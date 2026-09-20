@@ -2,11 +2,11 @@
 
 ## Initial migration
 
-| Table | Ownership / writes | Purpose |
-| --- | --- | --- |
-| persons | unique auth_user_id; owner may edit display name, timezone, onboarding only | Stable application identity distinct from Auth |
-| membership_accounts | person primary key; owner read only, trusted billing writes later | Tier, subscription state, trial/access expiry and beta grant |
-| personal_events | person FK; owner read only initially | Minimal typed longitudinal event index |
+| Table               | Ownership / writes                                                          | Purpose                                                      |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| persons             | unique auth_user_id; owner may edit display name, timezone, onboarding only | Stable application identity distinct from Auth               |
+| membership_accounts | person primary key; owner read only, trusted billing writes later           | Tier, subscription state, trial/access expiry and beta grant |
+| personal_events     | person FK; owner read only initially                                        | Minimal typed longitudinal event index                       |
 
 Auth-user creation provisions person and free membership transactionally with a fixed-search-path trigger. User metadata never sets privileges. Profile mutation has a column grant so ownership IDs cannot be changed. No authenticated update grant on billing or event infrastructure.
 

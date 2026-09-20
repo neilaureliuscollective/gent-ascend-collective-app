@@ -1,16 +1,16 @@
 # Build roadmap and acceptance gates
 
-| Stage | Working outcome | Validation |
-| --- | --- | --- |
-| 0 | Constitution, architecture, researched versions, risk/decision log | Official repo inspection; documented sources; scope agreed by brief |
-| 1 | Responsive shell + local founder harness + first schema | Gates below; no required production services |
-| 2A | Edit profile and one goal, ownership enforced | Save/reload with two-user isolation; error and empty states |
-| 2B | Log one metric + routine completion; see 30-day progress | Transactional timeline, timezone/units, reproducible personas |
-| 3A | Aurelius reads authorized profile/goals/history context | Cross-user denial; sources, uncertain/missing data and usage limits |
-| 3B | User-controlled memory and confirmed actions | Correction/deletion propagation; tool approval/idempotency |
-| 4 | Selective private beta + Stripe test lifecycle | Invitations, real auth, billing replay/order/cancellation, recovery |
-| 5+ | Expand validated product loop; body visualization, commerce, community | Feature-specific usefulness, privacy and access checks |
-| Clinical | Partner-powered care behind clinical gateway | Explicit legal/provider/data-contract readiness gate |
+| Stage    | Working outcome                                                        | Validation                                                          |
+| -------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 0        | Constitution, architecture, researched versions, risk/decision log     | Official repo inspection; documented sources; scope agreed by brief |
+| 1        | Responsive shell + local founder harness + first schema                | Gates below; no required production services                        |
+| 2A       | Edit profile and one goal, ownership enforced                          | Save/reload with two-user isolation; error and empty states         |
+| 2B       | Log one metric + routine completion; see 30-day progress               | Transactional timeline, timezone/units, reproducible personas       |
+| 3A       | Aurelius reads authorized profile/goals/history context                | Cross-user denial; sources, uncertain/missing data and usage limits |
+| 3B       | User-controlled memory and confirmed actions                           | Correction/deletion propagation; tool approval/idempotency          |
+| 4        | Selective private beta + Stripe test lifecycle                         | Invitations, real auth, billing replay/order/cancellation, recovery |
+| 5+       | Expand validated product loop; body visualization, commerce, community | Feature-specific usefulness, privacy and access checks              |
+| Clinical | Partner-powered care behind clinical gateway                           | Explicit legal/provider/data-contract readiness gate                |
 
 ## Stage 1 acceptance
 

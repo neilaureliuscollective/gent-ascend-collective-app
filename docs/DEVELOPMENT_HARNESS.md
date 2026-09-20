@@ -4,7 +4,7 @@
 
 The full local path uses real Supabase Auth and session cookies. A local seed creates a synthetic founder user and corresponding person/membership. Founder entry signs into that seeded account; every application read uses its authenticated JWT and RLS. No service-role application client, forged JWT or request-provided user ID.
 
-Enable only when all conditions hold: NODE_ENV=development; APP_ENV=local; explicit AURELIUS_DEV_HARNESS=true; VERCEL/VERCEL_ENV absent; Supabase URL (if set) is loopback; request origin/host is loopback; and a random server-only bootstrap token is supplied on initial entry. CLI setup generates that token in ignored .env.local and prints a local entry instruction. Keep the Next dev listener bound to 127.0.0.1.
+Enable only when all conditions hold: NODE_ENV=development; APP_ENV=local; explicit AURELIUS_DEV_HARNESS=true; VERCEL/VERCEL_ENV absent; Supabase URL (if set) is loopback; request origin/host is loopback; and a random server-only bootstrap token is supplied on initial entry. CLI setup generates that token in ignored .env.development.local and prints a local entry instruction. Keep the Next dev listener bound to 127.0.0.1.
 
 Initial entry exchanges the token for a normal local Supabase session. Before rendering the console or applying scenario changes, verify the session and exact seeded founder Auth ID. A copied scenario cookie is insufficient. The scenario is signed, short lived, owner-bound and httpOnly; validate it on every read. Same-origin POST is required for mutation. Production build/runtime reject enabled harness configuration. Routes return 404 outside local development even if queried directly.
 
@@ -20,7 +20,7 @@ Console skeleton: selectable free/Aurelius/Health/beta/admin scenarios, billing 
 
 ## Commands and protection
 
-npm run dev:setup starts local Supabase, generates local-only credentials/config and seeds the founder via the local Auth admin API. It refuses to overwrite non-local existing configuration. npm run dev starts loopback Next. npm run db:reset is explicitly destructive to local synthetic data and uses --local; setup then recreates test identities. Hosted DB reset is never an application feature.
+npm run dev:setup starts local Supabase, generates local-only credentials/config and seeds the founder via the local Auth admin API. It refuses to overwrite non-local existing configuration. npm run dev starts loopback Next. Restart Next after regenerating local credentials. Development credentials live in .env.development.local, which production builds do not load. npm run db:reset is explicitly destructive to local synthetic data and uses --local; setup then recreates test identities. Hosted DB reset is never an application feature.
 
 If Docker is unavailable, the shell remains inspectable and tests can run, but founder persistence and real Auth acceptance remain unverified. Never label a fixture shell as a complete founder harness.
 

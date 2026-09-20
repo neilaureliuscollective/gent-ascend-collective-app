@@ -2,13 +2,13 @@
 
 Stage 1 accepts synthetic data only. No production customer data or PHI ingestion. This is a product-scope limit, not a declaration that all consumer health data is exempt from privacy obligations.
 
-| Class | Examples | Handling |
-| --- | --- | --- |
-| Public | approved marketing, product catalog | cacheable if deliberately public |
-| Private | profile, goals, personal timeline | verified identity, owner RLS, no shared cache |
+| Class              | Examples                                                   | Handling                                                                 |
+| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Public             | approved marketing, product catalog                        | cacheable if deliberately public                                         |
+| Private            | profile, goals, personal timeline                          | verified identity, owner RLS, no shared cache                            |
 | Sensitive personal | health observations, mental wellbeing, scans, family vault | explicit purpose/consent, private files, minimized logging and retention |
-| Regulated clinical | provider records, treatment decisions | clinical gateway; partner/legal readiness required |
-| Operational secret | credentials, webhook secrets, harness token | server-only, ignored env, never response or log |
+| Regulated clinical | provider records, treatment decisions                      | clinical gateway; partner/legal readiness required                       |
+| Operational secret | credentials, webhook secrets, harness token                | server-only, ignored env, never response or log                          |
 
 Avoid raw chat/health content in analytics and error traces. Log operational IDs and sanitized failures. Secrets never use NEXT_PUBLIC except the intended Supabase URL/publishable key. Access tokens and service keys never go into Git.
 
