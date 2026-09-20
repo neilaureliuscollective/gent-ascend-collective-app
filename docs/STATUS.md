@@ -1,48 +1,53 @@
 # Execution status — 2026-09-20
 
-Stage 0 complete. Stage 1 and **Stage 2A personal foundation implemented, pending real-Supabase acceptance**. Nothing deployed. No remote push performed.
+**Aurelius 1A implemented in code; real-service acceptance remains open.** The founder explicitly prioritized usable Aurelius before metrics/routines. Stage 0 complete; prior Stage 1/2A real-Supabase gates also remain open. Nothing deployed or pushed remotely.
 
-## Implemented
+## Current working scope
 
-- Existing strict Next/React/Tailwind modular monolith, premium responsive shell, centralized capabilities and isolated founder console retained.
-- You: editable name, timezone, units and current priority; validated server actions and session-bound persistence.
-- Goals: create/edit one active goal with reason, domain, next step and optional calendar date; confirm completion/archive; retained history.
-- Command: authenticated person's actual priority, active goal and next step. My world and profile link to goals. No invented AI guidance or progress scores.
-- Profile/goal versions reject stale edits. Forms preserve drafts on errors, expose accessible feedback and disable pending submissions. Basic goals remain available without payment.
-- Additive migration with owner RLS, column-level grants, single-active-goal constraint, closed-goal protection and transactional lifecycle events. Compound owner references protect timeline links.
-- Expanded local Auth/PostgREST smoke and a complete founder browser journey wired into the Docker-backed CI job.
-- Updated architecture, data model, decision log, roadmap and Stage 2A scope documentation.
+The existing strict Next/React/Tailwind foundation, profile/goals and protected real-identity founder harness remain intact. Added:
+
+- Shared Aurelius conversation interface in the global panel and full workspace; responsive composer, safe Markdown, streaming, stop, saved conversation selection and deletion.
+- AI SDK 7.0.107 ToolLoopAgent through Gateway; verified/configurable initial model openai/gpt-6-astra; versioned instructions distilled from both approved doctrine documents, mirrored in docs/doctrine.
+- Session-bound owner context from profile, active goal and confirmed memory; visible Context tab and per-message opt-out.
+- Explicit memory create/correct/forget with provenance and stale-version checks. No automatic inference promoted to fact.
+- Reply feedback and local founder-console review of “Needs work” replies.
+- Atomic turn reservation, idempotency, rolling usage limits, pending lease recovery, partial/failed/cancelled states and persistence-before-saved acknowledgment.
+- Private conversation/turn/memory/usage tables with RLS, owner-scoped RPCs and deletion behavior. No service-role application client.
+- Operator activation guide, evaluation rubric, updated roadmap and a separate live-provider smoke command.
 
 ## Observed checks
 
-| Gate                                 | Result                                                                                             |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| ESLint                               | Passed, zero warnings                                                                              |
-| Strict typecheck                     | Passed                                                                                             |
-| Unit + fast SQL/RLS tests            | 36 passed                                                                                          |
-| Production build                     | Passed                                                                                             |
-| Critical browser interactions        | 10 passed: 4 shell/security, 6 real-component fixture cases                                        |
-| Responsive checks                    | 360, 768, 1440px; no horizontal overflow or page errors; screenshots inspected                     |
-| Migration chain + seed SQL           | Both migrations executed in PGlite; owner isolation, stale versions, lifecycle and rollback tested |
-| Actual Supabase reset/Auth/PostgREST | Unrun: no Docker/Podman available                                                                  |
-| Full founder browser journey         | Added and typechecked; unrun because actual local Supabase is unavailable                          |
-| GitHub CI                            | Unrun: local commits, read-only remote access                                                      |
-| Deployment                           | None                                                                                               |
+| Gate                                 | Result                                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| ESLint                               | Passed, zero warnings                                                                           |
+| Strict typecheck                     | Passed                                                                                          |
+| Unit + SQL + SDK mock-provider tests | 53 passed                                                                                       |
+| Production build                     | Passed                                                                                          |
+| Browser interactions                 | 20 passed at 360/768/1440px                                                                     |
+| Migration chain                      | Three migrations executed in PGlite; explicit minimal Auth adapter                              |
+| UI inspection                        | Phone/desktop conversation screenshots reviewed; composer and empty heading visible in viewport |
+| Actual Supabase reset/Auth/PostgREST | Unrun: Docker/Podman unavailable                                                                |
+| Real founder browser journey         | Extended for memory persistence; unrun without local Supabase                                   |
+| Paid live-model smoke                | Unrun: no AI_GATEWAY_API_KEY configured                                                         |
+| Intelligence-quality evaluation      | Unrun; requires real founder conversations                                                      |
+| GitHub CI / remote push              | Not performed; last verified connector access is read-only                                      |
+| Hosted preview / production          | None                                                                                            |
 
-Component fixtures inject synthetic actions into the actual editor components outside Next routes. They validate interaction behavior, not server persistence. PGlite uses a minimal Auth schema and does not emulate GoTrue/PostgREST. Neither substitutes for the outstanding real integration gates.
+Aurelius browser tests intercept API traffic with synthetic records; they do not prove live persistence or model quality. SDK adapter tests use the actual AI SDK with a mock provider. SQL tests validate Postgres logic via PGlite, not GoTrue/PostgREST. Screenshots explicitly label synthetic fixtures. Never equate these with the outstanding real-service checks.
 
-Browser verification used temporary Chromium 153 outside the app because the normal browser download failed previously. Single-process mode caused context creation failures; removing that flag produced a clean 10-test run with two workers and system fonts. This browser package is not an application dependency.
+Browser checks use temporary Chromium 153 outside the app, system fonts and two workers. Tests caught and resolved valid-origin comparison against Next's internal host and initial transcript scrolling. Model middleware tests verify provider-error redaction before SDK default logging.
 
-## Remaining limitations
+## Limits and remaining work
 
-- The founder's Desktop is not mounted. Work is in /root/Desktop/aurelius-og, a checkout of the official repository, not a replacement project. Unpushed founder workstation changes cannot be inspected from here.
-- The official GitHub repository remains empty and the connector reports pull=true, push=false. Changes are locally committed only. Preserve the handoff package; inspect the existing official checkout before importing it.
-- Database types describe the shipped SQL manually. Actual CLI generation and reconciliation remain required after a full local reset.
-- Developer console has scenario controls, not history persona packs, live feature toggles or memory clearing.
-- One active goal, no hard-delete/reopen UI and up to 100 recent goal records in the current view. Closed history remains in the database. Multiple goals and full history pagination can follow demonstrated need.
-- AI, Stripe, clinical services, community, commerce, 3D and production onboarding are not implemented. No production customer data has been introduced.
-- ESLint 9 is the latest compatible version for Next's current bundled plugins and has an upstream deprecation notice; reassess before beta.
+- This Work checkout is /root/Desktop/aurelius-og with the official remote. The founder's computer Desktop is not mounted; unpushed workstation files remain unknown. Preserve them before importing this work.
+- Commits are local. The official GitHub remote was empty at inspection and write access was unavailable. Updated handoff retains source/history/screenshots; do not replace the official folder blindly.
+- No API key or real Supabase session was fabricated. Actual founder use requires those connections. No phone-installable hosted build is available yet.
+- Database types are a hand-maintained SQL contract pending actual CLI generation/reconciliation.
+- Current limits: 100 conversations, 200 turns/conversation, 24 confirmed memories, 20 recent complete exchanges within a 32,000-character history context. Older saved messages are not all automatically recalled. Full budgets/timeouts are in AI_ARCHITECTURE.md.
+- Owner-controlled AI RPC records/token counts are not tamper-proof billing/clinical audit evidence.
+- Web research, voice, files, tool actions, automatic memory proposals, cross-chat summaries, embeddings, clinical integrations and Stripe remain unimplemented.
+- Gateway/provider retention and logs, BYOK policy, staging access, backup/export/deletion/usage retention and sensitive-data contracts require review before beta personal-data operation. No production PHI was introduced.
 
 ## Exact next step
 
-Sync these commits to the official repository with write-authorized access. On a Docker-capable machine run local setup, both integration suites and database type generation. Resolve any real-runtime differences and sign off Stage 1/2A. Then build **Stage 2B: one chosen measurement, one routine and a simple recorded-progress view**, using founder feedback to choose that first daily loop.
+Import/sync this committed milestone into the existing official checkout with write-authorized access. On a Docker-capable machine configure Supabase and a dedicated Gateway key, run the real integration/founder/live-model tests, and resolve any differences. Then Neil uses Aurelius daily and flags quality failures. Prioritize conversation quality, continuity and sourced research before expanding dashboard modules. A protected phone-installable preview follows verified hosted Auth and HTTPS/PWA setup; never expose the local developer harness.

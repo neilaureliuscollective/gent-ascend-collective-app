@@ -13,7 +13,7 @@ for (const width of [360, 768, 1440]) {
     await trigger.click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(
-      page.getByText('AI conversations are not active yet.', { exact: false }),
+      page.getByText('Sign in to use your Aurelius workspace.', { exact: false }),
     ).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).not.toBeVisible();

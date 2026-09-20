@@ -12,6 +12,10 @@
 | 5+       | Expand validated product loop; body visualization, commerce, community | Feature-specific usefulness, privacy and access checks              |
 | Clinical | Partner-powered care behind clinical gateway                           | Explicit legal/provider/data-contract readiness gate                |
 
+## Founder-directed sequence update — 2026-09-20
+
+The founder explicitly prioritized usable Aurelius intelligence before measurement/routine modules. Stage numbers below are historical labels, not execution order. Current order: Stage 1/2A validation → **Aurelius 1A (the Stage 3A conversation foundation plus manual memory controls)** → founder daily conversation evaluation and corrections → research/continuity improvements → choose the first metric/routine that genuinely strengthens Aurelius. Do not resume feature expansion merely because old Stage 2B appeared earlier in the table.
+
 ## Stage 1 acceptance
 
 - One canonical repository; root AGENTS and all planning documents present.
@@ -32,10 +36,10 @@ Use meaningful failure cases; no arbitrary test-count target. Each stage exposes
 
 ## Now vs later
 
-Now: framework, tokens, Auth adapter, ownership schema, capability calculator, local console, synthetic data, tests/CI, docs. Later: Stripe API, model/provider SDK, workflow durability, private file storage, notifications, telemetry vendor, AI memory, provider integrations, digital twin renderer. Redis, microservices, queues and additional databases require evidence of need.
+Now: framework, tokens, Auth adapter, ownership schema, capability calculator, local console, synthetic data, tests/CI, docs. Aurelius 1A adds the model SDK, private conversations and explicit memory. Later: Stripe API, workflow durability, private file storage, notifications, telemetry vendor, automatic memory proposals, provider integrations and digital twin renderer. Redis, microservices, queues and additional databases require evidence of need.
 
 ## Stage 2A acceptance
 
 Implemented scope is in STAGE_2A.md; observed results are in STATUS.md. Required: profile save/reload, a goal with next step surfaced on Command, complete/archive with retained history, stale-tab rejection, one active goal, two-user RLS, event atomicity, free-member access, usable 360/768/1440 layouts and honest errors. Run both `npm run test:integration` (real Auth/PostgREST) and `npm run test:founder` (real Next/browser journey) after local setup. Browser editor fixtures alone cannot close this stage.
 
-Next product increment is Stage 2B after the persistence gates pass: choose one useful measurement and one routine, then show honest recorded progress. Confirm the exact metric and routine with founder use before expanding schemas.
+Measurement/routine work is deferred behind the working Aurelius milestone. See the sequence update above and AURELIUS_1A.md.

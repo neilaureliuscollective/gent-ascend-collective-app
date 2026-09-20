@@ -42,3 +42,17 @@ Official public remote was empty (no refs/commits); no local application files o
 - Keep Stage 1 and Stage 2A signoff open until actual Supabase reset/Auth/PostgREST and founder browser tests pass. Docker remains unavailable here; GitHub access remains read-only.
 
 Official references rechecked: [Next forms](https://nextjs.org/docs/app/guides/forms), [React useActionState](https://react.dev/reference/react/useActionState), [Supabase database functions](https://supabase.com/docs/guides/database/functions). No new production integration was introduced.
+
+## Aurelius 1A — 2026-09-20
+
+The founder explicitly reordered the roadmap: usable Aurelius comes before metrics/routines. Scope: one reusable conversation service, streaming/history, explicit memory controls, context inspection and feedback. No live research, voice, tools or autonomous mutation yet. The missing capabilities are stated in both UI and runtime instructions.
+
+Read the approved Thinking/Reasoning and Personality/Voice/Temperament v1 doctrines from their current saved documents; mirrored them in docs/doctrine. Prompt distillation is versioned and reviewable. Model changes and prompt changes are not silent self-modification.
+
+Verified npm ai@7.0.107 (Node >=22, ESM), its bundled ToolLoopAgent, streamText, middleware, v4 mock-model and gateway references/source. Verified current Gateway catalog at https://ai-gateway.vercel.sh/v1/models; chose openai/gpt-6-astra as the initial high-capability candidate, configurable server-side. This is not a benchmark claim. No automatic multi-model routing/fallback was added by application code; Gateway's own routing/settings must be reviewed before sensitive beta data.
+
+No additional provider SDK or workflow engine. Added react-markdown@10.1.0 for safe formatted answers; official README confirms default URL safety and warns against unsafe transforms/plugins. Raw HTML and remote image rendering are disabled. Vite remains test-only.
+
+Research sources: [AI SDK agents](https://ai-sdk.dev/docs/agents/building-agents), [message persistence](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-persistence), [Gateway provider options](https://vercel.com/docs/ai-gateway/models-and-providers/provider-options), [disallow prompt training](https://vercel.com/docs/ai-gateway/security-and-compliance/disallow-prompt-training), [ZDR](https://vercel.com/docs/ai-gateway/security-and-compliance/zdr), [React Markdown](https://github.com/remarkjs/react-markdown). AI SDK web pages returned unsupported content types; installed official package docs/source supplied the implementation reference instead.
+
+Gateway no-training filtering is available without requiring a paid hosting plan. ZDR has separate plan/provider requirements and is not claimed here. No PHI approval or infrastructure claim is introduced.

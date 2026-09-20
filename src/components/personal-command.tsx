@@ -22,6 +22,16 @@ export function PersonalCommand({
           Your foundation →
         </Link>
       </div>
+      <section className="aurelius-command-invite">
+        <span className="orb" aria-hidden="true" />
+        <div>
+          <h2>A considered next move.</h2>
+          <p>Think through your direction with Aurelius.</p>
+        </div>
+        <Link className="text-link" href="/aurelius">
+          Talk with Aurelius →
+        </Link>
+      </section>
       <div className="command-grid">
         <section className="focus-panel">
           <div className="panel-heading">

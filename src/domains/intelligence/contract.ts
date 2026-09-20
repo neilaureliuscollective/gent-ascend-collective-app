@@ -16,4 +16,4 @@ export interface IntelligenceContext {
 export interface ContextProvider {
   readAuthorized(context: IntelligenceContext): Promise<ContextReference[]>;
 }
-// No model execution or memory storage before Stage 3.
+// Aurelius conversation implementation lives beside this future context-provider contract.

@@ -38,3 +38,12 @@ Use a clinical gateway interface and separate authorization, consent, audit and 
 ## Data lifecycle
 
 Record origin (user/import/provider/derived), event time vs ingestion time and processing version. No real customer data in test seeds. Before beta implement export, deletion propagation, retention schedule, account closure and backup restoration. Before sharing implement explicit consent/grants, not shared ownership booleans.
+
+## Aurelius 1A records
+
+- ai_conversations: owner, title and timestamps. Owner can read/delete; creation occurs in the bounded begin-turn RPC.
+- ai_turns: compound owner/conversation FK, user/assistant text, pending/complete/failed/cancelled state, prompt version, configured model, context inclusion and explicit feedback. Owners may update feedback only through direct grants. Turn content/finalization goes through owner-scoped RPCs. These are private working records, not immutable provenance evidence.
+- ai_usage: non-content request IDs, owner/time and optional token counts. Read-only to authenticated users; survives conversation deletion for rate limits, cascades on account deletion. Cleanup/retention job remains a pre-beta requirement.
+- ai_memories: explicitly confirmed user facts/preferences, source=user, content, confirmation time and optimistic version. Bounded create/correct/delete RPCs; no AI inferred truth or vectors.
+
+All new tables enable RLS, deny anon access and isolate owner reads. Fixed-search-path definer RPCs derive owner from auth.uid() and grant no cross-person access. No raw AI text is copied into the generic personal timeline. Memory and conversation deletion are separate intentional operations.

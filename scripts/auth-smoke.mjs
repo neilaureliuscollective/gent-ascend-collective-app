@@ -115,14 +115,12 @@ try {
     .select('id');
   assert.equal(deniedError, null);
   assert.equal(deniedWrite.length, 0);
-  const { error: forgedOwner } = await founder
-    .from('goals')
-    .insert({
-      person_id: memberPerson.id,
-      title: 'Forbidden',
-      domain: 'life',
-      next_step: 'Forbidden',
-    });
+  const { error: forgedOwner } = await founder.from('goals').insert({
+    person_id: memberPerson.id,
+    title: 'Forbidden',
+    domain: 'life',
+    next_step: 'Forbidden',
+  });
   assert.ok(forgedOwner);
   const { data: edited, error: editError } = await member
     .from('goals')
@@ -187,4 +185,85 @@ try {
     .eq('status', 'active');
   assert.equal(restoreError, null);
   assert.equal(cleanupError, null);
+}
+
+// Aurelius SQL contract through actual Auth/PostgREST; no paid model request.
+const aiConversation = crypto.randomUUID(),
+  aiRequest = crypto.randomUUID(),
+  aiMemory = crypto.randomUUID();
+try {
+  const { error: memoryError } = await member.rpc('ai_save_memory', {
+    p_id: aiMemory,
+    p_content: 'Synthetic preference: concise answers',
+    p_kind: 'preference',
+    p_version: 0,
+  });
+  assert.equal(memoryError, null);
+  const { data: leakedMemories, error: memoryReadError } = await founder
+    .from('ai_memories')
+    .select('*')
+    .eq('id', aiMemory);
+  assert.equal(memoryReadError, null);
+  assert.equal(leakedMemories.length, 0);
+  const { error: startError } = await member.rpc('ai_begin_turn', {
+    p_conversation: aiConversation,
+    p_request: aiRequest,
+    p_text: 'Synthetic persistence check',
+    p_model: 'synthetic-no-model-call',
+    p_context: true,
+    p_prompt_version: 'integration-test',
+  });
+  assert.equal(startError, null);
+  const { data: leakedTurns, error: turnReadError } = await founder
+    .from('ai_turns')
+    .select('*')
+    .eq('id', aiRequest);
+  assert.equal(turnReadError, null);
+  assert.equal(leakedTurns.length, 0);
+  const { data: deniedFinish, error: finishDenial } = await founder.rpc('ai_finish_turn', {
+    p_request: aiRequest,
+    p_text: 'Intruder',
+    p_status: 'complete',
+  });
+  assert.equal(finishDenial, null);
+  assert.equal(deniedFinish, false);
+  const { data: finished, error: finishError } = await member.rpc('ai_finish_turn', {
+    p_request: aiRequest,
+    p_text: 'Synthetic stored reply, not model output.',
+    p_status: 'complete',
+    p_input: 0,
+    p_output: 0,
+  });
+  assert.equal(finishError, null);
+  assert.equal(finished, true);
+  const { data: saved, error: savedError } = await member
+    .from('ai_turns')
+    .select('*')
+    .eq('id', aiRequest)
+    .single();
+  assert.equal(savedError, null);
+  assert.equal(saved.status, 'complete');
+  const { error: deleteError } = await member
+    .from('ai_conversations')
+    .delete()
+    .eq('id', aiConversation);
+  assert.equal(deleteError, null);
+  const { data: removed, error: removedError } = await member
+    .from('ai_turns')
+    .select('*')
+    .eq('id', aiRequest);
+  assert.equal(removedError, null);
+  assert.equal(removed.length, 0);
+  const { data: ledger, error: ledgerError } = await member
+    .from('ai_usage')
+    .select('id')
+    .eq('id', aiRequest);
+  assert.equal(ledgerError, null);
+  assert.equal(ledger.length, 1);
+  console.log(
+    'PASS: Aurelius memory, turn lifecycle, two-user isolation, cascade deletion and durable usage ledger',
+  );
+} finally {
+  await member.from('ai_conversations').delete().eq('id', aiConversation);
+  await member.rpc('ai_delete_memory', { p_id: aiMemory, p_version: 1 });
 }

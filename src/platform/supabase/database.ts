@@ -1,3 +1,4 @@
+import type { Conversation, Turn, Memory } from '@/domains/intelligence/types';
 // Initial migration contract. Replace with CLI-generated types after a validated
 // local Supabase reset; this file deliberately describes only shipped tables.
 type Relationship = {
@@ -52,6 +53,20 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      ai_conversations: Table<Conversation, never, never>;
+      ai_turns: Table<Turn, never, { feedback: Turn['feedback'] }>;
+      ai_memories: Table<Memory, never, never>;
+      ai_usage: Table<
+        {
+          id: string;
+          person_id: string;
+          created_at: string;
+          input_tokens: number | null;
+          output_tokens: number | null;
+        },
+        never,
+        never
+      >;
       persons: Table<
         PersonRow,
         never,
@@ -90,7 +105,34 @@ export interface Database {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      ai_begin_turn: {
+        Args: {
+          p_conversation: string;
+          p_request: string;
+          p_text: string;
+          p_model: string;
+          p_context: boolean;
+          p_prompt_version: string;
+        };
+        Returns: string;
+      };
+      ai_finish_turn: {
+        Args: {
+          p_request: string;
+          p_text: string;
+          p_status: string;
+          p_input?: number | null;
+          p_output?: number | null;
+        };
+        Returns: boolean;
+      };
+      ai_save_memory: {
+        Args: { p_id: string; p_content: string; p_kind: string; p_version: number };
+        Returns: number;
+      };
+      ai_delete_memory: { Args: { p_id: string; p_version: number }; Returns: boolean };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

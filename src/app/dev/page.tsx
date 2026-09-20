@@ -4,6 +4,7 @@ import { requireLocalHarness } from '@/domains/development/guard';
 import { currentIdentity } from '@/domains/identity/current';
 import { defaultScenario, founderAuthId, readScenario } from '@/domains/development/scenario';
 import { currentAccess } from '@/domains/access/current';
+import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { enterFounder, updateScenario } from './actions';
 export default async function DeveloperConsole({
   searchParams,
@@ -18,6 +19,16 @@ export default async function DeveloperConsole({
     readScenario((await cookies()).get('aurelius-scenario')?.value, env.AURELIUS_DEV_TOKEN!) ??
     defaultScenario;
   const access = founder ? await currentAccess() : new Set<string>();
+  const ai = aiConfigSchema.parse(process.env);
+  const review =
+    founder && identity
+      ? await identity.client
+          .from('ai_turns')
+          .select('id,user_text,assistant_text')
+          .eq('feedback', 'needs_work')
+          .order('created_at', { ascending: false })
+          .limit(10)
+      : null;
   return (
     <main className="console">
       <Link href="/">← Return to Command</Link>
@@ -68,6 +79,40 @@ export default async function DeveloperConsole({
               Apply scenario
             </button>
           </form>
+          <section className="panel">
+            <h2>Aurelius testing</h2>
+            <p>
+              Model connection:{' '}
+              {ai.AI_GATEWAY_API_KEY
+                ? 'Configured — live validation still required'
+                : 'Waiting for AI_GATEWAY_API_KEY in your local environment'}
+            </p>
+            <p>Model: {ai.AURELIUS_AI_MODEL}</p>
+            <Link className="text-link" href="/aurelius">
+              Open Aurelius →
+            </Link>
+            <h3>Replies marked “Needs work”</h3>
+            <p>
+              Review these when refining the versioned instructions. Feedback does not retrain or
+              rewrite Aurelius automatically.
+            </p>
+            {review?.error ? (
+              <p>Feedback could not be loaded. Apply the Aurelius migration first.</p>
+            ) : review?.data?.length ? (
+              <ul>
+                {review.data.map((item) => (
+                  <li key={item.id}>
+                    <details>
+                      <summary>{item.user_text.slice(0, 100)}</summary>
+                      <p style={{ whiteSpace: 'pre-wrap' }}>{item.assistant_text}</p>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No flagged replies yet.</p>
+            )}
+          </section>
           <section className="panel">
             <h2>Effective capabilities</h2>
             <ul>

@@ -243,3 +243,171 @@ describe('personal profile and goal transactions', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('Aurelius private records and generation limits', () => {
+  const chat = '30000000-0000-4000-8000-000000000001';
+  const request = '40000000-0000-4000-8000-000000000001';
+  const memory = '50000000-0000-4000-8000-000000000001';
+  const begin = (id: string, conversation = chat) =>
+    `select public.ai_begin_turn('${conversation}','${id}','Help me think','openai/gpt-6-astra',true,'test-v1')`;
+  it('saves explicit memory, rejects stale correction and isolates the other person', async () => {
+    await asUser(
+      founder,
+      `select public.ai_save_memory('${memory}','Prefer concise answers','preference',0)`,
+    );
+    expect((await asUser(member, 'select * from public.ai_memories')).rows).toHaveLength(0);
+    await expect(
+      asUser(member, `select public.ai_save_memory('${memory}','Overwrite','fact',1)`),
+    ).rejects.toThrow();
+    const corrected = await asUser<{ ai_save_memory: number }>(
+      founder,
+      `select public.ai_save_memory('${memory}','Prefer direct answers','preference',1)`,
+    );
+    expect(corrected.rows[0]?.ai_save_memory).toBe(2);
+    await expect(
+      asUser(founder, `select public.ai_save_memory('${memory}','Stale','preference',1)`),
+    ).rejects.toThrow();
+    await expect(
+      asUser(
+        founder,
+        "insert into public.ai_memories(id,person_id,content,kind) values(gen_random_uuid(),(select id from public.persons),'Bypass','fact')",
+      ),
+    ).rejects.toThrow();
+  });
+  it('reserves a request once and forbids concurrent replies', async () => {
+    await asUser(founder, begin(request));
+    expect((await asUser(founder, 'select * from public.ai_turns')).rows).toHaveLength(1);
+    await expect(asUser(founder, begin(request))).rejects.toThrow();
+    await expect(asUser(founder, begin('40000000-0000-4000-8000-000000000002'))).rejects.toThrow();
+    expect((await asUser(founder, 'select * from public.ai_usage')).rows).toHaveLength(1);
+  });
+  it('prevents cross-user conversation reads, writes and completion', async () => {
+    for (const table of ['ai_conversations', 'ai_turns', 'ai_usage'])
+      expect((await asUser(member, `select * from public.${table}`)).rows).toHaveLength(0);
+    await expect(asUser(member, begin('40000000-0000-4000-8000-000000000003'))).rejects.toThrow();
+    expect(
+      (
+        await asUser<{ ai_finish_turn: boolean }>(
+          member,
+          `select public.ai_finish_turn('${request}','Intruder','complete')`,
+        )
+      ).rows[0]?.ai_finish_turn,
+    ).toBe(false);
+    expect(
+      (await asUser(member, `delete from public.ai_conversations where id='${chat}' returning id`))
+        .rows,
+    ).toHaveLength(0);
+    await expect(
+      asUser(founder, "update public.ai_turns set assistant_text='Direct spoof'"),
+    ).rejects.toThrow();
+    await db.exec('set role anon');
+    try {
+      await expect(db.query(begin('40000000-0000-4000-8000-000000000004'))).rejects.toThrow();
+    } finally {
+      await db.exec('reset role');
+    }
+  });
+  it('finalizes once, records usage and permits feedback without changing the reply', async () => {
+    await expect(
+      asUser(founder, `select public.ai_finish_turn('${request}','','complete')`),
+    ).rejects.toThrow();
+    expect(
+      (
+        await asUser<{ ai_finish_turn: boolean }>(
+          founder,
+          `select public.ai_finish_turn('${request}','A considered next step.','complete',100,20)`,
+        )
+      ).rows[0]?.ai_finish_turn,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ ai_finish_turn: boolean }>(
+          founder,
+          `select public.ai_finish_turn('${request}','Overwrite','complete')`,
+        )
+      ).rows[0]?.ai_finish_turn,
+    ).toBe(false);
+    await asUser(founder, `update public.ai_turns set feedback='helpful' where id='${request}'`);
+    expect(
+      (await asUser<{ input_tokens: number }>(founder, 'select input_tokens from public.ai_usage'))
+        .rows[0]?.input_tokens,
+    ).toBe(100);
+  });
+  it('deletes content without erasing rate limits or reviving a request', async () => {
+    await asUser(founder, `delete from public.ai_conversations where id='${chat}'`);
+    expect((await asUser(founder, 'select * from public.ai_turns')).rows).toHaveLength(0);
+    expect((await asUser(founder, 'select * from public.ai_usage')).rows).toHaveLength(1);
+    expect((await asUser(founder, 'select * from public.ai_memories')).rows).toHaveLength(1);
+    await expect(asUser(founder, begin(request))).rejects.toThrow();
+    expect(
+      (
+        await asUser<{ ai_finish_turn: boolean }>(
+          founder,
+          `select public.ai_finish_turn('${request}','Resurrect','complete')`,
+        )
+      ).rows[0]?.ai_finish_turn,
+    ).toBe(false);
+    expect(
+      (
+        await asUser<{ ai_delete_memory: boolean }>(
+          member,
+          `select public.ai_delete_memory('${memory}',2)`,
+        )
+      ).rows[0]?.ai_delete_memory,
+    ).toBe(false);
+    expect(
+      (
+        await asUser<{ ai_delete_memory: boolean }>(
+          founder,
+          `select public.ai_delete_memory('${memory}',1)`,
+        )
+      ).rows[0]?.ai_delete_memory,
+    ).toBe(false);
+    expect(
+      (
+        await asUser<{ ai_delete_memory: boolean }>(
+          founder,
+          `select public.ai_delete_memory('${memory}',2)`,
+        )
+      ).rows[0]?.ai_delete_memory,
+    ).toBe(true);
+  });
+  it('expires abandoned requests and prevents old completion from overwriting', async () => {
+    const abandoned = '40000000-0000-4000-8000-000000000010';
+    const next = '40000000-0000-4000-8000-000000000011';
+    await asUser(founder, begin(abandoned));
+    await db.exec(
+      `update public.ai_turns set created_at=now()-interval '3 minutes' where id='${abandoned}'`,
+    );
+    await asUser(founder, begin(next));
+    expect(
+      (
+        await asUser<{ status: string }>(
+          founder,
+          `select status from public.ai_turns where id='${abandoned}'`,
+        )
+      ).rows[0]?.status,
+    ).toBe('failed');
+    expect(
+      (
+        await asUser<{ ai_finish_turn: boolean }>(
+          founder,
+          `select public.ai_finish_turn('${abandoned}','Late result','complete')`,
+        )
+      ).rows[0]?.ai_finish_turn,
+    ).toBe(false);
+    await asUser(founder, `select public.ai_finish_turn('${next}','Partial','cancelled')`);
+  });
+  it('enforces a durable per-person rolling request ceiling', async () => {
+    await db.exec(
+      `insert into public.ai_usage(id,person_id,created_at) select gen_random_uuid(),(select id from public.persons where auth_user_id='${member}'),now()-interval '2 hours' from generate_series(1,120)`,
+    );
+    await expect(
+      asUser(
+        member,
+        begin('40000000-0000-4000-8000-000000000012', '30000000-0000-4000-8000-000000000002'),
+      ),
+    ).rejects.toThrow('Usage limit');
+    await expect(asUser(member, 'delete from public.ai_usage')).rejects.toThrow();
+  });
+});

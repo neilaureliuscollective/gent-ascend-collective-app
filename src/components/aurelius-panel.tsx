@@ -1,16 +1,30 @@
 'use client';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+const Workspace = dynamic(
+  () => import('./aurelius/workspace').then((module) => module.AureliusWorkspace),
+  { loading: () => <p role="status">Opening Aurelius…</p>, ssr: false },
+);
 export function AureliusPanel() {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
   const path = usePathname();
+  useEffect(() => {
+    dialog.current?.close();
+  }, [path]);
+  if (path === '/aurelius') return null;
   return (
     <>
       <button
         className="aurelius-trigger"
         ref={trigger}
-        onClick={() => dialog.current?.showModal()}
+        onClick={() => {
+          setOpen(true);
+          dialog.current?.showModal();
+        }}
         aria-haspopup="dialog"
       >
         <span className="orb" aria-hidden="true" />
@@ -19,31 +33,23 @@ export function AureliusPanel() {
       </button>
       <dialog
         ref={dialog}
-        className="aurelius-dialog"
+        className="aurelius-dialog live-dialog"
         aria-labelledby="aurelius-title"
-        onClose={() => trigger.current?.focus()}
+        onClose={() => {
+          setOpen(false);
+          trigger.current?.focus();
+        }}
       >
         <div className="dialog-top">
-          <span className="eyebrow">Your intelligence</span>
+          <h2 id="aurelius-title">Aurelius</h2>
+          <Link href="/aurelius" onClick={() => dialog.current?.close()}>
+            Open full space ↗
+          </Link>
           <button aria-label="Close Aurelius" onClick={() => dialog.current?.close()}>
             ×
           </button>
         </div>
-        <span className="orb large" aria-hidden="true" />
-        <h2 id="aurelius-title">Aurelius</h2>
-        <p>
-          One perspective.
-          <br />
-          Your whole world.
-        </p>
-        <div className="panel">
-          <span className="eyebrow">Foundation preview</span>
-          <p>Your personal intelligence will connect your goals, routines and progress here.</p>
-          <p className="muted">
-            AI conversations are not active yet. No personal data has been sent to a model.
-          </p>
-        </div>
-        <small>Current space: {path === '/' ? 'Command' : path.slice(1)}</small>
+        {open && <Workspace compact />}
       </dialog>
     </>
   );

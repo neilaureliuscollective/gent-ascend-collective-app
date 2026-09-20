@@ -17,3 +17,7 @@ Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNES
 - Run lint, typecheck, unit tests, production build, interaction tests and migration checks before declaring Stage 1 complete. Mark unrun gates explicitly; never equate SQL emulation with a real Supabase Auth test.
 - Commit meaningful milestones. No history rewriting or production deployment without founder approval. Do not silently change major product decisions.
 - Update docs/STATUS.md with implemented behavior, limitations and next stage. Keep placeholders honest and sample data labeled.
+
+- Founder sequence update: usable Aurelius is the immediate priority before metrics/routines. Read docs/AURELIUS_1A.md and docs/doctrine/ before changing AI behavior.
+- Never label mock-provider or intercepted-browser results as a live model test. Never claim ChatGPT parity without measured founder evaluation.
+- AI output is never auto-promoted to memory. Only explicit user confirmation writes memory; private history/context uses session-bound ownership. Maintain stream save acknowledgments, quotas and error redaction.

@@ -23,7 +23,7 @@ Use typed domain tables for facts. A personal_events table carries event kind/ve
 
 ## Navigation proposal
 
-Four stable destinations: Command (today), My world (domains), Progress (longitudinal), You (profile/vault/settings). Aurelius is a persistent contextual panel, not a fifth silo. Community and commerce can appear within My world and relevant tasks. This is a reversible Stage 1 hypothesis, to be tested with founder use. No inaccessible maze of 25 tabs; capability registry will drive discoverable modules as they become real.
+Four stable destinations: Command (today), My world (domains), Progress (longitudinal), You (profile/vault/settings). Aurelius is a persistent contextual panel, with a full conversation workspace at /aurelius when more space is useful. The shared domain service and reusable UI power both surfaces. Community and commerce can appear within My world and relevant tasks. This is a reversible Stage 1 hypothesis, to be tested with founder use. No inaccessible maze of 25 tabs; capability registry will drive discoverable modules as they become real.
 
 ## Billing boundary
 

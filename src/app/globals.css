@@ -998,3 +998,529 @@ button:disabled {
 .perspective-panel p {
   overflow-wrap: anywhere;
 }
+
+/* Aurelius shares one conversation surface across the workspace and global panel. */
+.aurelius-surface {
+  border: 1px solid var(--border);
+  background: #100d16;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.aurelius-workspace {
+  min-width: 0;
+  padding: 24px;
+}
+.aurelius-toolbar,
+.conversation-controls,
+.composer-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.aurelius-toolbar {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.aurelius-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.aurelius-tabs button,
+.message-feedback button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #c5bbcc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.aurelius-tabs button[aria-pressed='true'],
+.message-feedback button[aria-pressed='true'] {
+  background: #d6ae6212;
+  border-color: #d6ae6245;
+  color: #f1d99e;
+}
+.conversation-controls {
+  margin: 18px 0;
+}
+.conversation-controls select {
+  flex: 1;
+  min-width: 120px;
+  max-width: 100%;
+  margin: 0;
+}
+.conversation-scroll {
+  height: min(55vh, 660px);
+  min-height: 340px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 10px 8px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #564664 transparent;
+}
+.aurelius-welcome {
+  text-align: center;
+  padding: 32px 0;
+}
+.aurelius-welcome .orb {
+  margin: 0 auto 28px;
+}
+.aurelius-welcome h2 {
+  font:
+    clamp(1.9rem, 4vw, 3rem)/1.15 Georgia,
+    serif;
+  margin: 16px 0;
+}
+.aurelius-welcome p {
+  color: #bbb0c5;
+  line-height: 1.7;
+}
+.conversation-starters {
+  display: grid;
+  gap: 10px;
+  margin: 28px auto 0;
+  max-width: 540px;
+}
+.conversation-starters button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  text-align: left;
+  padding: 14px 18px;
+  color: #e4dce9;
+  background: #1a1423;
+  border: 1px solid #d6ae6228;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.conversation-starters span {
+  color: #d6ae62;
+}
+.aurelius-composer {
+  display: block;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #d6ae6240;
+  background: #17111f;
+  border-radius: 12px;
+}
+.aurelius-composer textarea {
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  resize: vertical;
+  min-height: 70px;
+  max-height: 240px;
+  color: #f1ecf5;
+}
+.composer-controls .button {
+  margin: 0;
+  padding: 10px 20px;
+  gap: 24px;
+}
+.context-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c3b7cf;
+  font-size: 0.8rem;
+}
+.context-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #d6ae62;
+  margin: 0;
+}
+.composer-disclosure {
+  font-size: 0.72rem;
+  color: #a99db3;
+  line-height: 1.6;
+  margin: 12px 0 0;
+}
+.aurelius-notice {
+  min-height: 1.5em;
+  font-size: 0.8rem;
+  color: #d6ae62;
+  margin: 10px 0 0;
+}
+.conversation-turn {
+  margin-bottom: 32px;
+}
+.user-message {
+  margin-left: 10%;
+  padding: 18px 22px;
+  background: #21182d;
+  border: 1px solid #88709e25;
+  border-radius: 12px 12px 3px 12px;
+}
+.message-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: #d6ae62;
+  margin-bottom: 12px;
+}
+.user-message p {
+  white-space: pre-wrap;
+  margin: 0;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.assistant-message {
+  padding: 24px 4px 8px;
+}
+.small-orb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #f4dba2, #916826 40%, #381e55 75%);
+  box-shadow: 0 0 16px #9b73cd30;
+}
+.message-markdown {
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  color: #e6dfea;
+}
+.message-markdown p {
+  margin: 0 0 14px;
+}
+.message-markdown ul,
+.message-markdown ol {
+  padding-left: 24px;
+}
+.message-markdown h1,
+.message-markdown h2,
+.message-markdown h3 {
+  font-size: 1.2rem;
+  letter-spacing: normal;
+  line-height: 1.4;
+  margin: 20px 0 12px;
+}
+.message-markdown pre {
+  background: #09070d;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  max-width: 100%;
+  font-size: 0.82rem;
+}
+.message-markdown code {
+  font-size: 0.88em;
+}
+.message-markdown a {
+  color: #e7c580;
+  text-decoration: underline;
+}
+.message-markdown blockquote {
+  border-left: 2px solid #d6ae6260;
+  margin: 16px 0;
+  padding-left: 16px;
+  color: #bfb2cd;
+}
+.message-feedback {
+  display: flex;
+  gap: 8px;
+}
+.message-feedback button {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+}
+.message-state,
+.connection-note {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #c6b4d5;
+}
+.memory-space,
+.context-space {
+  padding: 24px 0;
+  max-width: 760px;
+  margin: auto;
+}
+.memory-space h3,
+.context-space h3 {
+  font:
+    1.7rem/1.3 Georgia,
+    serif;
+}
+.memory-space > p,
+.context-space > p {
+  line-height: 1.7;
+  color: #bfb4c9;
+}
+.memory-list {
+  list-style: none;
+  padding: 0;
+}
+.memory-list li {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--border);
+}
+.memory-list p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.memory-list .button-row {
+  margin-top: 4px;
+}
+.context-space dt {
+  font-size: 0.75rem;
+  color: #d6ae62;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 22px;
+}
+.context-space dd {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.confirm-row {
+  background: #d6ae620a;
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid #d6ae6240;
+}
+.confirm-row .text-button {
+  margin-left: 14px;
+}
+.aurelius-unavailable {
+  text-align: center;
+  padding: 50px 20px;
+}
+.aurelius-unavailable .orb {
+  margin: 0 auto 30px;
+}
+.aurelius-unavailable h3 {
+  font:
+    2rem Georgia,
+    serif;
+}
+.aurelius-unavailable p {
+  margin: 20px 0;
+}
+.aurelius-unavailable .button {
+  display: inline-flex;
+}
+.aurelius-unavailable .text-button {
+  display: block;
+  margin: 16px auto;
+}
+.aurelius-dialog.live-dialog {
+  width: min(900px, calc(100vw - 32px));
+  max-width: 900px;
+  padding: 0;
+  max-height: 92dvh;
+}
+.live-dialog .dialog-top {
+  padding: 18px 24px;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+.live-dialog .dialog-top h2 {
+  margin: 0;
+  font:
+    1.5rem Georgia,
+    serif;
+}
+.live-dialog .dialog-top a {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #d6ae62;
+}
+.live-dialog .aurelius-workspace {
+  padding: 18px;
+}
+.live-dialog .conversation-scroll {
+  height: 40dvh;
+  min-height: 240px;
+}
+.live-dialog .aurelius-welcome {
+  padding: 20px 0;
+}
+.aurelius-command-invite {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid #d6ae6238;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  background: linear-gradient(120deg, #21132d, #110d17);
+}
+.aurelius-command-invite h2 {
+  font-size: 1.2rem;
+  margin: 0 0 6px;
+}
+.aurelius-command-invite p {
+  margin: 0;
+  color: #bbaec7;
+}
+.aurelius-command-invite .text-link {
+  margin-left: auto;
+}
+@media (max-width: 600px) {
+  .aurelius-workspace {
+    padding: 14px;
+  }
+  .aurelius-toolbar {
+    gap: 10px;
+  }
+  .aurelius-tabs {
+    gap: 0;
+  }
+  .aurelius-tabs button {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+  .conversation-scroll {
+    padding: 8px 0 20px;
+    min-height: 300px;
+    height: 48dvh;
+  }
+  .aurelius-composer {
+    padding: 12px;
+  }
+  .user-message {
+    margin-left: 5%;
+    padding: 14px;
+  }
+  .composer-controls {
+    gap: 10px;
+  }
+  .context-toggle {
+    font-size: 0.73rem;
+  }
+  .aurelius-dialog.live-dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+  .live-dialog .dialog-top {
+    padding: 16px;
+  }
+  .live-dialog .conversation-scroll {
+    height: 42dvh;
+  }
+  .aurelius-command-invite {
+    flex-wrap: wrap;
+    padding: 18px;
+  }
+  .aurelius-command-invite .text-link {
+    margin-left: 0;
+  }
+  .aurelius-command-invite .orb {
+    flex-shrink: 0;
+  }
+}
+/* Keep the composer in view; only the transcript scrolls. */
+.aurelius-surface {
+  height: calc(100dvh - 300px);
+  min-height: 520px;
+}
+.aurelius-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.aurelius-toolbar,
+.conversation-controls,
+.aurelius-composer,
+.aurelius-notice,
+.connection-note {
+  flex-shrink: 0;
+}
+.conversation-scroll {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+.memory-space,
+.context-space {
+  overflow-y: auto;
+  width: 100%;
+  min-height: 0;
+}
+.live-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  height: 90dvh;
+}
+.live-dialog .dialog-top {
+  flex-shrink: 0;
+}
+.live-dialog .aurelius-workspace {
+  flex: 1;
+  overflow-y: auto;
+}
+.live-dialog .conversation-scroll {
+  height: auto;
+  min-height: 0;
+}
+@media (max-width: 600px) {
+  .aurelius-page-heading {
+    margin-bottom: 18px;
+    gap: 0;
+  }
+  .aurelius-page-heading h1 {
+    font-size: 2.2rem;
+    margin: 8px 0 0;
+  }
+  .aurelius-page-heading > p {
+    display: none;
+  }
+  .aurelius-surface {
+    height: calc(100dvh - 275px);
+    min-height: 420px;
+  }
+  .aurelius-toolbar > .quiet-label {
+    display: none;
+  }
+  .aurelius-toolbar {
+    padding-bottom: 10px;
+  }
+  .conversation-controls {
+    margin: 12px 0;
+    gap: 8px;
+  }
+  .conversation-scroll {
+    height: auto;
+    min-height: 0;
+  }
+  .aurelius-welcome {
+    padding: 16px 0;
+  }
+  .aurelius-welcome .orb {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 20px;
+  }
+  .aurelius-welcome h2 {
+    font-size: 1.65rem;
+  }
+  .conversation-starters {
+    margin-top: 18px;
+  }
+  .composer-controls {
+    flex-wrap: nowrap;
+  }
+  .composer-controls .button {
+    padding: 10px 14px;
+  }
+  .composer-disclosure {
+    font-size: 0.66rem;
+  }
+  .aurelius-dialog.live-dialog[open] {
+    height: 100dvh;
+  }
+}
