@@ -33,3 +33,9 @@ Use meaningful failure cases; no arbitrary test-count target. Each stage exposes
 ## Now vs later
 
 Now: framework, tokens, Auth adapter, ownership schema, capability calculator, local console, synthetic data, tests/CI, docs. Later: Stripe API, model/provider SDK, workflow durability, private file storage, notifications, telemetry vendor, AI memory, provider integrations, digital twin renderer. Redis, microservices, queues and additional databases require evidence of need.
+
+## Stage 2A acceptance
+
+Implemented scope is in STAGE_2A.md; observed results are in STATUS.md. Required: profile save/reload, a goal with next step surfaced on Command, complete/archive with retained history, stale-tab rejection, one active goal, two-user RLS, event atomicity, free-member access, usable 360/768/1440 layouts and honest errors. Run both `npm run test:integration` (real Auth/PostgREST) and `npm run test:founder` (real Next/browser journey) after local setup. Browser editor fixtures alone cannot close this stage.
+
+Next product increment is Stage 2B after the persistence gates pass: choose one useful measurement and one routine, then show honest recorded progress. Confirm the exact metric and routine with founder use before expanding schemas.

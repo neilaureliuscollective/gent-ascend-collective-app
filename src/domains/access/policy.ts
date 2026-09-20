@@ -5,6 +5,8 @@ export type BillingState =
 export const capabilities = [
   'profile.read',
   'profile.write',
+  'goals.read',
+  'goals.write',
   'progress.read',
   'aurelius.context',
   'health.navigation',
@@ -22,7 +24,12 @@ export function calculateCapabilities(
   state: AccessState,
   now = new Date(),
 ): ReadonlySet<Capability> {
-  const granted = new Set<Capability>(['profile.read', 'profile.write']);
+  const granted = new Set<Capability>([
+    'profile.read',
+    'profile.write',
+    'goals.read',
+    'goals.write',
+  ]);
   const future = (value: string | null | undefined) =>
     !!value && new Date(value).getTime() > now.getTime();
   const paid =

@@ -1,7 +1,18 @@
 import Link from 'next/link';
+import { PersonalCommand } from '@/components/personal-command';
+import { readGoals } from '@/domains/goals/service';
 import { currentPerson } from '@/domains/person/current';
 export default async function Command() {
   const person = await currentPerson();
+  if (person) {
+    const goals = await readGoals();
+    return (
+      <PersonalCommand
+        person={person}
+        goal={goals?.find((goal) => goal.status === 'active') ?? null}
+      />
+    );
+  }
   return (
     <>
       <div className="page-heading">
@@ -23,13 +34,13 @@ export default async function Command() {
             <span className="eyebrow">Today’s perspective</span>
             <span className="pill">Foundation</span>
           </div>
-          <h2>{person ? `Welcome, ${person.display_name}.` : 'Your next chapter starts here.'}</h2>
+          <h2>Your next chapter starts here.</h2>
           <p>
             A clearer view of what matters.
             <br />A deliberate next step.
           </p>
           <Link className="button" href="/you">
-            {person ? 'View your profile' : 'Explore your workspace'}{' '}
+            Explore your workspace
             <span aria-hidden="true">↗</span>
           </Link>
           <div className="focus-foot">

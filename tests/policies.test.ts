@@ -13,6 +13,11 @@ const local = {
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'local-test-key',
 };
 describe('capabilities', () => {
+  it('keeps profile and basic goals available without payment', () => {
+    const capabilities = calculateCapabilities({ tier: 'free', billing: 'none', beta: false }, now);
+    for (const capability of ['profile.write', 'goals.read', 'goals.write'] as const)
+      expect(capabilities.has(capability)).toBe(true);
+  });
   it('grants paid context only within valid paid access', () => {
     expect(
       calculateCapabilities(

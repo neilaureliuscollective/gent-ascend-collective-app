@@ -1,42 +1,48 @@
 # Execution status — 2026-09-20
 
-Stage 0 completed in this repository checkout. Stage 1 implemented but **not closed**: actual Supabase runtime/auth integration is an outstanding gate. Nothing deployed.
+Stage 0 complete. Stage 1 and **Stage 2A personal foundation implemented, pending real-Supabase acceptance**. Nothing deployed. No remote push performed.
 
 ## Implemented
 
-- Next 16.3.5 / React 19.3 / Node 24 / strict TypeScript / Tailwind 4 foundation and lockfile.
-- Responsive obsidian, gold and purple shell; Command, My world, Progress and You; global accessible Aurelius dialog; honest empty states; PWA manifest (no offline personal-data caching).
-- Validated environment boundary, verified Supabase session adapters and proxy refresh, person mapping, centralized capability calculation and billing/AI/timeline contracts.
-- Local-only token-protected founder entry into a real seeded Auth identity; server-validated, signed membership/billing/onboarding scenario console skeleton. Production/hosted harness denial.
-- SQL migrations for persons, membership and timeline; ownership RLS, narrow column grants; synthetic founder and second-user seed; local bootstrap/reset scripts.
-- Vitest, Playwright, formatting, CI application/database jobs; architecture documents and root AGENTS rules.
+- Existing strict Next/React/Tailwind modular monolith, premium responsive shell, centralized capabilities and isolated founder console retained.
+- You: editable name, timezone, units and current priority; validated server actions and session-bound persistence.
+- Goals: create/edit one active goal with reason, domain, next step and optional calendar date; confirm completion/archive; retained history.
+- Command: authenticated person's actual priority, active goal and next step. My world and profile link to goals. No invented AI guidance or progress scores.
+- Profile/goal versions reject stale edits. Forms preserve drafts on errors, expose accessible feedback and disable pending submissions. Basic goals remain available without payment.
+- Additive migration with owner RLS, column-level grants, single-active-goal constraint, closed-goal protection and transactional lifecycle events. Compound owner references protect timeline links.
+- Expanded local Auth/PostgREST smoke and a complete founder browser journey wired into the Docker-backed CI job.
+- Updated architecture, data model, decision log, roadmap and Stage 2A scope documentation.
 
 ## Observed checks
 
-| Gate                               | Result                                                                                          |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
-| ESLint                             | Passed, zero warnings                                                                           |
-| Strict typecheck                   | Passed                                                                                          |
-| Unit + fast SQL/RLS tests          | 23 passed                                                                                       |
-| Production build                   | Passed                                                                                          |
-| Critical browser interactions      | 4 passed at 360, 768, 1440px; no page errors; nav/dialog/focus and production dev denial        |
-| Migration + seed SQL execution     | Passed in PGlite with explicit minimal auth schema; repeated seed and ownership/privilege cases |
-| Real Supabase reset/Auth/PostgREST | Blocked: Docker and Podman unavailable in this Work runtime                                     |
-| GitHub CI                          | Not run: commits are local and remote push is unavailable                                       |
-| Production deployment              | Not requested/performed                                                                         |
+| Gate                                 | Result                                                                                             |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| ESLint                               | Passed, zero warnings                                                                              |
+| Strict typecheck                     | Passed                                                                                             |
+| Unit + fast SQL/RLS tests            | 36 passed                                                                                          |
+| Production build                     | Passed                                                                                             |
+| Critical browser interactions        | 10 passed: 4 shell/security, 6 real-component fixture cases                                        |
+| Responsive checks                    | 360, 768, 1440px; no horizontal overflow or page errors; screenshots inspected                     |
+| Migration chain + seed SQL           | Both migrations executed in PGlite; owner isolation, stale versions, lifecycle and rollback tested |
+| Actual Supabase reset/Auth/PostgREST | Unrun: no Docker/Podman available                                                                  |
+| Full founder browser journey         | Added and typechecked; unrun because actual local Supabase is unavailable                          |
+| GitHub CI                            | Unrun: local commits, read-only remote access                                                      |
+| Deployment                           | None                                                                                               |
 
-Browser download endpoint failed. Browser tests ran with a temporary Chromium 153 package outside the application, using system fonts; it is not an application dependency. Desktop/mobile screenshots were visually inspected.
+Component fixtures inject synthetic actions into the actual editor components outside Next routes. They validate interaction behavior, not server persistence. PGlite uses a minimal Auth schema and does not emulate GoTrue/PostgREST. Neither substitutes for the outstanding real integration gates.
 
-## Limitations and release blockers
+Browser verification used temporary Chromium 153 outside the app because the normal browser download failed previously. Single-process mode caused context creation failures; removing that flag produced a clean 10-test run with two workers and system fonts. This browser package is not an application dependency.
 
-- Founder computer Desktop is not mounted. The official GitHub remote was empty; this session checked it out at /root/Desktop/aurelius-og. Unpushed workstation changes could not be inspected. Do not replace any workstation work without checking it.
-- GitHub connector reports pull=true and push=false. Local commits are not on GitHub. A recovery package retains the source and complete Git history for import into the existing official checkout after inspection.
-- Real local Auth bootstrap, GoTrue compatibility, PostgREST integration and database-generated types still need validation on Docker-backed Supabase. Do not call Stage 1 complete until those pass.
-- Database types currently describe the initial migration manually. Generate and adopt CLI types after the full local reset succeeds.
-- The console implements scenario selection only; complete persona packs, module toggles, memory reset and profile-editing flows follow with their actual schemas.
-- AI, Stripe, clinical services, community, commerce, 3D and production onboarding are intentionally not implemented.
-- ESLint 9 is the latest compatible version for Next's current bundled plugins and has an upstream deprecation notice. Reassess tooling before private beta.
+## Remaining limitations
 
-## Next action
+- The founder's Desktop is not mounted. Work is in /root/Desktop/aurelius-og, a checkout of the official repository, not a replacement project. Unpushed founder workstation changes cannot be inspected from here.
+- The official GitHub repository remains empty and the connector reports pull=true, push=false. Changes are locally committed only. Preserve the handoff package; inspect the existing official checkout before importing it.
+- Database types describe the shipped SQL manually. Actual CLI generation and reconciliation remain required after a full local reset.
+- Developer console has scenario controls, not history persona packs, live feature toggles or memory clearing.
+- One active goal, no hard-delete/reopen UI and up to 100 recent goal records in the current view. Closed history remains in the database. Multiple goals and full history pagination can follow demonstrated need.
+- AI, Stripe, clinical services, community, commerce, 3D and production onboarding are not implemented. No production customer data has been introduced.
+- ESLint 9 is the latest compatible version for Next's current bundled plugins and has an upstream deprecation notice; reassess before beta.
 
-Sync the existing commits using write-authorized access. On a Docker-capable machine, run local setup/reset and the real Auth integration test; fix any integration differences and replace manual DB types with generated types. Then validate local founder entry and scenario controls in the browser, close Stage 1, and start **Stage 2A: editable person/profile and one goal with real persistence and ownership**.
+## Exact next step
+
+Sync these commits to the official repository with write-authorized access. On a Docker-capable machine run local setup, both integration suites and database type generation. Resolve any real-runtime differences and sign off Stage 1/2A. Then build **Stage 2B: one chosen measurement, one routine and a simple recorded-progress view**, using founder feedback to choose that first daily loop.

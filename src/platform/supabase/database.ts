@@ -20,6 +20,10 @@ export type PersonRow = {
   timezone: string;
   onboarding_completed: boolean;
   created_at: string;
+  updated_at: string;
+  version: number;
+  priority: string;
+  unit_system: 'metric' | 'imperial';
 };
 export type MembershipRow = {
   person_id: string;
@@ -31,13 +35,42 @@ export type MembershipRow = {
   access_until: string | null;
   updated_at: string;
 };
+export type GoalRow = {
+  id: string;
+  person_id: string;
+  title: string;
+  domain: 'body' | 'mind' | 'life';
+  reason: string;
+  next_step: string;
+  target_date: string | null;
+  status: 'active' | 'completed' | 'archived';
+  version: number;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+};
 export interface Database {
   public: {
     Tables: {
       persons: Table<
         PersonRow,
         never,
-        Partial<Pick<PersonRow, 'display_name' | 'timezone' | 'onboarding_completed'>>
+        Partial<
+          Pick<
+            PersonRow,
+            'display_name' | 'timezone' | 'onboarding_completed' | 'unit_system' | 'priority'
+          >
+        >
+      >;
+      goals: Table<
+        GoalRow,
+        Pick<
+          GoalRow,
+          'id' | 'person_id' | 'title' | 'domain' | 'reason' | 'next_step' | 'target_date'
+        >,
+        Partial<
+          Pick<GoalRow, 'title' | 'domain' | 'reason' | 'next_step' | 'target_date' | 'status'>
+        >
       >;
       membership_accounts: Table<MembershipRow, never, never>;
       personal_events: Table<
@@ -50,6 +83,7 @@ export interface Database {
           recorded_at: string;
           source: string;
           source_record_id: string | null;
+          goal_id: string | null;
         },
         never,
         never

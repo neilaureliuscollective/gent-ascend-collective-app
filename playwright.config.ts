@@ -11,7 +11,6 @@ export default defineConfig({
           args: [
             '--no-sandbox',
             '--disable-dev-shm-usage',
-            '--single-process',
             '--no-zygote',
             '--use-gl=angle',
             '--use-angle=swiftshader',
@@ -19,11 +18,18 @@ export default defineConfig({
         }
       : undefined,
   },
-  webServer: {
-    command: 'npm run start -- --port 3100',
-    url: 'http://127.0.0.1:3100',
-    reuseExistingServer: false,
-    timeout: 60000,
-  },
+  webServer: [
+    {
+      command: 'npm run start -- --port 3100',
+      url: 'http://127.0.0.1:3100',
+      reuseExistingServer: false,
+      timeout: 60000,
+    },
+    {
+      command: 'node scripts/component-test-server.mjs',
+      url: 'http://127.0.0.1:3102',
+      reuseExistingServer: false,
+    },
+  ],
   reporter: 'list',
 });

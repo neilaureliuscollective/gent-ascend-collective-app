@@ -4,11 +4,11 @@
 
 Next.js App Router modular monolith, React, strict TypeScript, Tailwind CSS 4 tokens. Node 24 LTS, ESM, npm lockfile. Server Components compose authenticated reads; interactive islands own transient UI only. Server Actions/route handlers validate input and call domain services. Runtime configuration is server-only and fails closed.
 
-Supabase Postgres/Auth is the sole application persistence and identity platform. Use the Supabase SDK with generated database types; SQL migrations are the source of schema truth. No second ORM or migration system at this stage. Private Storage buckets arrive with the first real file feature.
+Supabase Postgres/Auth is the sole application persistence and identity platform. Use the Supabase SDK with schema-derived database types (manual migration contract pending verified CLI generation); SQL migrations are the source of schema truth. No second ORM or migration system at this stage. Private Storage buckets arrive with the first real file feature.
 
 src/app: route composition, error/loading boundaries, metadata.
 src/components: shared responsive shell and accessible interactions.
-src/domains: identity, person, access, billing, intelligence, timeline and development. Add concrete domains when needed, not empty packages for every roadmap noun.
+src/domains: identity, person, goals, access, billing, intelligence, timeline and development. Add concrete domains when needed, not empty packages for every roadmap noun.
 src/platform: environment and Supabase adapters.
 supabase: migrations, deterministic synthetic seed, local configuration.
 tests: policy, SQL/RLS and browser verification.
@@ -19,7 +19,7 @@ Request → verified Supabase session → person lookup → ownership/capability
 
 ## Events and longitudinal context
 
-Use typed domain tables for facts. A personal_events table carries event kind/version, owner, occurred_at, recorded_at, source and a reference to a domain record. No duplicated clinical values in a generic payload. Write record + event transactionally (database function once that write exists). It is a timeline projection, not event sourcing. Use compound ownership references for links where possible; otherwise domain resolution must re-check ownership. Later integrations use unique external-source IDs and idempotent ingestion.
+Use typed domain tables for facts. A personal_events table carries event kind/version, owner, occurred_at, recorded_at, source and a reference to a domain record. No duplicated clinical values in a generic payload. Write record + event transactionally. Stage 2A uses a narrow database trigger for goal lifecycle events. It is a timeline projection, not event sourcing. Use compound ownership references for links where possible; otherwise domain resolution must re-check ownership. Later integrations use unique external-source IDs and idempotent ingestion.
 
 ## Navigation proposal
 

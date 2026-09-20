@@ -28,5 +28,7 @@ jobs:
       - run: npx supabase db reset --local
       - run: node scripts/dev-setup.mjs --running
       - run: npm run test:integration
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:founder
       - if: always()
         run: npx supabase stop --no-backup

@@ -43,4 +43,7 @@ test('production runtime denies developer routes and query bypass', async ({ pag
   await expect(
     page.getByText('Personal profiles are not connected', { exact: false }),
   ).toBeVisible();
+  await page.goto('/goals');
+  await expect(page.getByRole('link', { name: 'Go to your account' })).toBeVisible();
+  await expect(page.getByRole('form', { name: 'Create goal' })).toHaveCount(0);
 });

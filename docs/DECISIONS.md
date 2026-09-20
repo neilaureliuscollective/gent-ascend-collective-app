@@ -30,3 +30,15 @@ Checked 2026-09-20. Published npm latest metadata corroborated framework version
 ## Repository inspection
 
 Official public remote was empty (no refs/commits); no local application files or history to preserve in this session's checkout. Founder computer's Desktop is not mounted and unpushed workstation files cannot be inspected. Remote checked out at /root/Desktop/aurelius-og, origin unchanged. GitHub connector reported pull=true, push=false. Do not claim that local commits have reached GitHub.
+
+## Stage 2A decisions — 2026-09-20
+
+- Build the first useful personal action: edit profile, choose a goal/next step, see it on Command, then complete/archive. Reuse the existing modular monolith, real session and RLS boundary.
+- One active goal is an explicit, reversible first-slice limit. It keeps Command focused and the first founder journey small enough to validate. Multiple concurrent goals and progress percentages are deferred.
+- Basic profile and goals are free capabilities; payment and onboarding cannot gate them. This is not a final pricing promise.
+- Use optimistic versions to reject stale edits. Controlled React fields retain drafts after failed actions; conflicts require reloading instead of silently overwriting.
+- Narrow database triggers maintain version/time and goal events in the same transaction. No workflow engine or second event database.
+- Vite 8.3.0, already in Vitest's dependency graph, is now an explicit development dependency solely for isolated real-component browser tests. Fixtures are outside Next routes, marked synthetic, served only on loopback and contain no real credentials. They do not substitute for the separate real Auth/Next/Supabase founder journey.
+- Keep Stage 1 and Stage 2A signoff open until actual Supabase reset/Auth/PostgREST and founder browser tests pass. Docker remains unavailable here; GitHub access remains read-only.
+
+Official references rechecked: [Next forms](https://nextjs.org/docs/app/guides/forms), [React useActionState](https://react.dev/reference/react/useActionState), [Supabase database functions](https://supabase.com/docs/guides/database/functions). No new production integration was introduced.
