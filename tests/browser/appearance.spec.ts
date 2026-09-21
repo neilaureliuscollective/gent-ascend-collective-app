@@ -73,3 +73,26 @@ test('200 percent text remains navigable and permits reading and composing', asy
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
 });
+
+test('connected light follows navigation and becomes still while reading a dialog', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/');
+  await expect(page.locator('.connection-selected')).toHaveCount(1);
+  await expect(page.locator('.connection-arrival')).toHaveCSS('animation-iteration-count', '1');
+  const navigation = page.getByRole('navigation', { name: 'Main navigation' });
+  await navigation.getByRole('link', { name: 'My world' }).click();
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/world');
+  await page.getByRole('button', { name: 'Aurelius', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
+  await expect(page.locator('.ambient-light')).toHaveCSS('animation-play-state', 'paused');
+  await expect(page.locator('.connection-arrival')).toHaveCSS('animation-play-state', 'paused');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('html')).toHaveAttribute('data-quiet', 'false');
+  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
+  await expect(page.locator('.connection-arrival')).toBeHidden();
+  await page.emulateMedia({ forcedColors: 'active' });
+  await expect(page.locator('.connection-field')).toBeHidden();
+  await expect(navigation.getByRole('link', { name: 'My world' })).toBeVisible();
+});

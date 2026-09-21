@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { Icon } from './icon';
 const eventName = 'aurelius-appearance';
 let sessionMotion: string | null = null;
@@ -78,7 +78,7 @@ export function AppearanceControls() {
     </div>
   );
 }
-export function VisualEnvironment() {
+export function VisualEnvironment({ children }: { children?: ReactNode }) {
   const { moving, solid } = useAppearance();
   useEffect(() => {
     document.documentElement.dataset.motion = moving ? 'ambient' : 'still';
@@ -92,10 +92,14 @@ export function VisualEnvironment() {
           !!document.querySelector('dialog[open]'),
       );
     };
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['open'], subtree: true });
+    sync();
     document.addEventListener('focusin', sync);
     document.addEventListener('focusout', sync);
     document.addEventListener('visibilitychange', sync);
     return () => {
+      observer.disconnect();
       document.removeEventListener('focusin', sync);
       document.removeEventListener('focusout', sync);
       document.removeEventListener('visibilitychange', sync);
@@ -104,7 +108,7 @@ export function VisualEnvironment() {
   return (
     <div className="ambient-environment" aria-hidden="true">
       <div className="ambient-light" />
-      <div className="ambient-horizon" />
+      {children}
       <div className="ambient-grain" />
     </div>
   );

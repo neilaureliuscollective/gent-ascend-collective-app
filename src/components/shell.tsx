@@ -1,3 +1,4 @@
+import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
 import { Navigation } from './navigation';
 import { AureliusPanel } from './aurelius-panel';
@@ -13,7 +14,9 @@ export function Shell({
 }) {
   return (
     <div className="app-shell">
-      <VisualEnvironment />
+      <VisualEnvironment>
+        <ConnectionField />
+      </VisualEnvironment>
       <a className="skip" href="#main">
         Skip to content
       </a>

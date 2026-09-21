@@ -2,30 +2,39 @@
 @import './forms.css';
 @import './dashboard.css';
 @theme {
-  --color-obsidian: #09070b;
-  --color-surface: #180f1d;
-  --color-gold: #dfbd7d;
+  --color-obsidian: #080909;
+  --color-surface: #181818;
+  --color-gold: #d2a653;
   --color-purple: #200c24;
   --color-ink: #f5f1e9;
-  --color-muted: #bcb2c2;
+  --color-muted: #b8b9b5;
 }
 :root {
   color-scheme: dark;
-  --background: #09070b;
+  --background: #080909;
+  --metal-gold: linear-gradient(
+    112deg,
+    #a87932 0%,
+    #c89a4a 21%,
+    #efd394 38%,
+    #d1a14d 48%,
+    #b78537 74%,
+    #d7b46b 100%
+  );
   --enamel: #150319;
   --purple: #200c24;
   --purple-light: #582164;
-  --gold: #dfbd7d;
-  --gold-light: #f4dfb1;
+  --gold: #d2a653;
+  --gold-light: #ebcd8d;
   --text: #f5f1e9;
-  --muted: #bcb2c2;
-  --surface: #180f1d;
-  --border: #e9d5f01a;
-  --border-strong: #c5a17245;
+  --muted: #b8b9b5;
+  --surface: #181818;
+  --border: #bcae9026;
+  --border-strong: #b48c465e;
   --font-body: Arial, sans-serif;
   --font-display: Arial, sans-serif;
   --radius: 24px;
-  --shadow: 0 20px 60px #0004, inset 0 1px 0 #f6e6ff08;
+  --shadow: 0 20px 60px #0004, inset 0 1px 0 #f7e3b70d;
 }
 * {
   box-sizing: border-box;
@@ -160,31 +169,22 @@ h4 {
   pointer-events: none;
   overflow: hidden;
   z-index: 0;
-  background: radial-gradient(ellipse at 75% 5%, #23082988, transparent 65%);
+  background: radial-gradient(ellipse at 78% 8%, #21112638, transparent 45%);
 }
 .ambient-light {
   position: absolute;
-  inset: -15%;
+  inset: 0;
+  height: min(780px, 95svh);
   background:
-    radial-gradient(ellipse at 70% 25%, #49164f44, transparent 40%),
-    radial-gradient(ellipse at 15% 75%, #300b3530, transparent 50%);
+    radial-gradient(ellipse at 35% 5%, #c8954230, transparent 42%),
+    radial-gradient(ellipse at 90% 35%, #35103f20, transparent 36%);
   animation: ambient-drift 22s ease-in-out infinite alternate;
   animation-play-state: paused;
-}
-.ambient-horizon {
-  position: absolute;
-  top: 380px;
-  left: 15%;
-  right: -10%;
-  height: 1px;
-  transform: rotate(-12deg);
-  background: linear-gradient(90deg, transparent, #d6ae6230, transparent);
-  box-shadow: 0 0 70px 20px #69216b08;
 }
 .ambient-grain {
   position: absolute;
   inset: 0;
-  opacity: 0.13;
+  opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.18' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
 }
 @keyframes ambient-drift {
@@ -211,7 +211,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   width: 218px;
   padding: 33px 22px;
   z-index: 10;
-  background: linear-gradient(165deg, #180c1be8, #09080be8 70%);
+  background: linear-gradient(165deg, #151514f5, #080909f5 70%);
   border-right: 1px solid var(--border);
 }
 .brand-lockup {
@@ -245,7 +245,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 .navigation-label {
   font-size: 0.625rem;
   letter-spacing: 0.2em;
-  color: #a69aaf;
+  color: #a5a69f;
   margin: 65px 14px 16px;
 }
 .navigation {
@@ -257,7 +257,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   display: flex;
   align-items: center;
   gap: 15px;
-  color: #bbb0c2;
+  color: #b8b9b5;
   padding: 14px 16px;
   min-height: 48px;
   font-size: 0.81rem;
@@ -273,8 +273,8 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 }
 .navigation a[aria-current='page'] {
   color: var(--gold-light);
-  background: linear-gradient(120deg, #c9994220, #61226c12);
-  border-color: #d6ae6224;
+  background: linear-gradient(115deg, #ac7a2f30, #141414);
+  border-color: #b48c465e;
   box-shadow: inset 0 1px 0 #f1d99e09;
 }
 .navigation-presence-gap {
@@ -287,14 +287,14 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   right: 22px;
 }
 .sidebar-footer p {
-  color: #c9bdcf;
+  color: #bbbcb7;
   font-size: 0.74rem;
   margin: 12px 0 8px;
   line-height: 1.9;
 }
 .sidebar-footer .quiet-label {
   font-size: 0.625rem;
-  color: #a89bad;
+  color: #a5a69f;
 }
 .brand-star {
   color: var(--gold);
@@ -317,7 +317,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 .topbar-context {
   font-size: 0.625rem;
   letter-spacing: 0.18em;
-  color: #c4b6cc;
+  color: #b6b8b1;
 }
 .topbar-context span {
   margin: 0 15px;
@@ -335,7 +335,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   place-items: center;
   border: 1px solid #d6ae6236;
   border-radius: 50%;
-  background: linear-gradient(145deg, #2a1631, #140c19);
+  background: linear-gradient(145deg, #28251b, #121212);
   color: var(--gold);
 }
 .appearance-controls {
@@ -350,7 +350,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   gap: 8px;
   min-height: 44px;
   padding: 0 10px;
-  color: #bcafc5;
+  color: #b6b8b1;
   font-size: 0.67rem;
   border: 0;
   background: transparent;
@@ -380,7 +380,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 .domain-card {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(150deg, #23132bd9, #130e17 78%);
+  background: linear-gradient(150deg, #1e1e1cd9, #121212 78%);
   box-shadow: var(--shadow);
 }
 .panel {
@@ -410,14 +410,16 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
     background 0.2s;
 }
 .button {
-  color: #211408;
-  background: linear-gradient(115deg, #f1d8a3, #d1a45d);
+  color: #100d06;
+  background: var(--metal-gold);
   box-shadow:
-    0 3px 18px #b47c1b16,
-    inset 0 1px 0 #fff6;
+    0 5px 18px #0006,
+    0 1px 0 #664015,
+    inset 0 1px 0 #fff0be,
+    inset 0 -2px 0 #754c2b70;
 }
 .button:hover:not(:disabled) {
-  background: linear-gradient(115deg, #f6e3ba, #e2bd7b);
+  background: var(--metal-gold);
   transform: translateY(-1px);
 }
 .button:active:not(:disabled),
@@ -426,7 +428,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 }
 .secondary-button {
   color: var(--gold-light);
-  background: #29162d75;
+  background: #191919;
   border-color: var(--border-strong);
   box-shadow: inset 0 1px 0 #ffedff07;
 }
@@ -767,7 +769,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 }
 .aurelius-dialog {
   border: 1px solid #dcc29b50;
-  background: #130b19;
+  background: #101211;
   color: var(--text);
   border-radius: 24px;
   padding: 0;
@@ -1642,9 +1644,9 @@ form > .button {
     grid-template-columns: 1fr 1fr 1.1fr 1fr 1fr;
     gap: 0;
     padding: 8px;
-    border: 1px solid #d4b7df30;
+    border: 1px solid #caa76250;
     border-radius: 24px;
-    background: linear-gradient(140deg, #28132bdb, #140c1ae8);
+    background: linear-gradient(140deg, #24231fef, #0f1010ed);
     backdrop-filter: blur(18px);
     box-shadow:
       0 12px 45px #0009,
@@ -2190,12 +2192,12 @@ html[data-motion='still'] .ambient-light {
 html[data-material='solid'] .navigation,
 html[data-material='solid'] .aurelius-trigger {
   backdrop-filter: none;
-  background: #1b1020;
+  background: #151515;
 }
 html[data-material='solid'] .surface,
 html[data-material='solid'] .panel,
 html[data-material='solid'] .domain-card {
-  background: #1a1120;
+  background: #191919;
 }
 html[data-material='solid'] .aurelius-dialog::backdrop {
   backdrop-filter: none;
@@ -2205,11 +2207,11 @@ html[data-material='solid'] .aurelius-dialog::backdrop {
   .navigation,
   .aurelius-trigger {
     backdrop-filter: none !important;
-    background: #1b1020 !important;
+    background: #151515 !important;
   }
   .surface,
   .panel {
-    background: #1a1120 !important;
+    background: #191919 !important;
   }
 }
 @media (forced-colors: active) {
@@ -2239,4 +2241,222 @@ html[data-material='solid'] .aurelius-dialog::backdrop {
 .aurelius-toolbar .quiet-label .aurelius-presence {
   width: 24px;
   height: 24px;
+}
+
+/* Aurelius 1E: one lighting environment; decoration never intercepts an action. */
+.connection-field {
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 0;
+  height: min(960px, 100svh);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.65;
+  mask-image: linear-gradient(#000, #0009 65%, transparent);
+}
+.connection-field > svg {
+  width: 100%;
+  height: 100%;
+}
+.connection-track {
+  stroke: #ad8747;
+  opacity: 0.2;
+}
+.connection-selected {
+  stroke: #dfb965;
+  opacity: 0.6;
+}
+.connection-points {
+  fill: #e0b765;
+}
+.connection-arrival {
+  position: absolute;
+  top: 5%;
+  left: 20%;
+  width: 55%;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #e7b35916, transparent 67%);
+  opacity: 0;
+}
+html[data-motion='ambient'] .connection-arrival {
+  animation: connection-arrival 1800ms ease-out both;
+}
+@keyframes connection-arrival {
+  0% {
+    opacity: 0;
+    transform: translate3d(-35%, -10%, 0) scale(0.85);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(35%, 15%, 0) scale(1.1);
+  }
+}
+html[data-quiet='true'] .connection-arrival {
+  animation-play-state: paused;
+}
+.orbit-signature {
+  position: absolute;
+  right: -135px;
+  top: -65px;
+  width: 430px;
+  height: 430px;
+  z-index: -1;
+  pointer-events: none;
+  color: #d3ad65;
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+}
+.button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.button::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, #fff6 49%, transparent 65%);
+  transform: translateX(-120%);
+  opacity: 0;
+}
+html[data-motion='ambient']:not([data-quiet='true']) .button:hover::before {
+  animation: control-glint 650ms ease-out both;
+}
+@keyframes control-glint {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+.navigation a {
+  position: relative;
+}
+.navigation a[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 28%;
+  bottom: 28%;
+  width: 2px;
+  background: linear-gradient(#8f6323, #f1d897, #8f6323);
+  box-shadow: 0 0 8px #c9994260;
+}
+.navigation a[aria-current='page'] .ui-icon {
+  color: #dfb865;
+}
+.daily-card {
+  position: relative;
+}
+.daily-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #b8a16b6b 28%, #a8925930 65%, transparent);
+}
+.daily-notice[data-saved='true'] {
+  border-left: 2px solid var(--gold);
+  padding-left: 12px;
+}
+html[data-motion='ambient']:not([data-quiet='true']) .daily-notice[data-saved='true'] {
+  animation: save-arrival 400ms ease-out both;
+}
+@keyframes save-arrival {
+  from {
+    opacity: 0.4;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@supports (background-clip: text) {
+  .brand-type {
+    background: linear-gradient(115deg, #be934a, #f2dca5 30%, #b68b3e 60%, #dbb979);
+    background-clip: text;
+    color: transparent;
+  }
+}
+@media (max-width: 900px) {
+  .connection-field {
+    left: 0;
+    height: 680px;
+    opacity: 0.5;
+  }
+  .navigation a[aria-current='page']::before {
+    left: 25%;
+    right: 25%;
+    top: auto;
+    bottom: -1px;
+    width: auto;
+    height: 2px;
+  }
+}
+@media (max-width: 600px) {
+  .connection-field {
+    height: 540px;
+  }
+  .orbit-signature {
+    width: 350px;
+    height: 350px;
+    right: -165px;
+    top: -32px;
+    opacity: 0.75;
+  }
+}
+html[data-motion='still'] .connection-arrival {
+  display: none;
+}
+html[data-motion='still'] .button::before {
+  display: none;
+}
+html[data-material='solid'] .daily-card {
+  background: #141414;
+}
+@media (prefers-reduced-motion: reduce) {
+  .connection-arrival,
+  .button::before {
+    display: none;
+  }
+}
+@media (prefers-contrast: more), (forced-colors: active) {
+  .connection-field,
+  .orbit-signature,
+  .daily-card::before {
+    display: none;
+  }
+  .brand-type {
+    background: none;
+    color: var(--gold-light);
+  }
+}
+@media (forced-colors: active) {
+  .button {
+    background: ButtonFace;
+    color: ButtonText;
+    box-shadow: none;
+  }
+  .brand-type {
+    color: CanvasText;
+  }
+  .navigation a[aria-current='page']::before {
+    background: Highlight;
+    box-shadow: none;
+  }
 }

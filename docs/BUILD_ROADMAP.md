@@ -61,3 +61,7 @@ Founder requested a materially more immersive, premium and futuristic aesthetic 
 ## Aurelius 1D — daily dashboard
 
 Acceptance: truthful empty and fictional sample states; check-in/intention/action/reflection interactions; sample produces no API writes; personal data uses real session ownership; local calendar date, normalized actions, bounded atomic save, stale-version denial, owner-only reads and no direct writes. 7/30-day chart has exact accessible values and visible gaps. Starters open reviewable drafts, saved conversation resumes without automatic sending. Phone/unfolded/desktop, short screen, keyboard, reduced motion, build and database checks are required. Real Supabase/founder persistence and physical-device gates remain separate. Scope, research and measured evidence: [DAILY_DASHBOARD.md](DAILY_DASHBOARD.md).
+
+## Aurelius 1E — approved material correction
+
+Rebalance the existing dashboard/shared shell toward obsidian, reflective gold and localized purple. Add a bounded decorative connection field and finite entry/interaction lighting, retaining Still, reduced-motion, solid and forced-color operation. Verify current workflows and response/payload cost. Scope/evidence: AURELIUS_1E.md. This is the current authorized visual phase; service activation and intelligence evaluation remain the subsequent product milestones.

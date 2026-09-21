@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { OrbitSignature } from '@/components/visual/orbit-signature';
 import { AureliusPresence } from '@/components/visual/aurelius-presence';
 import { Icon } from '@/components/visual/icon';
 import {
@@ -205,13 +206,13 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
           Today in {data.timezone.replaceAll('_', ' ')} · User-entered observations
         </p>
       )}
-      <p className="daily-notice" role="status">
+      <p className="daily-notice" role="status" data-saved={!!notice && !busy}>
         {busy ? (sample ? 'Updating sample…' : 'Saving your day…') : notice}
       </p>
       {!editorOpen && feedback}
       <div className="daily-top-grid">
         <section className="daily-orientation" aria-labelledby="orientation-title">
-          <div className="orientation-orbit" aria-hidden="true" />
+          <OrbitSignature />
           <div className="orientation-top">
             <span className="eyebrow">
               {lens === 'today' ? 'YOUR DIRECTION TODAY' : 'A MOMENT TO REFLECT'}

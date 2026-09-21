@@ -2,8 +2,8 @@
 .daily-dashboard {
   max-width: 1440px;
   margin: 0 auto;
-  --day-muted: #c2b6ca;
-  --day-edge: #d8b4e224;
+  --day-muted: #bbbbb4;
+  --day-edge: #bcae9030;
 }
 .daily-heading {
   display: flex;
@@ -18,7 +18,7 @@
 }
 .daily-heading .eyebrow span {
   margin: 0 10px;
-  color: #76637c;
+  color: #8d8573;
 }
 .daily-heading h1 {
   font-size: clamp(1.8rem, 3vw, 2.75rem);
@@ -40,7 +40,7 @@
   padding: 4px;
   border: 1px solid #e9d5f018;
   border-radius: 14px;
-  background: #0d081080;
+  background: #0c0d0db0;
   gap: 3px;
 }
 .segmented button {
@@ -54,11 +54,11 @@
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
-  color: #c2b6ca;
+  color: #bbbbb4;
   font-size: 12px;
 }
 .segmented button[aria-pressed='true'] {
-  background: linear-gradient(140deg, #60305e60, #2b192f);
+  background: linear-gradient(140deg, #79582550, #161917);
   border-color: #ddbb7838;
   color: #f0d4a3;
   box-shadow: 0 3px 12px #0003;
@@ -77,10 +77,10 @@
   align-items: center;
   gap: 16px;
   border: 1px solid #d9b97c40;
-  background: linear-gradient(90deg, #40234970, #211326);
+  background: linear-gradient(90deg, #28251c70, #151515);
   border-radius: 12px;
   padding: 6px 15px;
-  color: #d1c2d7;
+  color: #c5c3b9;
   font-size: 12px;
   margin-bottom: 16px;
 }
@@ -104,8 +104,8 @@
   width: 16px;
 }
 .daily-mode-bar.quiet {
-  background: #160d1b;
-  border-color: #ceb0d41c;
+  background: #111312;
+  border-color: #bcae9026;
 }
 .daily-timezone {
   font-size: 11px;
@@ -128,30 +128,17 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  border: 1px solid #ab6eba40;
+  border: 1px solid #c99a465c;
   border-radius: 26px;
   padding: 28px 30px 20px;
   background:
-    radial-gradient(ellipse at 95% 10%, #56236165, transparent 65%),
-    linear-gradient(130deg, #34123d, #180b1e 72%);
+    radial-gradient(ellipse at 100% 45%, #35103f90, transparent 58%),
+    linear-gradient(125deg, #24221d, #111111 57%, #150319);
   box-shadow:
-    inset 0 1px 0 #f1d8ff0d,
-    0 16px 45px #0003;
+    inset 0 1px 0 #f1d79d38,
+    inset 0 -1px 0 #000,
+    0 18px 50px #0005;
   min-width: 0;
-}
-.orientation-orbit {
-  z-index: -1;
-  position: absolute;
-  width: 420px;
-  height: 420px;
-  right: -190px;
-  top: -90px;
-  border-radius: 50%;
-  border: 1px solid #ddbe8620;
-  box-shadow:
-    0 0 0 48px #bc845808,
-    0 0 0 98px #6d37650a;
-  transform: rotate(-30deg) scaleX(0.8);
 }
 .orientation-top {
   display: flex;
@@ -224,14 +211,14 @@
 .orientation-source {
   font-size: 10px;
   margin-top: 15px;
-  color: #b8a8c2;
+  color: #b5afa6;
 }
 .daily-card {
   border: 1px solid var(--day-edge);
   border-radius: 24px;
-  background: linear-gradient(140deg, #23132c, #130d19 80%);
+  background: linear-gradient(140deg, #1d1d1c, #111111 80%);
   box-shadow:
-    inset 0 1px 0 #f6e6ff08,
+    inset 0 1px 0 #f4dfa515,
     0 12px 35px #0002;
   padding: 25px 27px;
   min-width: 0;
@@ -252,7 +239,7 @@
   overflow-wrap: anywhere;
 }
 .daily-card-heading > .ui-icon {
-  color: #dfbd7d;
+  color: #d2a653;
 }
 .daily-card-copy {
   margin-top: 12px;
@@ -271,7 +258,7 @@
   margin: 24px 0 19px;
 }
 .checkin-values > div + div {
-  border-left: 1px solid #dbc0e11b;
+  border-left: 1px solid #c7b38626;
   padding-left: 22px;
 }
 .checkin-values > div > span:first-child {
@@ -392,7 +379,7 @@
   height: 21px;
   margin: 0;
   flex-shrink: 0;
-  accent-color: #dfbd7d;
+  accent-color: #d2a653;
 }
 .daily-actions label > span {
   overflow-wrap: anywhere;
@@ -446,11 +433,11 @@
 }
 .daily-actions-empty p {
   font-size: 14px;
-  color: #e0d5e5;
+  color: #deded5;
 }
 .daily-actions-empty span {
   font-size: 12px;
-  color: #b9a6c5;
+  color: #b6b8ae;
 }
 .completion-note {
   font-size: 12px;
@@ -533,15 +520,15 @@
 }
 .rhythm-summary > strong > span {
   font-size: 18px;
-  color: #a58bad;
+  color: #a8a897;
 }
 .rhythm-summary p {
   font-size: 12px;
-  color: #d9cde0;
+  color: #c9cbc4;
   line-height: 1.8;
 }
 .rhythm-summary p > span {
-  color: #b6a3c2;
+  color: #b4b5ad;
   font-size: 11px;
 }
 .energy-chart {
@@ -556,7 +543,7 @@
   justify-content: space-between;
   padding-bottom: 22px;
   font-size: 10px;
-  color: #bba7c7;
+  color: #b6b8ae;
 }
 .chart-bars {
   display: flex;
@@ -592,23 +579,23 @@
   display: block;
   width: 100%;
   border-radius: 6px 6px 2px 2px;
-  background: linear-gradient(0deg, #351840, #825391);
-  border-top: 1px solid #c090d5a0;
+  background: linear-gradient(0deg, #24162a, #795282);
+  border-top: 1px solid #ac83bb80;
 }
 .is-today .bar-track > span {
-  background: linear-gradient(0deg, #80612e, #e2c58c);
+  background: linear-gradient(0deg, #76511d, #ba8d3c 65%, #eed394);
   border-color: #f8e4b6;
 }
 .bar-track > i {
   display: block;
   width: 8px;
   height: 2px;
-  background: #95749e;
+  background: #8f927f;
 }
 .chart-day small {
   font-size: 10px;
   line-height: 1.2;
-  color: #bca7c8;
+  color: #b6b8ae;
   min-height: 12px;
 }
 .chart-caption {
@@ -620,7 +607,7 @@
 }
 .rhythm-details summary {
   font-size: 11px;
-  color: #d9c4e4;
+  color: #d2c6a7;
   cursor: pointer;
   min-height: 44px;
   display: flex;
@@ -644,7 +631,7 @@
   font-size: 12px;
 }
 .daily-table-scroll caption {
-  color: #b6a3c2;
+  color: #b4b5ad;
   text-align: left;
   padding: 0 0 12px;
   font-size: 11px;
@@ -664,7 +651,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: radial-gradient(ellipse at 100% 0, #4d1d5540, transparent 65%), #17101d;
+  background: radial-gradient(ellipse at 100% 0, #80632c20, transparent 65%), #141414;
 }
 .reflection-symbol {
   position: absolute;
@@ -695,7 +682,7 @@
 .reflection-note {
   display: block;
   font-size: 10px;
-  color: #bba6c6;
+  color: #b9b3a6;
   margin-top: 18px;
 }
 .reflection-active {
@@ -740,7 +727,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  color: #bca8c8;
+  color: #b7b8af;
   font-size: 11px;
 }
 .daily-data-note summary::before {
@@ -758,8 +745,8 @@
   max-height: calc(100dvh - 32px);
   overflow: auto;
   color: #f5f1e9;
-  background: linear-gradient(140deg, #2c1634, #150d1c 70%);
-  border: 1px solid #cc9fe548;
+  background: linear-gradient(140deg, #24251e, #111111 70%);
+  border: 1px solid #c498465c;
   border-radius: 24px;
   padding: 25px 28px;
   margin: auto;
@@ -782,7 +769,7 @@
   background: #ffffff05;
   border-radius: 50%;
   font-size: 23px;
-  color: #e4d4ed;
+  color: #dedfd7;
 }
 .daily-editor h2 {
   font-size: 1.7rem;
@@ -791,14 +778,14 @@
 .daily-editor label {
   display: block;
   font-size: 13px;
-  color: #e4d6eb;
+  color: #dedfd7;
   margin: 20px 0 8px;
 }
 .daily-editor input,
 .daily-editor textarea {
   width: 100%;
-  background: #140c1c;
-  border: 1px solid #bc9bc93b;
+  background: #101010;
+  border: 1px solid #bba06d45;
   border-radius: 12px;
   padding: 13px 14px;
   color: #f5f1e9;
@@ -810,7 +797,7 @@
 }
 .daily-editor input::placeholder,
 .daily-editor textarea::placeholder {
-  color: #ad98ba;
+  color: #abaea3;
 }
 .daily-editor .button {
   margin-top: 25px;
@@ -828,7 +815,7 @@
 }
 .energy-input legend span {
   font-size: 11px;
-  color: #bba7c5;
+  color: #b5b6ae;
   margin-left: 9px;
 }
 .energy-input > div {
@@ -837,9 +824,9 @@
   gap: 6px;
 }
 .energy-input button {
-  background: #1b1023;
-  border: 1px solid #b68dc532;
-  color: #d1bfd9;
+  background: #191919;
+  border: 1px solid #bba06d45;
+  color: #c8c8bd;
   border-radius: 12px;
   padding: 11px 4px;
   font-size: 10px;
@@ -852,7 +839,7 @@
   margin-bottom: 3px;
 }
 .energy-input button[aria-pressed='true'] {
-  background: #57315c;
+  background: #4c3a1f;
   border-color: #e4c289;
   color: #ffe8bb;
 }
@@ -1227,9 +1214,6 @@ html[data-material='solid'] .daily-editor::backdrop {
   }
   .energy-pips .lit {
     background: Highlight;
-  }
-  .orientation-orbit {
-    display: none;
   }
 }
 

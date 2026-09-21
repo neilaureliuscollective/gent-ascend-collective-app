@@ -90,3 +90,7 @@ Five actions and one intention are reversible first-slice product limits, not pr
 A clearly labeled synthetic sample enables disconnected interaction without a forged identity or persistent browser health data. Personal mode adds normalized daily entries/actions with RLS and an atomic versioned owner-derived RPC. Same-statement embedded reads avoid mixed entry/action versions. Validation loads on interaction rather than inflating the initial dashboard bundle. The dashboard uses the existing static globe; optional canvas remains in the Aurelius welcome only.
 
 Daily data stays outside model context until a separate explicit briefing/context decision. Generic allowlisted starters prefill a draft, never send automatically; a validated conversation UUID resumes authorized history. Live connections, physical-device acceptance and real Supabase gates remain open. No remote push or deployment.
+
+## 2026-09-21 — Aurelius 1E materials and light
+
+Founder approved the researched visual correction: obsidian/charcoal lead, warmer metallic gold, localized approved purple, consistent light and orbital geometry. Implementation/research: AURELIUS_1E.md. Route-aware SVG paths are decorative only. Finite entry/interaction highlights use CSS transforms/opacity; no new framework/renderer/package or body model. Dialog mutation observation extends the existing quiet-state behavior. Personal features, schema and intelligence contracts are unchanged. Physical-device acceptance remains open; no deployment.

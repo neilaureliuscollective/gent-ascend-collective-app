@@ -1,6 +1,8 @@
 # Execution status — 2026-09-21
 
-**Latest milestone: Aurelius 1D daily dashboard implemented; verification results below.** The founder explicitly authorized the daily dashboard while postponing backend/GitHub activation and all human/body modeling. See [research, scope and evidence](DAILY_DASHBOARD.md). Command now supports a daily intention, optional self-reported energy/sleep, five bounded actions, 7/30-day observations, evening reflection, active goal and Aurelius conversation entry points. Public sample mode is clearly fictional, in-memory only and performs no API writes. Personal mode uses an additive migration and real owner-scoped save/read contracts. No new packages or model behavior.
+**Latest milestone: Aurelius 1E materials and connected light implemented and locally verified.** Founder-approved correction replaces the pervasive purple wash with neutral obsidian/charcoal, richer metallic gold controls and localized purple. Decorative orbital paths respond to navigation; a finite arrival sweep and interaction highlights preserve Still/reduced-motion/solid modes. No new dependencies, initial canvas, schema, auth or model changes. Scope/research: [AURELIUS_1E.md](AURELIUS_1E.md). Lint/typecheck/build, 59 unit/SQL/mock SDK tests and 40 browser tests pass. Initial home JS 153,888 encoded bytes (+749 vs 1D), CSS 15,865 (+684). Screenshots at 390/768/1440 reviewed, no overflow/page errors. Local 120-frame samples: p95 16.7ms phone viewport, 16.8ms desktop; not physical-device or battery evidence.
+
+**Previous milestone: Aurelius 1D daily dashboard implemented; verification results below.** The founder explicitly authorized the daily dashboard while postponing backend/GitHub activation and all human/body modeling. See [research, scope and evidence](DAILY_DASHBOARD.md). Command now supports a daily intention, optional self-reported energy/sleep, five bounded actions, 7/30-day observations, evening reflection, active goal and Aurelius conversation entry points. Public sample mode is clearly fictional, in-memory only and performs no API writes. Personal mode uses an additive migration and real owner-scoped save/read contracts. No new packages or model behavior.
 
 **Previous milestone: Aurelius 1C visual elevation implemented and locally verified.** The founder supplied the official logo and authorized building. Its sampled aubergine palette now anchors the shell, Command and Aurelius. Original artwork is preserved; transparent seal, compact app icons, self-hosted typography, controlled glass/motion and a deferred 3D brand globe are implemented. See [AURELIUS_1C.md](AURELIUS_1C.md) and [BRAND_IDENTITY.md](BRAND_IDENTITY.md). Lint/typecheck/build, 53 unit/SQL/SDK tests and 30 browser tests pass. Physical-device and live-service gates remain open.
 
@@ -35,7 +37,7 @@ The existing strict Next/React/Tailwind foundation, profile/goals and protected 
 | Strict typecheck                     | Passed                                                                                          |
 | Unit + SQL + SDK mock-provider tests | 59 passed                                                                                       |
 | Production build                     | Passed                                                                                          |
-| Browser interactions                 | 39 passed; daily sample flows, conflicts, deep links, keyboard and responsive checks            |
+| Browser interactions                 | 40 passed; daily flows, light/navigation, modal pause, forced colors and responsive checks      |
 | Migration chain                      | Four migrations executed in PGlite; explicit minimal Auth adapter                               |
 | UI inspection                        | Phone/desktop conversation screenshots reviewed; composer and empty heading visible in viewport |
 | Actual Supabase reset/Auth/PostgREST | Unrun: Docker/Podman unavailable                                                                |
@@ -62,6 +64,6 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 
 ## Exact next step
 
-Founder review of the daily dashboard on a real phone/foldable, then service activation and daily Aurelius evaluation. No body model is scheduled. The disconnected sample can be tested immediately by running the existing checkout and selecting **Explore a sample day**.
+Founder review of the Aurelius 1E dashboard/materials on a real phone/foldable, then service activation and daily Aurelius evaluation. No body model is scheduled. The disconnected sample can be tested immediately by running the existing checkout and selecting **Explore a sample day**.
 
 When ready, sync the preserved history into the official workstation checkout, reconnect the new GitHub account, and configure protected Vercel/Supabase/Gateway access. Apply all four migrations, run real integration/founder/live-provider gates, then use Aurelius daily and assess quality with the existing rubric. Daily records are not automatically in AI context; the next intelligence slice should add a user-reviewed, source-linked daily briefing only after live quality, ownership and privacy validation. A phone-installable hosted preview follows verified Auth/HTTPS setup; never expose the local harness.

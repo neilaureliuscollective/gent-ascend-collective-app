@@ -1,6 +1,8 @@
-# Design system — Aurelius 1C
+# Design system — Aurelius 1E
 
 Implemented 2026-09-21 following founder approval and the supplied official logo. [BRAND_IDENTITY.md](BRAND_IDENTITY.md) owns asset provenance and palette. [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md) retains the research and rationale; its provisional palette is superseded.
+
+Current material correction: [AURELIUS_1E.md](AURELIUS_1E.md). Founder approved rebalancing the interface toward neutral obsidian and richer gold, while preserving the original enamel purple and logo.
 
 ## Experience
 
@@ -12,7 +14,7 @@ Use the full seal for formal brand lockups, a compact A/orbit/star for app icons
 
 Central tokens are in `src/app/globals.css`. Four levels: environment, illumination, substantial reading surfaces, floating controls. Smoked glass belongs to navigation and the global Aurelius launcher. Content is predominantly opaque. Metallic gold identifies the primary action and selected location; purple supplies depth without washing every label in color. Keep gradients away from long reading text.
 
-Calculated contrast on the opaque #180F1D reference: primary text 16.57:1; secondary text 9.14:1; gold 10.41:1. Decorative #582164 is only 1.61:1 and must not carry essential information. These token calculations and screenshot checks are not a full accessibility certification of every composite.
+Current calculated contrast on the opaque #1d1d1c reference: primary text 14.98:1; secondary text 8.74:1; gold labels 7.49:1. Dark button text reaches 5.03:1 against the darkest metallic stop. Decorative purple never carries essential information. These calculations are not a full accessibility certification of every composite.
 
 Keep 16px body/form text and readable secondary labels. Metadata has a 10px lower bound in this pass; favor larger text as real content arrives. Primary task controls and tabs have ≥44px heights. Some compact display controls are 40px wide with spacing. WCAG zoom/reflow and target-size verification remains part of each screen's acceptance, not just a token promise.
 
@@ -37,3 +39,5 @@ See [AURELIUS_1C.md](AURELIUS_1C.md) for measured results and remaining device g
 ## Daily dashboard application
 
 See DAILY_DASHBOARD.md. Replace the oversized introductory home hero with a compact greeting/lens and an actionable aubergine intention card. Personal check-in, deliberate actions, active goal, history and reflection form the hierarchy. Gold is an action/material accent, not a universal status color. Today/Evening changes emphasis; no content disappears on a timer. Use static celestial imagery here; no body placeholder or new GPU scene. `dashboard.css` extends shared tokens without changing the approved brand palette.
+
+Shared backgrounds are neutral; purple is concentrated in Aurelius identity and focal surfaces. `--metal-gold` is the control material; solid `--gold` is for readable labels. One route-aware decorative field draws orbital connections. It never reads personal data. Arrival/hover/save effects are finite; ambient light can be paused. The unchanged 1C master logo remains canonical.
