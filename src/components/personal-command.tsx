@@ -1,81 +1,144 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { GoalRow, PersonRow } from '@/platform/supabase/database';
-import { domainLabels, formatCalendarDate } from '@/domains/goals/validation';
+import { AureliusPresence } from './visual/aurelius-presence';
+import { Icon } from './visual/icon';
 export function PersonalCommand({
   person,
   goal,
 }: {
-  person: Pick<PersonRow, 'display_name' | 'priority'>;
+  person?: Pick<PersonRow, 'display_name' | 'priority'>;
   goal: GoalRow | null;
 }) {
   return (
     <>
-      <div className="page-heading compact-heading">
-        <div>
-          <p className="eyebrow">Your command</p>
+      <section className="command-hero">
+        <div className="hero-copy">
+          <p className="eyebrow">
+            <span className="status-dot" /> YOUR PERSONAL OPERATING ENVIRONMENT
+          </p>
           <h1>
-            {person.display_name},<br />
-            <em>make today count.</em>
+            {person ? (
+              <>
+                {person.display_name},<br />
+                <em>make room for more.</em>
+              </>
+            ) : (
+              <>
+                A life built
+                <br />
+                <em>with intention.</em>
+              </>
+            )}
           </h1>
+          <p className="hero-description">
+            Your perspective. Your potential. Your next chapter. <br />
+            One connected space to bring it all together.
+          </p>
+          <div className="hero-actions">
+            <Link href="/aurelius" className="button">
+              Open Aurelius <Icon name="arrow" />
+            </Link>
+            <Link href={person ? '/goals' : '/you'} className="hero-secondary">
+              {person ? 'Your direction' : 'Make it yours'} <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+          <p className="hero-caption">
+            CHARACTER <span>·</span> DISCIPLINE <span>·</span> COMMUNITY <span>·</span> LEGACY
+          </p>
         </div>
-        <Link className="text-link" href="/you">
-          Your foundation →
-        </Link>
-      </div>
-      <section className="aurelius-command-invite">
-        <span className="orb" aria-hidden="true" />
+        <div className="hero-emblem">
+          <div className="emblem-halo" />
+          <Image
+            src="/brand/aurelius-seal.png"
+            alt="Aurelius Collective seal: a gold figure supporting a purple celestial globe"
+            width={1254}
+            height={1254}
+            sizes="(max-width: 600px) 160px, (max-width: 1100px) 260px, 370px"
+            preload
+          />
+          <span className="emblem-caption">BUILT AROUND YOU</span>
+        </div>
+      </section>
+      <div className="section-heading">
         <div>
-          <h2>A considered next move.</h2>
-          <p>Think through your direction with Aurelius.</p>
+          <p className="eyebrow">IN YOUR ORBIT</p>
+          <h2>Start where it matters.</h2>
         </div>
-        <Link className="text-link" href="/aurelius">
-          Talk with Aurelius →
-        </Link>
-      </section>
+        <span className="quiet-label">{person ? 'Your personal space' : 'Foundation preview'}</span>
+      </div>
       <div className="command-grid">
-        <section className="focus-panel">
-          <div className="panel-heading">
-            <span className="eyebrow">
-              {goal ? domainLabels[goal.domain] : 'Your next chapter'}
-            </span>
-            <span className="pill">{goal ? 'Active focus' : 'Your direction'}</span>
+        <section className="intelligence-card surface">
+          <div className="card-heading">
+            <span className="eyebrow">01 / YOUR INTELLIGENCE</span>
+            <span className="tag">AURELIUS</span>
           </div>
-          <h2>{goal?.title ?? 'Choose a goal that matters.'}</h2>
-          <p>
-            {goal?.reason ||
-              'Give your effort a clear direction. Begin with one goal and a concrete next step.'}
-          </p>
-          {goal?.target_date && (
-            <p className="target-date">Target · {formatCalendarDate(goal.target_date)}</p>
-          )}
-          <Link className="button" href="/goals">
-            {goal ? 'Review your goal' : 'Set your first goal'} <span aria-hidden="true">↗</span>
+          <div className="intelligence-card-body">
+            <div>
+              <h2>
+                A clearer
+                <br />
+                perspective.
+              </h2>
+              <p>
+                Bring a thought. Explore a possibility.
+                <br />
+                Find your next move.
+              </p>
+            </div>
+            <AureliusPresence enhanced className="command-presence" />
+          </div>
+          <Link href="/aurelius" className="card-action">
+            Think with Aurelius <Icon name="arrow" />
           </Link>
-          <div className="focus-foot">
-            <span>YOUR DIRECTION</span>
-            <span>YOUR PACE</span>
-          </div>
         </section>
-        <section className="panel intention-panel">
-          <span className="eyebrow">Your next step</span>
-          <h2>{goal?.next_step ?? 'Turn intention into action.'}</h2>
+        <section className="direction-card surface">
+          <div className="card-heading">
+            <span className="eyebrow">02 / YOUR DIRECTION</span>
+            <Icon name="progress" />
+          </div>
+          <h2>{goal?.title || 'Something worth\nmoving toward.'}</h2>
           <p>
-            {goal
-              ? 'A step you chose. Adjust it as your circumstances change.'
-              : 'Choose your goal, then name the next action you can take.'}
+            {goal?.next_step ||
+              'A meaningful goal. A deliberate next step. A direction that belongs to you.'}
           </p>
-          <Link className="text-link" href="/goals">
-            {goal ? 'Refine your next step' : 'Find your direction'} →
+          <Link href="/goals" className="card-action">
+            {goal ? 'Refine your next step' : 'Choose your direction'} <Icon name="arrow" />
+          </Link>
+        </section>
+        <section className="foundation-card surface">
+          <div className="card-heading">
+            <span className="eyebrow">03 / YOUR FOUNDATION</span>
+            <Icon name="person" />
+          </div>
+          <h2>{person?.priority || 'A little more you.'}</h2>
+          <p>
+            {person
+              ? 'What matters now, in your own words. Refine it as your life changes.'
+              : 'Your priorities and preferences give this space its meaning.'}
+          </p>
+          <Link href="/you" className="card-action">
+            Your personal context <Icon name="arrow" />
           </Link>
         </section>
       </div>
-      <section className="panel current-priority">
-        <span className="eyebrow">What matters now</span>
-        <p>{person.priority || 'You haven’t set a current priority yet.'}</p>
-        <Link className="text-link" href="/you">
-          {person.priority ? 'Refine your priority' : 'Add your priority'} →
+      <section className="world-invitation">
+        <div className="world-lines" aria-hidden="true" />
+        <div>
+          <p className="eyebrow">A CONNECTED LIFE</p>
+          <h2>There’s a bigger picture.</h2>
+          <p>Body. Mind. Work. The people and possibilities ahead.</p>
+        </div>
+        <Link href="/world" className="secondary-button">
+          Explore your world <Icon name="arrow" />
         </Link>
       </section>
+      {!person && (
+        <p className="preview-footnote">
+          Explore the design freely. Your personal records and live conversations begin when your
+          account and services are connected.
+        </p>
+      )}
     </>
   );
 }

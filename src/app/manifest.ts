@@ -6,8 +6,12 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Your personal operating environment.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#09080D',
-    theme_color: '#09080D',
-    icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+    background_color: '#09070B',
+    theme_color: '#09070B',
+    icons: [
+      { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/brand/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/brand/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
   };
 }

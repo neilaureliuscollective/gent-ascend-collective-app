@@ -31,7 +31,7 @@ Stripe customer/subscription → verified idempotent webhook → application bil
 
 ## Digital twin extension
 
-Body domain owns measurement/scan records, method, units, consent, timestamps and uncertainty. A read projection composes body state for interchangeable renderers. A renderer is never a source of health truth. No mesh/3D dependency now.
+Body domain owns measurement/scan records, method, units, consent, timestamps and uncertainty. A read projection composes body state for interchangeable renderers. A renderer is never a source of health truth. Aurelius 1C adds one optional Three.js brand globe behind a presentation-only boundary. It is not a body renderer and consumes no personal data. Actual body visualization remains deferred.
 
 ## Deployment and environments
 

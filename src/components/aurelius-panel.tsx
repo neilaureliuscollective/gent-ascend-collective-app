@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AureliusPresence } from './visual/aurelius-presence';
 const Workspace = dynamic(
   () => import('./aurelius/workspace').then((module) => module.AureliusWorkspace),
   { loading: () => <p role="status">Opening Aurelius…</p>, ssr: false },
@@ -15,7 +16,13 @@ export function AureliusPanel() {
   useEffect(() => {
     dialog.current?.close();
   }, [path]);
-  if (path === '/aurelius') return null;
+  if (path === '/aurelius')
+    return (
+      <Link className="aurelius-trigger is-current" href="/aurelius" aria-current="page">
+        <AureliusPresence />
+        <span>Aurelius</span>
+      </Link>
+    );
   return (
     <>
       <button
@@ -27,9 +34,8 @@ export function AureliusPanel() {
         }}
         aria-haspopup="dialog"
       >
-        <span className="orb" aria-hidden="true" />
+        <AureliusPresence />
         <span>Aurelius</span>
-        <span aria-hidden="true">↗</span>
       </button>
       <dialog
         ref={dialog}

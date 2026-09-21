@@ -1,6 +1,6 @@
 # Aurelius Collective — immersive Life OS proposal
 
-Status: proposed for founder approval; no visual implementation authorized in this research turn.
+Status: founder approved implementation on 2026-09-21 with the official logo. The logo-derived palette in BRAND_IDENTITY.md supersedes provisional values below. Implemented outcome and limits: AURELIUS_1C.md. This document preserves the original research/proposal.
 Research date: 2026-09-21. Baseline: Aurelius 1B, commit a6f31d5.
 
 ## Founder decision in one minute

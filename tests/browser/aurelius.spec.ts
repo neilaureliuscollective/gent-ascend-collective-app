@@ -113,16 +113,12 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
     'aria-pressed',
     'true',
   );
-  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await page.getByRole('button', { name: 'Start a conversation', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
-  await page
-    .getByLabel('Saved conversations')
-    .selectOption({ label: 'Help me choose a next step' });
+  await page.getByRole('button', { name: /Help me choose a next step/ }).click();
   await expect(page.locator('.user-message')).toContainText('Help me choose a next step');
   await page.reload();
-  await page
-    .getByLabel('Saved conversations')
-    .selectOption({ label: 'Help me choose a next step' });
+  await page.getByRole('button', { name: /Help me choose a next step/ }).click();
   await expect(page.locator('.message-markdown strong')).toBeVisible();
   await page.getByRole('button', { name: 'Delete conversation', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm delete', exact: true }).click();

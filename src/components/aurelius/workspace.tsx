@@ -7,6 +7,7 @@ import { ConversationTurn } from './message';
 import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
+import { AureliusPresence } from '../visual/aurelius-presence';
 export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
   const [preview, setPreview] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -299,13 +300,26 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
               Context
             </button>
           </div>
-          <span className="quiet-label">
+          <div className="quiet-label">
+            <AureliusPresence
+              state={
+                busy
+                  ? 'working'
+                  : needsReload
+                    ? 'stopped'
+                    : notice === 'Reply saved.'
+                      ? 'saved'
+                      : preview || !data.configured
+                        ? 'disconnected'
+                        : 'ready'
+              }
+            />
             {preview
               ? 'Workspace preview'
               : data.configured
                 ? 'Model configured'
                 : 'Connection pending'}
-          </span>
+          </div>
         </div>
         {preview && (
           <div className="workspace-preview-note">
@@ -336,32 +350,43 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
           <ContextPanel data={data} preview={preview} included={includeContext} />
         ) : (
           <>
-            <div className="conversation-controls">
-              <label className="sr-only" htmlFor="conversation-choice">
-                Saved conversations
-              </label>
-              <select
-                id="conversation-choice"
-                value={selected ?? ''}
-                disabled={blocked}
-                onChange={(e) => {
-                  follow.current = true;
-                  void reload(e.target.value || null).catch(() => {});
-                }}
-              >
-                <option value="">New conversation</option>
-                {selected && !data.conversations.some((c) => c.id === selected) && (
-                  <option value={selected}>Current conversation</option>
-                )}
-                {data.conversations.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
-              <button className="secondary-button" disabled={blocked} onClick={newConversation}>
-                New
-              </button>
+            <div className={`conversation-controls ${compact ? '' : 'full-conversation-controls'}`}>
+              {compact ? (
+                <>
+                  <label className="sr-only" htmlFor="conversation-choice">
+                    Saved conversations
+                  </label>
+                  <select
+                    id="conversation-choice"
+                    value={selected ?? ''}
+                    disabled={blocked}
+                    onChange={(e) => {
+                      follow.current = true;
+                      void reload(e.target.value || null).catch(() => {});
+                    }}
+                  >
+                    <option value="">New conversation</option>
+                    {selected && !data.conversations.some((c) => c.id === selected) && (
+                      <option value={selected}>Current conversation</option>
+                    )}
+                    {data.conversations.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title}
+                      </option>
+                    ))}
+                  </select>
+                  <button className="secondary-button" disabled={blocked} onClick={newConversation}>
+                    New
+                  </button>
+                </>
+              ) : (
+                <span className="conversation-title">
+                  {selected
+                    ? data.conversations.find((c) => c.id === selected)?.title ||
+                      'Current conversation'
+                    : 'A space to think clearly.'}
+                </span>
+              )}
               {selected && (
                 <button
                   className="text-button"
@@ -402,7 +427,10 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
               {!data.turns.length ? (
                 <div className="aurelius-welcome">
                   <div className="welcome-heading">
-                    <span className="orb" aria-hidden="true" />
+                    <AureliusPresence
+                      enhanced={!compact}
+                      state={preview || !data.configured ? 'disconnected' : 'ready'}
+                    />
                     <div>
                       <p className="eyebrow">Clarity. Judgment. Direction.</p>
                       <h2>What’s on your mind?</h2>
@@ -458,7 +486,7 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
               <textarea
                 id="aurelius-message"
                 ref={composer}
-                rows={3}
+                rows={2}
                 maxLength={6000}
                 value={draft}
                 disabled={blocked}

@@ -1,8 +1,8 @@
 # Execution status — 2026-09-21
 
-**Latest founder direction: visual elevation before further feature expansion.** Research and build-ready proposal are in [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md). Aurelius 1C is pending founder approval. This turn changes documentation only; the running application remains Aurelius 1B.
+**Latest milestone: Aurelius 1C visual elevation implemented and locally verified.** The founder supplied the official logo and authorized building. Its sampled aubergine palette now anchors the shell, Command and Aurelius. Original artwork is preserved; transparent seal, compact app icons, self-hosted typography, controlled glass/motion and a deferred 3D brand globe are implemented. See [AURELIUS_1C.md](AURELIUS_1C.md) and [BRAND_IDENTITY.md](BRAND_IDENTITY.md). Lint/typecheck/build, 53 unit/SQL/SDK tests and 30 browser tests pass. Physical-device and live-service gates remain open.
 
-**Latest milestone: Aurelius 1B workspace refinement implemented and locally verified.** The founder explicitly deferred GitHub reconnection and live-service testing, and authorized continuing the premium structure and experience. See [Aurelius 1B](AURELIUS_1B.md). Saved-conversation search/navigation, personal-context cards, refined memory presentation and an honest signed-out preview are now available. No provider, auth, billing or database permissions changed. The remaining real-service gates below still apply.
+**Previous milestone: Aurelius 1B workspace refinement implemented and locally verified.** The founder explicitly deferred GitHub reconnection and live-service testing, and authorized continuing the premium structure and experience. See [Aurelius 1B](AURELIUS_1B.md). Saved-conversation search/navigation, personal-context cards, refined memory presentation and an honest signed-out preview are now available. No provider, auth, billing or database permissions changed. The remaining real-service gates below still apply.
 
 Canonical repository update: founder created https://github.com/neilaureliuscollective/aurelius-collective-app. Verified it exists and is empty; changed this checkout's origin and project rules to the new destination while retaining the existing folder and complete history. The connected GitHub identity still lacks write access. Pending: reconnect the new account, verify authorization, push main, then import this new repo into Vercel. This execution checkout is not the founder's mounted Desktop.
 
@@ -33,7 +33,7 @@ The existing strict Next/React/Tailwind foundation, profile/goals and protected 
 | Strict typecheck                     | Passed                                                                                          |
 | Unit + SQL + SDK mock-provider tests | 53 passed                                                                                       |
 | Production build                     | Passed                                                                                          |
-| Browser interactions                 | 25 passed at 360/768/1440px                                                                     |
+| Browser interactions                 | 30 passed; includes short screens, appearance fallback and 200% text                            |
 | Migration chain                      | Three migrations executed in PGlite; explicit minimal Auth adapter                              |
 | UI inspection                        | Phone/desktop conversation screenshots reviewed; composer and empty heading visible in viewport |
 | Actual Supabase reset/Auth/PostgREST | Unrun: Docker/Podman unavailable                                                                |
@@ -60,6 +60,6 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 
 ## Exact next step
 
-Review the proposed Aurelius 1C visual direction. After founder approval, build the shared visual system and immersive shell locally, then proceed to service activation and daily intelligence evaluation. The steps below remain the activation path; they do not block the approved visual work.
+Review the implemented Aurelius 1C on the founder device, then proceed to service activation and daily intelligence evaluation. The steps below remain the activation path; they do not block the approved visual work.
 
 No founder setup is required to preserve this milestone. GitHub reconnection is deliberately deferred. When the founder is ready, import/sync this committed milestone into the existing official checkout with write-authorized access. On a Docker-capable machine configure Supabase and a dedicated Gateway key, run the real integration/founder/live-model tests, and resolve any differences. Then Neil uses Aurelius daily and flags quality failures. Prioritize conversation quality, continuity and sourced research before expanding dashboard modules. A protected phone-installable preview follows verified hosted Auth and HTTPS/PWA setup; never expose the local developer harness.

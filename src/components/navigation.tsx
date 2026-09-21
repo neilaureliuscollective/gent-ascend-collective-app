@@ -1,23 +1,26 @@
 'use client';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { usePathname } from 'next/navigation';
-const destinations = [
-  ['/', 'Command', '01'],
-  ['/world', 'My world', '02'],
-  ['/progress', 'Progress', '03'],
-  ['/you', 'You', '04'],
-] as const;
+import { Icon, type IconName } from './visual/icon';
+const destinations: [string, string, IconName][] = [
+  ['/', 'Command', 'command'],
+  ['/world', 'My world', 'world'],
+  ['/progress', 'Progress', 'progress'],
+  ['/you', 'You', 'person'],
+];
 export function Navigation() {
   const path = usePathname();
   return (
     <nav aria-label="Main navigation" className="navigation">
-      {destinations.map(([href, label, index]) => (
-        <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>
-          <span className="nav-index" aria-hidden="true">
-            {index}
-          </span>
-          <span>{label}</span>
-        </Link>
+      {destinations.map(([href, label, icon], i) => (
+        <Fragment key={href}>
+          {i === 2 && <span className="navigation-presence-gap" aria-hidden="true" />}
+          <Link href={href} aria-current={path === href ? 'page' : undefined}>
+            <Icon name={icon} />
+            <span>{label}</span>
+          </Link>
+        </Fragment>
       ))}
     </nav>
   );

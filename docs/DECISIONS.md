@@ -72,3 +72,11 @@ No new packages, APIs, schema, paid services or model behavior. Used existing in
 ## Aurelius 1C research — proposed, not accepted
 
 2026-09-21: founder requested research and a concise visual/build proposal for approval, not immediate implementation. Audited existing UI and researched primary design guidance, color psychology, motivation/habit research, accessibility and web rendering performance. Findings, sources, evidence limits, proposed tokens and acceptance gates are in AESTHETIC_ELEVATION_PROPOSAL.md. No production code, dependency, model behavior, security or infrastructure changed. Next visual implementation waits for founder approval.
+
+## 2026-09-21 — approved identity and Aurelius 1C
+
+The founder supplied the official seal and explicitly requested implementation using its purple. This approves the pending visual proposal and supersedes its provisional palette. Keep the original untouched; use a prepared transparent derivative and a distinct compact digital icon. Sampled enamel anchor #150319. Brand provenance, source hashes and derivative limitations live in BRAND_IDENTITY.md.
+
+Implemented local Sora/Inter (OFL assets, combined 81,908 bytes), shared CSS materials, responsive navigation and one optional Three 0.186.0 scene. Three was chosen for a bounded procedural brand focal point, not a body model or new domain. Dynamic import, static SVG, 1.5 DPR cap, motion preference enforcement and cleanup are mandatory. No React Three Fiber, animation framework, paid assets or extra backend vendor. Initial JavaScript increase 7,485 encoded bytes; optional scene increase 133,447 bytes in the recorded local audit. See AURELIUS_1C.md for evidence and limitations.
+
+No auth, RLS, billing, AI instructions or schema changes. No remote push/deployment. Real services and actual device evaluation remain the next gates.
