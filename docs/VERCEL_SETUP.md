@@ -6,9 +6,23 @@ Prepared 2026-09-21. The source builds; actual hosted Supabase and model accepta
 
 Official repo: https://github.com/neilaureliuscollective/aurelius-collective-app
 
-Founder changed the canonical GitHub account/repository on 2026-09-21. The existing checkout's origin now points here; all source and commit history are retained. The workstation folder remains ~/Desktop/aurelius-og. Reconnect the GitHub integration as neilaureliuscollective and authorize this repository before retrying the initial push. The previous push failure below occurred against the old destination; the new repository also currently reports no write access for this session.
+The connected GitHub account is now `neilaureliuscollective`; the official repository reports admin/write permission and is empty. The complete 12-commit application history through `cf141f8` has been restored from the verified milestone bundle in the execution checkout. The founder's actual Desktop is not mounted here.
 
-The attempted `git push -u origin main` failed because this execution environment has no authenticated Git write credentials. The GitHub connector independently reports `pull: true, push: false`; the remote is still empty. Grant this integration write access to the official repository, or integrate the supplied Git bundle into the existing workstation checkout and push from an authenticated terminal. Do not paste a token into chat, overwrite local work, or force-push.
+A fresh terminal `git push --dry-run origin main` failed with `could not read Username for https://github.com: terminal prompts disabled`. Connected-app repository permission does not provide terminal Git credentials. The current connector exposes file/tree/commit editing, not an authenticated Git transport for uploading the original commit objects. No source or history has been published in this attempt.
+
+On the authenticated founder workstation, first integrate the latest handoff bundle into the existing `~/Desktop/aurelius-og` checkout using its START_HERE instructions. Preserve local changes; do not reset or force-push. With GitHub CLI installed, authenticate the correct account and publish:
+
+```sh
+cd ~/Desktop/aurelius-og
+gh auth login --hostname github.com --git-protocol https --web
+gh auth setup-git
+gh auth status --hostname github.com
+git remote set-url origin https://github.com/neilaureliuscollective/aurelius-collective-app.git
+git push -u origin main
+git ls-remote origin refs/heads/main
+```
+
+Verify the remote main SHA matches `git rev-parse HEAD`. Never paste an access token into chat. This preserves all original milestones; no replacement repository is required.
 
 ## Vercel import settings
 
