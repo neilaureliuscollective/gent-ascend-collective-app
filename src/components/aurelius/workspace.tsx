@@ -8,6 +8,7 @@ import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
+import { OrbPresentation } from '../visual/orb-presentation';
 export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
@@ -439,10 +440,26 @@ export function AureliusWorkspace({
               {!data.turns.length ? (
                 <div className="aurelius-welcome">
                   <div className="welcome-heading">
-                    <AureliusPresence
-                      enhanced={!compact}
-                      state={preview || !data.configured ? 'disconnected' : 'ready'}
-                    />
+                    {compact ? (
+                      <AureliusPresence
+                        state={
+                          busy ? 'working' : preview || !data.configured ? 'disconnected' : 'ready'
+                        }
+                      />
+                    ) : (
+                      <OrbPresentation
+                        state={
+                          busy
+                            ? 'working'
+                            : needsReload
+                              ? 'stopped'
+                              : preview || !data.configured
+                                ? 'disconnected'
+                                : 'ready'
+                        }
+                      />
+                    )}
+
                     <div>
                       <p className="eyebrow">Clarity. Judgment. Direction.</p>
                       <h2>What’s on your mind?</h2>

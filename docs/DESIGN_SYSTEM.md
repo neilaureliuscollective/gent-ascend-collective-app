@@ -1,4 +1,4 @@
-# Design system — Aurelius 1E
+# Design system — Aurelius 1F
 
 Implemented 2026-09-21 following founder approval and the supplied official logo. [BRAND_IDENTITY.md](BRAND_IDENTITY.md) owns asset provenance and palette. [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md) retains the research and rationale; its provisional palette is superseded.
 
@@ -28,7 +28,7 @@ The full workspace no longer duplicates its library with a second conversation d
 
 `components/visual` owns Brand, Icon, AureliusPresence, appearance controls and the environment. `platform/visual/presence-renderer.ts` owns the optional Three renderer. Components do not acquire identity or authorization responsibilities.
 
-Immediate SVG globe; one deferred procedural 3D scene per route, with no HDR/video/model downloads. Three 0.186.0 uses WebGL2, DPR capped at 1.5 and approximately 30fps decorative rendering. No per-frame React state. Dispose geometries, materials, renderer, listeners and observers on unmount. Context loss restores the static visual. A canvas never gates any product action.
+Immediate SVG globe; one deferred procedural 3D scene per route, with no HDR/video/model downloads. The 1F Orb uses Three 0.186.0/WebGL2, physically based gold, a layered-light core shader and procedural studio reflections. DPR starts at at most 1.5 and adapts downward under sustained frame pressure; scene updates target approximately 30fps. See AURELIUS_1F.md for limits and evidence. No per-frame React state. Dispose geometries, materials, renderer, listeners and observers on unmount. Context loss restores the static visual. A canvas never gates any product action.
 
 Ambient/Still and solid-surface choices persist locally. OS reduced motion wins over Ambient; reduced transparency or increased contrast uses solid controls. Decorative movement pauses while typing, when a dialog is open, when hidden or offscreen. No engagement streaks, random rewards, shame mechanics or simulated AI emotions. The presence is decorative; textual request/save/error state remains authoritative.
 
@@ -41,3 +41,7 @@ See [AURELIUS_1C.md](AURELIUS_1C.md) for measured results and remaining device g
 See DAILY_DASHBOARD.md. Replace the oversized introductory home hero with a compact greeting/lens and an actionable aubergine intention card. Personal check-in, deliberate actions, active goal, history and reflection form the hierarchy. Gold is an action/material accent, not a universal status color. Today/Evening changes emphasis; no content disappears on a timer. Use static celestial imagery here; no body placeholder or new GPU scene. `dashboard.css` extends shared tokens without changing the approved brand palette.
 
 Shared backgrounds are neutral; purple is concentrated in Aurelius identity and focal surfaces. `--metal-gold` is the control material; solid `--gold` is for readable labels. One route-aware decorative field draws orbital connections. It never reads personal data. Arrival/hover/save effects are finite; ambient light can be paused. The unchanged 1C master logo remains canonical.
+
+## Orb identity
+
+Aurelius 1F is the current Orb treatment: dark crystalline aubergine, gold orbital bands and the four-point star. Default workspace size remains compact enough for composition; Explore the Orb expands a labeled, microphone-free motion preview. Real work/save/stop status takes precedence. Static and enhanced variants share the same silhouette/material palette. The UI never presents illustrative listening/speaking as a live capability. Full voice integration remains a separate stage.

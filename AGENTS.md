@@ -27,3 +27,5 @@ Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNES
 - Founder sequence update: Aurelius 1D daily dashboard is authorized before live activation. Read docs/DAILY_DASHBOARD.md. Do not build any human/body model until requirements/measurements are ready. Keep self-reports distinct from imported/derived readings; never invent an AI briefing or readiness score. Sample mode is labeled, in-memory and never a privilege bypass. Daily private data is not automatically model context.
 
 - Current visual direction is Aurelius 1E (docs/AURELIUS_1E.md): neutral obsidian/charcoal lead, rich metallic gold, purple concentrated around Aurelius. Do not reintroduce a purple wash across every surface. Connection geometry is decorative navigation, never evidence of live integrations. Preserve Still/solid/reduced-motion and dialog quiet behavior.
+
+- Aurelius 1F owns the current Orb (docs/AURELIUS_1F.md): preserve the static fallback, bounded optional scene, adaptive resolution and lifecycle cleanup. Listening/speaking are labeled visual previews with no audio/microphone; never imply live voice or replace real request/save/error status with a demo.

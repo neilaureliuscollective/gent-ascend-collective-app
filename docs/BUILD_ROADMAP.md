@@ -65,3 +65,7 @@ Acceptance: truthful empty and fictional sample states; check-in/intention/actio
 ## Aurelius 1E — approved material correction
 
 Rebalance the existing dashboard/shared shell toward obsidian, reflective gold and localized purple. Add a bounded decorative connection field and finite entry/interaction lighting, retaining Still, reduced-motion, solid and forced-color operation. Verify current workflows and response/payload cost. Scope/evidence: AURELIUS_1E.md. This is the current authorized visual phase; service activation and intelligence evaluation remain the subsequent product milestones.
+
+## Aurelius 1F — founder-approved Orb
+
+Focused upgrade after 1E: dark crystalline core, metallic orbit bands, shared static identity, truthful request-state visuals, and labeled in-memory voice-motion previews. Validate graphics/lifecycle, layout, accessibility and existing workflows. See AURELIUS_1F.md. This supersedes the earlier visual stopping point at the founder’s explicit direction. It does not authorize new voice/model services; physical-device review and real-service activation remain next.

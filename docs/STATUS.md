@@ -1,6 +1,8 @@
 # Execution status — 2026-09-21
 
-**Latest milestone: Aurelius 1E materials and connected light implemented and locally verified.** Founder-approved correction replaces the pervasive purple wash with neutral obsidian/charcoal, richer metallic gold controls and localized purple. Decorative orbital paths respond to navigation; a finite arrival sweep and interaction highlights preserve Still/reduced-motion/solid modes. No new dependencies, initial canvas, schema, auth or model changes. Scope/research: [AURELIUS_1E.md](AURELIUS_1E.md). Lint/typecheck/build, 59 unit/SQL/mock SDK tests and 40 browser tests pass. Initial home JS 153,888 encoded bytes (+749 vs 1D), CSS 15,865 (+684). Screenshots at 390/768/1440 reviewed, no overflow/page errors. Local 120-frame samples: p95 16.7ms phone viewport, 16.8ms desktop; not physical-device or battery evidence.
+**Latest milestone: Aurelius 1F Orb implemented and locally verified.** Founder-approved focus on Aurelius’s visual presence: dark crystalline core, reflective gold orbit bands, a beveled compass star, internal light, matching SVG fallback and labeled voice-motion previews. `/aurelius` → **Explore the Orb** works without credentials; microphone and audio remain off. Real request/stop states take precedence. Adaptive detail and sustained-frame-budget fallback preserve usability. No new dependency, service, schema, model or authorization behavior. Scope/research: [AURELIUS_1F.md](AURELIUS_1F.md). Lint/typecheck/production build, 61 unit/SQL/mock SDK tests and 46 browser tests pass. Physical-device, live Auth/model and voice acceptance remain separate and open. Nothing pushed or deployed. Initial home JS 154,433 encoded bytes (+545 vs 1E), CSS 16,626 (+761); the full conversation including deferred graphics is 331,345 JS bytes. Final software-WebGL desktop RAF p95 was 83.3ms and triggered detail reduction; sustained physical-device smoothness is not established. Phone/unfolded lab p95 values were 16.8/16.7ms. Screenshots and evidence are recorded in the 1F handoff.
+
+**Previous milestone: Aurelius 1E materials and connected light implemented and locally verified.** Founder-approved correction replaces the pervasive purple wash with neutral obsidian/charcoal, richer metallic gold controls and localized purple. Decorative orbital paths respond to navigation; a finite arrival sweep and interaction highlights preserve Still/reduced-motion/solid modes. No new dependencies, initial canvas, schema, auth or model changes. Scope/research: [AURELIUS_1E.md](AURELIUS_1E.md). Lint/typecheck/build, 59 unit/SQL/mock SDK tests and 40 browser tests pass. Initial home JS 153,888 encoded bytes (+749 vs 1D), CSS 15,865 (+684). Screenshots at 390/768/1440 reviewed, no overflow/page errors. Local 120-frame samples: p95 16.7ms phone viewport, 16.8ms desktop; not physical-device or battery evidence.
 
 **Previous milestone: Aurelius 1D daily dashboard implemented; verification results below.** The founder explicitly authorized the daily dashboard while postponing backend/GitHub activation and all human/body modeling. See [research, scope and evidence](DAILY_DASHBOARD.md). Command now supports a daily intention, optional self-reported energy/sleep, five bounded actions, 7/30-day observations, evening reflection, active goal and Aurelius conversation entry points. Public sample mode is clearly fictional, in-memory only and performs no API writes. Personal mode uses an additive migration and real owner-scoped save/read contracts. No new packages or model behavior.
 
@@ -31,21 +33,21 @@ The existing strict Next/React/Tailwind foundation, profile/goals and protected 
 
 ## Observed checks
 
-| Gate                                 | Result                                                                                          |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| ESLint                               | Passed, zero warnings                                                                           |
-| Strict typecheck                     | Passed                                                                                          |
-| Unit + SQL + SDK mock-provider tests | 59 passed                                                                                       |
-| Production build                     | Passed                                                                                          |
-| Browser interactions                 | 40 passed; daily flows, light/navigation, modal pause, forced colors and responsive checks      |
-| Migration chain                      | Four migrations executed in PGlite; explicit minimal Auth adapter                               |
-| UI inspection                        | Phone/desktop conversation screenshots reviewed; composer and empty heading visible in viewport |
-| Actual Supabase reset/Auth/PostgREST | Unrun: Docker/Podman unavailable                                                                |
-| Real founder browser journey         | Extended for daily persistence; unrun without local Supabase                                    |
-| Paid live-model smoke                | Unrun: no AI_GATEWAY_API_KEY configured                                                         |
-| Intelligence-quality evaluation      | Unrun; requires real founder conversations                                                      |
-| GitHub CI / remote push              | Not performed; last verified connector access is read-only                                      |
-| Hosted preview / production          | None                                                                                            |
+| Gate                                 | Result                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| ESLint                               | Passed, zero warnings                                                                                  |
+| Strict typecheck                     | Passed                                                                                                 |
+| Unit + SQL + SDK mock-provider tests | 61 passed                                                                                              |
+| Production build                     | Passed                                                                                                 |
+| Browser interactions                 | 46 passed; Orb lifecycle/preview/adaptive fallback plus conversation, daily, editor and security flows |
+| Migration chain                      | Four migrations executed in PGlite; explicit minimal Auth adapter                                      |
+| UI inspection                        | Phone/desktop conversation screenshots reviewed; composer and empty heading visible in viewport        |
+| Actual Supabase reset/Auth/PostgREST | Unrun: Docker/Podman unavailable                                                                       |
+| Real founder browser journey         | Extended for daily persistence; unrun without local Supabase                                           |
+| Paid live-model smoke                | Unrun: no AI_GATEWAY_API_KEY configured                                                                |
+| Intelligence-quality evaluation      | Unrun; requires real founder conversations                                                             |
+| GitHub CI / remote push              | Not performed; last verified connector access is read-only                                             |
+| Hosted preview / production          | None                                                                                                   |
 
 Aurelius browser tests intercept API traffic with synthetic records; they do not prove live persistence or model quality. SDK adapter tests use the actual AI SDK with a mock provider. SQL tests validate Postgres logic via PGlite, not GoTrue/PostgREST. Fixture screenshots explicitly label synthetic records; disconnected preview screenshots show empty presentation data and the preview notice. Never equate these with the outstanding real-service checks.
 

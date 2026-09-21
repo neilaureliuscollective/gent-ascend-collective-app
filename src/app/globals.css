@@ -2460,3 +2460,243 @@ html[data-material='solid'] .daily-card {
     box-shadow: none;
   }
 }
+
+/* Aurelius 1F: one sculpted celestial identity, from dock to conversation. */
+.aurelius-presence {
+  pointer-events: none;
+}
+.presence-aura,
+.presence-reflection,
+.presence-listening-halo {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+}
+.presence-aura {
+  inset: -10%;
+  z-index: -1;
+  background: radial-gradient(ellipse, #6a365124 15%, #773f4312 42%, transparent 69%);
+}
+.presence-reflection {
+  bottom: 0;
+  left: 15%;
+  width: 70%;
+  height: 9%;
+  background: radial-gradient(ellipse, #d4a35236, #97622812 35%, transparent 72%);
+  transform: scaleY(0.5);
+}
+.presence-fallback {
+  filter: none;
+}
+.presence-listening-halo {
+  inset: 5%;
+  border: 1px solid #d6b27500;
+  opacity: 0;
+}
+.aurelius-presence[data-state='working'] {
+  filter: none;
+}
+.aurelius-presence[data-state='working'] .presence-aura,
+.aurelius-presence[data-state='preview-speaking'] .presence-aura {
+  background: radial-gradient(ellipse, #82456530, #b4803820 35%, transparent 70%);
+}
+.aurelius-presence[data-state='saved'] .presence-aura {
+  background: radial-gradient(ellipse, #e0b86638, transparent 65%);
+}
+.aurelius-presence[data-state='preview-listening'] .presence-listening-halo {
+  border-color: #d6b27570;
+  opacity: 1;
+}
+html[data-motion='ambient']:not([data-quiet='true'])
+  .aurelius-presence[data-state='preview-listening']
+  .presence-listening-halo {
+  animation: orb-listen 4.8s ease-in-out infinite;
+}
+html[data-motion='ambient']:not([data-quiet='true'])
+  .aurelius-presence[data-state='working']
+  .presence-inner-light,
+html[data-motion='ambient']:not([data-quiet='true'])
+  .aurelius-presence[data-state='preview-speaking']
+  .presence-inner-light {
+  animation: orb-inner 4.8s ease-in-out infinite;
+}
+@keyframes orb-listen {
+  0%,
+  68%,
+  100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  20%,
+  45% {
+    transform: scale(1.06);
+    opacity: 0.8;
+  }
+  32%,
+  55% {
+    transform: scale(1.02);
+    opacity: 0.5;
+  }
+}
+@keyframes orb-inner {
+  0%,
+  70%,
+  100% {
+    opacity: 0.5;
+  }
+  22%,
+  48% {
+    opacity: 1;
+  }
+}
+.welcome-heading:has(.orb-presentation) {
+  flex-direction: column;
+  text-align: center;
+}
+.orb-presentation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  flex-shrink: 0;
+}
+.welcome-heading .orb-presentation .aurelius-presence {
+  width: 180px;
+  height: 180px;
+}
+.orb-preview-toggle {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-light);
+  background: transparent;
+  border: 0;
+  min-height: 36px;
+  padding: 6px 14px;
+}
+.orb-preview-controls {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #b9915038;
+  border-radius: 16px;
+  background: #121212;
+  margin: 4px 0 12px;
+}
+.orb-preview-caption {
+  font-size: 0.6875rem;
+  color: #cfc3ae;
+  margin: 0 0 8px;
+}
+.orb-preview-controls [role='group'] {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.orb-preview-controls [role='group'] button {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 0.6875rem;
+  color: #c5c0b8;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+.orb-preview-controls [role='group'] button[aria-pressed='true'] {
+  color: #f1d394;
+  background: #a0732426;
+  border-color: #d6ad6259;
+}
+.orb-preview-description {
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  margin: 8px 0 0;
+  color: #b6b0a8;
+}
+@media (max-width: 600px) {
+  .welcome-heading .orb-presentation .aurelius-presence {
+    width: 112px;
+    height: 112px;
+  }
+}
+@media (max-height: 780px) and (min-width: 601px) {
+  .welcome-heading:has(.orb-presentation) {
+    flex-direction: column;
+    text-align: center;
+  }
+  .welcome-heading .orb-presentation .aurelius-presence {
+    width: 90px;
+    height: 90px;
+  }
+}
+@media (max-height: 740px) and (max-width: 600px) {
+  .welcome-heading .orb-presentation .aurelius-presence {
+    width: 68px;
+    height: 68px;
+  }
+}
+.welcome-heading .orb-presentation.is-previewing .aurelius-presence {
+  width: clamp(170px, 22vw, 200px);
+  height: clamp(170px, 22vw, 200px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurelius-presence *,
+  .aurelius-presence *::before {
+    animation: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .presence-canvas,
+  .presence-aura,
+  .presence-reflection,
+  .presence-listening-halo {
+    display: none;
+  }
+  .aurelius-presence[data-rendered='true'] .presence-fallback {
+    visibility: visible;
+  }
+  .presence-fallback {
+    forced-color-adjust: none;
+  }
+  .orb-preview-controls [role='group'] button[aria-pressed='true'] {
+    border-color: Highlight;
+  }
+}
+@media (max-height: 780px) and (min-width: 601px) {
+  .orb-presentation.is-previewing {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 4px 12px;
+    align-items: center;
+  }
+  .welcome-heading .orb-presentation.is-previewing .aurelius-presence {
+    width: 140px;
+    height: 140px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .orb-presentation.is-previewing .orb-preview-controls {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+  }
+  .orb-presentation.is-previewing .orb-preview-toggle {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+.aurelius-presence[data-rendered='true'] .presence-inner-light {
+  animation: none !important;
+}
+
+.orb-preview-controls [role='group'] {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.orb-preview-controls [role='group'] button {
+  min-width: 0;
+  padding-inline: 2px;
+}
+.aurelius-presence:not([data-rendered='true']) .presence-canvas {
+  visibility: hidden;
+}
