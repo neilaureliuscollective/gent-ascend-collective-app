@@ -2,6 +2,8 @@
 
 Canonical personal operating environment. Read [project rules](AGENTS.md) and [current status](docs/STATUS.md) first.
 
+For the fresh GitHub → Vercel deployment, follow [Vercel setup](docs/VERCEL_SETUP.md): exact import settings, required environment variables, hosted migrations, founder beta access and OpenAI/Gateway connection.
+
 Node 24, npm. `npm ci`, then `npm run dev` renders the application shell at http://127.0.0.1:3000 without external credentials. For real founder identity/persistence, start Docker and run `npm run dev:setup`; follow the generated local entry instruction. No Stripe, SMTP or production onboarding required.
 
 `npm run check` runs lint, typecheck, unit and fast SQL/RLS tests, then production build. `npm run test:e2e` checks the built application and isolated editor components (synthetic actions, no database). Install Chromium first with `npx playwright install chromium`. `npm run test:integration` requires running local Supabase and exercises real Auth, profile/goal persistence, event creation and ownership. `npm run test:founder` runs the full browser journey against local Supabase; use a fresh synthetic seed with no active founder/member goal. `npm run db:reset` resets local synthetic data; never use production data here.
