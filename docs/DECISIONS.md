@@ -68,3 +68,7 @@ A 401 from the existing workspace read endpoint renders an empty, visibly labele
 Conversation navigation is a title-only local filter over already-authorized records. Desktop has a sidebar; smaller widths have an expandable library. Reuse the same session-bound API and shared conversation surface, including the global panel. Personal context is inspectable with explicit inclusion state and bounded-history limitations. Memory remains user-confirmed.
 
 No new packages, APIs, schema, paid services or model behavior. Used existing installed Next/React guidance and existing test harness. The visual refinement is independently verifiable; it does not close outstanding actual Supabase and paid-provider acceptance gates.
+
+## Aurelius 1C research — proposed, not accepted
+
+2026-09-21: founder requested research and a concise visual/build proposal for approval, not immediate implementation. Audited existing UI and researched primary design guidance, color psychology, motivation/habit research, accessibility and web rendering performance. Findings, sources, evidence limits, proposed tokens and acceptance gates are in AESTHETIC_ELEVATION_PROPOSAL.md. No production code, dependency, model behavior, security or infrastructure changed. Next visual implementation waits for founder approval.

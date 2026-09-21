@@ -49,3 +49,7 @@ Measurement/routine work is deferred behind the working Aurelius milestone. See 
 Scope and observed acceptance: [AURELIUS_1B.md](AURELIUS_1B.md). Build the real conversation navigation and inspectable context experience while the founder postpones account reconnection. A signed-out preview is presentation only, with no model answers, identity, private records or write access. Preserve the same connected service and database contracts. No additional infrastructure or dependency is needed.
 
 Next: connect the existing backend/model adapter, validate real identity/persistence and use the founder evaluation rubric. Live results should guide the next intelligence enhancement; do not fill the waiting period with speculative product modules.
+
+## Aurelius 1C — proposal pending approval
+
+Founder requested a materially more immersive, premium and futuristic aesthetic before the rest of the Life OS grows. Research and implementation scope: [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md). Proposed order: shared materials/type/layout → Command and Aurelius → bounded 3D and motion → functional/accessibility/performance verification. Await approval before application changes. Real-service activation remains necessary afterward; visual refinement does not close those gates.

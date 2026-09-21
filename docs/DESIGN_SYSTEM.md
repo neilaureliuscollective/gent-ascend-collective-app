@@ -15,3 +15,7 @@ Use semantic landmarks, explicit form labels, visible focus rings, ≥44px touch
 The intelligence workspace uses an obsidian conversation library, restrained gold selection borders and a deep-purple working surface. A compact orb supports the conversation invitation without pushing it below the composer at unfolded widths. The transcript scrolls independently; composer and context controls remain accessible. Library navigation is persistent on larger canvases and an explicit disclosure below 1100px.
 
 Context has three grounded sections: profile/priority, current goal/next step and explicitly confirmed memory. Never invent progress, scores or personal facts to populate the design. The disconnected preview has empty data and visible sign-in/saving limitations. Disabled actions must also be guarded in handlers and on the server.
+
+## Proposed next language — pending approval
+
+The founder judged the existing shell too flat and dated for the intended Life OS. [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md) specifies the proposed successor: atmospheric obsidian environment, selective smoked glass, modern Sora/Inter typography, consistent material hierarchy, sculptural Aurelius presence and controlled motion. This is a reviewable proposal; current implementation tokens and fonts have not changed.

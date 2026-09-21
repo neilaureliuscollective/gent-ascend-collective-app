@@ -1,5 +1,7 @@
 # Execution status — 2026-09-21
 
+**Latest founder direction: visual elevation before further feature expansion.** Research and build-ready proposal are in [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md). Aurelius 1C is pending founder approval. This turn changes documentation only; the running application remains Aurelius 1B.
+
 **Latest milestone: Aurelius 1B workspace refinement implemented and locally verified.** The founder explicitly deferred GitHub reconnection and live-service testing, and authorized continuing the premium structure and experience. See [Aurelius 1B](AURELIUS_1B.md). Saved-conversation search/navigation, personal-context cards, refined memory presentation and an honest signed-out preview are now available. No provider, auth, billing or database permissions changed. The remaining real-service gates below still apply.
 
 Canonical repository update: founder created https://github.com/neilaureliuscollective/aurelius-collective-app. Verified it exists and is empty; changed this checkout's origin and project rules to the new destination while retaining the existing folder and complete history. The connected GitHub identity still lacks write access. Pending: reconnect the new account, verify authorization, push main, then import this new repo into Vercel. This execution checkout is not the founder's mounted Desktop.
@@ -57,5 +59,7 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 - Gateway/provider retention and logs, BYOK policy, staging access, backup/export/deletion/usage retention and sensitive-data contracts require review before beta personal-data operation. No production PHI was introduced.
 
 ## Exact next step
+
+Review the proposed Aurelius 1C visual direction. After founder approval, build the shared visual system and immersive shell locally, then proceed to service activation and daily intelligence evaluation. The steps below remain the activation path; they do not block the approved visual work.
 
 No founder setup is required to preserve this milestone. GitHub reconnection is deliberately deferred. When the founder is ready, import/sync this committed milestone into the existing official checkout with write-authorized access. On a Docker-capable machine configure Supabase and a dedicated Gateway key, run the real integration/founder/live-model tests, and resolve any differences. Then Neil uses Aurelius daily and flags quality failures. Prioritize conversation quality, continuity and sourced research before expanding dashboard modules. A protected phone-installable preview follows verified hosted Auth and HTTPS/PWA setup; never expose the local developer harness.
