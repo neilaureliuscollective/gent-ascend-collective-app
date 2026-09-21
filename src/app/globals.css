@@ -1524,3 +1524,432 @@ button:disabled {
     height: 100dvh;
   }
 }
+
+/* Aurelius 1B: an intimate workspace, with an expandable conversation library. */
+.aurelius-layout {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  background: radial-gradient(ellipse at 70% 5%, #35204245, transparent 65%);
+}
+.aurelius-layout.compact-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.compact-layout > .aurelius-workspace {
+  width: 100%;
+}
+.conversation-library {
+  min-width: 0;
+  min-height: 0;
+  background: linear-gradient(170deg, #18111f, #0d0b11 70%);
+  border-right: 1px solid #d6ae6225;
+}
+.library-body {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 16px 16px;
+  height: 100%;
+  min-height: 0;
+}
+.library-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #e4c990;
+  font-size: 0.87rem;
+  letter-spacing: 0.16em;
+  padding: 4px 2px 30px;
+}
+.library-brand small {
+  display: block;
+  margin-top: 7px;
+  font-size: 0.49rem;
+  letter-spacing: 0.12em;
+  color: #aa9fb3;
+}
+.library-brand .small-orb {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+.library-new {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  width: 100%;
+  min-height: 46px;
+  text-align: left;
+  border: 1px solid #d6ae6250;
+  border-radius: 8px;
+  color: #ecd6aa;
+  background: linear-gradient(120deg, #d6ae621a, #d6ae6205);
+  font-size: 0.8rem;
+}
+.library-new span {
+  font-size: 1.2rem;
+}
+.library-body input {
+  margin: 16px 0 24px;
+  padding: 12px;
+  font-size: 0.78rem;
+  background: #ffffff04;
+  border-color: #ffffff0c;
+}
+.library-section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #a698b4;
+  font-size: 0.65rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0 8px 12px;
+}
+.conversation-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+.conversation-list button {
+  width: 100%;
+  display: block;
+  text-align: left;
+  padding: 13px 12px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  color: #cbbfd5;
+}
+.conversation-list button:hover {
+  background: #ffffff06;
+}
+.conversation-list button[aria-current] {
+  border-color: #d6ae6235;
+  background: #a77adb12;
+  color: #f1dfbb;
+}
+.conversation-list button > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+.conversation-list time {
+  display: block;
+  color: #a294ae;
+  font-size: 0.66rem;
+  margin-top: 5px;
+}
+.library-empty {
+  text-align: center;
+  padding: 28px 10px;
+  color: #b5a6c2;
+}
+.library-empty > span {
+  font:
+    2rem Georgia,
+    serif;
+  color: #d6ae6270;
+}
+.library-empty p {
+  font:
+    1.15rem/1.5 Georgia,
+    serif;
+  margin: 12px 0 8px;
+}
+.library-empty small {
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: #a899b6;
+}
+.library-footer {
+  font-size: 0.66rem;
+  line-height: 1.7;
+  color: #a092ac;
+  padding: 18px 8px 0;
+  margin-top: auto;
+}
+.library-toggle {
+  display: none;
+}
+.workspace-preview-note {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: #d6ae6208;
+  padding: 10px 12px;
+  border-bottom: 1px solid #d6ae6220;
+  font-size: 0.73rem;
+  flex-shrink: 0;
+}
+.workspace-preview-note p {
+  margin: 0;
+  color: #bbafc5;
+}
+.workspace-preview-note a {
+  color: #e6c786;
+  white-space: nowrap;
+}
+.aurelius-surface {
+  box-shadow:
+    0 22px 100px #0005,
+    inset 0 1px #ffffff04;
+}
+.aurelius-composer {
+  box-shadow:
+    0 10px 28px #0003,
+    inset 0 1px #ffffff06;
+  background: linear-gradient(140deg, #23172d, #151019);
+}
+.aurelius-composer:focus-within {
+  border-color: #d6ae6280;
+}
+.context-space {
+  max-width: 850px;
+  padding: 28px 4px;
+}
+.context-space > h3 {
+  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  margin: 16px 0;
+}
+.context-scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: #d7c3e4;
+  padding: 16px 0 22px;
+}
+.context-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7d7386;
+  flex-shrink: 0;
+}
+.context-indicator[data-active='true'] {
+  background: #d6ae62;
+  box-shadow: 0 0 14px #d6ae6240;
+}
+.context-cards {
+  display: grid;
+  gap: 12px;
+}
+.context-cards article {
+  padding: 24px;
+  border: 1px solid #d6ae6225;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #24172f80, #100d1600);
+}
+.context-cards .eyebrow {
+  font-size: 0.61rem;
+}
+.context-cards h4 {
+  font:
+    1.3rem/1.4 Georgia,
+    serif;
+  color: #eee3f5;
+  margin: 16px 0 10px;
+  overflow-wrap: anywhere;
+}
+.context-cards p {
+  font-size: 0.87rem;
+  line-height: 1.8;
+  color: #c0b2cb;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.context-cards .text-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-top: 8px;
+}
+.context-next {
+  border-left: 2px solid #d6ae6240;
+  padding-left: 14px;
+  margin-top: 18px;
+}
+.context-next > span {
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: #ddbf88;
+}
+.context-next p {
+  margin: 6px 0;
+}
+.context-boundaries {
+  margin-top: 24px;
+  padding: 16px 0;
+  font-size: 0.8rem;
+  color: #b4a4c2;
+  line-height: 1.8;
+}
+.context-boundaries summary {
+  cursor: pointer;
+  color: #d8c3e7;
+  min-height: 44px;
+}
+.memory-empty {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 22px;
+  border: 1px solid #d6ae6225;
+  border-radius: 10px;
+  margin: 24px 0;
+  background: #d6ae6205;
+}
+.memory-empty > span {
+  color: #d6ae62;
+  font:
+    2rem Georgia,
+    serif;
+}
+.memory-empty h4 {
+  font:
+    1.25rem Georgia,
+    serif;
+  margin: 0 0 10px;
+}
+.memory-empty p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #b9aac6;
+}
+.memory-preview-label {
+  border-left: 2px solid #d6ae6260;
+  padding-left: 12px;
+  font-size: 0.78rem;
+}
+.memory-list li {
+  border: 1px solid #d6ae6220;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 10px;
+  background: #ffffff02;
+}
+@media (max-width: 1100px) {
+  .aurelius-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    position: relative;
+  }
+  .conversation-library {
+    border-right: 0;
+    border-bottom: 1px solid #d6ae6225;
+  }
+  .library-toggle {
+    display: flex;
+    width: 100%;
+    padding: 12px 20px;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    color: #d8c4e5;
+    border: 0;
+    background: transparent;
+    min-height: 44px;
+    font-size: 0.78rem;
+  }
+  .library-count {
+    color: #d6ae62;
+    margin-left: 8px;
+  }
+  .library-body {
+    display: none;
+  }
+  .conversation-library[data-open='true'] .library-body {
+    display: flex;
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    top: 45px;
+    height: min(420px, calc(100% - 45px));
+    background: #130e1b;
+    border-bottom: 1px solid #d6ae6250;
+    box-shadow: 0 20px 40px #0008;
+  }
+  .library-brand {
+    display: none;
+  }
+  .library-body input {
+    margin-bottom: 14px;
+  }
+  .library-footer {
+    padding-top: 12px;
+  }
+  .aurelius-layout.compact-layout {
+    display: flex;
+  }
+}
+@media (max-width: 600px) {
+  .workspace-preview-note {
+    padding: 8px 0;
+    font-size: 0.65rem;
+  }
+  .workspace-preview-note p {
+    max-width: 155px;
+    line-height: 1.5;
+  }
+  .context-cards article {
+    padding: 18px;
+  }
+  .aurelius-welcome .eyebrow {
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+  }
+  .aurelius-welcome {
+    padding-top: 12px;
+  }
+  .aurelius-welcome .orb {
+    margin-bottom: 12px;
+  }
+  .aurelius-welcome h2 {
+    margin: 12px 0;
+  }
+  .memory-empty {
+    padding: 16px;
+    gap: 16px;
+  }
+}
+
+/* Keep the invitation visible even when the composer needs several lines. */
+.aurelius-welcome {
+  padding-top: 10px;
+}
+.welcome-heading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  margin-bottom: 12px;
+}
+.welcome-heading .orb {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+}
+.welcome-heading h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.3rem);
+  margin: 6px 0 0;
+}
+.welcome-heading .eyebrow {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}

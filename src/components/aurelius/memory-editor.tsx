@@ -18,10 +18,12 @@ export function MemoryEditor({
   memories,
   onChanged,
   disabled = false,
+  preview = false,
 }: {
   memories: Memory[];
   onChanged: () => Promise<void>;
   disabled?: boolean;
+  preview?: boolean;
 }) {
   const [edit, setEdit] = useState<Memory | null>(null);
   const [content, setContent] = useState('');
@@ -31,7 +33,7 @@ export function MemoryEditor({
   const [remove, setRemove] = useState<string | null>(null);
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (pending) return;
+    if (pending || disabled || preview) return;
     setPending(true);
     setMessage('');
     try {
@@ -52,6 +54,7 @@ export function MemoryEditor({
     }
   }
   async function forget(memory: Memory) {
+    if (pending || disabled || preview) return;
     setPending(true);
     setMessage('');
     try {
@@ -80,6 +83,21 @@ export function MemoryEditor({
         Only details you explicitly save here become durable memory. Chatting does not silently add
         facts.
       </p>
+      {preview && (
+        <p className="memory-preview-label">Preview · sign in to confirm and save memories.</p>
+      )}
+      {!memories.length && (
+        <div className="memory-empty">
+          <span aria-hidden="true">◇</span>
+          <div>
+            <h4>A considered beginning.</h4>
+            <p>
+              Start with how you like to think, what matters to you, or a preference that makes the
+              conversation more useful.
+            </p>
+          </div>
+        </div>
+      )}
       <form className="editor-form" onSubmit={save}>
         <fieldset disabled={pending || disabled}>
           <label htmlFor="memory-kind">Type</label>

@@ -247,3 +247,72 @@ test('stopping a request retains the draft and requires checking saved state', a
   await expect(page.getByLabel('Message Aurelius')).toHaveValue('A thought worth keeping');
   await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
 });
+
+for (const width of [360, 768, 1440]) {
+  test(`disconnected workspace can be explored safely at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 960 });
+    const writes: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/aurelius') && request.method() !== 'GET')
+        writes.push(request.url());
+    });
+    await page.goto('/aurelius');
+    await expect(page.getByText('Sign in to use your Aurelius workspace.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeInViewport();
+    await page.screenshot({ path: `test-results/aurelius-preview-${width}.png`, fullPage: true });
+    await page.getByLabel('Message Aurelius').fill('An unsent thought');
+    await page.getByLabel('Message Aurelius').press('Control+Enter');
+    await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.getByRole('button', { name: 'Memory', exact: true }).click();
+    await expect(page.getByLabel('What should Aurelius remember?')).toBeDisabled();
+    await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
+    await page
+      .locator('.memory-space form')
+      .evaluate((form: HTMLFormElement) => form.requestSubmit());
+    await page.getByRole('button', { name: 'Context', exact: true }).click();
+    await expect(page.getByText('Preview · no personal data loaded')).toBeVisible();
+    await page.screenshot({ path: `test-results/aurelius-context-${width}.png`, fullPage: true });
+    await page.getByText('Understand the boundaries').click();
+    await expect(
+      page.getByText('Live web research, voice, file uploads', { exact: false }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Conversation', exact: true }).click();
+    await expect(page.getByLabel('Message Aurelius')).toHaveValue('An unsent thought');
+    expect(writes).toEqual([]);
+  });
+}
+
+for (const width of [360, 1440]) {
+  test(`conversation library filters and opens saved history at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 960 });
+    const { state } = await setup(page);
+    await page.getByLabel('Message Aurelius').fill('Direction for the week');
+    await page.getByRole('button', { name: 'Send', exact: false }).click();
+    await expect(page.getByRole('status')).toContainText('Reply saved.');
+    state.conversations.push({
+      id: '50000000-0000-4000-8000-000000000008',
+      person_id: 'synthetic',
+      title: 'A different thought',
+      created_at: '2026-09-20',
+      updated_at: '2026-09-20',
+    });
+    await page.reload();
+    const library = page.getByRole('complementary', { name: 'Conversation library' });
+    if (width < 1101) await library.getByRole('button', { name: /^Conversations/ }).click();
+    await library.getByLabel('Search conversation titles').fill('nothing matches');
+    await expect(library.getByText('No matching titles.')).toBeVisible();
+    await library.getByLabel('Search conversation titles').fill('DIRECTION');
+    await expect(library.locator('.conversation-list button')).toHaveCount(1);
+    await library.getByRole('button', { name: /Direction for the week/ }).click();
+    await expect(page.locator('.user-message')).toContainText('Direction for the week');
+    if (width < 1101)
+      await expect(library.getByLabel('Search conversation titles')).not.toBeVisible();
+    await page.getByRole('button', { name: 'Context', exact: true }).click();
+    await expect(page.getByText('Personal context is on for your next message')).toBeVisible();
+    await expect(page.getByText('A meaningful first step', { exact: true })).toBeVisible();
+  });
+}

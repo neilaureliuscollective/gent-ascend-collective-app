@@ -31,16 +31,16 @@ export default async function Command() {
       <div className="command-grid">
         <section className="focus-panel">
           <div className="panel-heading">
-            <span className="eyebrow">Today’s perspective</span>
-            <span className="pill">Foundation</span>
+            <span className="eyebrow">Your personal intelligence</span>
+            <span className="pill">Workspace preview</span>
           </div>
-          <h2>Your next chapter starts here.</h2>
+          <h2>Meet Aurelius.</h2>
           <p>
-            A clearer view of what matters.
-            <br />A deliberate next step.
+            A place to think clearly, challenge an idea,
+            <br />and find your next move.
           </p>
-          <Link className="button" href="/you">
-            Explore your workspace
+          <Link className="button" href="/aurelius">
+            Explore Aurelius
             <span aria-hidden="true">↗</span>
           </Link>
           <div className="focus-foot">
@@ -82,8 +82,8 @@ export default async function Command() {
       <div className="quiet-note">
         <span className="gold-rule" />
         <p>
-          Foundation preview. Your personal records and AI insights will appear as those
-          capabilities are added.
+          Explore the Aurelius workspace now. Personal records require sign-in; live replies
+          require a model connection.
         </p>
       </div>
     </>

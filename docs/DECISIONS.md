@@ -58,3 +58,13 @@ No additional provider SDK or workflow engine. Added react-markdown@10.1.0 for s
 Research sources: [AI SDK agents](https://ai-sdk.dev/docs/agents/building-agents), [message persistence](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-persistence), [Gateway provider options](https://vercel.com/docs/ai-gateway/models-and-providers/provider-options), [disallow prompt training](https://vercel.com/docs/ai-gateway/security-and-compliance/disallow-prompt-training), [ZDR](https://vercel.com/docs/ai-gateway/security-and-compliance/zdr), [React Markdown](https://github.com/remarkjs/react-markdown). AI SDK web pages returned unsupported content types; installed official package docs/source supplied the implementation reference instead.
 
 Gateway no-training filtering is available without requiring a paid hosting plan. ZDR has separate plan/provider requirements and is not claimed here. No PHI approval or infrastructure claim is introduced.
+
+## Aurelius 1B — 2026-09-21
+
+Founder authorization: postpone GitHub reconnection and bot testing; continue the premium structure and experience. Keep the canonical repository and complete history. No push or deployment in this phase.
+
+A 401 from the existing workspace read endpoint renders an empty, visibly labeled preview. This is not a developer bypass: no synthetic identity, entitlement, private records or model answers. Sending is guarded even for keyboard submission; memory writes are disabled. All server authorization remains unchanged. Other server failures remain errors instead of being concealed as a preview.
+
+Conversation navigation is a title-only local filter over already-authorized records. Desktop has a sidebar; smaller widths have an expandable library. Reuse the same session-bound API and shared conversation surface, including the global panel. Personal context is inspectable with explicit inclusion state and bounded-history limitations. Memory remains user-confirmed.
+
+No new packages, APIs, schema, paid services or model behavior. Used existing installed Next/React guidance and existing test harness. The visual refinement is independently verifiable; it does not close outstanding actual Supabase and paid-provider acceptance gates.

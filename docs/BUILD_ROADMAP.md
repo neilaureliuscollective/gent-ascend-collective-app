@@ -14,7 +14,7 @@
 
 ## Founder-directed sequence update — 2026-09-20
 
-The founder explicitly prioritized usable Aurelius intelligence before measurement/routine modules. Stage numbers below are historical labels, not execution order. Current order: Stage 1/2A validation → **Aurelius 1A (the Stage 3A conversation foundation plus manual memory controls)** → founder daily conversation evaluation and corrections → research/continuity improvements → choose the first metric/routine that genuinely strengthens Aurelius. Do not resume feature expansion merely because old Stage 2B appeared earlier in the table.
+The founder explicitly prioritized usable Aurelius intelligence before measurement/routine modules. Stage numbers below are historical labels, not execution order. Current order: Stage 1/2A validation → **Aurelius 1A (the Stage 3A conversation foundation plus manual memory controls)** → **Aurelius 1B (premium workspace and disconnected exploration)** → real-service activation → founder daily conversation evaluation and corrections → research/continuity improvements → choose the first metric/routine that genuinely strengthens Aurelius. Do not resume feature expansion merely because old Stage 2B appeared earlier in the table.
 
 ## Stage 1 acceptance
 
@@ -43,3 +43,9 @@ Now: framework, tokens, Auth adapter, ownership schema, capability calculator, l
 Implemented scope is in STAGE_2A.md; observed results are in STATUS.md. Required: profile save/reload, a goal with next step surfaced on Command, complete/archive with retained history, stale-tab rejection, one active goal, two-user RLS, event atomicity, free-member access, usable 360/768/1440 layouts and honest errors. Run both `npm run test:integration` (real Auth/PostgREST) and `npm run test:founder` (real Next/browser journey) after local setup. Browser editor fixtures alone cannot close this stage.
 
 Measurement/routine work is deferred behind the working Aurelius milestone. See the sequence update above and AURELIUS_1A.md.
+
+## Aurelius 1B — founder-authorized disconnected refinement
+
+Scope and observed acceptance: [AURELIUS_1B.md](AURELIUS_1B.md). Build the real conversation navigation and inspectable context experience while the founder postpones account reconnection. A signed-out preview is presentation only, with no model answers, identity, private records or write access. Preserve the same connected service and database contracts. No additional infrastructure or dependency is needed.
+
+Next: connect the existing backend/model adapter, validate real identity/persistence and use the founder evaluation rubric. Live results should guide the next intelligence enhancement; do not fill the waiting period with speculative product modules.
