@@ -1,6 +1,6 @@
 # Aurelius Collective — canonical project rules
 
-Official repository: https://github.com/legacy-sanctum-co/aurelius-collective-app.git
+Official repository: https://github.com/neilaureliuscollective/aurelius-collective-app.git
 Founder workstation: ~/Desktop/aurelius-og. Remote execution checkouts of this same repository are not replacement projects. Never initialize a competing repository or reuse an older build.
 
 Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNESS.md and docs/BUILD_ROADMAP.md before changes. Check git status and preserve existing work.

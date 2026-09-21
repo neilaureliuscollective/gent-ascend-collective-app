@@ -1,5 +1,7 @@
 # Decisions and research evidence
 
+2026-09-21 — Founder selected the new canonical repository https://github.com/neilaureliuscollective/aurelius-collective-app.git under the new neilaureliuscollective account. It supersedes legacy-sanctum-co/aurelius-collective-app. Preserve ~/Desktop/aurelius-og and all commits; change origin rather than reinitialize or transfer the old empty remote. GitHub confirmed the new repository exists and is empty. Write authentication remains pending.
+
 Checked 2026-09-20. Published npm latest metadata corroborated framework versions; lockfile is authoritative for actual install.
 
 | Decision                                  | Rationale / tradeoff                                                                                                                                                                                                     |

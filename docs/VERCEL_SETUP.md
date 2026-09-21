@@ -4,7 +4,9 @@ Prepared 2026-09-21. The source builds; actual hosted Supabase and model accepta
 
 ## GitHub first
 
-Official repo: https://github.com/legacy-sanctum-co/aurelius-collective-app
+Official repo: https://github.com/neilaureliuscollective/aurelius-collective-app
+
+Founder changed the canonical GitHub account/repository on 2026-09-21. The existing checkout's origin now points here; all source and commit history are retained. The workstation folder remains ~/Desktop/aurelius-og. Reconnect the GitHub integration as neilaureliuscollective and authorize this repository before retrying the initial push. The previous push failure below occurred against the old destination; the new repository also currently reports no write access for this session.
 
 The attempted `git push -u origin main` failed because this execution environment has no authenticated Git write credentials. The GitHub connector independently reports `pull: true, push: false`; the remote is still empty. Grant this integration write access to the official repository, or integrate the supplied Git bundle into the existing workstation checkout and push from an authenticated terminal. Do not paste a token into chat, overwrite local work, or force-push.
 

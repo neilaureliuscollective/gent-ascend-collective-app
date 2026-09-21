@@ -1,5 +1,7 @@
 # Execution status — 2026-09-21
 
+Canonical repository update: founder created https://github.com/neilaureliuscollective/aurelius-collective-app. Verified it exists and is empty; changed this checkout's origin and project rules to the new destination while retaining the existing folder and complete history. The connected GitHub identity still lacks write access. Pending: reconnect the new account, verify authorization, push main, then import this new repo into Vercel. This execution checkout is not the founder's mounted Desktop.
+
 Deployment preparation: added explicit Vercel framework/install/build settings and [fresh deployment instructions](VERCEL_SETUP.md). Git push was attempted with founder authorization but failed for missing terminal credentials; the connected GitHub account also reports read-only repository access. Remote remains empty. No deployment was performed. Hosted founder access uses the existing real Auth + server-stored beta grant, not the local harness. Current AI adapter requires a Gateway key; an OpenAI key alone is not read.
 
 Re-ran lint, typecheck, all 53 unit/SQL/SDK tests and production build with `APP_ENV=production`, Vercel production flags, harness disabled and explicitly synthetic Supabase build values: all passed. These values were command-scoped, never committed, and do not represent a connected backend. The existing 20 browser checks are from the Aurelius 1A implementation; deployment preparation changes only configuration and documentation.
