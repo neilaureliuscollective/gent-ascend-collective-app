@@ -267,3 +267,62 @@ try {
   await member.from('ai_conversations').delete().eq('id', aiConversation);
   await member.rpc('ai_delete_memory', { p_id: aiMemory, p_version: 1 });
 }
+
+// Daily dashboard through real Auth + PostgREST, including the embedded action relationship.
+const dateParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: memberPerson.timezone,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).formatToParts(new Date());
+const part = (type) => dateParts.find((p) => p.type === type).value;
+const dailyDate = `${part('year')}-${part('month')}-${part('day')}`;
+const { data: priorDay, error: priorError } = await member
+  .from('daily_entries')
+  .select('version')
+  .eq('day', dailyDate)
+  .maybeSingle();
+assert.equal(priorError, null);
+const dayInput = {
+  p_day: dailyDate,
+  p_version: priorDay?.version ?? 0,
+  p_energy: 3,
+  p_sleep: 450,
+  p_intention: 'Synthetic daily integration check',
+  p_reflection: '',
+  p_actions: [{ id: crypto.randomUUID(), title: 'Read the saved day', done: false }],
+};
+const { data: dayVersion, error: dayError } = await member.rpc('daily_save', dayInput);
+assert.equal(dayError, null);
+assert.equal(dayVersion, dayInput.p_version + 1);
+const { data: savedDay, error: dayReadError } = await member
+  .from('daily_entries')
+  .select('version,energy,actions:daily_actions(id,title,done,position)')
+  .eq('day', dailyDate)
+  .single();
+assert.equal(dayReadError, null);
+assert.equal(savedDay.energy, 3);
+assert.equal(savedDay.actions[0].title, 'Read the saved day');
+assert.equal(savedDay.version, dayVersion);
+const { error: staleDay } = await member.rpc('daily_save', dayInput);
+assert.equal(staleDay.code, '40001');
+for (const table of ['daily_entries', 'daily_actions']) {
+  const { data: hidden, error: hiddenError } = await founder
+    .from(table)
+    .select('*')
+    .eq('person_id', memberPerson.id);
+  assert.equal(hiddenError, null);
+  assert.equal(hidden.length, 0);
+  const { error: anonymousRead } = await anon.from(table).select('*');
+  assert.ok(anonymousRead);
+}
+const { error: directDayWrite } = await member
+  .from('daily_entries')
+  .update({ energy: 5 })
+  .eq('person_id', memberPerson.id);
+assert.ok(directDayWrite);
+const { error: anonymousDayWrite } = await anon.rpc('daily_save', dayInput);
+assert.ok(anonymousDayWrite);
+console.log(
+  'PASS: daily save, embedded action read, optimistic conflict, anonymous/direct-write denial and two-user isolation',
+);

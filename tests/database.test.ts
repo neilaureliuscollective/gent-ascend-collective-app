@@ -411,3 +411,58 @@ describe('Aurelius private records and generation limits', () => {
     await expect(asUser(member, 'delete from public.ai_usage')).rejects.toThrow();
   });
 });
+
+describe('daily records: transactional snapshots and ownership', () => {
+  const today = "(current_timestamp at time zone 'America/Chicago')::date";
+  const actions = JSON.stringify([
+    { id: '62000000-0000-4000-8000-000000000001', title: 'One deliberate step', done: false },
+  ]);
+  const save = (version: number, energy = '4', value = actions, date = today) =>
+    `select public.daily_save(${date},${version},${energy},450,'A meaningful day','', '${value}'::jsonb)`;
+  it('creates an owned day and actions atomically, then rejects stale writes', async () => {
+    expect((await asUser<{ daily_save: number }>(founder, save(0))).rows[0]?.daily_save).toBe(1);
+    expect(
+      (await asUser(founder, `select * from public.daily_actions where day=${today}`)).rows,
+    ).toHaveLength(1);
+    await expect(asUser(founder, save(0))).rejects.toThrow('changed');
+    expect((await asUser<{ daily_save: number }>(founder, save(1))).rows[0]?.daily_save).toBe(2);
+  });
+  it('denies other-person reads, direct writes and anonymous operations', async () => {
+    expect((await asUser(member, 'select * from public.daily_entries')).rows).toHaveLength(0);
+    expect((await asUser(member, 'select * from public.daily_actions')).rows).toHaveLength(0);
+    await expect(asUser(founder, 'update public.daily_entries set energy=5')).rejects.toThrow();
+    await expect(asUser(member, 'delete from public.daily_actions')).rejects.toThrow();
+    await db.exec('set role anon');
+    try {
+      await expect(db.query(save(0))).rejects.toThrow();
+      await expect(db.query('select * from public.daily_entries')).rejects.toThrow();
+    } finally {
+      await db.exec('reset role');
+    }
+  });
+  it('rolls back invalid action batches and rejects invalid observations and a stale local date', async () => {
+    const duplicate = JSON.stringify(
+      Array(2).fill({
+        id: '62000000-0000-4000-8000-000000000001',
+        title: 'Duplicate',
+        done: false,
+      }),
+    );
+    await expect(asUser(founder, save(2, '4', duplicate))).rejects.toThrow();
+    await expect(asUser(founder, save(2, '6'))).rejects.toThrow();
+    await expect(asUser(founder, save(2, '4', actions, `${today}-1`))).rejects.toThrow(
+      'local day changed',
+    );
+    expect(
+      (
+        await asUser<{ version: number }>(
+          founder,
+          `select version from public.daily_entries where day=${today}`,
+        )
+      ).rows[0]?.version,
+    ).toBe(2);
+    expect(
+      (await asUser(founder, `select * from public.daily_actions where day=${today}`)).rows,
+    ).toHaveLength(1);
+  });
+});

@@ -53,6 +53,23 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Synthetic founder goal' })).toBeVisible();
   await expect(page.getByText('Plan tomorrow deliberately.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Take a moment to check in' }).click();
+  await page.getByLabel('What matters most today?').fill('Synthetic saved daily intention');
+  await page.getByRole('button', { name: '3 Steady', exact: true }).click();
+  await page.getByLabel('Hours slept').fill('7.5');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Your day is saved.');
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic saved daily intention' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Add a deliberate action' }).click();
+  await page.getByLabel('One action you can take').fill('Synthetic persistence action');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Synthetic persistence action' }).click();
+  await expect(page.getByRole('status')).toHaveText('Your day is saved.');
+  await page.reload();
+  await expect(page.getByRole('checkbox', { name: 'Synthetic persistence action' })).toBeChecked();
   await page.goto('/goals');
   await page.getByRole('button', { name: 'Mark complete' }).click();
   await page.getByRole('button', { name: 'Confirm completion' }).click();

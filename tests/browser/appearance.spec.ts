@@ -34,21 +34,13 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
-  await expect(page.locator('.hero-emblem img')).toBeVisible();
-  await expect
-    .poll(() =>
-      page
-        .locator('.hero-emblem img')
-        .evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0),
-    )
-    .toBe(true);
-  // Exercise the deferred renderer failure, not just its initial static state.
+  await page.goto('/aurelius');
+  await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
+  // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
-  await expect(page.locator('.command-presence .presence-fallback')).toBeVisible();
+  await expect(page.locator('.welcome-heading .presence-fallback')).toBeVisible();
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
-  await page.getByRole('link', { name: 'Open Aurelius', exact: false }).click();
-  await expect(page.getByLabel('Message Aurelius')).toBeVisible();
+  await page.getByLabel('Message Aurelius').fill('Still usable without graphics');
   expect(errors).toEqual([]);
 });
 

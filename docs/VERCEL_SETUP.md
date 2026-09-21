@@ -12,15 +12,15 @@ The attempted `git push -u origin main` failed because this execution environmen
 
 ## Vercel import settings
 
-| Setting | Value |
-| --- | --- |
-| Framework | Next.js |
-| Root directory | Repository root |
-| Production branch | main |
-| Node.js | 24.x (also constrained by package.json) |
-| Install command | npm ci |
-| Build command | npm run build |
-| Output directory | Framework default; do not set a static export directory |
+| Setting           | Value                                                   |
+| ----------------- | ------------------------------------------------------- |
+| Framework         | Next.js                                                 |
+| Root directory    | Repository root                                         |
+| Production branch | main                                                    |
+| Node.js           | 24.x (also constrained by package.json)                 |
+| Install command   | npm ci                                                  |
+| Build command     | npm run build                                           |
+| Output directory  | Framework default; do not set a static export directory |
 
 `vercel.json` records the framework/install/build settings. GitHub Actions runs the broader quality gates. A successful Vercel build alone does not replace Auth, database or live-model verification. Enable deployment protection for the private founder site using the controls available on the Vercel plan; keep application sign-in and RLS as well.
 
@@ -28,12 +28,12 @@ The attempted `git push -u origin main` failed because this execution environmen
 
 Vercel calls the main-branch environment **Production** even while this product is in private testing. Set these in its Production environment scope:
 
-| Variable | Value |
-| --- | --- |
-| APP_ENV | production |
-| AURELIUS_DEV_HARNESS | false |
-| NEXT_PUBLIC_SUPABASE_URL | URL of the dedicated hosted Supabase project |
-| NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY | Publishable key from that same project |
+| Variable                             | Value                                        |
+| ------------------------------------ | -------------------------------------------- |
+| APP_ENV                              | production                                   |
+| AURELIUS_DEV_HARNESS                 | false                                        |
+| NEXT_PUBLIC_SUPABASE_URL             | URL of the dedicated hosted Supabase project |
+| NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY | Publishable key from that same project       |
 
 The production configuration deliberately requires the Supabase pair. Add them before pressing Deploy. Do not copy `.env.example` wholesale: its `APP_ENV=local` is for local use. Do not set `NODE_ENV` manually. Never upload local developer tokens, founder seed passwords or a service-role key to Vercel.
 
@@ -41,14 +41,14 @@ Preview branches use `APP_ENV=preview` and a separate staging Supabase project. 
 
 ## Hosted database and founder account
 
-Use a fresh dedicated Supabase project for private testing. Apply the three migrations before creating the founder Auth user. On an authenticated operator workstation, verify the project ref and run:
+Use a fresh dedicated Supabase project for private testing. Apply all four migrations before creating the founder Auth user. On an authenticated operator workstation, verify the project ref and run:
 
 ```sh
 npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase migration list --linked
 npx supabase db push --linked --dry-run
-# Review that only the intended three migrations are pending, then:
+# Review that only the intended four migrations are pending, then:
 npx supabase db push --linked
 ```
 

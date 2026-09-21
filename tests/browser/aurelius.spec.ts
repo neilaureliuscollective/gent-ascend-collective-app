@@ -312,3 +312,32 @@ for (const width of [360, 1440]) {
     await expect(page.getByText('A meaningful first step', { exact: true })).toBeVisible();
   });
 }
+
+test('conversation deep link resumes the selected history without sending', async ({ page }) => {
+  const { state, sent } = await setup(page);
+  const id = '62000000-0000-4000-8000-000000000001';
+  state.conversations.push({
+    id,
+    person_id: 'synthetic',
+    title: 'A saved thought',
+    created_at: '2026-09-21',
+    updated_at: '2026-09-21',
+  });
+  state.turns.push({
+    id: '62000000-0000-4000-8000-000000000002',
+    person_id: 'synthetic',
+    conversation_id: id,
+    user_text: 'Remember the small next step',
+    assistant_text: 'Synthetic saved response.',
+    status: 'complete',
+    model: 'synthetic-test-model',
+    context_included: false,
+    prompt_version: 'fixture',
+    feedback: null,
+    created_at: '2026-09-21',
+    finished_at: '2026-09-21',
+  });
+  await page.goto(`/aurelius?conversation=${id}`);
+  await expect(page.getByText('Synthetic saved response.', { exact: true })).toBeVisible();
+  expect(sent).toEqual([]);
+});

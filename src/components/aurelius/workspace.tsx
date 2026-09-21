@@ -8,12 +8,20 @@ import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
-export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
+export function AureliusWorkspace({
+  compact = false,
+  initialDraft = '',
+  initialConversation = null,
+}: {
+  compact?: boolean;
+  initialDraft?: string;
+  initialConversation?: string | null;
+}) {
   const [preview, setPreview] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
   const [data, setData] = useState<WorkspaceData | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
+  const [selected, setSelected] = useState<string | null>(initialConversation);
+  const [draft, setDraft] = useState(initialDraft);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -70,7 +78,10 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
   useEffect(() => {
     const controller = new AbortController();
     reading.current = controller;
-    void fetch('/api/aurelius', { cache: 'no-store', signal: controller.signal })
+    void fetch(
+      '/api/aurelius' + (initialConversation ? `?conversationId=${initialConversation}` : ''),
+      { cache: 'no-store', signal: controller.signal },
+    )
       .then(async (response) => {
         if (response.status === 401) return null;
         const result = await response.json();
@@ -80,6 +91,7 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
       .then((result) => {
         if (controller.signal.aborted) return;
         setPreview(result === null);
+        if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
         setLoading(false);
       })
@@ -93,7 +105,7 @@ export function AureliusWorkspace({ compact = false }: { compact?: boolean }) {
       reading.current?.abort();
       generation.current?.abort();
     };
-  }, []);
+  }, [initialConversation]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;

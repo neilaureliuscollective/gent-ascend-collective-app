@@ -23,3 +23,5 @@ Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNES
 - AI output is never auto-promoted to memory. Only explicit user confirmation writes memory; private history/context uses session-bound ownership. Maintain stream save acknowledgments, quotas and error redaction.
 
 - Founder-approved logo and purple are canonical: read docs/BRAND_IDENTITY.md and docs/DESIGN_SYSTEM.md. Preserve the original master. The core purple is dark aubergine #150319; do not substitute neon/blue-violet. The classical figure belongs to the approved seal, not every interface surface. Keep decorative 3D optional, bounded and independent of personal data.
+
+- Founder sequence update: Aurelius 1D daily dashboard is authorized before live activation. Read docs/DAILY_DASHBOARD.md. Do not build any human/body model until requirements/measurements are ready. Keep self-reports distinct from imported/derived readings; never invent an AI briefing or readiness score. Sample mode is labeled, in-memory and never a privilege bypass. Daily private data is not automatically model context.

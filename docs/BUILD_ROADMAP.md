@@ -12,7 +12,11 @@
 | 5+       | Expand validated product loop; body visualization, commerce, community | Feature-specific usefulness, privacy and access checks              |
 | Clinical | Partner-powered care behind clinical gateway                           | Explicit legal/provider/data-contract readiness gate                |
 
-## Founder-directed sequence update — 2026-09-20
+## Current execution order — 2026-09-21
+
+Aurelius 1C identity → **Aurelius 1D daily dashboard** (founder explicitly authorized; see DAILY_DASHBOARD.md) → real-service activation and phone/foldable testing → founder intelligence evaluation → a grounded, user-reviewed daily briefing. The dashboard adds bounded user-entered observations/actions, not the full former Stage 2B measurement/routine scope. All body/human rendering is explicitly deferred until measurements and requirements are ready.
+
+## Earlier founder-directed sequence update — 2026-09-20
 
 The founder explicitly prioritized usable Aurelius intelligence before measurement/routine modules. Stage numbers below are historical labels, not execution order. Current order: Stage 1/2A validation → **Aurelius 1A (the Stage 3A conversation foundation plus manual memory controls)** → **Aurelius 1B (premium workspace and disconnected exploration)** → real-service activation → founder daily conversation evaluation and corrections → research/continuity improvements → choose the first metric/routine that genuinely strengthens Aurelius. Do not resume feature expansion merely because old Stage 2B appeared earlier in the table.
 
@@ -53,3 +57,7 @@ Next: connect the existing backend/model adapter, validate real identity/persist
 ## Aurelius 1C — implemented; physical-device review pending
 
 Founder requested a materially more immersive, premium and futuristic aesthetic before the rest of the Life OS grows. Research and implementation scope: [AESTHETIC_ELEVATION_PROPOSAL.md](AESTHETIC_ELEVATION_PROPOSAL.md). Proposed order: shared materials/type/layout → Command and Aurelius → bounded 3D and motion → functional/accessibility/performance verification. The founder subsequently approved the phase and supplied the official logo. Implementation and verification: [AURELIUS_1C.md](AURELIUS_1C.md). Real-service activation remains necessary afterward; visual refinement does not close those gates.
+
+## Aurelius 1D — daily dashboard
+
+Acceptance: truthful empty and fictional sample states; check-in/intention/action/reflection interactions; sample produces no API writes; personal data uses real session ownership; local calendar date, normalized actions, bounded atomic save, stale-version denial, owner-only reads and no direct writes. 7/30-day chart has exact accessible values and visible gaps. Starters open reviewable drafts, saved conversation resumes without automatic sending. Phone/unfolded/desktop, short screen, keyboard, reduced motion, build and database checks are required. Real Supabase/founder persistence and physical-device gates remain separate. Scope, research and measured evidence: [DAILY_DASHBOARD.md](DAILY_DASHBOARD.md).

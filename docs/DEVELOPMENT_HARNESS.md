@@ -27,3 +27,7 @@ If Docker is unavailable, the shell remains inspectable and tests can run, but f
 ## Required abuse cases
 
 Hosted preview and production flag combinations; hostile Origin/Host; invalid/absent bootstrap token; unauthenticated scenario mutation; non-founder session; expired/tampered scenario; cross-person reads/writes; billing self-escalation; anonymous database access. Assert both positive local behavior and negative production behavior.
+
+## Daily dashboard testing
+
+The seed now adds five explicitly synthetic past-day energy/sleep entries for the founder, including a gap and an empty current day. Values/dates follow a repeatable pattern relative to local reset day; never load this into hosted data. The separate signed-out **Explore a sample day** control uses only in-memory fictional data and is safe in any environment; it does not grant identity or privileges. Founder persistence still requires the real local session. Integration and founder gates now exercise daily saves and action readback.

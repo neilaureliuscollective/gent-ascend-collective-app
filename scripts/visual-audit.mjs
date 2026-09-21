@@ -38,13 +38,8 @@ try {
   for (const width of [390, 768, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 960 } });
     await page.goto('http://127.0.0.1:3105');
-    await expect(page.getByRole('heading', { name: 'A life built with intention.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Make today yours.' })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
-    await expect
-      .poll(() =>
-        page.locator('.hero-emblem img').evaluate((el) => el.complete && el.naturalWidth > 0),
-      )
-      .toBe(true);
     await page.waitForTimeout(1600);
     await page.screenshot({ path: `${output}/command-${width}.png`, fullPage: true });
     report.screens.push({
@@ -58,15 +53,25 @@ try {
         performance.getEntriesByType('resource').map((e) => e.toJSON()),
       );
     if (width === 1440) {
-      const canvas = page.locator('.command-presence canvas');
+      await page.goto('http://127.0.0.1:3105/aurelius');
+      await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
+      const canvas = page.locator('.welcome-heading .aurelius-presence canvas');
       await expect(canvas).toHaveCount(1);
-      await expect(page.locator('.command-presence')).toHaveAttribute('data-rendered', 'true');
+      await expect(page.locator('.welcome-heading .aurelius-presence')).toHaveAttribute(
+        'data-rendered',
+        'true',
+      );
       await canvas.evaluate((el) =>
         el.dispatchEvent(new Event('webglcontextlost', { cancelable: true })),
       );
-      await expect(page.locator('.command-presence .presence-fallback')).toBeVisible();
+      await expect(
+        page.locator('.welcome-heading .aurelius-presence .presence-fallback'),
+      ).toBeVisible();
       await canvas.evaluate((el) => el.dispatchEvent(new Event('webglcontextrestored')));
-      await expect(page.locator('.command-presence')).toHaveAttribute('data-rendered', 'true');
+      await expect(page.locator('.welcome-heading .aurelius-presence')).toHaveAttribute(
+        'data-rendered',
+        'true',
+      );
       for (let i = 0; i < 3; i++) {
         await page.getByRole('button', { name: 'Pause ambient motion' }).click();
         await expect(canvas).toHaveCount(0);
@@ -91,7 +96,7 @@ try {
     reducedMotion: 'reduce',
   });
   await page.goto('http://127.0.0.1:3105');
-  await expect(page.getByRole('heading', { name: 'A life built with intention.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Make today yours.' })).toBeVisible();
   await page.waitForTimeout(1600);
   report.resources.still = await page.evaluate(() =>
     performance.getEntriesByType('resource').map((e) => e.toJSON()),

@@ -5,7 +5,7 @@ for (const width of [360, 768, 1440]) {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'A life built with intention.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Make today yours.' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
@@ -18,11 +18,16 @@ for (const width of [360, 768, 1440]) {
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).not.toBeVisible();
     await expect(trigger).toBeFocused();
-    await page.getByRole('link', { name: 'My world', exact: false }).click();
+    await page
+      .getByRole('navigation', { name: 'Main navigation' })
+      .getByRole('link', { name: 'My world', exact: false })
+      .click();
     await expect(page.getByRole('heading', { name: 'My world.' })).toBeVisible();
     await page.getByRole('link', { name: 'Progress', exact: false }).click();
     await expect(
-      page.getByText('No progress measurements have been recorded.', { exact: false }),
+      page.getByText('Your daily energy and sleep observations now live in Command.', {
+        exact: false,
+      }),
     ).toBeVisible();
     expect(errors).toEqual([]);
     if (width === 360 || width === 1440) {

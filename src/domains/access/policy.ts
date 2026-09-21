@@ -3,6 +3,8 @@ export type Tier = (typeof tiers)[number];
 export type BillingState =
   'none' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'paused';
 export const capabilities = [
+  'daily.read',
+  'daily.write',
   'profile.read',
   'profile.write',
   'goals.read',
@@ -25,6 +27,8 @@ export function calculateCapabilities(
   now = new Date(),
 ): ReadonlySet<Capability> {
   const granted = new Set<Capability>([
+    'daily.read',
+    'daily.write',
     'profile.read',
     'profile.write',
     'goals.read',

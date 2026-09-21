@@ -1,6 +1,8 @@
 # Execution status — 2026-09-21
 
-**Latest milestone: Aurelius 1C visual elevation implemented and locally verified.** The founder supplied the official logo and authorized building. Its sampled aubergine palette now anchors the shell, Command and Aurelius. Original artwork is preserved; transparent seal, compact app icons, self-hosted typography, controlled glass/motion and a deferred 3D brand globe are implemented. See [AURELIUS_1C.md](AURELIUS_1C.md) and [BRAND_IDENTITY.md](BRAND_IDENTITY.md). Lint/typecheck/build, 53 unit/SQL/SDK tests and 30 browser tests pass. Physical-device and live-service gates remain open.
+**Latest milestone: Aurelius 1D daily dashboard implemented; verification results below.** The founder explicitly authorized the daily dashboard while postponing backend/GitHub activation and all human/body modeling. See [research, scope and evidence](DAILY_DASHBOARD.md). Command now supports a daily intention, optional self-reported energy/sleep, five bounded actions, 7/30-day observations, evening reflection, active goal and Aurelius conversation entry points. Public sample mode is clearly fictional, in-memory only and performs no API writes. Personal mode uses an additive migration and real owner-scoped save/read contracts. No new packages or model behavior.
+
+**Previous milestone: Aurelius 1C visual elevation implemented and locally verified.** The founder supplied the official logo and authorized building. Its sampled aubergine palette now anchors the shell, Command and Aurelius. Original artwork is preserved; transparent seal, compact app icons, self-hosted typography, controlled glass/motion and a deferred 3D brand globe are implemented. See [AURELIUS_1C.md](AURELIUS_1C.md) and [BRAND_IDENTITY.md](BRAND_IDENTITY.md). Lint/typecheck/build, 53 unit/SQL/SDK tests and 30 browser tests pass. Physical-device and live-service gates remain open.
 
 **Previous milestone: Aurelius 1B workspace refinement implemented and locally verified.** The founder explicitly deferred GitHub reconnection and live-service testing, and authorized continuing the premium structure and experience. See [Aurelius 1B](AURELIUS_1B.md). Saved-conversation search/navigation, personal-context cards, refined memory presentation and an honest signed-out preview are now available. No provider, auth, billing or database permissions changed. The remaining real-service gates below still apply.
 
@@ -31,13 +33,13 @@ The existing strict Next/React/Tailwind foundation, profile/goals and protected 
 | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | ESLint                               | Passed, zero warnings                                                                           |
 | Strict typecheck                     | Passed                                                                                          |
-| Unit + SQL + SDK mock-provider tests | 53 passed                                                                                       |
+| Unit + SQL + SDK mock-provider tests | 59 passed                                                                                       |
 | Production build                     | Passed                                                                                          |
-| Browser interactions                 | 30 passed; includes short screens, appearance fallback and 200% text                            |
-| Migration chain                      | Three migrations executed in PGlite; explicit minimal Auth adapter                              |
+| Browser interactions                 | 39 passed; daily sample flows, conflicts, deep links, keyboard and responsive checks            |
+| Migration chain                      | Four migrations executed in PGlite; explicit minimal Auth adapter                               |
 | UI inspection                        | Phone/desktop conversation screenshots reviewed; composer and empty heading visible in viewport |
 | Actual Supabase reset/Auth/PostgREST | Unrun: Docker/Podman unavailable                                                                |
-| Real founder browser journey         | Extended for memory persistence; unrun without local Supabase                                   |
+| Real founder browser journey         | Extended for daily persistence; unrun without local Supabase                                    |
 | Paid live-model smoke                | Unrun: no AI_GATEWAY_API_KEY configured                                                         |
 | Intelligence-quality evaluation      | Unrun; requires real founder conversations                                                      |
 | GitHub CI / remote push              | Not performed; last verified connector access is read-only                                      |
@@ -60,6 +62,6 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 
 ## Exact next step
 
-Review the implemented Aurelius 1C on the founder device, then proceed to service activation and daily intelligence evaluation. The steps below remain the activation path; they do not block the approved visual work.
+Founder review of the daily dashboard on a real phone/foldable, then service activation and daily Aurelius evaluation. No body model is scheduled. The disconnected sample can be tested immediately by running the existing checkout and selecting **Explore a sample day**.
 
-No founder setup is required to preserve this milestone. GitHub reconnection is deliberately deferred. When the founder is ready, import/sync this committed milestone into the existing official checkout with write-authorized access. On a Docker-capable machine configure Supabase and a dedicated Gateway key, run the real integration/founder/live-model tests, and resolve any differences. Then Neil uses Aurelius daily and flags quality failures. Prioritize conversation quality, continuity and sourced research before expanding dashboard modules. A protected phone-installable preview follows verified hosted Auth and HTTPS/PWA setup; never expose the local developer harness.
+When ready, sync the preserved history into the official workstation checkout, reconnect the new GitHub account, and configure protected Vercel/Supabase/Gateway access. Apply all four migrations, run real integration/founder/live-provider gates, then use Aurelius daily and assess quality with the existing rubric. Daily records are not automatically in AI context; the next intelligence slice should add a user-reviewed, source-linked daily briefing only after live quality, ownership and privacy validation. A phone-installable hosted preview follows verified Auth/HTTPS setup; never expose the local harness.

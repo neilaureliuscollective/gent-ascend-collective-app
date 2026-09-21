@@ -27,7 +27,7 @@ Stage 2B: metric_definitions and measurements (typed numeric value/unit, method,
 
 Routines and completion records are separate entities. Workouts, lab panels/results, scans, mood and appointments get typed domain tables as those capabilities arrive. No giant JSON health table. Timeline events reference domain records and expose authorized summaries; a generic event must never grant access to its target.
 
-## Memory and AI records (planned, not migrated)
+## Memory distinctions and future derived records
 
 Canonical profile facts and goals retain domain ownership. Preferences may be user-confirmed. Inferences have provenance, confidence, review status, expiry and supersession. Summaries retain source IDs and invalidate when a source is edited/deleted. Conversation records are not automatically durable memory. User inspection, correction, deletion and retention preferences are required before persistent AI memory.
 
@@ -47,3 +47,11 @@ Record origin (user/import/provider/derived), event time vs ingestion time and p
 - ai_memories: explicitly confirmed user facts/preferences, source=user, content, confirmation time and optimistic version. Bounded create/correct/delete RPCs; no AI inferred truth or vectors.
 
 All new tables enable RLS, deny anon access and isolate owner reads. Fixed-search-path definer RPCs derive owner from auth.uid() and grant no cross-person access. No raw AI text is copied into the generic personal timeline. Memory and conversation deletion are separate intentional operations.
+
+## Aurelius 1D daily records
+
+Migration 202609210004_daily_dashboard.sql adds `daily_entries` keyed by (person_id, local calendar day), with saved timezone, optional ordinal energy 1–5, optional manually entered sleep minutes 0–1440, intention (160 characters), reflection (500 characters), optimistic version and updated_at. Null means missing; zero minutes is distinct. All are user reports, not clinical/derived metrics. `daily_actions` has a composite owner/day FK, stable UUID, title, completion and position; at most five per day.
+
+The authenticated `daily_save` RPC derives the person from auth.uid(), locks that person, checks local day and expected version, then replaces entry/action snapshot atomically. Direct client table writes are denied. Reads embed the action relationship in the same SQL statement so entry version and actions cannot come from different snapshots. Goals/latest conversation are separate read-only projections. Basic daily capabilities do not require paid billing. Date changes require explicit reload; no browser-provided timezone can change ownership/date authority.
+
+The UI reads the last 30 days and edits today only. Older records are retained; 30 days is a display window, not a deletion policy. Past reflections/action details are stored but their browsing UI is deferred; this phase charts energy and shows dated energy/sleep values. Records cascade on person/account deletion. Define full export, record deletion and retention controls before sensitive beta use. No daily text is duplicated into generic events, AI memory, summaries or provider context. A future authorized timeline projection can reference these domain records without replacing them.

@@ -15,3 +15,13 @@ insert into public.personal_events (id,person_id,kind,occurred_at,recorded_at,so
 select '10000000-0000-4000-8000-000000000001',id,'workspace.created','2026-01-01','2026-01-01','user'
 from public.persons where auth_user_id = '00000000-0000-4000-8000-000000000001'
 on conflict(id) do nothing;
+
+-- Deterministic synthetic pattern relative to reset day; founder starts today empty.
+-- A missing day is intentional. Never use this seed on a hosted environment.
+insert into public.daily_entries(person_id,day,timezone,energy,sleep_minutes,intention,reflection)
+select p.id, (current_timestamp at time zone p.timezone)::date - s.offset_days,
+ p.timezone, s.energy, s.sleep_minutes, '', ''
+from public.persons p cross join (values (6,3,420),(5,4,450),(3,2,390),(2,3,435),(1,4,465))
+ as s(offset_days,energy,sleep_minutes)
+where p.auth_user_id='00000000-0000-4000-8000-000000000001'
+on conflict(person_id,day) do nothing;

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 export default function Progress() {
   return (
     <>
@@ -11,10 +12,12 @@ export default function Progress() {
         <span className="eyebrow">Your history</span>
         <h2>Every meaningful step belongs here.</h2>
         <p>
-          No progress measurements have been recorded. Your timeline will connect goals,
-          observations and the changes that follow.
+          Your daily energy and sleep observations now live in Command. A broader timeline will
+          connect goals, measurements and the changes that follow.
         </p>
-        <span className="pill">Recording arrives in the next stage</span>
+        <Link className="button" href="/#rhythm">
+          View your daily observations
+        </Link>
       </section>
     </>
   );

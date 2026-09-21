@@ -1,3 +1,4 @@
+import type { DayEntry, DayAction } from '@/domains/daily/model';
 import type { Conversation, Turn, Memory } from '@/domains/intelligence/types';
 // Initial migration contract. Replace with CLI-generated types after a validated
 // local Supabase reset; this file deliberately describes only shipped tables.
@@ -8,11 +9,11 @@ type Relationship = {
   referencedRelation: string;
   referencedColumns: string[];
 };
-type Table<Row, Insert, Update> = {
+type Table<Row, Insert, Update, Relations extends Relationship[] = Relationship[]> = {
   Row: Row;
   Insert: Insert;
   Update: Update;
-  Relationships: Relationship[];
+  Relationships: Relations;
 };
 export type PersonRow = {
   id: string;
@@ -53,6 +54,21 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      daily_entries: Table<Omit<DayEntry, 'actions'> & { person_id: string }, never, never>;
+      daily_actions: Table<
+        DayAction & { person_id: string; day: string; position: number },
+        never,
+        never,
+        [
+          {
+            foreignKeyName: 'daily_actions_entry_fkey';
+            columns: ['person_id', 'day'];
+            isOneToOne: false;
+            referencedRelation: 'daily_entries';
+            referencedColumns: ['person_id', 'day'];
+          },
+        ]
+      >;
       ai_conversations: Table<Conversation, never, never>;
       ai_turns: Table<Turn, never, { feedback: Turn['feedback'] }>;
       ai_memories: Table<Memory, never, never>;
@@ -106,6 +122,18 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      daily_save: {
+        Args: {
+          p_day: string;
+          p_version: number;
+          p_energy: number | null;
+          p_sleep: number | null;
+          p_intention: string;
+          p_reflection: string;
+          p_actions: DayAction[];
+        };
+        Returns: number;
+      };
       ai_begin_turn: {
         Args: {
           p_conversation: string;

@@ -27,3 +27,11 @@ Sending a message transmits recent conversation and the user's optionally enable
 Requests are same-origin JSON with a 32 KiB body bound, validated input, verified Auth, server capabilities and atomic per-person limits. Markdown has no raw HTML or automatic remote image loading. Provider errors are redacted before SDK logging. No raw chat/AI trace telemetry is enabled.
 
 Deletion removes application conversation content or explicit memory independently. Database backups/provider retention and requests already sent are separate systems; do not imply immediate global erasure. Usage metadata is retained to enforce quotas; define its scheduled retention and account export/closure behavior before beta. Current AI tables/RPCs are owner-controlled working records, not reliable evidence for regulated decisions or invoicing.
+
+## Aurelius 1D daily boundary
+
+Intention/actions are private planning data. Sleep/energy and free-text reflections may be sensitive personal wellness data; use synthetic records until the existing beta privacy gates are met. No medical/clinical ingestion is added. Daily text is not sent to the model, promoted to memory, logged or saved to localStorage. Conversation starter URLs contain only an allowlisted generic key; resume URLs contain a validated UUID and still require owner authorization.
+
+The daily API uses same-origin JSON, an 8 KiB streaming body bound, server validation, verified session/capabilities and private no-store responses. RLS protects owner reads; explicit grants deny anon and direct table writes. A narrow fixed-search-path definer RPC derives owner itself and atomically validates date/version/action bounds. No service-role app client. An ambiguous save keeps the draft and requires reloading before retry, rather than claiming success or overwriting.
+
+Public sample mode is not a privileged account: explicitly fictional, in-memory, discarded on exit/reload, no database calls for mutations. The fixture's Next Link adapter exists only under tests; production navigation is separately exercised against the built app. No hosted harness or new auth bypass.

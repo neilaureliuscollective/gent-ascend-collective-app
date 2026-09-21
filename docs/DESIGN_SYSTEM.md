@@ -6,7 +6,7 @@ Implemented 2026-09-21 following founder approval and the supplied official logo
 
 An obsidian personal environment with deep aubergine enamel, warm gold edges, a slowly shifting light field and a celestial Aurelius presence. The home screen prioritizes Aurelius, personal direction and useful context. Profile, goals, memory and conversation share the same visual language. Empty states remain truthful; visuals never fabricate progress or connected services.
 
-Use the full seal for the home hero and brand lockup, a compact A/orbit/star for app icons, and the globe motif for the intelligence presence. Sora carries modern headings; Inter carries the interface and reading. A restrained serif remains only in the formal wordmark. Self-host fonts; no font network dependency.
+Use the full seal for formal brand lockups, a compact A/orbit/star for app icons, and the globe motif for the intelligence presence. Sora carries modern headings; Inter carries the interface and reading. A restrained serif remains only in the formal wordmark. Self-host fonts; no font network dependency.
 
 ## Materials and hierarchy
 
@@ -18,7 +18,7 @@ Keep 16px body/form text and readable secondary labels. Metadata has a 10px lowe
 
 ## Responsive behavior
 
-Phone: compact branded header, single-column Command, floating labeled dock, central Aurelius control, collapsed conversation library. Unfolded: two-column home areas when space permits; the conversation gets the broad reading canvas. Desktop: restrained sidebar, three content columns and persistent conversation library. Layout thresholds respond to width, not device names.
+Phone: compact branded header, single-column Command, floating labeled dock, central Aurelius control, collapsed conversation library. Unfolded: two-column home areas when space permits; the conversation gets the broad reading canvas. Desktop: restrained sidebar, asymmetric two-column daily home and persistent conversation library. Layout thresholds respond to width, not device names.
 
 The full workspace no longer duplicates its library with a second conversation dropdown. The compact global panel retains its dropdown. Transcript scrolling preserves composer access; short screens reduce decorative space. `interactive-widget=resizes-content` requests viewport adaptation on supporting mobile browsers. Actual phone keyboard behavior still requires device testing.
 
@@ -33,3 +33,7 @@ Ambient/Still and solid-surface choices persist locally. OS reduced motion wins 
 ## Validation
 
 See [AURELIUS_1C.md](AURELIUS_1C.md) for measured results and remaining device gates. Existing API, Auth, RLS, billing and AI behavior are unchanged. Visual acceptance is separate from live-service readiness.
+
+## Daily dashboard application
+
+See DAILY_DASHBOARD.md. Replace the oversized introductory home hero with a compact greeting/lens and an actionable aubergine intention card. Personal check-in, deliberate actions, active goal, history and reflection form the hierarchy. Gold is an action/material accent, not a universal status color. Today/Evening changes emphasis; no content disappears on a timer. Use static celestial imagery here; no body placeholder or new GPU scene. `dashboard.css` extends shared tokens without changing the approved brand palette.

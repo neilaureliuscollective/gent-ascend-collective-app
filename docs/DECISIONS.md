@@ -80,3 +80,13 @@ The founder supplied the official seal and explicitly requested implementation u
 Implemented local Sora/Inter (OFL assets, combined 81,908 bytes), shared CSS materials, responsive navigation and one optional Three 0.186.0 scene. Three was chosen for a bounded procedural brand focal point, not a body model or new domain. Dynamic import, static SVG, 1.5 DPR cap, motion preference enforcement and cleanup are mandatory. No React Three Fiber, animation framework, paid assets or extra backend vendor. Initial JavaScript increase 7,485 encoded bytes; optional scene increase 133,447 bytes in the recorded local audit. See AURELIUS_1C.md for evidence and limitations.
 
 No auth, RLS, billing, AI instructions or schema changes. No remote push/deployment. Real services and actual device evaluation remain the next gates.
+
+## 2026-09-21 — Aurelius 1D daily dashboard
+
+Founder explicitly requested research plus implementation while deferring human/body modeling. This supersedes 1C's earlier recommendation to stop at the visual shell. Keep a useful daily loop: arrive, choose, act, reflect. Approved aubergine/gold remains canonical; shared brand imagery is not personal anatomy. Research/limits: DAILY_DASHBOARD.md.
+
+Five actions and one intention are reversible first-slice product limits, not pricing rules. Energy is a 1–5 user report; sleep is manually entered, never a wearable score. No synthetic AI brief/readiness index, streak pressure or unrelated dashboard modules. Morning/evening lens is chosen by the person. No new dependency or infrastructure.
+
+A clearly labeled synthetic sample enables disconnected interaction without a forged identity or persistent browser health data. Personal mode adds normalized daily entries/actions with RLS and an atomic versioned owner-derived RPC. Same-statement embedded reads avoid mixed entry/action versions. Validation loads on interaction rather than inflating the initial dashboard bundle. The dashboard uses the existing static globe; optional canvas remains in the Aurelius welcome only.
+
+Daily data stays outside model context until a separate explicit briefing/context decision. Generic allowlisted starters prefill a draft, never send automatically; a validated conversation UUID resumes authorized history. Live connections, physical-device acceptance and real Supabase gates remain open. No remote push or deployment.
