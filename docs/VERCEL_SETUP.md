@@ -1,28 +1,12 @@
 # Fresh Vercel setup
 
-Prepared 2026-09-21. The source builds; actual hosted Supabase and model acceptance remain open. Import the existing official repository, not a replacement. No deployment or remote database change was performed during preparation.
+Updated 2026-09-22 for the new official repository and direct OpenAI. Actual hosted Supabase and paid model acceptance remain open. No Vercel deployment or remote database change was performed during preparation.
 
 ## GitHub first
 
-Official repo: https://github.com/neilaureliuscollective/aurelius-collective-app
+Official repository: https://github.com/neilaureliuscollective/gent-ascend-collective-app
 
-The connected GitHub account is now `neilaureliuscollective`; the official repository reports admin/write permission and is empty. The complete 12-commit application history through `cf141f8` has been restored from the verified milestone bundle in the execution checkout. The founder's actual Desktop is not mounted here.
-
-A fresh terminal `git push --dry-run origin main` failed with `could not read Username for https://github.com: terminal prompts disabled`. Connected-app repository permission does not provide terminal Git credentials. The current connector exposes file/tree/commit editing, not an authenticated Git transport for uploading the original commit objects. No source or history has been published in this attempt.
-
-On the authenticated founder workstation, first integrate the latest handoff bundle into the existing `~/Desktop/aurelius-og` checkout using its START_HERE instructions. Preserve local changes; do not reset or force-push. With GitHub CLI installed, authenticate the correct account and publish:
-
-```sh
-cd ~/Desktop/aurelius-og
-gh auth login --hostname github.com --git-protocol https --web
-gh auth setup-git
-gh auth status --hostname github.com
-git remote set-url origin https://github.com/neilaureliuscollective/aurelius-collective-app.git
-git push -u origin main
-git ls-remote origin refs/heads/main
-```
-
-Verify the remote main SHA matches `git rev-parse HEAD`. Never paste an access token into chat. This preserves all original milestones; no replacement repository is required.
+This is the founder-selected destination for the existing application. Import this repository into Vercel with the repository root as the root directory. The existing source, artwork, migrations and tests are preserved. No product-transformation features are included in this deployment preparation.
 
 ## Vercel import settings
 
@@ -81,11 +65,13 @@ returning membership.person_id, membership.beta_access;
 
 Verify exactly one row is returned. Sign in at `/you` using that account. This is normal hosted Auth, ownership and beta entitlement; it requires no Stripe payment or onboarding completion. `/dev` must return 404 on Vercel. Do not expose the local harness to get into the hosted app.
 
-## Connect the brain
+## Connect Aethelios directly to OpenAI
 
-Current adapter: **OpenAI models through Vercel AI Gateway**. Add a server-only `AI_GATEWAY_API_KEY` with Gateway credits and a budget. `AURELIUS_AI_MODEL` optionally overrides the current default `openai/gpt-6-astra`; verify model access in your account before live testing. No model credential is needed for the initial build or saved workspace reads.
+Add `OPENAI_API_KEY` privately in the Vercel project environment variables. Use an API key from the OpenAI project/account containing the founder's existing API credits. No `AI_GATEWAY_API_KEY`, Gateway credits or BYOK setup is required. Do not prefix the OpenAI key with `NEXT_PUBLIC_` and do not commit it.
 
-An `OPENAI_API_KEY` environment variable alone is not consumed by this implementation. To use an existing OpenAI key without changing the adapter, connect it in AI Gateway's BYOK settings and still supply the Gateway key to the app. BYOK currently requires purchased Gateway credits; failures may fall back to Gateway-funded credentials, and Gateway budgets do not cap BYOK spend. Review provider-side controls separately. The existing no-training Gateway option does not override your BYOK provider contract. Direct OpenAI routing would be a small, explicit adapter change, not an environment-variable rename.
+The optional `AURELIUS_AI_MODEL` is `gpt-6-astra` by default (without `openai/`). This internal variable name is retained for compatibility; the public intelligence is Aethelios. Verify that your OpenAI project has access to the selected model. The app builds without an OpenAI key; model replies remain unavailable until configured. Add the key before the first deployment, or redeploy after adding it.
+
+The provider adapter calls `https://api.openai.com/v1/responses` directly and disables response storage with `store: false`. The AI SDK is application code, not Gateway routing. Supabase remains the application's conversation and memory store. Existing quotas, confirmation controls and redacted error handling remain intact.
 
 ## Verify after deployment
 
@@ -102,6 +88,7 @@ Begin founder daily evaluation only after those real-service checks. Voice, web 
 
 - [Vercel Node versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)
 - [Vercel build settings](https://vercel.com/docs/builds/configure-a-build)
-- [Gateway BYOK](https://vercel.com/docs/ai-gateway/authentication-and-byok/byok)
+- [Direct OpenAI provider](https://ai-sdk.dev/providers/ai-sdk-providers/openai)
+- [OpenAI model](https://developers.openai.com/api/docs/models/gpt-6-astra)
 - [Supabase migration workflow](https://supabase.com/docs/guides/deployment/database-migrations)
 - [Supabase db push](https://supabase.com/docs/reference/cli/supabase-db-push)

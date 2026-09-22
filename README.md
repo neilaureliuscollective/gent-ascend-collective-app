@@ -4,7 +4,7 @@ A men’s personal operating environment. Aethelios is the Digital Co-Founder of
 
 Canonical personal operating environment. Read [project rules](AGENTS.md) and [current status](docs/STATUS.md) first.
 
-For the fresh GitHub → Vercel deployment, follow [Vercel setup](docs/VERCEL_SETUP.md): exact import settings, required environment variables, hosted migrations, founder beta access and OpenAI/Gateway connection.
+For the fresh GitHub → Vercel deployment, follow [Vercel setup](docs/VERCEL_SETUP.md): exact import settings, required environment variables, hosted migrations, founder beta access and direct OpenAI connection.
 
 Node 24, npm. `npm ci`, then `npm run dev` renders the application shell at http://127.0.0.1:3000 without external credentials. For real founder identity/persistence, start Docker and run `npm run dev:setup`; follow the generated local entry instruction. No Stripe, SMTP or production onboarding required.
 
@@ -18,12 +18,14 @@ On a Docker-capable machine, from this repository: `npm ci`, `npm run dev:setup`
 
 `npm run db:types` writes a separate generated comparison file; reconcile it with the currently hand-maintained `database.ts` contract after local Supabase validation. SQL grants, rather than generated TypeScript Insert/Update shapes, enforce write permissions.
 
-Aurelius 1A is now implemented: shared global/full-screen conversation UI, AI SDK streaming, saved history, profile/goal context, user-confirmed memory and reply feedback. Read [activation and acceptance](docs/AURELIUS_1A.md) and [AI architecture](docs/AI_ARCHITECTURE.md). Configure the server-only `AI_GATEWAY_API_KEY` in ignored `.env.local`; the app is honest about unavailable replies when the key is missing. `npm run test:ai:live` makes one synthetic paid-provider connection test and is separate from normal CI. Real service checks remain pending in this environment.
+Aurelius 1A is now implemented: shared global/full-screen conversation UI, AI SDK streaming, saved history, profile/goal context, user-confirmed memory and reply feedback. Read [activation and acceptance](docs/AURELIUS_1A.md) and [AI architecture](docs/AI_ARCHITECTURE.md). Configure the server-only `OPENAI_API_KEY` in ignored `.env.local`; the app is honest about unavailable replies when the key is missing. `npm run test:ai:live` makes one synthetic paid-provider connection test and is separate from normal CI. Real service checks remain pending in this environment.
 
-Aurelius 1B adds a searchable conversation library, refined context/memory views and a signed-out workspace preview. Open `/aethelios` to explore it without credentials; drafting is temporary and sending/saving stays disabled until authorized services are connected. See [scope and checks](docs/AURELIUS_1B.md). The founder has deferred GitHub reconnection; the current milestone remains local until that step.
+Aurelius 1B adds a searchable conversation library, refined context/memory views and a signed-out workspace preview. Open `/aethelios` to explore it without credentials; drafting is temporary and sending/saving stays disabled until authorized services are connected. See [scope and checks](docs/AURELIUS_1B.md). The current official repository and activation steps are listed in the deployment guide.
 
 Aurelius 1D adds the working daily dashboard. From `/`, select **Explore a sample day** to try intention, energy/sleep, actions, history and reflection without credentials; sample edits disappear on exit/reload. Real personal saves use the fourth migration and authenticated Supabase ownership. [Dashboard research and build](docs/DAILY_DASHBOARD.md) records the scope, evidence and remaining gates. No human/body model is included. `scripts/dashboard-audit.mjs` captures current daily screenshots and local resource measurements after a production build.
 
 Aurelius 1E refines the daily dashboard/shared shell with obsidian surfaces, metallic gold and concentrated purple, plus lightweight orbital lighting. [Material decisions and evidence](docs/AURELIUS_1E.md) record accessibility/performance limits. Still mode remains available; no new service or body model is required.
 
 Aurelius 1F upgrades the shared Orb with a dark crystalline core, reflective gold bands and layered light. Open `/aethelios` → **Explore the Orb** to inspect Ready/Listening/Preparing/Speaking/Stopped visual previews. Microphone and audio remain off. The same identity works in Still mode and without WebGL. [Scope, research and limits](docs/AURELIUS_1F.md); `scripts/orb-audit.mjs` captures the actual UI and local rendering evidence.
+
+Original application milestones are preserved in [the history archive](docs/history/README.md). The connected GitHub publication uses the current source snapshot.

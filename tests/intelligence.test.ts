@@ -191,8 +191,8 @@ describe('real AI SDK agent adapter with a mock provider', () => {
     ]);
     expect(model.doStreamCalls).toHaveLength(1);
     expect(model.doStreamCalls[0]?.maxOutputTokens).toBe(4096);
-    expect(model.doStreamCalls[0]?.providerOptions?.gateway).toMatchObject({
-      disallowPromptTraining: true,
+    expect(model.doStreamCalls[0]?.providerOptions?.openai).toMatchObject({
+      store: false,
     });
     expect(model.doStreamCalls[0]?.prompt[0]).toMatchObject({
       role: 'system',

@@ -249,7 +249,7 @@ describe('Aethelios private records and generation limits', () => {
   const request = '40000000-0000-4000-8000-000000000001';
   const memory = '50000000-0000-4000-8000-000000000001';
   const begin = (id: string, conversation = chat) =>
-    `select public.ai_begin_turn('${conversation}','${id}','Help me think','openai/gpt-6-astra',true,'test-v1')`;
+    `select public.ai_begin_turn('${conversation}','${id}','Help me think','gpt-6-astra',true,'test-v1')`;
   it('saves explicit memory, rejects stale correction and isolates the other person', async () => {
     await asUser(
       founder,

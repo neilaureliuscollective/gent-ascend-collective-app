@@ -110,7 +110,7 @@ export async function readWorkspace(conversationId?: string): Promise<WorkspaceD
     memories: memories.data ?? [],
     context,
     canChat: access.has('aurelius.context'),
-    configured: Boolean(config.AI_GATEWAY_API_KEY),
+    configured: Boolean(config.OPENAI_API_KEY),
     model: config.AURELIUS_AI_MODEL,
   };
 }
@@ -127,7 +127,7 @@ export async function prepareReply(input: {
       403,
     );
   const config = aiConfigSchema.parse(process.env);
-  if (!config.AI_GATEWAY_API_KEY)
+  if (!config.OPENAI_API_KEY)
     throw new IntelligenceError(
       'Aethelios is waiting for its model connection. Your workspace remains available.',
       503,

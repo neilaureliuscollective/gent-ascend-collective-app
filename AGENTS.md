@@ -1,6 +1,6 @@
 # Gent Ascend Collective — canonical project rules
 
-Official repository: https://github.com/neilaureliuscollective/aurelius-collective-app.git
+Official repository: https://github.com/neilaureliuscollective/gent-ascend-collective-app.git
 Founder workstation: ~/Desktop/aurelius-og. Remote execution checkouts of this same repository are not replacement projects. Never initialize a competing repository or reuse an older build.
 
 Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNESS.md and docs/BUILD_ROADMAP.md before changes. Check git status and preserve existing work.
@@ -31,3 +31,5 @@ Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNES
 - Aurelius 1F owns the current Orb (docs/AURELIUS_1F.md): preserve the static fallback, bounded optional scene, adaptive resolution and lifecycle cleanup. Listening/speaking are labeled visual previews with no audio/microphone; never imply live voice or replace real request/save/error status with a demo.
 
 - Latest founder correction: read docs/AETHELIOS_IDENTITY.md. Aethelios extends the human founder’s mission; he never replaces people or claims human experience. Public AI copy must use Aethelios, including voice previews and metadata. Stable API/database/environment identifiers remain unchanged. The authorized fictional portrait is an identity asset, not a body/health model.
+
+- Founder deployment decision, 2026-09-22: use OpenAI directly with server-only OPENAI_API_KEY and existing OpenAI API credits. No AI Gateway billing or routing. The repository above supersedes the old repository URL. Broader Collective product transformation remains in planning until approved.

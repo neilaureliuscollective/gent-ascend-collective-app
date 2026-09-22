@@ -1,16 +1,18 @@
 import { test, expect } from 'vitest';
-import { gateway } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamAurelius } from '../../src/domains/intelligence/agent';
 import { buildMessages } from '../../src/domains/intelligence/prompt';
 import { aiConfigSchema } from '../../src/domains/intelligence/validation';
-test('configured Gateway model can complete a synthetic Aethelios request', async () => {
+test('configured direct OpenAI model can complete a synthetic Aethelios request', async () => {
   const config = aiConfigSchema.parse(process.env);
-  if (!config.AI_GATEWAY_API_KEY)
-    throw new Error('AI_GATEWAY_API_KEY is not configured. No model request was sent.');
+  if (!config.OPENAI_API_KEY)
+    throw new Error('OPENAI_API_KEY is not configured. No model request was sent.');
   let text = '';
   let complete = false;
   for await (const chunk of streamAurelius(
-    gateway(config.AURELIUS_AI_MODEL),
+    createOpenAI({ apiKey: config.OPENAI_API_KEY, baseURL: 'https://api.openai.com/v1' }).responses(
+      config.AURELIUS_AI_MODEL,
+    ),
     buildMessages(
       [],
       'This is a synthetic connection test. Reply with exactly: Aethelios connection verified.',

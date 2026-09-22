@@ -1,3 +1,19 @@
+# Direct OpenAI deployment preparation — 2026-09-22
+
+Current official repository: https://github.com/neilaureliuscollective/gent-ascend-collective-app
+
+The existing app now calls OpenAI directly with server-only `OPENAI_API_KEY`, using the existing model as `gpt-6-astra`. Gateway routing and credits are no longer required. OpenAI response storage is disabled; Supabase conversations, explicit memory confirmation, ownership checks, quotas and error redaction are preserved. The broader Gent Ascend Collective product transformation remains unimplemented pending founder approval.
+
+Fresh checks: `npm run check` passed (lint, typecheck, 65 unit/SQL/mock-provider tests, Next.js production build). The direct-provider regression test intercepts fetch and verifies the OpenAI endpoint, authorization, streamed output and `store: false`; it is not a live paid-model test. `git diff --check` passed. No UI changes were made. Production-server HTTP smoke checks passed: home and Aethelios return 200, `/dev` returns 404, missing-origin chat requests return 403 and valid same-origin anonymous requests return 401.
+
+Fresh browser regression is unrun: Playwright Chromium download repeatedly returned an invalid archive. Real Supabase Auth/PostgREST, hosted migrations, founder access and paid OpenAI account/model access remain unverified. No production deployment or database mutation was performed.
+
+Terminal Git push authentication is unavailable. Publication uses the connected GitHub integration and the complete current source snapshot. All 15 original commits and exact objects remain recoverable in `docs/history/pre-openai-history.bundle`; see its README. The source/history scan found no candidate private API keys. No live credentials are committed.
+
+Follow [Vercel setup](VERCEL_SETUP.md) for the required Supabase variables, OpenAI key, migrations and hosted founder beta grant. Earlier status records below are historical and their Gateway/repository instructions are superseded here.
+
+---
+
 # Execution status — 2026-09-22 / Aethelios
 
 **Latest milestone: Aethelios is the Digital Co-Founder of Gent Ascend Collective.** The former public AI name is retired. Conversation screens, dashboard links, global panel, accessible labels, loading/error/memory copy and the versioned model instructions use Aethelios. An optional portrait introduction explains the human founder relationship and daily guidance. Legacy Reserve and the official company crest remain unchanged. [Identity and implementation](AETHELIOS_IDENTITY.md).

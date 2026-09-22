@@ -6,9 +6,9 @@ Identity and mission: [AETHELIOS_IDENTITY.md](AETHELIOS_IDENTITY.md). Existing A
 
 The founder moved working intelligence ahead of measurement/routine expansion. Aethelios is the Digital Co-Founder, backed by one reusable intelligence service, available in the persistent global panel and /aethelios full workspace. The former /aurelius route preserves bookmarks through a query-preserving redirect. Both use the same authorized routes, database records, prompt policy and streaming implementation. Atlas remains separate.
 
-AI SDK 7.0.107, Node 24/ESM. A ToolLoopAgent owns the versioned instructions and provider settings. It currently has no tools and exactly one model step. Do not add a durable workflow engine merely because the SDK supports it. Current model selection defaults to openai/gpt-6-astra, verified in the Gateway model catalog on 2026-09-20; AURELIUS_AI_MODEL is server configuration, never request input. No provider key is shipped.
+AI SDK 7.0.107, Node 24/ESM. A ToolLoopAgent owns the versioned instructions and provider settings. It currently has no tools and exactly one model step. Do not add a durable workflow engine merely because the SDK supports it. Current model selection defaults to gpt-6-astra, checked against OpenAI model documentation on 2026-09-22; AURELIUS_AI_MODEL is server configuration, never request input. No provider key is shipped.
 
-Vercel AI Gateway is the initial provider adapter. This avoids installing several model SDKs. It does not require deploying the app to Vercel. Runtime configuration remains isolated; no client imports of credentials or model execution. The adapter boundary can support a direct provider later if latency/privacy/cost evidence warrants it.
+The founder selected direct OpenAI on 2026-09-22 to use existing API credits. The server-only adapter uses @ai-sdk/openai Responses API at https://api.openai.com/v1 with OPENAI_API_KEY. No Gateway routing, key or credits are required. The AI SDK remains a local code dependency, not an intermediary service. Credentials and model execution stay on the server.
 
 ## Request and persistence
 
@@ -38,9 +38,9 @@ Helpful/Needs work is explicit per-reply feedback. The local founder console sur
 
 ## Bounds and privacy
 
-120 starts/person/rolling 24 hours; 10/minute; one active generation/person; 100 conversations/person; 200 turns/conversation; 24 memories × 500 characters; 4,096 output tokens; 90-second model timeout; 95-second stream abort; no SDK retries. These are initial operational ceilings, not membership/pricing promises. Input/output token counts are diagnostics, not an authoritative dollar bill. Use a dedicated Gateway key with an operator-configured spend budget before live testing.
+120 starts/person/rolling 24 hours; 10/minute; one active generation/person; 100 conversations/person; 200 turns/conversation; 24 memories × 500 characters; 4,096 output tokens; 90-second model timeout; 95-second stream abort; no SDK retries. These are initial operational ceilings, not membership/pricing promises. Input/output token counts are diagnostics, not an authoritative dollar bill. Use a dedicated OpenAI project key and monitor OpenAI usage before live testing; application quotas remain in force.
 
-Gateway requests set disallowPromptTraining=true. This is not zero retention or a BAA; BYOK and team/provider settings have separate implications. Before personal/sensitive beta use, review actual Gateway logging/retention/provider routing and contracts. Do not send production PHI. This phase's automated model tests use synthetic data.
+OpenAI Responses requests set store=false; app-owned conversation history remains in Supabase. This disables provider response storage, not all provider retention. Review OpenAI project data controls before sensitive beta use. Automated provider tests use synthetic data and intercepted network responses; the separate live smoke is explicitly billable.
 
 No raw prompts/errors in application telemetry. The SDK's default stream error handler logs errors, so a model middleware replaces raw provider exceptions/error chunks before they reach it and omits raw request/response metadata. Unit tests verify that provider secrets do not leak through this path. Markdown renders without raw HTML or remote images, with safe default URL handling.
 

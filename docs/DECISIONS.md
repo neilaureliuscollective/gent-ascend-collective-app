@@ -100,3 +100,10 @@ Founder approved the researched visual correction: obsidian/charcoal lead, warme
 Founder approved the researched Orb proposal. Preserve the logo and 1E environment; refine only the shared Orb, its full-workspace presentation and narrowly related responsive behavior. Use existing Three with standard metallic materials, a small procedural studio reflection map and a bounded core shader. No new renderer dependency, full transmission, postprocessing or downloaded model. Static SVG remains complete.
 
 Listening/speaking are explicitly visual previews until real voice exists. The preview has no microphone, audio, model request or persistence. Actual request/stop state takes precedence. CPU/software-WebGL checks cannot certify phone thermals or battery; add adaptive resolution and preserve lifecycle pause/disposal. Scope and references: AURELIUS_1F.md. No push or deployment.
+
+
+## 2026-09-22 — Founder selects direct OpenAI and new GitHub destination
+
+Use https://github.com/neilaureliuscollective/gent-ascend-collective-app for this existing application. Connect directly to OpenAI using server-only OPENAI_API_KEY so usage draws on the founder's existing OpenAI API credits. Retain AI SDK 7.0.107 and add compatible @ai-sdk/openai 4.0.72 (provider protocol 4.0.17). Use Responses with store=false, explicit api.openai.com base URL, no Gateway fallback, unchanged quotas and error redaction. Keep the existing default model as gpt-6-astra, verified in OpenAI documentation. Broader product pivot remains planning-only.
+
+Official references checked: https://ai-sdk.dev/providers/ai-sdk-providers/openai.md and https://developers.openai.com/api/docs/models/gpt-6-astra. Provider package source and the existing lockfile verified for compatibility. Live key/account model access is not verified by mock tests.

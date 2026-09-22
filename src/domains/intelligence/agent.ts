@@ -54,7 +54,7 @@ export async function* streamAurelius(
     stopWhen: isStepCount(1),
     maxOutputTokens: 4096,
     maxRetries: 0,
-    providerOptions: { gateway: { disallowPromptTraining: true } },
+    providerOptions: { openai: { store: false } },
   });
   const result = await agent.stream({
     messages,

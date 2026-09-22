@@ -85,9 +85,9 @@ export default async function DeveloperConsole({
             <h2>Aethelios testing</h2>
             <p>
               Model connection:{' '}
-              {ai.AI_GATEWAY_API_KEY
+              {ai.OPENAI_API_KEY
                 ? 'Configured — live validation still required'
-                : 'Waiting for AI_GATEWAY_API_KEY in your local environment'}
+                : 'Waiting for OPENAI_API_KEY in your local environment'}
             </p>
             <p>Model: {ai.AURELIUS_AI_MODEL}</p>
             <Link className="text-link" href="/aethelios">
