@@ -15,9 +15,9 @@ test('motion and solid-surface choices persist; OS reduced motion always wins', 
   await page.getByRole('button', { name: 'Enable ambient motion' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'still');
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Aurelius', exact: true }).click();
+  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByLabel('Message Aurelius').fill('A quiet place to think');
+  await page.getByLabel('Message Aethelios').fill('A quiet place to think');
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
 });
 
@@ -34,13 +34,13 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/aurelius');
+  await page.goto('/aethelios');
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
   // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
   await expect(page.locator('.welcome-heading .presence-fallback')).toBeVisible();
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
-  await page.getByLabel('Message Aurelius').fill('Still usable without graphics');
+  await page.getByLabel('Message Aethelios').fill('Still usable without graphics');
   expect(errors).toEqual([]);
 });
 
@@ -52,8 +52,8 @@ for (const viewport of [
     page,
   }) => {
     await page.setViewportSize(viewport);
-    await page.goto('/aurelius');
-    await expect(page.getByLabel('Message Aurelius')).toBeInViewport();
+    await page.goto('/aethelios');
+    await expect(page.getByLabel('Message Aethelios')).toBeInViewport();
     await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -65,11 +65,11 @@ for (const viewport of [
 
 test('200 percent text remains navigable and permits reading and composing', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 960 });
-  await page.goto('/aurelius');
+  await page.goto('/aethelios');
   await page.addStyleTag({ content: 'html { font-size: 200%; }' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByLabel('Message Aurelius').fill('Larger text');
-  await expect(page.getByLabel('Message Aurelius')).toHaveValue('Larger text');
+  await page.getByLabel('Message Aethelios').fill('Larger text');
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue('Larger text');
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
 });
@@ -84,7 +84,7 @@ test('connected light follows navigation and becomes still while reading a dialo
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await navigation.getByRole('link', { name: 'My world' }).click();
   await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/world');
-  await page.getByRole('button', { name: 'Aurelius', exact: true }).click();
+  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
   await expect(page.locator('.ambient-light')).toHaveCSS('animation-play-state', 'paused');
   await expect(page.locator('.connection-arrival')).toHaveCSS('animation-play-state', 'paused');

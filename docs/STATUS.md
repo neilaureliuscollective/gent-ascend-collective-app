@@ -1,3 +1,24 @@
+# Execution status — 2026-09-22 / Aethelios
+
+**Latest milestone: Aethelios is the Digital Co-Founder of Gent Ascend Collective.** The former public AI name is retired. Conversation screens, dashboard links, global panel, accessible labels, loading/error/memory copy and the versioned model instructions use Aethelios. An optional portrait introduction explains the human founder relationship and daily guidance. Legacy Reserve and the official company crest remain unchanged. [Identity and implementation](AETHELIOS_IDENTITY.md).
+
+## Current verification
+
+- Final `npm run check`: lint and strict typecheck pass; **63 unit/SQL/mock-provider tests** pass, including identity boundaries and finite insight/milestone responses.
+- Production build passes with canonical `/aethelios` and `/aethelios/meet` routes and a query-preserving redirect from the legacy route.
+- Full browser regression: **53/53 passed**. After the final orb composition and same-page panel navigation refinements, **10/10 focused browser checks passed**: introduction/portrait and whole-orb visibility at 344/768/1440px, same-page introduction navigation, short screens, 200% text and responsive orb controls. The complete 53-test suite was not repeated after those focused refinements; all changed behavior has fresh targeted coverage.
+- Portrait introduction reviewed at 344/768/1440px. The cover layout stacks portrait and story; unfolded and desktop use deliberate two-column compositions. The optional portrait is a 76KB WebP; it adds no image payload to the daily command or conversation routes.
+- The orb keeps its static fallback, reduced-motion/Still controls and optional bounded 3D scene. Voice states remain clearly labeled previews with no microphone or audio. Insight/milestone use finite two/three-second energy responses.
+- Auth services, Supabase adapters, SQL migrations, membership/authorization contracts, dependencies and Vercel configuration are unchanged. Saved historical conversation text is preserved. The new public route is included in session-refresh middleware.
+
+**Still unverified:** real Supabase Auth/PostgREST and hosted persistence, live paid AI responses, physical Fold GPU/keyboard behavior and device PWA installation. Browser intercepts and SQL fixtures do not establish live-service acceptance. No GitHub push or deployment was performed.
+
+The identity correction supersedes prior AI naming directions, including historical documents below. Existing internal API/environment/storage identifiers are intentionally retained for compatibility.
+
+---
+
+## Previous migration record (historical identity; superseded above)
+
 # Execution status — 2026-09-22
 
 **Latest milestone: Gent Ascend Collective migration complete in the existing codebase.** Exact founder logo master preserved; derived crest/wordmark/app icons, centralized obsidian/green/gold tokens, refined dashboard and account identity, shared shell and forms, clear Legacy Reserve relationship, updated public metadata and the green/gold Aurelius orb. Aurelius remains the AI; Aethelos is the crest archetype. [Migration details](GENT_ASCEND_MIGRATION.md), [identity](BRAND_IDENTITY.md), [design system](DESIGN_SYSTEM.md).

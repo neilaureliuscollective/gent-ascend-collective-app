@@ -5,8 +5,7 @@ Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aur
 ## Brand architecture
 
 - **Gent Ascend Collective**: master brand and men's advancement ecosystem; **Gent Ascend** is the compact display name.
-- **Aurelius**: the intelligence within Gent Ascend. Existing API routes, data tables, environment names, saved preferences and assistant identity retain Aurelius.
-- **Aethelos**: the composed gentleman archetype in the official crest. He stands with self-command; he is not Atlas, Zeus, a warrior or the AI.
+- **Aethelios**: Digital Co-Founder, AI intelligence and scalable extension of the human founder's mission. The former public AI identity is retired. See AETHELIOS_IDENTITY.md for personality, portrait, capabilities and implementation. The human founder remains the source of mission, culture and lived experience.
 - **Legacy Reserve**: separate grooming/wellness product and commerce brand. Do not rename it to Gent Ascend.
 
 Purpose: help men become more capable across presentation, wellbeing, performance, discipline, character, work, relationships, community and legacy. Confident and grounded; no macho slogans or mythology inside ordinary product controls.
@@ -20,7 +19,7 @@ Purpose: help men become more capable across presentation, wellbeing, performanc
 - `icon-192.png`, `icon-512.png`, `src/app/apple-icon.png`: exact crest on obsidian, padded for the central maskable safe circle.
 - `src/app/icon.svg`: reduced eight-point star and ring from the crest's celestial geometry, for very small favicon sizes where inscriptions are illegible. This is not a replacement primary logo.
 
-Do not stretch the crest or replace it with the Aurelius orb. Use Aethelos only at brand/identity moments. Earlier master and seal remain in `docs/brand-archive/` for historical provenance, never imported by the current UI.
+Do not stretch the crest or replace it with the Aethelios orb. Use the official crest only at brand/identity moments. Earlier master and seal remain in `docs/brand-archive/` for historical provenance, never imported by the current UI.
 
 ## Exact working palette
 

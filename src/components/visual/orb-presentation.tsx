@@ -4,10 +4,12 @@ import { AureliusPresence } from './aurelius-presence';
 import { useAppearance } from './appearance';
 import type { OrbState, PresenceState } from '@/platform/visual/presence-state';
 const previews = [
-  ['ready', 'Ready'],
+  ['ready', 'Idle'],
   ['preview-listening', 'Listening'],
-  ['working', 'Preparing'],
+  ['working', 'Thinking'],
   ['preview-speaking', 'Speaking'],
+  ['preview-insight', 'Insight'],
+  ['preview-milestone', 'Milestone'],
   ['stopped', 'Stopped'],
 ] as const;
 export function OrbPresentation({ state }: { state: PresenceState }) {

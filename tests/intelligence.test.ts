@@ -23,7 +23,15 @@ const context: PersonalContext = {
 };
 const turn = { id: 'request', assistant_text: 'Hello', status: 'complete' } as Turn;
 const consume = (stream: ReadableStream<Uint8Array>) => new Response(stream).text();
-describe('Aurelius context boundaries', () => {
+describe('Aethelios context boundaries', () => {
+  it('establishes the digital co-founder without impersonating the human founder or replacing relationships', () => {
+    expect(aureliusInstructions).toContain('You are Aethelios — Digital Co-Founder');
+    expect(aureliusInstructions).toContain('you are AI, not a human founder');
+    expect(aureliusInstructions).toContain('Never invent the founder');
+    expect(aureliusInstructions).toContain('never dependency on you');
+    expect(aureliusInstructions).toContain('Legacy Reserve is the separate product brand');
+    expect(aureliusInstructions).not.toMatch(/aurelius|aethelos/i);
+  });
   it('rejects client-injected roles, person IDs and oversized inputs', () => {
     const input = {
       conversationId: '30000000-0000-4000-8000-000000000001',

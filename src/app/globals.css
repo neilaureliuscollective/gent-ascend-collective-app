@@ -2673,7 +2673,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
     border-color: Highlight;
   }
 }
-@media (max-height: 780px) and (min-width: 601px) {
+@media (min-width: 601px) {
   .orb-presentation.is-previewing {
     display: grid;
     grid-template-columns: 140px minmax(0, 1fr);
@@ -3104,4 +3104,196 @@ html[data-motion='ambient']:not([data-quiet='true'])
     background: ButtonFace;
     color: ButtonText;
   }
+}
+
+/* Aethelios: portrait for introduction; the orb remains the everyday presence. */
+.aethelios-introduction {
+  max-width: 1260px;
+  margin: 0 auto;
+}
+.aethelios-intro-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0 28px;
+}
+.aethelios-intro-heading .eyebrow {
+  margin: 0;
+}
+.aethelios-intro-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+}
+.aethelios-portrait {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-premium);
+  background: var(--surface-green);
+}
+.aethelios-portrait img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.aethelios-portrait figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 50px 24px 24px;
+  background: linear-gradient(transparent, #050706eb);
+  display: grid;
+  gap: 6px;
+}
+.aethelios-portrait figcaption span {
+  color: var(--ascend-gold-400);
+  letter-spacing: 0.2em;
+  font-size: 0.875rem;
+}
+.aethelios-portrait figcaption small {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+.aethelios-intro-copy h1 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.35rem, 4.6vw, 4.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  margin: 16px 0 28px;
+}
+.aethelios-intro-copy > p {
+  max-width: 48ch;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+.aethelios-intro-copy .aethelios-intro-lead {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+.aethelios-intro-copy .button {
+  margin-top: 12px;
+}
+.aethelios-intro-copy .aethelios-intro-note {
+  margin-top: 20px;
+  font-size: 0.75rem;
+}
+.aethelios-expectations {
+  margin-top: 56px;
+  border-top: 1px solid var(--border-premium);
+  padding: 32px 0;
+  display: grid;
+  grid-template-columns: 0.85fr 1fr;
+  gap: 40px;
+}
+.aethelios-expectations h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+.aethelios-expectations ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aethelios-expectations li {
+  display: flex;
+  gap: 24px;
+  padding: 0 0 24px;
+}
+.aethelios-expectations li > span {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--ascend-gold-400);
+  padding-top: 4px;
+}
+.aethelios-expectations h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.aethelios-expectations li p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.aethelios-voice-note {
+  border-top: 1px solid var(--border-premium);
+  padding: 24px 0;
+}
+.aethelios-voice-note p {
+  max-width: 80ch;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.aethelios-meet-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  margin: 4px 0 10px;
+}
+.orb-preview-controls [role='group'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.aurelius-presence[data-state='preview-insight'] .presence-aura {
+  opacity: 0.3;
+  background: radial-gradient(ellipse, #146b5860, transparent 65%);
+}
+.aurelius-presence[data-state='preview-milestone'] .presence-aura {
+  opacity: 0.4;
+  background: radial-gradient(ellipse, #c4912f60, transparent 65%);
+}
+.aurelius-presence[data-state='preview-milestone'] .presence-fallback {
+  filter: drop-shadow(0 0 8px #c4912f30);
+}
+@media (max-width: 900px) and (min-width: 640px) {
+  .aethelios-intro-copy h1 {
+    font-size: 2.65rem;
+  }
+  .aethelios-intro-copy > p {
+    font-size: 0.875rem;
+  }
+  .aethelios-intro-grid {
+    align-items: start;
+    gap: 24px;
+  }
+}
+@media (max-width: 639px) {
+  .aethelios-intro-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+  }
+  .aethelios-intro-grid,
+  .aethelios-expectations {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .aethelios-portrait img {
+    max-height: 540px;
+    object-fit: cover;
+    object-position: center 26%;
+  }
+  .aethelios-intro-copy h1 {
+    font-size: clamp(2.3rem, 10vw, 3.4rem);
+  }
+  .aethelios-expectations {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 600px) {
+  .welcome-heading .orb-presentation.is-previewing .aurelius-presence {
+    width: 96px;
+    height: 96px;
+  }
+}
+/* The explicit preview gives the artifact and its controls the available reading space. */
+.welcome-heading:has(.orb-presentation.is-previewing) > div:not(.orb-presentation) {
+  display: none;
 }

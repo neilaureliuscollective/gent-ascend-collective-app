@@ -3,7 +3,7 @@ import { gateway } from 'ai';
 import { streamAurelius } from '../../src/domains/intelligence/agent';
 import { buildMessages } from '../../src/domains/intelligence/prompt';
 import { aiConfigSchema } from '../../src/domains/intelligence/validation';
-test('configured Gateway model can complete a synthetic Aurelius request', async () => {
+test('configured Gateway model can complete a synthetic Aethelios request', async () => {
   const config = aiConfigSchema.parse(process.env);
   if (!config.AI_GATEWAY_API_KEY)
     throw new Error('AI_GATEWAY_API_KEY is not configured. No model request was sent.');
@@ -13,7 +13,7 @@ test('configured Gateway model can complete a synthetic Aurelius request', async
     gateway(config.AURELIUS_AI_MODEL),
     buildMessages(
       [],
-      'This is a synthetic connection test. Reply with exactly: Aurelius connection verified.',
+      'This is a synthetic connection test. Reply with exactly: Aethelios connection verified.',
       null,
     ),
     new AbortController().signal,
@@ -22,5 +22,5 @@ test('configured Gateway model can complete a synthetic Aurelius request', async
     else complete = chunk.reason === 'stop';
   }
   expect(complete).toBe(true);
-  expect(text).toContain('Aurelius connection verified.');
+  expect(text).toContain('Aethelios connection verified.');
 });

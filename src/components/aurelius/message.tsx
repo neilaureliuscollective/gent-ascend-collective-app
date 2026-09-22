@@ -20,7 +20,7 @@ export const ConversationTurn = memo(function ConversationTurn({
       <div className="assistant-message">
         <span className="message-author">
           <span className="small-orb" aria-hidden="true" />
-          Aurelius
+          Aethelios
         </span>
         <div className="message-markdown">
           <Markdown

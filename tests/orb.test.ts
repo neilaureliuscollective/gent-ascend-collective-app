@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { orbEnergy, readOrbState } from '../src/platform/visual/presence-state';
 describe('Orb presentation signals', () => {
+  it('keeps insight and milestone responses finite, bounded, and distinct from real activity', () => {
+    for (const state of ['preview-insight', 'preview-milestone'] as const) {
+      expect(readOrbState(state)).toBe(state);
+      expect(orbEnergy(state, 1)).toBeGreaterThan(0);
+      for (const time of [-1, 0, 3, 100, Number.NaN]) expect(orbEnergy(state, time)).toBe(0);
+      for (let time = 0; time < 3; time += 0.1)
+        expect(orbEnergy(state, time)).toBeLessThanOrEqual(0.6);
+    }
+    expect(readOrbState('milestone')).toBe('disconnected');
+  });
   it('never invents voice activity for real application states or malformed input', () => {
     expect(readOrbState('speaking')).toBe('disconnected');
     expect(readOrbState(undefined)).toBe('disconnected');

@@ -35,8 +35,8 @@ export function PersonalCommand({
             Strength. Discipline. Character. Legacy. <br />A better standard, built daily.
           </p>
           <div className="hero-actions">
-            <Link href="/aurelius" className="button">
-              Open Aurelius <Icon name="arrow" />
+            <Link href="/aethelios" className="button">
+              Open Aethelios <Icon name="arrow" />
             </Link>
             <Link href={person ? '/goals' : '/you'} className="hero-secondary">
               {person ? 'Your direction' : 'Make it yours'} <span aria-hidden="true">↗</span>
@@ -50,7 +50,7 @@ export function PersonalCommand({
           <div className="emblem-halo" />
           <Image
             src="/brand/gent-ascend-crest.webp"
-            alt="Gent Ascend Collective seal: Aethelos standing composed in a green mantle, framed by celestial geometry and laurels"
+            alt="Gent Ascend Collective seal: a gentleman standing composed in a green mantle, framed by celestial geometry and laurels"
             width={1254}
             height={1254}
             sizes="(max-width: 600px) 160px, (max-width: 1100px) 260px, 370px"
@@ -70,7 +70,7 @@ export function PersonalCommand({
         <section className="intelligence-card surface">
           <div className="card-heading">
             <span className="eyebrow">01 / YOUR INTELLIGENCE</span>
-            <span className="tag">AURELIUS</span>
+            <span className="tag">AETHELIOS</span>
           </div>
           <div className="intelligence-card-body">
             <div>
@@ -87,8 +87,8 @@ export function PersonalCommand({
             </div>
             <AureliusPresence enhanced className="command-presence" />
           </div>
-          <Link href="/aurelius" className="card-action">
-            Think with Aurelius <Icon name="arrow" />
+          <Link href="/aethelios" className="card-action">
+            Think with Aethelios <Icon name="arrow" />
           </Link>
         </section>
         <section className="direction-card surface">

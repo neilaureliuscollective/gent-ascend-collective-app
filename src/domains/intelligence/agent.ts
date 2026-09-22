@@ -25,11 +25,11 @@ export const redactProviderErrors: LanguageModelMiddleware = {
               }
               controller.enqueue(
                 value.type === 'error'
-                  ? { type: 'error', error: new Error('Aurelius provider stream failed') }
+                  ? { type: 'error', error: new Error('Aethelios provider stream failed') }
                   : value,
               );
             } catch {
-              controller.error(new Error('Aurelius provider stream failed'));
+              controller.error(new Error('Aethelios provider stream failed'));
             }
           },
           cancel(reason) {
@@ -38,7 +38,7 @@ export const redactProviderErrors: LanguageModelMiddleware = {
         }),
       };
     } catch {
-      throw new Error('Aurelius provider unavailable');
+      throw new Error('Aethelios provider unavailable');
     }
   },
 };

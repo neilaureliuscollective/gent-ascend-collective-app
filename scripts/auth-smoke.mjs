@@ -187,7 +187,7 @@ try {
   assert.equal(cleanupError, null);
 }
 
-// Aurelius SQL contract through actual Auth/PostgREST; no paid model request.
+// Aethelios SQL contract through actual Auth/PostgREST; no paid model request.
 const aiConversation = crypto.randomUUID(),
   aiRequest = crypto.randomUUID(),
   aiMemory = crypto.randomUUID();
@@ -261,7 +261,7 @@ try {
   assert.equal(ledgerError, null);
   assert.equal(ledger.length, 1);
   console.log(
-    'PASS: Aurelius memory, turn lifecycle, two-user isolation, cascade deletion and durable usage ledger',
+    'PASS: Aethelios memory, turn lifecycle, two-user isolation, cascade deletion and durable usage ledger',
   );
 } finally {
   await member.from('ai_conversations').delete().eq('id', aiConversation);

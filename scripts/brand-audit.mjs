@@ -38,11 +38,11 @@ try {
     });
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    for (const route of ['/', '/you', '/world', '/aurelius', '/goals', '/progress']) {
+    for (const route of ['/', '/you', '/world', '/aethelios', '/goals', '/progress']) {
       await page.goto(`http://127.0.0.1:3107${route}`);
       await page.evaluate(() => document.fonts.ready);
       await page.waitForFunction(() => document.documentElement.dataset.motion === 'still');
-      if (route === '/aurelius') await page.getByLabel('Message Aurelius').waitFor();
+      if (route === '/aethelios') await page.getByLabel('Message Aethelios').waitFor();
       await page.screenshot({
         path: `${output}/${route === '/' ? 'command' : route.slice(1)}-${width}.png`,
         fullPage: true,
@@ -53,7 +53,7 @@ try {
         errors: [...errors],
         ...(await page.evaluate(() => ({
           overflow: document.documentElement.scrollWidth > innerWidth,
-          oldBrand: document.body.innerText.includes('Aurelius Collective'),
+          oldBrand: document.body.innerText.includes('Aurelius'),
           missingImages: [...document.images]
             .filter((i) => i.offsetWidth && (!i.complete || !i.naturalWidth))
             .map((i) => i.src),
@@ -63,10 +63,10 @@ try {
     await page.close();
   }
   const page = await browser.newPage({ viewport: { width: 768, height: 960 } });
-  await page.goto('http://127.0.0.1:3107/aurelius');
+  await page.goto('http://127.0.0.1:3107/aethelios');
   await page.locator('.presence-canvas').waitFor({ state: 'attached', timeout: 15000 });
   await page.waitForTimeout(1800);
-  await page.screenshot({ path: `${output}/aurelius-3d-768.png`, fullPage: true });
+  await page.screenshot({ path: `${output}/aethelios-3d-768.png`, fullPage: true });
   await page.close();
   await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));

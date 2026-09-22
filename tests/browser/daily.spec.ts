@@ -92,8 +92,8 @@ test('dashboard conversation starter is a draft, never an automatic model reques
     if (r.method() === 'POST' && r.url().includes('/api/aurelius')) writes.push(r.url());
   });
   await page.goto('/');
-  await page.getByRole('link', { name: 'Plan with Aurelius' }).click();
-  await expect(page.getByLabel('Message Aurelius')).toHaveValue(
+  await page.getByRole('link', { name: 'Plan with Aethelios' }).click();
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue(
     'Help me choose what matters most today and turn it into a manageable plan.',
   );
   expect(writes).toEqual([]);
@@ -145,6 +145,6 @@ test('short-screen daily editor supports keyboard dismissal, focus return and la
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('unrecognized conversation starter stays empty', async ({ page }) => {
-  await page.goto('/aurelius?starter=constructor');
-  await expect(page.getByLabel('Message Aurelius')).toHaveValue('');
+  await page.goto('/aethelios?starter=constructor');
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue('');
 });

@@ -34,6 +34,7 @@ export const config = {
     '/you',
     '/goals',
     '/aurelius/:path*',
+    '/aethelios/:path*',
     '/api/aurelius/:path*',
     '/dev/:path*',
     '/auth/:path*',

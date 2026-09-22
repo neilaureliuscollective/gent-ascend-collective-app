@@ -62,7 +62,9 @@ export default async function DeveloperConsole({
             <label htmlFor="membership">Membership scenario</label>
             <select id="membership" name="membership" defaultValue={scenario.membership}>
               {['founder', 'free', 'aurelius', 'health', 'beta', 'admin'].map((x) => (
-                <option key={x}>{x}</option>
+                <option key={x} value={x}>
+                  {x === 'aurelius' ? 'Aethelios' : x}
+                </option>
               ))}
             </select>
             <label htmlFor="billing">Billing simulation</label>
@@ -80,7 +82,7 @@ export default async function DeveloperConsole({
             </button>
           </form>
           <section className="panel">
-            <h2>Aurelius testing</h2>
+            <h2>Aethelios testing</h2>
             <p>
               Model connection:{' '}
               {ai.AI_GATEWAY_API_KEY
@@ -88,16 +90,16 @@ export default async function DeveloperConsole({
                 : 'Waiting for AI_GATEWAY_API_KEY in your local environment'}
             </p>
             <p>Model: {ai.AURELIUS_AI_MODEL}</p>
-            <Link className="text-link" href="/aurelius">
-              Open Aurelius →
+            <Link className="text-link" href="/aethelios">
+              Open Aethelios →
             </Link>
             <h3>Replies marked “Needs work”</h3>
             <p>
               Review these when refining the versioned instructions. Feedback does not retrain or
-              rewrite Aurelius automatically.
+              rewrite Aethelios automatically.
             </p>
             {review?.error ? (
-              <p>Feedback could not be loaded. Apply the Aurelius migration first.</p>
+              <p>Feedback could not be loaded. Apply the Aethelios migration first.</p>
             ) : review?.data?.length ? (
               <ul>
                 {review.data.map((item) => (

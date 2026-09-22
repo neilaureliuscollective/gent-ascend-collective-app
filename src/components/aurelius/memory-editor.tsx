@@ -76,7 +76,7 @@ export function MemoryEditor({
     }
   }
   return (
-    <section className="memory-space" aria-label="Aurelius memory">
+    <section className="memory-space" aria-label="Aethelios memory">
       <p className="eyebrow">What you choose to carry forward</p>
       <h3>Memory, on your terms.</h3>
       <p>
@@ -110,7 +110,7 @@ export function MemoryEditor({
             <option value="fact">Personal fact</option>
           </select>
           <label htmlFor="memory-content">
-            {edit ? 'Correct this memory' : 'What should Aurelius remember?'}
+            {edit ? 'Correct this memory' : 'What should Aethelios remember?'}
           </label>
           <textarea
             id="memory-content"

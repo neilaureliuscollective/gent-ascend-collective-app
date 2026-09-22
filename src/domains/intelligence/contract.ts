@@ -16,4 +16,4 @@ export interface IntelligenceContext {
 export interface ContextProvider {
   readAuthorized(context: IntelligenceContext): Promise<ContextReference[]>;
 }
-// Aurelius conversation implementation lives beside this future context-provider contract.
+// Aethelios conversation implementation lives beside this future context-provider contract.

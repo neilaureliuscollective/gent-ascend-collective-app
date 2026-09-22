@@ -42,7 +42,7 @@ export function ContextPanel({
           <span className="eyebrow">02 / Your direction</span>
           <h4>{data.context.goal?.title || 'Something worth moving toward.'}</h4>
           <p>
-            {data.context.goal?.reason || 'Your active goal gives Aurelius a point of reference.'}
+            {data.context.goal?.reason || 'Your active goal gives Aethelios a point of reference.'}
           </p>
           {data.context.goal?.nextStep && (
             <div className="context-next">

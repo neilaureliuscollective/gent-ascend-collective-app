@@ -8,11 +8,11 @@ for (const width of [344, 768, 1440]) {
     await expect(
       page.getByRole('link', { name: 'Gent Ascend Collective home' }).filter({ visible: true }),
     ).toBeVisible();
-    await expect(page.locator('body')).not.toContainText('Aurelius Collective');
+    await expect(page.locator('body')).not.toContainText('Aurelius');
     if (width > 1100) {
       const nav = await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox();
       const launcher = await page
-        .getByRole('button', { name: 'Aurelius', exact: true })
+        .getByRole('button', { name: 'Aethelios', exact: true })
         .boundingBox();
       expect(launcher!.y).toBeGreaterThanOrEqual(nav!.y + nav!.height);
     }
@@ -33,8 +33,8 @@ for (const width of [344, 768, 1440]) {
     await page.screenshot({ path: `test-results/gent-account-${width}.png`, fullPage: true });
     await page.goto('/world');
     await expect(page.getByRole('heading', { name: 'Legacy Reserve', exact: true })).toBeVisible();
-    await page.goto('/aurelius');
-    await expect(page.getByRole('heading', { name: 'Aurelius.', exact: true })).toBeVisible();
+    await page.goto('/aethelios');
+    await expect(page.getByRole('heading', { name: 'Aethelios.', exact: true })).toBeVisible();
     const manifest = await (await request.get('/manifest.webmanifest')).json();
     expect(manifest.name).toBe('Gent Ascend Collective');
     expect(manifest.short_name).toBe('Gent Ascend');

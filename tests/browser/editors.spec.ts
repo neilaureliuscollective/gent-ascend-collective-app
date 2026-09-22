@@ -11,7 +11,7 @@ test('profile validation preserves edits, focuses errors and saves a new version
   await expect(page.getByRole('alert')).toBeFocused();
   await expect(page.getByText('Enter your name.', { exact: true })).toBeVisible();
   await expect(page.getByLabel('What matters most right now?')).toHaveValue('Keep this draft');
-  await page.getByLabel('What should we call you?').fill('Aurelius Founder');
+  await page.getByLabel('What should we call you?').fill('Aethelios Founder');
   await page.getByRole('button', { name: 'Save profile' }).click();
   await expect(page.getByRole('status')).toHaveText('Profile saved.');
   await expect(page.locator('input[name="version"]')).toHaveValue('2');

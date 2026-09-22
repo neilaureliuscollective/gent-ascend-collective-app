@@ -255,10 +255,10 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
               <Icon name="arrow" />
             </button>
             <Link
-              href={`/aurelius?starter=${lens === 'today' ? 'plan' : 'reflect'}`}
+              href={`/aethelios?starter=${lens === 'today' ? 'plan' : 'reflect'}`}
               className="orientation-link"
             >
-              {lens === 'today' ? 'Plan with Aurelius' : 'Reflect with Aurelius'}{' '}
+              {lens === 'today' ? 'Plan with Aethelios' : 'Reflect with Aethelios'}{' '}
               <span aria-hidden="true">↗</span>
             </Link>
           </div>
@@ -423,11 +423,11 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
               <Link
                 href={
                   data.conversation
-                    ? `/aurelius?conversation=${data.conversation.id}`
-                    : '/aurelius?starter=perspective'
+                    ? `/aethelios?conversation=${data.conversation.id}`
+                    : '/aethelios?starter=perspective'
                 }
               >
-                {data.conversation ? 'Continue your conversation' : 'Think with Aurelius'}{' '}
+                {data.conversation ? 'Continue your conversation' : 'Think with Aethelios'}{' '}
                 <span aria-hidden="true">↗</span>
               </Link>
             </div>
@@ -484,7 +484,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
           Energy and sleep here are your own reports. Actions, intentions and reflections are
           entered by you. Missing entries remain blank. Wearables, automatic recovery scores, labs
           and body measurements are not connected to this dashboard. Daily entries are not yet sent
-          to Aurelius automatically; the conversation starters open a draft for you to review.
+          to Aethelios automatically; the conversation starters open a draft for you to review.
         </p>
       </details>
       <dialog
@@ -604,7 +604,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
                     placeholder="No perfect answer required."
                   />
                   <p className="daily-editor-help">
-                    Saved in your daily record. Nothing is automatically promoted to Aurelius
+                    Saved in your daily record. Nothing is automatically promoted to Aethelios
                     memory.
                   </p>
                 </>

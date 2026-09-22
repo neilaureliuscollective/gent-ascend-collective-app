@@ -8,5 +8,5 @@ export const brand = {
   crest: '/brand/gent-ascend-crest.webp',
   lockup: '/brand/gent-ascend-lockup.webp',
   crestAlt:
-    'Aethelos, the Gent Ascend emblem: a composed gold figure in a green mantle, framed by celestial geometry and laurels',
+    'The Gent Ascend emblem: a composed gold figure in a green mantle, framed by celestial geometry and laurels',
 } as const;

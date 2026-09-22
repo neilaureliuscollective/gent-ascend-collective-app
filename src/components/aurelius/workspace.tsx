@@ -129,7 +129,7 @@ export function AureliusWorkspace({
     generation.current = controller;
     setBusy(true);
     setError('');
-    setNotice('Aurelius is thinking…');
+    setNotice('Aethelios is thinking…');
     follow.current = true;
     let saved = false;
     try {
@@ -171,7 +171,7 @@ export function AureliusWorkspace({
         const item = JSON.parse(line) as StreamEvent;
         if (item.type === 'delta') {
           reply += item.text;
-          setNotice('Aurelius is responding…');
+          setNotice('Aethelios is responding…');
           setData((previous) =>
             previous
               ? {
@@ -302,7 +302,7 @@ export function AureliusWorkspace({
       )}
       <div className={`aurelius-workspace ${compact ? 'compact' : ''}`}>
         <div className="aurelius-toolbar">
-          <div className="aurelius-tabs" role="group" aria-label="Aurelius workspace">
+          <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
             <button aria-pressed={tab === 'conversation'} onClick={() => setTab('conversation')}>
               Conversation
             </button>
@@ -336,7 +336,7 @@ export function AureliusWorkspace({
         </div>
         {preview && (
           <div className="workspace-preview-note">
-            <p>Sign in to use your Aurelius workspace.</p>
+            <p>Sign in to use your Aethelios workspace.</p>
             <Link href="/you">Your account →</Link>
           </div>
         )}
@@ -461,8 +461,17 @@ export function AureliusWorkspace({
                     )}
 
                     <div>
-                      <p className="eyebrow">Clarity. Judgment. Direction.</p>
+                      <p className="eyebrow">Aethelios · Digital Co-Founder</p>
                       <h2>What’s on your mind?</h2>
+                      <Link
+                        className="text-link aethelios-meet-link"
+                        href="/aethelios/meet"
+                        onClick={(event) => {
+                          if (compact) event.currentTarget.closest('dialog')?.close();
+                        }}
+                      >
+                        Meet Aethelios →
+                      </Link>
                     </div>
                   </div>
                   <p>
@@ -504,13 +513,13 @@ export function AureliusWorkspace({
             {!preview && (!data.configured || !data.canChat) && (
               <p className="connection-note">
                 {!data.configured
-                  ? 'Aurelius is waiting for its model connection. Saved conversations and memory remain available.'
+                  ? 'Aethelios is waiting for its model connection. Saved conversations and memory remain available.'
                   : 'Conversation access is not enabled for this account. Local founders can restore the Founder scenario in the developer console.'}
               </p>
             )}
             <form className="aurelius-composer" onSubmit={send}>
               <label htmlFor="aurelius-message" className="sr-only">
-                Message Aurelius
+                Message Aethelios
               </label>
               <textarea
                 id="aurelius-message"
@@ -520,7 +529,7 @@ export function AureliusWorkspace({
                 value={draft}
                 disabled={blocked}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Think it through with Aurelius…"
+                placeholder="Think it through with Aethelios…"
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     e.preventDefault();

@@ -65,7 +65,7 @@ export default async function You({
           <aside className="account-brand">
             <Image
               src={brand.lockup}
-              alt="Gent Ascend Collective — official Aethelos crest and wordmark"
+              alt="Gent Ascend Collective — official crest and wordmark"
               width={960}
               height={960}
               sizes="(max-width: 600px) 230px, 420px"

@@ -18,7 +18,7 @@ test('Orb preview is illustrative, keyboard usable, and never requests audio or 
     if (message.type() === 'error' && /THREE|shader|WebGL/i.test(message.text()))
       errors.push(message.text());
   });
-  await page.goto('/aurelius');
+  await page.goto('/aethelios');
   const orb = page.locator('.orb-presentation .aurelius-presence');
   await expect(orb).toHaveAttribute('data-state', 'disconnected');
   await page.getByRole('button', { name: 'Explore the Orb' }).click();
@@ -38,7 +38,7 @@ test('Orb preview is illustrative, keyboard usable, and never requests audio or 
   await expect(orb).toHaveAttribute('data-state', 'stopped');
   await page.getByRole('button', { name: 'Close Orb preview' }).click();
   await expect(orb).toHaveAttribute('data-state', 'disconnected');
-  await page.getByLabel('Message Aurelius').fill('My unsent thought');
+  await page.getByLabel('Message Aethelios').fill('My unsent thought');
   expect(writes).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -46,12 +46,12 @@ test('Orb preview is illustrative, keyboard usable, and never requests audio or 
 test('enhanced Orb renders, pauses for focus and dialogs, handles context loss, and disposes', async ({
   page,
 }) => {
-  await page.goto('/aurelius');
+  await page.goto('/aethelios');
   const orb = page.locator('.orb-presentation .aurelius-presence');
   await expect(orb).toHaveAttribute('data-rendered', 'true', { timeout: 15000 });
   await expect(page.locator('.presence-canvas')).toHaveCount(1);
   await expect(orb).toHaveAttribute('data-animating', 'true');
-  await page.getByLabel('Message Aurelius').focus();
+  await page.getByLabel('Message Aethelios').focus();
   await expect(orb).toHaveAttribute('data-animating', 'false');
   await page.getByRole('button', { name: 'Explore the Orb' }).click();
   await expect(orb).toHaveAttribute('data-animating', 'true');
@@ -62,7 +62,7 @@ test('enhanced Orb renders, pauses for focus and dialogs, handles context loss, 
   await expect(orb).toHaveAttribute('data-animating', 'false');
   await page
     .getByRole('group', { name: 'Orb motion preview' })
-    .getByRole('button', { name: 'Preparing', exact: true })
+    .getByRole('button', { name: 'Thinking', exact: true })
     .click();
   await expect(orb).toHaveAttribute('data-animating', 'true');
   await page.evaluate(() => {
@@ -92,13 +92,13 @@ test('enhanced Orb renders, pauses for focus and dialogs, handles context loss, 
 for (const width of [390, 768, 1440]) {
   test(`Orb preview keeps controls and composition usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
-    await page.goto('/aurelius');
+    await page.goto('/aethelios');
     await page.getByRole('button', { name: 'Explore the Orb' }).click();
     await page
       .getByRole('group', { name: 'Orb motion preview' })
       .getByRole('button', { name: 'Speaking', exact: true })
       .click();
-    await expect(page.getByLabel('Message Aurelius')).toBeInViewport();
+    await expect(page.getByLabel('Message Aethelios')).toBeInViewport();
     expect(
       await page
         .locator('.orb-preview-controls')
@@ -128,12 +128,12 @@ test('sustained slow frames fall back to the static Orb without blocking the com
     const original = window.requestAnimationFrame.bind(window);
     window.requestAnimationFrame = (callback) => original((time) => callback(time * 4));
   });
-  await page.goto('/aurelius');
+  await page.goto('/aethelios');
   const orb = page.locator('.orb-presentation .aurelius-presence');
   await expect(orb).toHaveAttribute('data-fallback', 'frame-budget', { timeout: 20000 });
   await expect(orb).toHaveAttribute('data-rendered', 'false');
   await expect(orb.locator('.presence-fallback')).toBeVisible();
   await expect(orb.locator('canvas')).toBeHidden();
-  await page.getByLabel('Message Aurelius').fill('Still responsive');
-  await expect(page.getByLabel('Message Aurelius')).toHaveValue('Still responsive');
+  await page.getByLabel('Message Aethelios').fill('Still responsive');
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue('Still responsive');
 });

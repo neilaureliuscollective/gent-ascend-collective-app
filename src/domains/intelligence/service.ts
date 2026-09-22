@@ -17,7 +17,7 @@ export async function intelligenceSession() {
   const identity = await currentIdentity();
   const person = await currentPerson();
   if (!identity || !person)
-    throw new IntelligenceError('Sign in to use your Aurelius workspace.', 401);
+    throw new IntelligenceError('Sign in to use your Aethelios workspace.', 401);
   return { client: identity.client, person };
 }
 export async function personalContext(): Promise<PersonalContext> {
@@ -123,13 +123,13 @@ export async function prepareReply(input: {
   const { client, person } = await intelligenceSession();
   if (!(await currentAccess()).has('aurelius.context'))
     throw new IntelligenceError(
-      'Aurelius access is not enabled for this account. Local founders can select the Founder scenario.',
+      'Aethelios access is not enabled for this account. Local founders can select the Founder scenario.',
       403,
     );
   const config = aiConfigSchema.parse(process.env);
   if (!config.AI_GATEWAY_API_KEY)
     throw new IntelligenceError(
-      'Aurelius is waiting for its model connection. Your workspace remains available.',
+      'Aethelios is waiting for its model connection. Your workspace remains available.',
       503,
     );
   const begun = await client.rpc('ai_begin_turn', {

@@ -95,13 +95,13 @@ async function setup(page: Page, mode: 'normal' | 'interrupted' | 'unconfigured'
       json: { ...state, turns: url.searchParams.has('conversationId') ? state.turns : [] },
     });
   });
-  await page.goto('/aurelius');
+  await page.goto('/aethelios');
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
   return { state, sent };
 }
 test('saved conversation, safe formatting, feedback and return to history', async ({ page }) => {
   const { sent } = await setup(page);
-  await page.getByLabel('Message Aurelius').fill('Help me choose a next step');
+  await page.getByLabel('Message Aethelios').fill('Help me choose a next step');
   await page.getByRole('button', { name: 'Send', exact: false }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   await expect(page.locator('.message-markdown strong')).toHaveText('one deliberate action');
@@ -129,7 +129,7 @@ test('memory requires explicit confirmation and can be corrected and forgotten',
 }) => {
   await setup(page);
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
-  await page.getByLabel('What should Aurelius remember?').fill('Prefer brief answers');
+  await page.getByLabel('What should Aethelios remember?').fill('Prefer brief answers');
   await page.getByRole('button', { name: 'Confirm and remember' }).click();
   await expect(page.locator('.memory-list')).toContainText('Prefer brief answers');
   await page.getByRole('button', { name: 'Edit memory', exact: true }).click();
@@ -146,28 +146,28 @@ test('context opt-out reaches the server and incomplete streams never say saved'
 }) => {
   const { sent } = await setup(page, 'interrupted');
   await page.getByLabel('Use personal context').uncheck();
-  await page.getByLabel('Message Aurelius').fill('Keep this draft');
+  await page.getByLabel('Message Aethelios').fill('Keep this draft');
   await page.getByRole('button', { name: 'Send', exact: false }).click();
   await expect(page.locator('.aurelius-workspace [role=alert]')).toContainText(
     'before the save was confirmed',
   );
-  await expect(page.getByLabel('Message Aurelius')).toHaveValue('Keep this draft');
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue('Keep this draft');
   await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
   expect(sent[0]).toMatchObject({ includeContext: false });
   await expect(page.getByRole('status')).not.toContainText('Reply saved.');
 });
 test('missing model connection leaves memory and saved context usable', async ({ page }) => {
   await setup(page, 'unconfigured');
-  await page.getByLabel('Message Aurelius').fill('A draft');
+  await page.getByLabel('Message Aethelios').fill('A draft');
   await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
   await expect(
-    page.getByText('Aurelius is waiting for its model connection.', { exact: false }),
+    page.getByText('Aethelios is waiting for its model connection.', { exact: false }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Context', exact: true }).click();
   await expect(page.getByText('A meaningful first step', { exact: true })).toBeVisible();
 });
 for (const width of [360, 768, 1440])
-  test(`Aurelius conversation at ${width}px`, async ({ page }) => {
+  test(`Aethelios conversation at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -211,18 +211,18 @@ test('anonymous API and hostile origins fail closed', async ({ request }) => {
   ).toBe(401);
 });
 
-test('the global Aurelius panel uses the same saved conversation service', async ({ page }) => {
+test('the global Aethelios panel uses the same saved conversation service', async ({ page }) => {
   await setup(page);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Aurelius', exact: true }).click();
+  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
-  await dialog.getByLabel('Message Aurelius').fill('From Command');
+  await dialog.getByLabel('Message Aethelios').fill('From Command');
   await dialog.getByRole('button', { name: 'Send', exact: false }).click();
   await expect(dialog.getByRole('status')).toContainText('Reply saved.');
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
-  await page.getByRole('button', { name: 'Aurelius', exact: true }).click();
+  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await dialog.getByLabel('Saved conversations').selectOption({ label: 'From Command' });
   await expect(dialog.locator('.user-message')).toContainText('From Command');
 });
@@ -236,11 +236,11 @@ test('stopping a request retains the draft and requires checking saved state', a
       /* request was cancelled */
     }
   });
-  await page.getByLabel('Message Aurelius').fill('A thought worth keeping');
+  await page.getByLabel('Message Aethelios').fill('A thought worth keeping');
   await page.getByRole('button', { name: 'Send', exact: false }).click();
   await page.getByRole('button', { name: 'Stop reply' }).click();
   await expect(page.locator('.aurelius-workspace [role=alert]')).toContainText('Reply stopped');
-  await expect(page.getByLabel('Message Aurelius')).toHaveValue('A thought worth keeping');
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue('A thought worth keeping');
   await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
 });
 
@@ -252,19 +252,19 @@ for (const width of [360, 768, 1440]) {
       if (request.url().includes('/api/aurelius') && request.method() !== 'GET')
         writes.push(request.url());
     });
-    await page.goto('/aurelius');
-    await expect(page.getByText('Sign in to use your Aurelius workspace.')).toBeVisible();
+    await page.goto('/aethelios');
+    await expect(page.getByText('Sign in to use your Aethelios workspace.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeInViewport();
     await page.screenshot({ path: `test-results/aurelius-preview-${width}.png`, fullPage: true });
-    await page.getByLabel('Message Aurelius').fill('An unsent thought');
-    await page.getByLabel('Message Aurelius').press('Control+Enter');
+    await page.getByLabel('Message Aethelios').fill('An unsent thought');
+    await page.getByLabel('Message Aethelios').press('Control+Enter');
     await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
     await page.getByRole('button', { name: 'Memory', exact: true }).click();
-    await expect(page.getByLabel('What should Aurelius remember?')).toBeDisabled();
+    await expect(page.getByLabel('What should Aethelios remember?')).toBeDisabled();
     await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
     await page
       .locator('.memory-space form')
@@ -277,7 +277,7 @@ for (const width of [360, 768, 1440]) {
       page.getByText('Live web research, voice, file uploads', { exact: false }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Conversation', exact: true }).click();
-    await expect(page.getByLabel('Message Aurelius')).toHaveValue('An unsent thought');
+    await expect(page.getByLabel('Message Aethelios')).toHaveValue('An unsent thought');
     expect(writes).toEqual([]);
   });
 }
@@ -286,7 +286,7 @@ for (const width of [360, 1440]) {
   test(`conversation library filters and opens saved history at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
     const { state } = await setup(page);
-    await page.getByLabel('Message Aurelius').fill('Direction for the week');
+    await page.getByLabel('Message Aethelios').fill('Direction for the week');
     await page.getByRole('button', { name: 'Send', exact: false }).click();
     await expect(page.getByRole('status')).toContainText('Reply saved.');
     state.conversations.push({
@@ -337,7 +337,7 @@ test('conversation deep link resumes the selected history without sending', asyn
     created_at: '2026-09-21',
     finished_at: '2026-09-21',
   });
-  await page.goto(`/aurelius?conversation=${id}`);
+  await page.goto(`/aethelios?conversation=${id}`);
   await expect(page.getByText('Synthetic saved response.', { exact: true })).toBeVisible();
   expect(sent).toEqual([]);
 });

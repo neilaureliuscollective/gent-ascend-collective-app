@@ -8,7 +8,7 @@ export function apiError(error: unknown) {
       error:
         error instanceof IntelligenceError
           ? error.message
-          : 'Aurelius could not complete this request.',
+          : 'Aethelios could not complete this request.',
     },
     error instanceof IntelligenceError ? error.status : 503,
   );

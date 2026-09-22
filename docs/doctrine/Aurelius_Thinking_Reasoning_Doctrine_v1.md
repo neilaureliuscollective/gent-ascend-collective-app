@@ -1,3 +1,5 @@
+> Identity update, 2026-09-22: this historical doctrine uses the retired AI name. The current public identity, founder relationship and voice are defined in [AETHELIOS_IDENTITY.md](../AETHELIOS_IDENTITY.md) and the versioned runtime prompt. Use Aethelios in product copy.
+
 # Aurelius Thinking & Reasoning Doctrine v1
 
 **Classification:** Canonical Intelligence Doctrine

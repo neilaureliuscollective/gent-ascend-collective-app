@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 for (const width of [360, 768, 1440]) {
-  test(`shell and Aurelius panel at ${width}px`, async ({ page }) => {
+  test(`shell and Aethelios panel at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -9,11 +9,11 @@ for (const width of [360, 768, 1440]) {
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
-    const trigger = page.getByRole('button', { name: 'Aurelius' });
+    const trigger = page.getByRole('button', { name: 'Aethelios' });
     await trigger.click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(
-      page.getByText('Sign in to use your Aurelius workspace.', { exact: false }),
+      page.getByText('Sign in to use your Aethelios workspace.', { exact: false }),
     ).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).not.toBeVisible();

@@ -244,7 +244,7 @@ describe('personal profile and goal transactions', () => {
   });
 });
 
-describe('Aurelius private records and generation limits', () => {
+describe('Aethelios private records and generation limits', () => {
   const chat = '30000000-0000-4000-8000-000000000001';
   const request = '40000000-0000-4000-8000-000000000001';
   const memory = '50000000-0000-4000-8000-000000000001';

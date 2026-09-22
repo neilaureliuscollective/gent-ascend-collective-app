@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { AureliusPresence } from './visual/aurelius-presence';
 const Workspace = dynamic(
   () => import('./aurelius/workspace').then((module) => module.AureliusWorkspace),
-  { loading: () => <p role="status">Opening Aurelius…</p>, ssr: false },
+  { loading: () => <p role="status">Opening Aethelios…</p>, ssr: false },
 );
 export function AureliusPanel() {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -16,11 +16,11 @@ export function AureliusPanel() {
   useEffect(() => {
     dialog.current?.close();
   }, [path]);
-  if (path === '/aurelius')
+  if (path === '/aethelios')
     return (
-      <Link className="aurelius-trigger is-current" href="/aurelius" aria-current="page">
+      <Link className="aurelius-trigger is-current" href="/aethelios" aria-current="page">
         <AureliusPresence />
-        <span>Aurelius</span>
+        <span>Aethelios</span>
       </Link>
     );
   return (
@@ -35,7 +35,7 @@ export function AureliusPanel() {
         aria-haspopup="dialog"
       >
         <AureliusPresence />
-        <span>Aurelius</span>
+        <span>Aethelios</span>
       </button>
       <dialog
         ref={dialog}
@@ -47,11 +47,11 @@ export function AureliusPanel() {
         }}
       >
         <div className="dialog-top">
-          <h2 id="aurelius-title">Aurelius</h2>
-          <Link href="/aurelius" onClick={() => dialog.current?.close()}>
+          <h2 id="aurelius-title">Aethelios</h2>
+          <Link href="/aethelios" onClick={() => dialog.current?.close()}>
             Open full space ↗
           </Link>
-          <button aria-label="Close Aurelius" onClick={() => dialog.current?.close()}>
+          <button aria-label="Close Aethelios" onClick={() => dialog.current?.close()}>
             ×
           </button>
         </div>
