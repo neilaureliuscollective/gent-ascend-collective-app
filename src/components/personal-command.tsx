@@ -21,19 +21,18 @@ export function PersonalCommand({
             {person ? (
               <>
                 {person.display_name},<br />
-                <em>make room for more.</em>
+                <em>ascend behind the life.</em>
               </>
             ) : (
               <>
-                A life built
+                Build the man
                 <br />
-                <em>with intention.</em>
+                <em>behind the life.</em>
               </>
             )}
           </h1>
           <p className="hero-description">
-            Your perspective. Your potential. Your next chapter. <br />
-            One connected space to bring it all together.
+            Strength. Discipline. Character. Legacy. <br />A better standard, built daily.
           </p>
           <div className="hero-actions">
             <Link href="/aurelius" className="button">
@@ -50,8 +49,8 @@ export function PersonalCommand({
         <div className="hero-emblem">
           <div className="emblem-halo" />
           <Image
-            src="/brand/aurelius-seal.png"
-            alt="Aurelius Collective seal: a gold figure supporting a purple celestial globe"
+            src="/brand/gent-ascend-crest.webp"
+            alt="Gent Ascend Collective seal: Aethelos standing composed in a green mantle, framed by celestial geometry and laurels"
             width={1254}
             height={1254}
             sizes="(max-width: 600px) 160px, (max-width: 1100px) 260px, 370px"

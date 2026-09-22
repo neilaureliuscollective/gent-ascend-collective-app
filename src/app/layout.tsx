@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
+import { brand } from '@/platform/brand';
 import './globals.css';
 const sora = localFont({
   src: '../assets/fonts/sora.woff2',
@@ -12,12 +13,14 @@ const inter = localFont({
   display: 'swap',
 });
 export const metadata: Metadata = {
-  title: { default: 'Aurelius Collective', template: '%s · Aurelius Collective' },
-  description: 'Your personal operating environment.',
+  title: { default: brand.name, template: `%s · ${brand.shortName}` },
+  applicationName: brand.name,
+  appleWebApp: { capable: true, title: brand.shortName, statusBarStyle: 'black-translucent' },
+  description: brand.description,
   robots: { index: false, follow: false },
 };
 export const viewport: Viewport = {
-  themeColor: '#09070B',
+  themeColor: brand.themeColor,
   width: 'device-width',
   initialScale: 1,
   interactiveWidget: 'resizes-content',

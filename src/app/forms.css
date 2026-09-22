@@ -38,7 +38,7 @@ textarea {
   resize: vertical;
   min-height: 80px;
   padding: 12px;
-  background: #0e0b13;
+  background: #0b1311;
   border: 1px solid #78634b;
   color: #f4efe6;
   border-radius: 4px;
@@ -55,7 +55,7 @@ select {
 }
 .optional {
   font-size: 0.75rem;
-  color: #b8afbe;
+  color: #afbeba;
   font-weight: 400;
   margin-left: 5px;
 }
@@ -70,7 +70,7 @@ select {
 }
 .secondary-button {
   border: 1px solid #d6ae6260;
-  background: #17121e;
+  background: #121e1b;
   color: #f1d99e;
   padding: 10px 16px;
   border-radius: 4px;
@@ -122,7 +122,7 @@ button:disabled {
   margin-top: 30px;
   padding-top: 20px;
   font-size: 0.8rem;
-  color: #b8afbe;
+  color: #afbeba;
 }
 .goal-lifecycle {
   border-top: 1px solid var(--border);

@@ -21,30 +21,31 @@ export function Shell({
         Skip to content
       </a>
       <aside className="sidebar">
-        <Link className="wordmark" href="/" aria-label="Aurelius Collective home">
+        <Link className="wordmark" href="/" aria-label="Gent Ascend Collective home">
           <Brand />
         </Link>
-        <p className="navigation-label">YOUR SPACE</p>
+        <p className="navigation-label">YOUR ASCENT</p>
         <Navigation />
+        <AureliusPanel />
         <div className="sidebar-footer">
           <span className="brand-star" aria-hidden="true">
             ✦
           </span>
           <p>
-            Character. Discipline.
+            Strength. Discipline.
             <br />
-            Community. Legacy.
+            Character. Legacy.
           </p>
-          <span className="quiet-label">A life of your own making.</span>
+          <span className="quiet-label">A better standard, built daily.</span>
         </div>
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <Link href="/" className="mobile-brand" aria-label="Aurelius Collective home">
+          <Link href="/" className="mobile-brand" aria-label="Gent Ascend Collective home">
             <Brand compact />
           </Link>
           <span className="topbar-context">
-            THE COLLECTIVE <span>/</span> YOUR PERSONAL WORLD
+            GENT ASCEND <span>/</span> YOUR PERSONAL COMMAND
           </span>
           <div className="topbar-actions">
             <AppearanceControls />
@@ -58,7 +59,6 @@ export function Shell({
           {children}
         </main>
       </div>
-      <AureliusPanel />
     </div>
   );
 }

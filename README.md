@@ -1,4 +1,6 @@
-# Aurelius Collective
+# Gent Ascend Collective
+
+A men’s personal operating environment. Aurelius is the intelligence inside Gent Ascend. See [brand migration](docs/GENT_ASCEND_MIGRATION.md) for the latest implementation.
 
 Canonical personal operating environment. Read [project rules](AGENTS.md) and [current status](docs/STATUS.md) first.
 

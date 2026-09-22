@@ -107,7 +107,7 @@ export function mountPresence(host: HTMLDivElement): () => void {
     generator = undefined;
 
     const gold = new MeshStandardMaterial({
-      color: '#D5AB63',
+      color: '#C4912F',
       metalness: 1,
       roughness: 0.24,
       envMapIntensity: 1.8,
@@ -144,19 +144,19 @@ export function mountPresence(host: HTMLDivElement): () => void {
           float filament = pow(max(0.0, 1.0 - abs(layer)), 9.0);
           float dust = pow(max(0.0, sin(p.x * 52.0) * sin(p.y * 61.0 + p.z * 44.0 + flow * 12.0)), 64.0);
           float well = exp(-length(p.xy - vec2(-0.16, 0.15)) * 2.8);
-          vec3 color = mix(vec3(0.007, 0.002, 0.01), vec3(0.018, 0.0018, 0.024), facing);
-          color += vec3(0.038, 0.006, 0.055) * well * (0.6 + flow * 0.13);
-          color += vec3(0.075, 0.014, 0.095) * filament * well * (0.5 + uEnergy * 1.6);
+          vec3 color = mix(vec3(0.002, 0.007, 0.005), vec3(0.002, 0.024, 0.016), facing);
+          color += vec3(0.004, 0.055, 0.033) * well * (0.6 + flow * 0.13);
+          color += vec3(0.011, 0.095, 0.060) * filament * well * (0.5 + uEnergy * 1.6);
           color += vec3(0.48, 0.28, 0.08) * dust * well * (0.1 + uEnergy);
           float wave = pow(max(0.0, sin(length(p.xy) * 18.0 - uTime * 4.2)), 6.0);
-          color += vec3(0.055, 0.019, 0.048) * wave * uEnergy * facing;
-          color += vec3(0.045, 0.022, 0.065) * rim;
+          color += vec3(0.012, 0.065, 0.043) * wave * uEnergy * facing;
+          color += vec3(0.014, 0.065, 0.047) * rim;
           vec3 light = normalize(vec3(-0.7, 1.0, 1.8));
           float spec = pow(max(dot(n, normalize(light + v)), 0.0), 130.0);
           float soft = pow(max(dot(n, normalize(light + v)), 0.0), 14.0);
           color += vec3(0.95, 0.79, 0.58) * spec * 0.32;
-          color += vec3(0.24, 0.13, 0.19) * soft * 0.27;
-          color += vec3(0.045, 0.008, 0.04) * well * uWorking;
+          color += vec3(0.13, 0.24, 0.19) * soft * 0.27;
+          color += vec3(0.008, 0.055, 0.035) * well * uWorking;
           gl_FragColor = vec4(color, 1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -209,7 +209,7 @@ export function mountPresence(host: HTMLDivElement): () => void {
     });
     geometries.push(starGeometry);
     const starMaterial = new MeshStandardMaterial({
-      color: '#D5AB63',
+      color: '#C4912F',
       metalness: 0.8,
       roughness: 0.27,
       emissive: '#6B4215',
@@ -222,7 +222,7 @@ export function mountPresence(host: HTMLDivElement): () => void {
     const key = new DirectionalLight('#FFF1D0', 3);
     key.position.set(-2, 3, 4);
     scene.add(key);
-    const edge = new DirectionalLight('#D2A4D5', 1.2);
+    const edge = new DirectionalLight('#A4D5BC', 1.2);
     edge.position.set(2, -1, 2);
     scene.add(edge);
 

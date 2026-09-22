@@ -1,7 +1,9 @@
+import { Brand } from '@/components/visual/brand';
 export default function Loading() {
   return (
-    <p role="status" className="lead">
-      Opening your workspace…
-    </p>
+    <div role="status" className="workspace-loading">
+      <Brand />
+      <p>Opening your Gent Ascend workspace…</p>
+    </div>
   );
 }

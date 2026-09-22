@@ -1,3 +1,24 @@
+# Execution status — 2026-09-22
+
+**Latest milestone: Gent Ascend Collective migration complete in the existing codebase.** Exact founder logo master preserved; derived crest/wordmark/app icons, centralized obsidian/green/gold tokens, refined dashboard and account identity, shared shell and forms, clear Legacy Reserve relationship, updated public metadata and the green/gold Aurelius orb. Aurelius remains the AI; Aethelos is the crest archetype. [Migration details](GENT_ASCEND_MIGRATION.md), [identity](BRAND_IDENTITY.md), [design system](DESIGN_SYSTEM.md).
+
+## Current verification
+
+- Final `npm run check`: lint, strict typecheck, **61 unit/SQL/mock-provider tests**, and production build all pass.
+- Full sequential browser run: **48/49 passed**, identifying 200% text overflow in the longer brand header. Corrected with header reflow. Visual inspection also caught the desktop launcher overlapping navigation; moved it into normal sidebar flow.
+- Final focused regression run: **15/15 passed**, covering the corrected 200% text/short-screen editor, brand/assets/manifest at 344/768/1440, desktop navigation/launcher separation, shell/dialog keyboard behavior, global conversation panel, motion/material preferences, unsupported WebGL and hosted harness denial. Across the full run and final targeted rerun, all 49 distinct browser scenarios have passing results; there was no second full-suite run after the layout-only fixes.
+- Final dashboard and account screenshots at 344/768/1440 reviewed. No page overflow in asserted layouts; logo/manifest/icon routes valid. Orb lifecycle/voice-preview isolation/context-loss/adaptive fallback passed in the full run. No remaining violet hex colors in active CSS; original master SHA-256 matches the uploaded source.
+- Test runtime allowances: database initialization 60 seconds; browser assertions 15 seconds/scenarios 90 seconds. No assertions skipped or weakened. Initial short-budget parallel browser attempt was interrupted after timing failures; sequential runs above are the acceptance evidence.
+- Auth, API routes, Supabase adapters, all four migrations, package/lockfile and Vercel configuration unchanged. AI prompt receives only a versioned brand-architecture correction.
+
+**Still unverified:** actual Supabase Auth/PostgREST and hosted persistence; live paid AI requests; physical Fold GPU/keyboard behavior and device PWA installation. No services or credentials were fabricated. No GitHub push or Vercel deployment was performed during this migration. Existing technical names intentionally remain stable.
+
+The current source and all prior history are preserved in the migration handoff. The execution checkout is `/workspace/scratch/2f4521030116/gent-ascend`, restored from the original history bundle; it is not the founder's mounted Desktop. Follow VERCEL_SETUP.md and reconcile any unpushed workstation changes before repository synchronization.
+
+---
+
+## Historical milestone log (superseded by the current identity and verification above)
+
 # Execution status — 2026-09-21
 
 **Latest release preparation:** restored the exact `cf141f8` application and all 12 original commits from the saved Git bundle after the transient execution checkout was lost. Clean npm install and production/Vercel-flagged lint, strict typing, 61 unit/SQL/mock SDK tests and build passed using synthetic build-only Supabase values. No real service connection is claimed. The connected GitHub account is now the correct owner with admin/write permission, but terminal Git lacks authentication; the dry-run push was rejected for missing credentials. Remote main is still unpublished. [Release readiness](RELEASE_READINESS.md) and [fresh Vercel setup](VERCEL_SETUP.md) explain the remaining steps. No application behavior or dependencies changed in this release review.

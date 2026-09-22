@@ -167,7 +167,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
                 ? `Your day, ${data.name}.`
                 : 'Make today yours.'}
           </h1>
-          <p>A little perspective. Room for what matters.</p>
+          <p>Your standards. Your direction. Your next step.</p>
         </div>
         <div className="daily-heading-tools">
           <div className="segmented" aria-label="Dashboard perspective">
@@ -217,7 +217,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
             <span className="eyebrow">
               {lens === 'today' ? 'YOUR DIRECTION TODAY' : 'A MOMENT TO REFLECT'}
             </span>
-            <span className="tag">{day.intention ? 'IN YOUR WORDS' : 'AURELIUS COLLECTIVE'}</span>
+            <span className="tag">{day.intention ? 'IN YOUR WORDS' : 'GENT ASCEND'}</span>
           </div>
           <div className="orientation-content">
             <div>
@@ -237,7 +237,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
                   ? 'Keep what mattered. Notice what you learned. Tomorrow can begin from there.'
                   : day.intention
                     ? 'A direction you chose. Let the next small action support it.'
-                    : 'Give today a direction that feels like yours. One considered step is enough to begin.'}
+                    : 'Choose what deserves your attention. Build the day around it.'}
               </p>
             </div>
             <AureliusPresence className="daily-presence" />

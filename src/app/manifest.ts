@@ -1,13 +1,14 @@
 import type { MetadataRoute } from 'next';
+import { brand } from '@/platform/brand';
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Aurelius Collective',
-    short_name: 'Aurelius',
-    description: 'Your personal operating environment.',
+    name: brand.name,
+    short_name: brand.shortName,
+    description: brand.description,
     start_url: '/',
     display: 'standalone',
-    background_color: '#09070B',
-    theme_color: '#09070B',
+    background_color: brand.themeColor,
+    theme_color: brand.themeColor,
     icons: [
       { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
       { src: '/brand/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

@@ -1,43 +1,32 @@
-# Brand identity — founder logo, 2026-09-21
+# Gent Ascend Collective — official identity
 
-The founder approved the supplied **Aurelius Collective** seal and explicitly made its purple the reference for the application. Dictated “Aureus” is not a product rename. This direction authorizes Aurelius 1C and supersedes the provisional color values in the earlier visual proposal.
+Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aurelius Collective visual directions, including the historical 1C–1F documents. The existing repository and technical identifiers remain stable.
 
-## Master and derivatives
+## Brand architecture
 
-- `public/brand/aurelius-master.png`: unmodified 1536×1536 founder attachment, including the detached wordmark and reflection. SHA-256 `4da43c75bdb146ae83a3f255a644ca918e93ff4aaaee2ee9df47838d834bae8a`.
-- `public/brand/aurelius-seal.png`: 1254×1254 transparent seal derivative prepared with image generation from the master. Used in the hero and shell via responsive Next Image. It is a regenerated derivative, not a pixel-identical crop or a vector master. Original remains authoritative.
-- `src/app/icon.svg`: native vector compact A/orbit/star mark derived from the brand vocabulary. Used at favicon sizes where the full inscription and figure are illegible. PNG 192/512 and Apple 180 renditions are rendered from this vector; maskable PNGs have an opaque obsidian background and central safe-area composition. These are digital app assets, not print-ready minting dies.
-- Sora and Inter Latin variable WOFF2 assets and their OFL licenses are in `src/assets/fonts`. Files came from Fontsource 5.3.0; fonts are served locally through Next Font.
+- **Gent Ascend Collective**: master brand and men's advancement ecosystem; **Gent Ascend** is the compact display name.
+- **Aurelius**: the intelligence within Gent Ascend. Existing API routes, data tables, environment names, saved preferences and assistant identity retain Aurelius.
+- **Aethelos**: the composed gentleman archetype in the official crest. He stands with self-command; he is not Atlas, Zeus, a warrior or the AI.
+- **Legacy Reserve**: separate grooming/wellness product and commerce brand. Do not rename it to Gent Ascend.
 
-Seal preparation instructions: retain the circular composition, kneeling figure, A, celestial globe, gold metal, deep purple enamel and correct inscriptions; remove only the detached lower wordmark/reflection and surrounding background; sharpen edges for an isolated transparent digital asset without redesigning the emblem. The result was visually inspected for the wording and composition. Do not keep regenerating the brand across screens.
+Purpose: help men become more capable across presentation, wellbeing, performance, discipline, character, work, relationships, community and legacy. Confident and grounded; no macho slogans or mythology inside ordinary product controls.
 
-The figure is part of the approved emblem. It is not an assistant avatar, health model or reference to the founder's private Atlas AI. Keep the rest of the application modern and human; do not spread classical ornament into every interface control.
+## Authoritative artwork
 
-## Purple extraction and palette
+`public/brand/gent-ascend-master.png` is the untouched founder attachment, 567.png. The standing gold figure, green mantle, laurels, celestial geometry and inscriptions remain intact. `scripts/brand-assets.mjs` produces deterministic renditions from these exact pixels; no generated or redrawn figure.
 
-The original contains textured lighting, not one flat purple. Sampled the circular enamel annulus, excluding gold and near-black neutral pixels with a purple hue filter. Approximate selected-pixel lightness percentiles:
+- `gent-ascend-lockup.webp`: optimized complete crest/wordmark, account entrance.
+- `gent-ascend-crest.webp`: crest-only framing, responsive shell and profile identity.
+- `icon-192.png`, `icon-512.png`, `src/app/apple-icon.png`: exact crest on obsidian, padded for the central maskable safe circle.
+- `src/app/icon.svg`: reduced eight-point star and ring from the crest's celestial geometry, for very small favicon sizes where inscriptions are illegible. This is not a replacement primary logo.
 
-| Sample                      | sRGB        |
-| --------------------------- | ----------- |
-| Shadow, 20th percentile     | #110214     |
-| Median enamel               | **#150319** |
-| Lit enamel, 80th percentile | #1A061E     |
-| Highlight, 95th percentile  | #200C24     |
+Do not stretch the crest or replace it with the Aurelius orb. Use Aethelos only at brand/identity moments. Earlier master and seal remain in `docs/brand-archive/` for historical provenance, never imported by the current UI.
 
-138,448 pixels qualified. These are reproducible working observations of this raster, not measured material specifications, a Pantone match or a single universal “correct” purple.
+## Exact working palette
 
-The key character is **very dark, red-biased aubergine**, not electric blue-violet. Use #150319 as the identity anchor. #200C24 carries lit depth; #582164 is an intentionally brighter related light color for restrained decorative illumination. Do not use the latter for small text.
+Obsidian: #050706, #0A0C0B, #101311, #151917.
+Green: #071F1A, #092A24, **#0B3B32**, #0E4A3D, #146B58.
+Gold: #9D6E1F, **#C4912F**, #D6A84B, #E4BF6A.
+Reading text: #F5F1E9; secondary: #B9BCB5.
 
-| Semantic role        | Value   |
-| -------------------- | ------- |
-| Obsidian environment | #09070B |
-| Purple enamel        | #150319 |
-| Lit purple           | #200C24 |
-| Purple illumination  | #582164 |
-| Reading surface      | #180F1D |
-| Action gold          | #DFBD7D |
-| Gold highlight       | #F4DFB1 |
-| Primary text         | #F5F1E9 |
-| Secondary text       | #BCB2C2 |
-
-Gold is simulated through controlled warm gradients, narrow highlights and shadows. Do not put metallic gradients inside reading text. The seal receives room and contrast; do not recolor it, stretch it, add a competing glow or claim a registration/trademark status we have not established.
+Tokens are centralized in `src/app/globals.css`; public name, description and asset paths in `src/platform/brand.ts`. Brighter gold supports readable small labels; primary gold anchors metal, active edges and app identity. Green provides focal depth while most reading surfaces remain obsidian. Purple is no longer customer-facing.

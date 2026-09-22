@@ -38,7 +38,7 @@
 .segmented {
   display: flex;
   padding: 4px;
-  border: 1px solid #e9d5f018;
+  border: 1px solid #d5f0e818;
   border-radius: 14px;
   background: #0c0d0db0;
   gap: 3px;
@@ -132,8 +132,8 @@
   border-radius: 26px;
   padding: 28px 30px 20px;
   background:
-    radial-gradient(ellipse at 100% 45%, #35103f90, transparent 58%),
-    linear-gradient(125deg, #24221d, #111111 57%, #150319);
+    radial-gradient(ellipse at 100% 45%, #103f3290, transparent 58%),
+    linear-gradient(125deg, #24221d, #111111 57%, #051712);
   box-shadow:
     inset 0 1px 0 #f1d79d38,
     inset 0 -1px 0 #000,
@@ -180,13 +180,13 @@
   margin-top: 17px;
   font-size: 13px;
   line-height: 1.8;
-  color: #ccbad3;
+  color: #bad3cc;
 }
 .orientation-content .daily-presence {
   width: 102px;
   height: 102px;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 22px #b66ece18);
+  filter: drop-shadow(0 0 22px #6eceb318);
 }
 .orientation-bottom {
   display: flex;
@@ -264,7 +264,7 @@
 .checkin-values > div > span:first-child {
   font-size: 10px;
   letter-spacing: 0.12em;
-  color: #c6b6cf;
+  color: #b6cfc8;
 }
 .checkin-values strong {
   display: block;
@@ -278,7 +278,7 @@
 .checkin-values strong small {
   font-family: var(--font-body), sans-serif;
   font-size: 13px;
-  color: #c7b7ce;
+  color: #b7cec7;
 }
 .checkin-values p {
   font-size: 12px;
@@ -293,7 +293,7 @@
   height: 3px;
   width: 17px;
   border-radius: 2px;
-  background: #795c852e;
+  background: #5c85792e;
 }
 .energy-pips .lit {
   background: #dab976;
@@ -302,7 +302,7 @@
   display: block;
   font-size: 9px;
   letter-spacing: 0.07em;
-  color: #ae9cb9;
+  color: #9cb9b1;
   margin-top: 12px;
 }
 .checkin-button {
@@ -312,7 +312,7 @@
   gap: 14px;
   width: 100%;
   border: 0;
-  border-top: 1px solid #dec4e623;
+  border-top: 1px solid #c4e6dc23;
   color: #ecd5a5;
   background: transparent;
   min-height: 47px;
@@ -336,19 +336,19 @@
 }
 .daily-count > span {
   font-size: 14px;
-  color: #aa97b4;
+  color: #97b4ac;
 }
 .action-progress {
   height: 3px;
   border-radius: 2px;
-  background: #aa83bb1c;
+  background: #83bbab1c;
   margin: 21px 0 10px;
   overflow: hidden;
 }
 .action-progress > span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #91649d, #e7c887);
+  background: linear-gradient(90deg, #649d8d, #e7c887);
   transition: width 0.2s ease;
 }
 .daily-actions {
@@ -360,7 +360,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid #d0b0de12;
+  border-bottom: 1px solid #b0ded112;
   min-height: 69px;
 }
 .daily-actions label {
@@ -385,15 +385,15 @@
   overflow-wrap: anywhere;
 }
 .action-done {
-  color: #b7a4c3;
+  color: #a4c3ba;
   text-decoration: line-through;
-  text-decoration-color: #a2899a77;
+  text-decoration-color: #89a29b77;
 }
 .remove-action {
   width: 44px;
   height: 44px;
   border: 0;
-  color: #bca9c6;
+  color: #a9c6be;
   background: transparent;
   font-size: 19px;
   flex-shrink: 0;
@@ -407,11 +407,11 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  border: 1px dashed #c8a5d238;
-  background: #1d112780;
+  border: 1px dashed #a5d2c538;
+  background: #11272180;
   border-radius: 12px;
   min-height: 46px;
-  color: #d5c0dd;
+  color: #c0ddd5;
   font-size: 12px;
   margin-top: 19px;
 }
@@ -429,7 +429,7 @@
 .daily-actions-empty > .ui-icon {
   width: 34px;
   height: 34px;
-  color: #b38ac2;
+  color: #8ac2b2;
 }
 .daily-actions-empty p {
   font-size: 14px;
@@ -471,10 +471,10 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid #bd8acc23;
+  border: 1px solid #8accb923;
   border-radius: 20px;
   padding: 22px;
-  background: linear-gradient(110deg, #2e163a, #170e1c);
+  background: linear-gradient(110deg, #163a30, #0e1c18);
 }
 .daily-continuity > div:last-child {
   min-width: 0;
@@ -554,8 +554,8 @@
     to top,
     transparent,
     transparent 43px,
-    #b38ec419 44px,
-    #b38ec419 45px
+    #8ec4b519 44px,
+    #8ec4b519 45px
   );
   background-position: 0 -22px;
 }
@@ -579,8 +579,8 @@
   display: block;
   width: 100%;
   border-radius: 6px 6px 2px 2px;
-  background: linear-gradient(0deg, #24162a, #795282);
-  border-top: 1px solid #ac83bb80;
+  background: linear-gradient(0deg, #162a24, #528274);
+  border-top: 1px solid #83bbab80;
 }
 .is-today .bar-track > span {
   background: linear-gradient(0deg, #76511d, #ba8d3c 65%, #eed394);
@@ -639,7 +639,7 @@
 .daily-table-scroll th,
 .daily-table-scroll td {
   padding: 10px 8px;
-  border-bottom: 1px solid #c4a3d025;
+  border-bottom: 1px solid #a3d0c325;
   font-weight: 400;
 }
 .daily-table-scroll thead {
@@ -714,7 +714,7 @@
   gap: 16px;
   min-height: 44px;
   padding: 8px 14px;
-  border: 1px solid #cfafd225;
+  border: 1px solid #afd2c825;
   border-radius: 12px;
   font-size: 12px;
   color: #dec6a2;
@@ -753,7 +753,7 @@
   box-shadow: 0 30px 100px #000b;
 }
 .daily-editor::backdrop {
-  background: #050307c9;
+  background: #030706c9;
   backdrop-filter: blur(8px);
 }
 .daily-editor-top {
@@ -765,7 +765,7 @@
 .daily-editor-top button {
   width: 44px;
   height: 44px;
-  border: 1px solid #d9b9df28;
+  border: 1px solid #b9dfd428;
   background: #ffffff05;
   border-radius: 50%;
   font-size: 23px;
