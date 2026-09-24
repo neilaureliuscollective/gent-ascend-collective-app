@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { brand } from '@/platform/brand';
 import { currentPerson } from '@/domains/person/current';
+import { currentFounderAccess } from '@/domains/access/founder';
 import { parseEnvironment } from '@/platform/environment';
 import { signIn, signOut } from '@/app/auth/actions';
 import { ProfileEditor } from '@/components/profile-editor';
@@ -11,7 +12,9 @@ export default async function You({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const [person, params] = await Promise.all([currentPerson(), searchParams]);
+  const [person, params, founder] = await Promise.all([
+    currentPerson(), searchParams, currentFounderAccess(),
+  ]);
   const env = parseEnvironment(process.env);
   return (
     <>
@@ -36,6 +39,7 @@ export default async function You({
             <ProfileEditor person={person} action={saveProfileAction} />
           </section>
           <aside className="panel perspective-panel">
+            {founder && <p className="eyebrow">Founder access verified</p>}
             <Image
               className="identity-crest"
               src={brand.crest}

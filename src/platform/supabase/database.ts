@@ -104,6 +104,11 @@ export interface Database {
         >
       >;
       membership_accounts: Table<MembershipRow, never, never>;
+      founder_access: Table<
+        { person_id: string; granted_at: string; grant_reason: string },
+        never,
+        never
+      >;
       personal_events: Table<
         {
           id: string;

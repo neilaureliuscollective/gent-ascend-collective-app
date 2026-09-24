@@ -1,3 +1,19 @@
+# Founder activation foundation — 2026-09-24
+
+Recovered the exact hosted grooming and founder-access SQL migrations into
+source and added person-bound founder authority to the consumer app. A trusted
+founder grant unlocks implemented nonclinical capabilities without a paid tier;
+the account page displays verification. Clinical care and cross-person data
+remain inaccessible. See [founder activation](FOUNDER_ACTIVATION.md).
+
+The Gent Ascend hosted database had no Auth users at inspection. The Auth
+Admin account creation, trusted founder grant, real hosted login and paid
+model reply remain pending. No production DDL is needed by this code release.
+Older migration history versions differ between GitHub and hosted ledger;
+do not run `db push` until reconciled in a separate maintenance change.
+
+---
+
 # Cross-app publication foundation — 2026-09-24
 
 Added a reviewed public brand-knowledge snapshot with a schema and edition in

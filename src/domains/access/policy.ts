@@ -19,6 +19,7 @@ export interface AccessState {
   tier: Tier;
   billing: BillingState;
   beta: boolean;
+  founder?: boolean;
   trialEndsAt?: string | null;
   accessUntil?: string | null;
 }
@@ -40,11 +41,11 @@ export function calculateCapabilities(
     (state.billing === 'active' && future(state.accessUntil)) ||
     (state.billing === 'trialing' && future(state.trialEndsAt)) ||
     (state.billing === 'canceled' && future(state.accessUntil));
-  if (state.beta || (state.tier !== 'free' && paid)) {
+  if (state.founder || state.beta || (state.tier !== 'free' && paid)) {
     granted.add('progress.read');
     granted.add('aurelius.context');
   }
-  if (state.tier === 'health' && paid) granted.add('health.navigation');
+  if (state.founder || (state.tier === 'health' && paid)) granted.add('health.navigation');
   // Clinical care is never derived from a membership or developer scenario.
   return granted;
 }
