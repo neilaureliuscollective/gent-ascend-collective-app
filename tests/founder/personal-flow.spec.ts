@@ -34,7 +34,9 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page.getByRole('status')).toHaveText('Profile saved.');
   await stale.getByLabel('What should we call you?').fill('Stale name');
   await stale.getByRole('button', { name: 'Save profile' }).click();
-  await expect(stale.getByRole('alert')).toContainText('changed in another session');
+  await expect(
+    stale.getByRole('form', { name: 'Personal profile' }).getByRole('alert'),
+  ).toContainText('changed in another session');
   await stale.close();
   await page.reload();
   await expect(page.getByLabel('What matters most right now?')).toHaveValue(

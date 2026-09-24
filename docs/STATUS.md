@@ -12,7 +12,10 @@ deployment and provider acceptance are pending.
 CI integration follow-up: the first PR quality run passed the application job
 but failed local Auth because disabling `auth.email.enable_signup` also disabled
 password login for seeded synthetic users. Local email is now enabled while
-project-wide signup stays disabled. Re-run the database job before merge.
+project-wide signup stays disabled. The next database job passed Auth and
+integration, then found a founder Playwright selector that matched both the
+profile conflict alert and Next.js's route announcer. It now scopes the
+assertion to the Personal profile form. Re-run both jobs before merge.
 
 ---
 
