@@ -107,3 +107,14 @@ Listening/speaking are explicitly visual previews until real voice exists. The p
 Use https://github.com/neilaureliuscollective/gent-ascend-collective-app for this existing application. Connect directly to OpenAI using server-only OPENAI_API_KEY so usage draws on the founder's existing OpenAI API credits. Retain AI SDK 7.0.107 and add compatible @ai-sdk/openai 4.0.72 (provider protocol 4.0.17). Use Responses with store=false, explicit api.openai.com base URL, no Gateway fallback, unchanged quotas and error redaction. Keep the existing default model as gpt-6-astra, verified in OpenAI documentation. Broader product pivot remains planning-only.
 
 Official references checked: https://ai-sdk.dev/providers/ai-sdk-providers/openai.md and https://developers.openai.com/api/docs/models/gpt-6-astra. Provider package source and the existing lockfile verified for compatibility. Live key/account model access is not verified by mock tests.
+# 2026-09-24 — Aethelios cross-app publication seam
+
+Keep the private founder workspace and member app independently authorized.
+Start with a manually reviewed, editioned public fact snapshot in the member
+app. Personal memory and private founder knowledge are excluded. Only after a
+real publication workflow needs automation should a server-side, read-only
+approved-edition feed replace the snapshot. Current Supabase RLS guidance
+requires authorization at the data boundary; app OAuth scopes alone do not
+restrict database data. References checked 2026-09-24:
+https://supabase.com/docs/guides/database/postgres/row-level-security and
+https://supabase.com/docs/guides/auth/oauth-server/token-security.

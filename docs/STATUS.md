@@ -1,3 +1,24 @@
+# Cross-app publication foundation — 2026-09-24
+
+Added a reviewed public brand-knowledge snapshot with a schema and edition in
+`src/domains/intelligence/published-knowledge.ts`. Member Aethelios receives
+these facts as data regardless of the separate personal-context preference;
+the prompt version records the change. See [cross-app contract](AETHELIOS_INTEROP.md).
+This is a manually curated snapshot, not a live connection to the private
+Aethelios workspace or an export of founder memory. No new routes, secrets,
+database permissions, repository access or coding tools were added. Live
+deployment and provider acceptance are pending.
+
+CI integration follow-up: the first PR quality run passed the application job
+but failed local Auth because disabling `auth.email.enable_signup` also disabled
+password login for seeded synthetic users. Local email is now enabled while
+project-wide signup stays disabled. The next database job passed Auth and
+integration, then found a founder Playwright selector that matched both the
+profile conflict alert and Next.js's route announcer. It now scopes the
+assertion to the Personal profile form. Re-run both jobs before merge.
+
+---
+
 # Direct OpenAI deployment preparation — 2026-09-22
 
 Current official repository: https://github.com/neilaureliuscollective/gent-ascend-collective-app

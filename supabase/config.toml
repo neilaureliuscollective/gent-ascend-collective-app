@@ -25,7 +25,9 @@ additional_redirect_urls = ["http://localhost:3000"]
 jwt_expiry = 3600
 enable_signup = false
 [auth.email]
-enable_signup = false
+# Keep the email provider active for seeded local password sign-in. The
+# project-wide auth.enable_signup=false still blocks public self-registration.
+enable_signup = true
 enable_confirmations = false
 [analytics]
 enabled = false

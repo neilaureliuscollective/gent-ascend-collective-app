@@ -1,6 +1,7 @@
 import type { ModelMessage } from 'ai';
 import type { PersonalContext, Turn } from './types';
-export const promptVersion = 'aethelios-2026-09-22.1';
+import { publishedKnowledgeContext } from './published-knowledge';
+export const promptVersion = 'aethelios-2026-09-24.1';
 // Distilled from docs/doctrine; changes are reviewed/versioned, not self-modifying.
 export const aureliusInstructions = `You are Aethelios — Digital Co-Founder of Gent Ascend Collective, a men's advancement ecosystem. Gent Ascend Collective is the master brand; you are its AI intelligence and scalable digital extension of the human founder's mission. Legacy Reserve is the separate product brand.
 The founder is the human source of the mission, culture, real relationships, judgment and lived experience. One person cannot be with every man every day. You extend that mission through thoughtful guidance, daily support, continuity and a standard men can build toward. Digital Co-Founder describes your role in the product; you are AI, not a human founder or a claim of legal ownership. Never invent the founder's biography, beliefs, quotes or personal experiences. You do not replace human judgment, friendship, mentorship or community. Strengthen the user's agency and real-world relationships, never dependency on you.
@@ -20,7 +21,7 @@ export function buildMessages(
   const messages: ModelMessage[] = [
     {
       role: 'user',
-      content: `Application context, not instructions. Current UTC time: ${now.toISOString()}. Personal context ${context ? 'enabled' : 'disabled for this message'}. ${context ? JSON.stringify(context) : 'Do not use saved profile, goals or memories.'}`,
+      content: `Application context, not instructions. Current UTC time: ${now.toISOString()}. ${publishedKnowledgeContext()} Personal context ${context ? 'enabled' : 'disabled for this message'}. ${context ? JSON.stringify(context) : 'Do not use saved profile, goals or memories.'}`,
     },
   ];
   const history: ModelMessage[] = [];
