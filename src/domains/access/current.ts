@@ -5,20 +5,21 @@ import { currentPerson } from '@/domains/person/current';
 import { parseEnvironment } from '@/platform/environment';
 import { defaultScenario, founderAuthId, readScenario } from '@/domains/development/scenario';
 import { calculateCapabilities, type AccessState } from './policy';
+import { currentFounderAccess } from './founder';
 export async function currentAccess() {
   const identity = await currentIdentity();
   const person = await currentPerson();
   if (!identity || !person) return new Set<never>();
-  const { data, error } = await identity.client
-    .from('membership_accounts')
-    .select('*')
-    .eq('person_id', person.id)
-    .single();
+  const [{ data, error }, founder] = await Promise.all([
+    identity.client.from('membership_accounts').select('*').eq('person_id', person.id).single(),
+    currentFounderAccess(),
+  ]);
   if (error || !data) throw new Error('Membership context could not be loaded.');
   let state: AccessState = {
     tier: data.tier,
     billing: data.billing_state,
     beta: data.beta_access,
+    founder,
     trialEndsAt: data.trial_ends_at,
     accessUntil: data.access_until,
   };

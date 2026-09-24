@@ -59,6 +59,15 @@ describe('capabilities', () => {
     expect(c.has('clinical.care')).toBe(false);
     expect(c.has('health.navigation')).toBe(false);
   });
+  it('grants a trusted founder all implemented nonclinical capabilities without a subscription', () => {
+    const c = calculateCapabilities({ tier: 'free', billing: 'none', beta: false, founder: true }, now);
+    expect(c.has('aurelius.context')).toBe(true);
+    expect(c.has('progress.read')).toBe(true);
+    expect(c.has('health.navigation')).toBe(true);
+    expect(c.has('clinical.care')).toBe(false);
+    expect(c.has('profile.write')).toBe(true);
+    expect(calculateCapabilities({ tier: 'free', billing: 'none', beta: false }, now).has('aurelius.context')).toBe(false);
+  });
 });
 describe('environment isolation', () => {
   it('allows explicit configured local developer access', () =>

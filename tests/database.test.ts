@@ -29,6 +29,14 @@ beforeAll(async () => {
 });
 afterAll(() => db.close());
 describe('migration, seeds and owner security', () => {
+  it('keeps founder grants owner-readable and unavailable to member writes', async () => {
+    expect((await asUser(founder, 'select * from public.founder_access')).rows).toHaveLength(0);
+    await expect(asUser(founder, `insert into public.founder_access(person_id,grant_reason) values((select id from public.persons where auth_user_id='${founder}'),'Self promotion')`)).rejects.toThrow();
+    await db.exec(`insert into public.founder_access(person_id,grant_reason) values((select id from public.persons where auth_user_id='${founder}'),'Trusted founder grant')`);
+    expect((await asUser(founder, 'select * from public.founder_access')).rows).toHaveLength(1);
+    expect((await asUser(member, 'select * from public.founder_access')).rows).toHaveLength(0);
+    await expect(asUser(member, 'delete from public.founder_access')).rejects.toThrow();
+  });
   it('provisions both people and free memberships via auth trigger', async () => {
     expect((await db.query('select * from public.persons')).rows).toHaveLength(2);
     expect(
