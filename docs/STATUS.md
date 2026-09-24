@@ -9,6 +9,11 @@ Aethelios workspace or an export of founder memory. No new routes, secrets,
 database permissions, repository access or coding tools were added. Live
 deployment and provider acceptance are pending.
 
+CI integration follow-up: the first PR quality run passed the application job
+but failed local Auth because disabling `auth.email.enable_signup` also disabled
+password login for seeded synthetic users. Local email is now enabled while
+project-wide signup stays disabled. Re-run the database job before merge.
+
 ---
 
 # Direct OpenAI deployment preparation — 2026-09-22
