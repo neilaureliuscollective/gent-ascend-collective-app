@@ -1,3 +1,16 @@
+# Cross-app publication foundation — 2026-09-24
+
+Added a reviewed public brand-knowledge snapshot with a schema and edition in
+`src/domains/intelligence/published-knowledge.ts`. Member Aethelios receives
+these facts as data regardless of the separate personal-context preference;
+the prompt version records the change. See [cross-app contract](AETHELIOS_INTEROP.md).
+This is a manually curated snapshot, not a live connection to the private
+Aethelios workspace or an export of founder memory. No new routes, secrets,
+database permissions, repository access or coding tools were added. Live
+deployment and provider acceptance are pending.
+
+---
+
 # Direct OpenAI deployment preparation — 2026-09-22
 
 Current official repository: https://github.com/neilaureliuscollective/gent-ascend-collective-app

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildMessages, aureliusInstructions } from '../src/domains/intelligence/prompt';
+import { publishedKnowledge, publishedKnowledgeContext } from '../src/domains/intelligence/published-knowledge';
 import { chatInput, memoryInput } from '../src/domains/intelligence/validation';
 import { replyStream, type FinishReply, type ModelChunk } from '../src/domains/intelligence/stream';
 import type { PersonalContext, Turn } from '../src/domains/intelligence/types';
@@ -24,6 +25,16 @@ const context: PersonalContext = {
 const turn = { id: 'request', assistant_text: 'Hello', status: 'complete' } as Turn;
 const consume = (stream: ReadableStream<Uint8Array>) => new Response(stream).text();
 describe('Aethelios context boundaries', () => {
+  it('supplies only reviewed public facts independently of optional personal context', () => {
+    expect(publishedKnowledge.schemaVersion).toBe(1);
+    expect(publishedKnowledge.facts.map((fact) => fact.id)).toEqual([
+      'brand.identity', 'brand.intelligence', 'brand.legacy-reserve',
+    ]);
+    const publicOnly = buildMessages([], 'Who is Aethelios?', null);
+    expect(publicOnly[0]?.content).toContain(publishedKnowledgeContext());
+    expect(JSON.stringify(publicOnly)).not.toContain(context.memories[0]?.content);
+    expect(publishedKnowledgeContext()).not.toMatch(/github|repository|secret|medical history/i);
+  });
   it('establishes the digital co-founder without impersonating the human founder or replacing relationships', () => {
     expect(aureliusInstructions).toContain('You are Aethelios — Digital Co-Founder');
     expect(aureliusInstructions).toContain('you are AI, not a human founder');
