@@ -33,12 +33,22 @@ export async function founderBridgeContext(question: string): Promise<string | n
     ).slice(0, 24);
     const knowledge = 'knowledge' in payload && Array.isArray(payload.knowledge)
       ? payload.knowledge.filter((k): k is { title: string; content: string; domain: string; evidence_level: string; source: { title: string; url: string | null; reviewed_at: string } } =>
-        !!k && typeof k === 'object' && typeof k.title === 'string' && typeof k.content === 'string' &&
+        !!k && typeof k === 'object' && typeof k.title === 'string' && k.title.length <= 300 &&
+        typeof k.content === 'string' && k.content.length <= 5000 &&
         typeof k.domain === 'string' && typeof k.evidence_level === 'string' &&
         !!k.source && typeof k.source === 'object' && typeof k.source.title === 'string' &&
         (k.source.url === null || typeof k.source.url === 'string') && typeof k.source.reviewed_at === 'string',
       ).slice(0, 5) : [];
-    return JSON.stringify({ memories: items, knowledge }).slice(0, 21000);
+    const bounded = { memories: [] as typeof items, knowledge: [] as typeof knowledge };
+    for (const item of items) {
+      bounded.memories.push(item);
+      if (JSON.stringify(bounded).length > 21000) bounded.memories.pop();
+    }
+    for (const item of knowledge) {
+      bounded.knowledge.push(item);
+      if (JSON.stringify(bounded).length > 21000) bounded.knowledge.pop();
+    }
+    return JSON.stringify(bounded);
   } catch { return null; }
 }
 
