@@ -39,7 +39,7 @@ export default async function You({
             <ProfileEditor person={person} action={saveProfileAction} />
           </section>
           <aside className="panel perspective-panel">
-            {founder && <p className="eyebrow">Founder access verified</p>}
+            {founder && <><p className="eyebrow">Founder access verified</p><Link className="text-link" href="/founder/pilot">Manage founding members →</Link></>}
             <Image
               className="identity-crest"
               src={brand.crest}
@@ -59,6 +59,7 @@ export default async function You({
               aligned with your day.
             </p>
             <p>These details are private to your account.</p>
+            <Link className="text-link" href="/welcome">Founding member guide →</Link>
             <form action={signOut}>
               <button className="secondary-button">Sign out</button>
             </form>

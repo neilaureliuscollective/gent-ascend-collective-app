@@ -32,6 +32,8 @@ export const config = {
     '/world',
     '/progress',
     '/you',
+    '/welcome',
+    '/founder/:path*',
     '/goals',
     '/aurelius/:path*',
     '/aethelios/:path*',
