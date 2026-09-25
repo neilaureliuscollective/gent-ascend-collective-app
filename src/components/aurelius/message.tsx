@@ -2,14 +2,18 @@
 import { memo } from 'react';
 import Markdown from 'react-markdown';
 import type { Turn } from '@/domains/intelligence/types';
+import type { ActionProposal } from '@/domains/intelligence/types';
+import { ActionReview } from './action-review';
 export const ConversationTurn = memo(function ConversationTurn({
   turn,
   onFeedback,
   disabled,
+  action,
 }: {
   turn: Turn;
   onFeedback: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
+  action?: {proposal?:ActionProposal;onChanged:()=>Promise<void>};
 }) {
   return (
     <article className="conversation-turn">
@@ -69,6 +73,7 @@ export const ConversationTurn = memo(function ConversationTurn({
             </button>
           </div>
         )}
+        {turn.status==='complete'&&action&&<ActionReview turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
       </div>
     </article>
   );

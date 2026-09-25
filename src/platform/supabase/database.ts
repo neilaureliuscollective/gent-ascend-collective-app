@@ -1,5 +1,5 @@
 import type { DayEntry, DayAction } from '@/domains/daily/model';
-import type { Conversation, Turn, Memory } from '@/domains/intelligence/types';
+import type { Conversation, Turn, Memory, ActionProposal } from '@/domains/intelligence/types';
 import type { FactKey } from '@/domains/ascend-profile/schema';
 // Initial migration contract. Replace with CLI-generated types after a validated
 // local Supabase reset; this file deliberately describes only shipped tables.
@@ -55,6 +55,7 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      ai_action_proposals: Table<ActionProposal,never,never>;
       ascend_profile_facts: Table<{
         person_id: string; fact_key: FactKey; value: string | null; version: number;
         source_kind: 'user' | 'ai_proposal'; source_excerpt: string | null; confirmed_at: string;
@@ -142,6 +143,8 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      ai_propose_daily_action:{Args:{p_id:string;p_turn:string;p_title:string};Returns:string};
+      ai_decide_daily_action:{Args:{p_id:string;p_approve:boolean};Returns:string|null};
       ai_reserve_proposal: { Args: { p_request: string }; Returns: boolean };
       ascend_profile_confirm: { Args: {
         p_request: string; p_key: FactKey; p_value: string | null; p_expected_version: number;

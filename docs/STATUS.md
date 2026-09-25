@@ -172,3 +172,6 @@ The first slice is documented in [ASCEND_LOOP_V1.md](ASCEND_LOOP_V1.md). It adds
 # Ascend Profile baseline continuation
 
 The next Ascend Loop slice is described in [ASCEND_PROFILE_PHASE.md](ASCEND_PROFILE_PHASE.md). The six-step guided baseline proposes structured facts and requires user confirmation. Corrections supersede active values with owner-scoped revision history. Command and optional Aethelios context consume current confirmed state. Proposal usage shares the existing AI quota. Both Ascend Loop migrations must precede app deployment; hosted migration, live model and two-account Auth verification remain open.
+# Aethelios confirmed action boundary
+
+See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation turn can now yield a reviewable `create_daily_action` proposal. Approval executes an owner-scoped atomic daily write; dismissal makes no daily change. The general tool registry and guided evening extraction remain open. Three ordered Ascend Loop migrations must precede deployment.

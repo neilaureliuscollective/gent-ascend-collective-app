@@ -248,7 +248,7 @@ export function AureliusWorkspace({
       await jsonRequest('/api/aurelius', 'DELETE', { id: selected });
       await reload();
       setDraft('');
-      setNotice('Conversation deleted. Separately confirmed memories remain under Memory.');
+      setNotice('Conversation deleted. Confirmed memories and daily actions remain in their own records.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Deletion could not be confirmed.');
     } finally {
@@ -415,7 +415,7 @@ export function AureliusWorkspace({
             {confirmDelete && (
               <div className="confirm-row">
                 <p>
-                  Delete this conversation and all its messages? Confirmed memories remain separate.
+                  Delete this conversation and its messages? Confirmed memories and daily actions remain separate.
                 </p>
                 <button
                   className="secondary-button"
@@ -508,6 +508,10 @@ export function AureliusWorkspace({
                     turn={turn}
                     onFeedback={(id, value) => void feedback(id, value)}
                     disabled={blocked}
+                    action={turn.id===data.turns.filter(item=>item.status==='complete').at(-1)?.id && data.canChat ? {
+                      proposal:data.actionProposals?.find(item=>item.source_turn_id===turn.id),
+                      onChanged:()=>reload(selected),
+                    }:undefined}
                   />
                 ))
               )}

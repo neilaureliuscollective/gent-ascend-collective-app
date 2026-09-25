@@ -27,7 +27,7 @@ beforeAll(async () => {
   }
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
 });
-afterAll(() => db.close());
+
 describe('migration, seeds and owner security', () => {
   it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
     const first='84000000-0000-4000-8000-000000000001';
@@ -511,3 +511,46 @@ describe('daily records: transactional snapshots and ownership', () => {
     ).toHaveLength(1);
   });
 });
+
+describe('confirmed Aethelios action boundary',()=>{
+  const conversation='86000000-0000-4000-8000-000000000001';
+  const turn='86000000-0000-4000-8000-000000000002';
+  const proposal='86000000-0000-4000-8000-000000000003';
+  it('requires a complete owner turn and keeps proposals private',async()=>{
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await db.exec(`insert into public.ai_conversations(id,person_id,title) values('${conversation}',${owner},'Synthetic action review');
+      insert into public.ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version)
+      values('${turn}',${owner},'${conversation}','Plan my next step','Start with one action','complete','fixture',false,'fixture');`);
+    await asUser(founder,`select public.ai_propose_daily_action('${proposal}','${turn}','Review my plan')`);
+    expect((await asUser(member,'select * from public.ai_action_proposals')).rows).toHaveLength(0);
+    await expect(asUser(member,`select public.ai_decide_daily_action('${proposal}',true)`)).rejects.toThrow();
+    await expect(asUser(member,`select public.ai_propose_daily_action('86000000-0000-4000-8000-000000000004','${turn}','Intrusion')`)).rejects.toThrow();
+    expect((await asUser(founder,`select public.ai_propose_daily_action('${proposal}','${turn}','Review my plan')`)).rows).toHaveLength(1);
+    await expect(asUser(founder,`select public.ai_propose_daily_action('86000000-0000-4000-8000-000000000005','${turn}','Different')`)).rejects.toThrow();
+  });
+  it('executes once after approval and leaves existing daily content intact',async()=>{
+    const before=(await asUser<{version:number;intention:string}>(founder,'select version,intention from public.daily_entries order by day desc limit 1')).rows[0]!;
+    const result=await asUser<{ai_decide_daily_action:string}>(founder,`select public.ai_decide_daily_action('${proposal}',true)`);
+    const day=new Date(result.rows[0]!.ai_decide_daily_action).toISOString().slice(0,10);
+    expect(day).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect((await asUser(founder,`select title from public.daily_actions where id='${proposal}'`)).rows).toEqual([{title:'Review my plan'}]);
+    const after=(await asUser<{version:number;intention:string}>(founder,`select version,intention from public.daily_entries where day='${day}'`)).rows[0]!;
+    expect(after.version).toBe(before.version+1);
+    expect(after.intention).toBe(before.intention);
+    expect(new Date((await asUser<{ai_decide_daily_action:string}>(founder,`select public.ai_decide_daily_action('${proposal}',true)`)).rows[0]!.ai_decide_daily_action).toISOString().slice(0,10)).toBe(day);
+    expect((await asUser(founder,`select id from public.daily_actions where id='${proposal}'`)).rows).toHaveLength(1);
+    await expect(asUser(founder,`select public.ai_decide_daily_action('${proposal}',false)`)).rejects.toThrow();
+  });
+  it('dismisses without a daily write',async()=>{
+    const next='86000000-0000-4000-8000-000000000006';
+    const turn2='86000000-0000-4000-8000-000000000007';
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await db.exec(`insert into public.ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version)
+      values('${turn2}',${owner},'${conversation}','Think through an idea','Consider one step','complete','fixture',false,'fixture')`);
+    await asUser(founder,`select public.ai_propose_daily_action('${next}','${turn2}','Work on idea')`);
+    await asUser(founder,`select public.ai_decide_daily_action('${next}',false)`);
+    expect((await asUser(founder,`select id from public.daily_actions where id='${next}'`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`select public.ai_decide_daily_action('${next}',true)`)).rejects.toThrow();
+  });
+});
+afterAll(() => db.close());

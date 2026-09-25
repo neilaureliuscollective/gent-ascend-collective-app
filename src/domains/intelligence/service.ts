@@ -89,7 +89,7 @@ export async function conversationTurns(id: string) {
 }
 export async function readWorkspace(conversationId?: string): Promise<WorkspaceData> {
   const { client, person } = await intelligenceSession();
-  const [list, memories, context, access, turns] = await Promise.all([
+  const [list, memories, actionProposals, context, access, turns] = await Promise.all([
     client
       .from('ai_conversations')
       .select('*')
@@ -102,17 +102,19 @@ export async function readWorkspace(conversationId?: string): Promise<WorkspaceD
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
       .limit(24),
+    client.from('ai_action_proposals').select('*').eq('person_id',person.id).order('proposed_at',{ascending:false}).limit(100),
     personalContext(),
     currentAccess(),
     conversationId ? conversationTurns(conversationId) : Promise.resolve([]),
   ]);
-  if (list.error || memories.error)
+  if (list.error || memories.error || actionProposals.error)
     throw new IntelligenceError('Your workspace could not be loaded.', 503);
   const config = aiConfigSchema.parse(process.env);
   return {
     conversations: list.data ?? [],
     turns,
     memories: memories.data ?? [],
+    actionProposals: actionProposals.data ?? [],
     context,
     canChat: access.has('aurelius.context'),
     configured: Boolean(config.OPENAI_API_KEY),

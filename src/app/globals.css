@@ -3347,3 +3347,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .baseline-fact { background: #0b2119; border: 1px solid rgba(196,145,47,.24); border-radius: .75rem; padding: 1.2rem; }
 .baseline-fact button { margin-right: .75rem; }
 .baseline-invitation a { color: #e8c57e; text-decoration: underline; text-underline-offset: .25em; }
+.aethelios-action-review { margin: 1rem 0; padding: 1rem; border-left: 2px solid #c4912f; background: linear-gradient(90deg,#10271d,#091711); border-radius: .25rem .6rem .6rem .25rem; }
+.aethelios-action-review p { margin: .5rem 0; }
+.aethelios-action-review button { margin-right: .8rem; }
+.aethelios-action-review a { color: #e8c57e; }
