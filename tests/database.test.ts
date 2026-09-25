@@ -586,3 +586,34 @@ describe('confirmed evening review and next-day continuity',()=>{
  });
 });
 afterAll(() => db.close());
+
+describe('founding member pilot authorization', () => {
+  it('requires the founder grant, verified matching email, and an explicit claim', async () => {
+    await expect(asUser(member,"select public.pilot_reserve('member@aurelius.test')")).rejects.toThrow();
+    const reserved = await asUser<{pilot_reserve:string}>(founder,"select public.pilot_reserve('MEMBER@AURELIUS.TEST')");
+    expect(reserved.rows[0]?.pilot_reserve).toBeTruthy();
+    await expect(asUser(founder,"select public.pilot_reserve('member@aurelius.test')")).rejects.toThrow();
+    expect((await asUser(member,'select * from public.pilot_invitations')).rows).toHaveLength(0);
+    await expect(asUser(member,"update public.membership_accounts set beta_access=true")).rejects.toThrow();
+    await db.exec(`update auth.users set email_confirmed_at=null where id='${member}'`);
+    await expect(asUser(member,'select public.pilot_claim()')).rejects.toThrow();
+    await db.exec(`update auth.users set email_confirmed_at=now(),email='other@aurelius.test' where id='${member}'`);
+    expect((await asUser<{pilot_claim:boolean}>(member,'select public.pilot_claim()')).rows[0]?.pilot_claim).toBe(false);
+    await db.exec(`update auth.users set email='member@aurelius.test' where id='${member}'`);
+    expect((await asUser<{pilot_claim:boolean}>(member,'select public.pilot_claim()')).rows[0]?.pilot_claim).toBe(true);
+    expect((await asUser<{pilot_claim:boolean}>(member,'select public.pilot_claim()')).rows[0]?.pilot_claim).toBe(true);
+    expect((await asUser<{beta_access:boolean}>(member,'select beta_access from public.membership_accounts')).rows[0]?.beta_access).toBe(true);
+    expect((await asUser<{status:string}>(founder,'select status from public.pilot_invitations')).rows[0]?.status).toBe('claimed');
+    await expect(asUser(member,"update public.pilot_invitations set status='revoked'")).rejects.toThrow();
+  });
+  it('keeps feedback voluntary and read only for the member and founder', async () => {
+    await expect(asUser(member,"select public.pilot_submit_feedback('friction','')")).rejects.toThrow();
+    await asUser(member,"select public.pilot_submit_feedback('friction','I could not find my next action')");
+    expect((await asUser(member,'select * from public.pilot_feedback')).rows).toHaveLength(1);
+    expect((await asUser(founder,'select * from public.pilot_feedback')).rows).toHaveLength(1);
+    await expect(asUser(member,"update public.pilot_feedback set message='Altered'")).rejects.toThrow();
+    await db.exec('set role anon');
+    try { await expect(db.query('select * from public.pilot_feedback')).rejects.toThrow(); await expect(db.query('select public.pilot_claim()')).rejects.toThrow(); }
+    finally { await db.exec('reset role'); }
+  });
+});

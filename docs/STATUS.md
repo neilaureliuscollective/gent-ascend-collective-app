@@ -1,3 +1,11 @@
+# Founding Members pilot V1 — 2026-09-25
+
+Private invitation reservation, verified Auth email claim, first-session guide, password setup and voluntary feedback are implemented. Founder view shows invitation status and feedback only. The additive migration and operating steps are in [Founding Members pilot](FOUNDING_MEMBERS_PILOT.md). No invites were sent. Shopify and affiliates are later decisions informed by first-cohort usage.
+
+`npm run check` passes (84 tests at the implementation checkpoint), and the immutable hosted migration ledger check passes. The new migration, real Auth invite/template and phone flow still need live integration and release checks; local Docker/Podman is unavailable here. Publication status is recorded below after release work.
+
+---
+
 # Founder Daily Driver V1 — 2026-09-25
 
 Command now offers one next move from saved founder state; Ascend Profile allows a direct direction save without an AI proposal. All ten existing migration source filenames now match the hosted versions, with SQL bytes verified against the read-only hosted ledger and guarded by `npm run db:ledger`. This is a no-DDL source reconciliation; see [Founder Daily Driver](FOUNDER_DAILY_DRIVER.md). The physical-device founder journey and seven-day use remain acceptance gates. Earlier migration instructions below are historical and use superseded filenames.

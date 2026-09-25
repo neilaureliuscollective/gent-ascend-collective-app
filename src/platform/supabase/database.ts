@@ -127,6 +127,14 @@ export interface Database {
         never,
         never
       >;
+      pilot_invitations: Table<{
+        id: string; email: string; status: 'pending' | 'claimed' | 'revoked';
+        person_id: string | null; created_at: string; claimed_at: string | null;
+      }, never, never>;
+      pilot_feedback: Table<{
+        id: string; person_id: string; category: 'friction' | 'idea' | 'working';
+        message: string; created_at: string;
+      }, never, never>;
       personal_events: Table<
         {
           id: string;
@@ -145,6 +153,9 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      pilot_reserve: { Args: { p_email: string }; Returns: string };
+      pilot_claim: { Args: Record<string, never>; Returns: boolean };
+      pilot_submit_feedback: { Args: { p_category: string; p_message: string }; Returns: string };
       daily_confirm_review: {Args:{p_request:string;p_day:string;p_expected_review_version:number;p_source_day_version:number;p_progress:string;p_blocker:string;p_tomorrow:string};Returns:number};
       ai_propose_daily_action:{Args:{p_id:string;p_turn:string;p_title:string};Returns:string};
       ai_decide_daily_action:{Args:{p_id:string;p_approve:boolean};Returns:string|null};
