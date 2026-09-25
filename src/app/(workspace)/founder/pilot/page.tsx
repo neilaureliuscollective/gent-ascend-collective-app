@@ -1,12 +1,11 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { readPilotCohort } from '@/domains/pilot/service';
 import { reservePilotAction } from './actions';
 export default async function PilotConsole({ searchParams }: {
   searchParams: Promise<{ status?: string }>;
 }) {
   const cohort = await readPilotCohort();
-  if (!cohort) notFound();
+  if (!cohort) return <section className="panel pilot-section"><p className="eyebrow">Private founder space</p><h1>Founder access required.</h1><p>Sign in with your founder account to manage the pilot.</p><Link className="button" href="/you">Go to your account</Link></section>;
   const { status } = await searchParams;
   return <>
     <div className="page-heading compact-heading"><div><p className="eyebrow">Founder / Private pilot</p><h1>Founding members.</h1></div><Link className="text-link" href="/welcome">View arrival →</Link></div>
