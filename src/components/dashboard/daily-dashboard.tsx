@@ -210,6 +210,8 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         {busy ? (sample ? 'Updating sample…' : 'Saving your day…') : notice}
       </p>
       {!editorOpen && feedback}
+      {!sample && !preview && !data.profileDirection && <p className="baseline-invitation"><Link href="/ascend-profile">Give Aethelios your starting point →</Link></p>}
+      {!sample && !preview && data.profileDirection && <aside className="loop-context" aria-label="Your longer direction"><span className="eyebrow">THE DIRECTION YOU CHOSE</span><p>{data.profileDirection}</p><Link href="/ascend-profile">Refine your Ascend Profile →</Link></aside>}
       {!sample && !preview && (data.carryForward || data.openCaptures) && <aside className="loop-context" aria-label="Context carried into today">
         <span className="eyebrow">CARRIED INTO TODAY</span>
         {data.carryForward?.reflection && <p>From {dayLabel(data.carryForward.day, true)}: {data.carryForward.reflection}</p>}

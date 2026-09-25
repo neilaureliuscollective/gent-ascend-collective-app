@@ -11,6 +11,7 @@ export type DailyData = {
   conversation: { id: string; title: string } | null;
   carryForward?: { day: string; reflection: string; unfinished: string[] } | null;
   openCaptures?: number;
+  profileDirection?: string | null;
 };
 export function localDay(now: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {

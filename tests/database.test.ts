@@ -29,6 +29,32 @@ beforeAll(async () => {
 });
 afterAll(() => db.close());
 describe('migration, seeds and owner security', () => {
+  it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
+    const first='84000000-0000-4000-8000-000000000001';
+    const second='84000000-0000-4000-8000-000000000002';
+    const call=(request:string,value:string,version:number)=>`select public.ascend_profile_confirm('${request}','direction','${value}',${version},'ai_proposal','My own answer') as version`;
+    expect((await asUser<{version:number}>(founder,call(first,'Build a steady life',0))).rows[0]?.version).toBe(1);
+    expect((await asUser<{version:number}>(founder,call(first,'Build a steady life',0))).rows[0]?.version).toBe(1);
+    expect((await asUser<{version:number}>(founder,call(second,'Grow the company with discipline',1))).rows[0]?.version).toBe(2);
+    await expect(asUser(founder,`select public.ascend_profile_confirm('84000000-0000-4000-8000-000000000003','direction','Old truth',1,'user',null)`)).rejects.toThrow();
+    expect((await asUser<{value:string}>(founder,"select value from public.ascend_profile_facts where fact_key='direction'")).rows[0]?.value).toBe('Grow the company with discipline');
+    expect((await asUser<{old_value:string|null;new_value:string}>(founder,"select old_value,new_value from public.ascend_profile_revisions order by new_version")).rows.map(row=>row.old_value)).toEqual([null,'Build a steady life']);
+    expect((await asUser(member,'select * from public.ascend_profile_facts')).rows).toHaveLength(0);
+    expect((await asUser(member,'select * from public.ascend_profile_revisions')).rows).toHaveLength(0);
+    await expect(asUser(member,`select public.ascend_profile_confirm('${first}','direction','Intrusion',2,'user',null)`)).rejects.toThrow();
+    await expect(asUser(founder,"update public.ascend_profile_facts set value='Bypass'")).rejects.toThrow();
+    expect((await asUser<{version:number}>(founder,`select public.ascend_profile_confirm('84000000-0000-4000-8000-000000000004','direction',null,2,'user',null) as version`)).rows[0]?.version).toBe(3);
+    expect((await asUser<{value:string|null}>(founder,"select value from public.ascend_profile_facts where fact_key='direction'")).rows[0]?.value).toBeNull();
+  });
+  it('reserves a proposal in the existing owner-only AI usage ledger',async()=>{
+    const id='85000000-0000-4000-8000-000000000001';
+    await asUser(founder,`select public.ai_reserve_proposal('${id}')`);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${id}'`)).rows).toHaveLength(1);
+    expect((await asUser(member,`select id from public.ai_usage where id='${id}'`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`select public.ai_reserve_proposal('${id}')`)).rejects.toThrow();
+    // Isolate this fixture from the existing chat quota assertions below.
+    await db.exec(`delete from public.ai_usage where id='${id}'`);
+  });
   it('keeps captured thoughts owner-scoped and prevents ownership changes', async () => {
     const capture = '83000000-0000-4000-8000-000000000001';
     const own = `(select id from public.persons where auth_user_id='${founder}')`;

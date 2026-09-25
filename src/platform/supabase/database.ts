@@ -1,5 +1,6 @@
 import type { DayEntry, DayAction } from '@/domains/daily/model';
 import type { Conversation, Turn, Memory } from '@/domains/intelligence/types';
+import type { FactKey } from '@/domains/ascend-profile/schema';
 // Initial migration contract. Replace with CLI-generated types after a validated
 // local Supabase reset; this file deliberately describes only shipped tables.
 type Relationship = {
@@ -54,6 +55,15 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      ascend_profile_facts: Table<{
+        person_id: string; fact_key: FactKey; value: string | null; version: number;
+        source_kind: 'user' | 'ai_proposal'; source_excerpt: string | null; confirmed_at: string;
+      }, never, never>;
+      ascend_profile_revisions: Table<{
+        request_id: string; person_id: string; fact_key: FactKey; old_value: string | null;
+        new_value: string | null; previous_version: number; new_version: number;
+        source_kind: 'user' | 'ai_proposal'; source_excerpt: string | null; confirmed_at: string;
+      }, never, never>;
       life_captures: Table<
         { id: string; person_id: string; content: string; kind: 'thought' | 'idea' | 'task' | 'decision'; status: 'inbox' | 'acted' | 'dismissed'; source: 'user'; created_at: string; updated_at: string },
         { id: string; person_id: string; content: string; kind: 'thought' | 'idea' | 'task' | 'decision' },
@@ -132,6 +142,11 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      ai_reserve_proposal: { Args: { p_request: string }; Returns: boolean };
+      ascend_profile_confirm: { Args: {
+        p_request: string; p_key: FactKey; p_value: string | null; p_expected_version: number;
+        p_source_kind: string; p_excerpt: string | null;
+      }; Returns: number };
       daily_save: {
         Args: {
           p_day: string;

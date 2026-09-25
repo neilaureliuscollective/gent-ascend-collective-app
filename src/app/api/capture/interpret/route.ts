@@ -8,7 +8,7 @@ import { mutationBody } from '@/domains/intelligence/http';
 import { IntelligenceError } from '@/domains/intelligence/service';
 
 export const runtime = 'nodejs';
-const inputSchema = z.object({ captureId: z.uuid() }).strict();
+const inputSchema = z.object({ captureId: z.uuid(), requestId: z.uuid() }).strict();
 const proposalSchema = z.object({
   kind: z.enum(['thought', 'idea', 'task', 'decision']),
   actionTitle: z.string().max(100).nullable(),
@@ -18,7 +18,7 @@ const json = (body: unknown, status = 200) => Response.json(body, { status, head
 
 export async function POST(request: Request) {
   try {
-    const { captureId } = inputSchema.parse(await mutationBody(request));
+    const { captureId, requestId } = inputSchema.parse(await mutationBody(request));
     const owner = await authorizedPerson('daily.read');
     if (!owner) return json({ error: 'Sign in required.' }, 401);
     if (!(await currentAccess()).has('aurelius.context')) return json({ error: 'Aethelios is not enabled for this account.' }, 403);
@@ -26,6 +26,10 @@ export async function POST(request: Request) {
     if (capture.error || !capture.data) return json({ error: 'Capture not found.' }, 404);
     const config = aiConfigSchema.parse(process.env);
     if (!config.OPENAI_API_KEY) return json({ error: 'Aethelios is not connected yet. Your capture remains saved.' }, 503);
+    const reserved = await owner.client.rpc('ai_reserve_proposal', { p_request: requestId });
+    if (reserved.error?.code === 'P0001') return json({ error: 'Aethelios has reached the current usage limit. Try again later.' }, 429);
+    if (reserved.error?.code === '23505') return json({ error: 'This interpretation was already requested.' }, 409);
+    if (reserved.error) return json({ error: 'Aethelios could not reserve the interpretation.' }, 503);
     const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY, baseURL: 'https://api.openai.com/v1' });
     const { output } = await generateText({
       model: openai.responses(config.AURELIUS_AI_MODEL),

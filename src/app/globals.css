@@ -3329,3 +3329,21 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .loop-context a { color: #e8c57e; }
 .loop-history { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .loop-history blockquote { margin: 1rem 0 0; padding-left: 1rem; border-left: 2px solid #c4912f; }
+.ascend-baseline { max-width: 74rem; margin: 0 auto; padding: clamp(1.2rem,4vw,3rem); color: #f2eee4; }
+.ascend-baseline header h1 { font-size: clamp(2.1rem,5vw,4rem); margin: .5rem 0; }
+.baseline-conversation { max-width: 48rem; margin: 2rem 0; padding: clamp(1.25rem,4vw,2.5rem); border: 1px solid rgba(196,145,47,.35); border-radius: 1.25rem; background: linear-gradient(145deg,#0c3026,#071410 75%); }
+.baseline-voice { border-left: 2px solid #c4912f; padding-left: 1.25rem; margin-bottom: 1.5rem; }
+.baseline-voice p { font-size: clamp(1.2rem,3vw,1.8rem); line-height: 1.4; margin: .5rem 0; }
+.ascend-baseline textarea { display: block; width: 100%; margin: .75rem 0; padding: 1rem; border: 1px solid #756b4f; border-radius: .65rem; background: #0a2119; color: #fff; font: inherit; resize: vertical; }
+.ascend-baseline textarea:focus-visible,.ascend-baseline button:focus-visible { outline: 2px solid #c4912f; outline-offset: 3px; }
+.baseline-controls,.baseline-proposal { margin-top: 1rem; }
+.baseline-controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.baseline-proposals { border-top: 1px solid rgba(196,145,47,.35); margin-top: 1.5rem; padding-top: 1.5rem; }
+.baseline-proposal { padding: 1rem; border: 1px solid rgba(196,145,47,.24); border-radius: .7rem; }
+.baseline-proposal strong { display: block; color: #e8c57e; }
+.baseline-proposal button { margin-right: .75rem; }
+.baseline-current { max-width: 68rem; }
+.baseline-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,18rem),1fr)); gap: 1rem; margin-top: 1.5rem; }
+.baseline-fact { background: #0b2119; border: 1px solid rgba(196,145,47,.24); border-radius: .75rem; padding: 1.2rem; }
+.baseline-fact button { margin-right: .75rem; }
+.baseline-invitation a { color: #e8c57e; text-decoration: underline; text-underline-offset: .25em; }

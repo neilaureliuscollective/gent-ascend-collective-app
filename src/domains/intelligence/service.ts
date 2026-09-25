@@ -23,7 +23,7 @@ export async function intelligenceSession() {
 }
 export async function personalContext(): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const [goal, memories, daily] = await Promise.all([
+  const [goal, memories, daily, profileFacts] = await Promise.all([
     client
       .from('goals')
       .select('*')
@@ -37,8 +37,9 @@ export async function personalContext(): Promise<PersonalContext> {
       .order('confirmed_at', { ascending: false })
       .limit(24),
     client.from('daily_entries').select('day,intention,energy,reflection,actions:daily_actions(title,done)').eq('person_id', person.id).order('day', { ascending: false }).limit(3),
+    client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
   ]);
-  if (goal.error || memories.error || daily.error)
+  if (goal.error || memories.error || daily.error || profileFacts.error)
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
   return {
     profile: {
@@ -63,6 +64,7 @@ export async function personalContext(): Promise<PersonalContext> {
       confirmed_at,
     })),
     daily: (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => ({day,intention,energy,reflection,actions:actions ?? []})),
+    ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
   };
 }
 export async function conversationTurns(id: string) {

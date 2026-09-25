@@ -33,6 +33,7 @@ export type PersonalContext = {
   goal: { title: string; nextStep: string; reason: string; updatedAt: string } | null;
   memories: Pick<Memory, 'id' | 'content' | 'kind' | 'confirmed_at'>[];
   daily?: { day: string; intention: string; energy: number | null; actions: { title: string; done: boolean }[]; reflection: string }[];
+  ascendProfile?: { key: string; value: string; confirmedAt: string; source: 'user' | 'ai_proposal' }[];
 };
 export type WorkspaceData = {
   conversations: Conversation[];

@@ -169,3 +169,6 @@ When ready, sync the preserved history into the official workstation checkout, r
 # Ascend Loop V1 work in progress
 
 The first slice is documented in [ASCEND_LOOP_V1.md](ASCEND_LOOP_V1.md). It adds owner-scoped universal capture, optional structured Aethelios interpretation, a confirmed capture-to-daily-action path, carried-forward daily context, opt-in recent daily context for Aethelios, and a factual 30-day Progress history. This branch has not been deployed or migrated against hosted Supabase. Conversational baseline, full action tool registry and review extraction remain open.
+# Ascend Profile baseline continuation
+
+The next Ascend Loop slice is described in [ASCEND_PROFILE_PHASE.md](ASCEND_PROFILE_PHASE.md). The six-step guided baseline proposes structured facts and requires user confirmation. Corrections supersede active values with owner-scoped revision history. Command and optional Aethelios context consume current confirmed state. Proposal usage shares the existing AI quota. Both Ascend Loop migrations must precede app deployment; hosted migration, live model and two-account Auth verification remain open.

@@ -24,8 +24,8 @@ export default async function You({
           <h1>Your foundation.</h1>
         </div>
         {person && (
-          <Link className="text-link" href="/goals">
-            Your goals →
+          <Link className="text-link" href="/ascend-profile">
+            Build your Ascend Profile →
           </Link>
         )}
       </div>
