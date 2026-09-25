@@ -34,7 +34,12 @@ export default async function AetheliosPage({
       ? params.conversation
       : null;
   return (
-    <>
+    <div className="aethelios-page">
+      <div className="aethelios-mobile-heading">
+        <Link href="/" aria-label="Back to Command">←</Link>
+        <strong>Aethelios</strong>
+        <Link href="/aethelios/meet">Meet ↗</Link>
+      </div>
       <div className="page-heading compact-heading aurelius-page-heading">
         <div>
           <p className="eyebrow">Digital Co-Founder</p>
@@ -49,14 +54,16 @@ export default async function AetheliosPage({
         </p>
       </div>
       {isFounder && (
-        <aside className="aethelios-link-panel">
-          <strong>Founder continuity</strong>
+        <details className="aethelios-link-panel">
+          <summary>Founder continuity · {linked ? 'Connected' : 'Connect private workspace'}</summary>
+          <div className="aethelios-link-content">
           <p>{params.link === 'failed' ? 'The link could not be completed. Sign in to your private Aethelios workspace, then try again. ' : ''}
             {linked ? 'Your private Aethelios teaching is linked. Confirmed shared and Gent Ascend memories can inform your chats when you turn on personal context.' : <>Sign in to your <a href="https://aethelios.vercel.app" target="_blank" rel="noopener noreferrer">private Aethelios workspace</a> first, then connect it here once. Relevant teaching will be available when you turn on personal context.</>}
           </p>
           {linked ? <form action="/api/aethelios-link/disconnect" method="post"><button type="submit" className="button">Disconnect private account</button></form> :
             <a href="/api/aethelios-link/start" className="button">Connect private Aethelios</a>}
-        </aside>
+          </div>
+        </details>
       )}
       <section className="aurelius-surface">
         <AureliusWorkspace
@@ -66,6 +73,6 @@ export default async function AetheliosPage({
           initialConversation={initialConversation}
         />
       </section>
-    </>
+    </div>
   );
 }

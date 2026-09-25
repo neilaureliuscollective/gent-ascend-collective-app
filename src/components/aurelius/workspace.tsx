@@ -34,6 +34,12 @@ export function AureliusWorkspace({
   const [includeContext, setIncludeContext] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => {
+    const field = composer.current;
+    if (!field) return;
+    field.style.height = 'auto';
+    field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
+  }, [draft, tab, loading]);
   const generation = useRef<AbortController | null>(null);
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
@@ -530,7 +536,7 @@ export function AureliusWorkspace({
               <textarea
                 id="aurelius-message"
                 ref={composer}
-                rows={2}
+                rows={1}
                 maxLength={6000}
                 value={draft}
                 disabled={blocked}
@@ -573,7 +579,9 @@ export function AureliusWorkspace({
                   </button>
                 )}
               </div>
-              <p className="composer-disclosure">
+              <details className="composer-privacy">
+                <summary>What Aethelios receives</summary>
+                <p className="composer-disclosure">
                 {preview ? (
                   'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
                 ) : (
@@ -583,7 +591,8 @@ export function AureliusWorkspace({
                     AI service. Nothing is automatically added to memory.
                   </>
                 )}
-              </p>
+                </p>
+              </details>
             </form>
           </>
         )}
