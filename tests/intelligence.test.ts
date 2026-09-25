@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { buildMessages, aureliusInstructions } from '../src/domains/intelligence/prompt';
+import { buildMessages, aureliusInstructions, sharedCharacter } from '../src/domains/intelligence/prompt';
 import { publishedKnowledge, publishedKnowledgeContext } from '../src/domains/intelligence/published-knowledge';
 import { chatInput, memoryInput } from '../src/domains/intelligence/validation';
 import { replyStream, type FinishReply, type ModelChunk } from '../src/domains/intelligence/stream';
@@ -205,10 +205,10 @@ describe('real AI SDK agent adapter with a mock provider', () => {
     expect(model.doStreamCalls[0]?.providerOptions?.openai).toMatchObject({
       store: false,
     });
-    expect(model.doStreamCalls[0]?.prompt[0]).toMatchObject({
-      role: 'system',
-      content: aureliusInstructions,
-    });
+    expect(model.doStreamCalls[0]?.prompt[0]?.role).toBe('system');
+    expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(aureliusInstructions);
+    expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(sharedCharacter);
+    expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain('No verified founder link is available');
   });
   it('redacts raw provider failures before SDK default logging', async () => {
     const { MockLanguageModelV4 } = await import('ai/test');

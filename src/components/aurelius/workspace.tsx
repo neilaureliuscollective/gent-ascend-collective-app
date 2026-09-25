@@ -13,10 +13,12 @@ export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
   initialConversation = null,
+  founderLinked = false,
 }: {
   compact?: boolean;
   initialDraft?: string;
   initialConversation?: string | null;
+  founderLinked?: boolean;
 }) {
   const [preview, setPreview] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -573,7 +575,7 @@ export function AureliusWorkspace({
                 ) : (
                   <>
                     Sending shares this conversation’s recent messages
-                    {includeContext ? ', profile, active goal and confirmed memories' : ''} with our
+                    {includeContext ? `, profile, active goal and confirmed memories${founderLinked ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}` : ''} with our
                     AI service. Nothing is automatically added to memory.
                   </>
                 )}
