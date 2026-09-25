@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { serverClient } from '@/platform/supabase/server';
+import { supabaseConnection } from '@/platform/supabase/connection';
 export async function signIn(form: FormData) {
   const parsed = z
     .object({ email: z.email(), password: z.string().min(1).max(256) })
@@ -11,7 +12,7 @@ export async function signIn(form: FormData) {
   if (!client) redirect('/you?error=unavailable');
   // The project ref is public configuration. Log it without credentials or user details
   // so a hosted project mismatch is diagnosable from a single failed request.
-  const project = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+  const project = new URL(supabaseConnection(process.env)!.url).hostname.split('.')[0];
   console.info('Gent Ascend sign-in attempt', { project });
   let failure: 'credentials' | 'service' | null = null;
   try {
