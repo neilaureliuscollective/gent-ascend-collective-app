@@ -92,7 +92,11 @@ export default async function You({
               <form action={signIn}>
                 {params.error && (
                   <p role="alert">
-                    Sign-in could not be completed. Check your details and try again.
+                    {params.error === 'credentials'
+                      ? 'That email and password were not accepted. Check the password saved for Gent Ascend.'
+                      : params.error === 'service' || params.error === 'unavailable'
+                        ? 'The account service could not complete sign-in. Your account is still intact; please try again shortly.'
+                        : 'Sign-in could not be completed. Check your details and try again.'}
                   </p>
                 )}
                 <label htmlFor="email">Email</label>

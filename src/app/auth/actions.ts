@@ -6,11 +6,28 @@ export async function signIn(form: FormData) {
   const parsed = z
     .object({ email: z.email(), password: z.string().min(1).max(256) })
     .safeParse({ email: form.get('email'), password: form.get('password') });
-  if (!parsed.success) redirect('/you?error=signin');
+  if (!parsed.success) redirect('/you?error=invalid');
   const client = await serverClient();
   if (!client) redirect('/you?error=unavailable');
-  const { error } = await client.auth.signInWithPassword(parsed.data);
-  if (error) redirect('/you?error=signin');
+  // The project ref is public configuration. Log it without credentials or user details
+  // so a hosted project mismatch is diagnosable from a single failed request.
+  const project = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+  console.info('Gent Ascend sign-in attempt', { project });
+  let failure: 'credentials' | 'service' | null = null;
+  try {
+    const { error } = await client.auth.signInWithPassword(parsed.data);
+    if (error) {
+      console.error('Gent Ascend sign-in rejected', { project, code: error.code, status: error.status });
+      failure = error.code === 'invalid_credentials' ? 'credentials' : 'service';
+    }
+  } catch (error) {
+    console.error('Gent Ascend sign-in unavailable', {
+      project,
+      name: error instanceof Error ? error.name : 'unknown',
+    });
+    failure = 'service';
+  }
+  if (failure) redirect(`/you?error=${failure}`);
   redirect('/');
 }
 export async function signOut() {
