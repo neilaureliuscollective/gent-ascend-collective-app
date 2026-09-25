@@ -1,3 +1,11 @@
+# Aethelios mobile conversation space — 2026-09-25
+
+The dedicated `/aethelios` route now uses the available phone/tablet viewport for the conversation, above the app's bottom navigation. It has a compact return header and a collapsible founder connection explanation. The same workspace powers the global dialog; both surfaces use a compact, growing composer and an optional privacy explanation. The message list remains independently scrollable, while Memory and Context remain accessible from the tabs. Existing API, prompt, memory and founder bridge behavior are unchanged.
+
+Lint, typecheck, 84 unit tests, production build and migration ledger check pass. Playwright browser checks could not start because Chromium is absent and its download returned an invalid archive. Physical Fold/keyboard review remains necessary before claiming the layout is fully accepted. See [cross-app contract](AETHELIOS_INTEROP.md) for the boundary between private teaching and the consumer prompt.
+
+---
+
 # Founding Members pilot V1 — 2026-09-25
 
 Private invitation reservation, verified Auth email claim, first-session guide, password setup and voluntary feedback are implemented. Founder view shows invitation status and feedback only. The additive migration and operating steps are in [Founding Members pilot](FOUNDING_MEMBERS_PILOT.md). No invites were sent. Shopify and affiliates are later decisions informed by first-cohort usage.

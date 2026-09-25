@@ -3362,5 +3362,52 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .pilot-steps li p { margin: .2rem 0 0; }
 .pilot-list { list-style: none; padding: 0; margin: 1rem 0 0; }
 .pilot-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem; padding: 1rem 0; border-top: 1px solid rgba(196,145,47,.28); overflow-wrap: anywhere; }
+
+/* Aethelios: keep the conversation, rather than the page furniture, in view. */
+.aethelios-mobile-heading { display: none; }
+.aethelios-link-panel { display: block; padding: 0; }
+.aethelios-link-panel summary { cursor: pointer; padding: 12px 16px; color: #ecd4a6; font-size: .78rem; }
+.aethelios-link-content { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; padding: 0 16px 16px; }
+.composer-privacy { margin-top: 6px; color: #a9c5bd; font-size: .68rem; }
+.composer-privacy summary { cursor: pointer; width: fit-content; }
+.composer-privacy .composer-disclosure { margin: 6px 0 0; }
+.aurelius-composer textarea { resize: none; min-height: 28px; max-height: 120px; overflow-y: auto; }
+
+@media (max-width: 1100px) {
+  .workspace:has(.aethelios-page) { z-index: 25; }
+  .aethelios-page {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px, env(safe-area-inset-left));
+    background: #080e0b;
+  }
+  .aethelios-mobile-heading {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 54px;
+    color: #f3eee2;
+  }
+  .aethelios-mobile-heading strong { font-size: 1.05rem; }
+  .aethelios-mobile-heading a { color: #e8c57e; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
+  .aethelios-mobile-heading a:last-child { justify-content: flex-end; font-size: .76rem; }
+  .aethelios-page > .aurelius-page-heading { display: none; }
+  .aethelios-page > .aethelios-link-panel { flex: none; margin: 0 0 8px; border-radius: 10px; }
+  .aethelios-page > .aurelius-surface { flex: 1; height: auto; min-height: 0; border-radius: 12px; }
+  .aethelios-page .aurelius-workspace { padding: 10px; }
+  .aethelios-page .conversation-scroll { padding-bottom: 12px; }
+  .aethelios-page .aurelius-composer { padding: 8px 12px; }
+  .aethelios-page .aurelius-composer textarea { padding-bottom: 2px; }
+  .aethelios-page .composer-privacy { font-size: .63rem; }
+  .aurelius-dialog .aurelius-workspace { padding: 10px; }
+  .aurelius-dialog .aurelius-composer { padding: 8px 12px; }
+}
 .pilot-list li p { margin: .5rem 0 0; white-space: pre-wrap; }
 .pilot-list time { color: #aaa79d; }
