@@ -60,6 +60,7 @@ export default async function AetheliosPage({
       )}
       <section className="aurelius-surface">
         <AureliusWorkspace
+          founderLinked={linked}
           key={initialConversation ?? (initialDraft || 'new')}
           initialDraft={initialDraft}
           initialConversation={initialConversation}
