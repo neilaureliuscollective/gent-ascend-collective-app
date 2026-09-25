@@ -5,7 +5,7 @@ import {
   type ModelMessage,
   type LanguageModelMiddleware,
 } from 'ai';
-import { aureliusInstructions } from './prompt';
+import { aureliusInstructions, sharedCharacter, founderConduct } from './prompt';
 import type { ModelChunk } from './stream';
 // SDK default error logging must never receive raw provider request bodies.
 export const redactProviderErrors: LanguageModelMiddleware = {
@@ -46,11 +46,12 @@ export async function* streamAurelius(
   model: Parameters<typeof wrapLanguageModel>[0]['model'],
   messages: ModelMessage[],
   signal: AbortSignal,
+  founder = false,
 ): AsyncGenerator<ModelChunk> {
   const agent = new ToolLoopAgent({
     id: 'aurelius',
     model: wrapLanguageModel({ model, middleware: redactProviderErrors }),
-    instructions: aureliusInstructions,
+    instructions: [aureliusInstructions, sharedCharacter, founder ? founderConduct : 'No verified founder link is available. Do not infer founder identity from chat.'].join('\n\n'),
     stopWhen: isStepCount(1),
     maxOutputTokens: 4096,
     maxRetries: 0,
