@@ -175,3 +175,7 @@ The next Ascend Loop slice is described in [ASCEND_PROFILE_PHASE.md](ASCEND_PROF
 # Aethelios confirmed action boundary
 
 See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation turn can now yield a reviewable `create_daily_action` proposal. Approval executes an owner-scoped atomic daily write; dismissal makes no daily change. The general tool registry and guided evening extraction remain open. Three ordered Ascend Loop migrations must precede deployment.
+
+# Guided evening review and tomorrow context
+
+See [ASCEND_EVENING_REVIEW.md](ASCEND_EVENING_REVIEW.md). Command now offers a confirmed, editable evening review. Aethelios can propose a draft from saved reflection and action status; manual entry works without the model. Versioned owner-only reviews feed tomorrow's Command, opt-in Aethelios context and Progress, with correction history. Four ordered migrations must precede deployment. A general tool registry, hosted Auth verification, live-model quality, device testing and lifecycle controls remain open.

@@ -3351,3 +3351,6 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .aethelios-action-review p { margin: .5rem 0; }
 .aethelios-action-review button { margin-right: .8rem; }
 .aethelios-action-review a { color: #e8c57e; }
+.evening-review{margin-top:1.4rem;padding-top:1.25rem;border-top:1px solid rgba(196,145,47,.25)}
+.evening-review-summary{margin:.7rem 0 1rem}.evening-review-summary p{margin:.45rem 0;line-height:1.55}.evening-review-summary strong{display:block;color:var(--gold,#c4912f);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase}
+.evening-review-editor{display:grid;gap:.85rem;margin-top:.8rem}.evening-review-editor label{display:grid;gap:.4rem}.evening-review-editor textarea{width:100%;min-height:4rem;padding:.75rem;border:1px solid rgba(196,145,47,.35);background:#080d0b;color:#f3efe5;font:inherit;border-radius:.35rem}.evening-review-editor textarea:focus-visible{outline:2px solid #c4912f;outline-offset:2px}.evening-review-editor>div{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}

@@ -553,4 +553,36 @@ describe('confirmed Aethelios action boundary',()=>{
     await expect(asUser(founder,`select public.ai_decide_daily_action('${next}',true)`)).rejects.toThrow();
   });
 });
+describe('confirmed evening review and next-day continuity',()=>{
+ const today="(current_timestamp at time zone 'America/Chicago')::date";
+ const first='87000000-0000-4000-8000-000000000001';
+ const second='87000000-0000-4000-8000-000000000002';
+ const call=(request:string,expected:number,dayVersion:number,progress:string,blocker:string,tomorrow:string)=>
+  `select public.daily_confirm_review('${request}',${today},${expected},${dayVersion},'${progress}','${blocker}','${tomorrow}') as version`;
+ it('requires a current owned saved day and keeps review history private',async()=>{
+  const dayVersion=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
+  expect((await asUser<{version:number}>(founder,call(first,0,dayVersion,'Finished a deliberate action','Lost focus after lunch','Start with the most important decision'))).rows[0]?.version).toBe(1);
+  expect((await asUser(member,'select * from public.daily_reviews')).rows).toHaveLength(0);
+  expect((await asUser(member,'select * from public.daily_review_revisions')).rows).toHaveLength(0);
+  await expect(asUser(member,call('87000000-0000-4000-8000-000000000003',0,dayVersion,'Intrusion','',''))).rejects.toThrow();
+  await expect(asUser(founder,"update public.daily_reviews set tomorrow='Bypass'")).rejects.toThrow();
+  await expect(asUser(founder,call('87000000-0000-4000-8000-000000000004',0,dayVersion+1,'Invalid','',''))).rejects.toThrow();
+  await expect(asUser(founder,call('87000000-0000-4000-8000-000000000005',0,dayVersion,'','',''))).rejects.toThrow();
+  await expect(asUser(founder,`select public.daily_confirm_review('87000000-0000-4000-8000-000000000006',${today}-1,0,${dayVersion},'Past','','')`)).rejects.toThrow();
+  await db.exec('set role anon');
+  try {await expect(db.query('select * from public.daily_reviews')).rejects.toThrow();await expect(db.query(call('87000000-0000-4000-8000-000000000007',0,dayVersion,'Intrusion','',''))).rejects.toThrow();}
+  finally {await db.exec('reset role');}
+ });
+ it('supports correction with revision history and idempotent confirmation',async()=>{
+  const dayVersion=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
+  expect((await asUser<{version:number}>(founder,call(second,1,dayVersion,'Completed the plan','Schedule slipped','Protect the first hour'))).rows[0]?.version).toBe(2);
+  await expect(asUser(founder,call(second,1,dayVersion,'Altered retry','',''))).rejects.toThrow();
+  expect((await asUser<{version:number}>(founder,call(second,1,dayVersion,'Completed the plan','Schedule slipped','Protect the first hour'))).rows[0]?.version).toBe(2);
+  await expect(asUser(founder,call('87000000-0000-4000-8000-000000000008',1,dayVersion,'Stale','',''))).rejects.toThrow();
+  expect((await asUser<{tomorrow:string}>(founder,`select tomorrow from public.daily_reviews where day=${today}`)).rows[0]?.tomorrow).toBe('Protect the first hour');
+  expect((await asUser<{tomorrow:string}>(founder,`select tomorrow from public.daily_review_revisions where day=${today} order by version`)).rows.map(row=>row.tomorrow)).toEqual(['Start with the most important decision','Protect the first hour']);
+  const entry=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
+  expect(entry).toBe(dayVersion);
+ });
+});
 afterAll(() => db.close());

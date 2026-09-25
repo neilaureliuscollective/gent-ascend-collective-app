@@ -1,6 +1,7 @@
 import type { DayInput } from './schema';
 export type { DayInput, DayAction } from './schema';
-export type DayEntry = DayInput & { timezone: string; updated_at: string | null };
+export type DailyReview = {progress:string;blocker:string;tomorrow:string;version:number;source_kind:'user';source_day_version:number;confirmed_at:string};
+export type DayEntry = DayInput & { timezone: string; updated_at: string | null; review?: DailyReview | null };
 export type DailyData = {
   mode: 'personal' | 'preview' | 'sample';
   name: string | null;
@@ -9,7 +10,7 @@ export type DailyData = {
   entries: DayEntry[];
   goal: { title: string; next_step: string } | null;
   conversation: { id: string; title: string } | null;
-  carryForward?: { day: string; reflection: string; unfinished: string[] } | null;
+  carryForward?: { day: string; reflection: string; tomorrow: string; blocker: string; unfinished: string[] } | null;
   openCaptures?: number;
   profileDirection?: string | null;
 };

@@ -13,6 +13,7 @@ import {
   type DayEntry,
 } from '@/domains/daily/model';
 import { Rhythm } from './rhythm';
+import { EveningReview } from './evening-review';
 type Editor = 'checkin' | 'action' | 'reflection';
 export function DailyDashboard({ initial }: { initial: DailyData }) {
   const [data, setData] = useState(initial);
@@ -215,6 +216,8 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
       {!sample && !preview && (data.carryForward || data.openCaptures) && <aside className="loop-context" aria-label="Context carried into today">
         <span className="eyebrow">CARRIED INTO TODAY</span>
         {data.carryForward?.reflection && <p>From {dayLabel(data.carryForward.day, true)}: {data.carryForward.reflection}</p>}
+        {data.carryForward?.tomorrow && <p><strong>What you chose to carry forward:</strong> {data.carryForward.tomorrow}</p>}
+        {data.carryForward?.blocker && <p><strong>Friction you noticed:</strong> {data.carryForward.blocker}</p>}
         {!!data.carryForward?.unfinished.length && <p>{data.carryForward.unfinished.length} unfinished {data.carryForward.unfinished.length === 1 ? 'action' : 'actions'} from {dayLabel(data.carryForward.day, true)}. Choose deliberately what still matters.</p>}
         {!!data.openCaptures && <Link href="/captures">{data.openCaptures} {data.openCaptures === 1 ? 'thought' : 'thoughts'} waiting in Capture →</Link>}
       </aside>}
@@ -470,6 +473,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
                 ? 'Personal reflections require sign-in'
                 : 'Private to your account · not added to AI memory'}
           </span>
+          {!sample&&!preview&&day.version>0&&<EveningReview day={day} disabled={busy} onSaved={result=>{setData(result as DailyData);setNotice('Your review is confirmed. Tomorrow can begin from here.');}} />}
         </section>
       </div>
       <footer className="daily-footer">

@@ -24,7 +24,7 @@ export async function readDaily(): Promise<DailyData> {
   const { person, client } = context;
   const today = localDay(new Date(), person.timezone);
   const since = daysEnding(today, 30)[0]!;
-  const [entries, goals, conversations, captures, direction] = await Promise.all([
+  const [entries, goals, conversations, captures, direction, reviews] = await Promise.all([
     client
       .from('daily_entries')
       .select(
@@ -48,10 +48,12 @@ export async function readDaily(): Promise<DailyData> {
       .limit(1),
     client.from('life_captures').select('id', { count: 'exact', head: true }).eq('person_id', person.id).eq('status', 'inbox'),
     client.from('ascend_profile_facts').select('value').eq('person_id',person.id).eq('fact_key','direction').maybeSingle(),
+    client.from('daily_reviews').select('day,progress,blocker,tomorrow,version,source_kind,source_day_version,confirmed_at').eq('person_id',person.id).gte('day',since).lte('day',today),
   ]);
-  if (entries.error || goals.error || conversations.error || captures.error || direction.error)
+  if (entries.error || goals.error || conversations.error || captures.error || direction.error || reviews.error)
     throw new DailyError('Your daily records could not be loaded. Please try again.', 503);
-  const previous = [...(entries.data ?? [])].reverse().find((entry) => entry.day < today && (entry.reflection || entry.actions.some((action) => !action.done)));
+  const reviewByDay=new Map((reviews.data??[]).map(review=>[review.day,review]));
+  const previous = [...(entries.data ?? [])].reverse().find((entry) => entry.day < today && (entry.reflection || reviewByDay.get(entry.day)?.tomorrow || entry.actions.some((action) => !action.done)));
   return {
     mode: 'personal',
     name: person.display_name,
@@ -59,6 +61,7 @@ export async function readDaily(): Promise<DailyData> {
     timezone: person.timezone,
     entries: (entries.data ?? []).map((entry) => ({
       ...entry,
+      review: reviewByDay.get(entry.day)??null,
       actions: entry.actions
         .sort((a, b) => a.position - b.position)
         .map(({ id, title, done }) => ({ id, title, done })),
@@ -67,7 +70,7 @@ export async function readDaily(): Promise<DailyData> {
     conversation: conversations.data?.[0] ?? null,
     openCaptures: captures.count ?? 0,
     profileDirection: direction.data?.value ?? null,
-    carryForward: previous ? { day: previous.day, reflection: previous.reflection, unfinished: previous.actions.filter((action) => !action.done).map((action) => action.title) } : null,
+    carryForward: previous ? { day: previous.day, reflection: previous.reflection, tomorrow:reviewByDay.get(previous.day)?.tomorrow??'',blocker:reviewByDay.get(previous.day)?.blocker??'',unfinished: previous.actions.filter((action) => !action.done).map((action) => action.title) } : null,
   };
 }
 export async function saveDaily(input: DayInput): Promise<DailyData> {

@@ -23,7 +23,7 @@ export async function intelligenceSession() {
 }
 export async function personalContext(): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const [goal, memories, daily, profileFacts] = await Promise.all([
+  const [goal, memories, daily, profileFacts, reviews] = await Promise.all([
     client
       .from('goals')
       .select('*')
@@ -38,9 +38,11 @@ export async function personalContext(): Promise<PersonalContext> {
       .limit(24),
     client.from('daily_entries').select('day,intention,energy,reflection,actions:daily_actions(title,done)').eq('person_id', person.id).order('day', { ascending: false }).limit(3),
     client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
+    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).order('day',{ascending:false}).limit(3),
   ]);
-  if (goal.error || memories.error || daily.error || profileFacts.error)
+  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error)
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
+  const reviewByDay=new Map((reviews.data??[]).map(review=>[review.day,review]));
   return {
     profile: {
       name: person.display_name,
@@ -63,7 +65,7 @@ export async function personalContext(): Promise<PersonalContext> {
       kind,
       confirmed_at,
     })),
-    daily: (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => ({day,intention,energy,reflection,actions:actions ?? []})),
+    daily: (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}),
     ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
   };
 }
