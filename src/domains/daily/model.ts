@@ -9,6 +9,8 @@ export type DailyData = {
   entries: DayEntry[];
   goal: { title: string; next_step: string } | null;
   conversation: { id: string; title: string } | null;
+  carryForward?: { day: string; reflection: string; unfinished: string[] } | null;
+  openCaptures?: number;
 };
 export function localDay(now: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {

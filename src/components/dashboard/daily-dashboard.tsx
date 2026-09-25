@@ -210,6 +210,12 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         {busy ? (sample ? 'Updating sample…' : 'Saving your day…') : notice}
       </p>
       {!editorOpen && feedback}
+      {!sample && !preview && (data.carryForward || data.openCaptures) && <aside className="loop-context" aria-label="Context carried into today">
+        <span className="eyebrow">CARRIED INTO TODAY</span>
+        {data.carryForward?.reflection && <p>From {dayLabel(data.carryForward.day, true)}: {data.carryForward.reflection}</p>}
+        {!!data.carryForward?.unfinished.length && <p>{data.carryForward.unfinished.length} unfinished {data.carryForward.unfinished.length === 1 ? 'action' : 'actions'} from {dayLabel(data.carryForward.day, true)}. Choose deliberately what still matters.</p>}
+        {!!data.openCaptures && <Link href="/captures">{data.openCaptures} {data.openCaptures === 1 ? 'thought' : 'thoughts'} waiting in Capture →</Link>}
+      </aside>}
       <div className="daily-top-grid">
         <section className="daily-orientation" aria-labelledby="orientation-title">
           <OrbitSignature />
@@ -483,8 +489,8 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         <p>
           Energy and sleep here are your own reports. Actions, intentions and reflections are
           entered by you. Missing entries remain blank. Wearables, automatic recovery scores, labs
-          and body measurements are not connected to this dashboard. Daily entries are not yet sent
-          to Aethelios automatically; the conversation starters open a draft for you to review.
+          and body measurements are not connected to this dashboard. Your three most recent daily
+          entries are included only when you choose personal context in an Aethelios conversation.
         </p>
       </details>
       <dialog

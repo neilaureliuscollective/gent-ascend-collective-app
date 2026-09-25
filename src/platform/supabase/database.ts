@@ -54,6 +54,11 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      life_captures: Table<
+        { id: string; person_id: string; content: string; kind: 'thought' | 'idea' | 'task' | 'decision'; status: 'inbox' | 'acted' | 'dismissed'; source: 'user'; created_at: string; updated_at: string },
+        { id: string; person_id: string; content: string; kind: 'thought' | 'idea' | 'task' | 'decision' },
+        { status?: 'inbox' | 'acted' | 'dismissed'; updated_at?: string }
+      >;
       daily_entries: Table<Omit<DayEntry, 'actions'> & { person_id: string }, never, never>;
       daily_actions: Table<
         DayAction & { person_id: string; day: string; position: number },

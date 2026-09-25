@@ -24,7 +24,7 @@ export async function readDaily(): Promise<DailyData> {
   const { person, client } = context;
   const today = localDay(new Date(), person.timezone);
   const since = daysEnding(today, 30)[0]!;
-  const [entries, goals, conversations] = await Promise.all([
+  const [entries, goals, conversations, captures] = await Promise.all([
     client
       .from('daily_entries')
       .select(
@@ -46,9 +46,11 @@ export async function readDaily(): Promise<DailyData> {
       .eq('person_id', person.id)
       .order('updated_at', { ascending: false })
       .limit(1),
+    client.from('life_captures').select('id', { count: 'exact', head: true }).eq('person_id', person.id).eq('status', 'inbox'),
   ]);
-  if (entries.error || goals.error || conversations.error)
+  if (entries.error || goals.error || conversations.error || captures.error)
     throw new DailyError('Your daily records could not be loaded. Please try again.', 503);
+  const previous = [...(entries.data ?? [])].reverse().find((entry) => entry.day < today && (entry.reflection || entry.actions.some((action) => !action.done)));
   return {
     mode: 'personal',
     name: person.display_name,
@@ -62,6 +64,8 @@ export async function readDaily(): Promise<DailyData> {
     })),
     goal: goals.data?.[0] ?? null,
     conversation: conversations.data?.[0] ?? null,
+    openCaptures: captures.count ?? 0,
+    carryForward: previous ? { day: previous.day, reflection: previous.reflection, unfinished: previous.actions.filter((action) => !action.done).map((action) => action.title) } : null,
   };
 }
 export async function saveDaily(input: DayInput): Promise<DailyData> {

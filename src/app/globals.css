@@ -3297,3 +3297,21 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .welcome-heading:has(.orb-presentation.is-previewing) > div:not(.orb-presentation) {
   display: none;
 }
+/* Ascend Loop capture and longitudinal context */
+.capture-trigger { border: 1px solid rgba(196,145,47,.55); border-radius: 999px; padding: .65rem 1rem; background: #102b24; color: #e8c57e; cursor: pointer; white-space: nowrap; }
+.capture-trigger:focus-visible,.capture-surface button:focus-visible,.capture-surface textarea:focus-visible { outline: 2px solid #c4912f; outline-offset: 3px; }
+.capture-scrim { position: fixed; inset: 0; z-index: 100; background: rgba(1,5,3,.78); display: grid; place-items: center; padding: 1rem; }
+.capture-surface { width: min(100%, 36rem); max-height: 90dvh; overflow-y: auto; border: 1px solid rgba(196,145,47,.45); border-radius: 1.25rem; background: #081710; color: #f3eee2; padding: clamp(1.25rem,4vw,2.5rem); box-shadow: 0 2rem 5rem #000a; }
+.capture-head,.capture-options { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.capture-head button { border: 0; background: transparent; color: inherit; font-size: 1.7rem; cursor: pointer; }
+.capture-surface h2 { font-size: clamp(1.7rem,5vw,2.5rem); margin: 1rem 0 .5rem; }
+.capture-surface textarea { width: 100%; min-height: 9rem; resize: vertical; margin: 1rem 0; padding: 1rem; border-radius: .7rem; border: 1px solid #7b6b46; background: #0c241b; color: #fff; font: inherit; }
+.capture-surface input { display: block; width: 100%; padding: .8rem; margin: .5rem 0; border: 1px solid #7b6b46; border-radius: .5rem; background: #0c241b; color: #fff; font: inherit; }
+.capture-proposal { color: #e8c57e; border-left: 2px solid #c4912f; padding-left: .75rem; }
+.capture-options { justify-content: flex-start; margin-top: 1rem; }
+.capture-options button:not(.button),.capture-options a { color: #e8c57e; border: 0; background: transparent; cursor: pointer; }
+.loop-context { padding: 1.25rem 1.5rem; margin: 1rem 0; border-left: 2px solid #c4912f; background: linear-gradient(90deg,#0b2b20,#07130f); color: #e7e1d3; }
+.loop-context p { margin: .65rem 0; max-width: 70ch; }
+.loop-context a { color: #e8c57e; }
+.loop-history { display: grid; gap: 1rem; margin-top: 1.5rem; }
+.loop-history blockquote { margin: 1rem 0 0; padding-left: 1rem; border-left: 2px solid #c4912f; }

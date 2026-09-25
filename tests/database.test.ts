@@ -29,6 +29,17 @@ beforeAll(async () => {
 });
 afterAll(() => db.close());
 describe('migration, seeds and owner security', () => {
+  it('keeps captured thoughts owner-scoped and prevents ownership changes', async () => {
+    const capture = '83000000-0000-4000-8000-000000000001';
+    const own = `(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder, `insert into public.life_captures(id,person_id,content) values('${capture}',${own},'Rethink membership')`);
+    expect((await asUser(founder, `select * from public.life_captures where id='${capture}'`)).rows).toHaveLength(1);
+    expect((await asUser(member, `select * from public.life_captures where id='${capture}'`)).rows).toHaveLength(0);
+    expect((await asUser(member, `update public.life_captures set status='acted' where id='${capture}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(member, `insert into public.life_captures(id,person_id,content) values('83000000-0000-4000-8000-000000000002',${own},'Intrusion')`)).rejects.toThrow();
+    await expect(asUser(founder, `update public.life_captures set person_id=${own} where id='${capture}'`)).rejects.toThrow();
+    await expect(asUser(founder, `delete from public.life_captures where id='${capture}'`)).rejects.toThrow();
+  });
   it('keeps founder grants owner-readable and unavailable to member writes', async () => {
     expect((await asUser(founder, 'select * from public.founder_access')).rows).toHaveLength(0);
     await expect(asUser(founder, `insert into public.founder_access(person_id,grant_reason) values((select id from public.persons where auth_user_id='${founder}'),'Self promotion')`)).rejects.toThrow();
