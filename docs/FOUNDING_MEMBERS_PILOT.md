@@ -6,7 +6,7 @@ Ship a private cohort for Blair and 3–5 Katie clients while founder phone test
 
 ## Operating sequence
 
-1. Apply the additive `20260925205234_founding_members_pilot.sql` migration before deploying this app. Do not run the local synthetic seed on hosted Supabase.
+1. Apply the additive `20260925210204_founding_members_pilot.sql` migration before deploying this app. Do not run the local synthetic seed on hosted Supabase.
 2. In Supabase Auth email templates, set the **Invite user** link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite`. Set Site URL to the canonical app origin. This is required for cookie-based SSR arrival. Test this link using a test address before inviting a client.
 3. Founder opens `/founder/pilot`, reserves the exact email address, then sends the Auth invitation in Supabase Dashboard → Authentication → Users → Add user → Send invitation. The reserve button does **not** send email. If that person already has a confirmed account, have them sign in with that same verified email instead of sending a second Auth invite.
 4. The invitee accepts the email link, lands at `/welcome`, confirms pilot access and sets a password for future sign-ins. The server checks the confirmed Auth email against the founder reservation before setting only that person's beta access.
