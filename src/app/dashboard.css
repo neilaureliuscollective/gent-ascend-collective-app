@@ -119,6 +119,24 @@
   color: #ebd3a2;
   font-size: 13px;
 }
+.loop-next-move {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 20px;
+  padding: 18px 22px;
+  border: 1px solid #c4912f55;
+  border-radius: 18px;
+  background: linear-gradient(110deg, #122c25, #111714 58%, #1b1913);
+}
+.loop-next-move h2 { font-size: clamp(1.15rem, 2vw, 1.5rem); margin: 6px 0; }
+.loop-next-move p:not(.eyebrow) { color: #c7cec7; font-size: 0.875rem; }
+.loop-next-move .secondary-button { flex-shrink: 0; }
+@media (max-width: 650px) {
+  .loop-next-move { align-items: stretch; flex-direction: column; }
+  .loop-next-move .secondary-button { justify-content: center; }
+}
 .daily-top-grid {
   display: grid;
   grid-template-columns: 1.65fr 1fr;

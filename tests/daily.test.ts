@@ -1,6 +1,6 @@
 import { daySchema } from '../src/domains/daily/schema';
 import { describe, it, expect } from 'vitest';
-import { localDay, daysEnding, emptyDay, sampleData } from '../src/domains/daily/model';
+import { localDay, daysEnding, emptyDay, sampleData, nextLoopMove, type DailyData } from '../src/domains/daily/model';
 import { calculateCapabilities } from '../src/domains/access/policy';
 describe('daily observation boundaries', () => {
   it('uses the person timezone across midnight and preserves calendar dates across DST', () => {
@@ -26,5 +26,24 @@ describe('daily observation boundaries', () => {
     expect(access.has('daily.read')).toBe(true);
     expect(access.has('daily.write')).toBe(true);
     expect(access.has('clinical.care')).toBe(false);
+  });
+  it('guides a real first day from confirmed state through tomorrow without a fabricated score', () => {
+    const data: DailyData = { mode: 'personal', name: 'Founder', today: '2026-09-25', timezone: 'America/Chicago', entries: [], goal: null, conversation: null };
+    expect(nextLoopMove(data)?.target).toBe('profile');
+    data.profileDirection = 'Build a dependable daily practice';
+    expect(nextLoopMove(data)?.target).toBe('goal');
+    data.goal = { title: 'Build my company', next_step: 'Speak to one partner' };
+    expect(nextLoopMove(data)?.target).toBe('intention');
+    const today = emptyDay(data.today, data.timezone);
+    data.entries = [today];
+    today.intention = 'Talk to a partner';
+    expect(nextLoopMove(data)?.target).toBe('action');
+    today.actions = [{ id: '62000000-0000-4000-8000-000000000002', title: 'Call a partner', done: false }];
+    expect(nextLoopMove(data)?.target).toBe('complete');
+    today.actions[0]!.done = true;
+    expect(nextLoopMove(data)?.target).toBe('review');
+    today.review = { progress: 'Made the call', blocker: '', tomorrow: 'Follow up', version: 1, source_kind: 'user', source_day_version: 1, confirmed_at: '2026-09-25T21:00:00Z' };
+    expect(nextLoopMove(data)?.target).toBe('tomorrow');
+    expect(nextLoopMove({ ...data, mode: 'sample' })).toBeNull();
   });
 });

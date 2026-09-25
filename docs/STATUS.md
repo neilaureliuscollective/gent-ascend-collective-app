@@ -1,3 +1,9 @@
+# Founder Daily Driver V1 — 2026-09-25
+
+Command now offers one next move from saved founder state; Ascend Profile allows a direct direction save without an AI proposal. All ten existing migration source filenames now match the hosted versions, with SQL bytes verified against the read-only hosted ledger and guarded by `npm run db:ledger`. This is a no-DDL source reconciliation; see [Founder Daily Driver](FOUNDER_DAILY_DRIVER.md). The physical-device founder journey and seven-day use remain acceptance gates. Earlier migration instructions below are historical and use superseded filenames.
+
+---
+
 # Founder activation foundation — 2026-09-24
 
 Recovered the exact hosted grooming and founder-access SQL migrations into
