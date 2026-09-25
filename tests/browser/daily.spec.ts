@@ -87,8 +87,13 @@ test('daily editor preserves unsaved text on conflict and reloads only deliberat
 test('evening review stays a draft until confirmed and allows correction', async ({page})=>{
  const data={...sampleData('2026-09-21'),mode:'personal' as const,name:'Synthetic tester'};
  const day=data.entries.find(entry=>entry.day===data.today)!;
- day.reflection='I finished the client brief; the late meeting delayed planning.';
  const methods:string[]=[];
+ await page.route('**/api/daily',async route=>{
+  const input=route.request().postDataJSON();
+  day.reflection=input.reflection;
+  day.version+=1;
+  await route.fulfill({json:data});
+ });
  await page.route('**/api/daily/review',async route=>{
   const method=route.request().method();methods.push(method);
   if(method==='POST') return route.fulfill({json:{review:{progress:'Finished the client brief',blocker:'Late meeting delayed planning',tomorrow:'Protect the morning'},sourceDayVersion:day.version}});
@@ -97,10 +102,14 @@ test('evening review stays a draft until confirmed and allows correction', async
   return route.fulfill({json:data});
  });
  await page.goto('http://127.0.0.1:3102/?mode=daily');
+ await page.getByRole('button',{name:'Leave a reflection'}).click();
+ await page.getByLabel('A win, a lesson, or something to remember').fill('I finished the client brief; the late meeting delayed planning.');
+ await page.getByRole('button',{name:'Save your day',exact:true}).click();
+ await expect(page.locator('.reflection-card')).toContainText('I finished the client brief');
  await page.getByRole('button',{name:'Close the loop for today'}).click();
  await page.getByRole('button',{name:'Prepare from my reflection with Aethelios'}).click();
  await expect(page.getByLabel('What moved forward?')).toHaveValue('Finished the client brief');
- await expect(page.getByText('Protect the morning')).toHaveCount(0);
+ await expect(page.locator('.evening-review-summary')).toHaveCount(0);
  await page.getByLabel('What should tomorrow remember?').fill('Write first, meet later');
  await page.getByRole('button',{name:'Confirm review'}).click();
  await expect(page.getByText('Write first, meet later')).toBeVisible();

@@ -53,6 +53,19 @@ export function dayLabel(day: string, short = false) {
   }).format(new Date(`${day}T12:00:00Z`));
 }
 export const energyLabels = ['Very low', 'Low', 'Steady', 'Good', 'High'] as const;
+export type LoopMove = { label: string; detail: string; target: 'profile' | 'goal' | 'intention' | 'action' | 'complete' | 'review' | 'tomorrow' };
+/** A navigation hint derived only from confirmed records, never an AI assessment. */
+export function nextLoopMove(data: DailyData): LoopMove | null {
+  if (data.mode !== 'personal') return null;
+  const today = data.entries.find(entry => entry.day === data.today);
+  if (!data.profileDirection) return { label: 'Set your starting point', detail: 'Tell Aethelios what direction matters now. You choose what he keeps.', target: 'profile' };
+  if (!data.goal) return { label: 'Choose one larger goal', detail: 'Give today a direction you can return to.', target: 'goal' };
+  if (!today?.intention) return { label: 'Set today’s intention', detail: 'Choose what deserves your attention today.', target: 'intention' };
+  if (!today.actions.length) return { label: 'Choose one action', detail: 'Make your intention concrete with a step you can take.', target: 'action' };
+  if (!today.actions.some(action => action.done)) return { label: 'Follow through on your day', detail: 'When you finish a step, mark it complete. You can also capture what changed.', target: 'complete' };
+  if (!today.review) return { label: 'Close today’s loop', detail: 'Record what moved forward and what tomorrow should know.', target: 'review' };
+  return { label: 'Return tomorrow with context', detail: 'Your confirmed review is saved for the next day. Keep using Command as life moves.', target: 'tomorrow' };
+}
 export function sampleData(today: string): DailyData {
   const timezone = 'America/Chicago';
   const days = daysEnding(today, 7);

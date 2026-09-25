@@ -9,6 +9,7 @@ import {
   emptyDay,
   sampleData,
   energyLabels,
+  nextLoopMove,
   type DailyData,
   type DayEntry,
 } from '@/domains/daily/model';
@@ -33,6 +34,19 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
   const preview = data.mode === 'preview',
     sample = data.mode === 'sample';
   const done = day.actions.filter((a) => a.done).length;
+  const nextMove = nextLoopMove(data);
+  const recordedDays = data.entries.filter(entry => entry.version > 0).length;
+  function followNextMove() {
+    if (!nextMove) return;
+    if (nextMove.target === 'intention' || nextMove.target === 'action') {
+      open(nextMove.target === 'intention' ? 'checkin' : 'action');
+      return;
+    }
+    if (nextMove.target === 'review') {
+      setLens('evening');
+      document.getElementById('daily-review')?.scrollIntoView({ behavior: 'smooth' });
+    } else document.getElementById('daily-actions')?.scrollIntoView({ behavior: 'smooth' });
+  }
   const open = (kind: Editor) => {
     setEditorOpen(true);
     setEditor(kind);
@@ -211,6 +225,17 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         {busy ? (sample ? 'Updating sample…' : 'Saving your day…') : notice}
       </p>
       {!editorOpen && feedback}
+      {nextMove && <section className="loop-next-move" aria-label="Your next move">
+        <div><p className="eyebrow">YOUR NEXT MOVE · {recordedDays} {recordedDays === 1 ? 'DAY' : 'DAYS'} RECORDED IN THE LAST 30</p>
+          <h2>{nextMove.label}</h2><p>{nextMove.detail}</p></div>
+        {nextMove.target === 'profile' || nextMove.target === 'goal' || nextMove.target === 'tomorrow'
+          ? <Link className="secondary-button" href={nextMove.target === 'profile' ? '/ascend-profile' : nextMove.target === 'goal' ? '/goals' : '/progress'}>
+              {nextMove.target === 'tomorrow' ? 'See your recorded progress' : 'Take the next step'} <Icon name="arrow" />
+            </Link>
+          : <button className="secondary-button" type="button" onClick={followNextMove}>
+              {nextMove.target === 'complete' ? 'See today’s actions' : nextMove.target === 'review' ? 'Review today' : 'Take the next step'} <Icon name="arrow" />
+            </button>}
+      </section>}
       {!sample && !preview && !data.profileDirection && <p className="baseline-invitation"><Link href="/ascend-profile">Give Aethelios your starting point →</Link></p>}
       {!sample && !preview && data.profileDirection && <aside className="loop-context" aria-label="Your longer direction"><span className="eyebrow">THE DIRECTION YOU CHOSE</span><p>{data.profileDirection}</p><Link href="/ascend-profile">Refine your Ascend Profile →</Link></aside>}
       {!sample && !preview && (data.carryForward || data.openCaptures) && <aside className="loop-context" aria-label="Context carried into today">
@@ -329,7 +354,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         </section>
       </div>
       <div className="daily-main-grid">
-        <section className="daily-card actions-card">
+        <section id="daily-actions" className="daily-card actions-card">
           <div className="daily-card-heading">
             <div>
               <p className="eyebrow">SMALL STEPS. REAL INTENT.</p>
@@ -448,6 +473,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
       <div className="daily-bottom-grid">
         <Rhythm today={data.today} entries={data.entries} />
         <section
+          id="daily-review"
           className={`daily-card reflection-card ${lens === 'evening' ? 'reflection-active' : ''}`}
         >
           <div className="reflection-symbol" aria-hidden="true">

@@ -25,7 +25,7 @@ for (const width of [360, 768, 1440]) {
     await expect(page.getByRole('heading', { name: 'My world.' })).toBeVisible();
     await page.getByRole('link', { name: 'Progress', exact: false }).click();
     await expect(
-      page.getByText('Your daily energy and sleep observations now live in Command.', {
+      page.getByText('Sign in to see your history.', {
         exact: false,
       }),
     ).toBeVisible();
