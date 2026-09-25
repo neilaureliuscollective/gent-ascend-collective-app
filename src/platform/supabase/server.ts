@@ -1,15 +1,15 @@
 import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { parseEnvironment } from '@/platform/environment';
+import { supabaseConnection } from './connection';
 import type { Database } from './database';
 export async function serverClient() {
-  const env = parseEnvironment(process.env);
-  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return null;
+  const connection = supabaseConnection(process.env);
+  if (!connection) return null;
   const jar = await cookies();
   return createServerClient<Database>(
-    env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    connection.url,
+    connection.key,
     {
       cookies: {
         getAll: () => jar.getAll(),
