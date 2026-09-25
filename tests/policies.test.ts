@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateCapabilities } from '../src/domains/access/policy';
 import { parseEnvironment } from '../src/platform/environment';
+import { supabaseConnection } from '../src/platform/supabase/connection';
 import { defaultScenario, readScenario, signScenario } from '../src/domains/development/scenario';
 const now = new Date('2026-09-20T12:00:00Z');
 const local = {
@@ -12,6 +13,21 @@ const local = {
   NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'local-test-key',
 };
+describe('Supabase project selection', () => {
+  it('connects the hosted production app to its verified founder project', () => {
+    const connection = supabaseConnection({
+      APP_ENV: 'production',
+      VERCEL_ENV: 'production',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://ashhohitbvfcfspcoojt.supabase.co',
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'stale-public-key',
+    });
+    expect(connection?.url).toBe('https://volpzkfsnmtztrovexcw.supabase.co');
+    expect(connection?.key).toMatch(/^sb_publishable_/);
+  });
+  it('keeps local test Auth isolated from the hosted founder account', () => {
+    expect(supabaseConnection(local)?.url).toBe('http://127.0.0.1:54321');
+  });
+});
 describe('capabilities', () => {
   it('keeps profile and basic goals available without payment', () => {
     const capabilities = calculateCapabilities({ tier: 'free', billing: 'none', beta: false }, now);
