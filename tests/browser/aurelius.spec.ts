@@ -5,6 +5,7 @@ async function setup(page: Page, mode: 'normal' | 'interrupted' | 'unconfigured'
     conversations: [],
     turns: [],
     memories: [],
+    actionProposals: [],
     context: {
       profile: {
         name: 'Synthetic Founder',

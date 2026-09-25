@@ -23,7 +23,7 @@ export async function intelligenceSession() {
 }
 export async function personalContext(): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const [goal, memories] = await Promise.all([
+  const [goal, memories, daily, profileFacts, reviews] = await Promise.all([
     client
       .from('goals')
       .select('*')
@@ -36,9 +36,13 @@ export async function personalContext(): Promise<PersonalContext> {
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
       .limit(24),
+    client.from('daily_entries').select('day,intention,energy,reflection,actions:daily_actions(title,done)').eq('person_id', person.id).order('day', { ascending: false }).limit(3),
+    client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
+    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).order('day',{ascending:false}).limit(3),
   ]);
-  if (goal.error || memories.error)
+  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error)
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
+  const reviewByDay=new Map((reviews.data??[]).map(review=>[review.day,review]));
   return {
     profile: {
       name: person.display_name,
@@ -61,6 +65,8 @@ export async function personalContext(): Promise<PersonalContext> {
       kind,
       confirmed_at,
     })),
+    daily: (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}),
+    ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
   };
 }
 export async function conversationTurns(id: string) {
@@ -85,7 +91,7 @@ export async function conversationTurns(id: string) {
 }
 export async function readWorkspace(conversationId?: string): Promise<WorkspaceData> {
   const { client, person } = await intelligenceSession();
-  const [list, memories, context, access, turns] = await Promise.all([
+  const [list, memories, actionProposals, context, access, turns] = await Promise.all([
     client
       .from('ai_conversations')
       .select('*')
@@ -98,17 +104,19 @@ export async function readWorkspace(conversationId?: string): Promise<WorkspaceD
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
       .limit(24),
+    client.from('ai_action_proposals').select('*').eq('person_id',person.id).order('proposed_at',{ascending:false}).limit(100),
     personalContext(),
     currentAccess(),
     conversationId ? conversationTurns(conversationId) : Promise.resolve([]),
   ]);
-  if (list.error || memories.error)
+  if (list.error || memories.error || actionProposals.error)
     throw new IntelligenceError('Your workspace could not be loaded.', 503);
   const config = aiConfigSchema.parse(process.env);
   return {
     conversations: list.data ?? [],
     turns,
     memories: memories.data ?? [],
+    actionProposals: actionProposals.data ?? [],
     context,
     canChat: access.has('aurelius.context'),
     configured: Boolean(config.OPENAI_API_KEY),

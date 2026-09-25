@@ -118,3 +118,7 @@ requires authorization at the data boundary; app OAuth scopes alone do not
 restrict database data. References checked 2026-09-24:
 https://supabase.com/docs/guides/database/postgres/row-level-security and
 https://supabase.com/docs/guides/auth/oauth-server/token-security.
+
+## 2026-09-25 — Confirmed evening reviews, separate from chat and memory
+
+Extend the existing daily record with a versioned, person-owned review rather than promoting conversational text to memory. Aethelios may propose an editable three-field draft from a saved day, but confirmation records the user's choice. The RPC checks local day and source/review versions under the same person lock as daily writes; revision history preserves corrections. Command carries tomorrow context and unresolved friction, while Progress reads historical confirmed reviews. No causal patterns are inferred from sparse records. Primary technical references checked 2026-09-25: https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data and https://supabase.com/docs/guides/api/securing-your-api and https://supabase.com/docs/guides/database/functions. Supabase changelog index was attempted but not retrievable from this environment; verify it alongside real migration testing before deployment.

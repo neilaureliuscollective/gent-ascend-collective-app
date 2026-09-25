@@ -5,6 +5,7 @@ import { AureliusPanel } from './aurelius-panel';
 import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
+import { UniversalCapture } from './capture/universal-capture';
 export function Shell({
   children,
   founder = false,
@@ -48,6 +49,7 @@ export function Shell({
             GENT ASCEND <span>/</span> YOUR PERSONAL COMMAND
           </span>
           <div className="topbar-actions">
+            <UniversalCapture />
             <AppearanceControls />
             {founder && <Link href="/dev">Developer console</Link>}
             <Link href="/you" className="avatar" aria-label="Your account">

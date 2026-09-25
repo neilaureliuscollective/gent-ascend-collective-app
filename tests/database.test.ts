@@ -27,8 +27,45 @@ beforeAll(async () => {
   }
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
 });
-afterAll(() => db.close());
+
 describe('migration, seeds and owner security', () => {
+  it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
+    const first='84000000-0000-4000-8000-000000000001';
+    const second='84000000-0000-4000-8000-000000000002';
+    const call=(request:string,value:string,version:number)=>`select public.ascend_profile_confirm('${request}','direction','${value}',${version},'ai_proposal','My own answer') as version`;
+    expect((await asUser<{version:number}>(founder,call(first,'Build a steady life',0))).rows[0]?.version).toBe(1);
+    expect((await asUser<{version:number}>(founder,call(first,'Build a steady life',0))).rows[0]?.version).toBe(1);
+    expect((await asUser<{version:number}>(founder,call(second,'Grow the company with discipline',1))).rows[0]?.version).toBe(2);
+    await expect(asUser(founder,`select public.ascend_profile_confirm('84000000-0000-4000-8000-000000000003','direction','Old truth',1,'user',null)`)).rejects.toThrow();
+    expect((await asUser<{value:string}>(founder,"select value from public.ascend_profile_facts where fact_key='direction'")).rows[0]?.value).toBe('Grow the company with discipline');
+    expect((await asUser<{old_value:string|null;new_value:string}>(founder,"select old_value,new_value from public.ascend_profile_revisions order by new_version")).rows.map(row=>row.old_value)).toEqual([null,'Build a steady life']);
+    expect((await asUser(member,'select * from public.ascend_profile_facts')).rows).toHaveLength(0);
+    expect((await asUser(member,'select * from public.ascend_profile_revisions')).rows).toHaveLength(0);
+    await expect(asUser(member,`select public.ascend_profile_confirm('${first}','direction','Intrusion',2,'user',null)`)).rejects.toThrow();
+    await expect(asUser(founder,"update public.ascend_profile_facts set value='Bypass'")).rejects.toThrow();
+    expect((await asUser<{version:number}>(founder,`select public.ascend_profile_confirm('84000000-0000-4000-8000-000000000004','direction',null,2,'user',null) as version`)).rows[0]?.version).toBe(3);
+    expect((await asUser<{value:string|null}>(founder,"select value from public.ascend_profile_facts where fact_key='direction'")).rows[0]?.value).toBeNull();
+  });
+  it('reserves a proposal in the existing owner-only AI usage ledger',async()=>{
+    const id='85000000-0000-4000-8000-000000000001';
+    await asUser(founder,`select public.ai_reserve_proposal('${id}')`);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${id}'`)).rows).toHaveLength(1);
+    expect((await asUser(member,`select id from public.ai_usage where id='${id}'`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`select public.ai_reserve_proposal('${id}')`)).rejects.toThrow();
+    // Isolate this fixture from the existing chat quota assertions below.
+    await db.exec(`delete from public.ai_usage where id='${id}'`);
+  });
+  it('keeps captured thoughts owner-scoped and prevents ownership changes', async () => {
+    const capture = '83000000-0000-4000-8000-000000000001';
+    const own = `(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder, `insert into public.life_captures(id,person_id,content) values('${capture}',${own},'Rethink membership')`);
+    expect((await asUser(founder, `select * from public.life_captures where id='${capture}'`)).rows).toHaveLength(1);
+    expect((await asUser(member, `select * from public.life_captures where id='${capture}'`)).rows).toHaveLength(0);
+    expect((await asUser(member, `update public.life_captures set status='acted' where id='${capture}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(member, `insert into public.life_captures(id,person_id,content) values('83000000-0000-4000-8000-000000000002',${own},'Intrusion')`)).rejects.toThrow();
+    await expect(asUser(founder, `update public.life_captures set person_id=${own} where id='${capture}'`)).rejects.toThrow();
+    await expect(asUser(founder, `delete from public.life_captures where id='${capture}'`)).rejects.toThrow();
+  });
   it('keeps founder grants owner-readable and unavailable to member writes', async () => {
     expect((await asUser(founder, 'select * from public.founder_access')).rows).toHaveLength(0);
     await expect(asUser(founder, `insert into public.founder_access(person_id,grant_reason) values((select id from public.persons where auth_user_id='${founder}'),'Self promotion')`)).rejects.toThrow();
@@ -474,3 +511,78 @@ describe('daily records: transactional snapshots and ownership', () => {
     ).toHaveLength(1);
   });
 });
+
+describe('confirmed Aethelios action boundary',()=>{
+  const conversation='86000000-0000-4000-8000-000000000001';
+  const turn='86000000-0000-4000-8000-000000000002';
+  const proposal='86000000-0000-4000-8000-000000000003';
+  it('requires a complete owner turn and keeps proposals private',async()=>{
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await db.exec(`insert into public.ai_conversations(id,person_id,title) values('${conversation}',${owner},'Synthetic action review');
+      insert into public.ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version)
+      values('${turn}',${owner},'${conversation}','Plan my next step','Start with one action','complete','fixture',false,'fixture');`);
+    await asUser(founder,`select public.ai_propose_daily_action('${proposal}','${turn}','Review my plan')`);
+    expect((await asUser(member,'select * from public.ai_action_proposals')).rows).toHaveLength(0);
+    await expect(asUser(member,`select public.ai_decide_daily_action('${proposal}',true)`)).rejects.toThrow();
+    await expect(asUser(member,`select public.ai_propose_daily_action('86000000-0000-4000-8000-000000000004','${turn}','Intrusion')`)).rejects.toThrow();
+    expect((await asUser(founder,`select public.ai_propose_daily_action('${proposal}','${turn}','Review my plan')`)).rows).toHaveLength(1);
+    await expect(asUser(founder,`select public.ai_propose_daily_action('86000000-0000-4000-8000-000000000005','${turn}','Different')`)).rejects.toThrow();
+  });
+  it('executes once after approval and leaves existing daily content intact',async()=>{
+    const before=(await asUser<{version:number;intention:string}>(founder,'select version,intention from public.daily_entries order by day desc limit 1')).rows[0]!;
+    const result=await asUser<{ai_decide_daily_action:string}>(founder,`select public.ai_decide_daily_action('${proposal}',true)`);
+    const day=new Date(result.rows[0]!.ai_decide_daily_action).toISOString().slice(0,10);
+    expect(day).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect((await asUser(founder,`select title from public.daily_actions where id='${proposal}'`)).rows).toEqual([{title:'Review my plan'}]);
+    const after=(await asUser<{version:number;intention:string}>(founder,`select version,intention from public.daily_entries where day='${day}'`)).rows[0]!;
+    expect(after.version).toBe(before.version+1);
+    expect(after.intention).toBe(before.intention);
+    expect(new Date((await asUser<{ai_decide_daily_action:string}>(founder,`select public.ai_decide_daily_action('${proposal}',true)`)).rows[0]!.ai_decide_daily_action).toISOString().slice(0,10)).toBe(day);
+    expect((await asUser(founder,`select id from public.daily_actions where id='${proposal}'`)).rows).toHaveLength(1);
+    await expect(asUser(founder,`select public.ai_decide_daily_action('${proposal}',false)`)).rejects.toThrow();
+  });
+  it('dismisses without a daily write',async()=>{
+    const next='86000000-0000-4000-8000-000000000006';
+    const turn2='86000000-0000-4000-8000-000000000007';
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await db.exec(`insert into public.ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version)
+      values('${turn2}',${owner},'${conversation}','Think through an idea','Consider one step','complete','fixture',false,'fixture')`);
+    await asUser(founder,`select public.ai_propose_daily_action('${next}','${turn2}','Work on idea')`);
+    await asUser(founder,`select public.ai_decide_daily_action('${next}',false)`);
+    expect((await asUser(founder,`select id from public.daily_actions where id='${next}'`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`select public.ai_decide_daily_action('${next}',true)`)).rejects.toThrow();
+  });
+});
+describe('confirmed evening review and next-day continuity',()=>{
+ const today="(current_timestamp at time zone 'America/Chicago')::date";
+ const first='87000000-0000-4000-8000-000000000001';
+ const second='87000000-0000-4000-8000-000000000002';
+ const call=(request:string,expected:number,dayVersion:number,progress:string,blocker:string,tomorrow:string)=>
+  `select public.daily_confirm_review('${request}',${today},${expected},${dayVersion},'${progress}','${blocker}','${tomorrow}') as version`;
+ it('requires a current owned saved day and keeps review history private',async()=>{
+  const dayVersion=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
+  expect((await asUser<{version:number}>(founder,call(first,0,dayVersion,'Finished a deliberate action','Lost focus after lunch','Start with the most important decision'))).rows[0]?.version).toBe(1);
+  expect((await asUser(member,'select * from public.daily_reviews')).rows).toHaveLength(0);
+  expect((await asUser(member,'select * from public.daily_review_revisions')).rows).toHaveLength(0);
+  await expect(asUser(member,call('87000000-0000-4000-8000-000000000003',0,dayVersion,'Intrusion','',''))).rejects.toThrow();
+  await expect(asUser(founder,"update public.daily_reviews set tomorrow='Bypass'")).rejects.toThrow();
+  await expect(asUser(founder,call('87000000-0000-4000-8000-000000000004',0,dayVersion+1,'Invalid','',''))).rejects.toThrow();
+  await expect(asUser(founder,call('87000000-0000-4000-8000-000000000005',0,dayVersion,'','',''))).rejects.toThrow();
+  await expect(asUser(founder,`select public.daily_confirm_review('87000000-0000-4000-8000-000000000006',${today}-1,0,${dayVersion},'Past','','')`)).rejects.toThrow();
+  await db.exec('set role anon');
+  try {await expect(db.query('select * from public.daily_reviews')).rejects.toThrow();await expect(db.query(call('87000000-0000-4000-8000-000000000007',0,dayVersion,'Intrusion','',''))).rejects.toThrow();}
+  finally {await db.exec('reset role');}
+ });
+ it('supports correction with revision history and idempotent confirmation',async()=>{
+  const dayVersion=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
+  expect((await asUser<{version:number}>(founder,call(second,1,dayVersion,'Completed the plan','Schedule slipped','Protect the first hour'))).rows[0]?.version).toBe(2);
+  await expect(asUser(founder,call(second,1,dayVersion,'Altered retry','',''))).rejects.toThrow();
+  expect((await asUser<{version:number}>(founder,call(second,1,dayVersion,'Completed the plan','Schedule slipped','Protect the first hour'))).rows[0]?.version).toBe(2);
+  await expect(asUser(founder,call('87000000-0000-4000-8000-000000000008',1,dayVersion,'Stale','',''))).rejects.toThrow();
+  expect((await asUser<{tomorrow:string}>(founder,`select tomorrow from public.daily_reviews where day=${today}`)).rows[0]?.tomorrow).toBe('Protect the first hour');
+  expect((await asUser<{tomorrow:string}>(founder,`select tomorrow from public.daily_review_revisions where day=${today} order by version`)).rows.map(row=>row.tomorrow)).toEqual(['Start with the most important decision','Protect the first hour']);
+  const entry=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
+  expect(entry).toBe(dayVersion);
+ });
+});
+afterAll(() => db.close());

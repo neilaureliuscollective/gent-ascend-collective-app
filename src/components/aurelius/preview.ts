@@ -4,6 +4,7 @@ export const disconnectedWorkspace: WorkspaceData = {
   conversations: [],
   turns: [],
   memories: [],
+  actionProposals: [],
   canChat: false,
   configured: false,
   model: '',

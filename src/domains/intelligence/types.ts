@@ -28,15 +28,22 @@ export type Memory = {
   confirmed_at: string;
   version: number;
 };
+export type ActionProposal = {
+  id:string;person_id:string;source_turn_id:string|null;tool_name:'create_daily_action';title:string;
+  status:'pending'|'executed'|'rejected';proposed_at:string;decided_at:string|null;executed_day:string|null;
+};
 export type PersonalContext = {
   profile: { name: string; priority: string; timezone: string; units: string; updatedAt: string };
   goal: { title: string; nextStep: string; reason: string; updatedAt: string } | null;
   memories: Pick<Memory, 'id' | 'content' | 'kind' | 'confirmed_at'>[];
+  daily?: { day: string; intention: string; energy: number | null; actions: { title: string; done: boolean }[]; reflection: string; review?: {progress:string;blocker:string;tomorrow:string;confirmedAt:string}|null }[];
+  ascendProfile?: { key: string; value: string; confirmedAt: string; source: 'user' | 'ai_proposal' }[];
 };
 export type WorkspaceData = {
   conversations: Conversation[];
   turns: Turn[];
   memories: Memory[];
+  actionProposals: ActionProposal[];
   context: PersonalContext;
   canChat: boolean;
   configured: boolean;
