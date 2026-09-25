@@ -9,8 +9,8 @@ test('private pilot arrival is legible without a session and founder console sta
   await expect(page.getByRole('heading', { name: 'Accept your invitation' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Go to sign in' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.goto('/founder/pilot');
-  await expect(page.getByRole('heading', { name: /page not found|404/i })).toBeVisible();
+  const denied = await page.goto('/founder/pilot');
+  expect(denied?.status()).toBe(404);
   expect(errors).toEqual([]);
 });
 
