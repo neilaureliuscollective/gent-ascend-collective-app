@@ -35,6 +35,15 @@ Vercel calls the main-branch environment **Production** even while this product 
 
 The production configuration deliberately requires the Supabase pair. Add them before pressing Deploy. Do not copy `.env.example` wholesale: its `APP_ENV=local` is for local use. Do not set `NODE_ENV` manually. Never upload local developer tokens, founder seed passwords or a service-role key to Vercel.
 
+**Founder sign-in correction (2026-09-24):** Production was deployed with stale
+public Supabase configuration for project `ashhohitbvfcfspcoojt`, while the
+confirmed founder account and access grant are in `volpzkfsnmtztrovexcw`.
+The production Auth client and session proxy now select the latter project's
+public URL and publishable key from `src/platform/supabase/connection.ts`.
+Local and preview still use their configured environment. Reconcile the two
+Production Vercel environment variables with this dedicated project before
+removing that code-level selection; changing them requires a redeploy.
+
 Preview branches use `APP_ENV=preview` and a separate staging Supabase project. A preview without either Supabase variable renders only the shell; a partial pair is invalid. Never attach disposable previews to real customer data. Redeploy after changing environment variables.
 
 ## Hosted database and founder account
