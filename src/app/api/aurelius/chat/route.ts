@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const prepared = await prepareReply(input.data);
     return new Response(
       replyStream(
-        (signal) => generateReply(prepared.model, prepared.messages, signal),
+        (signal) => generateReply(prepared.model, prepared.messages, signal, prepared.founder),
         prepared.finish,
         request.signal,
       ),

@@ -4,6 +4,7 @@ import { currentPerson } from '@/domains/person/current';
 import { currentAccess } from '@/domains/access/current';
 import { aiConfigSchema } from './validation';
 import { promptVersion, buildMessages } from './prompt';
+import { founderBridgeContext } from './founder-bridge';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
 export class IntelligenceError extends Error {
   constructor(
@@ -179,9 +180,11 @@ export async function prepareReply(input: {
       503,
     );
   }
+  const founderContext = input.includeContext ? await founderBridgeContext(input.text) : null;
   return {
     model: config.AURELIUS_AI_MODEL,
-    messages: buildMessages(history, input.text, context),
+    messages: buildMessages(history, input.text, context, new Date(), founderContext),
+    founder: founderContext !== null,
     finish: async (
       text: string,
       status: 'complete' | 'failed' | 'cancelled',

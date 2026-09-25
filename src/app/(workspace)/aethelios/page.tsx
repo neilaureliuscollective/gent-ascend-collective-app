@@ -6,12 +6,16 @@ export const metadata: Metadata = {
   description: aethelios.description,
 };
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
+import { currentFounderAccess } from '@/domains/access/founder';
+import { founderBridgeLinked } from '@/domains/intelligence/founder-bridge';
 export default async function AetheliosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ starter?: string; conversation?: string }>;
+  searchParams: Promise<{ starter?: string; conversation?: string; link?: string }>;
 }) {
   const params = await searchParams;
+  const isFounder = await currentFounderAccess();
+  const linked = isFounder && await founderBridgeLinked();
   const starters: Record<string, string> = {
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',
     reflect:
@@ -44,8 +48,19 @@ export default async function AetheliosPage({
           </Link>
         </p>
       </div>
+      {isFounder && (
+        <aside className="aethelios-link-panel">
+          <strong>Founder continuity</strong>
+          <p>{params.link === 'failed' ? 'The link could not be completed. Sign in to your private Aethelios workspace, then try again. ' : ''}
+            {linked ? 'Your private Aethelios teaching is linked. Confirmed shared and Gent Ascend memories can inform your chats when you turn on personal context.' : <>Sign in to your <a href="https://aethelios.vercel.app" target="_blank" rel="noopener noreferrer">private Aethelios workspace</a> first, then connect it here once. Relevant teaching will be available when you turn on personal context.</>}
+          </p>
+          {linked ? <form action="/api/aethelios-link/disconnect" method="post"><button type="submit" className="button">Disconnect private account</button></form> :
+            <a href="/api/aethelios-link/start" className="button">Connect private Aethelios</a>}
+        </aside>
+      )}
       <section className="aurelius-surface">
         <AureliusWorkspace
+          founderLinked={linked}
           key={initialConversation ?? (initialDraft || 'new')}
           initialDraft={initialDraft}
           initialConversation={initialConversation}

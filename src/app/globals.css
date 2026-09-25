@@ -832,6 +832,20 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 .aurelius-page-heading > .muted {
   font-size: 0.74rem;
 }
+.aethelios-link-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border: 1px solid #c9a86766;
+  border-radius: 16px;
+  background: #14241e;
+}
+.aethelios-link-panel p { flex: 1 1 320px; margin: 0; color: #ddd7cb; line-height: 1.5; }
+.aethelios-link-panel .button { display: inline-flex; white-space: nowrap; }
 .aurelius-surface {
   height: calc(100dvh - 235px);
   min-height: 470px;

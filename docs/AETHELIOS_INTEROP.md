@@ -33,3 +33,31 @@ to private memory. Recheck each actor's authorization at their own tool.
 
 Identity sharing and a coding worker are separate future decisions. The
 consumer app does not gain development capabilities by displaying Aethelios.
+
+## Founder continuity bridge (edition 2)
+
+The founder can sign in to both apps and choose **Connect private Aethelios**
+from the Gent Ascend Aethelios page. The private app verifies its owner session
+and owner database gate. Gent Ascend separately verifies its person-bound
+`founder_access` grant. A short-lived authorization code is exchanged using a
+one-time verifier; the private app issues an expiring token bound to the Gent
+Ascend auth user ID. Only its SHA-256 digest is stored privately. Gent Ascend
+keeps the token in a secure, HttpOnly cookie and sends it server to server.
+
+When the founder enables personal context on a message, the consumer server
+requests a bounded selection of current, confirmed, stated, non-private-only
+notebook entries with `global` or `gent-ascend` scope. It does not copy them to
+the Collective database. It does not send other project, health or personal
+scopes, drafts, archived entries, full conversation history, voice assets or
+development tools. It also retrieves up to five relevant, source-labeled
+knowledge excerpts from the private knowledge core on a linked founder chat;
+these are dated evidence, not live research. The private server rechecks the
+grant for each request; it expires after 30 days and Disconnect revokes it.
+When the link is absent or unavailable, the chat uses local context only and
+must not claim access to the private notebook.
+
+Shared character conduct is versioned in the consumer prompt; product-specific
+tool limits remain local. The private workspace remains the source of truth
+for founder teaching, so confirmed edits to eligible entries are visible on
+the next linked chat. Public member knowledge remains the separately reviewed
+snapshot above, never the founder notebook.
