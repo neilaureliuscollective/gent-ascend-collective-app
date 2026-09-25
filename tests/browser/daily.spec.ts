@@ -109,7 +109,7 @@ test('evening review stays a draft until confirmed and allows correction', async
  await page.getByRole('button',{name:'Close the loop for today'}).click();
  await page.getByRole('button',{name:'Prepare from my reflection with Aethelios'}).click();
  await expect(page.getByLabel('What moved forward?')).toHaveValue('Finished the client brief');
- await expect(page.getByText('Protect the morning')).toHaveCount(0);
+ await expect(page.locator('.evening-review-summary')).toHaveCount(0);
  await page.getByLabel('What should tomorrow remember?').fill('Write first, meet later');
  await page.getByRole('button',{name:'Confirm review'}).click();
  await expect(page.getByText('Write first, meet later')).toBeVisible();
