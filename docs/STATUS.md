@@ -1,3 +1,13 @@
+# Cinematic Estate homepage — 2026-09-26
+
+Implemented founder-approved directed public homepage: original emerald/Louisiana arrival, native-scroll threshold, original Vitalis campaign environments (desktop and portrait), five supplied product references with accessible selector, near-viewport Three.js intelligence sculpture, labeled Reserve architectural study, legacy close and invitation. Future films plug into estate-media config. Existing authenticated OS/domain services remain unchanged. Details/storyboard/asset provenance: CINEMATIC_ESTATE.md.
+
+Verification: lint, strict typecheck, 84 unit tests, production build and all 12 targeted public/cinematic browser tests pass. Browser widths 344/768/1440, product selection, reduced motion, 3D fallback/context loss, native chapter navigation, Reserve return navigation, legacy redirects, private route cache headers and offline fallback checked. Recorded ledger verifies ten existing migration files; no new migration or hosted DB operation. Viewport screenshots inspected. An intermediate test run was invalidated by rebuilding its serving artifact; final run used a stable production build. A native hash/back-navigation failure was reproduced and fixed using Next Link for chapter navigation.
+
+Preview review only. Physical phone GPU/touch/keyboard and field Core Web Vitals remain unverified. Generated campaign assets need final label-artwork review; true textured 3D merchandise remains pending flat labels/dimensions. No production promotion, commerce activation, scanner, billing or booking activation in this milestone.
+
+---
+
 # Public material alignment — 2026-09-26
 
 Founder dashboard screenshots now govern the public material language: exact deep emerald/obsidian gradients, metallic gold buttons, inset highlights, rounded borders and shared orbital geometry. Replaced the brighter flat-green treatment in the Cinematic Emerald preview. Added bounded fine-pointer card tilt/light, preserving touch and Still mode. Phone viewport captures inspected. 12 targeted browser checks, lint, strict types, 84 unit tests and production build pass. This is a revision to PR #11; production remains unchanged.

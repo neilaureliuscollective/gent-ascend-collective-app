@@ -146,3 +146,7 @@ See ARRIVAL_COMMAND.md and CINEMATIC_MEDIA_PLAN.md for implementation boundaries
 ## 2026-09-26 — Cinematic Emerald public foundation
 
 Founder approved implementation after reviewing the first public pass. Use the existing Next.js/Three.js architecture with one native-scroll director, emerald materials, dimensional sections and a lazy interactive product study. No scroll interception or always-running 3D loop. Keep official crest and current API/auth/commerce boundaries. See CINEMATIC_EMERALD.md for official source links, implementation limits and the follow-on Grooming Discovery and guest intelligence sequence.
+
+## 2026-09-26 — Directed cinematic homepage
+
+Founder approved a continuous public journey following storyboard/research. Added GSAP + @gsap/react for scoped scroll timelines now that the opening needs coordinated scene staging. Preserved native scrolling, Next server content, existing public/private boundaries and media slots. Three.js intelligence sculpture loads near view with still/context-loss fallback and full disposal. Original environment/campaign imagery and supplied five-product references are documented in CINEMATIC_ESTATE.md. No final SKU 3D accuracy claim; exact flat labels/dimensions remain prerequisites for final merchandise models. Official references: https://gsap.com/resources/React/ , https://gsap.com/docs/v3/Plugins/ScrollTrigger/ , https://modelviewer.dev/examples/color , https://threejs.org/docs/pages/GLTFLoader.html .

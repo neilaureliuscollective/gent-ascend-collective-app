@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export interface SceneMedia {
   poster: string;
+  mobilePoster?: string;
   alt: string;
   credit: string;
   video?: string;
@@ -13,7 +14,15 @@ export interface SceneMedia {
 }
 
 /** The poster is the composition. Film progressively enhances it after entering view. */
-export function MediaScene({ media, priority = false }: { media: SceneMedia; priority?: boolean }) {
+export function MediaScene({
+  media,
+  priority = false,
+  bare = false,
+}: {
+  media: SceneMedia;
+  priority?: boolean;
+  bare?: boolean;
+}) {
   const worldStill = useWorldStill();
   const host = useRef<HTMLDivElement>(null);
   const film = useRef<HTMLVideoElement>(null);
@@ -51,15 +60,18 @@ export function MediaScene({ media, priority = false }: { media: SceneMedia; pri
     };
   }, [paused, worldStill]);
   return (
-    <div ref={host} className="world-scene" data-still="true">
-      <Image
-        src={media.poster}
-        alt={media.alt}
-        fill
-        sizes="100vw"
-        preload={priority}
-        style={{ objectPosition: media.focalPoint }}
-      />
+    <div ref={host} className={bare ? 'estate-scene-media' : 'world-scene'} data-still="true">
+      <picture>
+        {media.mobilePoster && <source media="(max-width: 600px)" srcSet={media.mobilePoster} />}
+        <Image
+          src={media.poster}
+          alt={media.alt}
+          fill
+          sizes={bare ? '(max-width: 600px) 220vw, 100vw' : '100vw'}
+          preload={priority}
+          style={{ objectPosition: media.focalPoint }}
+        />
+      </picture>
       {media.video && (
         <video
           ref={film}
@@ -77,15 +89,19 @@ export function MediaScene({ media, priority = false }: { media: SceneMedia; pri
           <source src={media.video} type="video/mp4" />
         </video>
       )}
-      <div className="scene-shade" />
-      <div className="scene-orbit" aria-hidden="true" />
-      <div className="scene-caption">
-        <span>{media.credit}</span>
-        <button onClick={() => setPaused(!paused)} aria-pressed={paused}>
-          {paused ? 'Motion on' : 'Pause motion'}{' '}
-          <span aria-hidden="true">{paused ? '▷' : 'Ⅱ'}</span>
-        </button>
-      </div>
+      {!bare && (
+        <>
+          <div className="scene-shade" />
+          <div className="scene-orbit" aria-hidden="true" />
+          <div className="scene-caption">
+            <span>{media.credit}</span>
+            <button onClick={() => setPaused(!paused)} aria-pressed={paused}>
+              {paused ? 'Motion on' : 'Pause motion'}{' '}
+              <span aria-hidden="true">{paused ? '▷' : 'Ⅱ'}</span>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -6,16 +6,16 @@ for (const width of [344, 768, 1440]) {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Build the life you carry.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'A life, deliberately built.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Make today yours.' })).toHaveCount(0);
-    await expect(page.locator('.world-scene img')).toBeVisible();
+    await expect(page.locator('.estate-landscape img')).toBeVisible();
     expect(
       await page
-        .locator('.world-scene img')
+        .locator('.estate-landscape img')
         .evaluate((img) => (img as HTMLImageElement).naturalWidth),
     ).toBeGreaterThan(0);
-    await page.getByRole('button', { name: 'Pause motion' }).click();
-    await expect(page.locator('.world-scene')).toHaveAttribute('data-still', 'true');
+    await page.getByRole('button', { name: 'Still mode', exact: true }).click();
+    await expect(page.locator('.estate-journey')).toHaveAttribute('data-still', 'true');
     await page.screenshot({ path: `test-results/public-home-${width}.png`, fullPage: true });
     if (width <= 850) await page.getByRole('button', { name: 'Explore', exact: true }).click();
     await page
