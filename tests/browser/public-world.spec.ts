@@ -6,18 +6,18 @@ for (const width of [344, 768, 1440]) {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Build the life you carry.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'A life, deliberately built.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Make today yours.' })).toHaveCount(0);
-    await expect(page.locator('.world-scene img')).toBeVisible();
+    await expect(page.locator('.estate-landscape img')).toBeVisible();
     expect(
       await page
-        .locator('.world-scene img')
+        .locator('.estate-landscape img')
         .evaluate((img) => (img as HTMLImageElement).naturalWidth),
     ).toBeGreaterThan(0);
-    await page.getByRole('button', { name: 'Pause motion' }).click();
-    await expect(page.locator('.world-scene')).toHaveAttribute('data-still', 'true');
+    await page.getByRole('button', { name: 'Still mode', exact: true }).click();
+    await expect(page.locator('.estate-journey')).toHaveAttribute('data-still', 'true');
     await page.screenshot({ path: `test-results/public-home-${width}.png`, fullPage: true });
-    if (width <= 850) await page.getByRole('button', { name: 'Explore' }).click();
+    if (width <= 850) await page.getByRole('button', { name: 'Explore', exact: true }).click();
     await page
       .getByRole('navigation', { name: 'Public navigation' })
       .getByRole('link', { name: 'Shop', exact: true })
@@ -72,9 +72,9 @@ test('install guide and reduced motion remain usable on a short phone screen', a
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.locator('.scene-orbit')).toBeHidden();
-  await page.getByRole('button', { name: 'Explore' }).click();
+  await page.getByRole('button', { name: 'Explore', exact: true }).click();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Explore' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Explore', exact: true })).toBeFocused();
   await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeHidden();
   await page.goto('/app/install');
   await page.getByText('Android / Samsung Fold', { exact: true }).click();
@@ -93,10 +93,10 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
     .toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('gent-ascend-fallback-v1');
+    const cache = await caches.open('gent-ascend-fallback-v2');
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
-  expect(cached).toEqual(['/brand/icon-192.png', '/offline.html']);
+  expect(cached).toEqual(['/brand/icon-v2-192.png', '/offline.html']);
   await context.setOffline(true);
   await page.goto('/app/progress');
   await expect(page.getByRole('heading', { name: 'A moment to reconnect.' })).toBeVisible();

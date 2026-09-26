@@ -1,0 +1,398 @@
+/* Environmental art direction: consistent stone, bronze, celestial light.
+   Ambient animation is independently paused offscreen, hidden, or in Still mode. */
+.scene-atmosphere {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.atmosphere-environment {
+  object-fit: cover;
+  object-position: center;
+}
+.atmosphere-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #041c16c9, #06271f44 70%, #03151022);
+}
+.atmosphere-light {
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(
+    from 185deg at 80% 0%,
+    transparent 0deg,
+    #f8d59116 12deg,
+    transparent 26deg,
+    #cfe5c608 42deg,
+    transparent 55deg
+  );
+  transform-origin: 80% 0;
+  animation: estate-light 19s ease-in-out infinite alternate;
+}
+.atmosphere-mist {
+  position: absolute;
+  inset: 35% -20% -20%;
+  opacity: 0.25;
+  background:
+    radial-gradient(ellipse at 65% 80%, #8baf9133, transparent 58%),
+    radial-gradient(ellipse at 20% 65%, #e3bf7120, transparent 45%);
+  animation: estate-air 24s ease-in-out infinite alternate;
+}
+.atmosphere-stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  color: #ecd59c;
+  opacity: 0.4;
+  animation: estate-stars 28s ease-in-out infinite alternate;
+}
+.scene-atmosphere[data-running='false'] * {
+  animation-play-state: paused !important;
+}
+.atmosphere-dawn .atmosphere-shade {
+  background: none;
+}
+.atmosphere-dawn .atmosphere-stars {
+  opacity: 0.18;
+}
+.atmosphere-sanctuary .atmosphere-shade {
+  background: linear-gradient(90deg, #031710dc, #03171060 50%, transparent 85%);
+}
+.atmosphere-celestial .atmosphere-shade {
+  background: linear-gradient(90deg, #041a15ed, #041a1577 48%, #061c1544);
+}
+@keyframes estate-light {
+  from {
+    transform: rotate(-5deg);
+    opacity: 0.45;
+  }
+  to {
+    transform: rotate(5deg);
+    opacity: 1;
+  }
+}
+@keyframes estate-air {
+  from {
+    transform: translate3d(-3%, 2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(5%, -3%, 0) scale(1.1);
+  }
+}
+@keyframes estate-stars {
+  from {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+  to {
+    transform: translateY(-12px);
+    opacity: 0.55;
+  }
+}
+.estate-collection,
+.estate-invitation {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.estate-collection {
+  padding: 90px 7vw 65px;
+}
+.estate-collection-heading,
+.estate-product-stage,
+.estate-product-selector {
+  position: relative;
+  z-index: 1;
+}
+.estate-collection-heading {
+  max-width: 720px;
+  text-shadow: 0 2px 25px #031b15;
+}
+.estate-collection .atmosphere-shade {
+  background:
+    linear-gradient(180deg, #041a14b0, transparent 40%, #041c16d9),
+    linear-gradient(90deg, transparent 35%, #041c16bc 64%);
+}
+.estate-product-image {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  height: 480px;
+  overflow: visible;
+}
+.estate-product-image::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 8%;
+  right: 8%;
+  height: 18px;
+  border-radius: 50%;
+  background: #0008;
+  filter: blur(9px);
+  z-index: -1;
+}
+.estate-product-image img {
+  filter: drop-shadow(8px 12px 12px #0008);
+  animation: product-arrive 0.7s ease-out both;
+}
+@keyframes product-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.estate-product-copy {
+  padding: 30px 22px;
+  background: linear-gradient(110deg, #051e18db, #061b15b0);
+  border-left: 1px solid #c4912f66;
+  backdrop-filter: blur(8px);
+}
+.estate-product-selector {
+  background: #041b15cc;
+  border: 1px solid #bd965144;
+  border-radius: 4px;
+  padding: 0 12px;
+}
+.estate-product-selector button {
+  min-height: 48px;
+}
+.estate-intelligence {
+  min-height: 850px;
+}
+.estate-intelligence .estate-scene-copy {
+  max-width: 680px;
+  position: relative;
+  z-index: 3;
+}
+.estate-sculpture,
+.estate-orbit {
+  right: -1%;
+  top: 15%;
+  width: 52vw;
+  max-width: 680px;
+}
+.estate-orbit-core {
+  border: 1px solid #ceab67;
+  background: radial-gradient(circle at 35% 25%, #387d61, #082e24 50%, #030f0b);
+  box-shadow:
+    inset -20px -30px 55px #000,
+    0 0 60px #cfad4533;
+}
+.estate-loop {
+  z-index: 3;
+  background: #042119b8;
+  padding: 20px;
+  border: 1px solid #c4912f55;
+  bottom: 38px;
+}
+.estate-reserve-frame {
+  background: none;
+}
+.estate-reserve .estate-scene-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 690px;
+}
+.estate-concept-note {
+  max-width: 400px;
+}
+.estate-invitation {
+  padding: 90px 7vw 110px;
+}
+.estate-invitation .atmosphere-environment {
+  object-position: 70% center;
+}
+.estate-invitation .atmosphere-shade {
+  background: linear-gradient(0deg, #031a13de, #073c2dc9 45%, #031a1380);
+}
+.estate-invitation > :not(.scene-atmosphere) {
+  position: relative;
+  z-index: 1;
+}
+.estate-seal-mount {
+  width: 240px;
+  margin: 0 auto 35px;
+  padding: 8px;
+  border-radius: 50%;
+  border: 1px solid #b3904d88;
+  box-shadow:
+    0 0 70px #d5aa3924,
+    0 24px 40px #0007;
+  background: #031911;
+}
+.estate-seal-mount img {
+  border-radius: 50%;
+  width: 100%;
+  height: auto;
+}
+.estate-invitation .estate-primary {
+  background: linear-gradient(115deg, #ad7b2a, #edcd7a 42%, #c4912f);
+  color: #09231a !important;
+  box-shadow:
+    inset 0 0 0 2px #ffe8a866,
+    0 7px 30px #0005;
+}
+.estate-index {
+  padding: 8px 12px;
+  min-height: 44px;
+}
+.estate-index a {
+  padding: 7px 0;
+}
+.estate-act {
+  scroll-margin-top: 120px;
+}
+.world-wordmark img,
+.brand-seal {
+  border-radius: 50%;
+}
+@media (min-width: 601px) and (max-width: 1100px) {
+  .estate-intelligence .estate-scene-copy {
+    max-width: 57%;
+    padding-left: 6vw;
+    padding-right: 0;
+  }
+  .estate-intelligence .estate-scene-copy h2 {
+    font-size: clamp(36px, 5.6vw, 60px);
+  }
+  .estate-sculpture,
+  .estate-orbit {
+    width: 55vw;
+    right: -6%;
+    top: 23%;
+    opacity: 1;
+  }
+  .estate-reserve .estate-scene-copy {
+    max-width: 65%;
+  }
+  .estate-product-stage {
+    gap: 3vw;
+  }
+  .estate-product-image {
+    height: 420px;
+  }
+}
+@media (max-width: 600px) {
+  .estate-collection {
+    padding: 65px 6vw 45px;
+  }
+  .estate-collection .atmosphere-environment {
+    object-position: 24% top;
+  }
+  .estate-collection .atmosphere-shade {
+    background: linear-gradient(#041d16b8, transparent 30%, #041d16d9 60%);
+  }
+  .estate-product-image {
+    height: 355px;
+    max-width: 290px;
+  }
+  .estate-product-copy {
+    padding: 24px 16px;
+    border: 1px solid #c4912f55;
+    border-radius: 4px;
+  }
+  .estate-product-selector {
+    padding: 5px;
+  }
+  .estate-intelligence {
+    min-height: 950px;
+  }
+  .estate-intelligence .atmosphere-environment {
+    object-position: 75% top;
+  }
+  .atmosphere-celestial .atmosphere-shade {
+    background: linear-gradient(0deg, #041e17f5 25%, #041e1766 68%, #041e1722);
+  }
+  .estate-sculpture,
+  .estate-orbit {
+    width: 100vw;
+    right: 0;
+    top: 0;
+    opacity: 1;
+  }
+  .estate-intelligence .estate-scene-copy {
+    max-width: none;
+    padding: 365px 7vw 140px;
+  }
+  .estate-loop {
+    left: 7vw;
+    right: 7vw;
+    gap: 12px;
+    bottom: 40px;
+    justify-content: space-between;
+    font-size: 10px;
+  }
+  .estate-reserve {
+    min-height: 920px;
+  }
+  .estate-reserve .atmosphere-environment {
+    object-position: 72% top;
+  }
+  .atmosphere-sanctuary .atmosphere-shade {
+    background: linear-gradient(0deg, #042016f5 20%, #042016b8 57%, transparent 95%);
+  }
+  .estate-reserve .estate-scene-copy {
+    padding: 390px 7vw 65px;
+    max-width: none;
+  }
+  .estate-seal-mount {
+    width: 190px;
+  }
+  .estate-invitation {
+    padding: 65px 7vw 100px;
+  }
+  .estate-index {
+    gap: 14px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-inline: 6vw;
+  }
+  .estate-index a {
+    font-size: 9px;
+  }
+  .estate-index a span {
+    margin-left: 2px;
+  }
+}
+.estate-journey[data-still='true'] .scene-atmosphere *,
+.estate-journey[data-still='true'] .estate-product-image img {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-atmosphere *,
+  .estate-product-image img {
+    animation: none !important;
+  }
+}
+.estate-product-image::before {
+  content: '';
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  bottom: -5px;
+  height: 25px;
+  border-radius: 50% / 25%;
+  background: linear-gradient(#31664c, #0b3023 35%, #bc9557 39%, #3f361e 43%, #08291e 48%, #051a12);
+  box-shadow: 0 20px 22px #0007;
+  z-index: -1;
+}
+
+.estate-invitation .estate-primary:hover {
+  background: linear-gradient(115deg, #d0a347, #ffe4a1, #d6a444);
+}
+@media (max-width: 600px) {
+  .estate-loop {
+    bottom: 105px;
+  }
+  .estate-intelligence .estate-scene-copy {
+    padding-bottom: 200px;
+  }
+}

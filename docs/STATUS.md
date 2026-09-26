@@ -1,3 +1,39 @@
+# Living Estate + new founder identity — 2026-09-26
+
+Implemented homepage environmental layers, generated emerald gallery/observatory/salon concepts, five transparent product visualizations, visibility-aware ambient light/mist/stars, graduated real-time armillary, tighter chapter navigation and complete supplied crest integration. Separate star/laurel PWA/Apple icons use versioned URLs and offline cache v2. See LIVING_ESTATE.md for asset provenance, placements, exact scope and research.
+
+Verification: lint, strict typecheck, 84 unit tests, production build and migration snapshot (10 existing files) pass. Ten targeted browser checks pass at 344/768/1440 widths; four journey tests repeated after armillary reflection changes, including ambient motion/Still, reduced motion, product selection and crest rendering. Final mobile image-sizing/CTA-contrast/layout adjustments passed a narrow browser recheck. Browser CLI unavailable; existing Playwright Chromium used. No hosted auth, real-model or physical PWA install claims. Production unchanged; preview branch for review.
+
+---
+
+# Cinematic Estate homepage — 2026-09-26
+
+Implemented founder-approved directed public homepage: original emerald/Louisiana arrival, native-scroll threshold, original Vitalis campaign environments (desktop and portrait), five supplied product references with accessible selector, near-viewport Three.js intelligence sculpture, labeled Reserve architectural study, legacy close and invitation. Future films plug into estate-media config. Existing authenticated OS/domain services remain unchanged. Details/storyboard/asset provenance: CINEMATIC_ESTATE.md.
+
+Verification: lint, strict typecheck, 84 unit tests, production build and all 12 targeted public/cinematic browser tests pass. Browser widths 344/768/1440, product selection, reduced motion, 3D fallback/context loss, native chapter navigation, Reserve return navigation, legacy redirects, private route cache headers and offline fallback checked. Recorded ledger verifies ten existing migration files; no new migration or hosted DB operation. Viewport screenshots inspected. An intermediate test run was invalidated by rebuilding its serving artifact; final run used a stable production build. A native hash/back-navigation failure was reproduced and fixed using Next Link for chapter navigation.
+
+Preview review only. Physical phone GPU/touch/keyboard and field Core Web Vitals remain unverified. Generated campaign assets need final label-artwork review; true textured 3D merchandise remains pending flat labels/dimensions. No production promotion, commerce activation, scanner, billing or booking activation in this milestone.
+
+---
+
+# Public material alignment — 2026-09-26
+
+Founder dashboard screenshots now govern the public material language: exact deep emerald/obsidian gradients, metallic gold buttons, inset highlights, rounded borders and shared orbital geometry. Replaced the brighter flat-green treatment in the Cinematic Emerald preview. Added bounded fine-pointer card tilt/light, preserving touch and Still mode. Phone viewport captures inspected. 12 targeted browser checks, lint, strict types, 84 unit tests and production build pass. This is a revision to PR #11; production remains unchanged.
+
+---
+
+# Cinematic Emerald — 2026-09-26
+
+Implemented the next public visual milestone on `cinematic-emerald`: visibly emerald surfaces, shared native-scroll choreography, dimensional world portals, spatial intelligence scene, Reserve architectural reveal, chapter navigation and a Vitalis product atelier. The atelier offers a labeled procedural 3D packaging study, pointer/keyboard rotation, warm/emerald lighting, reset, and a still fallback. No new dependencies, account privileges, AI endpoints, commerce operations or database changes.
+
+Verification: lint, strict typecheck, all 84 unit tests and production build pass after rebuilding a corrupted Turbopack cache. All 11 targeted public/cinematic browser tests pass at phone, tablet/Fold-like and desktop widths, including reduced motion, WebGL failure, context loss, product interaction, redirects, install guide and offline privacy boundaries. Full-page captures in this restricted browser showed compositor stitching artifacts; separate viewport captures and DOM checks confirmed one hero and a correct footer. Product, phone footer and Reserve renders were inspected. The full member browser suite was not repeated because its code is unchanged. Physical Fold/iPhone frame pacing and touch feel remain unverified.
+
+See [scope, research and next phases](CINEMATIC_EMERALD.md). Next useful interactive build: Grooming Discovery, followed by a bounded public Aethelios introduction. Real product geometry and film are replaceable later; the current study is not final packaging. Production promotion of this new milestone has not been performed.
+
+The prior Arrival + Command milestone was merged through PR #10 and deployed successfully to production at commit `8cb2e2b` on September 26. Its live routes, redirects, manifest and private cache headers were checked; no runtime errors were reported during that verification.
+
+---
+
 # Arrival + Command — 2026-09-26
 
 Implemented on `arrival-command`: cinematic public world, public product previews and Reserve gateway, existing OS moved under `/app`, invite/installation guidance, privacy-safe offline fallback, Ascend gateway, and mobile Aethelios conversation/keyboard/history refinements. See [implementation and release gates](ARRIVAL_COMMAND.md) and [cinematic media plan](CINEMATIC_MEDIA_PLAN.md). Existing APIs, RLS and database migrations remain intact. No products, billing, appointments, public waitlist or new invitations were activated.
