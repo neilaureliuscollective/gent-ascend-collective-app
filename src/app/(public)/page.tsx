@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { IntelligenceSculpture } from '@/components/public/intelligence-sculpture';
 import { WorldJourney } from '@/components/public/world-journey';
 import { RitualCollection } from '@/components/public/ritual-collection';
-import { OrbitSignature } from '@/components/visual/orbit-signature';
 import { brand } from '@/platform/brand';
 import { SceneAtmosphere } from '@/components/public/scene-atmosphere';
 import './estate.css';
@@ -86,76 +85,73 @@ export default function PublicHome() {
         </nav>
         <section
           id="the-ritual"
-          className="estate-act estate-ritual"
+          className="estate-act estate-ritual estate-held"
           data-chapter="ritual"
           aria-labelledby="ritual-title"
         >
-          <div className="estate-art">
-            <MediaScene media={estateMedia.ritual} bare />
+          <div className="estate-scene-stage">
+            <div className="estate-art">
+              <MediaScene media={estateMedia.ritual} bare />
+            </div>
+            <div className="estate-scene-shade" />
+            <SceneAtmosphere variant="dawn" />
+            <div className="estate-scene-copy">
+              <p className="estate-eyebrow">02 / THE DAILY RITUAL · LEGACY RESERVE</p>
+              <h2 id="ritual-title">
+                Begin with
+                <br />
+                <em>the care you take.</em>
+              </h2>
+              <p>
+                A moment to prepare. To pay attention.
+                <br />
+                To carry yourself with intention.
+              </p>
+              <Link className="estate-primary" href="/shop/vitalis">
+                Discover Vitalis <span>↗</span>
+              </Link>
+            </div>
+            <span className="estate-scene-note">
+              VITALIS / HAIR & BEARD OIL · COLLECTION PREVIEW
+            </span>
           </div>
-          <div className="estate-scene-shade" />
-          <SceneAtmosphere variant="dawn" />
-          <div className="estate-scene-copy">
-            <p className="estate-eyebrow">02 / THE DAILY RITUAL · LEGACY RESERVE</p>
-            <h2 id="ritual-title">
-              Begin with
-              <br />
-              <em>the care you take.</em>
-            </h2>
-            <p>
-              A moment to prepare. To pay attention.
-              <br />
-              To carry yourself with intention.
-            </p>
-            <Link className="estate-primary" href="/shop/vitalis">
-              Discover Vitalis <span>↗</span>
-            </Link>
-          </div>
-          <span className="estate-scene-note">VITALIS / HAIR & BEARD OIL · COLLECTION PREVIEW</span>
         </section>
         <RitualCollection />
         <section
           id="the-intelligence"
-          className="estate-act estate-intelligence"
+          className="estate-act estate-intelligence estate-held"
           data-chapter="intelligence"
           aria-labelledby="intelligence-title"
         >
-          <SceneAtmosphere image="/media/world/observatory.webp" variant="celestial" />
-          <IntelligenceSculpture />
-          <div className="estate-orbit" aria-hidden="true">
-            <div className="estate-orbit-core">Æ</div>
-            <i />
-            <i />
-            <i />
-            <div className="estate-orbit-trace">
-              <OrbitSignature />
+          <div className="estate-scene-stage">
+            <SceneAtmosphere image="/media/world/observatory.webp" variant="celestial" />
+            <IntelligenceSculpture />
+            <div className="estate-scene-copy">
+              <p className="estate-eyebrow">03 / AETHELIOS · PERSONAL INTELLIGENCE</p>
+              <h2 id="intelligence-title">
+                Your direction.
+                <br />
+                <em>Carried forward.</em>
+              </h2>
+              <p>
+                A place to think clearly. An intelligence that works with the context you choose to
+                share. A personal OS that connects your goals, actions, and reflections.
+              </p>
+              <div className="estate-actions">
+                <Link className="estate-primary" href="/aethelios">
+                  Meet Aethelios <span>↗</span>
+                </Link>
+                <Link href="/gent-ascend">Explore the OS ↗</Link>
+              </div>
             </div>
-          </div>
-          <div className="estate-scene-copy">
-            <p className="estate-eyebrow">03 / AETHELIOS · PERSONAL INTELLIGENCE</p>
-            <h2 id="intelligence-title">
-              Your direction.
-              <br />
-              <em>Carried forward.</em>
-            </h2>
-            <p>
-              A place to think clearly. An intelligence that works with the context you choose to
-              share. A personal OS that connects your goals, actions, and reflections.
-            </p>
-            <div className="estate-actions">
-              <Link className="estate-primary" href="/aethelios">
-                Meet Aethelios <span>↗</span>
-              </Link>
-              <Link href="/gent-ascend">Explore the OS ↗</Link>
+            <div className="estate-loop" aria-label="The Ascend loop">
+              <span>Direction</span>
+              <i>→</i>
+              <span>Action</span>
+              <i>→</i>
+              <span>Reflection</span>
+              <i>↺</i>
             </div>
-          </div>
-          <div className="estate-loop" aria-label="The Ascend loop">
-            <span>Direction</span>
-            <i>→</i>
-            <span>Action</span>
-            <i>→</i>
-            <span>Reflection</span>
-            <i>↺</i>
           </div>
         </section>
         <section
@@ -165,21 +161,25 @@ export default function PublicHome() {
           aria-labelledby="reserve-title"
         >
           <div className="estate-reserve-frame">
-            <SceneAtmosphere image="/media/world/sanctuary.webp" variant="sanctuary" />
+            <SceneAtmosphere image="/media/world/reserve-consultation.webp" variant="sanctuary" />
           </div>
           <div className="estate-scene-copy">
             <p className="estate-eyebrow">04 / THE RESERVE AT SANCTUM · EUNICE, LOUISIANA</p>
             <h2 id="reserve-title">
-              Care becomes
+              A place to
               <br />
-              <em>personal.</em>
+              <em>come into your own.</em>
             </h2>
             <p>
-              The people. The craft. The attention.
-              <br />
-              Our flagship physical experience brings Katie’s men’s salon expertise and Neil’s
-              grooming direction into one considered setting.
+              Sit down. Talk through your routine, your goals, and the care that fits your life.
+              Neil’s grooming and performance consultations, Legacy Reserve products, and Katie’s
+              men’s salon craft shape our flagship physical experience.
             </p>
+            <div className="estate-reserve-pillars" aria-label="The Reserve experience">
+              <span>Personal consultation</span>
+              <span>Products & rituals</span>
+              <span>Men’s salon craft</span>
+            </div>
             <Link className="estate-primary" href="/reserve">
               Discover The Reserve <span>↗</span>
             </Link>

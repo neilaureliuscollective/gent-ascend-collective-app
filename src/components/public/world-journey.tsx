@@ -42,75 +42,42 @@ export function WorldJourney({ children }: { children: ReactNode }) {
           )
           .to('.estate-threshold', { opacity: 0, y: -30, duration: 0.16 }, 0.74)
           .fromTo('.estate-veil', { opacity: 0 }, { opacity: 0.9, duration: 0.25 }, 0.75);
-        for (const scene of root.current!.querySelectorAll<HTMLElement>('.estate-act')) {
-          const art = scene.querySelector('.estate-art');
-          if (art)
-            gsap.fromTo(
-              art,
-              { yPercent: -5, scale: 1.08 },
-              {
-                yPercent: 5,
-                scale: 1,
-                ease: 'none',
-                scrollTrigger: {
-                  trigger: scene,
-                  start: 'top bottom',
-                  end: 'bottom top',
-                  scrub: 0.4,
-                },
-              },
-            );
-        }
+        const inset = () =>
+          (document.querySelector('.world-header')?.getBoundingClientRect().height ?? 78) +
+          (node.querySelector('.estate-index')?.getBoundingClientRect().height ?? 44);
         for (const scene of node.querySelectorAll<HTMLElement>(
           '.estate-act, .estate-collection, .estate-invitation',
         )) {
-          const environment = scene.querySelector('.atmosphere-environment');
-          if (environment)
-            gsap.fromTo(
-              environment,
-              { scale: 1.08, yPercent: -2 },
-              {
-                scale: 1.02,
-                yPercent: 2,
-                ease: 'none',
-                scrollTrigger: {
-                  trigger: scene,
-                  start: 'top bottom',
-                  end: 'bottom top',
-                  scrub: 0.5,
-                },
-              },
+          const stage = scene.querySelector<HTMLElement>('.estate-scene-stage');
+          const held = () => !!stage && getComputedStyle(stage).position === 'sticky';
+          const timeline = gsap.timeline({
+            scrollTrigger: {
+              trigger: scene,
+              start: () => (held() ? `top ${inset()}` : 'top 88%'),
+              end: () => (held() ? `+=${innerHeight * 0.4}` : 'top 38%'),
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          });
+          // Architecture remains stable. Only bounded foreground elements move.
+          const copy = scene.querySelector(
+            '.estate-scene-copy, .estate-legacy-copy, .estate-collection-heading',
+          );
+          if (copy) timeline.fromTo(copy, { y: 22 }, { y: 0, duration: 0.6, ease: 'none' }, 0);
+          const subject = scene.querySelector('.estate-sculpture, .estate-product-stage');
+          if (subject)
+            timeline.fromTo(subject, { y: 28 }, { y: -8, duration: 0.65, ease: 'none' }, 0);
+          const light = scene.querySelector('.atmosphere-light');
+          if (light)
+            timeline.fromTo(
+              light,
+              { opacity: 0.25 },
+              { opacity: 0.8, duration: 0.6, ease: 'none' },
+              0,
             );
+          // The last portion is a composed hold, not an animation that finishes on exit.
+          timeline.to({}, { duration: 0.35 });
         }
-        gsap.fromTo(
-          '.estate-orbit',
-          { rotateZ: -22, rotateY: -20 },
-          {
-            rotateZ: 32,
-            rotateY: 30,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#the-intelligence',
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 0.4,
-            },
-          },
-        );
-        gsap.fromTo(
-          '.estate-reserve-frame',
-          { clipPath: 'inset(12% 20% round 160px 160px 0 0)' },
-          {
-            clipPath: 'inset(0% 0% round 0px)',
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#the-reserve',
-              start: 'top 80%',
-              end: 'center center',
-              scrub: 0.35,
-            },
-          },
-        );
       });
       return () => {
         media.revert();
@@ -120,6 +87,33 @@ export function WorldJourney({ children }: { children: ReactNode }) {
     },
     { scope: root, dependencies: [still], revertOnUpdate: true },
   );
+
+  useEffect(() => {
+    const node = root.current;
+    if (!node) return;
+    const bars = [document.querySelector('.world-header'), node.querySelector('.estate-index')];
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const height = bars.reduce(
+          (sum, bar) => sum + (bar?.getBoundingClientRect().height ?? 0),
+          0,
+        );
+        node.style.setProperty('--scene-inset', `${height}px`);
+        ScrollTrigger.refresh();
+      });
+    };
+    const observer = new ResizeObserver(measure);
+    bars.forEach((bar) => {
+      if (bar) observer.observe(bar);
+    });
+    measure();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const node = root.current;

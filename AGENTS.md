@@ -37,3 +37,13 @@ Read docs/PROJECT_CONSTITUTION.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT_HARNES
 - Latest founder correction: read docs/AETHELIOS_IDENTITY.md. Aethelios extends the human founder’s mission; he never replaces people or claims human experience. Public AI copy must use Aethelios, including voice previews and metadata. Stable API/database/environment identifiers remain unchanged. The authorized fictional portrait is an identity asset, not a body/health model.
 
 - Founder deployment decision, 2026-09-22: use OpenAI directly with server-only OPENAI_API_KEY and existing OpenAI API credits. No AI Gateway billing or routing. The repository above supersedes the old repository URL. Broader Collective product transformation remains in planning until approved.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

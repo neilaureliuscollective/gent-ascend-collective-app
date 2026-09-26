@@ -101,12 +101,12 @@ Founder approved the researched Orb proposal. Preserve the logo and 1E environme
 
 Listening/speaking are explicitly visual previews until real voice exists. The preview has no microphone, audio, model request or persistence. Actual request/stop state takes precedence. CPU/software-WebGL checks cannot certify phone thermals or battery; add adaptive resolution and preserve lifecycle pause/disposal. Scope and references: AURELIUS_1F.md. No push or deployment.
 
-
 ## 2026-09-22 — Founder selects direct OpenAI and new GitHub destination
 
 Use https://github.com/neilaureliuscollective/gent-ascend-collective-app for this existing application. Connect directly to OpenAI using server-only OPENAI_API_KEY so usage draws on the founder's existing OpenAI API credits. Retain AI SDK 7.0.107 and add compatible @ai-sdk/openai 4.0.72 (provider protocol 4.0.17). Use Responses with store=false, explicit api.openai.com base URL, no Gateway fallback, unchanged quotas and error redaction. Keep the existing default model as gpt-6-astra, verified in OpenAI documentation. Broader product pivot remains planning-only.
 
 Official references checked: https://ai-sdk.dev/providers/ai-sdk-providers/openai.md and https://developers.openai.com/api/docs/models/gpt-6-astra. Provider package source and the existing lockfile verified for compatibility. Live key/account model access is not verified by mock tests.
+
 # 2026-09-24 — Aethelios cross-app publication seam
 
 Keep the private founder workspace and member app independently authorized.
@@ -122,16 +122,17 @@ https://supabase.com/docs/guides/auth/oauth-server/token-security.
 ## 2026-09-25 — Confirmed evening reviews, separate from chat and memory
 
 Extend the existing daily record with a versioned, person-owned review rather than promoting conversational text to memory. Aethelios may propose an editable three-field draft from a saved day, but confirmation records the user's choice. The RPC checks local day and source/review versions under the same person lock as daily writes; revision history preserves corrections. Command carries tomorrow context and unresolved friction, while Progress reads historical confirmed reviews. No causal patterns are inferred from sparse records. Primary technical references checked 2026-09-25: https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data and https://supabase.com/docs/guides/api/securing-your-api and https://supabase.com/docs/guides/database/functions. Supabase changelog index was attempted but not retrievable from this environment; verify it alongside real migration testing before deployment.
+
 ## 2026-09-25 — Private Founding Members pilot
 
 Founder requested a parallel next build while he tests the daily system. Prioritize a 4–6-person private cohort over commerce/affiliate breadth: use a founder-reserved normalized email, Supabase Auth's verified identity and an owner-derived claim RPC to grant existing beta capability. Dashboard invitation is a separate trusted manual step, avoiding a service-role secret in the consumer app. SSR invite template sends a token hash to `/auth/confirm`; no public signup. Feedback is voluntary and visible to the founder, while LifeOS records remain owner-only. Official Supabase email template/Next.js SSR guidance, function security and RLS were checked 2026-09-25; links and acceptance limits are in [pilot plan](FOUNDING_MEMBERS_PILOT.md).
-
 
 ## 2026-09-26 — Arrival + Command
 
 Founder approved public world + existing OS route separation, preview collections, Reserve gateway and install/mobile conversation improvements. Preserve the modular monolith, RLS, model adapter and existing AI persistence. Keep Shopify, paid membership and real Reserve activation in subsequent gated slices.
 
 Evidence reviewed in this session:
+
 - Next.js route groups: https://nextjs.org/docs/app/api-reference/file-conventions/route-groups
 - Shopify Cart API and checkout handoff: https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage
 - Shopify customer accounts: https://shopify.dev/docs/storefronts/headless/building-with-the-customer-account-api
@@ -154,3 +155,7 @@ Founder approved a continuous public journey following storyboard/research. Adde
 ## 2026-09-26 — Living Estate and updated founder seal
 
 Founder approved environment build and supplied new tailored-gentleman crest. Preserve exact original crest, use generated companion only for small install icons; retain old originals. Ambient scene layers complement native scroll; pause offscreen/hidden/Still/reduced motion. Selective Three armillary with environment reflections, no real-time shadow maps. Generated Reserve image clearly labeled as atmosphere concept, Gent emblem removed from Reserve representation. Product generated cutouts are campaign visualizations, not print label masters. See LIVING_ESTATE.md for sources, placement plan and limitations.
+
+## 2026-09-26 — one Aethelios visual and stable scene architecture
+
+Founder approved the public scene repair. Reuse the existing member orb renderer and fallback through a public decorative adapter; remove the parallel faceted sculpture. Do not import conversation services or simulate microphone/model activity. Keep architectural backgrounds stable and animate bounded foregrounds. Native sticky stages have a measured navigation inset and only activate where the viewport can contain the composition. Public Reserve representation centers consultation/products/relationship alongside Katie's salon craft, with honest concept/availability labels. Sources, tradeoffs and hardware limitations: SCENE_REPAIR.md.

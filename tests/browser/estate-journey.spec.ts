@@ -46,7 +46,7 @@ for (const width of [344, 768, 1440]) {
       'data-running',
       'true',
     );
-    const light = page.locator('#the-intelligence .atmosphere-light');
+    const light = page.locator('#the-intelligence .atmosphere-mist');
     const before = await light.evaluate((el) => getComputedStyle(el).transform);
     await expect
       .poll(() => light.evaluate((el) => getComputedStyle(el).transform))

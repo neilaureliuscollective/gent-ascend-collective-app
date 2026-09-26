@@ -15,8 +15,9 @@ export default function Reserve() {
           <em>at Sanctum.</em>
         </h1>
         <p>
-          A personal place for grooming, care, and conversation. Katie’s men’s salon craft and
-          Neil’s grooming direction, brought together with a shared standard of attention.
+          A personal setting for grooming, performance, and the way you care for yourself.
+          Consultation with Neil, Legacy Reserve products, and Katie’s men’s salon craft, brought
+          together with a shared standard of attention.
         </p>
         <div className="world-actions">
           {destination ? (
@@ -49,19 +50,19 @@ export default function Reserve() {
         </div>
         <div className="world-feature-list">
           <article>
-            <span className="world-kicker">01 / Katie</span>
+            <span className="world-kicker">01 / Neil</span>
+            <h3>Personal direction.</h3>
+            <p>
+              Grooming and performance consultations built around your routines, priorities, and
+              questions. A private conversation with a practical next step.
+            </p>
+          </article>
+          <article>
+            <span className="world-kicker">02 / Katie</span>
             <h3>Craft and attention.</h3>
             <p>
               Men’s hair services shaped by a salon professional who pays attention to the person in
               her chair.
-            </p>
-          </article>
-          <article>
-            <span className="world-kicker">02 / Neil</span>
-            <h3>Grooming direction.</h3>
-            <p>
-              Thoughtful consultation around your hair, beard, personal care, and the routine that
-              fits your life.
             </p>
           </article>
           <article>

@@ -7,22 +7,31 @@ export function AureliusPresence({
   state = 'disconnected',
   className = '',
   preview = false,
+  motionEnabled,
+  loadAhead = false,
 }: {
   enhanced?: boolean;
   state?: OrbState;
   preview?: boolean;
+  /** Public presentation may use its own Still control. No request state is inferred. */
+  motionEnabled?: boolean;
+  loadAhead?: boolean;
   className?: string;
 }) {
   const id = useId().replaceAll(':', '');
   const host = useRef<HTMLDivElement>(null);
-  const { moving } = useAppearance();
+  const appearance = useAppearance();
+  const moving = motionEnabled ?? appearance.moving;
   useEffect(() => {
     const element = host.current;
     if (!enhanced || !moving || !element) return;
     let disposed = false;
     let destroy: (() => void) | undefined;
-    // Optional scene never blocks the first useful paint or the static emblem.
-    const timer = window.setTimeout(() => {
+    // Share the exact member renderer; public scenes warm up before entering view.
+    let started = false;
+    const mount = () => {
+      if (started || disposed) return;
+      started = true;
       void import('@/platform/visual/presence-renderer')
         .then(({ mountPresence }) => {
           if (!disposed) destroy = mountPresence(element);
@@ -30,13 +39,24 @@ export function AureliusPresence({
         .catch(() => {
           /* The SVG remains the complete visual fallback. */
         });
-    }, 900);
+    };
+    const observer = loadAhead
+      ? new IntersectionObserver(
+          ([entry]) => {
+            if (entry?.isIntersecting) mount();
+          },
+          { rootMargin: '1200px' },
+        )
+      : undefined;
+    observer?.observe(element);
+    const timer = loadAhead ? undefined : window.setTimeout(mount, 900);
     return () => {
       disposed = true;
       clearTimeout(timer);
+      observer?.disconnect();
       destroy?.();
     };
-  }, [enhanced, moving]);
+  }, [enhanced, moving, loadAhead]);
   return (
     <div
       className={`aurelius-presence ${className}`}

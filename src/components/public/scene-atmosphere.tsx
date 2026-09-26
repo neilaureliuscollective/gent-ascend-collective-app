@@ -43,7 +43,7 @@ export function SceneAtmosphere({
           src={image}
           alt=""
           fill
-          sizes="(max-width: 600px) 1400px, 100vw"
+          sizes="(max-width: 1100px) 1600px, 100vw"
           className="atmosphere-environment"
         />
       )}

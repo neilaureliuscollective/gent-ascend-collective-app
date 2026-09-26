@@ -1,3 +1,9 @@
+## September 26 — public scene repair (founder approved)
+
+Implemented: shared member Aethelios renderer and SVG fallback; removed separate faceted sculpture; stable product/architectural backgrounds; bounded ambient layers; early scene motion with native sticky holds on larger screens; measured navigation inset; consultation-centered Reserve concept and broader role copy. Details and research: [SCENE_REPAIR.md](SCENE_REPAIR.md).
+
+Validation: production build, ESLint and strict TypeScript pass; 84 unit tests pass; 19 public journey/continuous-motion/member-orb browser tests pass at phone/Fold-like/desktop sizes; 10 existing migration files match recorded ledger. Browser evidence uses software-rendered Chromium. No actual Fold GPU tearing reproduction or hardware FPS claim. Production is not promoted; auth/model/invitation/device release gates remain separate.
+
 # Living Estate + new founder identity — 2026-09-26
 
 Implemented homepage environmental layers, generated emerald gallery/observatory/salon concepts, five transparent product visualizations, visibility-aware ambient light/mist/stars, graduated real-time armillary, tighter chapter navigation and complete supplied crest integration. Separate star/laurel PWA/Apple icons use versioned URLs and offline cache v2. See LIVING_ESTATE.md for asset provenance, placements, exact scope and research.
@@ -39,6 +45,7 @@ The prior Arrival + Command milestone was merged through PR #10 and deployed suc
 Implemented on `arrival-command`: cinematic public world, public product previews and Reserve gateway, existing OS moved under `/app`, invite/installation guidance, privacy-safe offline fallback, Ascend gateway, and mobile Aethelios conversation/keyboard/history refinements. See [implementation and release gates](ARRIVAL_COMMAND.md) and [cinematic media plan](CINEMATIC_MEDIA_PLAN.md). Existing APIs, RLS and database migrations remain intact. No products, billing, appointments, public waitlist or new invitations were activated.
 
 Verification:
+
 - `npm run check`: lint, strict typecheck, 84 unit/SQL tests and production build pass.
 - Browser suite: initial 63/65 passed. Fixed large-text header overflow and replaced the stop-response test's timing delay with an explicit held response. Targeted rerun: all 8 affected/public/install/offline tests passed. All 65 scenarios therefore have passing evidence across these runs, not a subsequent single full-suite run.
 - Rendered and inspected public homepage at desktop and phone sizes. Browser checks cover 344/360/390, 768 and 1440 widths, reduced motion, keyboard, streaming fixtures, redirects and cache boundaries.
@@ -239,12 +246,15 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 Founder review of the Aurelius 1E dashboard/materials on a real phone/foldable, then service activation and daily Aurelius evaluation. No body model is scheduled. The disconnected sample can be tested immediately by running the existing checkout and selecting **Explore a sample day**.
 
 When ready, sync the preserved history into the official workstation checkout, reconnect the new GitHub account, and configure protected Vercel/Supabase/Gateway access. Apply all four migrations, run real integration/founder/live-provider gates, then use Aurelius daily and assess quality with the existing rubric. Daily records are not automatically in AI context; the next intelligence slice should add a user-reviewed, source-linked daily briefing only after live quality, ownership and privacy validation. A phone-installable hosted preview follows verified Auth/HTTPS setup; never expose the local harness.
+
 # Ascend Loop V1 work in progress
 
 The first slice is documented in [ASCEND_LOOP_V1.md](ASCEND_LOOP_V1.md). It adds owner-scoped universal capture, optional structured Aethelios interpretation, a confirmed capture-to-daily-action path, carried-forward daily context, opt-in recent daily context for Aethelios, and a factual 30-day Progress history. This branch has not been deployed or migrated against hosted Supabase. Conversational baseline, full action tool registry and review extraction remain open.
+
 # Ascend Profile baseline continuation
 
 The next Ascend Loop slice is described in [ASCEND_PROFILE_PHASE.md](ASCEND_PROFILE_PHASE.md). The six-step guided baseline proposes structured facts and requires user confirmation. Corrections supersede active values with owner-scoped revision history. Command and optional Aethelios context consume current confirmed state. Proposal usage shares the existing AI quota. Both Ascend Loop migrations must precede app deployment; hosted migration, live model and two-account Auth verification remain open.
+
 # Aethelios confirmed action boundary
 
 See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation turn can now yield a reviewable `create_daily_action` proposal. Approval executes an owner-scoped atomic daily write; dismissal makes no daily change. The general tool registry and guided evening extraction remain open. Three ordered Ascend Loop migrations must precede deployment.
