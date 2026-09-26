@@ -1,3 +1,11 @@
+# Living Estate + new founder identity — 2026-09-26
+
+Implemented homepage environmental layers, generated emerald gallery/observatory/salon concepts, five transparent product visualizations, visibility-aware ambient light/mist/stars, graduated real-time armillary, tighter chapter navigation and complete supplied crest integration. Separate star/laurel PWA/Apple icons use versioned URLs and offline cache v2. See LIVING_ESTATE.md for asset provenance, placements, exact scope and research.
+
+Verification: lint, strict typecheck, 84 unit tests, production build and migration snapshot (10 existing files) pass. Ten targeted browser checks pass at 344/768/1440 widths; four journey tests repeated after armillary reflection changes, including ambient motion/Still, reduced motion, product selection and crest rendering. Final mobile image-sizing/CTA-contrast/layout adjustments passed a narrow browser recheck. Browser CLI unavailable; existing Playwright Chromium used. No hosted auth, real-model or physical PWA install claims. Production unchanged; preview branch for review.
+
+---
+
 # Cinematic Estate homepage — 2026-09-26
 
 Implemented founder-approved directed public homepage: original emerald/Louisiana arrival, native-scroll threshold, original Vitalis campaign environments (desktop and portrait), five supplied product references with accessible selector, near-viewport Three.js intelligence sculpture, labeled Reserve architectural study, legacy close and invitation. Future films plug into estate-media config. Existing authenticated OS/domain services remain unchanged. Details/storyboard/asset provenance: CINEMATIC_ESTATE.md.

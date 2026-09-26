@@ -61,6 +61,27 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               },
             );
         }
+        for (const scene of node.querySelectorAll<HTMLElement>(
+          '.estate-act, .estate-collection, .estate-invitation',
+        )) {
+          const environment = scene.querySelector('.atmosphere-environment');
+          if (environment)
+            gsap.fromTo(
+              environment,
+              { scale: 1.08, yPercent: -2 },
+              {
+                scale: 1.02,
+                yPercent: 2,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: scene,
+                  start: 'top bottom',
+                  end: 'bottom top',
+                  scrub: 0.5,
+                },
+              },
+            );
+        }
         gsap.fromTo(
           '.estate-orbit',
           { rotateZ: -22, rotateY: -20 },

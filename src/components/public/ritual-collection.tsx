@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { SceneAtmosphere } from './scene-atmosphere';
 const products = [
   {
     id: 'vitalis',
@@ -49,6 +50,7 @@ export function RitualCollection() {
   const product = products[selected]!;
   return (
     <section className="estate-collection" aria-labelledby="collection-title">
+      <SceneAtmosphere image="/media/world/gallery.webp" />
       <div className="estate-collection-heading">
         <p className="estate-eyebrow">LEGACY RESERVE / THE FOUNDING COLLECTION</p>
         <h2 id="collection-title">
@@ -57,11 +59,11 @@ export function RitualCollection() {
         <p>Grooming and performance. A closer look at the collection taking shape.</p>
       </div>
       <div className="estate-product-stage">
-        <div className="estate-product-image">
+        <div className="estate-product-image" data-product={product.id}>
           <Image
             key={product.id}
-            src={`/media/world/${product.id}.webp`}
-            alt={`${product.name} — supplied packaging reference`}
+            src={`/media/world/${product.id}-cutout.webp`}
+            alt={`${product.name} — packaging visualization`}
             fill
             sizes="(max-width: 700px) 85vw, 40vw"
           />

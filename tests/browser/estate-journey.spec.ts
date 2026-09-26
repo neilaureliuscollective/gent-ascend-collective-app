@@ -42,12 +42,37 @@ for (const width of [344, 768, 1440]) {
     await page.locator('#the-intelligence').scrollIntoViewIfNeeded();
     await expect(page.locator('.estate-sculpture canvas')).toHaveCount(1);
     await page.screenshot({ path: `test-results/estate-intelligence-${width}.png` });
+    await expect(page.locator('#the-intelligence .scene-atmosphere')).toHaveAttribute(
+      'data-running',
+      'true',
+    );
+    const light = page.locator('#the-intelligence .atmosphere-light');
+    const before = await light.evaluate((el) => getComputedStyle(el).transform);
+    await expect
+      .poll(() => light.evaluate((el) => getComputedStyle(el).transform))
+      .not.toBe(before);
     await page.getByRole('button', { name: 'Still mode', exact: true }).click();
     await expect(page.locator('.estate-journey')).toHaveAttribute('data-still', 'true');
     await expect(page.locator('.estate-sculpture canvas')).toHaveCount(0);
+    await expect(page.locator('#the-intelligence .scene-atmosphere')).toHaveAttribute(
+      'data-running',
+      'false',
+    );
+    await expect
+      .poll(() =>
+        page
+          .locator('#the-intelligence .atmosphere-light')
+          .evaluate((el) => getComputedStyle(el).animationName),
+      )
+      .toBe('none');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.locator('#the-reserve').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/estate-reserve-${width}.png` });
+    await page.locator('.estate-invitation').scrollIntoViewIfNeeded();
+    await expect(page.locator('.estate-seal-mount img')).toHaveAttribute('src', /crest-v2/);
+    await page.screenshot({ path: `test-results/estate-invitation-${width}.png` });
     await page.getByRole('link', { name: /Discover The Reserve/ }).click();
     await expect(page).toHaveURL('/reserve');
     await expect(page.getByRole('heading', { name: 'The Reserve at Sanctum.' })).toBeVisible();

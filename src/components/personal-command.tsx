@@ -49,7 +49,7 @@ export function PersonalCommand({
         <div className="hero-emblem">
           <div className="emblem-halo" />
           <Image
-            src="/brand/gent-ascend-crest.webp"
+            src="/brand/gent-ascend-crest-v2.webp"
             alt="Gent Ascend Collective seal: a gentleman standing composed in a green mantle, framed by celestial geometry and laurels"
             width={1254}
             height={1254}

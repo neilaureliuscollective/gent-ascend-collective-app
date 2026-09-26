@@ -7,7 +7,9 @@ import { WorldJourney } from '@/components/public/world-journey';
 import { RitualCollection } from '@/components/public/ritual-collection';
 import { OrbitSignature } from '@/components/visual/orbit-signature';
 import { brand } from '@/platform/brand';
+import { SceneAtmosphere } from '@/components/public/scene-atmosphere';
 import './estate.css';
+import './environment.css';
 
 export default function PublicHome() {
   return (
@@ -24,6 +26,7 @@ export default function PublicHome() {
               <MediaScene media={estateMedia.arrival} bare priority />
             </div>
             <div className="estate-opening-shade" />
+            <SceneAtmosphere variant="dawn" />
             <div className="estate-hero-copy">
               <p className="estate-eyebrow">GENT ASCEND COLLECTIVE · LOUISIANA</p>
               <h1 id="arrival-title">
@@ -91,6 +94,7 @@ export default function PublicHome() {
             <MediaScene media={estateMedia.ritual} bare />
           </div>
           <div className="estate-scene-shade" />
+          <SceneAtmosphere variant="dawn" />
           <div className="estate-scene-copy">
             <p className="estate-eyebrow">02 / THE DAILY RITUAL · LEGACY RESERVE</p>
             <h2 id="ritual-title">
@@ -116,7 +120,7 @@ export default function PublicHome() {
           data-chapter="intelligence"
           aria-labelledby="intelligence-title"
         >
-          <div className="estate-intelligence-lines" aria-hidden="true" />
+          <SceneAtmosphere image="/media/world/observatory.webp" variant="celestial" />
           <IntelligenceSculpture />
           <div className="estate-orbit" aria-hidden="true">
             <div className="estate-orbit-core">Æ</div>
@@ -160,14 +164,8 @@ export default function PublicHome() {
           data-chapter="reserve"
           aria-labelledby="reserve-title"
         >
-          <div className="estate-reserve-frame" aria-hidden="true">
-            <div className="estate-reserve-door">
-              <Image src={brand.crest} width={150} height={150} alt="" />
-              <span>
-                THE RESERVE<small>AT SANCTUM</small>
-              </span>
-            </div>
-            <div className="estate-reserve-light" />
+          <div className="estate-reserve-frame">
+            <SceneAtmosphere image="/media/world/sanctuary.webp" variant="sanctuary" />
           </div>
           <div className="estate-scene-copy">
             <p className="estate-eyebrow">04 / THE RESERVE AT SANCTUM · EUNICE, LOUISIANA</p>
@@ -186,7 +184,7 @@ export default function PublicHome() {
               Discover The Reserve <span>↗</span>
             </Link>
             <small className="estate-concept-note">
-              Architectural brand study · interior photography to follow
+              Atmosphere concept · not a photograph of the venue
             </small>
           </div>
         </section>
@@ -200,6 +198,7 @@ export default function PublicHome() {
             <MediaScene media={estateMedia.legacy} bare />
           </div>
           <div className="estate-legacy-shade" />
+          <SceneAtmosphere variant="dawn" />
           <div className="estate-legacy-copy">
             <p className="estate-eyebrow">05 / WHAT YOU CARRY FORWARD</p>
             <h2 id="legacy-title">
@@ -216,7 +215,10 @@ export default function PublicHome() {
           </div>
         </section>
         <section className="estate-invitation" aria-labelledby="invitation-title">
-          <Image src={brand.crest} alt="Gent Ascend crest" width={90} height={90} />
+          <SceneAtmosphere image="/media/world/gallery.webp" />
+          <div className="estate-seal-mount">
+            <Image src={brand.crest} alt="Gent Ascend Collective crest" width={240} height={240} />
+          </div>
           <p className="estate-eyebrow">YOUR NEXT CHAPTER</p>
           <h2 id="invitation-title">
             Find your place
