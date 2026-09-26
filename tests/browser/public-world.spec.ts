@@ -17,7 +17,7 @@ for (const width of [344, 768, 1440]) {
     await page.getByRole('button', { name: 'Pause motion' }).click();
     await expect(page.locator('.world-scene')).toHaveAttribute('data-still', 'true');
     await page.screenshot({ path: `test-results/public-home-${width}.png`, fullPage: true });
-    if (width <= 850) await page.getByRole('button', { name: 'Explore' }).click();
+    if (width <= 850) await page.getByRole('button', { name: 'Explore', exact: true }).click();
     await page
       .getByRole('navigation', { name: 'Public navigation' })
       .getByRole('link', { name: 'Shop', exact: true })
@@ -72,9 +72,9 @@ test('install guide and reduced motion remain usable on a short phone screen', a
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.locator('.scene-orbit')).toBeHidden();
-  await page.getByRole('button', { name: 'Explore' }).click();
+  await page.getByRole('button', { name: 'Explore', exact: true }).click();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Explore' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Explore', exact: true })).toBeFocused();
   await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeHidden();
   await page.goto('/app/install');
   await page.getByText('Android / Samsung Fold', { exact: true }).click();

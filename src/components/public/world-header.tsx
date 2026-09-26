@@ -18,14 +18,14 @@ export function WorldHeader() {
   const toggle = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && open) {
         setOpen(false);
         toggle.current?.focus();
       }
     };
     document.addEventListener('keydown', escape);
     return () => document.removeEventListener('keydown', escape);
-  }, []);
+  }, [open]);
   return (
     <header className="world-header">
       <Link

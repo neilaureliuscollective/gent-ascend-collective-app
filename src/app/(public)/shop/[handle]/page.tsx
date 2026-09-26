@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ProductAtelier } from '@/components/public/product-atelier';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { collectionPreviews, previewProduct } from '@/domains/catalog/preview';
@@ -37,6 +38,11 @@ export default async function Product({ params }: { params: Promise<{ handle: st
           </div>
         </div>
       </section>
+      {product.handle === 'vitalis' && (
+        <section className="world-section">
+          <ProductAtelier />
+        </section>
+      )}
       <section className="world-section detail-story">
         <Chapter number={product.number} label="The intention" />
         <h2>{product.ritual}</h2>
