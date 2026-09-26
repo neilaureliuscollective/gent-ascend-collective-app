@@ -125,3 +125,20 @@ Extend the existing daily record with a versioned, person-owned review rather th
 ## 2026-09-25 — Private Founding Members pilot
 
 Founder requested a parallel next build while he tests the daily system. Prioritize a 4–6-person private cohort over commerce/affiliate breadth: use a founder-reserved normalized email, Supabase Auth's verified identity and an owner-derived claim RPC to grant existing beta capability. Dashboard invitation is a separate trusted manual step, avoiding a service-role secret in the consumer app. SSR invite template sends a token hash to `/auth/confirm`; no public signup. Feedback is voluntary and visible to the founder, while LifeOS records remain owner-only. Official Supabase email template/Next.js SSR guidance, function security and RLS were checked 2026-09-25; links and acceptance limits are in [pilot plan](FOUNDING_MEMBERS_PILOT.md).
+
+
+## 2026-09-26 — Arrival + Command
+
+Founder approved public world + existing OS route separation, preview collections, Reserve gateway and install/mobile conversation improvements. Preserve the modular monolith, RLS, model adapter and existing AI persistence. Keep Shopify, paid membership and real Reserve activation in subsequent gated slices.
+
+Evidence reviewed in this session:
+- Next.js route groups: https://nextjs.org/docs/app/api-reference/file-conventions/route-groups
+- Shopify Cart API and checkout handoff: https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage
+- Shopify customer accounts: https://shopify.dev/docs/storefronts/headless/building-with-the-customer-account-api
+- Shopify product subscriptions: https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/products-collections/subscriptions
+- Install criteria: https://web.dev/articles/install-criteria
+- Safari 26 Home Screen behavior: https://webkit.org/blog/17333/webkit-features-in-safari-26-0/
+- Visual viewport/keyboard: https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport
+- Video loading: https://web.dev/articles/lazy-loading-video and https://web.dev/learn/performance/video-performance
+
+See ARRIVAL_COMMAND.md and CINEMATIC_MEDIA_PLAN.md for implementation boundaries and shooting/replacement plan.

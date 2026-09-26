@@ -10,6 +10,6 @@ export async function POST(request:Request) {
  catch(error){return fail(error);}
 }
 export async function PUT(request:Request) {
- try {const parsed=reviewConfirmInput.safeParse(await mutationBody(request));if(!parsed.success) throw new DailyError('Review at least one field before saving.');const data=await confirmReview(parsed.data);revalidatePath('/');revalidatePath('/progress');return privateJson(data);}
+ try {const parsed=reviewConfirmInput.safeParse(await mutationBody(request));if(!parsed.success) throw new DailyError('Review at least one field before saving.');const data=await confirmReview(parsed.data);revalidatePath('/app');revalidatePath('/app/progress');return privateJson(data);}
  catch(error){return fail(error);}
 }

@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('motion and solid-surface choices persist; OS reduced motion always wins', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/app');
   await page.getByRole('button', { name: 'Pause ambient motion' }).click();
   await page.getByRole('button', { name: 'Use solid surfaces' }).click();
   await page.reload();
@@ -34,7 +34,7 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/aethelios');
+  await page.goto('/app/aethelios');
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
   // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
@@ -52,7 +52,7 @@ for (const viewport of [
     page,
   }) => {
     await page.setViewportSize(viewport);
-    await page.goto('/aethelios');
+    await page.goto('/app/aethelios');
     await expect(page.getByLabel('Message Aethelios')).toBeInViewport();
     await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -65,7 +65,7 @@ for (const viewport of [
 
 test('200 percent text remains navigable and permits reading and composing', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 960 });
-  await page.goto('/aethelios');
+  await page.goto('/app/aethelios');
   await page.addStyleTag({ content: 'html { font-size: 200%; }' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel('Message Aethelios').fill('Larger text');
@@ -77,13 +77,13 @@ test('200 percent text remains navigable and permits reading and composing', asy
 test('connected light follows navigation and becomes still while reading a dialog', async ({
   page,
 }) => {
-  await page.goto('/');
-  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/');
+  await page.goto('/app');
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app');
   await expect(page.locator('.connection-selected')).toHaveCount(1);
   await expect(page.locator('.connection-arrival')).toHaveCSS('animation-iteration-count', '1');
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await navigation.getByRole('link', { name: 'My world' }).click();
-  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/world');
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app/world');
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
   await expect(page.locator('.ambient-light')).toHaveCSS('animation-play-state', 'paused');

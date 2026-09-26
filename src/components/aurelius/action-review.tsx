@@ -28,7 +28,7 @@ export function ActionReview({turnId,proposal,onChanged,disabled}:{turnId:string
   }
   return <section className="aethelios-action-review" aria-label="Aethelios action review">
     {proposal?.status==='pending'?<><span className="eyebrow">PROPOSED · NOT SAVED TO YOUR DAY</span><p>{proposal.title}</p><button className="secondary-button" disabled={busy||disabled} onClick={()=>void decide(true)}>Approve for today</button><button className="text-button" disabled={busy||disabled} onClick={()=>void decide(false)}>Dismiss</button></>:
-      proposal?.status==='executed'?<p>✓ Action confirmed for {proposal.executed_day}. <Link href="/">View Command →</Link></p>:
+      proposal?.status==='executed'?<p>✓ Action confirmed for {proposal.executed_day}. <Link href="/app">View Command →</Link></p>:
       proposal?.status==='rejected'?<p>Proposal dismissed. No action was created.</p>:
       <button className="text-button" disabled={busy||disabled} onClick={()=>void propose()}>Ask Aethelios for one actionable next step →</button>}
     {notice&&<p role="status">{notice}</p>}

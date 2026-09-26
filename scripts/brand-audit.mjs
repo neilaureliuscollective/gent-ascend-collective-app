@@ -38,13 +38,13 @@ try {
     });
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    for (const route of ['/', '/you', '/world', '/aethelios', '/goals', '/progress']) {
+    for (const route of ['/app', '/app/you', '/app/world', '/app/aethelios', '/app/goals', '/app/progress']) {
       await page.goto(`http://127.0.0.1:3107${route}`);
       await page.evaluate(() => document.fonts.ready);
       await page.waitForFunction(() => document.documentElement.dataset.motion === 'still');
-      if (route === '/aethelios') await page.getByLabel('Message Aethelios').waitFor();
+      if (route === '/app/aethelios') await page.getByLabel('Message Aethelios').waitFor();
       await page.screenshot({
-        path: `${output}/${route === '/' ? 'command' : route.slice(1)}-${width}.png`,
+        path: `${output}/${route === '/app' ? 'command' : route.slice(1).replaceAll('/', '-')}-${width}.png`,
         fullPage: true,
       });
       report.push({

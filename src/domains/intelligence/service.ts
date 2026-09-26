@@ -132,7 +132,7 @@ export async function prepareReply(input: {
   const { client, person } = await intelligenceSession();
   if (!(await currentAccess()).has('aurelius.context'))
     throw new IntelligenceError(
-      'Aethelios access is not enabled for this account. Local founders can select the Founder scenario.',
+      'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
   const config = aiConfigSchema.parse(process.env);

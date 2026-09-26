@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 for (const width of [344, 768, 1440]) {
   test(`Gent Ascend identity and account layout at ${width}px`, async ({ page, request }) => {
     await page.setViewportSize({ width, height: 960 });
-    await page.goto('/');
+    await page.goto('/app');
     await expect(page).toHaveTitle('Gent Ascend Collective');
     await expect(
       page.getByRole('link', { name: 'Gent Ascend Collective home' }).filter({ visible: true }),
@@ -17,7 +17,7 @@ for (const width of [344, 768, 1440]) {
       expect(launcher!.y).toBeGreaterThanOrEqual(nav!.y + nav!.height);
     }
     await page.screenshot({ path: `test-results/gent-command-${width}.png`, fullPage: true });
-    await page.goto('/you');
+    await page.goto('/app/you');
     await expect(
       page.getByRole('heading', { name: 'Build the man behind the life.' }),
     ).toBeVisible();
@@ -31,10 +31,11 @@ for (const width of [344, 768, 1440]) {
         .evaluate((img) => (img as HTMLImageElement).naturalWidth),
     ).toBeGreaterThan(0);
     await page.screenshot({ path: `test-results/gent-account-${width}.png`, fullPage: true });
-    await page.goto('/world');
-    await expect(page.getByRole('heading', { name: 'Legacy Reserve', exact: true })).toBeVisible();
-    await page.goto('/aethelios');
-    await expect(page.getByRole('heading', { name: 'Aethelios.', exact: true })).toBeVisible();
+    await page.goto('/app/world');
+    await expect(page.getByRole('heading', { name: 'Legacy Reserve.', exact: true })).toBeVisible();
+    await page.goto('/app/aethelios');
+    if (width > 1100) await expect(page.getByRole('heading', { name: 'Aethelios.', exact: true })).toBeVisible();
+    else await expect(page.locator('.aethelios-mobile-heading strong')).toHaveText('Aethelios');
     const manifest = await (await request.get('/manifest.webmanifest')).json();
     expect(manifest.name).toBe('Gent Ascend Collective');
     expect(manifest.short_name).toBe('Gent Ascend');

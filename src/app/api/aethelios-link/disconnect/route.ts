@@ -20,5 +20,5 @@ export async function POST(request: Request) {
     } catch { return new Response('Could not disconnect. Please try again.', { status: 503 }); }
   }
   jar.delete(bridgeCookie);
-  return Response.redirect(new URL('/aethelios?link=disconnected', request.url), 303);
+  return Response.redirect(new URL('/app/aethelios?link=disconnected', request.url), 303);
 }

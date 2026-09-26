@@ -1,5 +1,8 @@
 # Build roadmap and acceptance gates
 
+> Current founder-approved direction (2026-09-26): Arrival + Command is implemented on the working branch. Read docs/ARRIVAL_COMMAND.md (or ARRIVAL_COMMAND.md from docs/) for public `/` + member `/app` architecture, honest product previews, Reserve gateway, installation and mobile Aethelios. This supersedes older dashboard-first and commerce-last sequencing below. Production promotion still requires founder approval and the recorded release gates.
+
+
 | Stage    | Working outcome                                                        | Validation                                                          |
 | -------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | 0        | Constitution, architecture, researched versions, risk/decision log     | Official repo inspection; documented sources; scope agreed by brief |

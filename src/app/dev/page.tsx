@@ -31,7 +31,7 @@ export default async function DeveloperConsole({
       : null;
   return (
     <main className="console">
-      <Link href="/">← Return to Command</Link>
+      <Link href="/app">← Return to Command</Link>
       <p className="eyebrow">Local development only</p>
       <h1>Developer console</h1>
       {params.error && (
@@ -90,7 +90,7 @@ export default async function DeveloperConsole({
                 : 'Waiting for OPENAI_API_KEY in your local environment'}
             </p>
             <p>Model: {ai.AURELIUS_AI_MODEL}</p>
-            <Link className="text-link" href="/aethelios">
+            <Link className="text-link" href="/app/aethelios">
               Open Aethelios →
             </Link>
             <h3>Replies marked “Needs work”</h3>

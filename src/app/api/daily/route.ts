@@ -66,7 +66,7 @@ export async function PUT(request: Request) {
         'Review your entries: energy 1–5, sleep 0–24 hours, and up to five actions.',
       );
     const saved = await saveDaily(input.data);
-    revalidatePath('/');
+    revalidatePath('/app');
     return json(saved);
   } catch (error) {
     return fail(error);

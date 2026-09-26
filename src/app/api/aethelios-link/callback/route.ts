@@ -4,8 +4,8 @@ import { currentFounderAccess } from '@/domains/access/founder';
 import { currentIdentity } from '@/domains/identity/current';
 import { bridgeCookie, privateOrigin, stateCookie, verifierCookie } from '@/domains/intelligence/founder-bridge';
 
-const success = '/aethelios?link=connected';
-const failure = '/aethelios?link=failed';
+const success = '/app/aethelios?link=connected';
+const failure = '/app/aethelios?link=failed';
 export async function GET(request: Request) {
   const jar = await cookies();
   const state = jar.get(stateCookie)?.value;
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       typeof payload.token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(payload.token))
       return Response.redirect(new URL(failure, request.url), 303);
     jar.set(bridgeCookie, payload.token, {
-      httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 30 * 24 * 60 * 60,
+      httpOnly: true, secure: true, sameSite: 'lax', path: '/app', maxAge: 30 * 24 * 60 * 60,
     });
     return Response.redirect(new URL(success, request.url), 303);
   } catch { return Response.redirect(new URL(failure, request.url), 303); }

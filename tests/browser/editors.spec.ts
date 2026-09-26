@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 const fixture = 'http://127.0.0.1:3102';
 test('profile validation preserves edits, focuses errors and saves a new version', async ({
   page,

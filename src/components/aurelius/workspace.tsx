@@ -44,41 +44,59 @@ export function AureliusWorkspace({
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
-  const load = useCallback(async (id: string | null = null) => {
-    reading.current?.abort();
-    const controller = new AbortController();
-    reading.current = controller;
-    try {
-      const response = await fetch('/api/aurelius' + (id ? `?conversationId=${id}` : ''), {
-        cache: 'no-store',
-        signal: controller.signal,
-      });
-      const result = await response.json();
-      if (controller.signal.aborted) return;
-      setError('');
-      if (response.status === 401) {
-        setPreview(true);
-        setData(disconnectedWorkspace);
-        setSelected(null);
-        setDraft('');
+  const [awayFromLatest, setAwayFromLatest] = useState(false);
+  function rememberConversation(id: string | null) {
+    if (compact || !window.location.pathname.endsWith('/aethelios')) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('starter');
+    if (id) url.searchParams.set('conversation', id);
+    else url.searchParams.delete('conversation');
+    window.history.replaceState(window.history.state, '', url);
+  }
+  const load = useCallback(
+    async (id: string | null = null) => {
+      reading.current?.abort();
+      const controller = new AbortController();
+      reading.current = controller;
+      try {
+        const response = await fetch('/api/aurelius' + (id ? `?conversationId=${id}` : ''), {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const result = await response.json();
+        if (controller.signal.aborted) return;
+        setError('');
+        if (response.status === 401) {
+          setPreview(true);
+          setData(disconnectedWorkspace);
+          setSelected(null);
+          setDraft('');
+          setNeedsReload(false);
+          return;
+        }
+        if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
+        setPreview(false);
+        setData(result as WorkspaceData);
+        setSelected(id);
+        if (!compact && window.location.pathname.endsWith('/aethelios')) {
+          const url = new URL(window.location.href);
+          if (id) url.searchParams.set('conversation', id);
+          else url.searchParams.delete('conversation');
+          window.history.replaceState(window.history.state, '', url);
+        }
         setNeedsReload(false);
-        return;
+        setConfirmDelete(false);
+      } catch (e) {
+        if (!controller.signal.aborted) {
+          setError(e instanceof Error ? e.message : 'Your workspace could not be loaded.');
+          throw e;
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
-      if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
-      setPreview(false);
-      setData(result as WorkspaceData);
-      setSelected(id);
-      setNeedsReload(false);
-      setConfirmDelete(false);
-    } catch (e) {
-      if (!controller.signal.aborted) {
-        setError(e instanceof Error ? e.message : 'Your workspace could not be loaded.');
-        throw e;
-      }
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, []);
+    },
+    [compact],
+  );
   function reload(id: string | null = null) {
     setLoading(true);
     setError('');
@@ -166,6 +184,7 @@ export function AureliusWorkspace({
         finished_at: null,
       };
       setSelected(id);
+      rememberConversation(id);
       setData((previous) =>
         previous ? { ...previous, turns: [...previous.turns, pending] } : previous,
       );
@@ -254,7 +273,9 @@ export function AureliusWorkspace({
       await jsonRequest('/api/aurelius', 'DELETE', { id: selected });
       await reload();
       setDraft('');
-      setNotice('Conversation deleted. Confirmed memories and daily actions remain in their own records.');
+      setNotice(
+        'Conversation deleted. Confirmed memories and daily actions remain in their own records.',
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Deletion could not be confirmed.');
     } finally {
@@ -263,6 +284,8 @@ export function AureliusWorkspace({
   }
   function newConversation() {
     setSelected(null);
+    rememberConversation(null);
+    setAwayFromLatest(false);
     setData((previous) => (previous ? { ...previous, turns: [] } : previous));
     setDraft('');
     setNeedsReload(false);
@@ -282,7 +305,7 @@ export function AureliusWorkspace({
         <p role={error ? 'alert' : 'status'}>{error || 'Opening your personal workspace…'}</p>
         {!loading && (
           <>
-            <Link href="/you" className="button">
+            <Link href="/app/you" className="button">
               Your account
             </Link>
             <button className="text-button" onClick={() => void reload().catch(() => {})}>
@@ -335,17 +358,13 @@ export function AureliusWorkspace({
                         : 'ready'
               }
             />
-            {preview
-              ? 'Workspace preview'
-              : data.configured
-                ? 'Model configured'
-                : 'Connection pending'}
+            {preview ? 'Workspace preview' : data.configured ? 'Ready' : 'Connection pending'}
           </div>
         </div>
         {preview && (
           <div className="workspace-preview-note">
             <p>Sign in to use your Aethelios workspace.</p>
-            <Link href="/you">Your account →</Link>
+            <Link href="/app/you">Your account →</Link>
           </div>
         )}
         {error && (
@@ -421,7 +440,8 @@ export function AureliusWorkspace({
             {confirmDelete && (
               <div className="confirm-row">
                 <p>
-                  Delete this conversation and its messages? Confirmed memories and daily actions remain separate.
+                  Delete this conversation and its messages? Confirmed memories and daily actions
+                  remain separate.
                 </p>
                 <button
                   className="secondary-button"
@@ -440,7 +460,10 @@ export function AureliusWorkspace({
               ref={scroll}
               onScroll={() => {
                 const el = scroll.current;
-                if (el) follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+                if (el) {
+                  follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+                  setAwayFromLatest(!follow.current);
+                }
               }}
               aria-label="Conversation messages"
               aria-busy={busy}
@@ -473,7 +496,7 @@ export function AureliusWorkspace({
                       <h2>What’s on your mind?</h2>
                       <Link
                         className="text-link aethelios-meet-link"
-                        href="/aethelios/meet"
+                        href="/app/aethelios/meet"
                         onClick={(event) => {
                           if (compact) event.currentTarget.closest('dialog')?.close();
                         }}
@@ -514,10 +537,18 @@ export function AureliusWorkspace({
                     turn={turn}
                     onFeedback={(id, value) => void feedback(id, value)}
                     disabled={blocked}
-                    action={turn.id===data.turns.filter(item=>item.status==='complete').at(-1)?.id && data.canChat ? {
-                      proposal:data.actionProposals?.find(item=>item.source_turn_id===turn.id),
-                      onChanged:()=>reload(selected),
-                    }:undefined}
+                    action={
+                      turn.id ===
+                        data.turns.filter((item) => item.status === 'complete').at(-1)?.id &&
+                      data.canChat
+                        ? {
+                            proposal: data.actionProposals?.find(
+                              (item) => item.source_turn_id === turn.id,
+                            ),
+                            onChanged: () => reload(selected),
+                          }
+                        : undefined
+                    }
                   />
                 ))
               )}
@@ -526,8 +557,23 @@ export function AureliusWorkspace({
               <p className="connection-note">
                 {!data.configured
                   ? 'Aethelios is waiting for its model connection. Saved conversations and memory remain available.'
-                  : 'Conversation access is not enabled for this account. Local founders can restore the Founder scenario in the developer console.'}
+                  : 'Conversation access is not enabled for this account. If you were invited, confirm your access in the founding member guide.'}
               </p>
+            )}
+            {awayFromLatest && (
+              <button
+                className="latest-message"
+                onClick={() => {
+                  follow.current = true;
+                  setAwayFromLatest(false);
+                  scroll.current?.scrollTo({
+                    top: scroll.current.scrollHeight,
+                    behavior: 'instant',
+                  });
+                }}
+              >
+                Latest message ↓
+              </button>
             )}
             <form className="aurelius-composer" onSubmit={send}>
               <label htmlFor="aurelius-message" className="sr-only">
@@ -582,15 +628,17 @@ export function AureliusWorkspace({
               <details className="composer-privacy">
                 <summary>What Aethelios receives</summary>
                 <p className="composer-disclosure">
-                {preview ? (
-                  'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
-                ) : (
-                  <>
-                    Sending shares this conversation’s recent messages
-                    {includeContext ? `, profile, active goal and confirmed memories${founderLinked ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}` : ''} with our
-                    AI service. Nothing is automatically added to memory.
-                  </>
-                )}
+                  {preview ? (
+                    'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
+                  ) : (
+                    <>
+                      Sending shares this conversation’s recent messages
+                      {includeContext
+                        ? `, profile, active goal and confirmed memories${founderLinked ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
+                        : ''}{' '}
+                      with our AI service. Nothing is automatically added to memory.
+                    </>
+                  )}
                 </p>
               </details>
             </form>

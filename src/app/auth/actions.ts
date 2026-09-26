@@ -1,4 +1,5 @@
 'use server';
+import { readPilot } from '@/domains/pilot/service';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { serverClient } from '@/platform/supabase/server';
@@ -7,9 +8,9 @@ export async function signIn(form: FormData) {
   const parsed = z
     .object({ email: z.email(), password: z.string().min(1).max(256) })
     .safeParse({ email: form.get('email'), password: form.get('password') });
-  if (!parsed.success) redirect('/you?error=invalid');
+  if (!parsed.success) redirect('/app/you?error=invalid');
   const client = await serverClient();
-  if (!client) redirect('/you?error=unavailable');
+  if (!client) redirect('/app/you?error=unavailable');
   // The project ref is public configuration. Log it without credentials or user details
   // so a hosted project mismatch is diagnosable from a single failed request.
   const project = new URL(supabaseConnection(process.env)!.url).hostname.split('.')[0];
@@ -28,8 +29,9 @@ export async function signIn(form: FormData) {
     });
     failure = 'service';
   }
-  if (failure) redirect(`/you?error=${failure}`);
-  redirect('/');
+  if (failure) redirect(`/app/you?error=${failure}`);
+  const pilot = await readPilot();
+  redirect(pilot?.person.priority && (pilot.beta || pilot.founder) ? '/app' : '/app/welcome');
 }
 export async function signOut() {
   const client = await serverClient();

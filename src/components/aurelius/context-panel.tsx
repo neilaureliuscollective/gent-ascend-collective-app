@@ -34,7 +34,7 @@ export function ContextPanel({
             {data.context.profile.priority ||
               'Add a current priority to give your conversations direction.'}
           </p>
-          <Link className="text-link" href="/you">
+          <Link className="text-link" href="/app/you">
             {preview ? 'Connect your account' : 'Refine your profile'} →
           </Link>
         </article>
@@ -50,7 +50,7 @@ export function ContextPanel({
               <p>{data.context.goal.nextStep}</p>
             </div>
           )}
-          <Link className="text-link" href="/goals">
+          <Link className="text-link" href="/app/goals">
             Your goals →
           </Link>
         </article>

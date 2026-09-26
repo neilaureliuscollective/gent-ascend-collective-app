@@ -2735,6 +2735,9 @@ html[data-motion='ambient']:not([data-quiet='true'])
     padding-block: 12px;
   }
   .topbar-actions {
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     margin-left: auto;
   }
   .mobile-brand {
@@ -3411,3 +3414,8 @@ html[data-motion='ambient']:not([data-quiet='true'])
 }
 .pilot-list li p { margin: .5rem 0 0; white-space: pre-wrap; }
 .pilot-list time { color: #aaa79d; }
+
+/* Arrival + Command: member utilities and a viewport owned by the conversation. */
+.install-guide{max-width:52rem;margin-block:1.5rem}.install-guide h2{margin:10px 0 16px}.install-guide>p{max-width:44rem}.install-guide .button{margin-top:18px}.install-instructions{display:grid;gap:12px;margin:24px 0}.install-instructions details{border:1px solid #c4912f40;border-radius:10px;padding:16px 20px;background:#0a1c14}.install-instructions summary{cursor:pointer;min-height:32px;color:#e9cc94;font-weight:600}.install-instructions li{margin:12px 0;color:#c8d2c2}.install-instructions p,.install-guide>.muted{font-size:.8rem}.install-notice{color:#e9cc94;font-size:.85rem}.ascend-path{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:30px}.ascend-path h2{margin:12px 0;font-size:1.6rem}.ascend-path p{margin:0 0 20px;color:#b2c3b5}.world-gateway-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:30px}.world-gateway-grid h2{font-size:1.7rem}.world-gateway-grid p{color:#bcc9bb}.world-gateway-grid .text-link{margin-top:20px}.latest-message{align-self:center;flex:none;border:1px solid #b49a60;background:#132c1f;color:#efd6a4;border-radius:24px;font-size:.7rem;padding:8px 16px;min-height:36px;margin-bottom:8px;cursor:pointer}.conversation-scroll{overscroll-behavior:contain;scrollbar-gutter:stable}.conversation-scroll .conversation-turn{max-width:780px;margin-inline:auto}.aurelius-notice:empty{min-height:0;margin:0}.aurelius-notice{flex-shrink:0}.aurelius-composer{position:relative}.shell-ascend-link{font-size:.7rem}.sidebar-footer>.text-link{font-size:.7rem;display:block;margin-bottom:18px}.aethelios-page .aurelius-surface{min-height:0}
+@media(max-width:1100px){.aethelios-page{height:var(--conversation-height,100dvh);top:var(--conversation-top,0px);bottom:auto}.aethelios-page .conversation-scroll{padding-inline:3px}.aethelios-page .aurelius-notice{margin:4px 0 0;font-size:.62rem}.aethelios-page .aurelius-notice:empty{margin:0}.aethelios-page .aurelius-layout{grid-template-rows:auto minmax(0,1fr)}.aethelios-page .aurelius-message{line-height:1.75}.aethelios-page .aurelius-composer textarea{font-size:16px}.aethelios-page .aurelius-workspace{overflow:hidden}}
+@media(max-width:600px){.ascend-path,.world-gateway-grid{grid-template-columns:1fr}.shell-ascend-link{padding:6px}.install-instructions details{padding:14px}.install-instructions ol{padding-left:20px}.install-guide{padding:22px 18px}.aethelios-page .aurelius-toolbar{min-height:40px}.aethelios-page .composer-privacy{display:none}.aethelios-page .aethelios-link-panel summary{padding:8px 12px;font-size:.65rem}}

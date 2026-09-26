@@ -5,7 +5,7 @@ export default function NotFound() {
       <p className="eyebrow">Gent Ascend Collective</p>
       <h1>This space isn’t available.</h1>
       <Link className="button" href="/">
-        Return to Command
+        Return to Gent Ascend
       </Link>
     </main>
   );

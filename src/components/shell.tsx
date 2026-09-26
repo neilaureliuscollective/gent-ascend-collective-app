@@ -5,6 +5,7 @@ import { AureliusPanel } from './aurelius-panel';
 import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
+import { AppRuntime } from './app-runtime';
 import { UniversalCapture } from './capture/universal-capture';
 export function Shell({
   children,
@@ -15,6 +16,7 @@ export function Shell({
 }) {
   return (
     <div className="app-shell">
+      <AppRuntime />
       <VisualEnvironment>
         <ConnectionField />
       </VisualEnvironment>
@@ -22,13 +24,14 @@ export function Shell({
         Skip to content
       </a>
       <aside className="sidebar">
-        <Link className="wordmark" href="/" aria-label="Gent Ascend Collective home">
+        <Link className="wordmark" href="/app" aria-label="Gent Ascend Collective home">
           <Brand />
         </Link>
         <p className="navigation-label">YOUR ASCENT</p>
         <Navigation />
         <AureliusPanel />
         <div className="sidebar-footer">
+          <Link href="/" className="text-link">Explore Gent Ascend ↗</Link>
           <span className="brand-star" aria-hidden="true">
             ✦
           </span>
@@ -42,7 +45,7 @@ export function Shell({
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <Link href="/" className="mobile-brand" aria-label="Gent Ascend Collective home">
+          <Link href="/app" className="mobile-brand" aria-label="Gent Ascend Collective home">
             <Brand compact />
           </Link>
           <span className="topbar-context">
@@ -51,8 +54,9 @@ export function Shell({
           <div className="topbar-actions">
             <UniversalCapture />
             <AppearanceControls />
+            <Link href="/app/ascend" className="text-link shell-ascend-link">Ascend</Link>
             {founder && <Link href="/dev">Developer console</Link>}
-            <Link href="/you" className="avatar" aria-label="Your account">
+            <Link href="/app/you" className="avatar" aria-label="Your account">
               <Icon name="person" />
             </Link>
           </div>

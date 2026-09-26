@@ -15,6 +15,7 @@ export default defineConfig({
             '--no-sandbox',
             '--disable-dev-shm-usage',
             '--no-zygote',
+            ...(process.env.PLAYWRIGHT_SINGLE_PROCESS === '1' ? ['--single-process'] : []),
             '--use-gl=angle',
             '--use-angle=swiftshader',
           ],
