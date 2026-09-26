@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ProductAtelier } from '@/components/public/product-atelier';
 import Image from 'next/image';
+import { OrbitSignature } from '@/components/visual/orbit-signature';
 import { SceneSlot } from '@/components/public/scene-slot';
 import { MediaScene } from '@/components/public/media-scene';
 import { Chapter, CollectionGrid, Invitation } from '@/components/public/editorial';
@@ -89,6 +90,7 @@ export default function PublicHome() {
             ] as const
           ).map(([n, title, copy, href]) => (
             <Link href={href} key={title}>
+                <OrbitSignature />
               <span>{n}</span>
               <h3>
                 {title}

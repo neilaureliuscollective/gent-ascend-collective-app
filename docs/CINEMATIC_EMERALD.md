@@ -33,3 +33,9 @@ Reviewed September 26, 2026:
 ## Acceptance
 
 See STATUS.md for actual results. Verify desktop, Fold-like width and narrow phone layouts, chapter links, native scroll, all product controls, reduced motion, no-WebGL and context loss. Real hardware remains necessary for acceptance of frame pacing, touch feel and battery cost. No invented FPS/performance guarantee. No schema/auth, billing, scanning, guest AI, Shopify checkout or Reserve booking changes.
+
+## Founder material correction — September 26
+
+The founder supplied member-dashboard screenshots as the explicit visual reference. The earlier bright/flat green backgrounds are superseded. Public surfaces now reuse the exact dashboard emerald-to-obsidian gradient, shared gold metal token and OrbitSignature component. Green is concentrated in dimensional rounded cards with inset highlights and fine gold edges; dark atmosphere supplies contrast. Product, intelligence, invitation and secondary-page feature surfaces follow this material. Fine-pointer tilt and localized light are bounded, reset on leave, and disabled for touch/reduced motion/Still mode. No device orientation permission or private dashboard content is used.
+
+Rendered 390px viewport captures inspected for cards and product detail surfaces. All 12 targeted public/cinematic browser tests pass, including pointer response and Still-mode persistence through navigation. Lint, typecheck, 84 unit tests and production build pass. Founder visual acceptance remains open; this corrects the existing preview, not production.

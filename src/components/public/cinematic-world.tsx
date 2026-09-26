@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { OrbitSignature } from '@/components/visual/orbit-signature';
 
 const StillContext = createContext(false);
 export const useWorldStill = () => useContext(StillContext);
@@ -80,10 +81,70 @@ export function CinematicWorld({ children }: { children: React.ReactNode }) {
       });
     };
   }, [pathname, still]);
+  useEffect(() => {
+    const node = root.current;
+    if (!node || still) return;
+    const fine = matchMedia('(hover: hover) and (pointer: fine)');
+    let active: HTMLElement | null = null;
+    let frame = 0;
+    let x = 0,
+      y = 0;
+    const reset = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      if (active) {
+        active.style.removeProperty('--card-rx');
+        active.style.removeProperty('--card-ry');
+        active.style.removeProperty('--light-x');
+        active.style.removeProperty('--light-y');
+      }
+      active = null;
+    };
+    const move = (event: PointerEvent) => {
+      if (!fine.matches || event.pointerType === 'touch') return;
+      const card = (event.target as Element).closest<HTMLElement>(
+        '.world-doorways > a, .collection-card, .atelier-story, .world-feature-list > article',
+      );
+      if (!card) {
+        reset();
+        return;
+      }
+      if (card !== active) {
+        reset();
+        active = card;
+      }
+      x = event.clientX;
+      y = event.clientY;
+      if (!frame)
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          if (!active) return;
+          const box = active.getBoundingClientRect();
+          const px = Math.max(0, Math.min(1, (x - box.left) / box.width));
+          const py = Math.max(0, Math.min(1, (y - box.top) / box.height));
+          active.style.setProperty('--card-rx', `${(py - 0.5) * -5}deg`);
+          active.style.setProperty('--card-ry', `${(px - 0.5) * 5}deg`);
+          active.style.setProperty('--light-x', `${px * 100}%`);
+          active.style.setProperty('--light-y', `${py * 100}%`);
+        });
+    };
+    node.addEventListener('pointermove', move, { passive: true });
+    node.addEventListener('pointerleave', reset);
+    fine.addEventListener('change', reset);
+    return () => {
+      reset();
+      node.removeEventListener('pointermove', move);
+      node.removeEventListener('pointerleave', reset);
+      fine.removeEventListener('change', reset);
+    };
+  }, [pathname, still]);
   return (
     <StillContext value={still}>
       <div ref={root} className="public-world" data-world-still={still}>
         <div className="journey-progress" aria-hidden="true" />
+        <div className="public-orbital-field" aria-hidden="true">
+          <OrbitSignature />
+        </div>
         {children}
         <button
           className="world-motion-control"

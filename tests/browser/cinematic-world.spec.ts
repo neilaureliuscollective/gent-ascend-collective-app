@@ -84,3 +84,17 @@ test('reduced motion and unsupported graphics retain usable content', async ({ p
   await expect(page.getByRole('heading', { name: 'A moment to prepare.' })).toBeVisible();
   await expect(page.locator('.atelier-canvas canvas')).toHaveCount(0);
 });
+
+test('dimensional cards respond to a pointer and settle in Still mode', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/');
+  const card = page.locator('.world-doorways > a').first();
+  await card.scrollIntoViewIfNeeded();
+  await card.hover({ position: { x: 30, y: 35 } });
+  await expect.poll(() => card.evaluate((e) => e.style.getPropertyValue('--card-ry'))).not.toBe('');
+  await page.getByRole('button', { name: 'Still mode', exact: true }).click();
+  await expect.poll(() => card.evaluate((e) => getComputedStyle(e).transform)).toBe('none');
+  await card.getByRole('heading', { name: /Products/ }).click();
+  await expect(page).toHaveURL('/shop');
+  await expect(page.locator('.public-world')).toHaveAttribute('data-world-still', 'true');
+});

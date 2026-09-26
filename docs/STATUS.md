@@ -1,3 +1,9 @@
+# Public material alignment — 2026-09-26
+
+Founder dashboard screenshots now govern the public material language: exact deep emerald/obsidian gradients, metallic gold buttons, inset highlights, rounded borders and shared orbital geometry. Replaced the brighter flat-green treatment in the Cinematic Emerald preview. Added bounded fine-pointer card tilt/light, preserving touch and Still mode. Phone viewport captures inspected. 12 targeted browser checks, lint, strict types, 84 unit tests and production build pass. This is a revision to PR #11; production remains unchanged.
+
+---
+
 # Cinematic Emerald — 2026-09-26
 
 Implemented the next public visual milestone on `cinematic-emerald`: visibly emerald surfaces, shared native-scroll choreography, dimensional world portals, spatial intelligence scene, Reserve architectural reveal, chapter navigation and a Vitalis product atelier. The atelier offers a labeled procedural 3D packaging study, pointer/keyboard rotation, warm/emerald lighting, reset, and a still fallback. No new dependencies, account privileges, AI endpoints, commerce operations or database changes.

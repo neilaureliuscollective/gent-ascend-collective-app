@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { OrbitSignature } from '@/components/visual/orbit-signature';
 import { useEffect, useRef, useState } from 'react';
 import { useWorldStill } from './cinematic-world';
 import type { createProductStage } from './product-stage';
@@ -165,6 +166,7 @@ export function ProductAtelier() {
         <small className="atelier-disclosure">Concept packaging · final product may differ</small>
       </div>
       <div className="atelier-story">
+        <OrbitSignature />
         <span className="world-kicker">Legacy Reserve / Vitalis</span>
         <h2>
           The ritual.
