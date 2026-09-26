@@ -1,3 +1,9 @@
+# Ascend Loop 1.1 — first real day, 2026-09-25
+
+The reviewable branch adds a guided first-day route on Command, a fresh owner-scoped daily snapshot for Aethelios, explicit completion of one existing action, and editable titles before approving an AI-proposed action. The prior confirmed evening review remains the next-day source. This is not a general tool agent. See [the release plan](ASCEND_LOOP_1_1.md). The new migration must precede the application release. Local unit/SQL/build checks pass; browser installation, real two-account Auth, live model behavior and physical Fold acceptance remain open. Nothing in this phase has been pushed to production or applied to hosted Supabase.
+
+---
+
 # Aethelios mobile conversation space — 2026-09-25
 
 The dedicated `/aethelios` route now uses the available phone/tablet viewport for the conversation, above the app's bottom navigation. It has a compact return header and a collapsible founder connection explanation. The same workspace powers the global dialog; both surfaces use a compact, growing composer and an optional privacy explanation. The message list remains independently scrollable, while Memory and Context remain accessible from the tabs. Existing API, prompt, memory and founder bridge behavior are unchanged.

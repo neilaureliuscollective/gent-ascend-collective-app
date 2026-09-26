@@ -36,6 +36,14 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
   const done = day.actions.filter((a) => a.done).length;
   const nextMove = nextLoopMove(data);
   const recordedDays = data.entries.filter(entry => entry.version > 0).length;
+  const firstDaySteps = [
+    { label: 'Name your direction', done: !!data.profileDirection },
+    { label: 'Choose one goal', done: !!data.goal },
+    { label: 'Set today’s intention', done: !!day.intention },
+    { label: 'Save one action', done: day.actions.length > 0 },
+    { label: 'Complete a step', done: done > 0 },
+    { label: 'Close the day', done: !!day.review },
+  ];
   function followNextMove() {
     if (!nextMove) return;
     if (nextMove.target === 'intention' || nextMove.target === 'action') {
@@ -225,6 +233,10 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         {busy ? (sample ? 'Updating sample…' : 'Saving your day…') : notice}
       </p>
       {!editorOpen && feedback}
+      {!sample && !preview && recordedDays <= 1 && !day.review && <section className="first-day-guide" aria-label="Your first day">
+        <div><span className="eyebrow">YOUR FIRST DAY / {firstDaySteps.filter(step=>step.done).length} OF {firstDaySteps.length}</span><h2>One day. A real starting point.</h2><p>Take the next step below. Each confirmation saves to your private account, so you can leave and return.</p></div>
+        <ol>{firstDaySteps.map((step,index)=><li key={step.label} data-done={step.done} aria-current={!step.done && firstDaySteps.slice(0,index).every(item=>item.done)?'step':undefined}><span>{step.done?'✓':index+1}</span>{step.label}</li>)}</ol>
+      </section>}
       {nextMove && <section className="loop-next-move" aria-label="Your next move">
         <div><p className="eyebrow">YOUR NEXT MOVE · {recordedDays} {recordedDays === 1 ? 'DAY' : 'DAYS'} RECORDED IN THE LAST 30</p>
           <h2>{nextMove.label}</h2><p>{nextMove.detail}</p></div>
