@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WorldHeader } from '@/components/public/world-header';
+import { CinematicWorld } from '@/components/public/cinematic-world';
 import './world.css';
+import './cinematic.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
   description:
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 };
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="public-world">
+    <CinematicWorld>
       <a className="skip" href="#world-main">
         Skip to content
       </a>
@@ -37,6 +39,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <small>© {new Date().getFullYear()} Gent Ascend Collective</small>
         </div>
       </footer>
-    </div>
+    </CinematicWorld>
   );
 }

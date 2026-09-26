@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ProductAtelier } from '@/components/public/product-atelier';
 import Image from 'next/image';
 import { SceneSlot } from '@/components/public/scene-slot';
 import { MediaScene } from '@/components/public/media-scene';
@@ -41,6 +42,12 @@ export default function PublicHome() {
           <span>Rooted here. Built to go further.</span>
         </div>
       </section>
+      <nav className="world-chapter-nav" aria-label="Explore the world">
+        <a href="#the-world">The world</a>
+        <a href="#the-ritual">The ritual</a>
+        <a href="#the-intelligence">The intelligence</a>
+        <a href="#the-reserve">The Reserve</a>
+      </nav>
       <section id="the-world" className="world-section world-introduction">
         <Chapter number="01" label="One world. Every day." />
         <div className="editorial-split">
@@ -92,7 +99,7 @@ export default function PublicHome() {
           ))}
         </div>
       </section>
-      <section className="world-section world-collection">
+      <section id="the-ritual" className="world-section world-collection">
         <Chapter number="02" label="The daily ritual" />
         <div className="section-heading">
           <div>
@@ -113,10 +120,13 @@ export default function PublicHome() {
             {null}
           </SceneSlot>
         )}
+        <ProductAtelier />
         <CollectionGrid />
       </section>
-      <section className="intelligence-scene">
+      <section id="the-intelligence" className="intelligence-scene">
         <div className="intelligence-art" aria-hidden="true">
+          <div className="intelligence-meridian" />
+          <div className="intelligence-grid" />
           <div className="intelligence-ring ring-one" />
           <div className="intelligence-ring ring-two" />
           <div className="intelligence-ring ring-three" />
@@ -153,11 +163,13 @@ export default function PublicHome() {
           <span className="scene-footnote">Personal software · private invitation</span>
         </div>
       </section>
-      <section className="world-section reserve-feature">
+      <section id="the-reserve" className="world-section reserve-feature">
         <Chapter number="04" label="Care, in person" />
         <div className="reserve-feature-grid">
           <SceneSlot media={publicWorld.reserveMedia}>
             <div className="reserve-architecture" aria-hidden="true">
+              <div className="reserve-door reserve-door-left" />
+              <div className="reserve-door reserve-door-right" />
               <div className="reserve-arch">
                 <Image src={brand.crest} alt="" width={190} height={190} />
                 <span>

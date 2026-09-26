@@ -142,3 +142,7 @@ Evidence reviewed in this session:
 - Video loading: https://web.dev/articles/lazy-loading-video and https://web.dev/learn/performance/video-performance
 
 See ARRIVAL_COMMAND.md and CINEMATIC_MEDIA_PLAN.md for implementation boundaries and shooting/replacement plan.
+
+## 2026-09-26 — Cinematic Emerald public foundation
+
+Founder approved implementation after reviewing the first public pass. Use the existing Next.js/Three.js architecture with one native-scroll director, emerald materials, dimensional sections and a lazy interactive product study. No scroll interception or always-running 3D loop. Keep official crest and current API/auth/commerce boundaries. See CINEMATIC_EMERALD.md for official source links, implementation limits and the follow-on Grooming Discovery and guest intelligence sequence.

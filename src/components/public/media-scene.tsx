@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { useWorldStill } from './cinematic-world';
 import { useEffect, useRef, useState } from 'react';
 
 export interface SceneMedia {
@@ -13,6 +14,7 @@ export interface SceneMedia {
 
 /** The poster is the composition. Film progressively enhances it after entering view. */
 export function MediaScene({ media, priority = false }: { media: SceneMedia; priority?: boolean }) {
+  const worldStill = useWorldStill();
   const host = useRef<HTMLDivElement>(null);
   const film = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -22,7 +24,7 @@ export function MediaScene({ media, priority = false }: { media: SceneMedia; pri
     const node = host.current;
     let visible = false;
     const sync = () => {
-      const active = visible && !motion.matches && !paused && !document.hidden;
+      const active = visible && !motion.matches && !paused && !worldStill && !document.hidden;
       node?.setAttribute('data-still', String(!active));
       if (!film.current) return;
       if (active)
@@ -47,7 +49,7 @@ export function MediaScene({ media, priority = false }: { media: SceneMedia; pri
       motion.removeEventListener('change', sync);
       document.removeEventListener('visibilitychange', sync);
     };
-  }, [paused]);
+  }, [paused, worldStill]);
   return (
     <div ref={host} className="world-scene" data-still="true">
       <Image

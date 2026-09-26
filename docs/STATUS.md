@@ -1,3 +1,15 @@
+# Cinematic Emerald — 2026-09-26
+
+Implemented the next public visual milestone on `cinematic-emerald`: visibly emerald surfaces, shared native-scroll choreography, dimensional world portals, spatial intelligence scene, Reserve architectural reveal, chapter navigation and a Vitalis product atelier. The atelier offers a labeled procedural 3D packaging study, pointer/keyboard rotation, warm/emerald lighting, reset, and a still fallback. No new dependencies, account privileges, AI endpoints, commerce operations or database changes.
+
+Verification: lint, strict typecheck, all 84 unit tests and production build pass after rebuilding a corrupted Turbopack cache. All 11 targeted public/cinematic browser tests pass at phone, tablet/Fold-like and desktop widths, including reduced motion, WebGL failure, context loss, product interaction, redirects, install guide and offline privacy boundaries. Full-page captures in this restricted browser showed compositor stitching artifacts; separate viewport captures and DOM checks confirmed one hero and a correct footer. Product, phone footer and Reserve renders were inspected. The full member browser suite was not repeated because its code is unchanged. Physical Fold/iPhone frame pacing and touch feel remain unverified.
+
+See [scope, research and next phases](CINEMATIC_EMERALD.md). Next useful interactive build: Grooming Discovery, followed by a bounded public Aethelios introduction. Real product geometry and film are replaceable later; the current study is not final packaging. Production promotion of this new milestone has not been performed.
+
+The prior Arrival + Command milestone was merged through PR #10 and deployed successfully to production at commit `8cb2e2b` on September 26. Its live routes, redirects, manifest and private cache headers were checked; no runtime errors were reported during that verification.
+
+---
+
 # Arrival + Command — 2026-09-26
 
 Implemented on `arrival-command`: cinematic public world, public product previews and Reserve gateway, existing OS moved under `/app`, invite/installation guidance, privacy-safe offline fallback, Ascend gateway, and mobile Aethelios conversation/keyboard/history refinements. See [implementation and release gates](ARRIVAL_COMMAND.md) and [cinematic media plan](CINEMATIC_MEDIA_PLAN.md). Existing APIs, RLS and database migrations remain intact. No products, billing, appointments, public waitlist or new invitations were activated.
