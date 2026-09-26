@@ -1,6 +1,6 @@
 # Ascend Loop 1.1 — first real day, 2026-09-25
 
-The reviewable branch adds a guided first-day route on Command, a fresh owner-scoped daily snapshot for Aethelios, explicit completion of one existing action, and editable titles before approving an AI-proposed action. The prior confirmed evening review remains the next-day source. This is not a general tool agent. See [the release plan](ASCEND_LOOP_1_1.md). The new migration must precede the application release. Local unit/SQL/build checks pass; browser installation, real two-account Auth, live model behavior and physical Fold acceptance remain open. Nothing in this phase has been pushed to production or applied to hosted Supabase.
+The reviewable branch adds a guided first-day route on Command, a fresh owner-scoped daily snapshot for Aethelios, explicit completion of one existing action, and editable titles before approving an AI-proposed action. The prior confirmed evening review remains the next-day source. This is not a general tool agent. See [the release plan](ASCEND_LOOP_1_1.md). The new migration must precede the application release. Local unit/SQL/build checks and CI real local Auth integration pass. The CI application browser rerun, live model behavior and physical Fold acceptance remain open. Nothing in this phase has been pushed to production or applied to hosted Supabase.
 
 ---
 

@@ -84,6 +84,12 @@ test('daily editor preserves unsaved text on conflict and reloads only deliberat
   await expect(page.getByRole('status')).toHaveText('Your day is saved.');
   await expect(page.getByRole('heading', { name: 'A saved intention' })).toBeVisible();
 });
+test('completion endpoint rejects unsigned and hostile-origin requests',async ({request})=>{
+ const url='http://127.0.0.1:3100/api/daily/complete';
+ const input={day:'2026-09-25',actionId:'62000000-0000-4000-8000-000000000001',version:1};
+ expect((await request.post(url,{data:input,headers:{Origin:'https://hostile.example'}})).status()).toBe(403);
+ expect((await request.post(url,{data:input,headers:{Origin:'http://127.0.0.1:3100'}})).status()).toBe(401);
+});
 test('evening review stays a draft until confirmed and allows correction', async ({page})=>{
  const data={...sampleData('2026-09-21'),mode:'personal' as const,name:'Synthetic tester'};
  const day=data.entries.find(entry=>entry.day===data.today)!;

@@ -3395,7 +3395,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
     min-height: 54px;
     color: #f3eee2;
   }
-  .aethelios-mobile-heading strong { font-size: 1.05rem; }
+  .aethelios-mobile-heading h1 { margin: 0; font-size: 1.05rem; line-height: 1.2; font-weight: 700; }
   .aethelios-mobile-heading a { color: #e8c57e; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
   .aethelios-mobile-heading a:last-child { justify-content: flex-end; font-size: .76rem; }
   .aethelios-page > .aurelius-page-heading { display: none; }
