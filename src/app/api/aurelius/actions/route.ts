@@ -15,7 +15,7 @@ export async function PUT(request:Request) {
     const input=decideInput.safeParse(await mutationBody(request));
     if(!input.success) throw new IntelligenceError('Invalid action decision.');
     const result=await decideDailyAction(input.data);
-    revalidatePath('/');revalidatePath('/progress');
+    revalidatePath('/app');revalidatePath('/app/progress');
     return privateJson(result);
   } catch(error) {return apiError(error);}
 }

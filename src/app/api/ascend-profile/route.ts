@@ -11,7 +11,7 @@ export async function PUT(request: Request) {
     const parsed = confirmedFact.safeParse(await mutationBody(request));
     if (!parsed.success) throw new ProfileStateError('Review this detail before saving.');
     const saved = await confirmAscendFact(parsed.data);
-    revalidatePath('/'); revalidatePath('/you'); revalidatePath('/ascend-profile');
+    revalidatePath('/app'); revalidatePath('/app/you'); revalidatePath('/app/ascend-profile');
     return json(saved);
   } catch(error) { return fail(error); }
 }

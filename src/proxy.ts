@@ -27,18 +27,5 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 export const config = {
-  matcher: [
-    '/',
-    '/world',
-    '/progress',
-    '/you',
-    '/welcome',
-    '/founder/:path*',
-    '/goals',
-    '/aurelius/:path*',
-    '/aethelios/:path*',
-    '/api/aurelius/:path*',
-    '/dev/:path*',
-    '/auth/:path*',
-  ],
+  matcher: ['/app/:path*', '/enter', '/api/:path*', '/dev/:path*', '/auth/:path*'],
 };

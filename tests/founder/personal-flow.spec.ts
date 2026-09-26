@@ -25,9 +25,9 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.getByLabel('Billing simulation').selectOption('none');
   await page.getByRole('button', { name: 'Apply scenario' }).click();
   await expect(page.getByRole('status')).toHaveText('Scenario saved.');
-  await page.goto('/you');
+  await page.goto('/app/you');
   const stale = await context.newPage();
-  await stale.goto('/you');
+  await stale.goto('/app/you');
   await page.getByLabel('What should we call you?').fill('Founder');
   await page.getByLabel('What matters most right now?').fill('Make room for deliberate progress.');
   await page.getByRole('button', { name: 'Save profile' }).click();
@@ -42,7 +42,7 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page.getByLabel('What matters most right now?')).toHaveValue(
     'Make room for deliberate progress.',
   );
-  await page.goto('/goals');
+  await page.goto('/app/goals');
   await expect(page.getByRole('form', { name: 'Create goal' })).toBeVisible();
   await page.getByLabel('What are you working toward?').fill('Synthetic founder goal');
   await page.getByLabel('Your next concrete step').fill('Plan tomorrow deliberately.');
@@ -52,7 +52,7 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page.getByLabel('Your next concrete step')).toHaveValue(
     'Plan tomorrow deliberately.',
   );
-  await page.goto('/');
+  await page.goto('/app');
   await expect(page.getByRole('heading', { name: 'Synthetic founder goal' })).toBeVisible();
   await expect(page.getByText('Plan tomorrow deliberately.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Take a moment to check in' }).click();
@@ -72,7 +72,7 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page.getByRole('status')).toHaveText('Your day is saved.');
   await page.reload();
   await expect(page.getByRole('checkbox', { name: 'Synthetic persistence action' })).toBeChecked();
-  await page.goto('/goals');
+  await page.goto('/app/goals');
   await page.getByRole('button', { name: 'Mark complete' }).click();
   await page.getByRole('button', { name: 'Confirm completion' }).click();
   await expect(page.getByRole('form', { name: 'Create goal' })).toBeVisible();

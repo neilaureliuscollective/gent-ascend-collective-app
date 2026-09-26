@@ -4,10 +4,10 @@ import { Fragment } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from './visual/icon';
 const destinations: [string, string, IconName][] = [
-  ['/', 'Command', 'command'],
-  ['/world', 'My world', 'world'],
-  ['/progress', 'Progress', 'progress'],
-  ['/you', 'You', 'person'],
+  ['/app', 'Command', 'command'],
+  ['/app/world', 'My world', 'world'],
+  ['/app/progress', 'Progress', 'progress'],
+  ['/app/you', 'You', 'person'],
 ];
 export function Navigation() {
   const path = usePathname();

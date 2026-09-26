@@ -212,7 +212,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
       ) : preview ? (
         <div className="daily-mode-bar quiet">
           <span>Your daily space is ready to explore. Sign in to save personal records.</span>
-          <Link href="/you">
+          <Link href="/app/you">
             Your account <Icon name="arrow" />
           </Link>
         </div>
@@ -229,22 +229,22 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
         <div><p className="eyebrow">YOUR NEXT MOVE · {recordedDays} {recordedDays === 1 ? 'DAY' : 'DAYS'} RECORDED IN THE LAST 30</p>
           <h2>{nextMove.label}</h2><p>{nextMove.detail}</p></div>
         {nextMove.target === 'profile' || nextMove.target === 'goal' || nextMove.target === 'tomorrow'
-          ? <Link className="secondary-button" href={nextMove.target === 'profile' ? '/ascend-profile' : nextMove.target === 'goal' ? '/goals' : '/progress'}>
+          ? <Link className="secondary-button" href={nextMove.target === 'profile' ? '/app/ascend-profile' : nextMove.target === 'goal' ? '/app/goals' : '/app/progress'}>
               {nextMove.target === 'tomorrow' ? 'See your recorded progress' : 'Take the next step'} <Icon name="arrow" />
             </Link>
           : <button className="secondary-button" type="button" onClick={followNextMove}>
               {nextMove.target === 'complete' ? 'See today’s actions' : nextMove.target === 'review' ? 'Review today' : 'Take the next step'} <Icon name="arrow" />
             </button>}
       </section>}
-      {!sample && !preview && !data.profileDirection && <p className="baseline-invitation"><Link href="/ascend-profile">Give Aethelios your starting point →</Link></p>}
-      {!sample && !preview && data.profileDirection && <aside className="loop-context" aria-label="Your longer direction"><span className="eyebrow">THE DIRECTION YOU CHOSE</span><p>{data.profileDirection}</p><Link href="/ascend-profile">Refine your Ascend Profile →</Link></aside>}
+      {!sample && !preview && !data.profileDirection && <p className="baseline-invitation"><Link href="/app/ascend-profile">Give Aethelios your starting point →</Link></p>}
+      {!sample && !preview && data.profileDirection && <aside className="loop-context" aria-label="Your longer direction"><span className="eyebrow">THE DIRECTION YOU CHOSE</span><p>{data.profileDirection}</p><Link href="/app/ascend-profile">Refine your Ascend Profile →</Link></aside>}
       {!sample && !preview && (data.carryForward || data.openCaptures) && <aside className="loop-context" aria-label="Context carried into today">
         <span className="eyebrow">CARRIED INTO TODAY</span>
         {data.carryForward?.reflection && <p>From {dayLabel(data.carryForward.day, true)}: {data.carryForward.reflection}</p>}
         {data.carryForward?.tomorrow && <p><strong>What you chose to carry forward:</strong> {data.carryForward.tomorrow}</p>}
         {data.carryForward?.blocker && <p><strong>Friction you noticed:</strong> {data.carryForward.blocker}</p>}
         {!!data.carryForward?.unfinished.length && <p>{data.carryForward.unfinished.length} unfinished {data.carryForward.unfinished.length === 1 ? 'action' : 'actions'} from {dayLabel(data.carryForward.day, true)}. Choose deliberately what still matters.</p>}
-        {!!data.openCaptures && <Link href="/captures">{data.openCaptures} {data.openCaptures === 1 ? 'thought' : 'thoughts'} waiting in Capture →</Link>}
+        {!!data.openCaptures && <Link href="/app/captures">{data.openCaptures} {data.openCaptures === 1 ? 'thought' : 'thoughts'} waiting in Capture →</Link>}
       </aside>}
       <div className="daily-top-grid">
         <section className="daily-orientation" aria-labelledby="orientation-title">
@@ -291,7 +291,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
               <Icon name="arrow" />
             </button>
             <Link
-              href={`/aethelios?starter=${lens === 'today' ? 'plan' : 'reflect'}`}
+              href={`/app/aethelios?starter=${lens === 'today' ? 'plan' : 'reflect'}`}
               className="orientation-link"
             >
               {lens === 'today' ? 'Plan with Aethelios' : 'Reflect with Aethelios'}{' '}
@@ -446,7 +446,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
             <p>
               {data.goal?.next_step || 'Give your daily steps something meaningful to support.'}
             </p>
-            <Link className="card-action" href="/goals">
+            <Link className="card-action" href="/app/goals">
               {data.goal ? 'Open your goal' : 'Choose your direction'}
               <Icon name="arrow" />
             </Link>
@@ -459,8 +459,8 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
               <Link
                 href={
                   data.conversation
-                    ? `/aethelios?conversation=${data.conversation.id}`
-                    : '/aethelios?starter=perspective'
+                    ? `/app/aethelios?conversation=${data.conversation.id}`
+                    : '/app/aethelios?starter=perspective'
                 }
               >
                 {data.conversation ? 'Continue your conversation' : 'Think with Aethelios'}{' '}
@@ -508,10 +508,10 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
           <p>More of your world. At your pace.</p>
         </div>
         <nav aria-label="Explore your personal world">
-          <Link href="/world">
+          <Link href="/app/world">
             My world <Icon name="arrow" />
           </Link>
-          <Link href="/you">
+          <Link href="/app/you">
             Personal context <Icon name="arrow" />
           </Link>
         </nav>
@@ -560,7 +560,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
             <button className="button" onClick={() => switchMode(sampleData(data.today))}>
               Try the sample day
             </button>
-            <Link href="/you">Your account →</Link>
+            <Link href="/app/you">Your account →</Link>
           </div>
         ) : (
           <form onSubmit={submit} aria-label="Daily editor">

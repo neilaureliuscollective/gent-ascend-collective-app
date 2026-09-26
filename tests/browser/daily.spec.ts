@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { sampleData } from '../../src/domains/daily/model';
 for (const width of [360, 768, 1440])
   test(`sample dashboard is useful, isolated and responsive at ${width}px`, async ({ page }) => {
@@ -7,7 +7,7 @@ for (const width of [360, 768, 1440])
     page.on('request', (r) => {
       if (r.method() !== 'GET' && r.url().includes('/api/')) writes.push(r.url());
     });
-    await page.goto('/');
+    await page.goto('/app');
     await page.getByRole('button', { name: 'Explore a sample day' }).click();
     await expect(page.getByText('Sample experience', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -124,7 +124,7 @@ test('dashboard conversation starter is a draft, never an automatic model reques
   page.on('request', (r) => {
     if (r.method() === 'POST' && r.url().includes('/api/aurelius')) writes.push(r.url());
   });
-  await page.goto('/');
+  await page.goto('/app');
   await page.getByRole('link', { name: 'Plan with Aethelios' }).click();
   await expect(page.getByLabel('Message Aethelios')).toHaveValue(
     'Help me choose what matters most today and turn it into a manageable plan.',
@@ -169,7 +169,7 @@ test('short-screen daily editor supports keyboard dismissal, focus return and la
 }) => {
   await page.setViewportSize({ width: 360, height: 640 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/app');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   await page.addStyleTag({ content: 'html { font-size: 200%; }' });
   const trigger = page.getByRole('button', { name: 'Update your check-in' });
@@ -185,6 +185,6 @@ test('short-screen daily editor supports keyboard dismissal, focus return and la
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('unrecognized conversation starter stays empty', async ({ page }) => {
-  await page.goto('/aethelios?starter=constructor');
+  await page.goto('/app/aethelios?starter=constructor');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('');
 });

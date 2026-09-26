@@ -3,7 +3,7 @@ export const brand = {
   name: 'Gent Ascend Collective',
   shortName: 'Gent Ascend',
   description:
-    'A personal operating environment for men. Build your standards across wellbeing, discipline, work, and legacy.',
+    'Grooming, personal intelligence, daily practice, and experiences. A connected world built around the modern gentleman.',
   themeColor: '#050706',
   crest: '/brand/gent-ascend-crest.webp',
   lockup: '/brand/gent-ascend-lockup.webp',

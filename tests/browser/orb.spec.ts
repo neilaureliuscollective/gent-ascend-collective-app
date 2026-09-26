@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('Orb preview is illustrative, keyboard usable, and never requests audio or sends data', async ({
   page,
@@ -18,7 +18,7 @@ test('Orb preview is illustrative, keyboard usable, and never requests audio or 
     if (message.type() === 'error' && /THREE|shader|WebGL/i.test(message.text()))
       errors.push(message.text());
   });
-  await page.goto('/aethelios');
+  await page.goto('/app/aethelios');
   const orb = page.locator('.orb-presentation .aurelius-presence');
   await expect(orb).toHaveAttribute('data-state', 'disconnected');
   await page.getByRole('button', { name: 'Explore the Orb' }).click();
@@ -46,7 +46,7 @@ test('Orb preview is illustrative, keyboard usable, and never requests audio or 
 test('enhanced Orb renders, pauses for focus and dialogs, handles context loss, and disposes', async ({
   page,
 }) => {
-  await page.goto('/aethelios');
+  await page.goto('/app/aethelios');
   const orb = page.locator('.orb-presentation .aurelius-presence');
   await expect(orb).toHaveAttribute('data-rendered', 'true', { timeout: 15000 });
   await expect(page.locator('.presence-canvas')).toHaveCount(1);
@@ -92,7 +92,7 @@ test('enhanced Orb renders, pauses for focus and dialogs, handles context loss, 
 for (const width of [390, 768, 1440]) {
   test(`Orb preview keeps controls and composition usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
-    await page.goto('/aethelios');
+    await page.goto('/app/aethelios');
     await page.getByRole('button', { name: 'Explore the Orb' }).click();
     await page
       .getByRole('group', { name: 'Orb motion preview' })
@@ -128,7 +128,7 @@ test('sustained slow frames fall back to the static Orb without blocking the com
     const original = window.requestAnimationFrame.bind(window);
     window.requestAnimationFrame = (callback) => original((time) => callback(time * 4));
   });
-  await page.goto('/aethelios');
+  await page.goto('/app/aethelios');
   const orb = page.locator('.orb-presentation .aurelius-presence');
   await expect(orb).toHaveAttribute('data-fallback', 'frame-budget', { timeout: 20000 });
   await expect(orb).toHaveAttribute('data-rendered', 'false');

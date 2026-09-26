@@ -27,7 +27,7 @@ export async function enterFounder(form: FormData) {
     password: env.AURELIUS_FOUNDER_PASSWORD,
   });
   if (error || data.user?.id !== founderAuthId) redirect('/dev?error=database');
-  redirect('/');
+  redirect('/app');
 }
 export async function updateScenario(form: FormData) {
   const env = await requireLocalHarness(true);

@@ -35,10 +35,10 @@ export function PersonalCommand({
             Strength. Discipline. Character. Legacy. <br />A better standard, built daily.
           </p>
           <div className="hero-actions">
-            <Link href="/aethelios" className="button">
+            <Link href="/app/aethelios" className="button">
               Open Aethelios <Icon name="arrow" />
             </Link>
-            <Link href={person ? '/goals' : '/you'} className="hero-secondary">
+            <Link href={person ? '/app/goals' : '/app/you'} className="hero-secondary">
               {person ? 'Your direction' : 'Make it yours'} <span aria-hidden="true">↗</span>
             </Link>
           </div>
@@ -87,7 +87,7 @@ export function PersonalCommand({
             </div>
             <AureliusPresence enhanced className="command-presence" />
           </div>
-          <Link href="/aethelios" className="card-action">
+          <Link href="/app/aethelios" className="card-action">
             Think with Aethelios <Icon name="arrow" />
           </Link>
         </section>
@@ -101,7 +101,7 @@ export function PersonalCommand({
             {goal?.next_step ||
               'A meaningful goal. A deliberate next step. A direction that belongs to you.'}
           </p>
-          <Link href="/goals" className="card-action">
+          <Link href="/app/goals" className="card-action">
             {goal ? 'Refine your next step' : 'Choose your direction'} <Icon name="arrow" />
           </Link>
         </section>
@@ -116,7 +116,7 @@ export function PersonalCommand({
               ? 'What matters now, in your own words. Refine it as your life changes.'
               : 'Your priorities and preferences give this space its meaning.'}
           </p>
-          <Link href="/you" className="card-action">
+          <Link href="/app/you" className="card-action">
             Your personal context <Icon name="arrow" />
           </Link>
         </section>
@@ -128,7 +128,7 @@ export function PersonalCommand({
           <h2>There’s a bigger picture.</h2>
           <p>Body. Mind. Work. The people and possibilities ahead.</p>
         </div>
-        <Link href="/world" className="secondary-button">
+        <Link href="/app/world" className="secondary-button">
           Explore your world <Icon name="arrow" />
         </Link>
       </section>

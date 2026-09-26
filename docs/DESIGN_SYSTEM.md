@@ -1,5 +1,8 @@
 # Design system — Gent Ascend
 
+> Current founder-approved direction (2026-09-26): Arrival + Command is implemented on the working branch. Read docs/ARRIVAL_COMMAND.md (or ARRIVAL_COMMAND.md from docs/) for public `/` + member `/app` architecture, honest product previews, Reserve gateway, installation and mobile Aethelios. This supersedes older dashboard-first and commerce-last sequencing below. Production promotion still requires founder approval and the recorded release gates.
+
+
 Founder-authorized 2026-09-22 migration. See BRAND_IDENTITY.md for exact palette and artwork provenance. Historical Aurelius 1C–1F visual colors are superseded; their interaction and performance safeguards remain in effect.
 
 ## Product composition

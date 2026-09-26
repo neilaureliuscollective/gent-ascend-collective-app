@@ -4,7 +4,7 @@ import { serverClient } from '@/platform/supabase/server';
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token_hash');
   const type = request.nextUrl.searchParams.get('type');
-  const destination = new URL('/welcome', request.url);
+  const destination = new URL('/app/welcome', request.url);
   destination.searchParams.set('status', 'auth');
   if (type !== 'invite' || !token) return NextResponse.redirect(destination);
   const client = await serverClient();

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import type { WorkspaceData, Turn } from '../../src/domains/intelligence/types';
 async function setup(page: Page, mode: 'normal' | 'interrupted' | 'unconfigured' = 'normal') {
   const state: WorkspaceData = {
@@ -96,7 +96,7 @@ async function setup(page: Page, mode: 'normal' | 'interrupted' | 'unconfigured'
       json: { ...state, turns: url.searchParams.has('conversationId') ? state.turns : [] },
     });
   });
-  await page.goto('/aethelios');
+  await page.goto('/app/aethelios');
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
   return { state, sent };
 }
@@ -214,7 +214,7 @@ test('anonymous API and hostile origins fail closed', async ({ request }) => {
 
 test('the global Aethelios panel uses the same saved conversation service', async ({ page }) => {
   await setup(page);
-  await page.goto('/');
+  await page.goto('/app');
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
@@ -229,8 +229,10 @@ test('the global Aethelios panel uses the same saved conversation service', asyn
 });
 test('stopping a request retains the draft and requires checking saved state', async ({ page }) => {
   await setup(page);
+  let releaseReply!: () => void;
+  const replyHeld = new Promise<void>((resolve) => { releaseReply = resolve; });
   await page.route('**/api/aurelius/chat', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await replyHeld;
     try {
       await route.fulfill({ contentType: 'application/x-ndjson', body: '' });
     } catch {
@@ -240,6 +242,7 @@ test('stopping a request retains the draft and requires checking saved state', a
   await page.getByLabel('Message Aethelios').fill('A thought worth keeping');
   await page.getByRole('button', { name: 'Send', exact: false }).click();
   await page.getByRole('button', { name: 'Stop reply' }).click();
+  releaseReply();
   await expect(page.locator('.aurelius-workspace [role=alert]')).toContainText('Reply stopped');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('A thought worth keeping');
   await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeDisabled();
@@ -253,7 +256,7 @@ for (const width of [360, 768, 1440]) {
       if (request.url().includes('/api/aurelius') && request.method() !== 'GET')
         writes.push(request.url());
     });
-    await page.goto('/aethelios');
+    await page.goto('/app/aethelios');
     await expect(page.getByText('Sign in to use your Aethelios workspace.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeInViewport();
     await page.screenshot({ path: `test-results/aurelius-preview-${width}.png`, fullPage: true });
@@ -338,7 +341,24 @@ test('conversation deep link resumes the selected history without sending', asyn
     created_at: '2026-09-21',
     finished_at: '2026-09-21',
   });
-  await page.goto(`/aethelios?conversation=${id}`);
+  await page.goto(`/app/aethelios?conversation=${id}`);
   await expect(page.getByText('Synthetic saved response.', { exact: true })).toBeVisible();
   expect(sent).toEqual([]);
+});
+
+test('mobile conversation keeps room for reading and reopens its saved URL', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 740 });
+  await setup(page);
+  await page.getByLabel('Message Aethelios').fill('Give me one useful action');
+  await page.getByRole('button', { name: 'Send', exact: false }).click();
+  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page).toHaveURL(/\/app\/aethelios\?conversation=/);
+  await page.reload();
+  await expect(page.locator('.user-message')).toContainText('Give me one useful action');
+  const reading = await page.locator('.conversation-scroll').boundingBox();
+  expect(reading!.height).toBeGreaterThan(250);
+  await page.setViewportSize({ width: 390, height: 440 });
+  await expect(page.getByLabel('Message Aethelios')).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Send', exact: false })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

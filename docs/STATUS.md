@@ -1,3 +1,18 @@
+# Arrival + Command — 2026-09-26
+
+Implemented on `arrival-command`: cinematic public world, public product previews and Reserve gateway, existing OS moved under `/app`, invite/installation guidance, privacy-safe offline fallback, Ascend gateway, and mobile Aethelios conversation/keyboard/history refinements. See [implementation and release gates](ARRIVAL_COMMAND.md) and [cinematic media plan](CINEMATIC_MEDIA_PLAN.md). Existing APIs, RLS and database migrations remain intact. No products, billing, appointments, public waitlist or new invitations were activated.
+
+Verification:
+- `npm run check`: lint, strict typecheck, 84 unit/SQL tests and production build pass.
+- Browser suite: initial 63/65 passed. Fixed large-text header overflow and replaced the stop-response test's timing delay with an explicit held response. Targeted rerun: all 8 affected/public/install/offline tests passed. All 65 scenarios therefore have passing evidence across these runs, not a subsequent single full-suite run.
+- Rendered and inspected public homepage at desktop and phone sizes. Browser checks cover 344/360/390, 768 and 1440 widths, reduced motion, keyboard, streaming fixtures, redirects and cache boundaries.
+- `npm run db:ledger`: 10 migration files match the recorded hosted ledger snapshot. This is not a live database test.
+- Restricted runner used Playwright Headless Shell with an opt-in isolated context fixture; normal CI browser behavior is unchanged. The agent-browser daemon could not start in this runner.
+
+Release remains open: real hosted invite/login and two-account isolation, live Aethelios reply, existing founder bridge at migrated paths, physical iPhone/Android/Samsung Fold install/reopen/keyboard checks, approved film/product content and Reserve destination. Browser AI tests use intercepted fixtures. No production promotion or hosted database changes were performed. Shopify Cart/checkout is the next commercial milestone, not claimed as implemented here.
+
+---
+
 # Aethelios mobile conversation space — 2026-09-25
 
 The dedicated `/aethelios` route now uses the available phone/tablet viewport for the conversation, above the app's bottom navigation. It has a compact return header and a collapsible founder connection explanation. The same workspace powers the global dialog; both surfaces use a compact, growing composer and an optional privacy explanation. The message list remains independently scrollable, while Memory and Context remain accessible from the tabs. Existing API, prompt, memory and founder bridge behavior are unchanged.

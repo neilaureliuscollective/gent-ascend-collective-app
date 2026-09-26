@@ -58,7 +58,7 @@ export function UniversalCapture() {
         <p role="status">{message}</p>
         {!saved ? <button className="button" onClick={() => void save()} disabled={busy || !content.trim()}>{busy ? 'Saving…' : 'Save capture'}</button> : <div><button onClick={() => void interpret()} disabled={busy}>Ask Aethelios to interpret</button>{proposal && <p className="capture-proposal">Suggested: {proposal.kind}. {proposal.reason}</p>}<label htmlFor="capture-action-title">If this is an action, give it a clear next step</label><input id="capture-action-title" maxLength={100} value={actionTitle} onChange={(event) => setActionTitle(event.target.value)} /><div className="capture-options">
           <button className="button" disabled={busy || !actionTitle.trim()} onClick={() => void makeAction()}>Add to today’s actions</button>
-          <Link href={`/aethelios?starter=${encodeURIComponent('capture')}`}>Discuss with Aethelios</Link>
+          <Link href={`/app/aethelios?starter=${encodeURIComponent('capture')}`}>Discuss with Aethelios</Link>
           <button onClick={() => { setContent(''); setId(null); setSaved(false); setProposal(null); setMessage(''); }}>Capture another</button>
         </div></div>}
       </section>

@@ -24,7 +24,7 @@ export function EveningReview({day,onSaved,disabled}:{day:DayEntry;onSaved:(data
   const result=await request('PUT',{day:day.day,sourceDayVersion:day.version,expectedReviewVersion:day.review?.version??0,requestId:crypto.randomUUID(),review:draft});
   onSaved(result);setEditing(false);
  }catch(error){setNotice(error instanceof Error?error.message:'No review was confirmed. Reload your saved day.');}finally{setBusy(false);}}
- return <section className="evening-review" aria-label="Evening review">
+ return <section id="evening-review" className="evening-review" aria-label="Evening review">
   <span className="eyebrow">WHAT TOMORROW SHOULD KNOW</span>
   {day.review&&!editing&&<div className="evening-review-summary">
    {day.review.progress&&<p><strong>Moved forward</strong> {day.review.progress}</p>}

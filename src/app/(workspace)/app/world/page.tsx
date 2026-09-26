@@ -1,0 +1,9 @@
+import Link from 'next/link';
+export default function World() {
+  return <><p className="eyebrow">Gent Ascend / The collective</p><h1>My world.</h1><p className="lead">Care for the man. Strengthen the life around him.</p><div className="world-gateway-grid">
+    <section className="panel"><span className="eyebrow">Your daily practice / Available</span><h2>Ascend.</h2><p>Your baseline, goals, actions, and reflection. One connected loop.</p><Link href="/app/ascend" className="text-link">Follow your direction →</Link></section>
+    <section className="panel"><span className="eyebrow">Products / Collection preview</span><h2>Legacy Reserve.</h2><p>Explore the grooming and personal care collection taking shape within Gent Ascend.</p><Link href="/shop" className="text-link">Explore the collection ↗</Link></section>
+    <section className="panel"><span className="eyebrow">Experiences / Discover</span><h2>The Reserve at Sanctum.</h2><p>Meet the craft, people, and personal care behind the flagship physical experience in Eunice.</p><Link href="/reserve" className="text-link">Discover the Reserve ↗</Link></section>
+    <section className="panel"><span className="eyebrow">Your beginning / Available</span><h2>Member guide.</h2><p>Set your direction, install Gent Ascend, and make your first meaningful action.</p><Link href="/app/welcome" className="text-link">Continue your arrival →</Link></section>
+  </div><div className="domains-grid">{[['Grooming','Intake, routines, and personal grooming direction.'],['Training & recovery','Your practice, recovery, and progress.'],['Health & performance','Careful intelligence and future partner services.'],['Community','People, shared experiences, and a place to contribute.']].map(([title,copy])=><section className="panel" key={title}><span className="eyebrow">Future experience</span><h2>{title}</h2><p>{copy}</p><p className="muted">Not yet available.</p></section>)}</div></>;
+}
