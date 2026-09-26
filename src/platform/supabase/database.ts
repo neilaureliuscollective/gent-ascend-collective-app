@@ -159,6 +159,7 @@ export interface Database {
       daily_confirm_review: {Args:{p_request:string;p_day:string;p_expected_review_version:number;p_source_day_version:number;p_progress:string;p_blocker:string;p_tomorrow:string};Returns:number};
       ai_propose_daily_action:{Args:{p_id:string;p_turn:string;p_title:string};Returns:string};
       ai_decide_daily_action:{Args:{p_id:string;p_approve:boolean};Returns:string|null};
+      ai_decide_daily_action_v2:{Args:{p_id:string;p_approve:boolean;p_title:string|null};Returns:string|null};
       ai_reserve_proposal: { Args: { p_request: string }; Returns: boolean };
       ascend_profile_confirm: { Args: {
         p_request: string; p_key: FactKey; p_value: string | null; p_expected_version: number;
@@ -176,6 +177,7 @@ export interface Database {
         };
         Returns: number;
       };
+      daily_complete_action: { Args: { p_day: string; p_action: string; p_version: number }; Returns: number };
       ai_begin_turn: {
         Args: {
           p_conversation: string;

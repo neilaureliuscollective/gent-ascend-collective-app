@@ -1243,3 +1243,13 @@ html[data-material='solid'] .daily-editor::backdrop {
   display: grid;
   gap: 12px;
 }
+.first-day-guide { display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,1.2fr); gap: 24px; padding: 22px; margin: 18px 0; border: 1px solid rgba(196,145,47,.34); border-radius: 18px; background: linear-gradient(115deg,rgba(11,59,50,.45),rgba(5,7,6,.88)); }
+.first-day-guide h2 { margin: 8px 0; }
+.first-day-guide p { max-width: 44ch; margin: 0; color: #c9d4cd; }
+.first-day-guide ol { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 0; margin: 0; list-style: none; }
+.first-day-guide li { display: flex; align-items: center; gap: 9px; padding: 9px; border: 1px solid rgba(196,145,47,.18); border-radius: 10px; color: #d4d9d1; }
+.first-day-guide li span { display: grid; place-items: center; flex: none; width: 25px; height: 25px; border-radius: 50%; border: 1px solid rgba(196,145,47,.4); color: #e8c57e; }
+.first-day-guide li[data-done='true'] { color: #a9c5bd; }
+.first-day-guide li[aria-current='step'] { border-color: #c4912f; background: rgba(196,145,47,.08); color: #f3eee2; }
+@media (max-width: 760px) { .first-day-guide { grid-template-columns: 1fr; padding: 16px; } }
+@media (max-width: 440px) { .first-day-guide ol { grid-template-columns: 1fr; } }

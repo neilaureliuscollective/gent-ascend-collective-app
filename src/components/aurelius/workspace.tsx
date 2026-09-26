@@ -9,6 +9,7 @@ import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
 import { OrbPresentation } from '../visual/orb-presentation';
+import { TodayActions } from './today-actions';
 export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
@@ -435,6 +436,7 @@ export function AureliusWorkspace({
                 </button>
               </div>
             )}
+            {!preview && <TodayActions brief={data.context.dailyBrief} disabled={blocked} onChanged={() => reload(selected)} />}
             <div
               className="conversation-scroll"
               ref={scroll}
@@ -489,7 +491,7 @@ export function AureliusWorkspace({
                   </p>
                   <div className="conversation-starters">
                     {[
-                      'Help me decide what matters most today.',
+                      'Brief me on my saved day and help me choose one next step.',
                       'Challenge an assumption in my current goal.',
                       'Help me think through a decision.',
                     ].map((text) => (

@@ -92,6 +92,17 @@ describe('Aethelios context boundaries', () => {
     expect(JSON.stringify(messages)).toContain('My note');
     expect(messages[0]?.content).toContain('disabled');
   });
+  it('shares the dated day summary without passing action identifiers into the model prompt', () => {
+    const actionId='00000000-0000-4000-8000-000000000099';
+    const dailyBrief={asOf:'2026-09-25T20:00:00.000Z',day:'2026-09-25',version:2,intention:'Finish the plan',actions:[{id:actionId,title:'Call Katie',done:false}],openCaptures:2,previousReview:null};
+    const messages=buildMessages([], 'Brief me', {...context,dailyBrief});
+    const prompt=String(messages[0]?.content);
+    expect(prompt).toContain('Call Katie');
+    expect(prompt).toContain('2026-09-25T20:00:00.000Z');
+    expect(prompt).toContain('"openCaptures":2');
+    expect(prompt).not.toContain(actionId);
+    expect(JSON.stringify(buildMessages([], 'Brief me', null))).not.toContain('Call Katie');
+  });
   it('bounds recent exchanges without splitting message pairs', () => {
     const history = Array.from({ length: 30 }, (_, index) => ({
       status: 'complete' as const,

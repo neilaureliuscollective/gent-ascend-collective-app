@@ -37,7 +37,7 @@ export default async function AetheliosPage({
     <div className="aethelios-page">
       <div className="aethelios-mobile-heading">
         <Link href="/" aria-label="Back to Command">←</Link>
-        <strong>Aethelios</strong>
+        <h1>Aethelios.</h1>
         <Link href="/aethelios/meet">Meet ↗</Link>
       </div>
       <div className="page-heading compact-heading aurelius-page-heading">

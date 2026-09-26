@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { baselineStages, factKeys, type FactKey } from '@/domains/ascend-profile/schema';
 
 type Fact = {fact_key:FactKey;value:string|null;version:number;source_kind:'user'|'ai_proposal';confirmed_at:string};
@@ -42,7 +43,7 @@ export function AscendBaseline({initial}:{initial:Fact[]}) {
   }
   const next=()=>{setStage(n=>Math.min(5,n+1));setAnswer('');setProposals(null);setMessage('');setFailed(false);};
   return <div className="ascend-baseline">
-    <header><p className="eyebrow">ASCEND PROFILE / {stage+1} OF 6</p><h1>Begin where you are.</h1><p>Aethelios will ask a few direct questions. You decide what he keeps.</p></header>
+    <header><p className="eyebrow">ASCEND PROFILE / {stage+1} OF 6</p><h1>Begin where you are.</h1><p>Aethelios will ask a few direct questions. You decide what he keeps.</p><Link className="text-link" href="/">Continue your day on Command →</Link></header>
     <div className="baseline-conversation">
       <div className="baseline-voice"><span className="eyebrow">AETHELIOS</span><p>{baselineStages[stage]?.prompt}</p></div>
       <label htmlFor="baseline-answer">Your answer</label>

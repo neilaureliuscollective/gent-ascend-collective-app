@@ -510,6 +510,19 @@ describe('daily records: transactional snapshots and ownership', () => {
       (await asUser(founder, `select * from public.daily_actions where day=${today}`)).rows,
     ).toHaveLength(1);
   });
+  it('confirms exactly one owner action, rejects stale and foreign decisions, and permits a safe retry', async () => {
+    const action='62000000-0000-4000-8000-000000000001';
+    const call=(version:number,id=action)=>`select public.daily_complete_action(${today},'${id}',${version}) as version`;
+    await expect(asUser(member,call(2))).rejects.toThrow();
+    await expect(asUser(founder,call(2,'62000000-0000-4000-8000-000000000099'))).rejects.toThrow();
+    await expect(asUser(founder,call(1))).rejects.toThrow('changed');
+    expect((await asUser<{version:number}>(founder,call(2))).rows[0]?.version).toBe(3);
+    expect((await asUser<{version:number}>(founder,call(2))).rows[0]?.version).toBe(3);
+    expect((await asUser<{done:boolean}>(founder,`select done from public.daily_actions where id='${action}'`)).rows[0]?.done).toBe(true);
+    await db.exec('set role anon');
+    try { await expect(db.query(call(3))).rejects.toThrow(); }
+    finally { await db.exec('reset role'); }
+  });
 });
 
 describe('confirmed Aethelios action boundary',()=>{
@@ -551,6 +564,23 @@ describe('confirmed Aethelios action boundary',()=>{
     await asUser(founder,`select public.ai_decide_daily_action('${next}',false)`);
     expect((await asUser(founder,`select id from public.daily_actions where id='${next}'`)).rows).toHaveLength(0);
     await expect(asUser(founder,`select public.ai_decide_daily_action('${next}',true)`)).rejects.toThrow();
+  });
+  it('stores an edited action only after the owner approves the pending proposal',async()=>{
+    const turn3='86000000-0000-4000-8000-000000000008';
+    const next='86000000-0000-4000-8000-000000000009';
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await db.exec(`insert into public.ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version)
+      values('${turn3}',${owner},'${conversation}','Plan a specific move','Take one step','complete','fixture',false,'fixture')`);
+    await asUser(founder,`select public.ai_propose_daily_action('${next}','${turn3}','Vague step')`);
+    await expect(asUser(member,`select public.ai_decide_daily_action_v2('${next}',true,'Intrusion')`)).rejects.toThrow();
+    await expect(asUser(founder,`select public.ai_decide_daily_action_v2('${next}',true,' ')`)).rejects.toThrow();
+    expect((await asUser(founder,`select status from public.ai_action_proposals where id='${next}'`)).rows).toEqual([{status:'pending'}]);
+    await asUser(founder,`select public.ai_decide_daily_action_v2('${next}',true,'Send the proposal to Katie')`);
+    expect((await asUser(founder,`select title from public.daily_actions where id='${next}'`)).rows).toEqual([{title:'Send the proposal to Katie'}]);
+    expect((await asUser(founder,`select title,status from public.ai_action_proposals where id='${next}'`)).rows).toEqual([{title:'Send the proposal to Katie',status:'executed'}]);
+    await asUser(founder,`select public.ai_decide_daily_action_v2('${next}',true,'Send the proposal to Katie')`);
+    expect((await asUser(founder,`select id from public.daily_actions where id='${next}'`)).rows).toHaveLength(1);
+    await expect(asUser(founder,`select public.ai_decide_daily_action_v2('${next}',true,'Different action')`)).rejects.toThrow('different title');
   });
 });
 describe('confirmed evening review and next-day continuity',()=>{

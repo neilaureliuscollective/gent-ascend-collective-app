@@ -6,6 +6,7 @@ import { aiConfigSchema } from './validation';
 import { promptVersion, buildMessages } from './prompt';
 import { founderBridgeContext } from './founder-bridge';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
+import { localDay } from '@/domains/daily/model';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -23,7 +24,8 @@ export async function intelligenceSession() {
 }
 export async function personalContext(): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const [goal, memories, daily, profileFacts, reviews] = await Promise.all([
+  const today = localDay(new Date(), person.timezone);
+  const [goal, memories, daily, profileFacts, reviews, captures] = await Promise.all([
     client
       .from('goals')
       .select('*')
@@ -36,13 +38,16 @@ export async function personalContext(): Promise<PersonalContext> {
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
       .limit(24),
-    client.from('daily_entries').select('day,intention,energy,reflection,actions:daily_actions(title,done)').eq('person_id', person.id).order('day', { ascending: false }).limit(3),
+    client.from('daily_entries').select('day,version,intention,energy,reflection,actions:daily_actions(id,title,done,position)').eq('person_id', person.id).lte('day',today).order('day', { ascending: false }).limit(3),
     client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
-    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).order('day',{ascending:false}).limit(3),
+    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).lte('day',today).order('day',{ascending:false}).limit(3),
+    client.from('life_captures').select('id',{count:'exact',head:true}).eq('person_id',person.id).eq('status','inbox'),
   ]);
-  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error)
+  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error || captures.error)
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
   const reviewByDay=new Map((reviews.data??[]).map(review=>[review.day,review]));
+  const todayEntry=(daily.data??[]).find(entry=>entry.day===today);
+  const previousReview=(reviews.data??[]).find(review=>review.day<today);
   return {
     profile: {
       name: person.display_name,
@@ -65,7 +70,8 @@ export async function personalContext(): Promise<PersonalContext> {
       kind,
       confirmed_at,
     })),
-    daily: (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}),
+    daily: (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:(actions??[]).sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done})),review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}),
+    dailyBrief: {asOf:new Date().toISOString(),day:today,version:todayEntry?.version??0,intention:todayEntry?.intention??'',actions:(todayEntry?.actions??[]).sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done})),openCaptures:captures.count??0,previousReview:previousReview?{day:previousReview.day,tomorrow:previousReview.tomorrow,blocker:previousReview.blocker}:null},
     ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
   };
 }

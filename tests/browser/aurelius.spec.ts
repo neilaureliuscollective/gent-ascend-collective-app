@@ -125,6 +125,26 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
   await page.getByRole('button', { name: 'Confirm delete', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
 });
+test('one saved daily action needs a second confirmation before completion', async ({page}) => {
+  const {state}=await setup(page);
+  const id='62000000-0000-4000-8000-000000000001';
+  state.context.dailyBrief={asOf:'2026-09-25T20:00:00.000Z',day:'2026-09-25',version:2,intention:'Finish the plan',actions:[{id,title:'Review the client brief',done:false}],openCaptures:1,previousReview:null};
+  const writes:unknown[]=[];
+  await page.route('**/api/daily/complete',async route=>{
+    const input=route.request().postDataJSON();writes.push(input);
+    state.context.dailyBrief!.actions[0]!.done=true;
+    state.context.dailyBrief!.version=3;
+    await route.fulfill({json:{day:input.day,version:3,actionId:id,done:true}});
+  });
+  await page.reload();
+  await page.getByText('Today’s plan · 1 open action').click();
+  await expect(page.getByText('Review the client brief')).toBeVisible();
+  await page.getByRole('button',{name:'Mark complete'}).click();
+  expect(writes).toHaveLength(0);
+  await page.getByRole('button',{name:'Confirm complete'}).click();
+  await expect(page.getByText('Today’s plan · 0 open actions')).toBeVisible();
+  expect(writes).toEqual([{day:'2026-09-25',actionId:id,version:2}]);
+});
 test('memory requires explicit confirmation and can be corrected and forgotten', async ({
   page,
 }) => {

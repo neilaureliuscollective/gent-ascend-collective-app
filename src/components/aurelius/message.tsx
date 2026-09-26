@@ -73,7 +73,7 @@ export const ConversationTurn = memo(function ConversationTurn({
             </button>
           </div>
         )}
-        {turn.status==='complete'&&action&&<ActionReview turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
+        {turn.status==='complete'&&action&&<ActionReview key={action.proposal?.id??'new'} turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
       </div>
     </article>
   );
