@@ -121,44 +121,61 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               0.68,
             )
             .to({}, { duration: 0.13 }, 0.92);
+          const intelligence = node.querySelector<HTMLElement>('.ascend-emergence');
           const emergence = gsap.timeline({
             scrollTrigger: {
-              trigger: '.ascend-emergence',
-              start: 'top top',
-              end: 'bottom bottom',
-              scrub: true,
+              trigger: intelligence,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 0.8,
               invalidateOnRefresh: true,
+              onUpdate: (self) => {
+                if (intelligence) {
+                  intelligence.dataset.scrollProgress = self.progress.toFixed(3);
+                  intelligence.dataset.linked = String(self.progress > 0.62);
+                }
+              },
             },
           });
           emergence
             .fromTo(
-              '.ascend-emergence .estate-sculpture',
-              { scale: 0.68, opacity: 0.1 },
-              { scale: 1, opacity: 1, duration: 0.55, ease: 'none' },
+              '.ascend-intelligence-camera',
+              { scale: 0.82, rotation: -8, yPercent: 8 },
+              { scale: 1.16, rotation: 7, yPercent: -7, duration: 1, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-emergence-environment',
+              { scale: 0.97, opacity: 0.65 },
+              { scale: 1.1, opacity: 1, duration: 1, ease: 'none' },
               0,
             )
             .fromTo(
               '.ascend-connections span',
-              { opacity: 0, scale: 0.8 },
-              { opacity: 1, scale: 1, duration: 0.3, stagger: 0.055, ease: 'none' },
-              0.36,
+              { opacity: 0, x: (index: number) => index % 2 ? 62 : -62, y: (index: number) => index < 2 ? -20 : index > 3 ? 20 : 0, scale: 0.7, filter: 'blur(7px)' },
+              { opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.17, stagger: 0.075, ease: 'none' },
+              0.04,
             )
             .fromTo(
-              '.ascend-emergence-copy',
-              { y: 20, opacity: 0.55 },
-              { y: 0, opacity: 1, duration: 0.35, ease: 'none' },
+              '.intelligence-link',
+              { strokeDashoffset: 100, opacity: 0 },
+              { strokeDashoffset: 0, opacity: 1, duration: 0.17, stagger: 0.075, ease: 'none' },
               0.1,
             )
             .fromTo(
-              '.ascend-intelligence-field',
-              { scale: 0.62, opacity: 0.2 },
-              { scale: 1, opacity: 1, duration: 0.6, ease: 'none' },
-              0.05,
+              '.intelligence-convergence',
+              { scale: 0.3, opacity: 0 },
+              { scale: 1, opacity: 0.9, duration: 0.18, ease: 'none' },
+              0.52,
             );
           return () => {
             threshold.kill();
             man.kill();
             emergence.kill();
+            if (intelligence) {
+              delete intelligence.dataset.scrollProgress;
+              delete intelligence.dataset.linked;
+            }
           };
         });
         for (const scene of node.querySelectorAll<HTMLElement>(

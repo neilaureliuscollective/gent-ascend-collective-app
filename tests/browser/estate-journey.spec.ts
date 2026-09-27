@@ -41,8 +41,11 @@ for (const width of [344, 768, 1440]) {
     await page.getByRole('button', { name: 'Still mode', exact: true }).click();
     await expect(page.locator('.estate-journey')).toHaveAttribute('data-still', 'true');
     await page.locator('#the-intelligence').scrollIntoViewIfNeeded();
-    await expect(page.locator('.estate-sculpture canvas')).toHaveCount(0);
-    await expect(page.locator('.estate-sculpture .presence-fallback')).toBeVisible();
+    await expect(page.locator('.ascend-emergence .intelligence-orb')).not.toHaveAttribute(
+      'data-rendered',
+      'true',
+    );
+    await expect(page.locator('.ascend-emergence .intelligence-orb-static')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -61,7 +64,10 @@ test('reduced motion retains the complete sequence and destinations', async ({ p
   await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
   await expect(page.locator('.ascend-man-resolution')).toBeVisible();
   await page.locator('#the-intelligence').scrollIntoViewIfNeeded();
-  await expect(page.locator('.estate-sculpture canvas')).toHaveCount(0);
+  await expect(page.locator('.ascend-emergence .intelligence-orb')).not.toHaveAttribute(
+    'data-rendered',
+    'true',
+  );
   await page.locator('#the-system').scrollIntoViewIfNeeded();
   await expect(page.locator('.life-system-stages li')).toHaveCount(6);
   await page.getByRole('button', { name: /Next stage/ }).click();
@@ -129,10 +135,14 @@ for (const width of [344, 768]) {
     );
     await expect(page.getByRole('heading', { name: 'A moment to take your place.' })).toBeVisible();
     if (width === 344) await page.locator('#ritual-object').scrollIntoViewIfNeeded();
-    else await page.evaluate(() => {
-      const section = document.querySelector('#the-ritual')!;
-      scrollTo({ top: section.getBoundingClientRect().top + scrollY + section.clientHeight * 0.4, behavior: 'instant' });
-    });
+    else
+      await page.evaluate(() => {
+        const section = document.querySelector('#the-ritual')!;
+        scrollTo({
+          top: section.getBoundingClientRect().top + scrollY + section.clientHeight * 0.4,
+          behavior: 'instant',
+        });
+      });
     await expect(
       page.getByRole('heading', { name: 'Care becomes something you carry.' }),
     ).toBeVisible();
