@@ -1,4 +1,5 @@
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
+import { AetheliosSpaceNavigation } from '@/components/aurelius/space-navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { aethelios } from '@/platform/intelligence-identity';
@@ -39,11 +40,9 @@ export default async function AetheliosPage({
       <div className="aethelios-mobile-heading">
         <Link href="/app" aria-label="Back to Command">←</Link>
         <strong>Aethelios</strong>
-        <div className="aethelios-mobile-actions">
-          <Link href="/app/studio">Studio ↗</Link>
-          <Link href="/app/aethelios/meet">Meet ↗</Link>
-        </div>
+        <Link href="/app/aethelios/meet">Meet ↗</Link>
       </div>
+      <AetheliosSpaceNavigation placement="chat" />
       <div className="page-heading compact-heading aurelius-page-heading">
         <div>
           <p className="eyebrow">Digital Co-Founder</p>
@@ -56,7 +55,7 @@ export default async function AetheliosPage({
             Meet Aethelios →
           </Link>
           <br />
-          <Link href="/app/studio" className="text-link">Open Studio →</Link>
+          <Link href="/app/studio" className="text-link">Create in Studio →</Link>
         </p>
       </div>
       {isFounder && (

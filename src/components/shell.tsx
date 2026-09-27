@@ -2,6 +2,7 @@ import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
 import { Navigation } from './navigation';
 import { AureliusPanel } from './aurelius-panel';
+import { AetheliosSpaceNavigation } from './aurelius/space-navigation';
 import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
@@ -30,6 +31,7 @@ export function Shell({
         <p className="navigation-label">YOUR ASCENT</p>
         <Navigation />
         <AureliusPanel />
+        <AetheliosSpaceNavigation placement="sidebar" />
         <div className="sidebar-footer">
           <Link href="/" className="text-link">Explore Gent Ascend ↗</Link>
           <span className="brand-star" aria-hidden="true">

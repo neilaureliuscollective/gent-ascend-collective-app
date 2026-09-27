@@ -90,6 +90,9 @@ export function PersonalCommand({
           <Link href="/app/aethelios" className="card-action">
             Think with Aethelios <Icon name="arrow" />
           </Link>
+          <Link href="/app/studio" className="command-studio-entry">
+            Create in Studio <span aria-hidden="true">↗</span>
+          </Link>
         </section>
         <section className="direction-card surface">
           <div className="card-heading">
