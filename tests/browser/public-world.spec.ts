@@ -6,12 +6,14 @@ for (const width of [344, 768, 1440]) {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'A life, deliberately built.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'A life is built from the inside.' }),
+    ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Make today yours.' })).toHaveCount(0);
-    await expect(page.locator('.estate-landscape img')).toBeVisible();
+    await expect(page.locator('.ascend-threshold-mark img')).toBeVisible();
     expect(
       await page
-        .locator('.estate-landscape img')
+        .locator('.ascend-threshold-mark img')
         .evaluate((img) => (img as HTMLImageElement).naturalWidth),
     ).toBeGreaterThan(0);
     await page.getByRole('button', { name: 'Still mode', exact: true }).click();
@@ -71,7 +73,7 @@ test('install guide and reduced motion remain usable on a short phone screen', a
   await page.setViewportSize({ width: 344, height: 660 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await expect(page.locator('.scene-orbit')).toBeHidden();
+  await expect(page.locator('.ascend-man-resolution')).toBeVisible();
   await page.getByRole('button', { name: 'Explore', exact: true }).click();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Explore', exact: true })).toBeFocused();

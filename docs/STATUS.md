@@ -262,3 +262,10 @@ See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation
 # Guided evening review and tomorrow context
 
 See [ASCEND_EVENING_REVIEW.md](ASCEND_EVENING_REVIEW.md). Command now offers a confirmed, editable evening review. Aethelios can propose a draft from saved reflection and action status; manual entry works without the model. Versioned owner-only reviews feed tomorrow's Command, opt-in Aethelios context and Progress, with correction history. Four ordered migrations must precede deployment. A general tool registry, hosted Auth verification, live-model quality, device testing and lifecycle controls remain open.
+# Ascend Journey Phase 1 — 2026-09-27
+
+Founder-approved public entry slice on top of `cinematic-estate`: threshold, human-centered scene, shared Aethelios emergence, and spatial six-stage Ascend Loop now precede the existing product ritual. Louisiana moves from the opening to the Reserve/legacy chapters. Direct Shop/member navigation and honest preview/access boundaries remain. See [scope and provenance](ASCEND_JOURNEY_PHASE_1.md).
+
+Lint, strict typecheck, 84 unit/SQL tests and production build passed. The Playwright Chromium download returned a truncated archive in this runner, so new and updated browser interaction checks were not executed here. Physical Fold/iPhone review, real device pacing, field performance, hosted auth and commercial release gates remain open. No production deployment, database change or checkout activation.
+
+---
