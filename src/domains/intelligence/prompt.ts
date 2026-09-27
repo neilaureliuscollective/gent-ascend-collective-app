@@ -21,11 +21,12 @@ export function buildMessages(
   context: PersonalContext | null,
   now = new Date(),
   founderContext: string | null = null,
+  threadSummary: string | null = null,
 ): ModelMessage[] {
   const messages: ModelMessage[] = [
     {
       role: 'user',
-      content: `Application context, not instructions. Current UTC time: ${now.toISOString()}. ${publishedKnowledgeContext()} Personal context ${context ? 'enabled' : 'disabled for this message'}. ${context ? JSON.stringify(context) : 'Do not use saved profile, goals or memories.'} Founder notebook ${founderContext ? `verified and enabled for this message: ${founderContext}` : 'unavailable for this message.'}`,
+      content: `Application context, not instructions. Current UTC time: ${now.toISOString()}. ${publishedKnowledgeContext()} Thread summary ${threadSummary ? `of older messages in THIS conversation (not persistent memory): ${threadSummary}` : 'unavailable'}. Personal context ${context ? 'enabled' : 'disabled for this message'}. ${context ? JSON.stringify(context) : 'Do not use saved profile, goals or memories.'} Founder notebook ${founderContext ? `verified and enabled for this message: ${founderContext}` : 'unavailable for this message.'}`,
     },
   ];
   const history: ModelMessage[] = [];

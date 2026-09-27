@@ -14,21 +14,7 @@ export function apiError(error: unknown) {
   );
 }
 export async function mutationBody(request: Request): Promise<unknown> {
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  const protocol =
-    request.headers.get('x-forwarded-proto') ?? new URL(request.url).protocol.slice(0, -1);
-  let sameOrigin = false;
-  try {
-    const parsed = new URL(origin ?? '');
-    sameOrigin =
-      parsed.host === host &&
-      parsed.protocol === protocol + ':' &&
-      ['http:', 'https:'].includes(parsed.protocol);
-  } catch {
-    /* malformed or opaque origin */
-  }
-  if (!sameOrigin) throw new IntelligenceError('Request origin could not be verified.', 403);
+  verifyOrigin(request);
   if (!request.headers.get('content-type')?.includes('application/json'))
     throw new IntelligenceError('JSON required.', 415);
   const reader = request.body?.getReader();
@@ -51,4 +37,21 @@ export async function mutationBody(request: Request): Promise<unknown> {
   } catch {
     throw new IntelligenceError('Invalid request.');
   }
+}
+export function verifyOrigin(request: Request) {
+  const origin = request.headers.get('origin');
+  const host = request.headers.get('host');
+  const protocol =
+    request.headers.get('x-forwarded-proto') ?? new URL(request.url).protocol.slice(0, -1);
+  let sameOrigin = false;
+  try {
+    const parsed = new URL(origin ?? '');
+    sameOrigin =
+      parsed.host === host &&
+      parsed.protocol === protocol + ':' &&
+      ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    /* malformed or opaque origin */
+  }
+  if (!sameOrigin) throw new IntelligenceError('Request origin could not be verified.', 403);
 }

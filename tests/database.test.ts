@@ -20,6 +20,12 @@ beforeAll(async () => {
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema auth,public to authenticated,anon,service_role;
  grant execute on function auth.uid() to authenticated;`);
+  // Only the storage catalog surface used by migrations; this does not emulate Storage APIs.
+  await db.exec(`create schema storage;
+   create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+   create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+   create function storage.foldername(name text) returns text[] language sql immutable as $$select string_to_array(name,'/')$$;
+   grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;`);
   for (const file of (await readdir('supabase/migrations'))
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
@@ -29,6 +35,25 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('isolates Studio projects and versions, and reserves generation only once',async()=>{
+    const project='91000000-0000-4000-8000-000000000001';
+    const version='91000000-0000-4000-8000-000000000002';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Portrait study')`);
+    expect((await asUser(member,'select * from public.ai_studio_projects')).rows).toHaveLength(0);
+    await expect(asUser(member,`insert into public.ai_studio_projects(id,person_id,title) values(gen_random_uuid(),${own},'Intrusion')`)).rejects.toThrow();
+    const begin=`select public.ai_studio_begin('${version}','${project}',null,null,'A portrait in soft light','gpt-image-2.5-flare','1024x1024') as saved`;
+    expect((await asUser(founder,begin)).rows[0]).toEqual({saved:true});
+    expect((await asUser(founder,begin)).rows[0]).toEqual({saved:false});
+    expect((await asUser(member,'select * from public.ai_studio_versions')).rows).toHaveLength(0);
+    await expect(asUser(member,`select public.ai_studio_finish('${version}','complete','${member}/${project}/bad.png')`)).rejects.toThrow();
+    await expect(asUser(member,`select public.ai_studio_begin(gen_random_uuid(),'${project}',null,null,'Another portrait','gpt-image-2.5-flare','1024x1024')`)).rejects.toThrow();
+    expect((await asUser(founder,`select public.ai_studio_finish('${version}','failed',null,'test') as saved`)).rows[0]).toEqual({saved:true});
+    expect((await asUser(founder,'select * from public.ai_studio_usage')).rows).toHaveLength(1);
+    expect((await asUser(member,'select * from public.ai_studio_usage')).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_versions set status='complete' where id='${version}'`)).rejects.toThrow();
+    await expect(asUser(founder,`delete from public.ai_studio_projects where id='${project}'`)).rejects.toThrow();
+  });
   it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
     const first='84000000-0000-4000-8000-000000000001';
     const second='84000000-0000-4000-8000-000000000002';
@@ -615,5 +640,36 @@ describe('founding member pilot authorization', () => {
     await db.exec('set role anon');
     try { await expect(db.query('select * from public.pilot_feedback')).rejects.toThrow(); await expect(db.query('select public.pilot_claim()')).rejects.toThrow(); }
     finally { await db.exec('reset role'); }
+  });
+});
+
+describe('Aethelios chat foundation',()=>{
+  it('keeps message parts, search, archive and revisions owner-scoped', async () => {
+    const chat='96000000-0000-4000-8000-000000000001';
+    const first='96000000-0000-4000-8000-000000000002';
+    const second='96000000-0000-4000-8000-000000000003';
+    await asUser(founder,`select public.ai_begin_turn('${chat}','${first}','Plan my cedarwood grooming ritual','gpt-6-astra',false,'test')`);
+    await asUser(founder,`select public.ai_finish_turn('${first}','Start with a gentle cleanse.','complete',80,20)`);
+    const messages=await asUser<{role:string;content:string;parts:unknown}>(founder,`select role,content,parts from public.ai_messages where conversation_id='${chat}' order by created_at,position`);
+    expect(messages.rows.map(m=>m.role)).toEqual(['user','assistant']);
+    expect(messages.rows[1]?.content).toBe('Start with a gentle cleanse.');
+    expect((await asUser(member,`select * from public.ai_messages where conversation_id='${chat}'`)).rows).toHaveLength(0);
+    await expect(asUser(member,`update public.ai_messages set content='intrusion' where conversation_id='${chat}'`)).rejects.toThrow();
+    const found=await asUser<{id:string}>(founder,"select id from public.ai_search_conversations('cedarwood',30)");
+    expect(found.rows.some(row=>row.id===chat)).toBe(true);
+    expect((await asUser(member,"select id from public.ai_search_conversations('cedarwood',30)")).rows).toHaveLength(0);
+    await asUser(founder,`select public.ai_update_conversation('${chat}','Grooming ritual',true)`);
+    await expect(asUser(founder,`select public.ai_begin_turn('${chat}','${second}','Continue','gpt-6-astra',false,'test')`)).rejects.toThrow();
+    await asUser(founder,`select public.ai_update_conversation('${chat}',null,false)`);
+    await asUser(founder,`select public.ai_begin_revision('${chat}','${first}','${second}','Plan my cedarwood grooming ritual','regenerate','gpt-6-astra',false,'test')`);
+    const revision=await asUser<{parent_turn_id:string;revision_kind:string}>(founder,`select parent_turn_id,revision_kind from public.ai_turns where id='${second}'`);
+    expect(revision.rows[0]).toMatchObject({parent_turn_id:first,revision_kind:'regenerate'});
+    const auxiliary='96000000-0000-4000-8000-000000000004';
+    await asUser(founder,`select public.ai_reserve_auxiliary('${auxiliary}','summary')`);
+    await asUser(founder,`select public.ai_finish_auxiliary('${auxiliary}',400,60)`);
+    expect((await asUser<{input_tokens:number}>(founder,`select input_tokens from public.ai_aux_usage where id='${auxiliary}'`)).rows[0]?.input_tokens).toBe(400);
+    expect((await asUser(member,'select * from public.ai_aux_usage')).rows).toHaveLength(0);
+    await expect(asUser(member,`select public.ai_update_conversation('${chat}','Intrusion',null)`)).resolves.toMatchObject({rows:[{ai_update_conversation:false}]});
+    await asUser(founder,`select public.ai_finish_turn('${second}','Use a small amount after washing.','complete')`);
   });
 });

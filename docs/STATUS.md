@@ -1,8 +1,81 @@
+# Threshold and LifeOS visual correction — 2026-09-27
+
+The founder's Fold screenshots prompted a focused correction of only the Threshold and LifeOS scenes. The opening now has a material chamber, camera move and crest-to-passage transition. LifeOS has a spatial physical instrument and reserved mobile copy/CTA/rail positions. Four optimized concept environment plates were added; the approved Man sequence and other chapters remain in place. See [visual correction](ASCEND_JOURNEY_THRESHOLD_LIFEOS.md). Hardware acceptance and production promotion remain pending.
+
+---
+
+# Ascend Journey human slice — 2026-09-27
+
+The approved Man chapter now has three distinct camera states and a close human action, replacing the small floating labels. Two consistent generated concept frames are compressed to WebP and staged for later approved motion clips. It retains native scroll, direct exits, Still/reduced motion and the existing Aethelios renderer. See [human slice and optional manual Runway guide](ASCEND_JOURNEY_HUMAN_SLICE.md). Physical Fold visual and performance acceptance remains pending; production is unchanged.
+
+---
+
+# Ascend Journey motion recovery — 2026-09-27
+
+The founder's Fold preview exposed that mobile scene holds were disabled by breakpoint. This draft branch restores native-scroll choreography for the opening three acts, LifeOS and ritual at phone and open Fold widths, replaces boxed mobile LifeOS controls with a six-step rail, and preserves the Still/reduced-motion flow. See [motion recovery and remaining art direction](ASCEND_JOURNEY_MOTION_RECOVERY.md). `npm run check` and 17 targeted browser scenarios pass at 344/768/1440; the browser compares intermediate scene states and verifies exits. Physical Fold frame pacing and visual acceptance are pending. Production remains unchanged.
+
+---
+
+# Ascend Journey Phase 5 — 2026-09-27
+
+The public final door now leads to a server-rendered member entrance with the existing invitation sign-in flow, account-aware return path and shared visual language in the invited welcome. Details, boundaries and validation: [ASCEND_JOURNEY_PHASE_5.md](ASCEND_JOURNEY_PHASE_5.md). Production remains unchanged.
+
+---
+
+# Ascend Journey Phase 4 — 2026-09-27
+
+Built the physical and human close: Reserve consultation and men’s salon concept frames, a generated Collective conversation campaign frame, retained Louisiana legacy, and a material final door with direct account, shop and story paths. No booking, live community, or open signup is implied. Details: [ASCEND_JOURNEY_PHASE_4.md](ASCEND_JOURNEY_PHASE_4.md). Verification and hardware limitations are recorded there.
+
+---
+
+## September 26 — public scene repair (founder approved)
+
+Implemented: shared member Aethelios renderer and SVG fallback; removed separate faceted sculpture; stable product/architectural backgrounds; bounded ambient layers; early scene motion with native sticky holds on larger screens; measured navigation inset; consultation-centered Reserve concept and broader role copy. Details and research: [SCENE_REPAIR.md](SCENE_REPAIR.md).
+
+Validation: production build, ESLint and strict TypeScript pass; 84 unit tests pass; 19 public journey/continuous-motion/member-orb browser tests pass at phone/Fold-like/desktop sizes; 10 existing migration files match recorded ledger. Browser evidence uses software-rendered Chromium. No actual Fold GPU tearing reproduction or hardware FPS claim. Production is not promoted; auth/model/invitation/device release gates remain separate.
+
+# Living Estate + new founder identity — 2026-09-26
+
+Implemented homepage environmental layers, generated emerald gallery/observatory/salon concepts, five transparent product visualizations, visibility-aware ambient light/mist/stars, graduated real-time armillary, tighter chapter navigation and complete supplied crest integration. Separate star/laurel PWA/Apple icons use versioned URLs and offline cache v2. See LIVING_ESTATE.md for asset provenance, placements, exact scope and research.
+
+Verification: lint, strict typecheck, 84 unit tests, production build and migration snapshot (10 existing files) pass. Ten targeted browser checks pass at 344/768/1440 widths; four journey tests repeated after armillary reflection changes, including ambient motion/Still, reduced motion, product selection and crest rendering. Final mobile image-sizing/CTA-contrast/layout adjustments passed a narrow browser recheck. Browser CLI unavailable; existing Playwright Chromium used. No hosted auth, real-model or physical PWA install claims. Production unchanged; preview branch for review.
+
+---
+
+# Cinematic Estate homepage — 2026-09-26
+
+Implemented founder-approved directed public homepage: original emerald/Louisiana arrival, native-scroll threshold, original Vitalis campaign environments (desktop and portrait), five supplied product references with accessible selector, near-viewport Three.js intelligence sculpture, labeled Reserve architectural study, legacy close and invitation. Future films plug into estate-media config. Existing authenticated OS/domain services remain unchanged. Details/storyboard/asset provenance: CINEMATIC_ESTATE.md.
+
+Verification: lint, strict typecheck, 84 unit tests, production build and all 12 targeted public/cinematic browser tests pass. Browser widths 344/768/1440, product selection, reduced motion, 3D fallback/context loss, native chapter navigation, Reserve return navigation, legacy redirects, private route cache headers and offline fallback checked. Recorded ledger verifies ten existing migration files; no new migration or hosted DB operation. Viewport screenshots inspected. An intermediate test run was invalidated by rebuilding its serving artifact; final run used a stable production build. A native hash/back-navigation failure was reproduced and fixed using Next Link for chapter navigation.
+
+Preview review only. Physical phone GPU/touch/keyboard and field Core Web Vitals remain unverified. Generated campaign assets need final label-artwork review; true textured 3D merchandise remains pending flat labels/dimensions. No production promotion, commerce activation, scanner, billing or booking activation in this milestone.
+
+---
+
+# Public material alignment — 2026-09-26
+
+Founder dashboard screenshots now govern the public material language: exact deep emerald/obsidian gradients, metallic gold buttons, inset highlights, rounded borders and shared orbital geometry. Replaced the brighter flat-green treatment in the Cinematic Emerald preview. Added bounded fine-pointer card tilt/light, preserving touch and Still mode. Phone viewport captures inspected. 12 targeted browser checks, lint, strict types, 84 unit tests and production build pass. This is a revision to PR #11; production remains unchanged.
+
+---
+
+# Cinematic Emerald — 2026-09-26
+
+Implemented the next public visual milestone on `cinematic-emerald`: visibly emerald surfaces, shared native-scroll choreography, dimensional world portals, spatial intelligence scene, Reserve architectural reveal, chapter navigation and a Vitalis product atelier. The atelier offers a labeled procedural 3D packaging study, pointer/keyboard rotation, warm/emerald lighting, reset, and a still fallback. No new dependencies, account privileges, AI endpoints, commerce operations or database changes.
+
+Verification: lint, strict typecheck, all 84 unit tests and production build pass after rebuilding a corrupted Turbopack cache. All 11 targeted public/cinematic browser tests pass at phone, tablet/Fold-like and desktop widths, including reduced motion, WebGL failure, context loss, product interaction, redirects, install guide and offline privacy boundaries. Full-page captures in this restricted browser showed compositor stitching artifacts; separate viewport captures and DOM checks confirmed one hero and a correct footer. Product, phone footer and Reserve renders were inspected. The full member browser suite was not repeated because its code is unchanged. Physical Fold/iPhone frame pacing and touch feel remain unverified.
+
+See [scope, research and next phases](CINEMATIC_EMERALD.md). Next useful interactive build: Grooming Discovery, followed by a bounded public Aethelios introduction. Real product geometry and film are replaceable later; the current study is not final packaging. Production promotion of this new milestone has not been performed.
+
+The prior Arrival + Command milestone was merged through PR #10 and deployed successfully to production at commit `8cb2e2b` on September 26. Its live routes, redirects, manifest and private cache headers were checked; no runtime errors were reported during that verification.
+
+---
+
 # Arrival + Command — 2026-09-26
 
 Implemented on `arrival-command`: cinematic public world, public product previews and Reserve gateway, existing OS moved under `/app`, invite/installation guidance, privacy-safe offline fallback, Ascend gateway, and mobile Aethelios conversation/keyboard/history refinements. See [implementation and release gates](ARRIVAL_COMMAND.md) and [cinematic media plan](CINEMATIC_MEDIA_PLAN.md). Existing APIs, RLS and database migrations remain intact. No products, billing, appointments, public waitlist or new invitations were activated.
 
 Verification:
+
 - `npm run check`: lint, strict typecheck, 84 unit/SQL tests and production build pass.
 - Browser suite: initial 63/65 passed. Fixed large-text header overflow and replaced the stop-response test's timing delay with an explicit held response. Targeted rerun: all 8 affected/public/install/offline tests passed. All 65 scenarios therefore have passing evidence across these runs, not a subsequent single full-suite run.
 - Rendered and inspected public homepage at desktop and phone sizes. Browser checks cover 344/360/390, 768 and 1440 widths, reduced motion, keyboard, streaming fixtures, redirects and cache boundaries.
@@ -203,12 +276,15 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 Founder review of the Aurelius 1E dashboard/materials on a real phone/foldable, then service activation and daily Aurelius evaluation. No body model is scheduled. The disconnected sample can be tested immediately by running the existing checkout and selecting **Explore a sample day**.
 
 When ready, sync the preserved history into the official workstation checkout, reconnect the new GitHub account, and configure protected Vercel/Supabase/Gateway access. Apply all four migrations, run real integration/founder/live-provider gates, then use Aurelius daily and assess quality with the existing rubric. Daily records are not automatically in AI context; the next intelligence slice should add a user-reviewed, source-linked daily briefing only after live quality, ownership and privacy validation. A phone-installable hosted preview follows verified Auth/HTTPS setup; never expose the local harness.
+
 # Ascend Loop V1 work in progress
 
 The first slice is documented in [ASCEND_LOOP_V1.md](ASCEND_LOOP_V1.md). It adds owner-scoped universal capture, optional structured Aethelios interpretation, a confirmed capture-to-daily-action path, carried-forward daily context, opt-in recent daily context for Aethelios, and a factual 30-day Progress history. This branch has not been deployed or migrated against hosted Supabase. Conversational baseline, full action tool registry and review extraction remain open.
+
 # Ascend Profile baseline continuation
 
 The next Ascend Loop slice is described in [ASCEND_PROFILE_PHASE.md](ASCEND_PROFILE_PHASE.md). The six-step guided baseline proposes structured facts and requires user confirmation. Corrections supersede active values with owner-scoped revision history. Command and optional Aethelios context consume current confirmed state. Proposal usage shares the existing AI quota. Both Ascend Loop migrations must precede app deployment; hosted migration, live model and two-account Auth verification remain open.
+
 # Aethelios confirmed action boundary
 
 See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation turn can now yield a reviewable `create_daily_action` proposal. Approval executes an owner-scoped atomic daily write; dismissal makes no daily change. The general tool registry and guided evening extraction remain open. Three ordered Ascend Loop migrations must precede deployment.
@@ -216,3 +292,46 @@ See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation
 # Guided evening review and tomorrow context
 
 See [ASCEND_EVENING_REVIEW.md](ASCEND_EVENING_REVIEW.md). Command now offers a confirmed, editable evening review. Aethelios can propose a draft from saved reflection and action status; manual entry works without the model. Versioned owner-only reviews feed tomorrow's Command, opt-in Aethelios context and Progress, with correction history. Four ordered migrations must precede deployment. A general tool registry, hosted Auth verification, live-model quality, device testing and lifecycle controls remain open.
+
+# Ascend Journey Phase 1 — 2026-09-27
+
+Founder-approved public entry slice on top of `cinematic-estate`: threshold, human-centered scene, shared Aethelios emergence, and spatial six-stage Ascend Loop now precede the existing product ritual. Louisiana moves from the opening to the Reserve/legacy chapters. Direct Shop/member navigation and honest preview/access boundaries remain. See [scope and provenance](ASCEND_JOURNEY_PHASE_1.md).
+
+Lint, strict typecheck, 84 unit/SQL tests and production build passed. The Playwright Chromium download returned a truncated archive in this runner, so new and updated browser interaction checks were not executed here. Physical Fold/iPhone review, real device pacing, field performance, hosted auth and commercial release gates remain open. No production deployment, database change or checkout activation.
+
+# Ascend Journey Phase 2 — 2026-09-27
+
+Founder-authorized living LifeOS scene replaces the static six-stage diagram. One labeled fictional day advances through six decisions on desktop scroll or explicit stage buttons; phones, short screens, Still and reduced-motion retain the complete scene with direct controls and natural document scroll. Public Aethelios/commerce/member destinations remain available. The existing founder browser checks were updated to expect the current `/app` post-login path. See [Phase 2 scope](ASCEND_JOURNEY_PHASE_2.md).
+
+Local lint, strict typecheck, 84 unit/SQL tests, production build and migration ledger passed. Draft PR #14 CI passed both application and database jobs, including Chromium public-journey tests, local Supabase integration and founder browser flows. Physical Fold, Safari, field performance and production release remain open. No production deployment or database change.
+
+# Ascend Journey Phase 3 — 2026-09-27
+
+The public ritual now begins with a human mirror scene and resolves to the existing Vitalis concept object. Desktop has a measured two-beat scroll hold; Fold/phone, short viewport, Still and reduced-motion display both panels in natural flow. Existing catalog preview and the opt-in Vitalis 3D atelier are reused. The ornate gallery image has been removed from the collection backdrop. See [Phase 3 scope and asset provenance](ASCEND_JOURNEY_PHASE_3.md).
+
+Local lint, strict typecheck, 84 unit/SQL tests, production build and migration ledger passed. Draft PR #15 CI passed both application and database jobs on the corrected branch, including 78 public browser tests, local Supabase integration and founder browser flows. Physical Fold/Samsung Internet and iPhone Safari, field performance and product approval remain open. No product availability, checkout, booking, database or private account behavior changed. No production deployment.
+
+# Commerce Spine V1 — 2026-09-27 (local implementation; merchant activation open)
+
+The public Aethelios chapter has a focused living-field refinement on `aethelios-living-field`; see [AETHELIOS_LIVING_FIELD.md](AETHELIOS_LIVING_FIELD.md). Its conceptual life domains now assemble into a scroll-drawn network around the living orb. It is a visual change only and does not alter member intelligence or commerce activation. Device review remains open.
+
+The `commerce-activation-preview` integration branch combines this commerce slice with the latest `ascend-journey-threshold-lifeos` public experience so the founder can test one coherent preview. The Headless storefront and at least one published product were confirmed in Shopify admin; live Storefront API reads, cart mutation, checkout and the Vercel preview still require verification. Preview credentials were entered by the founder in Vercel and are not stored in the repository.
+
+The existing public shop now reads live Shopify products when a Headless storefront is configured, with editorial worlds and product pages, variant selection, a responsive cart, persistent server-held cart ID and Shopify checkout handoff. Without merchant credentials, the honest previews remain. No product, Shopify store, order, customer link, Supabase migration, member benefit or live checkout was created. See [activation and release gates](COMMERCE_SPINE_V1.md). Existing member architecture remains intact.
+
+Local acceptance: `npm run check` passed lint, strict typecheck, 87 unit/SQL tests (including three commerce contract tests), and a production build; `npm run db:ledger` and `git diff --check` passed. Production HTTP smoke returned 200 for `/`, `/shop`, `/shop/vitalis`, `/shop/cart` and `/app`, 503 for the unconfigured commerce API, and a redirect to `/shop` for unconfigured checkout. Public browser suite could not launch five browser scenarios because Chromium is absent; the download returned an invalid archive. One route-only browser request test passed. No live Shopify cart, checkout, physical Fold review, or full regression browser suite is claimed.
+
+---
+# Aethelios Chat Foundation — 2026-09-27 (implementation branch)
+
+Founder-approved conversation foundation extends existing owner-scoped chat with per-message projections, revisions, archive/rename, indexed title/content search, pagination, generated titles, long-thread summaries and relevant-memory selection. Existing conversation/turn IDs and approved daily-action links remain. This branch also incorporates the current public Aethelios living-field work and commerce preview. Details, research, migration and open gates: [AETHELIOS_CHAT_FOUNDATION.md](AETHELIOS_CHAT_FOUNDATION.md). Local lint, typecheck, 88 tests, build and ledger check passed. Browser binary download is blocked; live Auth/model, hosted migration, and physical-device tests remain open. No production deployment.
+
+---
+
+# Aethelios Studio V1 — 2026-09-27 (local build)
+
+The first Studio image project/iteration slice is implemented on `aethelios-studio-v1`; see [scope, research, security and release gates](AETHELIOS_STUDIO_V1.md). A new private bucket migration follows the unapplied Chat Foundation migration. Real Supabase Storage/Auth, live OpenAI image generation, browser/device interaction and cost/latency are not yet verified. No hosted migration or production deployment. The prior branch publication auto-review block remains in effect; this work remains local pending explicit source publication authorization.
+
+# Aethelios release readiness — 2026-09-27 (local branch)
+
+The Chat + Studio release pass is on `aethelios-release-readiness`. A read-only audit confirmed that the live Gent Ascend Supabase project includes five Reserve-owned migrations absent from this repository; the new chat and Studio migrations are still unapplied. The reference upload path now avoids Vercel's 4.5 MB Function request limit, and failed versions can be reused without automatic duplicate requests. See [release sequence and evidence](AETHELIOS_RELEASE_READINESS.md). No hosted migration, source push, or deployment in this pass.

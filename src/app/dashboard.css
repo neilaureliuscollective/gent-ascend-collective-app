@@ -1243,3 +1243,29 @@ html[data-material='solid'] .daily-editor::backdrop {
   display: grid;
   gap: 12px;
 }
+/* Studio shares the restrained Aethelios material language. */
+.studio-page{max-width:1500px;margin:0 auto;padding:clamp(1rem,3vw,3rem)}
+.studio-surface{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr);gap:1.25rem;min-height:65vh}
+.studio-projects,.studio-main{background:rgba(8,19,16,.84);border:1px solid rgba(196,145,47,.25);border-radius:18px;padding:clamp(1rem,2vw,1.75rem)}
+.studio-section-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}
+.studio-section-head h2,.studio-empty h2{margin:.25rem 0;font-size:clamp(1.3rem,2.4vw,2rem)}
+.studio-projects nav{display:grid;gap:.3rem}
+.studio-projects button,.studio-card-actions button,.studio-card-actions a,.studio-source button{font:inherit;color:#e9dec6;background:transparent;border:0;cursor:pointer;text-align:left}
+.studio-projects nav button{padding:.8rem;border-radius:9px;overflow-wrap:anywhere}
+.studio-projects nav button:hover,.studio-projects nav button.selected{background:rgba(11,59,50,.75);color:#fff}
+.studio-empty{max-width:38rem;margin:8vh auto;line-height:1.65}
+.studio-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:1rem;margin-bottom:2rem}
+.studio-card{border:1px solid rgba(196,145,47,.22);border-radius:12px;overflow:hidden;background:#0b1512}
+.studio-card img,.studio-placeholder{display:block;width:100%;height:250px;object-fit:contain;background:#050706}
+.studio-placeholder{display:grid;place-items:center;color:#cbbd9e}
+.studio-card-copy{padding:1rem}.studio-card-copy p{margin:0 0 .6rem;overflow-wrap:anywhere}.studio-card-copy small{display:block;color:#b5aa92}
+.studio-card-actions{display:flex;gap:1rem;margin:.8rem 0}.studio-card-actions button,.studio-card-actions a{color:#d4ad62;text-decoration:underline;text-underline-offset:3px}
+.studio-composer{position:sticky;bottom:0;background:#0a1814;border:1px solid rgba(196,145,47,.38);border-radius:14px;padding:1rem;box-shadow:0 -12px 30px #050706a8}
+.studio-composer>label{display:block;margin:.6rem 0}.studio-composer textarea{width:100%;min-height:110px;background:#07100d;color:#f2ede2;border:1px solid #536354;border-radius:9px;padding:1rem;font:inherit;resize:vertical}
+.studio-controls{display:flex;align-items:end;gap:1rem;flex-wrap:wrap;margin-top:.8rem}.studio-controls label{display:grid;gap:.35rem;color:#d4c9b6}.studio-controls select{background:#10221b;color:#fff;border:1px solid #607263;padding:.65rem;border-radius:7px;font:inherit}.studio-upload{cursor:pointer}.studio-upload input{max-width:160px;font-size:.75rem}
+.studio-source{display:flex;align-items:center;gap:.8rem;padding:.5rem;background:#0c2d24;border-radius:8px}.studio-source img{width:48px;height:48px;object-fit:cover}.studio-source button{margin-left:auto;text-decoration:underline}
+.studio-error,.studio-notice{padding:.8rem 1rem;border:1px solid #ae7945;border-radius:8px;color:#f4d7b1}
+@media(max-width:760px){.studio-surface{grid-template-columns:1fr}.studio-projects nav{display:flex;overflow-x:auto}.studio-projects nav button{white-space:nowrap}.studio-composer{position:static}.studio-page{padding:1rem}.studio-gallery{grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr))}}
+.studio-new-project{display:grid;gap:.5rem;margin-bottom:1rem}.studio-new-project input{min-width:0;padding:.7rem;background:#07100d;color:#fff;border:1px solid #607263;border-radius:7px;font:inherit}.studio-new-project button{color:#d4ad62;text-decoration:underline}
+.studio-retry{margin-top:.7rem;background:transparent;border:0;padding:0;color:#d4ad62;text-decoration:underline;font:inherit;cursor:pointer}
+.studio-references{margin:1rem 0 2rem}.studio-reference-list{display:flex;gap:.6rem;overflow-x:auto;padding:.4rem 0}.studio-reference-list button{flex:0 0 78px;width:78px;height:78px;border:1px solid #536354;border-radius:8px;background:#07100d;padding:2px;cursor:pointer}.studio-reference-list button[aria-pressed='true']{border:2px solid #c4912f}.studio-reference-list img{width:100%;height:100%;object-fit:cover;border-radius:5px}

@@ -1,0 +1,261 @@
+/* Phase 4: the digital world resolves into a place, people and a clear final door. */
+.reserve-world,
+.collective-world {
+  position: relative;
+  isolation: isolate;
+  min-height: 780px;
+  height: 100svh;
+  overflow: hidden;
+  scroll-margin-top: 122px;
+  background: #040c09;
+}
+.reserve-world-environment,
+.reserve-world-shade,
+.collective-world-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.reserve-world-environment img {
+  object-fit: cover;
+  object-position: 66% center;
+}
+.reserve-world-shade {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, #020806f5 0%, #03100cda 28%, #061a1370 57%, transparent 85%),
+    linear-gradient(0deg, #020806dd, transparent 22%, transparent 75%, #0208065c);
+}
+.reserve-world-copy,
+.collective-world-copy {
+  position: relative;
+  z-index: 3;
+  width: min(700px, 55vw);
+  padding: clamp(125px, 18svh, 210px) 0 110px 7vw;
+  text-shadow: 0 5px 32px #000a;
+}
+.reserve-world h2,
+.collective-world h2 {
+  font-size: clamp(3.3rem, 5.8vw, 6.8rem);
+  line-height: 1.03;
+  margin: 23px 0 29px;
+}
+.reserve-world-copy > p:not(.estate-eyebrow),
+.collective-world-copy > p:not(.estate-eyebrow) {
+  color: #e2e7da;
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  line-height: 1.65;
+  max-width: 470px;
+}
+.reserve-world-line,
+.collective-world-threads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+  margin: 27px 0 32px;
+  color: #ead096;
+  font:
+    10px/1.6 var(--font-sans),
+    sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.reserve-world-line span,
+.collective-world-threads span {
+  border-top: 1px solid #c4912f99;
+  padding-top: 9px;
+}
+.reserve-world-copy small,
+.collective-world-copy small {
+  display: block;
+  color: #c0c6b8;
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  margin-top: 24px;
+  max-width: 400px;
+}
+.reserve-world-craft {
+  position: absolute;
+  z-index: 2;
+  right: 6vw;
+  bottom: 8%;
+  width: min(28vw, 390px);
+  height: min(36svh, 300px);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #c69d576e;
+  box-shadow:
+    0 28px 60px #0009,
+    inset 0 0 0 6px #06150f88;
+  background: #051810;
+}
+.reserve-world-craft img {
+  object-fit: cover;
+  object-position: 75% center;
+}
+.reserve-world-craft figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 18px 16px 12px;
+  color: #f2dca9;
+  background: linear-gradient(transparent, #030b08e8 50%);
+  font:
+    9px/1.4 var(--font-sans),
+    sans-serif;
+  letter-spacing: 0.14em;
+}
+.collective-world-image {
+  object-fit: cover;
+  object-position: 70% center;
+}
+.collective-world-shade {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, #030907f7 0%, #030b09e8 25%, #030b0985 50%, transparent 80%),
+    linear-gradient(0deg, #020806d9, transparent 24%, transparent 72%, #0208066b);
+}
+.collective-world-copy {
+  padding-top: clamp(130px, 19svh, 225px);
+}
+.collective-world-copy .estate-actions {
+  margin-top: 20px;
+}
+.estate-invitation {
+  min-height: 760px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 125px 7vw 140px;
+  background: radial-gradient(ellipse at 50% 43%, #16422c 0%, #081f16 39%, #020806 75%), #030b08;
+}
+.estate-invitation::before {
+  content: '';
+  position: absolute;
+  inset: 6% max(4vw, 20px);
+  border: 1px solid #bf9b553e;
+  box-shadow:
+    inset 0 0 95px #0008,
+    0 0 100px #154b322a;
+  pointer-events: none;
+}
+.estate-invitation::after {
+  content: '';
+  position: absolute;
+  inset: 12% max(8vw, 34px);
+  border: 1px solid #c2a16727;
+  pointer-events: none;
+}
+.estate-invitation > :not(.scene-atmosphere) {
+  position: relative;
+  z-index: 1;
+}
+.estate-invitation h2 {
+  font-size: clamp(3.4rem, 6vw, 7.2rem);
+}
+.estate-invitation .estate-actions {
+  gap: 22px 30px;
+}
+@media (max-width: 900px) {
+  .reserve-world,
+  .collective-world {
+    height: auto;
+    min-height: 850px;
+  }
+  .reserve-world-copy,
+  .collective-world-copy {
+    width: min(650px, 70vw);
+  }
+  .reserve-world-craft {
+    right: 5vw;
+    bottom: 6%;
+    width: 34vw;
+    height: 30svh;
+  }
+}
+@media (max-width: 600px) {
+  .reserve-world,
+  .collective-world {
+    min-height: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .reserve-world-environment {
+    height: 540px;
+    bottom: auto;
+  }
+  .reserve-world-environment img {
+    object-position: 75% top;
+  }
+  .reserve-world-shade,
+  .collective-world-shade {
+    background: linear-gradient(0deg, #030b08 0%, #030b08f1 29%, #030b088a 54%, transparent 80%);
+  }
+  .reserve-world-copy,
+  .collective-world-copy {
+    width: auto;
+    padding: 420px 7vw 55px;
+  }
+  .reserve-world h2,
+  .collective-world h2 {
+    font-size: clamp(2.8rem, 11vw, 4.5rem);
+    margin: 16px 0 20px;
+  }
+  .reserve-world-copy > p:not(.estate-eyebrow),
+  .collective-world-copy > p:not(.estate-eyebrow) {
+    font-size: 1rem;
+  }
+  .reserve-world-craft {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-self: flex-end;
+    width: 62vw;
+    height: 220px;
+    margin: -20px 7vw 70px 0;
+  }
+  .collective-world-image {
+    height: 540px !important;
+    object-position: 77% center;
+  }
+  .collective-world-copy {
+    padding-top: 410px;
+    padding-bottom: 95px;
+  }
+  .collective-world-threads {
+    gap: 9px 17px;
+  }
+  .estate-invitation {
+    min-height: 680px;
+    padding: 100px 9vw 115px;
+  }
+  .estate-invitation h2 {
+    font-size: clamp(3rem, 12vw, 4.6rem);
+  }
+  .estate-invitation .estate-actions {
+    flex-direction: column;
+    gap: 22px;
+  }
+}
+@media (max-width: 390px) {
+  .reserve-world-copy {
+    padding-top: 395px;
+  }
+  .reserve-world-craft {
+    margin-top: -12px;
+  }
+  .collective-world-copy {
+    padding-top: 385px;
+  }
+  .reserve-world-line {
+    gap: 9px 15px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reserve-world-craft,
+  .collective-world-image {
+    transform: none !important;
+  }
+}
