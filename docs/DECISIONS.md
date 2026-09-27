@@ -1,5 +1,13 @@
 # Decisions and research evidence
 
+2026-09-27 — Ascend Journey mobile motion correction. The first preview revealed an incorrect desktop-only cinematic breakpoint. Keep native document scrolling and sticky, scrubbed compositions at Fold and phone widths with the existing GSAP ScrollTrigger dependency. Narrow screens change composition and duration, not whether the scene is directed. Still and OS reduced motion retain the complete normal-flow reading path. `svh` provides stable scene geometry while mobile browser chrome changes; transforms and opacity carry foreground motion. Official references: [GSAP ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/), [Chrome viewport units](https://developer.chrome.com/blog/whats-new-css-ui-2023), [web.dev animation performance](https://web.dev/articles/animations-and-performance). Hardware review remains necessary before any performance claim or production promotion.
+
+2026-09-27 — Ascend Journey Phase 3. Make the existing ritual scene human first, then reveal one product. Reuse the real Vitalis concept assets and opt-in 3D atelier instead of introducing a second 3D canvas or five simultaneous product animations on the homepage. A 91 KB concept mirror frame supplies the human moment. Desktop uses a bounded two-beat ScrollTrigger; touch/short/Still/reduced-motion layouts show both complete panels in document flow. Section ResizeObserver refreshes scroll measurements after responsive height changes. Preserve global Shop access and honest nonorderable preview status. Official [GSAP ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/), [Next 16 Image](https://nextjs.org/docs/app/api-reference/components/image), [web.dev responsive images](https://web.dev/learn/design/responsive-images) and [MDN reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40media/prefers-reduced-motion) reviewed. [Baymard homepage/category research](https://baymard.com/research/homepage-and-category-usability) informs direct product finding, not a measured conversion claim. Physical Fold/Safari and field performance remain unverified.
+
+2026-09-27 — Ascend Journey Phase 2. Reuse the existing GSAP/native-scroll architecture for one complete authored LifeOS decision instead of adding a renderer, smooth-scroll library or simulated private data. Desktop threshold updates hold the scene long enough to understand each step; touch and short viewport layouts use explicit buttons and document flow. Browser work should primarily change opacity/transform and respect reduced motion and Still. The current member Ascend Loop (`/app/ascend`, Command, goals and review) supports confirmed human actions; public presentation avoids claiming autonomous personal state changes. Official references reviewed: [GSAP ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/), [web.dev animation performance](https://web.dev/articles/animations-guide/), [W3C pause/stop/hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html), and [Chrome foldable viewport segments](https://developer.chrome.com/blog/viewport-segments-api-shipped). Layout uses responsive CSS rather than hinging on viewport segment support.
+
+2026-09-27 — Ascend Journey Phase 1. Extend the `cinematic-estate` branch rather than replace its GSAP/Three architecture. The public opening becomes threshold → human → shared Aethelios visual → six-stage LifeOS representation; existing commerce preview and Reserve chapters remain reachable. Native scroll, semantic server HTML, the existing orb renderer, and natural-flow phone/tablet layouts minimize duplicated rendering systems and touch-scroll risk. WebGPU, audio, full 3D human modeling, and smooth-scroll interception are deferred. The illustrated man is a concept asset, not a member or health model. Official documentation reviewed: [GSAP ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/), [Next.js lazy loading](https://nextjs.org/docs/app/guides/lazy-loading), [React Three Fiber performance scaling](https://r3f.docs.pmnd.rs/advanced/scaling-performance), [Web Vitals](https://web.dev/articles/vitals), [W3C reduced motion technique](https://www.w3.org/WAI/WCAG22/Techniques/css/C39), and [Chrome viewport segments](https://developer.chrome.com/blog/viewport-segments-api-shipped). The repo uses direct Three.js, so R3F was researched but not introduced. No field-performance or physical Fold claim follows from browser emulation.
+
 2026-09-21 — Founder selected the new canonical repository https://github.com/neilaureliuscollective/aurelius-collective-app.git under the new neilaureliuscollective account. It supersedes legacy-sanctum-co/aurelius-collective-app. Preserve ~/Desktop/aurelius-og and all commits; change origin rather than reinitialize or transfer the old empty remote. GitHub confirmed the new repository exists and is empty. Write authentication remains pending.
 
 Checked 2026-09-20. Published npm latest metadata corroborated framework versions; lockfile is authoritative for actual install.
@@ -101,12 +109,12 @@ Founder approved the researched Orb proposal. Preserve the logo and 1E environme
 
 Listening/speaking are explicitly visual previews until real voice exists. The preview has no microphone, audio, model request or persistence. Actual request/stop state takes precedence. CPU/software-WebGL checks cannot certify phone thermals or battery; add adaptive resolution and preserve lifecycle pause/disposal. Scope and references: AURELIUS_1F.md. No push or deployment.
 
-
 ## 2026-09-22 — Founder selects direct OpenAI and new GitHub destination
 
 Use https://github.com/neilaureliuscollective/gent-ascend-collective-app for this existing application. Connect directly to OpenAI using server-only OPENAI_API_KEY so usage draws on the founder's existing OpenAI API credits. Retain AI SDK 7.0.107 and add compatible @ai-sdk/openai 4.0.72 (provider protocol 4.0.17). Use Responses with store=false, explicit api.openai.com base URL, no Gateway fallback, unchanged quotas and error redaction. Keep the existing default model as gpt-6-astra, verified in OpenAI documentation. Broader product pivot remains planning-only.
 
 Official references checked: https://ai-sdk.dev/providers/ai-sdk-providers/openai.md and https://developers.openai.com/api/docs/models/gpt-6-astra. Provider package source and the existing lockfile verified for compatibility. Live key/account model access is not verified by mock tests.
+
 # 2026-09-24 — Aethelios cross-app publication seam
 
 Keep the private founder workspace and member app independently authorized.
@@ -122,16 +130,17 @@ https://supabase.com/docs/guides/auth/oauth-server/token-security.
 ## 2026-09-25 — Confirmed evening reviews, separate from chat and memory
 
 Extend the existing daily record with a versioned, person-owned review rather than promoting conversational text to memory. Aethelios may propose an editable three-field draft from a saved day, but confirmation records the user's choice. The RPC checks local day and source/review versions under the same person lock as daily writes; revision history preserves corrections. Command carries tomorrow context and unresolved friction, while Progress reads historical confirmed reviews. No causal patterns are inferred from sparse records. Primary technical references checked 2026-09-25: https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data and https://supabase.com/docs/guides/api/securing-your-api and https://supabase.com/docs/guides/database/functions. Supabase changelog index was attempted but not retrievable from this environment; verify it alongside real migration testing before deployment.
+
 ## 2026-09-25 — Private Founding Members pilot
 
 Founder requested a parallel next build while he tests the daily system. Prioritize a 4–6-person private cohort over commerce/affiliate breadth: use a founder-reserved normalized email, Supabase Auth's verified identity and an owner-derived claim RPC to grant existing beta capability. Dashboard invitation is a separate trusted manual step, avoiding a service-role secret in the consumer app. SSR invite template sends a token hash to `/auth/confirm`; no public signup. Feedback is voluntary and visible to the founder, while LifeOS records remain owner-only. Official Supabase email template/Next.js SSR guidance, function security and RLS were checked 2026-09-25; links and acceptance limits are in [pilot plan](FOUNDING_MEMBERS_PILOT.md).
-
 
 ## 2026-09-26 — Arrival + Command
 
 Founder approved public world + existing OS route separation, preview collections, Reserve gateway and install/mobile conversation improvements. Preserve the modular monolith, RLS, model adapter and existing AI persistence. Keep Shopify, paid membership and real Reserve activation in subsequent gated slices.
 
 Evidence reviewed in this session:
+
 - Next.js route groups: https://nextjs.org/docs/app/api-reference/file-conventions/route-groups
 - Shopify Cart API and checkout handoff: https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage
 - Shopify customer accounts: https://shopify.dev/docs/storefronts/headless/building-with-the-customer-account-api
@@ -142,3 +151,36 @@ Evidence reviewed in this session:
 - Video loading: https://web.dev/articles/lazy-loading-video and https://web.dev/learn/performance/video-performance
 
 See ARRIVAL_COMMAND.md and CINEMATIC_MEDIA_PLAN.md for implementation boundaries and shooting/replacement plan.
+
+## 2026-09-26 — Cinematic Emerald public foundation
+
+Founder approved implementation after reviewing the first public pass. Use the existing Next.js/Three.js architecture with one native-scroll director, emerald materials, dimensional sections and a lazy interactive product study. No scroll interception or always-running 3D loop. Keep official crest and current API/auth/commerce boundaries. See CINEMATIC_EMERALD.md for official source links, implementation limits and the follow-on Grooming Discovery and guest intelligence sequence.
+
+## 2026-09-26 — Directed cinematic homepage
+
+Founder approved a continuous public journey following storyboard/research. Added GSAP + @gsap/react for scoped scroll timelines now that the opening needs coordinated scene staging. Preserved native scrolling, Next server content, existing public/private boundaries and media slots. Three.js intelligence sculpture loads near view with still/context-loss fallback and full disposal. Original environment/campaign imagery and supplied five-product references are documented in CINEMATIC_ESTATE.md. No final SKU 3D accuracy claim; exact flat labels/dimensions remain prerequisites for final merchandise models. Official references: https://gsap.com/resources/React/ , https://gsap.com/docs/v3/Plugins/ScrollTrigger/ , https://modelviewer.dev/examples/color , https://threejs.org/docs/pages/GLTFLoader.html .
+
+## 2026-09-26 — Living Estate and updated founder seal
+
+Founder approved environment build and supplied new tailored-gentleman crest. Preserve exact original crest, use generated companion only for small install icons; retain old originals. Ambient scene layers complement native scroll; pause offscreen/hidden/Still/reduced motion. Selective Three armillary with environment reflections, no real-time shadow maps. Generated Reserve image clearly labeled as atmosphere concept, Gent emblem removed from Reserve representation. Product generated cutouts are campaign visualizations, not print label masters. See LIVING_ESTATE.md for sources, placement plan and limitations.
+
+## 2026-09-26 — one Aethelios visual and stable scene architecture
+
+Founder approved the public scene repair. Reuse the existing member orb renderer and fallback through a public decorative adapter; remove the parallel faceted sculpture. Do not import conversation services or simulate microphone/model activity. Keep architectural backgrounds stable and animate bounded foregrounds. Native sticky stages have a measured navigation inset and only activate where the viewport can contain the composition. Public Reserve representation centers consultation/products/relationship alongside Katie's salon craft, with honest concept/availability labels. Sources, tradeoffs and hardware limitations: SCENE_REPAIR.md.
+
+## 2026-09-27 — Ascend Journey Phase 5: public-to-personal entrance
+
+The former `/enter` redirect now renders inside the existing public layout, preserving the same crest, obsidian/green/gold materials, persistent Shop navigation and optional Still mode. Its account state is resolved server-side from the existing verified Supabase claims; it does not infer access from metadata or a client flag. The existing password Server Action and private invitation claim remain authoritative. An allowlisted form marker only chooses whether sign-in errors return to `/enter` or the legacy `/app/you` form; successful sign-in still sends ready members to Command and others to the founding-member welcome. The verified invite callback retains its direct welcome route. That screen now shares the entrance motif in both claim and first-session states. No open registration, new Auth provider, new data read, RLS change or artificial transition delay is added.
+
+Research checked against the September 27 Supabase [SSR client guide](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [Auth changelog](https://supabase.com/changelog?tags=auth), [getClaims reference](https://supabase.com/docs/reference/javascript/auth-getclaims), Next.js 16 [route groups](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups) and [Server Function redirect](https://nextjs.org/docs/app/api-reference/functions/redirect), and [W3C reduced motion](https://www.w3.org/WAI/WCAG22/Techniques/css/C39). The route group preserves `/enter` as the URL; a server action redirect supports progressive enhancement; cookie-backed SSR and the existing proxy retain the session. The existing stack has no relevant breaking change requiring a package or auth architecture migration. The visual handoff uses CSS and a shared image, not a second WebGL canvas or a forced route animation.
+## 2026-09-27 — Commerce Spine V1
+
+Founder approved the planning pass for implementation. Build within the existing Next.js public shop, using Shopify Headless Storefront API `2026-07` for merchandise/cart and Shopify-hosted checkout. Keep Supabase Auth/membership independent; guest and members can shop without claiming automatic Shopify customer association. Retain preview data when a live store is unavailable, and exclude subscription-only items until the Headless channel path is verified. Activation, boundaries and primary references are in [Commerce Spine V1](COMMERCE_SPINE_V1.md).
+
+## Aethelios Studio V1 — 2026-09-27
+
+Founder requested research and execution of the next phase after Chat Foundation. Reuse the verified session/capability boundary and private Supabase Storage. Keep project/version lineage in application Postgres, render with the current OpenAI Responses image tool using `store:false`, and send the selected saved image as an input for edits. This avoids relying on provider conversation retention while preserving a future bridge from chat messages to Studio versions. Fast/precise model selection, a 12-request rolling allowance, one in-flight request and explicit saved outcomes bound initial cost. Sources and open gates are in [AETHELIOS_STUDIO_V1.md](AETHELIOS_STUDIO_V1.md).
+
+## Aethelios Chat + Studio release hardening — 2026-09-27
+
+A read-only hosted audit revealed 16 applied Gent Ascend/Reserve migrations in one Supabase project, whereas this repository owns eleven of them. A broad CLI migration push is unsafe until the shared ledger is reconciled. Release only the two reviewed, ordered Aethelios migrations through a controlled migration step, after staging/ownership testing. Replace the 10 MB upload-through-Function with direct private Storage upload and server-validated finalization; Vercel's 4.5 MB Function body limit makes the original route fail on common phone photos. See [AETHELIOS_RELEASE_READINESS.md](AETHELIOS_RELEASE_READINESS.md) for exact gates and primary references.

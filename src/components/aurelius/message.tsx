@@ -9,11 +9,17 @@ export const ConversationTurn = memo(function ConversationTurn({
   onFeedback,
   disabled,
   action,
+  versions,
+  onCopy,
+  onRevise,
 }: {
   turn: Turn;
   onFeedback: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
   action?: {proposal?:ActionProposal;onChanged:()=>Promise<void>};
+  versions?:Turn[];
+  onCopy?:()=>void;
+  onRevise?:(kind:'retry'|'regenerate'|'edit')=>void;
 }) {
   return (
     <article className="conversation-turn">
@@ -46,6 +52,7 @@ export const ConversationTurn = memo(function ConversationTurn({
             {turn.assistant_text}
           </Markdown>
         </div>
+        {versions?.map(previous=><details className="message-version" key={previous.id}><summary>Previous version</summary><div className="message-markdown"><Markdown skipHtml>{previous.assistant_text || 'No completed reply.'}</Markdown></div></details>)}
         {turn.status !== 'complete' && (
           <p className="message-state">
             {turn.status === 'pending'
@@ -73,6 +80,13 @@ export const ConversationTurn = memo(function ConversationTurn({
             </button>
           </div>
         )}
+        <div className="message-tools">
+          {turn.status==='complete' && <button type="button" onClick={onCopy}>Copy</button>}
+          {onRevise && !disabled && (turn.status==='complete' ? <>
+            <button type="button" onClick={()=>onRevise('regenerate')}>Regenerate</button>
+            <button type="button" onClick={()=>onRevise('edit')}>Edit and resend</button>
+          </> : turn.status!=='pending' ? <button type="button" onClick={()=>onRevise('retry')}>Retry reply</button> : null)}
+        </div>
         {turn.status==='complete'&&action&&<ActionReview turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
       </div>
     </article>

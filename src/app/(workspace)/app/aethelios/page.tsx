@@ -52,6 +52,8 @@ export default async function AetheliosPage({
           <Link href="/app/aethelios/meet" className="text-link">
             Meet Aethelios →
           </Link>
+          <br />
+          <Link href="/app/studio" className="text-link">Open Studio →</Link>
         </p>
       </div>
       {isFounder && (

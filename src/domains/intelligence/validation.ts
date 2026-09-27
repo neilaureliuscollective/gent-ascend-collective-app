@@ -5,8 +5,10 @@ export const chatInput = z
     requestId: z.uuid(),
     text: z.string().trim().min(1).max(6000),
     includeContext: z.boolean(),
+    sourceTurnId: z.uuid().optional(),
+    revisionKind: z.enum(['retry','regenerate','edit']).optional(),
   })
-  .strict();
+  .strict().refine(v=>Boolean(v.sourceTurnId)===Boolean(v.revisionKind));
 export const memoryInput = z
   .object({
     id: z.uuid(),

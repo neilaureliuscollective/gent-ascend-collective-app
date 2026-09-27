@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OrbitSignature } from '@/components/visual/orbit-signature';
 import { collectionPreviews } from '@/domains/catalog/preview';
 
 export function Chapter({ number, label }: { number: string; label: string }) {
@@ -17,6 +18,7 @@ export function CollectionObject({ form, number }: { form: string; number: strin
       role="img"
       aria-label="Abstract packaging study; final packaging is not shown"
     >
+      <OrbitSignature />
       <div className="object-halo" />
       <div className="object-plinth" />
       <div className="object-vessel">
@@ -53,6 +55,7 @@ export function CollectionGrid() {
 export function Invitation() {
   return (
     <section className="world-invitation">
+      <OrbitSignature />
       <span className="world-kicker">A considered beginning</span>
       <h2>
         Find your way <em>in.</em>

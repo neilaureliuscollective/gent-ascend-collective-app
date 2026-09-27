@@ -1,8 +1,10 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
-// Read-only snapshot of the hosted Gent Ascend migration ledger, 2026-09-25.
-// The database was queried for version, name and md5(statements[1]); no production mutation.
+// Read-only snapshot of Gent Ascend-owned files in the shared hosted ledger,
+// checked again on 2026-09-27. Five Reserve-owned migrations are also applied
+// in the same project but their source is maintained in a separate repository.
+// This local hash check does not compare the live database on each run.
 const applied = new Map([
   ['20260924150752_202609200001_foundation.sql', 'dea15ce18e0d6bdaab921105a2a5e029'],
   ['20260924150810_202609200002_person_and_goals.sql', 'b8acf698ab71908359bbaa6f854e0be5'],
@@ -14,6 +16,7 @@ const applied = new Map([
   ['20260925135447_ascend_profile_baseline.sql', '41aac19a4dc659c95d66cc840dab3333'],
   ['20260925135455_aethelios_confirmed_actions.sql', 'c4fe550769976ddbef025c79f152575d'],
   ['20260925135504_daily_review_continuity.sql', '610d3661d18f7e0d08dbb126b217bfbc'],
+  ['20260925210204_founding_members_pilot.sql', '7258f409ca480ac1191868c17d12c4c1'],
 ]);
 const directory = new URL('../supabase/migrations/', import.meta.url);
 const filenames = (await readdir(directory)).filter(name => name.endsWith('.sql'));
@@ -25,4 +28,4 @@ for (const [name, expected] of applied) {
 }
 const versions = filenames.map(name => name.split('_')[0]);
 if (new Set(versions).size !== versions.length) throw new Error('Duplicate migration version in source');
-console.log(`Verified ${applied.size} applied migration files against the recorded hosted ledger snapshot.`);
+console.log(`Verified ${applied.size} Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.`);

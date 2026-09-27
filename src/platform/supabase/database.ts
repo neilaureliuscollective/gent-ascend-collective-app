@@ -1,5 +1,5 @@
 import type { DayEntry, DayAction, DailyReview } from '@/domains/daily/model';
-import type { Conversation, Turn, Memory, ActionProposal } from '@/domains/intelligence/types';
+import type { Conversation, Turn, Memory, ActionProposal, ChatMessage } from '@/domains/intelligence/types';
 import type { FactKey } from '@/domains/ascend-profile/schema';
 // Initial migration contract. Replace with CLI-generated types after a validated
 // local Supabase reset; this file deliberately describes only shipped tables.
@@ -88,7 +88,21 @@ export interface Database {
         ]
       >;
       ai_conversations: Table<Conversation, never, never>;
+      ai_studio_projects: Table<{
+        id:string;person_id:string;title:string;created_at:string;updated_at:string
+      },{id:string;person_id:string;title:string},{title?:string;updated_at?:string}>;
+      ai_studio_references: Table<{
+        id:string;person_id:string;project_id:string;storage_key:string;media_type:string;byte_size:number;created_at:string
+      },{id:string;person_id:string;project_id:string;storage_key:string;media_type:string;byte_size:number},never>;
+      ai_studio_versions: Table<{
+        id:string;person_id:string;project_id:string;parent_id:string|null;reference_id:string|null;
+        prompt:string;model:string;image_size:string;status:'pending'|'complete'|'failed';
+        storage_key:string|null;failure_code:string|null;created_at:string;completed_at:string|null
+      },never,never>;
+      ai_studio_usage: Table<{id:string;person_id:string;created_at:string},never,never>;
       ai_turns: Table<Turn, never, { feedback: Turn['feedback'] }>;
+      ai_messages: Table<ChatMessage, never, never>;
+      ai_aux_usage: Table<{id:string;person_id:string;kind:'title'|'summary';created_at:string;input_tokens:number|null;output_tokens:number|null},never,never>;
       ai_memories: Table<Memory, never, never>;
       ai_usage: Table<
         {
@@ -153,6 +167,8 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      ai_studio_begin: {Args:{p_id:string;p_project:string;p_parent:string|null;p_reference:string|null;p_prompt:string;p_model:string;p_size:string};Returns:boolean};
+      ai_studio_finish: {Args:{p_id:string;p_status:string;p_key?:string|null;p_failure?:string|null};Returns:boolean};
       pilot_reserve: { Args: { p_email: string }; Returns: string };
       pilot_claim: { Args: Record<string, never>; Returns: boolean };
       pilot_submit_feedback: { Args: { p_category: string; p_message: string }; Returns: string };
@@ -202,6 +218,13 @@ export interface Database {
         Returns: number;
       };
       ai_delete_memory: { Args: { p_id: string; p_version: number }; Returns: boolean };
+      ai_update_conversation: { Args: { p_id: string; p_title: string | null; p_archive: boolean | null }; Returns: boolean };
+      ai_search_conversations: { Args: { p_query: string; p_limit?: number }; Returns: { id: string; title: string; updated_at: string; archived_at:string|null; excerpt: string }[] };
+      ai_set_generated_title: { Args: {p_id:string;p_title:string}; Returns:boolean };
+      ai_save_thread_summary: {Args:{p_id:string;p_summary:string;p_through:string;p_expected:string|null};Returns:boolean};
+      ai_reserve_auxiliary: {Args:{p_id:string;p_kind:'title'|'summary'};Returns:boolean};
+      ai_finish_auxiliary: {Args:{p_id:string;p_input:number|null;p_output:number|null};Returns:boolean};
+      ai_begin_revision: {Args: {p_conversation:string;p_source:string;p_request:string;p_text:string;p_kind:string;p_model:string;p_context:boolean;p_prompt_version:string}; Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

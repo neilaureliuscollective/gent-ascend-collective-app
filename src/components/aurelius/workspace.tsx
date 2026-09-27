@@ -9,6 +9,17 @@ import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
 import { OrbPresentation } from '../visual/orb-presentation';
+function priorVersions(turn:Turn,turns:Turn[]) {
+  const versions:Turn[]=[];
+  let parent=turn.parent_turn_id;
+  while(parent && versions.length<20) {
+    const previous=turns.find(item=>item.id===parent);
+    if(!previous) break;
+    versions.push(previous);
+    parent=previous.parent_turn_id;
+  }
+  return versions;
+}
 export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
@@ -34,6 +45,8 @@ export function AureliusWorkspace({
   const [includeContext, setIncludeContext] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [revision, setRevision] = useState<{sourceTurnId:string;revisionKind:'edit'}|null>(null);
   useEffect(() => {
     const field = composer.current;
     if (!field) return;
@@ -102,6 +115,33 @@ export function AureliusWorkspace({
     setError('');
     return load(id);
   }
+  async function updateConversation(id:string, title:string|null, archived:boolean|null) {
+    try {
+      await jsonRequest('/api/aurelius','PATCH',{id,title,archived});
+      await reload(selected);
+      setNotice(archived===true?'Conversation archived.':archived===false?'Conversation restored.':'Title saved.');
+    } catch(e) {setError(e instanceof Error?e.message:'Conversation could not be updated.');throw e;}
+  }
+  async function loadOlder() {
+    const first=data?.turns[0];
+    if(!selected || !first || loadingOlder) return;
+    setLoadingOlder(true);
+    try {
+      const response=await fetch(`/api/aurelius?conversationId=${selected}&before=${encodeURIComponent(first.created_at)}`,{cache:'no-store'});
+      const older=await response.json() as WorkspaceData;
+      if(!response.ok) throw new Error('Older messages could not be loaded.');
+      setData(previous=>previous?{...previous,turns:[...older.turns,...previous.turns],hasOlderTurns:older.hasOlderTurns}:previous);
+      follow.current=false;
+    } catch(e) {setError(e instanceof Error?e.message:'Older messages could not be loaded.');}
+    finally {setLoadingOlder(false);}
+  }
+  async function loadMoreConversations() {
+    if(!data?.nextConversationCursor) return;
+    const response=await fetch(`/api/aurelius?listBefore=${encodeURIComponent(data.nextConversationCursor)}`,{cache:'no-store'});
+    const more=await response.json() as WorkspaceData;
+    if(!response.ok) {setError('More conversations could not be loaded.');return;}
+    setData(previous=>previous?{...previous,conversations:[...previous.conversations,...more.conversations.filter(c=>!previous.conversations.some(p=>p.id===c.id))],nextConversationCursor:more.nextConversationCursor}:previous);
+  }
   useEffect(() => {
     const controller = new AbortController();
     reading.current = controller;
@@ -137,20 +177,20 @@ export function AureliusWorkspace({
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
   }, [data?.turns]);
-  async function send(event: React.FormEvent) {
-    event.preventDefault();
+  async function sendMessage(messageText:string, replace?:{sourceTurnId:string;revisionKind:'retry'|'regenerate'|'edit'}|null) {
     if (
       generation.current ||
       preview ||
       !data?.configured ||
       !data.canChat ||
-      !draft.trim() ||
+      !messageText.trim() ||
       needsReload
+      || data.currentConversation?.archived_at
     )
       return;
     const id = selected ?? crypto.randomUUID();
     const requestId = crypto.randomUUID();
-    const text = draft.trim();
+    const text = messageText.trim();
     const controller = new AbortController();
     generation.current = controller;
     setBusy(true);
@@ -162,7 +202,7 @@ export function AureliusWorkspace({
       const response = await fetch('/api/aurelius/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: id, requestId, text, includeContext }),
+        body: JSON.stringify({ conversationId: id, requestId, text, includeContext,...replace }),
         signal: controller.signal,
       });
       if (!response.ok) {
@@ -182,6 +222,8 @@ export function AureliusWorkspace({
         feedback: null,
         created_at: new Date().toISOString(),
         finished_at: null,
+        parent_turn_id:replace?.sourceTurnId??null,
+        revision_kind:replace?.revisionKind??null,
       };
       setSelected(id);
       rememberConversation(id);
@@ -233,6 +275,7 @@ export function AureliusWorkspace({
       if (buffer.trim()) consume(buffer);
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
       setDraft('');
+      setRevision(null);
       setNotice('Reply saved.');
       await reload(id);
     } catch (e) {
@@ -293,6 +336,7 @@ export function AureliusWorkspace({
     setError('');
     setNotice('');
     setTab('conversation');
+    setRevision(null);
     follow.current = true;
     composer.current?.focus();
   }
@@ -329,6 +373,10 @@ export function AureliusWorkspace({
             void reload(id).catch(() => {});
           }}
           onNew={newConversation}
+          onRename={(id,title)=>updateConversation(id,title,null)}
+          onArchive={(id,archived)=>updateConversation(id,null,archived)}
+          nextCursor={data.nextConversationCursor}
+          onMore={loadMoreConversations}
         />
       )}
       <div className={`aurelius-workspace ${compact ? 'compact' : ''}`}>
@@ -422,7 +470,7 @@ export function AureliusWorkspace({
               ) : (
                 <span className="conversation-title">
                   {selected
-                    ? data.conversations.find((c) => c.id === selected)?.title ||
+                    ? data.currentConversation?.title || data.conversations.find((c) => c.id === selected)?.title ||
                       'Current conversation'
                     : 'A space to think clearly.'}
                 </span>
@@ -468,6 +516,7 @@ export function AureliusWorkspace({
               aria-label="Conversation messages"
               aria-busy={busy}
             >
+              {data.hasOlderTurns && <button type="button" className="secondary-button older-messages" disabled={loadingOlder} onClick={()=>void loadOlder()}>{loadingOlder?'Loading…':'Load older messages'}</button>}
               {!data.turns.length ? (
                 <div className="aurelius-welcome">
                   <div className="welcome-heading">
@@ -531,12 +580,18 @@ export function AureliusWorkspace({
                   </div>
                 </div>
               ) : (
-                data.turns.map((turn) => (
+                data.turns.filter(turn=>!data.turns.some(newer=>newer.parent_turn_id===turn.id)).map((turn) => (
                   <ConversationTurn
                     key={turn.id}
                     turn={turn}
                     onFeedback={(id, value) => void feedback(id, value)}
                     disabled={blocked}
+                    versions={priorVersions(turn,data.turns)}
+                    onCopy={()=>void navigator.clipboard.writeText(turn.assistant_text)}
+                    onRevise={turn.id===data.turns.at(-1)?.id && !data.currentConversation?.archived_at ? kind=>{
+                      if(kind==='edit') {setDraft(turn.user_text);setRevision({sourceTurnId:turn.id,revisionKind:'edit'});composer.current?.focus();}
+                      else void sendMessage(turn.user_text,{sourceTurnId:turn.id,revisionKind:kind});
+                    }:undefined}
                     action={
                       turn.id ===
                         data.turns.filter((item) => item.status === 'complete').at(-1)?.id &&
@@ -575,7 +630,8 @@ export function AureliusWorkspace({
                 Latest message ↓
               </button>
             )}
-            <form className="aurelius-composer" onSubmit={send}>
+            <form className="aurelius-composer" onSubmit={event=>{event.preventDefault();void sendMessage(draft,revision);}}>
+              {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
               <label htmlFor="aurelius-message" className="sr-only">
                 Message Aethelios
               </label>
@@ -618,6 +674,7 @@ export function AureliusWorkspace({
                     className="button"
                     disabled={
                       blocked || !data.configured || !data.canChat || !draft.trim() || needsReload
+                      || Boolean(data.currentConversation?.archived_at)
                     }
                     type="submit"
                   >

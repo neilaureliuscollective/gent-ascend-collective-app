@@ -1,6 +1,6 @@
-const FALLBACK_CACHE = 'gent-ascend-fallback-v1';
+const FALLBACK_CACHE = 'gent-ascend-fallback-v2';
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(FALLBACK_CACHE).then(cache => cache.addAll(['/offline.html', '/brand/icon-192.png'])));
+  event.waitUntil(caches.open(FALLBACK_CACHE).then(cache => cache.addAll(['/offline.html', '/brand/icon-v2-192.png'])));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('gent-ascend-fallback-') && key !== FALLBACK_CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));

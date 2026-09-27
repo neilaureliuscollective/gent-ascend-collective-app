@@ -1,0 +1,43 @@
+.pilot-entry {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 4vw, 55px);
+  margin: 12px 0 30px;
+  padding: clamp(26px, 5vw, 55px);
+  border: 1px solid #c4912f78;
+  background:
+    radial-gradient(circle at 20% 40%, #18543d85, transparent 40%),
+    linear-gradient(120deg, #08291e, #030a08 80%);
+  box-shadow: inset 0 1px #d6b67548;
+}
+.pilot-entry > img {
+  flex: 0 0 auto;
+  width: clamp(72px, 9vw, 120px);
+  height: auto;
+  filter: drop-shadow(0 13px 30px #c4912f30);
+}
+.pilot-entry h2 {
+  margin: 9px 0 12px;
+  color: #f3ead8;
+  font:
+    400 clamp(2rem, 4vw, 4.2rem)/1.08 var(--font-editorial),
+    Georgia,
+    serif;
+  letter-spacing: -0.04em;
+}
+.pilot-entry p:last-child {
+  color: #d2d9ce;
+  max-width: 610px;
+  line-height: 1.6;
+}
+@media (max-width: 600px) {
+  .pilot-entry {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .pilot-entry h2 {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}

@@ -4,6 +4,11 @@ export type Conversation = {
   title: string;
   created_at: string;
   updated_at: string;
+  archived_at?: string | null;
+  title_source?: 'first_message' | 'generated' | 'user';
+  context_summary?: string;
+  summary_through?: string | null;
+  summary_updated_at?: string | null;
 };
 export type Turn = {
   id: string;
@@ -18,6 +23,16 @@ export type Turn = {
   feedback: 'helpful' | 'needs_work' | null;
   created_at: string;
   finished_at: string | null;
+  parent_turn_id?: string | null;
+  revision_kind?: 'retry' | 'regenerate' | 'edit' | null;
+};
+export type ChatMessage = {
+  id: string; person_id: string; conversation_id: string; turn_id: string|null;
+  role: 'user' | 'assistant' | 'tool'; content: string;
+  position: 0|1|2;
+  parts: Array<{type: string; [key: string]: unknown}>;
+  metadata: Record<string,unknown>;
+  status: Turn['status']; created_at: string;
 };
 export type Memory = {
   id: string;
@@ -48,6 +63,9 @@ export type WorkspaceData = {
   canChat: boolean;
   configured: boolean;
   model: string;
+  hasOlderTurns?: boolean;
+  nextConversationCursor?: string | null;
+  currentConversation?: Conversation | null;
 };
 export type StreamEvent =
   | { type: 'delta'; text: string }
