@@ -1157,3 +1157,78 @@
     animation: none !important;
   }
 }
+
+/* The public intelligence is a living emerald surface. Its internal motion is
+   independent of the scroll camera and never represents personal data. */
+.ascend-emergence-environment {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 34% 60% at 76% 46%, #287a5352, transparent 85%),
+    radial-gradient(ellipse 72% 56% at 45% 100%, #12453042, transparent 82%),
+    linear-gradient(135deg, #03100d, #09291f 52%, #04110d);
+}
+.ascend-emergence-environment::before {
+  content: '';
+  position: absolute;
+  inset: -18% -8%;
+  opacity: .32;
+  background-image:
+    linear-gradient(#c5a66a1c 1px, transparent 1px),
+    linear-gradient(90deg, #c5a66a13 1px, transparent 1px);
+  background-size: 92px 92px;
+  mask-image: radial-gradient(ellipse at 65% 50%, #000, transparent 72%);
+  transform: perspective(700px) rotateX(22deg);
+}
+.ascend-emergence-environment i {
+  position: absolute;
+  left: 61%; top: 50%;
+  width: min(66vw, 850px); aspect-ratio: 1;
+  border: 1px solid #d2ae6540;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scaleY(.58) rotate(-22deg);
+  box-shadow: 0 0 80px #236c4a24, inset 0 0 90px #ba9a4c12;
+}
+.ascend-emergence-environment i:nth-child(2) { width: min(84vw, 1100px); opacity: .4; transform: translate(-50%, -50%) scaleY(.65) rotate(25deg); }
+.ascend-emergence-environment i:nth-child(3) { width: min(108vw, 1400px); opacity: .22; transform: translate(-50%, -50%) scaleY(.72) rotate(-12deg); }
+.ascend-intelligence-camera { position: absolute; inset: 0; transform-origin: center; }
+.ascend-intelligence-visual .estate-sculpture { z-index: 3; }
+.intelligence-orb { position: relative; width: 100%; height: 100%; filter: drop-shadow(0 0 38px #2b9b6755); }
+.intelligence-orb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.intelligence-orb-static {
+  position: absolute;
+  width: 79%; aspect-ratio: 1;
+  top: 50%; left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border: 1px solid #72bd966c;
+  background: radial-gradient(circle at 34% 28%, #2b8b68, #0c4936 37%, #06241d 72%, #030e0c);
+  box-shadow: inset -18px -25px 34px #03120f, 0 0 42px #2b8b674b;
+}
+.intelligence-orb[data-rendered='true'] .intelligence-orb-static { opacity: 0; }
+.intelligence-orb-contours {
+  position: absolute;
+  inset: 0;
+  opacity: .65;
+  background: repeating-radial-gradient(ellipse at 35% 85%, transparent 0 8px, #9be0b52e 9px 10px, transparent 11px 18px);
+  transform: rotate(-25deg) scale(1.4);
+}
+.intelligence-orb-light {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 32% 32%, #a2dbb283, transparent 27%), radial-gradient(circle at center, transparent 55%, #7dca9a44 77%, transparent 83%);
+}
+.ascend-emergence[data-ambient-active='true'] .ascend-emergence-environment::before { animation: intelligence-grid 18s ease-in-out infinite alternate; }
+.ascend-emergence[data-ambient-active='true'] .ascend-emergence-environment i:first-child { animation: intelligence-architecture 25s ease-in-out infinite alternate; }
+.ascend-emergence[data-ambient-active='true'] .intelligence-orb-static { animation: intelligence-core-breathe 6s ease-in-out infinite alternate; }
+@keyframes intelligence-grid { from { opacity: .18; translate: -2% 0; } to { opacity: .45; translate: 2% -2%; } }
+@keyframes intelligence-architecture { from { opacity: .35; transform: translate(-50%, -50%) scaleY(.58) rotate(-22deg) scale(.96); } to { opacity: .7; transform: translate(-50%, -50%) scaleY(.58) rotate(-17deg) scale(1.04); } }
+@keyframes intelligence-core-breathe { from { box-shadow: inset -18px -25px 34px #03120f, 0 0 35px #2b8b673b; } to { box-shadow: inset -18px -25px 34px #03120f, 0 0 65px #56b9837a; } }
+@media (max-width: 900px) {
+  .ascend-emergence-environment i { left: 50%; top: 35%; width: 100vw; }
+  .ascend-emergence-environment i:nth-child(2) { width: 135vw; }
+  .ascend-emergence-environment i:nth-child(3) { width: 180vw; }
+  .ascend-emergence-environment::before { background-size: 62px 62px; }
+}

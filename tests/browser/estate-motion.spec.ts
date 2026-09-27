@@ -92,12 +92,22 @@ for (const width of [344, 768, 1440]) {
     await sample('.ascend-emergence', 0.12);
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
     await expect(page.locator('.ascend-emergence')).toHaveAttribute('data-ambient-active', 'true');
+    const earlyCamera = await page
+      .locator('.ascend-intelligence-camera')
+      .evaluate((el) => getComputedStyle(el).transform);
     await expect(page.locator('.ascend-intelligence-traces i').first()).toHaveCSS(
       'animation-name',
       'intelligence-signal',
     );
     await sample('.ascend-emergence', 0.8);
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
+    await expect
+      .poll(() =>
+        page
+          .locator('.ascend-intelligence-camera')
+          .evaluate((el) => getComputedStyle(el).transform),
+      )
+      .not.toBe(earlyCamera);
     if (width <= 900) {
       const separation = await page.locator('.ascend-emergence-stage').evaluate((stage) => ({
         visualBottom: stage.querySelector('.ascend-intelligence-visual')!.getBoundingClientRect()
@@ -145,14 +155,17 @@ for (const width of [344, 768, 1440]) {
       await page.evaluate(() => scrollBy(0, -120));
     }
     await page.locator('#the-intelligence').scrollIntoViewIfNeeded();
-    await expect(page.locator('.estate-sculpture .aurelius-presence')).toHaveAttribute(
-      'data-state',
-      'ready',
+    await expect(page.locator('.ascend-emergence .intelligence-orb canvas')).toHaveCount(1);
+    await expect(page.locator('.ascend-emergence .intelligence-orb')).toHaveAttribute(
+      'data-rendered',
+      'true',
     );
-    await expect(page.locator('.estate-sculpture canvas')).toHaveCount(1);
     await page.setViewportSize({ width: width === 344 ? 768 : 344, height: 760 });
     await page.getByRole('button', { name: 'Still mode', exact: true }).click();
-    await expect(page.locator('.estate-sculpture canvas')).toHaveCount(0);
+    await expect(page.locator('.ascend-emergence .intelligence-orb')).not.toHaveAttribute(
+      'data-rendered',
+      'true',
+    );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

@@ -146,22 +146,29 @@ export default function PublicHome() {
           aria-labelledby="intelligence-title"
         >
           <div className="ascend-emergence-stage">
+            <div className="ascend-emergence-environment" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
             <div className="ascend-intelligence-visual" aria-hidden="true">
-              <div className="ascend-intelligence-field">
-                <i />
-                <i />
-                <i />
-                <i />
+              <div className="ascend-intelligence-camera">
+                <div className="ascend-intelligence-field">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </div>
+                <div className="ascend-intelligence-traces">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </div>
+                <IntelligenceSculpture />
               </div>
-              <div className="ascend-intelligence-traces">
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
-              </div>
-              <IntelligenceSculpture />
               <div className="ascend-connections">
                 <span>
                   <b>YOU</b>

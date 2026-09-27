@@ -121,9 +121,43 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               0.68,
             )
             .to({}, { duration: 0.13 }, 0.92);
+          const intelligence = node.querySelector<HTMLElement>('.ascend-emergence');
+          const emergence = gsap.timeline({
+            scrollTrigger: {
+              trigger: intelligence,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 0.8,
+              invalidateOnRefresh: true,
+              onUpdate: (self) => {
+                if (intelligence) intelligence.dataset.scrollProgress = self.progress.toFixed(3);
+              },
+            },
+          });
+          emergence
+            .fromTo(
+              '.ascend-intelligence-camera',
+              { scale: 0.82, rotation: -8, yPercent: 8 },
+              { scale: 1.16, rotation: 7, yPercent: -7, duration: 1, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-emergence-environment',
+              { scale: 0.97, opacity: 0.65 },
+              { scale: 1.1, opacity: 1, duration: 1, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-connections span',
+              { opacity: 0.52, y: 10 },
+              { opacity: 1, y: -10, duration: 0.7, stagger: 0.025, ease: 'none' },
+              0.1,
+            );
           return () => {
             threshold.kill();
             man.kill();
+            emergence.kill();
+            if (intelligence) delete intelligence.dataset.scrollProgress;
           };
         });
         for (const scene of node.querySelectorAll<HTMLElement>(

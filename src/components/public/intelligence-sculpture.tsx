@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useRef } from 'react';
-import { AureliusPresence } from '@/components/visual/aurelius-presence';
+import { IntelligenceOrb } from './intelligence-orb';
 import { useWorldStill } from './cinematic-world';
 
-/** The same presentation-only renderer and fallback used by member Aethelios. */
+/** Public Aethelios identity, adapted from the founder command orb. */
 export function IntelligenceSculpture() {
   const still = useWorldStill();
   const host = useRef<HTMLDivElement>(null);
@@ -28,7 +28,7 @@ export function IntelligenceSculpture() {
   }, []);
   return (
     <div className="estate-sculpture" aria-hidden="true" ref={host}>
-      <AureliusPresence enhanced state="ready" motionEnabled={!still} loadAhead />
+      <IntelligenceOrb active={!still} />
     </div>
   );
 }
