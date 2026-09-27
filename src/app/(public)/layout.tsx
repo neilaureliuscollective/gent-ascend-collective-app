@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WorldHeader } from '@/components/public/world-header';
 import { CinematicWorld } from '@/components/public/cinematic-world';
+import { CartPanel } from '@/components/commerce/cart-panel';
+import { commerceConfigured } from '@/domains/commerce/shopify';
 import './world.css';
 import './cinematic.css';
 export const metadata: Metadata = {
@@ -16,6 +18,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         Skip to content
       </a>
       <WorldHeader />
+      {commerceConfigured() && <CartPanel />}
       {children}
       <footer className="world-footer">
         <div>

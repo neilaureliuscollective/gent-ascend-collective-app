@@ -2,21 +2,95 @@ import Link from 'next/link';
 import { ProductAtelier } from '@/components/public/product-atelier';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { collectionPreviews, previewProduct } from '@/domains/catalog/preview';
+import { previewProduct } from '@/domains/catalog/preview';
 import { Chapter, CollectionObject } from '@/components/public/editorial';
-export function generateStaticParams() {
-  return collectionPreviews.map(({ handle }) => ({ handle }));
-}
+import Image from 'next/image';
+import { commerceConfigured, getProduct } from '@/domains/commerce/shopify';
+import { ProductPurchase } from '@/components/commerce/product-purchase';
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
-  const product = previewProduct((await params).handle);
-  return { title: product?.name ?? 'Collection', description: product?.summary };
+  const handle = (await params).handle;
+  const product = commerceConfigured() ? await getProduct(handle).catch(() => null) : null;
+  const preview = previewProduct(handle);
+  return {
+    title: product?.title ?? preview?.name ?? 'Collection',
+    description: product?.description ?? preview?.summary,
+  };
 }
 export default async function Product({ params }: { params: Promise<{ handle: string }> }) {
-  const product = previewProduct((await params).handle);
+  const handle = (await params).handle;
+  const live = commerceConfigured() ? await getProduct(handle).catch(() => null) : null;
+  if (live)
+    return (
+      <main id="world-main">
+        <section className="product-detail commerce-detail">
+          <div className="commerce-gallery">
+            {live.images.nodes.length
+              ? live.images.nodes.map((media, index) => (
+                  <Image
+                    key={media.url}
+                    src={media.url}
+                    alt={media.altText ?? `${live.title} view ${index + 1}`}
+                    width={media.width ?? 800}
+                    height={media.height ?? 1000}
+                    sizes="(max-width: 700px) 95vw, 45vw"
+                    priority={index === 0}
+                  />
+                ))
+              : live.featuredImage && (
+                  <Image
+                    src={live.featuredImage.url}
+                    alt={live.featuredImage.altText ?? live.title}
+                    width={live.featuredImage.width ?? 800}
+                    height={live.featuredImage.height ?? 1000}
+                    sizes="(max-width: 700px) 95vw, 45vw"
+                    priority
+                  />
+                )}
+          </div>
+          <div className="commerce-product-copy">
+            <Link href="/shop" className="world-text-link">
+              ← The collection
+            </Link>
+            <span className="world-kicker">
+              {live.collections.nodes[0]?.title ?? 'Gent Ascend'} /{' '}
+              {live.productType || 'The collection'}
+            </span>
+            <h1>{live.title}</h1>
+            <p>{live.purpose?.value || live.description}</p>
+            <ProductPurchase product={live} />
+            <p className="commerce-note">
+              Payment, shipping, and taxes are handled securely at checkout.
+            </p>
+          </div>
+        </section>
+        <section className="world-section detail-story commerce-story">
+          <Chapter number="01" label="The practice" />
+          {live.ritual?.value && (
+            <>
+              <h2>{live.ritual.value}</h2>
+            </>
+          )}
+          {live.description && <p>{live.description}</p>}
+          {live.ingredients?.value && (
+            <div>
+              <h3>Formulation</h3>
+              <p>{live.ingredients.value}</p>
+            </div>
+          )}
+          {live.directions?.value && (
+            <div>
+              <h3>How to use</h3>
+              <p>{live.directions.value}</p>
+            </div>
+          )}
+        </section>
+      </main>
+    );
+  const product = previewProduct(handle);
   if (!product) notFound();
   return (
     <main id="world-main">

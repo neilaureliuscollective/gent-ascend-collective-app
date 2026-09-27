@@ -3,6 +3,7 @@ import { parseEnvironment } from './src/platform/environment';
 parseEnvironment(process.env);
 const config: NextConfig = {
   poweredByHeader: false,
+  images: { remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }] },
   async redirects() {
     return [
       ...['conversation', 'starter', 'link'].map((key) => ({

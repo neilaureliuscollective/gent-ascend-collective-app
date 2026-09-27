@@ -310,4 +310,12 @@ The public ritual now begins with a human mirror scene and resolves to the exist
 
 Local lint, strict typecheck, 84 unit/SQL tests, production build and migration ledger passed. Draft PR #15 CI passed both application and database jobs on the corrected branch, including 78 public browser tests, local Supabase integration and founder browser flows. Physical Fold/Samsung Internet and iPhone Safari, field performance and product approval remain open. No product availability, checkout, booking, database or private account behavior changed. No production deployment.
 
+# Commerce Spine V1 — 2026-09-27 (local implementation; merchant activation open)
+
+The `commerce-activation-preview` integration branch combines this commerce slice with the latest `ascend-journey-threshold-lifeos` public experience so the founder can test one coherent preview. The Headless storefront and at least one published product were confirmed in Shopify admin; live Storefront API reads, cart mutation, checkout and the Vercel preview still require verification. Preview credentials were entered by the founder in Vercel and are not stored in the repository.
+
+The existing public shop now reads live Shopify products when a Headless storefront is configured, with editorial worlds and product pages, variant selection, a responsive cart, persistent server-held cart ID and Shopify checkout handoff. Without merchant credentials, the honest previews remain. No product, Shopify store, order, customer link, Supabase migration, member benefit or live checkout was created. See [activation and release gates](COMMERCE_SPINE_V1.md). Existing member architecture remains intact.
+
+Local acceptance: `npm run check` passed lint, strict typecheck, 87 unit/SQL tests (including three commerce contract tests), and a production build; `npm run db:ledger` and `git diff --check` passed. Production HTTP smoke returned 200 for `/`, `/shop`, `/shop/vitalis`, `/shop/cart` and `/app`, 503 for the unconfigured commerce API, and a redirect to `/shop` for unconfigured checkout. Public browser suite could not launch five browser scenarios because Chromium is absent; the download returned an invalid archive. One route-only browser request test passed. No live Shopify cart, checkout, physical Fold review, or full regression browser suite is claimed.
+
 ---
