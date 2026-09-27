@@ -9,7 +9,7 @@ import { useWorldStill } from './cinematic-world';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Two real compositions. Desktop scroll directs them; touch and Still keep both in document flow. */
+/** Two compositions in one held scene; Still keeps both in document flow. */
 export function RitualSequence() {
   const root = useRef<HTMLElement>(null);
   const [directed, setDirected] = useState(false);
@@ -19,9 +19,7 @@ export function RitualSequence() {
   useEffect(() => {
     const element = root.current;
     if (!element) return;
-    const media = matchMedia(
-      '(min-width: 901px) and (min-height: 721px) and (prefers-reduced-motion: no-preference)',
-    );
+    const media = matchMedia('(prefers-reduced-motion: no-preference)');
     let trigger: ScrollTrigger | undefined;
     let refreshFrame = 0;
     const observer = new ResizeObserver(() => {

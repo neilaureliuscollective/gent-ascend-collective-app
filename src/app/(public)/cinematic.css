@@ -677,7 +677,14 @@
   .world-motion-control {
     right: 10px;
     bottom: 10px;
-    font-size: 0.55rem;
+    width: 42px;
+    padding: 8px;
+    font-size: 0;
+    text-align: center;
+  }
+  .world-motion-control span {
+    margin: 0;
+    font-size: 13px;
   }
   .public-world .world-statement h2 {
     font-size: 2.3rem;

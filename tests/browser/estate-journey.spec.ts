@@ -123,9 +123,16 @@ for (const width of [344, 768]) {
     await page.setViewportSize({ width, height: width === 344 ? 660 : 900 });
     if (width === 344) await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/#the-ritual');
-    await expect(page.locator('#the-ritual')).toHaveAttribute('data-directed', 'false');
+    await expect(page.locator('#the-ritual')).toHaveAttribute(
+      'data-directed',
+      width === 344 ? 'false' : 'true',
+    );
     await expect(page.getByRole('heading', { name: 'A moment to take your place.' })).toBeVisible();
-    await page.locator('#ritual-object').scrollIntoViewIfNeeded();
+    if (width === 344) await page.locator('#ritual-object').scrollIntoViewIfNeeded();
+    else await page.evaluate(() => {
+      const section = document.querySelector('#the-ritual')!;
+      scrollTo({ top: section.getBoundingClientRect().top + scrollY + section.clientHeight * 0.4, behavior: 'instant' });
+    });
     await expect(
       page.getByRole('heading', { name: 'Care becomes something you carry.' }),
     ).toBeVisible();

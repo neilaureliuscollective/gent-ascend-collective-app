@@ -132,6 +132,9 @@
     visibility: visible;
     pointer-events: auto;
   }
+  .ritual-sequence[data-directed='true'] .ritual-beat[aria-hidden='true'] .ritual-beat-copy {
+    visibility: hidden;
+  }
 }
 @media (max-width: 900px), (max-height: 720px) {
   .ritual-beat {
@@ -214,4 +217,46 @@
   .ritual-progress span {
     transition: none;
   }
+}
+
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .ritual-sequence[data-directed='true'] { height: 240svh; }
+  .ritual-sequence[data-directed='true'] .ritual-sequence-stage {
+    position: sticky;
+    top: var(--scene-inset, 122px);
+    height: calc(100svh - var(--scene-inset, 122px));
+    overflow: hidden;
+  }
+  .ritual-sequence[data-directed='true'] .ritual-beat {
+    position: absolute;
+    inset: 0;
+    display: block;
+    height: 100%;
+    min-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 650ms ease, visibility 650ms;
+  }
+  .ritual-sequence[data-directed='true'][data-active='1'] .ritual-beat-human,
+  .ritual-sequence[data-directed='true'][data-active='2'] .ritual-beat-object {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  .ritual-sequence[data-directed='true'] .ritual-beat-copy {
+    bottom: 35px;
+    padding-bottom: 16px;
+  }
+  .ritual-sequence[data-directed='true'] .ritual-beat-copy h2,
+  .ritual-sequence[data-directed='true'] .ritual-beat-copy h3 {
+    font-size: clamp(2.55rem, 10vw, 3.8rem);
+  }
+  .ritual-sequence[data-directed='true'] .ritual-beat-object .ritual-beat-image {
+    object-position: 50% 30%;
+  }
+  .ritual-sequence[data-directed='true'] .ritual-frame-note { display: none; }
+  .ritual-sequence[data-directed='true'] .ritual-progress { bottom: 18px; }
 }

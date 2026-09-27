@@ -1,3 +1,9 @@
+# Ascend Journey motion recovery — 2026-09-27
+
+The founder's Fold preview exposed that mobile scene holds were disabled by breakpoint. This draft branch restores native-scroll choreography for the opening three acts, LifeOS and ritual at phone and open Fold widths, replaces boxed mobile LifeOS controls with a six-step rail, and preserves the Still/reduced-motion flow. See [motion recovery and remaining art direction](ASCEND_JOURNEY_MOTION_RECOVERY.md). `npm run check` and 17 targeted browser scenarios pass at 344/768/1440; the browser compares intermediate scene states and verifies exits. Physical Fold frame pacing and visual acceptance are pending. Production remains unchanged.
+
+---
+
 # Ascend Journey Phase 5 — 2026-09-27
 
 The public final door now leads to a server-rendered member entrance with the existing invitation sign-in flow, account-aware return path and shared visual language in the invited welcome. Details, boundaries and validation: [ASCEND_JOURNEY_PHASE_5.md](ASCEND_JOURNEY_PHASE_5.md). Production remains unchanged.
