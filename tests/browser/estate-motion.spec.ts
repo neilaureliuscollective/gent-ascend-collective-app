@@ -25,9 +25,14 @@ for (const width of [344, 768, 1440]) {
     expect(inset).toBeGreaterThanOrEqual(70);
     expect(inset).toBeLessThan(140);
     await sample('.ascend-man', 0.1);
-    const first = await page.locator('.ascend-man-resolution').evaluate((el) => Number(getComputedStyle(el).opacity));
+    const first = await page.locator('.ascend-man-choice').evaluate((el) => Number(getComputedStyle(el).opacity));
+    const firstPortrait = await page.locator('.ascend-man-portrait').evaluate((el) => Number(getComputedStyle(el).opacity));
+    await sample('.ascend-man', 0.52);
+    await expect.poll(() => page.locator('.ascend-man-portrait').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(firstPortrait + 0.5);
+    const middleDecision = await page.locator('.ascend-man-decision').evaluate((el) => Number(getComputedStyle(el).opacity));
     await sample('.ascend-man', 0.85);
-    await expect.poll(() => page.locator('.ascend-man-resolution').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(first + 0.5);
+    await expect.poll(() => page.locator('.ascend-man-choice').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(first + 0.5);
+    await expect.poll(() => page.locator('.ascend-man-decision').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(middleDecision + 0.5);
     await sample('.ascend-emergence', 0.12);
     const orb = await page.locator('.ascend-emergence .estate-sculpture').evaluate((el) => Number(getComputedStyle(el).opacity));
     await sample('.ascend-emergence', 0.8);

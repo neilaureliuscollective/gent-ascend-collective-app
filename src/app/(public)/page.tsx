@@ -86,14 +86,20 @@ export default function PublicHome() {
         </nav>
         <section id="the-man" className="ascend-man" data-chapter="man" aria-labelledby="man-title">
           <div className="ascend-man-stage">
-            <div className="ascend-man-image" aria-hidden="true">
+            <div className="ascend-man-image ascend-man-wide" aria-hidden="true">
               <picture>
                 <source media="(max-width: 600px)" srcSet="/media/world/the-man-mobile.webp" />
                 <Image src="/media/world/the-man.webp" alt="" fill sizes="100vw" />
               </picture>
             </div>
+            <div className="ascend-man-image ascend-man-portrait" aria-hidden="true">
+              <Image src="/media/world/the-man-portrait.webp" alt="" fill sizes="100vw" />
+            </div>
+            <div className="ascend-man-image ascend-man-decision" aria-hidden="true">
+              <Image src="/media/world/the-man-decision.webp" alt="" fill sizes="100vw" />
+            </div>
             <div className="ascend-man-shade" />
-            <div className="ascend-man-copy">
+            <div className="ascend-man-copy ascend-man-opening">
               <p className="estate-eyebrow">02 / THE MAN AT THE CENTER</p>
               <h2 id="man-title">
                 One man.
@@ -105,17 +111,16 @@ export default function PublicHome() {
                 future — each asking for a different part of him.
               </p>
             </div>
-            <div className="ascend-signals" aria-hidden="true">
-              <span>HEALTH</span>
-              <span>APPEARANCE</span>
-              <span>WORK</span>
-              <span>RECOVERY</span>
-              <span>RESPONSIBILITY</span>
-              <span>DIRECTION</span>
+            <div className="ascend-man-copy ascend-man-burden">
+              <p className="estate-eyebrow">THE WEIGHT OF A WHOLE LIFE</p>
+              <p className="ascend-man-statement">His work. His health. His people.</p>
+              <p>Each matters. None exists alone.</p>
             </div>
-            <p className="ascend-man-resolution">
-              The parts belong to <em>one life.</em>
-            </p>
+            <div className="ascend-man-copy ascend-man-choice">
+              <p className="estate-eyebrow">A MOMENT OF CLARITY</p>
+              <p className="ascend-man-resolution">The parts belong to <em>one life.</em></p>
+            </div>
+            <span className="ascend-man-edge" aria-hidden="true" />
           </div>
         </section>
         <section

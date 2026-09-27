@@ -115,7 +115,7 @@
   letter-spacing: 0.19em;
 }
 .ascend-man {
-  height: 175svh;
+  height: 340svh;
 }
 .ascend-man-stage {
   background: #030706;
@@ -129,10 +129,19 @@
   object-fit: cover;
   object-position: center;
 }
+.ascend-man-portrait img,
+.ascend-man-decision img { object-position: 62% 20%; }
+.ascend-man-portrait,
+.ascend-man-decision {
+  opacity: 0;
+  left: 32%;
+  mask-image: linear-gradient(90deg, transparent, #000 24%);
+}
 .ascend-man-shade {
   background:
-    linear-gradient(90deg, #020605 3%, #030906ca 31%, transparent 75%),
-    linear-gradient(0deg, #020705 0%, transparent 38%);
+    linear-gradient(90deg, #020605e8 0%, #03090688 38%, transparent 75%),
+    linear-gradient(0deg, #020705d9 0%, transparent 48%);
+  pointer-events: none;
 }
 .ascend-man-copy {
   position: absolute;
@@ -140,6 +149,42 @@
   top: 19%;
   left: 7vw;
   width: min(510px, 48vw);
+  text-shadow: 0 4px 28px #000d;
+}
+.ascend-man-burden,
+.ascend-man-choice {
+  top: auto;
+  bottom: 11%;
+  width: min(780px, 82vw);
+  opacity: 0;
+}
+.ascend-man-statement,
+.ascend-man-resolution {
+  display: block;
+  margin: 12px 0 16px;
+  font: clamp(2.35rem, 5vw, 5.5rem)/1.06 Georgia, serif;
+  letter-spacing: -0.045em;
+  color: #f2eee3;
+  max-width: 840px;
+}
+.ascend-man-copy > p.ascend-man-statement:not(.estate-eyebrow),
+.ascend-man-copy > p.ascend-man-resolution:not(.estate-eyebrow) {
+  font-size: clamp(2.35rem, 5vw, 5.5rem);
+  line-height: 1.06;
+  color: #f2eee3;
+}
+.ascend-man-edge {
+  position: absolute;
+  z-index: 3;
+  left: 5%;
+  top: 12%;
+  width: 1px;
+  height: 68%;
+  transform-origin: center;
+  background: linear-gradient(transparent, #f4d58b 50%, transparent);
+  box-shadow: 0 0 38px 5px #c4912f5c;
+  opacity: 0;
+  pointer-events: none;
 }
 .ascend-signals {
   position: absolute;
@@ -180,18 +225,6 @@
 .ascend-signals span:nth-child(6) {
   right: 12%;
   bottom: 15%;
-}
-.ascend-man-resolution {
-  position: absolute;
-  z-index: 3;
-  left: 7vw;
-  bottom: 8%;
-  font:
-    clamp(2rem, 4vw, 4.8rem)/1.1 Georgia,
-    serif;
-  color: #f2eee3;
-  text-shadow: 0 4px 30px #000;
-  max-width: 800px;
 }
 .ascend-emergence {
   height: 180svh;
@@ -302,7 +335,7 @@
   bottom: 37%;
 }
 .estate-journey[data-choreographed='true'] .ascend-threshold-mark,
-.estate-journey[data-choreographed='true'] .ascend-man-resolution {
+.estate-journey[data-choreographed='true'] .ascend-man-choice {
   opacity: 0;
 }
 .estate-journey[data-choreographed='true'] .ascend-connections span {
@@ -324,9 +357,9 @@
   top: 0;
 }
 .public-world[data-world-still='true'] .ascend-threshold-mark,
-.public-world[data-world-still='true'] .ascend-man-resolution,
+.public-world[data-world-still='true'] .ascend-man-choice,
 .estate-journey:not([data-choreographed='true']) .ascend-threshold-mark,
-.estate-journey:not([data-choreographed='true']) .ascend-man-resolution {
+.estate-journey:not([data-choreographed='true']) .ascend-man-choice {
   opacity: 1;
 }
 .public-world[data-world-still='true'] .ascend-connections span,
@@ -356,7 +389,7 @@
     min-height: 850px;
   }
   .estate-journey[data-choreographed='true'] .ascend-threshold-mark,
-  .estate-journey[data-choreographed='true'] .ascend-man-resolution,
+  .estate-journey[data-choreographed='true'] .ascend-man-choice,
   .estate-journey[data-choreographed='true'] .ascend-connections span {
     opacity: 1;
   }
@@ -452,6 +485,12 @@
     left: 7vw;
     width: 86vw;
   }
+  .ascend-man-burden,
+  .ascend-man-choice { top: auto; bottom: 8%; }
+  .ascend-man-statement,
+  .ascend-man-resolution { font-size: clamp(2.3rem, 10vw, 4.3rem); }
+  .ascend-man-copy > p.ascend-man-statement:not(.estate-eyebrow),
+  .ascend-man-copy > p.ascend-man-resolution:not(.estate-eyebrow) { font-size: clamp(2.3rem, 10vw, 4.3rem); }
   .ascend-signals span {
     font-size: 8px;
     padding-left: 7px;
@@ -479,10 +518,6 @@
   .ascend-signals span:nth-child(6) {
     right: 4%;
     bottom: 21%;
-  }
-  .ascend-man-resolution {
-    bottom: 5%;
-    font-size: clamp(2rem, 8vw, 3.2rem);
   }
   .ascend-emergence-stage {
     min-height: 870px;
@@ -574,7 +609,7 @@
     top: 0;
   }
   .ascend-threshold-mark,
-  .ascend-man-resolution,
+  .ascend-man-choice,
   .ascend-connections span {
     opacity: 1 !important;
   }
@@ -608,7 +643,7 @@
     display: block;
   }
   .estate-journey[data-choreographed='true'] .ascend-threshold-mark,
-  .estate-journey[data-choreographed='true'] .ascend-man-resolution {
+  .estate-journey[data-choreographed='true'] .ascend-man-choice {
     opacity: 0;
   }
   .estate-journey[data-choreographed='true'] .ascend-connections span {
@@ -669,7 +704,7 @@
   .estate-journey[data-choreographed='true'] .ascend-man-copy {
     top: 5%;
   }
-  .estate-journey[data-choreographed='true'] .ascend-man-resolution {
+  .estate-journey[data-choreographed='true'] .ascend-man-choice {
     bottom: 7%;
     max-width: 86vw;
   }
@@ -708,3 +743,41 @@
   }
   .estate-journey[data-choreographed='true'] .ascend-emergence-copy { bottom: 3%; }
 }
+
+/* The human chapter has three readable camera states, including on a closed Fold. */
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .estate-journey[data-choreographed='true'] .ascend-man { height: 355svh !important; }
+  .estate-journey[data-choreographed='true'] .ascend-man-portrait,
+  .estate-journey[data-choreographed='true'] .ascend-man-decision {
+    left: 0;
+    mask-image: none;
+  }
+  .estate-journey[data-choreographed='true'] .ascend-man-burden,
+  .estate-journey[data-choreographed='true'] .ascend-man-choice {
+    top: auto;
+    bottom: 9%;
+    width: min(670px, 86vw);
+  }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: no-preference) {
+  .estate-journey[data-choreographed='true'] .ascend-man { height: 370svh !important; }
+  .estate-journey[data-choreographed='true'] .ascend-man-portrait img,
+  .estate-journey[data-choreographed='true'] .ascend-man-decision img {
+    object-position: 60% center;
+  }
+  .estate-journey[data-choreographed='true'] .ascend-man-opening { top: 7%; }
+  .estate-journey[data-choreographed='true'] .ascend-man-burden,
+  .estate-journey[data-choreographed='true'] .ascend-man-choice { bottom: 7%; }
+  .estate-journey[data-choreographed='true'] .ascend-man-edge { left: 1%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ascend-man-burden { display: none; }
+  .ascend-man-portrait,
+  .ascend-man-decision { display: none; }
+}
+.public-world[data-world-still='true'] .ascend-man-burden,
+.estate-journey:not([data-choreographed='true']) .ascend-man-burden { display: none; }
+.public-world[data-world-still='true'] .ascend-man-portrait,
+.public-world[data-world-still='true'] .ascend-man-decision,
+.estate-journey:not([data-choreographed='true']) .ascend-man-portrait,
+.estate-journey:not([data-choreographed='true']) .ascend-man-decision { display: none; }
