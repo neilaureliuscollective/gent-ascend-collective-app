@@ -3,6 +3,7 @@
 Implemented on `arrival-command`: cinematic public world, public product previews and Reserve gateway, existing OS moved under `/app`, invite/installation guidance, privacy-safe offline fallback, Ascend gateway, and mobile Aethelios conversation/keyboard/history refinements. See [implementation and release gates](ARRIVAL_COMMAND.md) and [cinematic media plan](CINEMATIC_MEDIA_PLAN.md). Existing APIs, RLS and database migrations remain intact. No products, billing, appointments, public waitlist or new invitations were activated.
 
 Verification:
+
 - `npm run check`: lint, strict typecheck, 84 unit/SQL tests and production build pass.
 - Browser suite: initial 63/65 passed. Fixed large-text header overflow and replaced the stop-response test's timing delay with an explicit held response. Targeted rerun: all 8 affected/public/install/offline tests passed. All 65 scenarios therefore have passing evidence across these runs, not a subsequent single full-suite run.
 - Rendered and inspected public homepage at desktop and phone sizes. Browser checks cover 344/360/390, 768 and 1440 widths, reduced motion, keyboard, streaming fixtures, redirects and cache boundaries.
@@ -203,12 +204,15 @@ Browser checks use temporary Chromium 153 outside the app, system fonts and two 
 Founder review of the Aurelius 1E dashboard/materials on a real phone/foldable, then service activation and daily Aurelius evaluation. No body model is scheduled. The disconnected sample can be tested immediately by running the existing checkout and selecting **Explore a sample day**.
 
 When ready, sync the preserved history into the official workstation checkout, reconnect the new GitHub account, and configure protected Vercel/Supabase/Gateway access. Apply all four migrations, run real integration/founder/live-provider gates, then use Aurelius daily and assess quality with the existing rubric. Daily records are not automatically in AI context; the next intelligence slice should add a user-reviewed, source-linked daily briefing only after live quality, ownership and privacy validation. A phone-installable hosted preview follows verified Auth/HTTPS setup; never expose the local harness.
+
 # Ascend Loop V1 work in progress
 
 The first slice is documented in [ASCEND_LOOP_V1.md](ASCEND_LOOP_V1.md). It adds owner-scoped universal capture, optional structured Aethelios interpretation, a confirmed capture-to-daily-action path, carried-forward daily context, opt-in recent daily context for Aethelios, and a factual 30-day Progress history. This branch has not been deployed or migrated against hosted Supabase. Conversational baseline, full action tool registry and review extraction remain open.
+
 # Ascend Profile baseline continuation
 
 The next Ascend Loop slice is described in [ASCEND_PROFILE_PHASE.md](ASCEND_PROFILE_PHASE.md). The six-step guided baseline proposes structured facts and requires user confirmation. Corrections supersede active values with owner-scoped revision history. Command and optional Aethelios context consume current confirmed state. Proposal usage shares the existing AI quota. Both Ascend Loop migrations must precede app deployment; hosted migration, live model and two-account Auth verification remain open.
+
 # Aethelios confirmed action boundary
 
 See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation turn can now yield a reviewable `create_daily_action` proposal. Approval executes an owner-scoped atomic daily write; dismissal makes no daily change. The general tool registry and guided evening extraction remain open. Three ordered Ascend Loop migrations must precede deployment.
@@ -216,3 +220,11 @@ See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation
 # Guided evening review and tomorrow context
 
 See [ASCEND_EVENING_REVIEW.md](ASCEND_EVENING_REVIEW.md). Command now offers a confirmed, editable evening review. Aethelios can propose a draft from saved reflection and action status; manual entry works without the model. Versioned owner-only reviews feed tomorrow's Command, opt-in Aethelios context and Progress, with correction history. Four ordered migrations must precede deployment. A general tool registry, hosted Auth verification, live-model quality, device testing and lifecycle controls remain open.
+
+# Commerce Spine V1 — 2026-09-27 (local implementation; merchant activation open)
+
+The existing public shop now reads live Shopify products when a Headless storefront is configured, with editorial worlds and product pages, variant selection, a responsive cart, persistent server-held cart ID and Shopify checkout handoff. Without merchant credentials, the honest previews remain. No product, Shopify store, order, customer link, Supabase migration, member benefit or live checkout was created. See [activation and release gates](COMMERCE_SPINE_V1.md). Existing member architecture remains intact.
+
+Local acceptance: `npm run check` passed lint, strict typecheck, 87 unit/SQL tests (including three commerce contract tests), and a production build; `npm run db:ledger` and `git diff --check` passed. Production HTTP smoke returned 200 for `/`, `/shop`, `/shop/vitalis`, `/shop/cart` and `/app`, 503 for the unconfigured commerce API, and a redirect to `/shop` for unconfigured checkout. Public browser suite could not launch five browser scenarios because Chromium is absent; the download returned an invalid archive. One route-only browser request test passed. No live Shopify cart, checkout, physical Fold review, or full regression browser suite is claimed.
+
+---
