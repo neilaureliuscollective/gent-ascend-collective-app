@@ -19,13 +19,16 @@ export function WorldJourney({ children }: { children: ReactNode }) {
       const media = gsap.matchMedia();
       media.add('(prefers-reduced-motion: no-preference)', () => {
         node.dataset.choreographed = 'true';
-        media.add('(min-width: 901px) and (min-height: 721px)', () => {
+        // The narrative belongs to every viewport. Native scrolling drives a bounded
+        // sticky composition; the narrow layout changes the framing, not the story.
+        media.add('(min-width: 0px)', () => {
           const threshold = gsap.timeline({
             scrollTrigger: {
               trigger: '.ascend-threshold',
               start: 'top top',
               end: 'bottom bottom',
               scrub: true,
+              invalidateOnRefresh: true,
             },
           });
           threshold
@@ -47,12 +50,19 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               0.63,
             )
             .to('.ascend-depth', { scale: 1.24, duration: 0.37, ease: 'none' }, 0.63);
+          threshold.fromTo(
+            '.ascend-light',
+            { scale: 0.3, opacity: 0.35 },
+            { scale: 1.9, opacity: 1, duration: 0.52, ease: 'none' },
+            0.12,
+          );
           const man = gsap.timeline({
             scrollTrigger: {
               trigger: '.ascend-man',
               start: 'top top',
               end: 'bottom bottom',
               scrub: true,
+              invalidateOnRefresh: true,
             },
           });
           man
@@ -78,12 +88,19 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               0.65,
             )
             .to('.ascend-signals span', { opacity: 0.3, duration: 0.2, ease: 'none' }, 0.72);
+          man.fromTo(
+            '.ascend-man-shade',
+            { opacity: 0.55 },
+            { opacity: 1, duration: 0.5, ease: 'none' },
+            0.35,
+          );
           const emergence = gsap.timeline({
             scrollTrigger: {
               trigger: '.ascend-emergence',
               start: 'top top',
               end: 'bottom bottom',
               scrub: true,
+              invalidateOnRefresh: true,
             },
           });
           emergence
@@ -104,6 +121,12 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               { y: 20, opacity: 0.55 },
               { y: 0, opacity: 1, duration: 0.35, ease: 'none' },
               0.1,
+            )
+            .fromTo(
+              '.ascend-intelligence-field',
+              { scale: 0.62, opacity: 0.2 },
+              { scale: 1, opacity: 1, duration: 0.6, ease: 'none' },
+              0.05,
             );
           return () => {
             threshold.kill();

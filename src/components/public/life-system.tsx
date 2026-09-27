@@ -64,36 +64,39 @@ const stages = [
 export function LifeSystem() {
   const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
+  const [directed, setDirected] = useState(false);
   const still = useWorldStill();
 
   useEffect(() => {
     const element = root.current;
     if (!element || still) return;
-    const media = window.matchMedia('(min-width: 901px) and (min-height: 721px)');
-    let trigger: ScrollTrigger | undefined;
-    const sync = () => {
-      trigger?.kill();
-      trigger = undefined;
-      if (!media.matches) return;
-      trigger = ScrollTrigger.create({
-        trigger: element,
-        start: 'top top',
-        end: 'bottom bottom',
-        invalidateOnRefresh: true,
-        onUpdate: (self) =>
-          setActive((previous) => {
-            const next = Math.min(stages.length - 1, Math.floor(self.progress * stages.length));
-            return previous === next ? previous : next;
-          }),
+    setDirected(true);
+    const update = (progress: number) =>
+      setActive((previous) => {
+        const next = Math.min(stages.length - 1, Math.floor(progress * stages.length));
+        return previous === next ? previous : next;
       });
-    };
-    sync();
-    media.addEventListener('change', sync);
+    const trigger = ScrollTrigger.create({
+      trigger: element,
+      start: 'top top',
+      end: 'bottom bottom',
+      invalidateOnRefresh: true,
+      onUpdate: (self) => update(self.progress),
+      onRefresh: (self) => update(self.progress),
+    });
     return () => {
-      media.removeEventListener('change', sync);
       trigger?.kill();
+      setDirected(false);
     };
   }, [still]);
+
+  const chooseStage = (index: number) => {
+    if (directed && root.current) {
+      const length = root.current.offsetHeight - innerHeight;
+      scrollTo({ top: root.current.offsetTop + length * ((index + 0.5) / stages.length), behavior: 'smooth' });
+    }
+    setActive(index);
+  };
 
   const stage = stages[active] ?? stages[0]!;
   return (
@@ -103,6 +106,7 @@ export function LifeSystem() {
       className="life-system"
       data-chapter="system"
       data-active={active + 1}
+      data-directed={directed}
       aria-labelledby="system-title"
     >
       <div className="life-system-stage">
@@ -118,6 +122,7 @@ export function LifeSystem() {
             <span className="life-system-counter">
               0{active + 1} / 06 · {stage.label}
             </span>
+            <span className="life-system-current-question">{stage.question}</span>
             <h3>{stage.statement}</h3>
             <p>{stage.example}</p>
             <small>{stage.insight}</small>
@@ -146,8 +151,9 @@ export function LifeSystem() {
               <li key={item.question}>
                 <button
                   type="button"
+                  aria-label={`0${index + 1} ${item.question}`}
                   aria-pressed={active === index}
-                  onClick={() => setActive(index)}
+                  onClick={() => chooseStage(index)}
                 >
                   <span className="life-system-number">0{index + 1}</span>
                   <span className="life-system-question">{item.question}</span>
@@ -162,7 +168,7 @@ export function LifeSystem() {
         </div>
         <div className="life-system-mobile-control">
           <span>Explore the loop · 0{active + 1} of 06</span>
-          <button type="button" onClick={() => setActive((active + 1) % stages.length)}>
+          <button type="button" onClick={() => chooseStage((active + 1) % stages.length)}>
             {active === stages.length - 1 ? 'Begin again' : 'Next stage'}{' '}
             <span aria-hidden="true">→</span>
           </button>

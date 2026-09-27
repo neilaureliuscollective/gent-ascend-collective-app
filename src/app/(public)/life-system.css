@@ -93,6 +93,14 @@
   font-size: 0.82rem;
   line-height: 1.5;
 }
+.life-system-current-question {
+  display: block;
+  margin-top: 16px;
+  color: #d5bd80;
+  font: 11px/1.4 var(--font-sans), sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 .life-system-disclosure {
   color: #aabaad;
   margin: 10px 0 23px;
@@ -221,8 +229,9 @@
   padding: 10px 13px;
   text-align: left;
   color: #d0ddd0;
-  background: #061a14ec;
-  border: 1px solid #8f9c795e;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #8f9c795e;
   font:
     12px/1.25 var(--font-sans),
     sans-serif;
@@ -245,10 +254,8 @@
 .life-system-stages button[aria-pressed='true'] {
   color: #fff5dd;
   border-color: #dab76c;
-  background: #124533;
-  box-shadow:
-    inset 3px 0 #d0a44d,
-    0 0 30px #ba8f2d29;
+  background: linear-gradient(0deg, #c4912f14, transparent);
+  box-shadow: 0 1px #d0a44d;
 }
 .life-system-number {
   color: #c9a967;
@@ -440,4 +447,145 @@
 }
 .public-world[data-world-still='true'] .life-system-story {
   animation: none;
+}
+
+/* On narrow screens the loop becomes one held instrument, not six stacked cards.
+   Each native-scroll interval advances the same example and tactile stage rail. */
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .life-system[data-directed='true'] {
+    height: 480svh;
+  }
+  .life-system[data-directed='true'] .life-system-stage {
+    position: sticky;
+    top: var(--scene-inset, 122px);
+    height: calc(100svh - var(--scene-inset, 122px));
+    min-height: 0;
+    display: block;
+    padding: clamp(22px, 4svh, 40px) 7vw 26px;
+    overflow: hidden;
+  }
+  .life-system[data-directed='true'] .life-system-intro {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+  }
+  .life-system[data-directed='true'] .life-system h2,
+  .life-system[data-directed='true'] h2 {
+    font-size: clamp(2.4rem, 7.5vw, 4.8rem);
+    margin: 8px 0;
+  }
+  .life-system[data-directed='true'] .life-system-intro > p:not(.estate-eyebrow, .life-system-disclosure) {
+    display: none;
+  }
+  .life-system[data-directed='true'] .life-system-story {
+    width: min(460px, 80%);
+    min-height: 0;
+    margin: clamp(16px, 4svh, 38px) 0 0;
+    padding: 0 0 0 18px;
+    animation: none;
+  }
+  .life-system[data-directed='true'] .life-system-story h3 {
+    font-size: clamp(1.55rem, 4vw, 2.5rem);
+  }
+  .life-system[data-directed='true'] .life-system-story p {
+    font-size: clamp(0.88rem, 2vw, 1.1rem);
+  }
+  .life-system[data-directed='true'] .life-system-story small {
+    font-size: 0.75rem;
+  }
+  .life-system[data-directed='true'] .life-system-instrument {
+    position: static;
+    width: auto;
+    aspect-ratio: auto;
+    margin: 0;
+  }
+  .life-system[data-directed='true'] .life-system-orbits {
+    inset: auto;
+    width: min(65vw, 450px);
+    aspect-ratio: 1;
+    right: -8%;
+    top: 12%;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .life-system[data-directed='true'] .life-system-center,
+  .life-system[data-directed='true'] .life-system-axis {
+    display: none;
+  }
+  .life-system[data-directed='true'] .life-system-stages {
+    position: absolute;
+    inset: auto 64px 17px 7vw;
+    display: flex;
+    gap: 8px;
+    height: 42px;
+    z-index: 3;
+  }
+  .life-system[data-directed='true'] .life-system-stages li:nth-child(n) {
+    position: static;
+    width: auto;
+    flex: 1;
+    max-width: none;
+  }
+  .life-system[data-directed='true'] .life-system-stages button {
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 4px;
+    border-bottom: 1px solid #b49c6688;
+    font-size: 10px;
+  }
+  .life-system[data-directed='true'] .life-system-question {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .life-system[data-directed='true'] .life-system-number { flex: none; }
+  .life-system[data-directed='true'] .life-system-mobile-control { display: none; }
+  .life-system[data-directed='true'] .life-system-disclosure {
+    position: absolute;
+    bottom: 100px;
+    margin: 0;
+    font-size: 8px;
+  }
+  .life-system[data-directed='true'] .estate-actions {
+    position: absolute;
+    bottom: 48px;
+    margin: 0;
+  }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  .life-system[data-directed='true'] .life-system-stage { padding-top: 22px; }
+  .life-system[data-directed='true'] h2 { font-size: clamp(2.25rem, 9vw, 3.2rem); }
+  .life-system[data-directed='true'] .life-system-story { width: 92%; margin-top: 20px; }
+  .life-system[data-directed='true'] .life-system-story p { line-height: 1.4; }
+  .life-system[data-directed='true'] .life-system-story small { margin-top: 7px; }
+  .life-system[data-directed='true'] .life-system-orbits {
+    width: 90vw;
+    right: -40%;
+    top: 11%;
+    opacity: 0.28;
+  }
+  .life-system[data-directed='true'] .life-system-disclosure { bottom: 106px; }
+  .life-system[data-directed='true'] .estate-actions { bottom: 44px; }
+}
+@media (max-width: 600px) and (max-height: 720px) and (prefers-reduced-motion: no-preference) {
+  .life-system[data-directed='true'] h2 {
+    font-size: 2rem;
+    line-height: 1;
+  }
+  .life-system[data-directed='true'] .life-system-story { margin-top: 10px; }
+  .life-system[data-directed='true'] .life-system-current-question { margin-top: 8px; }
+  .life-system[data-directed='true'] .life-system-story h3 {
+    font-size: 1.35rem;
+    margin: 6px 0;
+  }
+  .life-system[data-directed='true'] .life-system-story small {
+    font-size: 0.7rem;
+    margin-top: 4px;
+  }
 }

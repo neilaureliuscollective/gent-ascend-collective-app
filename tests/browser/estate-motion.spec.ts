@@ -1,6 +1,40 @@
 import { test, expect } from './fixtures';
 
 for (const width of [344, 768, 1440]) {
+  test(`the first acts visibly transform with scroll at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 344 ? 740 : 900 });
+    await page.goto('/');
+    const threshold = page.locator('.ascend-threshold');
+    await expect(page.locator('.estate-journey')).toHaveAttribute('data-choreographed', 'true');
+    const sample = async (selector: string, progress: number) => {
+      await page.evaluate(({ progress, selector }) => {
+        const scene = document.querySelector(selector)!;
+        scrollTo({
+          top: scene.getBoundingClientRect().top + scrollY +
+            (scene.clientHeight - innerHeight) * progress,
+          behavior: 'instant',
+        });
+      }, { selector, progress });
+      await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    };
+    await sample('.ascend-threshold', 0.1);
+    const early = await threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity));
+    await sample('.ascend-threshold', 0.7);
+    await expect.poll(() => threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(early + 0.4);
+    const inset = await page.locator('.ascend-threshold-stage').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+    expect(inset).toBeGreaterThanOrEqual(70);
+    expect(inset).toBeLessThan(140);
+    await sample('.ascend-man', 0.1);
+    const first = await page.locator('.ascend-man-resolution').evaluate((el) => Number(getComputedStyle(el).opacity));
+    await sample('.ascend-man', 0.85);
+    await expect.poll(() => page.locator('.ascend-man-resolution').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(first + 0.5);
+    await sample('.ascend-emergence', 0.12);
+    const orb = await page.locator('.ascend-emergence .estate-sculpture').evaluate((el) => Number(getComputedStyle(el).opacity));
+    await sample('.ascend-emergence', 0.8);
+    await expect.poll(() => page.locator('.ascend-emergence .estate-sculpture').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(orb + 0.4);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+
   test(`native scroll and Fold-width changes preserve the entry at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     const errors: string[] = [];
