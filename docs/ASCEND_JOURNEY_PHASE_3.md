@@ -19,3 +19,5 @@ The existing direct Three.js atelier makes homepage duplicate 3D wasteful. CSS i
 ## Acceptance and limits
 
 Check forward/reverse scroll, chapter anchors, both destination links, mobile and open Fold flow, Still/reduced motion, keyboard focus, no sideways overflow, and the `#atelier` destination. Physical Fold closed/open, Samsung Internet, iPhone Safari, field LCP/INP/CLS and commercial product approval remain separate release gates. The catalog is still an honest preview with no order action. The Reserve and Collective stories and the continuous public-to-auth transition are future phases.
+
+Draft PR #15 CI passed the corrected application and database jobs on September 27, 2026: 78 Chromium browser tests, lint, typecheck, 84 unit/SQL tests, production build, local Supabase integration and founder flows. This is automated validation, not physical Fold or Safari acceptance.
