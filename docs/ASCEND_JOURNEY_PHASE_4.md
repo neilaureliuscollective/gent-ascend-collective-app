@@ -22,4 +22,6 @@ The images are responsive and lazy below the opening. Mobile shows the image fir
 
 ## Verification and limits
 
-Run `npm run check`, `npm run db:ledger`, and the public journey browser scenarios at 344, 768 and 1440 CSS pixels. Browser coverage checks image decoding, anchors, destinations and horizontal overflow. Hardware Fold open/closed viewport changes, touch feel, mobile Safari, field Core Web Vitals, and final founder art direction need review before production. The generated image should be replaced with commissioned human photography when actual releases and participant consent permit it.
+`npm run check` passes lint, strict types, 84 unit tests and a production build; `npm run db:ledger` verifies all ten recorded migration files. All 11 targeted public journey Playwright scenarios pass in software-rendered Chromium, including the new 344, 768 and 1440 CSS-pixel image decoding, anchor, destination and horizontal overflow checks. Viewport captures at those widths were inspected for the Reserve, Collective and final door. The complete browser and local-database CI suite is the independent PR gate.
+
+Hardware Fold open/closed viewport changes, touch feel, mobile Safari, field Core Web Vitals, and final founder art direction need review before production. The generated image should be replaced with commissioned human photography when actual releases and participant consent permit it.
