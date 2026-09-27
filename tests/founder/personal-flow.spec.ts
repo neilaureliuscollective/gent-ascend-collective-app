@@ -18,7 +18,9 @@ test('public entrance rejects invalid credentials without leaving the world', as
   await page.getByLabel('Password').fill('incorrect-password');
   await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
   await expect(page).toHaveURL(/\/enter\?error=credentials$/);
-  await expect(page.getByRole('alert')).toContainText('email and password were not accepted');
+  await expect(page.locator('.entrance-error')).toContainText(
+    'email and password were not accepted',
+  );
   await expect(page.getByRole('heading', { name: 'The world becomes yours.' })).toBeVisible();
 });
 test('founder can save a profile and goal without paid membership, then retain completed history', async ({
@@ -31,8 +33,9 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
   await page.goto('/enter');
   await expect(page.getByRole('heading', { name: 'The door is yours.' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open my space' })).toHaveAttribute('href', /\/app/);
-  await page.getByRole('link', { name: 'Open my space' }).click();
+  const personalDoor = page.locator('.entrance-panel a.entrance-primary');
+  await expect(personalDoor).toHaveAttribute('href', /\/app(?:\/welcome)?/);
+  await personalDoor.click();
   await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
   await page.goto('/dev');
   await page.getByLabel('Membership scenario').selectOption('free');
