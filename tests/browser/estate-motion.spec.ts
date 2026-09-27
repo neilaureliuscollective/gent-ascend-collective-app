@@ -7,41 +7,108 @@ for (const width of [344, 768, 1440]) {
     const threshold = page.locator('.ascend-threshold');
     await expect(page.locator('.estate-journey')).toHaveAttribute('data-choreographed', 'true');
     const sample = async (selector: string, progress: number) => {
-      await page.evaluate(({ progress, selector }) => {
-        const scene = document.querySelector(selector)!;
-        scrollTo({
-          top: scene.getBoundingClientRect().top + scrollY +
-            (scene.clientHeight - innerHeight) * progress,
-          behavior: 'instant',
-        });
-      }, { selector, progress });
-      await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+      await page.evaluate(
+        ({ progress, selector }) => {
+          const scene = document.querySelector(selector)!;
+          scrollTo({
+            top:
+              scene.getBoundingClientRect().top +
+              scrollY +
+              (scene.clientHeight - innerHeight) * progress,
+            behavior: 'instant',
+          });
+        },
+        { selector, progress },
+      );
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
     };
     await sample('.ascend-threshold', 0.1);
-    const early = await threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity));
-    const firstScale = await threshold.locator('.ascend-threshold-environment').evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
+    const early = await threshold
+      .locator('.ascend-threshold-mark')
+      .evaluate((el) => Number(getComputedStyle(el).opacity));
+    const firstScale = await threshold
+      .locator('.ascend-threshold-environment')
+      .evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
     await sample('.ascend-threshold', 0.5);
-    await expect.poll(() => threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(early + 0.4);
+    await expect
+      .poll(() =>
+        threshold
+          .locator('.ascend-threshold-mark')
+          .evaluate((el) => Number(getComputedStyle(el).opacity)),
+      )
+      .toBeGreaterThan(early + 0.4);
     await sample('.ascend-threshold', 0.88);
-    await expect.poll(() => threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(0.2);
-    await expect.poll(() => threshold.locator('.ascend-threshold-environment').evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeGreaterThan(firstScale + 0.3);
-    const inset = await page.locator('.ascend-threshold-stage').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+    await expect
+      .poll(() =>
+        threshold
+          .locator('.ascend-threshold-mark')
+          .evaluate((el) => Number(getComputedStyle(el).opacity)),
+      )
+      .toBeLessThan(0.2);
+    await expect
+      .poll(() =>
+        threshold
+          .locator('.ascend-threshold-environment')
+          .evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a),
+      )
+      .toBeGreaterThan(firstScale + 0.3);
+    const inset = await page
+      .locator('.ascend-threshold-stage')
+      .evaluate((el) => Math.round(el.getBoundingClientRect().top));
     expect(inset).toBeGreaterThanOrEqual(70);
     expect(inset).toBeLessThan(140);
     await sample('.ascend-man', 0.1);
-    const first = await page.locator('.ascend-man-choice').evaluate((el) => Number(getComputedStyle(el).opacity));
-    const firstPortrait = await page.locator('.ascend-man-portrait').evaluate((el) => Number(getComputedStyle(el).opacity));
+    const first = await page
+      .locator('.ascend-man-choice')
+      .evaluate((el) => Number(getComputedStyle(el).opacity));
+    const firstPortrait = await page
+      .locator('.ascend-man-portrait')
+      .evaluate((el) => Number(getComputedStyle(el).opacity));
     await sample('.ascend-man', 0.52);
-    await expect.poll(() => page.locator('.ascend-man-portrait').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(firstPortrait + 0.5);
-    const middleDecision = await page.locator('.ascend-man-decision').evaluate((el) => Number(getComputedStyle(el).opacity));
+    await expect
+      .poll(() =>
+        page.locator('.ascend-man-portrait').evaluate((el) => Number(getComputedStyle(el).opacity)),
+      )
+      .toBeGreaterThan(firstPortrait + 0.5);
+    const middleDecision = await page
+      .locator('.ascend-man-decision')
+      .evaluate((el) => Number(getComputedStyle(el).opacity));
     await sample('.ascend-man', 0.85);
-    await expect.poll(() => page.locator('.ascend-man-choice').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(first + 0.5);
-    await expect.poll(() => page.locator('.ascend-man-decision').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(middleDecision + 0.5);
+    await expect
+      .poll(() =>
+        page.locator('.ascend-man-choice').evaluate((el) => Number(getComputedStyle(el).opacity)),
+      )
+      .toBeGreaterThan(first + 0.5);
+    await expect
+      .poll(() =>
+        page.locator('.ascend-man-decision').evaluate((el) => Number(getComputedStyle(el).opacity)),
+      )
+      .toBeGreaterThan(middleDecision + 0.5);
     await sample('.ascend-emergence', 0.12);
-    const orb = await page.locator('.ascend-emergence .estate-sculpture').evaluate((el) => Number(getComputedStyle(el).opacity));
+    await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.ascend-emergence')).toHaveAttribute('data-in-view', 'true');
+    await expect(page.locator('.ascend-intelligence-traces i').first()).toHaveCSS(
+      'animation-name',
+      'intelligence-signal',
+    );
     await sample('.ascend-emergence', 0.8);
-    await expect.poll(() => page.locator('.ascend-emergence .estate-sculpture').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(orb + 0.4);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
+    if (width <= 900) {
+      const separation = await page.locator('.ascend-emergence-stage').evaluate((stage) => ({
+        visualBottom: stage.querySelector('.ascend-intelligence-visual')!.getBoundingClientRect()
+          .bottom,
+        copyTop: stage.querySelector('.ascend-emergence-copy')!.getBoundingClientRect().top,
+      }));
+      expect(separation.copyTop).toBeGreaterThanOrEqual(separation.visualBottom);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
   });
 
   test(`LifeOS copy and exits keep separate space at ${width}`, async ({ page }) => {
