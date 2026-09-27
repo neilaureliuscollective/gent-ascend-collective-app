@@ -67,33 +67,44 @@ export function WorldJourney({ children }: { children: ReactNode }) {
           });
           man
             .fromTo(
-              '.ascend-man-image',
-              { scale: 1.08 },
-              { scale: 1, duration: 1, ease: 'none' },
+              '.ascend-man-wide',
+              { scale: 1.16 },
+              { scale: 1.02, duration: 0.4, ease: 'none' },
               0,
             )
             .fromTo(
-              '.ascend-signals span',
-              {
-                opacity: 0,
-                x: 25,
-              },
-              { opacity: 0.75, x: 0, duration: 0.35, stagger: 0.04, ease: 'none' },
-              0.14,
+              '.ascend-man-portrait',
+              { opacity: 0, scale: 1.2, xPercent: 5 },
+              { opacity: 1, scale: 1.04, xPercent: 0, duration: 0.2, ease: 'none' },
+              0.26,
             )
             .fromTo(
-              '.ascend-man-resolution',
-              { opacity: 0, y: 30 },
-              { opacity: 1, y: 0, duration: 0.22, ease: 'none' },
-              0.65,
+              '.ascend-man-burden',
+              { opacity: 0, y: 50 },
+              { opacity: 1, y: 0, duration: 0.16, ease: 'none' },
+              0.38,
             )
-            .to('.ascend-signals span', { opacity: 0.3, duration: 0.2, ease: 'none' }, 0.72);
-          man.fromTo(
-            '.ascend-man-shade',
-            { opacity: 0.55 },
-            { opacity: 1, duration: 0.5, ease: 'none' },
-            0.35,
-          );
+            .to('.ascend-man-opening', { opacity: 0, y: -55, duration: 0.12, ease: 'none' }, 0.22)
+            .to('.ascend-man-burden', { opacity: 0, y: -40, duration: 0.12, ease: 'none' }, 0.59)
+            .fromTo(
+              '.ascend-man-decision',
+              { opacity: 0, scale: 1.19, xPercent: -5 },
+              { opacity: 1, scale: 1, xPercent: 0, duration: 0.18, ease: 'none' },
+              0.64,
+            )
+            .fromTo(
+              '.ascend-man-choice',
+              { opacity: 0, y: 45 },
+              { opacity: 1, y: 0, duration: 0.13, ease: 'none' },
+              0.79,
+            )
+            .fromTo(
+              '.ascend-man-edge',
+              { opacity: 0, scaleY: 0.2 },
+              { opacity: 0.8, scaleY: 1, duration: 0.25, ease: 'none' },
+              0.68,
+            )
+            .to({}, { duration: 0.13 }, 0.92);
           const emergence = gsap.timeline({
             scrollTrigger: {
               trigger: '.ascend-emergence',

@@ -16,7 +16,7 @@ for (const width of [344, 768, 1440]) {
       'A moment to take your place.',
     ])
       await expect(page.getByRole('heading', { name })).toHaveCount(1);
-    await expect(page.locator('.ascend-man-image img')).toHaveJSProperty('complete', true);
+    await expect(page.locator('.ascend-man-wide img')).toHaveJSProperty('complete', true);
     await page
       .getByRole('navigation', { name: 'Explore the world' })
       .getByRole('link', { name: /The system/ })
