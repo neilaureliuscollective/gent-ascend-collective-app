@@ -108,10 +108,9 @@ test('desktop ritual moves from preparation to the object and back', async ({ pa
   await expect(
     page.getByRole('heading', { name: 'Care becomes something you carry.' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: /Inspect Vitalis/ })).toHaveAttribute(
-    'href',
-    '/shop/vitalis#atelier',
-  );
+  await expect(
+    page.locator('#ritual-object').getByRole('link', { name: /Inspect Vitalis/ }),
+  ).toHaveAttribute('href', '/shop/vitalis#atelier');
   await page.evaluate(() => {
     const section = document.querySelector('#the-ritual')!;
     scrollTo({ top: section.getBoundingClientRect().top + scrollY + 5, behavior: 'instant' });
@@ -130,7 +129,10 @@ for (const width of [344, 768]) {
     await expect(
       page.getByRole('heading', { name: 'Care becomes something you carry.' }),
     ).toBeVisible();
-    await page.getByRole('link', { name: /Inspect Vitalis/ }).click();
+    await page
+      .locator('#ritual-object')
+      .getByRole('link', { name: /Inspect Vitalis/ })
+      .click();
     await expect(page).toHaveURL('/shop/vitalis#atelier');
     await expect(page.getByRole('button', { name: /Explore in 3D/ })).toBeVisible();
   });
