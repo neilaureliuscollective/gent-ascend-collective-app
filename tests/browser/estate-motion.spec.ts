@@ -96,7 +96,7 @@ for (const width of [344, 768, 1440]) {
     await expect(page.locator('.intelligence-network .intelligence-link').first()).toHaveAttribute('d', /Q/);
     await expect(page.locator('.ascend-connections [data-intelligence-signal]')).toHaveCount(6);
     const earlyLink = await page.locator('.intelligence-link').last()
-      .evaluate((el) => Number(getComputedStyle(el).strokeDashoffset));
+      .evaluate((el) => parseFloat(getComputedStyle(el).strokeDashoffset));
     const earlyCamera = await page
       .locator('.ascend-intelligence-camera')
       .evaluate((el) => getComputedStyle(el).transform);
@@ -106,7 +106,7 @@ for (const width of [344, 768, 1440]) {
     );
     await sample('.ascend-emergence', 0.8);
     await expect.poll(() => page.locator('.intelligence-link').last()
-      .evaluate((el) => Number(getComputedStyle(el).strokeDashoffset)))
+      .evaluate((el) => parseFloat(getComputedStyle(el).strokeDashoffset)))
       .toBeLessThan(earlyLink - 5);
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
     await expect
