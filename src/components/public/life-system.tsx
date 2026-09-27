@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import gsap from 'gsap';
@@ -84,7 +85,28 @@ export function LifeSystem() {
       onUpdate: (self) => update(self.progress),
       onRefresh: (self) => update(self.progress),
     });
+    const environment = element.querySelector('.life-system-environment');
+    const camera = environment
+      ? gsap.fromTo(
+          environment,
+          { scale: 1.04, xPercent: 0 },
+          {
+            scale: 1.24,
+            xPercent: -3,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: element,
+              start: 'top top',
+              end: 'bottom bottom',
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          },
+        )
+      : null;
     return () => {
+      camera?.scrollTrigger?.kill();
+      camera?.kill();
       trigger?.kill();
       setDirected(false);
     };
@@ -110,6 +132,13 @@ export function LifeSystem() {
       aria-labelledby="system-title"
     >
       <div className="life-system-stage">
+        <div className="life-system-environment" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 600px)" srcSet="/media/world/life-instrument-mobile.webp" />
+            <Image src="/media/world/life-instrument.webp" alt="" fill sizes="100vw" />
+          </picture>
+        </div>
+        <div className="life-system-environment-shade" aria-hidden="true" />
         <div className="life-system-intro">
           <p className="estate-eyebrow">04 / THE GENT ASCEND LIFEOS</p>
           <h2 id="system-title">

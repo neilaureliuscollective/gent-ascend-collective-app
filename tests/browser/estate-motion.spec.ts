@@ -19,8 +19,12 @@ for (const width of [344, 768, 1440]) {
     };
     await sample('.ascend-threshold', 0.1);
     const early = await threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity));
-    await sample('.ascend-threshold', 0.7);
+    const firstScale = await threshold.locator('.ascend-threshold-environment').evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
+    await sample('.ascend-threshold', 0.5);
     await expect.poll(() => threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(early + 0.4);
+    await sample('.ascend-threshold', 0.88);
+    await expect.poll(() => threshold.locator('.ascend-threshold-mark').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(0.2);
+    await expect.poll(() => threshold.locator('.ascend-threshold-environment').evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeGreaterThan(firstScale + 0.3);
     const inset = await page.locator('.ascend-threshold-stage').evaluate((el) => Math.round(el.getBoundingClientRect().top));
     expect(inset).toBeGreaterThanOrEqual(70);
     expect(inset).toBeLessThan(140);
@@ -38,6 +42,27 @@ for (const width of [344, 768, 1440]) {
     await sample('.ascend-emergence', 0.8);
     await expect.poll(() => page.locator('.ascend-emergence .estate-sculpture').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(orb + 0.4);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+
+  test(`LifeOS copy and exits keep separate space at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 344 ? 740 : 900 });
+    await page.goto('/#the-system');
+    const system = page.locator('#the-system');
+    await expect(system).toHaveAttribute('data-directed', 'true');
+    const boxes = await system.evaluate((element) => {
+      const rect = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+      return {
+        story: rect('.life-system-story').bottom,
+        disclosureTop: rect('.life-system-disclosure').top,
+        disclosureBottom: rect('.life-system-disclosure').bottom,
+        actionsTop: rect('.estate-actions').top,
+        actionsBottom: rect('.estate-actions').bottom,
+        railTop: rect('.life-system-stages').top,
+      };
+    });
+    expect(boxes.story).toBeLessThanOrEqual(boxes.disclosureTop + 4);
+    expect(boxes.disclosureBottom).toBeLessThanOrEqual(boxes.actionsTop + 1);
+    if (width <= 900) expect(boxes.actionsBottom).toBeLessThanOrEqual(boxes.railTop + 1);
   });
 
   test(`native scroll and Fold-width changes preserve the entry at ${width}`, async ({ page }) => {

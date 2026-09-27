@@ -17,16 +17,27 @@
   gap: clamp(20px, 4vw, 80px);
   padding: 42px 6vw 68px;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 69% 44%, #1c503861 0%, transparent 42%),
-    radial-gradient(ellipse at 42% 100%, #11392d75 0%, transparent 56%),
-    linear-gradient(122deg, #030a08, #081b15 58%, #020705);
+  background: #030a08;
+}
+.life-system-environment,
+.life-system-environment-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.life-system-environment img {
+  object-fit: cover;
+  object-position: center;
+}
+.life-system-environment-shade {
+  background: linear-gradient(90deg, #020604f5 0%, #020604d4 31%, #02060473 58%, #02060417 100%),
+    linear-gradient(0deg, #020604bd, transparent 40%);
 }
 .life-system-stage::before {
   content: '';
   position: absolute;
   inset: 18px;
-  border: 1px solid #c4a05d21;
+  border: 0;
   pointer-events: none;
 }
 .life-system-stage::after {
@@ -35,7 +46,7 @@
   left: 6vw;
   right: 6vw;
   bottom: 34px;
-  border-bottom: 1px solid #afbd9a38;
+  border-bottom: 0;
   pointer-events: none;
 }
 .life-system-intro {
@@ -125,6 +136,7 @@
   transition: transform 700ms cubic-bezier(0.2, 0.65, 0.2, 1);
   pointer-events: none;
 }
+.life-system[data-directed='true'] .life-system-orbits { opacity: 0.08; }
 .life-system-orbits::before,
 .life-system-orbits::after,
 .life-system-orbits i {
@@ -588,4 +600,43 @@
     font-size: 0.7rem;
     margin-top: 4px;
   }
+}
+
+/* The illustration sits in the same material world as the Threshold. The
+   mobile reading stack owns its footer space so copy cannot collide with CTAs. */
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .life-system[data-directed='true'] .life-system-environment img {
+    object-position: 60% center;
+  }
+  .life-system[data-directed='true'] .life-system-environment-shade {
+    background: linear-gradient(90deg, #020604e5, #0206047a 66%, #02060429),
+      linear-gradient(0deg, #020604e8, transparent 58%);
+  }
+  .life-system[data-directed='true'] .life-system-orbits { display: none; }
+  .life-system[data-directed='true'] .life-system-intro {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 59px);
+  }
+  .life-system[data-directed='true'] .life-system-story {
+    width: min(560px, 76%);
+    margin-top: clamp(14px, 3svh, 28px);
+  }
+  .life-system[data-directed='true'] .life-system-disclosure {
+    position: static;
+    margin: auto 0 10px;
+  }
+  .life-system[data-directed='true'] .estate-actions {
+    position: static;
+    margin: 0;
+  }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  .life-system[data-directed='true'] .life-system-environment img { object-position: 52% 26%; }
+  .life-system[data-directed='true'] .life-system-environment-shade {
+    background: linear-gradient(0deg, #020604f7 0%, #020604e8 34%, #02060491 65%, #02060434 100%);
+  }
+  .life-system[data-directed='true'] .life-system-story { width: 96%; margin-top: 18px; }
+  .life-system[data-directed='true'] .life-system-disclosure { margin-bottom: 8px; }
+  .life-system[data-directed='true'] .estate-actions { gap: 10px; }
 }

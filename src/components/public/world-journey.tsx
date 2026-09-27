@@ -33,27 +33,43 @@ export function WorldJourney({ children }: { children: ReactNode }) {
           });
           threshold
             .fromTo(
-              '.ascend-depth i',
-              { scale: 1.3, opacity: 0 },
-              { scale: 1, opacity: 0.6, duration: 0.36, stagger: 0.05, ease: 'none' },
+              '.ascend-threshold-environment',
+              { scale: 1.03, xPercent: 0 },
+              { scale: 1.53, xPercent: -4, duration: 1, ease: 'none' },
               0,
             )
             .fromTo(
               '.ascend-threshold-mark',
-              { scale: 0.45, opacity: 0 },
-              { scale: 1, opacity: 0.9, duration: 0.36, ease: 'none' },
-              0.22,
+              { scale: 0.3, opacity: 0 },
+              { scale: 1, opacity: 0.95, duration: 0.16, ease: 'none' },
+              0.37,
+            )
+            .to(
+              '.ascend-threshold-mark',
+              { scale: 3.2, opacity: 0, duration: 0.28, ease: 'none' },
+              0.54,
             )
             .to(
               '.ascend-threshold-copy',
-              { y: -35, opacity: 0.12, duration: 0.26, ease: 'none' },
-              0.63,
+              { y: -60, opacity: 0, duration: 0.17, ease: 'none' },
+              0.18,
             )
-            .to('.ascend-depth', { scale: 1.24, duration: 0.37, ease: 'none' }, 0.63);
+            .fromTo(
+              '.ascend-threshold-bloom',
+              { opacity: 0, scale: 0.45 },
+              { opacity: 0.8, scale: 1.7, duration: 0.31, ease: 'none' },
+              0.66,
+            )
+            .fromTo(
+              '.ascend-threshold-veil',
+              { opacity: 0.78 },
+              { opacity: 0.45, duration: 0.7, ease: 'none' },
+              0,
+            );
           threshold.fromTo(
             '.ascend-light',
             { scale: 0.3, opacity: 0.35 },
-            { scale: 1.9, opacity: 1, duration: 0.52, ease: 'none' },
+            { scale: 2.3, opacity: 0.85, duration: 0.8, ease: 'none' },
             0.12,
           );
           const man = gsap.timeline({

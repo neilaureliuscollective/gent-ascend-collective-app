@@ -1,3 +1,9 @@
+# Threshold and LifeOS visual correction — 2026-09-27
+
+The founder's Fold screenshots prompted a focused correction of only the Threshold and LifeOS scenes. The opening now has a material chamber, camera move and crest-to-passage transition. LifeOS has a spatial physical instrument and reserved mobile copy/CTA/rail positions. Four optimized concept environment plates were added; the approved Man sequence and other chapters remain in place. See [visual correction](ASCEND_JOURNEY_THRESHOLD_LIFEOS.md). Hardware acceptance and production promotion remain pending.
+
+---
+
 # Ascend Journey human slice — 2026-09-27
 
 The approved Man chapter now has three distinct camera states and a close human action, replacing the small floating labels. Two consistent generated concept frames are compressed to WebP and staged for later approved motion clips. It retains native scroll, direct exits, Still/reduced motion and the existing Aethelios renderer. See [human slice and optional manual Runway guide](ASCEND_JOURNEY_HUMAN_SLICE.md). Physical Fold visual and performance acceptance remains pending; production is unchanged.

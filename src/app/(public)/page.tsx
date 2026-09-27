@@ -27,10 +27,14 @@ export default function PublicHome() {
           aria-labelledby="arrival-title"
         >
           <div className="ascend-threshold-stage">
+            <div className="ascend-threshold-environment" aria-hidden="true">
+              <picture>
+                <source media="(max-width: 600px)" srcSet="/media/world/threshold-chamber-mobile.webp" />
+                <Image src="/media/world/threshold-chamber.webp" alt="" fill sizes="100vw" preload />
+              </picture>
+            </div>
+            <div className="ascend-threshold-veil" aria-hidden="true" />
             <div className="ascend-depth" aria-hidden="true">
-              <i />
-              <i />
-              <i />
               <span className="ascend-light" />
             </div>
             <div className="ascend-threshold-copy">
@@ -52,6 +56,7 @@ export default function PublicHome() {
             <div className="ascend-threshold-mark" aria-hidden="true">
               <Image src={brand.crest} alt="" width={260} height={260} preload />
             </div>
+            <div className="ascend-threshold-bloom" aria-hidden="true" />
             <div className="ascend-chapter-foot">
               <span>01 / THE THRESHOLD</span>
               <span>Scroll to enter ↓</span>
