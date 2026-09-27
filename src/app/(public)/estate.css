@@ -227,7 +227,9 @@
 }
 .estate-collection {
   padding: 80px 7vw 90px;
-  background: radial-gradient(ellipse at 30% 50%, #12553f 0%, #082b22 40%, #061911 90%);
+  background:
+    radial-gradient(ellipse at 41% 48%, #164b36 0%, #08271d 37%, transparent 72%),
+    linear-gradient(135deg, #020806, #071c15 65%, #030906);
   border-bottom: 1px solid #c4912f38;
 }
 .estate-collection-heading h2 {
@@ -615,18 +617,8 @@
     max-height: 1000px;
     scroll-margin-top: 137px;
   }
-  .estate-ritual .estate-art {
-    inset: 0 0 26%;
-    transform-origin: 70% top;
-  }
-  .estate-ritual .estate-art img {
-    object-position: 72% top;
-  }
   .estate-scene-shade {
     background: linear-gradient(0deg, #062319 0%, #062319 22%, #062319d9 40%, transparent 72%);
-  }
-  .estate-ritual .estate-scene-copy {
-    padding: 440px 7vw 75px;
   }
   .estate-scene-copy h2 {
     font-size: 44px;
@@ -812,12 +804,6 @@
   opacity: 1;
 }
 @media (max-width: 600px) {
-  .estate-ritual .estate-art {
-    inset: 0;
-  }
-  .estate-ritual .estate-art img {
-    object-position: 50% top !important;
-  }
   .estate-opening-caption {
     right: 115px;
   }
@@ -838,12 +824,6 @@
   }
 }
 @media (max-width: 600px) {
-  .estate-ritual {
-    min-height: 940px;
-  }
-  .estate-ritual .estate-scene-copy {
-    padding-top: 525px;
-  }
   .estate-loop {
     right: 115px;
     gap: 12px;
@@ -855,13 +835,4 @@
 }
 .estate-journey:not([data-choreographed='true']) .estate-opening-stage {
   position: relative;
-}
-@media (max-width: 600px) {
-  .estate-ritual .estate-art {
-    inset: 115px 0 0;
-  }
-  .estate-ritual .estate-art img {
-    object-fit: contain;
-    object-position: center top !important;
-  }
 }

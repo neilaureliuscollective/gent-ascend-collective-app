@@ -111,19 +111,14 @@ export function WorldJourney({ children }: { children: ReactNode }) {
             emergence.kill();
           };
         });
-        const inset = () =>
-          (document.querySelector('.world-header')?.getBoundingClientRect().height ?? 78) +
-          (node.querySelector('.estate-index')?.getBoundingClientRect().height ?? 44);
         for (const scene of node.querySelectorAll<HTMLElement>(
           '.estate-act, .estate-collection, .estate-invitation',
         )) {
-          const stage = scene.querySelector<HTMLElement>('.estate-scene-stage');
-          const held = () => !!stage && getComputedStyle(stage).position === 'sticky';
           const timeline = gsap.timeline({
             scrollTrigger: {
               trigger: scene,
-              start: () => (held() ? `top ${inset()}` : 'top 88%'),
-              end: () => (held() ? `+=${innerHeight * 0.4}` : 'top 38%'),
+              start: 'top 88%',
+              end: 'top 38%',
               scrub: true,
               invalidateOnRefresh: true,
             },

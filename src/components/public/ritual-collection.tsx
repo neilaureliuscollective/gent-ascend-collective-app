@@ -50,7 +50,7 @@ export function RitualCollection() {
   const product = products[selected]!;
   return (
     <section className="estate-collection" aria-labelledby="collection-title">
-      <SceneAtmosphere image="/media/world/gallery.webp" />
+      <SceneAtmosphere variant="stone" />
       <div className="estate-collection-heading">
         <p className="estate-eyebrow">LEGACY RESERVE / THE FOUNDING COLLECTION</p>
         <h2 id="collection-title">
@@ -76,7 +76,9 @@ export function RitualCollection() {
           <p>{product.kind}</p>
           <small>{product.detail}</small>
           <p className="estate-product-ritual">{product.ritual}</p>
-          <Link href={product.link}>Explore the collection ↗</Link>
+          <Link href={product.link}>
+            {product.id === 'vitalis' ? 'Inspect Vitalis ↗' : 'Explore the collection ↗'}
+          </Link>
           <small className="estate-availability">Preview only. Not available to order.</small>
         </div>
       </div>

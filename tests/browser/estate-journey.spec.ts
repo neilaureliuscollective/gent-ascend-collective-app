@@ -13,7 +13,7 @@ for (const width of [344, 768, 1440]) {
       'One man. Many demands.',
       'A clearer way to see the whole.',
       'Direction becomes daily practice.',
-      'Begin with the care you take.',
+      'A moment to take your place.',
     ])
       await expect(page.getByRole('heading', { name })).toHaveCount(1);
     await expect(page.locator('.ascend-man-image img')).toHaveJSProperty('complete', true);
@@ -90,3 +90,50 @@ test('desktop LifeOS stages advance and reverse with native scroll', async ({ pa
   });
   await expect(system).toHaveAttribute('data-active', '1');
 });
+
+test('desktop ritual moves from preparation to the object and back', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/#the-ritual');
+  const ritual = page.locator('#the-ritual');
+  await expect(ritual).toHaveAttribute('data-directed', 'true');
+  await expect(ritual).toHaveAttribute('data-active', '1');
+  await page.evaluate(() => {
+    const section = document.querySelector('#the-ritual')!;
+    scrollTo({
+      top: section.getBoundingClientRect().top + scrollY + section.clientHeight * 0.38,
+      behavior: 'instant',
+    });
+  });
+  await expect(ritual).toHaveAttribute('data-active', '2');
+  await expect(
+    page.getByRole('heading', { name: 'Care becomes something you carry.' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('#ritual-object').getByRole('link', { name: /Inspect Vitalis/ }),
+  ).toHaveAttribute('href', '/shop/vitalis#atelier');
+  await page.evaluate(() => {
+    const section = document.querySelector('#the-ritual')!;
+    scrollTo({ top: section.getBoundingClientRect().top + scrollY + 5, behavior: 'instant' });
+  });
+  await expect(ritual).toHaveAttribute('data-active', '1');
+});
+
+for (const width of [344, 768]) {
+  test(`Fold-width ${width} ritual keeps both moments readable`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 344 ? 660 : 900 });
+    if (width === 344) await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/#the-ritual');
+    await expect(page.locator('#the-ritual')).toHaveAttribute('data-directed', 'false');
+    await expect(page.getByRole('heading', { name: 'A moment to take your place.' })).toBeVisible();
+    await page.locator('#ritual-object').scrollIntoViewIfNeeded();
+    await expect(
+      page.getByRole('heading', { name: 'Care becomes something you carry.' }),
+    ).toBeVisible();
+    await page
+      .locator('#ritual-object')
+      .getByRole('link', { name: /Inspect Vitalis/ })
+      .click();
+    await expect(page).toHaveURL('/shop/vitalis#atelier');
+    await expect(page.getByRole('button', { name: /Explore in 3D/ })).toBeVisible();
+  });
+}

@@ -387,12 +387,6 @@
 }
 
 /* Scene repair: stable architectural plates and a shared, bounded member orb. */
-.estate-scene-stage {
-  position: relative;
-  min-height: inherit;
-  height: 100%;
-  overflow: clip;
-}
 .estate-sculpture .aurelius-presence {
   width: 100%;
   height: 100%;
@@ -424,43 +418,8 @@
 .estate-journey {
   --scene-inset: 122px;
 }
-.estate-ritual .estate-art {
-  transform: none;
-}
-/* Keep native sticky staging within the visible space below both navigation bars.
-   Small/short screens keep a natural-flow layout; no pinned, clipped paragraphs. */
+/* Keep the member visual and ambient scene bounded below the navigation. */
 @media (min-width: 701px) and (min-height: 720px) {
-  .estate-journey[data-choreographed='true'] .estate-held {
-    height: 165svh;
-    min-height: 0;
-    max-height: none;
-    overflow: visible;
-  }
-  .estate-journey[data-choreographed='true'] .estate-scene-stage {
-    position: sticky;
-    top: var(--scene-inset);
-    height: calc(100svh - var(--scene-inset));
-    min-height: 0;
-  }
-  .estate-held .estate-scene-copy {
-    padding: clamp(36px, 7svh, 90px) 7vw 60px;
-    max-width: 58%;
-  }
-  .estate-held .estate-scene-copy h2 {
-    font-size: clamp(38px, 5.3vw, 76px);
-  }
-  .estate-held .estate-scene-copy > p:not(.estate-eyebrow) {
-    font-size: clamp(14px, 1.25vw, 18px);
-    line-height: 1.8;
-  }
-  .estate-held .estate-actions {
-    gap: 16px;
-    margin-top: 24px;
-  }
-  .estate-held .estate-primary {
-    padding: 14px 18px;
-    gap: 20px;
-  }
   .estate-intelligence .estate-sculpture {
     width: min(50vw, 66svh);
     max-width: 680px;
@@ -470,21 +429,11 @@
   .estate-intelligence .estate-loop {
     bottom: 24px;
   }
-  .estate-ritual .estate-art {
-    inset: 0;
-  }
 }
 @media (min-width: 701px) and (max-width: 850px) {
   .estate-journey {
     --scene-inset: 116px;
   }
-  .estate-held .estate-scene-copy {
-    padding-left: 6vw;
-    padding-right: 0;
-  }
-}
-.estate-journey[data-still='true'] .estate-scene-stage {
-  position: relative;
 }
 @media (max-width: 600px) {
   .estate-reserve .estate-scene-copy {
