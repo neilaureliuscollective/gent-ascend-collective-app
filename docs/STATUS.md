@@ -268,4 +268,10 @@ Founder-approved public entry slice on top of `cinematic-estate`: threshold, hum
 
 Lint, strict typecheck, 84 unit/SQL tests and production build passed. The Playwright Chromium download returned a truncated archive in this runner, so new and updated browser interaction checks were not executed here. Physical Fold/iPhone review, real device pacing, field performance, hosted auth and commercial release gates remain open. No production deployment, database change or checkout activation.
 
+# Ascend Journey Phase 2 — 2026-09-27
+
+Founder-authorized living LifeOS scene replaces the static six-stage diagram. One labeled fictional day advances through six decisions on desktop scroll or explicit stage buttons; phones, short screens, Still and reduced-motion retain the complete scene with direct controls and natural document scroll. Public Aethelios/commerce/member destinations remain available. The existing founder browser checks were updated to expect the current `/app` post-login path. See [Phase 2 scope](ASCEND_JOURNEY_PHASE_2.md).
+
+Local lint, strict typecheck, 84 unit/SQL tests and production build passed. Migration ledger and browser/CI results are recorded separately after review. Physical Fold, Safari, field performance and production release remain open. No production deployment or database change.
+
 ---
