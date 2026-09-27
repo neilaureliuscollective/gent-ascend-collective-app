@@ -39,7 +39,7 @@ export default async function Product({ params }: { params: Promise<{ handle: st
         </div>
       </section>
       {product.handle === 'vitalis' && (
-        <section className="world-section">
+        <section id="atelier" className="world-section">
           <ProductAtelier />
         </section>
       )}

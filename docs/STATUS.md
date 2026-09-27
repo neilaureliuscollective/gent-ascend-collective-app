@@ -274,4 +274,10 @@ Founder-authorized living LifeOS scene replaces the static six-stage diagram. On
 
 Local lint, strict typecheck, 84 unit/SQL tests, production build and migration ledger passed. Draft PR #14 CI passed both application and database jobs, including Chromium public-journey tests, local Supabase integration and founder browser flows. Physical Fold, Safari, field performance and production release remain open. No production deployment or database change.
 
+# Ascend Journey Phase 3 — 2026-09-27
+
+The public ritual now begins with a human mirror scene and resolves to the existing Vitalis concept object. Desktop has a measured two-beat scroll hold; Fold/phone, short viewport, Still and reduced-motion display both panels in natural flow. Existing catalog preview and the opt-in Vitalis 3D atelier are reused. The ornate gallery image has been removed from the collection backdrop. See [Phase 3 scope and asset provenance](ASCEND_JOURNEY_PHASE_3.md).
+
+Automated and device gate results follow this implementation review. No product availability, checkout, booking, database or private account behavior changed. No production deployment.
+
 ---

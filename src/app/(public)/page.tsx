@@ -8,10 +8,12 @@ import { RitualCollection } from '@/components/public/ritual-collection';
 import { brand } from '@/platform/brand';
 import { SceneAtmosphere } from '@/components/public/scene-atmosphere';
 import { LifeSystem } from '@/components/public/life-system';
+import { RitualSequence } from '@/components/public/ritual-sequence';
 import './estate.css';
 import './environment.css';
 import './ascend-journey.css';
 import './life-system.css';
+import './ritual-sequence.css';
 
 export default function PublicHome() {
   return (
@@ -155,39 +157,7 @@ export default function PublicHome() {
           </div>
         </section>
         <LifeSystem />
-        <section
-          id="the-ritual"
-          className="estate-act estate-ritual estate-held"
-          data-chapter="ritual"
-          aria-labelledby="ritual-title"
-        >
-          <div className="estate-scene-stage">
-            <div className="estate-art">
-              <MediaScene media={estateMedia.ritual} bare />
-            </div>
-            <div className="estate-scene-shade" />
-            <SceneAtmosphere variant="dawn" />
-            <div className="estate-scene-copy">
-              <p className="estate-eyebrow">05 / THE DAILY RITUAL · LEGACY RESERVE</p>
-              <h2 id="ritual-title">
-                Begin with
-                <br />
-                <em>the care you take.</em>
-              </h2>
-              <p>
-                A moment to prepare. To pay attention.
-                <br />
-                To carry yourself with intention.
-              </p>
-              <Link className="estate-primary" href="/shop/vitalis">
-                Discover Vitalis <span>↗</span>
-              </Link>
-            </div>
-            <span className="estate-scene-note">
-              VITALIS / HAIR & BEARD OIL · COLLECTION PREVIEW
-            </span>
-          </div>
-        </section>
+        <RitualSequence />
         <RitualCollection />
         <section
           id="the-reserve"
