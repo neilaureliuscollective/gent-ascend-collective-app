@@ -809,3 +809,351 @@
 .public-world[data-world-still='true'] .ascend-man-decision,
 .estate-journey:not([data-choreographed='true']) .ascend-man-portrait,
 .estate-journey:not([data-choreographed='true']) .ascend-man-decision { display: none; }
+
+/* Aethelios is already present when the chapter enters view. Scroll changes
+   perspective elsewhere in the journey; this field has its own quiet rhythm. */
+.ascend-emergence-stage {
+  background: radial-gradient(ellipse at 73% 43%, #0d3d2d 0%, #071c16 43%, #04110d 85%);
+}
+.ascend-intelligence-visual {
+  position: absolute;
+  inset: 0 1% 0 auto;
+  width: 59%;
+  pointer-events: none;
+  isolation: isolate;
+}
+.ascend-intelligence-visual::before,
+.ascend-intelligence-visual::after {
+  content: '';
+  position: absolute;
+  inset: 8% 4%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #3e9a7050 0%, #1c5a4130 22%, transparent 67%);
+  opacity: 0.5;
+}
+.ascend-intelligence-visual::after {
+  inset: 19% 17%;
+  background: radial-gradient(ellipse, #e1bb6530, transparent 65%);
+}
+.ascend-intelligence-visual .estate-sculpture {
+  left: 50%;
+  right: auto;
+  top: 50%;
+  width: min(49vw, 610px);
+  height: min(49vw, 610px);
+  transform: translate(-50%, -50%);
+  opacity: 1;
+}
+.ascend-intelligence-field {
+  z-index: 0;
+  background: none;
+}
+.ascend-intelligence-field i,
+.ascend-intelligence-field i:nth-child(n) {
+  left: 50%;
+  top: 50%;
+  width: min(49vw, 630px);
+  height: min(49vw, 630px);
+  max-width: none;
+  max-height: none;
+  border-color: #bb98512d;
+  transform: translate(-50%, -50%) rotateX(68deg);
+}
+.ascend-intelligence-field i:nth-child(2) {
+  width: min(53vw, 700px);
+  height: min(53vw, 700px);
+  transform: translate(-50%, -50%) rotateY(68deg);
+  opacity: 0.42;
+}
+.ascend-intelligence-field i:nth-child(3) {
+  width: min(57vw, 760px);
+  height: min(57vw, 760px);
+  opacity: 0.24;
+  transform: translate(-50%, -50%);
+}
+.ascend-intelligence-field i:nth-child(4) {
+  width: 1px;
+  height: 78%;
+  border: 0;
+  border-left: 1px solid #d7b87127;
+  transform: translate(-50%, -50%);
+}
+.ascend-intelligence-traces {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.ascend-intelligence-traces i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #dab66c00, #dab66c49 65%, #f7d993aa 100%);
+  opacity: 0.35;
+}
+.ascend-intelligence-traces i:nth-child(1) {
+  transform: rotate(-148deg);
+}
+.ascend-intelligence-traces i:nth-child(2) {
+  transform: rotate(-42deg);
+}
+.ascend-intelligence-traces i:nth-child(3) {
+  transform: rotate(164deg);
+}
+.ascend-intelligence-traces i:nth-child(4) {
+  transform: rotate(26deg);
+}
+.ascend-intelligence-traces i:nth-child(5) {
+  transform: rotate(137deg);
+}
+.ascend-intelligence-traces i:nth-child(6) {
+  transform: rotate(53deg);
+}
+.ascend-intelligence-visual .ascend-connections {
+  z-index: 4;
+}
+.ascend-intelligence-visual .ascend-connections span {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  opacity: 1;
+}
+.estate-journey[data-choreographed='true'] .ascend-intelligence-visual .ascend-connections span {
+  opacity: 1;
+}
+.ascend-connections b {
+  display: block;
+  padding: 8px 11px;
+  border: 1px solid #c8a65a66;
+  background: #09261fe8;
+  box-shadow: 0 0 25px #c4912f19;
+  font-weight: 400;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(n) {
+  top: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(1) {
+  left: 10%;
+  top: 18%;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(2) {
+  right: 5%;
+  top: 24%;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(3) {
+  left: 2%;
+  top: 48%;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(4) {
+  right: 0;
+  top: 51%;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(5) {
+  left: 12%;
+  top: 74%;
+}
+.ascend-intelligence-visual .ascend-connections span:nth-child(6) {
+  right: 8%;
+  top: 77%;
+}
+.ascend-emergence-copy {
+  width: 48%;
+  max-width: 720px;
+}
+.ascend-emergence[data-in-view='true'] .ascend-intelligence-visual::before {
+  animation: intelligence-breathe 7s ease-in-out infinite alternate;
+}
+.ascend-emergence[data-in-view='true'] .ascend-intelligence-visual::after {
+  animation: intelligence-breathe 10s ease-in-out -4s infinite alternate-reverse;
+}
+.ascend-emergence[data-in-view='true'] .ascend-intelligence-field i:first-child {
+  animation: intelligence-ring 22s linear infinite;
+}
+.ascend-emergence[data-in-view='true'] .ascend-intelligence-field i:nth-child(2) {
+  animation: intelligence-ring-cross 29s linear infinite reverse;
+}
+.ascend-emergence[data-in-view='true'] .ascend-intelligence-traces i {
+  animation: intelligence-signal 6s ease-in-out infinite alternate;
+}
+.ascend-emergence[data-in-view='true'] .ascend-intelligence-traces i:nth-child(2n) {
+  animation-delay: -3s;
+}
+.ascend-emergence[data-in-view='true'] .ascend-connections b {
+  animation: intelligence-label 5s ease-in-out infinite alternate;
+}
+.ascend-emergence[data-in-view='true'] .ascend-connections span:nth-child(2n) b {
+  animation-delay: -2.5s;
+}
+@keyframes intelligence-breathe {
+  from {
+    opacity: 0.3;
+    transform: scale(0.93);
+  }
+  to {
+    opacity: 0.75;
+    transform: scale(1.07);
+  }
+}
+@keyframes intelligence-ring {
+  from {
+    transform: translate(-50%, -50%) rotateX(68deg) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotateX(68deg) rotate(360deg);
+  }
+}
+@keyframes intelligence-ring-cross {
+  from {
+    transform: translate(-50%, -50%) rotateY(68deg) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotateY(68deg) rotate(360deg);
+  }
+}
+@keyframes intelligence-signal {
+  from {
+    opacity: 0.12;
+  }
+  to {
+    opacity: 0.52;
+  }
+}
+@keyframes intelligence-label {
+  from {
+    transform: translateY(-2px);
+    box-shadow: 0 0 10px #c4912f12;
+  }
+  to {
+    transform: translateY(2px);
+    box-shadow: 0 0 25px #c4912f30;
+  }
+}
+
+/* Narrow screens have a dedicated visual frame; labels cannot enter the copy. */
+@media (max-width: 900px) {
+  .estate-journey[data-choreographed='true'] .ascend-emergence,
+  .ascend-emergence {
+    height: auto !important;
+  }
+  .estate-journey[data-choreographed='true'] .ascend-emergence-stage,
+  .ascend-emergence-stage {
+    position: relative !important;
+    top: 0 !important;
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0 65px;
+    overflow: hidden;
+  }
+  .ascend-intelligence-visual {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: clamp(300px, 55vw, 500px);
+    flex: none;
+  }
+  .ascend-intelligence-visual .estate-sculpture,
+  .estate-journey[data-choreographed='true'] .ascend-emergence .estate-sculpture {
+    position: absolute;
+    left: 50%;
+    right: auto;
+    top: 50%;
+    width: min(66vw, 440px);
+    height: min(66vw, 440px);
+    margin: 0;
+    transform: translate(-50%, -50%);
+  }
+  .ascend-intelligence-field i:nth-child(n) {
+    width: min(73vw, 510px);
+    height: min(73vw, 510px);
+    top: 50%;
+  }
+  .ascend-intelligence-field i:nth-child(4) {
+    width: 1px;
+    height: 82%;
+  }
+  .estate-journey[data-choreographed='true'] .ascend-emergence-copy,
+  .ascend-emergence-copy {
+    position: relative;
+    inset: auto;
+    bottom: auto;
+    width: 100%;
+    max-width: 690px;
+    padding: 18px 7vw 0;
+    opacity: 1;
+  }
+  .ascend-intelligence-visual .ascend-connections span:nth-child(1) {
+    left: 8%;
+    top: 12%;
+  }
+  .ascend-intelligence-visual .ascend-connections span:nth-child(2) {
+    right: 6%;
+    top: 16%;
+  }
+  .ascend-intelligence-visual .ascend-connections span:nth-child(3) {
+    left: 3%;
+    top: 45%;
+  }
+  .ascend-intelligence-visual .ascend-connections span:nth-child(4) {
+    right: 3%;
+    top: 48%;
+  }
+  .ascend-intelligence-visual .ascend-connections span:nth-child(5) {
+    left: 10%;
+    top: 78%;
+  }
+  .ascend-intelligence-visual .ascend-connections span:nth-child(6) {
+    right: 7%;
+    top: 79%;
+  }
+  .estate-journey[data-choreographed='true'] .ascend-connections span {
+    opacity: 1;
+  }
+}
+@media (max-width: 480px) {
+  .ascend-intelligence-visual {
+    height: clamp(295px, 84vw, 390px);
+  }
+  .ascend-intelligence-visual .estate-sculpture,
+  .estate-journey[data-choreographed='true'] .ascend-emergence .estate-sculpture {
+    width: min(73vw, 340px);
+    height: min(73vw, 340px);
+  }
+  .ascend-intelligence-visual .ascend-connections span {
+    font-size: 8px;
+  }
+  .ascend-connections b {
+    padding: 6px 7px;
+  }
+  .ascend-emergence-copy h2 {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+  }
+}
+@media (max-height: 720px) and (min-width: 901px) {
+  .ascend-intelligence-visual {
+    width: 54%;
+  }
+  .ascend-emergence-copy {
+    width: 50%;
+  }
+}
+.public-world[data-world-still='true'] .ascend-emergence *,
+.public-world[data-world-still='true'] .ascend-emergence *::before,
+.public-world[data-world-still='true'] .ascend-emergence *::after {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ascend-emergence *,
+  .ascend-emergence *::before,
+  .ascend-emergence *::after {
+    animation: none !important;
+  }
+}

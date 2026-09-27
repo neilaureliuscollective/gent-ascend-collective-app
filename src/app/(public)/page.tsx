@@ -29,8 +29,17 @@ export default function PublicHome() {
           <div className="ascend-threshold-stage">
             <div className="ascend-threshold-environment" aria-hidden="true">
               <picture>
-                <source media="(max-width: 600px)" srcSet="/media/world/threshold-chamber-mobile.webp" />
-                <Image src="/media/world/threshold-chamber.webp" alt="" fill sizes="100vw" preload />
+                <source
+                  media="(max-width: 600px)"
+                  srcSet="/media/world/threshold-chamber-mobile.webp"
+                />
+                <Image
+                  src="/media/world/threshold-chamber.webp"
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  preload
+                />
               </picture>
             </div>
             <div className="ascend-threshold-veil" aria-hidden="true" />
@@ -123,7 +132,9 @@ export default function PublicHome() {
             </div>
             <div className="ascend-man-copy ascend-man-choice">
               <p className="estate-eyebrow">A MOMENT OF CLARITY</p>
-              <p className="ascend-man-resolution">The parts belong to <em>one life.</em></p>
+              <p className="ascend-man-resolution">
+                The parts belong to <em>one life.</em>
+              </p>
             </div>
             <span className="ascend-man-edge" aria-hidden="true" />
           </div>
@@ -135,13 +146,43 @@ export default function PublicHome() {
           aria-labelledby="intelligence-title"
         >
           <div className="ascend-emergence-stage">
-            <div className="ascend-intelligence-field" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
+            <div className="ascend-intelligence-visual" aria-hidden="true">
+              <div className="ascend-intelligence-field">
+                <i />
+                <i />
+                <i />
+                <i />
+              </div>
+              <div className="ascend-intelligence-traces">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </div>
+              <IntelligenceSculpture />
+              <div className="ascend-connections">
+                <span>
+                  <b>YOU</b>
+                </span>
+                <span>
+                  <b>HEALTH</b>
+                </span>
+                <span>
+                  <b>RITUALS</b>
+                </span>
+                <span>
+                  <b>GOALS</b>
+                </span>
+                <span>
+                  <b>WORK</b>
+                </span>
+                <span>
+                  <b>RECOVERY</b>
+                </span>
+              </div>
             </div>
-            <IntelligenceSculpture />
             <div className="ascend-emergence-copy">
               <p className="estate-eyebrow">03 / AETHELIOS</p>
               <h2 id="intelligence-title">
@@ -159,14 +200,6 @@ export default function PublicHome() {
                 </Link>
                 <Link href="/enter">Enter your space ↗</Link>
               </div>
-            </div>
-            <div className="ascend-connections" aria-hidden="true">
-              <span>YOU</span>
-              <span>HEALTH</span>
-              <span>RITUALS</span>
-              <span>GOALS</span>
-              <span>WORK</span>
-              <span>RECOVERY</span>
             </div>
           </div>
         </section>

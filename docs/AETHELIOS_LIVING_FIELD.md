@@ -1,0 +1,9 @@
+# Aethelios living field — 2026-09-27
+
+The public intelligence chapter presents an ambient visual from the moment it enters view until it leaves. The existing member Aethelios renderer remains the central object; it retains its SVG fallback, adaptive resolution and offscreen/hidden-tab pause. Decorative signals represent possible areas of life, not connected accounts or personal readings.
+
+The previous scroll-scrub entrance controlled orb visibility, signal labels and copy. This left the chapter dependent on scroll position and placed labels over the headline on a closed Fold. The chapter now uses independent, bounded CSS motion for the field, traces and signals only while `data-in-view` is true. Scroll remains native and the rest of the journey's choreography is unchanged. At widths up to 900px the visual has its own bounded frame above the copy in natural document flow. The Still control and OS reduced-motion setting disable the ambient motion, while the still illustration and all copy remain visible.
+
+Research: [GSAP ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/) ties a scrubbed timeline to scroll progress; [MDN requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) and [Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API) describe hidden-tab behavior; [web.dev animation performance](https://web.dev/articles/animations-and-performance) recommends bounded transform and opacity changes. The implementation reuses the renderer's existing lifecycle rather than adding a second graphics context.
+
+Verification: `npm run check` passed lint, strict typecheck, 87 tests and production build; `npm run db:ledger` passed. No database or merchant changes. Physical Fold/iPhone review and browser screenshot verification remain open because Chromium is unavailable in this runner. This branch is reviewable and has not been promoted to production.

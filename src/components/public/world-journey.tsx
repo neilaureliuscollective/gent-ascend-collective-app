@@ -121,44 +121,9 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               0.68,
             )
             .to({}, { duration: 0.13 }, 0.92);
-          const emergence = gsap.timeline({
-            scrollTrigger: {
-              trigger: '.ascend-emergence',
-              start: 'top top',
-              end: 'bottom bottom',
-              scrub: true,
-              invalidateOnRefresh: true,
-            },
-          });
-          emergence
-            .fromTo(
-              '.ascend-emergence .estate-sculpture',
-              { scale: 0.68, opacity: 0.1 },
-              { scale: 1, opacity: 1, duration: 0.55, ease: 'none' },
-              0,
-            )
-            .fromTo(
-              '.ascend-connections span',
-              { opacity: 0, scale: 0.8 },
-              { opacity: 1, scale: 1, duration: 0.3, stagger: 0.055, ease: 'none' },
-              0.36,
-            )
-            .fromTo(
-              '.ascend-emergence-copy',
-              { y: 20, opacity: 0.55 },
-              { y: 0, opacity: 1, duration: 0.35, ease: 'none' },
-              0.1,
-            )
-            .fromTo(
-              '.ascend-intelligence-field',
-              { scale: 0.62, opacity: 0.2 },
-              { scale: 1, opacity: 1, duration: 0.6, ease: 'none' },
-              0.05,
-            );
           return () => {
             threshold.kill();
             man.kill();
-            emergence.kill();
           };
         });
         for (const scene of node.querySelectorAll<HTMLElement>(

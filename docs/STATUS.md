@@ -292,6 +292,7 @@ See [AETHELIOS_ACTION_PHASE.md](AETHELIOS_ACTION_PHASE.md). A saved conversation
 # Guided evening review and tomorrow context
 
 See [ASCEND_EVENING_REVIEW.md](ASCEND_EVENING_REVIEW.md). Command now offers a confirmed, editable evening review. Aethelios can propose a draft from saved reflection and action status; manual entry works without the model. Versioned owner-only reviews feed tomorrow's Command, opt-in Aethelios context and Progress, with correction history. Four ordered migrations must precede deployment. A general tool registry, hosted Auth verification, live-model quality, device testing and lifecycle controls remain open.
+
 # Ascend Journey Phase 1 — 2026-09-27
 
 Founder-approved public entry slice on top of `cinematic-estate`: threshold, human-centered scene, shared Aethelios emergence, and spatial six-stage Ascend Loop now precede the existing product ritual. Louisiana moves from the opening to the Reserve/legacy chapters. Direct Shop/member navigation and honest preview/access boundaries remain. See [scope and provenance](ASCEND_JOURNEY_PHASE_1.md).
@@ -311,6 +312,8 @@ The public ritual now begins with a human mirror scene and resolves to the exist
 Local lint, strict typecheck, 84 unit/SQL tests, production build and migration ledger passed. Draft PR #15 CI passed both application and database jobs on the corrected branch, including 78 public browser tests, local Supabase integration and founder browser flows. Physical Fold/Samsung Internet and iPhone Safari, field performance and product approval remain open. No product availability, checkout, booking, database or private account behavior changed. No production deployment.
 
 # Commerce Spine V1 — 2026-09-27 (local implementation; merchant activation open)
+
+The public Aethelios chapter has a focused living-field refinement on `aethelios-living-field`; see [AETHELIOS_LIVING_FIELD.md](AETHELIOS_LIVING_FIELD.md). It is a visual change only and does not alter member intelligence or commerce activation. Device review remains open.
 
 The `commerce-activation-preview` integration branch combines this commerce slice with the latest `ascend-journey-threshold-lifeos` public experience so the founder can test one coherent preview. The Headless storefront and at least one published product were confirmed in Shopify admin; live Storefront API reads, cart mutation, checkout and the Vercel preview still require verification. Preview credentials were entered by the founder in Vercel and are not stored in the repository.
 
