@@ -7,9 +7,11 @@ import { WorldJourney } from '@/components/public/world-journey';
 import { RitualCollection } from '@/components/public/ritual-collection';
 import { brand } from '@/platform/brand';
 import { SceneAtmosphere } from '@/components/public/scene-atmosphere';
+import { LifeSystem } from '@/components/public/life-system';
 import './estate.css';
 import './environment.css';
 import './ascend-journey.css';
+import './life-system.css';
 
 export default function PublicHome() {
   return (
@@ -152,68 +154,7 @@ export default function PublicHome() {
             </div>
           </div>
         </section>
-        <section
-          id="the-system"
-          className="ascend-system"
-          data-chapter="system"
-          aria-labelledby="system-title"
-        >
-          <div className="ascend-system-stage">
-            <div className="ascend-system-copy">
-              <p className="estate-eyebrow">04 / THE GENT ASCEND LIFEOS</p>
-              <h2 id="system-title">
-                Direction becomes
-                <br />
-                <em>daily practice.</em>
-              </h2>
-              <p>
-                A place to choose what matters, act on it, see what happened, and adapt. Aethelios
-                carries context across the loop with you.
-              </p>
-              <div className="estate-actions">
-                <Link className="estate-primary" href="/gent-ascend">
-                  Explore the OS <span>↗</span>
-                </Link>
-                <Link href="/enter">Member entrance ↗</Link>
-              </div>
-            </div>
-            <div
-              className="ascend-loop-system"
-              aria-label="The Ascend Loop: understand where you are, decide what matters, choose an action, record what you did, reflect on what you learned, and adjust what comes next."
-            >
-              <div className="ascend-loop-orbit" aria-hidden="true" />
-              <div className="ascend-loop-center" aria-hidden="true">
-                <span>
-                  THE
-                  <br />
-                  ASCEND
-                  <br />
-                  LOOP
-                </span>
-              </div>
-              <ol>
-                <li>
-                  <span>01</span> Where am I?
-                </li>
-                <li>
-                  <span>02</span> What matters?
-                </li>
-                <li>
-                  <span>03</span> What should I do?
-                </li>
-                <li>
-                  <span>04</span> What did I do?
-                </li>
-                <li>
-                  <span>05</span> What did we learn?
-                </li>
-                <li>
-                  <span>06</span> What changes next?
-                </li>
-              </ol>
-            </div>
-          </div>
-        </section>
+        <LifeSystem />
         <section
           id="the-ritual"
           className="estate-act estate-ritual estate-held"

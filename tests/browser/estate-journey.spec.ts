@@ -22,7 +22,14 @@ for (const width of [344, 768, 1440]) {
       .getByRole('link', { name: /The system/ })
       .click();
     await expect(page).toHaveURL(/#the-system$/);
-    await expect(page.locator('.ascend-loop-system li')).toHaveCount(6);
+    await expect(page.locator('.life-system-stages li')).toHaveCount(6);
+    await page.getByRole('button', { name: '03 What should I do?' }).click();
+    await expect(page.getByRole('heading', { name: 'Make the next move concrete.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '03 What should I do?' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByText('An illustrative day · no personal data shown')).toBeVisible();
     await expect(page.getByRole('link', { name: /Explore the OS/ }).first()).toHaveAttribute(
       'href',
       '/gent-ascend',
@@ -56,9 +63,30 @@ test('reduced motion retains the complete sequence and destinations', async ({ p
   await page.locator('#the-intelligence').scrollIntoViewIfNeeded();
   await expect(page.locator('.estate-sculpture canvas')).toHaveCount(0);
   await page.locator('#the-system').scrollIntoViewIfNeeded();
-  await expect(page.locator('.ascend-loop-system li')).toHaveCount(6);
+  await expect(page.locator('.life-system-stages li')).toHaveCount(6);
+  await page.getByRole('button', { name: /Next stage/ }).click();
+  await expect(page.getByRole('heading', { name: 'Choose what deserves a place.' })).toBeVisible();
   await page.locator('#the-legacy').scrollIntoViewIfNeeded();
   await expect(
     page.getByRole('heading', { name: 'For the life you build. And the people in it.' }),
   ).toBeVisible();
+});
+
+test('desktop LifeOS stages advance and reverse with native scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/#the-system');
+  const system = page.locator('#the-system');
+  await expect(system).toHaveAttribute('data-active', '1');
+  await page.evaluate(() => {
+    const section = document.querySelector('#the-system')!;
+    const top = section.getBoundingClientRect().top + scrollY;
+    scrollTo({ top: top + section.clientHeight * 0.43, behavior: 'instant' });
+  });
+  await expect(system).toHaveAttribute('data-active', '4');
+  await expect(page.getByRole('heading', { name: 'Record what actually happened.' })).toBeVisible();
+  await page.evaluate(() => {
+    const section = document.querySelector('#the-system')!;
+    scrollTo({ top: section.getBoundingClientRect().top + scrollY + 5, behavior: 'instant' });
+  });
+  await expect(system).toHaveAttribute('data-active', '1');
 });

@@ -105,38 +105,10 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               { y: 0, opacity: 1, duration: 0.35, ease: 'none' },
               0.1,
             );
-          const system = gsap.timeline({
-            scrollTrigger: {
-              trigger: '.ascend-system',
-              start: 'top top',
-              end: 'bottom bottom',
-              scrub: true,
-            },
-          });
-          system
-            .fromTo(
-              '.ascend-loop-orbit',
-              { rotate: -35, opacity: 0.15 },
-              { rotate: 0, opacity: 1, duration: 0.5, ease: 'none' },
-              0,
-            )
-            .fromTo(
-              '.ascend-loop-system li',
-              { opacity: 0.18, scale: 0.88 },
-              { opacity: 1, scale: 1, duration: 0.18, stagger: 0.1, ease: 'none' },
-              0.14,
-            )
-            .fromTo(
-              '.ascend-loop-center',
-              { opacity: 0.4, scale: 0.8 },
-              { opacity: 1, scale: 1, duration: 0.3, ease: 'none' },
-              0.48,
-            );
           return () => {
             threshold.kill();
             man.kill();
             emergence.kill();
-            system.kill();
           };
         });
         const inset = () =>

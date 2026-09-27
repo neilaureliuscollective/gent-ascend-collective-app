@@ -19,7 +19,7 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
   await page.goto('/dev');
   await page.getByLabel('Membership scenario').selectOption('free');
   await page.getByLabel('Billing simulation').selectOption('none');

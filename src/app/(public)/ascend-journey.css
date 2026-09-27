@@ -1,8 +1,7 @@
 /* Phase 1: one directed entry sequence. The DOM is complete before motion runs. */
 .ascend-threshold,
 .ascend-man,
-.ascend-emergence,
-.ascend-system {
+.ascend-emergence {
   position: relative;
   isolation: isolate;
   scroll-margin-top: 122px;
@@ -14,8 +13,7 @@
 }
 .ascend-threshold-stage,
 .ascend-man-stage,
-.ascend-emergence-stage,
-.ascend-system-stage {
+.ascend-emergence-stage {
   position: sticky;
   top: 78px;
   height: calc(100svh - 78px);
@@ -76,16 +74,14 @@
 }
 .ascend-threshold h1,
 .ascend-man h2,
-.ascend-emergence h2,
-.ascend-system h2 {
+.ascend-emergence h2 {
   font-size: clamp(3.25rem, 6.7vw, 7rem);
   margin: 25px 0;
   line-height: 1.04;
 }
 .ascend-threshold-copy > p:not(.estate-eyebrow),
 .ascend-man-copy > p:not(.estate-eyebrow),
-.ascend-emergence-copy > p:not(.estate-eyebrow),
-.ascend-system-copy > p:not(.estate-eyebrow) {
+.ascend-emergence-copy > p:not(.estate-eyebrow) {
   font-size: clamp(1rem, 1.3vw, 1.25rem);
   line-height: 1.7;
   color: #d5ddd4;
@@ -305,119 +301,6 @@
   right: 2%;
   bottom: 37%;
 }
-.ascend-system {
-  height: 190svh;
-  background: radial-gradient(ellipse at 65% 50%, #104432, #051d17 55%, #030b08);
-}
-.ascend-system-stage {
-  display: grid;
-  grid-template-columns: 1fr 1.05fr;
-  align-items: center;
-  gap: 3vw;
-  padding: 0 7vw;
-}
-.ascend-system-copy {
-  z-index: 3;
-}
-.ascend-system-copy h2 {
-  font-size: clamp(3rem, 5.7vw, 6rem);
-}
-.ascend-loop-system {
-  position: relative;
-  width: min(100%, 650px);
-  aspect-ratio: 1;
-  margin: auto;
-  z-index: 2;
-}
-.ascend-loop-orbit {
-  position: absolute;
-  inset: 11%;
-  border: 1px solid #c4912f80;
-  border-radius: 50%;
-  box-shadow:
-    0 0 75px #8bc99214,
-    inset 0 0 75px #8bc99210;
-}
-.ascend-loop-orbit::before,
-.ascend-loop-orbit::after {
-  content: '';
-  position: absolute;
-  inset: 13%;
-  border: 1px solid #dcba7752;
-  border-radius: 50%;
-}
-.ascend-loop-orbit::after {
-  inset: 27%;
-  border-color: #6cab815c;
-}
-.ascend-loop-center {
-  position: absolute;
-  inset: 39%;
-  border: 1px solid #dec0798c;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  background: radial-gradient(circle at 35% 20%, #286b50, #061c14 70%);
-  box-shadow: 0 0 45px #c4912f30;
-  font:
-    clamp(0.7rem, 1.1vw, 1rem)/1.35 var(--font-sans),
-    sans-serif;
-  letter-spacing: 0.12em;
-  color: #f1d99e;
-}
-.ascend-loop-system ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  position: absolute;
-  inset: 0;
-  counter-reset: stage;
-}
-.ascend-loop-system li {
-  position: absolute;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  min-width: 160px;
-  max-width: 195px;
-  padding: 13px 16px;
-  background: #08261fef;
-  border: 1px solid #be9c536e;
-  box-shadow: 0 16px 35px #0007;
-  color: #eee9db;
-  font-size: 13px;
-  line-height: 1.3;
-}
-.ascend-loop-system li span {
-  color: #dabb74;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-}
-.ascend-loop-system li:nth-child(1) {
-  top: 1%;
-  left: 36%;
-}
-.ascend-loop-system li:nth-child(2) {
-  top: 23%;
-  right: -2%;
-}
-.ascend-loop-system li:nth-child(3) {
-  bottom: 22%;
-  right: -3%;
-}
-.ascend-loop-system li:nth-child(4) {
-  bottom: 0;
-  left: 37%;
-}
-.ascend-loop-system li:nth-child(5) {
-  bottom: 24%;
-  left: -3%;
-}
-.ascend-loop-system li:nth-child(6) {
-  top: 23%;
-  left: -3%;
-}
 .estate-journey[data-choreographed='true'] .ascend-threshold-mark,
 .estate-journey[data-choreographed='true'] .ascend-man-resolution {
   opacity: 0;
@@ -428,17 +311,15 @@
 .public-world[data-world-still='true'] .ascend-threshold,
 .public-world[data-world-still='true'] .ascend-man,
 .public-world[data-world-still='true'] .ascend-emergence,
-.public-world[data-world-still='true'] .ascend-system,
 .estate-journey:not([data-choreographed='true']) .ascend-threshold,
 .estate-journey:not([data-choreographed='true']) .ascend-man,
-.estate-journey:not([data-choreographed='true']) .ascend-emergence,
-.estate-journey:not([data-choreographed='true']) .ascend-system {
+.estate-journey:not([data-choreographed='true']) .ascend-emergence {
   height: auto;
 }
 .public-world[data-world-still='true']
-  :is(.ascend-threshold-stage, .ascend-man-stage, .ascend-emergence-stage, .ascend-system-stage),
+  :is(.ascend-threshold-stage, .ascend-man-stage, .ascend-emergence-stage),
 .estate-journey:not([data-choreographed='true'])
-  :is(.ascend-threshold-stage, .ascend-man-stage, .ascend-emergence-stage, .ascend-system-stage) {
+  :is(.ascend-threshold-stage, .ascend-man-stage, .ascend-emergence-stage) {
   position: relative;
   top: 0;
 }
@@ -455,14 +336,12 @@
 @media (max-width: 900px) {
   .ascend-threshold,
   .ascend-man,
-  .ascend-emergence,
-  .ascend-system {
+  .ascend-emergence {
     height: auto;
   }
   .ascend-threshold-stage,
   .ascend-man-stage,
-  .ascend-emergence-stage,
-  .ascend-system-stage {
+  .ascend-emergence-stage {
     position: relative;
     top: 0;
     height: auto;
@@ -475,9 +354,6 @@
   }
   .ascend-emergence-stage {
     min-height: 850px;
-  }
-  .ascend-system-stage {
-    min-height: 1050px;
   }
   .estate-journey[data-choreographed='true'] .ascend-threshold-mark,
   .estate-journey[data-choreographed='true'] .ascend-man-resolution,
@@ -498,25 +374,6 @@
     text-align: center;
     flex-shrink: 0;
   }
-  .ascend-system-stage {
-    display: block;
-    padding: 70px 6vw;
-  }
-  .ascend-system-copy {
-    max-width: 640px;
-  }
-  .ascend-system-copy h2 {
-    font-size: clamp(2.8rem, 6vw, 5rem);
-  }
-  .ascend-loop-system {
-    width: min(65vw, 460px);
-  }
-  .ascend-loop-system li {
-    min-width: 130px;
-    max-width: 155px;
-    padding: 9px;
-    font-size: 11px;
-  }
   .ascend-emergence .estate-sculpture {
     position: relative;
     right: auto;
@@ -532,14 +389,12 @@
 @media (max-width: 700px) {
   .ascend-threshold,
   .ascend-man,
-  .ascend-emergence,
-  .ascend-system {
+  .ascend-emergence {
     height: auto !important;
   }
   .ascend-threshold-stage,
   .ascend-man-stage,
-  .ascend-emergence-stage,
-  .ascend-system-stage {
+  .ascend-emergence-stage {
     position: relative !important;
     top: 0 !important;
     height: auto;
@@ -555,8 +410,7 @@
   }
   .ascend-threshold h1,
   .ascend-man h2,
-  .ascend-emergence h2,
-  .ascend-system h2 {
+  .ascend-emergence h2 {
     font-size: clamp(2.75rem, 11vw, 5rem);
   }
   .ascend-depth i {
@@ -686,38 +540,8 @@
     right: auto;
     top: 47%;
   }
-  .ascend-system-stage {
-    display: block;
-    padding: 95px 7vw 100px;
-  }
-  .ascend-loop-system {
-    width: min(86vw, 470px);
-    margin: 55px auto 0;
-  }
-  .ascend-loop-system li {
-    min-width: 0;
-    max-width: 145px;
-    font-size: 10px;
-    padding: 8px;
-    gap: 5px;
-  }
-  .ascend-loop-center {
-    font-size: 10px;
-  }
 }
 @media (max-width: 390px) {
-  .ascend-loop-system li {
-    max-width: 125px;
-    font-size: 9px;
-  }
-  .ascend-loop-system li:nth-child(2),
-  .ascend-loop-system li:nth-child(3) {
-    right: -5%;
-  }
-  .ascend-loop-system li:nth-child(5),
-  .ascend-loop-system li:nth-child(6) {
-    left: -5%;
-  }
   .ascend-man-stage {
     min-height: 840px;
   }
@@ -725,34 +549,27 @@
 @media (max-height: 720px) and (min-width: 701px) {
   .ascend-threshold,
   .ascend-man,
-  .ascend-emergence,
-  .ascend-system {
+  .ascend-emergence {
     height: auto;
   }
   .ascend-threshold-stage,
   .ascend-man-stage,
-  .ascend-emergence-stage,
-  .ascend-system-stage {
+  .ascend-emergence-stage {
     position: relative;
     top: 0;
     min-height: 660px;
     height: auto;
   }
-  .ascend-system-stage {
-    min-height: 800px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .ascend-threshold,
   .ascend-man,
-  .ascend-emergence,
-  .ascend-system {
+  .ascend-emergence {
     height: auto;
   }
   .ascend-threshold-stage,
   .ascend-man-stage,
-  .ascend-emergence-stage,
-  .ascend-system-stage {
+  .ascend-emergence-stage {
     position: relative;
     top: 0;
   }
