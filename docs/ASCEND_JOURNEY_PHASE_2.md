@@ -17,3 +17,5 @@ The authored example reflects current member routes: baseline/profile, goals, Ae
 Check the six stages by scroll and by button, reverse scroll, chapter anchor, direct exits, focus/pressed state, Still and reduced motion at closed phone, open Fold/tablet and desktop sizes. Physical Fold/Samsung Internet and Safari review remains required to judge pacing and GPU/thermal feel. Field LCP, INP, CLS and conversion need instrumentation after preview review. A browser emulation is not physical-device validation. Future ritual, Reserve, Collective, legacy and auth transitions remain separate slices.
 
 The older founder browser assertions for post-login `/` were corrected to the current `/app` redirect. This is a test expectation fix, not an auth change.
+
+Draft PR #14 CI passed application and database jobs on September 27, 2026: lint, typecheck, 84 unit/SQL tests, production build, public browser interactions, local Supabase integration and founder browser flows. This closes automated gates for the slice, not physical-device or field-performance acceptance.

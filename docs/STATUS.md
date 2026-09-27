@@ -272,6 +272,6 @@ Lint, strict typecheck, 84 unit/SQL tests and production build passed. The Playw
 
 Founder-authorized living LifeOS scene replaces the static six-stage diagram. One labeled fictional day advances through six decisions on desktop scroll or explicit stage buttons; phones, short screens, Still and reduced-motion retain the complete scene with direct controls and natural document scroll. Public Aethelios/commerce/member destinations remain available. The existing founder browser checks were updated to expect the current `/app` post-login path. See [Phase 2 scope](ASCEND_JOURNEY_PHASE_2.md).
 
-Local lint, strict typecheck, 84 unit/SQL tests and production build passed. Migration ledger and browser/CI results are recorded separately after review. Physical Fold, Safari, field performance and production release remain open. No production deployment or database change.
+Local lint, strict typecheck, 84 unit/SQL tests, production build and migration ledger passed. Draft PR #14 CI passed both application and database jobs, including Chromium public-journey tests, local Supabase integration and founder browser flows. Physical Fold, Safari, field performance and production release remain open. No production deployment or database change.
 
 ---
