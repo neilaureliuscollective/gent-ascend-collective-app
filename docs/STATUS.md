@@ -335,3 +335,9 @@ The first Studio image project/iteration slice is implemented on `aethelios-stud
 # Aethelios release readiness — 2026-09-27 (local branch)
 
 The Chat + Studio release pass is on `aethelios-release-readiness`. A read-only audit confirmed that the live Gent Ascend Supabase project includes five Reserve-owned migrations absent from this repository; the new chat and Studio migrations are still unapplied. The reference upload path now avoids Vercel's 4.5 MB Function request limit, and failed versions can be reused without automatic duplicate requests. See [release sequence and evidence](AETHELIOS_RELEASE_READINESS.md). No hosted migration, source push, or deployment in this pass.
+
+# Aethelios hosted release and Studio placement — 2026-09-27
+
+The founder approved production release. Chat Foundation and Studio V1 were merged through PR #22; both additive migrations were applied to the shared Gent Ascend Supabase project in order. Seven new tables, seven owner policies, a private Studio bucket, and eight backfilled messages were verified. Vercel production build was ready. PR #23 then exposed the Studio link in the compact Aethelios header and reached production. The historical local-only notes above record their state before this release.
+
+The Studio placement refinement makes Chat and Studio sibling spaces within Aethelios: sidebar switch on desktop, contextual switch on phone/Fold, and an entry from Command. See [placement decision and sources](AETHELIOS_STUDIO_PLACEMENT.md). It changes navigation only. Real owner-account image generation, cross-device persistence, two-account isolation, and physical device layout still require founder testing; a ready build is not proof of those flows.
