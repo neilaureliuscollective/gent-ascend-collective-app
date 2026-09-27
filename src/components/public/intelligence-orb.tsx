@@ -117,7 +117,8 @@ export function IntelligenceOrb({ active }: { active: boolean }) {
       if (now - last >= 32) {
         last = now;
         elapsed += delta * 0.001;
-        energy += (0.14 - energy) * 0.08;
+        const scroll = Number(chapter?.dataset.scrollProgress || 0);
+        energy += (0.14 + Math.max(0, Math.min(1, (scroll - 0.35) / 0.45)) * 0.22 - energy) * 0.08;
         const size = Math.max(
           1,
           Math.min(500, Math.round(el.clientWidth * Math.min(devicePixelRatio || 1, 1.5))),
@@ -130,7 +131,7 @@ export function IntelligenceOrb({ active }: { active: boolean }) {
         gl.uniform2f(uniforms.resolution, size, size);
         gl.uniform1f(uniforms.time, elapsed);
         gl.uniform1f(uniforms.energy, energy);
-        gl.uniform1f(uniforms.scroll, Number(chapter?.dataset.scrollProgress || 0));
+        gl.uniform1f(uniforms.scroll, scroll);
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

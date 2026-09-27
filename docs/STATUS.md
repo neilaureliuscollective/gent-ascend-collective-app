@@ -313,7 +313,7 @@ Local lint, strict typecheck, 84 unit/SQL tests, production build and migration 
 
 # Commerce Spine V1 — 2026-09-27 (local implementation; merchant activation open)
 
-The public Aethelios chapter has a focused living-field refinement on `aethelios-living-field`; see [AETHELIOS_LIVING_FIELD.md](AETHELIOS_LIVING_FIELD.md). It is a visual change only and does not alter member intelligence or commerce activation. Device review remains open.
+The public Aethelios chapter has a focused living-field refinement on `aethelios-living-field`; see [AETHELIOS_LIVING_FIELD.md](AETHELIOS_LIVING_FIELD.md). Its conceptual life domains now assemble into a scroll-drawn network around the living orb. It is a visual change only and does not alter member intelligence or commerce activation. Device review remains open.
 
 The `commerce-activation-preview` integration branch combines this commerce slice with the latest `ascend-journey-threshold-lifeos` public experience so the founder can test one coherent preview. The Headless storefront and at least one published product were confirmed in Shopify admin; live Storefront API reads, cart mutation, checkout and the Vercel preview still require verification. Preview credentials were entered by the founder in Vercel and are not stored in the repository.
 

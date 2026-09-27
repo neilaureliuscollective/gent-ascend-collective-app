@@ -130,7 +130,10 @@ export function WorldJourney({ children }: { children: ReactNode }) {
               scrub: 0.8,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
-                if (intelligence) intelligence.dataset.scrollProgress = self.progress.toFixed(3);
+                if (intelligence) {
+                  intelligence.dataset.scrollProgress = self.progress.toFixed(3);
+                  intelligence.dataset.linked = String(self.progress > 0.62);
+                }
               },
             },
           });
@@ -149,15 +152,30 @@ export function WorldJourney({ children }: { children: ReactNode }) {
             )
             .fromTo(
               '.ascend-connections span',
-              { opacity: 0.52, y: 10 },
-              { opacity: 1, y: -10, duration: 0.7, stagger: 0.025, ease: 'none' },
+              { opacity: 0, x: (index: number) => index % 2 ? 62 : -62, y: (index: number) => index < 2 ? -20 : index > 3 ? 20 : 0, scale: 0.7, filter: 'blur(7px)' },
+              { opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.17, stagger: 0.075, ease: 'none' },
+              0.04,
+            )
+            .fromTo(
+              '.intelligence-link',
+              { strokeDashoffset: 100, opacity: 0 },
+              { strokeDashoffset: 0, opacity: 1, duration: 0.17, stagger: 0.075, ease: 'none' },
               0.1,
+            )
+            .fromTo(
+              '.intelligence-convergence',
+              { scale: 0.3, opacity: 0 },
+              { scale: 1, opacity: 0.9, duration: 0.18, ease: 'none' },
+              0.52,
             );
           return () => {
             threshold.kill();
             man.kill();
             emergence.kill();
-            if (intelligence) delete intelligence.dataset.scrollProgress;
+            if (intelligence) {
+              delete intelligence.dataset.scrollProgress;
+              delete intelligence.dataset.linked;
+            }
           };
         });
         for (const scene of node.querySelectorAll<HTMLElement>(

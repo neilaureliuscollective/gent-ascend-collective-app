@@ -3,6 +3,7 @@ import { MediaScene } from '@/components/public/media-scene';
 import { estateMedia } from '@/platform/estate-media';
 import Link from 'next/link';
 import { IntelligenceSculpture } from '@/components/public/intelligence-sculpture';
+import { IntelligenceNetwork } from '@/components/public/intelligence-network';
 import { WorldJourney } from '@/components/public/world-journey';
 import { RitualCollection } from '@/components/public/ritual-collection';
 import { brand } from '@/platform/brand';
@@ -169,26 +170,7 @@ export default function PublicHome() {
                 </div>
                 <IntelligenceSculpture />
               </div>
-              <div className="ascend-connections">
-                <span>
-                  <b>YOU</b>
-                </span>
-                <span>
-                  <b>HEALTH</b>
-                </span>
-                <span>
-                  <b>RITUALS</b>
-                </span>
-                <span>
-                  <b>GOALS</b>
-                </span>
-                <span>
-                  <b>WORK</b>
-                </span>
-                <span>
-                  <b>RECOVERY</b>
-                </span>
-              </div>
+              <IntelligenceNetwork />
             </div>
             <div className="ascend-emergence-copy">
               <p className="estate-eyebrow">03 / AETHELIOS</p>

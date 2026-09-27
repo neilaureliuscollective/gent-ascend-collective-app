@@ -317,27 +317,27 @@
   background: #09261fc9;
   box-shadow: 0 0 25px #c4912f19;
 }
-.ascend-connections span:nth-child(1) {
+.ascend-connections span:nth-of-type(1) {
   right: 19%;
   top: 18%;
 }
-.ascend-connections span:nth-child(2) {
+.ascend-connections span:nth-of-type(2) {
   right: 3%;
   top: 31%;
 }
-.ascend-connections span:nth-child(3) {
+.ascend-connections span:nth-of-type(3) {
   right: 12%;
   bottom: 20%;
 }
-.ascend-connections span:nth-child(4) {
+.ascend-connections span:nth-of-type(4) {
   right: 39%;
   top: 14%;
 }
-.ascend-connections span:nth-child(5) {
+.ascend-connections span:nth-of-type(5) {
   right: 46%;
   bottom: 16%;
 }
-.ascend-connections span:nth-child(6) {
+.ascend-connections span:nth-of-type(6) {
   right: 2%;
   bottom: 37%;
 }
@@ -555,29 +555,29 @@
     font-size: 8px;
     padding: 6px;
   }
-  .ascend-connections span:nth-child(1) {
+  .ascend-connections span:nth-of-type(1) {
     right: 15%;
     top: 12%;
   }
-  .ascend-connections span:nth-child(2) {
+  .ascend-connections span:nth-of-type(2) {
     right: 2%;
     top: 25%;
   }
-  .ascend-connections span:nth-child(3) {
+  .ascend-connections span:nth-of-type(3) {
     right: 5%;
     top: 44%;
   }
-  .ascend-connections span:nth-child(4) {
+  .ascend-connections span:nth-of-type(4) {
     left: 8%;
     right: auto;
     top: 18%;
   }
-  .ascend-connections span:nth-child(5) {
+  .ascend-connections span:nth-of-type(5) {
     left: 3%;
     right: auto;
     top: 36%;
   }
-  .ascend-connections span:nth-child(6) {
+  .ascend-connections span:nth-of-type(6) {
     left: 10%;
     right: auto;
     top: 47%;
@@ -729,16 +729,16 @@
   .estate-journey[data-choreographed='true'] .ascend-intelligence-field i {
     top: 29%;
   }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(n) {
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(n) {
     top: auto;
     bottom: auto;
   }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(1) { left: 9%; top: 8%; right: auto; }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(2) { right: 5%; top: 12%; left: auto; }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(3) { left: 4%; top: 29%; right: auto; }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(4) { right: 4%; top: 34%; left: auto; }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(5) { left: 9%; top: 48%; right: auto; }
-  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-child(6) { right: 7%; top: 48%; left: auto; }
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(1) { left: 9%; top: 8%; right: auto; }
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(2) { right: 5%; top: 12%; left: auto; }
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(3) { left: 4%; top: 29%; right: auto; }
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(4) { right: 4%; top: 34%; left: auto; }
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(5) { left: 9%; top: 48%; right: auto; }
+  .estate-journey[data-choreographed='true'] .ascend-connections span:nth-of-type(6) { right: 7%; top: 48%; left: auto; }
 }
 
 /* The opening travels through a material chamber. Portrait framing keeps the
@@ -933,33 +933,33 @@
   box-shadow: 0 0 25px #c4912f19;
   font-weight: 400;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(n) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(n) {
   top: auto;
   bottom: auto;
   left: auto;
   right: auto;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(1) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(1) {
   left: 10%;
   top: 18%;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(2) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(2) {
   right: 5%;
   top: 24%;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(3) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(3) {
   left: 2%;
   top: 48%;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(4) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(4) {
   right: 0;
   top: 51%;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(5) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(5) {
   left: 12%;
   top: 74%;
 }
-.ascend-intelligence-visual .ascend-connections span:nth-child(6) {
+.ascend-intelligence-visual .ascend-connections span:nth-of-type(6) {
   right: 8%;
   top: 77%;
 }
@@ -988,7 +988,7 @@
 .ascend-emergence[data-ambient-active='true'] .ascend-connections b {
   animation: intelligence-label 5s ease-in-out infinite alternate;
 }
-.ascend-emergence[data-ambient-active='true'] .ascend-connections span:nth-child(2n) b {
+.ascend-emergence[data-ambient-active='true'] .ascend-connections span:nth-of-type(2n) b {
   animation-delay: -2.5s;
 }
 @keyframes intelligence-breathe {
@@ -1090,27 +1090,27 @@
     padding: 18px 7vw 0;
     opacity: 1;
   }
-  .ascend-intelligence-visual .ascend-connections span:nth-child(1) {
+  .ascend-intelligence-visual .ascend-connections span:nth-of-type(1) {
     left: 8%;
     top: 12%;
   }
-  .ascend-intelligence-visual .ascend-connections span:nth-child(2) {
+  .ascend-intelligence-visual .ascend-connections span:nth-of-type(2) {
     right: 6%;
     top: 16%;
   }
-  .ascend-intelligence-visual .ascend-connections span:nth-child(3) {
+  .ascend-intelligence-visual .ascend-connections span:nth-of-type(3) {
     left: 3%;
     top: 45%;
   }
-  .ascend-intelligence-visual .ascend-connections span:nth-child(4) {
+  .ascend-intelligence-visual .ascend-connections span:nth-of-type(4) {
     right: 3%;
     top: 48%;
   }
-  .ascend-intelligence-visual .ascend-connections span:nth-child(5) {
+  .ascend-intelligence-visual .ascend-connections span:nth-of-type(5) {
     left: 10%;
     top: 78%;
   }
-  .ascend-intelligence-visual .ascend-connections span:nth-child(6) {
+  .ascend-intelligence-visual .ascend-connections span:nth-of-type(6) {
     right: 7%;
     top: 79%;
   }
@@ -1193,6 +1193,94 @@
 }
 .ascend-emergence-environment i:nth-child(2) { width: min(84vw, 1100px); opacity: .4; transform: translate(-50%, -50%) scaleY(.65) rotate(25deg); }
 .ascend-emergence-environment i:nth-child(3) { width: min(108vw, 1400px); opacity: .22; transform: translate(-50%, -50%) scaleY(.72) rotate(-12deg); }
+
+/* Life domains enter separately, then become one illuminated system. The
+   geometry follows the label positions at each viewport width. */
+.intelligence-network {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+  mask-image: radial-gradient(circle at center, transparent min(27vw, 225px), #000 min(35vw, 280px));
+}
+.intelligence-network path {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.intelligence-link-bed {
+  stroke: #8bc7a1;
+  stroke-width: .7px;
+  opacity: .13;
+}
+.intelligence-link {
+  stroke: url(#intelligence-connection-light);
+  stroke-width: 1.5px;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 0 5px #91d8a3);
+  opacity: 0;
+}
+.intelligence-current {
+  stroke: #ffe6a9;
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  stroke-dasharray: 2 98;
+  opacity: 0;
+  filter: drop-shadow(0 0 5px #ffd687);
+}
+.ascend-emergence[data-linked='true'][data-ambient-active='true'] .intelligence-current {
+  opacity: .9;
+  animation: intelligence-current 3.4s linear infinite;
+}
+.ascend-emergence[data-linked='true'][data-ambient-active='true'] .intelligence-network g:nth-of-type(2n) .intelligence-current {
+  animation-delay: -1.7s;
+}
+.intelligence-convergence {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: clamp(160px, 29vw, 460px);
+  aspect-ratio: 1;
+  border: 1px solid #d9bd704f;
+  border-radius: 50%;
+  background: radial-gradient(circle, #6edaa344 0%, #6edaa319 38%, transparent 69%);
+  box-shadow: 0 0 70px #9fdc8b33, inset 0 0 50px #dcb96724;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+.ascend-connections span { z-index: 3; }
+.ascend-connections b {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  backdrop-filter: blur(10px);
+}
+.ascend-connections b small {
+  color: #a1dbb1;
+  font-size: .7em;
+  letter-spacing: .05em;
+}
+@keyframes intelligence-current {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -100; }
+}
+.public-world[data-world-still='true'] .intelligence-link,
+.estate-journey:not([data-choreographed='true']) .intelligence-link {
+  opacity: .7;
+  stroke-dashoffset: 0;
+}
+.public-world[data-world-still='true'] .intelligence-convergence,
+.estate-journey:not([data-choreographed='true']) .intelligence-convergence {
+  opacity: .6;
+  scale: 1;
+}
+@media (max-width: 480px) {
+  .intelligence-convergence { width: 48vw; }
+  .ascend-connections b { gap: 5px; }
+}
 .ascend-intelligence-camera { position: absolute; inset: 0; transform-origin: center; }
 .ascend-intelligence-visual .estate-sculpture { z-index: 3; }
 .intelligence-orb { position: relative; width: 100%; height: 100%; filter: drop-shadow(0 0 38px #2b9b6755); }
