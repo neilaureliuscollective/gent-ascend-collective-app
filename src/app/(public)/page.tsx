@@ -9,80 +9,211 @@ import { brand } from '@/platform/brand';
 import { SceneAtmosphere } from '@/components/public/scene-atmosphere';
 import './estate.css';
 import './environment.css';
+import './ascend-journey.css';
 
 export default function PublicHome() {
   return (
     <main id="world-main" className="estate-home">
       <WorldJourney>
         <section
-          className="estate-opening"
+          className="ascend-threshold"
           id="the-world"
           data-chapter="arrival"
           aria-labelledby="arrival-title"
         >
-          <div className="estate-opening-stage">
-            <div className="estate-landscape">
-              <MediaScene media={estateMedia.arrival} bare priority />
+          <div className="ascend-threshold-stage">
+            <div className="ascend-depth" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <span className="ascend-light" />
             </div>
-            <div className="estate-opening-shade" />
-            <SceneAtmosphere variant="dawn" />
-            <div className="estate-hero-copy">
-              <p className="estate-eyebrow">GENT ASCEND COLLECTIVE · LOUISIANA</p>
+            <div className="ascend-threshold-copy">
+              <p className="estate-eyebrow">GENT ASCEND COLLECTIVE / THE ASCEND JOURNEY</p>
               <h1 id="arrival-title">
-                A life,
+                A life is built
                 <br />
-                <em>deliberately built.</em>
+                <em>from the inside.</em>
               </h1>
-              <p className="estate-definition">
-                Grooming. Wellbeing. Personal intelligence.
-                <br />A connected world for the man you choose to become.
-              </p>
+              <p>Care. Direction. Intelligence. A world built around the man who carries them.</p>
               <div className="estate-actions">
-                <Link className="estate-primary" href="#the-ritual">
-                  Explore the world <span>↓</span>
+                <Link className="estate-primary" href="#the-man">
+                  Enter the journey <span>↓</span>
                 </Link>
+                <Link href="/shop">Explore products ↗</Link>
                 <Link href="/enter">Member entrance ↗</Link>
               </div>
             </div>
-            <div className="estate-threshold">
-              <span className="estate-eyebrow">THE WORLD YOU ENTER</span>
-              <p>
-                Care becomes ritual.
-                <br />
-                Intention becomes <em>direction.</em>
-              </p>
-              <span>
-                Products. Intelligence. Experiences.
-                <br />
-                Built around the same life. Yours.
-              </span>
+            <div className="ascend-threshold-mark" aria-hidden="true">
+              <Image src={brand.crest} alt="" width={260} height={260} preload />
             </div>
-            <div className="estate-veil" />
-            <div className="estate-opening-caption">
-              <span>01 / ARRIVAL</span>
-              <span>
-                Scroll to enter <i>↓</i>
-              </span>
+            <div className="ascend-chapter-foot">
+              <span>01 / THE THRESHOLD</span>
+              <span>Scroll to enter ↓</span>
             </div>
           </div>
         </section>
         <nav className="estate-index" aria-label="Explore the world">
           <Link href="#the-world" data-chapter-link="arrival">
-            01 <span>Arrival</span>
+            01 <span>Enter</span>
           </Link>
-          <Link href="#the-ritual" data-chapter-link="ritual">
-            02 <span>The ritual</span>
+          <Link href="#the-man" data-chapter-link="man">
+            02 <span>The man</span>
           </Link>
           <Link href="#the-intelligence" data-chapter-link="intelligence">
             03 <span>Intelligence</span>
           </Link>
+          <Link href="#the-system" data-chapter-link="system">
+            04 <span>The system</span>
+          </Link>
+          <Link href="#the-ritual" data-chapter-link="ritual">
+            05 <span>The ritual</span>
+          </Link>
           <Link href="#the-reserve" data-chapter-link="reserve">
-            04 <span>The Reserve</span>
+            06 <span>The Reserve</span>
           </Link>
           <Link href="#the-legacy" data-chapter-link="legacy">
-            05 <span>Legacy</span>
+            07 <span>Legacy</span>
           </Link>
         </nav>
+        <section id="the-man" className="ascend-man" data-chapter="man" aria-labelledby="man-title">
+          <div className="ascend-man-stage">
+            <div className="ascend-man-image" aria-hidden="true">
+              <picture>
+                <source media="(max-width: 600px)" srcSet="/media/world/the-man-mobile.webp" />
+                <Image src="/media/world/the-man.webp" alt="" fill sizes="100vw" />
+              </picture>
+            </div>
+            <div className="ascend-man-shade" />
+            <div className="ascend-man-copy">
+              <p className="estate-eyebrow">02 / THE MAN AT THE CENTER</p>
+              <h2 id="man-title">
+                One man.
+                <br />
+                <em>Many demands.</em>
+              </h2>
+              <p>
+                More information than ever. More to carry. His health, his work, his people, his
+                future — each asking for a different part of him.
+              </p>
+            </div>
+            <div className="ascend-signals" aria-hidden="true">
+              <span>HEALTH</span>
+              <span>APPEARANCE</span>
+              <span>WORK</span>
+              <span>RECOVERY</span>
+              <span>RESPONSIBILITY</span>
+              <span>DIRECTION</span>
+            </div>
+            <p className="ascend-man-resolution">
+              The parts belong to <em>one life.</em>
+            </p>
+          </div>
+        </section>
+        <section
+          id="the-intelligence"
+          className="ascend-emergence"
+          data-chapter="intelligence"
+          aria-labelledby="intelligence-title"
+        >
+          <div className="ascend-emergence-stage">
+            <div className="ascend-intelligence-field" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            <IntelligenceSculpture />
+            <div className="ascend-emergence-copy">
+              <p className="estate-eyebrow">03 / AETHELIOS</p>
+              <h2 id="intelligence-title">
+                A clearer way
+                <br />
+                <em>to see the whole.</em>
+              </h2>
+              <p>
+                Aethelios brings perspective to what you choose to share — helping you think,
+                decide, and carry a deliberate next step forward.
+              </p>
+              <div className="estate-actions">
+                <Link className="estate-primary" href="/aethelios">
+                  Meet Aethelios <span>↗</span>
+                </Link>
+                <Link href="/enter">Enter your space ↗</Link>
+              </div>
+            </div>
+            <div className="ascend-connections" aria-hidden="true">
+              <span>YOU</span>
+              <span>HEALTH</span>
+              <span>RITUALS</span>
+              <span>GOALS</span>
+              <span>WORK</span>
+              <span>RECOVERY</span>
+            </div>
+          </div>
+        </section>
+        <section
+          id="the-system"
+          className="ascend-system"
+          data-chapter="system"
+          aria-labelledby="system-title"
+        >
+          <div className="ascend-system-stage">
+            <div className="ascend-system-copy">
+              <p className="estate-eyebrow">04 / THE GENT ASCEND LIFEOS</p>
+              <h2 id="system-title">
+                Direction becomes
+                <br />
+                <em>daily practice.</em>
+              </h2>
+              <p>
+                A place to choose what matters, act on it, see what happened, and adapt. Aethelios
+                carries context across the loop with you.
+              </p>
+              <div className="estate-actions">
+                <Link className="estate-primary" href="/gent-ascend">
+                  Explore the OS <span>↗</span>
+                </Link>
+                <Link href="/enter">Member entrance ↗</Link>
+              </div>
+            </div>
+            <div
+              className="ascend-loop-system"
+              aria-label="The Ascend Loop: understand where you are, decide what matters, choose an action, record what you did, reflect on what you learned, and adjust what comes next."
+            >
+              <div className="ascend-loop-orbit" aria-hidden="true" />
+              <div className="ascend-loop-center" aria-hidden="true">
+                <span>
+                  THE
+                  <br />
+                  ASCEND
+                  <br />
+                  LOOP
+                </span>
+              </div>
+              <ol>
+                <li>
+                  <span>01</span> Where am I?
+                </li>
+                <li>
+                  <span>02</span> What matters?
+                </li>
+                <li>
+                  <span>03</span> What should I do?
+                </li>
+                <li>
+                  <span>04</span> What did I do?
+                </li>
+                <li>
+                  <span>05</span> What did we learn?
+                </li>
+                <li>
+                  <span>06</span> What changes next?
+                </li>
+              </ol>
+            </div>
+          </div>
+        </section>
         <section
           id="the-ritual"
           className="estate-act estate-ritual estate-held"
@@ -96,7 +227,7 @@ export default function PublicHome() {
             <div className="estate-scene-shade" />
             <SceneAtmosphere variant="dawn" />
             <div className="estate-scene-copy">
-              <p className="estate-eyebrow">02 / THE DAILY RITUAL · LEGACY RESERVE</p>
+              <p className="estate-eyebrow">05 / THE DAILY RITUAL · LEGACY RESERVE</p>
               <h2 id="ritual-title">
                 Begin with
                 <br />
@@ -118,43 +249,6 @@ export default function PublicHome() {
         </section>
         <RitualCollection />
         <section
-          id="the-intelligence"
-          className="estate-act estate-intelligence estate-held"
-          data-chapter="intelligence"
-          aria-labelledby="intelligence-title"
-        >
-          <div className="estate-scene-stage">
-            <SceneAtmosphere image="/media/world/observatory.webp" variant="celestial" />
-            <IntelligenceSculpture />
-            <div className="estate-scene-copy">
-              <p className="estate-eyebrow">03 / AETHELIOS · PERSONAL INTELLIGENCE</p>
-              <h2 id="intelligence-title">
-                Your direction.
-                <br />
-                <em>Carried forward.</em>
-              </h2>
-              <p>
-                A place to think clearly. An intelligence that works with the context you choose to
-                share. A personal OS that connects your goals, actions, and reflections.
-              </p>
-              <div className="estate-actions">
-                <Link className="estate-primary" href="/aethelios">
-                  Meet Aethelios <span>↗</span>
-                </Link>
-                <Link href="/gent-ascend">Explore the OS ↗</Link>
-              </div>
-            </div>
-            <div className="estate-loop" aria-label="The Ascend loop">
-              <span>Direction</span>
-              <i>→</i>
-              <span>Action</span>
-              <i>→</i>
-              <span>Reflection</span>
-              <i>↺</i>
-            </div>
-          </div>
-        </section>
-        <section
           id="the-reserve"
           className="estate-act estate-reserve"
           data-chapter="reserve"
@@ -164,7 +258,7 @@ export default function PublicHome() {
             <SceneAtmosphere image="/media/world/reserve-consultation.webp" variant="sanctuary" />
           </div>
           <div className="estate-scene-copy">
-            <p className="estate-eyebrow">04 / THE RESERVE AT SANCTUM · EUNICE, LOUISIANA</p>
+            <p className="estate-eyebrow">06 / THE RESERVE AT SANCTUM · EUNICE, LOUISIANA</p>
             <h2 id="reserve-title">
               A place to
               <br />
@@ -200,7 +294,7 @@ export default function PublicHome() {
           <div className="estate-legacy-shade" />
           <SceneAtmosphere variant="dawn" />
           <div className="estate-legacy-copy">
-            <p className="estate-eyebrow">05 / WHAT YOU CARRY FORWARD</p>
+            <p className="estate-eyebrow">07 / WHAT YOU CARRY FORWARD</p>
             <h2 id="legacy-title">
               For the life you build.
               <br />

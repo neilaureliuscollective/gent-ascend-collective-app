@@ -16,32 +16,129 @@ export function WorldJourney({ children }: { children: ReactNode }) {
     () => {
       if (still || !root.current) return;
       const node = root.current;
-      const hero = node.querySelector<HTMLElement>('.estate-hero-copy');
       const media = gsap.matchMedia();
       media.add('(prefers-reduced-motion: no-preference)', () => {
         node.dataset.choreographed = 'true';
-        const arrival = gsap.timeline({
-          scrollTrigger: {
-            trigger: '.estate-opening',
-            start: 'top top',
-            end: 'bottom bottom',
-            scrub: 0.35,
-            onUpdate: (self) => {
-              if (hero) hero.inert = self.progress > 0.38;
+        media.add('(min-width: 901px) and (min-height: 721px)', () => {
+          const threshold = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.ascend-threshold',
+              start: 'top top',
+              end: 'bottom bottom',
+              scrub: true,
             },
-          },
+          });
+          threshold
+            .fromTo(
+              '.ascend-depth i',
+              { scale: 1.3, opacity: 0 },
+              { scale: 1, opacity: 0.6, duration: 0.36, stagger: 0.05, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-threshold-mark',
+              { scale: 0.45, opacity: 0 },
+              { scale: 1, opacity: 0.9, duration: 0.36, ease: 'none' },
+              0.22,
+            )
+            .to(
+              '.ascend-threshold-copy',
+              { y: -35, opacity: 0.12, duration: 0.26, ease: 'none' },
+              0.63,
+            )
+            .to('.ascend-depth', { scale: 1.24, duration: 0.37, ease: 'none' }, 0.63);
+          const man = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.ascend-man',
+              start: 'top top',
+              end: 'bottom bottom',
+              scrub: true,
+            },
+          });
+          man
+            .fromTo(
+              '.ascend-man-image',
+              { scale: 1.08 },
+              { scale: 1, duration: 1, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-signals span',
+              {
+                opacity: 0,
+                x: 25,
+              },
+              { opacity: 0.75, x: 0, duration: 0.35, stagger: 0.04, ease: 'none' },
+              0.14,
+            )
+            .fromTo(
+              '.ascend-man-resolution',
+              { opacity: 0, y: 30 },
+              { opacity: 1, y: 0, duration: 0.22, ease: 'none' },
+              0.65,
+            )
+            .to('.ascend-signals span', { opacity: 0.3, duration: 0.2, ease: 'none' }, 0.72);
+          const emergence = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.ascend-emergence',
+              start: 'top top',
+              end: 'bottom bottom',
+              scrub: true,
+            },
+          });
+          emergence
+            .fromTo(
+              '.ascend-emergence .estate-sculpture',
+              { scale: 0.68, opacity: 0.1 },
+              { scale: 1, opacity: 1, duration: 0.55, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-connections span',
+              { opacity: 0, scale: 0.8 },
+              { opacity: 1, scale: 1, duration: 0.3, stagger: 0.055, ease: 'none' },
+              0.36,
+            )
+            .fromTo(
+              '.ascend-emergence-copy',
+              { y: 20, opacity: 0.55 },
+              { y: 0, opacity: 1, duration: 0.35, ease: 'none' },
+              0.1,
+            );
+          const system = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.ascend-system',
+              start: 'top top',
+              end: 'bottom bottom',
+              scrub: true,
+            },
+          });
+          system
+            .fromTo(
+              '.ascend-loop-orbit',
+              { rotate: -35, opacity: 0.15 },
+              { rotate: 0, opacity: 1, duration: 0.5, ease: 'none' },
+              0,
+            )
+            .fromTo(
+              '.ascend-loop-system li',
+              { opacity: 0.18, scale: 0.88 },
+              { opacity: 1, scale: 1, duration: 0.18, stagger: 0.1, ease: 'none' },
+              0.14,
+            )
+            .fromTo(
+              '.ascend-loop-center',
+              { opacity: 0.4, scale: 0.8 },
+              { opacity: 1, scale: 1, duration: 0.3, ease: 'none' },
+              0.48,
+            );
+          return () => {
+            threshold.kill();
+            man.kill();
+            emergence.kill();
+            system.kill();
+          };
         });
-        arrival
-          .to('.estate-landscape', { scale: 1.28, transformOrigin: '65% 50%', ease: 'none' }, 0)
-          .to('.estate-hero-copy', { y: -65, opacity: 0, duration: 0.24 }, 0.14)
-          .fromTo(
-            '.estate-threshold',
-            { opacity: 0, y: 40 },
-            { opacity: 1, y: 0, duration: 0.2 },
-            0.38,
-          )
-          .to('.estate-threshold', { opacity: 0, y: -30, duration: 0.16 }, 0.74)
-          .fromTo('.estate-veil', { opacity: 0 }, { opacity: 0.9, duration: 0.25 }, 0.75);
         const inset = () =>
           (document.querySelector('.world-header')?.getBoundingClientRect().height ?? 78) +
           (node.querySelector('.estate-index')?.getBoundingClientRect().height ?? 44);
@@ -82,7 +179,6 @@ export function WorldJourney({ children }: { children: ReactNode }) {
       return () => {
         media.revert();
         delete node.dataset.choreographed;
-        if (hero) hero.inert = false;
       };
     },
     { scope: root, dependencies: [still], revertOnUpdate: true },
