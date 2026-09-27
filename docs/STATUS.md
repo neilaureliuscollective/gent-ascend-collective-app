@@ -1,3 +1,9 @@
+# Ascend Journey Phase 5 — 2026-09-27
+
+The public final door now leads to a server-rendered member entrance with the existing invitation sign-in flow, account-aware return path and shared visual language in the invited welcome. Details, boundaries and validation: [ASCEND_JOURNEY_PHASE_5.md](ASCEND_JOURNEY_PHASE_5.md). Production remains unchanged.
+
+---
+
 # Ascend Journey Phase 4 — 2026-09-27
 
 Built the physical and human close: Reserve consultation and men’s salon concept frames, a generated Collective conversation campaign frame, retained Louisiana legacy, and a material final door with direct account, shop and story paths. No booking, live community, or open signup is implied. Details: [ASCEND_JOURNEY_PHASE_4.md](ASCEND_JOURNEY_PHASE_4.md). Verification and hardware limitations are recorded there.
