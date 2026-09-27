@@ -137,3 +137,44 @@ for (const width of [344, 768]) {
     await expect(page.getByRole('button', { name: /Explore in 3D/ })).toBeVisible();
   });
 }
+
+for (const width of [344, 768, 1440]) {
+  test(`physical world and final door stay usable at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 344 ? 660 : 900 });
+    await page.goto('/#the-reserve');
+    await expect(
+      page.getByRole('heading', { name: 'A place where care has a face.' }),
+    ).toBeVisible();
+    await expect(page.locator('.reserve-world-environment img')).not.toHaveJSProperty(
+      'naturalWidth',
+      0,
+    );
+    await expect(page.locator('.reserve-world-craft img')).not.toHaveJSProperty('naturalWidth', 0);
+    await expect(
+      page.locator('#the-reserve').getByRole('link', { name: /Discover The Reserve/ }),
+    ).toHaveAttribute('href', '/reserve');
+    await page
+      .getByRole('navigation', { name: 'Explore the world' })
+      .getByRole('link', { name: /The Collective/ })
+      .click();
+    await expect(page).toHaveURL(/#the-collective$/);
+    await expect(
+      page.getByRole('heading', { name: 'The work extends beyond one man.' }),
+    ).toBeVisible();
+    await expect(page.locator('.collective-world-image')).not.toHaveJSProperty('naturalWidth', 0);
+    await expect(
+      page.locator('#the-collective').getByRole('link', { name: /Membership/ }),
+    ).toHaveAttribute('href', '/membership');
+    await page.locator('.estate-invitation').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('heading', { name: 'Enter Gent Ascend.' })).toBeVisible();
+    await expect(
+      page.locator('.estate-invitation').getByRole('link', { name: /Enter Gent Ascend/ }),
+    ).toHaveAttribute('href', '/enter');
+    await expect(
+      page.locator('.estate-invitation').getByRole('link', { name: /Explore the collection/ }),
+    ).toHaveAttribute('href', '/shop');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  });
+}

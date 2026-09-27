@@ -14,6 +14,7 @@ import './environment.css';
 import './ascend-journey.css';
 import './life-system.css';
 import './ritual-sequence.css';
+import './physical-world.css';
 
 export default function PublicHome() {
   return (
@@ -76,8 +77,11 @@ export default function PublicHome() {
           <Link href="#the-reserve" data-chapter-link="reserve">
             06 <span>The Reserve</span>
           </Link>
+          <Link href="#the-collective" data-chapter-link="collective">
+            07 <span>The Collective</span>
+          </Link>
           <Link href="#the-legacy" data-chapter-link="legacy">
-            07 <span>Legacy</span>
+            08 <span>Legacy</span>
           </Link>
         </nav>
         <section id="the-man" className="ascend-man" data-chapter="man" aria-labelledby="man-title">
@@ -161,36 +165,81 @@ export default function PublicHome() {
         <RitualCollection />
         <section
           id="the-reserve"
-          className="estate-act estate-reserve"
+          className="reserve-world"
           data-chapter="reserve"
           aria-labelledby="reserve-title"
         >
-          <div className="estate-reserve-frame">
-            <SceneAtmosphere image="/media/world/reserve-consultation.webp" variant="sanctuary" />
+          <div className="reserve-world-environment" aria-hidden="true">
+            <Image src="/media/world/reserve-consultation.webp" alt="" fill sizes="100vw" />
           </div>
-          <div className="estate-scene-copy">
-            <p className="estate-eyebrow">06 / THE RESERVE AT SANCTUM · EUNICE, LOUISIANA</p>
+          <div className="reserve-world-shade" aria-hidden="true" />
+          <div className="reserve-world-copy">
+            <p className="estate-eyebrow">06 / THE PHYSICAL WORLD · EUNICE, LOUISIANA</p>
             <h2 id="reserve-title">
-              A place to
+              A place where
               <br />
-              <em>come into your own.</em>
+              <em>care has a face.</em>
             </h2>
             <p>
-              Sit down. Talk through your routine, your goals, and the care that fits your life.
-              Neil’s grooming and performance consultations, Legacy Reserve products, and Katie’s
-              men’s salon craft shape our flagship physical experience.
+              The Reserve at Sanctum brings personal consultation, Legacy Reserve rituals, and
+              Katie’s men’s salon craft into one physical setting.
             </p>
-            <div className="estate-reserve-pillars" aria-label="The Reserve experience">
-              <span>Personal consultation</span>
-              <span>Products & rituals</span>
-              <span>Men’s salon craft</span>
+            <div className="reserve-world-line">
+              <span>Neil / consultation</span>
+              <span>Katie / men’s salon craft</span>
             </div>
             <Link className="estate-primary" href="/reserve">
               Discover The Reserve <span>↗</span>
             </Link>
-            <small className="estate-concept-note">
-              Atmosphere concept · not a photograph of the venue
-            </small>
+            <small>Atmosphere concepts · not photographs of the venue or its people</small>
+          </div>
+          <figure className="reserve-world-craft">
+            <Image
+              src="/media/world/sanctuary.webp"
+              alt=""
+              fill
+              sizes="(max-width: 700px) 55vw, 28vw"
+            />
+            <figcaption>THE CRAFT / A MEN’S SALON EXPERIENCE</figcaption>
+          </figure>
+        </section>
+        <section
+          id="the-collective"
+          className="collective-world"
+          data-chapter="collective"
+          aria-labelledby="collective-title"
+        >
+          <Image
+            src="/media/world/collective-table-v1.webp"
+            alt=""
+            fill
+            sizes="100vw"
+            className="collective-world-image"
+          />
+          <div className="collective-world-shade" aria-hidden="true" />
+          <div className="collective-world-copy">
+            <p className="estate-eyebrow">07 / THE COLLECTIVE · THE HUMAN LAYER</p>
+            <h2 id="collective-title">
+              The work extends
+              <br />
+              <em>beyond one man.</em>
+            </h2>
+            <p>
+              People with craft. People with knowledge. People willing to show up for one another.
+              The Collective is the culture we are building around that exchange.
+            </p>
+            <div className="collective-world-threads" aria-label="The culture of the Collective">
+              <span>Craft</span>
+              <span>Knowledge</span>
+              <span>Connection</span>
+            </div>
+            <div className="estate-actions">
+              <Link className="estate-primary" href="/about">
+                Our story <span>↗</span>
+              </Link>
+              <Link href="/membership">Membership ↗</Link>
+            </div>
+            <small>Campaign visualization · not portraits of current members</small>
           </div>
         </section>
         <section
@@ -205,7 +254,7 @@ export default function PublicHome() {
           <div className="estate-legacy-shade" />
           <SceneAtmosphere variant="dawn" />
           <div className="estate-legacy-copy">
-            <p className="estate-eyebrow">07 / WHAT YOU CARRY FORWARD</p>
+            <p className="estate-eyebrow">08 / WHAT YOU CARRY FORWARD</p>
             <h2 id="legacy-title">
               For the life you build.
               <br />
@@ -220,27 +269,24 @@ export default function PublicHome() {
           </div>
         </section>
         <section className="estate-invitation" aria-labelledby="invitation-title">
-          <SceneAtmosphere image="/media/world/gallery.webp" />
           <div className="estate-seal-mount">
             <Image src={brand.crest} alt="Gent Ascend Collective crest" width={240} height={240} />
           </div>
-          <p className="estate-eyebrow">YOUR NEXT CHAPTER</p>
+          <p className="estate-eyebrow">THE FINAL DOOR / YOUR NEXT CHAPTER</p>
           <h2 id="invitation-title">
-            Find your place
-            <br />
-            <em>in the Collective.</em>
+            Enter <em>Gent Ascend.</em>
           </h2>
           <p>
-            Explore the collection. Discover The Reserve.
+            Begin your personal space through private invitation.
             <br />
-            Enter your personal OS through private invitation.
+            Or explore the collection and the people behind the world.
           </p>
           <div className="estate-actions">
             <Link className="estate-primary" href="/enter">
-              Member entrance <span>↗</span>
+              Enter Gent Ascend <span>↗</span>
             </Link>
-            <Link href="/membership">About membership ↗</Link>
-            <Link href="/shop">Explore products ↗</Link>
+            <Link href="/shop">Explore the collection ↗</Link>
+            <Link href="/about">Discover the world ↗</Link>
           </div>
         </section>
       </WorldJourney>
