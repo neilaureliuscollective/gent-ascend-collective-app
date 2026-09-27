@@ -91,7 +91,7 @@ for (const width of [344, 768, 1440]) {
       .toBeGreaterThan(middleDecision + 0.5);
     await sample('.ascend-emergence', 0.12);
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
-    await expect(page.locator('.ascend-emergence')).toHaveAttribute('data-in-view', 'true');
+    await expect(page.locator('.ascend-emergence')).toHaveAttribute('data-ambient-active', 'true');
     await expect(page.locator('.ascend-intelligence-traces i').first()).toHaveCSS(
       'animation-name',
       'intelligence-signal',
