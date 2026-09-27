@@ -393,67 +393,6 @@
   font-style: normal;
   color: #8d9b85;
 }
-.estate-reserve {
-  background: #08291f;
-}
-.estate-reserve-frame {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    #061911 0px,
-    #0d3829 110px,
-    #214e36 113px,
-    #061b12 118px
-  );
-  overflow: hidden;
-}
-.estate-reserve-door {
-  position: absolute;
-  right: 7%;
-  top: 10%;
-  height: 90%;
-  width: 38%;
-  border: 1px solid #b9975680;
-  border-radius: 220px 220px 0 0;
-  background: radial-gradient(ellipse at 50% 30%, #375335, #132b1d 50%, #060f0b);
-  box-shadow:
-    0 0 90px #c49b3730,
-    inset 0 0 50px #0009;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 24px;
-  color: #e1c482;
-}
-.estate-reserve-door > span {
-  font:
-    24px Georgia,
-    serif;
-  letter-spacing: 0.18em;
-  text-align: center;
-}
-.estate-reserve-door small {
-  display: block;
-  font-size: 10px;
-  letter-spacing: 0.4em;
-  margin-top: 14px;
-}
-.estate-reserve-light {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, #051d13ee 0%, #051d13a0 38%, transparent 75%),
-    linear-gradient(0deg, #0b2419, transparent 30%);
-}
-.estate-concept-note {
-  display: block;
-  margin-top: 25px;
-  font-size: 10px;
-  line-height: 1.6;
-  color: #a9b5a5;
-}
 .estate-legacy {
   height: 95svh;
   min-height: 700px;
@@ -538,11 +477,6 @@
     right: -15%;
     width: 75vw;
     top: 10%;
-  }
-  .estate-reserve-door {
-    right: -10%;
-    width: 65%;
-    opacity: 0.65;
   }
 }
 @media (max-width: 600px) {
@@ -698,29 +632,6 @@
     bottom: 50px;
     gap: 18px;
     font-size: 10px;
-  }
-  .estate-reserve .estate-scene-copy {
-    padding: 380px 7vw 80px;
-  }
-  .estate-reserve-door {
-    right: 14%;
-    width: 72%;
-    height: 55%;
-    top: 5%;
-    opacity: 1;
-    border-radius: 150px 150px 0 0;
-    justify-content: flex-start;
-    padding-top: 40px;
-  }
-  .estate-reserve-door img {
-    width: 90px;
-    height: 90px;
-  }
-  .estate-reserve-door > span {
-    font-size: 18px;
-  }
-  .estate-reserve-light {
-    background: linear-gradient(0deg, #08291f 0%, #08291f 38%, transparent 80%);
   }
   .estate-legacy {
     min-height: 680px;

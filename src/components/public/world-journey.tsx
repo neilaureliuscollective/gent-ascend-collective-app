@@ -112,7 +112,7 @@ export function WorldJourney({ children }: { children: ReactNode }) {
           };
         });
         for (const scene of node.querySelectorAll<HTMLElement>(
-          '.estate-act, .estate-collection, .estate-invitation',
+          '.estate-act, .estate-collection, .reserve-world, .collective-world, .estate-invitation',
         )) {
           const timeline = gsap.timeline({
             scrollTrigger: {
@@ -125,7 +125,7 @@ export function WorldJourney({ children }: { children: ReactNode }) {
           });
           // Architecture remains stable. Only bounded foreground elements move.
           const copy = scene.querySelector(
-            '.estate-scene-copy, .estate-legacy-copy, .estate-collection-heading',
+            '.estate-scene-copy, .estate-legacy-copy, .estate-collection-heading, .reserve-world-copy, .collective-world-copy',
           );
           if (copy) timeline.fromTo(copy, { y: 22 }, { y: 0, duration: 0.6, ease: 'none' }, 0);
           const subject = scene.querySelector('.estate-sculpture, .estate-product-stage');

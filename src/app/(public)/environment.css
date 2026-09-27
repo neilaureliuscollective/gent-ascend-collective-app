@@ -181,29 +181,8 @@
   border: 1px solid #c4912f55;
   bottom: 38px;
 }
-.estate-reserve-frame {
-  background: none;
-}
-.estate-reserve .estate-scene-copy {
-  position: relative;
-  z-index: 2;
-  max-width: 690px;
-}
-.estate-concept-note {
-  max-width: 400px;
-}
 .estate-invitation {
   padding: 90px 7vw 110px;
-}
-.estate-invitation .atmosphere-environment {
-  object-position: 70% center;
-}
-.estate-invitation .atmosphere-shade {
-  background: linear-gradient(0deg, #031a13de, #073c2dc9 45%, #031a1380);
-}
-.estate-invitation > :not(.scene-atmosphere) {
-  position: relative;
-  z-index: 1;
 }
 .estate-seal-mount {
   width: 240px;
@@ -257,9 +236,6 @@
     right: -6%;
     top: 23%;
     opacity: 1;
-  }
-  .estate-reserve .estate-scene-copy {
-    max-width: 65%;
   }
   .estate-product-stage {
     gap: 3vw;
@@ -317,19 +293,6 @@
     bottom: 40px;
     justify-content: space-between;
     font-size: 10px;
-  }
-  .estate-reserve {
-    min-height: 920px;
-  }
-  .estate-reserve .atmosphere-environment {
-    object-position: 72% top;
-  }
-  .atmosphere-sanctuary .atmosphere-shade {
-    background: linear-gradient(0deg, #042016f5 20%, #042016b8 57%, transparent 95%);
-  }
-  .estate-reserve .estate-scene-copy {
-    padding: 390px 7vw 65px;
-    max-width: none;
   }
   .estate-seal-mount {
     width: 190px;
@@ -394,19 +357,6 @@
 .estate-sculpture {
   z-index: 2;
 }
-.estate-reserve-pillars {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin: 24px 0 28px;
-  color: #e5c88c;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-}
-.estate-reserve-pillars span {
-  border-bottom: 1px solid #c4912f66;
-  padding-bottom: 8px;
-}
 .estate-index {
   backdrop-filter: none;
   background: #061c17;
@@ -436,15 +386,4 @@
   }
 }
 @media (max-width: 600px) {
-  .estate-reserve .estate-scene-copy {
-    padding-top: 360px;
-  }
-  .estate-reserve {
-    height: auto;
-    min-height: 1000px;
-    max-height: none;
-  }
-  .estate-reserve-pillars {
-    font-size: 10px;
-  }
 }

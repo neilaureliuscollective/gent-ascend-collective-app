@@ -1,3 +1,9 @@
+# Ascend Journey Phase 4 — 2026-09-27
+
+Built the physical and human close: Reserve consultation and men’s salon concept frames, a generated Collective conversation campaign frame, retained Louisiana legacy, and a material final door with direct account, shop and story paths. No booking, live community, or open signup is implied. Details: [ASCEND_JOURNEY_PHASE_4.md](ASCEND_JOURNEY_PHASE_4.md). Verification and hardware limitations are recorded there.
+
+---
+
 ## September 26 — public scene repair (founder approved)
 
 Implemented: shared member Aethelios renderer and SVG fallback; removed separate faceted sculpture; stable product/architectural backgrounds; bounded ambient layers; early scene motion with native sticky holds on larger screens; measured navigation inset; consultation-centered Reserve concept and broader role copy. Details and research: [SCENE_REPAIR.md](SCENE_REPAIR.md).
