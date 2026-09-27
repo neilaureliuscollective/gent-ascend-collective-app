@@ -38,10 +38,34 @@ for (const width of [344, 768, 1440]) {
     await expect(page.getByRole('heading', { name: 'The Reserve at Sanctum.' })).toBeVisible();
     await expect(page.locator('main')).not.toContainText(/barbershop/i);
     await page.goto('/enter');
-    await expect(page).toHaveURL('/app/you');
+    await expect(page).toHaveURL('/enter');
+    await expect(page.getByRole('heading', { name: 'The world becomes yours.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'The entrance is being prepared.' }),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /Explore the collection/ })).toHaveAttribute(
+      'href',
+      '/shop',
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
     expect(errors).toEqual([]);
   });
 }
+
+test('member entrance keeps its story and exits in reduced motion', async ({ page }) => {
+  await page.setViewportSize({ width: 344, height: 660 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/enter');
+  await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
+  await expect(page.getByRole('heading', { name: 'The world becomes yours.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Return to the journey/ })).toHaveAttribute(
+    'href',
+    '/',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 
 test('legacy routes retain destinations and the installed app opens Command', async ({
   request,

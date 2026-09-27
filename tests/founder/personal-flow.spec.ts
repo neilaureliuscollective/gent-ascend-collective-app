@@ -12,6 +12,15 @@ const env = Object.fromEntries(
 );
 if (new URL(env.NEXT_PUBLIC_SUPABASE_URL!).hostname !== '127.0.0.1')
   throw new Error('Local Supabase required');
+test('public entrance rejects invalid credentials without leaving the world', async ({ page }) => {
+  await page.goto('/enter');
+  await page.getByLabel('Email').fill('not-invited@example.test');
+  await page.getByLabel('Password').fill('incorrect-password');
+  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await expect(page).toHaveURL(/\/enter\?error=credentials$/);
+  await expect(page.getByRole('alert')).toContainText('email and password were not accepted');
+  await expect(page.getByRole('heading', { name: 'The world becomes yours.' })).toBeVisible();
+});
 test('founder can save a profile and goal without paid membership, then retain completed history', async ({
   page,
   context,
@@ -20,6 +29,11 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await page.goto('/enter');
+  await expect(page.getByRole('heading', { name: 'The door is yours.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open my space' })).toHaveAttribute('href', /\/app/);
+  await page.getByRole('link', { name: 'Open my space' }).click();
+  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
   await page.goto('/dev');
   await page.getByLabel('Membership scenario').selectOption('free');
   await page.getByLabel('Billing simulation').selectOption('none');
