@@ -3400,7 +3400,8 @@ html[data-motion='ambient']:not([data-quiet='true'])
   }
   .aethelios-mobile-heading strong { font-size: 1.05rem; }
   .aethelios-mobile-heading a { color: #e8c57e; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
-  .aethelios-mobile-heading a:last-child { justify-content: flex-end; font-size: .76rem; }
+  .aethelios-mobile-actions { display: flex; align-items: center; gap: 10px; }
+  .aethelios-mobile-actions a { justify-content: flex-end; font-size: .76rem; }
   .aethelios-page > .aurelius-page-heading { display: none; }
   .aethelios-page > .aethelios-link-panel { flex: none; margin: 0 0 8px; border-radius: 10px; }
   .aethelios-page > .aurelius-surface { flex: 1; height: auto; min-height: 0; border-radius: 12px; }
