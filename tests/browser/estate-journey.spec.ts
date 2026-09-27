@@ -45,7 +45,7 @@ for (const width of [344, 768, 1440]) {
       'data-rendered',
       'true',
     );
-    await expect(page.locator('.estate-sculpture .presence-fallback')).toBeVisible();
+    await expect(page.locator('.ascend-emergence .intelligence-orb-static')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
