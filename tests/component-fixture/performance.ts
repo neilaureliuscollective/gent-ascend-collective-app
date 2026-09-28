@@ -1,4 +1,4 @@
-import { startProgramSession } from '@/domains/performance/program';
+import { startProgramSession } from '../../src/domains/performance/program';
 import type { PerformanceData } from '@/domains/performance/schema';
 export const performanceFixture: PerformanceData = {
   mode: 'personal',
