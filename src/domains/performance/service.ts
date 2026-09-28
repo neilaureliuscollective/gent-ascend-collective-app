@@ -4,6 +4,7 @@ import { localDate, nextAdjustment, samplePerformance, weeklyReview } from './mo
 import {
   checkinSchema,
   planSchema,
+  programSchema,
   profileSchema,
   sessionSchema,
   type Mutation,
@@ -14,7 +15,7 @@ export async function readPerformance(): Promise<PerformanceData> {
   const ctx = await authorizedPerson('performance.read');
   if (!ctx) return { ...samplePerformance(), today: localDate(new Date().toISOString(), 'UTC') };
   const { client, person } = ctx;
-  const [profile, plan, checks, sessions] = await Promise.all([
+  const [profile, plan, checks, sessions, program] = await Promise.all([
     client.from('performance_profiles').select('*').eq('person_id', person.id).maybeSingle(),
     client.from('performance_plans').select('*').eq('person_id', person.id).maybeSingle(),
     client
@@ -29,13 +30,23 @@ export async function readPerformance(): Promise<PerformanceData> {
       .eq('person_id', person.id)
       .order('started_at', { ascending: false })
       .limit(60),
+    client.from('performance_programs').select('*').eq('person_id', person.id).maybeSingle(),
   ]);
-  if (profile.error || plan.error || checks.error || sessions.error)
+  if (profile.error || plan.error || checks.error || sessions.error || program.error)
     throw new IntelligenceError(
       'Performance could not load your records. Try again when connected.',
       503,
     );
   const ids = (sessions.data ?? []).map((s) => s.id);
+  const contexts = ids.length
+    ? await client
+        .from('performance_session_context')
+        .select('*')
+        .eq('person_id', person.id)
+        .in('session_id', ids)
+    : { data: [], error: null };
+  if (contexts.error)
+    throw new IntelligenceError('Your session decisions could not be loaded.', 503);
   const setResults = await Promise.all(
     Array.from({ length: Math.ceil(ids.length / 10) }, (_, i) =>
       client
@@ -52,6 +63,14 @@ export async function readPerformance(): Promise<PerformanceData> {
   const sets = { data: setResults.flatMap((result) => result.data ?? []) };
   return {
     mode: 'personal',
+    program: program.data
+      ? {
+          data: programSchema.parse({ title: program.data.title, sessions: program.data.sessions }),
+          version: program.data.version,
+          updatedAt: program.data.updated_at,
+          nextSlotId: program.data.next_slot_id,
+        }
+      : null,
     owner: person.id,
     today: localDate(new Date().toISOString(), person.timezone),
     timezone: person.timezone,
@@ -102,6 +121,7 @@ export async function readPerformance(): Promise<PerformanceData> {
         id: s.id,
         title: s.title,
         planVersion: s.plan_version,
+        prescription: contexts.data?.find((c) => c.session_id === s.id)?.prescription,
         startedAt: s.started_at,
         endedAt: s.ended_at,
         status: s.status,
@@ -221,8 +241,14 @@ export async function explainPerformance(requestId: string) {
           status: s.data.status,
           pain: s.data.pain,
           sets: s.data.sets,
+          acceptedDecision: s.data.prescription
+            ? { mode: s.data.prescription.mode, timeBudget: s.data.prescription.timeBudget }
+            : null,
         })),
         eligibleAdjustment: nextAdjustment(data),
+        program: data.program
+          ? { title: data.program.data.title, nextSlotId: data.program.nextSlotId }
+          : null,
       }),
       maxOutputTokens: 500,
       maxRetries: 0,

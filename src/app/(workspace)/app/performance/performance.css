@@ -767,3 +767,132 @@
     opacity: 1;
   }
 }
+
+/* A sequence, a decision, a record: the program environment. */
+.perf-cycle {
+  padding: 24px 0 32px;
+  border-bottom: 1px solid var(--perf-line, #294038);
+}
+.perf-cycle ol {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  margin: 24px 0 0;
+}
+.perf-cycle li {
+  min-width: 145px;
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 4px;
+  border-top: 2px solid #294038;
+}
+.perf-cycle li[aria-current] {
+  border-color: #e0bb6a;
+  color: #e0bb6a;
+}
+.perf-cycle li > span {
+  font-size: 24px;
+  font-weight: 300;
+}
+.perf-cycle small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin-top: 10px;
+  color: #a8bfb4;
+}
+.perf-preparation {
+  max-width: 820px;
+  margin: 36px auto;
+}
+.perf-preparation h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+.perf-preparation label {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+.perf-preparation select,
+.perf-preparation input {
+  width: 100%;
+  max-width: 100%;
+  min-height: 48px;
+  background: #0b2118;
+  color: #f2ede1;
+  border: 1px solid #3b5545;
+  padding: 12px;
+  border-radius: 6px;
+  font: inherit;
+}
+.perf-signals {
+  border-left: 2px solid #c4912f;
+  padding: 18px 20px;
+  margin: 28px 0;
+  background: #10251c;
+}
+.perf-signals p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.perf-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0;
+}
+.perf-choice button {
+  flex: 1;
+}
+.perf-choice button[aria-pressed='true'] {
+  background: #214d3a;
+  border-color: #e0bb6a;
+  color: #e0bb6a;
+}
+.perf-prescription {
+  padding: 28px 0;
+  border-block: 1px solid #34503f;
+}
+.perf-prescription h3 {
+  font-size: 26px;
+  font-weight: 400;
+}
+.perf-changes {
+  padding: 16px 16px 16px 30px;
+  background: #10271c;
+  line-height: 1.8;
+  color: #e0bb6a;
+}
+.perf-program-entry {
+  margin: 32px 0;
+  padding: 28px 0;
+  border-block: 1px solid #294038;
+}
+.perf-program-editor {
+  list-style: none;
+  padding: 0;
+}
+.perf-program-editor > li {
+  padding: 24px 0;
+  border-bottom: 1px solid #294038;
+}
+@media (max-width: 600px) {
+  .perf-cycle ol {
+    gap: 14px;
+  }
+  .perf-choice button {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+  .perf-preparation {
+    margin: 24px 0;
+  }
+  .perf-signals {
+    padding: 16px;
+  }
+}

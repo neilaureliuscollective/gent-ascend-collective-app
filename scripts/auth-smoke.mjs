@@ -339,3 +339,20 @@ const perfOwn=await founder.from('performance_profiles').select('*');assert.equa
 const perfOther=await member.from('performance_profiles').select('*');assert.equal(perfOther.error,null);assert.equal(perfOther.data.length,0);
 const perfAnonymous=await anon.rpc('performance_save',performanceArgs);assert.ok(perfAnonymous.error);
 console.log('PASS: Performance real Auth/RPC profile save, receipt replay, and two-user isolation');
+
+const cycleSlotA=crypto.randomUUID(),cycleSlotB=crypto.randomUUID();
+const cyclePlan={title:'Synthetic session A',unit:'lb',exercises:[{id:crypto.randomUUID(),name:'Synthetic row',sets:3,reps:8,load:40,restSeconds:90}]};
+const cycle={title:'Synthetic training cycle',sessions:[{id:cycleSlotA,plan:cyclePlan},{id:cycleSlotB,plan:{...cyclePlan,title:'Synthetic session B'}}]};
+const cycleArgs={p_kind:'program',p_request:crypto.randomUUID(),p_expected:0,p_payload:cycle};
+const cycleSaved=await founder.rpc('performance_save',cycleArgs);assert.equal(cycleSaved.error,null);assert.equal(cycleSaved.data,1);
+const cycleReplay=await founder.rpc('performance_save',cycleArgs);assert.equal(cycleReplay.error,null);assert.equal(cycleReplay.data,1);
+const adjusted={...cyclePlan,exercises:cyclePlan.exercises.map(e=>({...e,sets:2}))};
+const cycleSession={id:crypto.randomUUID(),title:cyclePlan.title,unit:'lb',planVersion:1,startedAt:new Date().toISOString(),endedAt:new Date().toISOString(),status:'complete',pain:false,note:'Synthetic test',prescription:{ruleVersion:1,programVersion:1,slotId:cycleSlotA,mode:'lighter',timeBudget:40,originalPlan:cyclePlan,plan:adjusted},sets:Array.from({length:2},()=>({id:crypto.randomUUID(),exerciseId:cyclePlan.exercises[0].id,exercise:'Synthetic row',targetReps:8,targetLoad:40,reps:8,load:40,effort:7,done:true}))};
+const cycleSessionArgs={p_kind:'session',p_request:crypto.randomUUID(),p_expected:0,p_payload:cycleSession};
+const cycleFinished=await founder.rpc('performance_save',cycleSessionArgs);assert.equal(cycleFinished.error,null);assert.equal(cycleFinished.data,1);
+const cycleFinishedReplay=await founder.rpc('performance_save',cycleSessionArgs);assert.equal(cycleFinishedReplay.error,null);assert.equal(cycleFinishedReplay.data,1);
+const cyclePointer=await founder.from('performance_programs').select('next_slot_id');assert.equal(cyclePointer.error,null);assert.equal(cyclePointer.data[0].next_slot_id,cycleSlotB);
+const cycleContext=await founder.from('performance_session_context').select('prescription');assert.equal(cycleContext.error,null);assert.equal(cycleContext.data[0].prescription.mode,'lighter');
+for(const table of ['performance_programs','performance_program_revisions','performance_session_context']) {const hidden=await member.from(table).select('*');assert.equal(hidden.error,null);assert.equal(hidden.data.length,0);}
+const foreignDecision=await member.rpc('performance_save',{...cycleSessionArgs,p_request:crypto.randomUUID(),p_payload:{...cycleSession,id:crypto.randomUUID()}});assert.ok(foreignDecision.error);
+console.log('PASS: Performance program, accepted decision, atomic cycle advance, replay and two-user isolation');

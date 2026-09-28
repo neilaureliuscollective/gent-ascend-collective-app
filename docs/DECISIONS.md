@@ -189,3 +189,7 @@ A read-only hosted audit revealed 16 applied Gent Ascend/Reserve migrations in o
 ## 2026-09-28 — Ascend Performance Phase 1 (founder approved)
 
 Add a Performance domain and member world inside the canonical application. Typed longitudinal facts and versioned plans remain distinct from Aethelios memory and future clinical Health Intelligence. Start with a complete strength practice/review loop and an explicitly consented device draft. The narrow progression rule produces a reviewable proposal; optional model interpretation cannot execute plan writes. Direct Health Connect/HealthKit access requires a future native component. Source evidence and remaining gates: [ASCEND_PERFORMANCE_PHASE_1.md](ASCEND_PERFORMANCE_PHASE_1.md).
+
+## 2026-09-28 — Performance Phase 2: programs before predictive scores
+
+Founder authorized research, planning and the next build. Add a repeating multi-session program and explicit session preparation on the existing Performance foundation. A deterministic preview and database reconstruction agree; the accepted and original plan persist with session history. No automatic load increase, clinical inference, calendar integration or measured readiness claim. Completion advances only the current revision's next slot. Research, boundaries and migration ordering: [Phase 2](ASCEND_PERFORMANCE_PHASE_2.md).

@@ -727,3 +727,65 @@ describe('Performance transactions and isolation',()=>{
   await db.exec('set role anon');try{await expect(db.query(sql('profile',13,0,profile))).rejects.toThrow();await expect(db.query('select * from public.performance_sessions')).rejects.toThrow();}finally{await db.exec('reset role');}
  });
 });
+
+describe('Performance programs and immutable decisions',()=>{
+ const slotA='c1000000-0000-4000-8000-000000000001';
+ const slotB='c1000000-0000-4000-8000-000000000002';
+ const ex={id:'c1000000-0000-4000-8000-000000000003',name:'Synthetic row',sets:3,reps:8,load:40,restSeconds:90};
+ const plan={title:'Session A',unit:'lb',exercises:[ex]};
+ const program={title:'A / B',sessions:[{id:slotA,plan},{id:slotB,plan:{...plan,title:'Session B'}}]};
+ const call=(kind:string,version:number,payload:unknown,request=crypto.randomUUID())=>`select public.performance_save('${kind}','${request}',${version},'${JSON.stringify(payload).replaceAll("'","''")}'::jsonb) as version`;
+ it('versions programs, enforces ownership and preserves replay receipts',async()=>{
+  const request=crypto.randomUUID();
+  expect((await asUser(member,call('program',0,program,request))).rows).toEqual([{version:1}]);
+  expect((await asUser(member,call('program',0,program,request))).rows).toEqual([{version:1}]);
+  await expect(asUser(member,call('program',0,{...program,title:'Changed'},request))).rejects.toThrow();
+  await expect(asUser(member,call('program',0,program))).rejects.toThrow();
+  expect((await asUser(founder,'select * from public.performance_programs')).rows).toHaveLength(0);
+  expect((await asUser(founder,'select * from public.performance_program_revisions')).rows).toHaveLength(0);
+  await expect(asUser(member,"update public.performance_programs set title='bypass'")).rejects.toThrow();
+  await expect(asUser(member,call('program',1,{...program,sessions:[program.sessions[0],program.sessions[0]]}))).rejects.toThrow();
+ });
+ it('verifies decisions, advances exactly once and rejects forged or mutable provenance',async()=>{
+  const {startProgramSession,preparePlan}=await import('../src/domains/performance/program');
+  const {planSchema}=await import('../src/domains/performance/schema');
+  const p=planSchema.parse(plan);
+  const session=startProgramSession({ruleVersion:1,programVersion:1,slotId:slotA,mode:'lighter',timeBudget:40,originalPlan:p,plan:preparePlan(p,'lighter',40)});
+  await expect(asUser(founder,call('session',0,session))).rejects.toThrow();
+  const forged=structuredClone(session);forged.prescription.plan.exercises[0]!.load=100;
+  await expect(asUser(member,call('session',0,forged))).rejects.toThrow();
+  expect((await asUser(member,call('session',0,session))).rows).toEqual([{version:1}]);
+  const mutated=structuredClone(session);mutated.prescription.timeBudget=20;
+  await expect(asUser(member,call('session',1,mutated))).rejects.toThrow();
+  const {prescription: _ignored,...missing}=session;void _ignored;
+  await expect(asUser(member,call('session',1,missing))).rejects.toThrow();
+  const complete={...session,status:'complete',endedAt:new Date().toISOString(),sets:session.sets.map(s=>({...s,done:true}))};
+  const request=crypto.randomUUID();
+  expect((await asUser(member,call('session',1,complete,request))).rows).toEqual([{version:2}]);
+  expect((await asUser(member,call('session',1,complete,request))).rows).toEqual([{version:2}]);
+  expect((await asUser(member,'select next_slot_id from public.performance_programs')).rows).toEqual([{next_slot_id:slotB}]);
+  expect((await asUser(founder,'select * from public.performance_session_context')).rows).toHaveLength(0);
+  expect((await asUser(member,'select * from public.performance_session_context')).rows).toHaveLength(1);
+  expect((await asUser(member,`select * from public.personal_events where source_record_id='${session.id}'`)).rows).toHaveLength(1);
+ });
+ it('syncs an old offline revision after a program edit without advancing the new cycle',async()=>{
+  const {startProgramSession}=await import('../src/domains/performance/program');
+  const {planSchema}=await import('../src/domains/performance/schema');
+  const p=planSchema.parse({...plan,title:'Session B'});
+  const session=startProgramSession({ruleVersion:1,programVersion:1,slotId:slotB,mode:'planned',timeBudget:40,originalPlan:p,plan:p});
+  expect((await asUser(member,call('program',1,{...program,title:'Revised cycle'}))).rows).toEqual([{version:2}]);
+  const complete={...session,status:'complete',endedAt:new Date().toISOString(),sets:session.sets.map(s=>({...s,done:true}))};
+  await asUser(member,call('session',0,complete));
+  expect((await asUser(member,'select next_slot_id,version from public.performance_programs')).rows).toEqual([{next_slot_id:slotB,version:2}]);
+  expect((await asUser(member,'select * from public.performance_program_revisions')).rows).toHaveLength(2);
+ });
+ it('matches server and client shortening for bounded session combinations',async()=>{
+  const {preparePlan}=await import('../src/domains/performance/program');
+  const {planSchema}=await import('../src/domains/performance/schema');
+  for(const mode of ['planned','shorter','lighter'] as const) for(const budget of [10,15,40,120]) {
+   const source=planSchema.parse({...plan,exercises:[ex,{...ex,id:slotB,sets:5,restSeconds:180}]});
+   const result=await db.query<{plan:unknown}>(`select performance_private.prepare_plan_v1('${JSON.stringify(source)}'::jsonb,'${mode}',${budget}) as plan`);
+   expect(result.rows[0]?.plan).toEqual(preparePlan(source,mode,budget));
+  }
+ });
+});

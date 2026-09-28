@@ -30,11 +30,15 @@ import {
 } from '../../../public/performance-store.js';
 import { ProfileEditor, PlanEditor, CheckinEditor } from './editors';
 import { Training } from './training';
+import { ProgramEditor, ProgramCycle, SessionPreparation, SessionDecision } from './program';
+import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/performance/program';
+import type { Prescription, Program } from '@/domains/performance/schema';
 type View = 'today' | 'train' | 'restore' | 'review';
 export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) {
   const [data, setData] = useState(initial);
   const [view, setView] = useState<View>('today');
-  const [editing, setEditing] = useState<'profile' | 'plan' | 'checkin' | null>(null);
+  const [editing, setEditing] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(null);
+  const [programDraft, setProgramDraft] = useState<Program | null>(null);
   const [planDraft, setPlanDraft] = useState<Plan | null>(null);
   const [device, setDevice] = useState<DeviceDraft | null>(null);
   const [busy, setBusy] = useState(false);
@@ -171,8 +175,13 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
       setBusy(false);
     }
   }
-  async function begin() {
-    if (!owner || !plan || editLock.current) return;
+  async function begin(prescription?: Prescription) {
+    if (
+      !owner ||
+      (!plan && !prescription && !data.sessions.some((s) => s.data.status === 'active')) ||
+      editLock.current
+    )
+      return;
     editLock.current = true;
     setError('');
     try {
@@ -188,7 +197,10 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
       const remote = data.sessions.find((s) => s.data.status === 'active');
       const row = await beginDraft(
         owner,
-        remote?.data ?? startSession(plan.data, plan.version, plan.data.unit),
+        remote?.data ??
+          (prescription
+            ? startProgramSession(prescription)
+            : startSession(plan!.data, plan!.version, plan!.data.unit)),
         remote?.version ?? 0,
       );
       setLocal(row);
@@ -225,6 +237,10 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
       editLock.current = false;
       setSavingSet(false);
     }
+  }
+  function editProgram() {
+    setProgramDraft(data.program?.data ?? createProgram(plan?.data ?? starterPlan(profile)));
+    setEditing('program');
   }
   function editPlan() {
     setPlanDraft(plan?.data ?? starterPlan(profile));
@@ -346,6 +362,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
         <>
           {view === 'today' && (
             <>
+              <ProgramCycle data={data} />
               <section className="perf-stage">
                 <div className="perf-orbits" aria-hidden="true">
                   <i />
@@ -362,7 +379,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                       <button className="perf-primary" onClick={() => setEditing('profile')}>
                         Set your direction →
                       </button>
-                    ) : !plan ? (
+                    ) : !plan && !data.program ? (
                       <button className="perf-primary" onClick={editPlan}>
                         Shape your training plan →
                       </button>
@@ -410,7 +427,11 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               </section>
               <div className="perf-inline">
                 <button onClick={() => setEditing('profile')}>Edit direction</button>
-                {data.profile && <button onClick={editPlan}>Edit training plan</button>}
+                {data.profile && (
+                  <button onClick={data.program ? editProgram : editPlan}>
+                    {data.program ? 'Edit current program' : 'Edit training plan'}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -457,17 +478,28 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                       </div>
                     </div>
                   )}
+                  {device.draft.prescription && (
+                    <SessionDecision prescription={device.draft.prescription} />
+                  )}
                   <Training
                     key={device.draft.id}
                     session={device.draft}
-                    plan={plan?.data ?? null}
+                    plan={device.draft.prescription?.plan ?? plan?.data ?? null}
                     busy={savingSet || conflict}
                     save={saveSession}
                   />
                   {device.draft.status !== 'active' &&
                     device.revision === device.syncedRevision && (
-                      <button className="perf-primary" onClick={() => void begin()}>
-                        Start another session
+                      <button
+                        className="perf-primary"
+                        onClick={() => {
+                          if (data.program) {
+                            setLocal(null);
+                            setView('train');
+                          } else void begin();
+                        }}
+                      >
+                        Prepare next session
                       </button>
                     )}
                   <p className="perf-caption">
@@ -475,6 +507,29 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                     <a href="/performance-offline.html">Open offline training</a>
                   </p>
                 </>
+              ) : data.sessions.some((s) => s.data.status === 'active') ? (
+                <section className="perf-training-intro">
+                  <h2>Your workout is waiting.</h2>
+                  <p>
+                    Resume the active account session with its original targets. Keeping it on this
+                    device enables offline use.
+                  </p>
+                  <button className="perf-primary" onClick={() => void begin()}>
+                    Resume & keep workout on device
+                  </button>
+                </section>
+              ) : data.program ? (
+                <SessionPreparation
+                  key={`${data.program.version}-${data.program.nextSlotId}`}
+                  data={data}
+                  busy={busy}
+                  start={(p) => void begin(p)}
+                  edit={editProgram}
+                  recover={() => {
+                    setView('restore');
+                    setNotice('Recovery today. Your next session will be waiting.');
+                  }}
+                />
               ) : (
                 <section className="perf-training-intro">
                   <p className="eyebrow">YOUR NEXT SESSION</p>
@@ -600,12 +655,17 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                   </>
                 ) : (
                   <>
-                    <h3>Keep learning before changing the target.</h3>
+                    <h3>
+                      {data.program
+                        ? 'Review the pattern. Choose the next change.'
+                        : 'Keep learning before changing the target.'}
+                    </h3>
                     <p>
-                      A progression proposal needs two recent sessions on this plan, all planned
-                      sets completed at the target load, and effort of 7/10 or lower. Recorded
-                      limitations, discomfort, or a demanding daily check-in pause proposals.
+                      {data.program
+                        ? 'Your program keeps the targets you reviewed. Compare the original, accepted and completed work below; edit the program when you decide a change is appropriate. Automatic program progression is not active.'
+                        : 'A progression proposal needs two recent sessions on this plan, all planned sets completed at the target load, and effort of 7/10 or lower. Recorded limitations, discomfort, or a demanding daily check-in pause proposals.'}
                     </p>
+                    {data.program && <button onClick={editProgram}>Review program targets</button>}
                   </>
                 )}
               </div>
@@ -614,8 +674,8 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 <h3>Put the week into perspective.</h3>
                 <p className="perf-caption">
                   Share your Performance goal, limitations, seven recent check-ins, three recent
-                  sessions and this review with Aethelios for this request. This does not add them
-                  to memory.
+                  sessions, their accepted adjustments, program title and this review with Aethelios
+                  for this request. This does not add them to memory.
                 </p>
                 <button
                   disabled={busy || !data.profile}
@@ -653,6 +713,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                           {x.effort ? ` · effort ${x.effort}/10` : ''}
                         </p>
                       ))}
+                    {s.data.prescription && <SessionDecision prescription={s.data.prescription} />}
                     {s.data.note && <p>{s.data.note}</p>}
                   </details>
                 ))
@@ -685,7 +746,40 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               </p>
             </section>
           )}
+          {(view === 'today' || view === 'train') && !device && (
+            <div className="perf-program-entry">
+              <p className="eyebrow">THE NEXT CHAPTER</p>
+              <h3>
+                {data.program
+                  ? `Next up: ${nextProgramSlot(data)?.plan.title}`
+                  : 'Give every session its place.'}
+              </h3>
+              <p>
+                {data.program
+                  ? 'Your program moves forward when you complete its next session.'
+                  : 'Turn your practice into a repeating program, with different sessions for different days.'}
+              </p>
+              <button onClick={editProgram}>
+                {data.program ? 'Edit training program' : 'Build training program'}
+              </button>
+            </div>
+          )}
           <div ref={editorRef}>
+            {editing === 'program' && programDraft && (
+              <ProgramEditor
+                initial={programDraft}
+                key={data.program?.version ?? 0}
+                busy={busy}
+                save={async (payload) =>
+                  mutate({
+                    kind: 'program',
+                    requestId: crypto.randomUUID(),
+                    expectedVersion: data.program?.version ?? 0,
+                    payload,
+                  })
+                }
+              />
+            )}
             {editing === 'profile' && (
               <ProfileEditor
                 key={data.profile?.version ?? 0}

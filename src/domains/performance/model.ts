@@ -102,7 +102,8 @@ export type Adjustment = {
   reason: string;
 };
 export function nextAdjustment(data: PerformanceData): Adjustment | null {
-  if (!data.plan || !data.profile || data.profile.data.limitations.trim()) return null;
+  if (data.program || !data.plan || !data.profile || data.profile.data.limitations.trim())
+    return null;
   const today = data.checkins.find((c) => c.data.day === data.today)?.data;
   if (
     today &&
@@ -162,7 +163,7 @@ export function nextAdjustment(data: PerformanceData): Adjustment | null {
   return null;
 }
 export function todayDirection(data: PerformanceData) {
-  if (!data.profile || !data.plan)
+  if (!data.profile || (!data.plan && !data.program))
     return {
       title: 'Give your training a direction.',
       text: 'Set your goal, available time and equipment. Then shape a practice you can repeat.',

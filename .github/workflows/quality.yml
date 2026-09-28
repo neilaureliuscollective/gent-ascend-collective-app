@@ -22,6 +22,14 @@ jobs:
           name: browser-evidence
           path: test-results
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-evidence
+          path: |
+            test-results/performance*/**/*.png
+            test-results/performance*/**/error-context.md
+          if-no-files-found: ignore
   database:
     runs-on: ubuntu-latest
     steps:
