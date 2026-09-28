@@ -7,7 +7,11 @@ for (const width of [344, 768, 1440])
     await page.setViewportSize({ width, height: 900 });
     await page.goto(fixture);
     await expect(page.getByRole('heading', { name: 'Ascend Performance.' })).toBeVisible();
-    await page.screenshot({ path: testInfo.outputPath('performance-today.png'), fullPage: true });
+    await page.screenshot({
+      path: testInfo.outputPath('performance-today.png'),
+      fullPage: true,
+      animations: 'disabled',
+    });
     await page.getByRole('button', { name: 'Enter training' }).click();
     await expect(
       page.getByRole('button', { name: 'Start & keep workout on device' }),
@@ -15,6 +19,11 @@ for (const width of [344, 768, 1440])
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.screenshot({
+      path: testInfo.outputPath('performance-training.png'),
+      fullPage: true,
+      animations: 'disabled',
+    });
     await page.getByRole('button', { name: 'Restore', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Listen. Then decide.' })).toBeVisible();
     await page.getByRole('button', { name: 'Review', exact: true }).click();

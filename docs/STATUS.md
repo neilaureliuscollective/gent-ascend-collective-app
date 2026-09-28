@@ -2,7 +2,7 @@
 
 Implemented on an isolated review branch: personal direction, editable strength plan, device-persisted workout sets with idempotent sync, self-reported recovery/body/nutrition check-ins, weekly review, explicit progression approval, and opt-in Aethelios interpretation. Access through My world → Ascend Performance. See [scope, architecture and release gates](ASCEND_PERFORMANCE_PHASE_1.md).
 
-Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. Browser execution is blocked by the unavailable Chromium binary; real Auth/PostgREST, live OpenAI, and physical-device verification are pending. No hosted migration or production deployment.
+Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. All seven Performance browser scenarios and real Supabase Auth/PostgREST integration pass in CI. Full regression results are recorded on draft PR #26; live OpenAI and physical-device verification remain pending. No hosted migration or production deployment.
 
 ---
 

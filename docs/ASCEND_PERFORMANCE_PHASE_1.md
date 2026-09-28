@@ -28,19 +28,19 @@ The service worker caches only public static offline assets. `/app/performance` 
 
 Sync uses foreground/reconnect attempts, not a promise of background execution. Session writes preserve source times and stable IDs. Conflict handling retains the draft, allows export, and requires explicit choice before replacing it with the account version. The rest timer survives background tab delays using a deadline, but resets on reload. An explicit device removal control is available on the offline page. Account export in Review is honestly labeled as the loaded window: 60 sessions and 90 check-ins plus the retained draft, not a full historical export.
 
-## Verification in this runner
+## Verification
 
 - `npm run check`: passed lint, strict types, 103 tests, production build.
 - `npm run db:ledger`: passed all 11 previously recorded applied-file hashes; the new migration is pending, not applied to hosted data.
 - Tests include six new SQL cases for ownership, receipts, stale writes, invalid-set rollback, immutable completion, one timeline event, plan revision history and partial intake, plus six progression/schema cases.
 - Production HTTP smoke: Performance and My world 200 with private/no-store, public offline assets 200, anonymous reads/writes denied, hostile-origin mutation denied.
-- Seven browser scenarios are registered for 344/768/1440 layout/navigation, device reload/retry, remote conflict, HTTP boundaries and the service-worker fallback. The local browser could not run: agent-browser is absent; Playwright's Chromium download returned an invalid archive. Responsive visual, touch, IndexedDB and service-worker behavior remain unverified on an actual browser here. CI captures screenshots when executable.
-- Real Auth/PostgREST integration is extended in `scripts/auth-smoke.mjs`, but could not run locally because Docker/local Supabase and the local environment file are absent. PGlite SQL/RLS checks do not substitute for this gate.
+- All seven Performance browser scenarios passed in CI: 344/768/1440 layout/navigation, device reload/retry, remote conflict, HTTP boundaries and the service-worker fallback. CI provides Chromium screenshots. The local runner cannot install Chromium, so executable browser evidence comes from CI. Physical touch/device acceptance is still pending.
+- Real Supabase Auth/PostgREST integration and the founder browser suite passed in CI, including authenticated Performance saves, receipt replay and two-account isolation. This is separate from PGlite SQL/RLS emulation.
 - No live paid OpenAI interpretation, hosted migration, production promotion, or physical Fold/iPhone battery/touch verification was performed.
 
 ## Release sequence
 
-1. Pass CI and inspect browser evidence. Exercise real local/staging Auth with two accounts, session reconnect, account switch/sign-out, and lost acknowledgment. Verify the private schema is not exposed.
+1. Confirm final CI and inspect browser evidence. Complete staging account switch/sign-out and lost-acknowledgment checks; verify the private schema is not exposed.
 2. Review the Performance screens on Fold cover/unfolded and iPhone; complete an offline workout, reopen, reconnect and confirm one saved session. Verify the offline shell has installed before relying on it.
 3. Run a live Aethelios interpretation with synthetic records and assess grounding, latency and usage behavior.
 4. Reconcile this additive migration with the current hosted ledger; apply to staging, then production only during an approved release. Rollback application code independently; retain additive data tables.
