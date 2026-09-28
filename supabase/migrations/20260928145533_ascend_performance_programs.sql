@@ -50,7 +50,7 @@ language plpgsql immutable set search_path='' as $$ declare e jsonb; begin
  exception when others then return false;
 end $$;
 -- Mirrors the client preview; database verifies the accepted decision independently.
-create function performance_private.prepare_plan(p jsonb, mode text, budget integer) returns jsonb
+create function performance_private.prepare_plan_v1(p jsonb, mode text, budget integer) returns jsonb
 language plpgsql immutable set search_path='' as $$
 declare a jsonb:=p->'exercises'; i integer; estimate numeric; target integer;
 begin
@@ -73,7 +73,7 @@ begin
  end if;
  return jsonb_set(p,'{exercises}',a);
 end $$;
-revoke all on function performance_private.valid_plan(jsonb),performance_private.prepare_plan(jsonb,text,integer) from public,anon,authenticated;
+revoke all on function performance_private.valid_plan(jsonb),performance_private.prepare_plan_v1(jsonb,text,integer) from public,anon,authenticated;
 create function performance_private.save_program(p_kind text,p_request uuid,p_expected integer,p_payload jsonb)
 returns integer language plpgsql security definer set search_path='' as $$
 declare own uuid; ver integer; current_program public.performance_programs; item jsonb; c jsonb; original jsonb; expected jsonb;
@@ -115,12 +115,12 @@ begin
   insert into public.performance_program_revisions values(own,ver,p_payload->>'title',p_payload->'sessions',now());
  else
   c:=p_payload->'prescription'; sid:=(p_payload->>'id')::uuid; slot:=(c->>'slotId')::uuid; pv:=(c->>'programVersion')::integer;
-  if pv is null or slot is null or jsonb_typeof(c->'timeBudget') is distinct from 'number' or (c->>'timeBudget')::numeric%1<>0
+  if c->'ruleVersion' is distinct from '1'::jsonb or pv is null or slot is null or jsonb_typeof(c->'timeBudget') is distinct from 'number' or (c->>'timeBudget')::numeric%1<>0
   or (c->>'timeBudget')::integer not between 10 and 120 or c->>'mode' is null or c->>'mode' not in ('planned','shorter','lighter') then raise exception 'Invalid decision' using errcode='22023'; end if;
   select s.value->'plan' into original from public.performance_program_revisions r, lateral jsonb_array_elements(r.sessions) s
    where r.person_id=own and r.version=pv and (s.value->>'id')::uuid=slot;
   if original is null then raise exception 'Program source unavailable' using errcode='42501'; end if;
-  expected:=performance_private.prepare_plan(original,c->>'mode',(c->>'timeBudget')::integer);
+  expected:=performance_private.prepare_plan_v1(original,c->>'mode',(c->>'timeBudget')::integer);
   if c->'originalPlan' is distinct from original or c->'plan' is distinct from expected or p_payload->>'title' is distinct from expected->>'title' or p_payload->>'unit' is distinct from expected->>'unit' or (p_payload->>'planVersion')::integer is distinct from pv then raise exception 'Decision does not match source' using errcode='22023'; end if;
   if prior_context is null and exists(select 1 from public.performance_sessions where id=sid) then raise exception 'Cannot attach decision to existing session' using errcode='40001'; end if;
   select jsonb_agg(jsonb_build_object('exerciseId',e->>'id','exercise',e->>'name','targetReps',(e->>'reps')::integer,'targetLoad',(e->>'load')::numeric) order by n,k) into desired_sets

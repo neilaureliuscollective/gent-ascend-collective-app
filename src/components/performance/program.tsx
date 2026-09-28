@@ -283,6 +283,7 @@ export function SessionPreparation({
           disabled={busy || !Number.isInteger(budget) || budget < 10 || budget > 120}
           onClick={() =>
             start({
+              ruleVersion: 1,
               programVersion: data.program!.version,
               slotId: slot.id,
               mode,

@@ -427,7 +427,11 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               </section>
               <div className="perf-inline">
                 <button onClick={() => setEditing('profile')}>Edit direction</button>
-                {data.profile && <button onClick={editPlan}>Edit training plan</button>}
+                {data.profile && (
+                  <button onClick={data.program ? editProgram : editPlan}>
+                    {data.program ? 'Edit current program' : 'Edit training plan'}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -651,12 +655,17 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                   </>
                 ) : (
                   <>
-                    <h3>Keep learning before changing the target.</h3>
+                    <h3>
+                      {data.program
+                        ? 'Review the pattern. Choose the next change.'
+                        : 'Keep learning before changing the target.'}
+                    </h3>
                     <p>
-                      A progression proposal needs two recent sessions on this plan, all planned
-                      sets completed at the target load, and effort of 7/10 or lower. Recorded
-                      limitations, discomfort, or a demanding daily check-in pause proposals.
+                      {data.program
+                        ? 'Your program keeps the targets you reviewed. Compare the original, accepted and completed work below; edit the program when you decide a change is appropriate. Automatic program progression is not active.'
+                        : 'A progression proposal needs two recent sessions on this plan, all planned sets completed at the target load, and effort of 7/10 or lower. Recorded limitations, discomfort, or a demanding daily check-in pause proposals.'}
                     </p>
+                    {data.program && <button onClick={editProgram}>Review program targets</button>}
                   </>
                 )}
               </div>
@@ -665,8 +674,8 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 <h3>Put the week into perspective.</h3>
                 <p className="perf-caption">
                   Share your Performance goal, limitations, seven recent check-ins, three recent
-                  sessions and this review with Aethelios for this request. This does not add them
-                  to memory.
+                  sessions, their accepted adjustments, program title and this review with Aethelios
+                  for this request. This does not add them to memory.
                 </p>
                 <button
                   disabled={busy || !data.profile}

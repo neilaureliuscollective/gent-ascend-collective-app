@@ -750,7 +750,7 @@ describe('Performance programs and immutable decisions',()=>{
   const {startProgramSession,preparePlan}=await import('../src/domains/performance/program');
   const {planSchema}=await import('../src/domains/performance/schema');
   const p=planSchema.parse(plan);
-  const session=startProgramSession({programVersion:1,slotId:slotA,mode:'lighter',timeBudget:40,originalPlan:p,plan:preparePlan(p,'lighter',40)});
+  const session=startProgramSession({ruleVersion:1,programVersion:1,slotId:slotA,mode:'lighter',timeBudget:40,originalPlan:p,plan:preparePlan(p,'lighter',40)});
   await expect(asUser(founder,call('session',0,session))).rejects.toThrow();
   const forged=structuredClone(session);forged.prescription.plan.exercises[0]!.load=100;
   await expect(asUser(member,call('session',0,forged))).rejects.toThrow();
@@ -772,7 +772,7 @@ describe('Performance programs and immutable decisions',()=>{
   const {startProgramSession}=await import('../src/domains/performance/program');
   const {planSchema}=await import('../src/domains/performance/schema');
   const p=planSchema.parse({...plan,title:'Session B'});
-  const session=startProgramSession({programVersion:1,slotId:slotB,mode:'planned',timeBudget:40,originalPlan:p,plan:p});
+  const session=startProgramSession({ruleVersion:1,programVersion:1,slotId:slotB,mode:'planned',timeBudget:40,originalPlan:p,plan:p});
   expect((await asUser(member,call('program',1,{...program,title:'Revised cycle'}))).rows).toEqual([{version:2}]);
   const complete={...session,status:'complete',endedAt:new Date().toISOString(),sets:session.sets.map(s=>({...s,done:true}))};
   await asUser(member,call('session',0,complete));
@@ -784,7 +784,7 @@ describe('Performance programs and immutable decisions',()=>{
   const {planSchema}=await import('../src/domains/performance/schema');
   for(const mode of ['planned','shorter','lighter'] as const) for(const budget of [10,15,40,120]) {
    const source=planSchema.parse({...plan,exercises:[ex,{...ex,id:slotB,sets:5,restSeconds:180}]});
-   const result=await db.query<{plan:unknown}>(`select performance_private.prepare_plan('${JSON.stringify(source)}'::jsonb,'${mode}',${budget}) as plan`);
+   const result=await db.query<{plan:unknown}>(`select performance_private.prepare_plan_v1('${JSON.stringify(source)}'::jsonb,'${mode}',${budget}) as plan`);
    expect(result.rows[0]?.plan).toEqual(preparePlan(source,mode,budget));
   }
  });

@@ -46,6 +46,7 @@ export const programSchema = z
   );
 export const prescriptionSchema = z
   .object({
+    ruleVersion: z.literal(1),
     programVersion: z.number().int().positive(),
     slotId: z.uuid(),
     mode: z.enum(['planned', 'shorter', 'lighter']),

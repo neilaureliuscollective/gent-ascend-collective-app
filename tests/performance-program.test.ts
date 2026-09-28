@@ -34,6 +34,7 @@ describe('program preparation', () => {
   });
   it('preserves full prescription and original when creating an offline session', () => {
     const prescription = {
+      ruleVersion: 1 as const,
       programVersion: 1,
       slotId: programFixture.program!.nextSlotId,
       mode: 'lighter' as const,
