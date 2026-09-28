@@ -63,7 +63,9 @@ const lifecycle: FormAction = async (_previous, form) => ({
 });
 createRoot(document.getElementById('root')!).render(
   mode === 'performance' ? (
-    <PerformanceWorkspace initial={performanceFixture} />
+    <main style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+      <PerformanceWorkspace initial={performanceFixture} />
+    </main>
   ) : mode === 'daily' ? (
     <DailyDashboard
       initial={{ ...sampleData('2026-09-21'), mode: 'personal', name: 'Synthetic tester' }}
