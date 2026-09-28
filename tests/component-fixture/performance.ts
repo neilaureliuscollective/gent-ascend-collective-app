@@ -1,3 +1,4 @@
+import { decisionOutcome } from '../../src/domains/performance/outcomes';
 import { startProgramSession } from '../../src/domains/performance/program';
 import type { PerformanceData } from '@/domains/performance/schema';
 export const performanceFixture: PerformanceData = {
@@ -139,3 +140,47 @@ export const learningFixture: PerformanceData = {
   ],
   progressionDecisions: [],
 };
+
+// Synthetic follow-through records: real evaluator, no database or model call.
+export const outcomesFixture: PerformanceData = (() => {
+  const data = structuredClone(learningFixture);
+  const review = structuredClone(data.progression![0]!);
+  const plan = structuredClone(data.program!.data.sessions[0]!.plan);
+  plan.exercises[0]!.reps = 9;
+  const decision = { fromVersion: 1, toVersion: 2, createdAt: '2026-09-25T12:00:00Z', review };
+  data.progressionDecisions = [decision];
+  data.program!.version = 2;
+  data.program!.data.sessions[0]!.plan = plan;
+  data.progression![0] = {
+    ...review,
+    status: 'hold',
+    proposal: null,
+    reason: 'Keep the current targets while you review these recorded attempts.',
+  };
+  const sessions = ['2026-09-26', '2026-09-27'].map((day, i) => {
+    const session = startProgramSession({
+      ruleVersion: 1,
+      programVersion: 2,
+      slotId: review.slotId,
+      mode: 'planned',
+      timeBudget: 40,
+      plan,
+      originalPlan: plan,
+    });
+    return {
+      ...session,
+      startedAt: `${day}T10:00:00Z`,
+      endedAt: `${day}T11:00:00Z`,
+      status: 'complete' as const,
+      sets: session.sets.map((s) => ({ ...s, done: true, effort: i === 0 ? null : 8 })),
+    };
+  });
+  data.outcomes = [
+    decisionOutcome(
+      { ...decision, approvedPlan: plan, revisedAt: null, sessions },
+      'UTC',
+      '2026-09-28T12:00:00Z',
+    ),
+  ];
+  return data;
+})();

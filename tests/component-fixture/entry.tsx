@@ -1,5 +1,10 @@
 import { PerformanceWorkspace } from '@/components/performance/workspace';
-import { performanceFixture, programFixture, learningFixture } from './performance';
+import {
+  performanceFixture,
+  programFixture,
+  learningFixture,
+  outcomesFixture,
+} from './performance';
 import '@/app/(workspace)/app/performance/performance.css';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
 import { sampleData } from '@/domains/daily/model';
@@ -62,15 +67,20 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'performance' || mode === 'performance-program' || mode === 'performance-learning' ? (
+  mode === 'performance' ||
+    mode === 'performance-program' ||
+    mode === 'performance-learning' ||
+    mode === 'performance-outcomes' ? (
     <main style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
       <PerformanceWorkspace
         initial={
-          mode === 'performance-learning'
-            ? learningFixture
-            : mode === 'performance-program'
-              ? programFixture
-              : performanceFixture
+          mode === 'performance-outcomes'
+            ? outcomesFixture
+            : mode === 'performance-learning'
+              ? learningFixture
+              : mode === 'performance-program'
+                ? programFixture
+                : performanceFixture
         }
       />
     </main>
