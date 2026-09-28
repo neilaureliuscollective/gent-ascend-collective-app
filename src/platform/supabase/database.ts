@@ -108,6 +108,14 @@ export interface Database {
         asset_version_id:string|null;created_at:string;updated_at:string
       },never,{title?:string;message?:string;visual_direction?:string;motion_note?:string;
         channel?:'social'|'website'|'pitch'|'print';asset_version_id?:string|null;updated_at?:string}>;
+      ai_studio_finishes: Table<{
+        id:string;person_id:string;project_id:string;version_id:string;format:'square'|'portrait'|'landscape';
+        treatment:'editorial'|'centered'|'quiet';brand:string;headline:string;supporting:string;footer:string;
+        focal_x:number;focal_y:number;updated_at:string
+      },{person_id:string;project_id:string;version_id:string;format:'square'|'portrait'|'landscape';
+        treatment:'editorial'|'centered'|'quiet';brand:string;headline:string;supporting:string;footer:string;focal_x:number;focal_y:number},
+      {format?:'square'|'portrait'|'landscape';treatment?:'editorial'|'centered'|'quiet';brand?:string;
+        headline?:string;supporting?:string;footer?:string;focal_x?:number;focal_y?:number;updated_at?:string}>;
       ai_turns: Table<Turn, never, { feedback: Turn['feedback'] }>;
       ai_messages: Table<ChatMessage, never, never>;
       ai_aux_usage: Table<{id:string;person_id:string;kind:'title'|'summary';created_at:string;input_tokens:number|null;output_tokens:number|null},never,never>;

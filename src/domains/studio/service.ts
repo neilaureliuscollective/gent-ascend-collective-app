@@ -24,13 +24,14 @@ export async function studioWorkspace(projectId?:string){
  if(projects.error) throw new IntelligenceError('Studio projects could not be loaded.',503);
  const current=projectId ?? projects.data?.[0]?.id;
  if(current && !projects.data?.some(project=>project.id===current)) throw new IntelligenceError('Project not found.',404);
- const [versions,references,scenes]=current?await Promise.all([
+ const [versions,references,scenes,finishes]=current?await Promise.all([
   client.from('ai_studio_versions').select('*').eq('project_id',current).eq('person_id',person.id).order('created_at',{ascending:false}).limit(100),
   client.from('ai_studio_references').select('*').eq('project_id',current).eq('person_id',person.id).order('created_at',{ascending:false}).limit(30),
   client.from('ai_studio_scenes').select('*').eq('project_id',current).eq('person_id',person.id).order('position',{ascending:true}).limit(8),
- ]):[{data:[],error:null},{data:[],error:null},{data:[],error:null}];
- if(versions.error||references.error||scenes.error) throw new IntelligenceError('Studio history could not be loaded.',503);
- return {projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
+  client.from('ai_studio_finishes').select('*').eq('project_id',current).eq('person_id',person.id).limit(100),
+ ]):[{data:[],error:null},{data:[],error:null},{data:[],error:null},{data:[],error:null}];
+ if(versions.error||references.error||scenes.error||finishes.error) throw new IntelligenceError('Studio history could not be loaded.',503);
+ return {projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
 }
 export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>){
  const key=process.env.OPENAI_API_KEY;

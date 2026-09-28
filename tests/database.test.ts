@@ -73,10 +73,27 @@ describe('migration, seeds and owner security', () => {
     const unrelated='92000000-0000-4000-8000-000000000003';
     await asUser(founder,`select public.ai_studio_begin('${unrelated}','${other}',null,null,'Other frame','gpt-image-2.5-flare','1024x1024')`);
     await expect(asUser(founder,`update public.ai_studio_scenes set asset_version_id='${unrelated}' where id='${scene}'`)).rejects.toThrow();
+    await asUser(founder,`select public.ai_studio_finish('${unrelated}','failed',null,'test')`);
     for(let index=0;index<7;index++) await asUser(founder,create(project));
     await expect(asUser(founder,create(project))).rejects.toThrow(/eight scenes/);
     await asUser(founder,`delete from public.ai_studio_scenes where id='${scene}'`);
     expect((await asUser<{id:string}>(founder,create(project))).rows).toHaveLength(1);
+  });
+  it('binds finishing compositions to one owner and one project image',async()=>{
+    const project='93000000-0000-4000-8000-000000000001';
+    const other='93000000-0000-4000-8000-000000000002';
+    const version='93000000-0000-4000-8000-000000000003';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Finish study'),('${other}',${own},'Other')`);
+    await asUser(founder,`select public.ai_studio_begin('${version}','${project}',null,null,'Gold light','gpt-image-2.5-flare','1024x1024')`);
+    const insert=(id:string)=>`insert into public.ai_studio_finishes(person_id,project_id,version_id,brand,headline) values(${own},'${id}','${version}','GENT ASCEND','A clearer way')`;
+    await expect(asUser(founder,insert(other))).rejects.toThrow();
+    await expect(asUser(member,insert(project))).rejects.toThrow();
+    await asUser(founder,insert(project));
+    expect((await asUser(member,'select id from public.ai_studio_finishes')).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.ai_studio_finishes set headline='Intrusion' where version_id='${version}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_finishes set project_id='${other}' where version_id='${version}'`)).rejects.toThrow();
+    await expect(asUser(founder,insert(project))).rejects.toThrow();
   });
   it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
     const first='84000000-0000-4000-8000-000000000001';

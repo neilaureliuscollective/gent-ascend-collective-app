@@ -27,9 +27,9 @@ async function request(body: unknown, method: 'POST' | 'PATCH' | 'DELETE') {
   return data;
 }
 
-export function StudioStoryboard({ projectId, scenes, versions, disabled, onChanged, onCreateFrame }: {
+export function StudioStoryboard({ projectId, scenes, versions, disabled, onChanged, onCreateFrame, onFinishImage }: {
   projectId: string; scenes: StudioScene[]; versions: Version[]; disabled: boolean;
-  onChanged: () => Promise<void>; onCreateFrame: (scene: StudioScene) => void;
+  onChanged: () => Promise<void>; onCreateFrame: (scene: StudioScene) => void; onFinishImage: (versionId: string) => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -84,7 +84,7 @@ export function StudioStoryboard({ projectId, scenes, versions, disabled, onChan
         {scene.message && <p className="studio-scene-message">{scene.message}</p>}
         {scene.visual_direction && <p><strong>Visual</strong> {scene.visual_direction}</p>}
         {scene.motion_note && <p><strong>Motion concept</strong> {scene.motion_note}</p>}
-        <div className="studio-scene-buttons"><button type="button" onClick={() => onCreateFrame(scene)}>Create frame ↗</button><button type="button" onClick={() => { setChoosing(choosing === scene.id ? null : scene.id); setEditing(null); }}>Choose saved image</button><button type="button" onClick={() => { setDraft(fromScene(scene)); setEditing(scene.id); setChoosing(null); }}>Edit</button><button type="button" onClick={() => setRemoving(scene.id)}>Remove</button></div>
+        <div className="studio-scene-buttons"><button type="button" onClick={() => onCreateFrame(scene)}>Create frame ↗</button>{scene.asset_version_id && <button type="button" onClick={() => onFinishImage(scene.asset_version_id!)}>Finish frame ↗</button>}<button type="button" onClick={() => { setChoosing(choosing === scene.id ? null : scene.id); setEditing(null); }}>Choose saved image</button><button type="button" onClick={() => { setDraft(fromScene(scene)); setEditing(scene.id); setChoosing(null); }}>Edit</button><button type="button" onClick={() => setRemoving(scene.id)}>Remove</button></div>
         {choosing === scene.id && <div className="studio-scene-picker"><p>Choose a completed image from this project</p>{ready.length ? <div>{ready.map(version => <button key={version.id} type="button" disabled={busy} onClick={() => void save(scene, fromScene(scene), version.id)}><Image unoptimized width={110} height={110} src={`/api/studio/image?id=${version.id}&kind=version`} alt={version.prompt} /></button>)}</div> : <p>No completed images yet. Create a frame first.</p>}{scene.asset_version_id && <button type="button" onClick={() => void save(scene, fromScene(scene), null)}>Remove current image</button>}</div>}
         {removing === scene.id && <div className="studio-scene-confirm"><p>Remove this scene from the board? Its image remains in the Library.</p><button type="button" disabled={busy} onClick={() => void remove(scene)}>Remove scene</button><button type="button" onClick={() => setRemoving(null)}>Keep it</button></div>}
       </>}</div>
