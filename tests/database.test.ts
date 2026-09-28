@@ -979,3 +979,37 @@ describe('Phase 5 owner-bound fuel references',()=>{
   expect((await asUser(founder,save())).rows).toEqual([{version:1}]);
  });
 });
+
+describe('Phase 6 recovery routine integrity',()=>{
+ let day:string;const request=crypto.randomUUID();let payload:{day:string;action:string;minutes:number;cue:string;outcome:null|string};
+ const call=(expected:number,p:object=payload,id=request)=>`select public.performance_save_recovery_routine('${id}',${expected},'${JSON.stringify(p)}') as version`;
+ it('uses owner-local today, saves/replays once, isolates reads and denies direct/anonymous writes',async()=>{
+  day=(await db.query<{day:string}>(`select ((now() at time zone timezone)::date)::text as day from public.persons where auth_user_id='${founder}'`)).rows[0]!.day;
+  payload={day,action:'quiet-time',minutes:15,cue:'Before my next sleep',outcome:null};
+  expect((await asUser(founder,call(0))).rows).toEqual([{version:1}]);expect((await asUser(founder,call(0))).rows).toEqual([{version:1}]);
+  for(const table of ['performance_recovery_routines','performance_recovery_revisions']){
+   expect((await asUser(member,`select * from public.${table}`)).rows).toHaveLength(0);
+   expect((await asUser(founder,`select * from public.${table}`)).rows).toHaveLength(1);
+   await expect(asUser(founder,`delete from public.${table}`)).rejects.toThrow();
+  }
+  await db.exec('set role anon');try{await expect(db.query(call(0))).rejects.toThrow();}finally{await db.exec('reset role');}
+  await expect(asUser(founder,call(0,payload,crypto.randomUUID()))).rejects.toThrow(/changed/);
+  await expect(asUser(founder,call(0,{...payload,minutes:20}))).rejects.toThrow(/reused/);
+ });
+ it('rejects future/backfilled plans, premature outcomes and malformed input without a partial write',async()=>{
+  const {shiftDay}=await import('../src/domains/performance/fuel');
+  for(const change of [{day:shiftDay(day,1)},{day:shiftDay(day,-1)},{outcome:'done'},{minutes:1},{minutes:5.5},{cue:'x'.repeat(121)},{action:'treatment'},{owner:member}])await expect(asUser(founder,call(1,{...payload,...change},crypto.randomUUID()))).rejects.toThrow();
+  expect((await asUser(founder,'select version from public.performance_recovery_routines')).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,call(1,{...payload,minutes:20},crypto.randomUUID()))).rows).toEqual([{version:2}]);
+ });
+ it('freezes past plans while versioning follow-through corrections and preserving original intent',async()=>{
+  const {shiftDay}=await import('../src/domains/performance/fuel');const yesterday=shiftDay(day,-1);const past={...payload,day:yesterday};
+  // Synthetic past plan: only test-admin SQL can create a backdated plan.
+  const own=`(select id from public.persons where auth_user_id='${founder}')`;
+  await db.exec(`insert into public.performance_recovery_routines values(${own},'${yesterday}','UTC','${JSON.stringify(past)}',1,now());insert into public.performance_recovery_revisions values(${own},'${yesterday}',1,'${JSON.stringify(past)}',gen_random_uuid(),'synthetic',now())`);
+  await expect(asUser(founder,call(1,{...past,minutes:30,outcome:'done'},crypto.randomUUID()))).rejects.toThrow(/fixed/);
+  const id=crypto.randomUUID();expect((await asUser(founder,call(1,{...past,outcome:'partial'},id))).rows).toEqual([{version:2}]);expect((await asUser(founder,call(1,{...past,outcome:'partial'},id))).rows).toEqual([{version:2}]);
+  expect((await asUser(founder,call(2,past,crypto.randomUUID()))).rows).toEqual([{version:3}]);
+  expect((await asUser(founder,`select routine from public.performance_recovery_revisions where day='${yesterday}' and version=1`)).rows).toEqual([{routine:past}]);
+ });
+});

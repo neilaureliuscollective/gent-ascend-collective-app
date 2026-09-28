@@ -25,7 +25,7 @@ for (const width of [344, 768, 1440])
       animations: 'disabled',
     });
     await page.getByRole('button', { name: 'Restore', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Listen. Then decide.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Make room to recover.' })).toBeVisible();
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'What carries forward.' })).toBeVisible();
   });

@@ -213,3 +213,22 @@ export const fuelFixture: PerformanceData = {
     };
   }),
 };
+
+export const recoveryFixture: PerformanceData = {
+  ...fuelFixture,
+  recoveryRoutines: [1, 3].map((ago) => {
+    const date = new Date(`${fuelFixture.today}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() - ago);
+    return {
+      version: 1,
+      updatedAt: '',
+      data: {
+        day: date.toISOString().slice(0, 10),
+        action: 'quiet-time',
+        minutes: 15,
+        cue: 'After my shift',
+        outcome: null,
+      },
+    };
+  }),
+};

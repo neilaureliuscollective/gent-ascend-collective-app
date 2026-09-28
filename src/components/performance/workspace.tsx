@@ -29,6 +29,7 @@ import {
   type DeviceDraft,
 } from '../../../public/performance-store.js';
 import { ProfileEditor, PlanEditor, CheckinEditor } from './editors';
+import { RecoverySpace } from './recovery';
 import { FuelSpace } from './fuel';
 import { Training } from './training';
 import { ProgressionReview } from './progression';
@@ -579,49 +580,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
             </>
           )}
           {view === 'fuel' && <FuelSpace data={data} busy={busy} save={mutate} />}
-          {view === 'restore' && (
-            <section className="perf-restore">
-              <p className="eyebrow">RECOVERY / SELF-REPORTED</p>
-              <h2>Listen. Then decide.</h2>
-              <p>
-                Sleep and how you feel add context to your training. Each observation keeps its
-                source.
-              </p>
-              <dl className="perf-observations">
-                <div>
-                  <dt>Last night’s sleep</dt>
-                  <dd>
-                    {today?.data.sleepMinutes != null
-                      ? `${(today.data.sleepMinutes / 60).toFixed(1)} hours`
-                      : 'Not recorded'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Energy today</dt>
-                  <dd>{today?.data.energy ? `${today.data.energy} / 5` : 'Not recorded'}</dd>
-                </div>
-                <div>
-                  <dt>Muscle soreness</dt>
-                  <dd>{today?.data.soreness ?? 'Not recorded'}</dd>
-                </div>
-                <div>
-                  <dt>Body weight</dt>
-                  <dd>
-                    {today?.data.weight
-                      ? `${today.data.weight} ${today.data.unit}`
-                      : 'Not recorded'}
-                  </dd>
-                </div>
-              </dl>
-              <button className="perf-primary" onClick={() => setEditing('checkin')}>
-                Record your check-in →
-              </button>
-              <p className="perf-caption">
-                Your observations guide a conversation. They do not measure muscle recovery or
-                establish a readiness score.
-              </p>
-            </section>
-          )}
+          {view === 'restore' && <RecoverySpace data={data} busy={busy} save={mutate} />}
           {view === 'review' && (
             <section className="perf-review">
               <p className="eyebrow">THE LEARNING LOOP / LAST SEVEN DAYS</p>
@@ -696,8 +655,8 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                   Share your Performance goal, limitations, seven recent check-ins, three recent
                   sessions, their accepted adjustments, program title, session progression evidence,
                   recorded outcomes after approved changes, your fuel references, 28-day weight
-                  readings and seven-day intake summaries with Aethelios for this request. This does
-                  not add them to memory.
+                  readings, seven-day intake and recovery summaries, and up to seven recovery
+                  practices with Aethelios for this request. This does not add them to memory.
                 </p>
                 <button
                   disabled={busy || !data.profile}
