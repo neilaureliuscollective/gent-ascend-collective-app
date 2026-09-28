@@ -40,7 +40,10 @@ describe('migration, seeds and owner security', () => {
     const version='91000000-0000-4000-8000-000000000002';
     const own=`(select id from public.persons where auth_user_id='${founder}')`;
     await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Portrait study')`);
+    await asUser(founder,`update public.ai_studio_projects set creative_type='brand',brief='{"purpose":"A founder campaign","palette":"emerald and gold"}'::jsonb where id='${project}'`);
+    expect((await asUser<{creative_type:string;brief:{purpose:string}}>(founder,`select creative_type,brief from public.ai_studio_projects where id='${project}'`)).rows[0]).toMatchObject({creative_type:'brand',brief:{purpose:'A founder campaign'}});
     expect((await asUser(member,'select * from public.ai_studio_projects')).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.ai_studio_projects set brief='{"purpose":"Intrusion"}'::jsonb where id='${project}' returning id`)).rows).toHaveLength(0);
     await expect(asUser(member,`insert into public.ai_studio_projects(id,person_id,title) values(gen_random_uuid(),${own},'Intrusion')`)).rejects.toThrow();
     const begin=`select public.ai_studio_begin('${version}','${project}',null,null,'A portrait in soft light','gpt-image-2.5-flare','1024x1024') as saved`;
     expect((await asUser(founder,begin)).rows[0]).toEqual({saved:true});

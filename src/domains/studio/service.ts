@@ -4,7 +4,14 @@ import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/s
 import { z } from 'zod';
 
 export const studioInput=z.object({id:z.uuid(),projectId:z.uuid(),parentId:z.uuid().nullable(),referenceId:z.uuid().nullable(),prompt:z.string().trim().min(3).max(3000),mode:z.enum(['fast','precise']),size:z.enum(['1024x1024','1536x1024','1024x1536'])}).strict();
-export const projectInput=z.object({title:z.string().trim().min(1).max(80)}).strict();
+export const creativeType=z.enum(['open','brand','campaign','product','personal']);
+export const projectBrief=z.object({purpose:z.string().trim().max(500),audience:z.string().trim().max(300),direction:z.string().trim().max(700),palette:z.string().trim().max(200),avoid:z.string().trim().max(400)}).strict();
+export const projectInput=z.object({title:z.string().trim().min(1).max(80),creativeType:creativeType.default('open')}).strict();
+export const projectUpdate=z.object({projectId:z.uuid(),title:z.string().trim().min(1).max(80),creativeType,brief:projectBrief,updatedAt:z.iso.datetime({offset:true})}).strict();
+export function imageDirection(prompt:string,brief:z.infer<typeof projectBrief>){
+ const directions=[brief.purpose&&`Purpose: ${brief.purpose}`,brief.audience&&`Audience: ${brief.audience}`,brief.direction&&`Visual direction: ${brief.direction}`,brief.palette&&`Palette: ${brief.palette}`,brief.avoid&&`Avoid: ${brief.avoid}`].filter(Boolean);
+ return directions.length?`Project direction (follow where relevant; do not add unrequested text or logos):\n${directions.join('\n')}\n\nImage request: ${prompt}`:prompt;
+}
 const bucket='aethelios-studio';
 export async function studioSession(){
  const session=await intelligenceSession();
@@ -24,10 +31,10 @@ export async function studioWorkspace(projectId?:string){
  if(versions.error||references.error) throw new IntelligenceError('Studio history could not be loaded.',503);
  return {projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
 }
-export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string}){
+export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>){
  const key=process.env.OPENAI_API_KEY;
  if(!key) throw new IntelligenceError('Image generation is not connected yet.',503);
- const content:({type:'input_text';text:string}|{type:'input_image';image_url:string})[]=[{type:'input_text',text:`Create one image. ${prompt}`}];
+ const content:({type:'input_text';text:string}|{type:'input_image';image_url:string})[]=[{type:'input_text',text:`Create one image. ${imageDirection(prompt,brief??{purpose:'',audience:'',direction:'',palette:'',avoid:''})}`}];
  if(reference) content.push({type:'input_image',image_url:`data:${reference.type};base64,${Buffer.from(reference.bytes).toString('base64')}`});
  const response=await fetch('https://api.openai.com/v1/responses',{
   method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
@@ -66,7 +73,10 @@ export async function generateStudio(input:z.infer<typeof studioInput>){
    if(data.error||!data.data) throw new IntelligenceError('Reference image could not be loaded.',503);
    reference={bytes:new Uint8Array(await data.data.arrayBuffer()),type:'media_type' in source.data && typeof source.data.media_type==='string'?source.data.media_type:'image/png'};
   }
-  const image=await renderImage(input.prompt,model,input.size,reference);
+  const project=await client.from('ai_studio_projects').select('brief').eq('person_id',person.id).eq('id',input.projectId).single();
+  if(project.error||!project.data) throw new IntelligenceError('Project brief could not be loaded.',503);
+  const brief=projectBrief.safeParse(project.data.brief);
+  const image=await renderImage(input.prompt,model,input.size,reference,brief.success?brief.data:undefined);
   key=`${(await client.auth.getUser()).data.user?.id}/${input.projectId}/${input.id}.png`;
   if(key.startsWith('undefined/')) throw new IntelligenceError('Session expired.',401);
   const upload=await client.storage.from(bucket).upload(key,image,{contentType:'image/png',upsert:false,cacheControl:'private, no-store'});

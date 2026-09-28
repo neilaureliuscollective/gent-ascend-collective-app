@@ -89,8 +89,10 @@ export interface Database {
       >;
       ai_conversations: Table<Conversation, never, never>;
       ai_studio_projects: Table<{
-        id:string;person_id:string;title:string;created_at:string;updated_at:string
-      },{id:string;person_id:string;title:string},{title?:string;updated_at?:string}>;
+        id:string;person_id:string;title:string;creative_type:'open'|'brand'|'campaign'|'product'|'personal';
+        brief:{purpose?:string;audience?:string;direction?:string;palette?:string;avoid?:string};created_at:string;updated_at:string
+      },{id:string;person_id:string;title:string;creative_type?:'open'|'brand'|'campaign'|'product'|'personal'},
+        {title?:string;creative_type?:'open'|'brand'|'campaign'|'product'|'personal';brief?:{purpose:string;audience:string;direction:string;palette:string;avoid:string};updated_at?:string}>;
       ai_studio_references: Table<{
         id:string;person_id:string;project_id:string;storage_key:string;media_type:string;byte_size:number;created_at:string
       },{id:string;person_id:string;project_id:string;storage_key:string;media_type:string;byte_size:number},never>;

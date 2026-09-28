@@ -1,3 +1,19 @@
+# Aethelios Studio project workspace — 2026-09-28
+
+Studio now presents a dedicated creation room, project direction editor and project library at `/app/studio`. A project can save its purpose, audience, visual direction, palette and exclusions. These fields guide new image requests on the server. Projects retain private references and saved versions; a member can refine an image, retry a failed request, or use a reference. Five creation entries help shape a first request without changing provider models or silently generating media. Image generation remains one image per request with the existing quota and owner-bound storage.
+
+The additive `20260928015000_studio_project_briefs.sql` migration is pending in hosted Supabase. Apply it before preview or production promotion; otherwise the new project columns are unavailable. Lint, strict typecheck, 91 unit/SQL tests, migration ledger check and production build pass locally. Browser tests could not run because this environment could not download a valid Chromium archive. Physical Fold visual and keyboard acceptance, real hosted Auth and image generation remain open. No video, brand-logo fidelity guarantee or publishing flow is claimed.
+
+---
+
+# Aethelios conversation room phase one — 2026-09-28
+
+The account chat now occupies its own full-height room on phone, unfolded and desktop widths. It reuses the public living orb on the welcome and in the active-conversation toolbar, retains a static appearance for unsupported graphics or Still mode, and expands the writing area for longer prompts. The conversation controls and existing API, saved chats, memory, context, and founder link remain. Studio's larger project workspace is a separate phase.
+
+Lint, strict typecheck, 91 unit tests, migration ledger and production build pass. The focused browser tests were updated for the shared orb and larger composer, but were not executed: the Chromium download returned an invalid archive in this runner. A real signed-in phone/Fold keyboard, scroll, animation and WebGL review is still required before a production claim.
+
+---
+
 # Threshold and LifeOS visual correction — 2026-09-27
 
 The founder's Fold screenshots prompted a focused correction of only the Threshold and LifeOS scenes. The opening now has a material chamber, camera move and crest-to-passage transition. LifeOS has a spatial physical instrument and reserved mobile copy/CTA/rail positions. Four optimized concept environment plates were added; the approved Man sequence and other chapters remain in place. See [visual correction](ASCEND_JOURNEY_THRESHOLD_LIFEOS.md). Hardware acceptance and production promotion remain pending.
