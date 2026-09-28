@@ -32,7 +32,7 @@ for (const width of [344, 768, 1440]) {
         .getByRole('group', { name: 'Orb motion preview' })
         .getByRole('button', { name: label, exact: true })
         .click();
-      await expect(page.locator('.orb-presentation .aurelius-presence')).toHaveAttribute(
+      await expect(page.locator('.orb-presentation .account-intelligence-orb')).toHaveAttribute(
         'data-state',
         `preview-${label.toLowerCase()}`,
       );
@@ -40,7 +40,9 @@ for (const width of [344, 768, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await expect(page.locator('.orb-presentation .aurelius-presence')).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('.orb-presentation .account-intelligence-orb')).toBeInViewport({
+      ratio: 1,
+    });
     await page.screenshot({ path: `test-results/aethelios-orb-${width}.png`, fullPage: true });
   });
 }
@@ -51,7 +53,7 @@ test('previous conversation bookmarks retain their conversation and starter quer
   const query = '?conversation=30000000-0000-4000-8000-000000000001&starter=reflect';
   await page.goto('/app/aurelius' + query);
   await expect(page).toHaveURL('/app/aethelios' + query);
-  await expect(page.getByRole('heading', { name: 'Aethelios.', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
 });
 
 test('introduction link closes the global panel even when already on the introduction', async ({

@@ -30,6 +30,7 @@ import {
 } from '../../../public/performance-store.js';
 import { ProfileEditor, PlanEditor, CheckinEditor } from './editors';
 import { Training } from './training';
+import { ProgressionReview } from './progression';
 import { ProgramEditor, ProgramCycle, SessionPreparation, SessionDecision } from './program';
 import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/performance/program';
 import type { Prescription, Program } from '@/domains/performance/schema';
@@ -159,7 +160,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
         await reload();
         setEditing(null);
         setNotice(
-          command.kind === 'adapt'
+          command.kind === 'adapt' || command.kind === 'progress'
             ? 'Plan updated after your approval. The next workout will use the new target.'
             : 'Saved to your account.',
         );
@@ -626,56 +627,70 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                   ? `Average reported sleep: ${(weekly.sleepMinutes! / 60).toFixed(1)} hours across ${weekly.sleepDays} days.`
                   : 'Sleep history is still forming.'}
               </p>
-              <div className="perf-insight">
-                <span className="eyebrow">NEXT SESSION / RULE-BASED PROPOSAL</span>
-                {adjustment ? (
-                  <>
-                    <h3>
-                      {adjustment.exercise}: try {adjustment.to} reps.
-                    </h3>
-                    <p>{adjustment.reason}</p>
-                    <p className="perf-caption">
-                      Sources: your two latest completed workouts. This is a modest trial, not a
-                      forecast. Only this exercise’s rep target changes.
-                    </p>
-                    <button
-                      className="perf-primary"
-                      disabled={busy}
-                      onClick={() =>
-                        void mutate({
-                          kind: 'adapt',
-                          requestId: crypto.randomUUID(),
-                          expectedVersion: plan!.version,
-                          sourceIds: adjustment.sourceIds,
-                        })
-                      }
-                    >
-                      Approve {adjustment.from} → {adjustment.to} reps
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <h3>
-                      {data.program
-                        ? 'Review the pattern. Choose the next change.'
-                        : 'Keep learning before changing the target.'}
-                    </h3>
-                    <p>
-                      {data.program
-                        ? 'Your program keeps the targets you reviewed. Compare the original, accepted and completed work below; edit the program when you decide a change is appropriate. Automatic program progression is not active.'
-                        : 'A progression proposal needs two recent sessions on this plan, all planned sets completed at the target load, and effort of 7/10 or lower. Recorded limitations, discomfort, or a demanding daily check-in pause proposals.'}
-                    </p>
-                    {data.program && <button onClick={editProgram}>Review program targets</button>}
-                  </>
-                )}
-              </div>
+              {data.program ? (
+                <ProgressionReview
+                  data={data}
+                  busy={busy}
+                  deviceActive={
+                    !!device &&
+                    (device.draft.status === 'active' || device.revision !== device.syncedRevision)
+                  }
+                  onAccept={(input) => void mutate(input)}
+                />
+              ) : (
+                <div className="perf-insight">
+                  <span className="eyebrow">NEXT SESSION / RULE-BASED PROPOSAL</span>
+                  {adjustment ? (
+                    <>
+                      <h3>
+                        {adjustment.exercise}: try {adjustment.to} reps.
+                      </h3>
+                      <p>{adjustment.reason}</p>
+                      <p className="perf-caption">
+                        Sources: your two latest completed workouts. This is a modest trial, not a
+                        forecast. Only this exercise’s rep target changes.
+                      </p>
+                      <button
+                        className="perf-primary"
+                        disabled={busy}
+                        onClick={() =>
+                          void mutate({
+                            kind: 'adapt',
+                            requestId: crypto.randomUUID(),
+                            expectedVersion: plan!.version,
+                            sourceIds: adjustment.sourceIds,
+                          })
+                        }
+                      >
+                        Approve {adjustment.from} → {adjustment.to} reps
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <h3>
+                        {data.program
+                          ? 'Review the pattern. Choose the next change.'
+                          : 'Keep learning before changing the target.'}
+                      </h3>
+                      <p>
+                        {data.program
+                          ? 'Your program keeps the targets you reviewed. Compare the original, accepted and completed work below; edit the program when you decide a change is appropriate. Automatic program progression is not active.'
+                          : 'A progression proposal needs two recent sessions on this plan, all planned sets completed at the target load, and effort of 7/10 or lower. Recorded limitations, discomfort, or a demanding daily check-in pause proposals.'}
+                      </p>
+                      {data.program && (
+                        <button onClick={editProgram}>Review program targets</button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
               <div className="perf-aethelios">
                 <span className="eyebrow">AETHELIOS / INTERPRET YOUR RECORDS</span>
                 <h3>Put the week into perspective.</h3>
                 <p className="perf-caption">
                   Share your Performance goal, limitations, seven recent check-ins, three recent
-                  sessions, their accepted adjustments, program title and this review with Aethelios
-                  for this request. This does not add them to memory.
+                  sessions, their accepted adjustments, program title, session progression evidence
+                  and this review with Aethelios for this request. This does not add them to memory.
                 </p>
                 <button
                   disabled={busy || !data.profile}

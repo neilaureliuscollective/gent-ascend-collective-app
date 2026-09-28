@@ -9,6 +9,8 @@ import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
 import { OrbPresentation } from '../visual/orb-presentation';
+import { IntelligenceOrb } from '../public/intelligence-orb';
+import { useAppearance } from '../visual/appearance';
 function priorVersions(turn:Turn,turns:Turn[]) {
   const versions:Turn[]=[];
   let parent=turn.parent_turn_id;
@@ -32,10 +34,12 @@ export function AureliusWorkspace({
   founderLinked?: boolean;
 }) {
   const [preview, setPreview] = useState(false);
+  const { moving } = useAppearance();
   const composer = useRef<HTMLTextAreaElement>(null);
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
   const [draft, setDraft] = useState(initialDraft);
+  const [composerExpanded, setComposerExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,8 +55,8 @@ export function AureliusWorkspace({
     const field = composer.current;
     if (!field) return;
     field.style.height = 'auto';
-    field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
-  }, [draft, tab, loading]);
+    field.style.height = `${Math.min(field.scrollHeight, composerExpanded ? Math.max(200, window.innerHeight * .48) : Math.max(120, window.innerHeight * .3))}px`;
+  }, [draft, tab, loading, composerExpanded]);
   const generation = useRef<AbortController | null>(null);
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
@@ -393,7 +397,7 @@ export function AureliusWorkspace({
             </button>
           </div>
           <div className="quiet-label">
-            <AureliusPresence
+            {!compact && data.turns.length ? <span className="account-toolbar-orb"><IntelligenceOrb active={moving} engaged={busy} /></span> : <AureliusPresence
               state={
                 busy
                   ? 'working'
@@ -405,7 +409,7 @@ export function AureliusWorkspace({
                         ? 'disconnected'
                         : 'ready'
               }
-            />
+            />}
             {preview ? 'Workspace preview' : data.configured ? 'Ready' : 'Connection pending'}
           </div>
         </div>
@@ -630,7 +634,7 @@ export function AureliusWorkspace({
                 Latest message ↓
               </button>
             )}
-            <form className="aurelius-composer" onSubmit={event=>{event.preventDefault();void sendMessage(draft,revision);}}>
+            <form className={`aurelius-composer ${composerExpanded ? 'is-expanded' : ''}`} onSubmit={event=>{event.preventDefault();void sendMessage(draft,revision);}}>
               {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
               <label htmlFor="aurelius-message" className="sr-only">
                 Message Aethelios
@@ -652,6 +656,9 @@ export function AureliusWorkspace({
                 }}
               />
               <div className="composer-controls">
+                <button type="button" className="composer-expand" aria-pressed={composerExpanded} onClick={() => setComposerExpanded(!composerExpanded)}>
+                  {composerExpanded ? 'Minimize' : 'Expand writing space'}
+                </button>
                 <label className="context-toggle">
                   <input
                     type="checkbox"

@@ -356,3 +356,23 @@ const cycleContext=await founder.from('performance_session_context').select('pre
 for(const table of ['performance_programs','performance_program_revisions','performance_session_context']) {const hidden=await member.from(table).select('*');assert.equal(hidden.error,null);assert.equal(hidden.data.length,0);}
 const foreignDecision=await member.rpc('performance_save',{...cycleSessionArgs,p_request:crypto.randomUUID(),p_payload:{...cycleSession,id:crypto.randomUUID()}});assert.ok(foreignDecision.error);
 console.log('PASS: Performance program, accepted decision, atomic cycle advance, replay and two-user isolation');
+
+// Phase 3 uses real Auth + PostgREST for evidence, approval and replay.
+const progressionCheck={day:new Date().toISOString().slice(0,10),sleepMinutes:450,energy:4,soreness:'none',weight:null,unit:'lb',calories:null,protein:null,waterMl:null,nutritionComplete:false};
+const progressionChecked=await founder.rpc('performance_save',{p_kind:'checkin',p_request:crypto.randomUUID(),p_expected:0,p_payload:progressionCheck});assert.equal(progressionChecked.error,null);
+for(const daysAgo of [4,2]) {
+ const p=cycle.sessions[1].plan;
+ const session={...cycleSession,id:crypto.randomUUID(),title:p.title,startedAt:new Date(Date.now()-daysAgo*86400000-3600000).toISOString(),endedAt:new Date(Date.now()-daysAgo*86400000).toISOString(),prescription:{ruleVersion:1,programVersion:1,slotId:cycleSlotB,mode:'planned',timeBudget:40,originalPlan:p,plan:p},sets:Array.from({length:3},()=>({...cycleSession.sets[0],id:crypto.randomUUID()}))};
+ const saved=await founder.rpc('performance_save',{p_kind:'session',p_request:crypto.randomUUID(),p_expected:0,p_payload:session});assert.equal(saved.error,null);
+}
+const progressRead=await founder.rpc('performance_progression',{});assert.equal(progressRead.error,null);
+const candidate=progressRead.data.find(r=>r.slotId===cycleSlotB);assert.equal(candidate.status,'ready');
+const progressArgs={p_request:crypto.randomUUID(),p_expected:1,p_slot:cycleSlotB,p_token:candidate.proposal.token};
+assert.ok((await member.rpc('performance_progression_accept',progressArgs)).error);
+const approved=await founder.rpc('performance_progression_accept',progressArgs);assert.equal(approved.error,null);assert.equal(approved.data,2);
+const approvedReplay=await founder.rpc('performance_progression_accept',progressArgs);assert.equal(approvedReplay.error,null);assert.equal(approvedReplay.data,2);
+const progressAudit=await founder.from('performance_progression_decisions').select('*');assert.equal(progressAudit.error,null);assert.equal(progressAudit.data.length,1);
+const hiddenAudit=await member.from('performance_progression_decisions').select('*');assert.equal(hiddenAudit.error,null);assert.equal(hiddenAudit.data.length,0);
+assert.ok((await anon.rpc('performance_progression',{})).error);
+assert.ok((await founder.rpc('performance_progression_accept',{...progressArgs,p_request:crypto.randomUUID()})).error);
+console.log('PASS: Performance progression evidence, atomic approval, replay and owner isolation through real Auth/PostgREST');

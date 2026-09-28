@@ -40,7 +40,10 @@ describe('migration, seeds and owner security', () => {
     const version='91000000-0000-4000-8000-000000000002';
     const own=`(select id from public.persons where auth_user_id='${founder}')`;
     await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Portrait study')`);
+    await asUser(founder,`update public.ai_studio_projects set creative_type='brand',brief='{"purpose":"A founder campaign","palette":"emerald and gold"}'::jsonb where id='${project}'`);
+    expect((await asUser<{creative_type:string;brief:{purpose:string}}>(founder,`select creative_type,brief from public.ai_studio_projects where id='${project}'`)).rows[0]).toMatchObject({creative_type:'brand',brief:{purpose:'A founder campaign'}});
     expect((await asUser(member,'select * from public.ai_studio_projects')).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.ai_studio_projects set brief='{"purpose":"Intrusion"}'::jsonb where id='${project}' returning id`)).rows).toHaveLength(0);
     await expect(asUser(member,`insert into public.ai_studio_projects(id,person_id,title) values(gen_random_uuid(),${own},'Intrusion')`)).rejects.toThrow();
     const begin=`select public.ai_studio_begin('${version}','${project}',null,null,'A portrait in soft light','gpt-image-2.5-flare','1024x1024') as saved`;
     expect((await asUser(founder,begin)).rows[0]).toEqual({saved:true});
@@ -53,6 +56,49 @@ describe('migration, seeds and owner security', () => {
     expect((await asUser(member,'select * from public.ai_studio_usage')).rows).toHaveLength(0);
     await expect(asUser(founder,`update public.ai_studio_versions set status='complete' where id='${version}'`)).rejects.toThrow();
     await expect(asUser(founder,`delete from public.ai_studio_projects where id='${project}'`)).rejects.toThrow();
+  });
+  it('keeps storyboard scenes owner-bound, project-bound and within eight slots',async()=>{
+    const grants=await db.query<{anon_insert:boolean;member_insert:boolean;member_rpc:boolean}>(`select
+      has_table_privilege('anon','public.ai_studio_scenes','INSERT') as anon_insert,
+      has_table_privilege('authenticated','public.ai_studio_scenes','INSERT') as member_insert,
+      has_function_privilege('authenticated','public.ai_studio_scene_create(uuid,text,text,text,text,text)','EXECUTE') as member_rpc`);
+    expect(grants.rows[0]).toEqual({anon_insert:false,member_insert:false,member_rpc:true});
+    const project='92000000-0000-4000-8000-000000000001';
+    const other='92000000-0000-4000-8000-000000000002';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Campaign'),('${other}',${own},'Other')`);
+    const create=(id:string)=>`select public.ai_studio_scene_create('${id}','Opening','Lead with a feeling','Emerald light','','social') as id`;
+    const scene=(await asUser<{id:string}>(founder,create(project))).rows[0]?.id;
+    expect(scene).toBeDefined();
+    expect((await asUser(member,'select id from public.ai_studio_scenes')).rows).toHaveLength(0);
+    await expect(asUser(member,create(project))).rejects.toThrow();
+    await expect(asUser(founder,`insert into public.ai_studio_scenes(person_id,project_id,position,title) values(${own},'${project}',2,'Bypass')`)).rejects.toThrow();
+    expect((await asUser(member,`update public.ai_studio_scenes set title='Intrusion' where id='${scene}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_scenes set project_id='${other}' where id='${scene}'`)).rejects.toThrow();
+    const unrelated='92000000-0000-4000-8000-000000000003';
+    await asUser(founder,`select public.ai_studio_begin('${unrelated}','${other}',null,null,'Other frame','gpt-image-2.5-flare','1024x1024')`);
+    await expect(asUser(founder,`update public.ai_studio_scenes set asset_version_id='${unrelated}' where id='${scene}'`)).rejects.toThrow();
+    await asUser(founder,`select public.ai_studio_finish('${unrelated}','failed',null,'test')`);
+    for(let index=0;index<7;index++) await asUser(founder,create(project));
+    await expect(asUser(founder,create(project))).rejects.toThrow(/eight scenes/);
+    await asUser(founder,`delete from public.ai_studio_scenes where id='${scene}'`);
+    expect((await asUser<{id:string}>(founder,create(project))).rows).toHaveLength(1);
+  });
+  it('binds finishing compositions to one owner and one project image',async()=>{
+    const project='93000000-0000-4000-8000-000000000001';
+    const other='93000000-0000-4000-8000-000000000002';
+    const version='93000000-0000-4000-8000-000000000003';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Finish study'),('${other}',${own},'Other')`);
+    await asUser(founder,`select public.ai_studio_begin('${version}','${project}',null,null,'Gold light','gpt-image-2.5-flare','1024x1024')`);
+    const insert=(id:string)=>`insert into public.ai_studio_finishes(person_id,project_id,version_id,brand,headline) values(${own},'${id}','${version}','GENT ASCEND','A clearer way')`;
+    await expect(asUser(founder,insert(other))).rejects.toThrow();
+    await expect(asUser(member,insert(project))).rejects.toThrow();
+    await asUser(founder,insert(project));
+    expect((await asUser(member,'select id from public.ai_studio_finishes')).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.ai_studio_finishes set headline='Intrusion' where version_id='${version}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_finishes set project_id='${other}' where version_id='${version}'`)).rejects.toThrow();
+    await expect(asUser(founder,insert(project))).rejects.toThrow();
   });
   it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
     const first='84000000-0000-4000-8000-000000000001';
@@ -787,5 +833,87 @@ describe('Performance programs and immutable decisions',()=>{
    const result=await db.query<{plan:unknown}>(`select performance_private.prepare_plan_v1('${JSON.stringify(source)}'::jsonb,'${mode}',${budget}) as plan`);
    expect(result.rows[0]?.plan).toEqual(preparePlan(source,mode,budget));
   }
+ });
+});
+
+describe('Performance progression evidence and approval', () => {
+ beforeAll(async()=>{ await db.exec(`delete from public.performance_checkins where person_id=(select id from public.persons where auth_user_id='${founder}')`); });
+ const slot=crypto.randomUUID(),other=crypto.randomUUID(),exercise=crypto.randomUUID();
+ const plan={title:'Progression A',unit:'lb' as const,exercises:[{id:exercise,name:'Row',sets:2,reps:8,load:40,restSeconds:90}]};
+ const program={title:'Learning cycle',sessions:[{id:slot,plan},{id:other,plan:{...plan,title:'Progression B'}}]};
+ const call=(kind:string,version:number,payload:unknown,request=crypto.randomUUID())=>`select public.performance_save('${kind}','${request}',${version},'${JSON.stringify(payload).replaceAll("'","''")}'::jsonb) as version`;
+ const review=async()=> (await asUser<{value:import('../src/domains/performance/progression').ProgressionReview[]}>(founder,'select public.performance_progression() as value')).rows[0]!.value;
+ let token='',checkVersion=1;
+ const check={day:new Date().toISOString().slice(0,10),sleepMinutes:450,energy:4,soreness:'none',weight:null,unit:'lb',calories:null,protein:null,waterMl:null,nutritionComplete:false};
+ const accept=(request=crypto.randomUUID(),t=token,version=1)=>`select public.performance_progression_accept('${request}',${version},'${slot}','${t}') as version`;
+ async function workout(daysAgo:number,mode:'planned'|'lighter'='planned',effort:number|null=7,slotId=slot) {
+  const {startProgramSession,preparePlan}=await import('../src/domains/performance/program');
+  const original=slotId===slot?plan:program.sessions[1]!.plan;
+  const s=startProgramSession({ruleVersion:1,programVersion:1,slotId,mode,timeBudget:40,originalPlan:original,plan:preparePlan(original,mode,40)});
+  s.startedAt=new Date(Date.now()-daysAgo*86400000-3600000).toISOString();
+  const complete={...s,status:'complete',endedAt:new Date(Date.now()-daysAgo*86400000).toISOString(),sets:s.sets.map(x=>({...x,done:true,effort}))};
+  await asUser(founder,call('session',0,complete));return complete;
+ }
+ it('holds with unknown recovery and matches two records for each slot rather than globally',async()=>{
+  await asUser(founder,call('program',0,program));
+  expect((await review())[0]!.reason).toContain('today’s');
+  await asUser(founder,call('checkin',0,check));
+  await workout(6);await workout(3);await workout(1,'planned',7,other);
+  const reviews=await review();
+  expect(reviews[0]).toMatchObject({status:'ready',proposal:{from:8,to:9,load:40}});
+  expect(reviews[1]).toMatchObject({status:'hold',proposal:null});
+  expect(reviews[1]!.reason).toContain('Two completed');
+  token=reviews[0]!.proposal!.token;
+ });
+ it('rejects stale check-ins and forged tokens; owner-only reads and writes stay isolated',async()=>{
+  await asUser(founder,call('checkin',checkVersion++,{...check,energy:5}));
+  await expect(asUser(founder,accept())).rejects.toThrow(/Evidence changed/);
+  token=(await review())[0]!.proposal!.token;
+  await expect(asUser(member,accept())).rejects.toThrow();
+  await expect(asUser(founder,accept(crypto.randomUUID(),'0'.repeat(64)))).rejects.toThrow();
+  await expect(asUser(founder,"update public.performance_progression_decisions set to_version=99")).rejects.toThrow();
+  await expect(asUser(founder,`select performance_private.progression_state((select id from public.persons limit 1))`)).rejects.toThrow();
+  await db.exec('set role anon');try {await expect(db.query('select public.performance_progression()')).rejects.toThrow();}finally {await db.exec('reset role');}
+ });
+ it('does not skip adapted or unknown-effort sessions to cherry-pick older easy workouts',async()=>{
+  await workout(.5,'lighter');
+  expect((await review())[0]!.reason).toContain('adapted');
+  await expect(asUser(founder,accept())).rejects.toThrow();
+  // Remove synthetic test-only rows to isolate the next rule; production sessions are immutable.
+  await db.exec(`delete from public.performance_sessions where person_id=(select id from public.persons where auth_user_id='${founder}') and started_at>now()-interval '1 day'`);
+  const s=await workout(2,'planned',null);
+  expect((await review())[0]).toMatchObject({status:'hold',proposal:null});
+  await db.exec(`delete from public.performance_sessions where id='${s.id}'`);
+ });
+ it('pauses for active workouts, discomfort, limitations and demanding check-ins',async()=>{
+  const own=`(select id from public.persons where auth_user_id='${founder}')`;
+  await db.exec(`update public.performance_profiles set limitations='Recorded limitation' where person_id=${own}`);
+  expect((await review())[0]!.reason).toContain('limitations');
+  await db.exec(`update public.performance_profiles set limitations='' where person_id=${own};update public.performance_sessions set pain=true where person_id=${own} and status='complete'`);
+  expect((await review())[0]!.reason).toContain('Discomfort');
+  await db.exec(`update public.performance_sessions set pain=false where person_id=${own}`);
+  await asUser(founder,call('checkin',checkVersion++,{...check,energy:2}));
+  expect((await review())[0]!.reason).toContain('keeping targets');
+  await asUser(founder,call('checkin',checkVersion++,check));
+  const {startProgramSession}=await import('../src/domains/performance/program');
+  const s=startProgramSession({ruleVersion:1,programVersion:1,slotId:slot,mode:'planned',timeBudget:40,originalPlan:plan,plan});
+  await asUser(founder,call('session',0,s));
+  expect((await review())[0]!.reason).toContain('active workout');
+  await asUser(founder,call('session',1,{...s,status:'abandoned',endedAt:new Date().toISOString()}));
+  token=(await review())[0]!.proposal!.token;
+ });
+ it('atomically versions one target, preserves the other session, records provenance and replays exactly once',async()=>{
+  const request=crypto.randomUUID();
+  expect((await asUser(founder,accept(request))).rows).toEqual([{version:2}]);
+  expect((await asUser(founder,accept(request))).rows).toEqual([{version:2}]);
+  await expect(asUser(founder,accept(request,'0'.repeat(64)))).rejects.toThrow(/reused/);
+  await expect(asUser(founder,accept())).rejects.toThrow(/Program changed/);
+  const saved=(await asUser<{sessions:typeof program.sessions}>(founder,'select sessions from public.performance_programs')).rows[0]!.sessions;
+  expect(saved[0]!.plan.exercises[0]!.reps).toBe(9);
+  expect(saved[1]).toEqual(program.sessions[1]);
+  expect((await review())[0]!.reason).toContain('Targets changed');
+  expect((await asUser(founder,'select * from public.performance_progression_decisions')).rows).toHaveLength(1);
+  expect((await asUser(founder,"select id from public.personal_events where kind='performance.progression.approved'")).rows).toHaveLength(1);
+  expect((await asUser(member,'select * from public.performance_progression_decisions')).rows).toHaveLength(0);
  });
 });

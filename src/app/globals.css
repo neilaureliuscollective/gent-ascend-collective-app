@@ -3470,6 +3470,107 @@ html[data-motion='ambient']:not([data-quiet='true'])
 @media(max-width:1100px){.aethelios-page{height:var(--conversation-height,100dvh);top:var(--conversation-top,0px);bottom:auto}.aethelios-page .conversation-scroll{padding-inline:3px}.aethelios-page .aurelius-notice{margin:4px 0 0;font-size:.62rem}.aethelios-page .aurelius-notice:empty{margin:0}.aethelios-page .aurelius-layout{grid-template-rows:auto minmax(0,1fr)}.aethelios-page .aurelius-message{line-height:1.75}.aethelios-page .aurelius-composer textarea{font-size:16px}.aethelios-page .aurelius-workspace{overflow:hidden}}
 @media(max-width:600px){.ascend-path,.world-gateway-grid{grid-template-columns:1fr}.shell-ascend-link{padding:6px}.install-instructions details{padding:14px}.install-instructions ol{padding-left:20px}.install-guide{padding:22px 18px}.aethelios-page .aurelius-toolbar{min-height:40px}.aethelios-page .composer-privacy{display:none}.aethelios-page .aethelios-link-panel summary{padding:8px 12px;font-size:.65rem}}
 
+/* Phase one: a dedicated conversation room, shared with the public living orb. */
+.aethelios-page {
+  position: fixed;
+  z-index: 30;
+  left: 218px;
+  right: 0;
+  top: var(--conversation-top, 0px);
+  height: var(--conversation-height, 100dvh);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 18px clamp(16px, 2vw, 32px) 20px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 52% 27%, #1253424a, transparent 56%),
+    radial-gradient(ellipse at 94% 90%, #c4912f12, transparent 46%), #050b09;
+}
+.aethelios-page::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: .23;
+  background: linear-gradient(90deg, transparent 49.9%, #9ec8b212 50%, transparent 50.1%),
+    repeating-radial-gradient(ellipse at 50% 43%, transparent 0 104px, #aacbb010 105px 106px, transparent 107px 180px);
+}
+.aethelios-page > * { position: relative; }
+.aethelios-room-heading {
+  flex: none;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid #c4912f30;
+  margin-bottom: 10px;
+}
+.aethelios-room-heading > a { color: #e8c57e; font-size: 1.4rem; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.aethelios-room-heading > div { display: flex; flex-direction: column; line-height: 1.2; }
+.aethelios-room-heading .eyebrow { font-size: .56rem; letter-spacing: .2em; color: #a8c8bd; }
+.aethelios-room-heading h1 { font-family: var(--font-editorial); font-weight: 500; font-size: 1.5rem; color: #f5eee0; margin: 0; }
+.aethelios-room-heading nav { display: flex; gap: 8px; margin-left: auto; }
+.aethelios-room-heading nav a { display: grid; place-items: center; min-height: 44px; padding: 0 14px; color: #ead3a5; font-size: .78rem; border: 1px solid #c4912f32; border-radius: 10px; }
+.aethelios-room-heading a:focus-visible { outline: 2px solid #e8c57e; outline-offset: 2px; }
+.aethelios-page > .aethelios-link-panel { flex: none; margin-bottom: 8px; background: #0a211bbd; border-color: #c4912f32; }
+.aethelios-page > .aurelius-surface { flex: 1; min-height: 0; height: auto; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.aethelios-page .aurelius-layout { min-height: 0; }
+.aethelios-page .conversation-library { background: #07191396; border: 1px solid #c4912f21; border-radius: 14px 0 0 14px; }
+.aethelios-page .aurelius-workspace { padding: 12px clamp(14px, 2vw, 32px) 0; }
+.aethelios-page .aurelius-toolbar { border-bottom-color: #c4912f24; }
+.aethelios-page .conversation-scroll { padding-top: 16px; scrollbar-gutter: auto; }
+.aethelios-page .aurelius-welcome { max-width: 740px; }
+.aethelios-page .welcome-heading h2 { margin-top: 0; }
+.aethelios-page .aurelius-composer { width: min(100%, 840px); align-self: center; padding: 12px 18px; border-radius: 18px; background: linear-gradient(140deg, #12372c, #0b211a 80%); }
+.aethelios-page .aurelius-composer textarea { width: 100%; min-height: 52px; max-height: 30dvh; font-size: 1rem; line-height: 1.5; }
+.aethelios-page .aurelius-composer.is-expanded textarea { max-height: 48dvh; min-height: min(190px, 25dvh); }
+.composer-expand { color: #e7c98d; background: none; border: 0; font-size: .7rem; min-height: 40px; padding: 0 6px; }
+.composer-expand:focus-visible { outline: 2px solid #e8c57e; }
+.aethelios-page .composer-controls { flex-wrap: wrap; gap: 4px 12px; }
+.aethelios-page .context-toggle { margin-right: auto; }
+.aethelios-page .aurelius-notice { width: min(100%, 840px); align-self: center; }
+.account-intelligence-orb { position: relative; width: 210px; height: 210px; }
+.account-intelligence-orb .intelligence-orb { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 0 28px #3ca47866); }
+.account-intelligence-orb .intelligence-orb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.account-intelligence-orb .intelligence-orb-static { position: absolute; width: 79%; aspect-ratio: 1; top: 50%; left: 50%; border-radius: 50%; transform: translate(-50%, -50%); overflow: hidden; border: 1px solid #72bd966c; background: radial-gradient(circle at 34% 28%, #2b8b68, #0c4936 37%, #06241d 72%, #030e0c); box-shadow: inset -18px -25px 34px #03120f, 0 0 42px #2b8b674b; }
+.account-intelligence-orb .intelligence-orb[data-rendered='true'] .intelligence-orb-static { opacity: 0; }
+.account-intelligence-orb .intelligence-orb-contours { position: absolute; inset: 0; opacity: .65; background: repeating-radial-gradient(ellipse at 35% 85%, transparent 0 8px, #9be0b52e 9px 10px, transparent 11px 18px); transform: rotate(-25deg) scale(1.4); }
+.account-intelligence-orb .intelligence-orb-light { position: absolute; inset: 0; background: radial-gradient(circle at 32% 32%, #a2dbb283, transparent 27%), radial-gradient(circle at center, transparent 55%, #7dca9a44 77%, transparent 83%); }
+.account-intelligence-orb[data-state='working'] { filter: drop-shadow(0 0 18px #c4912f55); }
+.account-intelligence-orb[data-state='preview-listening'] { filter: drop-shadow(0 0 20px #74c8aa88); }
+.account-intelligence-orb[data-state='preview-speaking'], .account-intelligence-orb[data-state='preview-insight'] { filter: drop-shadow(0 0 20px #d9af6288); }
+.account-intelligence-orb .account-orb-fallback { display: none; }
+.account-toolbar-orb { display: block; width: 36px; height: 36px; flex: none; }
+.account-toolbar-orb .intelligence-orb { position: relative; width: 100%; height: 100%; }
+.account-toolbar-orb .intelligence-orb canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.account-toolbar-orb .intelligence-orb-static { position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #69b793, #0b3b32 55%, #03120f); box-shadow: 0 0 12px #4db68175; }
+.account-toolbar-orb .intelligence-orb[data-rendered='true'] .intelligence-orb-static { opacity: 0; }
+.account-toolbar-orb .intelligence-orb-contours, .account-toolbar-orb .intelligence-orb-light { display: none; }
+.welcome-heading .orb-presentation .account-intelligence-orb { width: clamp(150px, 20vw, 230px); height: clamp(150px, 20vw, 230px); }
+@media (forced-colors: active) { .account-intelligence-orb .intelligence-orb { display: none; } .account-intelligence-orb .account-orb-fallback { display: block; width: 100%; height: 100%; } }
+@media (prefers-reduced-motion: reduce) { .account-intelligence-orb .intelligence-orb-static { animation: none; } }
+@media (max-width: 1100px) {
+  .aethelios-page { left: 0; padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px, env(safe-area-inset-left)); }
+  .aethelios-page .aurelius-layout { grid-template-rows: auto minmax(0, 1fr); }
+  .aethelios-page .conversation-library { border-radius: 10px; }
+  .aethelios-page .aurelius-workspace { padding: 8px 4px 0; }
+}
+@media (max-width: 600px) {
+  .aethelios-room-heading { min-height: 52px; gap: 7px; margin-bottom: 5px; }
+  .aethelios-room-heading h1 { font-size: 1.18rem; }
+  .aethelios-room-heading nav { gap: 2px; }
+  .aethelios-room-heading nav a { padding: 0 7px; font-size: .68rem; border: 0; }
+  .aethelios-page .aurelius-composer { padding: 10px 12px; }
+  .aethelios-page .aurelius-toolbar > .quiet-label { display: flex; font-size: 0; }
+  .aethelios-page .account-toolbar-orb { width: 30px; height: 30px; }
+  .aethelios-page .aurelius-composer textarea { min-height: 72px; max-height: 30dvh; font-size: 16px; }
+  .aethelios-page .composer-controls .button { min-height: 40px; padding-inline: 12px; }
+  .aethelios-page .context-toggle { font-size: .64rem; }
+  .aethelios-page .welcome-heading .account-intelligence-orb { width: min(42vw, 170px); height: min(42vw, 170px); }
+  .aethelios-page .aurelius-welcome > p { margin: 8px 0; }
+  .aethelios-page .conversation-starters { margin-top: 10px; }
+}
+
 /* September 26 founder crest: keep the circular artwork intact at every placement. */
 .identity-crest, .account-brand img { border-radius:50%; object-fit:contain; }
 .brand-seal { filter:drop-shadow(0 2px 6px #c4912f22); }
@@ -3485,3 +3586,15 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .older-messages{display:block;margin:0 auto 14px}
 .library-more{width:100%;border-top:1px solid #c4912f35}
 .message-tools{display:flex;flex-wrap:wrap;gap:12px;margin-top:9px}.message-tools button,.revision-notice button{border:0;background:transparent;color:#d9bd82;cursor:pointer;font-size:.7rem;min-height:32px}.message-version{border-left:1px solid #c4912f70;margin:12px 0;padding:8px 12px;color:#bfcac2}.message-version summary{cursor:pointer;color:#dfc58c;font-size:.7rem}.revision-notice{display:flex;align-items:center;justify-content:space-between;color:#e5cd98;font-size:.7rem;padding:3px 8px}
+
+/* Keep the room's real controls reachable; decorative graphics never own input. */
+.workspace:has(.aethelios-page) > .topbar { visibility: hidden; }
+.aethelios-room-heading { flex-wrap: wrap; }
+.aethelios-room-heading > .appearance-controls { flex-direction: row; margin-left: auto; }
+.aethelios-room-heading .appearance-controls button { min-width: 44px; }
+.account-intelligence-orb { pointer-events: none; }
+@media (min-width: 601px) {
+ .welcome-heading .orb-presentation.is-previewing .account-intelligence-orb {
+  width: 140px; height: 140px; grid-column: 1; grid-row: 1;
+ }
+}
