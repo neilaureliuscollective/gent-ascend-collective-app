@@ -1,5 +1,6 @@
 'use server';
 import { readPilot } from '@/domains/pilot/service';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { serverClient } from '@/platform/supabase/server';
@@ -40,6 +41,11 @@ export async function signIn(form: FormData) {
   redirect(pilot?.person.priority && (pilot.beta || pilot.founder) ? '/app' : '/app/welcome');
 }
 export async function signOut() {
+  (await cookies()).set('performance-reset', '1', {
+    path: '/',
+    sameSite: 'strict',
+    httpOnly: false,
+  });
   const client = await serverClient();
   await client?.auth.signOut();
   redirect('/');

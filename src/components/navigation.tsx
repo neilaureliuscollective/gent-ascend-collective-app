@@ -16,7 +16,14 @@ export function Navigation() {
       {destinations.map(([href, label, icon], i) => (
         <Fragment key={href}>
           {i === 2 && <span className="navigation-presence-gap" aria-hidden="true" />}
-          <Link href={href} aria-current={path === href ? 'page' : undefined}>
+          <Link
+            href={href}
+            aria-current={
+              path === href || (href === '/app/world' && path.startsWith('/app/performance'))
+                ? 'page'
+                : undefined
+            }
+          >
             <Icon name={icon} />
             <span>{label}</span>
           </Link>

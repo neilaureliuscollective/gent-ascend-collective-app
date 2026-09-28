@@ -184,3 +184,8 @@ Founder requested research and execution of the next phase after Chat Foundation
 ## Aethelios Chat + Studio release hardening — 2026-09-27
 
 A read-only hosted audit revealed 16 applied Gent Ascend/Reserve migrations in one Supabase project, whereas this repository owns eleven of them. A broad CLI migration push is unsafe until the shared ledger is reconciled. Release only the two reviewed, ordered Aethelios migrations through a controlled migration step, after staging/ownership testing. Replace the 10 MB upload-through-Function with direct private Storage upload and server-validated finalization; Vercel's 4.5 MB Function body limit makes the original route fail on common phone photos. See [AETHELIOS_RELEASE_READINESS.md](AETHELIOS_RELEASE_READINESS.md) for exact gates and primary references.
+
+
+## 2026-09-28 — Ascend Performance Phase 1 (founder approved)
+
+Add a Performance domain and member world inside the canonical application. Typed longitudinal facts and versioned plans remain distinct from Aethelios memory and future clinical Health Intelligence. Start with a complete strength practice/review loop and an explicitly consented device draft. The narrow progression rule produces a reviewable proposal; optional model interpretation cannot execute plan writes. Direct Health Connect/HealthKit access requires a future native component. Source evidence and remaining gates: [ASCEND_PERFORMANCE_PHASE_1.md](ASCEND_PERFORMANCE_PHASE_1.md).

@@ -1,3 +1,6 @@
+import { PerformanceWorkspace } from '@/components/performance/workspace';
+import { performanceFixture } from './performance';
+import '@/app/(workspace)/app/performance/performance.css';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
 import { sampleData } from '@/domains/daily/model';
 import { createRoot } from 'react-dom/client';
@@ -59,7 +62,9 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'daily' ? (
+  mode === 'performance' ? (
+    <PerformanceWorkspace initial={performanceFixture} />
+  ) : mode === 'daily' ? (
     <DailyDashboard
       initial={{ ...sampleData('2026-09-21'), mode: 'personal', name: 'Synthetic tester' }}
     />

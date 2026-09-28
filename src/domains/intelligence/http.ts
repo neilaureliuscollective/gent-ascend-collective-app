@@ -13,7 +13,7 @@ export function apiError(error: unknown) {
     error instanceof IntelligenceError ? error.status : 503,
   );
 }
-export async function mutationBody(request: Request): Promise<unknown> {
+export async function mutationBody(request: Request, maxBytes = 32768): Promise<unknown> {
   verifyOrigin(request);
   if (!request.headers.get('content-type')?.includes('application/json'))
     throw new IntelligenceError('JSON required.', 415);
@@ -26,7 +26,7 @@ export async function mutationBody(request: Request): Promise<unknown> {
     const { value, done } = await reader.read();
     if (done) break;
     size += value.length;
-    if (size > 32768) {
+    if (size > maxBytes) {
       await reader.cancel();
       throw new IntelligenceError('Request is too large.', 413);
     }

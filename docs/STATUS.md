@@ -1,3 +1,11 @@
+# Ascend Performance Phase 1 — September 28, 2026 UTC
+
+Implemented on an isolated review branch: personal direction, editable strength plan, device-persisted workout sets with idempotent sync, self-reported recovery/body/nutrition check-ins, weekly review, explicit progression approval, and opt-in Aethelios interpretation. Access through My world → Ascend Performance. See [scope, architecture and release gates](ASCEND_PERFORMANCE_PHASE_1.md).
+
+Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. Browser execution is blocked by the unavailable Chromium binary; real Auth/PostgREST, live OpenAI, and physical-device verification are pending. No hosted migration or production deployment.
+
+---
+
 # Threshold and LifeOS visual correction — 2026-09-27
 
 The founder's Fold screenshots prompted a focused correction of only the Threshold and LifeOS scenes. The opening now has a material chamber, camera move and crest-to-passage transition. LifeOS has a spatial physical instrument and reserved mobile copy/CTA/rail positions. Four optimized concept environment plates were added; the approved Man sequence and other chapters remain in place. See [visual correction](ASCEND_JOURNEY_THRESHOLD_LIFEOS.md). Hardware acceptance and production promotion remain pending.

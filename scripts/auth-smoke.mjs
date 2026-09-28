@@ -326,3 +326,16 @@ assert.ok(anonymousDayWrite);
 console.log(
   'PASS: daily save, embedded action read, optimistic conflict, anonymous/direct-write denial and two-user isolation',
 );
+
+// Performance slice: use real Auth/PostgREST and the caller's JWT, never service credentials.
+const performanceProfile = { goal:'strength',experience:'returning',daysPerWeek:3,minutes:40,equipment:'gym',limitations:'',unit:'lb' };
+const performanceRequest = crypto.randomUUID();
+const performanceArgs = {p_kind:'profile',p_request:performanceRequest,p_expected:0,p_payload:performanceProfile};
+const perfSaved = await founder.rpc('performance_save',performanceArgs);
+assert.equal(perfSaved.error,null);assert.equal(perfSaved.data,1);
+const perfReplay=await founder.rpc('performance_save',performanceArgs);
+assert.equal(perfReplay.error,null);assert.equal(perfReplay.data,1);
+const perfOwn=await founder.from('performance_profiles').select('*');assert.equal(perfOwn.error,null);assert.equal(perfOwn.data.length,1);
+const perfOther=await member.from('performance_profiles').select('*');assert.equal(perfOther.error,null);assert.equal(perfOther.data.length,0);
+const perfAnonymous=await anon.rpc('performance_save',performanceArgs);assert.ok(perfAnonymous.error);
+console.log('PASS: Performance real Auth/RPC profile save, receipt replay, and two-user isolation');

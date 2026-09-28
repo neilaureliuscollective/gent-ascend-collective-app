@@ -673,3 +673,57 @@ describe('Aethelios chat foundation',()=>{
     await asUser(founder,`select public.ai_finish_turn('${second}','Use a small amount after washing.','complete')`);
   });
 });
+
+describe('Performance transactions and isolation',()=>{
+ const request=(n:number)=>`b0000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+ const profile={goal:'strength',experience:'returning',daysPerWeek:3,minutes:40,equipment:'gym',limitations:'',unit:'lb'};
+ const plan={title:'Strength',unit:'lb',exercises:[{id:request(50),name:'Row',sets:2,reps:8,load:40,restSeconds:90}]};
+ const start=new Date(Date.now()-3600000).toISOString();
+ const session={id:request(60),title:'Strength',planVersion:1,startedAt:start,endedAt:null,status:'active',unit:'lb',pain:false,note:'',sets:[{id:request(61),exerciseId:request(50),exercise:'Row',targetReps:8,targetLoad:40,reps:8,load:40,effort:7,done:true}]};
+ const sql=(kind:string,n:number,version:number,payload:unknown)=>`select public.performance_save('${kind}','${request(n)}',${version},'${JSON.stringify(payload).replaceAll("'","''")}'::jsonb) as version`;
+ it('saves typed profiles and refuses direct writes or stale replacements',async()=>{
+  expect((await asUser(founder,sql('profile',1,0,profile))).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,sql('profile',1,0,profile))).rows).toEqual([{version:1}]);
+  await expect(asUser(founder,sql('profile',1,0,{...profile,minutes:60}))).rejects.toThrow();
+  await expect(asUser(founder,sql('profile',2,0,profile))).rejects.toThrow();
+  await expect(asUser(founder,"update public.performance_profiles set minutes=120")).rejects.toThrow();
+  expect((await asUser(member,'select * from public.performance_profiles')).rows).toHaveLength(0);
+ });
+ it('keeps plan revisions and rolls back malformed or foreign source changes',async()=>{
+  await asUser(founder,sql('plan',3,0,plan));
+  await expect(asUser(founder,sql('plan',4,1,{...plan,exercises:[{...plan.exercises[0],reps:0}]}))).rejects.toThrow();
+  await expect(asUser(founder,sql('plan',5,1,{...plan,sourceSessionIds:[request(95),request(96)]}))).rejects.toThrow();
+  expect((await asUser(founder,'select version from public.performance_plans')).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,'select version from public.performance_plan_revisions')).rows).toEqual([{version:1}]);
+  expect((await asUser(member,'select * from public.performance_plan_revisions')).rows).toHaveLength(0);
+ });
+ it('replays a session save safely after a lost acknowledgement',async()=>{
+  expect((await asUser(founder,sql('session',6,0,session))).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,sql('session',6,0,session))).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,'select id from public.performance_sets')).rows).toHaveLength(1);
+  await expect(asUser(member,sql('session',7,0,session))).rejects.toThrow();
+  expect((await asUser(member,'select * from public.performance_sessions')).rows).toHaveLength(0);
+  expect((await asUser(member,'select * from public.performance_sets')).rows).toHaveLength(0);
+ });
+ it('rejects invalid sets atomically and preserves the previous record',async()=>{
+  await expect(asUser(founder,sql('session',8,1,{...session,sets:[{...session.sets[0],reps:null}]}))).rejects.toThrow();
+  await expect(asUser(founder,sql('session',9,1,{...session,unit:'kg'}))).rejects.toThrow();
+  expect((await asUser(founder,'select version from public.performance_sessions')).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,'select reps from public.performance_sets')).rows).toEqual([{reps:8}]);
+ });
+ it('finishes once, emits one event, and prevents a stale tab from reopening it',async()=>{
+  const finished={...session,status:'complete',endedAt:new Date().toISOString()};
+  expect((await asUser(founder,sql('session',10,1,finished))).rows).toEqual([{version:2}]);
+  expect((await asUser(founder,sql('session',10,1,finished))).rows).toEqual([{version:2}]);
+  await expect(asUser(founder,sql('session',11,2,session))).rejects.toThrow();
+  expect((await asUser(founder,"select id from public.personal_events where kind='performance.session.completed'")).rows).toHaveLength(1);
+ });
+ it('keeps partial intake distinct from missing data and denies anonymous access',async()=>{
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const check={day:today,sleepMinutes:null,energy:3,soreness:'mild',weight:null,unit:'lb',calories:600,protein:30,waterMl:null,nutritionComplete:false};
+  await asUser(founder,sql('checkin',12,0,check));
+  expect((await asUser(founder,'select sleep_minutes,nutrition_complete from public.performance_checkins')).rows).toEqual([{sleep_minutes:null,nutrition_complete:false}]);
+  expect((await asUser(member,'select * from public.performance_checkins')).rows).toHaveLength(0);
+  await db.exec('set role anon');try{await expect(db.query(sql('profile',13,0,profile))).rejects.toThrow();await expect(db.query('select * from public.performance_sessions')).rejects.toThrow();}finally{await db.exec('reset role');}
+ });
+});
