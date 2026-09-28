@@ -58,6 +58,11 @@ describe('migration, seeds and owner security', () => {
     await expect(asUser(founder,`delete from public.ai_studio_projects where id='${project}'`)).rejects.toThrow();
   });
   it('keeps storyboard scenes owner-bound, project-bound and within eight slots',async()=>{
+    const grants=await db.query<{anon_insert:boolean;member_insert:boolean;member_rpc:boolean}>(`select
+      has_table_privilege('anon','public.ai_studio_scenes','INSERT') as anon_insert,
+      has_table_privilege('authenticated','public.ai_studio_scenes','INSERT') as member_insert,
+      has_function_privilege('authenticated','public.ai_studio_scene_create(uuid,text,text,text,text,text)','EXECUTE') as member_rpc`);
+    expect(grants.rows[0]).toEqual({anon_insert:false,member_insert:false,member_rpc:true});
     const project='92000000-0000-4000-8000-000000000001';
     const other='92000000-0000-4000-8000-000000000002';
     const own=`(select id from public.persons where auth_user_id='${founder}')`;
