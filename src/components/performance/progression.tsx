@@ -1,4 +1,5 @@
 'use client';
+import { OutcomeCard } from './outcome';
 import type { Mutation, PerformanceData } from '@/domains/performance/schema';
 export function ProgressionReview({
   data,
@@ -93,9 +94,18 @@ export function ProgressionReview({
           </article>
         );
       })}
+      {data.outcomes?.[0] && data.progressionDecisions?.[0] && (
+        <section className="perf-follow-through" aria-label="Latest change outcome">
+          <h3>Did the change hold?</h3>
+          <OutcomeCard outcome={data.outcomes[0]} decision={data.progressionDecisions[0]} />
+        </section>
+      )}
       {!!data.progressionDecisions?.length && (
         <details className="perf-history">
           <summary>Approved changes ({data.progressionDecisions.length})</summary>
+          <p className="perf-caption">
+            Your latest 20 approved changes. Outcomes describe each change’s first two attempts.
+          </p>
           <ol>
             {data.progressionDecisions.map((d) => (
               <li key={d.toVersion}>
@@ -108,6 +118,12 @@ export function ProgressionReview({
                   Program v{d.fromVersion} → v{d.toVersion} · Rule v1
                 </p>
                 <p>{d.review.reason}</p>
+                {data.outcomes?.find((o) => o.toVersion === d.toVersion) && (
+                  <OutcomeCard
+                    outcome={data.outcomes.find((o) => o.toVersion === d.toVersion)!}
+                    decision={d}
+                  />
+                )}
                 <p className="perf-caption">
                   Source workouts: {d.review.evidence.map((e) => e.day).join(' & ')}. This is a
                   saved decision, not a current recommendation.

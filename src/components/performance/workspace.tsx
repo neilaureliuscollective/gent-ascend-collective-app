@@ -690,7 +690,8 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 <p className="perf-caption">
                   Share your Performance goal, limitations, seven recent check-ins, three recent
                   sessions, their accepted adjustments, program title, session progression evidence
-                  and this review with Aethelios for this request. This does not add them to memory.
+                  and recorded outcomes after approved changes and this review with Aethelios for
+                  this request. This does not add them to memory.
                 </p>
                 <button
                   disabled={busy || !data.profile}

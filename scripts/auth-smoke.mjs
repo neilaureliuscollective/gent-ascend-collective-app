@@ -376,3 +376,13 @@ const hiddenAudit=await member.from('performance_progression_decisions').select(
 assert.ok((await anon.rpc('performance_progression',{})).error);
 assert.ok((await founder.rpc('performance_progression_accept',{...progressArgs,p_request:crypto.randomUUID()})).error);
 console.log('PASS: Performance progression evidence, atomic approval, replay and owner isolation through real Auth/PostgREST');
+
+// Phase 4 reads source records through the session-bound, RLS invoker RPC.
+const outcomeEmpty=await founder.rpc('performance_outcomes',{});assert.equal(outcomeEmpty.error,null);assert.equal(outcomeEmpty.data.length,1);assert.deepEqual(outcomeEmpty.data[0].sessions,[]);
+const postPlan=structuredClone(cycle.sessions[1].plan);postPlan.exercises[0].reps=9;
+const postSession={...cycleSession,id:crypto.randomUUID(),title:postPlan.title,planVersion:2,startedAt:new Date().toISOString(),endedAt:new Date().toISOString(),prescription:{ruleVersion:1,programVersion:2,slotId:cycleSlotB,mode:'planned',timeBudget:40,originalPlan:postPlan,plan:postPlan},sets:Array.from({length:3},()=>({...cycleSession.sets[0],id:crypto.randomUUID(),targetReps:9,reps:9,effort:null}))};
+const outcomeSaved=await founder.rpc('performance_save',{p_kind:'session',p_request:crypto.randomUUID(),p_expected:0,p_payload:postSession});assert.equal(outcomeSaved.error,null);
+const outcomeRead=await founder.rpc('performance_outcomes',{});assert.equal(outcomeRead.error,null);assert.equal(outcomeRead.data[0].sessions[0].id,postSession.id);assert.equal(outcomeRead.data[0].sessions[0].sets[0].effort,null);assert.equal(outcomeRead.data[0].approvedPlan.exercises[0].reps,9);
+const hiddenOutcomes=await member.rpc('performance_outcomes',{});assert.equal(hiddenOutcomes.error,null);assert.deepEqual(hiddenOutcomes.data,[]);
+assert.ok((await anon.rpc('performance_outcomes',{})).error);
+console.log('PASS: Performance outcome lineage, recorded sets and owner isolation through real Auth/PostgREST');

@@ -1,3 +1,4 @@
+import type { DecisionOutcome } from './outcomes';
 import type { ProgressionReview, ProgressionDecision } from './progression';
 import { z } from 'zod';
 export const exerciseSchema = z
@@ -153,6 +154,7 @@ export type PerformanceData = {
   program?: (Stored<Program> & { nextSlotId: string }) | null;
   progression?: ProgressionReview[];
   progressionDecisions?: ProgressionDecision[];
+  outcomes?: DecisionOutcome[];
   checkins: Stored<Checkin>[];
   sessions: Stored<Session>[];
 };

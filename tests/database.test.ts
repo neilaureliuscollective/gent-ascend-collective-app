@@ -916,4 +916,41 @@ describe('Performance progression evidence and approval', () => {
   expect((await asUser(founder,"select id from public.personal_events where kind='performance.progression.approved'")).rows).toHaveLength(1);
   expect((await asUser(member,'select * from public.performance_progression_decisions')).rows).toHaveLength(0);
  });
+ it('reads exact first attempts beyond history caps, stops at changed plans and isolates owners',async()=>{
+  const { outcomeEvidenceSchema, decisionOutcome }=await import('../src/domains/performance/outcomes');
+  const { startProgramSession }=await import('../src/domains/performance/program');
+  const own=`(select id from public.persons where auth_user_id='${founder}')`;
+  const get=async()=>outcomeEvidenceSchema.array().parse((await asUser<{value:unknown}>(founder,'select public.performance_outcomes() as value')).rows[0]!.value);
+  expect((await get())[0]!.sessions).toHaveLength(0);
+  expect((await asUser(member,'select public.performance_outcomes() as value')).rows).toEqual([{value:[]}]);
+  await db.exec('set role anon');try {await expect(db.query('select public.performance_outcomes()')).rejects.toThrow();}finally {await db.exec('reset role');}
+  expect((await db.query<{prosecdef:boolean}>("select prosecdef from pg_proc where oid='public.performance_outcomes()'::regprocedure")).rows[0]!.prosecdef).toBe(false);
+  // Synthetic timeline: approval six days ago; avoid relying on wall-clock sleeps.
+  await db.exec(`update public.performance_progression_decisions set created_at=now()-interval '6 days' where person_id=${own};
+   update public.performance_program_revisions set recorded_at=now()-interval '6 days' where person_id=${own} and version=2`);
+  const approvedPlan={...plan,exercises:plan.exercises.map(x=>({...x,reps:9}))};
+  async function attempt(daysAgo:number,version=2,status:'complete'|'abandoned'='complete') {
+   const session=startProgramSession({ruleVersion:1,programVersion:version,slotId:slot,mode:'planned',timeBudget:40,originalPlan:approvedPlan,plan:approvedPlan});
+   session.startedAt=new Date(Date.now()-daysAgo*86400000-3600000).toISOString();
+   session.endedAt=new Date(Date.now()-daysAgo*86400000).toISOString();session.status=status;
+   session.sets=session.sets.map(x=>({...x,done:status==='complete',effort:8}));
+   await asUser(founder,call('session',0,session));return session.id;
+  }
+  const first=await attempt(5,2,'abandoned');const second=await attempt(3);
+  await attempt(1); // A third successful workout must not replace the abandoned first attempt.
+  let evidence=(await get())[0]!;
+  expect(evidence.sessions.map(s=>s.id)).toEqual([first,second]);
+  expect(decisionOutcome(evidence,'UTC').attempts.map(a=>a.status)).toEqual(['abandoned','met']);
+  // Changing another slot does not end this trial.
+  const next={...program,sessions:[{id:slot,plan:approvedPlan},{id:other,plan:{...program.sessions[1]!.plan,title:'Other revised'}}]};
+  await asUser(founder,call('program',2,next));
+  expect((await get())[0]!.revisedAt).toBeNull();
+  await asUser(founder,call('program',3,{...next,sessions:next.sessions.map(s=>s.id===slot?{...s,plan:{...s.plan,title:'Revised trial'}}:s)}));
+  // Move the synthetic revision boundary between the first and second attempts.
+  await db.exec(`update public.performance_program_revisions set recorded_at=now()-interval '4 days' where person_id=${own} and version=4`);
+  evidence=(await get())[0]!;
+  expect(evidence.revisedAt).not.toBeNull();expect(evidence.sessions.map(s=>s.id)).toEqual([first]);
+  expect((await asUser(founder,'select * from public.performance_progression_decisions')).rows).toHaveLength(1);
+ });
+
 });

@@ -204,3 +204,7 @@ Founder authorized research, planning and the next build. Add a repeating multi-
 ## 2026-09-28 — Ascend Performance Phase 3
 
 Use a single owner-bound database evaluator for per-session progression preview and atomic acceptance. Preserve conservative rule versions and exact evidence; show missing evidence explicitly. Two recent comparable sessions can support one user-approved rep increase, with no load or autonomous changes. Research, thresholds, limitations, source references and sequencing: [Phase 3](ASCEND_PERFORMANCE_PHASE_3.md). Integrate current main Aethelios/Studio work; retain the whole-man hierarchy.
+
+## 2026-09-28 — Performance Phase 4
+
+Founder approved the next research/plan/build phase. Close the approved-decision loop with first-attempt outcomes before broadening adaptive programming. Read-only owner-RLS projection, immutable plan lineage, no cherry-picking and no causal claims. Existing consent gates Aethelios access. See [Phase 4](ASCEND_PERFORMANCE_PHASE_4.md) for primary sources and precise rules.

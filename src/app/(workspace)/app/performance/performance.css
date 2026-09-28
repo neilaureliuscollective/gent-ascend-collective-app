@@ -944,3 +944,60 @@
   margin-top: 0.75rem;
   white-space: normal;
 }
+
+/* Follow-through stays a vertical reading sequence, including on cover screens. */
+.perf-follow-through {
+  margin-top: 2.5rem;
+}
+.perf-outcome {
+  margin-top: 1rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border-left: 2px solid var(--gold, #c4912f);
+  background: linear-gradient(125deg, rgba(11, 59, 50, 0.3), rgba(5, 7, 6, 0.35));
+  overflow-wrap: anywhere;
+}
+.perf-outcome h4 {
+  font-size: clamp(1.1rem, 4vw, 1.45rem);
+  line-height: 1.3;
+  margin: 0.6rem 0 1rem;
+}
+.perf-outcome-change {
+  line-height: 1.9;
+}
+.perf-outcome-change strong {
+  color: #e0bb6a;
+  font-size: 1.3em;
+}
+.perf-outcome-attempts {
+  list-style: none;
+  padding: 0;
+}
+.perf-outcome-attempts > li {
+  border-top: 1px solid rgba(196, 145, 47, 0.2);
+  padding: 1rem 0;
+}
+.perf-outcome dl {
+  display: grid;
+  gap: 0.75rem;
+}
+.perf-outcome dl > div {
+  display: grid;
+  gap: 0.2rem;
+}
+.perf-outcome dt {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+.perf-outcome dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.perf-outcome summary {
+  min-height: 44px;
+  padding: 0.8rem 0;
+}
+@media (min-width: 600px) {
+  .perf-outcome dl {
+    grid-template-columns: 1fr 1fr;
+  }
+}

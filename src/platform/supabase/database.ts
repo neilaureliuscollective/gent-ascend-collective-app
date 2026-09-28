@@ -400,6 +400,7 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      performance_outcomes: { Args: Record<string, never>; Returns: unknown };
       performance_progression: { Args: Record<string, never>; Returns: unknown };
       performance_progression_accept: {
         Args: { p_request: string; p_expected: number; p_slot: string; p_token: string };
