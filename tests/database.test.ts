@@ -954,3 +954,28 @@ describe('Performance progression evidence and approval', () => {
  });
 
 });
+
+describe('Phase 5 owner-bound fuel references',()=>{
+ const targets={calories:2400,protein:150,waterMl:2500,goalWeight:80,unit:'kg'};
+ const request=crypto.randomUUID();
+ const save=(expected=0,payload:object=targets,id=request)=>`select public.performance_save_fuel_targets('${id}',${expected},'${JSON.stringify(payload)}') as version`;
+ it('saves and replays once; denies anonymous, direct writes and cross-owner reads',async()=>{
+  expect((await asUser(founder,save())).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,save())).rows).toEqual([{version:1}]);
+  for(const table of ['performance_fuel_targets','performance_fuel_target_revisions']){
+   expect((await asUser(member,`select * from public.${table}`)).rows).toHaveLength(0);
+   expect((await asUser(founder,`select * from public.${table}`)).rows).toHaveLength(1);
+   await expect(asUser(founder,`delete from public.${table}`)).rejects.toThrow();
+  }
+  await db.exec('set role anon');try{await expect(db.query(save())).rejects.toThrow();}finally{await db.exec('reset role');}
+  await expect(asUser(founder,save(0,targets,crypto.randomUUID()))).rejects.toThrow(/changed/);
+  await expect(asUser(founder,save(0,{...targets,protein:160}))).rejects.toThrow(/reused/);
+ });
+ it('rejects malformed values atomically and retains prior revisions when cleared',async()=>{
+  for(const change of [{calories:0},{waterMl:1.5},{goalWeight:701},{protein:'150'},{unit:'stone'},{owner:member}])await expect(asUser(founder,save(1,{...targets,...change},crypto.randomUUID()))).rejects.toThrow();
+  expect((await asUser(founder,'select version from public.performance_fuel_targets')).rows).toEqual([{version:1}]);
+  expect((await asUser(founder,save(1,{calories:null,protein:null,waterMl:null,goalWeight:null,unit:'lb'},crypto.randomUUID()))).rows).toEqual([{version:2}]);
+  expect((await asUser(founder,'select targets from public.performance_fuel_target_revisions where version=1')).rows).toEqual([{targets}]);
+  expect((await asUser(founder,save())).rows).toEqual([{version:1}]);
+ });
+});

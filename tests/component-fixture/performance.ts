@@ -184,3 +184,32 @@ export const outcomesFixture: PerformanceData = (() => {
   ];
   return data;
 })();
+
+export const fuelFixture: PerformanceData = {
+  ...performanceFixture,
+  fuelTargets: {
+    version: 1,
+    updatedAt: '',
+    data: { calories: 2400, protein: 150, waterMl: 2500, goalWeight: 175, unit: 'lb' },
+  },
+  checkins: [0, 1, 2, 7, 8, 9, 20].map((ago) => {
+    const date = new Date(`${performanceFixture.today}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() - ago);
+    return {
+      version: 1,
+      updatedAt: '',
+      data: {
+        day: date.toISOString().slice(0, 10),
+        sleepMinutes: 450,
+        energy: 4,
+        soreness: 'none',
+        weight: ago < 7 ? 180 : 82,
+        unit: ago < 7 ? 'lb' : 'kg',
+        calories: 2300,
+        protein: 140,
+        waterMl: 2200,
+        nutritionComplete: ago !== 0,
+      },
+    };
+  }),
+};

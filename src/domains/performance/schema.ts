@@ -116,8 +116,19 @@ export const sessionSchema = z
     (s) => !s.endedAt || new Date(s.endedAt).getTime() >= new Date(s.startedAt).getTime(),
     'Finish time must follow start time.',
   );
+export const fuelTargetsSchema = z
+  .object({
+    calories: z.number().int().positive().max(15000).nullable(),
+    protein: z.number().positive().max(1000).nullable(),
+    waterMl: z.number().int().positive().max(15000).nullable(),
+    goalWeight: z.number().min(20).max(700).nullable(),
+    unit: z.enum(['kg', 'lb']),
+  })
+  .strict();
+export type FuelTargets = z.infer<typeof fuelTargetsSchema>;
 const base = { requestId: z.uuid(), expectedVersion: z.number().int().min(0) };
 export const mutationSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('fuel-targets'), ...base, payload: fuelTargetsSchema }).strict(),
   z.object({ kind: z.literal('profile'), ...base, payload: profileSchema }).strict(),
   z.object({ kind: z.literal('plan'), ...base, payload: planSchema }).strict(),
   z.object({ kind: z.literal('program'), ...base, payload: programSchema }).strict(),
@@ -152,6 +163,7 @@ export type PerformanceData = {
   profile: Stored<Profile> | null;
   plan: Stored<Plan> | null;
   program?: (Stored<Program> & { nextSlotId: string }) | null;
+  fuelTargets?: Stored<FuelTargets> | null;
   progression?: ProgressionReview[];
   progressionDecisions?: ProgressionDecision[];
   outcomes?: DecisionOutcome[];

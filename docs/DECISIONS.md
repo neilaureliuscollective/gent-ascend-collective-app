@@ -208,3 +208,7 @@ Use a single owner-bound database evaluator for per-session progression preview 
 ## 2026-09-28 — Performance Phase 4
 
 Founder approved the next research/plan/build phase. Close the approved-decision loop with first-attempt outcomes before broadening adaptive programming. Read-only owner-RLS projection, immutable plan lineage, no cherry-picking and no causal claims. Existing consent gates Aethelios access. See [Phase 4](ASCEND_PERFORMANCE_PHASE_4.md) for primary sources and precise rules.
+
+## 2026-09-28 — Performance Phase 5: Fuel & Body
+
+Expand beyond training with a focused daily-total workflow and optional user-defined references. Reuse versioned check-ins to preserve recovery fields, and give reference targets their own versioned history. Report per-metric complete-day denominators and normalize original weight units; never score historical adherence against a newly changed target. Three readings in each of two adjacent weeks is a display threshold, not validated physiological accuracy. NIDDK self-monitoring and dynamic-model research, Supabase function/RLS documentation and the installed Next.js guide informed the boundaries; see [Phase 5 research and plan](ASCEND_PERFORMANCE_PHASE_5.md). No new provider or automatically calculated intake recommendation. The [revised V1 sequence](ASCEND_PERFORMANCE_ROADMAP.md) identifies four remaining core phases after this build; the flagship expansion has separate feasibility gates.
