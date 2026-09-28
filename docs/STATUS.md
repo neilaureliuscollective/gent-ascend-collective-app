@@ -1,3 +1,19 @@
+# Aethelios Studio project workspace — 2026-09-28
+
+Studio now presents a dedicated creation room, project direction editor and project library at `/app/studio`. A project can save its purpose, audience, visual direction, palette and exclusions. These fields guide new image requests on the server. Projects retain private references and saved versions; a member can refine an image, retry a failed request, or use a reference. Five creation entries help shape a first request without changing provider models or silently generating media. Image generation remains one image per request with the existing quota and owner-bound storage.
+
+The additive `20260928015000_studio_project_briefs.sql` migration is pending in hosted Supabase. Apply it before preview or production promotion; otherwise the new project columns are unavailable. Lint, strict typecheck, 91 unit/SQL tests, migration ledger check and production build pass locally. Browser tests could not run because this environment could not download a valid Chromium archive. Physical Fold visual and keyboard acceptance, real hosted Auth and image generation remain open. No video, brand-logo fidelity guarantee or publishing flow is claimed.
+
+---
+
+# Aethelios conversation room phase one — 2026-09-28
+
+The account chat now occupies its own full-height room on phone, unfolded and desktop widths. It reuses the public living orb on the welcome and in the active-conversation toolbar, retains a static appearance for unsupported graphics or Still mode, and expands the writing area for longer prompts. The conversation controls and existing API, saved chats, memory, context, and founder link remain. Studio's larger project workspace is a separate phase.
+
+Lint, strict typecheck, 91 unit tests, migration ledger and production build pass. The focused browser tests were updated for the shared orb and larger composer, but were not executed: the Chromium download returned an invalid archive in this runner. A real signed-in phone/Fold keyboard, scroll, animation and WebGL review is still required before a production claim.
+
+---
+
 # Threshold and LifeOS visual correction — 2026-09-27
 
 The founder's Fold screenshots prompted a focused correction of only the Threshold and LifeOS scenes. The opening now has a material chamber, camera move and crest-to-passage transition. LifeOS has a spatial physical instrument and reserved mobile copy/CTA/rail positions. Four optimized concept environment plates were added; the approved Man sequence and other chapters remain in place. See [visual correction](ASCEND_JOURNEY_THRESHOLD_LIFEOS.md). Hardware acceptance and production promotion remain pending.
@@ -341,3 +357,10 @@ The Chat + Studio release pass is on `aethelios-release-readiness`. A read-only 
 The founder approved production release. Chat Foundation and Studio V1 were merged through PR #22; both additive migrations were applied to the shared Gent Ascend Supabase project in order. Seven new tables, seven owner policies, a private Studio bucket, and eight backfilled messages were verified. Vercel production build was ready. PR #23 then exposed the Studio link in the compact Aethelios header and reached production. The historical local-only notes above record their state before this release.
 
 The Studio placement refinement makes Chat and Studio sibling spaces within Aethelios: sidebar switch on desktop, contextual switch on phone/Fold, and an entry from Command. See [placement decision and sources](AETHELIOS_STUDIO_PLACEMENT.md). It changes navigation only. Real owner-account image generation, cross-device persistence, two-account isolation, and physical device layout still require founder testing; a ready build is not proof of those flows.
+# Aethelios Studio storyboard — 2026-09-28
+
+The next phase adds a private storyboard to each Studio project. Members can plan a campaign as up to eight scenes, attach completed images from that project or create a new frame from a scene, and print the board. Motion notes are editorial planning, with no video model or provider charge. The additive scene migration follows the project brief migration in PR #25; neither is applied to hosted Supabase yet. Local database owner isolation, project asset binding, scene quota and deletion were tested. Browser/device and live image generation remain release checks.
+# Aethelios Studio Finish room — 2026-09-28
+
+Studio now offers a Finish view for completed private images, directly from the Library or storyboard. Members can choose a square, portrait or landscape canvas, control the image focus, compose original brand copy in three treatments, save an editable private composition and export its current appearance as PNG. The source image is unchanged. No AI copy or video provider is connected. The new additive finishes migration follows the two unpromoted Studio migrations in PR #25. Local database owner and project isolation passed; phone/Fold browser rendering, hosted Auth/Storage and real export still require a device pass before release.
+The hosted-release privilege audit found broad Supabase default ACLs on the new Studio tables; a fourth migration revokes these and restores only the intended member privileges. Verify hosted ACLs after applying `20260928151124_studio_table_privileges.sql` before merging PR #25.

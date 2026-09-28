@@ -5,18 +5,19 @@ import { AetheliosSpaceNavigation } from '@/components/aurelius/space-navigation
 
 export const metadata: Metadata = {
   title: 'Aethelios Studio',
-  description: 'Create and refine images with Aethelios.',
+  description: 'Develop creative projects, references and images with Aethelios.',
 };
 
 export default function StudioPage() {
   return (
     <div className="studio-page">
-      <div className="page-heading compact-heading">
+      <div className="studio-world-heading">
         <div>
-          <p className="eyebrow">Aethelios / Studio</p>
-          <h1>Visual ideas, developed.</h1>
+          <p className="eyebrow">AETHELIOS / CREATIVE INTELLIGENCE</p>
+          <h1>Studio<span className="brand-star">✦</span></h1>
+          <p>From an idea to a world you can see.</p>
         </div>
-        <Link className="text-link" href="/app">Command ↗</Link>
+        <Link className="text-link" href="/app/aethelios">Aethelios Chat ↗</Link>
       </div>
       <AetheliosSpaceNavigation placement="studio" />
       <StudioWorkspace />

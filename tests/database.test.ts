@@ -40,7 +40,10 @@ describe('migration, seeds and owner security', () => {
     const version='91000000-0000-4000-8000-000000000002';
     const own=`(select id from public.persons where auth_user_id='${founder}')`;
     await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Portrait study')`);
+    await asUser(founder,`update public.ai_studio_projects set creative_type='brand',brief='{"purpose":"A founder campaign","palette":"emerald and gold"}'::jsonb where id='${project}'`);
+    expect((await asUser<{creative_type:string;brief:{purpose:string}}>(founder,`select creative_type,brief from public.ai_studio_projects where id='${project}'`)).rows[0]).toMatchObject({creative_type:'brand',brief:{purpose:'A founder campaign'}});
     expect((await asUser(member,'select * from public.ai_studio_projects')).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.ai_studio_projects set brief='{"purpose":"Intrusion"}'::jsonb where id='${project}' returning id`)).rows).toHaveLength(0);
     await expect(asUser(member,`insert into public.ai_studio_projects(id,person_id,title) values(gen_random_uuid(),${own},'Intrusion')`)).rejects.toThrow();
     const begin=`select public.ai_studio_begin('${version}','${project}',null,null,'A portrait in soft light','gpt-image-2.5-flare','1024x1024') as saved`;
     expect((await asUser(founder,begin)).rows[0]).toEqual({saved:true});
@@ -53,6 +56,49 @@ describe('migration, seeds and owner security', () => {
     expect((await asUser(member,'select * from public.ai_studio_usage')).rows).toHaveLength(0);
     await expect(asUser(founder,`update public.ai_studio_versions set status='complete' where id='${version}'`)).rejects.toThrow();
     await expect(asUser(founder,`delete from public.ai_studio_projects where id='${project}'`)).rejects.toThrow();
+  });
+  it('keeps storyboard scenes owner-bound, project-bound and within eight slots',async()=>{
+    const grants=await db.query<{anon_insert:boolean;member_insert:boolean;member_rpc:boolean}>(`select
+      has_table_privilege('anon','public.ai_studio_scenes','INSERT') as anon_insert,
+      has_table_privilege('authenticated','public.ai_studio_scenes','INSERT') as member_insert,
+      has_function_privilege('authenticated','public.ai_studio_scene_create(uuid,text,text,text,text,text)','EXECUTE') as member_rpc`);
+    expect(grants.rows[0]).toEqual({anon_insert:false,member_insert:false,member_rpc:true});
+    const project='92000000-0000-4000-8000-000000000001';
+    const other='92000000-0000-4000-8000-000000000002';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Campaign'),('${other}',${own},'Other')`);
+    const create=(id:string)=>`select public.ai_studio_scene_create('${id}','Opening','Lead with a feeling','Emerald light','','social') as id`;
+    const scene=(await asUser<{id:string}>(founder,create(project))).rows[0]?.id;
+    expect(scene).toBeDefined();
+    expect((await asUser(member,'select id from public.ai_studio_scenes')).rows).toHaveLength(0);
+    await expect(asUser(member,create(project))).rejects.toThrow();
+    await expect(asUser(founder,`insert into public.ai_studio_scenes(person_id,project_id,position,title) values(${own},'${project}',2,'Bypass')`)).rejects.toThrow();
+    expect((await asUser(member,`update public.ai_studio_scenes set title='Intrusion' where id='${scene}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_scenes set project_id='${other}' where id='${scene}'`)).rejects.toThrow();
+    const unrelated='92000000-0000-4000-8000-000000000003';
+    await asUser(founder,`select public.ai_studio_begin('${unrelated}','${other}',null,null,'Other frame','gpt-image-2.5-flare','1024x1024')`);
+    await expect(asUser(founder,`update public.ai_studio_scenes set asset_version_id='${unrelated}' where id='${scene}'`)).rejects.toThrow();
+    await asUser(founder,`select public.ai_studio_finish('${unrelated}','failed',null,'test')`);
+    for(let index=0;index<7;index++) await asUser(founder,create(project));
+    await expect(asUser(founder,create(project))).rejects.toThrow(/eight scenes/);
+    await asUser(founder,`delete from public.ai_studio_scenes where id='${scene}'`);
+    expect((await asUser<{id:string}>(founder,create(project))).rows).toHaveLength(1);
+  });
+  it('binds finishing compositions to one owner and one project image',async()=>{
+    const project='93000000-0000-4000-8000-000000000001';
+    const other='93000000-0000-4000-8000-000000000002';
+    const version='93000000-0000-4000-8000-000000000003';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Finish study'),('${other}',${own},'Other')`);
+    await asUser(founder,`select public.ai_studio_begin('${version}','${project}',null,null,'Gold light','gpt-image-2.5-flare','1024x1024')`);
+    const insert=(id:string)=>`insert into public.ai_studio_finishes(person_id,project_id,version_id,brand,headline) values(${own},'${id}','${version}','GENT ASCEND','A clearer way')`;
+    await expect(asUser(founder,insert(other))).rejects.toThrow();
+    await expect(asUser(member,insert(project))).rejects.toThrow();
+    await asUser(founder,insert(project));
+    expect((await asUser(member,'select id from public.ai_studio_finishes')).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.ai_studio_finishes set headline='Intrusion' where version_id='${version}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_finishes set project_id='${other}' where version_id='${version}'`)).rejects.toThrow();
+    await expect(asUser(founder,insert(project))).rejects.toThrow();
   });
   it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
     const first='84000000-0000-4000-8000-000000000001';

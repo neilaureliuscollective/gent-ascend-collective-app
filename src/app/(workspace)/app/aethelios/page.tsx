@@ -1,5 +1,4 @@
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
-import { AetheliosSpaceNavigation } from '@/components/aurelius/space-navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { aethelios } from '@/platform/intelligence-identity';
@@ -37,27 +36,17 @@ export default async function AetheliosPage({
       : null;
   return (
     <ConversationViewport>
-      <div className="aethelios-mobile-heading">
+      <header className="aethelios-room-heading">
         <Link href="/app" aria-label="Back to Command">←</Link>
-        <strong>Aethelios</strong>
-        <Link href="/app/aethelios/meet">Meet ↗</Link>
-      </div>
-      <AetheliosSpaceNavigation placement="chat" />
-      <div className="page-heading compact-heading aurelius-page-heading">
         <div>
-          <p className="eyebrow">Digital Co-Founder</p>
-          <h1>Aethelios.</h1>
+          <span className="eyebrow">THE INTELLIGENCE</span>
+          <strong>Aethelios</strong>
         </div>
-        <p className="muted">
-          A considered perspective. A deliberate next step.
-          <br />
-          <Link href="/app/aethelios/meet" className="text-link">
-            Meet Aethelios →
-          </Link>
-          <br />
-          <Link href="/app/studio" className="text-link">Create in Studio →</Link>
-        </p>
-      </div>
+        <nav aria-label="Aethelios destinations">
+          <Link href="/app/studio">Studio ↗</Link>
+          <Link href="/app/aethelios/meet">Meet ↗</Link>
+        </nav>
+      </header>
       {isFounder && (
         <details className="aethelios-link-panel">
           <summary>Founder continuity · {linked ? 'Connected' : 'Connect private workspace'}</summary>
