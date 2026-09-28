@@ -1,3 +1,4 @@
+import type { ProgressionReview, ProgressionDecision } from './progression';
 import { z } from 'zod';
 export const exerciseSchema = z
   .object({
@@ -124,6 +125,14 @@ export const mutationSchema = z.discriminatedUnion('kind', [
     .object({ kind: z.literal('session'), owner: z.uuid(), ...base, payload: sessionSchema })
     .strict(),
   z.object({ kind: z.literal('adapt'), ...base, sourceIds: z.array(z.uuid()).length(2) }).strict(),
+  z
+    .object({
+      kind: z.literal('progress'),
+      ...base,
+      slotId: z.uuid(),
+      token: z.string().regex(/^[a-f0-9]{64}$/),
+    })
+    .strict(),
   z.object({ kind: z.literal('review'), requestId: z.uuid() }).strict(),
 ]);
 export type Program = z.infer<typeof programSchema>;
@@ -142,6 +151,8 @@ export type PerformanceData = {
   profile: Stored<Profile> | null;
   plan: Stored<Plan> | null;
   program?: (Stored<Program> & { nextSlotId: string }) | null;
+  progression?: ProgressionReview[];
+  progressionDecisions?: ProgressionDecision[];
   checkins: Stored<Checkin>[];
   sessions: Stored<Session>[];
 };

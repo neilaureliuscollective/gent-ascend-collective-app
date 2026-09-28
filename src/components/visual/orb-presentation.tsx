@@ -1,6 +1,7 @@
 'use client';
 import { useId, useState } from 'react';
 import { AureliusPresence } from './aurelius-presence';
+import { IntelligenceOrb } from '../public/intelligence-orb';
 import { useAppearance } from './appearance';
 import type { OrbState, PresenceState } from '@/platform/visual/presence-state';
 const previews = [
@@ -21,7 +22,10 @@ export function OrbPresentation({ state }: { state: PresenceState }) {
   const previewing = open && (state === 'ready' || state === 'disconnected');
   return (
     <div className={`orb-presentation ${previewing ? 'is-previewing' : ''}`}>
-      <AureliusPresence enhanced state={previewing ? previewState : state} preview={previewing} />
+      <div className="account-intelligence-orb" data-state={previewing ? previewState : state}>
+        <IntelligenceOrb active={moving && (previewing ? previewState !== 'stopped' : state !== 'stopped')} engaged={state === 'working' || previewing} />
+        <AureliusPresence className="account-orb-fallback" state={previewing ? previewState : state} preview={previewing} />
+      </div>
       <button
         className="orb-preview-toggle"
         aria-expanded={previewing}

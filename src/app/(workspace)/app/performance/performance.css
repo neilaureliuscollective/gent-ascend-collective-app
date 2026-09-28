@@ -896,3 +896,51 @@
     padding: 16px;
   }
 }
+
+.perf-progression {
+  margin-block: 2rem;
+}
+.perf-progression > h3 {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 400;
+}
+.perf-progression-item {
+  padding: 1.5rem 0;
+  border-top: 1px solid #c4912f38;
+}
+.perf-progression-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.perf-progression-heading h4 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.perf-progression-target strong {
+  display: block;
+  color: #d5b16e;
+  font-size: 2rem;
+  font-weight: 400;
+}
+.perf-progression-target span {
+  display: block;
+  color: #c4c9c5;
+  font-size: 0.85rem;
+}
+.perf-progression details {
+  margin-block: 1rem;
+}
+.perf-progression summary {
+  cursor: pointer;
+  padding-block: 0.7rem;
+}
+.perf-progression li {
+  margin-block: 0.7rem;
+}
+.perf-progression .perf-primary {
+  margin-top: 0.75rem;
+  white-space: normal;
+}

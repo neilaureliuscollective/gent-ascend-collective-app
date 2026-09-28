@@ -59,7 +59,7 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
   return shader;
 }
 /** Public, presentation-only adaptation of the founder Aethelios living orb. */
-export function IntelligenceOrb({ active }: { active: boolean }) {
+export function IntelligenceOrb({ active, engaged = false }: { active: boolean; engaged?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const el = canvas.current;
@@ -118,7 +118,7 @@ export function IntelligenceOrb({ active }: { active: boolean }) {
         last = now;
         elapsed += delta * 0.001;
         const scroll = Number(chapter?.dataset.scrollProgress || 0);
-        energy += (0.14 + Math.max(0, Math.min(1, (scroll - 0.35) / 0.45)) * 0.22 - energy) * 0.08;
+        energy += (0.14 + (engaged ? 0.35 : 0) + Math.max(0, Math.min(1, (scroll - 0.35) / 0.45)) * 0.22 - energy) * 0.08;
         const size = Math.max(
           1,
           Math.min(500, Math.round(el.clientWidth * Math.min(devicePixelRatio || 1, 1.5))),
@@ -178,7 +178,7 @@ export function IntelligenceOrb({ active }: { active: boolean }) {
       gl.deleteShader(vs);
       gl.deleteShader(fs);
     };
-  }, [active]);
+  }, [active, engaged]);
   return (
     <div className="intelligence-orb" aria-hidden="true">
       <div className="intelligence-orb-static">
