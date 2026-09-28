@@ -1001,3 +1001,146 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Fuel & Body uses open reading rows and one focused editor at a time. */
+.perf-nav {
+  display: flex;
+  overflow-x: auto;
+}
+.perf-nav button {
+  flex: 1 0 auto;
+  white-space: nowrap;
+}
+.perf-fuel > h2,
+.perf-fuel-editor > h2 {
+  font-size: clamp(1.6rem, 5vw, 2.8rem);
+  line-height: 1.15;
+  max-width: 22ch;
+}
+.perf-fuel > section {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(196, 145, 47, 0.22);
+}
+.perf-fuel h3 {
+  font-size: clamp(1.15rem, 3vw, 1.6rem);
+}
+.perf-fuel-capture {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  margin: 1.75rem 0;
+}
+.perf-fuel-capture label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+.perf-fuel-capture input {
+  color-scheme: dark;
+  max-width: 100%;
+  border: 1px solid rgba(196, 145, 47, 0.35);
+  background: #0b1713;
+  color: inherit;
+  border-radius: 0.3rem;
+  padding: 0.75rem;
+  min-height: 44px;
+}
+.perf-fuel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.perf-fuel-totals {
+  display: grid;
+  gap: 1.3rem;
+  margin: 1.25rem 0;
+}
+.perf-fuel-totals > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.perf-fuel-totals dt,
+.perf-fuel-totals span {
+  font-size: 0.83rem;
+  color: #adc3b9;
+}
+.perf-fuel-totals dd {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #e0bb6a;
+  font-variant-numeric: tabular-nums;
+}
+.perf-day-state {
+  padding: 1rem 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.perf-day-state button {
+  min-height: 44px;
+  text-align: left;
+}
+.perf-day-state button[aria-pressed='true'] {
+  border-color: #c4912f;
+  background: #163d31;
+  color: #f4dfb2;
+}
+.perf-weight-figure {
+  margin: 1.5rem 0;
+}
+.perf-weight-figure figcaption {
+  font-size: 0.8rem;
+  color: #adc3b9;
+}
+.perf-weight-figure svg {
+  width: 100%;
+  max-height: 210px;
+  margin: 1rem 0;
+  overflow: visible;
+}
+.perf-weight-figure line {
+  stroke: #c4912f;
+  stroke-width: 1.5;
+}
+.perf-weight-figure circle {
+  fill: #e0bb6a;
+}
+.perf-weight-figure text {
+  fill: #adc3b9;
+  font-size: 11px;
+}
+.perf-weight-weeks {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.perf-weight-weeks li {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.perf-weight-weeks span,
+.perf-weight-weeks small {
+  font-size: 0.75rem;
+  color: #adc3b9;
+}
+.perf-weight-weeks strong {
+  font-size: 1rem;
+  font-weight: 500;
+}
+@media (min-width: 600px) {
+  .perf-fuel-totals {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .perf-weight-weeks {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

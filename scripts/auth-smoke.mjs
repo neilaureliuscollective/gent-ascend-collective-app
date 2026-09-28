@@ -386,3 +386,19 @@ const outcomeRead=await founder.rpc('performance_outcomes',{});assert.equal(outc
 const hiddenOutcomes=await member.rpc('performance_outcomes',{});assert.equal(hiddenOutcomes.error,null);assert.deepEqual(hiddenOutcomes.data,[]);
 assert.ok((await anon.rpc('performance_outcomes',{})).error);
 console.log('PASS: Performance outcome lineage, recorded sets and owner isolation through real Auth/PostgREST');
+
+// Phase 5: independently versioned owner references, replay, RLS and preserved recovery.
+const fuelArgs={p_request:crypto.randomUUID(),p_expected:0,p_targets:{calories:2400,protein:150,waterMl:2500,goalWeight:80,unit:'kg'}};
+for(let i=0;i<2;i++){const result=await founder.rpc('performance_save_fuel_targets',fuelArgs);assert.equal(result.error,null);assert.equal(result.data,1);}
+for(const table of ['performance_fuel_targets','performance_fuel_target_revisions']){
+ const own=await founder.from(table).select('*');assert.equal(own.error,null);assert.equal(own.data.length,1);
+ const other=await member.from(table).select('*');assert.equal(other.error,null);assert.equal(other.data.length,0);
+ assert.ok((await founder.from(table).delete().eq('person_id',own.data[0].person_id)).error);
+}
+assert.ok((await anon.rpc('performance_save_fuel_targets',fuelArgs)).error);
+assert.ok((await founder.rpc('performance_save_fuel_targets',{...fuelArgs,p_request:crypto.randomUUID()})).error);
+assert.ok((await founder.rpc('performance_save_fuel_targets',{...fuelArgs,p_targets:{...fuelArgs.p_targets,protein:160}})).error);
+const fuelDay={...progressionCheck,weight:180,calories:2300,protein:145,waterMl:2500,nutritionComplete:true};
+const fuelDaySaved=await founder.rpc('performance_save',{p_kind:'checkin',p_request:crypto.randomUUID(),p_expected:1,p_payload:fuelDay});assert.equal(fuelDaySaved.error,null);
+const fuelDayRead=await founder.from('performance_checkins').select('*').eq('day',fuelDay.day);assert.equal(fuelDayRead.error,null);assert.equal(fuelDayRead.data[0].sleep_minutes,450);assert.equal(fuelDayRead.data[0].calories,2300);
+console.log('PASS: Fuel targets, replay, stale denial, owner isolation and daily recovery preservation through real Auth/PostgREST');

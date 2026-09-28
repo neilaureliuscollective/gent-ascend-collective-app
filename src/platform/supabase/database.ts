@@ -7,6 +7,7 @@ import type {
   SessionRow,
   SetRow,
 } from '@/domains/performance/rows';
+import type { FuelTargets } from '@/domains/performance/schema';
 import type { DayEntry, DayAction, DailyReview } from '@/domains/daily/model';
 import type {
   Conversation,
@@ -150,6 +151,23 @@ export interface Database {
             referencedColumns: ['person_id', 'day'];
           },
         ]
+      >;
+      performance_fuel_targets: Table<
+        { person_id: string; targets: FuelTargets; version: number; updated_at: string },
+        never,
+        never
+      >;
+      performance_fuel_target_revisions: Table<
+        {
+          person_id: string;
+          targets: FuelTargets;
+          version: number;
+          recorded_at: string;
+          request_id: string;
+          fingerprint: string;
+        },
+        never,
+        never
       >;
       performance_progression_decisions: Table<
         {
@@ -400,6 +418,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      performance_save_fuel_targets: {
+        Args: { p_request: string; p_expected: number; p_targets: FuelTargets };
+        Returns: number;
+      };
       performance_outcomes: { Args: Record<string, never>; Returns: unknown };
       performance_progression: { Args: Record<string, never>; Returns: unknown };
       performance_progression_accept: {

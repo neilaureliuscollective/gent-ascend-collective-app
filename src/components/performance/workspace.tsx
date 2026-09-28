@@ -29,12 +29,13 @@ import {
   type DeviceDraft,
 } from '../../../public/performance-store.js';
 import { ProfileEditor, PlanEditor, CheckinEditor } from './editors';
+import { FuelSpace } from './fuel';
 import { Training } from './training';
 import { ProgressionReview } from './progression';
 import { ProgramEditor, ProgramCycle, SessionPreparation, SessionDecision } from './program';
 import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/performance/program';
 import type { Prescription, Program } from '@/domains/performance/schema';
-type View = 'today' | 'train' | 'restore' | 'review';
+type View = 'today' | 'train' | 'restore' | 'fuel' | 'review';
 export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) {
   const [data, setData] = useState(initial);
   const [view, setView] = useState<View>('today');
@@ -137,8 +138,8 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
   useEffect(() => {
     if (editing) editorRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }, [editing]);
-  async function mutate(command: Mutation) {
-    if (mutationLock.current) return;
+  async function mutate(command: Mutation): Promise<boolean> {
+    if (mutationLock.current) return false;
     mutationLock.current = true;
     setBusy(true);
     setError('');
@@ -165,12 +166,14 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
             : 'Saved to your account.',
         );
       }
+      return true;
     } catch (caught) {
       setError(
         caught instanceof Error
           ? caught.message
           : 'The request could not complete. Your entries remain here.',
       );
+      return false;
     } finally {
       mutationLock.current = false;
       setBusy(false);
@@ -308,6 +311,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
             ['today', 'Today'],
             ['train', 'Training'],
             ['restore', 'Restore'],
+            ['fuel', 'Fuel & Body'],
             ['review', 'Review'],
           ] as const
         ).map(([key, label]) => (
@@ -574,6 +578,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               )}
             </>
           )}
+          {view === 'fuel' && <FuelSpace data={data} busy={busy} save={mutate} />}
           {view === 'restore' && (
             <section className="perf-restore">
               <p className="eyebrow">RECOVERY / SELF-REPORTED</p>
@@ -689,9 +694,10 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 <h3>Put the week into perspective.</h3>
                 <p className="perf-caption">
                   Share your Performance goal, limitations, seven recent check-ins, three recent
-                  sessions, their accepted adjustments, program title, session progression evidence
-                  and recorded outcomes after approved changes and this review with Aethelios for
-                  this request. This does not add them to memory.
+                  sessions, their accepted adjustments, program title, session progression evidence,
+                  recorded outcomes after approved changes, your fuel references, 28-day weight
+                  readings and seven-day intake summaries with Aethelios for this request. This does
+                  not add them to memory.
                 </p>
                 <button
                   disabled={busy || !data.profile}
@@ -786,14 +792,14 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 initial={programDraft}
                 key={data.program?.version ?? 0}
                 busy={busy}
-                save={async (payload) =>
-                  mutate({
+                save={async (payload) => {
+                  await mutate({
                     kind: 'program',
                     requestId: crypto.randomUUID(),
                     expectedVersion: data.program?.version ?? 0,
                     payload,
-                  })
-                }
+                  });
+                }}
               />
             )}
             {editing === 'profile' && (
@@ -801,14 +807,14 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 key={data.profile?.version ?? 0}
                 initial={data.profile?.data ?? null}
                 busy={busy}
-                save={async (payload) =>
-                  mutate({
+                save={async (payload) => {
+                  await mutate({
                     kind: 'profile',
                     requestId: crypto.randomUUID(),
                     expectedVersion: data.profile?.version ?? 0,
                     payload,
-                  })
-                }
+                  });
+                }}
               />
             )}
             {editing === 'plan' && planDraft && (
@@ -816,14 +822,14 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 key={plan?.version ?? 0}
                 initial={planDraft}
                 busy={busy}
-                save={async (payload) =>
-                  mutate({
+                save={async (payload) => {
+                  await mutate({
                     kind: 'plan',
                     requestId: crypto.randomUUID(),
                     expectedVersion: plan?.version ?? 0,
                     payload,
-                  })
-                }
+                  });
+                }}
               />
             )}
             {editing === 'checkin' && (
@@ -831,14 +837,14 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                 key={`${data.today}-${today?.version ?? 0}`}
                 initial={today?.data ?? blankCheck}
                 busy={busy}
-                save={async (payload) =>
-                  mutate({
+                save={async (payload) => {
+                  await mutate({
                     kind: 'checkin',
                     requestId: crypto.randomUUID(),
                     expectedVersion: today?.version ?? 0,
                     payload,
-                  })
-                }
+                  });
+                }}
               />
             )}
             {editing && (
