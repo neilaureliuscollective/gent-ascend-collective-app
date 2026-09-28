@@ -55,6 +55,19 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      grooming_profiles: Table<{person_id:string;hair_focus:string;beard_focus:string;skin_focus:string;morning_ritual:string;evening_ritual:string;preferred_look:string;effort:'simple'|'considered'|'detailed';sensitivities:string;dislikes:string;version:number;updated_at:string},{person_id:string;hair_focus?:string;beard_focus?:string;skin_focus?:string;morning_ritual?:string;evening_ritual?:string;preferred_look?:string;effort?:'simple'|'considered'|'detailed';sensitivities?:string;dislikes?:string},{hair_focus?:string;beard_focus?:string;skin_focus?:string;morning_ritual?:string;evening_ritual?:string;preferred_look?:string;effort?:'simple'|'considered'|'detailed';sensitivities?:string;dislikes?:string}>;
+      grooming_goals: Table<{id:string;person_id:string;title:string;target_date:string|null;status:'active'|'completed'|'archived';created_at:string},{person_id:string;title:string;target_date?:string|null},{status?:'active'|'completed'|'archived'}>;
+      grooming_rituals: Table<{id:string;person_id:string;kind:'morning'|'evening'|'weekly';title:string;steps:string;version:number;active:boolean;created_at:string},never,never>;
+      grooming_checkins: Table<{id:string;person_id:string;ritual_id:string;done:boolean;note:string;occurred_at:string},{person_id:string;ritual_id:string;done:boolean;note?:string},never>;
+      grooming_products: Table<{id:string;person_id:string;name:string;category:'hair'|'beard'|'skin'|'other';relation:'owned'|'tried'|'favorite'|'stopped';shopify_handle:string|null;note:string;created_at:string},{person_id:string;name:string;category:'hair'|'beard'|'skin'|'other';relation:'owned'|'tried'|'favorite'|'stopped';shopify_handle?:string|null;note?:string},never>;
+      grooming_looks: Table<{id:string;person_id:string;title:string;detail:string;kind:'target'|'service';service_date:string|null;created_at:string},{person_id:string;title:string;detail:string;kind:'target'|'service';service_date?:string|null},never>;
+      grooming_events: Table<{id:string;person_id:string;title:string;event_date:string;note:string;created_at:string},{person_id:string;title:string;event_date:string;note:string},never>;
+      grooming_scans: Table<{id:string;person_id:string;status:'pending'|'complete'|'rejected'|'failed';consented_at:string;created_at:string;completed_at:string|null;provider_version:string|null;quality_note:string;summary:string;next_step:string},never,never>;
+      grooming_photos: Table<{id:string;person_id:string;scan_id:string|null;storage_key:string;view:'front'|'left'|'right'|'hair';note:string;captured_on:string;media_type:string;byte_size:number;created_at:string},{id:string;person_id:string;scan_id?:string|null;storage_key:string;view:'front'|'left'|'right'|'hair';note:string;captured_on:string;media_type:string;byte_size:number},never>;
+      grooming_scan_observations: Table<{id:string;person_id:string;scan_id:string;area:'skin'|'hair'|'beard';description:string;confidence:'low'|'medium'|'high';source_version:string;created_at:string},never,never>;
+      grooming_look_previews: Table<{id:string;person_id:string;source_photo_id:string|null;category:'hair'|'beard';style_id:string;title:string;note:string;saved_at:string|null;status:'pending'|'complete'|'failed';storage_key:string|null;created_at:string},never,{title?:string;note?:string;saved_at?:string}>;
+      grooming_professional_passes: Table<{id:string;person_id:string;professional_user_id:string|null;label:string;direction:string;hair:string;beard:string;preferences:string;avoid:string;target_title:string;target_detail:string;note:string;created_at:string;expires_at:string;claimed_at:string|null;revoked_at:string|null},{id:string;person_id:string;label:string;direction:string;hair:string;beard:string;preferences:string;avoid:string;target_title:string;target_detail:string;note:string;expires_at:string},{revoked_at:string}>;
+      grooming_service_proposals: Table<{id:string;pass_id:string;person_id:string;professional_user_id:string;service_date:string;title:string;detail:string;return_note:string;status:'pending'|'accepted'|'declined';created_at:string;decided_at:string|null},never,never>;
       ai_action_proposals: Table<ActionProposal,never,never>;
       ascend_profile_facts: Table<{
         person_id: string; fact_key: FactKey; value: string | null; version: number;
@@ -183,6 +196,15 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      grooming_set_ritual:{Args:{p_kind:string;p_title:string;p_steps:string};Returns:string};
+      grooming_begin_scan:{Args:{p_id:string};Returns:boolean};
+      grooming_finish_scan:{Args:{p_id:string;p_status:string;p_quality:string;p_summary:string;p_next:string;p_observations:unknown};Returns:boolean};
+      grooming_begin_look:{Args:{p_id:string;p_photo:string;p_category:string;p_style:string};Returns:boolean};
+      grooming_finish_look:{Args:{p_id:string;p_status:string;p_key?:string|null};Returns:boolean};
+      grooming_store_pass_code:{Args:{p_pass:string;p_hash:string};Returns:boolean};
+      grooming_claim_pass:{Args:{p_hash:string};Returns:string|null};
+      grooming_propose_service:{Args:{p_pass:string;p_id:string;p_date:string;p_title:string;p_detail:string;p_return:string};Returns:boolean};
+      grooming_decide_service:{Args:{p_id:string;p_accept:boolean};Returns:boolean};
       ai_studio_begin: {Args:{p_id:string;p_project:string;p_parent:string|null;p_reference:string|null;p_prompt:string;p_model:string;p_size:string};Returns:boolean};
       ai_studio_finish: {Args:{p_id:string;p_status:string;p_key?:string|null;p_failure?:string|null};Returns:boolean};
       ai_studio_scene_create: {Args:{p_project:string;p_title:string;p_message:string;p_visual:string;p_motion:string;p_channel:string};Returns:string};

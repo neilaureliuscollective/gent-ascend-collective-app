@@ -7,6 +7,7 @@ const destinations: [string, string, IconName][] = [
   ['/app', 'Command', 'command'],
   ['/app/world', 'My world', 'world'],
   ['/app/progress', 'Progress', 'progress'],
+  ['/app/grooming', 'Grooming', 'spark'],
   ['/app/you', 'You', 'person'],
 ];
 export function Navigation() {
@@ -16,7 +17,7 @@ export function Navigation() {
       {destinations.map(([href, label, icon], i) => (
         <Fragment key={href}>
           {i === 2 && <span className="navigation-presence-gap" aria-hidden="true" />}
-          <Link href={href} aria-current={path === href ? 'page' : undefined}>
+          <Link href={href} aria-current={path === href || href === '/app/grooming' && path.startsWith('/app/grooming/') ? 'page' : undefined}>
             <Icon name={icon} />
             <span>{label}</span>
           </Link>

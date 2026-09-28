@@ -33,30 +33,12 @@ export async function studioWorkspace(projectId?:string){
  if(versions.error||references.error||scenes.error||finishes.error) throw new IntelligenceError('Studio history could not be loaded.',503);
  return {projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
 }
+import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';
 export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>){
- const key=process.env.OPENAI_API_KEY;
- if(!key) throw new IntelligenceError('Image generation is not connected yet.',503);
- const content:({type:'input_text';text:string}|{type:'input_image';image_url:string})[]=[{type:'input_text',text:`Create one image. ${imageDirection(prompt,brief??{purpose:'',audience:'',direction:'',palette:'',avoid:''})}`}];
- if(reference) content.push({type:'input_image',image_url:`data:${reference.type};base64,${Buffer.from(reference.bytes).toString('base64')}`});
- const response=await fetch('https://api.openai.com/v1/responses',{
-  method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
-  body:JSON.stringify({model:process.env.AURELIUS_AI_MODEL||'gpt-6-astra',store:false,
-   input:[{role:'user',content}],tool_choice:{type:'image_generation'},
-   tools:[{type:'image_generation',model,size,quality:'medium',output_format:'png'}]}),
-  signal:AbortSignal.timeout(240000),cache:'no-store',
- });
- if(!response.ok){
-  if(response.status===429) throw new IntelligenceError('Studio is busy. Try again in a moment.',429);
-  if(response.status===400||response.status===403) throw new IntelligenceError('This image request could not be completed. Try a different prompt or reference.',422);
-  throw new IntelligenceError('Image generation is temporarily unavailable.',503);
+ try{return await generateImage(imageDirection(prompt,brief??{purpose:'',audience:'',direction:'',palette:'',avoid:''}),model,size,reference);}catch(error){
+  if(error instanceof ImageGenerationError)throw new IntelligenceError(error.message,error.status);
+  throw error;
  }
- const result=await response.json() as {output?:{type:string;result?:string}[]};
- const encoded=result.output?.find(item=>item.type==='image_generation_call')?.result;
- if(!encoded) throw new IntelligenceError('No image was returned. Try again.',502);
- const bytes=Buffer.from(encoded,'base64');
- if(bytes.length<100||bytes.length>10485760||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))
-  throw new IntelligenceError('The returned image could not be stored.',502);
- return bytes;
 }
 export async function generateStudio(input:z.infer<typeof studioInput>){
  const {client,person}=await studioSession();

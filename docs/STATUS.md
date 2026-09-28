@@ -357,6 +357,12 @@ The Chat + Studio release pass is on `aethelios-release-readiness`. A read-only 
 The founder approved production release. Chat Foundation and Studio V1 were merged through PR #22; both additive migrations were applied to the shared Gent Ascend Supabase project in order. Seven new tables, seven owner policies, a private Studio bucket, and eight backfilled messages were verified. Vercel production build was ready. PR #23 then exposed the Studio link in the compact Aethelios header and reached production. The historical local-only notes above record their state before this release.
 
 The Studio placement refinement makes Chat and Studio sibling spaces within Aethelios: sidebar switch on desktop, contextual switch on phone/Fold, and an entry from Command. See [placement decision and sources](AETHELIOS_STUDIO_PLACEMENT.md). It changes navigation only. Real owner-account image generation, cross-device persistence, two-account isolation, and physical device layout still require founder testing; a ready build is not proof of those flows.
+
+
+# Grooming Concierge recovery — 2026-09-28
+
+Reconstructed Grooming Foundation, Ascend Scan, My Look and Professional Concierge from the founder-approved scope after an ephemeral checkout was pruned before publication. This is a new release candidate, not a byte-for-byte recovery of the lost commits. See [scope and release gates](GROOMING_CONCIERGE_RECOVERY.md). Do not claim a live release until hosted migration, real account checks, main push and production verification complete.
+
 # Aethelios Studio storyboard — 2026-09-28
 
 The next phase adds a private storyboard to each Studio project. Members can plan a campaign as up to eight scenes, attach completed images from that project or create a new frame from a scene, and print the board. Motion notes are editorial planning, with no video model or provider charge. The additive scene migration follows the project brief migration in PR #25; neither is applied to hosted Supabase yet. Local database owner isolation, project asset binding, scene quota and deletion were tested. Browser/device and live image generation remain release checks.
