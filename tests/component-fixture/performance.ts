@@ -38,3 +38,28 @@ export const performanceFixture: PerformanceData = {
   checkins: [],
   sessions: [],
 };
+export const programFixture: PerformanceData = {
+  ...performanceFixture,
+  program: {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    nextSlotId: 'c0000000-0000-4000-8000-000000000010',
+    data: {
+      title: 'Synthetic A / B cycle',
+      sessions: [
+        {
+          id: 'c0000000-0000-4000-8000-000000000010',
+          plan: {
+            ...performanceFixture.plan!.data,
+            title: 'Strength A',
+            exercises: performanceFixture.plan!.data.exercises.map((e) => ({ ...e, sets: 3 })),
+          },
+        },
+        {
+          id: 'c0000000-0000-4000-8000-000000000011',
+          plan: { ...performanceFixture.plan!.data, title: 'Strength B' },
+        },
+      ],
+    },
+  },
+};

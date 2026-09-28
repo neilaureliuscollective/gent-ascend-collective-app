@@ -1,4 +1,4 @@
-import type { Profile, Plan, Session } from './schema';
+import type { Profile, Plan, Session, Program, Prescription } from './schema';
 type Base = { person_id: string; version: number; updated_at: string };
 export type ProfileRow = Base & Omit<Profile, 'daysPerWeek'> & { days_per_week: number };
 export type PlanRow = Base & Plan;
@@ -40,4 +40,13 @@ export type SetRow = {
   load: number | null;
   effort: number | null;
   done: boolean;
+};
+
+export type ProgramRow = Base & Program & { next_slot_id: string };
+export type SessionContextRow = {
+  person_id: string;
+  session_id: string;
+  program_version: number;
+  slot_id: string;
+  prescription: Prescription;
 };

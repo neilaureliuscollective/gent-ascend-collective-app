@@ -1,5 +1,7 @@
 import type {
   ProfileRow,
+  ProgramRow,
+  SessionContextRow,
   PlanRow,
   CheckinRow,
   SessionRow,
@@ -68,6 +70,8 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      performance_programs: Table<ProgramRow, never, never>;
+      performance_session_context: Table<SessionContextRow, never, never>;
       performance_profiles: Table<ProfileRow, never, never>;
       performance_plans: Table<PlanRow, never, never>;
       performance_checkins: Table<CheckinRow, never, never>;

@@ -1,3 +1,9 @@
+# Ascend Performance Phase 2 — September 28, 2026
+
+Built on the Phase 1 review branch: versioned multi-session programs, a repeating next-session sequence, explicit time/volume decisions, immutable planned-versus-accepted snapshots, and compatible offline recording. See [Phase 2 scope and evidence](ASCEND_PERFORMANCE_PHASE_2.md). No main merge, hosted migration or production promotion. CI results and remaining physical-device/live-AI acceptance are recorded on the review PR.
+
+---
+
 # Ascend Performance Phase 1 — September 28, 2026 UTC
 
 Implemented on an isolated review branch: personal direction, editable strength plan, device-persisted workout sets with idempotent sync, self-reported recovery/body/nutrition check-ins, weekly review, explicit progression approval, and opt-in Aethelios interpretation. Access through My world → Ascend Performance. See [scope, architecture and release gates](ASCEND_PERFORMANCE_PHASE_1.md).

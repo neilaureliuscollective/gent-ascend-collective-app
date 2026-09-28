@@ -31,6 +31,29 @@ export const planSchema = z
     (p) => new Set(p.exercises.map((e) => e.id)).size === p.exercises.length,
     'Exercise IDs must be unique.',
   );
+export const programSchema = z
+  .object({
+    title: z.string().trim().min(1).max(80),
+    sessions: z
+      .array(z.object({ id: z.uuid(), plan: planSchema }).strict())
+      .min(1)
+      .max(6),
+  })
+  .strict()
+  .refine(
+    (p) => new Set(p.sessions.map((s) => s.id)).size === p.sessions.length,
+    'Session IDs must be unique.',
+  );
+export const prescriptionSchema = z
+  .object({
+    programVersion: z.number().int().positive(),
+    slotId: z.uuid(),
+    mode: z.enum(['planned', 'shorter', 'lighter']),
+    timeBudget: z.number().int().min(10).max(120),
+    plan: planSchema,
+    originalPlan: planSchema,
+  })
+  .strict();
 export const checkinSchema = z
   .object({
     day: z.iso.date(),
@@ -67,6 +90,7 @@ export const sessionSchema = z
     id: z.uuid(),
     title: z.string().trim().min(1).max(80),
     planVersion: z.number().int().min(1),
+    prescription: prescriptionSchema.optional(),
     startedAt: z.iso.datetime({ offset: true }),
     endedAt: z.iso.datetime({ offset: true }).nullable(),
     status: z.enum(['active', 'complete', 'abandoned']),
@@ -93,6 +117,7 @@ const base = { requestId: z.uuid(), expectedVersion: z.number().int().min(0) };
 export const mutationSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('profile'), ...base, payload: profileSchema }).strict(),
   z.object({ kind: z.literal('plan'), ...base, payload: planSchema }).strict(),
+  z.object({ kind: z.literal('program'), ...base, payload: programSchema }).strict(),
   z.object({ kind: z.literal('checkin'), ...base, payload: checkinSchema }).strict(),
   z
     .object({ kind: z.literal('session'), owner: z.uuid(), ...base, payload: sessionSchema })
@@ -100,6 +125,8 @@ export const mutationSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('adapt'), ...base, sourceIds: z.array(z.uuid()).length(2) }).strict(),
   z.object({ kind: z.literal('review'), requestId: z.uuid() }).strict(),
 ]);
+export type Program = z.infer<typeof programSchema>;
+export type Prescription = z.infer<typeof prescriptionSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Plan = z.infer<typeof planSchema>;
 export type Checkin = z.infer<typeof checkinSchema>;
@@ -113,6 +140,7 @@ export type PerformanceData = {
   timezone: string;
   profile: Stored<Profile> | null;
   plan: Stored<Plan> | null;
+  program?: (Stored<Program> & { nextSlotId: string }) | null;
   checkins: Stored<Checkin>[];
   sessions: Stored<Session>[];
 };
