@@ -28,7 +28,7 @@ for (const width of [344, 768, 1440])
       animations: 'disabled',
     });
     await page.getByRole('button', { name: 'Choose recovery today' }).click();
-    await expect(page.getByRole('heading', { name: 'Listen. Then decide.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Make room to recover.' })).toBeVisible();
     expect(writes).toHaveLength(0);
   });
 test('accepted program adjustment survives offline reload, syncs once and advances to the next session', async ({

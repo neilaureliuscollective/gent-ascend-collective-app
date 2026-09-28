@@ -98,7 +98,9 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page.locator('.goal-history').getByText('Completed', { exact: true })).toBeVisible();
 });
 
-test('Fuel & Body persists references and daily records through the real app and Auth', async ({ page }) => {
+test('Fuel & Body persists references and daily records through the real app and Auth', async ({
+  page,
+}) => {
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
@@ -114,10 +116,55 @@ test('Fuel & Body persists references and daily records through the real app and
   await page.getByLabel('Protein · g', { exact: true }).fill('145');
   await page.getByRole('button', { name: 'These are my full-day totals' }).click();
   await page.getByRole('button', { name: 'Save daily record' }).click();
-  await expect(page.getByRole('region', { name: "Today's fuel" }).getByText('2,350 kcal', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: "Today's fuel" }).getByText('2,350 kcal', { exact: true }),
+  ).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Fuel & Body', exact: true }).click();
   await expect(page.getByText('Your reference: 2,550 kcal', { exact: true })).toBeVisible();
-  await expect(page.getByRole('region', { name: "Today's fuel" }).getByText('2,350 kcal', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: "Today's fuel" }).getByText('2,350 kcal', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText('FULL DAY REPORTED', { exact: true })).toBeVisible();
+});
+
+test('Restore saves a practice and recovery check-in through the real authenticated app', async ({
+  page,
+}) => {
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await page.goto('/app/performance');
+  await page.getByRole('button', { name: 'Restore', exact: true }).click();
+  await page.getByRole('button', { name: /^(Choose|Edit) today’s practice$/ }).click();
+  await page.getByRole('button', { name: 'Protected rest', exact: true }).click();
+  await page.getByLabel('Minutes to set aside').fill('25');
+  await page.getByLabel('Your cue · optional').fill('After my shift');
+  await page.getByRole('button', { name: 'Save practice', exact: true }).click();
+  await expect(page.getByRole('region', { name: "Today's recovery practice" })).toContainText(
+    'Protected rest',
+  );
+  await page.getByRole('button', { name: 'Record recovery', exact: true }).click();
+  await page.getByLabel('Sleep · hours', { exact: true }).fill('7.5');
+  await page.getByRole('button', { name: '4 · Good', exact: true }).click();
+  await page.getByRole('button', { name: 'No soreness', exact: true }).click();
+  await page.getByRole('button', { name: 'Save recovery check-in' }).click();
+  await expect(page.getByRole('heading', { name: 'Make room to recover.' })).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: 'Restore', exact: true }).click();
+  await expect(page.getByRole('region', { name: "Today's recovery practice" })).toContainText(
+    '25 minutes · After my shift',
+  );
+  await page.getByRole('button', { name: 'Record recovery', exact: true }).click();
+  await expect(page.getByLabel('Sleep · hours', { exact: true })).toHaveValue('7.5');
+  await expect(page.getByRole('button', { name: '4 · Good', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Fuel & Body', exact: true }).click();
+  await expect(
+    page.getByRole('region', { name: "Today's fuel" }).getByText('2,350 kcal', { exact: true }),
+  ).toBeVisible();
 });

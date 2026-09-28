@@ -402,3 +402,18 @@ const fuelDay={...progressionCheck,weight:180,calories:2300,protein:145,waterMl:
 const fuelDaySaved=await founder.rpc('performance_save',{p_kind:'checkin',p_request:crypto.randomUUID(),p_expected:1,p_payload:fuelDay});assert.equal(fuelDaySaved.error,null);
 const fuelDayRead=await founder.from('performance_checkins').select('*').eq('day',fuelDay.day);assert.equal(fuelDayRead.error,null);assert.equal(fuelDayRead.data[0].sleep_minutes,450);assert.equal(fuelDayRead.data[0].calories,2300);
 console.log('PASS: Fuel targets, replay, stale denial, owner isolation and daily recovery preservation through real Auth/PostgREST');
+
+// Phase 6 owner routines use caller JWTs and the owner's local date.
+const recoveryOwn=await founder.from('persons').select('timezone').single();assert.equal(recoveryOwn.error,null);
+const recoveryDay=new Intl.DateTimeFormat('en-CA',{timeZone:recoveryOwn.data.timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const recoveryArgs={p_request:crypto.randomUUID(),p_expected:0,p_routine:{day:recoveryDay,action:'quiet-time',minutes:15,cue:'After my shift',outcome:null}};
+for(let i=0;i<2;i++){const result=await founder.rpc('performance_save_recovery_routine',recoveryArgs);assert.equal(result.error,null);assert.equal(result.data,1);}
+for(const table of ['performance_recovery_routines','performance_recovery_revisions']){
+ const own=await founder.from(table).select('*');assert.equal(own.error,null);assert.equal(own.data.length,1);
+ const other=await member.from(table).select('*');assert.equal(other.error,null);assert.equal(other.data.length,0);
+ assert.ok((await founder.from(table).delete().eq('person_id',own.data[0].person_id)).error);
+}
+assert.ok((await anon.rpc('performance_save_recovery_routine',recoveryArgs)).error);
+assert.ok((await founder.rpc('performance_save_recovery_routine',{...recoveryArgs,p_request:crypto.randomUUID()})).error);
+assert.ok((await founder.rpc('performance_save_recovery_routine',{...recoveryArgs,p_expected:1,p_request:crypto.randomUUID(),p_routine:{...recoveryArgs.p_routine,outcome:'done'}})).error);
+console.log('PASS: Recovery routine save/replay, owner-local date, stale denial, premature outcome denial and owner isolation through real Auth/PostgREST');

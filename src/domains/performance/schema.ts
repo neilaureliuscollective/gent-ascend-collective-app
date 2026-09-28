@@ -125,9 +125,22 @@ export const fuelTargetsSchema = z
     unit: z.enum(['kg', 'lb']),
   })
   .strict();
+export const recoveryRoutineSchema = z
+  .object({
+    day: z.iso.date(),
+    action: z.enum(['quiet-time', 'screen-break', 'gentle-mobility', 'rest']),
+    minutes: z.number().int().min(5).max(60),
+    cue: z.string().trim().max(120),
+    outcome: z.enum(['done', 'partial', 'skipped']).nullable(),
+  })
+  .strict();
+export type RecoveryRoutine = z.infer<typeof recoveryRoutineSchema>;
 export type FuelTargets = z.infer<typeof fuelTargetsSchema>;
 const base = { requestId: z.uuid(), expectedVersion: z.number().int().min(0) };
 export const mutationSchema = z.discriminatedUnion('kind', [
+  z
+    .object({ kind: z.literal('recovery-routine'), ...base, payload: recoveryRoutineSchema })
+    .strict(),
   z.object({ kind: z.literal('fuel-targets'), ...base, payload: fuelTargetsSchema }).strict(),
   z.object({ kind: z.literal('profile'), ...base, payload: profileSchema }).strict(),
   z.object({ kind: z.literal('plan'), ...base, payload: planSchema }).strict(),
@@ -164,6 +177,7 @@ export type PerformanceData = {
   plan: Stored<Plan> | null;
   program?: (Stored<Program> & { nextSlotId: string }) | null;
   fuelTargets?: Stored<FuelTargets> | null;
+  recoveryRoutines?: Stored<RecoveryRoutine>[];
   progression?: ProgressionReview[];
   progressionDecisions?: ProgressionDecision[];
   outcomes?: DecisionOutcome[];

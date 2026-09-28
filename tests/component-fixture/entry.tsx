@@ -5,6 +5,7 @@ import {
   learningFixture,
   outcomesFixture,
   fuelFixture,
+  recoveryFixture,
 } from './performance';
 import '@/app/(workspace)/app/performance/performance.css';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
@@ -72,19 +73,22 @@ createRoot(document.getElementById('root')!).render(
     mode === 'performance-program' ||
     mode === 'performance-learning' ||
     mode === 'performance-outcomes' ||
-    mode === 'performance-fuel' ? (
+    mode === 'performance-fuel' ||
+    mode === 'performance-recovery' ? (
     <main style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
       <PerformanceWorkspace
         initial={
-          mode === 'performance-fuel'
-            ? fuelFixture
-            : mode === 'performance-outcomes'
-              ? outcomesFixture
-              : mode === 'performance-learning'
-                ? learningFixture
-                : mode === 'performance-program'
-                  ? programFixture
-                  : performanceFixture
+          mode === 'performance-recovery'
+            ? recoveryFixture
+            : mode === 'performance-fuel'
+              ? fuelFixture
+              : mode === 'performance-outcomes'
+                ? outcomesFixture
+                : mode === 'performance-learning'
+                  ? learningFixture
+                  : mode === 'performance-program'
+                    ? programFixture
+                    : performanceFixture
         }
       />
     </main>
