@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StudioStoryboard, type StudioScene } from './studio-storyboard';
 
 type CreativeType = 'open' | 'brand' | 'campaign' | 'product' | 'personal';
 type Brief = { purpose: string; audience: string; direction: string; palette: string; avoid: string };
 type Project = { id: string; title: string; creative_type: CreativeType; brief: Partial<Brief>; updated_at: string };
 type Version = { id: string; parent_id: string | null; reference_id: string | null; prompt: string; model: string; image_size: string; status: 'pending' | 'complete' | 'failed'; created_at: string };
 type Reference = { id: string; created_at: string };
-type Workspace = { projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; configured: boolean };
-type View = 'create' | 'library' | 'direction';
+type Workspace = { projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; configured: boolean };
+type View = 'create' | 'library' | 'direction' | 'storyboard';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
-const empty: Workspace = { projects: [], projectId: null, versions: [], references: [], configured: false };
+const empty: Workspace = { projects: [], projectId: null, versions: [], references: [], scenes: [], configured: false };
 const paths: { type: CreativeType; title: string; description: string; starter: string }[] = [
   { type: 'open', title: 'Explore an idea', description: 'Discover the shape of a new direction.', starter: 'Explore three visual directions for ' },
   { type: 'brand', title: 'Build a brand', description: 'Identity, atmosphere and a consistent world.', starter: 'Create a visual world for my brand that expresses ' },
@@ -46,6 +47,7 @@ export function StudioWorkspace() {
   const [size, setSize] = useState<'1024x1024' | '1536x1024' | '1024x1536'>('1024x1024');
   const [parent, setParent] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
+  const [forScene, setForScene] = useState<string | null>(null);
   const project = data.projects.find(item => item.id === selected);
 
   function accept(next: Workspace) {
@@ -83,7 +85,7 @@ export function StudioWorkspace() {
         body: JSON.stringify({ title: newTitle.trim(), creativeType: newType }),
       }));
       await load(result.id);
-      setNewTitle(''); setNaming(false); setDraft(''); setParent(null); setReference(null); setView('direction');
+      setNewTitle(''); setNaming(false); setDraft(''); setParent(null); setReference(null); setForScene(null); setView('direction');
     } catch (cause) { setError((cause as Error).message); } finally { setBusy(false); }
   }
   async function saveBrief(event: React.FormEvent) {
@@ -128,11 +130,28 @@ export function StudioWorkspace() {
     setBusy(true); setBusyLabel('Creating image…'); setError('');
     const requestId = crypto.randomUUID();
     try {
-      await jsonResponse(await fetch('/api/studio', {
+      const result = await jsonResponse<{ id: string }>(await fetch('/api/studio', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: requestId, projectId: selected, parentId: parent, referenceId: reference, prompt: draft, mode, size }),
       }));
-      setDraft(''); setReference(null); setParent(null); await load(selected); setView('library');
+      setDraft(''); setReference(null); setParent(null);
+      if (forScene) {
+        const scene = data.scenes.find(item => item.id === forScene);
+        if (scene) {
+          try {
+            await jsonResponse(await fetch('/api/studio/scenes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+              projectId: selected, sceneId: scene.id, updatedAt: scene.updated_at, title: scene.title,
+              message: scene.message, visualDirection: scene.visual_direction, motionNote: scene.motion_note,
+              channel: scene.channel, assetVersionId: result.id,
+            }) }));
+          } catch {
+            await load(selected); setForScene(null); setView('library');
+            setError('The image was saved in your Library, but the scene changed while it was being made. Attach it from the storyboard.');
+            return;
+          }
+        }
+      }
+      setForScene(null); await load(selected); setView(forScene ? 'storyboard' : 'library');
     } catch (cause) {
       await load(selected); setError((cause as Error).message);
     } finally { setBusy(false); }
@@ -141,7 +160,14 @@ export function StudioWorkspace() {
     setParent(version.id); setReference(null); setDraft(''); setView('create');
   }
   function selectReference(id: string) {
-    setReference(id); setParent(null); setView('create');
+    setReference(id); setParent(null); setForScene(null); setView('create');
+  }
+  function createSceneFrame(scene: StudioScene) {
+    setForScene(scene.id); setParent(null); setReference(null);
+    setDraft(`Create a visual frame for “${scene.title}”. ${scene.visual_direction} ${scene.message ? `The message is: ${scene.message}.` : ''}`.trim());
+    setSize(scene.channel === 'website' || scene.channel === 'pitch' ? '1536x1024' : '1024x1536');
+    setView('create');
+    requestAnimationFrame(() => document.getElementById('studio-prompt')?.focus());
   }
 
   return <section className="studio-surface" aria-label="Aethelios Studio">
@@ -154,7 +180,7 @@ export function StudioWorkspace() {
         <select id="studio-type" value={newType} onChange={event => setNewType(event.target.value as CreativeType)}>{paths.map(path => <option value={path.type} key={path.type}>{path.title}</option>)}</select>
         <button type="submit" disabled={busy}>Create project →</button>
       </form>}
-      {loading ? <p>Opening Studio…</p> : data.projects.length === 0 ? <p className="muted">One place for every direction you develop.</p> : <nav aria-label="Studio projects">{data.projects.map(item => <button key={item.id} type="button" className={selected === item.id ? 'selected' : ''} aria-current={selected === item.id ? 'page' : undefined} onClick={() => { setParent(null); setReference(null); setLoading(true); setView('create'); void load(item.id); }}><small>{paths.find(path => path.type === item.creative_type)?.title ?? 'Project'}</small>{item.title}</button>)}</nav>}
+      {loading ? <p>Opening Studio…</p> : data.projects.length === 0 ? <p className="muted">One place for every direction you develop.</p> : <nav aria-label="Studio projects">{data.projects.map(item => <button key={item.id} type="button" className={selected === item.id ? 'selected' : ''} aria-current={selected === item.id ? 'page' : undefined} onClick={() => { setParent(null); setReference(null); setForScene(null); setLoading(true); setView('create'); void load(item.id); }}><small>{paths.find(path => path.type === item.creative_type)?.title ?? 'Project'}</small>{item.title}</button>)}</nav>}
       <div className="studio-side-note"><span className="small-orb" aria-hidden="true" /><p>Give the idea a direction. Aethelios helps you develop it, version by version.</p></div>
     </aside>
 
@@ -163,8 +189,9 @@ export function StudioWorkspace() {
       {!selected ? <div className="studio-empty"><p className="eyebrow">AETHELIOS STUDIO</p><h2>Make the vision visible.</h2><p>Build a brand world, shape a campaign, explore a product, or see a personal idea before it exists. Every project keeps its direction, references and finished images together.</p><button className="button" type="button" onClick={() => setNaming(true)} disabled={busy}>Start a project ↗</button></div> : <>
         <div className="studio-project-heading"><div><p className="eyebrow">{paths.find(path => path.type === project?.creative_type)?.title ?? 'Creative project'}</p><h2>{project?.title}</h2><span>{data.versions.filter(version => version.status === 'complete').length} images · {data.references.length} references</span></div><Link href="/app/aethelios">Talk it through with Aethelios ↗</Link></div>
         <div className="studio-view-tabs" role="group" aria-label="Studio workspace views">
-          {(['create', 'library', 'direction'] as const).map(tab => <button key={tab} type="button" aria-pressed={view === tab} onClick={() => setView(tab)}>{tab === 'create' ? 'Create' : tab === 'library' ? 'Library' : 'Direction'}</button>)}
+          {(['create', 'storyboard', 'library', 'direction'] as const).map(tab => <button key={tab} type="button" aria-pressed={view === tab} onClick={() => setView(tab)}>{tab === 'create' ? 'Create' : tab === 'storyboard' ? 'Storyboard' : tab === 'library' ? 'Library' : 'Direction'}</button>)}
         </div>
+        {view === 'storyboard' && <StudioStoryboard key={selected} projectId={selected} scenes={data.scenes} versions={data.versions} disabled={busy} onChanged={() => load(selected)} onCreateFrame={createSceneFrame} />}
         {view === 'direction' && <form className="studio-direction" onSubmit={saveBrief}>
           <div className="studio-intro"><p className="eyebrow">THE CREATIVE BRIEF</p><h3>Set the standard for this project.</h3><p>This direction guides new images in this project. You can change it as the idea develops.</p></div>
           <div className="studio-brief-grid">{([
@@ -181,7 +208,8 @@ export function StudioWorkspace() {
           <div className="studio-paths">{paths.map(path => <button key={path.type} type="button" onClick={() => { setDraft(path.starter); document.getElementById('studio-prompt')?.focus(); }}><span>0{paths.indexOf(path) + 1}</span><strong>{path.title}</strong><small>{path.description}</small><b aria-hidden="true">↗</b></button>)}</div>
           {!data.configured && <p className="studio-notice">Image generation is awaiting a server model connection. Projects and references remain available.</p>}
           <form onSubmit={generate} className="studio-composer">
-            <p className="eyebrow">{parent ? 'REFINE A SAVED IMAGE' : reference ? 'CREATE FROM A REFERENCE' : 'NEW IMAGE'}</p>
+            <p className="eyebrow">{forScene ? `FRAME FOR ${data.scenes.find(item => item.id === forScene)?.title ?? 'STORYBOARD'}` : parent ? 'REFINE A SAVED IMAGE' : reference ? 'CREATE FROM A REFERENCE' : 'NEW IMAGE'}</p>
+            {forScene && <button type="button" className="studio-cancel-scene" onClick={() => setForScene(null)}>Create outside this storyboard instead</button>}
             {(parent || reference) && <div className="studio-source"><Image unoptimized width={60} height={60} src={imageUrl((parent ?? reference)!, parent ? 'version' : 'reference')} alt="Selected source" /><span>{parent ? 'Developing this saved version' : 'Using this reference'}</span><button type="button" onClick={() => { setParent(null); setReference(null); }}>Clear</button></div>}
             <label htmlFor="studio-prompt">Describe what you want to see</label>
             <textarea id="studio-prompt" value={draft} onChange={event => setDraft(event.target.value)} minLength={3} maxLength={3000} required placeholder="The subject, setting, feeling, details and intended use…" disabled={busy} />

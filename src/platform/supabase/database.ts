@@ -102,6 +102,12 @@ export interface Database {
         storage_key:string|null;failure_code:string|null;created_at:string;completed_at:string|null
       },never,never>;
       ai_studio_usage: Table<{id:string;person_id:string;created_at:string},never,never>;
+      ai_studio_scenes: Table<{
+        id:string;person_id:string;project_id:string;position:number;title:string;message:string;
+        visual_direction:string;motion_note:string;channel:'social'|'website'|'pitch'|'print';
+        asset_version_id:string|null;created_at:string;updated_at:string
+      },never,{title?:string;message?:string;visual_direction?:string;motion_note?:string;
+        channel?:'social'|'website'|'pitch'|'print';asset_version_id?:string|null;updated_at?:string}>;
       ai_turns: Table<Turn, never, { feedback: Turn['feedback'] }>;
       ai_messages: Table<ChatMessage, never, never>;
       ai_aux_usage: Table<{id:string;person_id:string;kind:'title'|'summary';created_at:string;input_tokens:number|null;output_tokens:number|null},never,never>;
@@ -171,6 +177,7 @@ export interface Database {
     Functions: {
       ai_studio_begin: {Args:{p_id:string;p_project:string;p_parent:string|null;p_reference:string|null;p_prompt:string;p_model:string;p_size:string};Returns:boolean};
       ai_studio_finish: {Args:{p_id:string;p_status:string;p_key?:string|null;p_failure?:string|null};Returns:boolean};
+      ai_studio_scene_create: {Args:{p_project:string;p_title:string;p_message:string;p_visual:string;p_motion:string;p_channel:string};Returns:string};
       pilot_reserve: { Args: { p_email: string }; Returns: string };
       pilot_claim: { Args: Record<string, never>; Returns: boolean };
       pilot_submit_feedback: { Args: { p_category: string; p_message: string }; Returns: string };

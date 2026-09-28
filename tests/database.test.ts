@@ -57,6 +57,27 @@ describe('migration, seeds and owner security', () => {
     await expect(asUser(founder,`update public.ai_studio_versions set status='complete' where id='${version}'`)).rejects.toThrow();
     await expect(asUser(founder,`delete from public.ai_studio_projects where id='${project}'`)).rejects.toThrow();
   });
+  it('keeps storyboard scenes owner-bound, project-bound and within eight slots',async()=>{
+    const project='92000000-0000-4000-8000-000000000001';
+    const other='92000000-0000-4000-8000-000000000002';
+    const own=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Campaign'),('${other}',${own},'Other')`);
+    const create=(id:string)=>`select public.ai_studio_scene_create('${id}','Opening','Lead with a feeling','Emerald light','','social') as id`;
+    const scene=(await asUser<{id:string}>(founder,create(project))).rows[0]?.id;
+    expect(scene).toBeDefined();
+    expect((await asUser(member,'select id from public.ai_studio_scenes')).rows).toHaveLength(0);
+    await expect(asUser(member,create(project))).rejects.toThrow();
+    await expect(asUser(founder,`insert into public.ai_studio_scenes(person_id,project_id,position,title) values(${own},'${project}',2,'Bypass')`)).rejects.toThrow();
+    expect((await asUser(member,`update public.ai_studio_scenes set title='Intrusion' where id='${scene}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.ai_studio_scenes set project_id='${other}' where id='${scene}'`)).rejects.toThrow();
+    const unrelated='92000000-0000-4000-8000-000000000003';
+    await asUser(founder,`select public.ai_studio_begin('${unrelated}','${other}',null,null,'Other frame','gpt-image-2.5-flare','1024x1024')`);
+    await expect(asUser(founder,`update public.ai_studio_scenes set asset_version_id='${unrelated}' where id='${scene}'`)).rejects.toThrow();
+    for(let index=0;index<7;index++) await asUser(founder,create(project));
+    await expect(asUser(founder,create(project))).rejects.toThrow(/eight scenes/);
+    await asUser(founder,`delete from public.ai_studio_scenes where id='${scene}'`);
+    expect((await asUser<{id:string}>(founder,create(project))).rows).toHaveLength(1);
+  });
   it('versions confirmed Ascend Profile facts and isolates history between users', async () => {
     const first='84000000-0000-4000-8000-000000000001';
     const second='84000000-0000-4000-8000-000000000002';
