@@ -1,5 +1,6 @@
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import Link from 'next/link';
+import { AppearanceControls } from '@/components/visual/appearance';
 import type { Metadata } from 'next';
 import { aethelios } from '@/platform/intelligence-identity';
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default async function AetheliosPage({
 }) {
   const params = await searchParams;
   const isFounder = await currentFounderAccess();
-  const linked = isFounder && await founderBridgeLinked();
+  const linked = isFounder && (await founderBridgeLinked());
   const starters: Record<string, string> = {
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',
     reflect:
@@ -37,11 +38,14 @@ export default async function AetheliosPage({
   return (
     <ConversationViewport>
       <header className="aethelios-room-heading">
-        <Link href="/app" aria-label="Back to Command">←</Link>
+        <Link href="/app" aria-label="Back to Command">
+          ←
+        </Link>
         <div>
           <span className="eyebrow">THE INTELLIGENCE</span>
-          <strong>Aethelios</strong>
+          <h1>Aethelios</h1>
         </div>
+        <AppearanceControls />
         <nav aria-label="Aethelios destinations">
           <Link href="/app/studio">Studio ↗</Link>
           <Link href="/app/aethelios/meet">Meet ↗</Link>
@@ -49,13 +53,38 @@ export default async function AetheliosPage({
       </header>
       {isFounder && (
         <details className="aethelios-link-panel">
-          <summary>Founder continuity · {linked ? 'Connected' : 'Connect private workspace'}</summary>
+          <summary>
+            Founder continuity · {linked ? 'Connected' : 'Connect private workspace'}
+          </summary>
           <div className="aethelios-link-content">
-          <p>{params.link === 'failed' ? 'The link could not be completed. Sign in to your private Aethelios workspace, then try again. ' : ''}
-            {linked ? 'Your private Aethelios teaching is linked. Confirmed shared and Gent Ascend memories can inform your chats when you turn on personal context.' : <>Sign in to your <a href="https://aethelios.vercel.app" target="_blank" rel="noopener noreferrer">private Aethelios workspace</a> first, then connect it here once. Relevant teaching will be available when you turn on personal context.</>}
-          </p>
-          {linked ? <form action="/api/aethelios-link/disconnect" method="post"><button type="submit" className="button">Disconnect private account</button></form> :
-            <a href="/api/aethelios-link/start" className="button">Connect private Aethelios</a>}
+            <p>
+              {params.link === 'failed'
+                ? 'The link could not be completed. Sign in to your private Aethelios workspace, then try again. '
+                : ''}
+              {linked ? (
+                'Your private Aethelios teaching is linked. Confirmed shared and Gent Ascend memories can inform your chats when you turn on personal context.'
+              ) : (
+                <>
+                  Sign in to your{' '}
+                  <a href="https://aethelios.vercel.app" target="_blank" rel="noopener noreferrer">
+                    private Aethelios workspace
+                  </a>{' '}
+                  first, then connect it here once. Relevant teaching will be available when you
+                  turn on personal context.
+                </>
+              )}
+            </p>
+            {linked ? (
+              <form action="/api/aethelios-link/disconnect" method="post">
+                <button type="submit" className="button">
+                  Disconnect private account
+                </button>
+              </form>
+            ) : (
+              <a href="/api/aethelios-link/start" className="button">
+                Connect private Aethelios
+              </a>
+            )}
           </div>
         </details>
       )}

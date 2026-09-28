@@ -49,6 +49,10 @@ CLI-created additive migration: `20260928151743_ascend_performance_progression.s
 
 **Not yet:** automatic overload decisions, overtraining diagnosis, personalized injury prescriptions, calories from noisy expenditure, calibrated forecasts, 3D body transformations or claims of predictive accuracy.
 
+## Integration fixes
+
+Full regression exposed two control-overlap issues in the incoming conversation room and one stale heading assertion. Keep appearance controls inside the immersive room, hide the covered shell toolbar, size the replacement orb to its preview grid column, prevent decorative graphics from capturing clicks, and restore a semantic room heading. Existing click tests remain unforced.
+
 ## Verification and release
 
 Local lint, strict types, 119 unit/SQL tests, production build and migration-ledger checks passed before review. CI adds full browser regression at phone/unfolded/desktop widths and real Supabase Auth/PostgREST approval, replay and owner-isolation tests. Final CI evidence belongs on the review PR; physical-device offline behavior and a live Aethelios response still need founder acceptance.

@@ -1,3 +1,4 @@
+import { startProgramSession } from '@/domains/performance/program';
 import type { PerformanceData } from '@/domains/performance/schema';
 export const performanceFixture: PerformanceData = {
   mode: 'personal',
@@ -65,6 +66,30 @@ export const programFixture: PerformanceData = {
 };
 export const learningFixture: PerformanceData = {
   ...programFixture,
+  sessions: ['2026-09-25', '2026-09-22'].map((day, i) => {
+    const slot = programFixture.program!.data.sessions[0]!;
+    const session = startProgramSession({
+      ruleVersion: 1,
+      programVersion: 1,
+      slotId: slot.id,
+      mode: 'planned',
+      timeBudget: 40,
+      originalPlan: slot.plan,
+      plan: slot.plan,
+    });
+    return {
+      version: 1,
+      updatedAt: `${day}T11:00:00Z`,
+      data: {
+        ...session,
+        id: `c0000000-0000-4000-8000-00000000002${i + 1}`,
+        startedAt: `${day}T10:00:00Z`,
+        endedAt: `${day}T11:00:00Z`,
+        status: 'complete',
+        sets: session.sets.map((s) => ({ ...s, done: true, effort: 7 })),
+      },
+    };
+  }),
   progression: [
     {
       slotId: programFixture.program!.data.sessions[0]!.id,

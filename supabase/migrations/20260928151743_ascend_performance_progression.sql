@@ -56,7 +56,7 @@ begin
    elsif exists(select 1 from jsonb_array_elements(history) h where h->'prescription'->>'mode'<>'planned') then reason:='A recent workout was adapted. That is not a failed workout; collect two comparable planned sessions before increasing targets.';
    elsif exists(select 1 from jsonb_array_elements(history) h where h->'prescription'->'originalPlan' is distinct from slot->'plan') then reason:='Targets changed since these workouts. Learn from two workouts on the current session plan.';
    else
-    reason:='Keep targets steady. A proposal needs every planned set completed and one exercise meeting its reps at the target load with recorded effort of 7/10 or lower in both workouts.';
+    reason:='Keep targets steady. A proposal needs every planned set completed and one exercise meeting its reps at the target load with recorded effort of 7/10 or lower in both workouts. Rep targets of 20 or more stay manual.';
     -- Full sessions must be completed, not merely the candidate exercise.
     select sum((e->>'sets')::integer) into planned from jsonb_array_elements(slot->'plan'->'exercises') e;
     if (select count(*) from public.performance_sets where person_id=own and session_id=any(ids) and done)=planned*2 then

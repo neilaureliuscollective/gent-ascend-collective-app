@@ -3508,7 +3508,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .aethelios-room-heading > a { color: #e8c57e; font-size: 1.4rem; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .aethelios-room-heading > div { display: flex; flex-direction: column; line-height: 1.2; }
 .aethelios-room-heading .eyebrow { font-size: .56rem; letter-spacing: .2em; color: #a8c8bd; }
-.aethelios-room-heading strong { font-family: var(--font-editorial); font-weight: 500; font-size: 1.5rem; color: #f5eee0; }
+.aethelios-room-heading h1 { font-family: var(--font-editorial); font-weight: 500; font-size: 1.5rem; color: #f5eee0; margin: 0; }
 .aethelios-room-heading nav { display: flex; gap: 8px; margin-left: auto; }
 .aethelios-room-heading nav a { display: grid; place-items: center; min-height: 44px; padding: 0 14px; color: #ead3a5; font-size: .78rem; border: 1px solid #c4912f32; border-radius: 10px; }
 .aethelios-room-heading a:focus-visible { outline: 2px solid #e8c57e; outline-offset: 2px; }
@@ -3557,7 +3557,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
 }
 @media (max-width: 600px) {
   .aethelios-room-heading { min-height: 52px; gap: 7px; margin-bottom: 5px; }
-  .aethelios-room-heading strong { font-size: 1.18rem; }
+  .aethelios-room-heading h1 { font-size: 1.18rem; }
   .aethelios-room-heading nav { gap: 2px; }
   .aethelios-room-heading nav a { padding: 0 7px; font-size: .68rem; border: 0; }
   .aethelios-page .aurelius-composer { padding: 10px 12px; }
@@ -3586,3 +3586,15 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .older-messages{display:block;margin:0 auto 14px}
 .library-more{width:100%;border-top:1px solid #c4912f35}
 .message-tools{display:flex;flex-wrap:wrap;gap:12px;margin-top:9px}.message-tools button,.revision-notice button{border:0;background:transparent;color:#d9bd82;cursor:pointer;font-size:.7rem;min-height:32px}.message-version{border-left:1px solid #c4912f70;margin:12px 0;padding:8px 12px;color:#bfcac2}.message-version summary{cursor:pointer;color:#dfc58c;font-size:.7rem}.revision-notice{display:flex;align-items:center;justify-content:space-between;color:#e5cd98;font-size:.7rem;padding:3px 8px}
+
+/* Keep the room's real controls reachable; decorative graphics never own input. */
+.workspace:has(.aethelios-page) > .topbar { visibility: hidden; }
+.aethelios-room-heading { flex-wrap: wrap; }
+.aethelios-room-heading > .appearance-controls { flex-direction: row; margin-left: auto; }
+.aethelios-room-heading .appearance-controls button { min-width: 44px; }
+.account-intelligence-orb { pointer-events: none; }
+@media (min-width: 601px) {
+ .welcome-heading .orb-presentation.is-previewing .account-intelligence-orb {
+  width: 140px; height: 140px; grid-column: 1; grid-row: 1;
+ }
+}
