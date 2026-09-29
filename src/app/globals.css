@@ -379,7 +379,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 .mobile-brand {
   display: none;
 }
-.workspace main {
+.workspace > main {
   max-width: 1520px;
   margin: auto;
   padding: 32px 38px 48px;
@@ -1593,7 +1593,7 @@ form > .button {
   .topbar {
     margin: 0 28px;
   }
-  .workspace main {
+  .workspace > main {
     padding: 26px 28px 44px;
   }
   .aurelius-trigger {
@@ -1663,7 +1663,7 @@ form > .button {
   .brand-type small {
     font-size: 0.625rem;
   }
-  .workspace main {
+  .workspace > main {
     padding: 25px 28px 120px;
   }
   .navigation {
@@ -1837,7 +1837,7 @@ form > .button {
   .appearance-controls button > span {
     display: none;
   }
-  .workspace main {
+  .workspace > main {
     padding: 20px 18px 114px;
   }
   .command-hero {
@@ -3108,7 +3108,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
     min-width: 34px;
     padding-inline: 5px;
   }
-  .workspace main {
+  .workspace > main {
     padding-inline: 14px;
   }
 }

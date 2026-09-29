@@ -1,4 +1,5 @@
 'use client';
+import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useRef, useState, type FormEvent } from 'react';
 import {
   convertWeight,
@@ -30,13 +31,20 @@ export function FuelSpace({
   data,
   busy,
   save,
+  error = '',
 }: {
+  error?: string;
   data: PerformanceData;
   busy: boolean;
   save: Save;
 }) {
   const [day, setDay] = useState(data.today);
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const [editor, updateEditor] = useState<Editor | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  function setEditor(next: Editor | null) {
+    updateEditor(next);
+    setSheetOpen(next !== null);
+  }
   const report = fuelReview(data);
   const today = data.checkins.find((c) => c.data.day === data.today)?.data;
   const targets = data.fuelTargets?.data;
@@ -45,172 +53,186 @@ export function FuelSpace({
     [targets.calories, targets.protein, targets.waterMl, targets.goalWeight].some(
       (v) => v !== null,
     );
-  if (editor)
-    return editor.kind === 'day' ? (
-      <FuelDayEditor
-        key={editor.record.data.day}
-        initial={editor.record}
-        busy={busy}
-        save={save}
-        close={() => setEditor(null)}
-      />
-    ) : (
-      <FuelTargetEditor
-        initial={editor.data}
-        version={editor.version}
-        busy={busy}
-        save={save}
-        close={() => setEditor(null)}
-      />
-    );
   return (
-    <section className="perf-fuel" aria-label="Fuel and body">
-      <p className="eyebrow">FUEL & BODY / YOUR OWN RECORD</p>
-      <h2>See the pattern. Keep the context.</h2>
-      <p>Record your daily totals and body weight. Build a clearer picture over time.</p>
-      <div className="perf-fuel-capture">
-        <label>
-          Record date
-          <input
-            type="date"
-            min={shiftDay(data.today, -27)}
-            max={data.today}
-            value={day}
-            onChange={(e) => setDay(e.target.value)}
-          />
-        </label>
-        <button
-          className="perf-primary"
-          disabled={busy || !day || day > data.today || day < shiftDay(data.today, -27)}
-          onClick={() =>
-            setEditor({
-              kind: 'day',
-              record: structuredClone(
-                data.checkins.find((c) => c.data.day === day) ?? {
-                  data: emptyFuelDay(day, report.unit),
-                  version: 0,
-                  updatedAt: '',
-                },
-              ),
-            })
-          }
-        >
-          Record intake & weight
-        </button>
-      </div>
-      <section aria-label="Today's fuel">
-        <div className="perf-fuel-heading">
-          <h3>Today, so far.</h3>
-          <span className="eyebrow">
-            {today?.nutritionComplete ? 'FULL DAY REPORTED' : 'PARTIAL / NOT CLOSED'}
-          </span>
-        </div>
-        <dl className="perf-fuel-totals">
-          {(
-            [
-              ['Calories', today?.calories ?? null, targets?.calories, 'kcal'],
-              ['Protein', today?.protein ?? null, targets?.protein, 'g'],
-              ['Water', today?.waterMl ?? null, targets?.waterMl, 'ml'],
-            ] as const
-          ).map(([label, recorded, target, unit]) => (
-            <div key={label}>
-              <dt>{label}</dt>
-              <dd>{format(recorded, unit)}</dd>
-              <span>
-                {target == null ? 'No reference set' : `Your reference: ${format(target, unit)}`}
-              </span>
-            </div>
-          ))}
-        </dl>
-        <p className="perf-caption">
-          {activeTargets
-            ? 'References are yours to set. They are not calculated prescriptions or historical adherence scores.'
-            : 'Targets are optional. You can build your record without them.'}
-        </p>
-        <button
-          className="text-button"
-          disabled={busy}
-          onClick={() =>
-            setEditor({
-              kind: 'targets',
-              version: data.fuelTargets?.version ?? 0,
-              data: structuredClone(
-                targets ?? {
-                  calories: null,
-                  protein: null,
-                  waterMl: null,
-                  goalWeight: null,
-                  unit: report.unit,
-                },
-              ),
-            })
-          }
-        >
-          {activeTargets ? 'Edit my references' : 'Set my references'}
-        </button>
-      </section>
-      <section className="perf-fuel-week" aria-label="Seven-day intake">
-        <p className="eyebrow">LAST SEVEN DAYS</p>
-        <h3>What your records support.</h3>
-        <dl className="perf-fuel-totals">
-          <div>
-            <dt>Average calories</dt>
-            <dd>{format(report.calories.average, 'kcal')}</dd>
-            <span>{report.calories.days} complete days with calories</span>
-          </div>
-          <div>
-            <dt>Average protein</dt>
-            <dd>{format(report.protein.average, 'g')}</dd>
-            <span>{report.protein.days} complete days with protein</span>
-          </div>
-          <div>
-            <dt>Average water recorded</dt>
-            <dd>{format(report.water.average, 'ml')}</dd>
-            <span>{report.water.days} days with water recorded · may be partial</span>
-          </div>
-        </dl>
-        <p className="perf-caption">
-          {report.partialDays} partial intake days are excluded from calorie and protein averages.
-          Missing days are not zero.
-        </p>
-      </section>
-      <section className="perf-body-trend" aria-label="Body weight trend">
-        <p className="eyebrow">BODY RECORD / 28 DAYS</p>
-        <h3>A trend needs more than one reading.</h3>
-        {targets?.goalWeight != null && (
-          <p>
-            Your weight reference:{' '}
-            <strong>
-              {roundWeight(targets.goalWeight)} {targets.unit}
-            </strong>
+    <>
+      <ContextSheet
+        open={sheetOpen}
+        title="Fuel and body"
+        busy={busy}
+        onClose={() => setSheetOpen(false)}
+      >
+        {error && (
+          <p className="perf-error" role="alert">
+            {error}
           </p>
         )}
-        <p>
-          {report.change === null
-            ? 'Record weight on at least three days in each of the latest two weeks to compare their averages.'
-            : `Weekly average change: ${report.change > 0 ? '+' : ''}${roundWeight(report.change).toFixed(1)} ${report.unit}.`}
-        </p>
-        <p className="perf-caption">
-          Scale weight is not body composition. These readings do not establish fat loss or explain
-          its cause.
-        </p>
-        <WeightTrend weeks={report.weeks} unit={report.unit} />
-        <details className="perf-history">
-          <summary>See original weight readings ({report.weightReadings.length})</summary>
-          {report.weightReadings.length ? (
-            <ul>
-              {report.weightReadings.map((r) => (
-                <li key={r.day}>
-                  <time dateTime={r.day}>{r.day}</time> · {r.value} {r.unit}
-                </li>
-              ))}
-            </ul>
+        {editor &&
+          (editor.kind === 'day' ? (
+            <FuelDayEditor
+              key={editor.record.data.day}
+              initial={editor.record}
+              busy={busy}
+              save={save}
+              close={() => setEditor(null)}
+            />
           ) : (
-            <p>No readings in this 28-day window.</p>
+            <FuelTargetEditor
+              initial={editor.data}
+              version={editor.version}
+              busy={busy}
+              save={save}
+              close={() => setEditor(null)}
+            />
+          ))}
+      </ContextSheet>
+      <section className="perf-fuel" aria-label="Fuel and body">
+        <p className="eyebrow">FUEL & BODY / YOUR OWN RECORD</p>
+        <h2>See the pattern. Keep the context.</h2>
+        <p>Record your daily totals and body weight. Build a clearer picture over time.</p>
+        <div className="perf-fuel-capture">
+          <label>
+            Record date
+            <input
+              type="date"
+              min={shiftDay(data.today, -27)}
+              max={data.today}
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+            />
+          </label>
+          <button
+            className="perf-primary"
+            disabled={busy || !day || day > data.today || day < shiftDay(data.today, -27)}
+            onClick={() =>
+              setEditor({
+                kind: 'day',
+                record: structuredClone(
+                  data.checkins.find((c) => c.data.day === day) ?? {
+                    data: emptyFuelDay(day, report.unit),
+                    version: 0,
+                    updatedAt: '',
+                  },
+                ),
+              })
+            }
+          >
+            Record intake & weight
+          </button>
+        </div>
+        <section aria-label="Today's fuel">
+          <div className="perf-fuel-heading">
+            <h3>Today, so far.</h3>
+            <span className="eyebrow">
+              {today?.nutritionComplete ? 'FULL DAY REPORTED' : 'PARTIAL / NOT CLOSED'}
+            </span>
+          </div>
+          <dl className="perf-fuel-totals">
+            {(
+              [
+                ['Calories', today?.calories ?? null, targets?.calories, 'kcal'],
+                ['Protein', today?.protein ?? null, targets?.protein, 'g'],
+                ['Water', today?.waterMl ?? null, targets?.waterMl, 'ml'],
+              ] as const
+            ).map(([label, recorded, target, unit]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{format(recorded, unit)}</dd>
+                <span>
+                  {target == null ? 'No reference set' : `Your reference: ${format(target, unit)}`}
+                </span>
+              </div>
+            ))}
+          </dl>
+          <p className="perf-caption">
+            {activeTargets
+              ? 'References are yours to set. They are not calculated prescriptions or historical adherence scores.'
+              : 'Targets are optional. You can build your record without them.'}
+          </p>
+          <button
+            className="text-button"
+            disabled={busy}
+            onClick={() =>
+              setEditor({
+                kind: 'targets',
+                version: data.fuelTargets?.version ?? 0,
+                data: structuredClone(
+                  targets ?? {
+                    calories: null,
+                    protein: null,
+                    waterMl: null,
+                    goalWeight: null,
+                    unit: report.unit,
+                  },
+                ),
+              })
+            }
+          >
+            {activeTargets ? 'Edit my references' : 'Set my references'}
+          </button>
+        </section>
+        <section className="perf-fuel-week" aria-label="Seven-day intake">
+          <p className="eyebrow">LAST SEVEN DAYS</p>
+          <h3>What your records support.</h3>
+          <dl className="perf-fuel-totals">
+            <div>
+              <dt>Average calories</dt>
+              <dd>{format(report.calories.average, 'kcal')}</dd>
+              <span>{report.calories.days} complete days with calories</span>
+            </div>
+            <div>
+              <dt>Average protein</dt>
+              <dd>{format(report.protein.average, 'g')}</dd>
+              <span>{report.protein.days} complete days with protein</span>
+            </div>
+            <div>
+              <dt>Average water recorded</dt>
+              <dd>{format(report.water.average, 'ml')}</dd>
+              <span>{report.water.days} days with water recorded · may be partial</span>
+            </div>
+          </dl>
+          <p className="perf-caption">
+            {report.partialDays} partial intake days are excluded from calorie and protein averages.
+            Missing days are not zero.
+          </p>
+        </section>
+        <section className="perf-body-trend" aria-label="Body weight trend">
+          <p className="eyebrow">BODY RECORD / 28 DAYS</p>
+          <h3>A trend needs more than one reading.</h3>
+          {targets?.goalWeight != null && (
+            <p>
+              Your weight reference:{' '}
+              <strong>
+                {roundWeight(targets.goalWeight)} {targets.unit}
+              </strong>
+            </p>
           )}
-        </details>
+          <p>
+            {report.change === null
+              ? 'Record weight on at least three days in each of the latest two weeks to compare their averages.'
+              : `Weekly average change: ${report.change > 0 ? '+' : ''}${roundWeight(report.change).toFixed(1)} ${report.unit}.`}
+          </p>
+          <p className="perf-caption">
+            Scale weight is not body composition. These readings do not establish fat loss or
+            explain its cause.
+          </p>
+          <WeightTrend weeks={report.weeks} unit={report.unit} />
+          <details className="perf-history">
+            <summary>See original weight readings ({report.weightReadings.length})</summary>
+            {report.weightReadings.length ? (
+              <ul>
+                {report.weightReadings.map((r) => (
+                  <li key={r.day}>
+                    <time dateTime={r.day}>{r.day}</time> · {r.value} {r.unit}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No readings in this 28-day window.</p>
+            )}
+          </details>
+        </section>
       </section>
-    </section>
+    </>
   );
 }
 function WeightTrend({

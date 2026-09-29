@@ -24,6 +24,7 @@ beforeAll(async () => {
   await db.exec(`create schema storage;
    create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
    create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+   alter table storage.objects enable row level security;
    create function storage.foldername(name text) returns text[] language sql immutable as $$select string_to_array(name,'/')$$;
    grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;`);
   for (const file of (await readdir('supabase/migrations'))
@@ -35,6 +36,40 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('keeps grooming evidence private and professional proposals member-controlled',async()=>{
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    const scan='9a000000-0000-4000-8000-000000000001',photo='9a000000-0000-4000-8000-000000000002',look='9a000000-0000-4000-8000-000000000003',pass='9a000000-0000-4000-8000-000000000004',proposal='9a000000-0000-4000-8000-000000000005',code='a'.repeat(64);
+    await asUser(founder,`insert into public.grooming_profiles(person_id,beard_focus,preferred_look) values(${owner},'Keep chin length','A full beard')`);
+    expect((await asUser(member,'select * from public.grooming_profiles')).rows).toHaveLength(0);
+    const ritual=(await asUser<{grooming_set_ritual:string}>(founder,"select public.grooming_set_ritual('morning','Beard routine','Cleanse, then condition')")).rows[0]!.grooming_set_ritual;
+    await expect(asUser(member,`insert into public.grooming_checkins(person_id,ritual_id,done) values((select id from public.persons where auth_user_id='${member}'),'${ritual}',true)`)).rejects.toThrow();
+    expect((await asUser<{grooming_begin_scan:boolean}>(founder,`select public.grooming_begin_scan('${scan}')`)).rows[0]?.grooming_begin_scan).toBe(true);
+    await asUser(founder,`insert into public.grooming_photos(id,person_id,scan_id,storage_key,view,captured_on,media_type,byte_size) values('${photo}',${owner},'${scan}','${founder}/${photo}.jpg','front',current_date,'image/jpeg',1000)`);
+    expect((await asUser(member,'select * from public.grooming_photos')).rows).toHaveLength(0);
+    expect((await asUser<{grooming_finish_scan:boolean}>(founder,`select public.grooming_finish_scan('${scan}','complete','','Visible beard shape','Discuss line upkeep','[{"area":"beard","description":"Fuller at the chin","confidence":"medium"}]'::jsonb)`)).rows[0]?.grooming_finish_scan).toBe(true);
+    expect((await asUser(member,'select * from public.grooming_scan_observations')).rows).toHaveLength(0);
+    expect((await asUser<{grooming_begin_look:boolean}>(member,`select public.grooming_begin_look('${look}','${photo}','beard','short-boxed')`)).rows[0]?.grooming_begin_look).toBe(false);
+    expect((await asUser<{grooming_begin_look:boolean}>(founder,`select public.grooming_begin_look('${look}','${photo}','beard','short-boxed')`)).rows[0]?.grooming_begin_look).toBe(true);
+    await expect(asUser(founder,`insert into public.grooming_scan_observations(person_id,scan_id,area,description,confidence,source_version) values(${owner},'${scan}','beard','Forged score','high','fake')`)).rejects.toThrow();
+    await expect(asUser(member,`insert into storage.objects(bucket_id,name) values('grooming-private','${founder}/${photo}.jpg')`)).rejects.toThrow();
+    await asUser(founder,`insert into public.grooming_professional_passes(id,person_id,label,beard,expires_at) values('${pass}',${owner},'Trim visit','Keep chin length',now()+interval '6 days')`);
+    expect((await asUser(member,'select * from public.grooming_professional_passes')).rows).toHaveLength(0);
+    expect((await asUser<{grooming_store_pass_code:boolean}>(founder,`select public.grooming_store_pass_code('${pass}','${code}')`)).rows[0]?.grooming_store_pass_code).toBe(true);
+    expect((await asUser<{grooming_claim_pass:string|null}>(founder,`select public.grooming_claim_pass('${code}')`)).rows[0]?.grooming_claim_pass).toBe(null);
+    await expect(asUser(member,'select * from public.grooming_professional_codes')).rejects.toThrow();
+    expect((await asUser<{grooming_claim_pass:string|null}>(member,`select public.grooming_claim_pass('${code}')`)).rows[0]?.grooming_claim_pass).toBe(pass);
+    expect((await asUser<{beard:string}>(member,`select beard from public.grooming_professional_passes where id='${pass}'`)).rows[0]?.beard).toBe('Keep chin length');
+    expect((await asUser<{grooming_propose_service:boolean}>(member,`select public.grooming_propose_service('${pass}','${proposal}',current_date,'Beard trim','Preserved chin, shaped sides','Four weeks')`)).rows[0]?.grooming_propose_service).toBe(true);
+    expect((await asUser(member,`select * from public.grooming_looks where id='${proposal}'`)).rows).toHaveLength(0);
+    expect((await asUser<{grooming_decide_service:boolean}>(member,`select public.grooming_decide_service('${proposal}',true)`)).rows[0]?.grooming_decide_service).toBe(false);
+    expect((await asUser<{grooming_decide_service:boolean}>(founder,`select public.grooming_decide_service('${proposal}',true)`)).rows[0]?.grooming_decide_service).toBe(true);
+    expect((await asUser<{title:string}>(founder,`select title from public.grooming_looks where id='${proposal}'`)).rows[0]?.title).toBe('Beard trim');
+    await asUser(founder,`update public.grooming_professional_passes set revoked_at=now() where id='${pass}'`);
+    expect((await asUser(member,`select id from public.grooming_professional_passes where id='${pass}'`)).rows).toHaveLength(0);
+    expect((await asUser(member,`select id from public.grooming_service_proposals where id='${proposal}'`)).rows).toHaveLength(0);
+    await expect(asUser(founder,'select * from public.grooming_look_usage')).rejects.toThrow();
+    await expect(asUser(founder,'select * from public.grooming_scan_usage')).rejects.toThrow();
+  });
   it('isolates Studio projects and versions, and reserves generation only once',async()=>{
     const project='91000000-0000-4000-8000-000000000001';
     const version='91000000-0000-4000-8000-000000000002';

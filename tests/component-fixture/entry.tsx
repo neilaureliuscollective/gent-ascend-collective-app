@@ -18,6 +18,7 @@ import { goalMutationSchema } from '@/domains/goals/validation';
 import { validationErrors, type FormAction } from '@/domains/shared/form-state';
 import type { GoalRow } from '@/platform/supabase/database';
 import '@/app/globals.css';
+import '@/app/interaction.css';
 const params = new URLSearchParams(location.search);
 const mode = params.get('mode') ?? 'profile';
 const goal: GoalRow = {

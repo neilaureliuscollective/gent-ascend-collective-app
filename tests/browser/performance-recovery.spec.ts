@@ -40,7 +40,9 @@ for (const width of [344, 390, 768, 1440])
       animations: 'disabled',
     });
     await page.getByRole('button', { name: 'Record recovery', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'How did you arrive today?' })).toBeFocused();
+    await expect(
+      page.getByRole('heading', { name: 'Recovery and sleep', exact: true }),
+    ).toBeFocused();
     await page.getByLabel('Sleep · hours', { exact: true }).fill('6.5');
     await page.getByRole('button', { name: '2 · Low', exact: true }).click();
     await page.getByRole('button', { name: 'Mild soreness', exact: true }).click();
@@ -152,7 +154,11 @@ test('follow-through changes only the past report; missing next-day records rema
   await page.getByRole('button', { name: 'Review yesterday’s practice' }).click();
   await page.getByRole('button', { name: 'Not recorded', exact: true }).click();
   await page.getByRole('button', { name: 'Save follow-through' }).click();
-  await page.getByText('Recovery history (2)', { exact: true }).click();
+  // Focused editing preserves the already-expanded history in the underlying world.
+  await expect(page.locator('details').filter({ hasText: 'Recovery history (2)' })).toHaveAttribute(
+    'open',
+    '',
+  );
   await expect(page.getByText(/Later days do not replace it\./)).toBeVisible();
   expect(writes[1]).toMatchObject({ expectedVersion: 2, payload: { outcome: null } });
 });

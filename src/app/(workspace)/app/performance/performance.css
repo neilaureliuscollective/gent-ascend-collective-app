@@ -1231,3 +1231,14 @@
     gap: 24px 40px;
   }
 }
+
+/* Interaction migration: open canvas, compact hierarchy, focused task overlays. */
+.performance-world{margin:0;padding:0;border:0;border-radius:0;background:transparent;overflow:visible;}
+.performance-world .perf-title{padding:24px 0 16px;}.performance-world .perf-title h1{font-size:clamp(1.8rem,6vw,3rem);line-height:1.15;letter-spacing:-.04em;}
+.performance-world .perf-header{gap:8px;}.performance-world .perf-edition{display:none;}
+.performance-world .perf-nav{display:flex;overflow-x:auto;gap:4px;padding:4px 0 12px;scrollbar-width:thin;}.performance-world .perf-nav button{flex:none;min-height:48px;white-space:nowrap;padding:10px 12px;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;}.performance-world .perf-nav button[aria-pressed="true"]{border-color:var(--perf-gold);}.performance-world .perf-nav button span{display:none;}
+.performance-world .perf-stage{border:0;border-radius:0;min-height:0;padding:24px 0;}.performance-world .perf-stage-copy{padding:0;}.performance-world .perf-stage-copy h2{font-size:clamp(1.6rem,5vw,2.4rem);}.performance-world .perf-stage-foot{padding:20px 0 0;}.performance-world .perf-orbits{display:none;}
+.performance-world .perf-week{padding:24px 0;border-inline:0;border-radius:0;}.performance-world .perf-program-entry{border-inline:0;border-radius:0;padding-inline:0;}
+.performance-world :where(.perf-fuel-totals,.perf-recovery-totals){gap:16px;}.performance-world .perf-inline{gap:8px;}.performance-world button{min-height:48px;}.performance-world :where(input,select,textarea){font-size:1rem;}
+.performance-world .context-sheet-body{padding-inline:4px;}.performance-world .context-sheet-body .perf-form-heading h2{font-size:1.6rem;}.performance-world .context-sheet-body .perf-form{max-width:none;}.performance-world .context-sheet .perf-exercise-editor{padding:16px 0;border:0;border-bottom:1px solid var(--perf-line);border-radius:0;}
+@media(max-width:599px){.performance-world .perf-header>.eyebrow{font-size:9px;}.performance-world .perf-numbers{grid-template-columns:repeat(2,minmax(0,1fr));}.performance-world .context-sheet .perf-fields{grid-template-columns:1fr;}.performance-world .perf-stage-foot{flex-wrap:wrap;}.performance-world .perf-inline>.perf-primary{width:100%;}.performance-world .perf-stage-copy>p{line-height:1.6;}}

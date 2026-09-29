@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Fragment } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from './visual/icon';
 const destinations: [string, string, IconName][] = [
@@ -11,23 +11,42 @@ const destinations: [string, string, IconName][] = [
 ];
 export function Navigation() {
   const path = usePathname();
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () =>
+      document.documentElement.style.setProperty(
+        '--interaction-nav-space',
+        `${matchMedia('(max-width:1100px)').matches ? node.getBoundingClientRect().height : 0}px`,
+      );
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    window.addEventListener('resize', measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+      document.documentElement.style.removeProperty('--interaction-nav-space');
+    };
+  }, []);
   return (
-    <nav aria-label="Main navigation" className="navigation">
-      {destinations.map(([href, label, icon], i) => (
-        <Fragment key={href}>
-          {i === 2 && <span className="navigation-presence-gap" aria-hidden="true" />}
-          <Link
-            href={href}
-            aria-current={
-              path === href || (href === '/app/world' && path.startsWith('/app/performance'))
-                ? 'page'
-                : undefined
-            }
-          >
-            <Icon name={icon} />
-            <span>{label}</span>
-          </Link>
-        </Fragment>
+    <nav ref={ref} aria-label="Main navigation" className="navigation">
+      {destinations.map(([href, label, icon]) => (
+        <Link
+          key={href}
+          href={href}
+          aria-current={
+            path === href ||
+            (href === '/app/world' &&
+              (path.startsWith('/app/performance') || path.startsWith('/app/grooming')))
+              ? 'page'
+              : undefined
+          }
+        >
+          <Icon name={icon} />
+          <span>{label}</span>
+        </Link>
       ))}
     </nav>
   );

@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { ContextSheet } from '@/components/interaction/context-sheet';
+import { useRef, useState, type FormEvent } from 'react';
 import { emptyFuelDay, shiftDay } from '@/domains/performance/fuel';
 import {
   recoveryActions,
@@ -24,21 +25,24 @@ export function RecoverySpace({
   data,
   busy,
   save,
+  error = '',
 }: {
+  error?: string;
   data: PerformanceData;
   busy: boolean;
   save: Save;
 }) {
   const [day, setDay] = useState(data.today);
-  const [editor, setEditor] = useState<Editor | null>(null);
-  const container = useRef<HTMLDivElement>(null);
+  const [editor, updateEditor] = useState<Editor | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  function setEditor(next: Editor | null) {
+    updateEditor(next);
+    setSheetOpen(next !== null);
+  }
   const report = recoveryReview(data);
   const today = data.checkins.find((c) => c.data.day === data.today)?.data;
   const routine = report.routines.find((r) => r.record.data.day === data.today)?.record;
   const yesterday = report.routines.find((r) => r.record.data.day === shiftDay(data.today, -1));
-  useEffect(() => {
-    if (editor) container.current?.querySelector('h2')?.focus();
-  }, [editor]);
   function editRoutine(record?: Stored<RecoveryRoutine>) {
     const latest = report.routines[0]?.record.data;
     setEditor({
@@ -59,179 +63,188 @@ export function RecoverySpace({
     });
   }
   return (
-    <div ref={container} className="perf-recovery">
-      {editor ? (
-        editor.kind === 'checkin' ? (
-          <RecoveryCheckin
-            initial={editor.record}
-            busy={busy}
-            save={save}
-            close={() => setEditor(null)}
-          />
-        ) : (
-          <RoutineEditor
-            initial={editor.record}
-            today={data.today}
-            busy={busy}
-            save={save}
-            close={() => setEditor(null)}
-          />
-        )
-      ) : (
-        <section aria-label="Recovery and sleep">
-          <p className="eyebrow">RESTORE / YOUR OWN RECORD</p>
-          <h2>Make room to recover.</h2>
-          <p>Notice how you feel. Choose one practice. See what follows.</p>
+    <div className="perf-recovery">
+      <ContextSheet
+        open={sheetOpen}
+        title="Recovery and sleep"
+        busy={busy}
+        onClose={() => setSheetOpen(false)}
+      >
+        {error && (
+          <p className="perf-error" role="alert">
+            {error}
+          </p>
+        )}
+        {editor &&
+          (editor.kind === 'checkin' ? (
+            <RecoveryCheckin
+              key={`checkin-${editor.record.data.day}-${editor.record.version}`}
+              initial={editor.record}
+              busy={busy}
+              save={save}
+              close={() => setEditor(null)}
+            />
+          ) : (
+            <RoutineEditor
+              key={`routine-${editor.record.data.day}-${editor.record.version}`}
+              initial={editor.record}
+              today={data.today}
+              busy={busy}
+              save={save}
+              close={() => setEditor(null)}
+            />
+          ))}
+      </ContextSheet>
+      <section aria-label="Recovery and sleep">
+        <p className="eyebrow">RESTORE / YOUR OWN RECORD</p>
+        <h2>Make room to recover.</h2>
+        <p>Notice how you feel. Choose one practice. See what follows.</p>
+        <dl className="perf-fuel-totals">
+          <div>
+            <dt>Sleep recorded today</dt>
+            <dd>{sleepText(today?.sleepMinutes ?? null)}</dd>
+          </div>
+          <div>
+            <dt>Energy today</dt>
+            <dd>{today?.energy == null ? 'Not recorded' : `${today.energy} / 5`}</dd>
+          </div>
+          <div>
+            <dt>Soreness today</dt>
+            <dd>{today?.soreness ?? 'Not recorded'}</dd>
+          </div>
+        </dl>
+        <div className="perf-fuel-capture">
+          <label>
+            Check-in date
+            <input
+              type="date"
+              value={day}
+              min={shiftDay(data.today, -27)}
+              max={data.today}
+              onChange={(e) => setDay(e.target.value)}
+            />
+          </label>
+          <button
+            className="perf-primary"
+            disabled={busy || !day || day > data.today || day < shiftDay(data.today, -27)}
+            onClick={() =>
+              setEditor({
+                kind: 'checkin',
+                record: structuredClone(
+                  data.checkins.find((c) => c.data.day === day) ?? {
+                    version: 0,
+                    updatedAt: '',
+                    data: emptyFuelDay(day, data.profile?.data.unit ?? 'lb'),
+                  },
+                ),
+              })
+            }
+          >
+            Record recovery
+          </button>
+        </div>
+        <section className="perf-recovery-section" aria-label="Today's recovery practice">
+          <p className="eyebrow">ONE DELIBERATE PRACTICE</p>
+          <h3>
+            {routine ? recoveryActions[routine.data.action] : 'Give recovery a place in your day.'}
+          </h3>
+          {routine ? (
+            <p>
+              {routine.data.minutes} minutes{routine.data.cue ? ` · ${routine.data.cue}` : ''}
+            </p>
+          ) : (
+            <p>
+              Choose a small routine that fits your schedule, including daytime sleep or shift work.
+            </p>
+          )}
+          <button disabled={busy} onClick={() => editRoutine(routine)}>
+            {routine ? 'Edit today’s practice' : 'Choose today’s practice'}
+          </button>
+          {routine && (
+            <p className="perf-caption">
+              Saved for {data.today}. Review your follow-through tomorrow.
+            </p>
+          )}
+        </section>
+        {yesterday && (
+          <section className="perf-recovery-section" aria-label="Yesterday's follow-through">
+            <p className="eyebrow">YESTERDAY → TODAY</p>
+            <h3>What followed your choice?</h3>
+            <RoutineResult entry={yesterday} />
+            <button disabled={busy} onClick={() => editRoutine(yesterday.record)}>
+              Review yesterday’s practice
+            </button>
+          </section>
+        )}
+        <section className="perf-recovery-section" aria-label="Seven-day recovery">
+          <p className="eyebrow">SEVEN DAYS / SELF-REPORTED</p>
+          <h3>Your pattern, with the gaps.</h3>
           <dl className="perf-fuel-totals">
             <div>
-              <dt>Sleep recorded today</dt>
-              <dd>{sleepText(today?.sleepMinutes ?? null)}</dd>
+              <dt>Average sleep recorded</dt>
+              <dd>{sleepText(report.sleep.average)}</dd>
+              <span>{report.sleep.days}/7 days recorded</span>
             </div>
             <div>
-              <dt>Energy today</dt>
-              <dd>{today?.energy == null ? 'Not recorded' : `${today.energy} / 5`}</dd>
+              <dt>Average energy</dt>
+              <dd>
+                {report.energy.average === null
+                  ? 'Not recorded'
+                  : `${report.energy.average.toFixed(1)} / 5`}
+              </dd>
+              <span>{report.energy.days}/7 days recorded</span>
             </div>
             <div>
-              <dt>Soreness today</dt>
-              <dd>{today?.soreness ?? 'Not recorded'}</dd>
+              <dt>High soreness</dt>
+              <dd>{report.highSorenessDays} days</dd>
+              <span>Of {report.sorenessDays} days with soreness recorded</span>
             </div>
           </dl>
-          <div className="perf-fuel-capture">
-            <label>
-              Check-in date
-              <input
-                type="date"
-                value={day}
-                min={shiftDay(data.today, -27)}
-                max={data.today}
-                onChange={(e) => setDay(e.target.value)}
-              />
-            </label>
-            <button
-              className="perf-primary"
-              disabled={busy || !day || day > data.today || day < shiftDay(data.today, -27)}
-              onClick={() =>
-                setEditor({
-                  kind: 'checkin',
-                  record: structuredClone(
-                    data.checkins.find((c) => c.data.day === day) ?? {
-                      version: 0,
-                      updatedAt: '',
-                      data: emptyFuelDay(day, data.profile?.data.unit ?? 'lb'),
-                    },
-                  ),
-                })
-              }
-            >
-              Record recovery
-            </button>
-          </div>
-          <section className="perf-recovery-section" aria-label="Today's recovery practice">
-            <p className="eyebrow">ONE DELIBERATE PRACTICE</p>
-            <h3>
-              {routine
-                ? recoveryActions[routine.data.action]
-                : 'Give recovery a place in your day.'}
-            </h3>
-            {routine ? (
-              <p>
-                {routine.data.minutes} minutes{routine.data.cue ? ` · ${routine.data.cue}` : ''}
-              </p>
-            ) : (
-              <p>
-                Choose a small routine that fits your schedule, including daytime sleep or shift
-                work.
-              </p>
-            )}
-            <button disabled={busy} onClick={() => editRoutine(routine)}>
-              {routine ? 'Edit today’s practice' : 'Choose today’s practice'}
-            </button>
-            {routine && (
-              <p className="perf-caption">
-                Saved for {data.today}. Review your follow-through tomorrow.
-              </p>
-            )}
-          </section>
-          {yesterday && (
-            <section className="perf-recovery-section" aria-label="Yesterday's follow-through">
-              <p className="eyebrow">YESTERDAY → TODAY</p>
-              <h3>What followed your choice?</h3>
-              <RoutineResult entry={yesterday} />
-              <button disabled={busy} onClick={() => editRoutine(yesterday.record)}>
-                Review yesterday’s practice
-              </button>
-            </section>
-          )}
-          <section className="perf-recovery-section" aria-label="Seven-day recovery">
-            <p className="eyebrow">SEVEN DAYS / SELF-REPORTED</p>
-            <h3>Your pattern, with the gaps.</h3>
-            <dl className="perf-fuel-totals">
-              <div>
-                <dt>Average sleep recorded</dt>
-                <dd>{sleepText(report.sleep.average)}</dd>
-                <span>{report.sleep.days}/7 days recorded</span>
-              </div>
-              <div>
-                <dt>Average energy</dt>
-                <dd>
-                  {report.energy.average === null
-                    ? 'Not recorded'
-                    : `${report.energy.average.toFixed(1)} / 5`}
-                </dd>
-                <span>{report.energy.days}/7 days recorded</span>
-              </div>
-              <div>
-                <dt>High soreness</dt>
-                <dd>{report.highSorenessDays} days</dd>
-                <span>Of {report.sorenessDays} days with soreness recorded</span>
-              </div>
-            </dl>
-            <ol className="perf-recovery-days" aria-label="Daily recovery observations">
-              {report.days.map((d) => (
-                <li key={d.day}>
-                  <time dateTime={d.day}>{d.day.slice(5)}</time>
-                  <div className="perf-sleep-track" aria-hidden="true">
-                    {d.sleepMinutes !== null && (
-                      <span style={{ width: `${Math.min((d.sleepMinutes / 1440) * 100, 100)}%` }} />
-                    )}
-                  </div>
-                  <strong>{sleepText(d.sleepMinutes)}</strong>
-                  <small>
-                    Energy {d.energy === null ? 'unknown' : `${d.energy}/5`} · Soreness{' '}
-                    {d.soreness ?? 'unknown'}
-                  </small>
-                </li>
-              ))}
-            </ol>
-            <p className="perf-caption">
-              Hours are duration, not sleep quality. Energy and soreness are separate observations.
-              Missing days are not zero.
-            </p>
-          </section>
-          <details className="perf-history">
-            <summary>Recovery history ({report.routines.length})</summary>
-            <p>
-              Each practice is paired with the following calendar day. These records do not
-              establish what caused a change.
-            </p>
-            {report.routines.length ? (
-              report.routines.map((entry) => (
-                <article className="perf-recovery-history" key={entry.record.data.day}>
-                  <h3>{entry.record.data.day}</h3>
-                  <RoutineResult entry={entry} />
-                  {entry.record.data.day < data.today && (
-                    <button disabled={busy} onClick={() => editRoutine(entry.record)}>
-                      Review practice from {entry.record.data.day}
-                    </button>
+          <ol className="perf-recovery-days" aria-label="Daily recovery observations">
+            {report.days.map((d) => (
+              <li key={d.day}>
+                <time dateTime={d.day}>{d.day.slice(5)}</time>
+                <div className="perf-sleep-track" aria-hidden="true">
+                  {d.sleepMinutes !== null && (
+                    <span style={{ width: `${Math.min((d.sleepMinutes / 1440) * 100, 100)}%` }} />
                   )}
-                </article>
-              ))
-            ) : (
-              <p>Your chosen practices will appear here.</p>
-            )}
-          </details>
+                </div>
+                <strong>{sleepText(d.sleepMinutes)}</strong>
+                <small>
+                  Energy {d.energy === null ? 'unknown' : `${d.energy}/5`} · Soreness{' '}
+                  {d.soreness ?? 'unknown'}
+                </small>
+              </li>
+            ))}
+          </ol>
+          <p className="perf-caption">
+            Hours are duration, not sleep quality. Energy and soreness are separate observations.
+            Missing days are not zero.
+          </p>
         </section>
-      )}
+        <details className="perf-history">
+          <summary>Recovery history ({report.routines.length})</summary>
+          <p>
+            Each practice is paired with the following calendar day. These records do not establish
+            what caused a change.
+          </p>
+          {report.routines.length ? (
+            report.routines.map((entry) => (
+              <article className="perf-recovery-history" key={entry.record.data.day}>
+                <h3>{entry.record.data.day}</h3>
+                <RoutineResult entry={entry} />
+                {entry.record.data.day < data.today && (
+                  <button disabled={busy} onClick={() => editRoutine(entry.record)}>
+                    Review practice from {entry.record.data.day}
+                  </button>
+                )}
+              </article>
+            ))
+          ) : (
+            <p>Your chosen practices will appear here.</p>
+          )}
+        </details>
+      </section>
     </div>
   );
 }

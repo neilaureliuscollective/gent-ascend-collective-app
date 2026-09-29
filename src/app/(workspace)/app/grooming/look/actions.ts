@@ -1,0 +1,3 @@
+'use server';import { revalidatePath } from 'next/cache';import { redirect } from 'next/navigation';import { saveLook,deleteLook } from '@/domains/grooming/look';
+export async function saveLookAction(form:FormData){let result='saved';try{await saveLook({id:form.get('id'),title:form.get('title'),note:form.get('note')});revalidatePath('/app/grooming/look');}catch{result='error';}redirect(`/app/grooming/look?result=${result}#history`);}
+export async function deleteLookAction(form:FormData){let result='deleted';try{await deleteLook(form.get('id'));revalidatePath('/app/grooming/look');}catch{result='error';}redirect(`/app/grooming/look?result=${result}#history`);}

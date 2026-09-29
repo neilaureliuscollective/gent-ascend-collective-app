@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   defaultProfile,
@@ -40,7 +41,14 @@ type View = 'today' | 'train' | 'restore' | 'fuel' | 'review';
 export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) {
   const [data, setData] = useState(initial);
   const [view, setView] = useState<View>('today');
-  const [editing, setEditing] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(null);
+  const [editing, setEditorValue] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(
+    null,
+  );
+  const [sheetOpen, setSheetOpen] = useState(false);
+  function setEditing(next: 'profile' | 'plan' | 'checkin' | 'program' | null) {
+    setEditorValue(next);
+    setSheetOpen(next !== null);
+  }
   const [programDraft, setProgramDraft] = useState<Program | null>(null);
   const [planDraft, setPlanDraft] = useState<Plan | null>(null);
   const [device, setDevice] = useState<DeviceDraft | null>(null);
@@ -63,7 +71,6 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
   const direction = todayDirection(data);
   const weekly = weeklyReview(data);
   const adjustment = nextAdjustment(data);
-  const editorRef = useRef<HTMLDivElement>(null);
   function setLocal(row: DeviceDraft | null) {
     const current = deviceRef.current;
     if (
@@ -136,9 +143,6 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
       window.removeEventListener('online', online);
     };
   }, [owner, sync]);
-  useEffect(() => {
-    if (editing) editorRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
-  }, [editing]);
   async function mutate(command: Mutation): Promise<boolean> {
     if (mutationLock.current) return false;
     mutationLock.current = true;
@@ -579,8 +583,10 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               )}
             </>
           )}
-          {view === 'fuel' && <FuelSpace data={data} busy={busy} save={mutate} />}
-          {view === 'restore' && <RecoverySpace data={data} busy={busy} save={mutate} />}
+          {view === 'fuel' && <FuelSpace data={data} busy={busy} error={error} save={mutate} />}
+          {view === 'restore' && (
+            <RecoverySpace data={data} busy={busy} error={error} save={mutate} />
+          )}
           {view === 'review' && (
             <section className="perf-review">
               <p className="eyebrow">THE LEARNING LOOP / LAST SEVEN DAYS</p>
@@ -745,7 +751,23 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               </button>
             </div>
           )}
-          <div ref={editorRef}>
+          <ContextSheet
+            open={sheetOpen}
+            title={
+              editing === 'checkin'
+                ? 'Your check-in'
+                : editing === 'profile'
+                  ? 'Your direction'
+                  : 'Your training plan'
+            }
+            busy={busy}
+            onClose={() => setSheetOpen(false)}
+          >
+            {error && (
+              <p role="alert" className="perf-error">
+                {error}
+              </p>
+            )}
             {editing === 'program' && programDraft && (
               <ProgramEditor
                 initial={programDraft}
@@ -763,6 +785,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
             )}
             {editing === 'profile' && (
               <ProfileEditor
+                close={() => setSheetOpen(false)}
                 key={data.profile?.version ?? 0}
                 initial={data.profile?.data ?? null}
                 busy={busy}
@@ -807,11 +830,11 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               />
             )}
             {editing && (
-              <button className="perf-cancel" disabled={busy} onClick={() => setEditing(null)}>
+              <button className="perf-cancel" disabled={busy} onClick={() => setSheetOpen(false)}>
                 Close editor
               </button>
             )}
-          </div>
+          </ContextSheet>
         </>
       )}
       <footer className="perf-footer">

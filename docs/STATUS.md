@@ -1,3 +1,10 @@
+# Interaction System Phase 3 — 2026-09-29
+
+Reconstructed the shared task foundation and migrated Performance editors, My World and Progress. Reconciled remote Performance Phase 6 with released Grooming main. Important recovery limit: local-only Interaction Phases 1–2 were removed by workspace maintenance and are absent remotely; the Phase 2 Grooming redesign is not restored by this branch. Exact scope, research and release gates: [Phase 3](INTERACTION_SYSTEM_PHASE_3.md). Production remains unchanged.
+
+
+---
+
 # Ascend Performance Phase 3 — September 28, 2026
 
 Built evidence-led session progression: explicit hold reasons, source workout records, user-approved single-exercise rep changes, atomic stale-evidence checks and immutable change history. Existing offline workouts remain compatible. Latest main Aethelios/Studio updates are incorporated. See [scope, research and release gates](ASCEND_PERFORMANCE_PHASE_3.md). Local lint/types, 119 unit/SQL tests, production build and migration ledger pass; CI/browser/real-Auth results are recorded on the review PR. No hosted migration or production promotion.
@@ -374,6 +381,12 @@ The Chat + Studio release pass is on `aethelios-release-readiness`. A read-only 
 The founder approved production release. Chat Foundation and Studio V1 were merged through PR #22; both additive migrations were applied to the shared Gent Ascend Supabase project in order. Seven new tables, seven owner policies, a private Studio bucket, and eight backfilled messages were verified. Vercel production build was ready. PR #23 then exposed the Studio link in the compact Aethelios header and reached production. The historical local-only notes above record their state before this release.
 
 The Studio placement refinement makes Chat and Studio sibling spaces within Aethelios: sidebar switch on desktop, contextual switch on phone/Fold, and an entry from Command. See [placement decision and sources](AETHELIOS_STUDIO_PLACEMENT.md). It changes navigation only. Real owner-account image generation, cross-device persistence, two-account isolation, and physical device layout still require founder testing; a ready build is not proof of those flows.
+
+
+# Grooming Concierge recovery — 2026-09-28
+
+Reconstructed Grooming Foundation, Ascend Scan, My Look and Professional Concierge from the founder-approved scope after an ephemeral checkout was pruned before publication. This is a new release candidate, not a byte-for-byte recovery of the lost commits. See [scope and release gates](GROOMING_CONCIERGE_RECOVERY.md). Do not claim a live release until hosted migration, real account checks, main push and production verification complete.
+
 # Aethelios Studio storyboard — 2026-09-28
 
 The next phase adds a private storyboard to each Studio project. Members can plan a campaign as up to eight scenes, attach completed images from that project or create a new frame from a scene, and print the board. Motion notes are editorial planning, with no video model or provider charge. The additive scene migration follows the project brief migration in PR #25; neither is applied to hosted Supabase yet. Local database owner isolation, project asset binding, scene quota and deletion were tested. Browser/device and live image generation remain release checks.
