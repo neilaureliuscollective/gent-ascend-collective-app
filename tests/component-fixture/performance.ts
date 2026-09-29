@@ -232,3 +232,39 @@ export const recoveryFixture: PerformanceData = {
     };
   }),
 };
+
+export const movementFixture: PerformanceData = {
+  ...performanceFixture,
+  movements: [
+    {
+      version: 1,
+      updatedAt: '',
+      data: {
+        id: '77000000-0000-4000-9000-000000000001',
+        day: performanceFixture.today,
+        kind: 'walk',
+        minutes: 20,
+        distance: 1,
+        unit: 'mi',
+        intensity: null,
+        note: 'Synthetic walk',
+        voided: false,
+      },
+    },
+    {
+      version: 1,
+      updatedAt: '',
+      data: {
+        id: '77000000-0000-4000-9000-000000000002',
+        day: performanceFixture.today,
+        kind: 'mobility',
+        minutes: 10,
+        distance: null,
+        unit: 'mi',
+        intensity: null,
+        note: '',
+        voided: false,
+      },
+    },
+  ],
+};

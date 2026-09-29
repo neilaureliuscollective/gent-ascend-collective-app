@@ -1,4 +1,5 @@
 import 'server-only';
+import { shiftDay } from './fuel';
 import { recoveryReview } from './recovery';
 import { fuelReview } from './fuel';
 import { decisionOutcome, outcomeEvidenceSchema } from './outcomes';
@@ -8,6 +9,7 @@ import { localDate, nextAdjustment, samplePerformance, weeklyReview } from './mo
 import {
   fuelTargetsSchema,
   recoveryRoutineSchema,
+  movementSchema,
   checkinSchema,
   planSchema,
   programSchema,
@@ -21,6 +23,7 @@ export async function readPerformance(): Promise<PerformanceData> {
   const ctx = await authorizedPerson('performance.read');
   if (!ctx) return { ...samplePerformance(), today: localDate(new Date().toISOString(), 'UTC') };
   const { client, person } = ctx;
+  const currentDay = localDate(new Date().toISOString(), person.timezone);
   const [
     profile,
     plan,
@@ -30,6 +33,7 @@ export async function readPerformance(): Promise<PerformanceData> {
     progression,
     outcomes,
     fuelTargets,
+    movements,
     recoveryRoutines,
   ] = await Promise.all([
     client.from('performance_profiles').select('*').eq('person_id', person.id).maybeSingle(),
@@ -51,6 +55,14 @@ export async function readPerformance(): Promise<PerformanceData> {
     client.rpc('performance_outcomes', {}),
     client.from('performance_fuel_targets').select('*').eq('person_id', person.id).maybeSingle(),
     client
+      .from('performance_movements')
+      .select('*')
+      .eq('person_id', person.id)
+      .gte('day', shiftDay(currentDay, -27))
+      .lte('day', currentDay)
+      .order('day', { ascending: false })
+      .limit(560),
+    client
       .from('performance_recovery_routines')
       .select('*')
       .eq('person_id', person.id)
@@ -66,6 +78,7 @@ export async function readPerformance(): Promise<PerformanceData> {
     progression.error ||
     outcomes.error ||
     fuelTargets.error ||
+    movements.error ||
     recoveryRoutines.error
   )
     throw new IntelligenceError(
@@ -99,6 +112,11 @@ export async function readPerformance(): Promise<PerformanceData> {
   const outcomeEvidence = outcomeEvidenceSchema.array().parse(outcomes.data);
   return {
     mode: 'personal',
+    movements: (movements.data ?? []).map((r) => ({
+      data: movementSchema.parse(r.entry),
+      version: r.version,
+      updatedAt: r.updated_at,
+    })),
     recoveryRoutines: (recoveryRoutines.data ?? []).map((r) => ({
       data: recoveryRoutineSchema.parse(r.routine),
       version: r.version,
@@ -239,31 +257,37 @@ export async function savePerformance(input: Exclude<Mutation, { kind: 'review' 
     };
   } else if (input.kind !== 'progress') payload = input.payload;
   const saved =
-    input.kind === 'recovery-routine'
-      ? await ctx.client.rpc('performance_save_recovery_routine', {
+    input.kind === 'movement'
+      ? await ctx.client.rpc('performance_save_movement', {
           p_request: input.requestId,
           p_expected: input.expectedVersion,
-          p_routine: input.payload,
+          p_entry: input.payload,
         })
-      : input.kind === 'fuel-targets'
-        ? await ctx.client.rpc('performance_save_fuel_targets', {
+      : input.kind === 'recovery-routine'
+        ? await ctx.client.rpc('performance_save_recovery_routine', {
             p_request: input.requestId,
             p_expected: input.expectedVersion,
-            p_targets: input.payload,
+            p_routine: input.payload,
           })
-        : input.kind === 'progress'
-          ? await ctx.client.rpc('performance_progression_accept', {
+        : input.kind === 'fuel-targets'
+          ? await ctx.client.rpc('performance_save_fuel_targets', {
               p_request: input.requestId,
               p_expected: input.expectedVersion,
-              p_slot: input.slotId,
-              p_token: input.token,
+              p_targets: input.payload,
             })
-          : await ctx.client.rpc('performance_save', {
-              p_kind: kind,
-              p_request: input.requestId,
-              p_expected: input.expectedVersion,
-              p_payload: payload,
-            });
+          : input.kind === 'progress'
+            ? await ctx.client.rpc('performance_progression_accept', {
+                p_request: input.requestId,
+                p_expected: input.expectedVersion,
+                p_slot: input.slotId,
+                p_token: input.token,
+              })
+            : await ctx.client.rpc('performance_save', {
+                p_kind: kind,
+                p_request: input.requestId,
+                p_expected: input.expectedVersion,
+                p_payload: payload,
+              });
   if (saved.error?.code === '40001')
     throw new IntelligenceError(
       'This record changed elsewhere. Your draft is safe; reload the saved version before deciding what to keep.',

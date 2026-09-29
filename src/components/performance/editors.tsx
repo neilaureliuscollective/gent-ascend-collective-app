@@ -1,4 +1,6 @@
 'use client';
+import { ExercisePicker } from './exercise-picker';
+import { catalogExercise, finalizeExerciseNames } from '@/domains/performance/catalog';
 import { useState, type FormEvent } from 'react';
 import { defaultProfile, goalLabels } from '@/domains/performance/model';
 import type { Profile, Plan, Checkin } from '@/domains/performance/schema';
@@ -126,6 +128,7 @@ export function PlanEditor({
   save: (value: Plan) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(initial);
+  const [picker, setPicker] = useState<number | 'add' | null>(null);
   function update(index: number, patch: Partial<Plan['exercises'][number]>) {
     setDraft((d) => ({
       ...d,
@@ -137,7 +140,7 @@ export function PlanEditor({
       className="perf-form"
       onSubmit={(e) => {
         e.preventDefault();
-        void save(draft);
+        void save(finalizeExerciseNames(draft, initial));
       }}
     >
       <div className="perf-form-heading">
@@ -161,6 +164,24 @@ export function PlanEditor({
         Loads use {draft.unit}. Use zero for bodyweight. This plan retains its unit when profile
         preferences change.
       </p>
+      {picker !== null && (
+        <ExercisePicker
+          exclude={draft.exercises.map((e) => e.id)}
+          replacing={typeof picker === 'number' ? draft.exercises[picker]?.name : undefined}
+          close={() => setPicker(null)}
+          choose={(entry) => {
+            const next = catalogExercise(entry);
+            setDraft((d) => ({
+              ...d,
+              exercises:
+                picker === 'add'
+                  ? [...d.exercises, next]
+                  : d.exercises.map((e, i) => (i === picker ? next : e)),
+            }));
+            setPicker(null);
+          }}
+        />
+      )}
       {draft.exercises.map((exercise, index) => (
         <fieldset className="perf-exercise-editor" key={exercise.id}>
           <legend>Movement {index + 1}</legend>
@@ -173,6 +194,22 @@ export function PlanEditor({
               value={exercise.name}
               onChange={(e) => update(index, { name: e.target.value })}
             />
+          </label>
+          <button type="button" disabled={busy} onClick={() => setPicker(index)}>
+            Replace movement {index + 1} from library
+          </button>
+          <label>
+            Progression for this movement
+            <select
+              aria-label={`Exercise ${index + 1} progression`}
+              value={exercise.progression ?? 'review'}
+              onChange={(e) =>
+                update(index, { progression: e.target.value as 'manual' | 'review' })
+              }
+            >
+              <option value="review">Review eligible rep increases</option>
+              <option value="manual">Keep targets manual</option>
+            </select>
           </label>
           <div className="perf-fields perf-fields-four">
             {(
@@ -227,6 +264,10 @@ export function PlanEditor({
           </div>
         </fieldset>
       ))}
+      <p className="perf-caption">
+        Renaming a custom movement starts a new identity and clears its load when saved. Manual
+        targets stay yours to change; eligible increases always require approval.
+      </p>
       <div className="perf-inline">
         <button
           type="button"
@@ -242,6 +283,13 @@ export function PlanEditor({
           }
         >
           Add movement
+        </button>
+        <button
+          type="button"
+          disabled={busy || draft.exercises.length >= 12}
+          onClick={() => setPicker('add')}
+        >
+          Add from exercise library
         </button>
         <button className="perf-primary" disabled={busy}>
           Save training plan

@@ -394,3 +394,7 @@ Fuel & Body adds optional reference targets, focused daily intake/weight capture
 ## 2026-09-28 — Ascend Performance Phase 6
 
 Restore now has focused recovery capture, a seven-day history with per-metric denominators, daily chosen practices and next-day review. Check-in edits preserve nutrition/body fields. Routine plans freeze after their local date; follow-through corrections retain revisions, with owner RLS, exact retry and stale-edit checks. No autonomous training changes or invented readiness. Local lint/types, 142 unit/SQL tests, build and ledger passed; final browser/Auth/CI evidence is recorded on the Phase 6 PR. [Scope and research](ASCEND_PERFORMANCE_PHASE_6.md). No hosted migration or production promotion. Three core V1 phases remain: Movement; Physical Twin/integrated intelligence; integration/release.
+
+## 2026-09-29 — Ascend Performance Phase 7
+
+Movement adds completed cardio/mobility records, separate seven-day summaries and original-unit history. The starter exercise library supports previewed replacements and manual progression settings while retaining completed prescriptions. Owner-only RPCs preserve immutable revisions, exact retries, stale protection and bounded date windows. Local lint/types, 150 unit/SQL tests and production build pass; final browser/Auth/CI evidence is recorded on the Phase 7 PR. [Scope and research](ASCEND_PERFORMANCE_PHASE_7.md). No hosted migration or production promotion. Two core V1 phases remain: Physical Twin/integrated intelligence; integration/release.

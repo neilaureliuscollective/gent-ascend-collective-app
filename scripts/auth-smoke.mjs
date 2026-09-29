@@ -417,3 +417,19 @@ assert.ok((await anon.rpc('performance_save_recovery_routine',recoveryArgs)).err
 assert.ok((await founder.rpc('performance_save_recovery_routine',{...recoveryArgs,p_request:crypto.randomUUID()})).error);
 assert.ok((await founder.rpc('performance_save_recovery_routine',{...recoveryArgs,p_expected:1,p_request:crypto.randomUUID(),p_routine:{...recoveryArgs.p_routine,outcome:'done'}})).error);
 console.log('PASS: Recovery routine save/replay, owner-local date, stale denial, premature outcome denial and owner isolation through real Auth/PostgREST');
+
+// Phase 7 movement mutations cross the real authenticated API boundary.
+const movementPayload={id:crypto.randomUUID(),day:recoveryDay,kind:'walk',minutes:20,distance:1,unit:'mi',intensity:null,note:'Auth movement check',voided:false};
+const movementArgs={p_request:crypto.randomUUID(),p_expected:0,p_entry:movementPayload};
+for(let i=0;i<2;i++){const result=await founder.rpc('performance_save_movement',movementArgs);assert.equal(result.error,null);assert.equal(result.data,1);}
+for(const table of ['performance_movements','performance_movement_revisions']){
+ const own=await founder.from(table).select('*');assert.equal(own.error,null);assert.equal(own.data.length,1);
+ const other=await member.from(table).select('*');assert.equal(other.error,null);assert.equal(other.data.length,0);
+ assert.ok((await founder.from(table).delete().eq('person_id',own.data[0].person_id)).error);
+}
+assert.ok((await anon.rpc('performance_save_movement',movementArgs)).error);
+assert.ok((await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID()})).error);
+assert.ok((await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID(),p_expected:1,p_entry:{...movementPayload,kind:'mobility'}})).error);
+const movementRemoved=await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID(),p_expected:1,p_entry:{...movementPayload,voided:true}});assert.equal(movementRemoved.error,null);assert.equal(movementRemoved.data,2);
+assert.equal((await founder.from('performance_movement_revisions').select('*')).data.length,2);
+console.log('PASS: Movement save/replay, stale denial, strict mobility values, removal revisions and owner isolation through real Auth/PostgREST');

@@ -168,3 +168,38 @@ test('Restore saves a practice and recovery check-in through the real authentica
     page.getByRole('region', { name: "Today's fuel" }).getByText('2,350 kcal', { exact: true }),
   ).toBeVisible();
 });
+
+test('Movement persists activity and removal through the real authenticated app', async ({
+  page,
+}) => {
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await page.goto('/app/performance');
+  await page.getByRole('button', { name: 'Movement', exact: true }).click();
+  await page.getByRole('button', { name: 'Record activity', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Activity', exact: true }).selectOption('cycle');
+  await page.getByLabel('Duration · minutes').fill('30');
+  await page.getByLabel('Distance · optional').fill('2');
+  await page.getByLabel('Activity note · optional').fill('Founder cycle persistence');
+  await page.getByRole('button', { name: 'Save activity', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Activity history' })).toContainText(
+    'Founder cycle persistence',
+  );
+  await page.reload();
+  await page.getByRole('button', { name: 'Movement', exact: true }).click();
+  const row = page
+    .getByRole('region', { name: 'Activity history' })
+    .locator('li')
+    .filter({ hasText: 'Founder cycle persistence' });
+  await expect(row).toContainText('2 mi');
+  await row.getByRole('button').click();
+  await page.getByRole('button', { name: 'Remove activity', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm removal', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Movement', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Activity history' })).not.toContainText(
+    'Founder cycle persistence',
+  );
+});
