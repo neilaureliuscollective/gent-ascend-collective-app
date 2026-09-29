@@ -9,6 +9,7 @@ export const exerciseSchema = z
     reps: z.number().int().min(1).max(30),
     load: z.number().min(0).max(1500),
     restSeconds: z.number().int().min(15).max(600),
+    progression: z.enum(['review', 'manual']).optional(),
   })
   .strict();
 export const profileSchema = z
@@ -136,8 +137,27 @@ export const recoveryRoutineSchema = z
   .strict();
 export type RecoveryRoutine = z.infer<typeof recoveryRoutineSchema>;
 export type FuelTargets = z.infer<typeof fuelTargetsSchema>;
+export const movementSchema = z
+  .object({
+    id: z.uuid(),
+    day: z.iso.date(),
+    kind: z.enum(['walk', 'run', 'cycle', 'row', 'swim', 'cardio', 'mobility']),
+    minutes: z.number().int().min(1).max(1440),
+    distance: z.number().positive().max(1000).nullable(),
+    unit: z.enum(['km', 'mi']),
+    intensity: z.enum(['easy', 'moderate', 'vigorous']).nullable(),
+    note: z.string().trim().max(240),
+    voided: z.boolean(),
+  })
+  .strict()
+  .refine(
+    (x) => x.kind !== 'mobility' || (x.distance === null && x.intensity === null),
+    'Mobility uses duration only.',
+  );
+export type Movement = z.infer<typeof movementSchema>;
 const base = { requestId: z.uuid(), expectedVersion: z.number().int().min(0) };
 export const mutationSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('movement'), ...base, payload: movementSchema }).strict(),
   z
     .object({ kind: z.literal('recovery-routine'), ...base, payload: recoveryRoutineSchema })
     .strict(),
@@ -178,6 +198,7 @@ export type PerformanceData = {
   program?: (Stored<Program> & { nextSlotId: string }) | null;
   fuelTargets?: Stored<FuelTargets> | null;
   recoveryRoutines?: Stored<RecoveryRoutine>[];
+  movements?: Stored<Movement>[];
   progression?: ProgressionReview[];
   progressionDecisions?: ProgressionDecision[];
   outcomes?: DecisionOutcome[];

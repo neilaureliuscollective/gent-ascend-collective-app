@@ -29,6 +29,7 @@ import {
   type DeviceDraft,
 } from '../../../public/performance-store.js';
 import { ProfileEditor, PlanEditor, CheckinEditor } from './editors';
+import { MovementSpace } from './movement';
 import { RecoverySpace } from './recovery';
 import { FuelSpace } from './fuel';
 import { Training } from './training';
@@ -36,7 +37,7 @@ import { ProgressionReview } from './progression';
 import { ProgramEditor, ProgramCycle, SessionPreparation, SessionDecision } from './program';
 import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/performance/program';
 import type { Prescription, Program } from '@/domains/performance/schema';
-type View = 'today' | 'train' | 'restore' | 'fuel' | 'review';
+type View = 'today' | 'train' | 'restore' | 'fuel' | 'movement' | 'review';
 export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) {
   const [data, setData] = useState(initial);
   const [view, setView] = useState<View>('today');
@@ -313,6 +314,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
             ['train', 'Training'],
             ['restore', 'Restore'],
             ['fuel', 'Fuel & Body'],
+            ['movement', 'Movement'],
             ['review', 'Review'],
           ] as const
         ).map(([key, label]) => (
@@ -579,6 +581,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
               )}
             </>
           )}
+          {view === 'movement' && <MovementSpace data={data} busy={busy} save={mutate} />}
           {view === 'fuel' && <FuelSpace data={data} busy={busy} save={mutate} />}
           {view === 'restore' && <RecoverySpace data={data} busy={busy} save={mutate} />}
           {view === 'review' && (

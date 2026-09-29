@@ -132,7 +132,7 @@ export function nextAdjustment(data: PerformanceData): Adjustment | null {
     86400000;
   if (daysAgo > 21 || daysAgo < 0) return null;
   for (const exercise of data.plan.data.exercises) {
-    if (exercise.reps >= 20) continue;
+    if (exercise.reps >= 20 || exercise.progression === 'manual') continue;
     const meets = recent.every((s) => {
       const sets = s.data.sets.filter((x) => x.exerciseId === exercise.id);
       return (

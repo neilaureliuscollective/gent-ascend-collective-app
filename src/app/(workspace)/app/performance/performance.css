@@ -1231,3 +1231,60 @@
     gap: 24px 40px;
   }
 }
+
+.perf-exercise-picker {
+  padding-block: 24px;
+  border-block: 1px solid var(--perf-line);
+}
+.perf-catalog-results {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.perf-catalog-results button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 52px;
+  text-align: left;
+}
+.perf-catalog-results span {
+  font-size: 0.75rem;
+  color: var(--perf-muted);
+}
+.perf-movement h2 {
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  max-width: 24ch;
+}
+.perf-movement-history {
+  list-style: none;
+  padding: 0;
+}
+.perf-movement-history li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 20px;
+  border-top: 1px solid var(--perf-line);
+}
+.perf-movement-history li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.perf-movement-history time {
+  font-size: 0.75rem;
+  color: var(--perf-muted);
+}
+.perf-movement-history h4 {
+  margin: 8px 0;
+}
+.perf-movement-history button {
+  min-height: 44px;
+  flex-shrink: 0;
+}

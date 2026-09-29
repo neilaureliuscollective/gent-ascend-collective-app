@@ -216,3 +216,7 @@ Expand beyond training with a focused daily-total workflow and optional user-def
 ## 2026-09-28 — Performance Phase 6: Recovery & sleep
 
 Founder authorized the next research/plan/build phase. Replace static Restore observations with focused capture, separate seven-day sleep/energy/soreness context, a daily user-chosen routine and exact next-day follow-through. Preserve existing fuel/body values and freeze past routine plans while allowing versioned corrections to follow-through. No causal improvement claim, fabricated readiness score, universal bedtime, new reminder or training mutation. [Research, scope, invariants and release gates](ASCEND_PERFORMANCE_PHASE_6.md). Three core phases remain in the revised V1 sequence.
+
+## 2026-09-29 — Phase 7 movement identity and evidence
+
+Use a small original catalog of stable exercise identities instead of importing media or guessing identity from user text. Substitution and custom renaming reset identity/load; progression is opt-in for catalog selections and remains manual when selected. Completed cardio/mobility records are distinct from resistance prescriptions and never qualify for rep progression. Intensity is optional self-report; normalize distance only within an activity summary, retaining entered units. Follow existing owner-scoped RPC, receipt, optimistic-version and immutable-revision contracts. Research and release boundaries: [Phase 7](ASCEND_PERFORMANCE_PHASE_7.md). No additional dependency or infrastructure.

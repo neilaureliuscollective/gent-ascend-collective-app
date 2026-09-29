@@ -7,7 +7,7 @@ import type {
   SessionRow,
   SetRow,
 } from '@/domains/performance/rows';
-import type { FuelTargets, RecoveryRoutine } from '@/domains/performance/schema';
+import type { FuelTargets, RecoveryRoutine, Movement } from '@/domains/performance/schema';
 import type { DayEntry, DayAction, DailyReview } from '@/domains/daily/model';
 import type {
   Conversation,
@@ -151,6 +151,31 @@ export interface Database {
             referencedColumns: ['person_id', 'day'];
           },
         ]
+      >;
+      performance_movements: Table<
+        {
+          person_id: string;
+          id: string;
+          day: string;
+          entry: Movement;
+          version: number;
+          updated_at: string;
+        },
+        never,
+        never
+      >;
+      performance_movement_revisions: Table<
+        {
+          person_id: string;
+          id: string;
+          entry: Movement;
+          version: number;
+          request_id: string;
+          fingerprint: string;
+          recorded_at: string;
+        },
+        never,
+        never
       >;
       performance_recovery_routines: Table<
         {
@@ -443,6 +468,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      performance_save_movement: {
+        Args: { p_request: string; p_expected: number; p_entry: Movement };
+        Returns: number;
+      };
       performance_save_recovery_routine: {
         Args: { p_request: string; p_expected: number; p_routine: RecoveryRoutine };
         Returns: number;
