@@ -13,8 +13,9 @@ for (const width of [344, 768, 1440])
       animations: 'disabled',
     });
     await page.getByRole('button', { name: 'Enter training' }).click();
+  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
     await expect(
-      page.getByRole('button', { name: 'Start & keep workout on device' }),
+      page.getByRole('button', { name: 'Start saved workout →' }),
     ).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -64,7 +65,8 @@ test('workout survives reload, retries the same pending request, and finishes on
   });
   await page.goto(fixture);
   await page.getByRole('button', { name: 'Enter training' }).click();
-  await page.getByRole('button', { name: 'Start & keep workout on device' }).click();
+  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
+  await page.getByRole('button', { name: 'Start saved workout →' }).click();
   await page.getByLabel('Set 1 reps').fill('9');
   await page.getByLabel('Set 1 effort').fill('7');
   await page.getByRole('button', { name: 'Record set 1', exact: true }).click();
@@ -77,7 +79,7 @@ test('workout survives reload, retries the same pending request, and finishes on
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
   await expect(page.getByText('Synced to your account', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Session complete.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Workout complete.' })).toBeVisible();
   await expect(page.getByText('Synced to your account', { exact: true })).toBeVisible();
   const count = receipts.size;
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
@@ -92,7 +94,8 @@ test('stale remote edits retain the local draft and offer explicit reconciliatio
   );
   await page.goto(fixture);
   await page.getByRole('button', { name: 'Enter training' }).click();
-  await page.getByRole('button', { name: 'Start & keep workout on device' }).click();
+  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
+  await page.getByRole('button', { name: 'Start saved workout →' }).click();
   await expect(
     page.getByRole('heading', { name: 'Another version is saved to your account.' }),
   ).toBeVisible();

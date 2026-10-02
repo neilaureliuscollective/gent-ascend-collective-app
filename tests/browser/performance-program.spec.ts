@@ -15,6 +15,7 @@ for (const width of [344, 768, 1440])
     await page.goto(fixture);
     await expect(page.getByRole('region', { name: 'Training cycle' })).toContainText('Strength A');
     await page.getByRole('button', { name: 'Enter training' }).click();
+  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
     await page.getByRole('button', { name: 'Fewer sets', exact: true }).click();
     await expect(page.getByText('Cable row: 3 → 2 sets')).toBeVisible();
     await expect(page.getByText('No check-in today. Recovery is unknown.')).toBeVisible();
@@ -68,6 +69,7 @@ test('accepted program adjustment survives offline reload, syncs once and advanc
   });
   await page.goto(fixture);
   await page.getByRole('button', { name: 'Enter training' }).click();
+  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
   await page.getByRole('button', { name: 'Fewer sets', exact: true }).click();
   await page.getByRole('button', { name: 'Accept & start workout', exact: true }).click();
   await page.getByRole('button', { name: 'Record set 1', exact: true }).click();
@@ -80,7 +82,7 @@ test('accepted program adjustment survives offline reload, syncs once and advanc
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
   await expect(page.getByText('Synced to your account', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Session complete.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Workout complete.' })).toBeVisible();
   await expect(page.getByText('Synced to your account', { exact: true })).toBeVisible();
   const count = receipts.size;
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
@@ -93,6 +95,7 @@ test('accepted program adjustment survives offline reload, syncs once and advanc
     },
   });
   await page.getByRole('button', { name: 'Prepare next session' }).click();
+  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
   await expect(page.getByLabel('Session to train')).toHaveValue(
     programFixture.program!.data.sessions[1]!.id,
   );

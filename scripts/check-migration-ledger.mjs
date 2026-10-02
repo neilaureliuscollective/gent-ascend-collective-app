@@ -33,6 +33,8 @@ const applied = new Map([
   ['20260928215620_ascend_performance_fuel_body.sql', '25b9af35a6972d87008db85cecbf179b'],
   ['20260928223531_ascend_performance_recovery.sql', '9f55d35585e60b0af1ca9234b9a8d3ad'],
   ['20260929083302_ascend_performance_movement.sql', 'e7d95655c9c64262a5f0d75bf2459362'],
+  ['20261002105745_founding_membership_billing.sql', '859a4afef0855c95251b0919c8de83f9'],
+  ['20261002123344_restrict_chat_trigger_execution.sql', 'cdc2ec0d899586651d4db01d8134b734'],
 ]);
 const directory = new URL('../supabase/migrations/', import.meta.url);
 const filenames = (await readdir(directory)).filter(name => name.endsWith('.sql'));
