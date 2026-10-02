@@ -1,3 +1,7 @@
+# Subtle cinematic replay — October 2, 2026
+
+Added a quiet ↺ Replay experience link beneath the world controls. It opens the existing entrance with a clear replay action that bypasses remembered completion after an explicit tap. The original film, sound preference, Skip, Still/reduced-motion and Data Saver behavior remain intact; navigating to replay alone does not download the film. No account or database changes.
+
 # Combined production release — October 2, 2026
 
 Integrated Whole-Man World and latest freestyle/Machine Scout training, Performance phases 1–7, Interaction Phase 3, cinematic public journey, Commerce Spine, current main Grooming/Chat/Studio and the older daily completion feature. Resolved overlapping controls without dropping copy/revision, focused editors, error recovery or offline behavior. Production homepage activates the new /experience entrance; GENT_WORLD_ENABLED=false remains an explicit rollback.

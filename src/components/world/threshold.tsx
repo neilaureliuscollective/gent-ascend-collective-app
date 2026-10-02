@@ -7,7 +7,7 @@ import { EnergyOrb } from './energy-orb';
 import { brand } from '@/platform/brand';
 import { useAppearance } from '@/components/visual/appearance';
 
-export function Threshold() {
+export function Threshold({ replay = false }: { replay?: boolean }) {
   const router = useRouter();
   const { moving } = useAppearance();
   const [entering, setEntering] = useState(false);
@@ -201,12 +201,13 @@ export function Threshold() {
               event.button === 0
             ) {
               event.preventDefault();
-              void enter();
+              void enter(replay);
             }
           }}
           aria-disabled={entering}
+          aria-label={replay ? 'Replay experience' : undefined}
         >
-          ENTER <span aria-hidden="true">↗</span>
+          {replay ? 'REPLAY EXPERIENCE' : 'ENTER'} <span aria-hidden="true">↗</span>
         </Link>
         <span className="gw-entry-note">Explore freely. Make it yours when you’re ready.</span>
       </div>
