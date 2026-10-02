@@ -2,7 +2,7 @@
 import { ChoiceGroup } from '@/components/interaction/choice-group';
 import { ExercisePicker } from './exercise-picker';
 import { catalogExercise, finalizeExerciseNames } from '@/domains/performance/catalog';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { defaultProfile, goalLabels } from '@/domains/performance/model';
 import type { Profile, Plan, Checkin } from '@/domains/performance/schema';
 export function ProfileEditor({
