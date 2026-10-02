@@ -4,7 +4,7 @@ import { launchPurchaseAllowed, launchState, launchLabel } from '@/domains/comme
 import { readProductStory, shopifyMediaUrl } from '@/domains/commerce/product-story';
 import { previewProduct } from '@/domains/catalog/preview';
 import { vitalisDevelopmentHighlights } from '@/domains/catalog/vitalis-development';
-import { ProductAtelier } from '@/components/public/product-atelier';
+import { CommerceMotion } from './commerce-motion';
 import { ProductPurchase } from './product-purchase';
 import { PurchaseTerms } from './purchase-terms';
 import { ProductGallery } from './product-gallery';
@@ -42,13 +42,11 @@ export function ProductExperience({
     product?.description ||
     preview?.summary ||
     'A considered part of your daily ritual.';
-  const images = story?.mediaApproved
-    ? product?.images.nodes.length
-      ? product.images.nodes
-      : product?.featuredImage
-        ? [product.featuredImage]
-        : []
-    : [];
+  const images = product?.images.nodes.length
+    ? product.images.nodes
+    : product?.featuredImage
+      ? [product.featuredImage]
+      : [];
   const model = story?.mediaApproved
     ? product?.media?.nodes
         .flatMap((media) => media.sources ?? [])
@@ -65,14 +63,11 @@ export function ProductExperience({
   const developmentBlend = !product && handle === 'vitalis';
   return (
     <main id="world-main" className="reserve-commerce reserve-product">
+      <CommerceMotion />
       <ProductView handle={handle} />
       <section className="reserve-product-intro">
         <div id="atelier" className="reserve-product-visual">
-          {!images.length && handle === 'vitalis' ? (
-            <ProductAtelier stageOnly />
-          ) : (
-            <ProductGallery title={title} kind={kind} brand={brand} images={images} model={model} />
-          )}
+          <ProductGallery title={title} kind={kind} brand={brand} images={images} model={model} />
         </div>
         <div className="reserve-product-copy">
           <Link href="/shop" className="world-text-link">

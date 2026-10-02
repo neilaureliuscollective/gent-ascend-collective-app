@@ -94,6 +94,7 @@ createRoot(document.getElementById('root')!).render(
         product={{
           ...commerceFixture,
           launchState: { value: params.get('state') ?? 'ready' },
+          ...(params.get('story') === 'missing' ? { story: null } : {}),
           ...(params.get('model') === 'fail'
             ? {
                 media: {

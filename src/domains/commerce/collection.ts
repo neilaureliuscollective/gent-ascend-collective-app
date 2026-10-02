@@ -50,7 +50,7 @@ export function collectionEntries(
       scent: story?.scent.map((note) => `${note.label}: ${note.value}`).join(' · '),
       orderable: launchPurchaseAllowed(product) && product.availableForSale,
       image:
-        story?.mediaApproved && product.featuredImage && shopifyMediaUrl(product.featuredImage.url)
+        product.featuredImage && shopifyMediaUrl(product.featuredImage.url)
           ? product.featuredImage
           : undefined,
       categories: product.collections.nodes.map((collection) => collection.handle),

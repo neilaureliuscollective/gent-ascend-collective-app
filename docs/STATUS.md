@@ -1,3 +1,7 @@
+# Commerce photography and cinematic refinement — 2026-10-02
+
+Founder-approved visual correction: Shopify photos no longer depend on editorial `mediaApproved`; fabricated packaging fallbacks removed from commerce. Larger dimensional product scenes, green/gold lighting, staggered shelves and scoped native-scroll choreography implemented. Lint/typecheck/build and 223 unit tests passed; browser verification and publication results recorded in the release handoff. See [COMMERCE_VISUAL_REFINEMENT.md](COMMERCE_VISUAL_REFINEMENT.md). Physical Fold performance remains founder review.
+
 # Subtle cinematic replay — October 2, 2026
 
 Added a quiet ↺ Replay experience link beneath the world controls. It opens the existing entrance with a clear replay action that bypasses remembered completion after an explicit tap. The original film, sound preference, Skip, Still/reduced-motion and Data Saver behavior remain intact; navigating to replay alone does not download the film. No account or database changes.

@@ -26,9 +26,8 @@ export async function generateMetadata({
   const origin = publicCommerceOrigin(process.env.NEXT_PUBLIC_APP_URL);
   const path = productPath(handle);
   const url = origin && path ? `${origin}${path}` : undefined;
-  const story = readProductStory(product?.story);
   const image =
-    story?.mediaApproved && product?.featuredImage && shopifyMediaUrl(product.featuredImage.url)
+    product?.featuredImage && shopifyMediaUrl(product.featuredImage.url)
       ? product.featuredImage.url
       : undefined;
   return {

@@ -42,7 +42,8 @@ test('reduced motion and keyboard-accessible preview education', async ({ page }
   await page.goto('/shop/vitalis');
   await expect(page.locator('.public-world')).toHaveAttribute('data-world-still', 'true');
   await expect(page.locator('canvas')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Explore in 3D' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Explore in 3D' })).toHaveCount(0);
+  await expect(page.getByText('Product photography forthcoming', { exact: true })).toBeVisible();
   await page.locator('summary').filter({ hasText: 'Do I need a membership to purchase?' }).focus();
   await page.keyboard.press('Enter');
   await expect(

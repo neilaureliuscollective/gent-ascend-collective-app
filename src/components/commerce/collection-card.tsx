@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CollectionEntry } from '@/domains/commerce/collection';
-import { ConceptVessel } from './concept-vessel';
+import { ProductMediaPending } from './product-media-pending';
 import { CollectionSave } from './collection-save';
 
 export function CollectionCard({
@@ -31,9 +31,9 @@ export function CollectionCard({
               sizes="(max-width: 560px) 90vw, (max-width: 960px) 45vw, 30vw"
             />
           ) : (
-            <ConceptVessel title={entry.title} kind={entry.kind} brand={entry.brand} />
+            <ProductMediaPending title={entry.title} />
           )}
-          <small>{entry.image ? entry.status : 'Concept packaging'}</small>
+          <small>{entry.image ? entry.status : 'Photography forthcoming'}</small>
         </div>
         <div className="reserve-card-copy">
           <span className="world-kicker">

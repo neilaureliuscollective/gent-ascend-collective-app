@@ -3,16 +3,14 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import type { createModelStage } from './product-model-stage';
-import { ConceptVessel } from './concept-vessel';
+import { ProductMediaPending } from './product-media-pending';
 import { commerceEvent } from './commerce-events';
 import { shopifyMediaUrl } from '@/domains/commerce/product-story';
 
 export function ProductGallery({
   title,
-  kind,
   images,
   model,
-  brand,
 }: {
   title: string;
   kind: string;
@@ -77,6 +75,7 @@ export function ProductGallery({
   return (
     <div className="reserve-gallery">
       <div className="reserve-product-stage">
+        <div className="reserve-scene-light" aria-hidden="true" />
         <span className="reserve-stage-coordinate">
           THE COLLECTION <span>{requested ? 'OBJECT / 360°' : 'OBJECT / 01'}</span>
         </span>
@@ -89,6 +88,7 @@ export function ProductGallery({
             aria-label={`Enlarge ${title} image ${selected + 1}`}
           >
             <Image
+              key={image.url}
               src={image.url}
               alt={image.altText ?? `${title} view ${selected + 1}`}
               width={image.width ?? 800}
@@ -98,15 +98,13 @@ export function ProductGallery({
             />
           </button>
         ) : (
-          <ConceptVessel title={title} kind={kind} brand={brand} />
+          <ProductMediaPending title={title} />
         )}
         {requested && (
           <div ref={host} className="reserve-model-host" data-ready={status === 'ready'} />
         )}
         <span className="reserve-stage-caption">
-          {image
-            ? 'Inspect the details · tap to enlarge'
-            : 'Concept packaging · final product may differ'}
+          {image ? 'Inspect the details · tap to enlarge' : 'Product photography is being prepared'}
         </span>
       </div>
       {safeImages.length > 1 && (
