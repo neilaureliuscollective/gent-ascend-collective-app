@@ -1,3 +1,7 @@
+# Photographic product lightboxes — 2026-10-02
+
+Founder-directed refinement of the live product presentation: photo-aligned metallic gold frames, corner geometry, slow breathing and light movement replace the disconnected arch/pedestal treatment. Hero captions now sit below images in document flow; Shopify intrinsic dimensions retained. Offscreen/background/Still/reduced-motion handling implemented. Build/lint/typecheck and 223 unit tests passed; targeted browser tests verify activation and caption separation across 344/768/1440 widths. See COMMERCE_VISUAL_REFINEMENT.md.
+
 # Commerce photography and cinematic refinement — 2026-10-02
 
 Founder-approved visual correction: Shopify photos no longer depend on editorial `mediaApproved`; fabricated packaging fallbacks removed from commerce. Larger dimensional product scenes, green/gold lighting, staggered shelves and scoped native-scroll choreography implemented. Lint/typecheck/build and 223 unit tests passed; browser verification and publication results recorded in the release handoff. See [COMMERCE_VISUAL_REFINEMENT.md](COMMERCE_VISUAL_REFINEMENT.md). Physical Fold performance remains founder review.

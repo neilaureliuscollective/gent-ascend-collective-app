@@ -17,3 +17,11 @@ Lint, typecheck, 223 unit tests and production build pass. Migration ledger conf
 Live inspection before this change confirmed Shopify products were present while all card photos were being suppressed. Production publication uses the founder's existing approval to make this commerce work available on the live domain. Final deployment verification is reported separately.
 
 Research: Shopify MediaImage and Product Storefront API documentation; GSAP ScrollTrigger and matchMedia documentation; web.dev animation performance guide. The intended motion uses transform/opacity and respects the existing public world's Still control.
+
+## Photographic lightbox correction — founder screenshots, 2026-10-02
+
+Founder screenshots showed scenic rectangular photos floating on unrelated arched pedestals and a long hero caption overlapped by the transformed photo. The photo scene is now framed directly: metallic gold rim, corner details, recessed photographic window and ambient halo. Fake pedestals/arches behind photography are removed. Hero coordinate and caption have their own normal-flow rows. Actual Shopify image dimensions prevent reserved-space mismatch. Parallax displacement is reduced to preserve caption clearance.
+
+The reusable photographic frame uses slow transform-only breathing, an opacity halo and a low-opacity compositor light sweep. Intersection observation and document visibility pause motion outside the viewport/background tab. Still mode clears activation; OS reduced motion disables the CSS sequences. Merchandise labels, watermarks, artwork and original photographic backgrounds remain intact. No supplier media is rewritten or new packaging invented.
+
+Research: https://web.dev/articles/animations-and-performance and https://shopify.dev/docs/storefronts/themes/best-practices/performance/use-transform-for-animations . Existing React and deployment skill review applies; frame observers/listeners clean up on unmount.

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { ProductPhotoFrame } from './product-photo-frame';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { ProductMediaPending } from './product-media-pending';
 import { CollectionSave } from './collection-save';
@@ -23,13 +24,15 @@ export function CollectionCard({
             {String(index + 1).padStart(2, '0')} / {entry.brand}
           </span>
           {entry.image ? (
-            <Image
-              src={entry.image.url}
-              alt={entry.image.altText ?? entry.title}
-              width={600}
-              height={740}
-              sizes="(max-width: 560px) 90vw, (max-width: 960px) 45vw, 30vw"
-            />
+            <ProductPhotoFrame>
+              <Image
+                src={entry.image.url}
+                alt={entry.image.altText ?? entry.title}
+                width={entry.image.width ?? 600}
+                height={entry.image.height ?? 740}
+                sizes="(max-width: 560px) 90vw, (max-width: 960px) 45vw, 30vw"
+              />
+            </ProductPhotoFrame>
           ) : (
             <ProductMediaPending title={entry.title} />
           )}

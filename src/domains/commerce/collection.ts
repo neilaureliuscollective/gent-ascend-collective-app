@@ -12,7 +12,7 @@ export type CollectionEntry = {
   price: string;
   status: string;
   size?: string;
-  image?: { url: string; altText: string | null };
+  image?: { url: string; altText: string | null; width?: number | null; height?: number | null };
   categories: string[];
   discovery?: string[];
   fit?: string;

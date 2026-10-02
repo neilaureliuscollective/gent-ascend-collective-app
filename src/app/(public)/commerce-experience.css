@@ -1904,3 +1904,258 @@ body:has(.reserve-product .reserve-sticky-purchase) .world-motion-control {
     animation: reserve-photo-arrival 600ms ease-out both;
   }
 }
+
+/* The photograph is the scene: a metallic lightbox, not a bottle on a fake pedestal. */
+.reserve-photo-frame {
+  display: block;
+  position: relative;
+  padding: 9px;
+  width: 100%;
+  min-width: 0;
+  border-radius: 21px;
+  border: 1px solid #c4912fb3;
+  background: linear-gradient(135deg, #e4bf6a35, #081b16 23%, #102d25 70%, #c4912f55);
+  box-shadow:
+    inset 0 0 0 1px #f5deb31a,
+    0 25px 65px #0008,
+    0 0 45px #0b3b3260;
+  isolation: isolate;
+}
+.reserve-photo-window {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #050706;
+}
+.reserve-photo-window::after {
+  content: '';
+  position: absolute;
+  inset: -25% -100%;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 44%,
+    #ffe8b314 49%,
+    #ffffff0c 51%,
+    transparent 57%
+  );
+  transform: translateX(-32%);
+  opacity: 0;
+}
+.reserve-photo-corners {
+  position: absolute;
+  inset: -3px;
+  border-radius: 24px;
+  pointer-events: none;
+  background:
+    linear-gradient(#e4bf6a, #e4bf6a) left top / 24px 2px no-repeat,
+    linear-gradient(#e4bf6a, #e4bf6a) left top / 2px 24px no-repeat,
+    linear-gradient(#e4bf6a, #e4bf6a) right bottom / 24px 2px no-repeat,
+    linear-gradient(#e4bf6a, #e4bf6a) right bottom / 2px 24px no-repeat;
+}
+.reserve-photo-aura {
+  position: absolute;
+  inset: -35px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse, #c4912f17, #146b5826 45%, transparent 72%);
+  opacity: 0.55;
+}
+.reserve-card-stage,
+.reserve-hero-object,
+.reserve-product-stage {
+  border-radius: 24px;
+  background: radial-gradient(ellipse at center, #146b582e, transparent 75%);
+}
+.reserve-card-stage::before,
+.reserve-card-stage::after,
+.reserve-hero-object::before,
+.reserve-hero-object::after,
+.reserve-product-stage::before,
+.reserve-product-stage::after,
+.reserve-card-stage .reserve-stage-rings,
+.reserve-hero-object .reserve-stage-rings,
+.reserve-product-stage .reserve-stage-rings {
+  display: none;
+}
+.reserve-card-stage {
+  height: auto;
+  padding: 58px 5% 48px;
+  overflow: visible;
+}
+.reserve-card-stage .reserve-photo-frame {
+  width: 100%;
+}
+.reserve-card-stage .reserve-photo-window img,
+.reserve-hero-object .reserve-photo-window img,
+.reserve-product-stage .reserve-photo-window img {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  filter: none;
+  z-index: 0;
+  transition: none;
+}
+.reserve-card-number {
+  top: 16px;
+  left: 5%;
+  max-width: 90%;
+}
+.reserve-card-stage > small {
+  bottom: 16px;
+}
+.reserve-hero-object {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  min-height: 0;
+  padding: 20px 5% 0;
+  align-content: start;
+}
+.reserve-hero-coordinate {
+  position: static;
+  width: 100%;
+}
+.reserve-hero-object > .reserve-photo-frame {
+  width: 100%;
+}
+.reserve-hero-object-caption {
+  position: static;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 24px 0 0;
+}
+.reserve-hero-object-caption > span {
+  white-space: nowrap;
+}
+.reserve-hero-object-caption > strong {
+  font-size: clamp(1.6rem, 2.4vw, 2.4rem);
+  line-height: 1.2;
+}
+.reserve-product-stage {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 5%;
+  overflow: visible;
+}
+.reserve-product-stage .reserve-stage-coordinate,
+.reserve-product-stage .reserve-stage-caption {
+  position: static;
+  width: 100%;
+}
+.reserve-product-stage .reserve-image-button {
+  width: 100%;
+  max-width: none;
+}
+.reserve-product-stage .reserve-image-button .reserve-photo-frame {
+  width: 100%;
+}
+@keyframes reserve-photo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.018);
+  }
+}
+@keyframes reserve-photo-sweep {
+  0%,
+  12% {
+    transform: translateX(-32%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.7;
+  }
+  65%,
+  100% {
+    transform: translateX(32%);
+    opacity: 0;
+  }
+}
+@keyframes reserve-photo-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reserve-photo-window img {
+    animation: reserve-photo-breathe 9s ease-in-out infinite paused;
+  }
+  .reserve-photo-window::after {
+    animation: reserve-photo-sweep 14s ease-in-out infinite paused;
+  }
+  .reserve-photo-aura {
+    animation: reserve-photo-glow 9s ease-in-out infinite paused;
+  }
+  [data-photo-active='true'] .reserve-photo-window img,
+  [data-photo-active='true'] .reserve-photo-window::after,
+  [data-photo-active='true'] .reserve-photo-aura {
+    animation-play-state: running;
+  }
+  [data-commerce-motion='active'] .reserve-image-button img {
+    animation: reserve-photo-breathe 9s ease-in-out infinite paused;
+  }
+  [data-commerce-motion='active'] [data-photo-active='true'] .reserve-photo-window img {
+    animation-play-state: running;
+  }
+  .reserve-collection-card:hover .reserve-card-stage img {
+    transform: none;
+  }
+}
+@media (max-width: 600px) {
+  .reserve-hero-object {
+    min-height: 0;
+    padding-inline: 2%;
+    gap: 24px;
+  }
+  .reserve-card-stage {
+    height: auto;
+    padding-inline: 2%;
+  }
+  .reserve-product-stage {
+    min-height: 0;
+    padding-inline: 2%;
+  }
+  .reserve-card-copy {
+    padding-inline: 2%;
+  }
+  .reserve-card-copy h3 {
+    font-size: clamp(1.9rem, 8.5vw, 2.6rem);
+  }
+  .reserve-card-number {
+    left: 2%;
+  }
+  .reserve-photo-frame {
+    padding: 7px;
+    border-radius: 18px;
+  }
+}
+.reserve-commerce {
+  overflow-x: clip;
+}
+.reserve-product-stage .reserve-image-button {
+  height: auto;
+  padding: 0;
+  flex-shrink: 0;
+}
+.reserve-product-stage {
+  height: auto;
+}
+.reserve-thumbnails {
+  position: relative;
+  z-index: 3;
+}

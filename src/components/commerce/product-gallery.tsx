@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { ProductPhotoFrame } from './product-photo-frame';
 import { useEffect, useRef, useState } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import type { createModelStage } from './product-model-stage';
@@ -87,15 +88,17 @@ export function ProductGallery({
             onClick={() => setZoom(true)}
             aria-label={`Enlarge ${title} image ${selected + 1}`}
           >
-            <Image
-              key={image.url}
-              src={image.url}
-              alt={image.altText ?? `${title} view ${selected + 1}`}
-              width={image.width ?? 800}
-              height={image.height ?? 1000}
-              sizes="(max-width: 760px) 90vw, 48vw"
-              preload={selected === 0}
-            />
+            <ProductPhotoFrame>
+              <Image
+                key={image.url}
+                src={image.url}
+                alt={image.altText ?? `${title} view ${selected + 1}`}
+                width={image.width ?? 800}
+                height={image.height ?? 1000}
+                sizes="(max-width: 760px) 90vw, 48vw"
+                preload={selected === 0}
+              />
+            </ProductPhotoFrame>
           </button>
         ) : (
           <ProductMediaPending title={title} />
