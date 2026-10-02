@@ -715,3 +715,161 @@
     color: ButtonText;
   }
 }
+
+/* Phase 3: one personal signal, revealed without turning the scene into a dashboard. */
+.gw-saved-priority {
+  min-height: 109px;
+  padding: 0;
+}
+.gw-priority-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.gw-priority-label .gw-kicker {
+  margin: 0;
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+}
+.gw-priority-mark {
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #cfa755;
+  box-shadow: 0 0 10px #c4912f55;
+}
+.gw-priority-open {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  padding: 10px 0;
+  background: none;
+  color: #f1e8d1;
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.gw-priority-open > span:first-child {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gw-priority-open > span:last-child {
+  color: #d7b66d;
+}
+.gw-priority-source {
+  color: #adc3b4;
+  font-size: 0.66rem;
+  line-height: 1.6;
+  margin: 0;
+}
+.gw-priority-editor > .gw-kicker {
+  margin-top: 8px;
+}
+.gw-priority-editor h3 {
+  font-size: clamp(2rem, 6vw, 3.1rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin: 18px 0;
+}
+.gw-priority-editor h3 em {
+  color: #d8b878;
+  font-style: normal;
+}
+.gw-priority-editor > p {
+  color: #c7d1c6;
+  line-height: 1.6;
+}
+.gw-priority-editor form {
+  margin: 28px 0 16px;
+}
+.gw-priority-editor label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+  color: #e9ddc1;
+}
+.gw-priority-editor textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  padding: 16px;
+  border: 1px solid #ba995050;
+  border-radius: 8px;
+  background: #061b15;
+  color: #f3ead7;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.gw-priority-editor textarea::placeholder {
+  color: #94ab9d;
+}
+.gw-priority-editor .gw-muted {
+  margin-block: 12px;
+}
+.gw-priority-editor .gw-action {
+  width: 100%;
+}
+.gw-priority-editor button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.gw-priority-next {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #c4912f30;
+}
+.gw-priority-next > p:last-child {
+  color: #e9e3d2;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.gw-priority-return {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  margin-top: 14px;
+  color: #e4c181 !important;
+}
+.gw-priority-error {
+  margin-block: 16px;
+  color: #f3d3ac;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.gw-priority-error button,
+.gw-priority-error a {
+  display: block;
+  min-height: 44px;
+  padding: 10px 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+@media (forced-colors: active) {
+  .gw-priority-open {
+    color: ButtonText;
+  }
+  .gw-priority-editor textarea {
+    color: FieldText;
+    background: Field;
+    border-color: ButtonText;
+  }
+}
+
+@media (max-width: 900px) {
+  .gw-saved-priority {
+    min-height: 87px;
+  }
+}

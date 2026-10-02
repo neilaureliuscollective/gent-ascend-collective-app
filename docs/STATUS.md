@@ -1,3 +1,11 @@
+# Whole-Man World Phase 3 — October 2, 2026
+
+Built personal continuity into the approved world: one dated saved priority, a focused editor, the next unfinished daily action and a direct return to the existing daily workspace. Members use their existing daily intention; guests keep the session-only reflection. The server retains all unrelated daily fields and rejects stale account/date/version writes. Confirmed saves update the scene; failed or ambiguous writes preserve drafts and require explicit reload before retry. The narrow response excludes wellness/reflection history, and private reads never block world navigation. No new migration or dependency.
+
+Verified production build/strict TypeScript, ESLint, 150 unit/service/route/SQL-emulation tests and recorded migration ledger. Fifteen world regression cases passed, plus six new priority browser scenarios on the final build. Visual review corrected phone dock clearance. Research, implementation and verification: [Phase 3](WHOLE_MAN_WORLD_PHASE_3.md). Production remains unchanged on draft PR #33. Member browser flows use synthetic API fixtures; real hosted two-account acceptance and physical-device checks remain release gates.
+
+---
+
 ## 2026-10-02 — Founder orb correction
 
 The Whole-Man World now uses the flowing-energy orb from the founder’s Aethelios reference, adapted to Gent Ascend emerald and gold. Fine orbital node glyphs, moving selected connection trails and a subtle perspective light lattice complete the environment. The official crest remains unchanged. The atlas uses a separate bounded WebGL2 shader with matching SVG fallback, Still/reduced-motion/Data Saver support and visibility/dialog/input pause. Graphics-context loss restores the fallback. No AI, voice or personal-data behavior is changed. Physical-device performance and founder visual acceptance remain release gates; this is a draft branch update, not production.

@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { worlds } from '@/platform/world/registry';
 import { ContextSheet } from '@/components/interaction/context-sheet';
-import { GuestDirection } from './guest-direction';
+import { useWorldPriority, WorldPrioritySummary, WorldPriorityEditor } from './world-priority';
 import { WorldPresence, WorldScenery, useWorldAtmosphere } from './world-atmosphere';
 
 const connections = [
@@ -23,6 +23,7 @@ export function WholeManWorld() {
   const world = worlds[selected]!;
   const [directory, setDirectory] = useState(false);
   const [direction, setDirection] = useState(false);
+  const priority = useWorldPriority(direction);
   const { ref: sceneRef, moving, solid, saveData } = useWorldAtmosphere();
   useEffect(() => {
     const sync = () => {
@@ -120,13 +121,17 @@ export function WholeManWorld() {
           <span className="gw-atlas-caption">THE PARTS BELONG TO ONE LIFE</span>
         </div>
         <div className="gw-world-choice" id="world-destination">
-          <div className="gw-choice-copy" key={world.id}>
-            <p className="gw-kicker">
-              {world.number} / {world.theme}
-            </p>
-            <h2>{world.name}</h2>
-            <p>{world.line}</p>
-          </div>
+          {priority.data?.mode === 'personal' ? (
+            <WorldPrioritySummary priority={priority} onOpen={() => setDirection(true)} />
+          ) : (
+            <div className="gw-choice-copy" key={world.id}>
+              <p className="gw-kicker">
+                {world.number} / {world.theme}
+              </p>
+              <h2>{world.name}</h2>
+              <p>{world.line}</p>
+            </div>
+          )}
           <Link className="gw-world-enter" href={world.href} prefetch={false}>
             Enter {world.name}
             <span aria-hidden="true">↗</span>
@@ -144,8 +149,13 @@ export function WholeManWorld() {
           </span>
         </div>
       </section>
-      <ContextSheet open={direction} title="Your next move" onClose={closeDirection}>
-        <GuestDirection />
+      <ContextSheet
+        open={direction}
+        title="Your next move"
+        busy={priority.saving}
+        onClose={closeDirection}
+      >
+        <WorldPriorityEditor priority={priority} />
       </ContextSheet>
       <ContextSheet open={directory} title="Your destinations" onClose={() => setDirectory(false)}>
         <nav className="gw-directory" aria-label="All destinations">
