@@ -33,7 +33,11 @@ for (const width of [344, 768, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await page.screenshot({ path: `test-results/commerce-selection-${width}.png`, fullPage: true });
+    await page.screenshot({
+      path: `test-results/commerce-selection-${width}.png`,
+      fullPage: true,
+      animations: 'disabled',
+    });
     expect(errors).toEqual([]);
   });
 }

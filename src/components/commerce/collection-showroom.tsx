@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ProductPhotoFrame } from './product-photo-frame';
 import { useState } from 'react';
 import { CommerceMotion } from './commerce-motion';
 import type { CollectionEntry } from '@/domains/commerce/collection';
@@ -77,14 +78,16 @@ export function CollectionShowroom({
             <span className="reserve-hero-coordinate">{featured.brand} / 001</span>
             <div className="reserve-stage-rings" aria-hidden="true" />
             {featured.image ? (
-              <Image
-                src={featured.image.url}
-                alt={featured.image.altText ?? featured.title}
-                width={700}
-                height={850}
-                sizes="(max-width: 760px) 85vw, 42vw"
-                preload
-              />
+              <ProductPhotoFrame>
+                <Image
+                  src={featured.image.url}
+                  alt={featured.image.altText ?? featured.title}
+                  width={featured.image.width ?? 700}
+                  height={featured.image.height ?? 850}
+                  sizes="(max-width: 760px) 85vw, 42vw"
+                  preload
+                />
+              </ProductPhotoFrame>
             ) : (
               <ProductMediaPending title={featured.title} />
             )}

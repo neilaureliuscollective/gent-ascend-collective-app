@@ -92,14 +92,16 @@ export function CommerceMotion({ revision = '' }: { revision?: string }) {
                   { y: 28, opacity: 0.5 },
                   { y: 0, opacity: 1, duration: 1.1, ease: 'power3.out' },
                 );
-                const image = hero.querySelector('.reserve-hero-object img, .reserve-image-button');
+                const image = hero.querySelector(
+                  '.reserve-hero-object .reserve-photo-frame, .reserve-image-button',
+                );
                 if (image)
                   gsap.fromTo(
                     image,
                     { y: -12, scale: 0.96 },
                     {
-                      y: narrow ? 18 : 48,
-                      scale: 1.04,
+                      y: narrow ? 8 : 14,
+                      scale: 1.01,
                       ease: 'none',
                       scrollTrigger: {
                         trigger: hero,

@@ -22,6 +22,8 @@ import '@/app/globals.css';
 import '@/app/interaction.css';
 import { GroomingDirectionEditor } from '@/components/grooming/direction';
 import '@/app/(workspace)/app/grooming/grooming.css';
+import { CollectionShowroom } from '@/components/commerce/collection-showroom';
+import { collectionEntries } from '@/domains/commerce/collection';
 import { ProductExperience } from '@/components/commerce/product-experience';
 import { resolveRelated } from '@/domains/commerce/discovery';
 import { readProductStory } from '@/domains/commerce/product-story';
@@ -82,7 +84,19 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'commerce' ? (
+  mode === 'commerce-showroom' ? (
+    <main className="reserve-commerce">
+      <CollectionShowroom
+        entries={collectionEntries([
+          {
+            ...commerceFixture,
+            title: 'Hand & Body Wash, Patchouli & Amber Vanilla',
+            priceRange: { minVariantPrice: commerceFixture.variants.nodes[0]!.price },
+          },
+        ])}
+      />
+    </main>
+  ) : mode === 'commerce' ? (
     <div className="public-world">
       <p>Synthetic commerce fixture · no orders or payments.</p>
       <ProductExperience
