@@ -87,7 +87,7 @@ export const ConversationTurn = memo(function ConversationTurn({
             <button type="button" onClick={()=>onRevise('edit')}>Edit and resend</button>
           </> : turn.status!=='pending' ? <button type="button" onClick={()=>onRevise('retry')}>Retry reply</button> : null)}
         </div>
-        {turn.status==='complete'&&action&&<ActionReview turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
+        {turn.status==='complete'&&action&&<ActionReview key={action.proposal?.id??'new'} turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
       </div>
     </article>
   );

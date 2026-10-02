@@ -8,7 +8,7 @@ import { currentAccess } from '@/domains/access/current';
 import { aureliusInstructions, sharedCharacter } from './prompt';
 
 export const proposeInput=z.object({turnId:z.uuid(),requestId:z.uuid(),proposalId:z.uuid()}).strict();
-export const decideInput=z.object({proposalId:z.uuid(),approve:z.boolean()}).strict();
+export const decideInput=z.object({proposalId:z.uuid(),approve:z.boolean(),title:z.string().trim().min(1).max(100).nullable()}).strict().refine(value=>!value.approve||!!value.title,{message:'An approved action needs a title.'});
 const modelProposal=z.object({shouldAct:z.boolean(),title:z.string().max(100).nullable(),reason:z.string().max(180)});
 
 export async function proposeDailyAction(input:z.infer<typeof proposeInput>) {
@@ -47,7 +47,7 @@ export async function proposeDailyAction(input:z.infer<typeof proposeInput>) {
 export async function decideDailyAction(input:z.infer<typeof decideInput>) {
   const {client}=await intelligenceSession();
   if(!(await currentAccess()).has('daily.write')) throw new IntelligenceError('Daily actions are not enabled.',403);
-  const decision=await client.rpc('ai_decide_daily_action',{p_id:input.proposalId,p_approve:input.approve});
+  const decision=await client.rpc('ai_decide_daily_action_v2',{p_id:input.proposalId,p_approve:input.approve,p_title:input.title});
   if(decision.error?.code==='P0001') throw new IntelligenceError('Today already has five actions. The proposal is still awaiting your decision.',409);
   if(decision.error?.code==='40001') throw new IntelligenceError('This proposal was already decided. Reload to see its saved state.',409);
   if(decision.error) throw new IntelligenceError('The action was not confirmed. Reload to check your day before retrying.',503);

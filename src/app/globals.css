@@ -379,7 +379,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 .mobile-brand {
   display: none;
 }
-.workspace main {
+.workspace > main {
   max-width: 1520px;
   margin: auto;
   padding: 32px 38px 48px;
@@ -1593,7 +1593,7 @@ form > .button {
   .topbar {
     margin: 0 28px;
   }
-  .workspace main {
+  .workspace > main {
     padding: 26px 28px 44px;
   }
   .aurelius-trigger {
@@ -1663,7 +1663,7 @@ form > .button {
   .brand-type small {
     font-size: 0.625rem;
   }
-  .workspace main {
+  .workspace > main {
     padding: 25px 28px 120px;
   }
   .navigation {
@@ -1837,7 +1837,7 @@ form > .button {
   .appearance-controls button > span {
     display: none;
   }
-  .workspace main {
+  .workspace > main {
     padding: 20px 18px 114px;
   }
   .command-hero {
@@ -3108,7 +3108,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
     min-width: 34px;
     padding-inline: 5px;
   }
-  .workspace main {
+  .workspace > main {
     padding-inline: 14px;
   }
 }
@@ -3448,7 +3448,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
     min-height: 54px;
     color: #f3eee2;
   }
-  .aethelios-mobile-heading strong { font-size: 1.05rem; }
+  .aethelios-mobile-heading h1 { margin: 0; font-size: 1.05rem; line-height: 1.2; font-weight: 700; }
   .aethelios-mobile-heading a { color: #e8c57e; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
   .aethelios-mobile-heading a:last-child { justify-content: flex-end; font-size: .76rem; }
   .aethelios-page > .aurelius-page-heading { display: none; }
@@ -3508,7 +3508,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .aethelios-room-heading > a { color: #e8c57e; font-size: 1.4rem; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .aethelios-room-heading > div { display: flex; flex-direction: column; line-height: 1.2; }
 .aethelios-room-heading .eyebrow { font-size: .56rem; letter-spacing: .2em; color: #a8c8bd; }
-.aethelios-room-heading strong { font-family: var(--font-editorial); font-weight: 500; font-size: 1.5rem; color: #f5eee0; }
+.aethelios-room-heading h1 { font-family: var(--font-editorial); font-weight: 500; font-size: 1.5rem; color: #f5eee0; margin: 0; }
 .aethelios-room-heading nav { display: flex; gap: 8px; margin-left: auto; }
 .aethelios-room-heading nav a { display: grid; place-items: center; min-height: 44px; padding: 0 14px; color: #ead3a5; font-size: .78rem; border: 1px solid #c4912f32; border-radius: 10px; }
 .aethelios-room-heading a:focus-visible { outline: 2px solid #e8c57e; outline-offset: 2px; }
@@ -3557,7 +3557,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
 }
 @media (max-width: 600px) {
   .aethelios-room-heading { min-height: 52px; gap: 7px; margin-bottom: 5px; }
-  .aethelios-room-heading strong { font-size: 1.18rem; }
+  .aethelios-room-heading h1 { font-size: 1.18rem; }
   .aethelios-room-heading nav { gap: 2px; }
   .aethelios-room-heading nav a { padding: 0 7px; font-size: .68rem; border: 0; }
   .aethelios-page .aurelius-composer { padding: 10px 12px; }
@@ -3586,3 +3586,26 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .older-messages{display:block;margin:0 auto 14px}
 .library-more{width:100%;border-top:1px solid #c4912f35}
 .message-tools{display:flex;flex-wrap:wrap;gap:12px;margin-top:9px}.message-tools button,.revision-notice button{border:0;background:transparent;color:#d9bd82;cursor:pointer;font-size:.7rem;min-height:32px}.message-version{border-left:1px solid #c4912f70;margin:12px 0;padding:8px 12px;color:#bfcac2}.message-version summary{cursor:pointer;color:#dfc58c;font-size:.7rem}.revision-notice{display:flex;align-items:center;justify-content:space-between;color:#e5cd98;font-size:.7rem;padding:3px 8px}
+
+/* Keep the room's real controls reachable; decorative graphics never own input. */
+.workspace:has(.aethelios-page) > .topbar { visibility: hidden; }
+.aethelios-room-heading { flex-wrap: wrap; }
+.aethelios-room-heading > .appearance-controls { flex-direction: row; margin-left: auto; }
+.aethelios-room-heading .appearance-controls button { min-width: 44px; }
+.account-intelligence-orb { pointer-events: none; }
+@media (min-width: 601px) {
+ .welcome-heading .orb-presentation.is-previewing .account-intelligence-orb {
+  width: 140px; height: 140px; grid-column: 1; grid-row: 1;
+ }
+}
+
+.aethelios-today { margin: 0 0 14px; border: 1px solid rgba(196,145,47,.32); border-radius: 12px; background: rgba(11,59,50,.28); color: #e9e5d9; }
+.aethelios-today summary { cursor: pointer; padding: 12px 16px; color: #e8c57e; font-weight: 650; }
+.aethelios-today-content { padding: 0 16px 14px; font-size: .85rem; }
+.aethelios-today-content p { margin: 8px 0; }
+.aethelios-today-content ul { list-style: none; padding: 0; margin: 12px 0; }
+.aethelios-today-content li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid rgba(196,145,47,.2); }
+.aethelios-today-content button { min-height: 40px; border: 1px solid rgba(196,145,47,.45); border-radius: 8px; padding: 6px 10px; color: #f0d59c; background: #12221b; cursor: pointer; }
+.aethelios-today-content button:disabled { opacity: .55; cursor: wait; }
+.aethelios-today-confirm { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 540px) { .aethelios-today-content li { align-items: flex-start; flex-direction: column; } }

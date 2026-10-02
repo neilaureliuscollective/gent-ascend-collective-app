@@ -27,6 +27,13 @@ export function ContextPanel({
             : 'Personal context is off for your next message'}
       </div>
       <div className="context-cards">
+        {!preview && data.context.dailyBrief && <article>
+          <span className="eyebrow">TODAY / SAVED SNAPSHOT</span>
+          <h4>{data.context.dailyBrief.day}</h4>
+          <p>{data.context.dailyBrief.actions.length} saved actions · {data.context.dailyBrief.openCaptures} open captures</p>
+          {data.context.dailyBrief.previousReview?.tomorrow && <p>Carried forward from {data.context.dailyBrief.previousReview.day}: {data.context.dailyBrief.previousReview.tomorrow}</p>}
+          <p>Read at {data.context.dailyBrief.asOf.slice(11,16)} UTC. Reload to see later changes.</p>
+        </article>}
         <article>
           <span className="eyebrow">01 / Your foundation</span>
           <h4>{preview ? 'Your perspective starts here.' : data.context.profile.name}</h4>

@@ -1,0 +1,357 @@
+/* Reconstructed compact foundation; each world owns content, the shell owns gutters. */
+:root {
+  --interaction-gutter: 16px;
+  --interaction-nav-space: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 400px) {
+  :root {
+    --interaction-gutter: 20px;
+  }
+}
+@media (min-width: 600px) {
+  :root {
+    --interaction-gutter: 24px;
+  }
+}
+@media (min-width: 1101px) {
+  :root {
+    --interaction-gutter: 32px;
+    --interaction-nav-space: 0px;
+  }
+}
+.app-shell .workspace > main {
+  width: 100%;
+  min-width: 0;
+  max-width: 1280px;
+  padding: 24px max(var(--interaction-gutter), env(safe-area-inset-right))
+    calc(var(--interaction-nav-space) + 24px)
+    max(var(--interaction-gutter), env(safe-area-inset-left));
+}
+.context-sheet {
+  position: fixed;
+  inset: var(--task-top, 0px) 0 auto;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: var(--task-height, 100dvh);
+  max-width: none;
+  max-height: none;
+  border: 0;
+  background: transparent;
+  color: #f5f1e9;
+  overflow: hidden;
+}
+.context-sheet[open] {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.context-sheet::backdrop {
+  background: #020805bf;
+}
+.context-sheet-surface {
+  width: 100%;
+  max-height: 94%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px 24px 0 0;
+  background: radial-gradient(ellipse at top right, #123e30, transparent 60%), #081610;
+  border-top: 1px solid #c4912f66;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+}
+.context-sheet-surface > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #c4912f33;
+  flex: none;
+}
+.context-sheet-surface > header h2 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  margin: 0;
+}
+.context-sheet-surface > header button {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 24px;
+  background: none;
+  border: 0;
+  color: #e0bb6a;
+}
+.context-sheet-body {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 24px 0 max(24px, env(safe-area-inset-bottom));
+  scroll-padding-block: 24px;
+}
+.context-sheet-body .perf-form {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: none;
+}
+.context-sheet-body .perf-fields,
+.context-sheet-body .perf-numbers {
+  grid-template-columns: 1fr;
+}
+.context-sheet :where(input, textarea, select) {
+  font-size: 1rem;
+  max-width: 100%;
+}
+.context-sheet :where(button, summary) {
+  min-height: 48px;
+}
+.context-sheet-body :where(p, h2, h3) {
+  overflow-wrap: anywhere;
+}
+.choice-group {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+}
+.choice-group > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.choice-group label {
+  position: relative;
+  display: block !important;
+}
+.choice-group input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0;
+}
+.choice-group span {
+  display: block;
+  border: 1px solid #97b6a866;
+  border-radius: 24px;
+  padding: 12px 16px;
+  min-height: 48px;
+  cursor: pointer;
+}
+.choice-group input:checked + span {
+  color: #e0bb6a;
+  border-color: #e0bb6a;
+  background: #163326;
+}
+.choice-group input:focus-visible + span {
+  outline: 3px solid #e0bb6a;
+  outline-offset: 3px;
+}
+.direction-summary {
+  margin: 24px 0;
+}
+.direction-summary > div {
+  padding: 12px 0;
+  border-bottom: 1px solid #c4912f30;
+}
+.direction-summary dt {
+  color: #a7bbb0;
+  font-size: 0.85rem;
+}
+.direction-summary dd {
+  margin: 6px 0 0;
+}
+.world-directory {
+  max-width: 900px;
+}
+.world-directory a {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  padding: 24px 0;
+  border-bottom: 1px solid #c4912f40;
+  color: inherit;
+  text-decoration: none;
+}
+.world-directory h2 {
+  font-size: clamp(1.25rem, 4vw, 1.7rem);
+  margin: 0;
+}
+.world-directory p {
+  grid-column: 1;
+  color: #a7bbb0;
+  margin: 0;
+  line-height: 1.6;
+}
+.world-directory span {
+  grid-column: 2;
+  grid-row: 1/3;
+  align-self: center;
+  color: #e0bb6a;
+}
+.world-directory a:focus-visible {
+  outline: 3px solid #e0bb6a;
+  outline-offset: 4px;
+}
+@media (min-width: 840px) and (min-height: 600px) {
+  .context-sheet[open] {
+    justify-content: flex-end;
+    align-items: stretch;
+  }
+  .context-sheet-surface {
+    max-width: 600px;
+    max-height: 100%;
+    border-radius: 0;
+    padding-top: env(safe-area-inset-top);
+  }
+  .context-sheet-body .perf-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-height: 500px) {
+  .context-sheet-surface {
+    max-height: 100%;
+    border-radius: 0;
+  }
+}
+@media (max-width: 1100px) {
+  .app-shell .navigation {
+    inset: auto 0 0;
+    transform: none;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    border-radius: 0;
+    padding: 4px max(8px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+  .app-shell .navigation a {
+    min-height: 56px;
+    min-width: 0;
+    padding: 4px 2px;
+    font-size: 0.6875rem;
+  }
+  .app-shell .aurelius-trigger {
+    top: 10px;
+    bottom: auto;
+    left: auto;
+    right: 16px;
+    transform: none;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    z-index: 30;
+    border-radius: 50%;
+  }
+  .app-shell .aurelius-trigger > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .app-shell .topbar {
+    padding-right: 72px;
+  }
+  .app-shell .topbar .shell-ascend-link,
+  .app-shell .topbar .avatar {
+    display: none;
+  }
+}
+@media (max-width: 599px) {
+  .app-shell .workspace > main h1 {
+    font-size: clamp(1.75rem, 7vw, 2.25rem);
+    line-height: 1.2;
+  }
+  .app-shell .workspace > main :where(input, textarea, select) {
+    font-size: 1rem;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .context-sheet-surface {
+    animation: task-enter 150ms ease-out;
+  }
+  @keyframes task-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+.world-more {
+  margin: 32px 0;
+}
+.world-more > summary {
+  min-height: 48px;
+  padding: 12px 0;
+  color: #e0bb6a;
+  cursor: pointer;
+}
+.progress-thread-entry {
+  border-bottom: 1px solid #c4912f40;
+  padding: 20px 0;
+}
+.progress-thread-entry summary {
+  cursor: pointer;
+  min-height: 48px;
+}
+.progress-thread-entry summary span {
+  display: block;
+  color: #a7bbb0;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.progress-thread-entry summary strong {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+@media (max-width: 1100px) {
+  .app-shell .topbar {
+    min-height: 64px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding-left: var(--interaction-gutter);
+  }
+  .app-shell .topbar-actions {
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+  .app-shell .mobile-brand {
+    min-width: 0;
+  }
+  .app-shell .mobile-brand .brand-seal {
+    width: 30px;
+    height: 30px;
+  }
+  .app-shell .mobile-brand .brand-type {
+    font-size: 0.65rem;
+  }
+  .app-shell .mobile-brand .brand-type small {
+    font-size: 0.5rem;
+  }
+  .app-shell .capture-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .app-shell .capture-trigger {
+    width: 44px;
+    height: 48px;
+    padding: 0;
+    font-size: 1.4rem;
+  }
+  .app-shell .appearance-controls button {
+    min-width: 40px;
+    min-height: 48px;
+    padding: 8px;
+  }
+  .app-shell .appearance-controls button > span {
+    display: none;
+  }
+}

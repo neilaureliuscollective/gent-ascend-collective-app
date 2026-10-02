@@ -34,7 +34,7 @@ for (const width of [344, 768, 1440]) {
     await page.goto('/app/world');
     await expect(page.getByRole('heading', { name: 'Legacy Reserve.', exact: true })).toBeVisible();
     await page.goto('/app/aethelios');
-    await expect(page.locator('.aethelios-room-heading strong')).toHaveText('Aethelios');
+    await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toHaveText('Aethelios');
     const manifest = await (await request.get('/manifest.webmanifest')).json();
     expect(manifest.name).toBe('Gent Ascend Collective');
     expect(manifest.short_name).toBe('Gent Ascend');

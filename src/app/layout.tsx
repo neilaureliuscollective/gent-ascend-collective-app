@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { brand } from '@/platform/brand';
 import './globals.css';
+import './interaction.css';
 const sora = localFont({
   src: '../assets/fonts/sora.woff2',
   variable: '--font-display',
@@ -23,6 +24,7 @@ export const viewport: Viewport = {
   themeColor: brand.themeColor,
   width: 'device-width',
   initialScale: 1,
+  viewportFit: "cover",
   interactiveWidget: 'resizes-content',
 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
