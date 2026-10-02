@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import type { Session, Plan } from '@/domains/performance/schema';
+import { MachineScout, type MachineScoutResult } from './machine-scout';
 
 function SetEntry({
   set,
@@ -96,6 +97,9 @@ export function Training({
   const [note, setNote] = useState(session.note);
   const [restUntil, setRestUntil] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(0);
+  const [manualName, setManualName] = useState('');
+  const [manualSets, setManualSets] = useState(3);
+  const [manualReps, setManualReps] = useState(10);
   const exerciseIds = useMemo(
     () => Array.from(new Set(session.sets.map((s) => s.exerciseId))),
     [session.sets],
@@ -129,6 +133,32 @@ export function Training({
   const activeTarget = activeSets[0]?.targetReps ?? 0;
   const exerciseComplete = activeSets.filter((set) => set.done).length;
   const sessionActive = session.status === 'active';
+
+  async function addMovement(name: string, sets = 3, reps = 10) {
+    const clean = name.trim().slice(0, 70);
+    if (!clean || sets < 1 || sets > 8 || reps < 1 || reps > 30) return;
+    const exerciseId = crypto.randomUUID();
+    const nextSets: Session['sets'] = Array.from({ length: sets }, () => ({
+      id: crypto.randomUUID(),
+      exerciseId,
+      exercise: clean,
+      targetReps: reps,
+      targetLoad: 0,
+      reps: null,
+      load: null,
+      effort: null,
+      done: false,
+    }));
+    const saved = await save({ ...session, sets: [...session.sets, ...nextSets] });
+    if (saved) {
+      setActiveExercise(exerciseId);
+      setManualName('');
+    }
+  }
+
+  async function addScoutedMovement(result: MachineScoutResult) {
+    await addMovement(result.name, 3, 10);
+  }
 
   function moveExercise(direction: -1 | 1) {
     const next = Math.min(exerciseIds.length - 1, Math.max(0, activeIndex + direction));
@@ -181,6 +211,66 @@ export function Training({
           <p>One movement at a time. Your full session stays saved on this device.</p>
         </div>
       </header>
+
+      {sessionActive && (
+        <details className="perf-live-builder">
+          <summary>
+            <span>
+              <span className="eyebrow">BUILD AS YOU GO</span>
+              <strong>Add what you find in the gym</strong>
+            </span>
+            <span>＋</span>
+          </summary>
+          <div className="perf-live-builder-body">
+            <MachineScout disabled={busy} onAdd={addScoutedMovement} />
+            <form
+              className="perf-quick-add"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void addMovement(manualName, manualSets, manualReps);
+              }}
+            >
+              <span className="eyebrow">QUICK ADD</span>
+              <label>
+                Movement
+                <input
+                  value={manualName}
+                  maxLength={70}
+                  placeholder="Incline press machine"
+                  onChange={(event) => setManualName(event.target.value)}
+                />
+              </label>
+              <div>
+                <label>
+                  Sets
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={8}
+                    value={manualSets}
+                    onChange={(event) => setManualSets(event.target.valueAsNumber || 1)}
+                  />
+                </label>
+                <label>
+                  Rep target
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={30}
+                    value={manualReps}
+                    onChange={(event) => setManualReps(event.target.valueAsNumber || 1)}
+                  />
+                </label>
+              </div>
+              <button className="perf-primary" disabled={busy || !manualName.trim()}>
+                Add movement →
+              </button>
+            </form>
+          </div>
+        </details>
+      )}
 
       <nav className="perf-exercise-rail" aria-label="Workout exercises">
         {exerciseIds.map((id, index) => {
