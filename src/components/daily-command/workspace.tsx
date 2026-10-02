@@ -243,7 +243,7 @@ export function DailyCommandWorkspace({ initial }: { initial: CommandData }) {
       <details className="command-disclosure">
         <summary>Talk to Aethelios about this day</summary>
         <p>
-          Open an editable draft containing the signals and suggestions shown above. Review or
+          Open an editable draft from your latest saved reports and current suggestions. Review or
           remove details before sending. Nothing is added to memory.
         </p>
         <Link className="button" href="/app/aethelios?starter=command">

@@ -209,7 +209,10 @@ test('Daily Command saves arrival and feedback through real Auth, then reloads t
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await page.goto('/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  const commandResponse = await page.request.get('/api/daily-command');
+  const commandData = await commandResponse.json();
+  expect(commandResponse.ok(), commandData.error).toBe(true);
   await expect(page.getByRole('region', { name: 'Daily Command' })).toBeVisible();
   await page.getByText('Morning arrival · optional', { exact: true }).click();
   await page.getByLabel('Sleep · minutes').fill('450');

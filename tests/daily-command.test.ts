@@ -102,6 +102,8 @@ describe('Daily Command rules', () => {
         ritual: 'Morning care',
       }),
     );
+    expect(result.supportingContext.water).toBe(0);
+    expect(result.supportingContext.waterTarget).toBe(2000);
     expect(result.decisions.map((x) => x.id)).toEqual([
       'occasion',
       'focus',

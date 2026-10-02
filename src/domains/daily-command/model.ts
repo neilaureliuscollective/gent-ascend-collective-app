@@ -52,6 +52,18 @@ export type DailyCommandSignals = {
   unavailable: string[];
 };
 export type DailyCommandSnapshot = {
+  supportingContext: Pick<
+    DailyCommandSignals,
+    | 'recentTraining'
+    | 'water'
+    | 'waterTarget'
+    | 'priority'
+    | 'blocker'
+    | 'goal'
+    | 'ritual'
+    | 'occasion'
+    | 'priorFit'
+  >;
   ruleVersion: 1;
   day: string;
   state: DailyCommandState;
@@ -249,6 +261,19 @@ export function deriveCommand(input: DailyCommandSignals): DailyCommandSnapshot 
       '/app/daily#daily-actions',
     );
   return {
+    supportingContext: {
+      recentTraining: input.recentTraining.filter(
+        (s) => s.day >= shiftDay(input.day, -6) && s.day <= input.day,
+      ),
+      water: input.water,
+      waterTarget: input.waterTarget,
+      priority: input.priority,
+      blocker: input.blocker,
+      goal: input.goal,
+      ritual: input.ritual,
+      occasion: input.occasion,
+      priorFit: input.priorFit ?? null,
+    },
     ruleVersion: 1,
     day: input.day,
     state,
@@ -290,7 +315,10 @@ export function commandDraft(s: DailyCommandSnapshot) {
   let draft = header;
   for (const signal of s.signals) {
     const line = `${signal.source} (${signal.day}): ${signal.detail}\n`;
-    if (draft.length + line.length > 5500) { draft += 'Additional evidence remains in Daily Command; not included in this draft.\n'; break; }
+    if (draft.length + line.length > 5500) {
+      draft += 'Additional evidence remains in Daily Command; not included in this draft.\n';
+      break;
+    }
     draft += line;
   }
   return draft.slice(0, 5800) + ending;
