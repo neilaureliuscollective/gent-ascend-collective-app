@@ -497,6 +497,7 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                     plan={device.draft.prescription?.plan ?? plan?.data ?? null}
                     busy={savingSet || conflict}
                     save={saveSession}
+                    history={data.sessions.map((entry) => entry.data)}
                   />
                   {device.draft.status !== 'active' &&
                     device.revision === device.syncedRevision && (
