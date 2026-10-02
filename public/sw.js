@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   if (
     url.origin !== self.location.origin ||
     event.request.mode !== 'navigate' ||
-    !/^\/app(?:\/|$)/.test(url.pathname)
+    (!/^\/app(?:\/|$)/.test(url.pathname) && !/^\/experience(?:\/|$)/.test(url.pathname))
   )
     return;
   event.respondWith(
@@ -56,7 +56,9 @@ self.addEventListener('fetch', (event) => {
       const cache = await caches.open(FALLBACK_CACHE);
       return (
         (await cache.match(
-          url.pathname === '/app/performance' ? '/performance-offline.html' : '/offline.html',
+          ['/app/performance', '/experience/performance/practice'].includes(url.pathname)
+            ? '/performance-offline.html'
+            : '/offline.html',
         )) ||
         new Response('Gent Ascend needs a connection. Reconnect and reload.', {
           status: 503,

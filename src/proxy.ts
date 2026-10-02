@@ -5,27 +5,29 @@ export async function proxy(request: NextRequest) {
   const connection = supabaseConnection(process.env);
   let response = NextResponse.next({ request });
   if (connection) {
-    const client = createServerClient(
-      connection.url,
-      connection.key,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: (values) => {
-            values.forEach(({ name, value }) => request.cookies.set(name, value));
-            response = NextResponse.next({ request });
-            values.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options),
-            );
-          },
+    const client = createServerClient(connection.url, connection.key, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (values) => {
+          values.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          values.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
-    );
+    });
     await client.auth.getClaims();
   }
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }
 export const config = {
-  matcher: ['/app/:path*', '/enter', '/api/:path*', '/dev/:path*', '/auth/:path*'],
+  matcher: [
+    '/experience/performance/practice/:path*',
+    '/experience/aethelios/:path*',
+    '/app/:path*',
+    '/enter',
+    '/api/:path*',
+    '/dev/:path*',
+    '/auth/:path*',
+  ],
 };

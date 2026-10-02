@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
 import { MediaScene } from '@/components/public/media-scene';
 import { estateMedia } from '@/platform/estate-media';
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import './ritual-sequence.css';
 import './physical-world.css';
 
 export default function PublicHome() {
+  if (process.env.GENT_WORLD_ENABLED === 'true') redirect('/experience');
   return (
     <main id="world-main" className="estate-home">
       <WorldJourney>

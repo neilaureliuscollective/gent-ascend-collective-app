@@ -1,7 +1,20 @@
+# Whole-Man World review slice — October 2, 2026
+
+Implemented on `feat/whole-man-world`, based on preserved integration commit `114d98c`. See [architecture, routes, preservation and release limits](WHOLE_MAN_WORLD.md). Review at `/experience`; the existing homepage remains the default. No production deployment or hosted migration was performed.
+
+The slice connects the cinematic threshold, whole-man observatory, session-only guest direction, contextual Aethelios and its existing conversation workspace, Performance environment, and real workout UI. Members reuse existing domain services; guests get a labeled in-memory recording sample without identity or API writes. Still/reduced motion, keyboard dialogs, route focus, finite entrance/watchdog, optional audio, graphics/image fallback, and private-page no-store are included. No new dependencies or migrations.
+
+Validation: strict TypeScript through production build, ESLint, 143 unit/SQL-emulation tests and recorded migration-ledger check pass. Twelve targeted browser cases initially passed (five world + seven existing Performance). After the final visual handoff correction, all six world cases passed, including the added audio/privacy case: 13 distinct passing browser scenarios across the runs. New flows were exercised at 360/768/1440 widths; existing Performance also at 344. Existing tests cover idempotent sync, stale-edit reconciliation and offline recording with fixtures. No live-model or real hosted-auth claim is made. A transient zero-byte generated pages manifest required a clean build; the clean production build and browser run passed.
+
+Screenshots: [threshold](evidence/world-slice/threshold-mobile.png), [mobile World](evidence/world-slice/world-mobile.png), [Performance](evidence/world-slice/performance-mobile.png), [desktop World](evidence/world-slice/world-desktop.png). Visual inspection corrected mobile dock spacing and sequential transition legibility.
+
+Open release gates: physical Samsung/iPhone/Fold and installed PWA, live two-account isolation and authenticated model/session flow, hosted inherited migration reconciliation, measured device performance and founder visual acceptance. The original uncommitted Grooming work remains untouched in its original checkout and is not silently included in this branch. Main remained `1db7da7` at final remote inspection.
+
+---
+
 # Interaction System Phase 3 — 2026-09-29
 
 Reconstructed the shared task foundation and migrated Performance editors, My World and Progress. Reconciled remote Performance Phase 6 with released Grooming main. Important recovery limit: local-only Interaction Phases 1–2 were removed by workspace maintenance and are absent remotely; the Phase 2 Grooming redesign is not restored by this branch. Exact scope, research and release gates: [Phase 3](INTERACTION_SYSTEM_PHASE_3.md). Production remains unchanged.
-
 
 ---
 
@@ -22,6 +35,7 @@ Built on the Phase 1 review branch: versioned multi-session programs, a repeatin
 Implemented on an isolated review branch: personal direction, editable strength plan, device-persisted workout sets with idempotent sync, self-reported recovery/body/nutrition check-ins, weekly review, explicit progression approval, and opt-in Aethelios interpretation. Access through My world → Ascend Performance. See [scope, architecture and release gates](ASCEND_PERFORMANCE_PHASE_1.md).
 
 Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. All seven Performance browser scenarios and real Supabase Auth/PostgREST integration pass in CI. Full regression results are recorded on draft PR #26; live OpenAI and physical-device verification remain pending. No hosted migration or production deployment.
+
 # Aethelios Studio project workspace — 2026-09-28
 
 Studio now presents a dedicated creation room, project direction editor and project library at `/app/studio`. A project can save its purpose, audience, visual direction, palette and exclusions. These fields guide new image requests on the server. Projects retain private references and saved versions; a member can refine an image, retry a failed request, or use a reference. Five creation entries help shape a first request without changing provider models or silently generating media. Image generation remains one image per request with the existing quota and owner-bound storage.
@@ -362,6 +376,7 @@ The existing public shop now reads live Shopify products when a Headless storefr
 Local acceptance: `npm run check` passed lint, strict typecheck, 87 unit/SQL tests (including three commerce contract tests), and a production build; `npm run db:ledger` and `git diff --check` passed. Production HTTP smoke returned 200 for `/`, `/shop`, `/shop/vitalis`, `/shop/cart` and `/app`, 503 for the unconfigured commerce API, and a redirect to `/shop` for unconfigured checkout. Public browser suite could not launch five browser scenarios because Chromium is absent; the download returned an invalid archive. One route-only browser request test passed. No live Shopify cart, checkout, physical Fold review, or full regression browser suite is claimed.
 
 ---
+
 # Aethelios Chat Foundation — 2026-09-27 (implementation branch)
 
 Founder-approved conversation foundation extends existing owner-scoped chat with per-message projections, revisions, archive/rename, indexed title/content search, pagination, generated titles, long-thread summaries and relevant-memory selection. Existing conversation/turn IDs and approved daily-action links remain. This branch also incorporates the current public Aethelios living-field work and commerce preview. Details, research, migration and open gates: [AETHELIOS_CHAT_FOUNDATION.md](AETHELIOS_CHAT_FOUNDATION.md). Local lint, typecheck, 88 tests, build and ledger check passed. Browser binary download is blocked; live Auth/model, hosted migration, and physical-device tests remain open. No production deployment.
@@ -382,7 +397,6 @@ The founder approved production release. Chat Foundation and Studio V1 were merg
 
 The Studio placement refinement makes Chat and Studio sibling spaces within Aethelios: sidebar switch on desktop, contextual switch on phone/Fold, and an entry from Command. See [placement decision and sources](AETHELIOS_STUDIO_PLACEMENT.md). It changes navigation only. Real owner-account image generation, cross-device persistence, two-account isolation, and physical device layout still require founder testing; a ready build is not proof of those flows.
 
-
 # Grooming Concierge recovery — 2026-09-28
 
 Reconstructed Grooming Foundation, Ascend Scan, My Look and Professional Concierge from the founder-approved scope after an ephemeral checkout was pruned before publication. This is a new release candidate, not a byte-for-byte recovery of the lost commits. See [scope and release gates](GROOMING_CONCIERGE_RECOVERY.md). Do not claim a live release until hosted migration, real account checks, main push and production verification complete.
@@ -390,11 +404,11 @@ Reconstructed Grooming Foundation, Ascend Scan, My Look and Professional Concier
 # Aethelios Studio storyboard — 2026-09-28
 
 The next phase adds a private storyboard to each Studio project. Members can plan a campaign as up to eight scenes, attach completed images from that project or create a new frame from a scene, and print the board. Motion notes are editorial planning, with no video model or provider charge. The additive scene migration follows the project brief migration in PR #25; neither is applied to hosted Supabase yet. Local database owner isolation, project asset binding, scene quota and deletion were tested. Browser/device and live image generation remain release checks.
+
 # Aethelios Studio Finish room — 2026-09-28
 
 Studio now offers a Finish view for completed private images, directly from the Library or storyboard. Members can choose a square, portrait or landscape canvas, control the image focus, compose original brand copy in three treatments, save an editable private composition and export its current appearance as PNG. The source image is unchanged. No AI copy or video provider is connected. The new additive finishes migration follows the two unpromoted Studio migrations in PR #25. Local database owner and project isolation passed; phone/Fold browser rendering, hosted Auth/Storage and real export still require a device pass before release.
 The hosted-release privilege audit found broad Supabase default ACLs on the new Studio tables; a fourth migration revokes these and restores only the intended member privileges. Verify hosted ACLs after applying `20260928151124_studio_table_privileges.sql` before merging PR #25.
-
 
 ## 2026-09-28 — Ascend Performance Phase 4
 
