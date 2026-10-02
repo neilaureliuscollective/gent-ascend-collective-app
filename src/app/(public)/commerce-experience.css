@@ -1542,3 +1542,365 @@ body:has(.reserve-product .reserve-sticky-purchase) .world-motion-control {
   color: #eee6d2;
   border: 1px solid #c4912f55;
 }
+
+/* Photography-led showroom. Light, material and depth frame the actual merchandise. */
+.reserve-commerce {
+  background:
+    radial-gradient(ellipse at 78% 8%, #146b5860, transparent 34%),
+    radial-gradient(ellipse at 4% 44%, #0b3b3280, transparent 38%),
+    linear-gradient(135deg, #050706, #071f1a 45%, #050706);
+}
+.reserve-shop-hero {
+  min-height: min(960px, 100svh);
+  padding-top: clamp(140px, 16vh, 220px);
+  gap: 3%;
+  isolation: isolate;
+}
+.reserve-shop-hero::before {
+  background:
+    linear-gradient(115deg, transparent 15%, #c4912f0a 40%, transparent 41%),
+    repeating-linear-gradient(0deg, #ffffff03 0 1px, transparent 1px 4px);
+  mask-image: linear-gradient(#000, #0004);
+}
+.reserve-shop-headline h1 {
+  font-size: clamp(3.8rem, 8vw, 9rem);
+  letter-spacing: -0.06em;
+}
+.reserve-shop-headline .world-kicker {
+  letter-spacing: 0.18em;
+}
+.reserve-shop-headline p {
+  max-width: 390px;
+  line-height: 1.8;
+}
+.reserve-hero-object {
+  min-height: 620px;
+  border-radius: 48% 48% 12px 12px;
+  background:
+    radial-gradient(ellipse at 50% 32%, #e4bf6a17, transparent 52%),
+    radial-gradient(ellipse at 50% 48%, #146b5880, transparent 68%);
+  isolation: isolate;
+}
+.reserve-hero-object::before,
+.reserve-product-stage::before {
+  content: '';
+  position: absolute;
+  inset: 7% 12% 15%;
+  border-radius: 48% 48% 0 0;
+  border: 1px solid #c4912f35;
+  background: linear-gradient(100deg, #ffffff03, transparent 45%, #c4912f09);
+  box-shadow:
+    inset 0 0 60px #0b3b3260,
+    0 30px 90px #0006;
+  pointer-events: none;
+  z-index: -1;
+}
+.reserve-hero-object::after,
+.reserve-product-stage::after {
+  content: '';
+  position: absolute;
+  bottom: 15%;
+  left: 12%;
+  width: 76%;
+  height: 7%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #225145, #071a15);
+  border-top: 1px solid #c4912f90;
+  box-shadow:
+    0 16px 0 #07100d,
+    0 25px 40px #0009;
+  z-index: -1;
+  pointer-events: none;
+}
+.reserve-hero-object img {
+  width: 78%;
+  height: auto;
+  max-height: 490px;
+  object-fit: contain;
+}
+.reserve-hero-coordinate {
+  inset: 0 8% auto;
+}
+.reserve-hero-object-caption {
+  inset: auto 8% 0;
+}
+.reserve-stage-rings {
+  opacity: 0.38;
+  width: 90%;
+}
+.reserve-shelf-section {
+  padding: 100px 6% 120px;
+}
+.reserve-shelf-heading {
+  margin-bottom: 50px;
+}
+.reserve-shelf-heading h2 {
+  font-size: clamp(2.8rem, 5vw, 5.6rem);
+  letter-spacing: -0.04em;
+}
+.reserve-collection-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 80px 7%;
+}
+.reserve-collection-object {
+  min-width: 0;
+  position: relative;
+}
+.reserve-collection-object:nth-child(even) {
+  padding-top: 100px;
+}
+.reserve-card-stage {
+  height: clamp(360px, 38vw, 570px);
+  border: 0;
+  border-radius: 45% 45% 20px 20px;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% 40%, #146b585c, transparent 65%),
+    linear-gradient(155deg, #0e332a66, #05070600);
+  box-shadow: none;
+}
+.reserve-card-stage::before {
+  content: '';
+  position: absolute;
+  inset: 11% 11% 17%;
+  border: 1px solid #c4912f30;
+  border-radius: 48% 48% 2px 2px;
+  background: linear-gradient(125deg, #e4bf6a0a, transparent 45%);
+  pointer-events: none;
+}
+.reserve-card-stage::after {
+  bottom: 10%;
+  height: 7%;
+  width: 76%;
+  background: linear-gradient(175deg, #234c40, #081410);
+  border-top: 1px solid #c4912f80;
+  box-shadow:
+    0 10px 0 #050d09,
+    0 22px 35px #0008;
+}
+.reserve-card-stage img {
+  width: 78%;
+  height: 76%;
+  object-fit: contain;
+  filter: drop-shadow(0 24px 18px #0008);
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reserve-card-number {
+  top: 5%;
+  left: 9%;
+  font-size: 0.6rem;
+}
+.reserve-card-stage > small {
+  bottom: 2%;
+  font-size: 0.6rem;
+}
+.reserve-card-copy {
+  padding: 28px 8% 0;
+}
+.reserve-card-copy h3 {
+  font-size: clamp(2rem, 3.4vw, 3.5rem);
+  letter-spacing: -0.035em;
+}
+.reserve-collection-object > .reserve-save {
+  margin-left: 8%;
+}
+.reserve-collection-filters {
+  border: 0;
+  gap: 8px;
+}
+.reserve-collection-filters button {
+  border-radius: 100px;
+  padding: 12px 22px;
+  background: #ffffff05;
+}
+.reserve-collection-filters button[aria-pressed='true'] {
+  background: #c4912f1a;
+}
+.reserve-product-intro {
+  gap: 5%;
+  background: radial-gradient(ellipse at 20% 40%, #0b3b3270, transparent 60%);
+}
+.reserve-product-stage {
+  isolation: isolate;
+  border: 0;
+  border-radius: 45% 45% 18px 18px;
+  background: radial-gradient(ellipse at 50% 30%, #146b5870, transparent 70%);
+  min-height: 620px;
+}
+.reserve-image-button {
+  max-width: 85%;
+  position: relative;
+  z-index: 1;
+}
+.reserve-image-button img {
+  object-fit: contain;
+  filter: drop-shadow(0 24px 26px #0008);
+}
+.reserve-product-copy h1 {
+  letter-spacing: -0.055em;
+}
+.reserve-product-purpose {
+  line-height: 1.85;
+}
+.reserve-thumbnails {
+  gap: 12px;
+  padding: 20px 8%;
+}
+.reserve-thumbnails button {
+  border-radius: 12px;
+  overflow: hidden;
+}
+.reserve-editorial-section {
+  padding-block: 100px;
+  border-top-color: #c4912f20;
+}
+.reserve-editorial-section h2 {
+  letter-spacing: -0.045em;
+}
+.reserve-product-nav {
+  background: #071f1ae8;
+  backdrop-filter: blur(12px);
+}
+.reserve-media-pending {
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 18px;
+  min-height: 260px;
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+}
+.reserve-media-pending > span {
+  font-family: var(--font-editorial);
+  font-size: 5rem;
+  color: #c4912f80;
+  letter-spacing: -0.08em;
+}
+.reserve-media-pending strong {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #eee9dc;
+}
+.reserve-media-pending small {
+  color: #b6c4ba;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .reserve-collection-card:hover .reserve-card-stage img {
+    transform: translateY(-10px) scale(1.045);
+  }
+  .reserve-hero-object:hover img {
+    filter: drop-shadow(0 30px 38px #000b);
+  }
+}
+@media (max-width: 960px) {
+  .reserve-hero-object {
+    min-height: 480px;
+  }
+  .reserve-product-stage {
+    min-height: 480px;
+  }
+  .reserve-collection-grid {
+    gap: 60px 4%;
+  }
+  .reserve-collection-object:nth-child(even) {
+    padding-top: 65px;
+  }
+}
+@media (max-width: 600px) {
+  .reserve-shop-hero {
+    min-height: auto;
+    padding: 135px 6% 60px;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .reserve-shop-headline h1 {
+    font-size: clamp(3.6rem, 15vw, 5.6rem);
+  }
+  .reserve-hero-object {
+    min-height: 460px;
+  }
+  .reserve-hero-object img {
+    max-height: 350px;
+    width: 76%;
+  }
+  .reserve-shelf-section {
+    padding: 65px 6% 85px;
+  }
+  .reserve-collection-grid {
+    grid-template-columns: 1fr;
+    gap: 55px;
+  }
+  .reserve-collection-object:nth-child(even) {
+    padding-top: 0;
+  }
+  .reserve-card-stage {
+    height: 420px;
+  }
+  .reserve-card-copy h3 {
+    font-size: 2.5rem;
+  }
+  .reserve-product-stage {
+    min-height: 470px;
+  }
+  .reserve-editorial-section {
+    padding-block: 65px;
+  }
+  .reserve-collection-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 15px;
+  }
+  .reserve-collection-filters button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reserve-card-stage img {
+    transition: none;
+  }
+}
+.reserve-shop-hero,
+.reserve-product-stage {
+  overflow: clip;
+}
+.reserve-scene-light {
+  position: absolute;
+  inset: -25% 5% -20% 45%;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    #e4bf6a08 44%,
+    #e4bf6a16 48%,
+    transparent 70%
+  );
+  transform: rotate(-12deg);
+  transform-origin: top center;
+  pointer-events: none;
+  z-index: 0;
+}
+.reserve-product-stage > .reserve-scene-light {
+  inset: -20% 15% -10% 30%;
+}
+.reserve-product-stage > .reserve-stage-coordinate,
+.reserve-product-stage > .reserve-stage-caption {
+  z-index: 2;
+}
+@keyframes reserve-photo-arrival {
+  from {
+    opacity: 0.35;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-commerce-motion='active'] .reserve-image-button img {
+    animation: reserve-photo-arrival 600ms ease-out both;
+  }
+}

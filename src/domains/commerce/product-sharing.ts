@@ -33,9 +33,8 @@ export function productStructuredData(product: Product, rawOrigin: string | null
   const origin = publicCommerceOrigin(rawOrigin ?? undefined);
   const path = productPath(product.handle);
   if (!origin || !path) return null;
-  const story = readProductStory(product.story);
   const image =
-    story?.mediaApproved && product.featuredImage && shopifyMediaUrl(product.featuredImage.url)
+    product.featuredImage && shopifyMediaUrl(product.featuredImage.url)
       ? product.featuredImage.url
       : undefined;
   // Preview prices and unsupported selling plans never become searchable offers.

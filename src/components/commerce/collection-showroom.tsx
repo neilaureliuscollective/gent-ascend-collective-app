@@ -2,8 +2,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { CommerceMotion } from './commerce-motion';
 import type { CollectionEntry } from '@/domains/commerce/collection';
-import { ConceptVessel } from './concept-vessel';
+import { ProductMediaPending } from './product-media-pending';
 import { useSavedCollection, removeSavedCollection } from './saved-selection-store';
 import { CollectionDiscovery } from './collection-discovery';
 import { CollectionCard } from './collection-card';
@@ -41,10 +42,12 @@ export function CollectionShowroom({
       : entry.categories.includes(world),
   );
   const visible = filterCatalog(chapter, query, readyOnly);
-  const featured = entries[0];
+  const featured = entries.find((entry) => entry.image) ?? entries[0];
   return (
     <>
+      <CommerceMotion revision={`${world}:${query}:${readyOnly}:${saved.join(',')}`} />
       <header className="reserve-shop-hero">
+        <div className="reserve-scene-light" aria-hidden="true" />
         <div className="reserve-shop-headline">
           <span className="world-kicker">Gent Ascend Collective / {title}</span>
           <h1>
@@ -83,10 +86,10 @@ export function CollectionShowroom({
                 preload
               />
             ) : (
-              <ConceptVessel title={featured.title} kind={featured.kind} brand={featured.brand} />
+              <ProductMediaPending title={featured.title} />
             )}
             <div className="reserve-hero-object-caption">
-              <span>{featured.image ? 'THE FIRST CHAPTER' : 'CONCEPT PACKAGING'}</span>
+              <span>{featured.image ? 'THE FIRST CHAPTER' : 'THE NEXT CHAPTER'}</span>
               <strong>{featured.title} ↗</strong>
             </div>
           </Link>

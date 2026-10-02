@@ -22,7 +22,7 @@ describe('public product sharing contract', () => {
     ])
       expect(publicCommerceOrigin(origin)).toBeNull();
   });
-  it('uses real variant prices and stock while excluding preview offers and unapproved media', () => {
+  it('uses real variant prices and stock while excluding preview offers and unsafe media', () => {
     const data = productStructuredData(commerceFixture, 'https://gent.example');
     expect(data?.offers?.map((offer) => offer.price)).toEqual(['24.00', '38.00']);
     expect(data?.offers?.[0]?.availability).toBe('https://schema.org/InStock');
@@ -39,6 +39,18 @@ describe('public product sharing contract', () => {
       ).not.toHaveProperty('offers');
     expect(
       productStructuredData({ ...commerceFixture, story: null }, 'https://gent.example'),
+    ).toHaveProperty('image', [commerceFixture.featuredImage!.url]);
+    expect(
+      productStructuredData(
+        {
+          ...commerceFixture,
+          featuredImage: {
+            ...commerceFixture.featuredImage!,
+            url: 'https://untrusted.example/image.jpg',
+          },
+        },
+        'https://gent.example',
+      ),
     ).not.toHaveProperty('image');
     expect(productStructuredData(commerceFixture, null)).toBeNull();
     expect(data).not.toHaveProperty('aggregateRating');
