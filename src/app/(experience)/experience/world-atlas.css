@@ -337,6 +337,25 @@
   color: #dabb79;
   margin-left: 5px;
 }
+.gw-world-replay {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 44px;
+  width: fit-content;
+  margin-left: auto;
+  color: #bcc4b4;
+  font-size: 0.68rem;
+  text-decoration: none;
+}
+.gw-world-replay span {
+  color: #dabb79;
+  font-size: 1rem;
+}
+.gw-world-replay:hover {
+  color: #f1d18e;
+}
 .gw-atlas[data-animated='true']
   :is(.gw-chamber, .gw-light-shaft, .gw-orb-halo, .gw-orbit-plane > div:last-child) {
   animation-play-state: running;

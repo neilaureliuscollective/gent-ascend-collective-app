@@ -144,6 +144,9 @@ export function WholeManWorld() {
               All destinations <span aria-hidden="true">+</span>
             </button>
           </div>
+          <Link className="gw-world-replay" href="/experience?replay=1" prefetch={false}>
+            <span aria-hidden="true">↺</span> Replay experience
+          </Link>
           <span className="sr-only" role="status">
             {world.name} selected. {world.line}
           </span>

@@ -75,3 +75,25 @@ test('Data Saver enters without fetching film', async ({ page }) => {
   await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 3000 });
   expect(requested).toBe(false);
 });
+
+for (const width of [360, 768, 1440]) {
+  test(`world offers a deliberate cinematic replay after a previous visit at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 });
+    await page.addInitScript(() => localStorage.setItem('gent-entrance-seen-v1', 'true'));
+    let requested = false;
+    await page.route('**/collective-journey-v1.mp4', route => {
+      requested = true;
+      return route.abort();
+    });
+    await page.goto('/experience/world');
+    const replay = page.getByRole('link', { name: 'Replay experience', exact: true });
+    await expect(replay).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await replay.click();
+    await expect(page).toHaveURL(/\/experience\?replay=1$/);
+    expect(requested).toBe(false);
+    await page.getByRole('link', { name: 'Replay experience', exact: true }).click();
+    await expect.poll(() => requested).toBe(true);
+    await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
+  });
+}
