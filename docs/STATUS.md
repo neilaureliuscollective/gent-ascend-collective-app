@@ -96,6 +96,25 @@ Implemented on an isolated review branch: personal direction, editable strength 
 
 Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. All seven Performance browser scenarios and real Supabase Auth/PostgREST integration pass in CI. Full regression results are recorded on draft PR #26; live OpenAI and physical-device verification remain pending. No hosted migration or production deployment.
 
+
+# Founding memberships Phase 2 — 2026-10-02
+
+Implemented locally on `feat/founding-membership-billing`, continuing the Phase 1 foundation. `/join` provides gated public Auth registration and membership sign-in; verified email callbacks return to `/app/membership`. The account screen exposes current paid status, cancellation/end date, support contact, recurring terms consent, hosted checkout, the billing portal and owner-triggered refresh. New customers can choose the canonical $19.99 / $49.99 / $74.99 monthly USD prices. Paid sign-in/welcome no longer requires claiming a pilot invitation.
+
+Provider control uses pinned Stripe 23.0.0 / `2026-09-30.endive`, server-selected immutable price validation, same-product portal checks, persisted/idempotent checkout attempts, per-person leases, raw-body webhook verification, transactional event receipts and current-provider reconciliation. Paid invoices must match the actual price before expanding access. Delayed dispute facts are refreshed under the lease. Refund/dispute holds prevent additional subscription charges; a separate restricted portal keeps cancellation/card management available when full plan management or new sales cannot be verified. Independent beta/founder access is preserved. Studio creation is gated to Signature/Reserve and existing eligible invitation/founder/legacy access; no larger quotas or clinical privileges were invented.
+
+The additive `20261002105745_founding_membership_billing.sql` migration is **not applied to hosted Supabase**. It extends the tier constraint and adds owner-readable billing summaries plus service-only controls/event/enrollment receipts. Explicit grants, RLS and a narrow security-invoker RPC keep normal private reads session-bound. Test billing rejects the pinned production project. Existing migration hashes are unchanged.
+
+Final observed gates: ESLint, strict typecheck, **130 automated unit/provider/SQL tests**, production build, migration ledger and diff checks passed. **23 browser scenarios** passed with Chromium Headless Shell: membership/registration entrance at 344/768/1440, consent, retry/error persistence, unsafe redirect rejection, closed-enrollment management, founding pages, existing editors, pilot boundaries and public/offline behavior. Phone screenshots of membership, join and controls were inspected. Browser component fixtures are synthetic; provider tests mock network responses but exercise actual Stripe signatures; PGlite is a SQL adapter, not a hosted Auth test.
+
+One production rebuild encountered a Turbopack persistence-cache panic. Moving the generated cache aside allowed a clean successful rebuild; the final complete check passed. Supabase `db advisors --local` could not connect to `127.0.0.1:54322` because a real local Supabase database is not running. Real Supabase advisors/Auth/PostgREST checks, physical Fold acceptance, live Stripe sandbox lifecycle, CAPTCHA and SMTP/email-delivery tests remain unrun. No real payments, provider settings, production data or deployment changed.
+
+Enrollment and public registration remain disabled by default. Before opening sales: reconcile/apply the migration, configure both Stripe portals and the three prices, verify Auth/email/CAPTCHA, establish support and tax setup, and approve concrete current benefits plus founding/bundle/refund terms. Reserve still has the same implemented digital capacity as Signature; larger allowances/human services remain planned. Shopify member discounts are Phase 3; paid preorders/supplier holds are Phase 4; fulfillment/bundles/operations are Phase 5. Research, phase plan, current behavior and the full activation/recovery runbook: [FOUNDING_LAUNCH_PHASE_2.md](FOUNDING_LAUNCH_PHASE_2.md).
+
+Source publication remains blocked by the earlier automatic approval review: build authorization did not explicitly authorize publishing private source/documentation to the GitHub destination. This turn made no alternate publication attempt, PR, main push or production promotion.
+
+---
+
 # Aethelios Studio project workspace — 2026-09-28
 
 Studio now presents a dedicated creation room, project direction editor and project library at `/app/studio`. A project can save its purpose, audience, visual direction, palette and exclusions. These fields guide new image requests on the server. Projects retain private references and saved versions; a member can refine an image, retry a failed request, or use a reference. Five creation entries help shape a first request without changing provider models or silently generating media. Image generation remains one image per request with the existing quota and owner-bound storage.
@@ -491,3 +510,15 @@ Restore now has focused recovery capture, a seven-day history with per-metric de
 
 Movement adds completed cardio/mobility records, separate seven-day summaries and original-unit history. The starter exercise library supports previewed replacements and manual progression settings while retaining completed prescriptions. Owner-only RPCs preserve immutable revisions, exact retries, stale protection and bounded date windows. Local lint/types, 150 unit/SQL tests and production build pass; final browser/Auth/CI evidence is recorded on the Phase 7 PR. [Scope and research](ASCEND_PERFORMANCE_PHASE_7.md). No hosted migration or production promotion. Two core V1 phases remain: Physical Twin/integrated intelligence; integration/release.
 
+
+# Founding launch commerce phase 1 — 2026-10-02
+
+Implemented on `feat/founding-launch-foundation`: canonical $19.99 / $49.99 / $74.99 USD monthly founding offer definitions, a responsive `/membership` comparison, and `/launch` gallery combining Shopify products with labeled Vitalis, hair-care, body-care and Hydros concept studies. Native expandable sections distinguish the invitation-access app foundation from planned tier benefits and one-time bundles. Shop and footer expose the launch entry.
+
+Shopify product queries now read launch-state/window metafields and protective tags. Fresh server variant checks reject direct adds of preview/preorder/invalid-state merchandise; cart updates and checkout reject held lines while removal remains available. The client purchase/cart views explain the held state. Ordinary merchandise without launch metadata retains its existing buy-now path. No membership permissions, database migration, paid checkout, Shopify discount or supplier order was activated.
+
+Research, five build phases, merchant metadata setup and pending commercial decisions: [FOUNDING_LAUNCH_PHASE_1.md](FOUNDING_LAUNCH_PHASE_1.md). Local ESLint, strict typecheck, 99 unit/SQL/contract tests, production build, migration ledger and diff checks passed. Ten founding/public browser scenarios passed at 344/768/1440 using existing Chromium Headless Shell, including keyboard disclosure controls, concept images, reduced motion, no overflow, public account routes and offline boundaries. A focused final gallery rerun covers the added Hydros study.
+
+Live Shopify token/metafield reads, member billing, real customer discount eligibility, selling-plan preorders, bank payout/supplier holds and physical-device acceptance remain unverified. Phase 2 is paid membership lifecycle; phases 3–5 add member offers, paid preorders and fulfillment. This phase is a source review candidate, not a deployed paid launch.
+
+Publication status: local implementation commit `df9bdea`. Automatic approval review rejected the attempted push to the canonical GitHub remote, stating that the build authorization did not explicitly authorize publishing source/documentation to that destination. No alternate publication path was used and no draft PR or deployment was created. Await explicit authorization to publish `feat/founding-launch-foundation` to `neilaureliuscollective/gent-ascend-collective-app`.

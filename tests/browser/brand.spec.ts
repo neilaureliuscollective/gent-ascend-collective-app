@@ -32,7 +32,9 @@ for (const width of [344, 768, 1440]) {
     ).toBeGreaterThan(0);
     await page.screenshot({ path: `test-results/gent-account-${width}.png`, fullPage: true });
     await page.goto('/app/world');
-    await expect(page.getByRole('heading', { name: 'Legacy Reserve.', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'My world.', exact: true })).toBeVisible();
+    await page.getByText('Explore the Collective', { exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Legacy Reserve', exact: true })).toBeVisible();
     await page.goto('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toHaveText('Aethelios');
     const manifest = await (await request.get('/manifest.webmanifest')).json();

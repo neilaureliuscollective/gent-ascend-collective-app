@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseConnection } from '@/platform/supabase/connection';
 export async function proxy(request: NextRequest) {
+  // Stripe authenticates its raw event body independently of browser cookies.
+  if (request.nextUrl.pathname === '/api/billing/webhook') {
+    const response = NextResponse.next({ request });
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
+  }
   const connection = supabaseConnection(process.env);
   let response = NextResponse.next({ request });
   if (connection) {
@@ -26,6 +32,7 @@ export const config = {
     '/experience/aethelios/:path*',
     '/app/:path*',
     '/enter',
+    '/join',
     '/api/:path*',
     '/dev/:path*',
     '/auth/:path*',

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { launchLabel, launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 import { formatMoney } from '@/components/commerce/money';
 import { commerceConfigured, listProducts } from '@/domains/commerce/shopify';
 const worlds: Record<string, string> = {
@@ -43,7 +44,11 @@ export default async function World({ params }: { params: Promise<{ handle: stri
                 )}
               </div>
               <h2>{product.title}</h2>
-              <p>From {formatMoney(product.priceRange.minVariantPrice)}</p>
+              <p>
+                {launchPurchaseAllowed(product)
+                  ? `From ${formatMoney(product.priceRange.minVariantPrice)}`
+                  : launchLabel(product)}
+              </p>
             </Link>
           ))}
         </div>

@@ -7,6 +7,8 @@ import {
   getCart,
   removeLine,
   updateLine,
+  LaunchPurchaseError,
+  cartLaunchPurchasable,
 } from '@/domains/commerce/shopify';
 import { cartId, clearCartId, saveCartId } from '@/domains/commerce/cart-session';
 
@@ -71,6 +73,13 @@ export async function POST(request: NextRequest) {
     const existing = oldId ? await getCart(oldId, ip) : null;
     if (!existing && oldId) await clearCartId();
     const action = parsed.data;
+    if (existing && action.action !== 'remove' && !cartLaunchPurchasable(existing))
+      return NextResponse.json(
+        {
+          error: 'Remove items that are not open for ordering before adding or updating your cart.',
+        },
+        { status: 409, headers: privateHeaders },
+      );
     if (action.action !== 'add' && !existing)
       return NextResponse.json(
         { error: 'Your cart expired. Start a new cart.' },
@@ -88,10 +97,15 @@ export async function POST(request: NextRequest) {
           : await removeLine(existing!.id, action.lineId, ip);
     await saveCartId(cart.id);
     return NextResponse.json({ cart }, { headers: privateHeaders });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: 'Could not update the cart. Please retry.' },
-      { status: 502, headers: privateHeaders },
+      {
+        error:
+          error instanceof LaunchPurchaseError
+            ? error.message
+            : 'Could not update the cart. Please retry.',
+      },
+      { status: error instanceof LaunchPurchaseError ? 409 : 502, headers: privateHeaders },
     );
   }
 }

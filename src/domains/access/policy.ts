@@ -1,4 +1,4 @@
-export const tiers = ['free', 'aurelius', 'health'] as const;
+export const tiers = ['free', 'aurelius', 'health', 'essential', 'signature', 'reserve'] as const;
 export type Tier = (typeof tiers)[number];
 export type BillingState =
   'none' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'paused';
@@ -15,6 +15,7 @@ export const capabilities = [
   'aurelius.context',
   'health.navigation',
   'clinical.care',
+  'studio.create',
 ] as const;
 export type Capability = (typeof capabilities)[number];
 export interface AccessState {
@@ -50,6 +51,12 @@ export function calculateCapabilities(
     granted.add('aurelius.context');
   }
   if (state.founder || (state.tier === 'health' && paid)) granted.add('health.navigation');
+  if (
+    state.founder ||
+    state.beta ||
+    (paid && ['aurelius', 'health', 'signature', 'reserve'].includes(state.tier))
+  )
+    granted.add('studio.create');
   // Clinical care is never derived from a membership or developer scenario.
   return granted;
 }

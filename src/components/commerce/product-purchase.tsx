@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import { formatMoney } from './money';
+import { launchLabel, launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 
 export function ProductPurchase({ product }: { product: Product }) {
+  const open = launchPurchaseAllowed(product);
   const [selected, setSelected] = useState(
     product.variants.nodes.find((entry) => entry.availableForSale)?.id ??
       product.variants.nodes[0]?.id ??
@@ -14,7 +16,7 @@ export function ProductPurchase({ product }: { product: Product }) {
   const [message, setMessage] = useState('');
   const variant = product.variants.nodes.find((entry) => entry.id === selected);
   async function add() {
-    if (!variant) return;
+    if (!variant || !open) return;
     setBusy(true);
     setMessage('');
     try {
@@ -38,6 +40,12 @@ export function ProductPurchase({ product }: { product: Product }) {
       <div className="commerce-price">
         {variant ? formatMoney(variant.price) : 'Select an option'}
       </div>
+      {!open && (
+        <p className="preview-notice">
+          {launchLabel(product)}. Payment is not being collected for this item.
+          {product.launchWindow?.value ? ` Estimated launch: ${product.launchWindow.value}.` : ''}
+        </p>
+      )}
       {product.variants.nodes.length > 1 && (
         <label className="commerce-field">
           Choose an option
@@ -71,9 +79,15 @@ export function ProductPurchase({ product }: { product: Product }) {
         className="world-button commerce-add"
         type="button"
         onClick={add}
-        disabled={busy || !variant?.availableForSale}
+        disabled={busy || !variant?.availableForSale || !open}
       >
-        {busy ? 'Adding…' : variant?.availableForSale ? 'Add to cart ↗' : 'Currently unavailable'}
+        {!open
+          ? launchLabel(product)
+          : busy
+            ? 'Adding…'
+            : variant?.availableForSale
+              ? 'Add to cart ↗'
+              : 'Currently unavailable'}
       </button>
       <p className="commerce-status" role="status">
         {message}

@@ -1,4 +1,5 @@
 import 'server-only';
+import { launchPurchaseAllowed, type LaunchMetadata } from './launch-policy';
 
 const VERSION = '2026-07';
 
@@ -7,7 +8,7 @@ export function commerceConfigured() {
 }
 
 export type Money = { amount: string; currencyCode: string };
-export type Product = {
+export type Product = LaunchMetadata & {
   id: string;
   handle: string;
   title: string;
@@ -49,6 +50,9 @@ export type ProductSummary = Pick<
   | 'collections'
   | 'availableForSale'
   | 'requiresSellingPlan'
+  | 'launchState'
+  | 'launchWindow'
+  | 'tags'
 > & {
   priceRange: { minVariantPrice: Money };
 };
@@ -65,14 +69,21 @@ export type Cart = {
       merchandise: {
         id: string;
         title: string;
-        product: { handle: string; title: string; featuredImage: Product['featuredImage'] };
+        product: LaunchMetadata & {
+          handle: string;
+          title: string;
+          featuredImage: Product['featuredImage'];
+        };
       };
     }[];
   };
   warnings?: { code: string; message: string }[];
 };
 
-const PRODUCT = `id handle title description productType availableForSale requiresSellingPlan
+const LAUNCH = `tags requiresSellingPlan
+  launchState: metafield(namespace: "gent_ascend", key: "launch_state") { value }
+  launchWindow: metafield(namespace: "gent_ascend", key: "launch_window") { value }`;
+const PRODUCT = `id handle title description productType availableForSale ${LAUNCH}
   featuredImage { url altText width height }
   images(first: 6) { nodes { url altText width height } }
   variants(first: 50) { nodes { id title availableForSale price { amount currencyCode } selectedOptions { name value } } }
@@ -83,7 +94,7 @@ const PRODUCT = `id handle title description productType availableForSale requir
   ritual: metafield(namespace: "gent_ascend", key: "ritual") { value }`;
 const CART = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
   lines(first: 100) { nodes { id quantity cost { totalAmount { amount currencyCode } }
-    merchandise { ... on ProductVariant { id title product { handle title featuredImage { url altText width height } } } } } }
+    merchandise { ... on ProductVariant { id title product { handle title ${LAUNCH} featuredImage { url altText width height } } } } } }
   `;
 
 function config() {
@@ -121,7 +132,7 @@ export async function storefront<T>(
 export async function listProducts() {
   const data = await storefront<{ products: { nodes: ProductSummary[] } }>(
     `query Catalog { products(first: 60, sortKey: CREATED_AT, reverse: true) { nodes {
-      id handle title productType availableForSale requiresSellingPlan
+      id handle title productType availableForSale ${LAUNCH}
       featuredImage { url altText width height }
       collections(first: 8) { nodes { handle title } }
       priceRange { minVariantPrice { amount currencyCode } }
@@ -174,6 +185,7 @@ export async function getCart(id: string, buyerIp?: string) {
 }
 
 export async function createCart(variantId: string, quantity: number, buyerIp?: string) {
+  await assertVariantPurchasable(variantId, buyerIp);
   return mutateCart(
     'cartCreate',
     `mutation Create($lines: [CartLineInput!]!) { cartCreate(input: { lines: $lines }) { cart { ${CART} } userErrors { message } warnings { code message } } }`,
@@ -183,11 +195,43 @@ export async function createCart(variantId: string, quantity: number, buyerIp?: 
 }
 
 export async function addLine(id: string, variantId: string, quantity: number, buyerIp?: string) {
+  await assertVariantPurchasable(variantId, buyerIp);
   return mutateCart(
     'cartLinesAdd',
     `mutation Add($id: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $id, lines: $lines) { cart { ${CART} } userErrors { message } warnings { code message } } }`,
     { id, lines: [{ merchandiseId: variantId, quantity }] },
     buyerIp,
+  );
+}
+
+export class LaunchPurchaseError extends Error {
+  constructor() {
+    super('This item is not open for ordering yet.');
+    this.name = 'LaunchPurchaseError';
+  }
+}
+
+async function assertVariantPurchasable(id: string, buyerIp?: string) {
+  const data = await storefront<{
+    node: { availableForSale: boolean; product: LaunchMetadata } | null;
+  }>(
+    `query PurchaseReadiness($id: ID!) { node(id: $id) { ... on ProductVariant {
+      availableForSale product { ${LAUNCH} }
+    } } }`,
+    { id },
+    { buyerIp },
+  );
+  if (
+    !data.node?.availableForSale ||
+    !data.node.product ||
+    !launchPurchaseAllowed(data.node.product)
+  )
+    throw new LaunchPurchaseError();
+}
+
+export function cartLaunchPurchasable(cart: Cart) {
+  return cart.lines.nodes.every(
+    (line) => Boolean(line.merchandise?.product) && launchPurchaseAllowed(line.merchandise.product),
   );
 }
 

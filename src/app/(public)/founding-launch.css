@@ -1,0 +1,179 @@
+.founding-world {
+  --founding-gold: #e0bb6a;
+}
+.founding-intro {
+  background: radial-gradient(ellipse at 80% 20%, #163f3266, transparent 65%);
+}
+.founding-intro .founding-disclosure {
+  max-width: 55rem;
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: #b5beb8;
+}
+.founding-levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 3vw, 3rem);
+}
+.founding-level {
+  min-width: 0;
+  padding: 2rem 0;
+  border-top: 1px solid #c4912f66;
+}
+.founding-level--signature {
+  background: linear-gradient(180deg, #0b3b3280, transparent);
+  padding-inline: 1.5rem;
+}
+.founding-level h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  margin: 1rem 0;
+}
+.founding-promise {
+  min-height: 4rem;
+}
+.founding-level .founding-price {
+  color: var(--founding-gold);
+  font-size: clamp(2.3rem, 4vw, 3.2rem);
+  line-height: 1.2;
+  margin: 1.5rem 0 0.5rem;
+}
+.founding-price span {
+  font-size: 0.9rem;
+  color: #c0c8c1;
+}
+.founding-level .founding-price-note,
+.founding-detail-note,
+.founding-enrollment {
+  font-size: 0.8rem;
+  color: #b5beb8;
+}
+.founding-level details {
+  border-bottom: 1px solid #ffffff1f;
+  padding: 1.1rem 0;
+}
+.founding-level summary {
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #f0e8d5;
+  min-height: 2rem;
+}
+.founding-level summary:focus-visible {
+  outline: 2px solid var(--founding-gold);
+  outline-offset: 6px;
+}
+.founding-level ul {
+  padding-left: 1.2rem;
+  margin-top: 1rem;
+}
+.founding-level li {
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #ccd1ca;
+}
+.founding-enrollment {
+  margin-top: 1.5rem;
+}
+.founding-close {
+  max-width: 75rem;
+}
+.founding-close > p {
+  max-width: 48rem;
+}
+.launch-collection {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(2rem, 6vw, 5rem);
+}
+.launch-object {
+  min-width: 0;
+}
+.launch-image {
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #163e32, #070909 75%);
+}
+.launch-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.launch-image--study img {
+  padding: 1.5rem;
+}
+.launch-study-label {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #d8c795;
+  background: #070909db;
+  padding: 0.4rem 0.6rem;
+}
+.launch-copy {
+  padding: 1.5rem 0;
+}
+.launch-copy h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  margin: 0.6rem 0;
+}
+.launch-copy small {
+  display: block;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: #b5beb8;
+}
+@media (max-width: 900px) {
+  .founding-levels {
+    grid-template-columns: 1fr;
+  }
+  .founding-promise {
+    min-height: 0;
+  }
+  .founding-level--signature {
+    padding: 2rem 1rem;
+  }
+}
+@media (max-width: 700px) {
+  .launch-collection {
+    grid-template-columns: 1fr;
+  }
+}
+@media (forced-colors: active) {
+  .founding-level {
+    border-color: CanvasText;
+  }
+  .launch-study-label {
+    color: CanvasText;
+    background: Canvas;
+  }
+}
+
+.membership-arrival {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3rem;
+}
+.membership-arrival form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.membership-arrival input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid #45534b;
+  background: #0b1712;
+  color: #f3edde;
+  border-radius: 6px;
+}
+@media (max-width: 760px) {
+  .membership-arrival {
+    grid-template-columns: 1fr;
+  }
+}

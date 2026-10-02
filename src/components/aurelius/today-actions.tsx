@@ -36,9 +36,9 @@ export function TodayActions({ brief, disabled, onChanged }: {
           <button disabled={busy || disabled} onClick={() => void complete(action.id)}>Confirm complete</button>
           <button disabled={busy} onClick={() => setConfirm(null)}>Cancel</button>
         </span> : <button disabled={busy || disabled} onClick={() => setConfirm(action.id)}>Mark complete</button>}
-      </li>)}</ul> : <p>No open actions saved today. <Link href="/">Plan one on Command →</Link></p>}
+      </li>)}</ul> : <p>No open actions saved today. <Link href="/app">Plan one on Command →</Link></p>}
       {brief.openCaptures > 0 && <p><Link href="/captures">{brief.openCaptures} thoughts waiting in Capture →</Link></p>}
-      <Link href="/">Open Command and evening review →</Link>
+      <Link href="/app">Open Command and evening review →</Link>
       {notice && <p role="status">{notice}</p>}
     </div>
   </details>;

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Cart } from '@/domains/commerce/shopify';
 import { formatMoney } from './money';
+import { launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 
 export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; notice?: string }) {
   const [open, setOpen] = useState(fullPage);
@@ -13,6 +14,8 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
   const [error, setError] = useState('');
   const closeButton = useRef<HTMLButtonElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const held =
+    cart?.lines.nodes.some((line) => !launchPurchaseAllowed(line.merchandise.product)) ?? false;
   const load = useCallback(async () => {
     try {
       const response = await fetch('/api/commerce/cart', { cache: 'no-store' });
@@ -149,7 +152,7 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                       Quantity{' '}
                       <select
                         value={line.quantity}
-                        disabled={busy}
+                        disabled={busy || held}
                         onChange={(event) =>
                           void change('update', line.id, Number(event.target.value))
                         }
@@ -186,9 +189,15 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
               </p>
             ))}
             <p>Shipping, taxes, and any eligible discounts are confirmed at checkout.</p>
-            <a className="world-button" href="/checkout" rel="nofollow">
-              Continue to secure checkout ↗
-            </a>
+            {held ? (
+              <p className="cart-error" role="status">
+                An item is not open for ordering. Remove it to continue checkout.
+              </p>
+            ) : (
+              <a className="world-button" href="/checkout" rel="nofollow">
+                Continue to secure checkout ↗
+              </a>
+            )}
           </div>
         </>
       )}

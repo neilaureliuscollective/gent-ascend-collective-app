@@ -59,6 +59,7 @@ export default async function You({
               aligned with your day.
             </p>
             <p>These details are private to your account.</p>
+            <Link className="text-link" href="/app/membership">Your membership →</Link>
             <Link className="text-link" href="/app/welcome">Founding member guide →</Link>
             <Link className="text-link" href="/app/install">Install Gent Ascend →</Link>
             <Link className="text-link" href="/">Explore the public world ↗</Link>

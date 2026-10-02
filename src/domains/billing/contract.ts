@@ -6,8 +6,8 @@ export interface BillingSnapshot extends AccessState {
   subscriptionReference: string | null;
   synchronizedAt: string | null;
 }
-// Future webhook adapters verify signature, deduplicate, reconcile current provider
-// state, and persist this projection. Page code never calls Stripe directly.
+// The implemented provider adapter persists a verified projection through service-only
+// control RPCs. Optional readers must preserve session ownership; this type grants no access.
 export interface BillingReader {
   forPerson(personId: string): Promise<BillingSnapshot>;
 }

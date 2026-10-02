@@ -5,12 +5,14 @@ export function ContextSheet({
   open,
   title,
   busy = false,
+  fullScreen = false,
   onClose,
   children,
 }: {
   open: boolean;
   title: string;
   busy?: boolean;
+  fullScreen?: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -46,7 +48,7 @@ export function ContextSheet({
   }, [open]);
   return (
     <dialog
-      className="context-sheet"
+      className={`context-sheet${fullScreen ? ' context-sheet-full' : ''}`}
       ref={ref}
       aria-labelledby={id}
       onCancel={(e) => {

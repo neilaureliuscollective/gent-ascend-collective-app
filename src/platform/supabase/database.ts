@@ -46,7 +46,7 @@ export type PersonRow = {
 };
 export type MembershipRow = {
   person_id: string;
-  tier: 'free' | 'aurelius' | 'health';
+  tier: 'free' | 'aurelius' | 'health' | 'essential' | 'signature' | 'reserve';
   billing_state:
     'none' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'paused';
   beta_access: boolean;
@@ -362,6 +362,7 @@ export interface Database {
         never,
         never
       >;
+      billing_profiles: Table<import('@/domains/billing/policy').BillingSummary, never, never>;
       life_captures: Table<
         {
           id: string;
@@ -809,6 +810,7 @@ export interface Database {
         Returns: boolean;
       };
       grooming_decide_service: { Args: { p_id: string; p_accept: boolean }; Returns: boolean };
+      billing_control: { Args: { p_command: string; p_person: string | null; p_token: string | null; p_payload: unknown }; Returns: unknown };
       pilot_reserve: { Args: { p_email: string }; Returns: string };
       pilot_claim: { Args: Record<string, never>; Returns: boolean };
       pilot_submit_feedback: { Args: { p_category: string; p_message: string }; Returns: string };

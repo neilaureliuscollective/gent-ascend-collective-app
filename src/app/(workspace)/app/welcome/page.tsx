@@ -1,6 +1,7 @@
 import { InstallGuide } from '@/components/install-guide';
 import Link from 'next/link';
 import Image from 'next/image';
+import { currentAccess } from '@/domains/access/current';
 import { readPilot } from '@/domains/pilot/service';
 import { brand } from '@/platform/brand';
 import { claimPilotAction, setPilotPassword, submitFeedbackAction } from './actions';
@@ -25,6 +26,42 @@ export default async function Welcome({
   searchParams: Promise<{ status?: string }>;
 }) {
   const [pilot, params] = await Promise.all([readPilot(), searchParams]);
+  if (pilot && !pilot.beta && !pilot.founder && (await currentAccess()).has('aurelius.context'))
+    return (
+      <>
+        <div className="page-heading compact-heading">
+          <div>
+            <p className="eyebrow">Gent Ascend / Your first chapter</p>
+            <h1>Welcome to your ascent.</h1>
+          </div>
+        </div>
+        <section className="panel pilot-section">
+          <h2>Your membership is ready.</h2>
+          <p>
+            Begin with your priority, build your personal baseline, then choose one action for
+            today.
+          </p>
+          <ol className="pilot-steps">
+            <li>
+              <Link href="/app/you">Set your priority</Link>
+            </li>
+            <li>
+              <Link href="/app/ascend-profile">Build your baseline</Link>
+            </li>
+            <li>
+              <Link href="/app/goals">Choose your first goal</Link>
+            </li>
+          </ol>
+          <Link className="button" href="/app">
+            Open Command →
+          </Link>
+          <Link className="text-link" href="/app/membership">
+            Manage your membership →
+          </Link>
+        </section>
+        <InstallGuide />
+      </>
+    );
   return (
     <>
       <div className="page-heading compact-heading">
