@@ -21,7 +21,7 @@ const details = [
     copy: 'Our signature oil is taking shape. Final formula, packaging, directions and availability will be published with the finished product.',
   },
 ];
-export function ProductAtelier() {
+export function ProductAtelier({ stageOnly = false }: { stageOnly?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const stage = useRef<ReturnType<typeof createProductStage> | null>(null);
   const [enabled, setEnabled] = useState(false);
@@ -68,7 +68,10 @@ export function ProductAtelier() {
   }, [status]);
   const info = details[detail]!;
   return (
-    <div className="product-atelier" data-renderer={status}>
+    <div
+      className={`product-atelier${stageOnly ? ' product-atelier--stage' : ''}`}
+      data-renderer={status}
+    >
       <div className="atelier-visual">
         <span className="atelier-coordinate">
           LR / 001 <span>OBJECT STUDY</span>
@@ -165,38 +168,40 @@ export function ProductAtelier() {
         </div>
         <small className="atelier-disclosure">Concept packaging · final product may differ</small>
       </div>
-      <div className="atelier-story">
-        <OrbitSignature />
-        <span className="world-kicker">Legacy Reserve / Vitalis</span>
-        <h2>
-          The ritual.
-          <br />
-          <em>In your hands.</em>
-        </h2>
-        <div className="atelier-select" role="group" aria-label="Explore Vitalis">
-          {details.map((item, i) => (
-            <button
-              key={item.label}
-              aria-pressed={detail === i}
-              onClick={() => {
-                setDetail(i);
-                if (!still) setAngle(i === 0 ? 0 : i === 1 ? 45 : 315);
-              }}
-            >
-              <small>0{i + 1}</small>
-              {item.label}
-            </button>
-          ))}
+      {!stageOnly && (
+        <div className="atelier-story">
+          <OrbitSignature />
+          <span className="world-kicker">Legacy Reserve / Vitalis</span>
+          <h2>
+            The ritual.
+            <br />
+            <em>In your hands.</em>
+          </h2>
+          <div className="atelier-select" role="group" aria-label="Explore Vitalis">
+            {details.map((item, i) => (
+              <button
+                key={item.label}
+                aria-pressed={detail === i}
+                onClick={() => {
+                  setDetail(i);
+                  if (!still) setAngle(i === 0 ? 0 : i === 1 ? 45 : 315);
+                }}
+              >
+                <small>0{i + 1}</small>
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div className="atelier-detail" aria-live="polite">
+            <h3>{info.title}</h3>
+            <p>{info.copy}</p>
+          </div>
+          <Link href="/shop/vitalis" className="world-text-link">
+            Discover Vitalis ↗
+          </Link>
+          <p className="atelier-footnote">In development. Not available to order.</p>
         </div>
-        <div className="atelier-detail" aria-live="polite">
-          <h3>{info.title}</h3>
-          <p>{info.copy}</p>
-        </div>
-        <Link href="/shop/vitalis" className="world-text-link">
-          Discover Vitalis ↗
-        </Link>
-        <p className="atelier-footnote">In development. Not available to order.</p>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { commerceEvent } from './commerce-events';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Cart } from '@/domains/commerce/shopify';
@@ -194,7 +195,12 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                 An item is not open for ordering. Remove it to continue checkout.
               </p>
             ) : (
-              <a className="world-button" href="/checkout" rel="nofollow">
+              <a
+                className="world-button"
+                href="/checkout"
+                rel="nofollow"
+                onClick={() => commerceEvent('checkout_start')}
+              >
                 Continue to secure checkout ↗
               </a>
             )}

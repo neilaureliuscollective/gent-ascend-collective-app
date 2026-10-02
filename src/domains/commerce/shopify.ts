@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { launchPurchaseAllowed, type LaunchMetadata } from './launch-policy';
 
 const VERSION = '2026-07';
@@ -39,6 +40,13 @@ export type Product = LaunchMetadata & {
   ritual: { value: string } | null;
   availableForSale: boolean;
   requiresSellingPlan: boolean;
+  story?: { value: string } | null;
+  media?: {
+    nodes: {
+      mediaContentType: string;
+      sources?: { url: string; format: string; filesize: number }[];
+    }[];
+  };
 };
 export type ProductSummary = Pick<
   Product,
@@ -53,6 +61,7 @@ export type ProductSummary = Pick<
   | 'launchState'
   | 'launchWindow'
   | 'tags'
+  | 'story'
 > & {
   priceRange: { minVariantPrice: Money };
 };
@@ -91,7 +100,9 @@ const PRODUCT = `id handle title description productType availableForSale ${LAUN
   purpose: metafield(namespace: "gent_ascend", key: "purpose") { value }
   ingredients: metafield(namespace: "gent_ascend", key: "ingredients") { value }
   directions: metafield(namespace: "gent_ascend", key: "directions") { value }
-  ritual: metafield(namespace: "gent_ascend", key: "ritual") { value }`;
+  ritual: metafield(namespace: "gent_ascend", key: "ritual") { value }
+  story: metafield(namespace: "gent_ascend", key: "product_story") { value }
+  media(first: 8) { nodes { mediaContentType ... on Model3d { sources { url format filesize } } } }`;
 const CART = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
   lines(first: 100) { nodes { id quantity cost { totalAmount { amount currencyCode } }
     merchandise { ... on ProductVariant { id title product { handle title ${LAUNCH} featuredImage { url altText width height } } } } } }
@@ -133,6 +144,7 @@ export async function listProducts() {
   const data = await storefront<{ products: { nodes: ProductSummary[] } }>(
     `query Catalog { products(first: 60, sortKey: CREATED_AT, reverse: true) { nodes {
       id handle title productType availableForSale ${LAUNCH}
+      story: metafield(namespace: "gent_ascend", key: "product_story") { value }
       featuredImage { url altText width height }
       collections(first: 8) { nodes { handle title } }
       priceRange { minVariantPrice { amount currencyCode } }
@@ -143,14 +155,14 @@ export async function listProducts() {
   return data.products.nodes.filter((product) => !product.requiresSellingPlan);
 }
 
-export async function getProduct(handle: string) {
+export const getProduct = cache(async (handle: string) => {
   const data = await storefront<{ product: Product | null }>(
     `query Product($handle: String!) { product(handle: $handle) { ${PRODUCT} } }`,
     { handle },
     { cache: 'force-cache', revalidate: 300 },
   );
   return data.product?.requiresSellingPlan ? null : data.product;
-}
+});
 
 async function mutateCart(
   field: string,

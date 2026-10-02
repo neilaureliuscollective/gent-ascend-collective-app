@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 /** Procedural packaging study, not a final product asset. Render only on interaction. */
 export function createProductStage(host: HTMLElement, onLost: () => void) {
@@ -11,6 +12,12 @@ export function createProductStage(host: HTMLElement, onLost: () => void) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.5;
   const scene = new THREE.Scene();
+  const studio = new RoomEnvironment();
+  const reflections = new THREE.PMREMGenerator(renderer);
+  const environment = reflections.fromScene(studio, 0.04);
+  scene.environment = environment.texture;
+  studio.dispose();
+  reflections.dispose();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 40);
   camera.position.set(0, 0.65, 6.8);
   camera.lookAt(0, 0.35, 0);
@@ -19,8 +26,9 @@ export function createProductStage(host: HTMLElement, onLost: () => void) {
   const glass = new THREE.MeshPhysicalMaterial({
     color: 0x10241c,
     metalness: 0.32,
-    roughness: 0.22,
+    roughness: 0.18,
     clearcoat: 1,
+    envMapIntensity: 0.65,
   });
   const gold = new THREE.MeshStandardMaterial({
     color: 0xc4912f,
@@ -45,7 +53,9 @@ export function createProductStage(host: HTMLElement, onLost: () => void) {
   part(new THREE.CylinderGeometry(0.25, 0.48, 0.26, 64), glass, 0, 0.99);
   part(new THREE.CylinderGeometry(0.27, 0.27, 0.22, 48), gold, 0, 1.21);
   part(new THREE.CylinderGeometry(0.15, 0.15, 0.19, 32), black, 0, 1.4);
-  part(new THREE.BoxGeometry(0.59, 0.13, 0.23), black, 0.15, 1.56);
+  part(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 32), black, 0, 1.56);
+  const spout = part(new THREE.CapsuleGeometry(0.065, 0.39, 6, 24), black, 0.17, 1.62);
+  spout.rotation.z = Math.PI / 2;
   part(new THREE.CylinderGeometry(0.48, 0.46, 0.09, 64), gold, 0, -0.87);
   const label = document.createElement('canvas');
   label.width = 512;
@@ -58,14 +68,23 @@ export function createProductStage(host: HTMLElement, onLost: () => void) {
   context.strokeRect(20, 20, 472, 472);
   context.textAlign = 'center';
   context.fillStyle = '#e4c68b';
-  context.font = '28px Georgia';
-  context.fillText('LEGACY RESERVE', 256, 100);
-  context.font = '62px Georgia';
-  context.fillText('Vitalis', 256, 240);
+  context.font = '30px Georgia';
+  context.fillText('LEGACY RESERVE', 256, 80);
+  context.beginPath();
+  context.arc(256, 225, 91, 0, Math.PI * 2);
+  context.stroke();
+  context.lineWidth = 1;
+  context.beginPath();
+  context.arc(256, 225, 81, 0, Math.PI * 2);
+  context.stroke();
+  context.font = '90px Georgia';
+  context.fillText('LR', 256, 253);
+  context.font = '54px Georgia';
+  context.fillText('Vitalis', 256, 381);
   context.font = '18px sans-serif';
-  context.fillText('HAIR & BEARD OIL', 256, 300);
-  context.font = '15px sans-serif';
-  context.fillText('PACKAGING STUDY', 256, 426);
+  context.fillText('HAIR & BEARD OIL', 256, 426);
+  context.font = '13px sans-serif';
+  context.fillText('PACKAGING STUDY', 256, 468);
   const texture = new THREE.CanvasTexture(label);
   texture.colorSpace = THREE.SRGBColorSpace;
   const labelMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.65 });
@@ -140,6 +159,7 @@ export function createProductStage(host: HTMLElement, onLost: () => void) {
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => m.dispose());
       texture.dispose();
+      environment.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       renderer.domElement.remove();

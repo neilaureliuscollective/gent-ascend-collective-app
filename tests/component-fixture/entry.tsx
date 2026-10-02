@@ -22,6 +22,11 @@ import '@/app/globals.css';
 import '@/app/interaction.css';
 import { GroomingDirectionEditor } from '@/components/grooming/direction';
 import '@/app/(workspace)/app/grooming/grooming.css';
+import { ProductExperience } from '@/components/commerce/product-experience';
+import { commerceFixture } from './commerce';
+import '@/app/(public)/world.css';
+import '@/app/(public)/cinematic.css';
+import '@/app/(public)/commerce-experience.css';
 import { MembershipControls } from '@/components/membership-controls';
 import '@/app/(workspace)/app/membership/membership.css';
 const params = new URLSearchParams(location.search);
@@ -75,13 +80,44 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'grooming-direction' ? (
+  mode === 'commerce' ? (
+    <div className="public-world">
+      <p>Synthetic commerce fixture · no orders or payments.</p>
+      <ProductExperience
+        product={{
+          ...commerceFixture,
+          launchState: { value: params.get('state') ?? 'ready' },
+          ...(params.get('model') === 'fail'
+            ? {
+                media: {
+                  nodes: [
+                    {
+                      mediaContentType: 'MODEL_3D',
+                      sources: [
+                        {
+                          url: 'https://cdn.shopify.com/fixture/missing.glb',
+                          format: 'glb',
+                          filesize: 1000,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              }
+            : {}),
+        }}
+      />
+    </div>
+  ) : mode === 'grooming-direction' ? (
     <main className="grooming" style={{ padding: 24 }}>
       <p>Synthetic direction fixture; no account writes.</p>
-      <GroomingDirectionEditor profile={null} saveAction={async () => {
-        const response = await fetch('/fixture-direction-save', { method: 'POST' });
-        return response.json();
-      }} />
+      <GroomingDirectionEditor
+        profile={null}
+        saveAction={async () => {
+          const response = await fetch('/fixture-direction-save', { method: 'POST' });
+          return response.json();
+        }}
+      />
     </main>
   ) : mode === 'membership' ? (
     <main
@@ -100,7 +136,7 @@ createRoot(document.getElementById('root')!).render(
         />
       </section>
     </main>
-  ) :   mode === 'performance' ||
+  ) : mode === 'performance' ||
     mode === 'performance-program' ||
     mode === 'performance-learning' ||
     mode === 'performance-outcomes' ||

@@ -526,3 +526,20 @@ Research, five build phases, merchant metadata setup and pending commercial deci
 Live Shopify token/metafield reads, member billing, real customer discount eligibility, selling-plan preorders, bank payout/supplier holds and physical-device acceptance remain unverified. Phase 2 is paid membership lifecycle; phases 3–5 add member offers, paid preorders and fulfillment. This phase is a source review candidate, not a deployed paid launch.
 
 Publication status: local implementation commit `df9bdea`. Automatic approval review rejected the attempted push to the canonical GitHub remote, stating that the build authorization did not explicitly authorize publishing source/documentation to that destination. No alternate publication path was used and no draft PR or deployment was created. Await explicit authorization to publish `feat/founding-launch-foundation` to `neilaureliuscollective/gent-ascend-collective-app`.
+
+## 2026-10-02 — Premium commerce Phase One
+
+Founder approved execution of the researched premium-commerce brief. Implemented on `feat/premium-commerce-phase-one`, based on canonical main `9af7473dec0fa0c1bfb5b9f5c373380a604a2e94`.
+
+The existing shop, launch and collection-world routes now share an immersive green/obsidian/gold showroom with category filters and a browser-saved selection. Product detail uses a primary object stage, optional 3D, approved image enlargement, fit/sensory education, inspectable ingredient roles and full formulation/fact text, ritual steps, release terms, FAQ and a truthful optional membership bridge. The Vitalis procedural study adds studio reflections, a rounded pump and a concept LR label; the official site crest is preserved. Founder-provided Vitalis formula direction is explicitly separate from final supplier INCI.
+
+A strict approved Shopify JSON editorial contract owns product education/media approval; Shopify continues to own prices, variants and inventory. Phone purchase controls share variant/quantity state with the existing server-validated cart flow. First-party event hooks contain only public commerce facts. No package, account authority, billing permission, database migration or production data was changed.
+
+Commercial limits: native selling-plan paid preorders remain server-blocked until supplier/payment/shipping setup is implemented and verified; member product discounts remain planned. Media without explicit approval uses disclosed concept packaging. Missing product facts remain unpublished. Saving is browser-local, not account sync, stock reservation, a waitlist or email subscription. Event hooks have no configured measurement persistence. The live Shopify/Auth/payment and physical-phone acceptance gates remain open; synthetic browser fixtures do not close them. Scope, publication metadata and merchant activation contract: `PREMIUM_COMMERCE_PHASE_1.md`.
+
+### Phase One final verification
+
+- `npm run check` passed: zero-warning lint, TypeScript, all 209 unit tests across 25 files, and the production build.
+- Targeted production-browser verification passed all 18 tests covering the showroom, saved collections, formula keyboard access, gallery, purchase/error states, responsive widths, 3D inspection and graphics fallbacks, and existing public/founding-launch flows.
+- `npm run db:ledger` passed for the 28 recorded Gent Ascend migrations; no migrations were added.
+- Live Shopify checkout, signed-in membership, physical-device performance, and supplier fulfillment remain unverified here. Paid preorders remain gated by the existing launch policy. This is a review candidate, not a production release.
