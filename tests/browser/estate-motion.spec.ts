@@ -14,7 +14,9 @@ for (const width of [344, 768, 1440]) {
             top:
               scene.getBoundingClientRect().top +
               scrollY +
-              (scene.clientHeight - innerHeight) * progress,
+              (selector === '.ascend-emergence'
+                ? -innerHeight + (scene.clientHeight + innerHeight) * progress
+                : (scene.clientHeight - innerHeight) * progress),
             behavior: 'instant',
           });
         },
@@ -89,7 +91,7 @@ for (const width of [344, 768, 1440]) {
         page.locator('.ascend-man-decision').evaluate((el) => Number(getComputedStyle(el).opacity)),
       )
       .toBeGreaterThan(middleDecision + 0.5);
-    await sample('.ascend-emergence', 0.12);
+    await sample('.ascend-emergence', 0.3);
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
     await expect(page.locator('.ascend-emergence')).toHaveAttribute('data-ambient-active', 'true');
     await expect(page.locator('.intelligence-network .intelligence-link')).toHaveCount(6);
@@ -104,7 +106,7 @@ for (const width of [344, 768, 1440]) {
       'animation-name',
       'intelligence-signal',
     );
-    await sample('.ascend-emergence', 0.8);
+    await sample('.ascend-emergence', 0.65);
     await expect.poll(() => page.locator('.intelligence-link').last()
       .evaluate((el) => parseFloat(getComputedStyle(el).strokeDashoffset)))
       .toBeLessThan(earlyLink - 5);
