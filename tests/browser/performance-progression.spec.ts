@@ -88,7 +88,7 @@ test('stale progression keeps its explanation until records are explicitly reloa
   await page.getByRole('button', { name: 'Review', exact: true }).click();
   await page.getByRole('button', { name: 'Approve Cable row: 8 → 9 reps', exact: true }).click();
   await expect(
-    page.getByText('Your evidence changed. Reload saved records before deciding.', { exact: true }),
+    page.getByText('Your evidence changed. Reload saved records before deciding.', { exact: true }).first(),
   ).toBeVisible();
   expect(writes).toBe(1);
   await page.getByRole('button', { name: 'Reload saved records', exact: true }).click();

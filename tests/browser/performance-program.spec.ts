@@ -73,6 +73,7 @@ test('accepted program adjustment survives offline reload, syncs once and advanc
   await page.getByRole('button', { name: 'Fewer sets', exact: true }).click();
   await page.getByRole('button', { name: 'Accept & start workout', exact: true }).click();
   await page.getByRole('button', { name: 'Record set 1', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Undo set 1', exact: true })).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Training', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Undo set 1', exact: true })).toBeVisible();
@@ -119,7 +120,7 @@ test('program builder stages distinct sessions and retains edits after a conflic
   await page.getByRole('button', { name: 'Save training plan', exact: true }).click();
   expect(body).toBeUndefined();
   await page.getByRole('button', { name: 'Save program', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Program changed elsewhere');
+  await expect(page.getByRole('dialog', { name: 'Your training plan' }).getByRole('alert')).toContainText('Program changed elsewhere');
   await expect(page.getByLabel('Program name')).toHaveValue('My A / B / C cycle');
   await expect(page.getByRole('heading', { name: 'Home session C' })).toBeVisible();
   expect(body).toMatchObject({

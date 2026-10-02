@@ -20,7 +20,7 @@ for (const width of [360, 768]) {
     expect(latest).toBeNull();
     await page.getByRole('button', { name: 'Start this workout →', exact: true }).click();
     await expect(page.getByLabel('Set 1 reps')).toBeVisible();
-    expect(latest).toMatchObject({ status: 'active', sets: [{ exercise: 'Incline plate-loaded press', targetReps: 8 }, { targetReps: 8 }] });
+    await expect.poll(() => latest).toMatchObject({ status: 'active', sets: [{ exercise: 'Incline plate-loaded press', targetReps: 8 }, { targetReps: 8 }] });
     await page.getByLabel('Set 1 reps').fill('7');
     await page.getByRole('button', { name: 'Record set 1', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Undo set 1', exact: true })).toBeVisible();

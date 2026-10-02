@@ -64,7 +64,7 @@ for (const width of [360, 768, 1440]) {
       .getByRole('button', { name: /Record set/ })
       .first()
       .click();
-    await expect(page.getByText('1 of 6 sets recorded')).toBeVisible();
+    await expect(page.getByText('1/6 sets recorded')).toBeVisible();
     await page.getByRole('button', { name: /Finish/ }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Sample complete' })).toContainText(
       'Sample complete',
