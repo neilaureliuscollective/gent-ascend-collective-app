@@ -33,6 +33,7 @@ import { ProfileEditor, PlanEditor, CheckinEditor } from './editors';
 import { RecoverySpace } from './recovery';
 import { FuelSpace } from './fuel';
 import { Training } from './training';
+import { FreestyleComposer } from './freestyle-composer';
 import { ProgressionReview } from './progression';
 import { ProgramEditor, ProgramCycle, SessionPreparation, SessionDecision } from './program';
 import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/performance/program';
@@ -222,6 +223,37 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
       editLock.current = false;
     }
   }
+  async function beginFreestyle(freestyle: Plan) {
+    if (!owner || editLock.current) return;
+    editLock.current = true;
+    setError('');
+    try {
+      const parsedPlan = freestyle;
+      const existing = await readDraft(owner);
+      if (
+        existing &&
+        (existing.draft.status === 'active' || existing.revision !== existing.syncedRevision)
+      ) {
+        setLocal(existing);
+        setView('train');
+        return;
+      }
+      const row = await beginDraft(
+        owner,
+        startSession(parsedPlan, 1, parsedPlan.unit),
+        0,
+      );
+      setLocal(row);
+      setView('train');
+      setSyncState('Freestyle workout saved on this device');
+      void sync();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not start the freestyle workout.');
+    } finally {
+      editLock.current = false;
+    }
+  }
+
   async function saveSession(value: Session): Promise<boolean> {
     if (!owner || !deviceRef.current || editLock.current || conflict) return false;
     editLock.current = true;
@@ -529,57 +561,71 @@ export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) 
                     Resume & keep workout on device
                   </button>
                 </section>
-              ) : data.program ? (
-                <SessionPreparation
-                  key={`${data.program.version}-${data.program.nextSlotId}`}
-                  data={data}
-                  busy={busy}
-                  start={(p) => void begin(p)}
-                  edit={editProgram}
-                  recover={() => {
-                    setView('restore');
-                    setNotice('Recovery today. Your next session will be waiting.');
-                  }}
-                />
               ) : (
-                <section className="perf-training-intro">
-                  <p className="eyebrow">YOUR NEXT SESSION</p>
-                  <h2>{plan?.data.title ?? 'Build a session worth repeating.'}</h2>
-                  {plan ? (
-                    <>
-                      <ol className="perf-movements">
-                        {plan.data.exercises.map((e) => (
-                          <li key={e.id}>
-                            <span>{e.name}</span>
-                            <strong>
-                              {e.sets} × {e.reps}
-                              <small>
-                                {e.load} {plan.data.unit}
-                              </small>
-                            </strong>
-                          </li>
-                        ))}
-                      </ol>
-                      <p className="perf-caption">
-                        Starting keeps this workout on your device for offline use. It is accessible
-                        in this browser until removed or you sign out. Reconnect to sync your
-                        recorded sets.
-                      </p>
-                      <div className="perf-inline">
-                        <button className="perf-primary" onClick={() => void begin()}>
-                          Start & keep workout on device →
-                        </button>
-                        <button onClick={editPlan}>Edit plan</button>
-                      </div>
-                    </>
-                  ) : (
-                    <button
-                      className="perf-primary"
-                      onClick={() => (data.profile ? editPlan() : setEditing('profile'))}
-                    >
-                      {data.profile ? 'Create your plan' : 'Set your direction'}
-                    </button>
-                  )}
+                <section className="perf-training-entry">
+                  <FreestyleComposer
+                    history={data.sessions.map((entry) => entry.data)}
+                    unit={profile.unit}
+                    busy={busy}
+                    onStart={beginFreestyle}
+                  />
+                  <details className="perf-saved-structure">
+                    <summary>
+                      <span>
+                        <span className="eyebrow">SAVED STRUCTURE</span>
+                        <strong>Use a plan or repeating program instead</strong>
+                      </span>
+                      <span>＋</span>
+                    </summary>
+                    {data.program ? (
+                      <SessionPreparation
+                        key={`${data.program.version}-${data.program.nextSlotId}`}
+                        data={data}
+                        busy={busy}
+                        start={(p) => void begin(p)}
+                        edit={editProgram}
+                        recover={() => {
+                          setView('restore');
+                          setNotice('Recovery today. Your next session will be waiting.');
+                        }}
+                      />
+                    ) : (
+                      <section className="perf-training-intro">
+                        <p className="eyebrow">YOUR SAVED SESSION</p>
+                        <h2>{plan?.data.title ?? 'Build a session worth repeating.'}</h2>
+                        {plan ? (
+                          <>
+                            <ol className="perf-movements">
+                              {plan.data.exercises.map((e) => (
+                                <li key={e.id}>
+                                  <span>{e.name}</span>
+                                  <strong>
+                                    {e.sets} × {e.reps}
+                                    <small>
+                                      {e.load} {plan.data.unit}
+                                    </small>
+                                  </strong>
+                                </li>
+                              ))}
+                            </ol>
+                            <div className="perf-inline">
+                              <button className="perf-primary" onClick={() => void begin()}>
+                                Start saved workout →
+                              </button>
+                              <button onClick={editPlan}>Edit plan</button>
+                            </div>
+                          </>
+                        ) : (
+                          <button
+                            className="perf-primary"
+                            onClick={() => (data.profile ? editPlan() : setEditing('profile'))}
+                          >
+                            {data.profile ? 'Create a reusable plan' : 'Set your direction'}
+                          </button>
+                        )}
+                      </section>
+                    )}
+                  </details>
                 </section>
               )}
             </>
