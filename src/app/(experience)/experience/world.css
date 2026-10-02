@@ -1007,3 +1007,77 @@ html:has(.gent-world) {
     bottom: 80px;
   }
 }
+
+/* Claim belongs to the same world, with quiet, readable authentication. */
+.gw-account-claim {
+  display: grid;
+  gap: 1.15rem;
+  max-width: 32rem;
+  margin: auto;
+  padding: 0.6rem 0 1.5rem;
+}
+.gw-account-claim .gw-energy-orb {
+  max-height: 8rem;
+}
+.gw-account-claim blockquote {
+  margin: 0;
+  padding: 1.4rem;
+  border-left: 2px solid #c4912f;
+  background: linear-gradient(120deg, #0b3b3270, transparent);
+  font-size: clamp(1.25rem, 4vw, 1.8rem);
+  overflow-wrap: anywhere;
+}
+.gw-account-claim h3 {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 400;
+}
+.gw-account-claim form {
+  display: grid;
+  gap: 0.8rem;
+}
+.gw-account-claim input {
+  width: 100%;
+  min-height: 3.2rem;
+  border: 1px solid #c4912f55;
+  background: #050706;
+  color: #f4eee1;
+  padding: 0.9rem;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+}
+.gw-account-claim button {
+  min-height: 2.8rem;
+  text-align: left;
+}
+.gw-account-claim input:focus-visible,
+.gw-account-claim button:focus-visible {
+  outline: 2px solid #c4912f;
+  outline-offset: 4px;
+}
+.gw-account-claim [role='alert'] {
+  padding: 1rem;
+  border: 1px solid #c4912f;
+}
+.gw-account-claim[data-saved='true'] {
+  background: radial-gradient(ellipse at top, #0b3b3260, transparent 70%);
+}
+@media (max-width: 600px) {
+  .gent-world .context-sheet:has(.gw-account-claim) {
+    width: 100%;
+    max-width: none;
+    height: var(--task-height, 100dvh);
+    max-height: var(--task-height, 100dvh);
+    top: var(--task-top, 0);
+    margin: 0;
+    border-radius: 0;
+  }
+}
+.gw-account-claim .gw-energy-orb {
+  width: 100px;
+  height: 100px;
+  margin: auto;
+}
+@media (max-width: 600px) {
+  .gent-world .context-sheet:has(.gw-account-claim)[open] { align-items:stretch; }
+  .gent-world .context-sheet:has(.gw-account-claim) .context-sheet-surface { height:100%; max-height:100%; border-radius:0; padding-top:env(safe-area-inset-top); }
+}

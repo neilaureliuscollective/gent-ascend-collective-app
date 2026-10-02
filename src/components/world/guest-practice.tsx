@@ -43,8 +43,7 @@ export function GuestPractice() {
         </p>
       )}
       <p className="gw-muted">
-        <Link href="/enter">Member sign in ↗</Link> to record your own training. Current account
-        access is by invitation.
+        <Link href="/enter">Member sign in ↗</Link> to record your own training. Or create a free account from the World to keep your own direction. Sample sets are never imported as training history.
       </p>
     </div>
   );

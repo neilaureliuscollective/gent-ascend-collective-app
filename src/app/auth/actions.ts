@@ -43,7 +43,10 @@ export async function signIn(form: FormData) {
     failure = 'service';
   }
   if (failure) redirect(`${errorPath}?error=${failure}`);
+  if (form.get('claim') === '1') redirect('/experience/world?claim=1');
   if (form.get('entry') === 'membership') redirect('/app/membership');
+  const { savedWorld } = await import('@/domains/onboarding/service');
+  if (await savedWorld()) redirect('/experience/world');
   const pilot = await readPilot();
   if (!pilot?.beta && !pilot?.founder && (await currentAccess()).has('aurelius.context'))
     redirect('/app');
