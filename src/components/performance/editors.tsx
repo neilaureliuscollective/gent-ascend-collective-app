@@ -2,7 +2,7 @@
 import { ChoiceGroup } from '@/components/interaction/choice-group';
 import { ExercisePicker } from './exercise-picker';
 import { catalogExercise, finalizeExerciseNames } from '@/domains/performance/catalog';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { defaultProfile, goalLabels } from '@/domains/performance/model';
 import type { Profile, Plan, Checkin } from '@/domains/performance/schema';
 export function ProfileEditor({
@@ -17,143 +17,159 @@ export function ProfileEditor({
   save: (value: Profile) => Promise<void>;
 }) {
   const [draft, setDraft] = useState<Profile>(initial ?? defaultProfile);
-  const [review, setReview] = useState(Boolean(initial));
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!review) {
-      setReview(true);
-      return;
-    }
+  const [step, setStep] = useState(initial ? 4 : 0);
+  const steps = 5;
+
+  function finish() {
     if (initial && JSON.stringify(initial) === JSON.stringify(draft)) {
       close?.();
       return;
     }
     void save(draft);
   }
+
+  function next() {
+    if (step >= steps - 1) finish();
+    else setStep((value) => Math.min(steps - 1, value + 1));
+  }
+
+  const progress = ((step + 1) / steps) * 100;
+
   return (
-    <form className="perf-form" onSubmit={submit}>
-      <div className="perf-form-heading">
-        <span className="eyebrow">01 / Your foundation</span>
-        <h2>Make the practice yours.</h2>
-        <p>These are your preferences. You can revise them as life changes.</p>
+    <div className="perf-calibration" aria-live="polite">
+      <div className="perf-calibration-progress" aria-hidden="true">
+        <i style={{ width: `${progress}%` }} />
       </div>
-      {review ? (
-        <>
-          <dl className="direction-summary">
-            <div>
-              <dt>Direction</dt>
-              <dd>{goalLabels[draft.goal]}</dd>
-            </div>
-            <div>
-              <dt>Your practice</dt>
-              <dd>
-                {draft.daysPerWeek} sessions / week · {draft.minutes} minutes · {draft.equipment}
-              </dd>
-            </div>
-            <div>
-              <dt>Experience and units</dt>
-              <dd>
-                {draft.experience} · {draft.unit}
-              </dd>
-            </div>
-            <div>
-              <dt>What to account for</dt>
-              <dd>{draft.limitations || 'No limitations recorded'}</dd>
-            </div>
-          </dl>
-          <button type="button" disabled={busy} onClick={() => setReview(false)}>
-            Adjust direction
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="perf-fields">
-            <ChoiceGroup
-              label="My direction"
-              value={draft.goal}
-              options={Object.entries(goalLabels).map(([value, label]) => ({ value, label }))}
-              onChange={(value) => setDraft({ ...draft, goal: value as Profile['goal'] })}
-              disabled={busy}
-            />
+
+      <div className="perf-calibration-head">
+        <span className="eyebrow">AETHELIOS / TRAINING CALIBRATION</span>
+        <span>{step + 1} / {steps}</span>
+      </div>
+
+      {step === 0 && (
+        <section className="perf-calibration-step">
+          <p className="eyebrow">START HERE</p>
+          <h2>What are we building right now?</h2>
+          <p>This sets the bias. It does not lock you into a program.</p>
+          <ChoiceGroup
+            label="Training direction"
+            value={draft.goal}
+            options={Object.entries(goalLabels).map(([value, label]) => ({ value, label }))}
+            onChange={(value) => setDraft({ ...draft, goal: value as Profile['goal'] })}
+            disabled={busy}
+          />
+        </section>
+      )}
+
+      {step === 1 && (
+        <section className="perf-calibration-step">
+          <p className="eyebrow">YOUR BASELINE</p>
+          <h2>Where are you coming from?</h2>
+          <p>Aethelios uses this to decide how much guidance to put in front of you.</p>
+          <ChoiceGroup
+            label="Experience"
+            value={draft.experience}
+            options={[
+              { value: 'new', label: 'Getting started' },
+              { value: 'returning', label: 'Coming back' },
+              { value: 'consistent', label: 'Training consistently' },
+            ]}
+            onChange={(value) => setDraft({ ...draft, experience: value as Profile['experience'] })}
+            disabled={busy}
+          />
+        </section>
+      )}
+
+      {step === 2 && (
+        <section className="perf-calibration-step">
+          <p className="eyebrow">YOUR ENVIRONMENT</p>
+          <h2>What do you usually train with?</h2>
+          <p>This gives Machine Scout and movement suggestions the right context.</p>
+          <ChoiceGroup
+            label="Equipment"
+            value={draft.equipment}
+            options={[
+              { value: 'gym', label: 'Full gym' },
+              { value: 'dumbbells', label: 'Dumbbells' },
+              { value: 'bodyweight', label: 'Bodyweight' },
+            ]}
+            onChange={(value) => setDraft({ ...draft, equipment: value as Profile['equipment'] })}
+            disabled={busy}
+          />
+        </section>
+      )}
+
+      {step === 3 && (
+        <section className="perf-calibration-step">
+          <p className="eyebrow">REAL LIFE</p>
+          <h2>How much room does training get?</h2>
+          <p>Give us your normal week, not your perfect week.</p>
+          <div className="perf-calibration-numbers">
             <label>
-              Training experience
-              <select
-                value={draft.experience}
-                onChange={(e) =>
-                  setDraft({ ...draft, experience: e.target.value as Profile['experience'] })
-                }
-              >
-                <option value="new">Getting started</option>
-                <option value="returning">Returning to training</option>
-                <option value="consistent">Training consistently</option>
-              </select>
-            </label>
-            <label>
-              Sessions per week
+              Sessions / week
               <input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max="6"
-                required
                 value={draft.daysPerWeek}
-                onChange={(e) => setDraft({ ...draft, daysPerWeek: e.target.valueAsNumber })}
+                onChange={(e) => setDraft({ ...draft, daysPerWeek: e.target.valueAsNumber || 1 })}
               />
             </label>
             <label>
-              Typical time · minutes
+              Minutes / session
               <input
                 type="number"
+                inputMode="numeric"
                 min="10"
                 max="120"
-                required
+                step="5"
                 value={draft.minutes}
-                onChange={(e) => setDraft({ ...draft, minutes: e.target.valueAsNumber })}
+                onChange={(e) => setDraft({ ...draft, minutes: e.target.valueAsNumber || 10 })}
               />
             </label>
-            <label>
-              Equipment
-              <select
-                value={draft.equipment}
-                onChange={(e) =>
-                  setDraft({ ...draft, equipment: e.target.value as Profile['equipment'] })
-                }
-              >
-                <option value="gym">Gym</option>
-                <option value="dumbbells">Dumbbells</option>
-                <option value="bodyweight">Bodyweight</option>
-              </select>
-            </label>
-            <label>
-              Preferred weight unit
-              <select
-                value={draft.unit}
-                onChange={(e) => setDraft({ ...draft, unit: e.target.value as Profile['unit'] })}
-              >
-                <option value="lb">Pounds · lb</option>
-                <option value="kg">Kilograms · kg</option>
-              </select>
-            </label>
           </div>
-          <label>
-            Movements or limitations to account for
+        </section>
+      )}
+
+      {step === 4 && (
+        <section className="perf-calibration-step">
+          <p className="eyebrow">CALIBRATED</p>
+          <h2>Aethelios has the starting signal.</h2>
+          <p>Nothing here is permanent. Performance should learn from what you actually do next.</p>
+          <dl className="direction-summary perf-calibration-summary">
+            <div><dt>Direction</dt><dd>{goalLabels[draft.goal]}</dd></div>
+            <div><dt>Experience</dt><dd>{draft.experience}</dd></div>
+            <div><dt>Environment</dt><dd>{draft.equipment}</dd></div>
+            <div><dt>Cadence</dt><dd>{draft.daysPerWeek} × {draft.minutes} min</dd></div>
+          </dl>
+          <label className="perf-calibration-quiet">
+            Anything training should account for?
             <textarea
               maxLength={500}
               rows={3}
               value={draft.limitations}
-              placeholder="Optional. What should your training account for?"
+              placeholder="Optional"
               onChange={(e) => setDraft({ ...draft, limitations: e.target.value })}
             />
           </label>
-          <p className="perf-caption">
-            When you record a limitation, automatic progression proposals pause. Review exercise
-            choices against your own guidance.
-          </p>
-        </>
+          <label className="perf-calibration-unit">
+            Weight unit
+            <select value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value as Profile['unit'] })}>
+              <option value="lb">lb</option>
+              <option value="kg">kg</option>
+            </select>
+          </label>
+        </section>
       )}
-      <button className="perf-primary" disabled={busy}>
-        {review ? 'Keep this direction' : 'Review direction'}
-      </button>
-    </form>
+
+      <div className="perf-calibration-actions">
+        {step > 0 && <button type="button" disabled={busy} onClick={() => setStep((value) => value - 1)}>Back</button>}
+        <button type="button" className="perf-primary" disabled={busy} onClick={next}>
+          {step === steps - 1 ? (initial ? 'Save calibration →' : 'Enter Performance →') : 'Continue →'}
+        </button>
+      </div>
+    </div>
   );
 }
 export function PlanEditor({

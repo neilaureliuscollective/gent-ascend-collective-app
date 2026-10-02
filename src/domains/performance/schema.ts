@@ -101,7 +101,7 @@ export const sessionSchema = z
     unit: z.enum(['kg', 'lb']),
     pain: z.boolean(),
     note: z.string().trim().max(500),
-    sets: z.array(setSchema).min(1).max(96),
+    sets: z.array(setSchema).min(0).max(96),
   })
   .strict()
   .refine((s) => new Set(s.sets.map((x) => x.id)).size === s.sets.length, 'Set IDs must be unique.')

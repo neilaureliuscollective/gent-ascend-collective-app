@@ -6,8 +6,14 @@ import { authorizedPerson } from '@/domains/access/authorize';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 
 const requestSchema = z.object({
-  image: z.string().max(2_800_000),
+  image: z.string().max(3_600_000),
   mediaType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+});
+
+const candidateSchema = z.object({
+  name: z.string().min(1).max(80),
+  equipment: z.string().min(1).max(80),
+  movementPattern: z.string().min(1).max(80),
 });
 
 const machineResultSchema = z.object({
@@ -19,6 +25,7 @@ const machineResultSchema = z.object({
   setupCue: z.string().min(1).max(220),
   confidence: z.enum(['high', 'medium', 'low']),
   uncertainty: z.string().max(220),
+  alternatives: z.array(candidateSchema).max(3).default([]),
 });
 
 function extractJson(text: string) {
@@ -36,47 +43,35 @@ export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
     const config = aiConfigSchema.parse(process.env);
-    if (!config.OPENAI_API_KEY)
-      return NextResponse.json({ error: 'Aethelios vision is not connected.' }, { status: 503 });
+    if (!config.OPENAI_API_KEY) return NextResponse.json({ error: 'Aethelios vision is not connected.' }, { status: 503 });
 
-    const openai = createOpenAI({
-      apiKey: config.OPENAI_API_KEY,
-      baseURL: 'https://api.openai.com/v1',
-    });
-
+    const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY, baseURL: 'https://api.openai.com/v1' });
     const result = await generateText({
       model: openai.responses(config.AURELIUS_AI_MODEL),
       instructions:
-        'You are Aethelios Machine Scout inside a strength-training app. Analyze only the visible gym equipment. Identify the most likely exercise/machine category conservatively. Never pretend certainty from an ambiguous image. Do not diagnose injury or prescribe a medical exercise. Return ONLY valid JSON with keys: name, equipment, movementPattern, primaryMuscles, secondaryMuscles, setupCue, confidence, uncertainty. setupCue should be one brief neutral setup cue, not a full technique prescription. If uncertain, use a generic descriptive name and say what visual detail is missing in uncertainty.',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Identify this gym machine or exercise station so I can add the movement to my live workout. Use common gym language.',
-            },
-            { type: 'image', image: input.image, mediaType: input.mediaType },
-          ],
-        },
-      ],
-      maxOutputTokens: 350,
-      maxRetries: 0,
-      timeout: { totalMs: 18000 },
+        'You are Aethelios Machine Scout inside a strength-training app. Inspect only visible gym equipment. Identify the most likely machine or exercise station using common gym language. Use geometry and visible features such as bench angle, pads, handles, plate horns, cables, lever arms, foot plates and movement path. Never invent certainty. If confidence is medium or low, provide 1-3 plausible alternatives instead of failing. Return ONLY valid JSON with keys: name, equipment, movementPattern, primaryMuscles, secondaryMuscles, setupCue, confidence, uncertainty, alternatives. Each alternative has name, equipment, movementPattern. setupCue is one brief neutral setup cue, not medical advice.',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Identify this gym machine or station so I can add it to the workout. If the exact model is unclear, identify the exercise category and give likely alternatives.' },
+          { type: 'image', image: input.image, mediaType: input.mediaType },
+        ],
+      }],
+      maxOutputTokens: 600,
+      maxRetries: 1,
+      timeout: { totalMs: 24000 },
       providerOptions: { openai: { store: false } },
     });
 
     const parsed = machineResultSchema.parse(extractJson(result.text));
-    return NextResponse.json(parsed, {
-      headers: { 'Cache-Control': 'private, no-store' },
-    });
+    return NextResponse.json(parsed, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     const message =
       error instanceof z.ZodError
         ? 'That image could not be read. Try a clearer photo of the full machine.'
-        : error instanceof Error && error.message.includes('JSON')
-          ? 'Machine Scout could not identify that confidently. Try another angle.'
-          : 'Machine Scout could not inspect that image right now.';
+        : error instanceof Error && /JSON|parse/i.test(error.message)
+          ? 'Aethelios could not read that result cleanly. Try the photo again.'
+          : 'Machine Scout could not inspect that image right now. Try another angle.';
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
