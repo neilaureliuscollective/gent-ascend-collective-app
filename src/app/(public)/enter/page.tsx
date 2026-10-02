@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { signIn } from '@/app/auth/actions';
+import { savedWorld } from '@/domains/onboarding/service';
 import { currentIdentity } from '@/domains/identity/current';
 import { readPilot } from '@/domains/pilot/service';
 import { parseEnvironment } from '@/platform/environment';
@@ -26,12 +27,14 @@ const errors: Record<string, string> = {
 export default async function Enter({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; entry?: string }>;
 }) {
   const [identity, params] = await Promise.all([currentIdentity(), searchParams]);
   const pilot = identity ? await readPilot() : null;
-  const destination =
-    pilot?.beta || pilot?.founder
+  const claimed = identity ? await savedWorld() : null;
+  const destination = claimed
+    ? '/experience/world'
+    : pilot?.beta || pilot?.founder
       ? pilot.person.priority
         ? '/app'
         : '/app/welcome'
@@ -64,10 +67,10 @@ export default async function Enter({
           </h1>
           <p className="entrance-statement">
             {identity
-              ? pilot?.beta || pilot?.founder
+              ? claimed || pilot?.beta || pilot?.founder
                 ? 'Your place inside Gent Ascend is ready when you are.'
                 : 'Your account is recognized. Confirm your invitation to continue inside.'
-              : 'The public journey ends here. Your own direction, daily practice, and Aethelios begin inside.'}
+              : 'Return to your saved direction, training, and personal space.'}
           </p>
           <div className="entrance-threads" aria-hidden="true">
             <span>YOUR DIRECTION</span>
@@ -80,15 +83,19 @@ export default async function Enter({
             <>
               <p className="entrance-kicker">YOUR PERSONAL SPACE</p>
               <h2>
-                {pilot?.beta || pilot?.founder ? 'Continue your ascent.' : 'Confirm your place.'}
+                {claimed || pilot?.beta || pilot?.founder
+                  ? 'Continue your ascent.'
+                  : 'Confirm your place.'}
               </h2>
               <p>
-                {pilot?.beta || pilot?.founder
+                {claimed || pilot?.beta || pilot?.founder
                   ? 'Step into your own space. Your work and records stay connected to your account.'
                   : 'Your account is recognized. Founding member access is confirmed through your invitation.'}
               </p>
               <Link className="entrance-primary" href={destination}>
-                {pilot?.beta || pilot?.founder ? 'Open my space' : 'Continue to invitation'}{' '}
+                {claimed || pilot?.beta || pilot?.founder
+                  ? 'Open my space'
+                  : 'Continue to invitation'}{' '}
                 <span aria-hidden="true">↗</span>
               </Link>
             </>
@@ -96,9 +103,10 @@ export default async function Enter({
             <>
               <p className="entrance-kicker">PRIVATE MEMBER ENTRANCE</p>
               <h2>Return to your space.</h2>
-              <p>Sign in with the email and password connected to your invitation.</p>
+              <p>Sign in with your existing email and password.</p>
               <form action={signIn} className="entrance-form">
                 <input type="hidden" name="entry" value="world" />
+                {params.entry === 'claim' && <input type="hidden" name="claim" value="1" />}
                 {params.error && (
                   <p className="entrance-error" role="alert">
                     {errors[params.error] ?? errors.invalid}
@@ -125,8 +133,8 @@ export default async function Enter({
                 </button>
               </form>
               <p className="entrance-note">
-                First invitation? Open the secure link sent to your email to establish your account.
-                Access is currently by private invitation.
+                New here? <Link href="/experience/world?claim=1">Create a free account</Link>.
+                Existing invitations remain supported.
               </p>
             </>
           ) : (

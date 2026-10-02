@@ -28,6 +28,8 @@ export async function proxy(request: NextRequest) {
 }
 export const config = {
   matcher: [
+    '/experience/world',
+    '/experience/grooming',
     '/experience/performance/practice/:path*',
     '/experience/aethelios/:path*',
     '/app/:path*',

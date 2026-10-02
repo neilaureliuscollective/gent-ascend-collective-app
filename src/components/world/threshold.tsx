@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { EnergyOrb } from './energy-orb';
+import { track } from '@/domains/onboarding/track';
 import { brand } from '@/platform/brand';
 import { useAppearance } from '@/components/visual/appearance';
 
@@ -228,7 +229,10 @@ export function Threshold({ replay = false }: { replay?: boolean }) {
           muted
           playsInline
           preload="none"
-          onEnded={() => void arrive()}
+          onEnded={() => {
+            track('cinematic_completed');
+            void arrive();
+          }}
           onError={() => {
             if (active.current && filmStarted.current) void arrive();
           }}

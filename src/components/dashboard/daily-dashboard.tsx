@@ -1,4 +1,5 @@
 'use client';
+import { track } from '@/domains/onboarding/track';
 import { useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { OrbitSignature } from '@/components/visual/orbit-signature';
@@ -104,6 +105,7 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? 'Your day could not be saved.');
       setData(result as DailyData);
+      if (next.actions.some(action => !day.actions.some(previous => previous.id === action.id) || (action.done && !day.actions.find(previous => previous.id === action.id)?.done))) track('first_meaningful_action');
       setNotice('Your day is saved.');
       if (close) dialog.current?.close();
     } catch (caught) {

@@ -71,6 +71,7 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      onboarding_claims: Table<{ person_id: string; request_id: string; focus: 'body' | 'presence' | 'focus'; day: string; intention: string; created_at: string }, never, never>;
       performance_programs: Table<ProgramRow, never, never>;
       performance_session_context: Table<SessionContextRow, never, never>;
       performance_profiles: Table<ProfileRow, never, never>;
@@ -723,6 +724,19 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      onboarding_claim: {
+        Args: {
+          p_request: string;
+          p_focus: string;
+          p_intention: string;
+          p_timezone: string;
+          p_created: string;
+          p_replace: boolean;
+          p_expected: number;
+          p_day: string | null;
+        };
+        Returns: unknown;
+      };
       performance_save_movement: {
         Args: { p_request: string; p_expected: number; p_entry: Movement };
         Returns: number;
@@ -810,7 +824,15 @@ export interface Database {
         Returns: boolean;
       };
       grooming_decide_service: { Args: { p_id: string; p_accept: boolean }; Returns: boolean };
-      billing_control: { Args: { p_command: string; p_person: string | null; p_token: string | null; p_payload: unknown }; Returns: unknown };
+      billing_control: {
+        Args: {
+          p_command: string;
+          p_person: string | null;
+          p_token: string | null;
+          p_payload: unknown;
+        };
+        Returns: unknown;
+      };
       pilot_reserve: { Args: { p_email: string }; Returns: string };
       pilot_claim: { Args: Record<string, never>; Returns: boolean };
       pilot_submit_feedback: { Args: { p_category: string; p_message: string }; Returns: string };
@@ -834,7 +856,10 @@ export interface Database {
         Args: { p_id: string; p_approve: boolean };
         Returns: string | null;
       };
-      ai_decide_daily_action_v2:{Args:{p_id:string;p_approve:boolean;p_title:string|null};Returns:string|null};
+      ai_decide_daily_action_v2: {
+        Args: { p_id: string; p_approve: boolean; p_title: string | null };
+        Returns: string | null;
+      };
       ai_reserve_proposal: { Args: { p_request: string }; Returns: boolean };
       ascend_profile_confirm: {
         Args: {
@@ -859,7 +884,10 @@ export interface Database {
         };
         Returns: number;
       };
-      daily_complete_action: { Args: { p_day: string; p_action: string; p_version: number }; Returns: number };
+      daily_complete_action: {
+        Args: { p_day: string; p_action: string; p_version: number };
+        Returns: number;
+      };
       ai_begin_turn: {
         Args: {
           p_conversation: string;

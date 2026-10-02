@@ -1127,3 +1127,35 @@ describe('Phase 7 exercise identity and manual progression',()=>{
   await expect(asUser(user,`select public.performance_progression_accept(gen_random_uuid(),1,'${slot}','${ready.proposal!.token}')`)).rejects.toThrow();
  });
 });
+
+describe('account claim: atomic import, isolation and conflict recovery',()=>{
+  it('imports once, preserves existing records, rejects silent replacement and cross-user writes',async()=>{
+    const user='9b000000-0000-4000-8000-000000000001',other='9b000000-0000-4000-8000-000000000002';
+    const request='9b100000-0000-4000-8000-000000000001',second='9b100000-0000-4000-8000-000000000002';
+    await db.exec(`insert into auth.users(id) values('${user}'),('${other}')`);
+    const call=(id:string,text:string,replace=false,expected=0,day="null")=>`select public.onboarding_claim('${id}','body','${text}','America/Chicago',now(),${replace},${expected},${day}) as receipt`;
+    type Receipt={receipt:{status:string;day:string;version:number}};
+    const first=(await asUser<Receipt>(user,call(request,'Train deliberately'))).rows[0]!.receipt;
+    expect(first.status).toBe('saved');
+    const repeated=(await asUser<Receipt>(user,call(request,'Train deliberately'))).rows[0]!.receipt;
+    expect(repeated.status).toBe('saved');
+    expect((await asUser(user,'select * from public.onboarding_claims')).rows).toHaveLength(1);
+    expect((await asUser(user,'select version from public.daily_entries')).rows).toEqual([{version:1}]);
+    await expect(asUser(user,call(request,'Changed payload'))).rejects.toThrow(/changed/);
+    expect((await asUser(other,'select * from public.onboarding_claims')).rows).toHaveLength(0);
+    await expect(asUser(other,`insert into public.onboarding_claims(person_id,request_id,focus,day,intention) values((select id from public.persons where auth_user_id='${other}'),'${request}','body',current_date,'Forged')`)).rejects.toThrow();
+    await db.exec(`update public.daily_entries set energy=4,sleep_minutes=420,reflection='Private reflection' where person_id=(select id from public.persons where auth_user_id='${user}');
+      insert into public.daily_actions(person_id,day,id,title,done,position) select person_id,day,'9b200000-0000-4000-8000-000000000001','Make the call',false,0 from public.daily_entries where person_id=(select id from public.persons where auth_user_id='${user}')`);
+    const conflict=(await asUser<Receipt>(user,call(second,'Protect my time'))).rows[0]!.receipt;
+    expect(conflict.status).toBe('conflict');
+    expect((await asUser<Receipt>(user,call(second,'Protect my time',true,0))).rows[0]!.receipt.status).toBe('conflict');
+    expect((await asUser<Receipt>(user,call(second,'Protect my time',true,1,"'2020-01-01'"))).rows[0]!.receipt.status).toBe('day_changed');
+    expect((await asUser<Receipt>(user,call(second,'Protect my time',true,1,`'${first.day}'`))).rows[0]!.receipt.status).toBe('saved');
+    expect((await asUser(user,'select intention,version from public.daily_entries')).rows).toEqual([{intention:'Protect my time',version:2}]);
+    expect((await asUser(user,'select energy,sleep_minutes,reflection from public.daily_entries')).rows).toEqual([{energy:4,sleep_minutes:420,reflection:'Private reflection'}]);
+    expect((await asUser(user,'select title,done from public.daily_actions')).rows).toEqual([{title:'Make the call',done:false}]);
+    expect((await asUser(user,'select onboarding_completed,timezone from public.persons')).rows).toEqual([{onboarding_completed:true,timezone:'America/Chicago'}]);
+    await db.exec('set role anon');
+    try {await expect(db.query(call(request,'Train deliberately'))).rejects.toThrow(/permission/);} finally {await db.exec('reset role');}
+  });
+});

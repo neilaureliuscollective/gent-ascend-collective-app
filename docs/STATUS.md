@@ -1,3 +1,11 @@
+# Free account claim — October 2, 2026
+
+Founder-approved Phase 1 implemented on `feat/free-account-claim`. Existing cinematic entrance retained. World direction now becomes a recoverable 24-hour device draft; optional branded signup sheet supports Google + email OTP, fixed return routing, atomic owner-derived import and persisted focus. Free signup is independent of billing and fails closed until verified configuration is enabled. Existing password/invitation/membership flows retained. Sample workout/grooming activity is never promoted to actual history. Account creation never grants AI/beta/paid/clinical access.
+
+Validation: lint and TypeScript passed; production build passed; 213 unit/route/SQL tests passed, including owner-only/idempotent/conflict-safe import. Four account-claim browser tests passed at 360/768/1440 and failed-save/replacement recovery using explicit API fixtures. Eight existing cinematic/world-priority browser regression tests passed. Local migration ledger check passed (existing 28 hosted hash snapshot entries); new claim migration remains unapplied remotely. SQL uses PGlite, not GoTrue/PostgREST. Browser screenshots visually inspected; narrow phone authentication is full screen.
+
+Open release gates: actual Supabase migration/Auth/PostgREST, Google provider, production OTP email + CAPTCHA, physical Fold/iPhone/PWA and cross-user hosted acceptance. Docker is unavailable in this runtime. No hosted settings or production deployment changed. Setup and exact limits: ACCOUNT_CLAIM_PHASE_1.md. Structured logs are the initial analytics sink, not a durable reporting dashboard. This is implementation-ready for review; hosted activation remains open.
+
 # Subtle cinematic replay — October 2, 2026
 
 Added a quiet ↺ Replay experience link beneath the world controls. It opens the existing entrance with a clear replay action that bypasses remembered completion after an explicit tap. The original film, sound preference, Skip, Still/reduced-motion and Data Saver behavior remain intact; navigating to replay alone does not download the film. No account or database changes.
