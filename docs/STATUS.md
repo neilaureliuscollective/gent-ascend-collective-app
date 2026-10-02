@@ -1,3 +1,13 @@
+# Whole Man World Phase 2 — October 2, 2026
+
+Replaced the stacked mobile world entrance with a spatial destination navigator over a new green/obsidian/gold chamber. Aethelios is larger; four labeled world controls change scenery and the selected action. Selection survives refresh/back through the URL. The initial scene is server-rendered; entrance image warmup uses the same optimized variant. Reflection opens in the existing accessible sheet, retains its draft on close/reopen, and preserves the Aethelios direction link. All modal dialogs pause ambience; Still, reduced motion, Data Saver, image/graphics failure and forced-color operation remain usable.
+
+Verified production build/strict types, lint, 143 unit/SQL-emulation tests, recorded ledger and 14 production-browser scenarios. Visual review corrected phone dock spacing; tested 320px with enlarged text through 1440px. Real UI screenshots: [phone](evidence/world-phase2/world-mobile.webp), [Fold-like](evidence/world-phase2/world-fold.webp), [desktop](evidence/world-phase2/world-desktop.webp). [Research, comparison, architecture and limitations](WHOLE_MAN_WORLD_PHASE_2.md).
+
+This extends Draft PR #33's exact saved tree in an isolated worktree. No new dependency, migration, AI call or hosted deployment. Existing private services and the separate unfinished Grooming checkout are preserved. Hosted inherited migrations, real account/model checks and physical iPhone/Fold/PWA performance remain release gates. Production is unchanged.
+
+---
+
 # Whole-Man World review slice — October 2, 2026
 
 Implemented on `feat/whole-man-world`, based on preserved integration commit `114d98c`. See [architecture, routes, preservation and release limits](WHOLE_MAN_WORLD.md). Review at `/experience`; the existing homepage remains the default. No production deployment or hosted migration was performed.

@@ -1,67 +1,146 @@
 'use client';
-import Image from 'next/image';
 import Link from 'next/link';
-import { useState, ViewTransition, startTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { worlds } from '@/platform/world/registry';
-import { AureliusPresence } from '@/components/visual/aurelius-presence';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { GuestDirection } from './guest-direction';
+import { WorldPresence, WorldScenery, useWorldAtmosphere } from './world-atmosphere';
+
+const connections = [
+  'M170 155 Q120 115 54 72',
+  'M170 155 Q220 115 286 72',
+  'M170 155 Q120 195 54 242',
+  'M170 155 Q220 195 286 242',
+];
+
 export function WholeManWorld() {
-  const [selected, setSelected] = useState(0);
+  const params = useSearchParams();
+  const selected = Math.max(
+    0,
+    worlds.findIndex((world) => world.id === params.get('world')),
+  );
+  const world = worlds[selected]!;
   const [directory, setDirectory] = useState(false);
-  const world = worlds[selected] ?? worlds[0];
+  const [direction, setDirection] = useState(false);
+  const { ref: sceneRef, moving, solid, saveData } = useWorldAtmosphere();
+  useEffect(() => {
+    const sync = () => {
+      if (window.location.hash === '#direction') setDirection(true);
+    };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  function select(index: number) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('world', worlds[index]!.id);
+    // Next's native history integration retains selection across refresh/back without a server fetch.
+    window.history.replaceState(null, '', url);
+  }
+  function closeDirection() {
+    setDirection(false);
+    if (window.location.hash === '#direction') {
+      const url = new URL(window.location.href);
+      url.hash = '';
+      window.history.replaceState(null, '', url);
+    }
+  }
   return (
     <>
-      <section className="gw-observatory" aria-labelledby="world-heading">
-        <div className="gw-environment" aria-hidden="true">
-          <Image src="/media/world/observatory.webp" alt="" fill sizes="100vw" preload />
-        </div>
-        <div className="gw-world-intro">
-          <p className="gw-kicker">YOUR WORLD / GENT ASCEND</p>
+      <section
+        className="gw-atlas"
+        aria-labelledby="world-heading"
+        ref={sceneRef}
+        data-world={world.id}
+        data-solid={solid}
+        data-save-data={saveData}
+      >
+        <WorldScenery world={world} saveData={saveData} />
+        <div className="gw-atlas-intro">
+          <p className="gw-kicker">GENT ASCEND / WHOLE MAN</p>
           <h1 id="world-heading" tabIndex={-1}>
-            The parts belong
+            One life.
             <br />
-            to <em>one life.</em>
+            <em>Your world.</em>
           </h1>
-          <p>Choose where you want to begin.</p>
+          <p>Choose what you want to build.</p>
         </div>
-        <div className="gw-presence">
-          <AureliusPresence enhanced />
-          <span>AETHELIOS</span>
-          <p>Perspective across your world.</p>
-        </div>
-        <div className="gw-destination">
-          <nav className="gw-destination-tabs" aria-label="Choose a destination">
+        <div className="gw-constellation">
+          <div className="gw-orbit-plane" aria-hidden="true">
+            <div />
+            <div />
+          </div>
+          <svg
+            className="gw-world-connections"
+            viewBox="0 0 340 310"
+            fill="none"
+            aria-hidden="true"
+          >
+            {connections.map((path, i) => (
+              <path key={path} d={path} data-selected={selected === i} />
+            ))}
+          </svg>
+          <WorldPresence moving={moving} />
+          <nav className="gw-world-nodes" aria-label="Choose a destination">
             {worlds.map((item, index) => (
               <button
+                type="button"
                 key={item.id}
-                onClick={() => startTransition(() => setSelected(index))}
+                className="gw-world-node"
+                data-position={index}
+                onClick={() => select(index)}
                 aria-pressed={index === selected}
+                aria-controls="world-destination"
+                aria-label={item.name}
               >
-                {item.name}
+                <span className="gw-node-glyph" aria-hidden="true">
+                  {item.number}
+                </span>
+                <span className="gw-node-name">{item.name}</span>
+                <span className="gw-node-context">{item.theme}</span>
               </button>
             ))}
           </nav>
-          <ViewTransition>
-            <div className="gw-destination-detail" key={world.id}>
-              <span className="gw-kicker">{world.number} / EXPLORE</span>
-              <h2>{world.name}</h2>
-              <p>{world.line}</p>
-              <Link className="gw-action" href={world.href}>
-                Enter {world.name} <span aria-hidden="true">↗</span>
-              </Link>
-            </div>
-          </ViewTransition>
-          <button className="gw-all" onClick={() => setDirectory(true)}>
-            All destinations +
-          </button>
+          <span className="gw-atlas-caption">THE PARTS BELONG TO ONE LIFE</span>
+        </div>
+        <div className="gw-world-choice" id="world-destination">
+          <div className="gw-choice-copy" key={world.id}>
+            <p className="gw-kicker">
+              {world.number} / {world.theme}
+            </p>
+            <h2>{world.name}</h2>
+            <p>{world.line}</p>
+          </div>
+          <Link className="gw-world-enter" href={world.href} prefetch={false}>
+            Enter {world.name}
+            <span aria-hidden="true">↗</span>
+          </Link>
+          <div className="gw-world-utilities">
+            <button type="button" onClick={() => setDirection(true)} aria-haspopup="dialog">
+              Find my next move <span aria-hidden="true">↗</span>
+            </button>
+            <button type="button" onClick={() => setDirectory(true)} aria-haspopup="dialog">
+              All destinations <span aria-hidden="true">+</span>
+            </button>
+          </div>
+          <span className="sr-only" role="status">
+            {world.name} selected. {world.line}
+          </span>
         </div>
       </section>
-      <GuestDirection />
+      <ContextSheet open={direction} title="Your next move" onClose={closeDirection}>
+        <GuestDirection />
+      </ContextSheet>
       <ContextSheet open={directory} title="Your destinations" onClose={() => setDirectory(false)}>
         <nav className="gw-directory" aria-label="All destinations">
           {worlds.map((item) => (
-            <Link key={item.id} href={item.href} onClick={() => setDirectory(false)}>
+            <Link
+              key={item.id}
+              href={item.href}
+              onClick={() => setDirectory(false)}
+              prefetch={false}
+            >
               <strong>{item.name}</strong>
               <span>{item.detail}</span>
             </Link>

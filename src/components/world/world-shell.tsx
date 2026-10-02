@@ -15,13 +15,16 @@ function AmbientSound({ quiet }: { quiet: boolean }) {
   const gain = useRef<GainNode | null>(null);
   useEffect(() => {
     const pause = () => {
-      if (document.hidden) {
+      if (document.hidden || document.querySelector('dialog[open]')) {
         void audio.current?.suspend();
         setPlaying(false);
       }
     };
+    const dialogs = new MutationObserver(pause);
+    dialogs.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
     document.addEventListener('visibilitychange', pause);
     return () => {
+      dialogs.disconnect();
       document.removeEventListener('visibilitychange', pause);
       void audio.current?.close();
       audio.current = null;

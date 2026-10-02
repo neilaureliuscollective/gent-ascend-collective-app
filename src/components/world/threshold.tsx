@@ -1,5 +1,5 @@
 'use client';
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -36,7 +36,12 @@ export function Threshold() {
     setEntering(true);
     // Start meaningful asset work alongside the camera, never wait for a video.
     const poster = new window.Image();
-    poster.src = '/media/world/observatory.webp';
+    const { props } = getImageProps({
+      src: '/media/world/whole-man-chamber-v2.webp', alt: '', fill: true, sizes: '100vw',
+    });
+    poster.sizes = props.sizes ?? '100vw';
+    poster.srcset = props.srcSet ?? '';
+    poster.src = props.src;
     void poster.decode().catch(() => {});
     const timeout = window.setTimeout(finish, 2200);
     timeoutRef.current = timeout;

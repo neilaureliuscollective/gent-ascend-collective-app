@@ -3,6 +3,7 @@ export const worlds = [
   {
     id: 'performance',
     name: 'Performance',
+    theme: 'Body & vitality',
     line: 'Strength for the life you carry.',
     detail: 'Training, fuel and recovery. One part of the whole man.',
     href: '/experience/performance',
@@ -12,6 +13,7 @@ export const worlds = [
   {
     id: 'grooming',
     name: 'Grooming',
+    theme: 'Presence & ritual',
     line: 'Show up with intention.',
     detail: 'Your appearance, routines and professional direction.',
     href: '/app/grooming',
@@ -21,6 +23,7 @@ export const worlds = [
   {
     id: 'focus',
     name: 'Direction',
+    theme: 'Mind & purpose',
     line: 'Make room for what matters.',
     detail: 'Your priorities, daily practice and reflection.',
     href: '/app/ascend',
@@ -30,6 +33,7 @@ export const worlds = [
   {
     id: 'work',
     name: 'Creation',
+    theme: 'Work & ideas',
     line: 'Give your ideas a place.',
     detail: 'Projects and visual work in Aethelios Studio.',
     href: '/app/studio',

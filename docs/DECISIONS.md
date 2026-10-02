@@ -229,3 +229,7 @@ Reuse the canonical remotely preserved Performance Phase 6 and merge released ma
 ## 2026-10-02 — Whole-Man World vertical slice
 
 Founder approved the world-entry plan. Use an additive `/experience` route family and a build-time homepage rollout switch, preserving the current private service contracts and routes. Keep GSAP for finite portal choreography, React ViewTransition for environment continuity, CSS for feedback, and the existing optional Three.js orb. Do not add Motion/R3F or a video pipeline without a demonstrated need. Guest reflection and workout recording are explicitly session-only and never grant identity/entitlements. Reuse Training and PerformanceWorkspace rather than duplicate workout persistence. See WHOLE_MAN_WORLD.md for current official documentation and release limits.
+
+## 2026-10-02 — Whole Man World Phase 2: spatial mobile navigation
+
+Founder requested deeper research and authorized implementation after rejecting the flat mobile composition. Use one architectural environment, four accessible destination nodes, the existing adaptive orb, a selected action and an on-demand direction sheet. Keep route selection in the URL and server-render the first scene. Bound ambient effects to transform/opacity; pause hidden/offscreen/modal motion and honor Still, OS preferences and Data Saver. Reuse all domain services. No added renderer, dependency or migration. Primary comparisons (Apple, Linear, Oura, Endel, Active Theory), technical references, phased plan and asset provenance: [Phase 2](WHOLE_MAN_WORLD_PHASE_2.md).

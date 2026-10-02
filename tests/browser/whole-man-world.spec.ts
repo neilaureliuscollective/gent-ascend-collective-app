@@ -12,12 +12,21 @@ for (const width of [360, 768, 1440]) {
     ).toBeVisible();
     await page.getByRole('link', { name: /^ENTER/ }).click();
     await expect(page).toHaveURL(/\/experience\/world$/);
-    await expect(
-      page.getByRole('heading', { name: 'The parts belong to one life.' }),
-    ).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'One life. Your world.' })).toBeFocused();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      await Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => {})),
+      );
+    });
     await page.screenshot({
       path: testInfo.outputPath('world.png'),
       fullPage: true,
@@ -27,11 +36,13 @@ for (const width of [360, 768, 1440]) {
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: 'All destinations' })).toBeFocused();
+    await page.getByRole('button', { name: 'Find my next move' }).click();
     await page.getByLabel('My next move').fill('Tomorrow at 7, I will make time for training.');
     await page.getByRole('button', { name: 'Set my direction' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Your direction:' })).toContainText(
       'Tomorrow at 7',
     );
+    await page.getByRole('button', { name: 'Close Your next move', exact: true }).click();
     await page.getByRole('link', { name: 'Enter Performance' }).click();
     await expect(
       page.getByRole('heading', { name: 'Strength for the life you carry.' }),
@@ -133,4 +144,119 @@ test('sound is opt-in and pauses for Aethelios; private world pages are not cach
     const response = await request.get(path);
     expect(response.headers()['cache-control']).toContain('no-store');
   }
+});
+
+for (const width of [344, 390, 768, 1440]) {
+  test(`spatial world selection, return and focused direction at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/experience/world');
+    const nav = page.getByRole('navigation', { name: 'Choose a destination' });
+    for (const [name, id, href] of [
+      ['Grooming', 'grooming', '/app/grooming'],
+      ['Direction', 'focus', '/app/ascend'],
+      ['Creation', 'work', '/app/studio'],
+      ['Performance', 'performance', '/experience/performance'],
+    ]) {
+      const control = nav.getByRole('button', { name, exact: true });
+      await control.click();
+      await expect(control).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('link', { name: `Enter ${name}` })).toHaveAttribute(
+        'href',
+        href!,
+      );
+      await expect(page).toHaveURL(new RegExp(`world=${id}`));
+      const box = await control.boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(44);
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+    }
+    await nav.getByRole('button', { name: 'Grooming', exact: true }).click();
+    await page.reload();
+    await expect(nav.getByRole('button', { name: 'Grooming' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByLabel('My next move')).not.toBeVisible();
+    await page.getByRole('button', { name: 'Find my next move' }).click();
+    await page.getByLabel('My next move').fill('Make time for one deliberate action.');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Find my next move' })).toBeFocused();
+    await page.getByRole('button', { name: 'Find my next move' }).click();
+    await expect(page.getByLabel('My next move')).toHaveValue(
+      'Make time for one deliberate action.',
+    );
+    await page.keyboard.press('Escape');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  });
+}
+
+test('ambient scenery pauses for dialogs and Still; direct reflection link remains usable', async ({
+  page,
+}) => {
+  await page.goto('/experience/world');
+  const world = page.locator('.gw-atlas');
+  await expect(world).toHaveAttribute('data-animated', 'true');
+  await page.getByRole('button', { name: 'Find my next move' }).click();
+  await expect(world).toHaveAttribute('data-animated', 'false');
+  await page.keyboard.press('Escape');
+  await expect(world).toHaveAttribute('data-animated', 'true');
+  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
+  await expect(world).toHaveAttribute('data-animated', 'false');
+  await expect(page.locator('.gw-chamber')).toHaveCSS('animation-play-state', 'paused');
+  await page.goto('/experience/world?world=focus#direction');
+  await expect(page.getByRole('dialog', { name: 'Your next move' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/world\?world=focus$/);
+});
+
+test('data saver and forced colors retain all navigation without enhanced graphics', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'connection', {
+      value: Object.assign(new EventTarget(), { saveData: true }),
+    });
+  });
+  await page.goto('/experience/world?world=grooming');
+  await expect(page.locator('.gw-atlas')).toHaveAttribute('data-animated', 'false');
+  await expect(page.locator('.gw-scenery')).toHaveCount(0);
+  await expect(page.locator('.presence-canvas')).toHaveCount(0);
+  await page.emulateMedia({ forcedColors: 'active' });
+  const control = page
+    .getByRole('navigation', { name: 'Choose a destination' })
+    .getByRole('button', { name: 'Performance' });
+  await control.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('link', { name: 'Enter Performance' })).toBeVisible();
+});
+
+test('phone actions clear the dock; short screens and enlarged text remain reachable', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 850 });
+  await page.goto('/experience/world');
+  const utilities = await page.locator('.gw-world-utilities').boundingBox();
+  const dock = await page.locator('.gw-dock').boundingBox();
+  expect(utilities!.y + utilities!.height).toBeLessThan(dock!.y - 8);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.addStyleTag({ content: 'html { font-size: 24px !important; }' });
+  await page.getByRole('button', { name: 'All destinations' }).click();
+  await expect(page.getByRole('dialog', { name: 'Your destinations' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('link', { name: 'Enter Performance' }).click();
+  await expect(page.getByRole('link', { name: 'Enter your practice' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('direct world entry is server-rendered with the selected action and image preload', async ({
+  request,
+}) => {
+  const response = await request.get('/experience/world?world=grooming');
+  expect(response.status()).toBe(200);
+  const html = await response.text();
+  expect(html).toContain('id="world-heading"');
+  expect(html).toContain('href="/app/grooming"');
+  expect(html).toContain('whole-man-chamber-v2.webp');
+  expect(html).not.toContain('Opening your world');
 });
