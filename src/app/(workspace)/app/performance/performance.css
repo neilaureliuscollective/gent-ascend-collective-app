@@ -1242,3 +1242,75 @@
 .performance-world :where(.perf-fuel-totals,.perf-recovery-totals){gap:16px;}.performance-world .perf-inline{gap:8px;}.performance-world button{min-height:48px;}.performance-world :where(input,select,textarea){font-size:1rem;}
 .performance-world .context-sheet-body{padding-inline:4px;}.performance-world .context-sheet-body .perf-form-heading h2{font-size:1.6rem;}.performance-world .context-sheet-body .perf-form{max-width:none;}.performance-world .context-sheet .perf-exercise-editor{padding:16px 0;border:0;border-bottom:1px solid var(--perf-line);border-radius:0;}
 @media(max-width:599px){.performance-world .perf-header>.eyebrow{font-size:9px;}.performance-world .perf-numbers{grid-template-columns:repeat(2,minmax(0,1fr));}.performance-world .context-sheet .perf-fields{grid-template-columns:1fr;}.performance-world .perf-stage-foot{flex-wrap:wrap;}.performance-world .perf-inline>.perf-primary{width:100%;}.performance-world .perf-stage-copy>p{line-height:1.6;}}
+
+
+/* Focused gym runner: one movement, one decision, one clear next action. */
+.perf-training-mode{position:relative;max-width:980px;margin:0 auto;padding-bottom:24px}
+.perf-training-hud{position:sticky;top:0;z-index:18;display:grid;grid-template-columns:auto minmax(100px,1fr) auto;align-items:center;gap:14px;padding:10px 12px;margin:0 -12px 18px;background:linear-gradient(180deg,rgba(5,15,11,.97),rgba(5,15,11,.88));border-bottom:1px solid rgba(224,187,106,.2);backdrop-filter:blur(18px)}
+.perf-training-status{display:flex;align-items:baseline;gap:8px;min-width:max-content}
+.perf-training-status .eyebrow{display:none}
+.perf-training-status strong{font-size:1.3rem;font-weight:500;color:#e0bb6a;font-variant-numeric:tabular-nums}
+.perf-training-status>span:last-child{font-size:.72rem;color:#9fb3aa}
+.perf-training-progress{height:4px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.08)}
+.perf-training-progress i{display:block;height:100%;background:linear-gradient(90deg,#7e6327,#e0bb6a);box-shadow:0 0 18px rgba(224,187,106,.35);transition:width .24s ease}
+.perf-training-mode .perf-rest{min-width:66px;padding:0;border:0;background:transparent;text-align:right}
+.perf-training-mode .perf-rest span{display:block;font-size:.58rem;letter-spacing:.16em;color:#8ea49a}
+.perf-training-mode .perf-rest strong{display:block;font-size:1.08rem;letter-spacing:.04em;color:#f3e5bf;font-variant-numeric:tabular-nums}
+.perf-training-mode .perf-rest button{min-height:30px;padding:2px 8px;margin-top:2px;font-size:.7rem}
+.perf-training-mode .perf-training-heading{padding:2px 0 18px;border-bottom:0}
+.perf-training-mode .perf-training-heading h2{font-size:clamp(1.7rem,6vw,2.6rem);line-height:1.05;margin:.35rem 0}
+.perf-training-mode .perf-training-heading p:last-child{max-width:48ch;color:#9eb5a7}
+.perf-exercise-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 0 16px;scroll-snap-type:x proximity;scrollbar-width:none}
+.perf-exercise-rail::-webkit-scrollbar{display:none}
+.perf-exercise-rail button{scroll-snap-align:start;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;min-width:min(78vw,310px);min-height:54px;padding:10px 12px;text-align:left;border:1px solid rgba(196,145,47,.16);border-radius:12px;background:rgba(9,30,22,.54);color:#d7e0db}
+.perf-exercise-rail button[aria-current="step"]{border-color:rgba(224,187,106,.72);background:linear-gradient(135deg,rgba(22,70,51,.82),rgba(10,32,23,.9));box-shadow:0 0 0 1px rgba(224,187,106,.08) inset,0 10px 30px rgba(0,0,0,.18)}
+.perf-exercise-rail button[data-complete="true"]{opacity:.68}
+.perf-exercise-rail button>span{font-size:.7rem;color:#c4912f}
+.perf-exercise-rail button strong{font-size:.84rem;font-weight:520;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf-exercise-rail button small{font-size:.68rem;color:#9eb5a7}
+.perf-lift-focus{margin:8px 0 0;padding:22px 0 0;border-top:1px solid rgba(196,145,47,.18)}
+.perf-lift-focus .perf-lift-heading{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-bottom:8px}
+.perf-lift-focus .perf-lift-heading h3{font-size:clamp(1.45rem,6vw,2.5rem);line-height:1.05;margin:.4rem 0 0}
+.perf-lift-target{display:grid;justify-items:end;min-width:74px}
+.perf-lift-target strong{font-size:2.15rem;line-height:1;color:#e0bb6a;font-weight:420}
+.perf-lift-target span{font-size:.65rem;color:#91a79d;white-space:nowrap}
+.perf-lift-meta{display:flex;justify-content:space-between;gap:12px;padding:10px 0 15px;font-size:.72rem;color:#91a79d}
+.perf-training-mode .perf-set{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;padding:12px 0 14px}
+.perf-training-mode .perf-set-inputs{grid-column:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.perf-training-mode .perf-set label{font-size:.63rem;letter-spacing:.05em;text-transform:uppercase;color:#8ea49a}
+.perf-training-mode .perf-set input{width:100%;min-height:56px;padding:8px 4px;font-size:1.28rem;font-weight:520;border-radius:10px;background:#091a13;border:1px solid rgba(196,145,47,.2);color:#f4efe4}
+.perf-training-mode .perf-set>button{grid-column:2;width:100%;min-height:50px;margin:0;border-radius:10px}
+.perf-training-mode .perf-set-record{background:linear-gradient(135deg,#1d5a42,#153c2f);border-color:#c4912f;color:#f7f0df;font-weight:650}
+.perf-training-mode .perf-set-recorded{background:rgba(21,60,42,.58);color:#b8cdbf}
+.perf-training-mode .perf-set[data-done="true"]{opacity:.72}
+.perf-exercise-controls{display:flex;justify-content:space-between;gap:8px;padding:10px 0 2px}
+.perf-exercise-controls button{min-height:46px;flex:1;background:transparent}
+.perf-session-details{margin:18px 0;border-top:1px solid rgba(196,145,47,.18);border-bottom:1px solid rgba(196,145,47,.18)}
+.perf-session-details summary{min-height:50px;display:flex;align-items:center;cursor:pointer;color:#b8c8c0}
+.perf-session-details[open]{padding-bottom:16px}
+.perf-session-details textarea{width:100%;margin-top:8px}
+.perf-session-finish{display:grid;gap:10px;padding:20px 0 6px}
+.perf-session-finish>div{display:grid;gap:2px}
+.perf-session-finish>div strong{font-size:1.05rem;color:#f2ead8}
+.perf-session-finish>div small{font-size:.75rem;color:#8ea49a}
+.perf-session-finish .perf-primary{width:100%;min-height:56px;font-size:1rem;font-weight:650}
+.perf-end-quiet{justify-self:center;background:transparent!important;border:0!important;color:#82958d!important;font-size:.78rem!important}
+.perf-session-complete{padding:32px 0}
+.perf-session-complete h3{font-size:clamp(1.8rem,7vw,3rem);font-weight:430;margin:.45rem 0}
+
+@media(min-width:700px){
+  .perf-training-mode .perf-set{grid-template-columns:32px minmax(0,1fr) 136px;align-items:end}
+  .perf-training-mode .perf-set-inputs{grid-column:2}
+  .perf-training-mode .perf-set>button{grid-column:3;margin:0;min-height:56px}
+  .perf-training-status .eyebrow{display:inline}
+  .perf-exercise-rail button{min-width:250px}
+}
+@media(max-width:420px){
+  .perf-training-hud{grid-template-columns:auto 1fr auto;gap:9px}
+  .perf-training-status>span:last-child{display:none}
+  .perf-lift-target strong{font-size:1.8rem}
+  .perf-exercise-rail button{min-width:82vw}
+}
+@media(prefers-reduced-motion:reduce){
+  .perf-training-progress i{transition:none}
+}
