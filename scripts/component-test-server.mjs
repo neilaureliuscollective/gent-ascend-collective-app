@@ -8,6 +8,7 @@ const server = await createServer({
     alias: {
       '@': resolve('src'),
       'next/link': resolve('tests/component-fixture/link.tsx'),
+      'next/image': resolve('tests/component-fixture/image.tsx'),
       'next/navigation': resolve('tests/component-fixture/navigation.ts'),
     },
   },

@@ -25,7 +25,7 @@ for (const width of [344, 768, 1440]) {
       .getByRole('link', { name: 'Shop', exact: true })
       .click();
     await expect(page).toHaveURL('/shop');
-    await page.getByRole('link', { name: /Vitalis/ }).click();
+    await page.locator('.reserve-collection-card').filter({ hasText: 'Vitalis' }).click();
     await expect(page).toHaveURL('/shop/vitalis');
     await expect(
       page.getByText('This item is not available to order.', { exact: false }),

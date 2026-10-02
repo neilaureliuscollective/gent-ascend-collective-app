@@ -48,7 +48,7 @@ test('reduced motion and unsupported graphics retain usable content', async ({ p
   await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
   await page.getByRole('button', { name: 'Explore in 3D' }).click();
   await expect(page.locator('.product-atelier')).toHaveAttribute('data-renderer', 'fallback');
-  await page.getByRole('button', { name: 'The ritual', exact: false }).click();
-  await expect(page.getByRole('heading', { name: 'A moment to prepare.' })).toBeVisible();
+  await page.getByRole('link', { name: 'The ritual', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Make it your ritual.' })).toBeVisible();
   await expect(page.locator('.atelier-canvas canvas')).toHaveCount(0);
 });

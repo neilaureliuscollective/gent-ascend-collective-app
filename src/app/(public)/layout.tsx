@@ -7,6 +7,7 @@ import { CartPanel } from '@/components/commerce/cart-panel';
 import { commerceConfigured } from '@/domains/commerce/shopify';
 import './world.css';
 import './cinematic.css';
+import './commerce-experience.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
   description:

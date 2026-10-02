@@ -1,10 +1,11 @@
 'use client';
 import Image from 'next/image';
+import { commerceEvent } from './commerce-events';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Cart } from '@/domains/commerce/shopify';
 import { formatMoney } from './money';
-import { launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
+import { launchLabel, launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 
 export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; notice?: string }) {
   const [open, setOpen] = useState(fullPage);
@@ -14,19 +15,25 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
   const [error, setError] = useState('');
   const closeButton = useRef<HTMLButtonElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const loadVersion = useRef(0);
+  const mutationPending = useRef(false);
   const held =
     cart?.lines.nodes.some((line) => !launchPurchaseAllowed(line.merchandise.product)) ?? false;
   const load = useCallback(async () => {
+    if (mutationPending.current) return;
+    const version = ++loadVersion.current;
     try {
       const response = await fetch('/api/commerce/cart', { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Cart unavailable.');
+      if (version !== loadVersion.current) return;
       setCart(data.cart);
       setError('');
     } catch {
+      if (version !== loadVersion.current) return;
       setError('Cart is temporarily unavailable.');
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
   }, []);
   useEffect(() => {
@@ -65,6 +72,9 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
     return () => document.removeEventListener('keydown', keydown);
   }, [open, fullPage]);
   async function change(action: 'update' | 'remove', lineId: string, quantity?: number) {
+    if (mutationPending.current) return;
+    mutationPending.current = true;
+    ++loadVersion.current;
     setBusy(true);
     setError('');
     try {
@@ -79,7 +89,9 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to update cart.');
     } finally {
+      mutationPending.current = false;
       setBusy(false);
+      setLoading(false);
     }
   }
   const contents = (
@@ -88,6 +100,7 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
         <div>
           <span className="world-kicker">Your selection</span>
           <h2>Cart.</h2>
+          <p>Review what earns a place in your ritual.</p>
         </div>
         {!fullPage && (
           <button
@@ -127,6 +140,15 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
         </div>
       ) : (
         <>
+          {held && (
+            <div className="reserve-cart-review" role="status">
+              <strong>Your selection needs a small adjustment.</strong>
+              <p>
+                Items marked below are not open for ordering. Remove them to continue with the rest
+                of your selection.
+              </p>
+            </div>
+          )}
           <ul className="cart-lines">
             {cart.lines.nodes.map((line) => (
               <li key={line.id}>
@@ -146,6 +168,11 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                     {line.merchandise.product.title}
                   </Link>
                   <span>{line.merchandise.title}</span>
+                  {!launchPurchaseAllowed(line.merchandise.product) && (
+                    <p className="cart-error">
+                      {launchLabel(line.merchandise.product)} · Remove this item to continue.
+                    </p>
+                  )}
                   <strong>{formatMoney(line.cost.totalAmount)}</strong>
                   <div className="cart-line-actions">
                     <label>
@@ -168,6 +195,7 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                     </label>
                     <button
                       type="button"
+                      aria-label={`Remove ${line.merchandise.product.title} from cart`}
                       disabled={busy}
                       onClick={() => void change('remove', line.id)}
                     >
@@ -188,16 +216,34 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                 {warning.message}
               </p>
             ))}
-            <p>Shipping, taxes, and any eligible discounts are confirmed at checkout.</p>
+            <p>
+              Shipping, taxes, and any eligible discounts are confirmed at Shopify checkout. This
+              subtotal is not the final order total.
+            </p>
             {held ? (
               <p className="cart-error" role="status">
                 An item is not open for ordering. Remove it to continue checkout.
               </p>
             ) : (
-              <a className="world-button" href="/checkout" rel="nofollow">
+              <a
+                className="world-button"
+                href="/checkout"
+                rel="nofollow"
+                aria-disabled={busy || Boolean(error)}
+                onClick={(event) => {
+                  if (busy || error) event.preventDefault();
+                  else commerceEvent('checkout_start');
+                }}
+              >
                 Continue to secure checkout ↗
               </a>
             )}
+            <Link href="/shop" onClick={() => setOpen(false)}>
+              Continue exploring ↗
+            </Link>
+            <Link href="/shop?saved=1" onClick={() => setOpen(false)}>
+              Review your saved collection ↗
+            </Link>
           </div>
         </>
       )}
