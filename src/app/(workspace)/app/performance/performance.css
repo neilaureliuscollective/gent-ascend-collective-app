@@ -1348,3 +1348,17 @@
   .perf-machine-scout-heading .perf-primary{min-width:150px}
   .perf-live-builder-body{grid-template-columns:minmax(0,1.4fr) minmax(260px,.6fr)}
 }
+
+
+/* Live learning layer */
+.perf-live-intelligence{display:grid;gap:12px;margin:8px 0 16px;padding:14px 0;border-top:1px solid rgba(196,145,47,.16);border-bottom:1px solid rgba(196,145,47,.16)}
+.perf-live-intelligence p{margin:.35rem 0 0;color:#c7d3cd;line-height:1.55;font-size:.88rem}
+.perf-last-time{display:grid;gap:2px;padding:10px 12px;border-left:2px solid #c4912f;background:rgba(17,49,36,.48)}
+.perf-last-time span{font-size:.6rem;letter-spacing:.12em;color:#91a69d}
+.perf-last-time strong{font-size:1rem;color:#eee5d3;font-weight:520}
+.perf-last-time small{font-size:.72rem;color:#91a69d}
+.perf-live-intelligence>button{justify-self:start;min-height:44px;padding:8px 12px;background:rgba(28,81,59,.7);border:1px solid rgba(224,187,106,.35);color:#f0e5c7}
+@media(min-width:700px){
+  .perf-live-intelligence{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+  .perf-live-intelligence>button{grid-column:1/-1}
+}
