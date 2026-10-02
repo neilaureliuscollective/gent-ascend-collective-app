@@ -1,10 +1,13 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { ConceptVessel } from './concept-vessel';
-import { readSavedCollection } from './collection-save';
+import { useSavedCollection, removeSavedCollection } from './saved-selection-store';
+import { CollectionDiscovery } from './collection-discovery';
+import { CollectionCard } from './collection-card';
+import { filterCatalog } from '@/domains/commerce/catalog-filter';
 const worlds = [
   ['all', 'The collection'],
   ['grooming', 'Grooming'],
@@ -27,22 +30,17 @@ export function CollectionShowroom({
   savedOnly?: boolean;
 }) {
   const [world, setWorld] = useState(savedOnly ? 'saved' : (fixedWorld ?? 'all'));
-  const [saved, setSaved] = useState<string[]>([]);
-  useEffect(() => {
-    const sync = () => setSaved(readSavedCollection());
-    queueMicrotask(sync);
-    window.addEventListener('storage', sync);
-    window.addEventListener('gent-ascend-collection-updated', sync);
-    return () => {
-      window.removeEventListener('storage', sync);
-      window.removeEventListener('gent-ascend-collection-updated', sync);
-    };
-  }, []);
-  const visible = entries.filter((entry) =>
+  const saved = useSavedCollection();
+  const [selectionMessage, setSelectionMessage] = useState('');
+  const [query, setQuery] = useState('');
+  const [readyOnly, setReadyOnly] = useState(false);
+  const missing = saved.filter((handle) => !entries.some((entry) => entry.handle === handle));
+  const chapter = entries.filter((entry) =>
     world === 'all' || world === 'saved'
       ? world !== 'saved' || saved.includes(entry.handle)
       : entry.categories.includes(world),
   );
+  const visible = filterCatalog(chapter, query, readyOnly);
   const featured = entries[0];
   return (
     <>
@@ -59,7 +57,7 @@ export function CollectionShowroom({
             them.
           </p>
           <div className="world-actions">
-            <a href="#collection" className="world-button">
+            <a href={savedOnly ? '#collection' : '#discovery'} className="world-button">
               Find your next essential ↓
             </a>
             <Link href="/membership" className="world-text-link">
@@ -94,6 +92,7 @@ export function CollectionShowroom({
           </Link>
         )}
       </header>
+      {!savedOnly && <CollectionDiscovery entries={entries} />}
       <section id="collection" className="reserve-shelf-section">
         <div className="reserve-shelf-heading">
           <div>
@@ -134,65 +133,118 @@ export function CollectionShowroom({
               </button>
             ))}
         </div>
+        <div className="reserve-catalog-tools">
+          <label>
+            Search this collection
+            <input
+              type="search"
+              value={query}
+              maxLength={120}
+              placeholder="Name, product or ritual"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
+          <label className="reserve-ready-filter">
+            <input
+              type="checkbox"
+              checked={readyOnly}
+              onChange={(event) => setReadyOnly(event.target.checked)}
+            />
+            Available to order
+          </label>
+          {(query || readyOnly) && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setReadyOnly(false);
+              }}
+            >
+              Clear search & availability
+            </button>
+          )}
+        </div>
         <p className="reserve-collection-count" role="status">
           {visible.length} {visible.length === 1 ? 'object' : 'objects'}
           {world === 'saved' ? ' in your saved selection on this browser' : ' to explore'}
         </p>
+        {world === 'saved' && (
+          <div className="reserve-selection-intro">
+            <h3>Your collection, considered.</h3>
+            <p>
+              Review the purpose, texture, scent, and availability of each object. Open its product
+              page to check ingredients, cautions, and the exact option before purchasing.
+            </p>
+            <p>
+              Saved on this browser. This is not a cart, reservation, release alert, or
+              account-synced collection.
+            </p>
+            {missing.length > 0 && (
+              <div className="reserve-unresolved-selection">
+                <p>
+                  {missing.length} saved {missing.length === 1 ? 'item is' : 'items are'} not in
+                  this collection view. Availability has not been confirmed.
+                </p>
+                {missing.map((handle) => (
+                  <div key={handle}>
+                    <span>{handle}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          removeSavedCollection(handle);
+                          setSelectionMessage('Removed from your saved selection.');
+                        } catch {
+                          setSelectionMessage(
+                            'Storage is unavailable. Your saved selection could not be changed.',
+                          );
+                        }
+                      }}
+                    >
+                      Remove {handle}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p role="status">{selectionMessage}</p>
+          </div>
+        )}
         <div className="reserve-collection-grid">
           {visible.map((entry, index) => (
-            <Link
+            <CollectionCard
               key={entry.handle}
-              href={`/shop/${entry.handle}`}
-              className="reserve-collection-card"
-            >
-              <div className="reserve-card-stage">
-                <span className="reserve-card-number">
-                  {String(index + 1).padStart(2, '0')} / {entry.brand}
-                </span>
-                {entry.image ? (
-                  <Image
-                    src={entry.image.url}
-                    alt={entry.image.altText ?? entry.title}
-                    width={600}
-                    height={740}
-                    sizes="(max-width: 560px) 90vw, (max-width: 960px) 45vw, 30vw"
-                  />
-                ) : (
-                  <ConceptVessel title={entry.title} kind={entry.kind} brand={entry.brand} />
-                )}
-                <small>{entry.image ? entry.status : 'Concept packaging'}</small>
-              </div>
-              <div className="reserve-card-copy">
-                <span className="world-kicker">
-                  {entry.kind}
-                  {entry.size ? ` / ${entry.size}` : ''}
-                </span>
-                <h3>
-                  {entry.title}
-                  <span aria-hidden="true">↗</span>
-                </h3>
-                {entry.summary && <p>{entry.summary}</p>}
-                <div className="reserve-card-price">
-                  <strong>{entry.price}</strong>
-                  <span>{entry.status}</span>
-                </div>
-              </div>
-            </Link>
+              entry={entry}
+              index={index}
+              review={world === 'saved'}
+            />
           ))}
         </div>
         {!visible.length && (
           <div className="reserve-empty-selection">
             <h3>
-              {world === 'saved'
-                ? 'Your collection starts with a closer look.'
-                : 'This chapter is taking shape.'}
+              {query || readyOnly
+                ? 'No objects match these filters.'
+                : world === 'saved'
+                  ? 'Your collection starts with a closer look.'
+                  : 'This chapter is taking shape.'}
             </h3>
             <p>
-              {world === 'saved'
-                ? 'Open a product and save it to keep your selection here. Saved products stay on this browser and do not reserve stock.'
-                : 'Explore the other objects in the collection.'}
+              {query || readyOnly
+                ? 'Clear the search or include previews to explore more of this chapter. Your saved selection has not changed.'
+                : world === 'saved'
+                  ? 'Open a product and save it to keep your selection here. Saved products stay on this browser and do not reserve stock.'
+                  : 'Explore the other objects in the collection.'}
             </p>
-            <button type="button" className="world-button" onClick={() => setWorld('all')}>
+            <button
+              type="button"
+              className="world-button"
+              onClick={() => {
+                setWorld('all');
+                setQuery('');
+                setReadyOnly(false);
+              }}
+            >
               Explore the collection ↗
             </button>
           </div>

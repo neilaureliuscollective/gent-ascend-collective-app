@@ -25,6 +25,42 @@ afterEach(() => {
 });
 
 describe('Shopify commerce contract', () => {
+  it('passes the Shopify end cursor to subsequent catalog reads and retains older products', async () => {
+    const cursors: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, options: RequestInit) => {
+        const request = JSON.parse(String(options.body));
+        expect(request.query).toContain('after: $cursor');
+        cursors.push(request.variables.cursor);
+        return new Response(
+          JSON.stringify({
+            data: {
+              products:
+                request.variables.cursor === null
+                  ? {
+                      nodes: [{ id: 'new-product', requiresSellingPlan: false }],
+                      pageInfo: { hasNextPage: true, endCursor: 'older-page' },
+                    }
+                  : {
+                      nodes: [
+                        { id: 'older-product', requiresSellingPlan: false },
+                        { id: 'unsupported-plan', requiresSellingPlan: true },
+                      ],
+                      pageInfo: { hasNextPage: false, endCursor: 'last' },
+                    },
+            },
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+    expect((await listProducts()).map((product) => product.id)).toEqual([
+      'new-product',
+      'older-product',
+    ]);
+    expect(cursors).toEqual([null, 'older-page']);
+  });
   it('queries real catalog data and excludes subscription-only products in V1', async () => {
     const fetch = vi.fn(async (...args: [string, RequestInit]) => {
       expect(args[0]).toContain('graphql.json');
@@ -32,6 +68,7 @@ describe('Shopify commerce contract', () => {
         JSON.stringify({
           data: {
             products: {
+              pageInfo: { hasNextPage: false, endCursor: null },
               nodes: [
                 { id: 'one', requiresSellingPlan: false },
                 { id: 'two', requiresSellingPlan: true },

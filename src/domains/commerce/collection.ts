@@ -14,6 +14,12 @@ export type CollectionEntry = {
   size?: string;
   image?: { url: string; altText: string | null };
   categories: string[];
+  discovery?: string[];
+  fit?: string;
+  texture?: string;
+  scent?: string;
+  preview?: boolean;
+  orderable?: boolean;
 };
 export function collectionEntries(
   products: ProductSummary[],
@@ -38,6 +44,11 @@ export function collectionEntries(
           : 'Unavailable'
         : launchLabel(product),
       size: story?.size,
+      discovery: story?.discovery ?? [],
+      fit: story?.fit,
+      texture: story?.texture,
+      scent: story?.scent.map((note) => `${note.label}: ${note.value}`).join(' · '),
+      orderable: launchPurchaseAllowed(product) && product.availableForSale,
       image:
         story?.mediaApproved && product.featuredImage && shopifyMediaUrl(product.featuredImage.url)
           ? product.featuredImage
@@ -56,6 +67,16 @@ export function collectionEntries(
         summary: preview.summary,
         price: 'Pricing at release',
         status: preview.state,
+        preview: true,
+        orderable: false,
+        discovery:
+          preview.handle === 'vitalis'
+            ? ['beard', 'hair']
+            : preview.handle === 'hair-care'
+              ? ['hair']
+              : preview.handle === 'body-care'
+                ? ['body']
+                : [],
         categories: preview.handle === 'hydros' ? ['performance'] : ['grooming'],
       });
     }

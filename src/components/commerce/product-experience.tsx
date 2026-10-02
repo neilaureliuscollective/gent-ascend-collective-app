@@ -6,20 +6,26 @@ import { previewProduct } from '@/domains/catalog/preview';
 import { vitalisDevelopmentHighlights } from '@/domains/catalog/vitalis-development';
 import { ProductAtelier } from '@/components/public/product-atelier';
 import { ProductPurchase } from './product-purchase';
+import { PurchaseTerms } from './purchase-terms';
 import { ProductGallery } from './product-gallery';
 import { CollectionSave } from './collection-save';
 import { FormulaExplorer } from './formula-explorer';
+import type { resolveRelated } from '@/domains/commerce/discovery';
+import { ProductRelations } from './product-relations';
 import { ProductView } from './product-view';
+import { ProductShare } from './product-share';
 
 type Preview = NonNullable<ReturnType<typeof previewProduct>>;
 export function ProductExperience({
   product,
   preview,
   unavailable = false,
+  related = [],
 }: {
   product?: Product;
   preview?: Preview;
   unavailable?: boolean;
+  related?: ReturnType<typeof resolveRelated>;
 }) {
   const title = product?.title ?? preview!.name;
   const handle = product?.handle ?? preview!.handle;
@@ -98,8 +104,15 @@ export function ProductExperience({
               Live availability is temporarily unavailable. This is a collection preview.
             </p>
           )}
+          <ProductShare
+            handle={product?.handle ?? preview!.handle}
+            title={product?.title ?? preview!.name}
+          />
           {product ? (
-            <ProductPurchase product={product} />
+            <>
+              <ProductPurchase product={product} />
+              <PurchaseTerms story={story} />
+            </>
           ) : (
             <div className="reserve-preview-release">
               <strong>Coming to the collection.</strong>
@@ -304,6 +317,7 @@ export function ProductExperience({
           </a>
         </div>
       </section>
+      <ProductRelations items={related} />
       <section className="reserve-membership-bridge">
         <span className="world-kicker">Gent Ascend Collective / Beyond the shelf</span>
         <h2>

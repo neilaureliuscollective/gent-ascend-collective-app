@@ -1,5 +1,6 @@
 'use client';
 export type CommerceEvent =
+  | 'discovery_complete'
   | 'product_view'
   | 'gallery_view'
   | 'model_open'

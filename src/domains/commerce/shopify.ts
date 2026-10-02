@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { launchPurchaseAllowed, type LaunchMetadata } from './launch-policy';
+import { collectCatalog, type CatalogPage } from './catalog-pagination';
 
 const VERSION = '2026-07';
 
@@ -140,20 +141,25 @@ export async function storefront<T>(
   return result.data;
 }
 
-export async function listProducts() {
-  const data = await storefront<{ products: { nodes: ProductSummary[] } }>(
-    `query Catalog { products(first: 60, sortKey: CREATED_AT, reverse: true) { nodes {
+export const listProducts = cache(async () => {
+  const products = await collectCatalog<ProductSummary>(async (cursor) => {
+    const data = await storefront<{ products: CatalogPage<ProductSummary> }>(
+      `query Catalog($cursor: String) { products(first: 60, after: $cursor, sortKey: CREATED_AT, reverse: true) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
       id handle title productType availableForSale ${LAUNCH}
       story: metafield(namespace: "gent_ascend", key: "product_story") { value }
       featuredImage { url altText width height }
       collections(first: 8) { nodes { handle title } }
       priceRange { minVariantPrice { amount currencyCode } }
     } } }`,
-    {},
-    { cache: 'force-cache', revalidate: 300 },
-  );
-  return data.products.nodes.filter((product) => !product.requiresSellingPlan);
-}
+      { cursor },
+      { cache: 'force-cache', revalidate: 300 },
+    );
+    return data.products;
+  });
+  return products.filter((product) => !product.requiresSellingPlan);
+});
 
 export const getProduct = cache(async (handle: string) => {
   const data = await storefront<{ product: Product | null }>(

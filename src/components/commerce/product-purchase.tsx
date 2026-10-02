@@ -42,6 +42,18 @@ export function ProductPurchase({ product }: { product: Product }) {
       <div className="commerce-price">
         {variant ? formatMoney(variant.price) : 'Select an option'}
       </div>
+      {variant && (
+        <p className="reserve-order-summary" aria-live="polite">
+          {quantity} × {variant.title} · Item subtotal{' '}
+          <strong>
+            {formatMoney({
+              ...variant.price,
+              amount: String(Number(variant.price.amount) * quantity),
+            })}
+          </strong>
+          <small>Shipping and taxes calculated at checkout.</small>
+        </p>
+      )}
       {!open && (
         <p className="preview-notice">
           {launchLabel(product)}. Payment is not being collected for this item.

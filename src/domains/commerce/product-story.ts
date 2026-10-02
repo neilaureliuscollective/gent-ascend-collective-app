@@ -32,6 +32,22 @@ export const productStorySchema = z
     cancellation: copy.optional(),
     payment: copy.optional(),
     factsLabel: z.enum(['Ingredients', 'Supplement Facts']).default('Ingredients'),
+    discovery: z
+      .array(z.enum(['beard', 'hair', 'body']))
+      .max(3)
+      .default([]),
+    related: z
+      .array(
+        z
+          .object({
+            handle: z.string().regex(/^[a-z0-9-]{1,120}$/),
+            kind: z.enum(['alternative', 'complementary']),
+            reason: copy,
+          })
+          .strict(),
+      )
+      .max(4)
+      .default([]),
   })
   .strict();
 export type ProductStory = z.infer<typeof productStorySchema>;

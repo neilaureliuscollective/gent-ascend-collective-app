@@ -1,3 +1,4 @@
+import type { CollectionEntry } from '@/domains/commerce/collection';
 import type { Product } from '@/domains/commerce/shopify';
 export const commerceFixture: Product = {
   id: 'gid://shopify/Product/fixture',
@@ -59,6 +60,19 @@ export const commerceFixture: Product = {
       status: 'approved',
       mediaApproved: true,
       size: '30 ml / 60 ml',
+      discovery: ['beard'],
+      related: [
+        {
+          handle: 'fixture-balm',
+          kind: 'alternative',
+          reason: 'Synthetic alternative for browser verification.',
+        },
+        {
+          handle: 'fixture-wash',
+          kind: 'complementary',
+          reason: 'Synthetic next chapter for browser verification.',
+        },
+      ],
       fit: 'Synthetic fit information.',
       texture: 'Synthetic texture description.',
       scent: [{ label: 'Profile', value: 'Synthetic scent notes' }],
@@ -69,3 +83,31 @@ export const commerceFixture: Product = {
     }),
   },
 };
+
+export const relatedFixture: CollectionEntry[] = [
+  {
+    handle: 'fixture-balm',
+    title: 'Fixture Balm',
+    kind: 'Beard balm',
+    brand: 'Legacy Reserve',
+    summary: 'Synthetic product, not merchandise.',
+    price: 'From $28.00',
+    status: 'Available',
+    categories: ['grooming'],
+    discovery: ['beard'],
+    orderable: true,
+  },
+  {
+    handle: 'fixture-wash',
+    title: 'Fixture Wash',
+    kind: 'Body wash',
+    brand: 'Legacy Reserve',
+    summary: 'Synthetic preview, not merchandise.',
+    price: 'Pricing at release',
+    status: 'Collection preview',
+    categories: ['grooming'],
+    discovery: ['body'],
+    orderable: false,
+    preview: true,
+  },
+];

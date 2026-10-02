@@ -23,7 +23,9 @@ import '@/app/interaction.css';
 import { GroomingDirectionEditor } from '@/components/grooming/direction';
 import '@/app/(workspace)/app/grooming/grooming.css';
 import { ProductExperience } from '@/components/commerce/product-experience';
-import { commerceFixture } from './commerce';
+import { resolveRelated } from '@/domains/commerce/discovery';
+import { readProductStory } from '@/domains/commerce/product-story';
+import { commerceFixture, relatedFixture } from './commerce';
 import '@/app/(public)/world.css';
 import '@/app/(public)/cinematic.css';
 import '@/app/(public)/commerce-experience.css';
@@ -84,6 +86,11 @@ createRoot(document.getElementById('root')!).render(
     <div className="public-world">
       <p>Synthetic commerce fixture · no orders or payments.</p>
       <ProductExperience
+        related={resolveRelated(
+          readProductStory(commerceFixture.story),
+          commerceFixture.handle,
+          relatedFixture,
+        )}
         product={{
           ...commerceFixture,
           launchState: { value: params.get('state') ?? 'ready' },
