@@ -279,3 +279,7 @@ Payment-derived access is a database projection of verified current provider sta
 Normal member data reads remain session-bound. The provider adapter's service credentials are limited to a service-only security-invoker control RPC with explicit table grants/RLS; no generic privileged client is exported. Keep beta/founder authority and clinical authorization independent. Essential gains personal guidance/memory; Signature/Reserve gain Studio creation under existing ceilings. No Reserve quota, consultation capacity or product bundle obligation was inferred.
 
 Public registration is separate from pilot invitations and checkout activation. Use verified Supabase Auth, confirmed email, fixed callback destinations and hosted CAPTCHA. Existing pilot/local harness behavior stays intact; public signup remains closed until actual Auth/SMTP/CAPTCHA setup is verified. Local provider/SQL/browser checks cannot stand in for live Auth/payment acceptance. Detailed current sources and activation gates are in `docs/FOUNDING_LAUNCH_PHASE_2.md`.
+
+## 2026-10-02 — Daily Command Phase One
+
+Founder authorized deterministic cross-domain prioritization and an optional morning/evening loop. Use existing owner-bound facts; keep saved recommendations and user outcomes separate in a versioned command history. Null is unknown, state is qualitative, and AI is an explicit editable handoff. Research and thresholds: [ASCEND_DAILY_COMMAND_PHASE_1.md](ASCEND_DAILY_COMMAND_PHASE_1.md). Main stays unmerged; active refinement PRs remain independent.

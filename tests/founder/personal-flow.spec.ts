@@ -69,7 +69,7 @@ test('founder can save a profile and goal without paid membership, then retain c
   await expect(page.getByLabel('Your next concrete step')).toHaveValue(
     'Plan tomorrow deliberately.',
   );
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await expect(page.getByRole('heading', { name: 'Synthetic founder goal' })).toBeVisible();
   await expect(page.getByText('Plan tomorrow deliberately.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Take a moment to check in' }).click();
@@ -203,4 +203,29 @@ test('Movement persists activity and removal through the real authenticated app'
   await expect(page.getByRole('region', { name: 'Activity history' })).not.toContainText(
     'Founder cycle persistence',
   );
+});
+
+test('Daily Command saves arrival and feedback through real Auth, then reloads the saved loop', async ({ page }) => {
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await page.goto('/app');
+  await expect(page.getByRole('region', { name: 'Daily Command' })).toBeVisible();
+  await page.getByText('Morning arrival · optional', { exact: true }).click();
+  await page.getByLabel('Sleep · minutes').fill('450');
+  await page.getByLabel('Energy · 1 very low to 5 high').fill('4');
+  await page.getByLabel('Soreness', { exact: true }).selectOption('mild');
+  await page.getByRole('button', { name: 'Save arrival & command' }).click();
+  await expect(page.getByRole('status')).toContainText('arrival and command are saved');
+  await page.reload();
+  await page.getByText('Morning arrival · optional', { exact: true }).click();
+  await expect(page.getByLabel('Sleep · minutes')).toHaveValue('450');
+  await page.getByText('Close the loop', { exact: true }).click();
+  await page.getByLabel('Did the direction fit?').selectOption('right');
+  await page.getByLabel('What should tomorrow know?').fill('Synthetic command follow-through.');
+  await page.getByRole('button', { name: 'Save evening feedback' }).click();
+  await expect(page.getByRole('status')).toContainText('feedback is saved for tomorrow');
+  await page.reload();
+  await page.getByText('Close the loop', { exact: true }).click();
+  await expect(page.getByLabel('What should tomorrow know?')).toHaveValue('Synthetic command follow-through.');
 });
