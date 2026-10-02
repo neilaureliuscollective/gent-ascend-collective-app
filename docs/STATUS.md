@@ -1,3 +1,13 @@
+# Cinematic product entrance — 2026-10-02
+
+Founder-approved product journey implemented at `/experience`: illuminated crest → edited Hydros architecture / Vitalis / Hydros film → flowing emerald Aethelios orb → existing world. About 16 seconds; 1,464,565-byte silent 720p H.264 film starts downloading only on Enter/Replay. Skip, remembered completion, Replay, reduced motion/Still/Data Saver bypass, failed media fallback and a bounded watchdog keep entry usable. Existing ambient sound remains; ElevenLabs is explicitly deferred. No new dependency, migration or manufacturing claims.
+
+Research, exact edit, plan and limitations: `docs/CINEMATIC_PRODUCT_ENTRANCE.md`. Reproducible edit: `scripts/build-entrance-film.sh`. Actual phone captures: `docs/evidence/cinematic-entrance/`.
+
+Verification: clean production build including strict TypeScript, ESLint, 158 unit/service/SQL-emulation checks pass. All 15 existing responsive world browser checks pass; six entrance checks pass against the clean output, covering actual H.264 playback, completion, repeat visit, mute, Skip, failed media, reduced motion and Data Saver. The initial incremental build retained an older generated entrance reference; a clean build resolved it. Existing entrance URL assertions now allow the intended longer sequence. Physical Samsung/Safari playback and subjective pacing remain founder review gates. No production promotion.
+
+---
+
 # Entrance refinement — October 2, 2026
 
 Founder-approved entrance correction: exact official crest composited with screen blending to remove its visible black matte, emerald illumination, a gold sweep, one light pulse, readable Gent Ascend Collective lockup and a 4.05-second approach/acceleration. Skip, reduced motion and a finite watchdog remain. Enter starts the existing synthesized ambience unless muted; direct world visits remain silent until the sound control is used. Existing dialog/visibility quiet behavior remains.

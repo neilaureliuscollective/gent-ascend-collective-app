@@ -11,7 +11,7 @@ for (const width of [360, 768, 1440]) {
       page.getByRole('link', { name: 'ENTER', exact: false }).filter({ hasText: /^ENTER/ }),
     ).toBeVisible();
     await page.getByRole('link', { name: /^ENTER/ }).click();
-    await expect(page).toHaveURL(/\/experience\/world$/);
+    await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
     await expect(page.getByRole('heading', { name: 'One life. Your world.' })).toBeFocused();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -90,7 +90,7 @@ test('reduced motion, direct entry, Aethelios and history preserve orientation',
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/experience');
   await page.getByRole('link', { name: /^ENTER/ }).click();
-  await expect(page).toHaveURL(/\/experience\/world$/);
+  await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
   await expect(page.locator('.gent-world')).toHaveAttribute('data-moving', 'false');
   await page.getByRole('button', { name: 'Aethelios', exact: false }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -98,7 +98,7 @@ test('reduced motion, direct entry, Aethelios and history preserve orientation',
   await expect(page).toHaveURL(/\/experience\/aethelios$/);
   await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(/\/experience\/world$/);
+  await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
   await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
