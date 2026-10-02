@@ -3,7 +3,13 @@ import { PerformanceWorkspace } from '@/components/performance/workspace';
 import { readPerformance } from '@/domains/performance/service';
 import './performance.css';
 export const metadata = { title: 'Ascend Performance | Gent Ascend Collective' };
-export default async function PerformancePage() {
+export default async function PerformancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ space?: string }>;
+}) {
+  const space = (await searchParams).space;
+  const initialView = space === 'fuel' || space === 'restore' ? space : 'today';
   const data = await readPerformance().catch(() => null);
   if (!data) {
     return (
@@ -23,5 +29,5 @@ export default async function PerformancePage() {
       </section>
     );
   }
-  return <PerformanceWorkspace initial={data} />;
+  return <PerformanceWorkspace initial={data} initialView={initialView} />;
 }

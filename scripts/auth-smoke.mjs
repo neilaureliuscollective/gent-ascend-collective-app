@@ -327,6 +327,24 @@ console.log(
   'PASS: daily save, embedded action read, optimistic conflict, anonymous/direct-write denial and two-user isolation',
 );
 
+// Daily Command: suggestions and self-reported outcomes stay owner-bound.
+const commandArrival = {sleepMinutes:null,energy:null,soreness:null,bandwidth:null,minutes:null};
+const commandSnapshot = {day:dailyDate,ruleVersion:1,state:'STEADY',decisions:[{id:'focus',label:'FOCUS',detail:'Synthetic priority',reason:'Synthetic evidence',href:'/app/daily'}]};
+const commandArgs = {p_request:crypto.randomUUID(),p_day:dailyDate,p_version:0,p_kind:'arrival',p_arrival:commandArrival,p_snapshot:commandSnapshot,p_outcome:null};
+const commandSave=await member.rpc('daily_command_save',commandArgs);assert.equal(commandSave.error,null);assert.equal(commandSave.data,1);
+const commandReplay=await member.rpc('daily_command_save',commandArgs);assert.equal(commandReplay.error,null);assert.equal(commandReplay.data,1);
+const commandStale=await member.rpc('daily_command_save',{...commandArgs,p_request:crypto.randomUUID()});assert.equal(commandStale.error.code,'40001');
+const commandOutcome={decisions:[{id:'focus',result:'skipped'}],fit:'too-much',tomorrow:'Synthetic carry forward'};
+const commandClose=await member.rpc('daily_command_save',{...commandArgs,p_request:crypto.randomUUID(),p_version:1,p_kind:'outcome',p_outcome:commandOutcome});assert.equal(commandClose.error,null);assert.equal(commandClose.data,2);
+for(const table of ['daily_command_records','daily_command_revisions']) {
+ const own=await member.from(table).select('*');assert.equal(own.error,null);assert.ok(own.data.length);
+ const other=await founder.from(table).select('*').eq('person_id',memberPerson.id);assert.equal(other.error,null);assert.equal(other.data.length,0);
+ const anonymous=await anon.from(table).select('*');assert.ok(anonymous.error);
+ const direct=await member.from(table).update({version:99}).eq('person_id',memberPerson.id);assert.ok(direct.error);
+}
+const anonymousCommand=await anon.rpc('daily_command_save',commandArgs);assert.ok(anonymousCommand.error);
+console.log('PASS: Daily Command exact replay, stale version, feedback retention, two-owner isolation and denied direct/anonymous writes');
+
 // Performance slice: use real Auth/PostgREST and the caller's JWT, never service credentials.
 const performanceProfile = { goal:'strength',experience:'returning',daysPerWeek:3,minutes:40,equipment:'gym',limitations:'',unit:'lb' };
 const performanceRequest = crypto.randomUUID();

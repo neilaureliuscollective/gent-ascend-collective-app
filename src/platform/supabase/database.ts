@@ -71,6 +71,7 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      daily_command_records: Table<import("@/domains/daily-command/model").CommandRecord, never, never>;
       performance_programs: Table<ProgramRow, never, never>;
       performance_session_context: Table<SessionContextRow, never, never>;
       performance_profiles: Table<ProfileRow, never, never>;
@@ -723,6 +724,7 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      daily_command_save: { Args: { p_request: string; p_day: string; p_version: number; p_kind: string; p_arrival: import("@/domains/daily-command/model").Arrival; p_snapshot: import("@/domains/daily-command/model").DailyCommandSnapshot; p_outcome: import("@/domains/daily-command/model").DailyCommandOutcome | null }; Returns: number };
       performance_save_movement: {
         Args: { p_request: string; p_expected: number; p_entry: Movement };
         Returns: number;

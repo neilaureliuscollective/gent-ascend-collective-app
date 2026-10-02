@@ -1,3 +1,5 @@
+import { readCommand } from '@/domains/daily-command/service';
+import { commandDraft } from '@/domains/daily-command/model';
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import Link from 'next/link';
 import { AppearanceControls } from '@/components/visual/appearance';
@@ -24,8 +26,10 @@ export default async function AetheliosPage({
       'Help me reflect on today: what mattered, what I learned, and what to carry into tomorrow.',
     perspective: 'Help me think clearly about a decision I am facing.',
   };
-  const initialDraft =
-    typeof params.starter === 'string' && Object.hasOwn(starters, params.starter)
+  const command = params.starter === 'command' ? await readCommand().catch(() => null) : null;
+  const initialDraft = command?.snapshot
+    ? commandDraft(command.snapshot)
+    : typeof params.starter === 'string' && Object.hasOwn(starters, params.starter)
       ? starters[params.starter]
       : '';
   const initialConversation =

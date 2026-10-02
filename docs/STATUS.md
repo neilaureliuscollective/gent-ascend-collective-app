@@ -1,3 +1,9 @@
+## 2026-10-02 — Daily Command Phase One (draft, no production release)
+
+Member Command now composes existing training, recovery, movement, fuel, Daily priorities/reviews and grooming context into qualitative state, explained confidence and up to five decisions. Optional arrival, explicit saved-command snapshots, immutable feedback revisions, tomorrow carry-forward and a consented editable Aethelios draft are implemented. Existing Daily UI remains at `/app/daily`; public cinematic experience and active refinement branches remain independent.
+
+Local lint, strict types, **218 unit/SQL tests**, production build, migration ledger and diff whitespace checks passed. Five targeted browser checks passed at 344/768/1440px, including reduced-motion arrival/feedback, stale draft retention and private API/origin denial; mobile screenshot inspected. CI verified all **192 browser regressions**, the real Auth/PostgREST suite and the Supabase security-advisor step. All **29 sequential local rechecks** also passed. The real signed-in Command save/reload journey is included in the founder gate; current CI evidence is recorded in [draft PR #39](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/39). Local real-service execution is unavailable because Docker is absent. Hosted migration, physical-device review and live Aethelios evaluation remain release gates. Scope, sources, rules and operational boundaries: [ASCEND_DAILY_COMMAND_PHASE_1.md](ASCEND_DAILY_COMMAND_PHASE_1.md).
+
 # Subtle cinematic replay — October 2, 2026
 
 Added a quiet ↺ Replay experience link beneath the world controls. It opens the existing entrance with a clear replay action that bypasses remembered completion after an explicit tap. The original film, sound preference, Skip, Still/reduced-motion and Data Saver behavior remain intact; navigating to replay alone does not download the film. No account or database changes.

@@ -7,7 +7,7 @@ export default async function Ascend() {
     ['02','What matters?','A direction you chose and one goal worth acting on.','/app/goals','Set your direction'],
     ['03','What should I do?','Think it through with Aethelios, then confirm your next action.','/app/aethelios?starter=plan','Plan with Aethelios'],
     ['04','What did I do?','Record your check-in and the actions you actually completed.','/app','Open today'],
-    ['05','What did I learn?','Reflect on what moved forward and what got in the way.','/app#evening-review','Review your day'],
+    ['05','What did I learn?','Reflect on what moved forward and what got in the way.','/app/daily#evening-review','Review your day'],
     ['06','What changes next?','Look at your recorded history and carry forward what still matters.','/app/progress','See your progress'],
   ] as const).map(([n,title,copy,href,label])=><section className="panel" key={n}><span className="eyebrow">{n}</span><h2>{title}</h2><p>{copy}</p><Link className="text-link" href={href}>{label} →</Link></section>)}</div>{daily.profileDirection && <aside className="panel pilot-section"><p className="eyebrow">In your words</p><h2>{daily.profileDirection}</h2><Link href="/app/ascend-profile" className="text-link">Refine your direction →</Link></aside>}</>;
 }
