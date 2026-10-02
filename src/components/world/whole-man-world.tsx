@@ -95,7 +95,22 @@ export function WholeManWorld() {
                 aria-label={item.name}
               >
                 <span className="gw-node-glyph" aria-hidden="true">
-                  {item.number}
+                  <svg viewBox="0 0 32 32" fill="none">
+                    <path
+                      d={
+                        [
+                          'M5 17h5l3-8 5 15 3-8h6',
+                          'M16 4 25 16 16 28 7 16Z M11 16h10',
+                          'M16 5v5m0 12v5M5 16h5m12 0h5 M16 11l4 5-4 5-4-5Z',
+                          'M7 10 16 5l9 5v12l-9 5-9-5Z M7 10l9 6 9-6M16 16v11',
+                        ][index]
+                      }
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </span>
                 <span className="gw-node-name">{item.name}</span>
                 <span className="gw-node-context">{item.theme}</span>

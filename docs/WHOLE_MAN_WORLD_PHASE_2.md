@@ -67,3 +67,10 @@ Next: one real saved daily priority surfaced in this environment with source/fre
 - Inspected screenshots after route transitions completed: [phone](evidence/world-phase2/world-mobile.webp), [Fold-like](evidence/world-phase2/world-fold.webp), [desktop](evidence/world-phase2/world-desktop.webp). These are real built UI captures; backgrounds are labeled concept art above.
 - Runner initially denied compiler child processes; rerunning the authorized build with subprocess permission succeeded. No dependency, compiler or application permission bypass was introduced.
 - Real phone GPU/battery, installed PWA, hosted authenticated two-account behavior and inherited migration reconciliation remain release gates. The browser tool CLI was unavailable; the repository's existing Playwright/Chromium runner performed the browser verification.
+
+
+### Founder reference correction — 2026-10-02
+
+Replaced the atlas ring/star presence with the actual flowing-energy shader approach used in the founder's Aethelios reference, recolored emerald/gold. Added a matching no-GPU SVG sphere, fine orbit markings around distinct destination glyphs, selected-path energy travel and a perspective lattice. Darkened the existing chamber so the luminous sphere leads the composition. No new dependencies or backend changes. Other application presence components are outside this atlas correction.
+
+Verification: strict TypeScript, ESLint, production Turbopack build and all 143 unit/SQL-emulation tests passed. All 15 production-browser scenarios passed; refreshed phone/Fold/desktop captures accompany this change. The added browser case checks successful WebGL rendering, the 480px bound, context-loss recovery, continued navigation and reduced-motion fallback. Device performance remains unmeasured on physical hardware.

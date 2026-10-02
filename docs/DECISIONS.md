@@ -233,3 +233,8 @@ Founder approved the world-entry plan. Use an additive `/experience` route famil
 ## 2026-10-02 — Whole Man World Phase 2: spatial mobile navigation
 
 Founder requested deeper research and authorized implementation after rejecting the flat mobile composition. Use one architectural environment, four accessible destination nodes, the existing adaptive orb, a selected action and an on-demand direction sheet. Keep route selection in the URL and server-render the first scene. Bound ambient effects to transform/opacity; pause hidden/offscreen/modal motion and honor Still, OS preferences and Data Saver. Reuse all domain services. No added renderer, dependency or migration. Primary comparisons (Apple, Linear, Oura, Endel, Active Theory), technical references, phased plan and asset provenance: [Phase 2](WHOLE_MAN_WORLD_PHASE_2.md).
+
+
+## 2026-10-02 — Follow the founder's energy-orb reference
+
+The founder rejected the atlas's older metal-ring/star orb and supplied the Aethelios flowing violet sphere as the visual reference. Adapted the existing founder-owned `app/personal/living-orb.tsx` shader geometry/noise to emerald (#0B3B32 family) and fine gold (#C4912F family) rather than generating a bitmap or adding a rendering dependency. The new atlas-only renderer has a 480px canvas cap, 30fps target, adaptive pixel ratio, lifecycle disposal and pause on hidden/offscreen/dialog/input states. Context loss falls back to static SVG; Still and Data Saver do not mount the shader. Decorative energy never represents model activity or health measurements. Preserved established navigation targets and accessible button labels while replacing numbered node discs with distinctive illuminated glyphs.

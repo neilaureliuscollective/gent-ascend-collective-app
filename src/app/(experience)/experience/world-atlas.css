@@ -155,7 +155,7 @@
   text-align: center;
   pointer-events: none;
 }
-.gw-atlas-presence .aurelius-presence {
+.gw-atlas-presence .gw-energy-orb {
   width: 250px;
   height: 250px;
   margin: auto;
@@ -450,7 +450,7 @@
   .gw-atlas-presence {
     width: 180px;
   }
-  .gw-atlas-presence .aurelius-presence {
+  .gw-atlas-presence .gw-energy-orb {
     width: 180px;
     height: 180px;
   }
@@ -515,7 +515,7 @@
   .gw-world-node {
     width: 100px;
   }
-  .gw-atlas-presence .aurelius-presence {
+  .gw-atlas-presence .gw-energy-orb {
     width: 165px;
     height: 165px;
   }
@@ -590,5 +590,128 @@
   }
   .gw-atlas-intro h1 em:before {
     content: none;
+  }
+}
+
+/* Founder reference: flowing emerald energy and fine gold orbital instrumentation. */
+.gw-energy-orb {
+  position: relative;
+  aspect-ratio: 1;
+}
+.gw-energy-orb canvas,
+.gw-energy-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.gw-energy-orb[data-rendered='true'] .gw-energy-fallback {
+  visibility: hidden;
+}
+.gw-chamber {
+  opacity: 0.38;
+}
+.gw-atmosphere-shade {
+  background: radial-gradient(ellipse at 68% 45%, #064b3522, #030c0ae8 78%);
+}
+.gw-energy-field {
+  position: absolute;
+  inset: 15% -30% -50%;
+  opacity: 0.24;
+  transform: perspective(650px) rotateX(64deg);
+  background-image:
+    linear-gradient(#64c89820 1px, transparent 1px),
+    linear-gradient(90deg, #64c89820 1px, transparent 1px);
+  background-size: 75px 75px;
+  mask-image: radial-gradient(ellipse, black, transparent 65%);
+}
+.gw-constellation:before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, #15986d18, transparent 66%);
+}
+.gw-node-glyph {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background: radial-gradient(circle at 35% 25%, #257c5b99, #061c16 70%);
+  border-color: #75cca078;
+  box-shadow:
+    inset 0 0 12px #35ce8733,
+    0 0 16px #35ce8712;
+}
+.gw-node-glyph svg {
+  width: 25px;
+  height: 25px;
+}
+.gw-node-glyph:before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid #c4912f55;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-30deg);
+  animation: gw-ring-turn 24s linear infinite;
+  animation-play-state: paused;
+}
+.gw-node-glyph:after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #edcd83;
+  border-radius: 50%;
+  top: -5px;
+  box-shadow: 0 0 7px #e9c67e;
+}
+.gw-world-node[aria-pressed='true'] .gw-node-glyph {
+  color: #ffdfa0;
+  background: radial-gradient(circle at 35% 25%, #438666, #082b20 70%);
+  border-color: #e5c779;
+  box-shadow:
+    inset 0 0 14px #67d79b44,
+    0 0 22px #c4912f40;
+}
+.gw-world-connections path[data-selected='true'] {
+  stroke-dasharray: 3 7;
+  animation: gw-signal-travel 14s linear infinite;
+  animation-play-state: paused;
+}
+.gw-atlas[data-animated='true'] .gw-node-glyph:before,
+.gw-atlas[data-animated='true'] .gw-world-connections path[data-selected='true'] {
+  animation-play-state: running;
+}
+@keyframes gw-signal-travel {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+@media (max-width: 900px) {
+  .gw-atmosphere-shade {
+    background: radial-gradient(ellipse at 50% 42%, #064b3511, #030c0aee 80%);
+  }
+  .gw-node-glyph {
+    width: 31px;
+    height: 31px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gw-node-glyph:before,
+  .gw-world-connections path[data-selected='true'] {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .gw-node-glyph:before,
+  .gw-node-glyph:after {
+    display: none;
+  }
+  .gw-world-node[aria-pressed='true'] .gw-node-glyph {
+    background: Canvas;
+    color: ButtonText;
   }
 }

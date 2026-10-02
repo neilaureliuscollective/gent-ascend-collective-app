@@ -260,3 +260,25 @@ test('direct world entry is server-rendered with the selected action and image p
   expect(html).toContain('whole-man-chamber-v2.webp');
   expect(html).not.toContain('Opening your world');
 });
+
+test('energy orb renders, survives context loss and retains its Still identity', async ({
+  page,
+}) => {
+  await page.goto('/experience/world');
+  const orb = page.locator('.gw-energy-orb');
+  await expect(orb).toHaveAttribute('data-rendered', 'true');
+  await expect(orb.locator('canvas')).toBeVisible();
+  expect(
+    await orb.locator('canvas').evaluate((canvas: HTMLCanvasElement) => canvas.width),
+  ).toBeLessThanOrEqual(480);
+  await orb.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
+    canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context')?.loseContext();
+  });
+  await expect(orb).not.toHaveAttribute('data-rendered', 'true');
+  await expect(orb.locator('svg')).toBeVisible();
+  await page.getByRole('button', { name: 'Grooming', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Enter Grooming' })).toBeVisible();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(orb.locator('canvas')).toHaveCount(0);
+  await expect(orb.locator('svg')).toBeVisible();
+});

@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAppearance } from '@/components/visual/appearance';
-import { AureliusPresence } from '@/components/visual/aurelius-presence';
+import { EnergyOrb } from './energy-orb';
 import type { worlds } from '@/platform/world/registry';
 
 type Connection = EventTarget & { saveData?: boolean };
@@ -72,6 +72,7 @@ export function WorldScenery({
       <div className="gw-atmosphere-shade" />
       <div className="gw-light-shaft" />
       <div className="gw-horizon" />
+      <div className="gw-energy-field" />
     </div>
   );
 }
@@ -87,7 +88,7 @@ export function WorldPresence({ moving }: { moving: boolean }) {
   return (
     <div className="gw-atlas-presence">
       <div className="gw-orb-halo" aria-hidden="true" />
-      <AureliusPresence enhanced motionEnabled={moving} />
+      <EnergyOrb moving={moving} />
       <span>AETHELIOS</span>
       <p>Your intelligence</p>
     </div>

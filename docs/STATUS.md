@@ -1,3 +1,7 @@
+## 2026-10-02 — Founder orb correction
+
+The Whole-Man World now uses the flowing-energy orb from the founder’s Aethelios reference, adapted to Gent Ascend emerald and gold. Fine orbital node glyphs, moving selected connection trails and a subtle perspective light lattice complete the environment. The official crest remains unchanged. The atlas uses a separate bounded WebGL2 shader with matching SVG fallback, Still/reduced-motion/Data Saver support and visibility/dialog/input pause. Graphics-context loss restores the fallback. No AI, voice or personal-data behavior is changed. Physical-device performance and founder visual acceptance remain release gates; this is a draft branch update, not production.
+
 # Whole Man World Phase 2 — October 2, 2026
 
 Replaced the stacked mobile world entrance with a spatial destination navigator over a new green/obsidian/gold chamber. Aethelios is larger; four labeled world controls change scenery and the selected action. Selection survives refresh/back through the URL. The initial scene is server-rendered; entrance image warmup uses the same optimized variant. Reflection opens in the existing accessible sheet, retains its draft on close/reopen, and preserves the Aethelios direction link. All modal dialogs pause ambience; Still, reduced motion, Data Saver, image/graphics failure and forced-color operation remain usable.
