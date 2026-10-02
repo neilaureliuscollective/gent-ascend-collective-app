@@ -16,7 +16,7 @@ export const worlds = [
     theme: 'Presence & ritual',
     line: 'Show up with intention.',
     detail: 'Your appearance, routines and professional direction.',
-    href: '/app/grooming',
+    href: '/experience/grooming',
     image: '/media/world/ritual-mirror-v1.webp',
     number: '02',
   },

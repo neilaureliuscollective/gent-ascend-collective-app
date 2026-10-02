@@ -152,7 +152,7 @@ for (const width of [344, 390, 768, 1440]) {
     await page.goto('/experience/world');
     const nav = page.getByRole('navigation', { name: 'Choose a destination' });
     for (const [name, id, href] of [
-      ['Grooming', 'grooming', '/app/grooming'],
+      ['Grooming', 'grooming', '/experience/grooming'],
       ['Direction', 'focus', '/app/ascend'],
       ['Creation', 'work', '/app/studio'],
       ['Performance', 'performance', '/experience/performance'],
@@ -256,7 +256,7 @@ test('direct world entry is server-rendered with the selected action and image p
   expect(response.status()).toBe(200);
   const html = await response.text();
   expect(html).toContain('id="world-heading"');
-  expect(html).toContain('href="/app/grooming"');
+  expect(html).toContain('href="/experience/grooming"');
   expect(html).toContain('whole-man-chamber-v2.webp');
   expect(html).not.toContain('Opening your world');
 });
@@ -265,7 +265,7 @@ test('energy orb renders, survives context loss and retains its Still identity',
   page,
 }) => {
   await page.goto('/experience/world');
-  const orb = page.locator('.gw-energy-orb');
+  const orb = page.locator('.gw-atlas .gw-energy-orb');
   await expect(orb).toHaveAttribute('data-rendered', 'true');
   await expect(orb.locator('canvas')).toBeVisible();
   expect(

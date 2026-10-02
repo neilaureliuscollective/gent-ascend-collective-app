@@ -182,7 +182,7 @@ export interface Database {
           note: string;
           occurred_at: string;
         },
-        { person_id: string; ritual_id: string; done: boolean; note?: string },
+        { id?: string; person_id: string; ritual_id: string; done: boolean; note?: string },
         never
       >;
       grooming_products: Table<

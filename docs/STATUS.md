@@ -1,3 +1,11 @@
+# Whole-Man World Phase 4 — October 2, 2026
+
+Built a dedicated Grooming world at `/experience/grooming`: cinematic green/gold mirror environment, focused ritual practice and clear entrances to existing Ascend Scan, My Look and Professional workflows. Members follow their exact saved morning/evening/weekly steps and explicitly record practice. Guests get a labeled sample with no account writes. Saves reuse an immutable request ID so a lost response can be retried without duplicating that practice. Existing authorization, RLS and ritual history remain authoritative. No new dependency or migration.
+
+Research, architecture, test results and release limits: [Phase 4](WHOLE_MAN_WORLD_PHASE_4.md). Draft PR #33 only; production unchanged. Real hosted account acceptance and physical-device performance remain release gates. Next candidate: bring the most useful Scan result and professional preparation tasks into this same focused interaction model after founder review.
+
+---
+
 # Whole-Man World Phase 3 — October 2, 2026
 
 Built personal continuity into the approved world: one dated saved priority, a focused editor, the next unfinished daily action and a direct return to the existing daily workspace. Members use their existing daily intention; guests keep the session-only reflection. The server retains all unrelated daily fields and rejects stale account/date/version writes. Confirmed saves update the scene; failed or ambiguous writes preserve drafts and require explicit reload before retry. The narrow response excludes wellness/reflection history, and private reads never block world navigation. No new migration or dependency.

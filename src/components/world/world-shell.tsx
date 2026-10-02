@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, ViewTransition, type ReactNode } from 'rea
 import { AppearanceControls, useAppearance } from '@/components/visual/appearance';
 import { AppRuntime } from '@/components/app-runtime';
 import { ContextSheet } from '@/components/interaction/context-sheet';
-import { AureliusPresence } from '@/components/visual/aurelius-presence';
+import { EnergyOrb } from './energy-orb';
 
 /** A single audio context for the environment, never voice or microphone. */
 function AmbientSound({ quiet }: { quiet: boolean }) {
@@ -154,12 +154,14 @@ export function WorldShell({ children }: { children: ReactNode }) {
       )}
       <ContextSheet open={intelligence} title="Aethelios" onClose={() => setIntelligence(false)}>
         <div className="gw-intelligence">
-          <AureliusPresence enhanced={false} />
+          <EnergyOrb moving={false} />
           <p className="gw-kicker">A clearer next move</p>
           <p>
-            {path.includes('performance')
-              ? 'Think through how your training fits the rest of your life.'
-              : 'Bring the parts of your life into one conversation.'}
+            {path.includes('grooming')
+              ? 'Refine your grooming direction and the rituals that support it.'
+              : path.includes('performance')
+                ? 'Think through how your training fits the rest of your life.'
+                : 'Bring the parts of your life into one conversation.'}
           </p>
           <p className="gw-muted">
             Your private conversations and saved context stay in your account. Opening a
