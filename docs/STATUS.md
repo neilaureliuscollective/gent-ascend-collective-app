@@ -1,3 +1,13 @@
+# Entrance refinement — October 2, 2026
+
+Founder-approved entrance correction: exact official crest composited with screen blending to remove its visible black matte, emerald illumination, a gold sweep, one light pulse, readable Gent Ascend Collective lockup and a 4.05-second approach/acceleration. Skip, reduced motion and a finite watchdog remain. Enter starts the existing synthesized ambience unless muted; direct world visits remain silent until the sound control is used. Existing dialog/visibility quiet behavior remains.
+
+Verified production build/strict TypeScript, ESLint and 17 browser cases, including timed reveal, automatic gesture playback, persistent mute, skip and reduced motion. Actual phone capture: [awakening](evidence/entrance-refinement/awakening-mobile.webp).
+
+ElevenLabs soundtrack remains pending: plugin skills appeared, but no callable ElevenLabs generation tools were exposed in the session and plugin search returned no result. No ElevenLabs credits were spent and no generated soundtrack is claimed. The current audio remains the existing browser-synthesized tones. Next: generate and audition one entrance cue plus a seamless ambient bed through the connected ElevenLabs account, then replace those tones with the approved assets.
+
+---
+
 # Whole-Man World Phase 4 — October 2, 2026
 
 Built a dedicated Grooming world at `/experience/grooming`: cinematic green/gold mirror environment, focused ritual practice and clear entrances to existing Ascend Scan, My Look and Professional workflows. Members follow their exact saved morning/evening/weekly steps and explicitly record practice. Guests get a labeled sample with no account writes. Saves reuse an immutable request ID so a lost response can be retried without duplicating that practice. Existing authorization, RLS and ritual history remain authoritative. No new dependency or migration.

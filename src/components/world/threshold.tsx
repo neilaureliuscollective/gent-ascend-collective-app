@@ -22,12 +22,14 @@ export function Threshold() {
     };
   }, [router]);
   function finish() {
+    if (!active.current) return;
     active.current = false;
     clearTimeout(timeoutRef.current);
     router.push('/experience/world');
   }
   async function enter() {
     if (active.current) return;
+    window.dispatchEvent(new Event('gent-world-enter'));
     if (!moving) {
       router.push('/experience/world');
       return;
@@ -37,13 +39,16 @@ export function Threshold() {
     // Start meaningful asset work alongside the camera, never wait for a video.
     const poster = new window.Image();
     const { props } = getImageProps({
-      src: '/media/world/whole-man-chamber-v2.webp', alt: '', fill: true, sizes: '100vw',
+      src: '/media/world/whole-man-chamber-v2.webp',
+      alt: '',
+      fill: true,
+      sizes: '100vw',
     });
     poster.sizes = props.sizes ?? '100vw';
     poster.srcset = props.srcSet ?? '';
     poster.src = props.src;
     void poster.decode().catch(() => {});
-    const timeout = window.setTimeout(finish, 2200);
+    const timeout = window.setTimeout(finish, 5600);
     timeoutRef.current = timeout;
     dispose.current = () => clearTimeout(timeout);
     try {
@@ -51,16 +56,38 @@ export function Threshold() {
       if (!active.current || !root.current) return;
       const ctx = gsap.context(() => {
         const tl = gsap.timeline({ onComplete: finish });
-        tl.to('.gw-threshold-copy', { opacity: 0, y: -12, duration: 0.3 })
-          .to('.gw-threshold-image', { scale: 1.65, duration: 1.6, ease: 'power2.in' }, 0)
+        tl.to('.gw-threshold-copy', { opacity: 0, y: -10, duration: 0.45 })
+          .to('.gw-threshold-image', { scale: 1.15, duration: 2.8, ease: 'sine.inOut' }, 0)
           .fromTo(
-            '.gw-crest-flight',
-            { opacity: 0, scale: 0.5 },
-            { opacity: 1, scale: 1, duration: 0.6 },
+            '.gw-arrival-glow',
+            { opacity: 0, scale: 0.65 },
+            { opacity: 0.85, scale: 1, duration: 1.3, ease: 'sine.out' },
             0.2,
           )
-          .to('.gw-crest-flight', { scale: 8, opacity: 0, duration: 0.75, ease: 'power3.in' }, 0.8)
-          .to('.gw-threshold-veil', { opacity: 1, duration: 0.25 }, 1.4);
+          .fromTo(
+            '.gw-crest-flight',
+            { opacity: 0, scale: 0.82 },
+            { opacity: 1, scale: 1, duration: 1.2, ease: 'power1.out' },
+            0.4,
+          )
+          .fromTo('.gw-arrival-name', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.7 }, 1)
+          .fromTo(
+            '.gw-arrival-sweep',
+            { xPercent: -130, opacity: 0 },
+            { xPercent: 130, opacity: 0.7, duration: 1.4, ease: 'sine.inOut' },
+            0.7,
+          )
+          .to(
+            '.gw-arrival-glow',
+            { opacity: 0.55, scale: 1.08, duration: 0.6, yoyo: true, repeat: 1 },
+            1.45,
+          )
+          .to('.gw-crest-flight', { scale: 1.12, duration: 1.15, ease: 'sine.inOut' }, 1.6)
+          .to('.gw-arrival-name', { opacity: 0, duration: 0.5 }, 2.75)
+          .to('.gw-crest-flight', { scale: 7, opacity: 0, duration: 1.25, ease: 'power3.in' }, 2.75)
+          .to('.gw-threshold-image', { scale: 1.8, duration: 1.25, ease: 'power3.in' }, 2.75)
+          .to('.gw-arrival-glow', { opacity: 0, scale: 1.6, duration: 0.9 }, 3.1)
+          .to('.gw-threshold-veil', { opacity: 1, duration: 0.35 }, 3.7);
       }, root);
       dispose.current = () => {
         clearTimeout(timeout);
@@ -74,7 +101,12 @@ export function Threshold() {
     if (!moving && active.current) finish();
   });
   return (
-    <section className="gw-threshold" ref={root} aria-labelledby="threshold-heading">
+    <section
+      className="gw-threshold"
+      data-entering={entering}
+      ref={root}
+      aria-labelledby="threshold-heading"
+    >
       <picture className="gw-threshold-image">
         <source media="(max-width: 600px)" srcSet="/media/world/threshold-chamber-mobile.webp" />
         <Image src="/media/world/threshold-chamber.webp" alt="" fill sizes="100vw" preload />
@@ -109,8 +141,15 @@ export function Threshold() {
         </Link>
         <span className="gw-entry-note">Explore freely. Make it yours when you’re ready.</span>
       </div>
+      <div className="gw-arrival-glow" aria-hidden="true" />
       <div className="gw-crest-flight" aria-hidden="true">
-        <Image src={brand.crest} alt="" width={260} height={260} />
+        <Image src={brand.crest} alt="" width={260} height={260} preload />
+        <span className="gw-arrival-sweep" />
+      </div>
+      <div className="gw-arrival-name" aria-hidden="true">
+        <span>GENT ASCEND</span>
+        <small>COLLECTIVE</small>
+        <p>Your world is opening.</p>
       </div>
       <div className="gw-threshold-veil" aria-hidden="true" />
       <div className="gw-threshold-footer">

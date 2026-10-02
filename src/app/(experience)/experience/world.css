@@ -845,3 +845,75 @@ html:has(.gent-world) {
     animation: none !important;
   }
 }
+
+/* Screen composition removes the black matte while retaining the exact official crest. */
+.gw-crest-flight {
+  mix-blend-mode: screen;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+.gw-crest-flight img {
+  display: block;
+}
+.gw-arrival-glow {
+  position: absolute;
+  width: min(640px, 110vw);
+  aspect-ratio: 1;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse, #c4912f35 0%, #2caa7160 22%, #0b3b3260 45%, transparent 70%);
+}
+.gw-arrival-sweep {
+  mask-image: url('/brand/gent-ascend-crest-v2.webp');
+  mask-mode: luminance;
+  mask-size: 100% 100%;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(110deg, transparent 35%, #ffe5a040 49%, transparent 63%);
+  mix-blend-mode: screen;
+}
+.gw-arrival-name {
+  position: absolute;
+  top: calc(50% + 140px);
+  left: 16px;
+  right: 16px;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  color: #ecd6a2;
+}
+.gw-arrival-name > span {
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  letter-spacing: 0.3em;
+}
+.gw-arrival-name small {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.55em;
+  margin-top: 12px;
+}
+.gw-arrival-name p {
+  font-size: 0.72rem;
+  color: #c2d2c6;
+  margin-top: 18px;
+  letter-spacing: 0.08em;
+}
+.gw-threshold[data-entering='true'] .gw-threshold-copy {
+  pointer-events: none;
+}
+@media (max-height: 620px) {
+  .gw-arrival-name {
+    top: calc(50% + 115px);
+  }
+  .gw-arrival-name p {
+    display: none;
+  }
+  .gw-crest-flight {
+    margin-top: -20px;
+  }
+}

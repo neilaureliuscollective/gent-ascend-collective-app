@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState, ViewTransition, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, ViewTransition, type ReactNode } from 'react';
 import { AppearanceControls, useAppearance } from '@/components/visual/appearance';
 import { AppRuntime } from '@/components/app-runtime';
 import { ContextSheet } from '@/components/interaction/context-sheet';
@@ -33,6 +33,20 @@ function AmbientSound({ quiet }: { quiet: boolean }) {
   useEffect(() => {
     if (quiet) void audio.current?.suspend();
   }, [quiet]);
+  const startFromEntrance = useEffectEvent(() => {
+    let muted = false;
+    try {
+      muted = localStorage.getItem('gent-world-muted') === 'true';
+    } catch {
+      /* optional */
+    }
+    if (!muted && !playing && !quiet) void toggle();
+  });
+  useEffect(() => {
+    const start = () => startFromEntrance();
+    window.addEventListener('gent-world-enter', start);
+    return () => window.removeEventListener('gent-world-enter', start);
+  }, []);
   async function toggle() {
     try {
       if (playing) {
@@ -57,7 +71,7 @@ function AmbientSound({ quiet }: { quiet: boolean }) {
         gain.current?.gain.setTargetAtTime(0.009, audio.current.currentTime, 0.8);
         setPlaying(true);
       }
-      // Playback always requires a fresh gesture, even if the preference was sound-on.
+      // Enter and this button are explicit gestures; a remembered mute always wins.
       try {
         localStorage.setItem('gent-world-muted', String(playing));
       } catch {
