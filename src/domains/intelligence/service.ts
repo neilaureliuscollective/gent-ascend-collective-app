@@ -7,6 +7,7 @@ import { promptVersion, buildMessages } from './prompt';
 import { founderBridgeContext } from './founder-bridge';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
+import { localDay } from '@/domains/daily/model';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -25,7 +26,8 @@ export async function intelligenceSession() {
 export async function personalContext(question?:string): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
   const groomingRelevant=!!question && /groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
-  const [goal, memories, daily, profileFacts, reviews, grooming] = await Promise.all([
+  const today = localDay(new Date(), person.timezone);
+  const [goal, memories, daily, profileFacts, reviews, grooming, captures] = await Promise.all([
     client
       .from('goals')
       .select('*')
@@ -38,9 +40,9 @@ export async function personalContext(question?:string): Promise<PersonalContext
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
       .limit(24),
-    client.from('daily_entries').select('day,intention,energy,reflection,actions:daily_actions(title,done)').eq('person_id', person.id).order('day', { ascending: false }).limit(3),
+    client.from('daily_entries').select('day,version,intention,energy,reflection,actions:daily_actions(id,title,done,position)').eq('person_id', person.id).lte('day',today).order('day', { ascending: false }).limit(3),
     client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
-    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).order('day',{ascending:false}).limit(3),
+    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).lte('day',today).order('day',{ascending:false}).limit(3),
     groomingRelevant?Promise.all([
       client.from('grooming_profiles').select('hair_focus,beard_focus,skin_focus,preferred_look,effort,sensitivities,dislikes').eq('person_id',person.id).maybeSingle(),
       client.from('grooming_goals').select('title,target_date').eq('person_id',person.id).eq('status','active').limit(4),
@@ -50,14 +52,17 @@ export async function personalContext(question?:string): Promise<PersonalContext
       client.from('grooming_look_previews').select('title,style_id,note,saved_at').eq('person_id',person.id).eq('status','complete').not('saved_at','is',null).order('saved_at',{ascending:false}).limit(4),
       client.from('grooming_scans').select('created_at,summary').eq('person_id',person.id).eq('status','complete').order('created_at',{ascending:false}).limit(2),
     ]):null,
+    client.from('life_captures').select('id',{count:'exact',head:true}).eq('person_id',person.id).eq('status','inbox'),
   ]);
-  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error || grooming?.some(result=>result.error))
+  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error || captures.error || grooming?.some(result=>result.error))
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
   const reviewByDay=new Map((reviews.data??[]).map(review=>[review.day,review]));
   const tokens=new Set((question??'').toLowerCase().match(/[a-z]{4,}/g)??[]);
   const ranked=(memories.data??[]).map(row=>({row,score:[...tokens].reduce((n,word)=>n+(row.content.toLowerCase().includes(word)?1:0),0)}));
   const selected=question ? ranked.sort((a,b)=>b.score-a.score).filter(item=>item.score>0).slice(0,6).map(item=>item.row) : memories.data??[];
   const dailyRelevant=!question || /today|tomorrow|daily|routine|week|progress|energy|sleep|reflect|yesterday|plan/i.test(question);
+  const todayEntry=(daily.data??[]).find(entry=>entry.day===today);
+  const previousReview=(reviews.data??[]).find(review=>review.day<today);
   return {
     profile: {
       name: person.display_name,
@@ -81,6 +86,7 @@ export async function personalContext(question?:string): Promise<PersonalContext
       confirmed_at,
     })),
     daily: dailyRelevant ? (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}) : [],
+    dailyBrief: {asOf:new Date().toISOString(),day:today,version:todayEntry?.version??0,intention:todayEntry?.intention??'',actions:(todayEntry?.actions??[]).sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done})),openCaptures:captures.count??0,previousReview:previousReview?{day:previousReview.day,tomorrow:previousReview.tomorrow,blocker:previousReview.blocker}:null},
     ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
     grooming:grooming?(()=>{const [p,g,r,products,looks,concepts,scans]=grooming;return {profile:p.data?{hair:p.data.hair_focus,beard:p.data.beard_focus,skin:p.data.skin_focus,look:p.data.preferred_look,effort:p.data.effort,sensitivities:p.data.sensitivities,dislikes:p.data.dislikes}:null,goals:(g.data??[]).map(x=>({title:x.title,date:x.target_date})),rituals:(r.data??[]).map(x=>({kind:x.kind,title:x.title,steps:x.steps})),products:(products.data??[]).map(x=>({name:x.name,relation:x.relation,note:x.note})),looks:(looks.data??[]).map(x=>({title:x.title,kind:x.kind,detail:x.detail,date:x.service_date})),concepts:(concepts.data??[]).map(x=>({title:x.title,style:x.style_id,note:x.note,at:x.saved_at!})),scans:(scans.data??[]).map(x=>({at:x.created_at,summary:x.summary}))};})():undefined,
   };

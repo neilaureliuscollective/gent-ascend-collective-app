@@ -1,0 +1,355 @@
+.gw-grooming {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(300px, 1.05fr);
+  column-gap: 7vw;
+  padding: 112px 7vw 120px;
+  min-height: 100svh;
+  background: radial-gradient(ellipse at 75% 40%, #17473960, transparent 60%), #050c09;
+}
+.gw-grooming-return {
+  grid-column: 1/-1;
+  width: fit-content;
+  color: #c6bb94;
+  font-size: 0.72rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.gw-grooming-intro {
+  grid-column: 1;
+  align-self: end;
+}
+.gw-grooming h1 {
+  font-size: clamp(3rem, 4.9vw, 5.4rem);
+  line-height: 1.03;
+  letter-spacing: -0.06em;
+  margin: 20px 0 18px;
+}
+.gw-grooming h1 em {
+  color: #e2c486;
+  font-style: normal;
+}
+.gw-grooming-intro > p:last-child {
+  color: #bbc9be;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.gw-grooming-mirror {
+  position: relative;
+  grid-column: 2;
+  grid-row: 2/4;
+  align-self: center;
+  min-height: 520px;
+  overflow: hidden;
+  border-radius: 48% 48% 4px 4px;
+  border: 1px solid #c4912f60;
+  box-shadow:
+    0 0 65px #22654b25,
+    inset 0 0 40px #000;
+}
+.gw-grooming-mirror img {
+  object-fit: cover;
+  object-position: 100% center;
+  transform: scale(1.03);
+  animation: gw-mirror-drift 20s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.gw-mirror-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, #03100b00 45%, #03100beb),
+    linear-gradient(90deg, #04120a60, transparent 75%);
+}
+.gw-mirror-orbit {
+  position: absolute;
+  inset: 5%;
+  border: 1px solid #d4b77540;
+  border-bottom-color: transparent;
+  border-radius: 48% 48% 0 0;
+  pointer-events: none;
+}
+.gw-mirror-orbit:after {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e7c57f;
+  top: 30%;
+  right: -3px;
+  box-shadow: 0 0 14px #efc96f;
+}
+.gw-mirror-caption {
+  position: absolute;
+  bottom: 26px;
+  width: 100%;
+  text-align: center;
+  color: #ebd39e;
+  letter-spacing: 0.25em;
+  font-size: 0.53rem;
+}
+.gw-grooming-controls {
+  grid-column: 1;
+  margin-top: 32px;
+  max-width: 510px;
+}
+.gw-grooming-areas {
+  display: flex;
+  border-bottom: 1px solid #c4912f45;
+  gap: 18px;
+}
+.gw-grooming-areas button {
+  color: #adc0b2;
+  font-size: 0.77rem;
+  min-height: 44px;
+  padding: 10px 0;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.gw-grooming-areas button[aria-pressed='true'] {
+  color: #f0d698;
+  border-bottom-color: #c4912f;
+}
+.gw-grooming-detail {
+  padding-top: 26px;
+}
+.gw-grooming-detail > .gw-kicker {
+  font-size: 0.55rem;
+}
+.gw-grooming-detail h2 {
+  font-size: 2rem;
+  letter-spacing: -0.045em;
+  margin: 12px 0;
+}
+.gw-grooming-detail > p:not(.gw-kicker) {
+  color: #bdcec1;
+  line-height: 1.6;
+  font-size: 0.82rem;
+}
+.gw-grooming-detail .gw-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 20px;
+  padding: 14px 18px;
+  border: 1px solid #c4a45c80;
+  border-radius: 5px;
+  background: linear-gradient(125deg, #1a4e3d, #0a2a20);
+  color: #efdab0;
+  font-size: 0.82rem;
+}
+.gw-grooming-detail .gw-muted {
+  font-size: 0.65rem !important;
+  margin-top: 12px;
+}
+.gw-ritual-kinds {
+  display: flex;
+  gap: 14px;
+  margin-top: 13px;
+}
+.gw-ritual-kinds button {
+  border: 0;
+  padding: 8px 0;
+  min-height: 44px;
+  background: none;
+  color: #b2c4b5;
+  text-transform: capitalize;
+  font-size: 0.75rem;
+}
+.gw-ritual-kinds button[aria-pressed='true'] {
+  color: #f4d395;
+  text-decoration: underline;
+  text-underline-offset: 7px;
+}
+.gw-grooming-detail .gw-ritual-title {
+  font-size: 0.5rem !important;
+  letter-spacing: 0.14em;
+  margin-top: 18px;
+  color: #c7ad75 !important;
+}
+.gw-ritual-title strong {
+  display: block;
+  color: #eee8d6;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.gw-grooming-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid #c4912f30;
+  margin-top: 22px;
+  padding-top: 6px;
+}
+.gw-grooming-links a {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: #b9c6b7;
+  font-size: 0.65rem;
+}
+.gw-grooming-error {
+  font-size: 0.8rem;
+  color: #efd5af;
+  line-height: 1.5;
+}
+.gw-grooming-error button {
+  min-height: 44px;
+  text-decoration: underline;
+}
+.gw-ritual-practice h3 {
+  font-size: 2rem;
+  letter-spacing: -0.035em;
+  margin: 18px 0;
+}
+.gw-ritual-position {
+  font-size: 3.5rem;
+  color: #e6c580;
+  margin: 24px 0;
+  font-weight: 300;
+}
+.gw-ritual-position span {
+  font-size: 0.8rem;
+  color: #99b09f;
+}
+.gw-ritual-step {
+  min-height: 130px;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #e3e8db;
+  overflow-wrap: anywhere;
+}
+.gw-ritual-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 24px 0;
+}
+.gw-ritual-navigation button {
+  min-height: 48px;
+}
+.gw-ritual-navigation .gw-action {
+  padding: 14px 20px;
+}
+.gw-ritual-navigation button:disabled {
+  opacity: 0.55;
+}
+.gw-ritual-practice > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.8rem;
+  color: #e3c078;
+}
+.gw-grooming[data-animated='true'] .gw-grooming-mirror img {
+  animation-play-state: running;
+}
+@keyframes gw-mirror-drift {
+  to {
+    transform: scale(1.08) translateY(-1%);
+  }
+}
+@media (max-width: 900px) {
+  .gw-grooming {
+    display: flex;
+    flex-direction: column;
+    padding: 92px 22px 112px;
+  }
+  .gw-grooming-return {
+    margin-bottom: 2px;
+  }
+  .gw-grooming-intro {
+    align-self: stretch;
+  }
+  .gw-grooming h1 {
+    font-size: clamp(2.6rem, 9vw, 4rem);
+    margin: 12px 0;
+  }
+  .gw-grooming-intro > p:last-child {
+    font-size: 0.73rem;
+  }
+  .gw-grooming-mirror {
+    align-self: stretch;
+    min-height: 0;
+    height: 190px;
+    margin-top: 18px;
+    border-radius: 120px 120px 4px 4px;
+  }
+  .gw-grooming-mirror img {
+    object-position: 100% 41%;
+  }
+  .gw-mirror-caption {
+    bottom: 18px;
+    font-size: 0.45rem;
+  }
+  .gw-grooming-controls {
+    margin-top: 22px;
+    max-width: none;
+  }
+  .gw-grooming-areas {
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .gw-grooming-areas button {
+    font-size: 0.69rem;
+  }
+  .gw-grooming-detail {
+    padding-top: 22px;
+  }
+  .gw-grooming-detail h2 {
+    font-size: 1.75rem;
+  }
+  .gw-grooming-detail > p:not(.gw-kicker) {
+    font-size: 0.77rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gw-grooming * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .gw-grooming-mirror {
+    display: none;
+  }
+  .gw-grooming {
+    background: Canvas;
+    color: CanvasText;
+  }
+  .gw-grooming-areas button[aria-pressed='true'] {
+    border-color: Highlight;
+  }
+  .gw-grooming-detail .gw-action {
+    color: ButtonText;
+    background: ButtonFace;
+    border-color: ButtonText;
+  }
+}
+
+.gw-grooming-areas,
+.gw-ritual-kinds,
+.gw-ritual-navigation {
+  flex-wrap: wrap;
+}
+.gw-grooming-controls,
+.gw-grooming-intro {
+  min-width: 0;
+}
+.gw-grooming h2,
+.gw-ritual-practice h3 {
+  overflow-wrap: anywhere;
+}

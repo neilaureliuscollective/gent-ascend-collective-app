@@ -51,7 +51,8 @@ export type PersonalContext = {
   profile: { name: string; priority: string; timezone: string; units: string; updatedAt: string };
   goal: { title: string; nextStep: string; reason: string; updatedAt: string } | null;
   memories: Pick<Memory, 'id' | 'content' | 'kind' | 'confirmed_at'>[];
-  daily?: { day: string; intention: string; energy: number | null; actions: { title: string; done: boolean }[]; reflection: string; review?: {progress:string;blocker:string;tomorrow:string;confirmedAt:string}|null }[];
+  daily?: { day: string; intention: string; energy: number | null; actions: { id: string; title: string; done: boolean }[]; reflection: string; review?: {progress:string;blocker:string;tomorrow:string;confirmedAt:string}|null }[];
+  dailyBrief?: { asOf: string; day: string; version: number; intention: string; actions: { id: string; title: string; done: boolean }[]; openCaptures: number; previousReview: { day: string; tomorrow: string; blocker: string } | null };
   ascendProfile?: { key: string; value: string; confirmedAt: string; source: 'user' | 'ai_proposal' }[];
   grooming?: { profile: {hair:string;beard:string;skin:string;look:string;effort:string;sensitivities:string;dislikes:string}|null; goals:{title:string;date:string|null}[]; rituals:{kind:string;title:string;steps:string}[]; products:{name:string;relation:string;note:string}[]; looks:{title:string;kind:string;detail:string;date:string|null}[]; concepts:{title:string;style:string;note:string;at:string}[]; scans:{at:string;summary:string}[] };
 };

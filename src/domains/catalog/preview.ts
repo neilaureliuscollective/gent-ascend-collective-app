@@ -39,6 +39,19 @@ export const collectionPreviews = [
       'The body care collection extends the same considered approach beyond hair and beard. The range, packaging, and availability will be introduced as each product is ready.',
     ritual: 'Small rituals. A standard you can feel.',
   },
+  {
+    handle: 'hydros',
+    name: 'Hydros',
+    kind: 'Electrolyte collection',
+    line: 'Gent Ascend',
+    number: '04',
+    form: 'wash',
+    state: 'Collection preview',
+    summary: 'A hydration ritual within the wider performance collection.',
+    story:
+      'Hydros brings the performance collection into view. Final formulation, approved labeling, pricing and availability will be confirmed before orders open.',
+    ritual: 'Prepare for the day you intend to build.',
+  },
 ] as const;
 
 export function previewProduct(handle: string) {

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AppRuntime } from '@/components/app-runtime';
 import type { Metadata } from 'next';
 import { WorldHeader } from '@/components/public/world-header';
 import { CinematicWorld } from '@/components/public/cinematic-world';
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <CinematicWorld>
+      <AppRuntime />
       <a className="skip" href="#world-main">
         Skip to content
       </a>
@@ -34,6 +36,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <nav aria-label="Footer navigation">
           <Link href="/about">Our story</Link>
           <Link href="/membership">Membership</Link>
+          <Link href="/launch">The launch collection</Link>
           <Link href="/reserve">The Reserve</Link>
           <Link href="/enter">Member entrance</Link>
         </nav>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Chapter, CollectionGrid } from '@/components/public/editorial';
 import Image from 'next/image';
 import Link from 'next/link';
+import { launchLabel, launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 import { formatMoney } from '@/components/commerce/money';
 import { commerceConfigured, listProducts } from '@/domains/commerce/shopify';
 export const metadata: Metadata = { title: 'The collection' };
@@ -36,6 +37,14 @@ export default async function Shop() {
           Considered care and performance within the Gent Ascend world. Explore what is ready, and
           the rituals taking shape.
         </p>
+        <div className="world-actions">
+          <Link href="/launch" className="world-button">
+            Explore the launch collection ↗
+          </Link>
+          <Link href="/membership" className="world-text-link">
+            Founding membership ↗
+          </Link>
+        </div>
       </header>
       <section className="world-section">
         {products?.length ? (
@@ -75,7 +84,11 @@ export default async function Shop() {
                   <h3>
                     {product.title} <span aria-hidden="true">↗</span>
                   </h3>
-                  <p>From {formatMoney(product.priceRange.minVariantPrice)}</p>
+                  <p>
+                    {launchPurchaseAllowed(product)
+                      ? `From ${formatMoney(product.priceRange.minVariantPrice)}`
+                      : launchLabel(product)}
+                  </p>
                 </Link>
               ))}
             </div>

@@ -42,6 +42,7 @@ export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt
 }
 export async function generateStudio(input:z.infer<typeof studioInput>){
  const {client,person}=await studioSession();
+ if(!(await currentAccess()).has('studio.create')) throw new IntelligenceError('Studio creation requires Signature, Reserve, or existing invitation access.',403);
  const model=input.mode==='fast'?'gpt-image-2.5-flare':'gpt-image-2.5-sunburst';
  const begun=await client.rpc('ai_studio_begin',{p_id:input.id,p_project:input.projectId,p_parent:input.parentId,p_reference:input.referenceId,p_prompt:input.prompt,p_model:model,p_size:input.size});
  if(begun.error) throw new IntelligenceError('Project, reference, or generation limit could not be verified.',begun.error.code==='P0001'?429:409);

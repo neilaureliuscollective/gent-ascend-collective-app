@@ -1,9 +1,69 @@
 import Link from 'next/link';
+const worlds = [
+  {
+    href: '/app/ascend',
+    title: 'LifeOS / Ascend',
+    copy: 'Your direction, daily actions and reflection.',
+  },
+  {
+    href: '/app/performance',
+    title: 'Ascend Performance',
+    copy: 'Training, fuel and recovery. One part of the whole man.',
+  },
+  {
+    href: '/app/grooming',
+    title: 'Grooming Concierge',
+    copy: 'Your appearance, routines and professional direction.',
+  },
+  {
+    href: '/app/aethelios',
+    title: 'Aethelios',
+    copy: 'Think through the next move with your personal intelligence.',
+  },
+  {
+    href: '/app/studio',
+    title: 'Aethelios Studio',
+    copy: 'Shape an idea into a project and visual work.',
+  },
+];
 export default function World() {
-  return <><p className="eyebrow">Gent Ascend / The collective</p><h1>My world.</h1><p className="lead">Care for the man. Strengthen the life around him.</p><div className="world-gateway-grid">
-    <section className="panel"><span className="eyebrow">Your daily practice / Available</span><h2>Ascend.</h2><p>Your baseline, goals, actions, and reflection. One connected loop.</p><Link href="/app/ascend" className="text-link">Follow your direction →</Link></section>
-    <section className="panel"><span className="eyebrow">Products / Collection preview</span><h2>Legacy Reserve.</h2><p>Explore the grooming and personal care collection taking shape within Gent Ascend.</p><Link href="/shop" className="text-link">Explore the collection ↗</Link></section>
-    <section className="panel"><span className="eyebrow">Experiences / Discover</span><h2>The Reserve at Sanctum.</h2><p>Meet the craft, people, and personal care behind the flagship physical experience in Eunice.</p><Link href="/reserve" className="text-link">Discover the Reserve ↗</Link></section>
-    <section className="panel"><span className="eyebrow">Your beginning / Available</span><h2>Member guide.</h2><p>Set your direction, install Gent Ascend, and make your first meaningful action.</p><Link href="/app/welcome" className="text-link">Continue your arrival →</Link></section>
-  </div><div className="domains-grid">{[['Grooming','Intake, routines, and personal grooming direction.'],['Training & recovery','Your practice, recovery, and progress.'],['Health & performance','Careful intelligence and future partner services.'],['Community','People, shared experiences, and a place to contribute.']].map(([title,copy])=><section className="panel" key={title}><span className="eyebrow">Future experience</span><h2>{title}</h2><p>{copy}</p><p className="muted">Not yet available.</p></section>)}</div></>;
+  return (
+    <>
+      <p className="eyebrow">Gent Ascend / The collective</p>
+      <h1>My world.</h1>
+      <p className="lead">Care for the man. Strengthen the life around him.</p>
+      <nav className="world-directory" aria-label="Your worlds">
+        {worlds.map((world) => (
+          <Link key={world.href} href={world.href}>
+            <h2>{world.title}</h2>
+            <p>{world.copy}</p>
+            <span aria-hidden="true">↗</span>
+          </Link>
+        ))}
+      </nav>
+      <details className="world-more">
+        <summary>Explore the Collective</summary>
+        <nav className="world-directory" aria-label="Collective experiences">
+          <Link href="/shop">
+            <h2>Legacy Reserve</h2>
+            <p>The grooming and personal care collection.</p>
+            <span>↗</span>
+          </Link>
+          <Link href="/reserve">
+            <h2>The Reserve at Sanctum</h2>
+            <p>Craft and personal care in Eunice.</p>
+            <span>↗</span>
+          </Link>
+          <Link href="/app/welcome">
+            <h2>Member guide</h2>
+            <p>Set your direction and make your first meaningful action.</p>
+            <span>↗</span>
+          </Link>
+        </nav>
+      </details>
+      <p className="muted">
+        Health partner services and community experiences are still in development.
+      </p>
+    </>
+  );
 }

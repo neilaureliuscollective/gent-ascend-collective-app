@@ -1,3 +1,120 @@
+# Combined production release — October 2, 2026
+
+Integrated Whole-Man World and latest freestyle/Machine Scout training, Performance phases 1–7, Interaction Phase 3, cinematic public journey, Commerce Spine, current main Grooming/Chat/Studio and the older daily completion feature. Resolved overlapping controls without dropping copy/revision, focused editors, error recovery or offline behavior. Production homepage activates the new /experience entrance; GENT_WORLD_ENABLED=false remains an explicit rollback.
+
+Hosted eight missing migrations applied before release; exact SQL MD5 matches source. Existing Chat/Studio/Grooming SQL hashes also match despite different hosted timestamps. The shared Reserve migrations remain separately owned. Closed direct RPC privileges on the trigger-only ai_sync_messages function. Security-invoker Performance wrappers use private, owner-checking transactions. Existing authenticated owner-bound RPC advisor notices are intentional; private receipt/usage tables intentionally deny direct reads. Leaked-password protection remains an existing Auth setting.
+
+Validation in progress: lint/types and 169 unit/SQL tests passed; production build passed after resolving one merged CSS block. Full browser and remote CI are pending. Live model/merchant checkout, signed-in physical Fold/iPhone and subjective entrance pacing require founder acceptance. Other repositories were not part of this Gent Ascend release. Older duplicate branches are retained for history rather than replacing newer implementations.
+
+---
+
+# Cinematic product entrance — 2026-10-02
+
+Founder-approved product journey implemented at `/experience`: illuminated crest → edited Hydros architecture / Vitalis / Hydros film → flowing emerald Aethelios orb → existing world. About 16 seconds; 1,464,565-byte silent 720p H.264 film starts downloading only on Enter/Replay. Skip, remembered completion, Replay, reduced motion/Still/Data Saver bypass, failed media fallback and a bounded watchdog keep entry usable. Existing ambient sound remains; ElevenLabs is explicitly deferred. No new dependency, migration or manufacturing claims.
+
+Research, exact edit, plan and limitations: `docs/CINEMATIC_PRODUCT_ENTRANCE.md`. Reproducible edit: `scripts/build-entrance-film.sh`. Actual phone captures: `docs/evidence/cinematic-entrance/`.
+
+Verification: clean production build including strict TypeScript, ESLint, 158 unit/service/SQL-emulation checks pass. All 15 existing responsive world browser checks pass; six entrance checks pass against the clean output, covering actual H.264 playback, completion, repeat visit, mute, Skip, failed media, reduced motion and Data Saver. The initial incremental build retained an older generated entrance reference; a clean build resolved it. Existing entrance URL assertions now allow the intended longer sequence. Physical Samsung/Safari playback and subjective pacing remain founder review gates. No production promotion.
+
+---
+
+# Entrance refinement — October 2, 2026
+
+Founder-approved entrance correction: exact official crest composited with screen blending to remove its visible black matte, emerald illumination, a gold sweep, one light pulse, readable Gent Ascend Collective lockup and a 4.05-second approach/acceleration. Skip, reduced motion and a finite watchdog remain. Enter starts the existing synthesized ambience unless muted; direct world visits remain silent until the sound control is used. Existing dialog/visibility quiet behavior remains.
+
+Verified production build/strict TypeScript, ESLint and 17 browser cases, including timed reveal, automatic gesture playback, persistent mute, skip and reduced motion. Actual phone capture: [awakening](evidence/entrance-refinement/awakening-mobile.webp).
+
+ElevenLabs soundtrack remains pending: plugin skills appeared, but no callable ElevenLabs generation tools were exposed in the session and plugin search returned no result. No ElevenLabs credits were spent and no generated soundtrack is claimed. The current audio remains the existing browser-synthesized tones. Next: generate and audition one entrance cue plus a seamless ambient bed through the connected ElevenLabs account, then replace those tones with the approved assets.
+
+---
+
+# Whole-Man World Phase 4 — October 2, 2026
+
+Built a dedicated Grooming world at `/experience/grooming`: cinematic green/gold mirror environment, focused ritual practice and clear entrances to existing Ascend Scan, My Look and Professional workflows. Members follow their exact saved morning/evening/weekly steps and explicitly record practice. Guests get a labeled sample with no account writes. Saves reuse an immutable request ID so a lost response can be retried without duplicating that practice. Existing authorization, RLS and ritual history remain authoritative. No new dependency or migration.
+
+Research, architecture, test results and release limits: [Phase 4](WHOLE_MAN_WORLD_PHASE_4.md). Draft PR #33 only; production unchanged. Real hosted account acceptance and physical-device performance remain release gates. Next candidate: bring the most useful Scan result and professional preparation tasks into this same focused interaction model after founder review.
+
+---
+
+# Whole-Man World Phase 3 — October 2, 2026
+
+Built personal continuity into the approved world: one dated saved priority, a focused editor, the next unfinished daily action and a direct return to the existing daily workspace. Members use their existing daily intention; guests keep the session-only reflection. The server retains all unrelated daily fields and rejects stale account/date/version writes. Confirmed saves update the scene; failed or ambiguous writes preserve drafts and require explicit reload before retry. The narrow response excludes wellness/reflection history, and private reads never block world navigation. No new migration or dependency.
+
+Verified production build/strict TypeScript, ESLint, 150 unit/service/route/SQL-emulation tests and recorded migration ledger. Fifteen world regression cases passed, plus six new priority browser scenarios on the final build. Visual review corrected phone dock clearance. Research, implementation and verification: [Phase 3](WHOLE_MAN_WORLD_PHASE_3.md). Production remains unchanged on draft PR #33. Member browser flows use synthetic API fixtures; real hosted two-account acceptance and physical-device checks remain release gates.
+
+---
+
+## 2026-10-02 — Founder orb correction
+
+The Whole-Man World now uses the flowing-energy orb from the founder’s Aethelios reference, adapted to Gent Ascend emerald and gold. Fine orbital node glyphs, moving selected connection trails and a subtle perspective light lattice complete the environment. The official crest remains unchanged. The atlas uses a separate bounded WebGL2 shader with matching SVG fallback, Still/reduced-motion/Data Saver support and visibility/dialog/input pause. Graphics-context loss restores the fallback. No AI, voice or personal-data behavior is changed. Physical-device performance and founder visual acceptance remain release gates; this is a draft branch update, not production.
+
+# Whole Man World Phase 2 — October 2, 2026
+
+Replaced the stacked mobile world entrance with a spatial destination navigator over a new green/obsidian/gold chamber. Aethelios is larger; four labeled world controls change scenery and the selected action. Selection survives refresh/back through the URL. The initial scene is server-rendered; entrance image warmup uses the same optimized variant. Reflection opens in the existing accessible sheet, retains its draft on close/reopen, and preserves the Aethelios direction link. All modal dialogs pause ambience; Still, reduced motion, Data Saver, image/graphics failure and forced-color operation remain usable.
+
+Verified production build/strict types, lint, 143 unit/SQL-emulation tests, recorded ledger and 14 production-browser scenarios. Visual review corrected phone dock spacing; tested 320px with enlarged text through 1440px. Real UI screenshots: [phone](evidence/world-phase2/world-mobile.webp), [Fold-like](evidence/world-phase2/world-fold.webp), [desktop](evidence/world-phase2/world-desktop.webp). [Research, comparison, architecture and limitations](WHOLE_MAN_WORLD_PHASE_2.md).
+
+This extends Draft PR #33's exact saved tree in an isolated worktree. No new dependency, migration, AI call or hosted deployment. Existing private services and the separate unfinished Grooming checkout are preserved. Hosted inherited migrations, real account/model checks and physical iPhone/Fold/PWA performance remain release gates. Production is unchanged.
+
+---
+
+# Whole-Man World review slice — October 2, 2026
+
+Implemented on `feat/whole-man-world`, based on preserved integration commit `114d98c`. See [architecture, routes, preservation and release limits](WHOLE_MAN_WORLD.md). Review at `/experience`; the existing homepage remains the default. No production deployment or hosted migration was performed.
+
+The slice connects the cinematic threshold, whole-man observatory, session-only guest direction, contextual Aethelios and its existing conversation workspace, Performance environment, and real workout UI. Members reuse existing domain services; guests get a labeled in-memory recording sample without identity or API writes. Still/reduced motion, keyboard dialogs, route focus, finite entrance/watchdog, optional audio, graphics/image fallback, and private-page no-store are included. No new dependencies or migrations.
+
+Validation: strict TypeScript through production build, ESLint, 143 unit/SQL-emulation tests and recorded migration-ledger check pass. Twelve targeted browser cases initially passed (five world + seven existing Performance). After the final visual handoff correction, all six world cases passed, including the added audio/privacy case: 13 distinct passing browser scenarios across the runs. New flows were exercised at 360/768/1440 widths; existing Performance also at 344. Existing tests cover idempotent sync, stale-edit reconciliation and offline recording with fixtures. No live-model or real hosted-auth claim is made. A transient zero-byte generated pages manifest required a clean build; the clean production build and browser run passed.
+
+Screenshots: [threshold](evidence/world-slice/threshold-mobile.png), [mobile World](evidence/world-slice/world-mobile.png), [Performance](evidence/world-slice/performance-mobile.png), [desktop World](evidence/world-slice/world-desktop.png). Visual inspection corrected mobile dock spacing and sequential transition legibility.
+
+Open release gates: physical Samsung/iPhone/Fold and installed PWA, live two-account isolation and authenticated model/session flow, hosted inherited migration reconciliation, measured device performance and founder visual acceptance. The original uncommitted Grooming work remains untouched in its original checkout and is not silently included in this branch. Main remained `1db7da7` at final remote inspection.
+
+---
+
+# Interaction System Phase 3 — 2026-09-29
+
+Reconstructed the shared task foundation and migrated Performance editors, My World and Progress. Reconciled remote Performance Phase 6 with released Grooming main. Important recovery limit: local-only Interaction Phases 1–2 were removed by workspace maintenance and are absent remotely; the Phase 2 Grooming redesign is not restored by this branch. Exact scope, research and release gates: [Phase 3](INTERACTION_SYSTEM_PHASE_3.md). Production remains unchanged.
+
+---
+
+# Ascend Performance Phase 3 — September 28, 2026
+
+Built evidence-led session progression: explicit hold reasons, source workout records, user-approved single-exercise rep changes, atomic stale-evidence checks and immutable change history. Existing offline workouts remain compatible. Latest main Aethelios/Studio updates are incorporated. See [scope, research and release gates](ASCEND_PERFORMANCE_PHASE_3.md). Local lint/types, 119 unit/SQL tests, production build and migration ledger pass; CI/browser/real-Auth results are recorded on the review PR. No hosted migration or production promotion.
+
+---
+
+# Ascend Performance Phase 2 — September 28, 2026
+
+Built on the Phase 1 review branch: versioned multi-session programs, a repeating next-session sequence, explicit time/volume decisions, immutable planned-versus-accepted snapshots, and compatible offline recording. See [Phase 2 scope and evidence](ASCEND_PERFORMANCE_PHASE_2.md). No main merge, hosted migration or production promotion. CI results and remaining physical-device/live-AI acceptance are recorded on the review PR.
+
+---
+
+# Ascend Performance Phase 1 — September 28, 2026 UTC
+
+Implemented on an isolated review branch: personal direction, editable strength plan, device-persisted workout sets with idempotent sync, self-reported recovery/body/nutrition check-ins, weekly review, explicit progression approval, and opt-in Aethelios interpretation. Access through My world → Ascend Performance. See [scope, architecture and release gates](ASCEND_PERFORMANCE_PHASE_1.md).
+
+Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. All seven Performance browser scenarios and real Supabase Auth/PostgREST integration pass in CI. Full regression results are recorded on draft PR #26; live OpenAI and physical-device verification remain pending. No hosted migration or production deployment.
+
+
+# Founding memberships Phase 2 — 2026-10-02
+
+Implemented locally on `feat/founding-membership-billing`, continuing the Phase 1 foundation. `/join` provides gated public Auth registration and membership sign-in; verified email callbacks return to `/app/membership`. The account screen exposes current paid status, cancellation/end date, support contact, recurring terms consent, hosted checkout, the billing portal and owner-triggered refresh. New customers can choose the canonical $19.99 / $49.99 / $74.99 monthly USD prices. Paid sign-in/welcome no longer requires claiming a pilot invitation.
+
+Provider control uses pinned Stripe 23.0.0 / `2026-09-30.endive`, server-selected immutable price validation, same-product portal checks, persisted/idempotent checkout attempts, per-person leases, raw-body webhook verification, transactional event receipts and current-provider reconciliation. Paid invoices must match the actual price before expanding access. Delayed dispute facts are refreshed under the lease. Refund/dispute holds prevent additional subscription charges; a separate restricted portal keeps cancellation/card management available when full plan management or new sales cannot be verified. Independent beta/founder access is preserved. Studio creation is gated to Signature/Reserve and existing eligible invitation/founder/legacy access; no larger quotas or clinical privileges were invented.
+
+The additive `20261002105745_founding_membership_billing.sql` migration is **not applied to hosted Supabase**. It extends the tier constraint and adds owner-readable billing summaries plus service-only controls/event/enrollment receipts. Explicit grants, RLS and a narrow security-invoker RPC keep normal private reads session-bound. Test billing rejects the pinned production project. Existing migration hashes are unchanged.
+
+Final observed gates: ESLint, strict typecheck, **130 automated unit/provider/SQL tests**, production build, migration ledger and diff checks passed. **23 browser scenarios** passed with Chromium Headless Shell: membership/registration entrance at 344/768/1440, consent, retry/error persistence, unsafe redirect rejection, closed-enrollment management, founding pages, existing editors, pilot boundaries and public/offline behavior. Phone screenshots of membership, join and controls were inspected. Browser component fixtures are synthetic; provider tests mock network responses but exercise actual Stripe signatures; PGlite is a SQL adapter, not a hosted Auth test.
+
+One production rebuild encountered a Turbopack persistence-cache panic. Moving the generated cache aside allowed a clean successful rebuild; the final complete check passed. Supabase `db advisors --local` could not connect to `127.0.0.1:54322` because a real local Supabase database is not running. Real Supabase advisors/Auth/PostgREST checks, physical Fold acceptance, live Stripe sandbox lifecycle, CAPTCHA and SMTP/email-delivery tests remain unrun. No real payments, provider settings, production data or deployment changed.
+
+Enrollment and public registration remain disabled by default. Before opening sales: reconcile/apply the migration, configure both Stripe portals and the three prices, verify Auth/email/CAPTCHA, establish support and tax setup, and approve concrete current benefits plus founding/bundle/refund terms. Reserve still has the same implemented digital capacity as Signature; larger allowances/human services remain planned. Shopify member discounts are Phase 3; paid preorders/supplier holds are Phase 4; fulfillment/bundles/operations are Phase 5. Research, phase plan, current behavior and the full activation/recovery runbook: [FOUNDING_LAUNCH_PHASE_2.md](FOUNDING_LAUNCH_PHASE_2.md).
+
+Source publication remains blocked by the earlier automatic approval review: build authorization did not explicitly authorize publishing private source/documentation to the GitHub destination. This turn made no alternate publication attempt, PR, main push or production promotion.
+
+---
+
 # Aethelios Studio project workspace — 2026-09-28
 
 Studio now presents a dedicated creation room, project direction editor and project library at `/app/studio`. A project can save its purpose, audience, visual direction, palette and exclusions. These fields guide new image requests on the server. Projects retain private references and saved versions; a member can refine an image, retry a failed request, or use a reference. Five creation entries help shape a first request without changing provider models or silently generating media. Image generation remains one image per request with the existing quota and owner-bound storage.
@@ -13,6 +130,7 @@ The account chat now occupies its own full-height room on phone, unfolded and de
 Lint, strict typecheck, 91 unit tests, migration ledger and production build pass. The focused browser tests were updated for the shared orb and larger composer, but were not executed: the Chromium download returned an invalid archive in this runner. A real signed-in phone/Fold keyboard, scroll, animation and WebGL review is still required before a production claim.
 
 ---
+
 
 # Threshold and LifeOS visual correction — 2026-09-27
 
@@ -99,6 +217,10 @@ Verification:
 - Restricted runner used Playwright Headless Shell with an opt-in isolated context fixture; normal CI browser behavior is unchanged. The agent-browser daemon could not start in this runner.
 
 Release remains open: real hosted invite/login and two-account isolation, live Aethelios reply, existing founder bridge at migrated paths, physical iPhone/Android/Samsung Fold install/reopen/keyboard checks, approved film/product content and Reserve destination. Browser AI tests use intercepted fixtures. No production promotion or hosted database changes were performed. Shopify Cart/checkout is the next commercial milestone, not claimed as implemented here.
+
+# Ascend Loop 1.1 — first real day, 2026-09-25
+
+The reviewable branch adds a guided first-day route on Command, a fresh owner-scoped daily snapshot for Aethelios, explicit completion of one existing action, and editable titles before approving an AI-proposed action. The prior confirmed evening review remains the next-day source. This is not a general tool agent. See [the release plan](ASCEND_LOOP_1_1.md). The new migration must precede the application release. Local unit/SQL/build checks and CI real local Auth integration pass. The CI application browser rerun, live model behavior and physical Fold acceptance remain open. Nothing in this phase has been pushed to production or applied to hosted Supabase.
 
 ---
 
@@ -338,6 +460,7 @@ The existing public shop now reads live Shopify products when a Headless storefr
 Local acceptance: `npm run check` passed lint, strict typecheck, 87 unit/SQL tests (including three commerce contract tests), and a production build; `npm run db:ledger` and `git diff --check` passed. Production HTTP smoke returned 200 for `/`, `/shop`, `/shop/vitalis`, `/shop/cart` and `/app`, 503 for the unconfigured commerce API, and a redirect to `/shop` for unconfigured checkout. Public browser suite could not launch five browser scenarios because Chromium is absent; the download returned an invalid archive. One route-only browser request test passed. No live Shopify cart, checkout, physical Fold review, or full regression browser suite is claimed.
 
 ---
+
 # Aethelios Chat Foundation — 2026-09-27 (implementation branch)
 
 Founder-approved conversation foundation extends existing owner-scoped chat with per-message projections, revisions, archive/rename, indexed title/content search, pagination, generated titles, long-thread summaries and relevant-memory selection. Existing conversation/turn IDs and approved daily-action links remain. This branch also incorporates the current public Aethelios living-field work and commerce preview. Details, research, migration and open gates: [AETHELIOS_CHAT_FOUNDATION.md](AETHELIOS_CHAT_FOUNDATION.md). Local lint, typecheck, 88 tests, build and ledger check passed. Browser binary download is blocked; live Auth/model, hosted migration, and physical-device tests remain open. No production deployment.
@@ -358,7 +481,6 @@ The founder approved production release. Chat Foundation and Studio V1 were merg
 
 The Studio placement refinement makes Chat and Studio sibling spaces within Aethelios: sidebar switch on desktop, contextual switch on phone/Fold, and an entry from Command. See [placement decision and sources](AETHELIOS_STUDIO_PLACEMENT.md). It changes navigation only. Real owner-account image generation, cross-device persistence, two-account isolation, and physical device layout still require founder testing; a ready build is not proof of those flows.
 
-
 # Grooming Concierge recovery — 2026-09-28
 
 Reconstructed Grooming Foundation, Ascend Scan, My Look and Professional Concierge from the founder-approved scope after an ephemeral checkout was pruned before publication. This is a new release candidate, not a byte-for-byte recovery of the lost commits. See [scope and release gates](GROOMING_CONCIERGE_RECOVERY.md). Do not claim a live release until hosted migration, real account checks, main push and production verification complete.
@@ -366,7 +488,37 @@ Reconstructed Grooming Foundation, Ascend Scan, My Look and Professional Concier
 # Aethelios Studio storyboard — 2026-09-28
 
 The next phase adds a private storyboard to each Studio project. Members can plan a campaign as up to eight scenes, attach completed images from that project or create a new frame from a scene, and print the board. Motion notes are editorial planning, with no video model or provider charge. The additive scene migration follows the project brief migration in PR #25; neither is applied to hosted Supabase yet. Local database owner isolation, project asset binding, scene quota and deletion were tested. Browser/device and live image generation remain release checks.
+
 # Aethelios Studio Finish room — 2026-09-28
 
 Studio now offers a Finish view for completed private images, directly from the Library or storyboard. Members can choose a square, portrait or landscape canvas, control the image focus, compose original brand copy in three treatments, save an editable private composition and export its current appearance as PNG. The source image is unchanged. No AI copy or video provider is connected. The new additive finishes migration follows the two unpromoted Studio migrations in PR #25. Local database owner and project isolation passed; phone/Fold browser rendering, hosted Auth/Storage and real export still require a device pass before release.
 The hosted-release privilege audit found broad Supabase default ACLs on the new Studio tables; a fourth migration revokes these and restores only the intended member privileges. Verify hosted ACLs after applying `20260928151124_studio_table_privileges.sql` before merging PR #25.
+
+## 2026-09-28 — Ascend Performance Phase 4
+
+Decision follow-through implemented on Phase 3: approved change → first two actual attempts → reps/load/effort, with adaptation, missing evidence and revision boundaries explicit. Existing Review contains the latest result plus retained decision history. Owner-RLS invoker RPC uses full history rather than the workspace's 60-session window. Optional Aethelios interpretation stays consented and read-only. Scope, research, limits and release ordering: [ASCEND_PERFORMANCE_PHASE_4.md](ASCEND_PERFORMANCE_PHASE_4.md). Local lint/types, 129 unit/SQL tests and migration ledger pass; CI/build/browser/Auth evidence recorded on the Phase 4 PR. No hosted migration or production promotion.
+
+## 2026-09-28 — Ascend Performance Phase 5
+
+Fuel & Body adds optional reference targets, focused daily intake/weight capture that preserves recovery fields, complete/partial intake distinctions, per-metric seven-day averages and normalized twenty-eight-day weight history. Targets have owner RLS, immutable revisions, exact retry receipts and stale-version protection. Aethelios interpretation remains opt-in and read-only. [Scope, research and validation](ASCEND_PERFORMANCE_PHASE_5.md); [remaining V1 sequence](ASCEND_PERFORMANCE_ROADMAP.md). Four core phases remain: Recovery; Movement; Physical Twin V1/integrated intelligence; integration/release. Migration and real-account rollout are not production-complete merely because local or CI checks pass. No hosted migration or production promotion.
+
+## 2026-09-28 — Ascend Performance Phase 6
+
+Restore now has focused recovery capture, a seven-day history with per-metric denominators, daily chosen practices and next-day review. Check-in edits preserve nutrition/body fields. Routine plans freeze after their local date; follow-through corrections retain revisions, with owner RLS, exact retry and stale-edit checks. No autonomous training changes or invented readiness. Local lint/types, 142 unit/SQL tests, build and ledger passed; final browser/Auth/CI evidence is recorded on the Phase 6 PR. [Scope and research](ASCEND_PERFORMANCE_PHASE_6.md). No hosted migration or production promotion. Three core V1 phases remain: Movement; Physical Twin/integrated intelligence; integration/release.
+
+## 2026-09-29 — Ascend Performance Phase 7
+
+Movement adds completed cardio/mobility records, separate seven-day summaries and original-unit history. The starter exercise library supports previewed replacements and manual progression settings while retaining completed prescriptions. Owner-only RPCs preserve immutable revisions, exact retries, stale protection and bounded date windows. Local lint/types, 150 unit/SQL tests and production build pass; final browser/Auth/CI evidence is recorded on the Phase 7 PR. [Scope and research](ASCEND_PERFORMANCE_PHASE_7.md). No hosted migration or production promotion. Two core V1 phases remain: Physical Twin/integrated intelligence; integration/release.
+
+
+# Founding launch commerce phase 1 — 2026-10-02
+
+Implemented on `feat/founding-launch-foundation`: canonical $19.99 / $49.99 / $74.99 USD monthly founding offer definitions, a responsive `/membership` comparison, and `/launch` gallery combining Shopify products with labeled Vitalis, hair-care, body-care and Hydros concept studies. Native expandable sections distinguish the invitation-access app foundation from planned tier benefits and one-time bundles. Shop and footer expose the launch entry.
+
+Shopify product queries now read launch-state/window metafields and protective tags. Fresh server variant checks reject direct adds of preview/preorder/invalid-state merchandise; cart updates and checkout reject held lines while removal remains available. The client purchase/cart views explain the held state. Ordinary merchandise without launch metadata retains its existing buy-now path. No membership permissions, database migration, paid checkout, Shopify discount or supplier order was activated.
+
+Research, five build phases, merchant metadata setup and pending commercial decisions: [FOUNDING_LAUNCH_PHASE_1.md](FOUNDING_LAUNCH_PHASE_1.md). Local ESLint, strict typecheck, 99 unit/SQL/contract tests, production build, migration ledger and diff checks passed. Ten founding/public browser scenarios passed at 344/768/1440 using existing Chromium Headless Shell, including keyboard disclosure controls, concept images, reduced motion, no overflow, public account routes and offline boundaries. A focused final gallery rerun covers the added Hydros study.
+
+Live Shopify token/metafield reads, member billing, real customer discount eligibility, selling-plan preorders, bank payout/supplier holds and physical-device acceptance remain unverified. Phase 2 is paid membership lifecycle; phases 3–5 add member offers, paid preorders and fulfillment. This phase is a source review candidate, not a deployed paid launch.
+
+Publication status: local implementation commit `df9bdea`. Automatic approval review rejected the attempted push to the canonical GitHub remote, stating that the build authorization did not explicitly authorize publishing source/documentation to that destination. No alternate publication path was used and no draft PR or deployment was created. Await explicit authorization to publish `feat/founding-launch-foundation` to `neilaureliuscollective/gent-ascend-collective-app`.

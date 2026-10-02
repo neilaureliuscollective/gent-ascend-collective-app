@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cartId, clearCartId } from '@/domains/commerce/cart-session';
-import { commerceConfigured, getCart } from '@/domains/commerce/shopify';
+import { cartLaunchPurchasable, commerceConfigured, getCart } from '@/domains/commerce/shopify';
 
 export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
     }
     if (!cart.totalQuantity || !cart.lines.nodes.length)
       return NextResponse.redirect(new URL('/shop/cart', request.url));
+    if (!cartLaunchPurchasable(cart))
+      return NextResponse.redirect(new URL('/shop/cart?launch=held', request.url));
     const url = new URL(cart.checkoutUrl);
     const store = process.env.SHOPIFY_STORE_DOMAIN!;
     const permitted = [store, 'checkout.shopify.com', process.env.SHOPIFY_CHECKOUT_HOST].filter(

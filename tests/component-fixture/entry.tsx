@@ -1,3 +1,14 @@
+import { PerformanceWorkspace } from '@/components/performance/workspace';
+import {
+  performanceFixture,
+  programFixture,
+  learningFixture,
+  outcomesFixture,
+  fuelFixture,
+  recoveryFixture,
+  movementFixture,
+} from './performance';
+import '@/app/(workspace)/app/performance/performance.css';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
 import { sampleData } from '@/domains/daily/model';
 import { createRoot } from 'react-dom/client';
@@ -8,6 +19,11 @@ import { goalMutationSchema } from '@/domains/goals/validation';
 import { validationErrors, type FormAction } from '@/domains/shared/form-state';
 import type { GoalRow } from '@/platform/supabase/database';
 import '@/app/globals.css';
+import '@/app/interaction.css';
+import { GroomingDirectionEditor } from '@/components/grooming/direction';
+import '@/app/(workspace)/app/grooming/grooming.css';
+import { MembershipControls } from '@/components/membership-controls';
+import '@/app/(workspace)/app/membership/membership.css';
 const params = new URLSearchParams(location.search);
 const mode = params.get('mode') ?? 'profile';
 const goal: GoalRow = {
@@ -59,7 +75,58 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'daily' ? (
+  mode === 'grooming-direction' ? (
+    <main className="grooming" style={{ padding: 24 }}>
+      <p>Synthetic direction fixture; no account writes.</p>
+      <GroomingDirectionEditor profile={null} saveAction={async () => {
+        const response = await fetch('/fixture-direction-save', { method: 'POST' });
+        return response.json();
+      }} />
+    </main>
+  ) : mode === 'membership' ? (
+    <main
+      className="membership-grid"
+      style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}
+    >
+      <section className="panel">
+        <p className="eyebrow">Synthetic membership fixture · no database or payments</p>
+        <h1>Your membership</h1>
+        <MembershipControls
+          enrollment={params.get('enrollment') !== 'closed'}
+          hasCustomer={params.get('customer') === 'yes'}
+          hasSubscription={false}
+          termsVersion="fixture-v1"
+          terms="Synthetic launch terms. These controls only exercise browser behavior and do not accept payment."
+        />
+      </section>
+    </main>
+  ) :   mode === 'performance' ||
+    mode === 'performance-program' ||
+    mode === 'performance-learning' ||
+    mode === 'performance-outcomes' ||
+    mode === 'performance-fuel' ||
+    mode === 'performance-recovery' ||
+    mode === 'performance-movement' ? (
+    <main style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+      <PerformanceWorkspace
+        initial={
+          mode === 'performance-movement'
+            ? movementFixture
+            : mode === 'performance-recovery'
+              ? recoveryFixture
+              : mode === 'performance-fuel'
+                ? fuelFixture
+                : mode === 'performance-outcomes'
+                  ? outcomesFixture
+                  : mode === 'performance-learning'
+                    ? learningFixture
+                    : mode === 'performance-program'
+                      ? programFixture
+                      : performanceFixture
+        }
+      />
+    </main>
+  ) : mode === 'daily' ? (
     <DailyDashboard
       initial={{ ...sampleData('2026-09-21'), mode: 'personal', name: 'Synthetic tester' }}
     />
