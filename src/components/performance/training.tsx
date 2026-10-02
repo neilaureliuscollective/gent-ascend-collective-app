@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Session, Plan } from '@/domains/performance/schema';
+
 function SetEntry({
   set,
   index,
@@ -52,7 +53,7 @@ function SetEntry({
           />
         </label>
         <label>
-          Effort / 10
+          Effort
           <input
             aria-label={`Set ${index + 1} effort`}
             inputMode="numeric"
@@ -70,15 +71,17 @@ function SetEntry({
         </label>
       </div>
       <button
+        className={set.done ? 'perf-set-recorded' : 'perf-set-record'}
         disabled={disabled}
         aria-label={`${set.done ? 'Undo' : 'Record'} set ${index + 1}`}
         onClick={() => void save({ ...value, done: !set.done })}
       >
-        {set.done ? '✓ Recorded' : 'Record'}
+        {set.done ? '✓ Recorded' : 'Record set'}
       </button>
     </div>
   );
 }
+
 export function Training({
   session,
   plan,
@@ -93,31 +96,70 @@ export function Training({
   const [note, setNote] = useState(session.note);
   const [restUntil, setRestUntil] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(0);
+  const exerciseIds = useMemo(
+    () => Array.from(new Set(session.sets.map((s) => s.exerciseId))),
+    [session.sets],
+  );
+  const firstIncomplete =
+    exerciseIds.find((id) => session.sets.some((set) => set.exerciseId === id && !set.done)) ??
+    exerciseIds[0]!;
+  const [activeExercise, setActiveExercise] = useState(firstIncomplete);
+
+  useEffect(() => {
+    if (!exerciseIds.includes(activeExercise)) setActiveExercise(firstIncomplete);
+  }, [activeExercise, exerciseIds, firstIncomplete]);
+
   useEffect(() => {
     if (!restUntil) return;
-    const tick = () => setRemaining(Math.max(0, Math.ceil((restUntil - Date.now()) / 1000)));
+    const tick = () => {
+      const next = Math.max(0, Math.ceil((restUntil - Date.now()) / 1000));
+      setRemaining(next);
+      if (next === 0) setRestUntil(null);
+    };
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [restUntil]);
+
   const complete = session.sets.filter((s) => s.done).length;
-  const groups = Array.from(new Set(session.sets.map((s) => s.exerciseId)));
+  const percent = Math.round((complete / session.sets.length) * 100);
+  const activeIndex = Math.max(0, exerciseIds.indexOf(activeExercise));
+  const activeSets = session.sets.filter((set) => set.exerciseId === activeExercise);
+  const activeName = activeSets[0]?.exercise ?? session.title;
+  const activeTarget = activeSets[0]?.targetReps ?? 0;
+  const exerciseComplete = activeSets.filter((set) => set.done).length;
+  const sessionActive = session.status === 'active';
+
+  function moveExercise(direction: -1 | 1) {
+    const next = Math.min(exerciseIds.length - 1, Math.max(0, activeIndex + direction));
+    setActiveExercise(exerciseIds[next]!);
+    document.getElementById('active-exercise')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   return (
-    <section className="perf-training">
-      <header className="perf-training-heading">
-        <div>
-          <p className="eyebrow">TRAINING / {session.unit.toUpperCase()}</p>
-          <h2>{session.title}</h2>
-          <p>
-            {complete} of {session.sets.length} sets recorded
-          </p>
+    <section className="perf-training perf-training-mode">
+      <div className="perf-training-hud">
+        <div className="perf-training-status">
+          <span className="eyebrow">LIVE SESSION</span>
+          <strong>{percent}%</strong>
+          <span>{complete}/{session.sets.length} sets</span>
         </div>
-        <div className="perf-rest" aria-live="off">
-          <span>REST TIMER</span>
+        <div
+          className="perf-training-progress"
+          role="progressbar"
+          aria-label="Workout progress"
+          aria-valuemin={0}
+          aria-valuemax={session.sets.length}
+          aria-valuenow={complete}
+        >
+          <i style={{ width: `${percent}%` }} />
+        </div>
+        <div className="perf-rest" aria-live="polite">
+          <span>REST</span>
           <strong>
             {remaining
               ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`
-              : 'Ready'}
+              : 'READY'}
           </strong>
           {remaining > 0 && (
             <button
@@ -126,77 +168,140 @@ export function Training({
                 setRemaining(0);
               }}
             >
-              Clear timer
+              Skip
             </button>
           )}
         </div>
+      </div>
+
+      <header className="perf-training-heading">
+        <div>
+          <p className="eyebrow">TRAINING / {session.unit.toUpperCase()}</p>
+          <h2>{session.title}</h2>
+          <p>One movement at a time. Your full session stays saved on this device.</p>
+        </div>
       </header>
-      <p className="perf-caption">
-        Adjust reps and load to what you actually did, then record the set. Effort is optional: 10
-        means maximum effort.
-      </p>
-      {groups.map((id) => (
-        <section className="perf-lift" key={id}>
-          <div className="perf-lift-heading">
-            <h3>{session.sets.find((s) => s.exerciseId === id)!.exercise}</h3>
-            <span>Target · {session.sets.find((s) => s.exerciseId === id)!.targetReps} reps</span>
+
+      <nav className="perf-exercise-rail" aria-label="Workout exercises">
+        {exerciseIds.map((id, index) => {
+          const sets = session.sets.filter((set) => set.exerciseId === id);
+          const done = sets.filter((set) => set.done).length;
+          const name = sets[0]?.exercise ?? `Exercise ${index + 1}`;
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-current={id === activeExercise ? 'step' : undefined}
+              data-complete={done === sets.length}
+              onClick={() => setActiveExercise(id)}
+            >
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <strong>{name}</strong>
+              <small>{done}/{sets.length}</small>
+            </button>
+          );
+        })}
+      </nav>
+
+      <section className="perf-lift perf-lift-focus" id="active-exercise">
+        <div className="perf-lift-heading">
+          <div>
+            <span className="eyebrow">
+              MOVEMENT {activeIndex + 1} / {exerciseIds.length}
+            </span>
+            <h3>{activeName}</h3>
           </div>
-          {session.sets.map((set, index) =>
-            set.exerciseId === id ? (
-              <SetEntry
-                key={`${set.id}-${set.done}`}
-                set={set}
-                index={index}
-                unit={session.unit}
-                disabled={busy || session.status !== 'active'}
-                save={async (next) => {
-                  const saved = await save({
-                    ...session,
-                    sets: session.sets.map((s) => (s.id === set.id ? next : s)),
-                  });
-                  if (saved && next.done) {
-                    const seconds = plan?.exercises.find((e) => e.id === id)?.restSeconds ?? 90;
-                    setRemaining(seconds);
-                    setRestUntil(Date.now() + seconds * 1000);
-                  }
-                }}
-              />
-            ) : null,
-          )}
-        </section>
-      ))}
-      {session.status === 'active' ? (
-        <div className="perf-session-close">
-          <label className="perf-check">
-            <input
-              type="checkbox"
-              disabled={busy}
-              checked={session.pain}
-              onChange={(e) => void save({ ...session, pain: e.target.checked })}
-            />
-            I noticed pain or discomfort
-          </label>
-          <label>
-            Session note
-            <textarea
-              key={session.id}
-              value={note}
-              maxLength={500}
-              rows={2}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Optional. What should you remember next time?"
-            />
-          </label>
-          <button
-            disabled={busy || note === session.note}
-            onClick={() => void save({ ...session, note })}
-          >
-            Save note
+          <div className="perf-lift-target">
+            <strong>{activeTarget}</strong>
+            <span>target reps</span>
+          </div>
+        </div>
+        <div className="perf-lift-meta">
+          <span>{exerciseComplete}/{activeSets.length} sets complete</span>
+          <span>
+            {plan?.exercises.find((exercise) => exercise.id === activeExercise)?.restSeconds ?? 90}s rest
+          </span>
+        </div>
+
+        {activeSets.map((set, index) => (
+          <SetEntry
+            key={`${set.id}-${set.done}`}
+            set={set}
+            index={index}
+            unit={session.unit}
+            disabled={busy || !sessionActive}
+            save={async (next) => {
+              const nextSession = {
+                ...session,
+                sets: session.sets.map((current) => (current.id === set.id ? next : current)),
+              };
+              const saved = await save(nextSession);
+              if (!saved || !next.done) return;
+
+              const seconds =
+                plan?.exercises.find((exercise) => exercise.id === activeExercise)?.restSeconds ?? 90;
+              setRemaining(seconds);
+              setRestUntil(Date.now() + seconds * 1000);
+
+              const movementFinished = nextSession.sets
+                .filter((current) => current.exerciseId === activeExercise)
+                .every((current) => current.done);
+              if (movementFinished && activeIndex < exerciseIds.length - 1) {
+                setActiveExercise(exerciseIds[activeIndex + 1]!);
+              }
+            }}
+          />
+        ))}
+
+        <div className="perf-exercise-controls">
+          <button type="button" disabled={activeIndex === 0} onClick={() => moveExercise(-1)}>
+            ← Previous
           </button>
-          <p className="perf-caption">
-            {session.sets.length - complete} unrecorded sets will remain unrecorded when you finish.
-          </p>
-          <div className="perf-inline">
+          <button
+            type="button"
+            disabled={activeIndex === exerciseIds.length - 1}
+            onClick={() => moveExercise(1)}
+          >
+            Next movement →
+          </button>
+        </div>
+      </section>
+
+      {sessionActive ? (
+        <div className="perf-session-close">
+          <details className="perf-session-details">
+            <summary>Session notes & discomfort</summary>
+            <label className="perf-check">
+              <input
+                type="checkbox"
+                disabled={busy}
+                checked={session.pain}
+                onChange={(e) => void save({ ...session, pain: e.target.checked })}
+              />
+              I noticed pain or discomfort
+            </label>
+            <label>
+              Session note
+              <textarea
+                key={session.id}
+                value={note}
+                maxLength={500}
+                rows={2}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Optional. What should you remember next time?"
+              />
+            </label>
+            <button disabled={busy || note === session.note} onClick={() => void save({ ...session, note })}>
+              Save note
+            </button>
+          </details>
+
+          <div className="perf-session-finish">
+            <div>
+              <span className="eyebrow">SESSION PROGRESS</span>
+              <strong>{complete}/{session.sets.length} sets recorded</strong>
+              <small>{session.sets.length - complete} sets still open</small>
+            </div>
             <button
               className="perf-primary"
               disabled={busy || complete === 0}
@@ -212,6 +317,7 @@ export function Training({
               Finish workout
             </button>
             <button
+              className="perf-end-quiet"
               disabled={busy}
               onClick={() => {
                 if (
@@ -232,9 +338,10 @@ export function Training({
           </div>
         </div>
       ) : (
-        <div className="perf-session-close">
-          <h3>{session.status === 'complete' ? 'Session complete.' : 'Session ended.'}</h3>
-          <p>Your recorded effort is now part of the picture. Sync to include it in your review.</p>
+        <div className="perf-session-close perf-session-complete">
+          <span className="eyebrow">SESSION CLOSED</span>
+          <h3>{session.status === 'complete' ? 'Workout complete.' : 'Session ended.'}</h3>
+          <p>Your recorded work is part of your Performance history and can inform the next review.</p>
         </div>
       )}
     </section>
