@@ -197,6 +197,7 @@ test('Movement persists activity and removal through the real authenticated app'
   await row.getByRole('button').click();
   await page.getByRole('button', { name: 'Remove activity', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm removal', exact: true }).click();
+  await expect(row).not.toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Movement', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Activity history' })).not.toContainText(
