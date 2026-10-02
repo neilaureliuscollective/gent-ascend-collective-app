@@ -88,11 +88,13 @@ export function Training({
   plan,
   busy,
   save,
+  history = [],
 }: {
   session: Session;
   plan: Plan | null;
   busy: boolean;
   save: (value: Session) => Promise<boolean>;
+  history?: Session[];
 }) {
   const [note, setNote] = useState(session.note);
   const [restUntil, setRestUntil] = useState<number | null>(null);
@@ -133,6 +135,27 @@ export function Training({
   const activeTarget = activeSets[0]?.targetReps ?? 0;
   const exerciseComplete = activeSets.filter((set) => set.done).length;
   const sessionActive = session.status === 'active';
+  const normalizedActiveName = activeName.trim().toLowerCase();
+  const previousSet = history
+    .filter((past) => past.id !== session.id)
+    .flatMap((past) => past.sets)
+    .filter((set) => set.done && set.exercise.trim().toLowerCase() === normalizedActiveName)
+    .sort((a, b) => (b.load ?? 0) - (a.load ?? 0))[0] ?? null;
+  const lastCompleted = [...activeSets].reverse().find((set) => set.done) ?? null;
+  const nextOpen = activeSets.find((set) => !set.done) ?? null;
+  const liveCue = session.pain
+    ? 'Discomfort is logged. Do not chase progression here; choose the next set deliberately.'
+    : !lastCompleted
+      ? previousSet
+        ? `Your history is here. Start where today feels appropriate, then let the next set respond to the record.`
+        : 'First signal: record the set honestly. Effort is what turns logging into learning.'
+      : lastCompleted.effort == null
+        ? 'Log effort on the next set if you can. That signal makes adaptation more useful.'
+        : lastCompleted.effort >= 9
+          ? 'That set was near your reported limit. Holding the target is the conservative move.'
+          : lastCompleted.effort <= 6 && lastCompleted.reps != null && lastCompleted.reps >= lastCompleted.targetReps
+            ? 'You reported room left. If the rep quality felt solid, one more rep on the next set is a reasonable experiment.'
+            : 'You are in the working zone. Hold the target and build another clean data point.';
 
   async function addMovement(name: string, sets = 3, reps = 10) {
     const clean = name.trim().slice(0, 70);
@@ -312,6 +335,42 @@ export function Training({
             {plan?.exercises.find((exercise) => exercise.id === activeExercise)?.restSeconds ?? 90}s rest
           </span>
         </div>
+
+        <aside className="perf-live-intelligence">
+          <div>
+            <span className="eyebrow">AETHELIOS / LIVE SIGNAL</span>
+            <p>{liveCue}</p>
+          </div>
+          {previousSet && (
+            <div className="perf-last-time">
+              <span>LAST RECORDED</span>
+              <strong>{previousSet.reps ?? '—'} reps · {previousSet.load ?? '—'} {session.unit}</strong>
+              <small>{previousSet.effort ? `effort ${previousSet.effort}/10` : 'effort not recorded'}</small>
+            </div>
+          )}
+          {lastCompleted?.effort != null &&
+            lastCompleted.effort <= 6 &&
+            lastCompleted.reps != null &&
+            lastCompleted.reps >= lastCompleted.targetReps &&
+            nextOpen && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  void save({
+                    ...session,
+                    sets: session.sets.map((set) =>
+                      set.id === nextOpen.id
+                        ? { ...set, targetReps: Math.min(30, set.targetReps + 1) }
+                        : set,
+                    ),
+                  })
+                }
+              >
+                Try +1 rep next set
+              </button>
+            )}
+        </aside>
 
         {activeSets.map((set, index) => (
           <SetEntry
