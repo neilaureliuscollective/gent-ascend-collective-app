@@ -79,6 +79,7 @@ export function MachineScout({
           className="perf-visually-hidden"
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          capture="environment"
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (file) void inspect(file);
