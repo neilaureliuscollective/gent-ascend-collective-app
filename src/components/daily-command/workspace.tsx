@@ -148,6 +148,7 @@ export function DailyCommandWorkspace({ initial }: { initial: CommandData }) {
     <label>
       {label}
       <select
+        aria-label={label}
         value={arrival[key] ?? ''}
         onChange={(e) =>
           setArrival({ ...arrival, [key]: (e.target.value || null) as Arrival[typeof key] })

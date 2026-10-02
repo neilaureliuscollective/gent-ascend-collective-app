@@ -42,6 +42,7 @@ for (const width of [344, 768, 1440]) {
     );
     await page.getByText('Morning arrival · optional', { exact: true }).click();
     await page.getByLabel('Energy · 1 very low to 5 high').fill('3');
+    await page.getByLabel('Soreness', { exact: true }).selectOption('mild');
     await page.getByRole('button', { name: 'Save arrival & command' }).click();
     await expect(page.getByRole('status')).toContainText('arrival and command are saved');
     await page.getByText('Close the loop', { exact: true }).click();
