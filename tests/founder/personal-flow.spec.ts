@@ -263,7 +263,8 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await page.goto('/app/grooming');
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
   const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
-  await ritual.getByLabel('When', { exact: true }).selectOption('morning');
+  await expect(ritual).toBeVisible();
+  await ritual.getByRole('combobox', { name: /^When/ }).selectOption('morning');
   await ritual.getByLabel('Name', { exact: true }).fill('Synthetic Cabinet morning');
   await ritual.getByLabel('Steps', { exact: true }).fill('Use what I already own.');
   await ritual.getByRole('button', { name: 'Save ritual', exact: true }).click();
