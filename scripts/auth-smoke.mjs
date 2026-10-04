@@ -451,3 +451,23 @@ assert.ok((await founder.rpc('performance_save_movement',{...movementArgs,p_requ
 const movementRemoved=await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID(),p_expected:1,p_entry:{...movementPayload,voided:true}});assert.equal(movementRemoved.error,null);assert.equal(movementRemoved.data,2);
 assert.equal((await founder.from('performance_movement_revisions').select('*')).data.length,2);
 console.log('PASS: Movement save/replay, stale denial, strict mobility values, removal revisions and owner isolation through real Auth/PostgREST');
+
+// Synthetic Cabinet products exercise the actual Auth/PostgREST grants, not Shopify purchases.
+const cabinetPerson = people[0].id;
+const cabinetFixture = {person_id:cabinetPerson,catalog_product_id:'gid://shopify/Product/999999991',shopify_handle:'auth-cabinet-fixture',name:'Synthetic Cabinet fixture',category:'other',relation:'saved'};
+const cabinetInserted = await founder.from('grooming_products').upsert([cabinetFixture],{onConflict:'person_id,catalog_product_id',ignoreDuplicates:true}).select('*');
+assert.equal(cabinetInserted.error,null);assert.equal(cabinetInserted.data.length,1);
+const cabinetId = cabinetInserted.data[0].id;
+const cabinetEdited = await founder.from('grooming_products').update({relation:'in_use',note:'Retain this note'}).eq('id',cabinetId).eq('version',1).select('*');
+assert.equal(cabinetEdited.error,null);assert.equal(cabinetEdited.data[0].version,2);
+const cabinetReplay = await founder.from('grooming_products').upsert([cabinetFixture],{onConflict:'person_id,catalog_product_id',ignoreDuplicates:true}).select('id');
+assert.equal(cabinetReplay.error,null);assert.equal(cabinetReplay.data.length,0);
+const cabinetKept = await founder.from('grooming_products').select('*').eq('id',cabinetId).single();
+assert.equal(cabinetKept.data.note,'Retain this note');assert.equal(cabinetKept.data.relation,'in_use');
+const foreignCabinet = await member.from('grooming_products').select('*').eq('id',cabinetId);
+assert.equal(foreignCabinet.error,null);assert.equal(foreignCabinet.data.length,0);
+assert.ok((await member.from('grooming_products').insert({...cabinetFixture,catalog_product_id:'gid://shopify/Product/999999992'})).error);
+assert.ok((await anon.from('grooming_products').select('*')).error);
+assert.ok((await founder.from('grooming_products').update({catalog_product_id:'gid://shopify/Product/999999993'}).eq('id',cabinetId)).error);
+assert.equal((await founder.from('grooming_products').delete().eq('id',cabinetId)).error,null);
+console.log('PASS: Cabinet bulk save/replay preserves personal state, denies foreign/anonymous access and protects catalog identity through real Auth/PostgREST');

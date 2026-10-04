@@ -140,7 +140,8 @@ export function CollectionWorld({
         </div>
         {chapter === 'saved' && (
           <p className="collection-save-note">
-            Your selection is saved on this browser. It does not reserve stock or place an order.
+            Your selection is saved on this browser. It does not reserve stock or place an order.{' '}
+            <Link href={`${basePath}/cabinet`}>Review it for your synced Cabinet →</Link>
           </p>
         )}
         {missing.map((handle) => (

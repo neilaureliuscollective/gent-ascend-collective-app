@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import { launchPurchaseAllowed, launchState, launchLabel } from '@/domains/commerce/launch-policy';
 import { readProductStory, shopifyMediaUrl } from '@/domains/commerce/product-story';
@@ -22,12 +23,14 @@ export function ProductExperience({
   unavailable = false,
   related = [],
   basePath = '/shop',
+  cabinetControl,
 }: {
   product?: Product;
   preview?: Preview;
   unavailable?: boolean;
   related?: ReturnType<typeof resolveRelated>;
   basePath?: string;
+  cabinetControl?: ReactNode;
 }) {
   const title = product?.title ?? preview!.name;
   const handle = product?.handle ?? preview!.handle;
@@ -124,6 +127,7 @@ export function ProductExperience({
             </div>
           )}
           <CollectionSave basePath={basePath} handle={handle} />
+          {cabinetControl}
         </div>
       </section>
       <nav className="reserve-product-nav" aria-label="Product chapters">

@@ -1,4 +1,6 @@
 import { DailyCommandWorkspace } from '@/components/daily-command/workspace';
+import { CabinetImport } from '@/components/commerce/cabinet-import';
+import { CabinetSave } from '@/components/commerce/cabinet-controls';
 import { CabinetEditor } from '@/components/commerce/cabinet-controls';
 import '@/app/(workspace)/app/collection/collection.css';
 import { commandFixture } from './daily-command';
@@ -103,15 +105,51 @@ createRoot(document.getElementById('root')!).render(
         ])}
       />
     </main>
+  ) : mode === 'cabinet-import' ? (
+    <section className="member-collection">
+      <p>Synthetic import fixture · no real account.</p>
+      <CabinetImport
+        reviewAction={async (_previous, form) => {
+          const response = await fetch('/fixture-import-review', {
+            method: 'POST',
+            body: JSON.stringify(form.getAll('handle')),
+          });
+          return await response.json();
+        }}
+        importAction={async (_previous, form) => {
+          const response = await fetch('/fixture-import-confirm', {
+            method: 'POST',
+            body: JSON.stringify(Object.fromEntries(form)),
+          });
+          return await response.json();
+        }}
+      />
+    </section>
   ) : mode === 'cabinet' ? (
     <section className="member-collection">
       <p>Synthetic Cabinet fixture · no member session or purchase.</p>
       <h1>Your Cabinet.</h1>
       <CabinetEditor
-        record={{id:'ce000000-0000-4000-8000-000000000001',person_id:'ce000000-0000-4000-8000-000000000002',name:'Test beard oil',category:'beard',relation:'owned',shopify_handle:null,catalog_product_id:null,note:'',version:1,ritual_id:null,created_at:'2026-10-04T12:00:00Z',updated_at:'2026-10-04T12:00:00Z'}}
-        rituals={[{id:'ce000000-0000-4000-8000-000000000003',title:'Morning ritual'}]}
-        action={async(_previous,form)=>{
-          const response=await fetch('/fixture-cabinet-save',{method:'POST',body:JSON.stringify(Object.fromEntries(form))});
+        record={{
+          id: 'ce000000-0000-4000-8000-000000000001',
+          person_id: 'ce000000-0000-4000-8000-000000000002',
+          name: 'Test beard oil',
+          category: 'beard',
+          relation: 'owned',
+          shopify_handle: null,
+          catalog_product_id: null,
+          note: '',
+          version: 1,
+          ritual_id: null,
+          created_at: '2026-10-04T12:00:00Z',
+          updated_at: '2026-10-04T12:00:00Z',
+        }}
+        rituals={[{ id: 'ce000000-0000-4000-8000-000000000003', title: 'Morning ritual' }]}
+        action={async (_previous, form) => {
+          const response = await fetch('/fixture-cabinet-save', {
+            method: 'POST',
+            body: JSON.stringify(Object.fromEntries(form)),
+          });
           return await response.json();
         }}
       />
@@ -120,6 +158,20 @@ createRoot(document.getElementById('root')!).render(
     <div className="public-world">
       <p>Synthetic commerce fixture · no orders or payments.</p>
       <ProductExperience
+        cabinetControl={
+          params.get('account') === 'true' ? (
+            <CabinetSave
+              handle={commerceFixture.handle}
+              action={async (_previous, form) => {
+                const response = await fetch('/fixture-cabinet-save', {
+                  method: 'POST',
+                  body: JSON.stringify(Object.fromEntries(form)),
+                });
+                return await response.json();
+              }}
+            />
+          ) : undefined
+        }
         related={resolveRelated(
           readProductStory(commerceFixture.story),
           commerceFixture.handle,

@@ -1,3 +1,7 @@
+# Collection-to-Ritual Continuity · October 4, 2026
+
+Implemented account saves on published member product pages, explicit reviewed browser-selection import, and member-linked products beside existing grooming rituals. Current session/product identity is rechecked at confirmation; unique owner/product writes preserve existing notes and use states. Browser selection remains separate and is never imported automatically. No migration or merchant change. Scope, research, limits and next prerequisites: `PRODUCT_RITUAL_CONTINUITY.md`. Local lint, types, 275 unit/SQL tests, production build, 28-file migration ledger and 17 targeted browser checks pass; the final four new browser checks also pass after the test-text revision. Real Auth/PostgREST and persisted ritual acceptance run in release CI. Exact release evidence follows in the PR; no verified purchase, price privilege or live signed-in acceptance is inferred.
+
 # Member Product Intelligence — Cabinet recovery increment · October 4, 2026
 
 Implemented `/app/collection/cabinet` inside the native Collection world with private synced product records extending the existing Grooming Vault, stable Shopify GID saves, member-reported use status, notes, owner-bound ritual links, external products and paginated history. Added My World/Grooming entry points. Repeat saves preserve existing personal state; versioned mutations reject stale edits. No new storefront, purchase claims, discount activation or AI sales flow. Scope, research, sequencing and release limits: `MEMBER_PRODUCT_CABINET.md`.

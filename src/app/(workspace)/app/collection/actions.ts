@@ -6,6 +6,8 @@ import {
   saveExternalProduct,
   updateCabinetProduct,
   removeCabinetProduct,
+  reviewCabinetImport,
+  importCabinetSelection,
 } from '@/domains/commerce/cabinet';
 const field = (f: FormData, key: string) => String(f.get(key) ?? '');
 type Result = { error: string; message: string };
@@ -53,4 +55,47 @@ export async function cabinetProductAction(_previous: Result, f: FormData) {
       ritual_id: field(f, 'ritual_id') || null,
     }),
   );
+}
+
+export async function reviewSelectionAction(
+  _previous: import('@/domains/commerce/cabinet-model').CabinetImportReview,
+  form: FormData,
+) {
+  try {
+    return await reviewCabinetImport(form.getAll('handle'));
+  } catch (error) {
+    return {
+      owner: '',
+      items: [],
+      unavailable: [],
+      error:
+        error instanceof CabinetError
+          ? error.message
+          : 'Choose between one and twenty products to review.',
+    };
+  }
+}
+export async function importSelectionAction(_previous: Result, form: FormData): Promise<Result> {
+  try {
+    const count = await importCabinetSelection({
+      owner: field(form, 'owner'),
+      items: JSON.parse(field(form, 'items')),
+    });
+    revalidatePath('/app/collection/cabinet');
+    revalidatePath('/app/grooming');
+    return {
+      error: '',
+      message: count
+        ? `${count} ${count === 1 ? 'product' : 'products'} added to your Cabinet. Existing notes and use states are kept.`
+        : 'These products are already in your Cabinet. Existing notes and use states are kept.',
+    };
+  } catch (error) {
+    return {
+      error:
+        error instanceof CabinetError
+          ? error.message
+          : 'The selection could not be imported. Review it again.',
+      message: '',
+    };
+  }
 }

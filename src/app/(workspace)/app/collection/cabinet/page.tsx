@@ -1,3 +1,4 @@
+import { CabinetImport } from '@/components/commerce/cabinet-import';
 import Link from 'next/link';
 import Image from 'next/image';
 import { currentPerson } from '@/domains/person/current';
@@ -11,7 +12,13 @@ import {
   CabinetExternal,
   CabinetSave,
 } from '@/components/commerce/cabinet-controls';
-import { cabinetProductAction, externalProductAction, saveProductAction } from '../actions';
+import {
+  cabinetProductAction,
+  externalProductAction,
+  saveProductAction,
+  reviewSelectionAction,
+  importSelectionAction,
+} from '../actions';
 import '../collection.css';
 export const metadata = {
   title: 'Your Cabinet | Gent Ascend',
@@ -117,6 +124,7 @@ export default async function Collection({
           <CabinetExternal id={crypto.randomUUID()} action={externalProductAction} />
         </details>
       </section>
+      <CabinetImport reviewAction={reviewSelectionAction} importAction={importSelectionAction} />
       <section id="collection">
         <p className="eyebrow">THE COLLECTION</p>
         <h2>Consider your next essential.</h2>
