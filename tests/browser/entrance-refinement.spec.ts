@@ -15,7 +15,7 @@ test('entrance holds the illuminated brand, starts sound and completes', async (
   expect(page.url()).toContain('/experience');
   expect(
     await page.locator('.gw-crest-flight').evaluate((e) => getComputedStyle(e).mixBlendMode),
-  ).toBe('screen');
+  ).toBe('normal');
   await page.screenshot({ path: info.outputPath('entrance-awakening.png'), animations: 'allow' });
   await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 22000 });
   expect(Date.now() - started).toBeGreaterThan(3600);

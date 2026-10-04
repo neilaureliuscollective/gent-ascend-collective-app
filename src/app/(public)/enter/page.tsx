@@ -49,7 +49,7 @@ export default async function Enter({
         <div className="entrance-copy">
           <p className="entrance-kicker">GENT ASCEND COLLECTIVE / THE PERSONAL WORLD</p>
           <div className="entrance-emblem">
-            <Image src={brand.crest} alt="" width={172} height={172} priority />
+            <Image src={brand.crest} alt="" width={172} height={172} preload />
           </div>
           <h1 id="entrance-title">
             {identity ? (

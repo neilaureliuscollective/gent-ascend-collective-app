@@ -1,3 +1,11 @@
+# Full crest integration — 2026-10-03
+
+Implemented on `feat/official-collective-crest`: founder-approved full A/star/globe/laurel crest with actual outer transparency; shared website/member-shell/account/arrival identity; footer seal; Command direct-path correction; accurate alt text; entrance normal blending and alpha sweep mask. Existing app icon, favicon, Apple icon, manifest, palette and cinematic sequence preserved. Original master retained separately.
+
+Validation results are recorded in docs/FULL_CREST_INTEGRATION.md. This is an isolated branding update, not a service, Auth or data migration. Physical phone evaluation and production promotion remain separate.
+
+---
+
 # Photographic product lightboxes — 2026-10-02
 
 Founder-directed refinement of the live product presentation: photo-aligned metallic gold frames, corner geometry, slow breathing and light movement replace the disconnected arch/pedestal treatment. Hero captions now sit below images in document flow; Shopify intrinsic dimensions retained. Offscreen/background/Still/reduced-motion handling implemented. Build/lint/typecheck and 223 unit tests passed; targeted browser tests verify activation and caption separation across 344/768/1440 widths. See COMMERCE_VISUAL_REFINEMENT.md.

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { brand } from '@/platform/brand';
 import Link from 'next/link';
 import type { GoalRow, PersonRow } from '@/platform/supabase/database';
 import { AureliusPresence } from './visual/aurelius-presence';
@@ -49,8 +50,8 @@ export function PersonalCommand({
         <div className="hero-emblem">
           <div className="emblem-halo" />
           <Image
-            src="/brand/gent-ascend-crest-v2.webp"
-            alt="Gent Ascend Collective seal: a gentleman standing composed in a green mantle, framed by celestial geometry and laurels"
+            src={brand.crest}
+            alt={brand.crestAlt}
             width={1254}
             height={1254}
             sizes="(max-width: 600px) 160px, (max-width: 1100px) 260px, 370px"

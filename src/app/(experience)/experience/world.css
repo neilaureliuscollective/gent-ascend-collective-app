@@ -846,9 +846,9 @@ html:has(.gent-world) {
   }
 }
 
-/* Screen composition removes the black matte while retaining the exact official crest. */
+/* Genuine alpha preserves the crest interior and avoids a rectangular black matte. */
 .gw-crest-flight {
-  mix-blend-mode: screen;
+  mix-blend-mode: normal;
   overflow: hidden;
   will-change: transform, opacity;
 }
@@ -868,8 +868,8 @@ html:has(.gent-world) {
   background: radial-gradient(ellipse, #c4912f35 0%, #2caa7160 22%, #0b3b3260 45%, transparent 70%);
 }
 .gw-arrival-sweep {
-  mask-image: url('/brand/gent-ascend-crest-v2.webp');
-  mask-mode: luminance;
+  mask-image: url('/brand/gent-ascend-full-20261003.webp');
+  mask-mode: alpha;
   mask-size: 100% 100%;
   position: absolute;
   inset: 0;

@@ -77,7 +77,7 @@ export default async function Welcome({
       )}
       {pilot && (
         <section className="pilot-entry" aria-label="Your Gent Ascend space">
-          <Image src={brand.crest} alt="" width={90} height={90} priority />
+          <Image src={brand.crest} alt="" width={90} height={90} preload />
           <div>
             <p className="eyebrow">INSIDE GENT ASCEND / YOUR FIRST SESSION</p>
             <h2>
