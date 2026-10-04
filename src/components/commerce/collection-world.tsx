@@ -68,6 +68,9 @@ export function CollectionWorld({
             <Link className="world-text-link" href={`${basePath}/cabinet`}>
               Your Cabinet
             </Link>
+            <Link className="world-text-link" href={`${basePath}/orders`} prefetch={false}>
+              Your orders
+            </Link>
           </div>
         </div>
         <div className="collection-chamber-caption" aria-hidden="true">

@@ -1,3 +1,4 @@
+import { CustomerOrders } from '@/components/commerce/customer-orders';
 import { DailyCommandWorkspace } from '@/components/daily-command/workspace';
 import { CabinetImport } from '@/components/commerce/cabinet-import';
 import { CabinetSave } from '@/components/commerce/cabinet-controls';
@@ -105,6 +106,42 @@ createRoot(document.getElementById('root')!).render(
         ])}
       />
     </main>
+  ) : mode === 'customer-orders' ? (
+    <>
+      <p>Synthetic Shopify order fixture · no real customer or purchase.</p>
+      <CustomerOrders
+        view={{
+          state: (params.get('state') ?? 'connected') as
+            'connected' | 'unconfigured' | 'signed-out' | 'disconnected' | 'unavailable',
+          displayName: 'Synthetic customer',
+          orders:
+            params.get('empty') === '1'
+              ? []
+              : [
+                  {
+                    id: 'gid://shopify/Order/1',
+                    name: '#1001',
+                    processedAt: '2026-10-04T12:00:00Z',
+                    cancelledAt: null,
+                    financialStatus: 'PAID',
+                    fulfillmentStatus: 'UNFULFILLED',
+                    totalPrice: { amount: '48.00', currencyCode: 'USD' },
+                  },
+                  {
+                    id: 'gid://shopify/Order/2',
+                    name: '#1002',
+                    processedAt: '2026-10-01T12:00:00Z',
+                    cancelledAt: '2026-10-02T12:00:00Z',
+                    financialStatus: 'REFUNDED',
+                    fulfillmentStatus: 'UNFULFILLED',
+                    totalPrice: { amount: '30.00', currencyCode: 'USD' },
+                  },
+                ],
+          more: true,
+        }}
+        failed={params.get('failed') === '1'}
+      />
+    </>
   ) : mode === 'cabinet-import' ? (
     <section className="member-collection">
       <p>Synthetic import fixture · no real account.</p>

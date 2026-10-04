@@ -72,6 +72,7 @@ export default async function Collection({
           <a href="#cabinet">Your Cabinet</a>
           <a href="#collection">The Collection</a>
           <Link href="/app/grooming">Grooming ritual →</Link>
+          <Link href="/app/collection/orders" prefetch={false}>My orders →</Link>
         </nav>
       </header>
       <section id="cabinet">

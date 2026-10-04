@@ -24,6 +24,11 @@ export async function proxy(request: NextRequest) {
     await client.auth.getClaims();
   }
   response.headers.set('Cache-Control', 'private, no-store');
+  if (
+    request.nextUrl.pathname === '/app/collection/orders' ||
+    request.nextUrl.pathname.startsWith('/api/commerce/customer')
+  )
+    response.headers.set('Referrer-Policy', 'no-referrer');
   return response;
 }
 export const config = {

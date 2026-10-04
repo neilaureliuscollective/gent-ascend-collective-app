@@ -314,3 +314,8 @@ Founder explicitly authorized inspection, Phase 1 implementation and target-main
 
 ## 2026-10-04 — Collection-to-Ritual Continuity
 Close the gap between native product browsing, synced Cabinet and ritual practice before advertising order history or member prices. Reuse the existing owner ledger and server catalog. Import requires explicit selection, server review, owner/product revalidation and confirmation; preserve browser saves and previous personal state. See PRODUCT_RITUAL_CONTINUITY.md for current official research and bounded views.
+
+
+## 2026-10-04 — Customer Account connection before economic privileges
+
+Advance the live Collection/Cabinet work with a browser-scoped, explicitly initiated OAuth/PKCE customer connection and read-only recent orders. Verify the provider's signed identity and API customer; keep credentials in short-lived encrypted host-only cookies bound to the Gent owner and configuration. No refresh token persistence, new ledger, membership inference, historical Cabinet purchase badge or discount enforcement is introduced. Merchant configuration and real Shopify acceptance stay separate from CI provider fixtures. Follow discovered supported endpoints and current Customer Account object contracts. Full research, scope, activation and durable-link next phase: CUSTOMER_ACCOUNT_CONNECTION.md.
