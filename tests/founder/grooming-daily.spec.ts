@@ -26,10 +26,11 @@ test('member chamber saves, reviews, records and restores the actual private rit
   const create = page.getByRole('button', { name: 'Create your ritual' });
   if (await create.count()) await create.click();
   else await page.getByRole('button', { name: 'Refine ritual ↗' }).click();
-  await page.getByLabel('Name', { exact: true }).fill('Synthetic daily evening');
-  await page.getByLabel('Steps · one per line').fill('Follow my existing care.\nNotice comfort.');
-  await page.getByRole('button', { name: 'Review ritual →' }).click();
-  await page.getByRole('button', { name: 'Save reviewed ritual' }).click();
+  const editor = page.getByRole('dialog');
+  await editor.getByLabel('Name', { exact: true }).fill('Synthetic daily evening');
+  await editor.getByLabel('Steps · one per line').fill('Follow my existing care.\nNotice comfort.');
+  await editor.getByRole('button', { name: 'Review ritual →' }).click();
+  await editor.getByRole('button', { name: 'Save reviewed ritual' }).click();
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(page.locator('#grooming-area')).toContainText('Synthetic daily evening');
   await page.reload();
