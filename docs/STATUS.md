@@ -1,3 +1,9 @@
+# Member Product Intelligence — Cabinet recovery increment · October 4, 2026
+
+Implemented `/app/collection` with private synced product records extending the existing Grooming Vault, stable Shopify GID saves, member-reported use status, notes, owner-bound ritual links, external products and paginated history. Added My World/Grooming entry points. Repeat saves preserve existing personal state; versioned mutations reject stale edits. No new storefront, purchase claims, discount activation or AI sales flow. Scope, research, sequencing and release limits: `MEMBER_PRODUCT_CABINET.md`.
+
+Local lint, types, 269 unit/SQL tests, production build, migration ledger and whitespace checks pass. Browser tests added but local Chromium installation failed with truncated archives. Real Auth/PostgREST remains unrun because Docker/local configuration are unavailable. Hosted migration and signed-in cross-device acceptance are pending. This is a review candidate, not completion of the full member commerce plans or a live release.
+
 # Member Council Phase 1 · October 4, 2026
 
 Founder-authorized member Council implemented in the existing Gent Ascend Aethelios workspace and shared chat panel. Five inspected specialist lenses, contextual recommendations, manual involvement, focused conversations, reviewed Assemble Around This / The Table, independent specialist calls and Aethelios synthesis. Existing person/session/context/conversation/message/memory/usage architecture reused. Council requests never query the private founder bridge; no founder tools, repository access, external writes, new navigation or migration. History records exact cast and identities on the existing owner-bound turn ledger. Full inspection/adaptation plan and limitations: MEMBER_COUNCIL.md.

@@ -1,6 +1,11 @@
 import Link from 'next/link';
 const worlds = [
   {
+    href: '/app/collection',
+    title: 'The Collection / Your Cabinet',
+    copy: 'Save your essentials and remember what you use.',
+  },
+  {
     href: '/app/ascend',
     title: 'LifeOS / Ascend',
     copy: 'Your direction, daily actions and reflection.',

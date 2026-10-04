@@ -1,0 +1,131 @@
+.member-collection {
+  max-width: 1200px;
+  margin: auto;
+  padding: clamp(24px, 5vw, 70px);
+  background: radial-gradient(ellipse at top right, #0b3b3270, transparent 65%);
+  color: var(--text, #f1eee3);
+}
+.cabinet-hero {
+  padding: 30px 0 60px;
+  border-bottom: 1px solid #c4912f55;
+}
+.cabinet-hero h1 {
+  font-family: var(--font-display, serif);
+  font-size: clamp(42px, 6vw, 78px);
+  line-height: 1.05;
+  font-weight: 400;
+  margin: 20px 0;
+}
+.cabinet-hero em {
+  color: #c4912f;
+  font-style: normal;
+}
+.member-collection section {
+  padding: 45px 0;
+  scroll-margin-top: 100px;
+}
+.member-collection h2 {
+  font-size: clamp(28px, 4vw, 40px);
+}
+.member-collection p {
+  line-height: 1.65;
+}
+.member-collection nav,
+.cabinet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.member-collection a {
+  color: inherit;
+}
+.cabinet-records {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+}
+.cabinet-record {
+  padding: 25px 0;
+  border-top: 1px solid #c4912f55;
+}
+.cabinet-record h3,
+.cabinet-shelf h3 {
+  overflow-wrap: anywhere;
+}
+.cabinet-record details {
+  margin-top: 20px;
+}
+.member-collection summary {
+  cursor: pointer;
+  padding: 14px 0;
+  color: #e0bb6a;
+}
+.cabinet-form {
+  display: grid;
+  gap: 18px;
+  max-width: 550px;
+  padding: 16px 0;
+}
+.cabinet-form label {
+  display: grid;
+  gap: 8px;
+}
+.cabinet-form input,
+.cabinet-form select,
+.cabinet-form textarea {
+  width: 100%;
+  padding: 12px;
+  background: #071612;
+  border: 1px solid #c4912f60;
+  color: inherit;
+  border-radius: 4px;
+  font: inherit;
+}
+.cabinet-form textarea {
+  resize: vertical;
+}
+.cabinet-actions button {
+  padding: 12px;
+  cursor: pointer;
+}
+.cabinet-form button:disabled {
+  opacity: 0.5;
+}
+.cabinet-external {
+  margin-top: 25px;
+  border-top: 1px solid #c4912f55;
+}
+.cabinet-shelf {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 35px;
+  margin: 30px 0;
+}
+.cabinet-image {
+  height: 260px;
+  position: relative;
+  background: #0c211b;
+  border-bottom: 1px solid #c4912f88;
+}
+.cabinet-image img {
+  object-fit: contain;
+}
+.member-collection :focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 4px;
+}
+.member-collection [role='alert'] {
+  color: #f4b6a3;
+}
+@media (max-width: 650px) {
+  .cabinet-records,
+  .cabinet-shelf {
+    grid-template-columns: 1fr;
+  }
+  .cabinet-hero {
+    padding-top: 10px;
+  }
+  .cabinet-image {
+    height: 300px;
+  }
+}

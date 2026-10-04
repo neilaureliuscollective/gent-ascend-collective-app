@@ -39,7 +39,7 @@ export function Navigation() {
           aria-current={
             path === href ||
             (href === '/app/world' &&
-              (path.startsWith('/app/performance') || path.startsWith('/app/grooming')))
+              (path.startsWith('/app/performance') || path.startsWith('/app/grooming') || path.startsWith('/app/collection')))
               ? 'page'
               : undefined
           }
