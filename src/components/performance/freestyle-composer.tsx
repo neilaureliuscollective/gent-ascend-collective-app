@@ -192,7 +192,7 @@ export function FreestyleComposer({
               <input type="number" inputMode="numeric" min={1} max={30} value={manualReps} onChange={(event) => setManualReps(event.target.valueAsNumber || 1)} />
             </label>
           </div>
-          <button className="perf-primary" disabled={busy || !manualName.trim()}>Add to workout →</button>
+          <button className="perf-primary" aria-label="Add movement" disabled={busy || !manualName.trim()}>Add to workout →</button>
         </form>
       )}
 
