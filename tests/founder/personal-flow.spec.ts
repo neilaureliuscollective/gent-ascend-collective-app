@@ -295,3 +295,26 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(products).toContainText('Running low');
   await expect(products).not.toContainText('Keep this private note.');
 });
+
+test('authenticated order workspace stays closed without merchant configuration', async ({
+  page,
+}) => {
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await page.goto('/app/collection/orders');
+  await expect(page.getByText(/Shopify account connection is not open yet/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Connect Shopify account' })).toHaveCount(0);
+  const response = await page.request.post('/api/commerce/customer', {
+    headers: { origin: 'http://127.0.0.1:3103' },
+    maxRedirects: 0,
+  });
+  expect(response.status()).toBe(303);
+  expect(response.headers().location).toContain('connection=unavailable');
+  expect(response.headers()['cache-control']).toContain('no-store');
+  expect(response.headers()['set-cookie'] ?? '').not.toContain('__Host-gent-customer-account=');
+  await page.getByRole('link', { name: 'My Cabinet' }).click();
+  await expect(page).toHaveURL(/\/app\/collection\/cabinet$/);
+  await expect(page.getByText('Synthetic external oil', { exact: true })).toBeVisible();
+});
