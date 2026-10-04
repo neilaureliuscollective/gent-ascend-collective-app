@@ -6,6 +6,19 @@ const config: NextConfig = {
   images: { remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }] },
   async redirects() {
     return [
+      // Retained installation URLs must never serve the retired star artwork.
+      ...[192, 512].flatMap((size) =>
+        [`/brand/icon-${size}.png`, `/brand/icon-v2-${size}.png`].map((source) => ({
+          source,
+          destination: `/brand/app-crest-20261004-${size}.png`,
+          permanent: false,
+        })),
+      ),
+      ...['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'].map((source) => ({
+        source,
+        destination: '/apple-icon.png',
+        permanent: false,
+      })),
       ...['conversation', 'starter', 'link'].map((key) => ({
         source: '/aethelios',
         has: [{ type: 'query' as const, key }],
@@ -32,6 +45,10 @@ const config: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/manifest.webmanifest',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
       {
         source: '/sw.js',
         headers: [
