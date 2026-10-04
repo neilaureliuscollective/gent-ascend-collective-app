@@ -340,9 +340,21 @@ test('free member first session saves and resumes through real Next and Supabase
     page.getByRole('status').filter({ hasText: 'priority and next move' }),
   ).toContainText('saved to Command');
   await page.goto('/app');
-  await expect(page.locator('main')).toContainText('Synthetic first-session direction');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
+  ).not.toBeChecked();
   await page.reload();
-  await expect(page.locator('main')).toContainText('Synthetic first-session direction');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
+  ).not.toBeChecked();
   await page.goto('/app/welcome');
   await expect(page.getByLabel('What matters today?')).toHaveValue(
     'Synthetic first-session direction',
