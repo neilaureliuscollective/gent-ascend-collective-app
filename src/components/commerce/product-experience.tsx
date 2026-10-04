@@ -21,11 +21,13 @@ export function ProductExperience({
   preview,
   unavailable = false,
   related = [],
+  basePath = '/shop',
 }: {
   product?: Product;
   preview?: Preview;
   unavailable?: boolean;
   related?: ReturnType<typeof resolveRelated>;
+  basePath?: string;
 }) {
   const title = product?.title ?? preview!.name;
   const handle = product?.handle ?? preview!.handle;
@@ -61,8 +63,9 @@ export function ProductExperience({
   const beard = /beard|vitalis/i.test(`${title} ${kind}`);
   const faq = story?.faq ?? [];
   const developmentBlend = !product && handle === 'vitalis';
+  const Container = basePath === '/shop' ? 'main' : 'div';
   return (
-    <main id="world-main" className="reserve-commerce reserve-product">
+    <Container id="world-main" className="reserve-commerce reserve-product">
       <CommerceMotion />
       <ProductView handle={handle} />
       <section className="reserve-product-intro">
@@ -70,7 +73,7 @@ export function ProductExperience({
           <ProductGallery title={title} kind={kind} brand={brand} images={images} model={model} />
         </div>
         <div className="reserve-product-copy">
-          <Link href="/shop" className="world-text-link">
+          <Link href={basePath} className="world-text-link">
             ← The collection
           </Link>
           <span className="world-kicker">
@@ -120,7 +123,7 @@ export function ProductExperience({
               </a>
             </div>
           )}
-          <CollectionSave handle={handle} />
+          <CollectionSave basePath={basePath} handle={handle} />
         </div>
       </section>
       <nav className="reserve-product-nav" aria-label="Product chapters">
@@ -312,7 +315,7 @@ export function ProductExperience({
           </a>
         </div>
       </section>
-      <ProductRelations items={related} />
+      <ProductRelations items={related} basePath={basePath} />
       <section className="reserve-membership-bridge">
         <span className="world-kicker">Gent Ascend Collective / Beyond the shelf</span>
         <h2>
@@ -326,10 +329,13 @@ export function ProductExperience({
           purchase.
         </p>
         <div className="world-actions">
-          <Link href="/membership" className="world-button">
+          <Link
+            href={basePath === '/shop' ? '/membership' : '/app/membership'}
+            className="world-button"
+          >
             Explore membership ↗
           </Link>
-          <Link href="/join" className="world-text-link">
+          <Link href={basePath === '/shop' ? '/join' : '/app/you'} className="world-text-link">
             Explore your account ↗
           </Link>
         </div>
@@ -393,6 +399,6 @@ export function ProductExperience({
           Collection preview · final product details will be published before orders open.
         </p>
       )}
-    </main>
+    </Container>
   );
 }

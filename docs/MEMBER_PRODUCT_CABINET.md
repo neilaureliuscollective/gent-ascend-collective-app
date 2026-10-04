@@ -10,7 +10,7 @@ Proceed with the useful prerequisite for the planned Purchase-to-Ritual Continui
 
 ## Delivered behavior
 
-- `/app/collection` provides account-owned Cabinet history and a small live product shelf using the existing Shopify catalog and product pages.
+- `/app/collection/cabinet` provides account-owned Cabinet history and a small live product shelf using the existing Shopify catalog and product pages.
 - My World and Grooming link directly to the Cabinet. The stable four-item main navigation is retained.
 - Saving a live product resolves its ID/title on the server. One owner/product record is enforced by Shopify product GID; repeat saves preserve use state and notes. Existing Vault records remain visible and are not silently imported or rewritten.
 - Member-reported states: saved, owned, in use, running low, finished, tried, favorite and stopped. Notes and an optional owner-bound grooming ritual belong to the same existing product record. Products from elsewhere remain supported.

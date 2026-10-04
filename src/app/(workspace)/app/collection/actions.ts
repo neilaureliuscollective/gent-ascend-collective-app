@@ -12,7 +12,7 @@ type Result = { error: string; message: string };
 async function commit(write: () => Promise<void>): Promise<Result> {
   try {
     await write();
-    revalidatePath('/app/collection');
+    revalidatePath('/app/collection/cabinet');
     revalidatePath('/app/grooming');
     return { error: '', message: 'Saved to your Cabinet.' };
   } catch (error) {

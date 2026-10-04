@@ -1,6 +1,16 @@
 export type IconName =
-  'command' | 'world' | 'progress' | 'person' | 'spark' | 'arrow' | 'sun' | 'moon' | 'shield';
+  | 'command'
+  | 'world'
+  | 'progress'
+  | 'person'
+  | 'spark'
+  | 'arrow'
+  | 'sun'
+  | 'moon'
+  | 'shield'
+  | 'collection';
 const paths: Record<IconName, string> = {
+  collection: 'M4 8h16l-1 13H5L4 8Zm4 0V6a4 4 0 0 1 8 0v2M9 13h6',
   command: 'M3 10.5 12 3l9 7.5M5 9v11h5v-6h4v6h5V9',
   world: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3c-5 5-5 13 0 18 5-5 5-13 0-18Z',
   progress: 'M4 4v16h16M7 15l4-5 4 2 5-7',

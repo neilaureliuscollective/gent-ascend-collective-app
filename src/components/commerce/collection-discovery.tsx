@@ -16,7 +16,13 @@ const subscribeHydration = () => () => {};
 const clientHydration = () => true;
 const serverHydration = () => false;
 
-export function CollectionDiscovery({ entries }: { entries: CollectionEntry[] }) {
+export function CollectionDiscovery({
+  entries,
+  basePath = '/shop',
+}: {
+  entries: CollectionEntry[];
+  basePath?: string;
+}) {
   const interactive = useSyncExternalStore(subscribeHydration, clientHydration, serverHydration);
   const [focus, setFocus] = useState<DiscoveryFocus>('all');
   const [availability, setAvailability] = useState<DiscoveryAvailability>('all');
@@ -122,6 +128,7 @@ export function CollectionDiscovery({ entries }: { entries: CollectionEntry[] })
                 <CollectionCard
                   key={entry.handle}
                   entry={entry}
+                  basePath={basePath}
                   index={index}
                   reason={discoveryReason(entry, focus)}
                 />
@@ -152,13 +159,14 @@ export function CollectionDiscovery({ entries }: { entries: CollectionEntry[] })
               )}
             </div>
           )}
-          <Link className="world-text-link" href="/shop?saved=1">
+          <Link className="world-text-link" href={`${basePath}?saved=1`}>
             Review my saved selection ↗
           </Link>
         </div>
       )}
       <p hidden={interactive}>
-        The interactive guide needs JavaScript. You can explore every product in the collection below.
+        The interactive guide needs JavaScript. You can explore every product in the collection
+        below.
       </p>
     </section>
   );

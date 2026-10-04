@@ -1,18 +1,10 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { previewProduct } from '@/domains/catalog/preview';
-import { commerceConfigured, getProduct, listProducts } from '@/domains/commerce/shopify';
-import { readProductStory, shopifyMediaUrl } from '@/domains/commerce/product-story';
+import { commerceConfigured, getProduct } from '@/domains/commerce/shopify';
+import { shopifyMediaUrl } from '@/domains/commerce/product-story';
 import { productPath } from '@/domains/commerce/product-path';
-import {
-  productDescription,
-  publicCommerceOrigin,
-  productStructuredData,
-  safeStructuredJson,
-} from '@/domains/commerce/product-sharing';
-import { collectionEntries } from '@/domains/commerce/collection';
-import { resolveRelated } from '@/domains/commerce/discovery';
-import { ProductExperience } from '@/components/commerce/product-experience';
+import { productDescription, publicCommerceOrigin } from '@/domains/commerce/product-sharing';
+import { ProductPage } from '@/components/commerce/product-page';
 export async function generateMetadata({
   params,
 }: {
@@ -50,37 +42,5 @@ export async function generateMetadata({
   };
 }
 export default async function Product({ params }: { params: Promise<{ handle: string }> }) {
-  const handle = (await params).handle;
-  let failed = false;
-  const product = commerceConfigured()
-    ? await getProduct(handle).catch(() => {
-        failed = true;
-        return null;
-      })
-    : null;
-  const preview = previewProduct(handle);
-  if (!product && !preview) notFound();
-  const story = readProductStory(product?.story);
-  const relatedProducts = story?.related.length ? await listProducts().catch(() => []) : [];
-  const related = resolveRelated(story, handle, collectionEntries(relatedProducts));
-  const structured = product
-    ? productStructuredData(product, publicCommerceOrigin(process.env.NEXT_PUBLIC_APP_URL))
-    : null;
-  return (
-    <>
-      {structured && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: safeStructuredJson(structured) }}
-        />
-      )}
-      <ProductExperience
-        key={product?.id ?? handle}
-        product={product ?? undefined}
-        preview={preview}
-        unavailable={failed}
-        related={related}
-      />
-    </>
-  );
+  return <ProductPage handle={(await params).handle} />;
 }

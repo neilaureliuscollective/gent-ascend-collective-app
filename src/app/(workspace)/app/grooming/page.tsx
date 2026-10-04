@@ -115,7 +115,7 @@ export default async function Grooming({
         </p>
       )}
       <nav className="groom-nav" aria-label="Grooming areas">
-        <Link href="/app/collection">Your Cabinet</Link>
+        <Link href="/app/collection/cabinet">Your Cabinet</Link>
         <Link href="/app/grooming/scan">Scan</Link>
         <Link href="/app/grooming/look">My Look</Link>
         <a href="#direction">Direction</a>

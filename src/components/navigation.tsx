@@ -6,6 +6,7 @@ import { Icon, type IconName } from './visual/icon';
 const destinations: [string, string, IconName][] = [
   ['/app', 'Command', 'command'],
   ['/app/world', 'My world', 'world'],
+  ['/app/collection', 'Collection', 'collection'],
   ['/app/progress', 'Progress', 'progress'],
   ['/app/you', 'You', 'person'],
 ];
@@ -38,8 +39,9 @@ export function Navigation() {
           href={href}
           aria-current={
             path === href ||
+            (href === '/app/collection' && path.startsWith('/app/collection/')) ||
             (href === '/app/world' &&
-              (path.startsWith('/app/performance') || path.startsWith('/app/grooming') || path.startsWith('/app/collection')))
+              (path.startsWith('/app/performance') || path.startsWith('/app/grooming')))
               ? 'page'
               : undefined
           }
