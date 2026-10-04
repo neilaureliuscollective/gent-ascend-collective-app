@@ -43,3 +43,7 @@ Gold: #9D6E1F, **#C4912F**, #D6A84B, #E4BF6A.
 Reading text: #F5F1E9; secondary: #B9BCB5.
 
 Tokens are centralized in `src/app/globals.css`; public name, description and asset paths in `src/platform/brand.ts`. Brighter gold supports readable small labels; primary gold anchors metal, active edges and app identity. Green provides focal depth while most reading surfaces remain obsidian. Purple is no longer customer-facing.
+
+## Current installed identity — 2026-10-04
+
+The founder’s subsequent installed-app correction supersedes the October 3 exclusion of icon changes. The existing approved architectural-A full crest now also supplies versioned standard/maskable PNG installation assets, Apple touch icon and browser icon. `scripts/current-app-icons.mjs` resizes/pads the tracked alpha artwork without redrawing. Preserve stable app ID and Command start URL. Older icon generators/assets are historical; do not run them over the current app metadata. See releases/INSTALLED_APP_AUDIT_20261004.md.

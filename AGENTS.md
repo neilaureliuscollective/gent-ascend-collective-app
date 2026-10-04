@@ -47,3 +47,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+- Current Command visual identity (2026-10-04): read docs/COMMAND_IMMERSIVE.md. Use the existing flowing `EnergyOrb` / `world-energy-renderer` from cinematic arrival/world, including the matching static fallback. Do not reintroduce `AureliusPresence` / `presence-renderer` metal-band-and-star artwork into Command or its shared shortcut. AURELIUS_1F.md is historical for this surface. Keep saved-record source connections truthful and motion purely decorative; no implied listening, analysis or background agency.
+
+- Command orchestration Phase2 (2026-10-04): read docs/COMMAND_ORCHESTRATION.md. Use the request-time Command service and shared next-move resolver; keep exact source/day/version/owner confirmation guards and existing atomic daily RPCs. Preparation/receipts are deterministic saved-record views, not LLM or background-agent activity. Preserve per-message model consent, mounted-only change comparison, uncertain-write replay lock and deeper-draft isolation. No public cinematic prefetch from the workspace sidebar.

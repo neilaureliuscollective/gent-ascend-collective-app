@@ -70,3 +70,7 @@ Apply the fourth migration before connected personal use. The seed adds a repeat
 The history chart shows energy and dated energy/sleep values for the last 30 days. Today can be edited; stored older intentions/reflections/action details have no browsing interface yet. The current display window is not a retention policy. Export/deletion/retention remain pre-beta work. No body assets, wearables, provider connections, generated health score, AI daily briefing or automatic memory ingestion were introduced.
 
 Next: founder device review, real service activation, and the existing Aurelius evaluation loop. After those checks, add a daily briefing grounded in explicitly selected records, with sources and user control over what enters model context. Do not expand unrelated modules before the actual daily experience is evaluated.
+
+## Command front door · 2026-10-04
+
+The default manual loop is superseded by the immersive saved-record briefing in [COMMAND_IMMERSIVE.md](COMMAND_IMMERSIVE.md). DailyData, RPC validation/versioning, reviews, actions, observations, goal and conversation paths remain intact. The former workspace is lazy-loaded through **Day workspace**; opening Command no longer displays mandatory setup, check-in or reflection forms. The optional bounded Orb is now allowed on Command, using the existing lifecycle and complete SVG fallback. No new intelligence/privacy permission is implied.

@@ -1,0 +1,102 @@
+{
+  "environment": "Local production, synthetic sample, headless Chromium/SwiftShader; viewport review, not physical-device or field performance.",
+  "previousCommand": {
+    "initialJS": 156360,
+    "ambientJS": 314500,
+    "css": 33472
+  },
+  "screens": [
+    {
+      "width": 344,
+      "height": 740,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 660.984375,
+      "canvases": 0,
+      "encodedJS": 156333,
+      "encodedCSS": 33847,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 643.0625,
+      "canvases": 0,
+      "encodedJS": 156333,
+      "encodedCSS": 33847,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "motion": "reduce",
+      "large": true,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 1731.046875,
+      "canvases": 0,
+      "encodedJS": 156333,
+      "encodedCSS": 33847,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 768,
+      "height": 900,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 412.03125,
+      "canvases": 0,
+      "encodedJS": 156333,
+      "encodedCSS": 33847,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 414.5625,
+      "canvases": 0,
+      "encodedJS": 156333,
+      "encodedCSS": 33847,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 568.140625,
+      "canvases": 0,
+      "encodedJS": 224609,
+      "encodedCSS": 66429,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "motion": "no-preference",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 643.0625,
+      "canvases": 1,
+      "canvasesAfterStill": 0,
+      "encodedJS": 158877,
+      "encodedCSS": 33847,
+      "chamberBytes": 155976
+    }
+  ]
+}

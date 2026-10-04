@@ -4,7 +4,7 @@ void main(){gl_Position=vec4(position,0.,1.);}`;
 const fragment = `#version 300 es
 precision highp float;
 uniform vec2 resolution;
-uniform float time,energy,mood,theme;
+uniform float time,energy,mood,theme,framing;
 out vec4 pixel;
 float hash(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
 float noise(vec3 p){
@@ -14,7 +14,7 @@ float noise(vec3 p){
 }
 void main(){
  vec2 uv=(gl_FragCoord.xy-.5*resolution)/min(resolution.x,resolution.y);
- vec2 p=uv*2.25;
+ vec2 p=uv*framing;
  float radius=.73*(1.+.018*sin(time*1.4)+energy*.095);
  float r2=dot(p,p);
  float halo=exp(-pow(length(p)/1.04,2.)*3.1);
@@ -47,7 +47,7 @@ void main(){
 }`;
 
 /** A single bounded shader plane, adapted from the founder's Aethelios reference. */
-export function mountWorldEnergy(host: HTMLElement) {
+export function mountWorldEnergy(host: HTMLElement, framing = 2.25) {
   const canvas = document.createElement('canvas');
   const gl = canvas.getContext('webgl2', {
     alpha: true,
@@ -109,6 +109,7 @@ export function mountWorldEnergy(host: HTMLElement) {
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   const resolution = gl.getUniformLocation(program, 'resolution'),
     time = gl.getUniformLocation(program, 'time');
+  gl.uniform1f(gl.getUniformLocation(program, 'framing'), Math.max(1.8, Math.min(2.5, framing)));
   gl.uniform1f(gl.getUniformLocation(program, 'energy'), 0.04);
   gl.uniform1f(gl.getUniformLocation(program, 'mood'), 0);
   host.append(canvas);
@@ -124,7 +125,10 @@ export function mountWorldEnergy(host: HTMLElement) {
     !document.activeElement?.matches('input,textarea,[contenteditable="true"]');
   function draw(now: number) {
     frame = 0;
-    if (!allowed()) return;
+    if (!allowed()) {
+      host.dataset.animating = 'false';
+      return;
+    }
     frame = requestAnimationFrame(draw);
     if (last && now - last < 32) return;
     const delta = last ? now - last : 32;
@@ -145,6 +149,7 @@ export function mountWorldEnergy(host: HTMLElement) {
     host.dataset.rendered = 'true';
   }
   function sync() {
+    host.dataset.animating = String(allowed());
     if (allowed()) {
       if (!frame) {
         last = 0;
@@ -193,5 +198,6 @@ export function mountWorldEnergy(host: HTMLElement) {
     cleanupGPU();
     canvas.remove();
     delete host.dataset.rendered;
+    delete host.dataset.animating;
   };
 }

@@ -9,9 +9,18 @@ export async function POST(request: Request) {
     const parsed = completeInput.safeParse(await mutationBody(request));
     if (!parsed.success) throw new DailyError('Choose a saved action to complete.');
     const result = await completeDailyAction(parsed.data);
-    revalidatePath('/'); revalidatePath('/progress');
+    revalidatePath('/app');
+    revalidatePath('/app/progress');
     return privateJson(result);
   } catch (error) {
-    return privateJson({ error: error instanceof DailyError || error instanceof IntelligenceError ? error.message : 'Completion could not be confirmed.' }, error instanceof DailyError || error instanceof IntelligenceError ? error.status : 503);
+    return privateJson(
+      {
+        error:
+          error instanceof DailyError || error instanceof IntelligenceError
+            ? error.message
+            : 'Completion could not be confirmed.',
+      },
+      error instanceof DailyError || error instanceof IntelligenceError ? error.status : 503,
+    );
   }
 }

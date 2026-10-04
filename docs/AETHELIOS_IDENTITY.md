@@ -33,3 +33,7 @@ Current capabilities remain text conversation, supplied conversation history, op
 ## Validation
 
 See STATUS.md for the final executed checks. New regression coverage includes identity/capability boundaries, finite orb responses, introduction and orb layouts at 344/768/1440px, and preserved legacy conversation links. Existing streaming, memory confirmation, error, auth-denial, SQL ownership and browser tests remain in place.
+
+## Command identity implementation · 2026-10-04
+
+The current Command presence is the flowing green energy sphere already used by the cinematic arrival/world (`EnergyOrb` / `world-energy-renderer`). It has no central star or metal armillary cage. Static and failed-graphics fallback use this same identity. The shared shortcut is a static energy icon, avoiding a second GPU scene. See COMMAND_IMMERSIVE.md for current component selection; AURELIUS_1F.md records the historical Orb, not the current Command visual standard.

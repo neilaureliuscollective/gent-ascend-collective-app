@@ -126,6 +126,15 @@ export function InstallGuide() {
       <p className="install-notice" role="status">
         {notice}
       </p>
+      <details>
+        <summary>Refresh an older app icon</summary>
+        <p>
+          Open Gent Ascend while connected. If Chrome offers “Review app update” in its menu, accept
+          the new crest. If your Home Screen keeps the older icon, remove the app and install again
+          from this browser. Removing the app does not delete records saved to your account; sync
+          any offline training drafts first.
+        </p>
+      </details>
       <p className="muted">
         Aethelios and personal records need an internet connection. Offline, the app shows a
         reconnect screen and does not report unsaved work as saved.

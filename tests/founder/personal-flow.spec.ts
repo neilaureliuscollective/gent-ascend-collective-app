@@ -70,15 +70,19 @@ test('founder can save a profile and goal without paid membership, then retain c
     'Plan tomorrow deliberately.',
   );
   await page.goto('/app/daily');
+  await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Synthetic founder goal' })).toBeVisible();
-  await expect(page.getByText('Plan tomorrow deliberately.', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('.goal-daily-card').getByText('Plan tomorrow deliberately.', { exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Take a moment to check in' }).click();
   await page.getByLabel('What matters most today?').fill('Synthetic saved daily intention');
   await page.getByRole('button', { name: '3 Steady', exact: true }).click();
   await page.getByLabel('Hours slept').fill('7.5');
   await page.getByRole('button', { name: 'Save your day', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Your day is saved.');
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
   await page.reload();
+  await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Synthetic saved daily intention' }),
   ).toBeVisible();
@@ -86,8 +90,9 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.getByLabel('One action you can take').fill('Synthetic persistence action');
   await page.getByRole('button', { name: 'Save your day', exact: true }).click();
   await page.getByRole('checkbox', { name: 'Synthetic persistence action' }).click();
-  await expect(page.getByRole('status')).toHaveText('Your day is saved.');
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
   await page.reload();
+  await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
   await expect(page.getByRole('checkbox', { name: 'Synthetic persistence action' })).toBeChecked();
   await page.goto('/app/goals');
   await page.getByRole('button', { name: 'Mark complete' }).click();
@@ -205,11 +210,14 @@ test('Movement persists activity and removal through the real authenticated app'
   );
 });
 
-test('Daily Command saves arrival and feedback through real Auth, then reloads the saved loop', async ({ page }) => {
+test('Daily Command saves arrival and feedback through real Auth, then reloads the saved loop', async ({
+  page,
+}) => {
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await page.goto('/app/arrival');
   const commandResponse = await page.request.get('/api/daily-command');
   const commandData = await commandResponse.json();
   expect(commandResponse.ok(), commandData.error).toBe(true);
@@ -230,5 +238,7 @@ test('Daily Command saves arrival and feedback through real Auth, then reloads t
   await expect(page.getByRole('status')).toContainText('feedback is saved for tomorrow');
   await page.reload();
   await page.getByText('Close the loop', { exact: true }).click();
-  await expect(page.getByLabel('What should tomorrow know?')).toHaveValue('Synthetic command follow-through.');
+  await expect(page.getByLabel('What should tomorrow know?')).toHaveValue(
+    'Synthetic command follow-through.',
+  );
 });

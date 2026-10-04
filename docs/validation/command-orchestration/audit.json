@@ -1,0 +1,104 @@
+{
+  "environment": "Local production, synthetic sample, Chromium/SwiftShader. Viewport evidence, not physical-device or field performance.",
+  "previous": {
+    "stillJS": 156333,
+    "ambientJS": 158877,
+    "css": 33847,
+    "desktopIncludingPublicPrefetchJS": 224609,
+    "desktopIncludingPublicPrefetchCSS": 66429
+  },
+  "screens": [
+    {
+      "width": 344,
+      "height": 740,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 530.140625,
+      "canvases": 0,
+      "encodedJS": 158459,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 643.0625,
+      "canvases": 0,
+      "encodedJS": 158459,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "motion": "reduce",
+      "large": true,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 1773.15625,
+      "canvases": 0,
+      "encodedJS": 158459,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 768,
+      "height": 900,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 412.03125,
+      "canvases": 0,
+      "encodedJS": 158459,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 414.5625,
+      "canvases": 0,
+      "encodedJS": 158459,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 581.578125,
+      "canvases": 0,
+      "encodedJS": 158459,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "motion": "no-preference",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 643.0625,
+      "canvases": 1,
+      "canvasesAfterStill": 0,
+      "encodedJS": 161003,
+      "encodedCSS": 34106,
+      "chamberBytes": 155976
+    }
+  ]
+}

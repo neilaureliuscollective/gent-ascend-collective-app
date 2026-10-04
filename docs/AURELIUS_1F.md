@@ -49,3 +49,7 @@ After founder visual review, reconnect the official repository when ready and va
 - Initial home payload: 154,433 encoded JavaScript bytes (+545 vs 1E) and 16,626 CSS bytes (+761). The dashboard still loads no canvas. Full conversation including deferred Three/scene: 331,345 encoded JavaScript bytes. These are local browser resource measurements, not field-transfer promises.
 - Final 120-interval RAF samples: phone-width p95 16.8ms / max 16.8ms; unfolded-width p95 16.7ms / max 16.8ms; desktop p95 83.3ms / max 266.6ms with six intervals over 50ms. Desktop reduced its canvas from 300 to 200 pixels during the run. The desktop software-rendered run did **not** establish a smooth sustained frame budget. Physical GPU/device testing remains necessary; do not represent the 30fps target as an observed hardware result.
 - Final audit images/JSON are included in the milestone handoff. Full physical-device, actual Supabase and live model/voice gates remain unrun. No push/deployment.
+
+## Command reuse · 2026-10-04
+
+The new Command environment reuses one deferred instance of this exact renderer. The historical dashboard-only SVG constraint above is superseded for this founder-authorized visual phase. All resource bounds, offscreen/dialog/input pause, adaptive degradation, context-loss behavior and Still/OS reduced-motion removal remain unchanged. Command renders saved records in separate HTML; no personal records enter the scene or model context. See COMMAND_IMMERSIVE.md and STATUS.md for current evidence.

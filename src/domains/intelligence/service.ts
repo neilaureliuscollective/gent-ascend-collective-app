@@ -8,6 +8,7 @@ import { founderBridgeContext } from './founder-bridge';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
 import { localDay } from '@/domains/daily/model';
+import { resolveNextMove } from '@/domains/command/next-move';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -63,6 +64,8 @@ export async function personalContext(question?:string): Promise<PersonalContext
   const dailyRelevant=!question || /today|tomorrow|daily|routine|week|progress|energy|sleep|reflect|yesterday|plan/i.test(question);
   const todayEntry=(daily.data??[]).find(entry=>entry.day===today);
   const previousReview=(reviews.data??[]).find(review=>review.day<today);
+  const orderedActions=(todayEntry?.actions??[]).slice().sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done}));
+  const { title, kind, source, sourceDay } = resolveNextMove({ day: today, actions: orderedActions, reviewed: reviewByDay.has(today), previousReview: previousReview ?? null, goalStep: goal.data?.next_step ?? null });
   return {
     profile: {
       name: person.display_name,
@@ -86,7 +89,7 @@ export async function personalContext(question?:string): Promise<PersonalContext
       confirmed_at,
     })),
     daily: dailyRelevant ? (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}) : [],
-    dailyBrief: {asOf:new Date().toISOString(),day:today,version:todayEntry?.version??0,intention:todayEntry?.intention??'',actions:(todayEntry?.actions??[]).sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done})),openCaptures:captures.count??0,previousReview:previousReview?{day:previousReview.day,tomorrow:previousReview.tomorrow,blocker:previousReview.blocker}:null},
+    dailyBrief: {asOf:new Date().toISOString(),day:today,version:todayEntry?.version??0,intention:todayEntry?.intention??'',actions:orderedActions,openCaptures:captures.count??0,previousReview:previousReview?{day:previousReview.day,tomorrow:previousReview.tomorrow,blocker:previousReview.blocker}:null,nextMove:{title,kind,source,sourceDay}},
     ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
     grooming:grooming?(()=>{const [p,g,r,products,looks,concepts,scans]=grooming;return {profile:p.data?{hair:p.data.hair_focus,beard:p.data.beard_focus,skin:p.data.skin_focus,look:p.data.preferred_look,effort:p.data.effort,sensitivities:p.data.sensitivities,dislikes:p.data.dislikes}:null,goals:(g.data??[]).map(x=>({title:x.title,date:x.target_date})),rituals:(r.data??[]).map(x=>({kind:x.kind,title:x.title,steps:x.steps})),products:(products.data??[]).map(x=>({name:x.name,relation:x.relation,note:x.note})),looks:(looks.data??[]).map(x=>({title:x.title,kind:x.kind,detail:x.detail,date:x.service_date})),concepts:(concepts.data??[]).map(x=>({title:x.title,style:x.style_id,note:x.note,at:x.saved_at!})),scans:(scans.data??[]).map(x=>({at:x.created_at,summary:x.summary}))};})():undefined,
   };

@@ -1,4 +1,4 @@
-const FALLBACK_CACHE = 'gent-ascend-fallback-v3';
+const FALLBACK_CACHE = 'gent-ascend-fallback-v4';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
@@ -6,13 +6,15 @@ self.addEventListener('install', (event) => {
       .then((cache) =>
         cache.addAll([
           '/offline.html',
-          '/brand/icon-v2-192.png',
+          '/brand/app-crest-20261004-192.png',
           '/performance-offline.html',
           '/performance-offline.css',
           '/performance-offline.js',
           '/performance-store.js',
         ]),
-      ),
+      )
+      // Only static fallbacks change; never reload a page or interrupt a private draft.
+      .then(() => self.skipWaiting()),
   );
 });
 self.addEventListener('activate', (event) => {
