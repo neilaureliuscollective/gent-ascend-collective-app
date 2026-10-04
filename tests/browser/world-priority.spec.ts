@@ -53,7 +53,7 @@ for (const width of [360, 768, 1440]) {
     await expect(page.getByText(base.nextAction, { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Continue my day' })).toHaveAttribute(
       'href',
-      '/app#daily-actions',
+      '/app/daily#daily-actions',
     );
     await page.screenshot({
       path: testInfo.outputPath('priority-editor.png'),
