@@ -126,7 +126,7 @@ export function Training({
   }, [restUntil]);
 
   const complete = session.sets.filter((s) => s.done).length;
-  const percent = Math.round((complete / session.sets.length) * 100);
+  const percent = session.sets.length ? Math.round((complete / session.sets.length) * 100) : 0;
   const activeIndex = Math.max(0, exerciseIds.indexOf(activeExercise));
   const activeSets = session.sets.filter((set) => set.exerciseId === activeExercise);
   const activeName = activeSets[0]?.exercise ?? session.title;
@@ -293,6 +293,17 @@ export function Training({
         </details>
       )}
 
+      {exerciseIds.length === 0 ? (
+        <section className="perf-empty-live">
+          <span className="eyebrow">SESSION IS LIVE</span>
+          <h3>Add the first movement when you reach it.</h3>
+          <p>No setup tax. Scan the machine or quick-add a movement above; your first set can start from there.</p>
+          <button type="button" className="perf-primary" onClick={() => document.querySelector<HTMLDetailsElement>('.perf-live-builder')?.setAttribute('open', '')}>
+            Add first movement →
+          </button>
+        </section>
+      ) : (
+        <>
       <nav className="perf-exercise-rail" aria-label="Workout exercises">
         {exerciseIds.map((id, index) => {
           const sets = session.sets.filter((set) => set.exerciseId === id);
@@ -413,6 +424,8 @@ export function Training({
           </button>
         </div>
       </section>
+        </>
+      )}
 
       {sessionActive ? (
         <div className="perf-session-close">
