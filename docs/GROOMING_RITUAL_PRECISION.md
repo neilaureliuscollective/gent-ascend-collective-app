@@ -1,6 +1,6 @@
 # Grooming — Ritual precision
 
-October 4, 2026. Founder instruction: research, plan and execute the next grooming build phase. Builds on the completed local Daily Grooming Intelligence branch. This authorization covers implementation; the earlier automatic source-publication rejection remains unresolved. No remote publication or production changes in this phase.
+October 4, 2026. Founder instruction: research, plan and execute the next grooming build phase. Builds on the completed local Daily Grooming Intelligence branch. Founder subsequently approved source publication to the canonical repository and draft PR #54. The earlier automatic source-publication rejection is resolved by that explicit approval. No production changes are included. Reconciliation with launch release #53 passes local lint/types/build, 324 unit/SQL tests and 27 Grooming/Council browser checks; real CI gates are running.
 
 ## Research and decision
 

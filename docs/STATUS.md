@@ -1,3 +1,9 @@
+## Grooming review publication — October 4, 2026
+
+Founder explicitly approved publication to the canonical repository and a draft PR. [PR #54](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/54) now contains the daily grooming intelligence and ritual precision phases. Reconciled with launch release #53 (`8d40fa0`), preserving web research, continuity and account-claim tests. Remote implementation `d8cf15d` exactly matches the reconciled local source tree `75ae235`.
+
+Reconciled local lint/types, 324 unit/SQL tests, production build, inherited migration ledger and 27 Grooming/Council browser checks pass. GitHub application and real local Supabase Auth/PostgREST/founder gates are running. No merge, hosted migration or production deployment is authorized by this publication approval. Physical device and live-model draft checks remain open. This receipt supersedes the earlier source-publication blocker recorded below.
+
 ## Grooming ritual precision — October 4, 2026
 
 Founder requested research and execution of the next grooming phase. Built a saved-step preview, Guided/All steps navigation, optional step arrangement with keyboard focus/announcements, review step counts, and feedback-driven weekly review using only recorded data. Confirmed feedback now refreshes Progress immediately. Details and research: [GROOMING_RITUAL_PRECISION.md](GROOMING_RITUAL_PRECISION.md).
