@@ -94,13 +94,15 @@ describe('Aethelios context boundaries', () => {
   });
   it('shares the dated day summary without passing action identifiers into the model prompt', () => {
     const actionId='00000000-0000-4000-8000-000000000099';
-    const dailyBrief={asOf:'2026-09-25T20:00:00.000Z',day:'2026-09-25',version:2,intention:'Finish the plan',actions:[{id:actionId,title:'Call Katie',done:false}],openCaptures:2,previousReview:null};
+    const dailyBrief={asOf:'2026-09-25T20:00:00.000Z',day:'2026-09-25',version:2,intention:'Finish the plan',actions:[{id:actionId,title:'Call Katie',done:false}],openCaptures:2,previousReview:null,nextMove:{kind:'action' as const,title:'Call Katie',source:'First unfinished action in your saved order',sourceDay:'2026-09-25'}};
     const messages=buildMessages([], 'Brief me', {...context,dailyBrief});
     const prompt=String(messages[0]?.content);
     expect(prompt).toContain('Call Katie');
     expect(prompt).toContain('2026-09-25T20:00:00.000Z');
     expect(prompt).toContain('"openCaptures":2');
     expect(prompt).not.toContain(actionId);
+    expect(prompt).toContain('First unfinished action in your saved order');
+    expect(JSON.stringify(buildMessages([], 'Brief me', null))).not.toContain('First unfinished action in your saved order');
     expect(JSON.stringify(buildMessages([], 'Brief me', null))).not.toContain('Call Katie');
   });
   it('bounds recent exchanges without splitting message pairs', () => {

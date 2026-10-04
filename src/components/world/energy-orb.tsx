@@ -2,7 +2,15 @@
 import { useEffect, useId, useRef } from 'react';
 
 /** Decorative presence only: no simulated listening or request state. */
-export function EnergyOrb({ moving }: { moving: boolean }) {
+export function EnergyOrb({
+  moving,
+  className = '',
+  framing = 2.25,
+}: {
+  moving: boolean;
+  className?: string;
+  framing?: number;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const id = useId().replaceAll(':', '');
   useEffect(() => {
@@ -12,16 +20,16 @@ export function EnergyOrb({ moving }: { moving: boolean }) {
     let destroy: (() => void) | undefined;
     void import('@/platform/visual/world-energy-renderer')
       .then(({ mountWorldEnergy }) => {
-        if (!disposed) destroy = mountWorldEnergy(element);
+        if (!disposed) destroy = mountWorldEnergy(element, framing);
       })
       .catch(() => {});
     return () => {
       disposed = true;
       destroy?.();
     };
-  }, [moving]);
+  }, [moving, framing]);
   return (
-    <div className="gw-energy-orb" ref={host} aria-hidden="true">
+    <div className={`gw-energy-orb ${className}`} ref={host} aria-hidden="true">
       <svg viewBox="0 0 240 240" fill="none" className="gw-energy-fallback">
         <defs>
           <radialGradient id={`${id}-body`} cx=".35" cy=".3" r=".75">

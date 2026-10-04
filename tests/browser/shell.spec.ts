@@ -5,7 +5,7 @@ for (const width of [360, 768, 1440]) {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto('/app');
-    await expect(page.getByRole('heading', { name: 'Make today yours.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

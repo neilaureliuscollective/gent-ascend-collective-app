@@ -1,0 +1,94 @@
+{
+  "environment": "Headless Chromium / SwiftShader, local production, synthetic sample, no throttling. Viewports, not physical devices. Empty/degraded/error screenshots are isolated real components with synthetic fixtures.",
+  "baseline": {
+    "encodedJS": 159558,
+    "encodedCSS": 29542
+  },
+  "screens": [
+    {
+      "width": 344,
+      "height": 740,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 660.984375,
+      "canvases": 0,
+      "encodedJS": 156360,
+      "encodedCSS": 33472
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 643.0625,
+      "canvases": 0,
+      "encodedJS": 156360,
+      "encodedCSS": 33472
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "motion": "reduce",
+      "large": true,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 1731.046875,
+      "canvases": 0,
+      "encodedJS": 156360,
+      "encodedCSS": 33472
+    },
+    {
+      "width": 768,
+      "height": 900,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 412.03125,
+      "canvases": 0,
+      "encodedJS": 156360,
+      "encodedCSS": 33472
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 414.5625,
+      "canvases": 0,
+      "encodedJS": 156360,
+      "encodedCSS": 33472
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "motion": "reduce",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 568.140625,
+      "canvases": 0,
+      "encodedJS": 156360,
+      "encodedCSS": 33472
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "motion": "no-preference",
+      "large": false,
+      "errors": [],
+      "overflow": false,
+      "moveTop": 643.0625,
+      "canvases": 1,
+      "canvasesAfterStill": 0,
+      "encodedJS": 314500,
+      "encodedCSS": 33472
+    }
+  ]
+}

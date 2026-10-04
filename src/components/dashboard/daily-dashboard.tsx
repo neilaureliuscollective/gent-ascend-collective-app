@@ -1,118 +1,254 @@
 'use client';
-import { useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { OrbitSignature } from '@/components/visual/orbit-signature';
-import { AureliusPresence } from '@/components/visual/aurelius-presence';
-import { Icon } from '@/components/visual/icon';
-import {
-  dayLabel,
-  emptyDay,
-  sampleData,
-  energyLabels,
-  nextLoopMove,
-  type DailyData,
-  type DayEntry,
-} from '@/domains/daily/model';
-import { Rhythm } from './rhythm';
-import { EveningReview } from './evening-review';
-type Editor = 'checkin' | 'action' | 'reflection';
-export function DailyDashboard({ initial }: { initial: DailyData }) {
+import { dayLabel, sampleData, type DailyData } from '@/domains/daily/model';
+import { projectCommand, type CommandProjection } from '@/domains/command/projection';
+import { commandChanges } from '@/domains/command/changes';
+import { CommandField } from './command-field';
+import type { CommandData } from '@/domains/daily-command/model';
+import { CommandArrival } from './command-arrival';
+const DailyDepth = dynamic(() => import('./daily-depth').then((module) => module.DailyDepth), {
+  loading: () => <p role="status">Opening your day workspace…</p>,
+});
+export function DailyDashboard({
+  initial,
+  opening,
+  asOf,
+  dailyCommand,
+}: {
+  initial: DailyData;
+  opening?: CommandProjection;
+  asOf?: string;
+  dailyCommand?: CommandData | null;
+}) {
   const [data, setData] = useState(initial);
-  const [lens, setLens] = useState<'today' | 'evening'>('today');
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editor, setEditor] = useState<Editor>('checkin');
-  const day = data.entries.find((e) => e.day === data.today) ?? emptyDay(data.today, data.timezone);
-  const [draft, setDraft] = useState<DayEntry>(day);
-  const [actionTitle, setActionTitle] = useState('');
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
+  const [operating, setOperating] = useState(dailyCommand ?? null);
+  const safeInitial = useRef(initial);
+  const [depth, setDepth] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [needsReload, setNeedsReload] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [checkedAt, setCheckedAt] = useState(asOf ?? null);
+  const [changes, setChanges] = useState<string[]>([]);
+  const [stale, setStale] = useState(false);
+  const [confirmMove, setConfirmMove] = useState<'adopt' | 'complete' | null>(null);
+  const confirmation = useRef<HTMLDialogElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const lastCheck = useRef(0);
   const lock = useRef(false);
-  const dialog = useRef<HTMLDialogElement>(null);
-  const focusReturn = useRef<HTMLElement | null>(null);
-  const preview = data.mode === 'preview',
-    sample = data.mode === 'sample';
-  const done = day.actions.filter((a) => a.done).length;
-  const nextMove = nextLoopMove(data);
-  const recordedDays = data.entries.filter(entry => entry.version > 0).length;
-  const firstDaySteps = [
-    { label: 'Name your direction', done: !!data.profileDirection },
-    { label: 'Choose one goal', done: !!data.goal },
-    { label: 'Set today’s intention', done: !!day.intention },
-    { label: 'Save one action', done: day.actions.length > 0 },
-    { label: 'Complete a step', done: done > 0 },
-    { label: 'Close the day', done: !!day.review },
-  ];
-  function followNextMove() {
-    if (!nextMove) return;
-    if (nextMove.target === 'intention' || nextMove.target === 'action') {
-      open(nextMove.target === 'intention' ? 'checkin' : 'action');
-      return;
+  const projection = data === initial && opening ? opening : projectCommand(data);
+  const proposal = projection.decisions[0];
+  function openPlan() {
+    if (busy || lock.current) return;
+    setDepth(true);
+    requestAnimationFrame(() => {
+      const target = document.getElementById('command-depth');
+      target?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      target?.focus({ preventScroll: true });
+    });
+  }
+  const refresh = useCallback(
+    async (signal?: AbortSignal) => {
+      const response = await fetch('/api/command', {
+        cache: 'no-store',
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+          : AbortSignal.timeout(15000),
+      });
+      if (response.status === 401 || response.status === 403) {
+        const cleared: DailyData = {
+          mode: 'preview',
+          name: null,
+          today: data.today,
+          timezone: data.timezone,
+          entries: [],
+          goal: null,
+          conversation: null,
+        };
+        safeInitial.current = cleared;
+        setData(cleared);
+        setOperating(null);
+        setChanges([]);
+        setCheckedAt(null);
+        setDepth(false);
+        throw new Error('Your session changed. Sign in again to load your context.');
+      }
+      if (!response.ok) throw new Error('Saved context could not be refreshed.');
+      const snapshot = (await response.json()) as { data: DailyData; asOf: string };
+      if (signal?.aborted) return;
+      if (data.ownerId && snapshot.data.ownerId !== data.ownerId) {
+        const cleared: DailyData = {
+          mode: 'preview',
+          name: null,
+          today: data.today,
+          timezone: data.timezone,
+          entries: [],
+          goal: null,
+          conversation: null,
+        };
+        safeInitial.current = cleared;
+        setData(cleared);
+        setOperating(null);
+        setChanges([]);
+        setCheckedAt(null);
+        setDepth(false);
+        throw new Error('Your account changed. Reload to open the correct Command.');
+      }
+      if (dailyCommand) {
+        let updated: CommandData | null = null;
+        try {
+          const operatingResponse = await fetch('/api/daily-command', {
+            cache: 'no-store',
+            signal: signal
+              ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+              : AbortSignal.timeout(15000),
+          });
+          if (operatingResponse.ok) updated = (await operatingResponse.json()) as CommandData;
+        } catch {
+          /* The sourced briefing remains usable when this independent read fails. */
+        }
+        if (signal?.aborted) return;
+        setOperating(
+          updated?.ownerId === snapshot.data.ownerId &&
+            updated?.snapshot?.day === snapshot.data.today
+            ? updated
+            : null,
+        );
+      }
+      setChanges(commandChanges(data, snapshot.data));
+      setData(snapshot.data);
+      setCheckedAt(snapshot.asOf);
+      lastCheck.current = Date.now();
+      setStale(false);
+    },
+    [data, dailyCommand],
+  );
+  // No polling. Deeper workspace and confirmation dialogs protect unsaved drafts.
+  useEffect(() => {
+    if (!lastCheck.current) lastCheck.current = Date.now();
+    if (data.mode !== 'personal' || depth || uncertain || confirmMove) return;
+    const controller = new AbortController();
+    async function resume() {
+      if (
+        document.visibilityState !== 'visible' ||
+        lock.current ||
+        Date.now() - lastCheck.current < 60000 ||
+        document.querySelector('dialog[open]')
+      )
+        return;
+      lock.current = true;
+      setBusy(true);
+      lastCheck.current = Date.now();
+      try {
+        await refresh(controller.signal);
+      } catch {
+        if (!controller.signal.aborted) setStale(true);
+      } finally {
+        lock.current = false;
+        setBusy(false);
+      }
     }
-    if (nextMove.target === 'review') {
-      setLens('evening');
-      document.getElementById('daily-review')?.scrollIntoView({ behavior: 'smooth' });
-    } else document.getElementById('daily-actions')?.scrollIntoView({ behavior: 'smooth' });
+    document.addEventListener('visibilitychange', resume);
+    window.addEventListener('focus', resume);
+    return () => {
+      controller.abort();
+      document.removeEventListener('visibilitychange', resume);
+      window.removeEventListener('focus', resume);
+    };
+  }, [data.mode, depth, uncertain, confirmMove, refresh]);
+  function askMove(kind: 'adopt' | 'complete') {
+    returnFocus.current = document.activeElement as HTMLElement;
+    setConfirmMove(kind);
+    confirmation.current?.showModal();
   }
-  const open = (kind: Editor) => {
-    setEditorOpen(true);
-    setEditor(kind);
-    setDraft(structuredClone(day));
-    setActionTitle('');
-    focusReturn.current = document.activeElement as HTMLElement;
-    dialog.current?.showModal();
-  };
-  function switchMode(next: DailyData) {
-    setData(next);
-    setNotice('');
-    setError('');
-    setNeedsReload(false);
-    dialog.current?.close();
+  function closeMove() {
+    confirmation.current?.close();
+    setConfirmMove(null);
+    requestAnimationFrame(() => {
+      if (returnFocus.current?.isConnected) returnFocus.current.focus();
+      else document.getElementById('command-move-title')?.focus({ preventScroll: true });
+    });
   }
-  async function save(next: DayEntry, close = true) {
-    if (lock.current || needsReload || preview) return;
+  async function confirm() {
+    if (!confirmMove || lock.current || uncertain || data.mode !== 'personal') return;
     lock.current = true;
     setBusy(true);
+    setFeedback('');
+    const kind = confirmMove;
     try {
-      const { daySchema } = await import('@/domains/daily/schema');
-      const checked = daySchema.safeParse(next);
-      if (!checked.success) {
-        setError('Review your entries before saving.');
-        return;
-      }
-      setError('');
-      setNotice('');
-      if (sample) {
-        setData({
-          ...data,
-          entries: [
-            ...data.entries.filter((e) => e.day !== next.day),
-            { ...next, version: next.version + 1, updated_at: new Date().toISOString() },
-          ],
-        });
-        setNotice('Sample updated. Nothing was saved to an account.');
-        if (close) dialog.current?.close();
-        return;
-      }
-      const response = await fetch('/api/daily', {
-        method: 'PUT',
+      const body =
+        kind === 'adopt'
+          ? {
+              ownerId: data.ownerId,
+              day: data.today,
+              version: projection.day.version,
+              source: projection.move.kind,
+              title: projection.move.title,
+              approve: true,
+            }
+          : {
+              day: data.today,
+              version: projection.day.version,
+              actionId: projection.move.actionId,
+            };
+      const response = await fetch(kind === 'adopt' ? '/api/command' : '/api/daily/complete', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(checked.data),
+        body: JSON.stringify(body),
         signal: AbortSignal.timeout(15000),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? 'Your day could not be saved.');
-      setData(result as DailyData);
-      setNotice('Your day is saved.');
-      if (close) dialog.current?.close();
-    } catch (caught) {
-      setError(
-        caught instanceof Error && caught.name !== 'TimeoutError'
-          ? caught.message
-          : 'We could not confirm the save. Your draft is still here. Reload the saved day before retrying.',
+      if (!response.ok) throw new Error(result.error || 'The change could not be confirmed.');
+      await refresh();
+      setFeedback(
+        kind === 'adopt'
+          ? 'Confirmed. Your move is now in today’s saved plan.'
+          : 'Completion confirmed. Your saved plan is refreshed.',
       );
-      setNeedsReload(true);
+      closeMove();
+    } catch (error) {
+      setUncertain(true);
+      setStale(true);
+      setFeedback(
+        `${error instanceof Error ? error.message : 'The change was not confirmed.'} Reload saved context before trying again.`,
+      );
+      closeMove();
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+  async function decide(approve: boolean) {
+    if (!proposal || lock.current || uncertain || depth || data.mode !== 'personal') return;
+    lock.current = true;
+    setBusy(true);
+    setFeedback('');
+    try {
+      const response = await fetch('/api/aurelius/actions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalId: proposal.id,
+          approve,
+          title: approve ? proposal.title : null,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'The decision was not confirmed.');
+      await refresh();
+      setFeedback(
+        approve
+          ? 'Approved. Your day has been refreshed.'
+          : 'Declined. Your saved context has been refreshed.',
+      );
+    } catch (error) {
+      setUncertain(true);
+      setStale(true);
+      setFeedback(
+        `${error instanceof Error ? error.message : 'The decision could not be confirmed.'} Reload saved context before trying again.`,
+      );
     } finally {
       lock.current = false;
       setBusy(false);
@@ -123,554 +259,325 @@ export function DailyDashboard({ initial }: { initial: DailyData }) {
     lock.current = true;
     setBusy(true);
     try {
-      const response = await fetch('/api/daily', {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(15000),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? 'Reload failed.');
-      setData(result as DailyData);
-      setNeedsReload(false);
-      setError('');
-      setNotice('Loaded your saved day.');
-      dialog.current?.close();
+      await refresh();
+      setUncertain(false);
+      setFeedback('Saved context loaded.');
     } catch {
-      setError(
-        'Your saved day could not be loaded. Your draft remains here. Try again when connected.',
-      );
+      setStale(true);
+      setFeedback('Saved context is unavailable. Try again when connected.');
     } finally {
       lock.current = false;
       setBusy(false);
     }
   }
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    const next =
-      editor === 'action'
-        ? {
-            ...draft,
-            actions: [
-              ...draft.actions,
-              { id: crypto.randomUUID(), title: actionTitle.trim(), done: false },
-            ],
-          }
-        : draft;
-    void save(next);
-  }
-  const feedback = (
-    <>
-      {error && (
-        <div className="daily-error" role="alert">
-          <p>{error}</p>
-          {needsReload && (
-            <button
-              className="text-button"
-              type="button"
-              disabled={busy}
-              onClick={() => void reload()}
-            >
-              Reload saved day (discard draft)
-            </button>
-          )}
-        </div>
-      )}
-    </>
-  );
   return (
-    <div className="daily-dashboard">
-      <header className="daily-heading">
-        <div>
-          <p className="eyebrow">
-            YOUR DAILY SPACE <span> / </span> {dayLabel(data.today, true)}
-          </p>
-          <h1>
-            {sample
-              ? 'A day with intention.'
-              : data.name
-                ? `Your day, ${data.name}.`
-                : 'Make today yours.'}
-          </h1>
-          <p>Your standards. Your direction. Your next step.</p>
-        </div>
-        <div className="daily-heading-tools">
-          <div className="segmented" aria-label="Dashboard perspective">
-            <button aria-pressed={lens === 'today'} onClick={() => setLens('today')}>
-              <Icon name="sun" />
-              Today
-            </button>
-            <button aria-pressed={lens === 'evening'} onClick={() => setLens('evening')}>
-              <Icon name="moon" />
-              Evening
-            </button>
-          </div>
-          {!data.name && !sample && (
-            <button className="text-button" onClick={() => switchMode(sampleData(data.today))}>
-              Explore a sample day <span aria-hidden="true">↗</span>
-            </button>
-          )}
-        </div>
-      </header>
-      {sample ? (
-        <div className="daily-mode-bar">
+    <div className="command-briefing" data-status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}>
+      <section className="command-environment" aria-labelledby="command-title">
+        <header className="command-arrival">
           <span>
-            <strong>Sample experience</strong> · Fictional records. Changes last only in this view.
+            Command <span aria-hidden="true">/</span> {dayLabel(data.today, true)}
           </span>
-          <button onClick={() => switchMode(initial)}>Exit sample</button>
+          <span>
+            {data.mode === 'sample'
+              ? 'Fictional sample'
+              : data.mode === 'preview'
+                ? 'Personal preview'
+                : data.timezone.replaceAll('_', ' ')}
+          </span>
+          <CommandArrival />
+        </header>
+        <div className="command-moment">
+          <p className="command-kicker">Space to see clearly.</p>
+          <h1 id="command-title">
+            {data.name ? `At a glance, ${data.name}.` : 'A clearer place to begin.'}
+          </h1>
+          <p className="command-brief">{projection.briefing}</p>
+          <span className="command-provenance">
+            {projection.briefingSource} ·{' '}
+            {data.mode === 'sample' ? 'fictional records' : 'no AI assessment'}
+          </span>
         </div>
-      ) : preview ? (
-        <div className="daily-mode-bar quiet">
-          <span>Your daily space is ready to explore. Sign in to save personal records.</span>
-          <Link href="/app/you">
-            Your account <Icon name="arrow" />
-          </Link>
-        </div>
-      ) : (
-        <p className="daily-timezone">
-          Today in {data.timezone.replaceAll('_', ' ')} · User-entered observations
-        </p>
-      )}
-      <p className="daily-notice" role="status" data-saved={!!notice && !busy}>
-        {busy ? (sample ? 'Updating sample…' : 'Saving your day…') : notice}
-      </p>
-      {!editorOpen && feedback}
-      {!sample && !preview && recordedDays <= 1 && !day.review && <section className="first-day-guide" aria-label="Your first day">
-        <div><span className="eyebrow">YOUR FIRST DAY / {firstDaySteps.filter(step=>step.done).length} OF {firstDaySteps.length}</span><h2>One day. A real starting point.</h2><p>Take the next step below. Each confirmation saves to your private account, so you can leave and return.</p></div>
-        <ol>{firstDaySteps.map((step,index)=><li key={step.label} data-done={step.done} aria-current={!step.done && firstDaySteps.slice(0,index).every(item=>item.done)?'step':undefined}><span>{step.done?'✓':index+1}</span>{step.label}</li>)}</ol>
-      </section>}
-      {nextMove && <section className="loop-next-move" aria-label="Your next move">
-        <div><p className="eyebrow">YOUR NEXT MOVE · {recordedDays} {recordedDays === 1 ? 'DAY' : 'DAYS'} RECORDED IN THE LAST 30</p>
-          <h2>{nextMove.label}</h2><p>{nextMove.detail}</p></div>
-        {nextMove.target === 'profile' || nextMove.target === 'goal' || nextMove.target === 'tomorrow'
-          ? <Link className="secondary-button" href={nextMove.target === 'profile' ? '/app/ascend-profile' : nextMove.target === 'goal' ? '/app/goals' : '/app/progress'}>
-              {nextMove.target === 'tomorrow' ? 'See your recorded progress' : 'Take the next step'} <Icon name="arrow" />
-            </Link>
-          : <button className="secondary-button" type="button" onClick={followNextMove}>
-              {nextMove.target === 'complete' ? 'See today’s actions' : nextMove.target === 'review' ? 'Review today' : 'Take the next step'} <Icon name="arrow" />
-            </button>}
-      </section>}
-      {!sample && !preview && !data.profileDirection && <p className="baseline-invitation"><Link href="/app/ascend-profile">Give Aethelios your starting point →</Link></p>}
-      {!sample && !preview && data.profileDirection && <aside className="loop-context" aria-label="Your longer direction"><span className="eyebrow">THE DIRECTION YOU CHOSE</span><p>{data.profileDirection}</p><Link href="/app/ascend-profile">Refine your Ascend Profile →</Link></aside>}
-      {!sample && !preview && (data.carryForward || data.openCaptures) && <aside className="loop-context" aria-label="Context carried into today">
-        <span className="eyebrow">CARRIED INTO TODAY</span>
-        {data.carryForward?.reflection && <p>From {dayLabel(data.carryForward.day, true)}: {data.carryForward.reflection}</p>}
-        {data.carryForward?.tomorrow && <p><strong>What you chose to carry forward:</strong> {data.carryForward.tomorrow}</p>}
-        {data.carryForward?.blocker && <p><strong>Friction you noticed:</strong> {data.carryForward.blocker}</p>}
-        {!!data.carryForward?.unfinished.length && <p>{data.carryForward.unfinished.length} unfinished {data.carryForward.unfinished.length === 1 ? 'action' : 'actions'} from {dayLabel(data.carryForward.day, true)}. Choose deliberately what still matters.</p>}
-        {!!data.openCaptures && <Link href="/app/captures">{data.openCaptures} {data.openCaptures === 1 ? 'thought' : 'thoughts'} waiting in Capture →</Link>}
-      </aside>}
-      <div className="daily-top-grid">
-        <section className="daily-orientation" aria-labelledby="orientation-title">
-          <OrbitSignature />
-          <div className="orientation-top">
-            <span className="eyebrow">
-              {lens === 'today' ? 'YOUR DIRECTION TODAY' : 'A MOMENT TO REFLECT'}
-            </span>
-            <span className="tag">{day.intention ? 'IN YOUR WORDS' : 'GENT ASCEND'}</span>
+        <section className="command-next" aria-label="Today’s move">
+          <div>
+            <span>Today’s move</span>
+            <h2 id="command-move-title" tabIndex={-1}>
+              {projection.move.title}
+            </h2>
+            <p>{projection.move.source}</p>
           </div>
-          <div className="orientation-content">
-            <div>
-              <h2 id="orientation-title">
-                {lens === 'evening'
-                  ? 'Let the day settle.'
-                  : day.intention || (
-                      <>
-                        Begin with clarity.
-                        <br />
-                        <em>Move with intention.</em>
-                      </>
-                    )}
-              </h2>
-              <p>
-                {lens === 'evening'
-                  ? 'Keep what mattered. Notice what you learned. Tomorrow can begin from there.'
-                  : day.intention
-                    ? 'A direction you chose. Let the next small action support it.'
-                    : 'Choose what deserves your attention. Build the day around it.'}
-              </p>
-            </div>
-            <AureliusPresence className="daily-presence" />
-          </div>
-          <div className="orientation-bottom">
+          {data.mode === 'personal' && projection.move.kind === 'action' ? (
             <button
-              className="button"
-              onClick={() => open(lens === 'today' ? 'checkin' : 'reflection')}
+              className="command-action"
+              disabled={busy || uncertain || stale || depth}
+              onClick={() => askMove('complete')}
             >
-              {lens === 'today'
-                ? day.intention
-                  ? 'Refine your intention'
-                  : 'Set your intention'
-                : 'Reflect on today'}
-              <Icon name="arrow" />
+              Mark complete <span aria-hidden="true">↗</span>
             </button>
-            <Link
-              href={`/app/aethelios?starter=${lens === 'today' ? 'plan' : 'reflect'}`}
-              className="orientation-link"
+          ) : data.mode === 'personal' && data.ownerId && projection.canAdopt ? (
+            <button
+              className="command-action"
+              disabled={busy || uncertain || stale || depth}
+              onClick={() => askMove('adopt')}
             >
-              {lens === 'today' ? 'Plan with Aethelios' : 'Reflect with Aethelios'}{' '}
-              <span aria-hidden="true">↗</span>
+              Use this move today <span aria-hidden="true">↗</span>
+            </button>
+          ) : projection.move.href ? (
+            <Link prefetch={false} className="command-action" href={projection.move.href}>
+              See next step <span aria-hidden="true">↗</span>
             </Link>
-          </div>
-          <p className="orientation-source">
-            {sample
-              ? 'Sample day · no AI assessment'
-              : day.intention
-                ? 'Your intention · no AI assessment'
-                : 'Your daily orientation · no AI assessment'}
-          </p>
-        </section>
-        <section className="daily-card checkin-card">
-          <div className="daily-card-heading">
-            <div>
-              <p className="eyebrow">PAUSE & NOTICE</p>
-              <h2>How are you arriving?</h2>
-            </div>
-            <Icon name="sun" />
-          </div>
-          <p className="daily-card-copy">Your own perspective belongs beside the numbers.</p>
-          <div className="checkin-values">
-            <div>
-              <span>ENERGY</span>
-              <strong>
-                {day.energy ?? '—'}
-                <small> / 5</small>
-              </strong>
-              <p>{day.energy ? energyLabels[day.energy - 1] : 'Not checked in'}</p>
-              <div className="energy-pips" aria-hidden="true">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <i key={n} className={day.energy != null && n <= day.energy ? 'lit' : ''} />
-                ))}
-              </div>
-            </div>
-            <div>
-              <span>SLEEP</span>
-              <strong>
-                {day.sleep_minutes != null ? Math.floor(day.sleep_minutes / 60) : '—'}
-                <small>
-                  {' '}
-                  h{' '}
-                  {day.sleep_minutes != null && day.sleep_minutes % 60
-                    ? `${day.sleep_minutes % 60}m`
-                    : ''}
-                </small>
-              </strong>
-              <p>{day.sleep_minutes != null ? 'Entered by you' : 'Not recorded'}</p>
-              <span className="manual-label">SELF-REPORTED</span>
-            </div>
-          </div>
-          <button className="checkin-button" onClick={() => open('checkin')}>
-            {day.energy != null || day.sleep_minutes != null
-              ? 'Update your check-in'
-              : 'Take a moment to check in'}
-            <Icon name="arrow" />
-          </button>
-        </section>
-      </div>
-      <div className="daily-main-grid">
-        <section id="daily-actions" className="daily-card actions-card">
-          <div className="daily-card-heading">
-            <div>
-              <p className="eyebrow">SMALL STEPS. REAL INTENT.</p>
-              <h2>Make room for progress.</h2>
-            </div>
-            <span className="daily-count">
-              {done}
-              <span> / {day.actions.length}</span>
-            </span>
-          </div>
-          <p className="daily-card-copy">
-            A few things worth doing. Enough space to actually do them.
-          </p>
-          <div
-            className="action-progress"
-            role="img"
-            aria-label={`${done} of ${day.actions.length} actions complete`}
-          >
-            <span
-              style={{ width: `${day.actions.length ? (done / day.actions.length) * 100 : 0}%` }}
-            />
-          </div>
-          <ul className="daily-actions">
-            {day.actions.map((action) => (
-              <li key={action.id}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={action.done}
-                    disabled={busy || needsReload || preview}
-                    onChange={() =>
-                      void save(
-                        {
-                          ...day,
-                          actions: day.actions.map((a) =>
-                            a.id === action.id ? { ...a, done: !a.done } : a,
-                          ),
-                        },
-                        false,
-                      )
-                    }
-                  />
-                  <span className={action.done ? 'action-done' : ''}>{action.title}</span>
-                </label>
-                <button
-                  className="remove-action"
-                  aria-label={`Remove action: ${action.title}`}
-                  disabled={busy || needsReload || preview}
-                  onClick={() =>
-                    void save(
-                      { ...day, actions: day.actions.filter((a) => a.id !== action.id) },
-                      false,
-                    )
-                  }
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-          {!day.actions.length && (
-            <div className="daily-actions-empty">
-              <Icon name="progress" />
-              <p>
-                What would make today meaningful?
-                <br />
-                <span>Start with one action you can actually take.</span>
-              </p>
-            </div>
+          ) : (
+            <button className="command-action" onClick={openPlan}>
+              Open day workspace <span aria-hidden="true">↗</span>
+            </button>
           )}
+        </section>
+        <CommandField
+          projection={projection}
+          openPlan={openPlan}
+          status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}
+          changed={changes.length > 0}
+        />
+      </section>
+      {data.mode === 'sample' && (
+        <div className="command-mode">
+          <span>Sample experience · Fictional records. Changes stay in this view.</span>
           <button
-            className="add-daily-action"
-            disabled={busy || needsReload || day.actions.length >= 5}
-            onClick={() => open('action')}
+            className="text-button"
+            onClick={() => {
+              setData(safeInitial.current);
+              setDepth(false);
+              setFeedback('');
+              setStale(false);
+              setChanges([]);
+              setUncertain(false);
+            }}
           >
-            +{' '}
-            {day.actions.length >= 5 ? 'Five is enough for this space' : 'Add a deliberate action'}
+            Exit sample
           </button>
-          {day.actions.length > 0 && done === day.actions.length && (
-            <p className="completion-note">
-              You followed through on what you chose. Leave some room for the rest of life.
-            </p>
-          )}
-        </section>
-        <div className="daily-side-stack">
-          <section className="daily-card goal-daily-card">
-            <p className="eyebrow">THE BIGGER DIRECTION</p>
-            <h2>{data.goal?.title || 'What are you building toward?'}</h2>
-            <p>
-              {data.goal?.next_step || 'Give your daily steps something meaningful to support.'}
-            </p>
-            <Link className="card-action" href="/app/goals">
-              {data.goal ? 'Open your goal' : 'Choose your direction'}
-              <Icon name="arrow" />
-            </Link>
-          </section>
-          <section className="daily-continuity">
-            <AureliusPresence />
-            <div>
-              <p className="eyebrow">PICK UP THE THREAD</p>
-              <h3>{data.conversation?.title || 'A considered perspective.'}</h3>
-              <Link
-                href={
-                  data.conversation
-                    ? `/app/aethelios?conversation=${data.conversation.id}`
-                    : '/app/aethelios?starter=perspective'
-                }
-              >
-                {data.conversation ? 'Continue your conversation' : 'Think with Aethelios'}{' '}
-                <span aria-hidden="true">↗</span>
-              </Link>
-            </div>
-          </section>
         </div>
-      </div>
-      <div className="daily-bottom-grid">
-        <Rhythm today={data.today} entries={data.entries} />
-        <section
-          id="daily-review"
-          className={`daily-card reflection-card ${lens === 'evening' ? 'reflection-active' : ''}`}
-        >
-          <div className="reflection-symbol" aria-hidden="true">
-            ✦
-          </div>
-          <p className="eyebrow">CLOSE THE DAY WELL</p>
+      )}
+      {data.mode === 'preview' && (
+        <div className="command-mode">
+          <span>Sign in to use your own saved context.</span>
+          <button
+            className="text-button"
+            onClick={() => {
+              setData(sampleData(data.today));
+              setDepth(false);
+              setFeedback('');
+              setStale(false);
+              setChanges([]);
+              setUncertain(false);
+            }}
+          >
+            Explore a sample day ↗
+          </button>
+        </div>
+      )}
+      <section className="command-oversight" aria-label="Needs you">
+        <div>
+          <span className="command-section-label">Needs you</span>
           <h2>
-            Keep the part
-            <br />
-            that matters.
+            {!projection.decisionsAvailable || stale
+              ? 'Decision status is unavailable.'
+              : proposal
+                ? projection.decisions.length > 1
+                  ? 'One decision at a time.'
+                  : 'One decision to make.'
+                : data.mode === 'personal'
+                  ? 'Nothing needs you right now.'
+                  : 'No account decisions in this view.'}
           </h2>
           <p>
-            {day.reflection || 'A small win. A lesson. Something you want to carry into tomorrow.'}
+            {proposal
+              ? proposal.title
+              : !projection.decisionsAvailable || stale
+                ? 'Your saved day is still available. Reload to check pending decisions.'
+                : 'No new approval step. Go live your day.'}
           </p>
-          <button className="secondary-button" onClick={() => open('reflection')}>
-            {day.reflection ? 'Edit your reflection' : 'Leave a reflection'}
-            <Icon name="arrow" />
-          </button>
-          <span className="reflection-note">
-            {sample
-              ? 'Sample only · never saved'
-              : preview
-                ? 'Personal reflections require sign-in'
-                : 'Private to your account · not added to AI memory'}
-          </span>
-          {!sample&&!preview&&day.version>0&&<EveningReview day={day} disabled={busy} onSaved={result=>{setData(result as DailyData);setNotice('Your review is confirmed. Tomorrow can begin from here.');}} />}
-        </section>
-      </div>
-      <footer className="daily-footer">
-        <div>
-          <p className="eyebrow">YOUR LIFE, CONNECTED</p>
-          <p>More of your world. At your pace.</p>
         </div>
-        <nav aria-label="Explore your personal world">
-          <Link href="/app/world">
-            My world <Icon name="arrow" />
-          </Link>
-          <Link href="/app/you">
-            Personal context <Icon name="arrow" />
-          </Link>
-        </nav>
-      </footer>
-      <details className="daily-data-note">
-        <summary>Where this information comes from</summary>
+        {proposal && (
+          <div className="command-decision">
+            <p>Saved Aethelios suggestion · not added to your day</p>
+            <button
+              className="secondary-button"
+              disabled={busy || uncertain || stale || depth}
+              onClick={() => void decide(true)}
+            >
+              Approve action
+            </button>
+            <button
+              className="text-button"
+              disabled={busy || uncertain || stale || depth}
+              onClick={() => void decide(false)}
+            >
+              Decline
+            </button>
+            {projection.decisions.length > 1 && (
+              <details>
+                <summary>{projection.decisions.length - 1} more saved suggestions</summary>
+                <ul>
+                  {projection.decisions.slice(1).map((item) => (
+                    <li key={item.id}>{item.title}</li>
+                  ))}
+                </ul>
+                <p>Oldest first. Decide the current suggestion to continue.</p>
+              </details>
+            )}
+          </div>
+        )}
+        {projection.decisions.length > 1 && (
+          <details className="command-more-decisions">
+            <summary>{projection.decisions.length - 1} more saved suggestions</summary>
+            <p>Shown in the order they were saved. No urgency is inferred.</p>
+            <ul>
+              {projection.decisions.slice(1).map((item) => (
+                <li key={item.id}>{item.title}</li>
+              ))}
+            </ul>
+          </details>
+        )}
+        {(uncertain || stale || !projection.decisionsAvailable) && (
+          <button className="text-button" disabled={busy || depth} onClick={() => void reload()}>
+            Reload saved context
+          </button>
+        )}
+      </section>
+      <p className="command-feedback" role="status">
+        {busy ? 'Confirming saved state…' : feedback}
+      </p>
+      <section className="command-continuity" aria-label="In motion">
+        <span className="command-section-label">In motion</span>
         <p>
-          Energy and sleep here are your own reports. Actions, intentions and reflections are
-          entered by you. Missing entries remain blank. Wearables, automatic recovery scores, labs
-          and body measurements are not connected to this dashboard. Your three most recent daily
-          entries are included only when you choose personal context in an Aethelios conversation.
+          {busy
+            ? 'Refreshing saved context…'
+            : stale
+              ? 'Showing the last loaded context. Refresh is unavailable.'
+              : projection.receipts.length
+                ? 'Your saved context is organized. No new input required.'
+                : 'Nothing to prepare right now.'}
         </p>
-      </details>
+        {!!changes.length && <p className="command-changes">{changes.join(' ')}</p>}
+        {!!projection.receipts.length && (
+          <details className="command-receipts">
+            <summary>What was prepared</summary>
+            <ul>
+              {projection.receipts.map((receipt) => (
+                <li key={receipt.id}>
+                  <strong>{receipt.title}</strong>
+                  <p>{receipt.detail}</p>
+                  <small>{receipt.source}</small>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+        {!!data.openCaptures && (
+          <Link prefetch={false} href="/app/captures">
+            {data.openCaptures} saved {data.openCaptures === 1 ? 'capture' : 'captures'} in your
+            inbox ↗
+          </Link>
+        )}
+        <small>
+          {checkedAt && data.mode === 'personal'
+            ? `Prepared at ${new Intl.DateTimeFormat('en-US', { timeZone: data.timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(checkedAt))}. `
+            : ''}
+          Saved records only. Model context stays under your conversation controls.
+        </small>
+        {data.mode === 'personal' && (
+          <button
+            className="text-button"
+            disabled={busy || depth || !!confirmMove}
+            onClick={() => void reload()}
+          >
+            Refresh briefing
+          </button>
+        )}
+      </section>
+      {data.mode === 'personal' && (
+        <section className="command-readiness" aria-label="Daily Command connection">
+          <div>
+            <span className="command-section-label">Your operating state</span>
+            <h2>
+              {operating?.snapshot?.confidence.known
+                ? operating.snapshot.state
+                : 'Arrival signals incomplete'}
+            </h2>
+            <p>
+              {operating?.snapshot?.reason ??
+                'Your arrival context is unavailable. Open Daily Command to reconnect.'}
+            </p>
+            <small>
+              {operating?.snapshot
+                ? `${operating.snapshot.confidence.known}/3 recovery signals · product guidance, not a health measurement`
+                : 'No state inferred.'}
+            </small>
+          </div>
+          <Link prefetch={false} className="command-action" href="/app/arrival">
+            Arrival & feedback ↗
+          </Link>
+        </section>
+      )}
+      <nav className="command-domains" aria-label="Your operating spaces">
+        <Link prefetch={false} href="/app/aethelios">
+          Aethelios <span>Think it through ↗</span>
+        </Link>
+        <Link prefetch={false} href="/app/performance">
+          Performance <span>Training · fuel · recovery ↗</span>
+        </Link>
+        <Link prefetch={false} href="/app/grooming">
+          Grooming <span>Your look · your ritual ↗</span>
+        </Link>
+      </nav>
+      <nav className="command-depth-nav" aria-label="Explore your context">
+        <button
+          disabled={busy}
+          aria-expanded={depth}
+          aria-controls="command-depth"
+          onClick={() => (depth ? setDepth(false) : openPlan())}
+        >
+          {depth ? 'Close day workspace' : 'Day workspace'} <span>↗</span>
+        </button>
+        <Link prefetch={false} href="/app/progress">
+          Progress <span>↗</span>
+        </Link>
+        <Link prefetch={false} href="/app/world">
+          My world <span>↗</span>
+        </Link>
+        <Link prefetch={false} href="/app/ascend-profile">
+          Your direction <span>↗</span>
+        </Link>
+      </nav>
+      {depth && (
+        <div id="command-depth" tabIndex={-1} aria-label="Day workspace">
+          <DailyDepth initial={data} onChange={setData} />
+        </div>
+      )}
       <dialog
-        className="daily-editor"
-        ref={dialog}
-        aria-labelledby="daily-editor-title"
+        ref={confirmation}
+        className="daily-editor command-confirmation"
+        aria-labelledby="command-confirm-title"
         onCancel={(event) => {
-          if (busy) event.preventDefault();
-        }}
-        onClose={() => {
-          setEditorOpen(false);
-          focusReturn.current?.focus();
+          event.preventDefault();
+          if (!busy) closeMove();
         }}
       >
-        <div className="daily-editor-top">
-          <p className="eyebrow">{sample ? 'SAMPLE DAY' : dayLabel(data.today, true)}</p>
-          <button
-            aria-label="Close daily editor"
-            disabled={busy}
-            onClick={() => dialog.current?.close()}
-          >
-            ×
-          </button>
-        </div>
-        <h2 id="daily-editor-title">
-          {editor === 'checkin'
-            ? 'A moment for yourself.'
-            : editor === 'action'
-              ? 'Choose your next step.'
-              : 'What stays with you?'}
+        <h2 id="command-confirm-title">
+          {confirmMove === 'adopt' ? 'Use this move today?' : 'Confirm this is complete?'}
         </h2>
-        {preview ? (
-          <div className="daily-editor-preview">
-            <p>Sign in to save your day, or try the sample experience with fictional records.</p>
-            <button className="button" onClick={() => switchMode(sampleData(data.today))}>
-              Try the sample day
-            </button>
-            <Link href="/app/you">Your account →</Link>
-          </div>
-        ) : (
-          <form onSubmit={submit} aria-label="Daily editor">
-            <fieldset disabled={busy} className="daily-editor-fields">
-              {editor === 'checkin' ? (
-                <>
-                  <label htmlFor="day-intention">What matters most today?</label>
-                  <input
-                    id="day-intention"
-                    maxLength={160}
-                    value={draft.intention}
-                    onChange={(e) => setDraft({ ...draft, intention: e.target.value })}
-                    placeholder="One direction worth choosing"
-                  />
-                  <fieldset className="energy-input">
-                    <legend>
-                      How is your energy? <span>Optional</span>
-                    </legend>
-                    <div>
-                      {energyLabels.map((label, i) => (
-                        <button
-                          type="button"
-                          key={label}
-                          aria-pressed={draft.energy === i + 1}
-                          onClick={() =>
-                            setDraft({ ...draft, energy: draft.energy === i + 1 ? null : i + 1 })
-                          }
-                        >
-                          <strong>{i + 1}</strong>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <label htmlFor="day-sleep">
-                    Hours slept <span className="muted">(optional, entered by you)</span>
-                  </label>
-                  <input
-                    id="day-sleep"
-                    type="number"
-                    min="0"
-                    max="24"
-                    step="0.25"
-                    value={draft.sleep_minutes == null ? '' : draft.sleep_minutes / 60}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        sleep_minutes:
-                          e.target.value === '' ? null : Math.round(Number(e.target.value) * 60),
-                      })
-                    }
-                    placeholder="e.g. 7.5"
-                  />
-                </>
-              ) : editor === 'action' ? (
-                <>
-                  <label htmlFor="day-action">One action you can take</label>
-                  <input
-                    id="day-action"
-                    required
-                    maxLength={100}
-                    value={actionTitle}
-                    onChange={(e) => setActionTitle(e.target.value)}
-                    placeholder="Keep it specific and manageable"
-                  />
-                  <p className="daily-editor-help">
-                    Up to five actions. Completing one does not complete your larger goal.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <label htmlFor="day-reflection">A win, a lesson, or something to remember</label>
-                  <textarea
-                    id="day-reflection"
-                    rows={5}
-                    maxLength={500}
-                    value={draft.reflection}
-                    onChange={(e) => setDraft({ ...draft, reflection: e.target.value })}
-                    placeholder="No perfect answer required."
-                  />
-                  <p className="daily-editor-help">
-                    Saved in your daily record. Nothing is automatically promoted to Aethelios
-                    memory.
-                  </p>
-                </>
-              )}
-            </fieldset>
-            {feedback}
-            <button
-              className="button"
-              type="submit"
-              disabled={busy || needsReload || (editor === 'action' && !actionTitle.trim())}
-            >
-              {busy ? 'Saving…' : sample ? 'Apply to sample' : 'Save your day'}
-              <Icon name="arrow" />
-            </button>
-          </form>
-        )}
+        <p>{projection.move.title}</p>
+        <small>{projection.move.source}</small>
+        <p>
+          {confirmMove === 'adopt'
+            ? 'This adds your saved next step to today’s plan. Your other records stay intact.'
+            : 'Only you can confirm what happened. This updates your saved action.'}
+        </p>
+        <button className="button" disabled={busy || uncertain} onClick={() => void confirm()}>
+          {busy ? 'Confirming…' : confirmMove === 'adopt' ? 'Confirm move' : 'Confirm completion'}
+        </button>
+        <button className="text-button" disabled={busy} onClick={closeMove}>
+          Cancel
+        </button>
       </dialog>
     </div>
   );

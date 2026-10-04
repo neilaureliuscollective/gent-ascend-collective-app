@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { AureliusPresence } from './visual/aurelius-presence';
+import { EnergyOrb } from './world/energy-orb';
 const Workspace = dynamic(
   () => import('./aurelius/workspace').then((module) => module.AureliusWorkspace),
   { loading: () => <p role="status">Opening Aethelios…</p>, ssr: false },
@@ -20,7 +20,7 @@ export function AureliusPanel() {
   if (path === '/app/aethelios')
     return (
       <Link className="aurelius-trigger is-current" href="/app/aethelios" aria-current="page">
-        <AureliusPresence />
+        <EnergyOrb moving={false} className="shell-energy-icon" />
         <span>Aethelios</span>
       </Link>
     );
@@ -30,13 +30,16 @@ export function AureliusPanel() {
         className="aurelius-trigger"
         ref={trigger}
         onClick={() => {
-          if (window.matchMedia('(max-width: 1100px)').matches) { router.push('/app/aethelios'); return; }
+          if (window.matchMedia('(max-width: 1100px)').matches) {
+            router.push('/app/aethelios');
+            return;
+          }
           setOpen(true);
           dialog.current?.showModal();
         }}
         aria-haspopup="dialog"
       >
-        <AureliusPresence />
+        <EnergyOrb moving={false} className="shell-energy-icon" />
         <span>Aethelios</span>
       </button>
       <dialog

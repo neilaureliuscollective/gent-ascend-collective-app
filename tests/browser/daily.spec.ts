@@ -9,7 +9,8 @@ for (const width of [360, 768, 1440])
     });
     await page.goto('/app');
     await page.getByRole('button', { name: 'Explore a sample day' }).click();
-    await expect(page.getByText('Sample experience', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: /^Day workspace/ }).click();
+    await expect(page.locator('.command-mode')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -46,7 +47,7 @@ for (const width of [360, 768, 1440])
     await expect(page.locator('.daily-table-scroll tbody tr')).toHaveCount(30);
     expect(writes).toEqual([]);
     await page.getByRole('button', { name: 'Exit sample' }).click();
-    await expect(page.getByRole('heading', { name: 'Make today yours.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Call a friend' })).toHaveCount(0);
   });
 test('daily editor preserves unsaved text on conflict and reloads only deliberately', async ({
@@ -69,6 +70,7 @@ test('daily editor preserves unsaved text on conflict and reloads only deliberat
     return route.fulfill({ json: data });
   });
   await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.getByRole('button', { name: 'Update your check-in' }).click();
   await page.getByLabel('What matters most today?').fill('Keep this draft');
   await page.getByRole('button', { name: 'Save your day', exact: true }).click();
@@ -81,47 +83,77 @@ test('daily editor preserves unsaved text on conflict and reloads only deliberat
   await page.getByRole('button', { name: 'Update your check-in' }).click();
   await page.getByLabel('What matters most today?').fill('A saved intention');
   await page.getByRole('button', { name: 'Save your day', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Your day is saved.');
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
   await expect(page.getByRole('heading', { name: 'A saved intention' })).toBeVisible();
 });
-test('completion endpoint rejects unsigned and hostile-origin requests',async ({request})=>{
- const url='http://127.0.0.1:3100/api/daily/complete';
- const input={day:'2026-09-25',actionId:'62000000-0000-4000-8000-000000000001',version:1};
- expect((await request.post(url,{data:input,headers:{Origin:'https://hostile.example'}})).status()).toBe(403);
- expect((await request.post(url,{data:input,headers:{Origin:'http://127.0.0.1:3100'}})).status()).toBe(401);
+test('completion endpoint rejects unsigned and hostile-origin requests', async ({ request }) => {
+  const url = 'http://127.0.0.1:3100/api/daily/complete';
+  const input = { day: '2026-09-25', actionId: '62000000-0000-4000-8000-000000000001', version: 1 };
+  expect(
+    (
+      await request.post(url, { data: input, headers: { Origin: 'https://hostile.example' } })
+    ).status(),
+  ).toBe(403);
+  expect(
+    (
+      await request.post(url, { data: input, headers: { Origin: 'http://127.0.0.1:3100' } })
+    ).status(),
+  ).toBe(401);
 });
-test('evening review stays a draft until confirmed and allows correction', async ({page})=>{
- const data={...sampleData('2026-09-21'),mode:'personal' as const,name:'Synthetic tester'};
- const day=data.entries.find(entry=>entry.day===data.today)!;
- const methods:string[]=[];
- await page.route('**/api/daily',async route=>{
-  const input=route.request().postDataJSON();
-  day.reflection=input.reflection;
-  day.version+=1;
-  await route.fulfill({json:data});
- });
- await page.route('**/api/daily/review',async route=>{
-  const method=route.request().method();methods.push(method);
-  if(method==='POST') return route.fulfill({json:{review:{progress:'Finished the client brief',blocker:'Late meeting delayed planning',tomorrow:'Protect the morning'},sourceDayVersion:day.version}});
-  const input=route.request().postDataJSON();
-  day.review={...input.review,version:1,source_kind:'user',source_day_version:day.version,confirmed_at:new Date().toISOString()};
-  return route.fulfill({json:data});
- });
- await page.goto('http://127.0.0.1:3102/?mode=daily');
- await page.getByRole('button',{name:'Leave a reflection'}).click();
- await page.getByLabel('A win, a lesson, or something to remember').fill('I finished the client brief; the late meeting delayed planning.');
- await page.getByRole('button',{name:'Save your day',exact:true}).click();
- await expect(page.locator('.reflection-card')).toContainText('I finished the client brief');
- await page.getByRole('button',{name:'Close the loop for today'}).click();
- await page.getByRole('button',{name:'Prepare from my reflection with Aethelios'}).click();
- await expect(page.getByLabel('What moved forward?')).toHaveValue('Finished the client brief');
- await expect(page.locator('.evening-review-summary')).toHaveCount(0);
- await page.getByLabel('What should tomorrow remember?').fill('Write first, meet later');
- await page.getByRole('button',{name:'Confirm review'}).click();
- await expect(page.getByText('Write first, meet later')).toBeVisible();
- expect(methods).toEqual(['POST','PUT']);
- await page.getByRole('button',{name:'Refine your review'}).click();
- await expect(page.getByLabel('What should tomorrow remember?')).toHaveValue('Write first, meet later');
+test('evening review stays a draft until confirmed and allows correction', async ({ page }) => {
+  const data = { ...sampleData('2026-09-21'), mode: 'personal' as const, name: 'Synthetic tester' };
+  const day = data.entries.find((entry) => entry.day === data.today)!;
+  const methods: string[] = [];
+  await page.route('**/api/daily', async (route) => {
+    const input = route.request().postDataJSON();
+    day.reflection = input.reflection;
+    day.version += 1;
+    await route.fulfill({ json: data });
+  });
+  await page.route('**/api/daily/review', async (route) => {
+    const method = route.request().method();
+    methods.push(method);
+    if (method === 'POST')
+      return route.fulfill({
+        json: {
+          review: {
+            progress: 'Finished the client brief',
+            blocker: 'Late meeting delayed planning',
+            tomorrow: 'Protect the morning',
+          },
+          sourceDayVersion: day.version,
+        },
+      });
+    const input = route.request().postDataJSON();
+    day.review = {
+      ...input.review,
+      version: 1,
+      source_kind: 'user',
+      source_day_version: day.version,
+      confirmed_at: new Date().toISOString(),
+    };
+    return route.fulfill({ json: data });
+  });
+  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await page.getByRole('button', { name: 'Leave a reflection' }).click();
+  await page
+    .getByLabel('A win, a lesson, or something to remember')
+    .fill('I finished the client brief; the late meeting delayed planning.');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await expect(page.locator('.reflection-card')).toContainText('I finished the client brief');
+  await page.getByRole('button', { name: 'Close the loop for today' }).click();
+  await page.getByRole('button', { name: 'Prepare from my reflection with Aethelios' }).click();
+  await expect(page.getByLabel('What moved forward?')).toHaveValue('Finished the client brief');
+  await expect(page.locator('.evening-review-summary')).toHaveCount(0);
+  await page.getByLabel('What should tomorrow remember?').fill('Write first, meet later');
+  await page.getByRole('button', { name: 'Confirm review' }).click();
+  await expect(page.getByText('Write first, meet later')).toBeVisible();
+  expect(methods).toEqual(['POST', 'PUT']);
+  await page.getByRole('button', { name: 'Refine your review' }).click();
+  await expect(page.getByLabel('What should tomorrow remember?')).toHaveValue(
+    'Write first, meet later',
+  );
 });
 test('dashboard conversation starter is a draft, never an automatic model request', async ({
   page,
@@ -131,6 +163,7 @@ test('dashboard conversation starter is a draft, never an automatic model reques
     if (r.method() === 'POST' && r.url().includes('/api/aurelius')) writes.push(r.url());
   });
   await page.goto('/app');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.getByRole('link', { name: 'Plan with Aethelios' }).click();
   await expect(page.getByLabel('Message Aethelios')).toHaveValue(
     'Help me choose what matters most today and turn it into a manageable plan.',
@@ -162,12 +195,37 @@ test('daily API rejects anonymous reads/writes and hostile origins', async ({ re
     ).status(),
   ).toBe(401);
 });
-test('review API rejects hostile origins and unsigned requests',async({request})=>{
- const input={day:'2026-09-21',sourceDayVersion:1,requestId:'87000000-0000-4000-8000-000000000099'};
- expect((await request.post('/api/daily/review',{headers:{Origin:'https://attacker.example'},data:input})).status()).toBe(403);
- expect((await request.post('/api/daily/review',{headers:{Origin:'http://127.0.0.1:3100'},data:input})).status()).toBe(401);
- const confirmation=await request.put('/api/daily/review',{headers:{Origin:'http://127.0.0.1:3100','Content-Type':'application/json'},data:JSON.stringify({...input,expectedReviewVersion:0,review:{progress:'Own work',blocker:'',tomorrow:''}})});
- expect(confirmation.status(),JSON.stringify(await confirmation.json())).toBe(401);
+test('review API rejects hostile origins and unsigned requests', async ({ request }) => {
+  const input = {
+    day: '2026-09-21',
+    sourceDayVersion: 1,
+    requestId: '87000000-0000-4000-8000-000000000099',
+  };
+  expect(
+    (
+      await request.post('/api/daily/review', {
+        headers: { Origin: 'https://attacker.example' },
+        data: input,
+      })
+    ).status(),
+  ).toBe(403);
+  expect(
+    (
+      await request.post('/api/daily/review', {
+        headers: { Origin: 'http://127.0.0.1:3100' },
+        data: input,
+      })
+    ).status(),
+  ).toBe(401);
+  const confirmation = await request.put('/api/daily/review', {
+    headers: { Origin: 'http://127.0.0.1:3100', 'Content-Type': 'application/json' },
+    data: JSON.stringify({
+      ...input,
+      expectedReviewVersion: 0,
+      review: { progress: 'Own work', blocker: '', tomorrow: '' },
+    }),
+  });
+  expect(confirmation.status(), JSON.stringify(await confirmation.json())).toBe(401);
 });
 
 test('short-screen daily editor supports keyboard dismissal, focus return and large text', async ({
@@ -177,6 +235,7 @@ test('short-screen daily editor supports keyboard dismissal, focus return and la
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/app');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.addStyleTag({ content: 'html { font-size: 200%; }' });
   const trigger = page.getByRole('button', { name: 'Update your check-in' });
   await trigger.click();

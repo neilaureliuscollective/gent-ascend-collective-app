@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 const server = await createServer({
   root: resolve('tests/component-fixture'),
   configFile: false,
+  publicDir: resolve('public'),
   resolve: {
     alias: {
       '@': resolve('src'),

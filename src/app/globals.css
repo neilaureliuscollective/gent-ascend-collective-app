@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './forms.css';
 @import './dashboard.css';
+@import './command.css';
 @theme {
   --color-obsidian: #050706;
   --color-surface: #101311;

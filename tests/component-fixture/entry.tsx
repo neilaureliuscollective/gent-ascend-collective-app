@@ -11,6 +11,7 @@ import {
   movementFixture,
 } from './performance';
 import '@/app/(workspace)/app/performance/performance.css';
+import CommandError from '@/app/(workspace)/app/error';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
 import { sampleData } from '@/domains/daily/model';
 import { createRoot } from 'react-dom/client';
@@ -86,7 +87,9 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'command' ? <DailyCommandWorkspace initial={commandFixture} /> : mode === 'commerce-showroom' ? (
+  mode === 'command' ? (
+    <DailyCommandWorkspace initial={commandFixture} />
+  ) : mode === 'commerce-showroom' ? (
     <main className="reserve-commerce">
       <CollectionShowroom
         entries={collectionEntries([
@@ -186,9 +189,59 @@ createRoot(document.getElementById('root')!).render(
         }
       />
     </main>
-  ) : mode === 'daily' ? (
+  ) : mode === 'command-error' ? (
+    <CommandError reset={() => location.reload()} />
+  ) : mode === 'daily' || mode === 'daily-summary' ? (
     <DailyDashboard
-      initial={{ ...sampleData('2026-09-21'), mode: 'personal', name: 'Synthetic tester' }}
+      dailyCommand={
+        mode === 'daily-summary'
+          ? {
+              ...commandFixture,
+              ownerId: '60000000-0000-4000-8000-000000000001',
+              snapshot: { ...commandFixture.snapshot!, day: '2026-09-21' },
+            }
+          : undefined
+      }
+      initial={{
+        ...sampleData('2026-09-21'),
+        mode: 'personal',
+        ownerId: '60000000-0000-4000-8000-000000000001',
+        name: 'Synthetic tester',
+        ...(params.get('state') === 'empty' ? { entries: [], goal: null } : {}),
+        ...(params.get('state') === 'carry'
+          ? {
+              entries: [],
+              goal: null,
+              carryForward: {
+                day: '2026-09-20',
+                tomorrow: 'Call the partner',
+                reflection: '',
+                blocker: '',
+                unfinished: [],
+              },
+            }
+          : {}),
+        decisionsAvailable: params.get('state') !== 'unavailable',
+        pendingDecisions:
+          params.get('state') === 'pending' || params.get('state') === 'several'
+            ? [
+                {
+                  id: '10000000-0000-4000-8000-000000000009',
+                  title: 'Protect 30 minutes for writing',
+                  proposed_at: '2026-09-21T10:00:00Z',
+                },
+                ...(params.get('state') === 'several'
+                  ? [
+                      {
+                        id: '10000000-0000-4000-8000-000000000010',
+                        title: 'Call the partner',
+                        proposed_at: '2026-09-21T11:00:00Z',
+                      },
+                    ]
+                  : []),
+              ]
+            : [],
+      }}
     />
   ) : (
     <main style={{ maxWidth: 1160, margin: '0 auto', padding: '32px 20px' }}>

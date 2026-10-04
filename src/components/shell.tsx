@@ -33,7 +33,7 @@ export function Shell({
         <AureliusPanel />
         <AetheliosSpaceNavigation placement="sidebar" />
         <div className="sidebar-footer">
-          <Link href="/" className="text-link">Explore Gent Ascend ↗</Link>
+          <Link href="/" prefetch={false} className="text-link">Explore Gent Ascend ↗</Link>
           <span className="brand-star" aria-hidden="true">
             ✦
           </span>

@@ -9,7 +9,7 @@ for (const width of [344, 768, 1440]) {
     await expect(
       page.getByRole('heading', { name: 'A life is built from the inside.' }),
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Make today yours.' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toHaveCount(0);
     await expect(page.locator('.ascend-threshold-mark img')).toBeVisible();
     expect(
       await page
@@ -135,5 +135,5 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
   await expect(page.getByRole('heading', { name: 'A moment to reconnect.' })).toBeVisible();
   await context.setOffline(false);
   await page.getByRole('link', { name: 'Try Command again' }).click();
-  await expect(page.getByRole('heading', { name: 'Make today yours.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toBeVisible();
 });

@@ -1,56 +1,27 @@
 import { test, expect } from './fixtures';
 
-test.beforeEach(async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 850 });
-});
-
-test('film loads only on entry, plays inline, and returns directly next visit', async ({
+test('arrival uses the current crest and energy, never the retired film, then returns directly', async ({
   page,
-}, info) => {
+}) => {
   await page.setViewportSize({ width: 390, height: 850 });
-  let requested = false;
+  const films: string[] = [];
   page.on('request', (request) => {
-    if (request.url().endsWith('collective-journey-v1.mp4')) requested = true;
+    if (/\.mp4(?:\?|$)/.test(request.url())) films.push(request.url());
   });
   await page.goto('/experience');
-  await expect(page.getByRole('button', { name: 'Replay entrance' })).toBeVisible();
-  expect(requested).toBe(false);
+  await expect(page.locator('video')).toHaveCount(0);
   await page.getByRole('link', { name: /^ENTER/ }).click();
-  await page.waitForFunction(() => {
-    const film = document.querySelector('video');
-    return film && film.currentTime > 3 && !film.paused;
-  });
-  expect(requested).toBe(true);
-  const video = page.locator('video');
-  await expect(video).toHaveAttribute('playsinline', '');
-  expect(await video.evaluate((v) => (v as HTMLVideoElement).muted)).toBe(true);
-  await page.screenshot({ path: info.outputPath('product-film-mobile.png') });
-  await page.waitForFunction(
-    () => Number(getComputedStyle(document.querySelector('.gw-cinematic-arrival')!).opacity) > 0.9,
-  );
-  await page.screenshot({ path: info.outputPath('orb-arrival-mobile.png') });
-  await expect(page).toHaveURL(/\/experience\/world$/);
+  await expect(page.locator('.gw-threshold')).toHaveAttribute('data-entering', 'true');
+  await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 12000 });
+  expect(films).toEqual([]);
   await page.goto('/experience');
-  requested = false;
   await page.getByRole('link', { name: /^ENTER/ }).click();
   await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 3000 });
-  expect(requested).toBe(false);
 });
 
-test('failed media preserves crest then enters through orb fallback', async ({ page }) => {
-  await page.route('**/collective-journey-v1.mp4', (route) => route.abort());
+test('skip leaves arrival immediately and reduced motion bypasses replay', async ({ page }) => {
   await page.goto('/experience');
   await page.getByRole('link', { name: /^ENTER/ }).click();
-  await page.waitForFunction(
-    () => Number(getComputedStyle(document.querySelector('.gw-arrival-name')!).opacity) > 0.9,
-  );
-  await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 12000 });
-});
-
-test('skip stops an active film and still mode bypasses replay', async ({ page }) => {
-  await page.goto('/experience');
-  await page.getByRole('link', { name: /^ENTER/ }).click();
-  await page.waitForFunction(() => (document.querySelector('video')?.currentTime ?? 0) > 0.5);
   await page.getByRole('link', { name: 'Skip entrance' }).click();
   await expect(page).toHaveURL(/\/experience\/world$/);
   await page.goto('/experience');
@@ -59,41 +30,28 @@ test('skip stops an active film and still mode bypasses replay', async ({ page }
   await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 3000 });
 });
 
-test('Data Saver enters without fetching film', async ({ page }) => {
+test('Data Saver enters without playing an arrival', async ({ page }) => {
   await page.addInitScript(() =>
     Object.defineProperty(navigator, 'connection', {
       value: Object.assign(new EventTarget(), { saveData: true }),
       configurable: true,
     }),
   );
-  let requested = false;
-  page.on('request', (request) => {
-    if (request.url().endsWith('collective-journey-v1.mp4')) requested = true;
-  });
   await page.goto('/experience');
   await page.getByRole('link', { name: /^ENTER/ }).click();
   await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 3000 });
-  expect(requested).toBe(false);
 });
 
 for (const width of [360, 768, 1440]) {
-  test(`world offers a deliberate cinematic replay after a previous visit at ${width}px`, async ({ page }) => {
+  test(`current arrival can be replayed at ${width}px without the old video`, async ({ page }) => {
     await page.setViewportSize({ width, height: 850 });
-    await page.addInitScript(() => localStorage.setItem('gent-entrance-seen-v1', 'true'));
-    let requested = false;
-    await page.route('**/collective-journey-v1.mp4', route => {
-      requested = true;
-      return route.abort();
-    });
+    await page.addInitScript(() => localStorage.setItem('gent-entrance-seen-v2', 'true'));
     await page.goto('/experience/world');
-    const replay = page.getByRole('link', { name: 'Replay experience', exact: true });
-    await expect(replay).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await replay.click();
-    await expect(page).toHaveURL(/\/experience\?replay=1$/);
-    expect(requested).toBe(false);
     await page.getByRole('link', { name: 'Replay experience', exact: true }).click();
-    await expect.poll(() => requested).toBe(true);
-    await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
+    await expect(page).toHaveURL(/\/experience\?replay=1$/);
+    await page.getByRole('link', { name: 'Replay experience', exact: true }).click();
+    await expect(page.locator('.gw-threshold')).toHaveAttribute('data-entering', 'true');
+    await expect(page.locator('video')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 12000 });
   });
 }
