@@ -6,10 +6,10 @@ for (const width of [360, 768, 1440]) {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('/experience');
-    await page.screenshot({ path: testInfo.outputPath('threshold.png'), animations: 'disabled' });
     await expect(
       page.getByRole('link', { name: 'ENTER', exact: false }).filter({ hasText: /^ENTER/ }),
     ).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('threshold.png'), animations: 'disabled' });
     await page.getByRole('link', { name: /^ENTER/ }).click();
     await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
     await expect(page.getByRole('heading', { name: 'One life. Your world.' })).toBeFocused();

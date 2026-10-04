@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { focuses, type DirectionDraft } from '@/domains/onboarding/model';
 import { clearDraft, readDraft, writeDraft } from '@/domains/onboarding/draft';
 import { track } from '@/domains/onboarding/track';
+import { requestAccountClaim } from '@/domains/onboarding/entry';
 export function GuestDirection() {
   const [choice, setChoice] = useState<keyof typeof focuses>('body'),
     [action, setAction] = useState(''),
@@ -98,7 +99,7 @@ export function GuestDirection() {
               className="gw-action"
               onClick={() => {
                 track('claim_clicked');
-                window.dispatchEvent(new Event('gent-claim-account'));
+                requestAccountClaim();
               }}
             >
               Save my direction ↗

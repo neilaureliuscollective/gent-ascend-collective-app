@@ -79,12 +79,10 @@ export function AccountClaim() {
       void load();
     };
     const sync = () => setDraft(readDraft());
-    window.addEventListener('gent-claim-account', show);
     window.addEventListener('gent-direction-change', sync);
     window.addEventListener('storage', sync);
     if (params.get('claim') === '1') show();
     return () => {
-      window.removeEventListener('gent-claim-account', show);
       window.removeEventListener('gent-direction-change', sync);
       window.removeEventListener('storage', sync);
     };

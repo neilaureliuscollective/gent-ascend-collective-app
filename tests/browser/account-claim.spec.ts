@@ -59,6 +59,7 @@ for (const width of [360, 768, 1440]) {
       'Keep my morning grooming deliberate.',
     );
     await page.getByRole('button', { name: 'Save my direction' }).click();
+    await expect(page).toHaveURL(/[?&]claim=1/);
     const dialog = page.getByRole('dialog', { name: 'Make this yours.' });
     await expect(dialog).toContainText('Free account. No payment required.');
     await page.screenshot({ path: testInfo.outputPath('claim.png'), animations: 'disabled' });
@@ -126,7 +127,9 @@ test('failed import keeps draft and existing priority requires explicit replacem
     });
   });
   await page.goto('/experience/world?claim=1');
-  await expect(page.getByRole('dialog', { name: 'Make this yours.' }).getByRole('alert')).toContainText('Retry your save.');
+  await expect(
+    page.getByRole('dialog', { name: 'Make this yours.' }).getByRole('alert'),
+  ).toContainText('Retry your save.');
   expect(await page.evaluate(() => localStorage.getItem('gent-direction-draft-v1'))).not.toBeNull();
   await page.getByRole('button', { name: 'Save my direction', exact: true }).click();
   await expect(page.getByText('Your saved priority: Existing priority')).toBeVisible();

@@ -13,6 +13,7 @@ Founder authorized the first of four consolidated public-launch phases on Octobe
 - Failed or uncertain saves retain draft text. Uncertain outcomes require reloading saved context before another attempt; a switched account cannot reuse another account's snapshot.
 - Returning accounts with saved direction resume Command. Eligible members can carry actual saved priority into an editable Aethelios prompt; sending remains manual. Free members see the real membership entry.
 - Facebook/Instagram browser guidance explains native-browser limitations and device-local drafts. Copying the entry link includes only the public origin and `/enter`, without query, private context or authentication tokens. Installation remains optional.
+- Entry requests are retained in the public URL so independently hydrating panels cannot lose a signup click. Action confirmation restores keyboard focus after the saved-state render re-enables the original control. Existing full-suite assertions exposed both timing issues; neither check was removed.
 
 No model upgrade, new subscription price, automatic AI request, private invitation grant, hosted configuration change or commerce activation is included.
 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { track } from '@/domains/onboarding/track';
+import { requestAccountClaim } from '@/domains/onboarding/entry';
 import { worlds } from '@/platform/world/registry';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useWorldPriority, WorldPrioritySummary, WorldPriorityEditor } from './world-priority';
@@ -155,7 +156,7 @@ export function WholeManWorld({ initialWorld = null }: { initialWorld?: string |
               <button
                 onClick={() => {
                   track('claim_clicked');
-                  window.dispatchEvent(new Event('gent-claim-account'));
+                  requestAccountClaim();
                 }}
               >
                 Create free account ↗
