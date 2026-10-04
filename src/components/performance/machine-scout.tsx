@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 export type MachineScoutCandidate = {
@@ -110,7 +111,7 @@ export function MachineScout({
 
       {preview && (
         <div className="perf-scout-stage">
-          <img src={preview} alt="Machine selected for identification" />
+          <Image src={preview} alt="Machine selected for identification" fill unoptimized sizes="100vw" />
           {busy && (
             <div className="perf-scout-analyzing" aria-live="polite">
               <i />
