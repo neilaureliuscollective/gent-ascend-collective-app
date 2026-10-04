@@ -84,7 +84,7 @@ export default async function Collection({
         <div className="cabinet-records">
           {data.records.map((record) => {
             const href = record.shopify_handle
-              ? productPath(record.shopify_handle).replace('/shop/', '/app/collection/')
+              ? productPath(record.shopify_handle)?.replace('/shop/', '/app/collection/')
               : null;
             return (
               <article className="cabinet-record" key={record.id}>
