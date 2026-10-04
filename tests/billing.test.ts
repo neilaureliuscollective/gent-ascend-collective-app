@@ -149,3 +149,35 @@ describe('billing configuration and paid entitlements', () => {
     ).toBe(true);
   });
 });
+
+describe('payment ownership and provider mode', () => {
+  it('rejects a subscription belonging to another mapped customer or provider mode', () => {
+    for (const change of [{ customer: 'cus_other' }, { livemode: true }]) {
+      const sub = { ...testSubscription(), ...change } as Stripe.Subscription;
+      expect(subscriptionSnapshot(sub, emptyBilling, config, false, now).billing).toBe(
+        'incomplete',
+      );
+    }
+  });
+  it('does not unlock access from another customer, subscription or mode invoice', () => {
+    for (const change of [
+      { customer: 'cus_other' },
+      {
+        parent: {
+          type: 'subscription_details',
+          subscription_details: { subscription: 'sub_other' },
+        },
+      },
+      { livemode: true },
+    ]) {
+      const sub = testSubscription();
+      sub.latest_invoice = {
+        ...(sub.latest_invoice as Stripe.Invoice),
+        ...change,
+      } as Stripe.Invoice;
+      expect(subscriptionSnapshot(sub, emptyBilling, config, false, now).billing).toBe(
+        'incomplete',
+      );
+    }
+  });
+});

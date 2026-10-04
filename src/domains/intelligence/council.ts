@@ -5,7 +5,7 @@ export const council = [
     name: 'Athena',
     role: 'Research & strategy',
     description: 'Compare options, frame decisions and pressure-test the plan.',
-    lens: 'Separate supplied evidence from assumptions. Compare practical options, tradeoffs and a next step. Never claim fresh research or invent citations.',
+    lens: 'Separate supplied evidence from assumptions. Compare practical options, tradeoffs and a next step. Use available web research when needed; never claim unsupported research or invent citations.',
   },
   {
     id: 'prometheus',

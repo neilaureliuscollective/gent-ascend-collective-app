@@ -75,3 +75,45 @@ test('turning off enrollment keeps billing management and refresh available', as
   await page.getByRole('button', { name: 'Refresh payment status' }).click();
   await expect(page.getByRole('status')).toHaveText('Your billing status has been refreshed.');
 });
+
+test('founder readiness is explicit, preserves unknown acceptance and recovers from failure', async ({
+  page,
+}) => {
+  let calls = 0;
+  await page.route('**/api/billing/readiness', async (route) => {
+    calls++;
+    await route.fulfill({
+      status: calls === 1 ? 503 : 200,
+      json:
+        calls === 1
+          ? { error: 'Readiness could not be checked.' }
+          : {
+              checkedAt: '2026-10-04T22:00:00.000Z',
+              checks: [
+                {
+                  name: 'Membership prices',
+                  status: 'verified',
+                  detail: 'Configured prices match.',
+                },
+                {
+                  name: 'Real subscription lifecycle',
+                  status: 'unknown',
+                  detail: 'Actual payment acceptance remains open.',
+                },
+              ],
+            },
+    });
+  });
+  await page.setViewportSize({ width: 360, height: 900 });
+  await page.goto('http://127.0.0.1:3102/?mode=membership&enrollment=closed&founder-audit=yes');
+  expect(calls).toBe(0);
+  await page.getByText('Founder / Revenue readiness', { exact: true }).click();
+  await page.getByRole('button', { name: 'Check billing readiness' }).click();
+  await expect(page.getByRole('status')).toHaveText('Readiness could not be checked.');
+  await page.getByRole('button', { name: 'Check billing readiness' }).click();
+  await expect(
+    page.getByText('Real subscription lifecycle — unknown', { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue to secure checkout ↗' })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

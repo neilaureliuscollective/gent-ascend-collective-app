@@ -22,6 +22,7 @@ export default async function AetheliosPage({
   const isFounder = await currentFounderAccess();
   const linked = isFounder && (await founderBridgeLinked());
   const starters: Record<string, string> = {
+    'weekly-review': 'Review my last seven days using my saved personal context if I enable it. Distinguish missing records from zero activity. Help me identify what worked, what got in the way, and one realistic adjustment for next week. Ask only what is needed. Propose changes for my review; do not claim to save them.',
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',
     reflect:
       'Help me reflect on today: what mattered, what I learned, and what to carry into tomorrow.',

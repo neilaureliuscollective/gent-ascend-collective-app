@@ -691,3 +691,17 @@ Observed: lint, strict typecheck, production build, ledger snapshot check, 238 u
 Real Supabase Auth/persistence/founder evaluation, physical Fold/touch/GPU/battery and assistive-technology testing remain open; large-text shared-header/navigation reflow belongs to final production polish. No push/main merge/deploy. One final production-finish and real-service/device validation phase remains; no claim of a general autonomous background agent.
 
 Final state evidence also includes the empty/unavailable/error/readback views and keyboard-operated source inspection at 200% text on 360×640; all five targeted cases passed.
+
+## 2026-10-04 — Public launch Phase 2: connected daily experience
+
+Recovered completed Phase 1 from PR52 ebd224a. Added session-bound Command return paths and a seven-day Progress projection across real Daily, training and grooming records. Editable weekly coaching uses consented context and existing reviewed saves. Shared read-only OpenAI search now reaches member Aethelios, specialists and Table; provider source links persist with saved text. No dependencies, migrations, entitlement changes or production activation. Local lint/types, 311 tests, webpack production build and migration ledger pass. Browser download failed; full interaction and real Supabase acceptance run through CI, with actual model and physical-device checks still pending. Scope/research/limits: PUBLIC_LAUNCH_PHASE_2.md. Two consolidated build phases remain, plus recorded acceptance gates.
+
+Phase 2 publication update: automatic approval review rejected the canonical GitHub push for unrecognized destination authorization. Local implementation is committed at 127f4b4; no alternate upload/publication route attempted. Remote PR and CI have not started. Final local code gates pass; browser archive download failed, and real provider/device checks remain open.
+
+## Public launch recovery and revenue verification — October 4, 2026
+
+Recovered committed Phase2 `127f4b4` after the interrupted session. Phase3 adds invoice customer/subscription/provider-mode verification and explicit founder-only billing configuration inspection in Membership. Real payments and merchant fulfillment stay separate unknown gates; paid preorders stay blocked. Local lint/types,316 unit/SQL/provider-contract tests, recorded migration ledger and production webpack build pass; local browser install failed, actual providers/devices remain unverified. Review/activation contract: `docs/PUBLIC_LAUNCH_PHASE_3.md`. The final consolidated build phase is release readiness; do not claim subscription or signup activation from code completion.
+
+## Public launch Phase4 — release controls, October 4, 2026
+
+Implemented founder-only launch ledger, public/member support paths, existing account/memory-control guidance and optional anonymous scalar Web Vitals reporting. Missing support and actual signup/payment/device/data-process/legal acceptance remain blocked or unknown; no automated ready score or activation. Monitoring is off by default, excludes private text/identifiers and respects privacy signals. Training API unchanged. Local lint/types,322 tests, recorded28-file ledger, final webpack production build and signed-out production-runtime HTTP checks pass. Browser, actual hosted identity/providers, clean CI and physical devices remain open. Exact scope, constrained build evidence and release/rollback: `docs/PUBLIC_LAUNCH_PHASE_4.md`. Public repository publication still awaits explicit authorization after the earlier automatic rejection; no deployment.

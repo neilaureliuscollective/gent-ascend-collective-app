@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import type { BillingReadiness } from '@/domains/billing/readiness-contract';
 import { useRouter } from 'next/navigation';
 import { foundingPlans, foundingPrice } from '@/domains/billing/founding-catalog';
 
@@ -9,14 +10,17 @@ export function MembershipControls({
   hasSubscription,
   termsVersion,
   terms,
+  founderAudit = false,
 }: {
   enrollment: boolean;
   hasCustomer: boolean;
   hasSubscription: boolean;
   termsVersion: string;
   terms: string;
+  founderAudit?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
+  const [report, setReport] = useState<BillingReadiness | null>(null);
   const [message, setMessage] = useState('');
   const router = useRouter();
   async function submit(payload: unknown) {
@@ -49,8 +53,52 @@ export function MembershipControls({
       setBusy(false);
     }
   }
+  async function inspect() {
+    if (busy) return;
+    setBusy(true);
+    setReport(null);
+    setMessage('');
+    try {
+      const response = await fetch('/api/billing/readiness', { method: 'POST' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? 'Readiness could not be checked.');
+      setReport(result);
+      setMessage('Billing configuration checked. Live acceptance remains separate.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Readiness could not be reached.');
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <div>
+      {founderAudit && (
+        <details>
+          <summary>Founder / Revenue readiness</summary>
+          <p>
+            Inspect current billing configuration. This check creates no charges and does not open
+            enrollment.
+          </p>
+          <button className="secondary-button" disabled={busy} onClick={inspect}>
+            Check billing readiness
+          </button>
+          {report && (
+            <div>
+              <p>Checked: {report.checkedAt}</p>
+              <ul>
+                {report.checks.map((check) => (
+                  <li key={check.name}>
+                    <strong>
+                      {check.name} — {check.status}
+                    </strong>
+                    <p>{check.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </details>
+      )}
       {hasCustomer && (
         <div className="membership-actions">
           <button className="button" disabled={busy} onClick={() => submit({ action: 'portal' })}>

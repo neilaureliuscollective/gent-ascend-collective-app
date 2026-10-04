@@ -13,6 +13,8 @@ import {
 
 const fake = vi.hoisted(() => ({
   rpc: vi.fn(),
+  founder: vi.fn(),
+  endpoints: vi.fn(),
   owner: vi.fn(),
   identity: vi.fn(),
   createCustomer: vi.fn(),
@@ -25,6 +27,7 @@ const fake = vi.hoisted(() => ({
   charge: vi.fn(),
   dispute: vi.fn(),
 }));
+vi.mock('@/domains/access/founder', () => ({ currentFounderAccess: fake.founder }));
 vi.mock('server-only', () => ({}));
 vi.mock('@/domains/person/current', () => ({ currentPerson: fake.owner }));
 vi.mock('@/domains/identity/current', () => ({ currentIdentity: fake.identity }));
@@ -35,6 +38,7 @@ vi.mock('stripe', async (original) => {
   return {
     default: class {
       webhooks = sdk.webhooks;
+      webhookEndpoints = { list: fake.endpoints };
       customers = { create: fake.createCustomer };
       prices = { retrieve: fake.prices };
       subscriptions = { list: fake.list };
@@ -53,8 +57,10 @@ import {
   startCheckout,
   openPortal,
   refreshBilling,
+  inspectBillingReadiness,
 } from '../src/domains/billing/provider';
 import { POST } from '../src/app/api/billing/route';
+import { POST as readiness } from '../src/app/api/billing/readiness/route';
 
 let summary = { ...emptyBilling, customer_id: null as string | null };
 let attempt: Record<string, unknown> | null = null;
@@ -81,6 +87,18 @@ const ownerClient = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
+  fake.founder.mockResolvedValue(false);
+  fake.endpoints.mockResolvedValue({
+    has_more: false,
+    data: [
+      {
+        url: 'http://127.0.0.1:3100/api/billing/webhook',
+        status: 'enabled',
+        livemode: false,
+        enabled_events: ['*'],
+      },
+    ],
+  });
   vi.spyOn(Date, 'now').mockReturnValue(now);
   for (const [key, value] of Object.entries(billingEnvironment)) vi.stubEnv(key, value);
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:54321');
@@ -326,5 +344,62 @@ describe('hosted billing commands and verified reconciliation', () => {
       ).status,
     ).toBe(400);
     expect(fake.checkout).not.toHaveBeenCalled();
+  });
+});
+
+describe('founder revenue readiness', () => {
+  it('denies members and hostile origins before provider reads', async () => {
+    await expect(inspectBillingReadiness()).rejects.toThrow('Founder access');
+    expect(fake.endpoints).not.toHaveBeenCalled();
+    const response = await readiness(
+      new NextRequest('http://127.0.0.1:3100/api/billing/readiness', {
+        method: 'POST',
+        headers: { origin: 'https://attacker.example' },
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(response.headers.get('cache-control')).toContain('no-store');
+  });
+  it('reports provider configuration without claiming payments or exposing credentials', async () => {
+    fake.founder.mockResolvedValue(true);
+    const report = await inspectBillingReadiness();
+    expect(report.checks.find((check) => check.name === 'Webhook registration')?.status).toBe(
+      'verified',
+    );
+    expect(
+      report.checks.find((check) => check.name === 'Real subscription lifecycle')?.status,
+    ).toBe('unknown');
+    expect(report.checks.find((check) => check.name === 'Paid preorders')?.status).toBe('blocked');
+    expect(fake.checkout).not.toHaveBeenCalled();
+    expect(fake.createCustomer).not.toHaveBeenCalled();
+    expect(fake.rpc).not.toHaveBeenCalled();
+    expect(JSON.stringify(report)).not.toMatch(/sk_test|whsec_|cus_owner|price_essential/);
+  });
+  it('keeps provider errors and wrong endpoint origins unknown and enrollment closed', async () => {
+    fake.founder.mockResolvedValue(true);
+    vi.stubEnv('STRIPE_CHECKOUT_ENABLED', 'false');
+    fake.endpoints.mockResolvedValue({
+      has_more: false,
+      data: [
+        {
+          url: 'https://attacker.example/api/billing/webhook',
+          status: 'enabled',
+          livemode: false,
+          enabled_events: ['*'],
+        },
+      ],
+    });
+    fake.prices.mockRejectedValue(new Error('secret provider failure'));
+    const report = await inspectBillingReadiness();
+    expect(report.checks.find((check) => check.name === 'Enrollment switch')?.status).toBe(
+      'blocked',
+    );
+    expect(report.checks.find((check) => check.name === 'Webhook registration')?.status).toBe(
+      'unknown',
+    );
+    expect(report.checks.find((check) => check.name === 'Membership prices')?.status).toBe(
+      'unknown',
+    );
+    expect(JSON.stringify(report)).not.toContain('secret provider failure');
   });
 });

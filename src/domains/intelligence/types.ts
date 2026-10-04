@@ -48,6 +48,7 @@ export type ActionProposal = {
   status:'pending'|'executed'|'rejected';proposed_at:string;decided_at:string|null;executed_day:string|null;
 };
 export type PersonalContext = {
+  continuity?: { start: string; today: string; timezone: string; recordedDays: number; actionsCompleted: number; actionsPlanned: number; sessionsCompleted: number | null; practiceDays: number | null; reviewedDays: number; nextAction: string | null; activeSession: { title: string } | null; unavailable: string[] } | null;
   profile: { name: string; priority: string; timezone: string; units: string; updatedAt: string };
   goal: { title: string; nextStep: string; reason: string; updatedAt: string } | null;
   memories: Pick<Memory, 'id' | 'content' | 'kind' | 'confirmed_at'>[];

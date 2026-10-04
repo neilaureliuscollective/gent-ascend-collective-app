@@ -359,6 +359,10 @@ test('free member first session saves and resumes through real Next and Supabase
   await expect(page.getByLabel('What matters today?')).toHaveValue(
     'Synthetic first-session direction',
   );
+  await page.goto('/app/progress');
+  await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(0);
   const response = await page.request.get('/api/daily');
   expect(response.ok()).toBeTruthy();
   const saved = await response.json();

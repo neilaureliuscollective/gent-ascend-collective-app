@@ -9,6 +9,7 @@ import { founderBridgeContext } from './founder-bridge';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
 import { localDay } from '@/domains/daily/model';
+import { readContinuity } from '@/domains/continuity/service';
 import { resolveNextMove } from '@/domains/command/next-move';
 export class IntelligenceError extends Error {
   constructor(
@@ -28,6 +29,7 @@ export async function intelligenceSession() {
 export async function personalContext(question?:string): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
   const groomingRelevant=!!question && /groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
+  const continuityPromise = question && /week|progress|train|workout|routine|ritual|groom/i.test(question) ? readContinuity({ client, person }).catch(() => null) : Promise.resolve(undefined);
   const today = localDay(new Date(), person.timezone);
   const [goal, memories, daily, profileFacts, reviews, grooming, captures] = await Promise.all([
     client
@@ -67,7 +69,9 @@ export async function personalContext(question?:string): Promise<PersonalContext
   const previousReview=(reviews.data??[]).find(review=>review.day<today);
   const orderedActions=(todayEntry?.actions??[]).slice().sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done}));
   const { title, kind, source, sourceDay } = resolveNextMove({ day: today, actions: orderedActions, reviewed: reviewByDay.has(today), previousReview: previousReview ?? null, goalStep: goal.data?.next_step ?? null });
+  const continuity = await continuityPromise;
   return {
+    continuity: continuity ? { start: continuity.start, today: continuity.today, timezone: continuity.timezone, recordedDays: continuity.recordedDays, actionsCompleted: continuity.actionsCompleted, actionsPlanned: continuity.actionsPlanned, sessionsCompleted: continuity.sessionsCompleted, practiceDays: continuity.practiceDays, reviewedDays: continuity.reviewedDays, nextAction: continuity.nextAction, activeSession: continuity.activeSession ? { title: continuity.activeSession.title } : null, unavailable: continuity.unavailable } : continuity,
     profile: {
       name: person.display_name,
       priority: person.priority,
