@@ -10,7 +10,21 @@ Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aur
 
 Purpose: help men become more capable across presentation, wellbeing, performance, discipline, character, work, relationships, community and legacy. Confident and grounded; no macho slogans or mythology inside ordinary product controls.
 
-## Authoritative artwork
+## Official full crest — 2026-10-03
+
+The founder-supplied `1737.png` supersedes the earlier standing-gentleman full logo for in-app and website identity. Its inscription is **GENT ASCEND COLLECTIVE**. Preserve the architectural A, central guiding star, globe, laurels, rings and motto. Preserve the existing independent installed-app icon, favicon, manifest and Apple icon; this change does not authorize modifying those assets.
+
+- `public/brand/gent-ascend-master-20261003.png`: untouched supplied original.
+- `public/brand/gent-ascend-full-20261003.png`: image-generation background extraction, inspected for correct lettering and actual alpha; opaque green/black interior remains.
+- `public/brand/gent-ascend-full-20261003.webp`: optimized alpha-preserving UI rendition, shared through `src/platform/brand.ts`.
+
+Use the complete crest at arrival (260px), sign-in (172px), Command hero, account identity, closing invitation and website footer (180px). Existing compact headers/sidebar retain their readable adjacent wordmark; the seal there is recognition, not a requirement to read microscopic inscriptions. Do not repeat it on task cards, product images or the Aethelios orb. No additional persistent animation: reuse the existing finite entrance choreography and reduced-motion controls.
+
+Render with normal composition to keep green depth and metallic contrast. The entrance's previous `screen` blend removed a black matte but washed dark interiors; real alpha replaces that workaround. Its light sweep uses the new crest's alpha mask. Existing global obsidian/green/gold tokens remain correct and unchanged.
+
+Research: Next.js Image documentation (https://nextjs.org/docs/app/api-reference/components/image) supports explicit dimensions, responsive sizes and selective preload; W3C C39 (https://www.w3.org/WAI/WCAG22/Techniques/css/C39) supports respecting reduced-motion preferences. Placement and scale are design judgments based on the actual route/component inspection, not claims prescribed by those sources.
+
+## Archived authoritative artwork
 
 `public/brand/gent-ascend-master.png` is the untouched founder attachment, 567.png. The standing gold figure, green mantle, laurels, celestial geometry and inscriptions remain intact. `scripts/brand-assets.mjs` produces deterministic renditions from these exact pixels; no generated or redrawn figure.
 

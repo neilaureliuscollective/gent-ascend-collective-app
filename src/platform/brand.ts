@@ -5,8 +5,8 @@ export const brand = {
   description:
     'Grooming, personal intelligence, daily practice, and experiences. A connected world built around the modern gentleman.',
   themeColor: '#050706',
-  crest: '/brand/gent-ascend-crest-v2.webp',
-  lockup: '/brand/gent-ascend-crest-v2.webp',
+  crest: '/brand/gent-ascend-full-20261003.webp',
+  lockup: '/brand/gent-ascend-full-20261003.webp',
   crestAlt:
-    'The Gent Ascend emblem: a tailored gentleman in emerald and gold, framed by celestial geometry and laurels',
+    'Gent Ascend Collective gold and deep green crest: an architectural A, guiding star, globe, and laurels',
 } as const;

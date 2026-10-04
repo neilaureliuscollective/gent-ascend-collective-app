@@ -1845,3 +1845,12 @@
 .editorial-media-slot .scene-shade {
   background: linear-gradient(0deg, #050907bb, transparent 60%);
 }
+
+/* Full official seal is a deliberate closing identity moment. */
+.footer-crest {
+  display: block;
+  width: 180px;
+  height: auto;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 6px 18px #0006);
+}

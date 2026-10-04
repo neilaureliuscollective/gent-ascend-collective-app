@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import { brand } from '@/platform/brand';
 import { AppRuntime } from '@/components/app-runtime';
 import type { Metadata } from 'next';
 import { WorldHeader } from '@/components/public/world-header';
@@ -26,7 +28,17 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <footer className="world-footer">
         <div>
           <Link href="/" className="footer-brand">
-            GENT ASCEND<small>COLLECTIVE</small>
+            <Image
+              className="footer-crest"
+              src={brand.crest}
+              alt={brand.crestAlt}
+              width={180}
+              height={180}
+              sizes="180px"
+            />
+            <span>
+              GENT ASCEND<small>COLLECTIVE</small>
+            </span>
           </Link>
           <p>
             Rooted in Louisiana.
