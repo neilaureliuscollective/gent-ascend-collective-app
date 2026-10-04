@@ -152,12 +152,10 @@ export function CollectionDiscovery({ entries }: { entries: CollectionEntry[] })
           </Link>
         </div>
       )}
-      <noscript>
-        <p>
-          The interactive guide needs JavaScript. You can explore every product in the collection
-          below.
-        </p>
-      </noscript>
+      <p>
+        The interactive guide needs JavaScript. You can explore every product in the collection
+        below.
+      </p>
     </section>
   );
 }
