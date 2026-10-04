@@ -1471,3 +1471,86 @@
   min-height: 44px;
   flex-shrink: 0;
 }
+
+
+/* Performance refinement v8 — zero-friction training, scanner, calibration */
+.perf-freestyle-v2{gap:18px}
+.perf-freestyle-v2 .perf-freestyle-hero{padding-top:8px}
+.perf-freestyle-v2 .perf-freestyle-hero h2{max-width:12ch;font-size:clamp(2rem,8vw,3.7rem);line-height:.96}
+.perf-start-now{width:100%;min-height:62px;border-radius:14px;font-size:1.04rem;font-weight:720;box-shadow:0 18px 55px rgba(0,0,0,.25),0 0 0 1px rgba(255,233,176,.08) inset}
+.perf-builder-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:2px 0;color:#7f958b;font-size:.74rem}
+.perf-builder-actions button{min-height:44px;padding:8px 12px;border-radius:999px;background:rgba(18,54,40,.72);border:1px solid rgba(224,187,106,.22);color:#eadfca}
+.perf-builder-actions span:last-child{color:#9eb0a8}
+.perf-quick-sheet{display:grid;gap:12px;padding:18px;border:1px solid rgba(224,187,106,.24);border-radius:16px;background:linear-gradient(145deg,rgba(13,42,31,.96),rgba(5,17,12,.98));box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.perf-quick-sheet-head{display:flex;justify-content:space-between;gap:16px;align-items:start}
+.perf-quick-sheet-head h3{margin:.25rem 0 0;font-size:1.45rem}
+.perf-quick-sheet-head>button{min-width:44px;min-height:44px;padding:0;border:0;background:transparent;color:#aebdb6;font-size:1.6rem}
+.perf-quick-sheet label{display:grid;gap:6px;color:#9db0a7;font-size:.72rem}
+.perf-quick-sheet input{width:100%;min-height:52px;padding:11px 12px;border-radius:11px;border:1px solid rgba(224,187,106,.22);background:#071a12;color:#f5efe4;font-size:1rem}
+.perf-stepper-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.perf-session-queue{display:grid;gap:12px;padding:18px 0 4px;border-top:1px solid rgba(196,145,47,.18)}
+.perf-session-queue ol{list-style:none;padding:0;margin:0}
+.perf-session-queue li{display:grid;grid-template-columns:28px minmax(0,1fr) 44px;gap:10px;align-items:center;padding:12px 0;border-top:1px solid rgba(196,145,47,.12)}
+.perf-session-queue li>span{font-size:.68rem;color:#c4912f}
+.perf-session-queue li>div{display:grid;gap:2px;min-width:0}
+.perf-session-queue li strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf-session-queue li small{font-size:.72rem;color:#8da097}
+.perf-session-queue li>button{min-width:44px;min-height:44px;border:0;background:transparent;color:#80938a;font-size:1.3rem}
+
+.perf-machine-scout-v2{padding:16px;border-radius:16px;background:radial-gradient(circle at 92% 0%,rgba(33,105,77,.22),transparent 36%),linear-gradient(145deg,rgba(9,33,24,.82),rgba(5,17,12,.86));box-shadow:0 16px 50px rgba(0,0,0,.2)}
+.perf-scout-launch{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.perf-scout-launch button{min-height:52px;border-radius:11px}
+.perf-scout-stage{position:relative;overflow:hidden;margin-top:14px;border-radius:14px;min-height:220px;background:#020806}
+.perf-scout-stage img{display:block;width:100%;max-height:360px;object-fit:cover;opacity:.9}
+.perf-scout-analyzing{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center;background:radial-gradient(circle,rgba(10,49,34,.58),rgba(2,8,6,.88));backdrop-filter:blur(3px)}
+.perf-scout-analyzing i{width:52px;height:52px;border:1px solid rgba(224,187,106,.3);border-top-color:#e0bb6a;border-radius:50%;animation:perf-scout-spin 1.15s linear infinite;box-shadow:0 0 30px rgba(224,187,106,.12)}
+.perf-scout-analyzing strong{font-size:.98rem;color:#f2ead9}
+.perf-scout-analyzing span{max-width:32ch;font-size:.72rem;color:#91a79d;line-height:1.5}
+.perf-scout-retake{position:absolute;right:10px;bottom:10px;min-height:40px;padding:7px 11px;border-radius:999px;background:rgba(3,11,8,.82);backdrop-filter:blur(12px)}
+.perf-machine-error{display:grid;gap:8px;padding:14px;margin-top:12px;border-left:2px solid #c4912f;background:rgba(47,31,16,.25);color:#d7b6a7}
+.perf-machine-error strong{color:#f1e2d6}
+.perf-machine-error span{font-size:.82rem;line-height:1.5}
+.perf-scout-retry{display:flex;gap:8px;flex-wrap:wrap}
+.perf-scout-retry button{min-height:44px;flex:1}
+.perf-scout-alternatives{display:grid;gap:7px;margin:16px 0}
+.perf-scout-alternatives button{display:grid;gap:2px;width:100%;min-height:52px;padding:10px 12px;text-align:left;border-radius:10px;background:rgba(15,48,35,.68);border:1px solid rgba(224,187,106,.15)}
+.perf-scout-alternatives button strong{font-size:.86rem;color:#efe7d8}
+.perf-scout-alternatives button span{font-size:.7rem;color:#8fa49a}
+.perf-scout-confirm{display:grid;gap:8px}
+.perf-scout-confirm button{min-height:50px}
+@keyframes perf-scout-spin{to{transform:rotate(360deg)}}
+
+.perf-empty-live{display:grid;gap:10px;padding:28px 4px 22px;border-top:1px solid rgba(196,145,47,.17);border-bottom:1px solid rgba(196,145,47,.17)}
+.perf-empty-live h3{margin:0;max-width:15ch;font-size:clamp(1.7rem,7vw,2.7rem);line-height:1.02;font-weight:450;letter-spacing:-.035em}
+.perf-empty-live p{max-width:45ch;margin:0;color:#97aaa1;line-height:1.6}
+.perf-empty-live .perf-primary{margin-top:5px;justify-self:start}
+
+.perf-calibration{display:grid;gap:18px;min-height:min(620px,78vh);align-content:start;padding:4px 2px 8px}
+.perf-calibration-progress{height:3px;background:rgba(255,255,255,.07);overflow:hidden;border-radius:999px}
+.perf-calibration-progress i{display:block;height:100%;background:linear-gradient(90deg,#806527,#e0bb6a);box-shadow:0 0 18px rgba(224,187,106,.28);transition:width .3s ease}
+.perf-calibration-head{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#8fa198;font-size:.68rem;letter-spacing:.08em}
+.perf-calibration-step{display:grid;gap:16px;padding:24px 0 12px;animation:perf-calibration-in .28s ease-out both}
+.perf-calibration-step>h2{margin:0;max-width:13ch;font-size:clamp(2rem,8vw,3.4rem);line-height:.98;font-weight:430;letter-spacing:-.045em}
+.perf-calibration-step>p:not(.eyebrow){max-width:44ch;margin:0;color:#9bada5;line-height:1.6}
+.perf-calibration-step fieldset{display:grid;gap:8px;margin:4px 0 0}
+.perf-calibration-step fieldset button{min-height:54px;text-align:left;border-radius:12px}
+.perf-calibration-numbers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.perf-calibration-numbers label,.perf-calibration-quiet,.perf-calibration-unit{display:grid;gap:7px;color:#9aada4;font-size:.74rem}
+.perf-calibration-numbers input,.perf-calibration-quiet textarea,.perf-calibration-unit select{width:100%;min-height:54px;border-radius:11px;border:1px solid rgba(196,145,47,.2);background:#081a13;color:#f3ede2;padding:11px 12px}
+.perf-calibration-summary{margin:4px 0}
+.perf-calibration-actions{display:flex;gap:9px;margin-top:auto;padding-top:14px;border-top:1px solid rgba(196,145,47,.14)}
+.perf-calibration-actions button{min-height:54px}
+.perf-calibration-actions .perf-primary{flex:1}
+@keyframes perf-calibration-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+@media(max-width:520px){
+  .perf-freestyle-v2{padding-bottom:20px}
+  .perf-scout-launch{grid-template-columns:1fr}
+  .perf-machine-scout-v2{margin-inline:-2px}
+  .perf-calibration{min-height:70vh}
+}
+@media(prefers-reduced-motion:reduce){
+  .perf-scout-analyzing i{animation:none}
+  .perf-calibration-step{animation:none}
+  .perf-calibration-progress i{transition:none}
+}
