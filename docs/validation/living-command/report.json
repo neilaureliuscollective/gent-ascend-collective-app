@@ -1,0 +1,1021 @@
+[
+  {
+    "width": 344,
+    "height": 740,
+    "motion": "reduce",
+    "large": false,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 555.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 525.01904296875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 529.119384765625
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 555.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 481.375
+      },
+      {
+        "tag": "circle",
+        "cls": {},
+        "right": 353.125
+      },
+      {
+        "tag": "circle",
+        "cls": {},
+        "right": 358.75
+      },
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 353.125
+      },
+      {
+        "tag": "circle",
+        "cls": {},
+        "right": 353.125
+      }
+    ],
+    "moveTop": 546.015625,
+    "canvases": 0,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/media/world/whole-man-chamber-v2.webp",
+        "bytes": 155976
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1022
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1029
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1033
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1026
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "motion": "reduce",
+    "large": false,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 578.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 548.01904296875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 552.119384765625
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 578.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 504.375
+      }
+    ],
+    "moveTop": 573.125,
+    "canvases": 0,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1028
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1027
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1033
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1028
+      }
+    ]
+  },
+  {
+    "width": 360,
+    "height": 640,
+    "motion": "reduce",
+    "large": true,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 563.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 533.01904296875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 537.119384765625
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 563.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 489.375
+      },
+      {
+        "tag": "circle",
+        "cls": {},
+        "right": 361.125
+      },
+      {
+        "tag": "circle",
+        "cls": {},
+        "right": 366.75
+      },
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 361.125
+      },
+      {
+        "tag": "circle",
+        "cls": {},
+        "right": 361.125
+      },
+      {
+        "tag": "SPAN",
+        "cls": "",
+        "right": 408
+      }
+    ],
+    "moveTop": 1557.90625,
+    "canvases": 0,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1024
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1027
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1032
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1025
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "height": 900,
+    "motion": "reduce",
+    "large": false,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 866.3858842849731
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 828.5425004959106
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 833.7058916091919
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 866.3858947753906
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 773.5833129882812
+      }
+    ],
+    "moveTop": 445.59375,
+    "canvases": 0,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/media/world/whole-man-chamber-v2.webp",
+        "bytes": 155976
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1027
+      }
+    ]
+  },
+  {
+    "width": 820,
+    "height": 1180,
+    "motion": "reduce",
+    "large": false,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 892.3858842849731
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 854.5425004959106
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 859.7058906555176
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 892.3858947753906
+      }
+    ],
+    "moveTop": 461.703125,
+    "canvases": 0,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/media/world/whole-man-chamber-v2.webp",
+        "bytes": 155976
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1022
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "motion": "reduce",
+    "large": false,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 1444.850341796875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 1444.850341796875
+      }
+    ],
+    "moveTop": 580.109375,
+    "canvases": 0,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/aethelios?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/studio?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 190
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/ascend?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 190
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1025
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1026
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1032
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1030
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/aethelios?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1048
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/studio?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1014
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/ascend?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1031
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "motion": "no-preference",
+    "large": false,
+    "errors": [],
+    "overflow": false,
+    "overflowElements": [
+      {
+        "tag": "g",
+        "cls": {},
+        "right": 578.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 548.01904296875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 552.119384765625
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 578.0711669921875
+      },
+      {
+        "tag": "path",
+        "cls": {},
+        "right": 504.375
+      }
+    ],
+    "moveTop": 573.125,
+    "canvases": 1,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/inter-s.p.0gsaq8ukbf34m.woff2",
+        "bytes": 48256
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/media/sora-s.p.2o7d_x-bmx02y.woff2",
+        "bytes": 33652
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/375mzzwt_6vlr.css",
+        "bytes": 814
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39ybrvvtm6xpg.css",
+        "bytes": 31808
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2g_uqr1_suj1q.css",
+        "bytes": 1800
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3txwaa2euv5aw.css",
+        "bytes": 2852
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0jvhpaew_uadu.js",
+        "bytes": 2351
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/19mx3mg6lkumu.js",
+        "bytes": 7614
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/turbopack-29bylba9u9kw-.js",
+        "bytes": 3850
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/39kbuq5y--kd2.js",
+        "bytes": 45094
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3odd7cb4m48w1.js",
+        "bytes": 71334
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/3fntmmi971322.js",
+        "bytes": 3661
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/1obynh88v4wlb.js",
+        "bytes": 530
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0obh6andwqr4u.js",
+        "bytes": 4649
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/0t7426wy-taq7.js",
+        "bytes": 780
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/43q1lyw7ucfjh.js",
+        "bytes": 11305
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/44o2y9005y6c4.js",
+        "bytes": 9225
+      },
+      {
+        "name": "http://127.0.0.1:3105/media/world/whole-man-chamber-v2.webp",
+        "bytes": 155976
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/image?url=%2Fbrand%2Fgent-ascend-full-20261003.webp&w=64&q=75",
+        "bytes": 2736
+      },
+      {
+        "name": "http://127.0.0.1:3105/_next/static/chunks/2v7jl4ibjnije.js",
+        "bytes": 2544
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 189
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 192
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=R0tRxeXOP7hmQRIY",
+        "bytes": 188
+      },
+      {
+        "name": "http://127.0.0.1:3105/app?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1025
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/progress?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1034
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/you?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1026
+      },
+      {
+        "name": "http://127.0.0.1:3105/app/world?_rsc=KTVpN2EO63YCLLZU",
+        "bytes": 1027
+      }
+    ],
+    "canvasesAfterStill": 0
+  }
+]
