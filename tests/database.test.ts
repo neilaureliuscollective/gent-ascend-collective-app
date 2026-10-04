@@ -36,6 +36,31 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('isolates Cabinet records, protects identity and versions edits',async()=>{
+    const id='ce000000-0000-4000-8000-000000000001';
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.grooming_products(id,person_id,name,category,relation,catalog_product_id,version) values('${id}',${owner},'Test beard oil','beard','saved','gid://shopify/Product/9001',99)`);
+    expect((await asUser<{version:number}>(founder,`select version from public.grooming_products where id='${id}'`)).rows[0]?.version).toBe(1);
+    expect((await asUser(member,`select * from public.grooming_products where id='${id}'`)).rows).toHaveLength(0);
+    expect((await asUser(member,`update public.grooming_products set relation='in_use' where id='${id}' returning id`)).rows).toHaveLength(0);
+    expect((await asUser(member,`delete from public.grooming_products where id='${id}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.grooming_products set catalog_product_id='gid://shopify/Product/9002' where id='${id}'`)).rejects.toThrow();
+    await expect(asUser(founder,`update public.grooming_products set version=99 where id='${id}'`)).rejects.toThrow();
+    await asUser(founder,`update public.grooming_products set relation='running_low',note='Member reported' where id='${id}' and version=1`);
+    expect((await asUser<{version:number;relation:string}>(founder,`select version,relation from public.grooming_products where id='${id}'`)).rows).toEqual([{version:2,relation:'running_low'}]);
+    expect((await asUser(founder,`update public.grooming_products set relation='finished' where id='${id}' and version=1 returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder,`insert into public.grooming_products(person_id,name,category,relation,catalog_product_id) values(${owner},'Duplicate','beard','saved','gid://shopify/Product/9001')`)).rejects.toThrow();
+    await expect(asUser(founder,`insert into public.grooming_products(person_id,name,category,relation) values(${owner},'Fake purchase','beard','verified_order')`)).rejects.toThrow();
+    await db.exec('set role anon');
+    try{await expect(db.query('select * from public.grooming_products')).rejects.toThrow();}finally{await db.exec('reset role');}
+    await asUser(founder,`delete from public.grooming_products where id='${id}' and version=2`);
+  });
+  it('rejects Cabinet links to another member ritual',async()=>{
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    const ritual=(await asUser<{grooming_set_ritual:string}>(member,"select public.grooming_set_ritual('weekly','Member ritual','Cleanse and condition')")).rows[0]!.grooming_set_ritual;
+    await expect(asUser(founder,`insert into public.grooming_products(person_id,name,category,relation,ritual_id) values(${owner},'Cross-owner oil','beard','in_use','${ritual}')`)).rejects.toThrow();
+    await db.exec(`delete from public.grooming_rituals where id='${ritual}'`);
+  });
   it('isolates Council and Table histories on the existing turn/message ledger',async()=>{
     const conversation='cb000000-0000-4000-8000-000000000001',turn='cb000000-0000-4000-8000-000000000002';
     const otherConversation='cb000000-0000-4000-8000-000000000003',otherTurn='cb000000-0000-4000-8000-000000000004';

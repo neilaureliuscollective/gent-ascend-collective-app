@@ -1,34 +1,15 @@
 import { test, expect } from './fixtures';
 
-test('3D study renders, rotates, changes lighting and recovers from context loss', async ({
+test('Vitalis preview preserves honest product inspection without approved media', async ({
   page,
 }) => {
   const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/shop/vitalis');
-  await expect(page.locator('.atelier-canvas canvas')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Explore in 3D' }).click();
-  await expect(page.locator('.product-atelier')).toHaveAttribute('data-renderer', 'ready');
-  const slider = page.getByRole('slider', { name: 'Rotate vessel' });
-  await slider.focus();
-  await page.keyboard.press('ArrowRight');
-  await expect(slider).toHaveValue('1');
-  await page.getByRole('button', { name: 'Emerald light', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Emerald light', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await page.getByRole('button', { name: 'Reset view' }).click();
-  await expect(slider).toHaveValue('0');
-  await page.locator('.product-atelier').screenshot({ path: 'test-results/atelier-3d.png' });
-  await page
-    .locator('.atelier-canvas canvas')
-    .evaluate((canvas) =>
-      canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true })),
-    );
-  await expect(page.locator('.product-atelier')).toHaveAttribute('data-renderer', 'fallback');
-  await expect(page.locator('.atelier-canvas canvas')).toHaveCount(0);
-  await expect(page.getByText('Still study shown.', { exact: false })).toBeVisible();
+  await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
+  await expect(page.getByText('Product photography forthcoming')).toBeVisible();
+  await expect(page.getByRole('button', { name: /(?:Explore|Inspect) in 3D/ })).toHaveCount(0);
+  await expect(page.locator('#atelier canvas')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -46,8 +27,8 @@ test('reduced motion and unsupported graphics retain usable content', async ({ p
   });
   await page.goto('/shop/vitalis');
   await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
-  await page.getByRole('button', { name: 'Explore in 3D' }).click();
-  await expect(page.locator('.product-atelier')).toHaveAttribute('data-renderer', 'fallback');
+  await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
+  await expect(page.getByText('Product photography forthcoming')).toBeVisible();
   await page.getByRole('link', { name: 'The ritual', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Make it your ritual.' })).toBeVisible();
   await expect(page.locator('.atelier-canvas canvas')).toHaveCount(0);

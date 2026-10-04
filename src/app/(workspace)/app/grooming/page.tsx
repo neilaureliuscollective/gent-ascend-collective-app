@@ -44,7 +44,7 @@ export default async function Grooming({
     event = events.find((e) => e.event_date >= new Date().toISOString().slice(0, 10));
   const owned = new Set(
     products
-      .filter((p) => p.relation === 'owned' || p.relation === 'favorite')
+      .filter((p) => ['owned','favorite','in_use','running_low'].includes(p.relation))
       .map((p) => p.shopify_handle),
   );
   const discovery = catalog
@@ -115,6 +115,7 @@ export default async function Grooming({
         </p>
       )}
       <nav className="groom-nav" aria-label="Grooming areas">
+        <Link href="/app/collection/cabinet">Your Cabinet</Link>
         <Link href="/app/grooming/scan">Scan</Link>
         <Link href="/app/grooming/look">My Look</Link>
         <a href="#direction">Direction</a>

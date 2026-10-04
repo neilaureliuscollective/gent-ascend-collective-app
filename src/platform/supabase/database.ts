@@ -187,25 +187,18 @@ export interface Database {
         never
       >;
       grooming_products: Table<
+        import('@/domains/commerce/cabinet-model').CabinetRow,
         {
-          id: string;
+          id?: string;
           person_id: string;
           name: string;
           category: 'hair' | 'beard' | 'skin' | 'other';
-          relation: 'owned' | 'tried' | 'favorite' | 'stopped';
-          shopify_handle: string | null;
-          note: string;
-          created_at: string;
-        },
-        {
-          person_id: string;
-          name: string;
-          category: 'hair' | 'beard' | 'skin' | 'other';
-          relation: 'owned' | 'tried' | 'favorite' | 'stopped';
+          relation: import('@/domains/commerce/cabinet-model').CabinetRelation;
+          catalog_product_id?: string | null;
           shopify_handle?: string | null;
           note?: string;
         },
-        never
+        {relation?:import('@/domains/commerce/cabinet-model').CabinetRelation;note?:string;ritual_id?:string|null}
       >;
       grooming_looks: Table<
         {

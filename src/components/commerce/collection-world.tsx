@@ -65,6 +65,9 @@ export function CollectionWorld({
             <Link className="world-text-link" href={`${basePath}/cart`}>
               Your cart
             </Link>
+            <Link className="world-text-link" href={`${basePath}/cabinet`}>
+              Your Cabinet
+            </Link>
           </div>
         </div>
         <div className="collection-chamber-caption" aria-hidden="true">
