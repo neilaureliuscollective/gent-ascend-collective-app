@@ -252,3 +252,45 @@ test('Daily Command saves arrival and feedback through real Auth, then reloads t
     'Synthetic command follow-through.',
   );
 });
+
+test('Cabinet product persists and appears beside its owner-linked grooming ritual', async ({
+  page,
+}) => {
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await page.goto('/app/grooming');
+  await page.getByRole('button', { name: 'Edit ritual structure' }).click();
+  const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
+  await ritual.getByLabel('When', { exact: true }).selectOption('morning');
+  await ritual.getByLabel('Name', { exact: true }).fill('Synthetic Cabinet morning');
+  await ritual.getByLabel('Steps', { exact: true }).fill('Use what I already own.');
+  await ritual.getByRole('button', { name: 'Save ritual', exact: true }).click();
+  await expect(
+    page.getByText('Saved to your private grooming history.', { exact: true }),
+  ).toBeVisible();
+  await page.goto('/app/collection/cabinet');
+  await page.getByText('Keep a product from elsewhere', { exact: true }).click();
+  await page.getByLabel('Product name', { exact: true }).fill('Synthetic external oil');
+  await page.getByRole('button', { name: 'Record a product I own' }).click();
+  const record = page.locator('.cabinet-record').filter({ hasText: 'Synthetic external oil' });
+  await expect(record.getByRole('heading', { name: 'Synthetic external oil' })).toBeVisible();
+  await record.getByText('Review my experience', { exact: true }).click();
+  await record.getByLabel('My experience').selectOption('running_low');
+  await record.getByLabel('My note').fill('Keep this private note.');
+  await record.getByLabel('Grooming ritual').selectOption({ label: 'Synthetic Cabinet morning' });
+  await record.getByRole('button', { name: 'Save my experience' }).click();
+  await expect(record.locator('.eyebrow')).toContainText('Running low');
+  await page.reload();
+  await record.getByText('Review my experience', { exact: true }).click();
+  await expect(record.getByLabel('My note')).toHaveValue('Keep this private note.');
+  await expect(record.getByLabel('My experience')).toHaveValue('running_low');
+  await page.goto('/app/grooming');
+  const products = page.getByRole('region', {
+    name: 'Products linked to Synthetic Cabinet morning',
+  });
+  await expect(products).toContainText('Synthetic external oil');
+  await expect(products).toContainText('Running low');
+  await expect(products).not.toContainText('Keep this private note.');
+});

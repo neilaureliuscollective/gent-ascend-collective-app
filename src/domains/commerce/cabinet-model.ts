@@ -54,3 +54,35 @@ export type CabinetRow = {
   version: number;
   ritual_id: string | null;
 };
+
+export const cabinetImportHandles = z
+  .array(catalogSaveInput.shape.handle)
+  .min(1)
+  .max(20)
+  .refine((handles) => new Set(handles).size === handles.length, 'Choose each product once.');
+export const cabinetImportInput = z
+  .object({
+    owner: z.uuid(),
+    items: z
+      .array(
+        z
+          .object({
+            handle: catalogSaveInput.shape.handle,
+            id: z.string().regex(/^gid:\/\/shopify\/Product\/[0-9]+$/),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(20),
+  })
+  .strict()
+  .refine(
+    ({ items }) => new Set(items.map((item) => item.handle)).size === items.length,
+    'Choose each product once.',
+  );
+export type CabinetImportReview = {
+  owner: string;
+  items: { handle: string; id: string; title: string }[];
+  unavailable: string[];
+  error: string;
+};

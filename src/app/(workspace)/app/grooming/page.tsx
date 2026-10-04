@@ -1,3 +1,4 @@
+import { cabinetLabels } from '@/domains/commerce/cabinet-model';
 import { GroomingDirectionEditor } from '@/components/grooming/direction';
 import { GroomingTask } from '@/components/grooming/focus-task';
 import Link from 'next/link';
@@ -176,6 +177,14 @@ export default async function Grooming({
                 <p className="groom-lines">
                   {r?.steps ?? 'Give it a name and a few practical steps.'}
                 </p>
+                {r && <section aria-label={`Products linked to ${r.title}`}>
+                  <p className="eyebrow">YOUR LINKED PRODUCTS / MEMBER RECORDED</p>
+                  {products.filter(product=>product.ritual_id===r.id).length ? <ul>
+                    {products.filter(product=>product.ritual_id===r.id).slice(0,6).map(product=><li key={product.id}>{product.name} · {cabinetLabels[product.relation]}</li>)}
+                  </ul> : <p>No linked products in this view.</p>}
+                  <small>Showing up to six links from your latest eighty Cabinet records. Linking is your choice, not a product recommendation.</small>
+                  <p><Link href="/app/collection/cabinet">Review products and ritual links →</Link></p>
+                </section>}
                 {r && (
                   <form action={checkinAction} className="groom-form">
                     <input type="hidden" name="ritual_id" value={r.id} />
