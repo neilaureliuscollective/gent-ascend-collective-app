@@ -151,7 +151,8 @@ for (const width of [344, 768]) {
       .getByRole('link', { name: /Inspect Vitalis/ })
       .click();
     await expect(page).toHaveURL('/shop/vitalis#atelier');
-    await expect(page.getByRole('button', { name: /Explore in 3D/ })).toBeVisible();
+    await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
+    await expect(page.getByText('Product photography forthcoming')).toBeVisible();
   });
 }
 

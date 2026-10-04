@@ -16,7 +16,11 @@ for (const width of [344, 768, 1440]) {
         .boundingBox();
       expect(launcher!.y).toBeGreaterThanOrEqual(nav!.y + nav!.height);
     }
-    await page.screenshot({ path: `test-results/gent-command-${width}.png`, fullPage: true });
+    await page.screenshot({
+      path: `test-results/gent-command-${width}.png`,
+      fullPage: true,
+      animations: 'disabled',
+    });
     await page.goto('/app/you');
     await expect(
       page.getByRole('heading', { name: 'Build the man behind the life.' }),
@@ -36,7 +40,9 @@ for (const width of [344, 768, 1440]) {
     await page.getByText('Explore the Collective', { exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Legacy Reserve', exact: true })).toBeVisible();
     await page.goto('/app/aethelios');
-    await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toHaveText('Aethelios');
+    await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toHaveText(
+      'Aethelios',
+    );
     const manifest = await (await request.get('/manifest.webmanifest')).json();
     expect(manifest.name).toBe('Gent Ascend Collective');
     expect(manifest.short_name).toBe('Gent Ascend');
