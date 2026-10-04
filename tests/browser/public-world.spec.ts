@@ -119,11 +119,11 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
     .toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('gent-ascend-fallback-v3');
+    const cache = await caches.open('gent-ascend-fallback-v4');
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([
-    '/brand/icon-v2-192.png',
+    '/brand/app-crest-20261004-192.png',
     '/offline.html',
     '/performance-offline.css',
     '/performance-offline.html',

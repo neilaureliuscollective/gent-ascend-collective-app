@@ -7,7 +7,12 @@ export function CommandArrival() {
   const { moving } = useAppearance();
   const [active, setActive] = useState(false);
   useEffect(() => {
-    if (!moving || matchMedia('(display-mode: standalone)').matches) return;
+    if (
+      !moving ||
+      matchMedia('(display-mode: standalone)').matches ||
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+    )
+      return;
     try {
       if (sessionStorage.getItem('gent-command-arrival-v2')) return;
       sessionStorage.setItem('gent-command-arrival-v2', 'seen');
