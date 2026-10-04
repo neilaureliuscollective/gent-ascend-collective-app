@@ -7,11 +7,22 @@ import { projectCommand, type CommandProjection } from '@/domains/command/projec
 import { commandChanges } from '@/domains/command/changes';
 import { CommandField } from './command-field';
 import type { CommandData } from '@/domains/daily-command/model';
-import { CommandArrival } from './command-arrival';
+import { HomeConversation } from './home-conversation';
 import '@/app/command-living.css';
 const DailyDepth = dynamic(() => import('./daily-depth').then((module) => module.DailyDepth), {
   loading: () => <p role="status">Opening your day workspace…</p>,
 });
+function greeting(asOf: string | undefined, timezone: string) {
+  if (!asOf) return 'Welcome back';
+  const hour = Number(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hourCycle: 'h23',
+    }).format(new Date(asOf)),
+  );
+  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+}
 export function DailyDashboard({
   initial,
   opening,
@@ -276,7 +287,7 @@ export function DailyDashboard({
   }
   return (
     <div
-      className="command-briefing command-living"
+      className="command-briefing command-living command-home"
       data-status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}
     >
       <section className="command-environment" aria-labelledby="command-title">
@@ -291,22 +302,19 @@ export function DailyDashboard({
                 ? 'Personal preview'
                 : data.timezone.replaceAll('_', ' ')}
           </span>
-          <CommandArrival />
         </header>
         <div className="command-moment">
-          <p className="command-kicker">Space to see clearly.</p>
+          <p className="command-kicker">Your Gent Ascend</p>
           <h1 id="command-title">
-            {data.name ? `At a glance, ${data.name}.` : 'A clearer place to begin.'}
+            {data.name
+              ? `${greeting(checkedAt ?? asOf, data.timezone)}, ${data.name}.`
+              : 'Your day. Your direction.'}
           </h1>
-          <p className="command-brief">{projection.briefing}</p>
-          <span className="command-provenance">
-            {projection.briefingSource} ·{' '}
-            {data.mode === 'sample' ? 'fictional records' : 'no AI assessment'}
-          </span>
         </div>
+        <HomeConversation key={`${data.mode}:${data.ownerId ?? 'preview'}`} data={data} />
         <section className="command-next" aria-label="Today’s move">
           <div>
-            <span>Today’s move</span>
+            <span>Now / Today’s move</span>
             <h2 id="command-move-title" tabIndex={-1}>
               {projection.move.title}
             </h2>
@@ -338,6 +346,30 @@ export function DailyDashboard({
             </button>
           )}
         </section>
+        <nav className="home-worlds" aria-label="Your operating spaces">
+          <Link prefetch={false} href="/app/grooming">
+            Grooming <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/performance">
+            Training <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/collection" className="home-collection">
+            Ascend Collection <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/aethelios">
+            Aethelios & Council <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/world">
+            My world <span>↗</span>
+          </Link>
+        </nav>
+        <div className="home-context-note">
+          <p>{projection.briefing}</p>
+          <small>
+            {projection.briefingSource} ·{' '}
+            {data.mode === 'sample' ? 'fictional records' : 'saved records, no AI assessment'}
+          </small>
+        </div>
         <CommandField
           projection={projection}
           openPlan={openPlan}
@@ -526,17 +558,6 @@ export function DailyDashboard({
           </Link>
         </section>
       )}
-      <nav className="command-domains" aria-label="Your operating spaces">
-        <Link prefetch={false} href="/app/aethelios">
-          Aethelios <span>Think it through ↗</span>
-        </Link>
-        <Link prefetch={false} href="/app/performance">
-          Performance <span>Training · fuel · recovery ↗</span>
-        </Link>
-        <Link prefetch={false} href="/app/grooming">
-          Grooming <span>Your look · your ritual ↗</span>
-        </Link>
-      </nav>
       <nav className="command-depth-nav" aria-label="Explore your context">
         <button
           disabled={busy}

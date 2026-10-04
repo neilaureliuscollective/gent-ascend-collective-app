@@ -47,7 +47,7 @@ export async function signIn(form: FormData) {
   const pilot = await readPilot();
   if (!pilot?.beta && !pilot?.founder && (await currentAccess()).has('aurelius.context'))
     redirect('/app');
-  redirect(pilot?.person.priority && (pilot.beta || pilot.founder) ? '/app' : '/app/welcome');
+  redirect(pilot?.beta || pilot?.founder ? '/app' : '/app/welcome');
 }
 export async function signOut() {
   (await cookies()).set('performance-reset', '1', {

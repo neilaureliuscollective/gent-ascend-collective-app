@@ -1,3 +1,4 @@
+import { HomeHandoffFixture } from './home-handoff';
 import { CustomerOrders } from '@/components/commerce/customer-orders';
 import { DailyCommandWorkspace } from '@/components/daily-command/workspace';
 import { CabinetImport } from '@/components/commerce/cabinet-import';
@@ -92,7 +93,7 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'command' ? (
+  mode === 'home-handoff' ? <HomeHandoffFixture /> : mode === 'command' ? (
     <DailyCommandWorkspace initial={commandFixture} />
   ) : mode === 'commerce-showroom' ? (
     <main className="reserve-commerce">
