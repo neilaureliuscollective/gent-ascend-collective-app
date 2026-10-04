@@ -59,7 +59,7 @@ export function FreestyleComposer({
 }) {
   const [intent, setIntent] = useState<Intent>('upper');
   const [draft, setDraft] = useState<DraftMovement[]>([]);
-  const [manualOpen, setManualOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(true);
   const [manualName, setManualName] = useState('');
   const [manualSets, setManualSets] = useState(3);
   const [manualReps, setManualReps] = useState(10);
@@ -152,7 +152,7 @@ export function FreestyleComposer({
         disabled={busy || starting}
         onClick={() => void start()}
       >
-        {starting ? 'Opening training…' : draft.length ? `Start with ${draft.length} movement${draft.length === 1 ? '' : 's'} →` : 'Start training now →'}
+        {starting ? 'Opening training…' : draft.length ? 'Start this workout →' : 'Start training now →'}
       </button>
 
       <div className="perf-builder-actions" aria-label="Add movements">
