@@ -6,6 +6,7 @@ export const priorityInput = z
     day: z.iso.date(),
     version: z.number().int().min(0),
     intention: z.string().trim().min(1).max(160),
+    nextAction: z.string().trim().min(1).max(100).optional(),
   })
   .strict();
 export type PriorityInput = z.infer<typeof priorityInput>;

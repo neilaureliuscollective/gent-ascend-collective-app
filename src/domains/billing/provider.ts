@@ -7,7 +7,15 @@ import { currentPerson } from '@/domains/person/current';
 import { supabaseConnection } from '@/platform/supabase/connection';
 import type { Database } from '@/platform/supabase/database';
 import { billingConfig, type BillingConfig } from './config';
-import { portalSafe, priceTier, subscriptionSnapshot, type BillingSummary } from './policy';
+import {
+  portalSafe,
+  recoveryPortalSafe,
+  priceTier,
+  subscriptionSnapshot,
+  type BillingSummary,
+} from './policy';
+import { currentFounderAccess } from '@/domains/access/founder';
+import type { BillingReadiness } from './readiness-contract';
 import type { FoundingTier } from './founding-catalog';
 
 export class BillingError extends Error {
@@ -141,16 +149,7 @@ async function validatePrices(stripe: Stripe, config: BillingConfig) {
 }
 async function recoveryPortal(stripe: Stripe, config: BillingConfig) {
   const portal = await stripe.billingPortal.configurations.retrieve(config.recoveryPortal);
-  if (
-    !portal.active ||
-    portal.livemode !== config.live ||
-    !portal.features.payment_method_update.enabled ||
-    !portal.features.invoice_history.enabled ||
-    !portal.features.subscription_cancel.enabled ||
-    portal.features.subscription_cancel.mode !== 'at_period_end' ||
-    portal.features.subscription_cancel.proration_behavior !== 'none' ||
-    portal.features.subscription_update.enabled
-  )
+  if (!recoveryPortalSafe(portal, config))
     throw new BillingError('Membership cancellation is awaiting configuration.');
   return config.recoveryPortal;
 }
@@ -384,4 +383,85 @@ export async function handleWebhook(raw: string, signature: string) {
   const mapping = await control<{ person: string } | null>('lookup', null, null, { customer });
   if (!mapping) return; // Other Stripe customers never become Gent Ascend members from metadata.
   await syncCustomer(stripe, config, mapping.person, event.id, readHold);
+}
+
+/** Explicit founder-requested provider reads only. Never create payments or change launch flags. */
+export async function inspectBillingReadiness(): Promise<BillingReadiness> {
+  if (!(await currentFounderAccess())) throw new BillingError('Founder access required.', 403);
+  const report: BillingReadiness = {
+    checkedAt: new Date().toISOString(),
+    checks: [],
+  };
+  const config = billingConfig(process.env);
+  if (!config) {
+    report.checks.push({
+      name: 'Billing configuration',
+      status: 'blocked',
+      detail: 'Required billing configuration or deployment mode is incomplete.',
+    });
+  } else {
+    report.checks.push({
+      name: 'Enrollment switch',
+      status: config.enrollment ? 'verified' : 'blocked',
+      detail: config.enrollment
+        ? 'Launch terms and enrollment switches are configured.'
+        : 'Paid enrollment remains closed.',
+    });
+    const stripe = provider(config);
+    const results = await Promise.allSettled([
+      validatePrices(stripe, config),
+      safePortal(stripe, config),
+      stripe.webhookEndpoints.list({ limit: 100 }).then((endpoints) => {
+        if (endpoints.has_more) throw new Error('Unbounded endpoint list');
+        const endpoint = endpoints.data.find(
+          (item) =>
+            item.url === `${config.origin}/api/billing/webhook` &&
+            item.status === 'enabled' &&
+            item.livemode === config.live &&
+            (item.enabled_events.includes('*') ||
+              [...eventTypes].every((event) =>
+                item.enabled_events.includes(event),
+              )),
+        );
+        if (!endpoint) throw new Error('Endpoint not verified');
+      }),
+    ]);
+    const names = ['Membership prices', 'Plan changes and cancellation', 'Webhook registration'];
+    const details = [
+      'Configured prices match the current offer, cadence and provider mode.',
+      'Configured management and recovery portals satisfy cancellation and plan-change rules.',
+      'An enabled endpoint covers the events used by this application.',
+    ];
+    results.forEach((result, index) =>
+      report.checks.push({
+        name: names[index]!,
+        status: result.status === 'fulfilled' ? 'verified' : 'unknown',
+        detail:
+          result.status === 'fulfilled'
+            ? details[index]!
+            : 'Provider verification did not complete. Review configuration and retry.',
+      }),
+    );
+  }
+  report.checks.push(
+    {
+      name: 'Real subscription lifecycle',
+      status: 'unknown',
+      detail:
+        'Checkout, signed delivery, renewal, failure and cancellation still require an actual test-account journey. Configuration checks do not prove payment.',
+    },
+    {
+      name: 'Product ordering',
+      status: 'unknown',
+      detail:
+        'Shopify product checkout and fulfillment require separate merchant acceptance. This report does not inspect orders.',
+    },
+    {
+      name: 'Paid preorders',
+      status: 'blocked',
+      detail:
+        'The app keeps preorders closed until a merchant-backed purchase-option and fulfillment path is verified.',
+    },
+  );
+  return report;
 }

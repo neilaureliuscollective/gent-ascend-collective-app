@@ -1,3 +1,7 @@
+# Public launch Phase 1 · October 4, 2026
+
+Public account entry and first-session continuity are implemented on a review branch from main `6abfd6d`. Recover the unmerged free-account claim build from PR #41, then add three authored starting paths, reviewed priority/next-move saving, returning-account routing, and Facebook browser guidance. Free identity remains separate from membership privileges. Local lint, types, 303 unit/SQL tests, 11 targeted browser checks, migration ledger and webpack production build pass. Real Auth acceptance and normal production build run in CI; hosted email/Google, migration activation, live AI and physical device acceptance are not claimed. Production remains unchanged. Scope and activation ledger: `PUBLIC_LAUNCH_PHASE_1.md`.
+
 # Shopify customer connection and recent orders · October 4, 2026
 
 Implemented explicit same-origin OAuth/PKCE connection, signature/issuer/audience/nonce verification, encrypted owner-bound browser sessions, disconnect and a bounded read-only order view inside the native Collection. Payment, fulfillment and cancellation remain separate. No order ingestion, migration, member-price activation, checkout identity mutation or AI access. Current Vercel metadata has no Customer Account configuration: the feature stays closed until a public Headless client, allowed callback, API permissions, independent encryption key and actual merchant acceptance are complete. This is browser-scoped, at most one hour, not a durable unique account mapping. Research/plan and exact activation contract: `CUSTOMER_ACCOUNT_CONNECTION.md`. Local lint, types, 293 unit/SQL tests and migration ledger pass; five new browser checks pass without retries using separate browser processes. The local webpack production build passes; normal Turbopack build and full authenticated release gates run in CI because storage forced a linked-dependency checkout. Release evidence follows in the PR.
@@ -64,6 +68,13 @@ Founder-directed refinement of the live product presentation: photo-aligned meta
 # Commerce photography and cinematic refinement — 2026-10-02
 
 Founder-approved visual correction: Shopify photos no longer depend on editorial `mediaApproved`; fabricated packaging fallbacks removed from commerce. Larger dimensional product scenes, green/gold lighting, staggered shelves and scoped native-scroll choreography implemented. Lint/typecheck/build and 223 unit tests passed; browser verification and publication results recorded in the release handoff. See [COMMERCE_VISUAL_REFINEMENT.md](COMMERCE_VISUAL_REFINEMENT.md). Physical Fold performance remains founder review.
+# Free account claim — October 2, 2026
+
+Founder-approved Phase 1 implemented on `feat/free-account-claim`. Existing cinematic entrance retained. World direction now becomes a recoverable 24-hour device draft; optional branded signup sheet supports Google + email OTP, fixed return routing, atomic owner-derived import and persisted focus. Free signup is independent of billing and fails closed until verified configuration is enabled. Existing password/invitation/membership flows retained. Sample workout/grooming activity is never promoted to actual history. Account creation never grants AI/beta/paid/clinical access.
+
+Validation: lint and TypeScript passed; production build passed; 213 unit/route/SQL tests passed, including owner-only/idempotent/conflict-safe import. Four account-claim browser tests passed at 360/768/1440 and failed-save/replacement recovery using explicit API fixtures. Eight existing cinematic/world-priority browser regression tests passed. Local migration ledger check passed (existing 28 hosted hash snapshot entries); new claim migration remains unapplied remotely. SQL uses PGlite, not GoTrue/PostgREST. Browser screenshots visually inspected; narrow phone authentication is full screen.
+
+Open release gates: actual Supabase migration/Auth/PostgREST, Google provider, production OTP email + CAPTCHA, physical Fold/iPhone/PWA and cross-user hosted acceptance. Docker is unavailable in this runtime. No hosted settings or production deployment changed. Setup and exact limits: ACCOUNT_CLAIM_PHASE_1.md. Structured logs are the initial analytics sink, not a durable reporting dashboard. This is implementation-ready for review; hosted activation remains open.
 
 # Subtle cinematic replay — October 2, 2026
 
@@ -680,3 +691,17 @@ Observed: lint, strict typecheck, production build, ledger snapshot check, 238 u
 Real Supabase Auth/persistence/founder evaluation, physical Fold/touch/GPU/battery and assistive-technology testing remain open; large-text shared-header/navigation reflow belongs to final production polish. No push/main merge/deploy. One final production-finish and real-service/device validation phase remains; no claim of a general autonomous background agent.
 
 Final state evidence also includes the empty/unavailable/error/readback views and keyboard-operated source inspection at 200% text on 360×640; all five targeted cases passed.
+
+## 2026-10-04 — Public launch Phase 2: connected daily experience
+
+Recovered completed Phase 1 from PR52 ebd224a. Added session-bound Command return paths and a seven-day Progress projection across real Daily, training and grooming records. Editable weekly coaching uses consented context and existing reviewed saves. Shared read-only OpenAI search now reaches member Aethelios, specialists and Table; provider source links persist with saved text. No dependencies, migrations, entitlement changes or production activation. Local lint/types, 311 tests, webpack production build and migration ledger pass. Browser download failed; full interaction and real Supabase acceptance run through CI, with actual model and physical-device checks still pending. Scope/research/limits: PUBLIC_LAUNCH_PHASE_2.md. Two consolidated build phases remain, plus recorded acceptance gates.
+
+Phase 2 publication update: automatic approval review rejected the canonical GitHub push for unrecognized destination authorization. Local implementation is committed at 127f4b4; no alternate upload/publication route attempted. Remote PR and CI have not started. Final local code gates pass; browser archive download failed, and real provider/device checks remain open.
+
+## Public launch recovery and revenue verification — October 4, 2026
+
+Recovered committed Phase2 `127f4b4` after the interrupted session. Phase3 adds invoice customer/subscription/provider-mode verification and explicit founder-only billing configuration inspection in Membership. Real payments and merchant fulfillment stay separate unknown gates; paid preorders stay blocked. Local lint/types,316 unit/SQL/provider-contract tests, recorded migration ledger and production webpack build pass; local browser install failed, actual providers/devices remain unverified. Review/activation contract: `docs/PUBLIC_LAUNCH_PHASE_3.md`. The final consolidated build phase is release readiness; do not claim subscription or signup activation from code completion.
+
+## Public launch Phase4 — release controls, October 4, 2026
+
+Implemented founder-only launch ledger, public/member support paths, existing account/memory-control guidance and optional anonymous scalar Web Vitals reporting. Missing support and actual signup/payment/device/data-process/legal acceptance remain blocked or unknown; no automated ready score or activation. Monitoring is off by default, excludes private text/identifiers and respects privacy signals. Training API unchanged. Local lint/types,322 tests, recorded28-file ledger, final webpack production build and signed-out production-runtime HTTP checks pass. Browser, actual hosted identity/providers, clean CI and physical devices remain open. Exact scope, constrained build evidence and release/rollback: `docs/PUBLIC_LAUNCH_PHASE_4.md`. Public repository publication still awaits explicit authorization after the earlier automatic rejection; no deployment.

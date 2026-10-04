@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { track } from '@/domains/onboarding/track';
+import { requestAccountClaim } from '@/domains/onboarding/entry';
 import { worlds } from '@/platform/world/registry';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useWorldPriority, WorldPrioritySummary, WorldPriorityEditor } from './world-priority';
@@ -14,11 +16,11 @@ const connections = [
   'M170 155 Q220 195 286 242',
 ];
 
-export function WholeManWorld() {
+export function WholeManWorld({ initialWorld = null }: { initialWorld?: string | null }) {
   const params = useSearchParams();
   const selected = Math.max(
     0,
-    worlds.findIndex((world) => world.id === params.get('world')),
+    worlds.findIndex((world) => world.id === (params.get('world') ?? initialWorld)),
   );
   const world = worlds[selected]!;
   const [directory, setDirectory] = useState(false);
@@ -33,7 +35,20 @@ export function WholeManWorld() {
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
   }, []);
+  useEffect(() => {
+    const claiming = () => {
+      setDirection(false);
+      const url = new URL(window.location.href);
+      if (url.hash === '#direction') {
+        url.hash = '';
+        window.history.replaceState(null, '', url);
+      }
+    };
+    window.addEventListener('gent-claim-account', claiming);
+    return () => window.removeEventListener('gent-claim-account', claiming);
+  }, []);
   function select(index: number) {
+    track('preview_engaged');
     const url = new URL(window.location.href);
     url.searchParams.set('world', worlds[index]!.id);
     // Next's native history integration retains selection across refresh/back without a server fetch.
@@ -137,6 +152,16 @@ export function WholeManWorld() {
             <span aria-hidden="true">↗</span>
           </Link>
           <div className="gw-world-utilities">
+            {priority.data?.mode === 'guest' && (
+              <button
+                onClick={() => {
+                  track('claim_clicked');
+                  requestAccountClaim();
+                }}
+              >
+                Create free account ↗
+              </button>
+            )}
             <button type="button" onClick={() => setDirection(true)} aria-haspopup="dialog">
               Find my next move <span aria-hidden="true">↗</span>
             </button>

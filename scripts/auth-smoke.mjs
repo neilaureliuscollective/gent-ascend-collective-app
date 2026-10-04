@@ -328,146 +328,634 @@ console.log(
 );
 
 // Daily Command: suggestions and self-reported outcomes stay owner-bound.
-const commandArrival = {sleepMinutes:null,energy:null,soreness:null,bandwidth:null,minutes:null};
-const commandSnapshot = {day:dailyDate,ruleVersion:1,state:'STEADY',decisions:[{id:'focus',label:'FOCUS',detail:'Synthetic priority',reason:'Synthetic evidence',href:'/app/daily'}]};
-const commandArgs = {p_request:crypto.randomUUID(),p_day:dailyDate,p_version:0,p_kind:'arrival',p_arrival:commandArrival,p_snapshot:commandSnapshot,p_outcome:null};
-const commandSave=await member.rpc('daily_command_save',commandArgs);assert.equal(commandSave.error,null);assert.equal(commandSave.data,1);
-const commandReplay=await member.rpc('daily_command_save',commandArgs);assert.equal(commandReplay.error,null);assert.equal(commandReplay.data,1);
-const commandStale=await member.rpc('daily_command_save',{...commandArgs,p_request:crypto.randomUUID()});assert.equal(commandStale.error.code,'40001');
-const commandOutcome={decisions:[{id:'focus',result:'skipped'}],fit:'too-much',tomorrow:'Synthetic carry forward'};
-const commandClose=await member.rpc('daily_command_save',{...commandArgs,p_request:crypto.randomUUID(),p_version:1,p_kind:'outcome',p_outcome:commandOutcome});assert.equal(commandClose.error,null);assert.equal(commandClose.data,2);
-for(const table of ['daily_command_records','daily_command_revisions']) {
- const own=await member.from(table).select('*');assert.equal(own.error,null);assert.ok(own.data.length);
- const other=await founder.from(table).select('*').eq('person_id',memberPerson.id);assert.equal(other.error,null);assert.equal(other.data.length,0);
- const anonymous=await anon.from(table).select('*');assert.ok(anonymous.error);
- const direct=await member.from(table).update({version:99}).eq('person_id',memberPerson.id);assert.ok(direct.error);
+const commandArrival = {
+  sleepMinutes: null,
+  energy: null,
+  soreness: null,
+  bandwidth: null,
+  minutes: null,
+};
+const commandSnapshot = {
+  day: dailyDate,
+  ruleVersion: 1,
+  state: 'STEADY',
+  decisions: [
+    {
+      id: 'focus',
+      label: 'FOCUS',
+      detail: 'Synthetic priority',
+      reason: 'Synthetic evidence',
+      href: '/app/daily',
+    },
+  ],
+};
+const commandArgs = {
+  p_request: crypto.randomUUID(),
+  p_day: dailyDate,
+  p_version: 0,
+  p_kind: 'arrival',
+  p_arrival: commandArrival,
+  p_snapshot: commandSnapshot,
+  p_outcome: null,
+};
+const commandSave = await member.rpc('daily_command_save', commandArgs);
+assert.equal(commandSave.error, null);
+assert.equal(commandSave.data, 1);
+const commandReplay = await member.rpc('daily_command_save', commandArgs);
+assert.equal(commandReplay.error, null);
+assert.equal(commandReplay.data, 1);
+const commandStale = await member.rpc('daily_command_save', {
+  ...commandArgs,
+  p_request: crypto.randomUUID(),
+});
+assert.equal(commandStale.error.code, '40001');
+const commandOutcome = {
+  decisions: [{ id: 'focus', result: 'skipped' }],
+  fit: 'too-much',
+  tomorrow: 'Synthetic carry forward',
+};
+const commandClose = await member.rpc('daily_command_save', {
+  ...commandArgs,
+  p_request: crypto.randomUUID(),
+  p_version: 1,
+  p_kind: 'outcome',
+  p_outcome: commandOutcome,
+});
+assert.equal(commandClose.error, null);
+assert.equal(commandClose.data, 2);
+for (const table of ['daily_command_records', 'daily_command_revisions']) {
+  const own = await member.from(table).select('*');
+  assert.equal(own.error, null);
+  assert.ok(own.data.length);
+  const other = await founder.from(table).select('*').eq('person_id', memberPerson.id);
+  assert.equal(other.error, null);
+  assert.equal(other.data.length, 0);
+  const anonymous = await anon.from(table).select('*');
+  assert.ok(anonymous.error);
+  const direct = await member.from(table).update({ version: 99 }).eq('person_id', memberPerson.id);
+  assert.ok(direct.error);
 }
-const anonymousCommand=await anon.rpc('daily_command_save',commandArgs);assert.ok(anonymousCommand.error);
-console.log('PASS: Daily Command exact replay, stale version, feedback retention, two-owner isolation and denied direct/anonymous writes');
+const anonymousCommand = await anon.rpc('daily_command_save', commandArgs);
+assert.ok(anonymousCommand.error);
+console.log(
+  'PASS: Daily Command exact replay, stale version, feedback retention, two-owner isolation and denied direct/anonymous writes',
+);
 
 // Performance slice: use real Auth/PostgREST and the caller's JWT, never service credentials.
-const performanceProfile = { goal:'strength',experience:'returning',daysPerWeek:3,minutes:40,equipment:'gym',limitations:'',unit:'lb' };
+const performanceProfile = {
+  goal: 'strength',
+  experience: 'returning',
+  daysPerWeek: 3,
+  minutes: 40,
+  equipment: 'gym',
+  limitations: '',
+  unit: 'lb',
+};
 const performanceRequest = crypto.randomUUID();
-const performanceArgs = {p_kind:'profile',p_request:performanceRequest,p_expected:0,p_payload:performanceProfile};
-const perfSaved = await founder.rpc('performance_save',performanceArgs);
-assert.equal(perfSaved.error,null);assert.equal(perfSaved.data,1);
-const perfReplay=await founder.rpc('performance_save',performanceArgs);
-assert.equal(perfReplay.error,null);assert.equal(perfReplay.data,1);
-const perfOwn=await founder.from('performance_profiles').select('*');assert.equal(perfOwn.error,null);assert.equal(perfOwn.data.length,1);
-const perfOther=await member.from('performance_profiles').select('*');assert.equal(perfOther.error,null);assert.equal(perfOther.data.length,0);
-const perfAnonymous=await anon.rpc('performance_save',performanceArgs);assert.ok(perfAnonymous.error);
+const performanceArgs = {
+  p_kind: 'profile',
+  p_request: performanceRequest,
+  p_expected: 0,
+  p_payload: performanceProfile,
+};
+const perfSaved = await founder.rpc('performance_save', performanceArgs);
+assert.equal(perfSaved.error, null);
+assert.equal(perfSaved.data, 1);
+const perfReplay = await founder.rpc('performance_save', performanceArgs);
+assert.equal(perfReplay.error, null);
+assert.equal(perfReplay.data, 1);
+const perfOwn = await founder.from('performance_profiles').select('*');
+assert.equal(perfOwn.error, null);
+assert.equal(perfOwn.data.length, 1);
+const perfOther = await member.from('performance_profiles').select('*');
+assert.equal(perfOther.error, null);
+assert.equal(perfOther.data.length, 0);
+const perfAnonymous = await anon.rpc('performance_save', performanceArgs);
+assert.ok(perfAnonymous.error);
 console.log('PASS: Performance real Auth/RPC profile save, receipt replay, and two-user isolation');
 
-const cycleSlotA=crypto.randomUUID(),cycleSlotB=crypto.randomUUID();
-const cyclePlan={title:'Synthetic session A',unit:'lb',exercises:[{id:crypto.randomUUID(),name:'Synthetic row',sets:3,reps:8,load:40,restSeconds:90}]};
-const cycle={title:'Synthetic training cycle',sessions:[{id:cycleSlotA,plan:cyclePlan},{id:cycleSlotB,plan:{...cyclePlan,title:'Synthetic session B'}}]};
-const cycleArgs={p_kind:'program',p_request:crypto.randomUUID(),p_expected:0,p_payload:cycle};
-const cycleSaved=await founder.rpc('performance_save',cycleArgs);assert.equal(cycleSaved.error,null);assert.equal(cycleSaved.data,1);
-const cycleReplay=await founder.rpc('performance_save',cycleArgs);assert.equal(cycleReplay.error,null);assert.equal(cycleReplay.data,1);
-const adjusted={...cyclePlan,exercises:cyclePlan.exercises.map(e=>({...e,sets:2}))};
-const cycleSession={id:crypto.randomUUID(),title:cyclePlan.title,unit:'lb',planVersion:1,startedAt:new Date().toISOString(),endedAt:new Date().toISOString(),status:'complete',pain:false,note:'Synthetic test',prescription:{ruleVersion:1,programVersion:1,slotId:cycleSlotA,mode:'lighter',timeBudget:40,originalPlan:cyclePlan,plan:adjusted},sets:Array.from({length:2},()=>({id:crypto.randomUUID(),exerciseId:cyclePlan.exercises[0].id,exercise:'Synthetic row',targetReps:8,targetLoad:40,reps:8,load:40,effort:7,done:true}))};
-const cycleSessionArgs={p_kind:'session',p_request:crypto.randomUUID(),p_expected:0,p_payload:cycleSession};
-const cycleFinished=await founder.rpc('performance_save',cycleSessionArgs);assert.equal(cycleFinished.error,null);assert.equal(cycleFinished.data,1);
-const cycleFinishedReplay=await founder.rpc('performance_save',cycleSessionArgs);assert.equal(cycleFinishedReplay.error,null);assert.equal(cycleFinishedReplay.data,1);
-const cyclePointer=await founder.from('performance_programs').select('next_slot_id');assert.equal(cyclePointer.error,null);assert.equal(cyclePointer.data[0].next_slot_id,cycleSlotB);
-const cycleContext=await founder.from('performance_session_context').select('prescription');assert.equal(cycleContext.error,null);assert.equal(cycleContext.data[0].prescription.mode,'lighter');
-for(const table of ['performance_programs','performance_program_revisions','performance_session_context']) {const hidden=await member.from(table).select('*');assert.equal(hidden.error,null);assert.equal(hidden.data.length,0);}
-const foreignDecision=await member.rpc('performance_save',{...cycleSessionArgs,p_request:crypto.randomUUID(),p_payload:{...cycleSession,id:crypto.randomUUID()}});assert.ok(foreignDecision.error);
-console.log('PASS: Performance program, accepted decision, atomic cycle advance, replay and two-user isolation');
+const cycleSlotA = crypto.randomUUID(),
+  cycleSlotB = crypto.randomUUID();
+const cyclePlan = {
+  title: 'Synthetic session A',
+  unit: 'lb',
+  exercises: [
+    { id: crypto.randomUUID(), name: 'Synthetic row', sets: 3, reps: 8, load: 40, restSeconds: 90 },
+  ],
+};
+const cycle = {
+  title: 'Synthetic training cycle',
+  sessions: [
+    { id: cycleSlotA, plan: cyclePlan },
+    { id: cycleSlotB, plan: { ...cyclePlan, title: 'Synthetic session B' } },
+  ],
+};
+const cycleArgs = {
+  p_kind: 'program',
+  p_request: crypto.randomUUID(),
+  p_expected: 0,
+  p_payload: cycle,
+};
+const cycleSaved = await founder.rpc('performance_save', cycleArgs);
+assert.equal(cycleSaved.error, null);
+assert.equal(cycleSaved.data, 1);
+const cycleReplay = await founder.rpc('performance_save', cycleArgs);
+assert.equal(cycleReplay.error, null);
+assert.equal(cycleReplay.data, 1);
+const adjusted = { ...cyclePlan, exercises: cyclePlan.exercises.map((e) => ({ ...e, sets: 2 })) };
+const cycleSession = {
+  id: crypto.randomUUID(),
+  title: cyclePlan.title,
+  unit: 'lb',
+  planVersion: 1,
+  startedAt: new Date().toISOString(),
+  endedAt: new Date().toISOString(),
+  status: 'complete',
+  pain: false,
+  note: 'Synthetic test',
+  prescription: {
+    ruleVersion: 1,
+    programVersion: 1,
+    slotId: cycleSlotA,
+    mode: 'lighter',
+    timeBudget: 40,
+    originalPlan: cyclePlan,
+    plan: adjusted,
+  },
+  sets: Array.from({ length: 2 }, () => ({
+    id: crypto.randomUUID(),
+    exerciseId: cyclePlan.exercises[0].id,
+    exercise: 'Synthetic row',
+    targetReps: 8,
+    targetLoad: 40,
+    reps: 8,
+    load: 40,
+    effort: 7,
+    done: true,
+  })),
+};
+const cycleSessionArgs = {
+  p_kind: 'session',
+  p_request: crypto.randomUUID(),
+  p_expected: 0,
+  p_payload: cycleSession,
+};
+const cycleFinished = await founder.rpc('performance_save', cycleSessionArgs);
+assert.equal(cycleFinished.error, null);
+assert.equal(cycleFinished.data, 1);
+const cycleFinishedReplay = await founder.rpc('performance_save', cycleSessionArgs);
+assert.equal(cycleFinishedReplay.error, null);
+assert.equal(cycleFinishedReplay.data, 1);
+const cyclePointer = await founder.from('performance_programs').select('next_slot_id');
+assert.equal(cyclePointer.error, null);
+assert.equal(cyclePointer.data[0].next_slot_id, cycleSlotB);
+const cycleContext = await founder.from('performance_session_context').select('prescription');
+assert.equal(cycleContext.error, null);
+assert.equal(cycleContext.data[0].prescription.mode, 'lighter');
+for (const table of [
+  'performance_programs',
+  'performance_program_revisions',
+  'performance_session_context',
+]) {
+  const hidden = await member.from(table).select('*');
+  assert.equal(hidden.error, null);
+  assert.equal(hidden.data.length, 0);
+}
+const foreignDecision = await member.rpc('performance_save', {
+  ...cycleSessionArgs,
+  p_request: crypto.randomUUID(),
+  p_payload: { ...cycleSession, id: crypto.randomUUID() },
+});
+assert.ok(foreignDecision.error);
+console.log(
+  'PASS: Performance program, accepted decision, atomic cycle advance, replay and two-user isolation',
+);
 
 // Phase 3 uses real Auth + PostgREST for evidence, approval and replay.
-const progressionCheck={day:new Date().toISOString().slice(0,10),sleepMinutes:450,energy:4,soreness:'none',weight:null,unit:'lb',calories:null,protein:null,waterMl:null,nutritionComplete:false};
-const progressionChecked=await founder.rpc('performance_save',{p_kind:'checkin',p_request:crypto.randomUUID(),p_expected:0,p_payload:progressionCheck});assert.equal(progressionChecked.error,null);
-for(const daysAgo of [4,2]) {
- const p=cycle.sessions[1].plan;
- const session={...cycleSession,id:crypto.randomUUID(),title:p.title,startedAt:new Date(Date.now()-daysAgo*86400000-3600000).toISOString(),endedAt:new Date(Date.now()-daysAgo*86400000).toISOString(),prescription:{ruleVersion:1,programVersion:1,slotId:cycleSlotB,mode:'planned',timeBudget:40,originalPlan:p,plan:p},sets:Array.from({length:3},()=>({...cycleSession.sets[0],id:crypto.randomUUID()}))};
- const saved=await founder.rpc('performance_save',{p_kind:'session',p_request:crypto.randomUUID(),p_expected:0,p_payload:session});assert.equal(saved.error,null);
+const progressionCheck = {
+  day: new Date().toISOString().slice(0, 10),
+  sleepMinutes: 450,
+  energy: 4,
+  soreness: 'none',
+  weight: null,
+  unit: 'lb',
+  calories: null,
+  protein: null,
+  waterMl: null,
+  nutritionComplete: false,
+};
+const progressionChecked = await founder.rpc('performance_save', {
+  p_kind: 'checkin',
+  p_request: crypto.randomUUID(),
+  p_expected: 0,
+  p_payload: progressionCheck,
+});
+assert.equal(progressionChecked.error, null);
+for (const daysAgo of [4, 2]) {
+  const p = cycle.sessions[1].plan;
+  const session = {
+    ...cycleSession,
+    id: crypto.randomUUID(),
+    title: p.title,
+    startedAt: new Date(Date.now() - daysAgo * 86400000 - 3600000).toISOString(),
+    endedAt: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+    prescription: {
+      ruleVersion: 1,
+      programVersion: 1,
+      slotId: cycleSlotB,
+      mode: 'planned',
+      timeBudget: 40,
+      originalPlan: p,
+      plan: p,
+    },
+    sets: Array.from({ length: 3 }, () => ({ ...cycleSession.sets[0], id: crypto.randomUUID() })),
+  };
+  const saved = await founder.rpc('performance_save', {
+    p_kind: 'session',
+    p_request: crypto.randomUUID(),
+    p_expected: 0,
+    p_payload: session,
+  });
+  assert.equal(saved.error, null);
 }
-const progressRead=await founder.rpc('performance_progression',{});assert.equal(progressRead.error,null);
-const candidate=progressRead.data.find(r=>r.slotId===cycleSlotB);assert.equal(candidate.status,'ready');
-const progressArgs={p_request:crypto.randomUUID(),p_expected:1,p_slot:cycleSlotB,p_token:candidate.proposal.token};
-assert.ok((await member.rpc('performance_progression_accept',progressArgs)).error);
-const approved=await founder.rpc('performance_progression_accept',progressArgs);assert.equal(approved.error,null);assert.equal(approved.data,2);
-const approvedReplay=await founder.rpc('performance_progression_accept',progressArgs);assert.equal(approvedReplay.error,null);assert.equal(approvedReplay.data,2);
-const progressAudit=await founder.from('performance_progression_decisions').select('*');assert.equal(progressAudit.error,null);assert.equal(progressAudit.data.length,1);
-const hiddenAudit=await member.from('performance_progression_decisions').select('*');assert.equal(hiddenAudit.error,null);assert.equal(hiddenAudit.data.length,0);
-assert.ok((await anon.rpc('performance_progression',{})).error);
-assert.ok((await founder.rpc('performance_progression_accept',{...progressArgs,p_request:crypto.randomUUID()})).error);
-console.log('PASS: Performance progression evidence, atomic approval, replay and owner isolation through real Auth/PostgREST');
+const progressRead = await founder.rpc('performance_progression', {});
+assert.equal(progressRead.error, null);
+const candidate = progressRead.data.find((r) => r.slotId === cycleSlotB);
+assert.equal(candidate.status, 'ready');
+const progressArgs = {
+  p_request: crypto.randomUUID(),
+  p_expected: 1,
+  p_slot: cycleSlotB,
+  p_token: candidate.proposal.token,
+};
+assert.ok((await member.rpc('performance_progression_accept', progressArgs)).error);
+const approved = await founder.rpc('performance_progression_accept', progressArgs);
+assert.equal(approved.error, null);
+assert.equal(approved.data, 2);
+const approvedReplay = await founder.rpc('performance_progression_accept', progressArgs);
+assert.equal(approvedReplay.error, null);
+assert.equal(approvedReplay.data, 2);
+const progressAudit = await founder.from('performance_progression_decisions').select('*');
+assert.equal(progressAudit.error, null);
+assert.equal(progressAudit.data.length, 1);
+const hiddenAudit = await member.from('performance_progression_decisions').select('*');
+assert.equal(hiddenAudit.error, null);
+assert.equal(hiddenAudit.data.length, 0);
+assert.ok((await anon.rpc('performance_progression', {})).error);
+assert.ok(
+  (
+    await founder.rpc('performance_progression_accept', {
+      ...progressArgs,
+      p_request: crypto.randomUUID(),
+    })
+  ).error,
+);
+console.log(
+  'PASS: Performance progression evidence, atomic approval, replay and owner isolation through real Auth/PostgREST',
+);
 
 // Phase 4 reads source records through the session-bound, RLS invoker RPC.
-const outcomeEmpty=await founder.rpc('performance_outcomes',{});assert.equal(outcomeEmpty.error,null);assert.equal(outcomeEmpty.data.length,1);assert.deepEqual(outcomeEmpty.data[0].sessions,[]);
-const postPlan=structuredClone(cycle.sessions[1].plan);postPlan.exercises[0].reps=9;
-const postSession={...cycleSession,id:crypto.randomUUID(),title:postPlan.title,planVersion:2,startedAt:new Date().toISOString(),endedAt:new Date().toISOString(),prescription:{ruleVersion:1,programVersion:2,slotId:cycleSlotB,mode:'planned',timeBudget:40,originalPlan:postPlan,plan:postPlan},sets:Array.from({length:3},()=>({...cycleSession.sets[0],id:crypto.randomUUID(),targetReps:9,reps:9,effort:null}))};
-const outcomeSaved=await founder.rpc('performance_save',{p_kind:'session',p_request:crypto.randomUUID(),p_expected:0,p_payload:postSession});assert.equal(outcomeSaved.error,null);
-const outcomeRead=await founder.rpc('performance_outcomes',{});assert.equal(outcomeRead.error,null);assert.equal(outcomeRead.data[0].sessions[0].id,postSession.id);assert.equal(outcomeRead.data[0].sessions[0].sets[0].effort,null);assert.equal(outcomeRead.data[0].approvedPlan.exercises[0].reps,9);
-const hiddenOutcomes=await member.rpc('performance_outcomes',{});assert.equal(hiddenOutcomes.error,null);assert.deepEqual(hiddenOutcomes.data,[]);
-assert.ok((await anon.rpc('performance_outcomes',{})).error);
-console.log('PASS: Performance outcome lineage, recorded sets and owner isolation through real Auth/PostgREST');
+const outcomeEmpty = await founder.rpc('performance_outcomes', {});
+assert.equal(outcomeEmpty.error, null);
+assert.equal(outcomeEmpty.data.length, 1);
+assert.deepEqual(outcomeEmpty.data[0].sessions, []);
+const postPlan = structuredClone(cycle.sessions[1].plan);
+postPlan.exercises[0].reps = 9;
+const postSession = {
+  ...cycleSession,
+  id: crypto.randomUUID(),
+  title: postPlan.title,
+  planVersion: 2,
+  startedAt: new Date().toISOString(),
+  endedAt: new Date().toISOString(),
+  prescription: {
+    ruleVersion: 1,
+    programVersion: 2,
+    slotId: cycleSlotB,
+    mode: 'planned',
+    timeBudget: 40,
+    originalPlan: postPlan,
+    plan: postPlan,
+  },
+  sets: Array.from({ length: 3 }, () => ({
+    ...cycleSession.sets[0],
+    id: crypto.randomUUID(),
+    targetReps: 9,
+    reps: 9,
+    effort: null,
+  })),
+};
+const outcomeSaved = await founder.rpc('performance_save', {
+  p_kind: 'session',
+  p_request: crypto.randomUUID(),
+  p_expected: 0,
+  p_payload: postSession,
+});
+assert.equal(outcomeSaved.error, null);
+const outcomeRead = await founder.rpc('performance_outcomes', {});
+assert.equal(outcomeRead.error, null);
+assert.equal(outcomeRead.data[0].sessions[0].id, postSession.id);
+assert.equal(outcomeRead.data[0].sessions[0].sets[0].effort, null);
+assert.equal(outcomeRead.data[0].approvedPlan.exercises[0].reps, 9);
+const hiddenOutcomes = await member.rpc('performance_outcomes', {});
+assert.equal(hiddenOutcomes.error, null);
+assert.deepEqual(hiddenOutcomes.data, []);
+assert.ok((await anon.rpc('performance_outcomes', {})).error);
+console.log(
+  'PASS: Performance outcome lineage, recorded sets and owner isolation through real Auth/PostgREST',
+);
 
 // Phase 5: independently versioned owner references, replay, RLS and preserved recovery.
-const fuelArgs={p_request:crypto.randomUUID(),p_expected:0,p_targets:{calories:2400,protein:150,waterMl:2500,goalWeight:80,unit:'kg'}};
-for(let i=0;i<2;i++){const result=await founder.rpc('performance_save_fuel_targets',fuelArgs);assert.equal(result.error,null);assert.equal(result.data,1);}
-for(const table of ['performance_fuel_targets','performance_fuel_target_revisions']){
- const own=await founder.from(table).select('*');assert.equal(own.error,null);assert.equal(own.data.length,1);
- const other=await member.from(table).select('*');assert.equal(other.error,null);assert.equal(other.data.length,0);
- assert.ok((await founder.from(table).delete().eq('person_id',own.data[0].person_id)).error);
+const fuelArgs = {
+  p_request: crypto.randomUUID(),
+  p_expected: 0,
+  p_targets: { calories: 2400, protein: 150, waterMl: 2500, goalWeight: 80, unit: 'kg' },
+};
+for (let i = 0; i < 2; i++) {
+  const result = await founder.rpc('performance_save_fuel_targets', fuelArgs);
+  assert.equal(result.error, null);
+  assert.equal(result.data, 1);
 }
-assert.ok((await anon.rpc('performance_save_fuel_targets',fuelArgs)).error);
-assert.ok((await founder.rpc('performance_save_fuel_targets',{...fuelArgs,p_request:crypto.randomUUID()})).error);
-assert.ok((await founder.rpc('performance_save_fuel_targets',{...fuelArgs,p_targets:{...fuelArgs.p_targets,protein:160}})).error);
-const fuelDay={...progressionCheck,weight:180,calories:2300,protein:145,waterMl:2500,nutritionComplete:true};
-const fuelDaySaved=await founder.rpc('performance_save',{p_kind:'checkin',p_request:crypto.randomUUID(),p_expected:1,p_payload:fuelDay});assert.equal(fuelDaySaved.error,null);
-const fuelDayRead=await founder.from('performance_checkins').select('*').eq('day',fuelDay.day);assert.equal(fuelDayRead.error,null);assert.equal(fuelDayRead.data[0].sleep_minutes,450);assert.equal(fuelDayRead.data[0].calories,2300);
-console.log('PASS: Fuel targets, replay, stale denial, owner isolation and daily recovery preservation through real Auth/PostgREST');
+for (const table of ['performance_fuel_targets', 'performance_fuel_target_revisions']) {
+  const own = await founder.from(table).select('*');
+  assert.equal(own.error, null);
+  assert.equal(own.data.length, 1);
+  const other = await member.from(table).select('*');
+  assert.equal(other.error, null);
+  assert.equal(other.data.length, 0);
+  assert.ok((await founder.from(table).delete().eq('person_id', own.data[0].person_id)).error);
+}
+assert.ok((await anon.rpc('performance_save_fuel_targets', fuelArgs)).error);
+assert.ok(
+  (
+    await founder.rpc('performance_save_fuel_targets', {
+      ...fuelArgs,
+      p_request: crypto.randomUUID(),
+    })
+  ).error,
+);
+assert.ok(
+  (
+    await founder.rpc('performance_save_fuel_targets', {
+      ...fuelArgs,
+      p_targets: { ...fuelArgs.p_targets, protein: 160 },
+    })
+  ).error,
+);
+const fuelDay = {
+  ...progressionCheck,
+  weight: 180,
+  calories: 2300,
+  protein: 145,
+  waterMl: 2500,
+  nutritionComplete: true,
+};
+const fuelDaySaved = await founder.rpc('performance_save', {
+  p_kind: 'checkin',
+  p_request: crypto.randomUUID(),
+  p_expected: 1,
+  p_payload: fuelDay,
+});
+assert.equal(fuelDaySaved.error, null);
+const fuelDayRead = await founder.from('performance_checkins').select('*').eq('day', fuelDay.day);
+assert.equal(fuelDayRead.error, null);
+assert.equal(fuelDayRead.data[0].sleep_minutes, 450);
+assert.equal(fuelDayRead.data[0].calories, 2300);
+console.log(
+  'PASS: Fuel targets, replay, stale denial, owner isolation and daily recovery preservation through real Auth/PostgREST',
+);
 
 // Phase 6 owner routines use caller JWTs and the owner's local date.
-const recoveryOwn=await founder.from('persons').select('timezone').single();assert.equal(recoveryOwn.error,null);
-const recoveryDay=new Intl.DateTimeFormat('en-CA',{timeZone:recoveryOwn.data.timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const recoveryArgs={p_request:crypto.randomUUID(),p_expected:0,p_routine:{day:recoveryDay,action:'quiet-time',minutes:15,cue:'After my shift',outcome:null}};
-for(let i=0;i<2;i++){const result=await founder.rpc('performance_save_recovery_routine',recoveryArgs);assert.equal(result.error,null);assert.equal(result.data,1);}
-for(const table of ['performance_recovery_routines','performance_recovery_revisions']){
- const own=await founder.from(table).select('*');assert.equal(own.error,null);assert.equal(own.data.length,1);
- const other=await member.from(table).select('*');assert.equal(other.error,null);assert.equal(other.data.length,0);
- assert.ok((await founder.from(table).delete().eq('person_id',own.data[0].person_id)).error);
+const recoveryOwn = await founder.from('persons').select('timezone').single();
+assert.equal(recoveryOwn.error, null);
+const recoveryDay = new Intl.DateTimeFormat('en-CA', {
+  timeZone: recoveryOwn.data.timezone,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date());
+const recoveryArgs = {
+  p_request: crypto.randomUUID(),
+  p_expected: 0,
+  p_routine: {
+    day: recoveryDay,
+    action: 'quiet-time',
+    minutes: 15,
+    cue: 'After my shift',
+    outcome: null,
+  },
+};
+for (let i = 0; i < 2; i++) {
+  const result = await founder.rpc('performance_save_recovery_routine', recoveryArgs);
+  assert.equal(result.error, null);
+  assert.equal(result.data, 1);
 }
-assert.ok((await anon.rpc('performance_save_recovery_routine',recoveryArgs)).error);
-assert.ok((await founder.rpc('performance_save_recovery_routine',{...recoveryArgs,p_request:crypto.randomUUID()})).error);
-assert.ok((await founder.rpc('performance_save_recovery_routine',{...recoveryArgs,p_expected:1,p_request:crypto.randomUUID(),p_routine:{...recoveryArgs.p_routine,outcome:'done'}})).error);
-console.log('PASS: Recovery routine save/replay, owner-local date, stale denial, premature outcome denial and owner isolation through real Auth/PostgREST');
+for (const table of ['performance_recovery_routines', 'performance_recovery_revisions']) {
+  const own = await founder.from(table).select('*');
+  assert.equal(own.error, null);
+  assert.equal(own.data.length, 1);
+  const other = await member.from(table).select('*');
+  assert.equal(other.error, null);
+  assert.equal(other.data.length, 0);
+  assert.ok((await founder.from(table).delete().eq('person_id', own.data[0].person_id)).error);
+}
+assert.ok((await anon.rpc('performance_save_recovery_routine', recoveryArgs)).error);
+assert.ok(
+  (
+    await founder.rpc('performance_save_recovery_routine', {
+      ...recoveryArgs,
+      p_request: crypto.randomUUID(),
+    })
+  ).error,
+);
+assert.ok(
+  (
+    await founder.rpc('performance_save_recovery_routine', {
+      ...recoveryArgs,
+      p_expected: 1,
+      p_request: crypto.randomUUID(),
+      p_routine: { ...recoveryArgs.p_routine, outcome: 'done' },
+    })
+  ).error,
+);
+console.log(
+  'PASS: Recovery routine save/replay, owner-local date, stale denial, premature outcome denial and owner isolation through real Auth/PostgREST',
+);
 
 // Phase 7 movement mutations cross the real authenticated API boundary.
-const movementPayload={id:crypto.randomUUID(),day:recoveryDay,kind:'walk',minutes:20,distance:1,unit:'mi',intensity:null,note:'Auth movement check',voided:false};
-const movementArgs={p_request:crypto.randomUUID(),p_expected:0,p_entry:movementPayload};
-for(let i=0;i<2;i++){const result=await founder.rpc('performance_save_movement',movementArgs);assert.equal(result.error,null);assert.equal(result.data,1);}
-for(const table of ['performance_movements','performance_movement_revisions']){
- const own=await founder.from(table).select('*');assert.equal(own.error,null);assert.equal(own.data.length,1);
- const other=await member.from(table).select('*');assert.equal(other.error,null);assert.equal(other.data.length,0);
- assert.ok((await founder.from(table).delete().eq('person_id',own.data[0].person_id)).error);
+const movementPayload = {
+  id: crypto.randomUUID(),
+  day: recoveryDay,
+  kind: 'walk',
+  minutes: 20,
+  distance: 1,
+  unit: 'mi',
+  intensity: null,
+  note: 'Auth movement check',
+  voided: false,
+};
+const movementArgs = { p_request: crypto.randomUUID(), p_expected: 0, p_entry: movementPayload };
+for (let i = 0; i < 2; i++) {
+  const result = await founder.rpc('performance_save_movement', movementArgs);
+  assert.equal(result.error, null);
+  assert.equal(result.data, 1);
 }
-assert.ok((await anon.rpc('performance_save_movement',movementArgs)).error);
-assert.ok((await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID()})).error);
-assert.ok((await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID(),p_expected:1,p_entry:{...movementPayload,kind:'mobility'}})).error);
-const movementRemoved=await founder.rpc('performance_save_movement',{...movementArgs,p_request:crypto.randomUUID(),p_expected:1,p_entry:{...movementPayload,voided:true}});assert.equal(movementRemoved.error,null);assert.equal(movementRemoved.data,2);
-assert.equal((await founder.from('performance_movement_revisions').select('*')).data.length,2);
-console.log('PASS: Movement save/replay, stale denial, strict mobility values, removal revisions and owner isolation through real Auth/PostgREST');
+for (const table of ['performance_movements', 'performance_movement_revisions']) {
+  const own = await founder.from(table).select('*');
+  assert.equal(own.error, null);
+  assert.equal(own.data.length, 1);
+  const other = await member.from(table).select('*');
+  assert.equal(other.error, null);
+  assert.equal(other.data.length, 0);
+  assert.ok((await founder.from(table).delete().eq('person_id', own.data[0].person_id)).error);
+}
+assert.ok((await anon.rpc('performance_save_movement', movementArgs)).error);
+assert.ok(
+  (
+    await founder.rpc('performance_save_movement', {
+      ...movementArgs,
+      p_request: crypto.randomUUID(),
+    })
+  ).error,
+);
+assert.ok(
+  (
+    await founder.rpc('performance_save_movement', {
+      ...movementArgs,
+      p_request: crypto.randomUUID(),
+      p_expected: 1,
+      p_entry: { ...movementPayload, kind: 'mobility' },
+    })
+  ).error,
+);
+const movementRemoved = await founder.rpc('performance_save_movement', {
+  ...movementArgs,
+  p_request: crypto.randomUUID(),
+  p_expected: 1,
+  p_entry: { ...movementPayload, voided: true },
+});
+assert.equal(movementRemoved.error, null);
+assert.equal(movementRemoved.data, 2);
+assert.equal((await founder.from('performance_movement_revisions').select('*')).data.length, 2);
+console.log(
+  'PASS: Movement save/replay, stale denial, strict mobility values, removal revisions and owner isolation through real Auth/PostgREST',
+);
 
 // Synthetic Cabinet products exercise the actual Auth/PostgREST grants, not Shopify purchases.
 const cabinetPerson = people[0].id;
-const cabinetFixture = {person_id:cabinetPerson,catalog_product_id:'gid://shopify/Product/999999991',shopify_handle:'auth-cabinet-fixture',name:'Synthetic Cabinet fixture',category:'other',relation:'saved'};
-const cabinetInserted = await founder.from('grooming_products').upsert([cabinetFixture],{onConflict:'person_id,catalog_product_id',ignoreDuplicates:true}).select('*');
-assert.equal(cabinetInserted.error,null);assert.equal(cabinetInserted.data.length,1);
+const cabinetFixture = {
+  person_id: cabinetPerson,
+  catalog_product_id: 'gid://shopify/Product/999999991',
+  shopify_handle: 'auth-cabinet-fixture',
+  name: 'Synthetic Cabinet fixture',
+  category: 'other',
+  relation: 'saved',
+};
+const cabinetInserted = await founder
+  .from('grooming_products')
+  .upsert([cabinetFixture], { onConflict: 'person_id,catalog_product_id', ignoreDuplicates: true })
+  .select('*');
+assert.equal(cabinetInserted.error, null);
+assert.equal(cabinetInserted.data.length, 1);
 const cabinetId = cabinetInserted.data[0].id;
-const cabinetEdited = await founder.from('grooming_products').update({relation:'in_use',note:'Retain this note'}).eq('id',cabinetId).eq('version',1).select('*');
-assert.equal(cabinetEdited.error,null);assert.equal(cabinetEdited.data[0].version,2);
-const cabinetReplay = await founder.from('grooming_products').upsert([cabinetFixture],{onConflict:'person_id,catalog_product_id',ignoreDuplicates:true}).select('id');
-assert.equal(cabinetReplay.error,null);assert.equal(cabinetReplay.data.length,0);
-const cabinetKept = await founder.from('grooming_products').select('*').eq('id',cabinetId).single();
-assert.equal(cabinetKept.data.note,'Retain this note');assert.equal(cabinetKept.data.relation,'in_use');
-const foreignCabinet = await member.from('grooming_products').select('*').eq('id',cabinetId);
-assert.equal(foreignCabinet.error,null);assert.equal(foreignCabinet.data.length,0);
-assert.ok((await member.from('grooming_products').insert({...cabinetFixture,catalog_product_id:'gid://shopify/Product/999999992'})).error);
+const cabinetEdited = await founder
+  .from('grooming_products')
+  .update({ relation: 'in_use', note: 'Retain this note' })
+  .eq('id', cabinetId)
+  .eq('version', 1)
+  .select('*');
+assert.equal(cabinetEdited.error, null);
+assert.equal(cabinetEdited.data[0].version, 2);
+const cabinetReplay = await founder
+  .from('grooming_products')
+  .upsert([cabinetFixture], { onConflict: 'person_id,catalog_product_id', ignoreDuplicates: true })
+  .select('id');
+assert.equal(cabinetReplay.error, null);
+assert.equal(cabinetReplay.data.length, 0);
+const cabinetKept = await founder
+  .from('grooming_products')
+  .select('*')
+  .eq('id', cabinetId)
+  .single();
+assert.equal(cabinetKept.data.note, 'Retain this note');
+assert.equal(cabinetKept.data.relation, 'in_use');
+const foreignCabinet = await member.from('grooming_products').select('*').eq('id', cabinetId);
+assert.equal(foreignCabinet.error, null);
+assert.equal(foreignCabinet.data.length, 0);
+assert.ok(
+  (
+    await member
+      .from('grooming_products')
+      .insert({ ...cabinetFixture, catalog_product_id: 'gid://shopify/Product/999999992' })
+  ).error,
+);
 assert.ok((await anon.from('grooming_products').select('*')).error);
-assert.ok((await founder.from('grooming_products').update({catalog_product_id:'gid://shopify/Product/999999993'}).eq('id',cabinetId)).error);
-assert.equal((await founder.from('grooming_products').delete().eq('id',cabinetId)).error,null);
-console.log('PASS: Cabinet bulk save/replay preserves personal state, denies foreign/anonymous access and protects catalog identity through real Auth/PostgREST');
+assert.ok(
+  (
+    await founder
+      .from('grooming_products')
+      .update({ catalog_product_id: 'gid://shopify/Product/999999993' })
+      .eq('id', cabinetId)
+  ).error,
+);
+assert.equal((await founder.from('grooming_products').delete().eq('id', cabinetId)).error, null);
+console.log(
+  'PASS: Cabinet bulk save/replay preserves personal state, denies foreign/anonymous access and protects catalog identity through real Auth/PostgREST',
+);
+
+// Recovered account claim crosses real Auth/PostgREST; no identity/paid grant is created.
+const claimBefore = await member
+  .from('daily_entries')
+  .select('version,energy,sleep_minutes,reflection,actions:daily_actions(id,title,done,position)')
+  .eq('day', dailyDate)
+  .single();
+assert.equal(claimBefore.error, null);
+const accessBefore = await member
+  .from('membership_accounts')
+  .select('tier,billing_state,beta_access')
+  .single();
+assert.equal(accessBefore.error, null);
+const claimArgs = {
+  p_request: crypto.randomUUID(),
+  p_focus: 'focus',
+  p_intention: 'Synthetic public entry direction',
+  p_timezone: 'America/Chicago',
+  p_created: new Date().toISOString(),
+  p_replace: false,
+  p_expected: claimBefore.data.version,
+  p_day: dailyDate,
+};
+const blockedClaim = await member.rpc('onboarding_claim', claimArgs);
+assert.equal(blockedClaim.error, null);
+assert.equal(blockedClaim.data.status, 'conflict');
+const approvedClaim = { ...claimArgs, p_replace: true };
+for (let i = 0; i < 2; i++) {
+  const result = await member.rpc('onboarding_claim', approvedClaim);
+  assert.equal(result.error, null);
+  assert.equal(result.data.status, 'saved');
+}
+const claimAfter = await member
+  .from('daily_entries')
+  .select('version,energy,sleep_minutes,reflection,actions:daily_actions(id,title,done,position)')
+  .eq('day', dailyDate)
+  .single();
+assert.equal(claimAfter.error, null);
+assert.equal(claimAfter.data.version, claimBefore.data.version + 1);
+for (const field of ['energy', 'sleep_minutes', 'reflection', 'actions'])
+  assert.deepEqual(claimAfter.data[field], claimBefore.data[field]);
+const claimOther = await founder
+  .from('onboarding_claims')
+  .select('*')
+  .eq('request_id', claimArgs.p_request);
+assert.equal(claimOther.error, null);
+assert.equal(claimOther.data.length, 0);
+assert.ok((await anon.rpc('onboarding_claim', approvedClaim)).error);
+const accessAfter = await member
+  .from('membership_accounts')
+  .select('tier,billing_state,beta_access')
+  .single();
+assert.equal(accessAfter.error, null);
+assert.deepEqual(accessAfter.data, accessBefore.data);
+console.log(
+  'PASS: Public direction claim conflict/approval/replay, daily preservation, owner isolation and unchanged membership through real Auth/PostgREST',
+);

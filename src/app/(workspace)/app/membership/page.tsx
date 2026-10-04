@@ -1,3 +1,4 @@
+import { currentFounderAccess } from '@/domains/access/founder';
 import Link from 'next/link';
 import { currentPerson } from '@/domains/person/current';
 import { currentBilling } from '@/domains/billing/provider';
@@ -14,6 +15,7 @@ export default async function Membership({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const person = await currentPerson();
+  const founder = person ? await currentFounderAccess().catch(() => false) : false;
   const params = await searchParams;
   const config = billingConfig(process.env);
   let billing: Awaited<ReturnType<typeof currentBilling>> = null;
@@ -115,6 +117,7 @@ export default async function Membership({
               )}
               {!unavailable && (
                 <MembershipControls
+                  founderAudit={founder}
                   enrollment={!!config?.enrollment && !billing?.payment_hold}
                   hasCustomer={!!billing?.customer_id && !!config}
                   hasSubscription={hasSubscription}

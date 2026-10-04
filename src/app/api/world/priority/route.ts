@@ -22,7 +22,10 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const input = priorityInput.safeParse(await mutationBody(request, 2048));
-    if (!input.success) throw new DailyError('Write a priority of 1–160 characters.');
+    if (!input.success)
+      throw new DailyError(
+        'Write a priority of 1–160 characters and, if included, a next move of 1–100 characters.',
+      );
     const result = await saveWorldPriority(input.data);
     revalidatePath('/app');
     return privateJson(result);

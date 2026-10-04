@@ -175,7 +175,7 @@ describe('stream completion and persistence', () => {
 });
 
 describe('real AI SDK agent adapter with a mock provider', () => {
-  it('uses doctrine, a bounded single call and text-only output without leaking reasoning', async () => {
+  it('uses doctrine, read-only research and durable sources without leaking reasoning', async () => {
     const { MockLanguageModelV4 } = await import('ai/test');
     const { streamAurelius } = await import('../src/domains/intelligence/agent');
     const model = new MockLanguageModelV4({
@@ -189,6 +189,7 @@ describe('real AI SDK agent adapter with a mock provider', () => {
             controller.enqueue({ type: 'text-start', id: 't' });
             controller.enqueue({ type: 'text-delta', id: 't', delta: 'A clear next step.' });
             controller.enqueue({ type: 'text-end', id: 't' });
+            controller.enqueue({ type: 'source', sourceType: 'url', id: 'source-1', url: 'https://example.com/research', title: 'Verified provider source' });
             controller.enqueue({
               type: 'finish',
               finishReason: { unified: 'stop', raw: 'stop' },
@@ -211,10 +212,12 @@ describe('real AI SDK agent adapter with a mock provider', () => {
       chunks.push(chunk);
     expect(chunks).toEqual([
       { type: 'text', text: 'A clear next step.' },
+      { type: 'text', text: '\n\nSources consulted\n\n- [Verified provider source](https://example.com/research)' },
       { type: 'finish', reason: 'stop', input: 10, output: 5 },
     ]);
     expect(model.doStreamCalls).toHaveLength(1);
     expect(model.doStreamCalls[0]?.maxOutputTokens).toBe(4096);
+    expect(model.doStreamCalls[0]?.tools).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'provider', name: 'web_search' })]));
     expect(model.doStreamCalls[0]?.providerOptions?.openai).toMatchObject({
       store: false,
     });

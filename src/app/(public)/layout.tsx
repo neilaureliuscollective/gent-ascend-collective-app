@@ -48,6 +48,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/about">Our story</Link>
+          <Link href="/support">Member support</Link>
           <Link href="/membership">Membership</Link>
           <Link href="/launch">The launch collection</Link>
           <Link href="/reserve">The Reserve</Link>

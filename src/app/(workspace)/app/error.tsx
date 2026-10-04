@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 export default function CommandError({ reset }: { reset: () => void }) {
   return (
     <div className="command-briefing">
@@ -12,6 +13,9 @@ export default function CommandError({ reset }: { reset: () => void }) {
         <button className="command-action" onClick={reset}>
           Try again <span aria-hidden="true">↗</span>
         </button>
+        <Link className="text-link" href="/support">
+          Get account help →
+        </Link>
       </section>
     </div>
   );

@@ -37,6 +37,7 @@ export function DailyDashboard({
   const [confirmedRevision, setConfirmedRevision] = useState(0);
   const confirmation = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
+  const focusPending = useRef(false);
   const lastCheck = useRef(0);
   const lock = useRef(false);
   const projection = data === initial && opening ? opening : projectCommand(data);
@@ -166,12 +167,18 @@ export function DailyDashboard({
   }
   function closeMove() {
     confirmation.current?.close();
+    focusPending.current = true;
     setConfirmMove(null);
-    requestAnimationFrame(() => {
-      if (returnFocus.current?.isConnected) returnFocus.current.focus();
-      else document.getElementById('command-move-title')?.focus({ preventScroll: true });
-    });
   }
+  useEffect(() => {
+    // Wait for the saved-state render to re-enable the trigger before restoring focus.
+    if (busy || confirmMove || !focusPending.current) return;
+    focusPending.current = false;
+    const trigger = returnFocus.current;
+    if (trigger?.isConnected && !trigger.matches(':disabled'))
+      trigger.focus({ preventScroll: true });
+    else document.getElementById('command-move-title')?.focus({ preventScroll: true });
+  }, [busy, confirmMove]);
   async function confirm() {
     if (!confirmMove || lock.current || uncertain || data.mode !== 'personal') return;
     lock.current = true;

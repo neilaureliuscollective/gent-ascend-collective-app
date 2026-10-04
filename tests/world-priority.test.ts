@@ -122,6 +122,33 @@ describe('World priority uses existing owner-bound daily records', () => {
       await expect(saveWorldPriority(changed)).rejects.toMatchObject({ status: 409 });
     expect(rpc).not.toHaveBeenCalled();
   });
+  it('adds an explicitly reviewed next move while preserving existing day fields and actions', async () => {
+    await saveWorldPriority({ ...input(), nextAction: 'Prepare my next training session' });
+    expect(rpc.mock.calls[0]![1]).toMatchObject({
+      p_energy: 3,
+      p_sleep: 420,
+      p_reflection: 'Private reflection',
+      p_actions: [
+        { id: action.id, title: action.title, done: false },
+        { id: expect.any(String), title: 'Prepare my next training session', done: false },
+      ],
+    });
+  });
+  it('does not duplicate an open next move or drop actions from a full plan', async () => {
+    await saveWorldPriority({ ...input(), nextAction: action.title });
+    expect(rpc.mock.calls[0]![1].p_actions).toHaveLength(1);
+    rpc.mockClear();
+    entry.actions = Array.from({ length: 5 }, (_, i) => ({
+      ...action,
+      id: crypto.randomUUID(),
+      title: `Action ${i}`,
+      position: i,
+    }));
+    await expect(
+      saveWorldPriority({ ...input(), version: 5, nextAction: 'Sixth action' }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(rpc).not.toHaveBeenCalled();
+  });
   it('surfaces a race rejected under the database lock without claiming a save', async () => {
     rpc.mockResolvedValue({ error: { code: '40001' } });
     await expect(saveWorldPriority(input())).rejects.toMatchObject({ status: 409 });

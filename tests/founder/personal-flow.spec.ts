@@ -318,3 +318,57 @@ test('authenticated order workspace stays closed without merchant configuration'
   await expect(page).toHaveURL(/\/app\/collection\/cabinet$/);
   await expect(page.getByText('Synthetic external oil', { exact: true })).toBeVisible();
 });
+
+test('free member first session saves and resumes through real Next and Supabase', async ({
+  page,
+}) => {
+  await page.goto('/enter');
+  await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
+  await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
+  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
+  await page.goto('/app/welcome');
+  await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Review membership access to Aethelios' }),
+  ).toBeVisible();
+  await page.getByLabel('Get organized', { exact: true }).check();
+  await page.getByLabel('What matters today?').fill('Synthetic first-session direction');
+  await page.getByLabel('My next move', { exact: true }).fill('Synthetic first-session next move');
+  await page.getByRole('button', { name: 'Save priority and next move' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'priority and next move' }),
+  ).toContainText('saved to Command');
+  await page.goto('/app');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
+  ).not.toBeChecked();
+  await page.reload();
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
+  ).not.toBeChecked();
+  await page.goto('/app/welcome');
+  await expect(page.getByLabel('What matters today?')).toHaveValue(
+    'Synthetic first-session direction',
+  );
+  await page.goto('/app/progress');
+  await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(0);
+  const response = await page.request.get('/api/daily');
+  expect(response.ok()).toBeTruthy();
+  const saved = await response.json();
+  expect(saved.entries.find((entry: { day: string }) => entry.day === saved.today).actions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ title: 'Synthetic first-session next move', done: false }),
+    ]),
+  );
+});

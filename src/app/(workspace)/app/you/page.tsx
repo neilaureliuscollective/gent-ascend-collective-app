@@ -13,7 +13,9 @@ export default async function You({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const [person, params, founder] = await Promise.all([
-    currentPerson(), searchParams, currentFounderAccess(),
+    currentPerson(),
+    searchParams,
+    currentFounderAccess(),
   ]);
   const env = parseEnvironment(process.env);
   return (
@@ -39,7 +41,17 @@ export default async function You({
             <ProfileEditor person={person} action={saveProfileAction} />
           </section>
           <aside className="panel perspective-panel">
-            {founder && <><p className="eyebrow">Founder access verified</p><Link className="text-link" href="/app/founder/pilot">Manage founding members →</Link></>}
+            {founder && (
+              <>
+                <p className="eyebrow">Founder access verified</p>
+                <Link className="text-link" href="/app/founder/pilot">
+                  Manage founding members →
+                </Link>
+                <Link className="text-link" href="/app/founder/launch">
+                  Launch readiness →
+                </Link>
+              </>
+            )}
             <Image
               className="identity-crest"
               src={brand.crest}
@@ -59,10 +71,21 @@ export default async function You({
               aligned with your day.
             </p>
             <p>These details are private to your account.</p>
-            <Link className="text-link" href="/app/membership">Your membership →</Link>
-            <Link className="text-link" href="/app/welcome">Founding member guide →</Link>
-            <Link className="text-link" href="/app/install">Install Gent Ascend →</Link>
-            <Link className="text-link" href="/">Explore the public world ↗</Link>
+            <Link className="text-link" href="/support">
+              Support and account controls →
+            </Link>
+            <Link className="text-link" href="/app/membership">
+              Your membership →
+            </Link>
+            <Link className="text-link" href="/app/welcome">
+              Founding member guide →
+            </Link>
+            <Link className="text-link" href="/app/install">
+              Install Gent Ascend →
+            </Link>
+            <Link className="text-link" href="/">
+              Explore the public world ↗
+            </Link>
             <form action={signOut}>
               <button className="secondary-button">Sign out</button>
             </form>
@@ -114,7 +137,9 @@ export default async function You({
                   required
                 />
                 <button className="button">Sign in</button>
-                <Link href="/app/welcome" className="text-link">Have an invitation? Begin here →</Link>
+                <Link href="/app/welcome" className="text-link">
+                  Have an invitation? Begin here →
+                </Link>
               </form>
             ) : (
               <>
