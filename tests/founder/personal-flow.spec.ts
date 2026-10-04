@@ -318,3 +318,41 @@ test('authenticated order workspace stays closed without merchant configuration'
   await expect(page).toHaveURL(/\/app\/collection\/cabinet$/);
   await expect(page.getByText('Synthetic external oil', { exact: true })).toBeVisible();
 });
+
+test('free member first session saves and resumes through real Next and Supabase', async ({
+  page,
+}) => {
+  await page.goto('/enter');
+  await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
+  await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
+  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
+  await page.goto('/app/welcome');
+  await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Review membership access to Aethelios' }),
+  ).toBeVisible();
+  await page.getByLabel('Get organized', { exact: true }).check();
+  await page.getByLabel('What matters today?').fill('Synthetic first-session direction');
+  await page.getByLabel('My next move', { exact: true }).fill('Synthetic first-session next move');
+  await page.getByRole('button', { name: 'Save priority and next move' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'priority and next move' }),
+  ).toContainText('saved to Command');
+  await page.goto('/app');
+  await expect(page.locator('main')).toContainText('Synthetic first-session direction');
+  await page.reload();
+  await expect(page.locator('main')).toContainText('Synthetic first-session direction');
+  await page.goto('/app/welcome');
+  await expect(page.getByLabel('What matters today?')).toHaveValue(
+    'Synthetic first-session direction',
+  );
+  const response = await page.request.get('/api/daily');
+  expect(response.ok()).toBeTruthy();
+  const saved = await response.json();
+  expect(saved.entries.find((entry: { day: string }) => entry.day === saved.today).actions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ title: 'Synthetic first-session next move', done: false }),
+    ]),
+  );
+});

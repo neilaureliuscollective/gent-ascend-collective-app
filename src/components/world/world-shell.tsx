@@ -1,10 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useEffectEvent, useRef, useState, ViewTransition, type ReactNode } from 'react';
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  ViewTransition,
+  Suspense,
+  type ReactNode,
+} from 'react';
 import { AppearanceControls, useAppearance } from '@/components/visual/appearance';
 import { AppRuntime } from '@/components/app-runtime';
 import { ContextSheet } from '@/components/interaction/context-sheet';
+import { AccountClaim } from './account-claim';
 import { EnergyOrb } from './energy-orb';
 
 /** A single audio context for the environment, never voice or microphone. */
@@ -124,6 +133,9 @@ export function WorldShell({ children }: { children: ReactNode }) {
       data-conversation={conversation}
     >
       <AppRuntime />
+      <Suspense fallback={null}>
+        <AccountClaim />
+      </Suspense>
       <a className="skip" href="#experience-main">
         Skip to content
       </a>

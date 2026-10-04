@@ -52,6 +52,22 @@ export async function saveWorldPriority(input: PriorityInput): Promise<PersonalP
   if (input.day !== current.day || input.version !== (current.entry?.version ?? 0))
     throw new DailyError('Your saved day changed. Reload it before saving your priority.', 409);
   const entry = current.entry;
+  const actions = (entry?.actions ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map(({ id, title, done }) => ({ id, title, done }));
+  // The first session explicitly reviews this addition. Never replace existing actions.
+  if (
+    input.nextAction &&
+    !actions.some((action) => !action.done && action.title === input.nextAction)
+  ) {
+    if (actions.length >= 5)
+      throw new DailyError(
+        'Today already has five actions. Review your plan on Command before adding another.',
+        409,
+      );
+    actions.push({ id: crypto.randomUUID(), title: input.nextAction, done: false });
+  }
   const { error } = await context.client.rpc('daily_save', {
     p_day: input.day,
     p_version: input.version,
@@ -59,10 +75,7 @@ export async function saveWorldPriority(input: PriorityInput): Promise<PersonalP
     p_energy: entry?.energy ?? null,
     p_sleep: entry?.sleep_minutes ?? null,
     p_reflection: entry?.reflection ?? '',
-    p_actions: (entry?.actions ?? [])
-      .slice()
-      .sort((a, b) => a.position - b.position)
-      .map(({ id, title, done }) => ({ id, title, done })),
+    p_actions: actions,
   });
   // The existing transaction also checks the version and local date under an owner lock.
   if (error?.code === '40001' || error?.code === '22023')

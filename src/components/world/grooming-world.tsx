@@ -1,4 +1,5 @@
 'use client';
+import { track } from '@/domains/onboarding/track';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -296,6 +297,7 @@ function RitualPractice({
       if (receipt.id !== requestId.current || receipt.ritualId !== ritual.id)
         throw new Error('The recording response could not be verified. Retry to confirm it.');
       if (controller.signal.aborted) return;
+      track('first_meaningful_action');
       onRecorded(receipt.occurredAt);
       setSaved(true);
     } catch (e) {

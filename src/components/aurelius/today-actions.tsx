@@ -1,4 +1,5 @@
 'use client';
+import { track } from '@/domains/onboarding/track';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { PersonalContext } from '@/domains/intelligence/types';
@@ -16,6 +17,7 @@ export function TodayActions({ brief, disabled, onChanged }: {
     setBusy(true); setNotice('');
     try {
       await jsonRequest('/api/daily/complete','POST',{day:brief.day,actionId:id,version:brief.version});
+      track('first_meaningful_action');
       setConfirm(null);
       await onChanged();
       setNotice('Action confirmed complete on Command.');

@@ -1,4 +1,5 @@
 import { readCommand } from '@/domains/daily-command/service';
+import { readWorldPriority } from '@/domains/daily/world-priority';
 import { commandDraft } from '@/domains/daily-command/model';
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import Link from 'next/link';
@@ -27,11 +28,19 @@ export default async function AetheliosPage({
     perspective: 'Help me think clearly about a decision I am facing.',
   };
   const command = params.starter === 'command' ? await readCommand().catch(() => null) : null;
-  const initialDraft = command?.snapshot
-    ? commandDraft(command.snapshot)
-    : typeof params.starter === 'string' && Object.hasOwn(starters, params.starter)
-      ? starters[params.starter]
+  const priority =
+    params.starter === 'first-session' ? await readWorldPriority().catch(() => null) : null;
+  const firstDraft =
+    priority?.mode === 'personal' && priority.intention
+      ? `My priority today is: ${priority.intention}\n${priority.nextAction ? `My next saved move is: ${priority.nextAction}\n` : ''}Help me make this practical. Ask only what you need, and offer one useful next step. Do not change my records unless I confirm.`
       : '';
+  const initialDraft =
+    firstDraft ||
+    (command?.snapshot
+      ? commandDraft(command.snapshot)
+      : typeof params.starter === 'string' && Object.hasOwn(starters, params.starter)
+        ? starters[params.starter]
+        : '');
   const initialConversation =
     typeof params.conversation === 'string' &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(

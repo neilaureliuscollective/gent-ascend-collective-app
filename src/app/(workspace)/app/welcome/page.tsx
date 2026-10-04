@@ -1,24 +1,25 @@
-import { InstallGuide } from '@/components/install-guide';
 import Link from 'next/link';
 import Image from 'next/image';
+import { FirstSession } from '@/components/first-session';
+import { InstallGuide } from '@/components/install-guide';
 import { currentAccess } from '@/domains/access/current';
+import { readWorldPriority } from '@/domains/daily/world-priority';
 import { readPilot } from '@/domains/pilot/service';
 import { brand } from '@/platform/brand';
 import { claimPilotAction, setPilotPassword, submitFeedbackAction } from './actions';
 import './welcome-entry.css';
 
 const notices: Record<string, string> = {
-  claimed: 'Your pilot access is active.',
-  unlisted:
-    'This verified email is not on the pilot list. Ask the person who invited you to check the address.',
-  error: 'We could not confirm access. Please try again.',
-  auth: 'That invitation link was not accepted. It may have expired; ask for a new Auth invitation.',
+  claimed: 'Your invitation access is active.',
+  unlisted: 'No invitation benefit was found for this email. Your free account remains available.',
+  error: 'We could not confirm invitation access. Please try again.',
+  auth: 'That email link was not accepted. Sign in or request a new email code.',
   'password-invalid': 'Use a password of at least 12 characters.',
   'password-error': 'Password could not be saved. Try again.',
   'password-saved': 'Password saved. You can sign in with this email and password next time.',
   'feedback-invalid': 'Choose a category and write 10–1500 characters.',
   'feedback-error': 'Feedback could not be saved. Please try again.',
-  'feedback-saved': 'Feedback saved. Thank you for helping shape the pilot.',
+  'feedback-saved': 'Feedback saved. Thank you.',
 };
 export default async function Welcome({
   searchParams,
@@ -26,47 +27,14 @@ export default async function Welcome({
   searchParams: Promise<{ status?: string }>;
 }) {
   const [pilot, params] = await Promise.all([readPilot(), searchParams]);
-  if (pilot && !pilot.beta && !pilot.founder && (await currentAccess()).has('aurelius.context'))
-    return (
-      <>
-        <div className="page-heading compact-heading">
-          <div>
-            <p className="eyebrow">Gent Ascend / Your first chapter</p>
-            <h1>Welcome to your ascent.</h1>
-          </div>
-        </div>
-        <section className="panel pilot-section">
-          <h2>Your membership is ready.</h2>
-          <p>
-            Begin with your priority, build your personal baseline, then choose one action for
-            today.
-          </p>
-          <ol className="pilot-steps">
-            <li>
-              <Link href="/app/you">Set your priority</Link>
-            </li>
-            <li>
-              <Link href="/app/ascend-profile">Build your baseline</Link>
-            </li>
-            <li>
-              <Link href="/app/goals">Choose your first goal</Link>
-            </li>
-          </ol>
-          <Link className="button" href="/app">
-            Open Command →
-          </Link>
-          <Link className="text-link" href="/app/membership">
-            Manage your membership →
-          </Link>
-        </section>
-        <InstallGuide />
-      </>
-    );
+  const [access, priority] = pilot
+    ? await Promise.all([currentAccess(), readWorldPriority().catch(() => null)])
+    : [new Set<string>(), null];
   return (
     <>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Founding members</p>
+          <p className="eyebrow">Gent Ascend / Your first chapter</p>
           <h1>Welcome to your ascent.</h1>
         </div>
       </div>
@@ -75,139 +43,87 @@ export default async function Welcome({
           {notices[params.status]}
         </p>
       )}
-      {pilot && (
-        <section className="pilot-entry" aria-label="Your Gent Ascend space">
-          <Image src={brand.crest} alt="" width={90} height={90} preload />
-          <div>
-            <p className="eyebrow">INSIDE GENT ASCEND / YOUR FIRST SESSION</p>
-            <h2>
-              {pilot.beta || pilot.founder
-                ? 'The world is now yours to shape.'
-                : 'Your place begins here.'}
-            </h2>
-            <p>
-              {pilot.beta || pilot.founder
-                ? 'Begin with one direction. Aethelios and the rest of your space will meet you there.'
-                : 'Confirm the invitation tied to your verified email to enter your personal space.'}
-            </p>
-          </div>
-        </section>
-      )}
       {!pilot ? (
         <section className="panel pilot-section">
-          <h2>Accept your invitation</h2>
+          <h2>Your own space begins here.</h2>
           <p>
-            Open the invitation sent to your email. If you already have an account, sign in with
-            that email to continue.
+            Create a free account or sign in to keep your direction, routines and training
+            connected.
           </p>
           <Link className="button" href="/enter">
-            Go to sign in
+            Create an account or sign in →
           </Link>
         </section>
       ) : (
         <>
-          {!pilot.beta && !pilot.founder ? (
-            <section className="panel pilot-section">
-              <h2>Confirm your place</h2>
+          <section className="pilot-entry" aria-label="Your Gent Ascend space">
+            <Image src={brand.crest} alt="" width={90} height={90} preload />
+            <div>
+              <p className="eyebrow">YOUR DIRECTION. YOUR WORLD.</p>
+              <h2>Begin with one clear move.</h2>
+              <p>Start where it matters today. Your profile can develop as you use your space.</p>
+            </div>
+          </section>
+          <FirstSession
+            initial={priority?.mode === 'personal' ? priority : null}
+            canTalk={access.has('aurelius.context')}
+          />
+          <InstallGuide />
+          <details className="panel pilot-section">
+            <summary>Save a password for future sign-in</summary>
+            <p>
+              If you use an email code or invitation, you can also save a password. Use at least 12
+              characters.
+            </p>
+            <form action={setPilotPassword}>
+              <label htmlFor="pilot-password">New password</label>
+              <input
+                id="pilot-password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                minLength={12}
+                maxLength={128}
+                required
+              />
+              <button className="secondary-button">Save password</button>
+            </form>
+          </details>
+          {!pilot.beta && !pilot.founder && (
+            <details className="panel pilot-section">
+              <summary>Have an invitation benefit?</summary>
               <p>
-                Your invitation is tied to your verified email. Confirm it here to open the founding
-                member experience.
+                Your free account does not require an invitation. If you were offered additional
+                access, confirm the invitation tied to your verified email.
               </p>
               <form action={claimPilotAction}>
-                <button className="button">Confirm my access</button>
+                <button className="secondary-button">Confirm invitation benefit</button>
               </form>
-            </section>
-          ) : (
-            <>
-              <div className="personal-grid">
-                <section className="panel">
-                  <p className="eyebrow">Your first session</p>
-                  <h2>Begin with one clear step.</h2>
-                  <ol className="pilot-steps">
-                    <li>
-                      <Link href="/app/you">Set your priority</Link>
-                      <p>Name what matters now and set your timezone.</p>
-                    </li>
-                    <li>
-                      <Link href="/app/ascend-profile">Build your baseline</Link>
-                      <p>Keep only the facts you choose to confirm.</p>
-                    </li>
-                    <li>
-                      <Link href="/app/goals">Choose one goal</Link>
-                      <p>Give it a next action you can actually take.</p>
-                    </li>
-                    <li>
-                      <Link href="/app/install">Install on your phone</Link>
-                      <p>Add Gent Ascend to your Home Screen, then reopen it from the icon.</p>
-                    </li>
-                    <li>
-                      <Link href="/app">Use Command today</Link>
-                      <p>Write your intention, act, then return for an evening review.</p>
-                    </li>
-                  </ol>
-                  <Link className="button" href="/app">
-                    Open Command
-                  </Link>
-                </section>
-                <aside className="panel perspective-panel">
-                  <p className="eyebrow">Your personal intelligence</p>
-                  <h2>Talk it through.</h2>
-                  <p>
-                    Aethelios can help you think, plan and reflect. Your private work remains yours;
-                    a proposal only changes your daily plan when you confirm it.
-                  </p>
-                  <Link className="text-link" href="/app/aethelios">
-                    Meet Aethelios →
-                  </Link>
-                </aside>
-              </div>
-              <section className="panel pilot-section">
-                <h2>Set a sign-in password</h2>
-                <p>
-                  If you arrived through an email invitation, save a password for your next visit.
-                  Use at least 12 characters.
-                </p>
-                <form action={setPilotPassword}>
-                  <label htmlFor="pilot-password">New password</label>
-                  <input
-                    id="pilot-password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    minLength={12}
-                    maxLength={128}
-                    required
-                  />
-                  <button className="secondary-button">Save password</button>
-                </form>
-              </section>
-              <InstallGuide />
-              <section className="panel pilot-section">
-                <h2>Tell us what happened</h2>
-                <p>
-                  Share a sticking point, an idea or something that worked. The founder sees this
-                  message, not your private records.
-                </p>
-                <form action={submitFeedbackAction}>
-                  <label htmlFor="pilot-category">Type</label>
-                  <select id="pilot-category" name="category">
-                    <option value="friction">Something got in the way</option>
-                    <option value="idea">An idea</option>
-                    <option value="working">Something worked</option>
-                  </select>
-                  <label htmlFor="pilot-message">Your note</label>
-                  <textarea
-                    id="pilot-message"
-                    name="message"
-                    minLength={10}
-                    maxLength={1500}
-                    required
-                    rows={4}
-                  />
-                  <button className="button">Send feedback</button>
-                </form>
-              </section>
-            </>
+            </details>
+          )}
+          {(pilot.beta || pilot.founder) && (
+            <details className="panel pilot-section">
+              <summary>Share feedback</summary>
+              <p>The founder sees this note, not your private records.</p>
+              <form action={submitFeedbackAction}>
+                <label htmlFor="pilot-category">Type</label>
+                <select id="pilot-category" name="category">
+                  <option value="friction">Something got in the way</option>
+                  <option value="idea">An idea</option>
+                  <option value="working">Something worked</option>
+                </select>
+                <label htmlFor="pilot-message">Your note</label>
+                <textarea
+                  id="pilot-message"
+                  name="message"
+                  minLength={10}
+                  maxLength={1500}
+                  required
+                  rows={4}
+                />
+                <button className="button">Send feedback</button>
+              </form>
+            </details>
           )}
         </>
       )}

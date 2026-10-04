@@ -319,3 +319,16 @@ Close the gap between native product browsing, synced Cabinet and ritual practic
 ## 2026-10-04 — Customer Account connection before economic privileges
 
 Advance the live Collection/Cabinet work with a browser-scoped, explicitly initiated OAuth/PKCE customer connection and read-only recent orders. Verify the provider's signed identity and API customer; keep credentials in short-lived encrypted host-only cookies bound to the Gent owner and configuration. No refresh token persistence, new ledger, membership inference, historical Cabinet purchase badge or discount enforcement is introduced. Merchant configuration and real Shopify acceptance stay separate from CI provider fixtures. Follow discovered supported endpoints and current Customer Account object contracts. Full research, scope, activation and durable-link next phase: CUSTOMER_ACCOUNT_CONNECTION.md.
+
+## October 2, 2026 — Deferred free account claim
+
+Founder approved direction-first account conversion. Reuse Supabase SSR and existing daily_save rather than anonymous Auth provisioning or a second profile system. Google + email OTP; existing passwords remain. Free signup configuration is independent of membership/billing. Authentication never grants paid/beta/founder/clinical authority. Account state and imports remain owner-derived and idempotent.
+
+Official sources reviewed October 2: https://supabase.com/docs/guides/auth/auth-email-passwordless (OTP email template must use .Token; signInWithOtp creates users by default); https://supabase.com/docs/guides/auth/social-login/auth-google (SSR PKCE code exchange); https://supabase.com/docs/guides/auth/auth-anonymous (anonymous identities use authenticated role; not enabled); https://supabase.com/changelog.md (reviewed recent Auth/SSR changes, no relevant breaking auth integration change); packaged Next.js 16.3.5 route-handler/cookies documentation (mutable response cookies, no shared private caching). Recent Postgres minor advisory affects specific extensions/encrypted legacy data; this migration introduces none of those features.
+
+Research informs the UX, without claiming measured conversion results: https://www.nngroup.com/articles/login-walls/, https://www.nngroup.com/articles/commitment-levels/, https://www.nngroup.com/articles/progressive-disclosure/, https://www.nike.com/membership. See ACCOUNT_CLAIM_PHASE_1.md for release settings and verification limitations.
+
+
+## 2026-10-04 — Public launch Phase 1: entry and first value
+
+Founder authorized execution of the consolidated launch blueprint's first phase. Recover PR #41's owner-derived, idempotent account claim instead of creating another identity ledger. Add an explicit first-session priority and next move through existing Daily Command, preserving existing daily fields and actions. Starting paths are authored suggestions; opening the page never runs a model or saves data. Account creation does not grant paid/beta/founder access. Existing public-browser draft claims stay explicit and reviewable. Publish a draft PR for the remaining consolidated launch work, with production signup/configuration and migration activation separately gated. See PUBLIC_LAUNCH_PHASE_1.md for evidence and limits.
