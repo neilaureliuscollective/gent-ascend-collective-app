@@ -37,7 +37,7 @@ export function CabinetEditor({
     [note, setNote] = useState(record.note),
     [ritual, setRitual] = useState(record.ritual_id ?? '');
   return (
-    <form action={submit} className="cabinet-form">
+    <form action={submit} onReset={(event) => event.preventDefault()} className="cabinet-form">
       <input type="hidden" name="id" value={record.id} />
       <input type="hidden" name="version" value={record.version} />
       <label>
@@ -97,7 +97,7 @@ export function CabinetExternal({ id, action }: { id: string; action: Action }) 
   const [name, setName] = useState(''),
     [category, setCategory] = useState('beard');
   return (
-    <form action={submit} className="cabinet-form">
+    <form action={submit} onReset={(event) => event.preventDefault()} className="cabinet-form">
       <input type="hidden" name="id" value={id} />
       <label>
         Product name
