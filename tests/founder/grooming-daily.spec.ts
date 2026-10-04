@@ -19,6 +19,7 @@ test('member chamber saves, reviews, records and restores the actual private rit
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
   await page.goto('/app/grooming');
   await expect(page.locator('.ritual-chamber-member')).toBeVisible();
   await page.getByRole('button', { name: 'evening', exact: true }).click();
