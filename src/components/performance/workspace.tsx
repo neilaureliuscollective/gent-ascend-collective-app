@@ -40,9 +40,9 @@ import { ProgramEditor, ProgramCycle, SessionPreparation, SessionDecision } from
 import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/performance/program';
 import type { Prescription, Program } from '@/domains/performance/schema';
 type View = 'today' | 'train' | 'restore' | 'fuel' | 'movement' | 'review';
-export function PerformanceWorkspace({ initial }: { initial: PerformanceData }) {
+export function PerformanceWorkspace({ initial, initialView = "today" }: { initial: PerformanceData; initialView?: View }) {
   const [data, setData] = useState(initial);
-  const [view, setView] = useState<View>('today');
+  const [view, setView] = useState<View>(initialView);
   const [editing, setEditorValue] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(
     null,
   );

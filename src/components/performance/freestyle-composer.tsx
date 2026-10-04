@@ -13,7 +13,7 @@ const intentLabels: Record<Intent, string> = {
   pull: 'Pull',
   legs: 'Legs',
   full: 'Full body',
-  move: 'Just get moving',
+  move: 'Just move',
 };
 
 function cleanName(name: string) {
@@ -58,32 +58,23 @@ export function FreestyleComposer({
   onStart: (plan: Plan) => Promise<void>;
 }) {
   const [intent, setIntent] = useState<Intent>('upper');
-  const [title, setTitle] = useState('');
   const [draft, setDraft] = useState<DraftMovement[]>([]);
+  const [manualOpen, setManualOpen] = useState(true);
   const [manualName, setManualName] = useState('');
   const [manualSets, setManualSets] = useState(3);
   const [manualReps, setManualReps] = useState(10);
   const [starting, setStarting] = useState(false);
 
   const learned = useMemo(() => {
-    const map = new Map<
-      string,
-      { name: string; appearances: number; last: Session['sets'][number]; latestAt: string }
-    >();
-    const completed = history
-      .filter((session) => session.status === 'complete')
-      .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+    const map = new Map<string, { name: string; appearances: number; last: Session['sets'][number]; latestAt: string }>();
+    const completed = history.filter((session) => session.status === 'complete').sort((a, b) => b.startedAt.localeCompare(a.startedAt));
     for (const session of completed) {
       const seen = new Set<string>();
       for (const set of session.sets) {
         const key = set.exercise.trim().toLowerCase();
         if (!key || seen.has(key)) continue;
         seen.add(key);
-        const lastSet =
-          [...session.sets]
-            .reverse()
-            .find((candidate) => candidate.done && candidate.exercise.trim().toLowerCase() === key) ??
-          set;
+        const lastSet = [...session.sets].reverse().find((candidate) => candidate.done && candidate.exercise.trim().toLowerCase() === key) ?? set;
         const existing = map.get(key);
         map.set(key, {
           name: set.exercise,
@@ -93,34 +84,27 @@ export function FreestyleComposer({
         });
       }
     }
-    return [...map.values()]
-      .sort((a, b) => b.appearances - a.appearances || b.latestAt.localeCompare(a.latestAt))
-      .slice(0, 8);
+    return [...map.values()].sort((a, b) => b.appearances - a.appearances || b.latestAt.localeCompare(a.latestAt)).slice(0, 6);
   }, [history]);
 
   const lastWorkout = useMemo(
-    () =>
-      history
-        .filter((session) => session.status === 'complete')
-        .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0] ?? null,
+    () => history.filter((session) => session.status === 'complete').sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0] ?? null,
     [history],
   );
 
   function addMovement(name: string, sets = 3, reps = 10, load = 0) {
     const clean = cleanName(name).slice(0, 70);
     if (!clean) return;
-    setDraft((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        name: clean,
-        sets: Math.min(8, Math.max(1, sets)),
-        reps: Math.min(30, Math.max(1, reps)),
-        load: Math.min(1500, Math.max(0, load)),
-        restSeconds: 90,
-      },
-    ]);
+    setDraft((current) => [...current, {
+      id: crypto.randomUUID(),
+      name: clean,
+      sets: Math.min(8, Math.max(1, sets)),
+      reps: Math.min(30, Math.max(1, reps)),
+      load: Math.min(1500, Math.max(0, load)),
+      restSeconds: 90,
+    }]);
     setManualName('');
+    setManualOpen(false);
   }
 
   function addScouted(result: MachineScoutResult) {
@@ -128,48 +112,95 @@ export function FreestyleComposer({
     return Promise.resolve();
   }
 
-  const sessionTitle = cleanName(title) || `${intentLabels[intent]} · freestyle`;
+  const sessionTitle = `${intentLabels[intent]} · freestyle`;
+
+  async function start() {
+    setStarting(true);
+    try {
+      await onStart({ title: sessionTitle, unit, exercises: draft });
+    } finally {
+      setStarting(false);
+    }
+  }
 
   return (
-    <section className="perf-freestyle">
+    <section className="perf-freestyle perf-freestyle-v2">
       <div className="perf-freestyle-hero">
         <div>
-          <span className="eyebrow">FREESTYLE / TODAY ONLY</span>
-          <h2>Build the workout while you train.</h2>
-          <p>
-            No program required. Choose the direction, add what feels right in the room, and let
-            Performance learn from what you actually keep choosing.
-          </p>
+          <span className="eyebrow">FREESTYLE / LIVE BUILD</span>
+          <h2>Start training. Build the rest as you go.</h2>
+          <p>Pick the direction. The workout can begin immediately — then add machines and movements from the floor.</p>
         </div>
         {lastWorkout && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => setDraft(movementFromHistory(lastWorkout))}
-          >
-            Repeat last workout
+          <button type="button" disabled={busy} onClick={() => setDraft(movementFromHistory(lastWorkout))}>
+            Use last session
           </button>
         )}
       </div>
 
       <div className="perf-intent-rail" role="group" aria-label="Today's training intent">
         {(Object.keys(intentLabels) as Intent[]).map((key) => (
-          <button
-            type="button"
-            key={key}
-            aria-pressed={intent === key}
-            onClick={() => setIntent(key)}
-          >
+          <button type="button" key={key} aria-pressed={intent === key} onClick={() => setIntent(key)}>
             {intentLabels[key]}
           </button>
         ))}
       </div>
 
+      <button
+        type="button"
+        className="perf-primary perf-start-now"
+        disabled={busy || starting}
+        onClick={() => void start()}
+      >
+        {starting ? 'Opening training…' : draft.length ? 'Start this workout →' : 'Start training now →'}
+      </button>
+
+      <div className="perf-builder-actions" aria-label="Add movements">
+        <button type="button" onClick={() => setManualOpen((open) => !open)}>＋ Add movement</button>
+        <span>or</span>
+        <span>scan the machine in front of you</span>
+      </div>
+
+      <MachineScout disabled={busy} onAdd={addScouted} />
+
+      {manualOpen && (
+        <form
+          className="perf-quick-sheet"
+          onSubmit={(event) => {
+            event.preventDefault();
+            addMovement(manualName, manualSets, manualReps);
+          }}
+        >
+          <div className="perf-quick-sheet-head">
+            <div>
+              <span className="eyebrow">QUICK ADD</span>
+              <h3>Add a movement.</h3>
+            </div>
+            <button type="button" onClick={() => setManualOpen(false)} aria-label="Close quick add">×</button>
+          </div>
+          <label>
+            Movement
+            <input autoFocus value={manualName} maxLength={70} placeholder="Incline plate-loaded press" onChange={(event) => setManualName(event.target.value)} />
+          </label>
+          <div className="perf-stepper-row">
+            <label>
+              Sets
+              <input type="number" inputMode="numeric" min={1} max={8} value={manualSets} onChange={(event) => setManualSets(event.target.valueAsNumber || 1)} />
+            </label>
+            <label>
+              Rep target
+              <input type="number" inputMode="numeric" min={1} max={30} value={manualReps} onChange={(event) => setManualReps(event.target.valueAsNumber || 1)} />
+            </label>
+          </div>
+          <button className="perf-primary" aria-label="Add movement" disabled={busy || !manualName.trim()}>Add to workout →</button>
+        </form>
+      )}
+
       {learned.length > 0 && (
         <section className="perf-learned-movements">
           <div>
-            <span className="eyebrow">LEARNED FROM YOU</span>
-            <h3>Movements you keep coming back to.</h3>
+            <span className="eyebrow">AETHELIOS REMEMBERS</span>
+            <h3>Your usual movements.</h3>
           </div>
           <div className="perf-learned-rail">
             {learned.map((item) => (
@@ -177,139 +208,40 @@ export function FreestyleComposer({
                 type="button"
                 key={item.name.toLowerCase()}
                 disabled={busy}
-                onClick={() =>
-                  addMovement(
-                    item.name,
-                    3,
-                    item.last.reps ?? item.last.targetReps,
-                    item.last.load ?? item.last.targetLoad,
-                  )
-                }
+                onClick={() => addMovement(item.name, 3, item.last.reps ?? item.last.targetReps, item.last.load ?? item.last.targetLoad)}
               >
                 <strong>{item.name}</strong>
-                <span>
-                  {item.appearances} session{item.appearances === 1 ? '' : 's'}
-                </span>
-                <small>
-                  last · {item.last.reps ?? item.last.targetReps} ×{' '}
-                  {item.last.load ?? item.last.targetLoad} {unit}
-                </small>
+                <span>{item.appearances} session{item.appearances === 1 ? '' : 's'}</span>
+                <small>last · {item.last.reps ?? item.last.targetReps} × {item.last.load ?? item.last.targetLoad} {unit}</small>
               </button>
             ))}
           </div>
         </section>
       )}
 
-      <MachineScout disabled={busy} onAdd={addScouted} />
-
-      <form
-        className="perf-freestyle-manual"
-        onSubmit={(event) => {
-          event.preventDefault();
-          addMovement(manualName, manualSets, manualReps);
-        }}
-      >
-        <span className="eyebrow">OR ADD IT YOURSELF</span>
-        <label>
-          Movement
-          <input
-            value={manualName}
-            maxLength={70}
-            placeholder="Incline plate-loaded press"
-            onChange={(event) => setManualName(event.target.value)}
-          />
-        </label>
-        <div>
-          <label>
-            Sets
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={8}
-              value={manualSets}
-              onChange={(event) => setManualSets(event.target.valueAsNumber || 1)}
-            />
-          </label>
-          <label>
-            Rep target
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={30}
-              value={manualReps}
-              onChange={(event) => setManualReps(event.target.valueAsNumber || 1)}
-            />
-          </label>
-        </div>
-        <button className="perf-primary" disabled={busy || !manualName.trim()}>
-          Add movement
-        </button>
-      </form>
-
-      <section className="perf-session-composer">
-        <div className="perf-session-composer-heading">
-          <div>
-            <span className="eyebrow">TODAY&apos;S SESSION</span>
-            <h3>{sessionTitle}</h3>
+      {draft.length > 0 && (
+        <section className="perf-session-queue">
+          <div className="perf-session-composer-heading">
+            <div>
+              <span className="eyebrow">STARTING QUEUE</span>
+              <h3>{sessionTitle}</h3>
+            </div>
+            <strong>{draft.length}</strong>
           </div>
-          <strong>{draft.length}</strong>
-        </div>
-
-        {draft.length === 0 ? (
-          <p className="perf-caption">
-            Add the first machine or movement. You can keep adding exercises after the workout starts.
-          </p>
-        ) : (
           <ol>
             {draft.map((movement, index) => (
               <li key={movement.id}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <div>
                   <strong>{movement.name}</strong>
-                  <small>
-                    {movement.sets} sets · {movement.reps} reps · {movement.load} {unit}
-                  </small>
+                  <small>{movement.sets} sets · {movement.reps} reps</small>
                 </div>
-                <button
-                  type="button"
-                  aria-label={`Remove ${movement.name}`}
-                  onClick={() => setDraft((current) => current.filter((item) => item.id !== movement.id))}
-                >
-                  ×
-                </button>
+                <button type="button" aria-label={`Remove ${movement.name}`} onClick={() => setDraft((current) => current.filter((item) => item.id !== movement.id))}>×</button>
               </li>
             ))}
           </ol>
-        )}
-
-        <label className="perf-session-name">
-          Session name <span>optional</span>
-          <input
-            value={title}
-            maxLength={80}
-            placeholder={sessionTitle}
-            onChange={(event) => setTitle(event.target.value)}
-          />
-        </label>
-
-        <button
-          type="button"
-          className="perf-primary perf-start-freestyle"
-          disabled={busy || starting || draft.length === 0}
-          onClick={async () => {
-            setStarting(true);
-            try {
-              await onStart({ title: sessionTitle, unit, exercises: draft });
-            } finally {
-              setStarting(false);
-            }
-          }}
-        >
-          {starting ? 'Opening training…' : 'Start this workout →'}
-        </button>
-      </section>
+        </section>
+      )}
     </section>
   );
 }

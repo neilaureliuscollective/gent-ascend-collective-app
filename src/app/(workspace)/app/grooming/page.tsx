@@ -52,23 +52,60 @@ export default async function Grooming({
     .slice(0, 3);
   return (
     <main className="grooming">
-      <header className="groom-hero">
-        <div>
-          <p className="eyebrow">Gent Ascend / Grooming</p>
+      <header className="groom-hero groom-hero-v2">
+        <div className="groom-hero-copy">
+          <p className="eyebrow">GENT ASCEND / GROOMING CONCIERGE</p>
           <h1>
-            Your personal
+            Your standard.
             <br />
-            <em>standard.</em>
+            <em>Sharper every time.</em>
           </h1>
-          <p>Keep what works. Refine what’s next.</p>
+          <p>Observe. Decide. Practice. Remember what actually works.</p>
+        </div>
+        <div className="groom-hero-signal" aria-hidden="true">
+          <span>STANDARD</span>
+          <strong>{active.length || '—'}</strong>
+          <small>live rituals</small>
         </div>
       </header>
+
+      <section className="groom-command-deck" aria-label="Grooming command">
+        <div className="groom-command-primary">
+          <span className="eyebrow">AETHELIOS / NEXT MOVE</span>
+          <h2>{goal?.title ?? 'Choose the detail worth refining.'}</h2>
+          <p>
+            {profile?.preferred_look
+              ? `Current direction · ${profile.preferred_look}`
+              : 'Set the direction once. Then let your scans, rituals, looks and service history make it smarter.'}
+          </p>
+          <div className="groom-command-actions">
+            <Link className="button" href="/app/grooming/scan">Run Ascend Scan →</Link>
+            <Link className="secondary-button" href="/app/aethelios?starter=grooming">Ask Aethelios</Link>
+          </div>
+        </div>
+        <div className="groom-command-status">
+          <div>
+            <span>Direction</span>
+            <strong>{profile?.preferred_look || 'Not calibrated'}</strong>
+          </div>
+          <div>
+            <span>Routine</span>
+            <strong>{active.length ? `${active.length} active` : 'Build your first'}</strong>
+          </div>
+          <div>
+            <span>Next occasion</span>
+            <strong>{event?.title || 'Nothing scheduled'}</strong>
+          </div>
+        </div>
+      </section>
+
       <GroomingDirectionEditor profile={profile} saveAction={saveDirectionAction} />
-      <nav className="groom-quick" aria-label="Grooming actions">
-        <Link href="/app/grooming/scan">Ascend Scan</Link>
-        <a href="#ritual">Your routine</a>
-        <Link href="/app/grooming/look">Explore a look</Link>
-        <Link href="/app/grooming/professional">Prepare a brief</Link>
+
+      <nav className="groom-quick groom-quick-v2" aria-label="Grooming actions">
+        <Link href="/app/grooming/scan"><span>01</span><strong>Scan</strong><small>See what changed</small></Link>
+        <a href="#ritual"><span>02</span><strong>Ritual</strong><small>Practice the standard</small></a>
+        <Link href="/app/grooming/look"><span>03</span><strong>My Look</strong><small>Explore a direction</small></Link>
+        <Link href="/app/grooming/professional"><span>04</span><strong>Professional</strong><small>Carry it forward</small></Link>
       </nav>
       {params.result && (
         <p className="groom-notice" role="status">
@@ -86,11 +123,12 @@ export default async function Grooming({
         <a href="#vault">Vault</a>
         <a href="#occasion">Occasion</a>
       </nav>
-      <aside className="groom-insight">
-        <p className="eyebrow">Aethelios / Next move</p>
-        <p>{goal?.title ?? 'Start with one detail you want to refine.'}</p>
-        <Link href="/app/aethelios?starter=grooming">Talk through your direction</Link>
-        <small>Saved grooming context is used only when personal context is enabled in chat.</small>
+      <aside className="groom-insight groom-insight-v2">
+        <div>
+          <p className="eyebrow">AETHELIOS / CONTEXT</p>
+          <p>{goal ? 'Your active grooming goal is in view.' : 'No active grooming goal yet. Your history can still guide the next move.'}</p>
+        </div>
+        <Link href="/app/aethelios?starter=grooming">Open grooming conversation →</Link>
       </aside>
       <details className="groom-disclosure">
         <summary>Goals & direction history</summary>
@@ -121,15 +159,15 @@ export default async function Grooming({
         ))}
       </details>
       <section id="ritual" className="groom-section">
-        <p className="eyebrow">02 / Ritual</p>
-        <h2>Make the standard repeatable.</h2>
-        <p>A small routine you follow beats an elaborate one you abandon.</p>
+        <p className="eyebrow">02 / LIVE RITUAL</p>
+        <h2>Practice the standard. Don’t manage a checklist.</h2>
+        <p>Keep the routine small, visible and easy to record. Refinement belongs behind the action.</p>
         <div className="groom-three">
           {(['morning', 'evening', 'weekly'] as const).map((kind) => {
             const r = active.find((x) => x.kind === kind),
               latest = r ? checkins.find((c) => c.ritual_id === r.id) : null;
             return (
-              <article className="groom-panel" key={kind}>
+              <article className="groom-panel groom-ritual-card" key={kind}>
                 <p className="eyebrow">
                   {kind} / {r ? `Version ${r.version}` : 'Not set'}
                 </p>
@@ -156,7 +194,7 @@ export default async function Grooming({
             );
           })}
         </div>
-        <GroomingTask title="Refine a routine">
+        <GroomingTask title="Edit ritual structure">
           <form action={ritualAction} className="groom-panel groom-form groom-wide">
             <h3>Set or refine a ritual</h3>
             <label>

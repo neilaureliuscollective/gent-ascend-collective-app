@@ -1,3 +1,5 @@
+import { DailyCommandWorkspace } from '@/components/daily-command/workspace';
+import { commandFixture } from './daily-command';
 import { PerformanceWorkspace } from '@/components/performance/workspace';
 import {
   performanceFixture,
@@ -84,7 +86,7 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'commerce-showroom' ? (
+  mode === 'command' ? <DailyCommandWorkspace initial={commandFixture} /> : mode === 'commerce-showroom' ? (
     <main className="reserve-commerce">
       <CollectionShowroom
         entries={collectionEntries([

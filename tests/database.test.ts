@@ -36,6 +36,29 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('isolates command history, atomically versions feedback, rejects stale and anonymous writes', async () => {
+    const arrival = JSON.stringify({sleepMinutes: null, energy: null, soreness: null, bandwidth: null, minutes: null});
+    const snapshot = JSON.stringify({day: 'DAY', ruleVersion: 1, state: 'STEADY', decisions: [{id:'focus'}]});
+    const request = 'db000000-0000-4000-8000-000000000001';
+    const day = `(now() at time zone (select timezone from public.persons where auth_user_id='${founder}'))::date`;
+    const sqlSnapshot = `replace('${snapshot}','DAY',(${day})::text)::jsonb`;
+    const call = `select public.daily_command_save('${request}',${day},0,'arrival','${arrival}'::jsonb,${sqlSnapshot},null)`;
+    expect((await asUser<{daily_command_save:number}>(founder,call)).rows[0]?.daily_command_save).toBe(1);
+    expect((await asUser<{daily_command_save:number}>(founder,call)).rows[0]?.daily_command_save).toBe(1);
+    expect((await asUser(member,'select * from public.daily_command_records')).rows).toHaveLength(0);
+    expect((await asUser(member,'select * from public.daily_command_revisions')).rows).toHaveLength(0);
+    await expect(asUser(founder,`update public.daily_command_records set version=9`)).rejects.toThrow();
+    await expect(asUser(founder,call.replace(request,'db000000-0000-4000-8000-000000000002'))).rejects.toThrow(/changed/);
+    await expect(asUser(founder,call.replace('"energy":null','"energy":9').replace(request,'db000000-0000-4000-8000-000000000003'))).rejects.toThrow();
+    const outcome = `'{"decisions":[{"id":"focus","result":"skipped"}],"fit":"too-much","tomorrow":"Keep it smaller"}'::jsonb`;
+    const close = `select public.daily_command_save('db000000-0000-4000-8000-000000000004',${day},1,'outcome','${arrival}'::jsonb,${sqlSnapshot},${outcome})`;
+    expect((await asUser<{daily_command_save:number}>(founder,close)).rows[0]?.daily_command_save).toBe(2);
+    expect((await asUser(founder,'select * from public.daily_command_revisions')).rows).toHaveLength(2);
+    await expect(asUser(founder,close.replace('000000000004','000000000005').replace(",1,'outcome'",",2,'outcome'").replace('"id":"focus","result"','"id":"invented","result"'))).rejects.toThrow(/Unknown decision/);
+    await db.exec('set role anon');
+    try { await expect(db.query(call)).rejects.toThrow(); await expect(db.query('select * from public.daily_command_records')).rejects.toThrow(); } finally { await db.exec('reset role'); }
+  });
+
   it('keeps grooming evidence private and professional proposals member-controlled',async()=>{
     const owner=`(select id from public.persons where auth_user_id='${founder}')`;
     const scan='9a000000-0000-4000-8000-000000000001',photo='9a000000-0000-4000-8000-000000000002',look='9a000000-0000-4000-8000-000000000003',pass='9a000000-0000-4000-8000-000000000004',proposal='9a000000-0000-4000-8000-000000000005',code='a'.repeat(64);

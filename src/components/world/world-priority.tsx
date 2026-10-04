@@ -233,7 +233,7 @@ export function WorldPriorityEditor({ priority }: { priority: Controller }) {
               <p>{data.nextAction}</p>
             </div>
           )}
-          <Link className="gw-priority-return" href="/app#daily-actions">
+          <Link className="gw-priority-return" href="/app/daily#daily-actions">
             Continue my day <span aria-hidden="true">↗</span>
           </Link>
         </>
