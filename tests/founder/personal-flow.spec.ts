@@ -70,7 +70,10 @@ test('founder can save a profile and goal without paid membership, then retain c
     'Plan tomorrow deliberately.',
   );
   await page.goto('/app/daily');
-  await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Explore your context' })
+    .getByRole('button', { name: /^Day workspace/ })
+    .click();
   await expect(page.getByRole('heading', { name: 'Synthetic founder goal' })).toBeVisible();
   await expect(
     page.locator('.goal-daily-card').getByText('Plan tomorrow deliberately.', { exact: true }),
@@ -82,7 +85,10 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.getByRole('button', { name: 'Save your day', exact: true }).click();
   await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
   await page.reload();
-  await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Explore your context' })
+    .getByRole('button', { name: /^Day workspace/ })
+    .click();
   await expect(
     page.getByRole('heading', { name: 'Synthetic saved daily intention' }),
   ).toBeVisible();
@@ -92,7 +98,10 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.getByRole('checkbox', { name: 'Synthetic persistence action' }).click();
   await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
   await page.reload();
-  await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Explore your context' })
+    .getByRole('button', { name: /^Day workspace/ })
+    .click();
   await expect(page.getByRole('checkbox', { name: 'Synthetic persistence action' })).toBeChecked();
   await page.goto('/app/goals');
   await page.getByRole('button', { name: 'Mark complete' }).click();
