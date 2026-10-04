@@ -1,6 +1,11 @@
 import Link from 'next/link';
 const worlds = [
   {
+    href: '/app/collection',
+    title: 'The Collection',
+    copy: 'Grooming, performance and recovery. Find what earns a place in your day.',
+  },
+  {
     href: '/app/ascend',
     title: 'LifeOS / Ascend',
     copy: 'Your direction, daily actions and reflection.',
@@ -44,7 +49,7 @@ export default function World() {
       <details className="world-more">
         <summary>Explore the Collective</summary>
         <nav className="world-directory" aria-label="Collective experiences">
-          <Link href="/shop">
+          <Link href="/app/collection">
             <h2>Legacy Reserve</h2>
             <p>The grooming and personal care collection.</p>
             <span>↗</span>

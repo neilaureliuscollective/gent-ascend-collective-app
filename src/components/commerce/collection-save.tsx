@@ -11,10 +11,12 @@ export function CollectionSave({
   handle,
   title,
   compact = false,
+  basePath = '/shop',
 }: {
   handle: string;
   title?: string;
   compact?: boolean;
+  basePath?: string;
 }) {
   const saved = useSavedCollection().includes(handle);
   const [message, setMessage] = useState('');
@@ -52,7 +54,7 @@ export function CollectionSave({
         {saved ? '◆ In your collection' : '◇ Save to my collection'}
       </button>
       <p role="status">{message || 'Your saved selection stays on this browser.'}</p>
-      {saved && !compact && <Link href="/shop?saved=1">View your saved selection ↗</Link>}
+      {saved && !compact && <Link href={`${basePath}?saved=1`}>View your saved selection ↗</Link>}
     </div>
   );
 }

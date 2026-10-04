@@ -10,15 +10,17 @@ export function CollectionCard({
   index = 0,
   reason,
   review = false,
+  basePath = '/shop',
 }: {
   entry: CollectionEntry;
   index?: number;
   reason?: string;
   review?: boolean;
+  basePath?: string;
 }) {
   return (
     <article className="reserve-collection-object">
-      <Link href={`/shop/${entry.handle}`} className="reserve-collection-card">
+      <Link href={`${basePath}/${entry.handle}`} className="reserve-collection-card">
         <div className="reserve-card-stage">
           <span className="reserve-card-number">
             {String(index + 1).padStart(2, '0')} / {entry.brand}
@@ -72,14 +74,14 @@ export function CollectionCard({
           <div>
             <dt>Before you choose</dt>
             <dd>
-              <Link href={`/shop/${entry.handle}#formula`}>
+              <Link href={`${basePath}/${entry.handle}#formula`}>
                 Review {entry.title} ingredients & cautions ↗
               </Link>
             </dd>
           </div>
         </dl>
       )}
-      <CollectionSave handle={entry.handle} title={entry.title} compact />
+      <CollectionSave basePath={basePath} handle={entry.handle} title={entry.title} compact />
     </article>
   );
 }

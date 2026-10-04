@@ -1,7 +1,13 @@
 import type { resolveRelated } from '@/domains/commerce/discovery';
 import { CollectionCard } from './collection-card';
 
-export function ProductRelations({ items }: { items: ReturnType<typeof resolveRelated> }) {
+export function ProductRelations({
+  items,
+  basePath = '/shop',
+}: {
+  items: ReturnType<typeof resolveRelated>;
+  basePath?: string;
+}) {
   if (!items.length) return null;
   return (
     <section className="reserve-related" aria-labelledby="related-title">
@@ -22,7 +28,13 @@ export function ProductRelations({ items }: { items: ReturnType<typeof resolveRe
             </h3>
             <div className="reserve-collection-grid">
               {group.map(({ entry, reason }, index) => (
-                <CollectionCard key={entry.handle} entry={entry} index={index} reason={reason} />
+                <CollectionCard
+                  key={entry.handle}
+                  entry={entry}
+                  basePath={basePath}
+                  index={index}
+                  reason={reason}
+                />
               ))}
             </div>
           </div>

@@ -7,7 +7,15 @@ import type { Cart } from '@/domains/commerce/shopify';
 import { formatMoney } from './money';
 import { launchLabel, launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 
-export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; notice?: string }) {
+export function CartPanel({
+  fullPage = false,
+  notice,
+  basePath = '/shop',
+}: {
+  fullPage?: boolean;
+  notice?: string;
+  basePath?: string;
+}) {
   const [open, setOpen] = useState(fullPage);
   const [cart, setCart] = useState<Cart | null>(null);
   const [busy, setBusy] = useState(false);
@@ -134,7 +142,7 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
       ) : !cart?.lines.nodes.length ? (
         <div className="cart-empty">
           <p>Your cart is ready when you are.</p>
-          <Link href="/shop" onClick={() => setOpen(false)}>
+          <Link href={basePath} onClick={() => setOpen(false)}>
             Explore the collection ↗
           </Link>
         </div>
@@ -162,7 +170,7 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                 )}
                 <div>
                   <Link
-                    href={`/shop/${line.merchandise.product.handle}`}
+                    href={`${basePath}/${line.merchandise.product.handle}`}
                     onClick={() => setOpen(false)}
                   >
                     {line.merchandise.product.title}
@@ -238,10 +246,10 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
                 Continue to secure checkout ↗
               </a>
             )}
-            <Link href="/shop" onClick={() => setOpen(false)}>
+            <Link href={basePath} onClick={() => setOpen(false)}>
               Continue exploring ↗
             </Link>
-            <Link href="/shop?saved=1" onClick={() => setOpen(false)}>
+            <Link href={`${basePath}?saved=1`} onClick={() => setOpen(false)}>
               Review your saved collection ↗
             </Link>
           </div>
@@ -249,11 +257,12 @@ export function CartPanel({ fullPage = false, notice }: { fullPage?: boolean; no
       )}
     </>
   );
+  const Container = basePath === '/shop' ? 'main' : 'div';
   if (fullPage)
     return (
-      <main id="world-main" className="cart-page">
+      <Container id="world-main" className="cart-page">
         {contents}
-      </main>
+      </Container>
     );
   return (
     <>

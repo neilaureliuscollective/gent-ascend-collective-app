@@ -48,7 +48,7 @@ test('world directory includes both deep worlds and compact global navigation', 
     '/app/grooming',
   );
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  await expect(nav.getByRole('link')).toHaveCount(4);
+  await expect(nav.getByRole('link')).toHaveCount(5);
   const tops = await nav
     .getByRole('link')
     .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
