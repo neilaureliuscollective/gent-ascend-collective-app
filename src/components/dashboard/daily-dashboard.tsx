@@ -8,6 +8,7 @@ import { commandChanges } from '@/domains/command/changes';
 import { CommandField } from './command-field';
 import type { CommandData } from '@/domains/daily-command/model';
 import { CommandArrival } from './command-arrival';
+import '@/app/command-living.css';
 const DailyDepth = dynamic(() => import('./daily-depth').then((module) => module.DailyDepth), {
   loading: () => <p role="status">Opening your day workspace…</p>,
 });
@@ -33,6 +34,7 @@ export function DailyDashboard({
   const [changes, setChanges] = useState<string[]>([]);
   const [stale, setStale] = useState(false);
   const [confirmMove, setConfirmMove] = useState<'adopt' | 'complete' | null>(null);
+  const [confirmedRevision, setConfirmedRevision] = useState(0);
   const confirmation = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const lastCheck = useRef(0);
@@ -201,6 +203,7 @@ export function DailyDashboard({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'The change could not be confirmed.');
       await refresh();
+      setConfirmedRevision((revision) => revision + 1);
       setFeedback(
         kind === 'adopt'
           ? 'Confirmed. Your move is now in today’s saved plan.'
@@ -238,6 +241,7 @@ export function DailyDashboard({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'The decision was not confirmed.');
       await refresh();
+      setConfirmedRevision((revision) => revision + 1);
       setFeedback(
         approve
           ? 'Approved. Your day has been refreshed.'
@@ -271,7 +275,10 @@ export function DailyDashboard({
     }
   }
   return (
-    <div className="command-briefing" data-status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}>
+    <div
+      className="command-briefing command-living"
+      data-status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}
+    >
       <section className="command-environment" aria-labelledby="command-title">
         <header className="command-arrival">
           <span>
@@ -336,6 +343,7 @@ export function DailyDashboard({
           openPlan={openPlan}
           status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}
           changed={changes.length > 0}
+          confirmedRevision={confirmedRevision}
         />
       </section>
       {data.mode === 'sample' && (

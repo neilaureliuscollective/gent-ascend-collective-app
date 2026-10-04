@@ -1,0 +1,570 @@
+/* One chamber: architecture, light and working planes share a single coordinate space. */
+.app-shell .workspace > main:has(.command-living) {
+  padding: 0 0 100px;
+}
+.command-living {
+  max-width: none;
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background:
+    radial-gradient(ellipse at 72% 24%, #16482f38, transparent 53%),
+    linear-gradient(180deg, #07100d 0%, #081710 48%, #050b08 100%);
+  padding-bottom: 24px;
+}
+.command-living::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  inset: 0 0 auto;
+  height: min(1100px, 100%);
+  background:
+    linear-gradient(180deg, #04100b42 0%, #05110c52 38%, #07140fc9 77%, #07130f 100%),
+    linear-gradient(90deg, #040b08c9, #06150c38 60%, #040b08a8),
+    url('/media/world/whole-man-chamber-v2.webp') center top / cover no-repeat;
+  mask-image: linear-gradient(#000 0%, #000 62%, transparent 100%);
+  pointer-events: none;
+}
+.command-living::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 71% 23%, #5bba7930, transparent 34%),
+    radial-gradient(ellipse at 28% 68%, #bc984011, transparent 43%),
+    linear-gradient(
+      114deg,
+      transparent 24%,
+      #c4912f06 24.15%,
+      transparent 24.4%,
+      transparent 78%,
+      #c4912f08 78.15%,
+      transparent 78.4%
+    );
+  pointer-events: none;
+}
+.command-living .command-environment {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.command-living .command-environment::before {
+  content: none;
+}
+.command-living .command-arrival {
+  color: #c1cbbd;
+}
+.command-living .command-moment h1 {
+  text-shadow: 0 4px 38px #0008;
+}
+.command-living .command-next {
+  position: relative;
+  border-top-color: #d5bc7933;
+  border-bottom: 0;
+}
+.command-living .command-next::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  width: 80%;
+  height: 180px;
+  z-index: -1;
+  background: radial-gradient(ellipse at left, #b9942814, transparent 72%);
+  pointer-events: none;
+}
+.command-living .field-space {
+  overflow: visible;
+}
+.command-living .field-horizon {
+  inset: 53% 10% -2%;
+  background: radial-gradient(ellipse, #4e996328 0%, #397c5420 30%, transparent 70%);
+  border-radius: 50%;
+}
+.command-living .field-presence-anchor {
+  width: fit-content;
+  margin: auto;
+}
+.command-living .field-connections {
+  overflow: visible;
+}
+.command-living .field-connections path {
+  fill: none;
+  stroke-dasharray: none;
+  animation: none;
+}
+.command-living .field-connections .connection-halo {
+  stroke: #63b68c;
+  stroke-width: 9;
+  opacity: 0.07;
+}
+.command-living .field-connections .connection-filament {
+  stroke-width: 1.15;
+  opacity: 0.68;
+}
+.command-living .field-connections .connection-trace {
+  stroke: #e5d3a2;
+  stroke-width: 2;
+  stroke-dasharray: 0.12 0.88;
+  opacity: 0;
+}
+.command-living .connection-anchor-halo {
+  fill: #6db591;
+  opacity: 0.12;
+}
+.command-living .connection-anchor {
+  fill: #d7c99b;
+}
+.command-living .field-connections g[data-selected='true'] .connection-halo {
+  opacity: 0.18;
+  stroke: #d9bf7a;
+}
+.command-living .field-connections g[data-selected='true'] .connection-filament {
+  stroke: #efd69b;
+  opacity: 1;
+  stroke-width: 1.7;
+}
+.command-living .field-space[data-state='stale'] .field-connections {
+  opacity: 0.32;
+}
+.command-living .field-space[data-state='refreshing'] .field-connections {
+  opacity: 0.5;
+}
+.command-living .field-signal {
+  min-height: 64px;
+  padding: 12px 16px;
+  background: linear-gradient(100deg, #07160cbb, #0a1d1259 80%, transparent);
+  color: #f2eee2;
+  transform: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.command-living .field-signal::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: linear-gradient(transparent, #d7bd7970, transparent);
+  pointer-events: none;
+}
+.command-living .field-signal:hover,
+.command-living .field-signal[aria-expanded='true'] {
+  transform: none;
+  background: linear-gradient(100deg, #153522e8, #12291866 80%, transparent);
+  box-shadow: none;
+}
+.command-living .signal-label {
+  color: #e1cfaa;
+}
+.command-living .signal-source {
+  color: #c0cabd;
+}
+.command-living .field-core-label span {
+  color: #c0cdbd;
+}
+.command-living .signal-detail {
+  background: linear-gradient(105deg, #0b2317ed, #08170ff0);
+  border-left: 1px solid #d5b66b;
+  box-shadow:
+    inset 0 1px #c4912f1a,
+    0 20px 40px #0003;
+}
+.command-living .signal-detail::before {
+  content: none;
+}
+.command-living > .command-mode,
+.command-living > .command-oversight,
+.command-living > .command-continuity,
+.command-living > .command-readiness,
+.command-living > .command-domains,
+.command-living > .command-depth-nav,
+.command-living > .command-feedback {
+  margin-left: clamp(18px, 4vw, 46px);
+  margin-right: clamp(18px, 4vw, 46px);
+}
+.command-living .command-oversight,
+.command-living .command-continuity,
+.command-living .command-readiness {
+  position: relative;
+  padding: 28px 0;
+  border: 0;
+  border-top: 1px solid #c9b47226;
+}
+.command-living .command-oversight::before,
+.command-living .command-continuity::before,
+.command-living .command-readiness::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  inset: -1px -20px 0;
+  background: radial-gradient(ellipse at 10% 0%, #27613d21, transparent 75%);
+}
+.command-living .command-feedback:empty {
+  min-height: 0;
+}
+.command-living .command-continuity small {
+  color: #b5c1af;
+}
+.command-living .command-domains {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 24px 0;
+}
+.command-living .command-domains a {
+  position: relative;
+  min-width: 0;
+  min-height: 112px;
+  padding: 24px 18px;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  text-decoration: none;
+  background: linear-gradient(135deg, #173c2529, transparent 85%);
+  border-top: 1px solid #c8ae6266;
+  border-bottom: 1px solid #667d5924;
+  transition: background 0.25s ease;
+}
+.command-living .command-domains a::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: 0;
+  height: 25px;
+  width: 1px;
+  background: linear-gradient(#c8ae6288, transparent);
+}
+.command-living .command-domains a:hover {
+  background: linear-gradient(135deg, #2b614339, transparent 85%);
+}
+.command-living .command-domains span {
+  margin-top: 12px;
+  color: #c0c9b7;
+  line-height: 1.5;
+}
+.command-living .command-depth-nav {
+  border-color: #c9b47226;
+}
+.command-living :is(button, a):focus-visible {
+  outline: 2px solid #e0bd70;
+  outline-offset: 5px;
+}
+@media (min-width: 1000px) {
+  .command-living .command-environment {
+    padding-bottom: 40px;
+  }
+  .command-living .command-moment {
+    padding-top: 25px;
+  }
+}
+@media (max-width: 750px) {
+  .command-living::before {
+    height: 820px;
+    background-position: center top;
+    background-size: auto 820px;
+  }
+  .command-living::after {
+    background:
+      radial-gradient(ellipse at 50% 16%, #479d6325, transparent 40%),
+      radial-gradient(ellipse at 25% 60%, #b9942810, transparent 50%);
+  }
+  .command-living .command-arrival {
+    padding: 14px 16px 8px;
+  }
+  .command-living .field-space {
+    height: 218px;
+  }
+  .command-living .field-core {
+    top: 30px;
+    width: 160px;
+  }
+  .command-living .field-core .command-presence {
+    width: 156px;
+    height: 156px;
+  }
+  .command-living .field-core-label strong {
+    font-size: 1rem;
+  }
+  .command-living .field-core-label span {
+    font-size: 0.58rem;
+  }
+  .command-living .field-signal {
+    width: 28%;
+    padding: 8px 7px;
+    min-height: 60px;
+  }
+  .command-living .signal-label {
+    font-size: 0.72rem;
+    line-height: 1.3;
+  }
+  .command-living .field-signal strong {
+    font-size: 1.25rem;
+  }
+  .command-living .signal-0,
+  .command-living .signal-1 {
+    top: 6px;
+  }
+  .command-living .signal-2,
+  .command-living .signal-3 {
+    bottom: 4px;
+  }
+  .command-living .command-next {
+    margin-top: 8px;
+    padding: 18px 0;
+  }
+  .command-living .command-next .command-action {
+    min-height: 44px;
+  }
+  .command-living .command-domains {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 14px 0;
+  }
+  .command-living .command-domains a {
+    min-height: 76px;
+    padding: 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 0;
+    border-bottom: 1px solid #c9b47226;
+  }
+  .command-living .command-domains span {
+    margin-top: 0;
+    max-width: 48%;
+    font-size: 0.75rem;
+  }
+  .command-living .command-domains a::after {
+    content: none;
+  }
+}
+@media (max-width: 380px), (max-height: 700px) and (max-width: 750px) {
+  .command-living .field-space {
+    height: 180px;
+  }
+  .command-living .field-core {
+    top: 22px;
+    width: 135px;
+  }
+  .command-living .field-core .command-presence {
+    width: 130px;
+    height: 130px;
+  }
+  .command-living .field-core-label span {
+    display: none;
+  }
+  .command-living .command-next {
+    margin-top: 2px;
+    padding-top: 14px;
+  }
+}
+@container (max-width: 16rem) {
+  .command-living .field-space {
+    height: auto;
+  }
+  .command-living .field-core {
+    top: auto;
+    width: 100%;
+  }
+  .command-living .field-signal {
+    width: 100%;
+    min-height: 60px;
+  }
+  .command-living .signal-source {
+    display: block;
+    font-size: 0.72rem;
+  }
+}
+html[data-material='solid'] .command-living {
+  background: #08140e;
+}
+html[data-material='solid'] .command-living::before,
+html[data-material='solid'] .command-living::after {
+  content: none;
+}
+html[data-material='solid'] .command-living .command-environment {
+  background: transparent;
+}
+html[data-material='solid'] .command-living .field-signal {
+  background: #0c2016;
+}
+html[data-motion='still'] .command-living .connection-trace,
+html[data-quiet='true'] .command-living .connection-trace {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .command-living .connection-trace {
+    display: none;
+  }
+  .command-living * {
+    transition: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .command-living {
+    background: Canvas;
+  }
+  .command-living::before,
+  .command-living::after {
+    content: none;
+  }
+  .command-living .field-connections {
+    display: none;
+  }
+  .command-living .field-signal,
+  .command-living .command-domains a {
+    border: 1px solid ButtonText;
+  }
+}
+/* Inner Fold composition: presence and the next move remain together above the fold. */
+@media (min-width: 751px) and (max-width: 999px) {
+  .command-living .command-environment {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 0 18px;
+    padding: 0 24px 28px;
+  }
+  .command-living .command-arrival {
+    grid-column: 1/-1;
+    padding: 22px 0;
+  }
+  .command-living .command-moment {
+    grid-column: 1/-1;
+    margin: 12px auto 16px;
+    padding: 0 16px;
+  }
+  .command-living .command-moment h1 {
+    font-size: 2.4rem;
+  }
+  .command-living .command-next {
+    grid-column: 1;
+    grid-row: 3;
+    flex-direction: column;
+    align-items: start;
+    align-self: center;
+    gap: 22px;
+    margin: 0;
+    padding: 24px 0;
+  }
+  .command-living .command-next h2 {
+    font-size: 1.65rem;
+  }
+  .command-living .command-field {
+    grid-column: 2;
+    grid-row: 3;
+    min-width: 0;
+  }
+  .command-living .field-caption {
+    margin: 8px 0 12px;
+    flex-wrap: wrap;
+    gap: 5px;
+    font-size: 0.68rem;
+  }
+  .command-living .field-space {
+    height: 310px;
+    margin: 0;
+  }
+  .command-living .field-core {
+    top: 70px;
+    width: 190px;
+  }
+  .command-living .field-core .command-presence {
+    width: 180px;
+    height: 180px;
+  }
+  .command-living .field-core-label strong {
+    font-size: 1.1rem;
+  }
+  .command-living .field-core-label span {
+    font-size: 0.58rem;
+  }
+  .command-living .field-signal {
+    width: 29%;
+    padding: 10px 8px;
+  }
+  .command-living .signal-0,
+  .command-living .signal-2 {
+    left: 0;
+  }
+  .command-living .signal-1,
+  .command-living .signal-3 {
+    right: 0;
+  }
+  .command-living .signal-0,
+  .command-living .signal-1 {
+    top: 14px;
+  }
+  .command-living .signal-2,
+  .command-living .signal-3 {
+    bottom: 20px;
+  }
+  .command-living .signal-label {
+    font-size: 0.72rem;
+  }
+  .command-living .field-signal strong {
+    font-size: 1.4rem;
+  }
+  .command-living .field-signal .signal-source {
+    display: none;
+  }
+  .command-living .signal-detail {
+    margin: 0;
+    padding: 18px;
+    flex-direction: column;
+  }
+  .command-living .command-trajectory {
+    display: none;
+  }
+}
+@media (max-width: 750px) {
+  .command-living .command-moment {
+    padding: 0 20px;
+  }
+  .command-living .command-moment h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  .command-living .command-brief {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .command-living .field-caption {
+    margin-top: 12px;
+  }
+  .command-living .command-trajectory {
+    display: none;
+  }
+  .command-living .command-field {
+    padding-bottom: 0;
+  }
+}
+.command-living .command-opening {
+  background:
+    radial-gradient(ellipse at 64% 40%, #174b2d9c, transparent 60%),
+    linear-gradient(135deg, #06110bd9, #081a11dd);
+}
+/* Route-local shell reflow keeps enlarged text clear of Capture and the presence shortcut. */
+@media (max-width: 1100px) {
+  .app-shell:has(.command-living) .topbar {
+    height: auto;
+    min-height: 72px;
+    margin: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px max(68px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  }
+  .app-shell:has(.command-living) .mobile-brand {
+    flex: 1 1 auto;
+    max-width: 100%;
+  }
+  .app-shell:has(.command-living) .topbar-actions {
+    flex-shrink: 0;
+  }
+  .app-shell:has(.command-living) .navigation a {
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+}

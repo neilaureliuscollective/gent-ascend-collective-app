@@ -1,3 +1,9 @@
+# Living Command environment · October 4, 2026
+
+Founder-approved continuous Command chamber and measured source connections implemented from current main ee507f2. The current energy identity, real Daily Command, source/owner/day/version guards, Performance, Grooming and installed identity remain intact. Fold cover/inner compositions, finite source-confirmed traces, Still/reduced motion, offscreen/quiet cancellation and route-local enlarged-text reflow are verified. See releases/LIVING_COMMAND_20261004.md and validation/living-command for exact checks, release authority and remaining physical/authenticated live evaluation. This entry supersedes historical no-push/old-production notes for this authorized phase; production receipt follows release verification.
+
+## Historical implementation records
+
 # Complete generation / installed identity audit · 2026-10-04
 
 Founder requested a full current-build audit and correction of the missing installed icon. Confirmed production still serves PR46 and the October 3 crest release intentionally excluded app-icon/manifest assets. The same PR47 integration now includes deterministic current full-crest standard 192/512 PNGs, separate maskable 512 PNG, Apple/browser icons, versioned URLs and no old SVG manifest competitor. Stable app ID and Command start retained. Static worker v4 activates after caching and updates without page reload, removes only old Gent fallback caches, and preserves device training drafts. Standalone Android/Apple fast return and explicit replay verified in emulation.
