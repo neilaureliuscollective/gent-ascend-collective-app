@@ -404,7 +404,7 @@ test('real arrival summary connects to the preserved workspace and clears on ses
   await expect(page.getByRole('button', { name: 'Explore a sample day' })).toBeVisible();
 });
 
-test('Command without JavaScript retains its briefing, fallback and domain navigation', async ({
+test('Command without JavaScript explains the workspace requirement and keeps a public exit', async ({
   browser,
 }) => {
   const context = await browser.newContext({
@@ -414,14 +414,18 @@ test('Command without JavaScript retains its briefing, fallback and domain navig
   try {
     const page = await context.newPage();
     await page.goto('http://127.0.0.1:3100/app');
-    await expect(page.locator('.command-brief')).toBeVisible();
-    await expect(page.locator('.command-presence svg').first()).toBeVisible();
     await expect(
-      page
-        .getByRole('navigation', { name: 'Your operating spaces' })
-        .getByRole('link', { name: /Performance/ }),
+      page.getByText('If this screen stays here, enable JavaScript', { exact: false }),
     ).toBeVisible();
-    await expect(page.getByText('Your saved briefing is visible.', { exact: false })).toBeVisible();
+    const fallback = page.getByRole('navigation', { name: 'Workspace fallback' });
+    await expect(fallback.getByRole('link', { name: 'Member entrance' })).toHaveAttribute(
+      'href',
+      '/enter',
+    );
+    await expect(fallback.getByRole('link', { name: 'Gent Ascend', exact: true })).toHaveAttribute(
+      'href',
+      '/',
+    );
   } finally {
     await context.close();
   }

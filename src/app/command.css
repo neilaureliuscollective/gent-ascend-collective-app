@@ -1486,9 +1486,10 @@ html[data-motion='still'] .field-space[data-changed='true'] .field-connections p
     flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem 0.75rem;
+    padding: 0 16px;
   }
   .command-replay {
-    min-height: 36px;
+    min-height: 44px;
   }
   .command-readiness {
     flex-direction: column;
