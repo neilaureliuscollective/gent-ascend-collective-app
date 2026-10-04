@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { CouncilPanel } from './council-panel';
+import { councilFromVersion, councilPromptVersion, councilLabel, type CouncilSelection } from '@/domains/intelligence/council';
 import type { StreamEvent, Turn, WorkspaceData } from '@/domains/intelligence/types';
 import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
@@ -38,9 +40,11 @@ export function AureliusWorkspace({
   const [preview, setPreview] = useState(false);
   const { moving } = useAppearance();
   const composer = useRef<HTMLTextAreaElement>(null);
+  const tableReview=useRef<{open:()=>void}>(null);
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
   const [draft, setDraft] = useState(initialDraft);
+  const [councilSelection,setCouncilSelection]=useState<CouncilSelection|null>(null);
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -87,6 +91,7 @@ export function AureliusWorkspace({
         setError('');
         if (response.status === 401) {
           setPreview(true);
+          setCouncilSelection(null);
           setData(disconnectedWorkspace);
           setSelected(null);
           setDraft('');
@@ -96,6 +101,7 @@ export function AureliusWorkspace({
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
         setData(result as WorkspaceData);
+        setCouncilSelection(councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version??''));
         setSelected(id);
         if (!compact && window.location.pathname.endsWith('/aethelios')) {
           const url = new URL(window.location.href);
@@ -166,6 +172,7 @@ export function AureliusWorkspace({
         setPreview(result === null);
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
+        setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version??''));
         setLoading(false);
       })
       .catch((error) => {
@@ -183,7 +190,7 @@ export function AureliusWorkspace({
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
   }, [data?.turns]);
-  async function sendMessage(messageText:string, replace?:{sourceTurnId:string;revisionKind:'retry'|'regenerate'|'edit'}|null) {
+  async function sendMessage(messageText:string, replace?:{sourceTurnId:string;revisionKind:'retry'|'regenerate'|'edit'}|null, requestedCouncil:CouncilSelection|null=councilSelection) {
     if (
       generation.current ||
       preview ||
@@ -201,14 +208,14 @@ export function AureliusWorkspace({
     generation.current = controller;
     setBusy(true);
     setError('');
-    setNotice('Aethelios is thinking…');
+    setNotice(requestedCouncil?.kind==='table'?'The Council is examining your question…':`${councilLabel(requestedCouncil)} is thinking…`);
     follow.current = true;
     let saved = false;
     try {
       const response = await fetch('/api/aurelius/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: id, requestId, text, includeContext,...replace }),
+        body: JSON.stringify({ conversationId: id, requestId, text, includeContext,...replace,...(requestedCouncil?{council:requestedCouncil}:{}) }),
         signal: controller.signal,
       });
       if (!response.ok) {
@@ -224,7 +231,7 @@ export function AureliusWorkspace({
         status: 'pending',
         model: data.model,
         context_included: includeContext,
-        prompt_version: '',
+        prompt_version: requestedCouncil?councilPromptVersion(requestedCouncil):'',
         feedback: null,
         created_at: new Date().toISOString(),
         finished_at: null,
@@ -333,9 +340,10 @@ export function AureliusWorkspace({
   }
   function newConversation() {
     setSelected(null);
+    setCouncilSelection(null);
     rememberConversation(null);
     setAwayFromLatest(false);
-    setData((previous) => (previous ? { ...previous, turns: [] } : previous));
+    setData((previous) => (previous ? { ...previous, turns: [],currentConversation:null } : previous));
     setDraft('');
     setNeedsReload(false);
     setConfirmDelete(false);
@@ -509,6 +517,7 @@ export function AureliusWorkspace({
                 </button>
               </div>
             )}
+            {!preview && <CouncilPanel reviewRef={tableReview} question={draft.trim()||data.turns.at(-1)?.user_text||''} selection={councilSelection} disabled={blocked||needsReload||!data.canChat||!data.configured||Boolean(data.currentConversation?.archived_at)} includeContext={includeContext} onSelect={setCouncilSelection} onFocused={id=>{newConversation();setCouncilSelection({kind:'specialist',specialists:[id]});}} onAssemble={(question,selection)=>{setCouncilSelection(selection);void sendMessage(question,revision,selection);}} />}
             {!preview && <TodayActions brief={data.context.dailyBrief} disabled={blocked} onChanged={() => reload(selected)} />}
             <div
               className="conversation-scroll"
@@ -597,7 +606,7 @@ export function AureliusWorkspace({
                     onCopy={()=>void navigator.clipboard.writeText(turn.assistant_text)}
                     onRevise={turn.id===data.turns.at(-1)?.id && !data.currentConversation?.archived_at ? kind=>{
                       if(kind==='edit') {setDraft(turn.user_text);setRevision({sourceTurnId:turn.id,revisionKind:'edit'});composer.current?.focus();}
-                      else void sendMessage(turn.user_text,{sourceTurnId:turn.id,revisionKind:kind});
+                      else void sendMessage(turn.user_text,{sourceTurnId:turn.id,revisionKind:kind},councilFromVersion(turn.prompt_version));
                     }:undefined}
                     action={
                       turn.id ===
@@ -637,7 +646,7 @@ export function AureliusWorkspace({
                 Latest message ↓
               </button>
             )}
-            <form className={`aurelius-composer ${composerExpanded ? 'is-expanded' : ''}`} onSubmit={event=>{event.preventDefault();void sendMessage(draft,revision);}}>
+            <form className={`aurelius-composer ${composerExpanded ? 'is-expanded' : ''}`} onSubmit={event=>{event.preventDefault();if(councilSelection?.kind==='table') {tableReview.current?.open();return;}void sendMessage(draft,revision);}}>
               {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
               <label htmlFor="aurelius-message" className="sr-only">
                 Message Aethelios
@@ -650,7 +659,7 @@ export function AureliusWorkspace({
                 value={draft}
                 disabled={blocked}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Think it through with Aethelios…"
+                placeholder={councilSelection?.kind==='specialist'?`Think it through with ${councilLabel(councilSelection)}…`:'Think it through with Aethelios…'}
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     e.preventDefault();
@@ -688,7 +697,7 @@ export function AureliusWorkspace({
                     }
                     type="submit"
                   >
-                    Send <span aria-hidden="true">↑</span>
+                    {councilSelection?.kind==='table'?'Review The Table':'Send'} <span aria-hidden="true">↑</span>
                   </button>
                 )}
               </div>
@@ -700,8 +709,9 @@ export function AureliusWorkspace({
                   ) : (
                     <>
                       Sending shares this conversation’s recent messages
+                      {councilSelection ? ' with the selected Council specialists' : ''}
                       {includeContext
-                        ? `, profile, active goal and confirmed memories${founderLinked ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
+                        ? `, profile, active goal and confirmed memories${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
                         : ''}{' '}
                       with our AI service. Nothing is automatically added to memory.
                     </>

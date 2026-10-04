@@ -4,6 +4,7 @@ import { currentPerson } from '@/domains/person/current';
 import { currentAccess } from '@/domains/access/current';
 import { aiConfigSchema } from './validation';
 import { promptVersion, buildMessages } from './prompt';
+import { councilPromptVersion, type CouncilSelection } from './council';
 import { founderBridgeContext } from './founder-bridge';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
@@ -202,6 +203,7 @@ export async function prepareReply(input: {
   includeContext: boolean;
   sourceTurnId?: string;
   revisionKind?: 'retry'|'regenerate'|'edit';
+  council?: CouncilSelection;
 }) {
   const { client, person } = await intelligenceSession();
   if (!(await currentAccess()).has('aurelius.context'))
@@ -220,7 +222,7 @@ export async function prepareReply(input: {
     p_text: input.text,
     p_model: config.AURELIUS_AI_MODEL,
     p_context: input.includeContext,
-    p_prompt_version: promptVersion,
+    p_prompt_version: input.council ? councilPromptVersion(input.council) : promptVersion,
   };
   const begun = input.sourceTurnId && input.revisionKind
     ? await client.rpc('ai_begin_revision',{...common,p_conversation:input.conversationId,p_source:input.sourceTurnId,p_kind:input.revisionKind})
@@ -264,11 +266,13 @@ export async function prepareReply(input: {
       503,
     );
   }
-  const founderContext = input.includeContext ? await founderBridgeContext(input.text) : null;
+  // Member Council never requests the founder bridge, even on the founder account.
+  const founderContext = input.includeContext && !input.council ? await founderBridgeContext(input.text) : null;
   return {
     model: config.AURELIUS_AI_MODEL,
     messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary),
     founder: founderContext !== null,
+    council: input.council,
     finish: async (
       text: string,
       status: 'complete' | 'failed' | 'cancelled',

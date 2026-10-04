@@ -3610,3 +3610,45 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .aethelios-today-content button:disabled { opacity: .55; cursor: wait; }
 .aethelios-today-confirm { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 540px) { .aethelios-today-content li { align-items: flex-start; flex-direction: column; } }
+
+/* Member Council uses the existing Gent Ascend materials, with no decorative motion. */
+.member-council {flex:none; min-width:0; border-block:1px solid #c4912f26; padding:.35rem 0;}
+.council-access {display:flex;align-items:center;gap:.4rem 1rem;flex-wrap:wrap;font-size:.75rem;}
+.council-access .text-button {font-size:.75rem;padding:.35rem .2rem;}
+.council-relevant {color:var(--muted,#aaa);flex:1;min-width:0;overflow-wrap:anywhere;}
+.council-current {color:#e0bb6a;}
+.council-dialog {color:#f0ece2;background:linear-gradient(145deg,#0b2420,#050706 58%);border:1px solid #c4912f55;border-radius:1rem;width:min(760px,calc(100vw - 2rem));max-height:85dvh;padding:1.5rem;overflow:auto;box-shadow:0 30px 100px #000b;}
+.council-dialog::backdrop {background:#020504d9;backdrop-filter:blur(12px);}
+.council-dialog header {display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;}
+.council-dialog h2 {font-size:2rem;margin:.3rem 0;}
+.council-dialog p {font-size:.88rem;line-height:1.6;}
+.council-roster {display:grid;gap:0;margin:1rem 0;}
+.council-roster article {display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 0;border-bottom:1px solid #c4912f26;}
+.council-roster h3 {font-size:1.15rem;margin:0;}
+.council-roster p {margin:.3rem 0;}
+.council-role,.council-reason {color:#e0bb6a;}
+.council-member-actions {display:flex;flex-direction:column;gap:.5rem;flex-shrink:0;align-items:flex-start;}
+.council-member-actions button {font-size:.75rem;}
+.council-dialog .council-scope {font-size:.75rem;color:#b5beb9;}
+.council-dialog fieldset {border:1px solid #c4912f30;border-radius:.5rem;padding:.75rem;margin:1rem 0;}
+.council-dialog legend {padding:0 .3rem;font-size:.85rem;}
+.council-invite {display:flex;gap:.65rem;align-items:center;padding:.65rem 0;}
+.council-invite small {display:block;color:#b5beb9;line-height:1.5;}
+.council-objective {display:grid;gap:.5rem;font-size:.85rem;margin-top:1rem;}
+.council-objective textarea {width:100%;resize:vertical;min-height:90px;}
+.council-dialog-actions {display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+@media(max-width:600px) {.council-dialog {padding:1rem;}.council-roster article {align-items:flex-start;flex-direction:column;gap:.5rem;}.council-member-actions {flex-direction:row;flex-wrap:wrap;}.council-relevant {display:none;}}
+@media (max-width:600px) {
+  .aethelios-page .full-conversation-controls:has(~ .member-council) { margin-block:0; }
+  .aethelios-page .member-council { padding-block:0; }
+}
+.council-dialog { margin:auto; }
+.council-dialog header {position:sticky;top:-1.5rem;background:#0a1c17;z-index:1;padding-block:.4rem;}
+@media(max-width:600px) {.council-dialog header {top:-1rem;}}
+@media(max-width:600px) and (max-height:600px) {
+  .aethelios-page .composer-expand { font-size:0; }
+  .aethelios-page .composer-expand::after { content:'Expand';font-size:.7rem; }
+  .aethelios-page .composer-expand[aria-pressed='true']::after { content:'Minimize'; }
+  .aethelios-page .aurelius-composer textarea { min-height:44px; }
+  .aethelios-page .conversation-scroll { padding-block:0; }
+}

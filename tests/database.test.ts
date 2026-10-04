@@ -36,6 +36,24 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('isolates Council and Table histories on the existing turn/message ledger',async()=>{
+    const conversation='cb000000-0000-4000-8000-000000000001',turn='cb000000-0000-4000-8000-000000000002';
+    const otherConversation='cb000000-0000-4000-8000-000000000003',otherTurn='cb000000-0000-4000-8000-000000000004';
+    await asUser(founder,`select public.ai_begin_turn('${conversation}','${turn}','Founder-only question','test-model',true,'council.1.t.athena,themis')`);
+    await asUser(founder,`select public.ai_finish_turn('${turn}','Founder-only Table synthesis','complete',40,60)`);
+    await asUser(member,`select public.ai_begin_turn('${otherConversation}','${otherTurn}','Member-only question','test-model',false,'council.1.s.apollo')`);
+    await asUser(member,`select public.ai_finish_turn('${otherTurn}','Member-only creative reply','complete',10,20)`);
+    expect((await asUser(member,`select * from public.ai_turns where id='${turn}'`)).rows).toHaveLength(0);
+    expect((await asUser(member,`select * from public.ai_messages where conversation_id='${conversation}'`)).rows).toHaveLength(0);
+    expect((await asUser(founder,`select * from public.ai_turns where id='${otherTurn}'`)).rows).toHaveLength(0);
+    expect((await asUser(member,`select assistant_text,prompt_version from public.ai_turns where id='${otherTurn}'`)).rows).toEqual([{assistant_text:'Member-only creative reply',prompt_version:'council.1.s.apollo'}]);
+    await expect(asUser(member,`select public.ai_begin_turn('${conversation}','cb000000-0000-4000-8000-000000000005','Unauthorized Council request','test-model',true,'council.1.s.athena')`)).rejects.toThrow();
+    expect((await asUser<{ai_finish_turn:boolean}>(member,`select public.ai_finish_turn('${turn}','Tampered synthesis','complete',0,0)`)).rows[0]?.ai_finish_turn).toBe(false);
+    await db.exec('set role anon');
+    try {await expect(db.query('select * from public.ai_turns')).rejects.toThrow();} finally {await db.exec('reset role');}
+    await db.exec(`delete from public.ai_conversations where id in ('${conversation}','${otherConversation}');delete from public.ai_usage where id in ('${turn}','${otherTurn}')`);
+  });
+
   it('isolates command history, atomically versions feedback, rejects stale and anonymous writes', async () => {
     const arrival = JSON.stringify({sleepMinutes: null, energy: null, soreness: null, bandwidth: null, minutes: null});
     const snapshot = JSON.stringify({day: 'DAY', ruleVersion: 1, state: 'STEADY', decisions: [{id:'focus'}]});

@@ -1,5 +1,6 @@
 'use client';
 import { memo } from 'react';
+import { councilFromVersion,councilLabel } from '@/domains/intelligence/council';
 import Markdown from 'react-markdown';
 import type { Turn } from '@/domains/intelligence/types';
 import type { ActionProposal } from '@/domains/intelligence/types';
@@ -30,7 +31,7 @@ export const ConversationTurn = memo(function ConversationTurn({
       <div className="assistant-message">
         <span className="message-author">
           <span className="small-orb" aria-hidden="true" />
-          Aethelios
+          {councilLabel(councilFromVersion(turn.prompt_version))}
         </span>
         <div className="message-markdown">
           <Markdown

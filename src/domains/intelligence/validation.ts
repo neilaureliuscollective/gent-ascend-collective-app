@@ -1,10 +1,15 @@
 import { z } from 'zod';
+export const councilInput = z.object({
+  kind:z.enum(['specialist','table']),
+  specialists:z.array(z.enum(['athena','prometheus','apollo','hermes','themis'])).min(1).max(3),
+}).strict().refine(v=>new Set(v.specialists).size===v.specialists.length && (v.kind==='specialist'?v.specialists.length===1:v.specialists.length>=2),{message:'Choose one specialist or two to three Table specialists.'});
 export const chatInput = z
   .object({
     conversationId: z.uuid(),
     requestId: z.uuid(),
     text: z.string().trim().min(1).max(6000),
     includeContext: z.boolean(),
+    council: councilInput.optional(),
     sourceTurnId: z.uuid().optional(),
     revisionKind: z.enum(['retry','regenerate','edit']).optional(),
   })

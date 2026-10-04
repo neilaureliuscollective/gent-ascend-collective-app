@@ -3,6 +3,7 @@ import { prepareReply, IntelligenceError } from '@/domains/intelligence/service'
 import { apiError, mutationBody } from '@/domains/intelligence/http';
 import { replyStream } from '@/domains/intelligence/stream';
 import { generateReply } from '@/domains/intelligence/model';
+import { generateCouncilReply } from '@/domains/intelligence/council-model';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 export async function POST(request: Request) {
@@ -12,7 +13,9 @@ export async function POST(request: Request) {
     const prepared = await prepareReply(input.data);
     return new Response(
       replyStream(
-        (signal) => generateReply(prepared.model, prepared.messages, signal, prepared.founder),
+        (signal) => prepared.council
+          ? generateCouncilReply(prepared.model, prepared.messages, prepared.council, signal)
+          : generateReply(prepared.model, prepared.messages, signal, prepared.founder),
         prepared.finish,
         request.signal,
       ),
