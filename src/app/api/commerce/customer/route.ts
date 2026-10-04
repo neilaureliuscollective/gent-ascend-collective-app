@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizedPerson } from '@/domains/access/authorize';
+import { verifyOrigin } from '@/domains/intelligence/http';
 import {
   ACCOUNT_COOKIE,
   FLOW_COOKIE,
@@ -10,13 +11,16 @@ import {
 export const runtime = 'nodejs';
 const headers = { 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer' };
 export async function POST(request: NextRequest) {
-  if (request.headers.get('origin') !== request.nextUrl.origin)
+  try {
+    verifyOrigin(request);
+  } catch {
     return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403, headers });
+  }
   const owner = await authorizedPerson('profile.read');
   if (!owner)
     return NextResponse.redirect(new URL('/enter', request.url), { status: 303, headers });
   const config = customerConfig();
-  if (!config || request.nextUrl.origin !== config.origin)
+  if (!config || request.headers.get('origin') !== config.origin)
     return NextResponse.redirect(new URL(`${CUSTOMER_PATH}?connection=unavailable`, request.url), {
       status: 303,
       headers,
@@ -50,8 +54,11 @@ export async function POST(request: NextRequest) {
   }
 }
 export async function DELETE(request: NextRequest) {
-  if (request.headers.get('origin') !== request.nextUrl.origin)
+  try {
+    verifyOrigin(request);
+  } catch {
     return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403, headers });
+  }
   if (!(await authorizedPerson('profile.read')))
     return NextResponse.json({ error: 'Sign in before disconnecting.' }, { status: 401, headers });
   const response = NextResponse.json({ disconnected: true }, { headers });

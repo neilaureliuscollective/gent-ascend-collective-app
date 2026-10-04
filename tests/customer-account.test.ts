@@ -339,13 +339,13 @@ describe('Shopify customer connection boundary', () => {
   it('protects connection and disconnect POSTs with real owner resolution and same origin', async () => {
     const hostile = new NextRequest(config.origin + '/api/commerce/customer', {
       method: 'POST',
-      headers: { origin: 'https://evil.example' },
+      headers: { origin: 'https://evil.example', host: new URL(config.origin).host },
     });
     expect((await POST(hostile)).status).toBe(403);
     expect(auth).not.toHaveBeenCalled();
     const own = new NextRequest(config.origin + '/api/commerce/customer', {
       method: 'POST',
-      headers: { origin: config.origin },
+      headers: { origin: config.origin, host: new URL(config.origin).host },
     });
     auth.mockResolvedValue(null);
     expect((await POST(own)).headers.get('location')).toBe(config.origin + '/enter');
@@ -361,23 +361,28 @@ describe('Shopify customer connection boundary', () => {
     const disc = await disconnect(
       new NextRequest(config.origin + '/api/commerce/customer/disconnect', {
         method: 'POST',
-        headers: { origin: config.origin },
+        headers: { origin: config.origin, host: new URL(config.origin).host },
       }),
     );
     expect(disc.cookies.get(ACCOUNT_COOKIE)?.maxAge).toBe(0);
     expect(disc.cookies.get(FLOW_COOKIE)?.maxAge).toBe(0);
     expect((await DELETE(hostile)).status).toBe(403);
   });
-  it('clears callback state on rejection, strips codes from redirects and never trusts an email or customer id parameter', async () => {
+  it('unsolicited callbacks preserve connections; matched callbacks consume only their state and strip codes', async () => {
     const p = await prepared();
     cookieGet.mockReturnValue({ value: p.cookie });
     const wrong = await callback(
       new NextRequest(config.redirect + '?state=wrong&code=secret&customerId=1'),
     );
-    expect(wrong.cookies.get(FLOW_COOKIE)?.maxAge).toBe(0);
-    expect(wrong.cookies.get(ACCOUNT_COOKIE)?.maxAge).toBe(0);
+    expect(wrong.cookies.get(FLOW_COOKIE)).toBeUndefined();
+    expect(wrong.cookies.get(ACCOUNT_COOKIE)).toBeUndefined();
     expect(wrong.headers.get('location')).not.toContain('secret');
     expect(requests.filter((r) => r.url === discovery.token_endpoint)).toHaveLength(0);
+    const refused = await callback(
+      new NextRequest(config.redirect + `?state=${p.flow.state}&error=access_denied`),
+    );
+    expect(refused.cookies.get(FLOW_COOKIE)?.maxAge).toBe(0);
+    expect(refused.cookies.get(ACCOUNT_COOKIE)).toBeUndefined();
     const ok = await callback(
       new NextRequest(config.redirect + `?state=${p.flow.state}&code=secret`),
     );
@@ -386,5 +391,10 @@ describe('Shopify customer connection boundary', () => {
     expect(customerSession(ok.cookies.get(ACCOUNT_COOKIE)?.value, person, config)?.customer).toBe(
       identity,
     );
+    cookieGet.mockReturnValue(undefined);
+    const stale = await callback(
+      new NextRequest(config.redirect + `?state=${p.flow.state}&code=secret`),
+    );
+    expect(stale.cookies.get(ACCOUNT_COOKIE)).toBeUndefined();
   });
 });
