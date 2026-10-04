@@ -959,3 +959,93 @@ assert.deepEqual(accessAfter.data, accessBefore.data);
 console.log(
   'PASS: Public direction claim conflict/approval/replay, daily preservation, owner isolation and unchanged membership through real Auth/PostgREST',
 );
+
+// Grooming daily intelligence: real session/RPC/readback. Synthetic local identities only.
+const groomingBefore = await member
+  .from('grooming_rituals')
+  .select('version')
+  .eq('kind', 'weekly')
+  .eq('active', true)
+  .maybeSingle();
+assert.equal(groomingBefore.error, null);
+const groomingReview = {
+  p_request: crypto.randomUUID(),
+  p_kind: 'weekly',
+  p_version: groomingBefore.data?.version ?? 0,
+  p_title: 'Synthetic weekly ritual',
+  p_steps: 'Follow familiar care.\nNotice comfort.',
+  p_source: null,
+};
+const groomingSaved = await member.rpc('grooming_review_ritual', groomingReview);
+assert.equal(groomingSaved.error, null);
+const groomingReplay = await member.rpc('grooming_review_ritual', groomingReview);
+assert.equal(groomingReplay.error, null);
+assert.equal(groomingReplay.data, groomingSaved.data);
+const groomingRecord = await member
+  .from('grooming_rituals')
+  .select('id,version,title')
+  .eq('id', groomingSaved.data)
+  .single();
+assert.equal(groomingRecord.error, null);
+assert.equal(groomingRecord.data.title, 'Synthetic weekly ritual');
+const practiceArgs = {
+  p_request: crypto.randomUUID(),
+  p_ritual: groomingSaved.data,
+  p_version: groomingRecord.data.version,
+  p_day: dailyDate,
+  p_note: '',
+};
+const practice = await member.rpc('grooming_record_practice', practiceArgs);
+assert.equal(practice.error, null);
+const practiceReplay = await member.rpc('grooming_record_practice', practiceArgs);
+assert.equal(practiceReplay.error, null);
+assert.equal(practiceReplay.data.id, practice.data.id);
+const practiceSecond = await member.rpc('grooming_record_practice', {
+  ...practiceArgs,
+  p_request: crypto.randomUUID(),
+});
+assert.equal(practiceSecond.error, null);
+assert.equal(practiceSecond.data.id, practice.data.id);
+const privatePractice = await member
+  .from('grooming_checkins')
+  .select('id,note,local_day')
+  .eq('ritual_id', groomingSaved.data);
+assert.equal(privatePractice.error, null);
+assert.equal(privatePractice.data.length, 1);
+assert.equal(privatePractice.data[0].local_day, dailyDate);
+const hiddenPractice = await founder
+  .from('grooming_checkins')
+  .select('id')
+  .eq('ritual_id', groomingSaved.data);
+assert.equal(hiddenPractice.error, null);
+assert.equal(hiddenPractice.data.length, 0);
+assert.ok((await founder.rpc('grooming_record_practice', practiceArgs)).error);
+assert.ok((await anon.rpc('grooming_record_practice', practiceArgs)).error);
+const practiceFeedback = await member.rpc('grooming_practice_feedback', {
+  p_checkin: practice.data.id,
+  p_note: 'Comfortable',
+});
+assert.equal(practiceFeedback.error, null);
+assert.ok(
+  (
+    await founder.rpc('grooming_practice_feedback', {
+      p_checkin: practice.data.id,
+      p_note: 'Comfortable',
+    })
+  ).error,
+);
+const feedbackRead = await member
+  .from('grooming_checkins')
+  .select('note')
+  .eq('id', practice.data.id)
+  .single();
+assert.equal(feedbackRead.error, null);
+assert.equal(feedbackRead.data.note, 'Comfortable');
+const staleRitual = await member.rpc('grooming_review_ritual', {
+  ...groomingReview,
+  p_request: crypto.randomUUID(),
+});
+assert.equal(staleRitual.error.code, '40001');
+console.log(
+  'PASS: Grooming reviewed version save, exact replay, daily deduplication, feedback readback, stale edit denial and real two-user isolation',
+);

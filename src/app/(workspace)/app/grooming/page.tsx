@@ -1,3 +1,9 @@
+import { GroomingPhotoCompare } from '@/components/grooming/photo-compare';
+import { readRitualSuggestion } from '@/domains/grooming/ritual';
+import { z } from 'zod';
+import { GroomingWorld } from '@/components/world/grooming-world';
+import { readGroomingWorld } from '@/domains/grooming/world';
+import '../../../(experience)/experience/grooming-world.css';
 import { cabinetLabels } from '@/domains/commerce/cabinet-model';
 import { GroomingDirectionEditor } from '@/components/grooming/direction';
 import { GroomingTask } from '@/components/grooming/focus-task';
@@ -23,7 +29,7 @@ export const metadata = { title: 'Grooming Concierge | Gent Ascend' };
 export default async function Grooming({
   searchParams,
 }: {
-  searchParams: Promise<{ result?: string }>;
+  searchParams: Promise<{ result?: string; ritualSuggestion?:string }>;
 }) {
   const person = await currentPerson();
   if (!person)
@@ -34,10 +40,11 @@ export default async function Grooming({
         <Link href="/enter">Sign in →</Link>
       </main>
     );
-  const [data, params, catalog] = await Promise.all([
+  const [data, params, catalog, world] = await Promise.all([
       groomingWorkspace(),
       searchParams,
       commerceConfigured() ? listProducts().catch(() => []) : Promise.resolve([]),
+      readGroomingWorld(),
     ]),
     { profile, goals, rituals, checkins, products, looks, events, photos } = data,
     active = rituals.filter((r) => r.active),
@@ -51,8 +58,26 @@ export default async function Grooming({
   const discovery = catalog
     .filter((p) => !owned.has(p.handle) && p.collections.nodes.some((c) => c.handle === 'grooming'))
     .slice(0, 3);
+  let suggestion = null;
+  let suggestionError = '';
+  if (params.ritualSuggestion) {
+    if (z.uuid().safeParse(params.ritualSuggestion).success) {
+      try {
+        suggestion = await readRitualSuggestion(params.ritualSuggestion);
+      } catch {
+        suggestionError =
+          'This saved ritual suggestion is unavailable. Your current routine is unchanged.';
+      }
+    } else
+      suggestionError =
+        'This saved ritual suggestion is unavailable. Your current routine is unchanged.';
+  }
   return (
-    <main className="grooming">
+    <main className="grooming grooming-daily">
+      <GroomingWorld embedded initialData={world} suggestion={suggestion} />
+      {suggestionError&&<p role="alert">{suggestionError}</p>}
+      <details id="ritual-history" className="grooming-full-history" open={!!params.result}>
+      <summary>Direction, rituals & private history</summary>
       <header className="groom-hero groom-hero-v2">
         <div className="groom-hero-copy">
           <p className="eyebrow">GENT ASCEND / GROOMING CONCIERGE</p>
@@ -237,6 +262,7 @@ export default async function Grooming({
           calibrated scores.
         </p>
         <Link href="/app/grooming/scan">Review scan history →</Link>
+        <GroomingPhotoCompare photos={photos.map(({id,view,captured_on})=>({id,view,captured_on}))} />
         <div className="groom-grid">
           <GroomingTask title="Record a moment">
             <form
@@ -458,6 +484,7 @@ export default async function Grooming({
             <Link href="/app/aethelios?starter=grooming-event">Refine with Aethelios →</Link>
           </article>
         </div>
+      </details>
       </details>
     </main>
   );

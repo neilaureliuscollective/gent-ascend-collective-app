@@ -36,6 +36,105 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('atomically records daily rituals, safely replays receipts and preserves reviewed version history', async () => {
+    const today = `(now() at time zone (select timezone from public.persons where auth_user_id='${founder}'))::date`;
+    const request = 'd7000000-0000-4000-8000-000000000001',
+      second = 'd7000000-0000-4000-8000-000000000002',
+      review = 'd7000000-0000-4000-8000-000000000003';
+    const ritual = (
+      await asUser<{ grooming_set_ritual: string }>(
+        founder,
+        "select public.grooming_set_ritual('evening','Evening standard','Follow familiar care\\nNotice comfort')",
+      )
+    ).rows[0]!.grooming_set_ritual;
+    const version = (
+      await asUser<{ version: number }>(
+        founder,
+        `select version from public.grooming_rituals where id='${ritual}'`,
+      )
+    ).rows[0]!.version;
+    const call = (id: string, day = today, v = version) =>
+      `select public.grooming_record_practice('${id}','${ritual}',${v},${day},'') as receipt`;
+    const first = (await asUser<{ receipt: { id: string } }>(founder, call(request))).rows[0]!
+      .receipt;
+    expect(first.id).toBe(request);
+    expect(
+      (await asUser<{ receipt: { id: string } }>(founder, call(second))).rows[0]!.receipt.id,
+    ).toBe(request);
+    expect(
+      (await asUser(founder, `select * from public.grooming_checkins where ritual_id='${ritual}'`))
+        .rows,
+    ).toHaveLength(1);
+    expect(
+      (await asUser(member, `select * from public.grooming_checkins where ritual_id='${ritual}'`))
+        .rows,
+    ).toHaveLength(0);
+    await expect(asUser(member, call(request,`(now() at time zone (select timezone from public.persons where auth_user_id='${member}'))::date`))).rejects.toThrow(/Ritual changed/);
+    await expect(asUser(founder, call(request, `(${today})-1`))).rejects.toThrow(/request changed/);
+    await expect(
+      asUser(founder, call('d7000000-0000-4000-8000-000000000004', `(${today})-1`)),
+    ).rejects.toThrow(/day changed/);
+    await expect(
+      asUser(founder, call('d7000000-0000-4000-8000-000000000005', today, version + 1)),
+    ).rejects.toThrow(/changed/);
+    await asUser(founder, `select public.grooming_practice_feedback('${first.id}','Comfortable')`);
+    await asUser(founder, `select public.grooming_practice_feedback('${first.id}','Comfortable')`);
+    await expect(
+      asUser(member, `select public.grooming_practice_feedback('${first.id}','Comfortable')`),
+    ).rejects.toThrow(/not found/);
+    await expect(
+      asUser(
+        founder,
+        `select public.grooming_practice_feedback('${first.id}','Something irritated')`,
+      ),
+    ).rejects.toThrow(/already recorded/);
+    const owner = `(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(
+      founder,
+      `insert into public.grooming_products(person_id,name,category,relation,ritual_id) values(${owner},'My external oil','beard','in_use','${ritual}')`,
+    );
+    const save = `select public.grooming_review_ritual('${review}','evening',${version},'Refined standard','Keep my familiar care',null) as id`;
+    const next = (await asUser<{ id: string }>(founder, save)).rows[0]!.id;
+    expect((await asUser<{ id: string }>(founder, save)).rows[0]!.id).toBe(next);
+    expect(
+      (
+        await asUser(
+          founder,
+          `select * from public.grooming_products where name='My external oil' and ritual_id='${next}'`,
+        )
+      ).rows,
+    ).toHaveLength(1);
+    expect(
+      (await asUser(founder, `select * from public.grooming_checkins where ritual_id='${ritual}'`))
+        .rows,
+    ).toHaveLength(1);
+    // Exact replay remains valid after the ritual is retired.
+    expect(
+      (await asUser<{ receipt: { id: string } }>(founder, call(request))).rows[0]!.receipt.id,
+    ).toBe(first.id);
+    await expect(
+      asUser(founder, save.replace(review, 'd7000000-0000-4000-8000-000000000006')),
+    ).rejects.toThrow(/Ritual changed/);
+    await expect(
+      asUser(founder, save.replace('Refined standard', 'Changed payload')),
+    ).rejects.toThrow(/request changed/);
+    await expect(
+      asUser(
+        founder,
+        `insert into public.grooming_checkins(person_id,ritual_id,done) values(${owner},'${next}',true)`,
+      ),
+    ).rejects.toThrow();
+    await db.exec('set role anon');
+    try {
+      await expect(db.query(call(request))).rejects.toThrow();
+    } finally {
+      await db.exec('reset role');
+    }
+    await db.exec(
+      `delete from public.grooming_products where name='My external oil';delete from public.grooming_rituals where id in ('${ritual}','${next}')`,
+    );
+  });
+
   it('isolates Cabinet records, protects identity and versions edits',async()=>{
     const id='ce000000-0000-4000-8000-000000000001';
     const owner=`(select id from public.persons where auth_user_id='${founder}')`;
