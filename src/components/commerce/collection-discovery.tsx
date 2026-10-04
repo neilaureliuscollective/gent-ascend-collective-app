@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import {
   discoveryFocus,
@@ -12,7 +12,12 @@ import {
 import { CollectionCard } from './collection-card';
 import { commerceEvent } from './commerce-events';
 
+const subscribeHydration = () => () => {};
+const clientHydration = () => true;
+const serverHydration = () => false;
+
 export function CollectionDiscovery({ entries }: { entries: CollectionEntry[] }) {
+  const interactive = useSyncExternalStore(subscribeHydration, clientHydration, serverHydration);
   const [focus, setFocus] = useState<DiscoveryFocus>('all');
   const [availability, setAvailability] = useState<DiscoveryAvailability>('all');
   const [searched, setSearched] = useState(false);
@@ -152,9 +157,8 @@ export function CollectionDiscovery({ entries }: { entries: CollectionEntry[] })
           </Link>
         </div>
       )}
-      <p>
-        The interactive guide needs JavaScript. You can explore every product in the collection
-        below.
+      <p hidden={interactive}>
+        The interactive guide needs JavaScript. You can explore every product in the collection below.
       </p>
     </section>
   );

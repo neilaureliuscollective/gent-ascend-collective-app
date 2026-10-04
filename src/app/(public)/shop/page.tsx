@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import { commerceConfigured, listProducts } from '@/domains/commerce/shopify';
 import { collectionEntries } from '@/domains/commerce/collection';
 import { CollectionShowroom } from '@/components/commerce/collection-showroom';
@@ -25,14 +24,12 @@ export default async function Shop({
   const entries = collectionEntries(products, !products.length);
   return (
     <main id="world-main" className="reserve-commerce">
-      <Suspense fallback={<p className="reserve-loading">Opening the collection…</p>}>
-        <CollectionShowroom
-          key={String(savedOnly)}
-          entries={entries}
-          failed={failed}
-          savedOnly={savedOnly}
-        />
-      </Suspense>
+      <CollectionShowroom
+        key={String(savedOnly)}
+        entries={entries}
+        failed={failed}
+        savedOnly={savedOnly}
+      />
     </main>
   );
 }
