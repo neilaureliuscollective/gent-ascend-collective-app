@@ -84,20 +84,46 @@ export function GuidedScan() {
       if (request === generation.current || !stream.current) setStarting(false);
     }
   }
-  function select(file: File, view: View) {
-    if (
-      !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
-      file.size > 1000000 ||
-      file.size < 100
-    ) {
-      setError('Choose a JPEG, PNG or WebP under 1 MB, or use the camera.');
-      return;
+  async function prepareImage(file: File) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 100)
+      throw new Error('Choose a JPEG, PNG or WebP image.');
+    if (file.size <= 950000) return file;
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1440 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) {
+      bitmap.close();
+      throw new Error('This photo could not be prepared on your device.');
     }
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', 0.76),
+    );
+    if (!blob) throw new Error('This photo could not be prepared. Try another image.');
+    if (blob.size > 1400000)
+      throw new Error('That photo is still too large after preparation. Try a tighter crop.');
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'grooming-view'}.jpg`, {
+      type: 'image/jpeg',
+    });
+  }
+  async function select(file: File, view: View) {
     setError('');
-    setPhotos((p) => ({ ...p, [view]: file }));
-    if (urls.current[view]) URL.revokeObjectURL(urls.current[view]!);
-    urls.current[view] = URL.createObjectURL(file);
-    setPreviews({ ...urls.current });
+    setBusy(true);
+    try {
+      const prepared = await prepareImage(file);
+      setPhotos((p) => ({ ...p, [view]: prepared }));
+      if (urls.current[view]) URL.revokeObjectURL(urls.current[view]!);
+      urls.current[view] = URL.createObjectURL(prepared);
+      setPreviews({ ...urls.current });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Choose another photo.');
+    } finally {
+      setBusy(false);
+    }
   }
   async function capture() {
     const el = video.current;
@@ -115,7 +141,7 @@ export function GuidedScan() {
         canvas.toBlob(resolve, 'image/jpeg', 0.79),
       );
       if (request === generation.current) {
-        if (blob) select(new File([blob], `${view}.jpg`, { type: 'image/jpeg' }), view);
+        if (blob) await select(new File([blob], `${view}.jpg`, { type: 'image/jpeg' }), view);
         else setError('Capture failed. Try again or choose a photo.');
       }
     } finally {
@@ -164,10 +190,16 @@ export function GuidedScan() {
   const view = views[index]!;
   return (
     <>
-      <p>Three views, one at a time. Choose photos or use your camera in even light.</p>
-      <button className="button" onClick={() => setOpen(true)}>
-        {Object.keys(photos).length ? 'Continue scan' : 'Begin scan'}
-      </button>
+      <div className="groom-scan-launch">
+        <div>
+          <span className="eyebrow">ASCEND SCAN / GUIDED CAPTURE</span>
+          <h3>Three views. One clean read.</h3>
+          <p>Use the camera or existing photos. Large images are prepared automatically on your device before upload.</p>
+        </div>
+        <button className="button" onClick={() => setOpen(true)}>
+          {Object.keys(photos).length ? 'Continue scan →' : 'Begin scan →'}
+        </button>
+      </div>
       <ContextSheet
         open={open}
         title={review ? 'Review your scan' : 'Ascend Scan'}
@@ -231,7 +263,10 @@ export function GuidedScan() {
               )}
               <div className="groom-capture-guide" aria-hidden="true" />
               <div className="groom-capture-prompt">
-                <p className="eyebrow">{index < 3 ? `${index + 1} / 3` : 'Optional view'}</p>
+                <div className="groom-scan-progress" aria-hidden="true">
+                  <i style={{ width: `${Math.min(100, ((index + 1) / 3) * 100)}%` }} />
+                </div>
+                <p className="eyebrow">{index < 3 ? `VIEW ${index + 1} / 3` : 'OPTIONAL VIEW'}</p>
                 <h3>{instructions[index]}</h3>
                 <p role="status">
                   {photos[view]
@@ -274,7 +309,7 @@ export function GuidedScan() {
                       disabled={busy}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) select(file, view);
+                        if (file) void select(file, view);
                         e.target.value = '';
                       }}
                     />
