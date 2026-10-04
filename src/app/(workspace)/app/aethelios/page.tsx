@@ -26,6 +26,8 @@ export default async function AetheliosPage({
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',
     reflect:
       'Help me reflect on today: what mattered, what I learned, and what to carry into tomorrow.',
+    grooming:
+      'Help me refine my grooming ritual using my saved direction, current routines, linked products and recent feedback when I enable personal context. Keep it practical and easy to follow.',
     perspective: 'Help me think clearly about a decision I am facing.',
   };
   const command = params.starter === 'command' ? await readCommand().catch(() => null) : null;

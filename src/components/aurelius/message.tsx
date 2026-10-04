@@ -1,6 +1,8 @@
 'use client';
+import Link from 'next/link';
+import { parseRitualSuggestion } from '@/domains/grooming/ritual-model';
 import { memo } from 'react';
-import { councilFromVersion,councilLabel } from '@/domains/intelligence/council';
+import { councilFromVersion, councilLabel } from '@/domains/intelligence/council';
 import Markdown from 'react-markdown';
 import type { Turn } from '@/domains/intelligence/types';
 import type { ActionProposal } from '@/domains/intelligence/types';
@@ -17,11 +19,12 @@ export const ConversationTurn = memo(function ConversationTurn({
   turn: Turn;
   onFeedback: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
-  action?: {proposal?:ActionProposal;onChanged:()=>Promise<void>};
-  versions?:Turn[];
-  onCopy?:()=>void;
-  onRevise?:(kind:'retry'|'regenerate'|'edit')=>void;
+  action?: { proposal?: ActionProposal; onChanged: () => Promise<void> };
+  versions?: Turn[];
+  onCopy?: () => void;
+  onRevise?: (kind: 'retry' | 'regenerate' | 'edit') => void;
 }) {
+  const ritual = turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
   return (
     <article className="conversation-turn">
       <div className="user-message">
@@ -50,10 +53,19 @@ export const ConversationTurn = memo(function ConversationTurn({
               ),
             }}
           >
-            {turn.assistant_text}
+            {ritual
+              ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
+              : turn.assistant_text}
           </Markdown>
         </div>
-        {versions?.map(previous=><details className="message-version" key={previous.id}><summary>Previous version</summary><div className="message-markdown"><Markdown skipHtml>{previous.assistant_text || 'No completed reply.'}</Markdown></div></details>)}
+        {versions?.map((previous) => (
+          <details className="message-version" key={previous.id}>
+            <summary>Previous version</summary>
+            <div className="message-markdown">
+              <Markdown skipHtml>{previous.assistant_text || 'No completed reply.'}</Markdown>
+            </div>
+          </details>
+        ))}
         {turn.status !== 'complete' && (
           <p className="message-state">
             {turn.status === 'pending'
@@ -81,14 +93,45 @@ export const ConversationTurn = memo(function ConversationTurn({
             </button>
           </div>
         )}
+        {ritual && (
+          <div className="ritual-chat-proposal">
+            <p>{ritual.title} · Proposed ritual</p>
+            <Link href={`/app/grooming?ritualSuggestion=${turn.id}`}>Review ritual change ↗</Link>
+            <small>Review the steps in Grooming. Nothing is saved from this reply.</small>
+          </div>
+        )}
         <div className="message-tools">
-          {turn.status==='complete' && <button type="button" onClick={onCopy}>Copy</button>}
-          {onRevise && !disabled && (turn.status==='complete' ? <>
-            <button type="button" onClick={()=>onRevise('regenerate')}>Regenerate</button>
-            <button type="button" onClick={()=>onRevise('edit')}>Edit and resend</button>
-          </> : turn.status!=='pending' ? <button type="button" onClick={()=>onRevise('retry')}>Retry reply</button> : null)}
+          {turn.status === 'complete' && (
+            <button type="button" onClick={onCopy}>
+              Copy
+            </button>
+          )}
+          {onRevise &&
+            !disabled &&
+            (turn.status === 'complete' ? (
+              <>
+                <button type="button" onClick={() => onRevise('regenerate')}>
+                  Regenerate
+                </button>
+                <button type="button" onClick={() => onRevise('edit')}>
+                  Edit and resend
+                </button>
+              </>
+            ) : turn.status !== 'pending' ? (
+              <button type="button" onClick={() => onRevise('retry')}>
+                Retry reply
+              </button>
+            ) : null)}
         </div>
-        {turn.status==='complete'&&action&&<ActionReview key={action.proposal?.id??'new'} turnId={turn.id} proposal={action.proposal} onChanged={action.onChanged} disabled={disabled} />}
+        {turn.status === 'complete' && action && (
+          <ActionReview
+            key={action.proposal?.id ?? 'new'}
+            turnId={turn.id}
+            proposal={action.proposal}
+            onChanged={action.onChanged}
+            disabled={disabled}
+          />
+        )}
       </div>
     </article>
   );

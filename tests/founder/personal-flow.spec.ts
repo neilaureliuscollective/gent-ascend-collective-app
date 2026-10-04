@@ -261,6 +261,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
   await page.goto('/app/grooming');
+  await page.getByText('Direction, rituals & private history', {exact:true}).click();
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
   const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
   await expect(ritual).toBeVisible();
@@ -288,6 +289,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(record.getByLabel('My note')).toHaveValue('Keep this private note.');
   await expect(record.getByLabel('My experience')).toHaveValue('running_low');
   await page.goto('/app/grooming');
+  await page.getByText('Direction, rituals & private history', {exact:true}).click();
   const products = page.getByRole('region', {
     name: 'Products linked to Synthetic Cabinet morning',
   });

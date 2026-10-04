@@ -183,6 +183,7 @@ export interface Database {
           done: boolean;
           note: string;
           occurred_at: string;
+          local_day: string | null;
         },
         { id?: string; person_id: string; ritual_id: string; done: boolean; note?: string },
         never
@@ -778,6 +779,28 @@ export interface Database {
           p_visual: string;
           p_motion: string;
           p_channel: string;
+        };
+        Returns: string;
+      };
+      grooming_record_practice: {
+        Args: {
+          p_request: string;
+          p_ritual: string;
+          p_version: number;
+          p_day: string;
+          p_note: string;
+        };
+        Returns: { id: string; ritualId: string; occurredAt: string };
+      };
+      grooming_practice_feedback: { Args: { p_checkin: string; p_note: string }; Returns: boolean };
+      grooming_review_ritual: {
+        Args: {
+          p_request: string;
+          p_kind: string;
+          p_version: number;
+          p_title: string;
+          p_steps: string;
+          p_source: string | null;
         };
         Returns: string;
       };

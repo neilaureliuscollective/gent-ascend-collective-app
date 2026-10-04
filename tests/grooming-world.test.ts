@@ -2,152 +2,152 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 const auth = vi.hoisted(() => vi.fn());
 vi.mock('../src/domains/access/authorize', () => ({ authorizedPerson: auth }));
-vi.mock('../src/domains/grooming/service', () => ({
-  GroomingError: class extends Error {
-    constructor(
-      message: string,
-      public status = 400,
-    ) {
-      super(message);
-    }
-  },
-}));
 import { readGroomingWorld, recordWorldPractice } from '../src/domains/grooming/world';
 import { practiceInput } from '../src/domains/grooming/world-model';
-import { localDay } from '../src/domains/daily/model';
+import {
+  parseRitualSuggestion,
+  suggestedRitualKind,
+  ritualSteps,
+  practiceSummary,
+} from '../src/domains/grooming/ritual-model';
 const owner = '60000000-0000-4000-8000-000000000001',
   ritual = '65000000-0000-4000-8000-000000000001',
   request = '66000000-0000-4000-8000-000000000001';
-const input = () => ({
+let queue: { data: unknown; error: unknown; count?: number }[];
+let filters: unknown[];
+const rpc = vi.fn(),
+  result = (data: unknown, error: unknown = null, count = 0) => ({ data, error, count });
+const input = {
   ownerId: owner,
   ritualId: ritual,
   requestId: request,
-  day: localDay(new Date(), 'America/Chicago'),
-});
-const stored = {
-  id: request,
-  ritual_id: ritual,
-  done: true,
-  note: '',
-  occurred_at: new Date().toISOString(),
+  version: 2,
+  day: '2026-10-04',
 };
-let queue: { data: unknown; error: unknown }[];
-let writes: unknown[], filters: unknown[], tables: string[];
-const result = (data: unknown, error: unknown = null) => ({ data, error });
 beforeEach(() => {
   queue = [];
-  writes = [];
   filters = [];
-  tables = [];
+  rpc.mockReset();
+  auth.mockReset();
   const client = {
-    from: (table: string) => {
-      tables.push(table);
-      const take = () => {
-        const next = queue.shift();
-        if (!next) throw new Error('Unexpected query');
-        return Promise.resolve(next);
-      };
+    rpc,
+    from: () => {
+      const take = () => Promise.resolve(queue.shift());
       const chain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn((...args: unknown[]) => {
           filters.push(args);
           return chain;
         }),
+        gte: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockReturnThis(),
         maybeSingle: take,
-        single: take,
-        insert: vi.fn((value: unknown) => {
-          writes.push(value);
-          return chain;
-        }),
         then: (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) =>
           take().then(resolve, reject),
       };
       return chain;
     },
   };
-  auth.mockReset();
   auth.mockResolvedValue({ person: { id: owner, timezone: 'America/Chicago' }, client });
 });
-describe('Grooming world continuity', () => {
-  it('loads only active rituals and their owner-bound latest completion', async () => {
+describe('Daily grooming continuity', () => {
+  it('summarizes recorded practice without inventing adherence or interpreting free-text notes', () => {
+    expect(practiceSummary([])).toEqual({ days: 0, recorded: 0, effort: 0, irritation: 0 });
+    expect(
+      practiceSummary([
+        { day: '2026-10-02', completed: 2, notes: ['Comfortable', 'Too much effort'] },
+        { day: '2026-10-03', completed: 0, notes: [] },
+        { day: '2026-10-04', completed: 1, notes: ['Something irritated', 'Irritated? Maybe.'] },
+      ]),
+    ).toEqual({ days: 2, recorded: 3, effort: 1, irritation: 1 });
+  });
+  it('loads private rituals, real product links and bounded practice separately from guests', async () => {
+    const at = new Date().toISOString();
     queue.push(
       result([
-        { id: ritual, kind: 'morning', title: 'Morning standard', steps: 'One\nTwo', version: 2 },
+        { id: ritual, kind: 'morning', title: 'My beard', steps: 'Cleanse\nStyle', version: 2 },
       ]),
-      result({ occurred_at: stored.occurred_at }),
+      result([]),
+      result({ occurred_at: at }),
+      result(
+        [{ id: request, name: 'External beard oil', relation: 'in_use', note: 'My choice' }],
+        null,
+        1,
+      ),
     );
     const data = await readGroomingWorld();
     expect(data).toMatchObject({
       mode: 'personal',
       ownerId: owner,
-      rituals: [{ lastRecordedAt: stored.occurred_at }],
+      rituals: [
+        { lastRecordedAt: at, productCount: 1, products: [{ name: 'External beard oil' }] },
+      ],
     });
-    expect(tables).toEqual(['grooming_rituals', 'grooming_checkins']);
-    expect(filters.filter((f) => (f as string[])[0] === 'person_id')).toEqual([
-      ['person_id', owner],
-      ['person_id', owner],
-    ]);
-  });
-  it('distinguishes guest, empty rituals and a failed history read', async () => {
+    expect(filters.filter((f) => (f as string[])[0] === 'person_id')).toHaveLength(4);
     auth.mockResolvedValueOnce(null);
     expect(await readGroomingWorld()).toEqual({ mode: 'guest' });
-    queue.push(result([]));
-    expect(await readGroomingWorld()).toMatchObject({ mode: 'personal', rituals: [] });
-    queue.push(result(null, { message: 'private database detail' }));
+  });
+  it('reports read failure rather than presenting empty personal history', async () => {
+    queue.push(result(null, { message: 'private details' }), result([]));
     await expect(readGroomingWorld()).rejects.toMatchObject({ status: 503 });
   });
-  it('records exactly the displayed ritual using the caller session', async () => {
-    queue.push(result(null), result({ id: ritual }), result(stored));
-    await expect(recordWorldPractice(input())).resolves.toEqual({
-      id: request,
-      ritualId: ritual,
-      occurredAt: stored.occurred_at,
-    });
-    expect(writes).toEqual([
-      { id: request, person_id: owner, ritual_id: ritual, done: true, note: '' },
-    ]);
-  });
-  it('returns the existing receipt on retry, including after the local date changes', async () => {
-    queue.push(result(stored));
-    await expect(recordWorldPractice({ ...input(), day: '2020-01-01' })).resolves.toMatchObject({
-      id: request,
-    });
-    expect(writes).toEqual([]);
-  });
-  it('resolves concurrent attempts through the existing unique record ID', async () => {
-    queue.push(
-      result(null),
-      result({ id: ritual }),
-      result(null, { code: '23505' }),
-      result(stored),
+  it('uses the caller session, exact displayed version and immutable request', async () => {
+    rpc.mockResolvedValue(
+      result({ id: request, ritualId: ritual, occurredAt: '2026-10-04T16:00:00Z' }),
     );
-    await expect(recordWorldPractice(input())).resolves.toMatchObject({ id: request });
-    expect(writes).toHaveLength(1);
+    expect(await recordWorldPractice(input)).toMatchObject({ requestId: request, id: request });
+    expect(rpc).toHaveBeenCalledWith('grooming_record_practice', {
+      p_request: request,
+      p_ritual: ritual,
+      p_version: 2,
+      p_day: '2026-10-04',
+      p_note: '',
+    });
   });
-  it('rejects sign-out, changed owner, stale day and retired ritual', async () => {
+  it('accepts an authoritative prior daily completion without treating it as a request mismatch', async () => {
+    rpc.mockResolvedValue(
+      result({ id: owner, ritualId: ritual, occurredAt: '2026-10-04T16:00:00Z' }),
+    );
+    expect(await recordWorldPractice(input)).toMatchObject({ id: owner, requestId: request });
+  });
+  it('denies signed-out/account-changed writes and redacts provider errors', async () => {
     auth.mockResolvedValueOnce(null);
-    await expect(recordWorldPractice(input())).rejects.toMatchObject({ status: 401 });
-    await expect(recordWorldPractice({ ...input(), ownerId: ritual })).rejects.toMatchObject({
+    await expect(recordWorldPractice(input)).rejects.toMatchObject({ status: 401 });
+    await expect(recordWorldPractice({ ...input, ownerId: request })).rejects.toMatchObject({
       status: 409,
     });
-    queue.push(result(null));
-    await expect(recordWorldPractice({ ...input(), day: '2020-01-01' })).rejects.toMatchObject({
-      status: 409,
-    });
-    queue.push(result(null), result(null));
-    await expect(recordWorldPractice(input())).rejects.toMatchObject({ status: 409 });
-    expect(writes).toEqual([]);
+    expect(rpc).not.toHaveBeenCalled();
+    rpc.mockResolvedValue(result(null, { code: '40001', message: 'sensitive' }));
+    await expect(recordWorldPractice(input)).rejects.toMatchObject({ status: 409 });
+    rpc.mockResolvedValue(result(null, { code: 'unknown', message: 'sensitive' }));
+    await expect(recordWorldPractice(input)).rejects.toMatchObject({ status: 503 });
   });
-  it('does not accept a reused ID for a different ritual or uncertain storage', async () => {
-    queue.push(result({ ...stored, ritual_id: owner }));
-    await expect(recordWorldPractice(input())).rejects.toMatchObject({ status: 409 });
-    queue.push(result(null), result({ id: ritual }), result(null, { code: 'unavailable' }));
-    await expect(recordWorldPractice(input())).rejects.toMatchObject({ status: 503 });
+  it('rejects missing versions and privilege-shaped extra fields', () => {
+    expect(practiceInput.safeParse({ ...input, version: undefined }).success).toBe(false);
+    expect(practiceInput.safeParse({ ...input, person_id: owner }).success).toBe(false);
   });
-  it('rejects extra fields and malformed identifiers at the request boundary', () => {
-    expect(practiceInput.safeParse({ ...input(), person_id: owner }).success).toBe(false);
-    expect(practiceInput.safeParse({ ...input(), ritualId: 'not-an-id' }).success).toBe(false);
+  it('suggests the member local ritual with immediate override available', () => {
+    expect(suggestedRitualKind(new Date('2026-10-04T13:00:00Z'), 'America/Chicago')).toBe(
+      'morning',
+    );
+    expect(suggestedRitualKind(new Date('2026-10-04T23:00:00Z'), 'America/Chicago')).toBe(
+      'evening',
+    );
+    expect(suggestedRitualKind(new Date('2026-10-04T23:00:00Z'), 'Asia/Tokyo')).toBe('morning');
+    expect(ritualSteps('One\n\n Two ')).toEqual(['One', 'Two']);
+  });
+  it('offers review only for one complete, bounded structured suggestion', () => {
+    const draft = {
+      kind: 'morning',
+      title: 'My beard ritual',
+      steps: 'Cleanse\nFollow my label directions',
+      reason: 'Keep it familiar',
+    };
+    const text = 'A practical refinement.\n```grooming-ritual\n' + JSON.stringify(draft) + '\n```';
+    expect(parseRitualSuggestion(text)).toEqual(draft);
+    expect(parseRitualSuggestion(text + text)).toBeNull();
+    expect(parseRitualSuggestion('```grooming-ritual\n{"steps":"oops"}\n```')).toBeNull();
+    expect(parseRitualSuggestion(text.replace('morning', 'clinical'))).toBeNull();
   });
 });
