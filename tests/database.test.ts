@@ -1067,7 +1067,11 @@ describe('Performance programs and immutable decisions',()=>{
 });
 
 describe('Performance progression evidence and approval', () => {
- beforeAll(async()=>{ await db.exec(`delete from public.performance_checkins where person_id=(select id from public.persons where auth_user_id='${founder}')`); });
+ beforeAll(async()=>{
+  await db.exec(`delete from public.performance_checkins where person_id=(select id from public.persons where auth_user_id='${founder}')`);
+  // Match the seeded person's calendar, including the UTC/Chicago midnight gap.
+  check.day=(await db.query<{day:string}>(`select (now() at time zone timezone)::date::text as day from public.persons where auth_user_id='${founder}'`)).rows[0]!.day;
+ });
  const slot=crypto.randomUUID(),other=crypto.randomUUID(),exercise=crypto.randomUUID();
  const plan={title:'Progression A',unit:'lb' as const,exercises:[{id:exercise,name:'Row',sets:2,reps:8,load:40,restSeconds:90}]};
  const program={title:'Learning cycle',sessions:[{id:slot,plan},{id:other,plan:{...plan,title:'Progression B'}}]};

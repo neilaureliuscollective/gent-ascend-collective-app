@@ -340,3 +340,7 @@ Preserve PR52's first-session foundation. Project existing domain facts into a m
 ## October 4 — public launch release controls
 
 Reuse existing identity/account/billing/commerce controls; add a founder-authenticated configuration/acceptance ledger and member support route. Configuration never auto-promotes into verified launch readiness. Use Next's built-in Web Vitals hook behind a default-off server flag and bounded same-origin scalar log endpoint; exclude raw URLs, identifiers and written content, respect DNT/GPC. This is an initial diagnostic sink, not durable analytics or measured field compliance. Whole-account export/deletion and legal publication remain operational acceptance gaps. Research and exact release/rollback contract: `PUBLIC_LAUNCH_PHASE_4.md`.
+
+## October 4 — Ascend Mirror camera-first scan
+
+Fix the confirmed live camera=() document policy to camera=(self), including client-navigation entry documents, preserving denied microphone/location and explicit user permission. Keep camera frames local; self-host pinned MediaPipe 1.0.1 assets/model and use a bounded CPU web worker for framing/steady capture. Existing OpenAI/private Storage scan pipeline receives only explicitly approved images. No streaming vendor, new database, medical claims, identity matching, or automatic photo upload. Research, model provenance/hash and honest test boundaries: ASCEND_MIRROR.md.
