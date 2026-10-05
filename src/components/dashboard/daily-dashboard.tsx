@@ -362,33 +362,27 @@ export function DailyDashboard({
         </section>
         <HomeConversation key={`${data.mode}:${data.ownerId ?? 'preview'}`} data={data} />
       </section>
-      <nav className="home-worlds" aria-label="Your operating spaces">
-        <Link prefetch={false} href="/app/presence">
-          <small>HOW YOU SHOW UP</small>
-          <strong>Presence</strong>
+      <nav className="home-worlds" aria-label="Your primary spaces">
+        <Link prefetch={false} href="/app/aethelios">
+          <small>ASK · PLAN · ACT</small>
+          <strong>Aethelios</strong>
           <span>
-            Prepare for the moment <i aria-hidden="true">↗</i>
+            Tell me what you need <i aria-hidden="true">↗</i>
           </span>
         </Link>
-        <Link prefetch={false} href="/app/performance">
-          <small>YOUR CAPACITY</small>
-          <strong>Performance</strong>
+        <Link prefetch={false} href="/app/world">
+          <small>YOUR CONTEXT</small>
+          <strong>Life</strong>
           <span>
-            Continue your training <i aria-hidden="true">↗</i>
+            See what Gent Ascend knows <i aria-hidden="true">↗</i>
           </span>
         </Link>
         <Link prefetch={false} href="/app/collection" className="home-collection">
-          <small>YOUR ESSENTIALS</small>
-          <strong>Ascend Collection</strong>
+          <small>PRODUCTS · SERVICES · BENEFITS</small>
+          <strong>Collective</strong>
           <span>
-            Explore the collection <i aria-hidden="true">↗</i>
+            Access what supports you <i aria-hidden="true">↗</i>
           </span>
-        </Link>
-        <Link prefetch={false} href="/app/aethelios" className="home-world-secondary">
-          Aethelios & Council <i aria-hidden="true">↗</i>
-        </Link>
-        <Link prefetch={false} href="/app/world" className="home-world-secondary">
-          My world <i aria-hidden="true">↗</i>
         </Link>
       </nav>
       {data.mode === 'sample' && (
@@ -581,25 +575,36 @@ export function DailyDashboard({
           </section>
         )}
       </details>
-      <nav className="command-depth-nav" aria-label="Explore your context">
-        <button
-          disabled={busy}
-          aria-expanded={depth}
-          aria-controls="command-depth"
-          onClick={() => (depth ? setDepth(false) : openPlan())}
-        >
-          {depth ? 'Close day workspace' : 'Day workspace'} <span>↗</span>
-        </button>
-        <Link prefetch={false} href="/app/progress">
-          Progress <span>↗</span>
-        </Link>
-        <Link prefetch={false} href="/app/world">
-          My world <span>↗</span>
-        </Link>
-        <Link prefetch={false} href="/app/ascend-profile">
-          Your direction <span>↗</span>
-        </Link>
-      </nav>
+      <details className="home-records">
+        <summary>
+          Open deeper systems <span aria-hidden="true">+</span>
+        </summary>
+        <nav className="command-depth-nav" aria-label="Deeper systems">
+          <button
+            disabled={busy}
+            aria-expanded={depth}
+            aria-controls="command-depth"
+            onClick={() => (depth ? setDepth(false) : openPlan())}
+          >
+            {depth ? 'Close day workspace' : 'Day workspace'} <span>↗</span>
+          </button>
+          <Link prefetch={false} href="/app/studio">
+            Studio <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/performance">
+            Performance <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/presence">
+            Presence <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/progress">
+            Progress <span>↗</span>
+          </Link>
+          <Link prefetch={false} href="/app/ascend-profile">
+            Direction <span>↗</span>
+          </Link>
+        </nav>
+      </details>
       {depth && (
         <div id="command-depth" tabIndex={-1} aria-label="Day workspace">
           <DailyDepth initial={data} onChange={setData} onReady={focusDepth} />
