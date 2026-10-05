@@ -8,6 +8,7 @@ import { commandChanges } from '@/domains/command/changes';
 import { CommandField } from './command-field';
 import type { CommandData } from '@/domains/daily-command/model';
 import { selectProactiveSignal } from '@/domains/intelligence/proactive';
+import { ProactiveSignalCard } from './proactive-signal-card';
 import { HomeConversation } from './home-conversation';
 import '@/app/command-living.css';
 const DailyDepth = dynamic(() => import('./daily-depth').then((module) => module.DailyDepth), {
@@ -29,11 +30,13 @@ export function DailyDashboard({
   opening,
   asOf,
   dailyCommand,
+  handledProactiveKeys = [],
 }: {
   initial: DailyData;
   opening?: CommandProjection;
   asOf?: string;
   dailyCommand?: CommandData | null;
+  handledProactiveKeys?: string[];
 }) {
   const [data, setData] = useState(initial);
   const [operating, setOperating] = useState(dailyCommand ?? null);
@@ -54,7 +57,7 @@ export function DailyDashboard({
   const lock = useRef(false);
   const projection = data === initial && opening ? opening : projectCommand(data);
   const proposal = projection.decisions[0];
-  const proactive = selectProactiveSignal(operating);
+  const proactive = selectProactiveSignal(operating, handledProactiveKeys);
   function openPlan() {
     if (busy || lock.current) return;
     setDepth(true);
@@ -363,18 +366,7 @@ export function DailyDashboard({
           )}
         </section>
         <HomeConversation key={`${data.mode}:${data.ownerId ?? 'preview'}`} data={data} />
-        {proactive && (
-          <section className="command-next" aria-label="Ahead">
-            <div>
-              <span>{proactive.eyebrow}</span>
-              <h2>{proactive.title}</h2>
-              <p>{proactive.detail}</p>
-            </div>
-            <Link prefetch={false} className="command-action" href={proactive.href}>
-              {proactive.action} <span aria-hidden="true">↗</span>
-            </Link>
-          </section>
-        )}
+        {proactive && <ProactiveSignalCard signal={proactive} />}
       </section>
       <nav className="home-worlds" aria-label="Your primary spaces">
         <Link prefetch={false} href="/app/aethelios">
