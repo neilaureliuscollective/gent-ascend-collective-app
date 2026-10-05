@@ -21,6 +21,11 @@ const worlds = [
     copy: 'Appearance, wardrobe, confidence and preparation for the moments that matter.',
   },
   {
+    href: '/app/progress',
+    title: 'Progress',
+    copy: 'Review what has moved over time without turning your life into a checklist.',
+  },
+  {
     href: '/app/aethelios',
     title: 'Aethelios',
     copy: 'Think through the next move with your personal intelligence.',
