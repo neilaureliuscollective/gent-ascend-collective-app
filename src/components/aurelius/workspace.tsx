@@ -46,7 +46,7 @@ export function AureliusWorkspace({
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
   const handoff = useConversationDraft();
-  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft ? handoff?.pending ?? null : null);
+  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft && !handoff?.pending?.target ? handoff?.pending ?? null : null);
   const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
   useEffect(() => {
     if (homeDraft && handoff?.pending === homeDraft) handoff.stage(null);
@@ -660,7 +660,14 @@ export function AureliusWorkspace({
               {capability && !councilSelection && (
                 <div className="revision-notice" aria-live="polite">
                   <span>Aethelios is routing this through <strong>{capability.label}</strong> intelligence.</span>{' '}
-                  <Link href={capability.href}>Open {capability.label} only if you want depth ↗</Link>
+                  <Link
+                    href={capability.href}
+                    onClick={() => {
+                      if (data.ownerId) handoff?.stage({ text: draft.trim() || data.turns.at(-1)?.user_text || '', ownerId: data.ownerId, target: capability.id });
+                    }}
+                  >
+                    Open {capability.label} only if you want depth ↗
+                  </Link>
                 </div>
               )}
               {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
