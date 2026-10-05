@@ -4,10 +4,12 @@ import { Suspense } from 'react';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
 import { readCommand } from '@/domains/command/service';
 import { readCommand as readDailyCommand } from '@/domains/daily-command/service';
+import { readProactiveReceipts } from '@/domains/intelligence/proactive-receipts';
 export default async function Command() {
-  const [snapshot, dailyCommand] = await Promise.all([
+  const [snapshot, dailyCommand, proactiveReceipts] = await Promise.all([
     readCommand(),
     readDailyCommand().catch(() => null),
+    readProactiveReceipts().catch(() => []),
   ]);
   return (
     <>
@@ -16,6 +18,7 @@ export default async function Command() {
         opening={snapshot.opening}
         asOf={snapshot.asOf}
         dailyCommand={dailyCommand}
+        handledProactiveKeys={proactiveReceipts.map((receipt) => receipt.signal_key)}
       />
       <Suspense fallback={null}>
         <Continuation />
