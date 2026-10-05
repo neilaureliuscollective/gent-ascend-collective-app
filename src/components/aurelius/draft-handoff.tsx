@@ -2,7 +2,7 @@
 import { createContext, useContext, useRef, type ReactNode } from 'react';
 import type { CapabilityId } from '@/domains/intelligence/capabilities';
 
-export type Handoff = { text: string; ownerId: string; target?: CapabilityId };
+export type Handoff = { text: string; ownerId: string; target?: CapabilityId; payload?: unknown };
 type DraftHandoff = {
   peek: () => Handoff | null;
   stage: (draft: Handoff | null) => void;
