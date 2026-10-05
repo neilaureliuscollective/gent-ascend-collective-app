@@ -43,9 +43,9 @@ test('world directory includes both deep worlds and compact global navigation', 
     'href',
     '/app/performance',
   );
-  await expect(worlds.getByRole('link', { name: /Grooming Concierge/ })).toHaveAttribute(
+  await expect(worlds.getByRole('link', { name: /Presence/ })).toHaveAttribute(
     'href',
-    '/app/grooming',
+    '/app/presence',
   );
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(nav.getByRole('link')).toHaveCount(5);

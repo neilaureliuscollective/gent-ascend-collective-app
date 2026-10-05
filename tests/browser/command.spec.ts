@@ -349,14 +349,11 @@ test('recovered Command opens current domains and preserves the separate saved a
     'href',
     '/app/performance',
   );
-  await expect(domains.getByRole('link', { name: /Grooming/ })).toHaveAttribute(
+  await expect(domains.getByRole('link', { name: /Presence/ })).toHaveAttribute(
     'href',
-    '/app/grooming',
+    '/app/presence',
   );
-  await expect(domains.getByRole('link', { name: /Aethelios/ })).toHaveAttribute(
-    'href',
-    '/app/aethelios',
-  );
+  await expect(page.getByRole('region', { name: 'Talk with Aethelios' }).getByRole('link', { name: /Sign in to talk/ })).toBeVisible();
   await page.goto('/app/arrival');
   await expect(page.getByRole('heading', { name: 'Your day is waiting.' })).toBeVisible();
 });
