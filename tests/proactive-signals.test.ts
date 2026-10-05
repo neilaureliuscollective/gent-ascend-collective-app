@@ -33,7 +33,7 @@ function base(): DailyCommandSnapshot {
 
 describe('proactive signals', () => {
   it('stays quiet when nothing materially changes the day', () => {
-    expect(selectProactiveSignal({ command: command(base() }))).toBeNull();
+    expect(selectProactiveSignal({ command: command(base()) })).toBeNull();
   });
 
   it('prioritizes an approaching saved occasion', () => {
