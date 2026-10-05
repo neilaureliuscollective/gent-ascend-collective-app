@@ -1,3 +1,4 @@
+import { presenceStarter } from '@/domains/presence/model';
 import { readCommand } from '@/domains/daily-command/service';
 import { readWorldPriority } from '@/domains/daily/world-priority';
 import { commandDraft } from '@/domains/daily-command/model';
@@ -22,12 +23,16 @@ export default async function AetheliosPage({
   const isFounder = await currentFounderAccess();
   const linked = isFounder && (await founderBridgeLinked());
   const starters: Record<string, string> = {
-    'weekly-review': 'Review my last seven days using my saved personal context if I enable it. Distinguish missing records from zero activity. Help me identify what worked, what got in the way, and one realistic adjustment for next week. Ask only what is needed. Propose changes for my review; do not claim to save them.',
+    'weekly-review':
+      'Review my last seven days using my saved personal context if I enable it. Distinguish missing records from zero activity. Help me identify what worked, what got in the way, and one realistic adjustment for next week. Ask only what is needed. Propose changes for my review; do not claim to save them.',
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',
     reflect:
       'Help me reflect on today: what mattered, what I learned, and what to carry into tomorrow.',
-    grooming:
-      'Help me refine my grooming ritual using my saved direction, current routines, linked products and recent feedback when I enable personal context. Keep it practical and easy to follow.',
+    presence: presenceStarter,
+    'presence-style':
+      'Help me choose wardrobe and appearance preparation for an important occasion. Ask about the setting, dress expectations and clothes I already own. Use saved preferences only if I enable personal context. Do not invent an inventory or recommend purchases by default.',
+    'grooming-event': presenceStarter,
+    grooming: presenceStarter,
     perspective: 'Help me think clearly about a decision I am facing.',
   };
   const command = params.starter === 'command' ? await readCommand().catch(() => null) : null;

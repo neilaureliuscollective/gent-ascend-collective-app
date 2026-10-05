@@ -1,3 +1,18 @@
+## Combined Command home + Presence release — 2026-10-05
+
+Founder authorized merging and deploying home restoration #57 together with Presence #58 for live testing. Both changes are reconciled in one candidate: integrated Command hero / expandable Talk plus the contextual Presence door, preserving scan, routines, products and history. No new migration. Combined local lint/types, 350 units, build and ledger passed. Combined browser/CI and exact production receipt pending below; no live acceptance claimed yet.
+
+## Presence repositioning — 2026-10-05
+
+Implemented the founder-approved Presence hierarchy; see [PRESENCE.md](PRESENCE.md). Command no longer creates grooming tasks from absent routine completion, and compact Home removes ritual compliance counts. `/app/presence` provides preparation and existing appearance intelligence; all grooming routes/data/API contracts remain intact. Upcoming user-saved occasions and member-marked replenishment are honest request-time signals. Aethelios receives relevant saved occasions under existing per-message context consent; wardrobe inventory, haircut cadence, calendar, reminders and background intelligence remain future work.
+
+Validation: typecheck, lint, 350 units, build and ledger passed; responsive browser and preserved grooming journeys checked with synthetic records. Live authenticated/model/physical-device review unverified. No deployment performed.
+# Command home recovery · October 4, 2026
+
+Founder-approved recovery built from main `930ca72`. Direct member entry now opens a single integrated green/obsidian/gold Command composition: greeting and saved briefing, current energy presence, today's next move and expandable Talk. Grooming/Performance/Collection have authored home doors; saved context and arrival explanations are disclosed below. Existing navigation, source ownership, confirmed writes and model-consent behavior are preserved. The lazy day workspace now focuses after its real content mounts, resolving a browser-observed scroll race.
+
+Lint, strict types, 343 unit/SQL tests, normal Turbopack production build and recorded migration-file ledger checks pass. Synthetic six-viewport plus enlarged-text audit has zero page errors/overflow; phone next-action controls clear persistent navigation. All 45 targeted Command/home/shell browser cases pass; receipt is recorded in COMMAND_HOME_RECOVERY.md. Real founder Auth/PostgREST, live-model and physical-device evaluations remain open. This build is prepared for draft-PR review; production has not been promoted.
+
 ## Grooming review publication — October 4, 2026
 
 Founder explicitly approved publication to the canonical repository and a draft PR. [PR #54](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/54) now contains the daily grooming intelligence and ritual precision phases. Reconciled with launch release #53 (`8d40fa0`), preserving web research, continuity and account-claim tests. Remote implementation `d8cf15d` exactly matches the reconciled local source tree `75ae235`.

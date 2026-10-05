@@ -47,39 +47,46 @@ export function HomeConversation({ data }: { data: DailyData }) {
   const personal = data.mode === 'personal' && !!data.ownerId;
   return (
     <section ref={root} className="home-conversation" aria-label="Talk with Aethelios">
-      <div className="home-conversation-heading">
-        <strong>Aethelios</strong>
-        <span>Your personal intelligence</span>
-      </div>
       {personal ? (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!text.trim() || !handoff || !data.ownerId) return;
-            handoff.stage({ text: text.trim(), ownerId: data.ownerId });
-            router.push('/app/aethelios');
+        <details
+          className="home-compose"
+          onToggle={(event) => {
+            if (event.currentTarget.open) root.current?.querySelector('textarea')?.focus();
           }}
         >
-          <label htmlFor="home-thought">What are we working on?</label>
-          <textarea
-            id="home-thought"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            rows={2}
-            maxLength={6000}
-            placeholder="Bring a thought. Find your next move."
-            aria-describedby="home-thought-note"
-          />
-          <div className="home-conversation-actions">
-            <small id="home-thought-note">Continue in Talk, then send when you’re ready.</small>
-            <button type="submit" className="command-action" disabled={!text.trim()}>
-              Continue in Talk <span aria-hidden="true">↗</span>
-            </button>
-          </div>
-        </form>
+          <summary>
+            <span>Talk with Aethelios</span>
+            <span aria-hidden="true">↗</span>
+          </summary>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!text.trim() || !handoff || !data.ownerId) return;
+              handoff.stage({ text: text.trim(), ownerId: data.ownerId });
+              router.push('/app/aethelios');
+            }}
+          >
+            <label htmlFor="home-thought">What are we working on?</label>
+            <textarea
+              id="home-thought"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              rows={2}
+              maxLength={6000}
+              placeholder="Bring a thought. Find your next move."
+              aria-describedby="home-thought-note"
+            />
+            <div className="home-conversation-actions">
+              <small id="home-thought-note">Continue in Talk, then send when you’re ready.</small>
+              <button type="submit" className="command-action" disabled={!text.trim()}>
+                Continue in Talk <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </form>
+        </details>
       ) : (
         <div className="home-conversation-preview">
-          <p>What are we working on?</p>
+          <p>Talk with Aethelios</p>
           <Link
             prefetch={false}
             className="command-action"

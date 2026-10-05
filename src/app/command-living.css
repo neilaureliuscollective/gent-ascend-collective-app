@@ -569,65 +569,178 @@ html[data-quiet='true'] .command-living .connection-trace {
   }
 }
 
-/* Direct member home: utility first, one environment, no entrance animation. */
+/* Command home: one composition owns greeting, presence, move and Talk. */
 .command-home .command-environment {
-  display: block;
-  padding: 0 clamp(18px, 4vw, 52px) 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'arrival' 'moment' 'presence' 'move' 'talk';
+  padding: 0 clamp(18px, 4vw, 48px) 28px;
+  gap: 0;
 }
 .command-home .command-arrival {
+  grid-area: arrival;
   padding: 18px 0 12px;
   flex-wrap: wrap;
+  font-size: 0.7rem;
 }
 .command-home .command-moment {
-  max-width: none;
+  grid-area: moment;
+  max-width: 680px;
   text-align: left;
-  margin: 8px 0 18px;
+  margin: 4px 0 0;
   padding: 0;
-}
-.command-home .command-moment h1 {
-  font-size: clamp(1.8rem, 3.5vw, 3rem);
-  margin: 0;
-  text-wrap: pretty;
+  align-self: start;
 }
 .command-home .command-kicker {
-  margin-bottom: 8px;
+  display: block;
+  margin: 0 0 10px;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.command-home .command-moment h1 {
+  font-size: clamp(1.9rem, 4.2vw, 3.6rem);
+  line-height: 1.12;
+  margin: 0;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+.home-brief {
+  color: #c7d5c8;
+  line-height: 1.6;
+  font-size: 0.88rem;
+  max-width: 52ch;
+  margin: 14px 0 0;
+  overflow-wrap: anywhere;
+}
+.command-home .command-field {
+  grid-area: presence;
+  min-width: 0;
+  padding: 0;
+  align-self: center;
+}
+.command-home .field-caption {
+  margin: 16px 0 0;
+  font-size: 0.64rem;
+}
+.command-home .field-space {
+  height: 208px;
+  margin: 0;
+}
+.command-home .field-core {
+  top: 25px;
+  width: 170px;
+}
+.command-home .field-core .command-presence {
+  width: 166px;
+  height: 166px;
+}
+.command-home .field-core-label {
+  margin-top: -9px;
+}
+.command-home .field-core-label strong {
+  font-size: 1.05rem;
+}
+.command-home .field-core-label span {
+  display: none;
+}
+.command-home .field-signal {
+  width: 26%;
+  min-height: 60px;
+  padding: 8px 7px;
+}
+.command-home .signal-0,
+.command-home .signal-1 {
+  top: 12px;
+}
+.command-home .signal-2,
+.command-home .signal-3 {
+  bottom: 12px;
+}
+.command-home .signal-label {
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
+}
+.command-home .field-signal strong {
+  font-size: 1.35rem;
+}
+.command-home .signal-source {
+  display: none;
+}
+.command-home .signal-detail {
+  margin: 8px 0 20px;
+  flex-direction: column;
+}
+.command-home .command-next {
+  grid-area: move;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 4px 0 0;
+  padding: 18px 0;
+  gap: 14px;
+}
+.command-home .command-next::before {
+  content: none;
+}
+.command-home .command-next h2 {
+  font-size: clamp(1.2rem, 2.1vw, 1.8rem);
+  text-wrap: pretty;
+  margin: 8px 0;
+}
+.command-home .command-next p {
+  margin: 0;
+  font-size: 0.7rem;
+}
+.command-home .command-next .command-action {
+  align-self: start;
+  min-height: 44px;
 }
 .home-conversation {
-  max-width: 840px;
-  margin: 0 0 20px;
+  grid-area: talk;
+  min-width: 0;
+  max-width: 660px;
+  margin: 4px 0 0;
 }
-.home-conversation-heading {
+.home-compose {
+  border-block: 1px solid #c4912f40;
+  background: linear-gradient(100deg, #10392c99, #09241b33);
+}
+.home-compose summary {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-bottom: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 54px;
+  padding: 14px 16px;
+  color: #eee6d4;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.9rem;
 }
-.home-conversation-heading strong {
+.home-compose summary::-webkit-details-marker {
+  display: none;
+}
+.home-compose summary span:last-child {
   color: #e0bb6a;
-  font-weight: 500;
 }
-.home-conversation-heading span {
-  font-size: 0.75rem;
-  color: #bdcbbf;
+.home-compose[open] summary {
+  border-bottom: 1px solid #c4912f26;
 }
 .home-conversation form {
-  border-bottom: 1px solid #c4912f66;
-  padding: 14px 16px 12px;
-  background: linear-gradient(100deg, #10392ce0, #09241b66);
+  padding: 16px;
 }
 .home-conversation label,
 .home-conversation-preview p {
   display: block;
-  font-size: 1.15rem;
+  font-size: 1rem;
   color: #f1eee4;
   margin: 0 0 8px;
 }
 .home-conversation textarea {
   display: block;
   width: 100%;
-  min-height: 70px;
-  max-height: 240px;
+  min-height: 88px;
+  max-height: 280px;
   font: inherit;
   font-size: 16px;
   line-height: 1.5;
@@ -635,7 +748,6 @@ html[data-quiet='true'] .command-living .connection-trace {
   color: #f5f0e4;
   background: transparent;
   border: 0;
-  border-radius: 0;
   padding: 8px 0;
   box-shadow: none;
   scroll-margin-block: 100px;
@@ -652,25 +764,15 @@ html[data-quiet='true'] .command-living .connection-trace {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 12px;
 }
 .home-conversation-actions small {
-  max-width: 230px;
+  max-width: 220px;
   font-size: 0.7rem;
   color: #bdcbbf;
 }
 .home-conversation .command-action {
   min-height: 44px;
-  flex-shrink: 0;
-}
-.home-conversation .command-action:disabled {
-  opacity: 0.55;
-}
-.home-conversation-preview {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
 }
 .home-resume {
   display: inline-flex;
@@ -682,115 +784,291 @@ html[data-quiet='true'] .command-living .connection-trace {
   font-size: 0.8rem;
   overflow-wrap: anywhere;
 }
-.command-home .command-next {
-  grid-area: auto;
-  margin: 0;
-  padding: 18px 0;
-  gap: 12px;
-}
-.command-home .command-next h2 {
-  font-size: clamp(1.1rem, 2vw, 1.55rem);
-}
-.command-home .command-next p {
-  margin-bottom: 0;
-}
-.home-worlds {
+.home-conversation-preview {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 22px;
-  border-block: 1px solid #c4912f30;
-  padding: 6px 0;
-}
-.home-worlds a {
-  display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 44px;
+  padding: 12px 0;
+  border-block: 1px solid #c4912f30;
+}
+.home-conversation-preview p {
+  margin: 0;
+}
+.home-worlds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 22px;
+  margin: 0 clamp(18px, 4vw, 48px);
+  padding: 22px 0;
+  border-top: 1px solid #c4912f40;
+}
+.home-worlds a {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 0;
   color: #e7e9dc;
-  font-size: 0.85rem;
+  text-decoration: none;
+  overflow-wrap: anywhere;
 }
-.home-worlds a span {
-  color: #c4912f;
-}
-.home-worlds .home-collection {
+.home-worlds a:hover strong {
   color: #e0bb6a;
 }
-.home-context-note {
-  max-width: 840px;
-  margin: 22px 0 0;
+.home-worlds small {
+  font-size: 0.63rem;
+  letter-spacing: 0.1em;
+  color: #bbccaf;
 }
-.home-context-note p {
-  color: #d0dbce;
-  margin: 0 0 6px;
-  line-height: 1.6;
+.home-worlds strong {
+  font-family: var(--font-editorial);
+  font-weight: 400;
+  font-size: clamp(1.25rem, 2.2vw, 1.85rem);
 }
-.home-context-note small {
-  color: #a9bcae;
-  font-size: 0.7rem;
+.home-worlds span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.74rem;
+  color: #bdcdbf;
 }
-.command-home .command-field {
-  grid-area: auto;
-  min-width: 0;
+.home-worlds i {
+  color: #c4912f;
+  font-style: normal;
 }
-.command-home .field-caption {
-  margin-inline: 0;
+.home-worlds .home-collection strong {
+  color: #e0bb6a;
 }
-.command-home .signal-detail {
-  margin-inline: 0;
+.home-worlds .home-world-secondary {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;
+  padding: 12px 0;
+  font-size: 0.8rem;
+  border-top: 1px solid #c4912f26;
 }
-@media (max-width: 750px) {
-  .command-home .command-arrival {
-    font-size: 0.68rem;
+.command-home .command-oversight[data-empty='true'] {
+  display: block;
+  padding: 16px 0;
+}
+.command-home .command-oversight[data-empty='true'] .command-section-label,
+.command-home .command-oversight[data-empty='true'] p {
+  display: none;
+}
+.command-home .command-oversight[data-empty='true'] h2 {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: #bbccbd;
+}
+.home-records {
+  margin: 0 clamp(18px, 4vw, 48px);
+  border-top: 1px solid #c4912f26;
+}
+.home-records > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  font-size: 0.8rem;
+  color: #c7d3c7;
+  cursor: pointer;
+  list-style: none;
+}
+.home-records > summary::-webkit-details-marker {
+  display: none;
+}
+.home-records > summary span {
+  color: #e0bb6a;
+}
+.home-records[open] > summary span {
+  transform: rotate(45deg);
+}
+.home-record-source {
+  color: #bbccbd;
+  font-size: 0.75rem;
+}
+.command-home .home-records .command-continuity,
+.command-home .home-records .command-readiness {
+  padding: 20px 0;
+}
+@media (min-width: 751px) {
+  .command-home .command-environment {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    grid-template-areas: 'arrival arrival' 'moment presence' 'move presence' 'talk presence';
+    gap: 0 32px;
+    padding-bottom: 36px;
   }
   .command-home .command-moment {
-    margin-bottom: 16px;
+    padding-top: 30px;
   }
-  .home-conversation {
-    margin-bottom: 12px;
+  .command-home .command-field {
+    align-self: center;
   }
-  .home-conversation form {
-    padding: 12px;
+  .command-home .field-space {
+    height: 420px;
   }
-  .home-conversation-heading {
-    margin-bottom: 8px;
+  .command-home .field-core {
+    top: 95px;
+    width: 245px;
+  }
+  .command-home .field-core .command-presence {
+    width: 240px;
+    height: 240px;
+  }
+  .command-home .field-core-label span {
+    display: block;
+    font-size: 0.65rem;
+  }
+  .command-home .field-signal {
+    width: 31%;
+  }
+  .command-home .signal-0,
+  .command-home .signal-1 {
+    top: 32px;
+  }
+  .command-home .signal-2,
+  .command-home .signal-3 {
+    bottom: 20px;
+  }
+  .command-home .command-next {
+    margin-top: 28px;
+  }
+  .command-home .signal-source {
+    display: block;
+    font-size: 0.65rem;
+  }
+  .command-home .signal-0,
+  .command-home .signal-2 {
+    left: 0;
+  }
+  .command-home .signal-1,
+  .command-home .signal-3 {
+    right: 0;
+  }
+}
+@media (min-width: 751px) and (max-width: 1100px) {
+  .command-home .command-environment {
+    column-gap: 22px;
+  }
+  .command-home .command-moment h1 {
+    font-size: 2.5rem;
+  }
+  .command-home .field-space {
+    height: 400px;
+  }
+  .command-home .field-core {
+    top: 108px;
+    width: 210px;
+  }
+  .command-home .field-core .command-presence {
+    width: 204px;
+    height: 204px;
+  }
+  .command-home .field-signal {
+    width: 42%;
+  }
+}
+@media (max-width: 750px) {
+  .home-brief {
+    margin-top: 10px;
+    font-size: 0.8rem;
+  }
+  .home-worlds {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 10px 0;
+  }
+  .home-worlds a:not(.home-world-secondary) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 16px;
+    border-bottom: 1px solid #c4912f26;
+    padding: 18px 0;
+  }
+  .home-worlds small {
+    grid-column: 1/-1;
+  }
+  .home-worlds strong {
+    font-size: 1.5rem;
+  }
+  .home-worlds span {
+    max-width: 140px;
+  }
+  .home-worlds .home-world-secondary {
+    border-top: 0;
+  }
+  .home-conversation-actions {
+    align-items: start;
   }
   .home-conversation-actions small {
-    max-width: 145px;
+    max-width: 100%;
   }
-  .home-conversation-actions .command-action {
-    font-size: 0.8rem;
+}
+@media (max-width: 380px), (max-height: 700px) and (max-width: 750px) {
+  .command-home .field-space {
+    height: 166px;
+  }
+  .command-home .field-core {
+    top: 14px;
+    width: 140px;
+  }
+  .command-home .field-core .command-presence {
+    width: 136px;
+    height: 136px;
   }
   .command-home .command-next {
     padding: 14px 0;
   }
-  .home-worlds {
-    gap: 0 16px;
+  .command-home .command-moment h1 {
+    font-size: 1.9rem;
   }
-  .home-worlds a {
-    font-size: 0.8rem;
+}
+@container (max-width: 16rem) {
+  .command-home .field-space {
+    height: auto;
   }
-  .home-context-note {
-    margin-top: 18px;
+  .command-home .field-core {
+    top: auto;
+    width: 100%;
+  }
+  .command-home .field-signal {
+    width: 100%;
+  }
+  .command-home .signal-source {
+    display: block;
   }
 }
 @media (forced-colors: active) {
-  .home-conversation form,
-  .home-worlds {
+  .home-compose,
+  .home-worlds,
+  .home-records {
     border: 1px solid CanvasText;
   }
 }
 
-@media (max-width: 750px) {
-  .home-conversation-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
+/* Short cover displays keep the action ahead of the navigation; depth still scrolls. */
+@media (max-width: 750px) and (max-height: 700px) {
+  .command-home .command-kicker,
+  .command-home .home-brief {
+    display: none;
   }
-  .home-conversation-actions small {
-    max-width: none;
+  .command-home .command-moment h1 {
+    font-size: 1.65rem;
   }
-  .home-conversation-actions .command-action {
-    padding-inline: 14px;
+  .command-home .field-space {
+    height: 146px;
+  }
+  .command-home .field-core {
+    top: 4px;
+  }
+  .command-home .command-next {
+    padding: 12px 0;
+    gap: 10px;
   }
 }

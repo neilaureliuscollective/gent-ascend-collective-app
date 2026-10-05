@@ -1,3 +1,4 @@
+import { PresenceConcierge } from '@/components/presence/presence-concierge';
 import { GuidedScan } from '@/components/grooming/guided-scan';
 import { HomeHandoffFixture } from './home-handoff';
 import { MemberContinuity } from '@/components/member-continuity';
@@ -99,7 +100,12 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'mirror' ? (
+  mode === 'presence' ? (
+    <main style={{ maxWidth: 1100, margin: 'auto' }}>
+      <p>Synthetic Presence records · no real account.</p>
+      <PresenceConcierge data={{ mode: 'personal', today: '2026-10-05', direction: 'Considered and understated', occasions: params.get('empty') ? [] : [{ title: 'Investor meeting', day: '2026-10-08', note: 'Charcoal suit, familiar skin care' }], replenishment: [{ name: 'Vitalis', note: 'Member marked running low' }], unavailable: params.get('unavailable') ? ['Occasions'] : [] }} />
+    </main>
+  ) : mode === 'mirror' ? (
     <main className="grooming mirror-page">
       <GuidedScan />
     </main>

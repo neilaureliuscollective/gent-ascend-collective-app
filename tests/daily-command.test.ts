@@ -104,16 +104,25 @@ describe('Daily Command rules', () => {
     );
     expect(result.supportingContext.water).toBe(0);
     expect(result.supportingContext.waterTarget).toBe(2000);
-    expect(result.decisions.map((x) => x.id)).toEqual([
-      'occasion',
-      'focus',
-      'training',
-      'fuel',
-      'groom',
-    ]);
+    expect(result.decisions.map((x) => x.id)).toEqual(['occasion', 'focus', 'training', 'fuel']);
     expect(result.decisions[1]?.reason).toContain('Need scope');
     expect(result.decisions[3]?.reason).toContain('not evidence of dehydration');
   });
+  it('never treats missing grooming completion as a Command obligation', () => {
+    expect(
+      deriveCommand(input({ ritual: 'Morning care' })).decisions.some((x) => x.id === 'groom'),
+    ).toBe(false);
+  });
+  it.each(['2026-10-01', '2026-10-10'])(
+    'does not surface an occasion outside the preparation window: %s',
+    (day) => {
+      expect(
+        deriveCommand(input({ occasion: { title: 'Meeting', day } })).decisions.some(
+          (x) => x.id === 'occasion',
+        ),
+      ).toBe(false);
+    },
+  );
   it('uses prior feedback to explain smaller scope without rewriting a plan', () => {
     const result = deriveCommand(input({ priorFit: 'too-much' }));
     expect(result.interpretation).toContain('scope smaller');

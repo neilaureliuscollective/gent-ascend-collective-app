@@ -32,18 +32,13 @@ export function MemberContinuity({
             <small>Open your program ↗</small>
           </Link>
         )}
-        <Link prefetch={false} href="/app/grooming">
-          <span>Grooming · your rituals</span>
-          <strong>{data.rituals[0]?.title ?? 'Build your daily standard.'}</strong>
-          <small>
-            {data.unavailable.includes('Grooming practice') || data.unavailable.includes('Rituals')
-              ? 'Saved practice is temporarily unavailable'
-              : data.rituals.length
-                ? `${data.rituals.filter((r) => r.practicedToday).length} of ${data.rituals.length} active rituals recorded today`
-                : 'Choose a routine you can keep'}{' '}
-            ↗
-          </small>
-        </Link>
+        {!compact && (
+          <Link prefetch={false} href="/app/presence">
+            <span>Presence</span>
+            <strong>Your appearance direction & private history.</strong>
+            <small>Review when it matters ↗</small>
+          </Link>
+        )}
         {data.conversation ? (
           <Link prefetch={false} href={`/app/aethelios?conversation=${data.conversation.id}`}>
             <span>Aethelios & Council</span>
@@ -80,17 +75,13 @@ export function MemberContinuity({
               <dd>{data.sessionsCompleted ?? 'Unavailable'}</dd>
             </div>
             <div>
-              <dt>Days with grooming practice</dt>
-              <dd>{data.practiceDays === null ? 'Unavailable' : `${data.practiceDays} / 7`}</dd>
-            </div>
-            <div>
               <dt>Confirmed daily reviews</dt>
               <dd>{data.reviewedDays} / 7</dd>
             </div>
           </dl>
           <p>
             {data.recordedDays} of 7 days have a daily record. Missing entries don’t mean missed
-            effort. Grooming reflects the latest check-in for each ritual and day.
+            effort. Appearance notes are optional and remain in Presence.
           </p>
           {data.unavailable.length > 0 && (
             <p role="status">
@@ -108,7 +99,7 @@ export function MemberContinuity({
                     <th scope="col">Day</th>
                     <th scope="col">Actions</th>
                     <th scope="col">Training</th>
-                    <th scope="col">Rituals</th>
+                    <th scope="col">Optional appearance records</th>
                   </tr>
                 </thead>
                 <tbody>

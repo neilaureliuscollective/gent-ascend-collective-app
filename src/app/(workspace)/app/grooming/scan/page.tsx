@@ -21,8 +21,8 @@ export default async function Scan({
   const [data, params] = await Promise.all([scanWorkspace(), searchParams]);
   return (
     <main className="grooming mirror-page">
-      <Link className="mirror-back" href="/app/grooming">
-        ← Grooming
+      <Link className="mirror-back" href="/app/presence">
+        ← Presence
       </Link>
       <GuidedScan />
       {params.result && (

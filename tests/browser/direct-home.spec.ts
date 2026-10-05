@@ -35,10 +35,22 @@ for (const [width, height] of [
     await expect(
       page.getByRole('heading', { name: 'Good morning, Synthetic tester.' }),
     ).toBeVisible();
+    const presence = await page.locator('.command-presence').boundingBox();
+    const move = await page.locator('.command-next h2').boundingBox();
+    expect(presence!.y + presence!.height).toBeLessThan(height - 90);
+    expect(move!.y).toBeLessThan(height - 90);
+    if (width <= 1100) {
+      const action = await page.locator('.command-next .command-action').boundingBox();
+      const navigation = await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .boundingBox();
+      expect(action!.y + action!.height).toBeLessThanOrEqual(navigation!.y);
+    }
+    await page.screenshot({ path: `test-results/direct-home-${width}.png`, fullPage: true });
+    await page.locator('.home-compose summary').click();
     const composer = page.getByRole('textbox', { name: 'What are we working on?' });
     await expect(composer).toBeVisible();
-    const box = await composer.boundingBox();
-    expect(box!.y + box!.height).toBeLessThan(height - 90);
+    await expect(composer).toBeFocused();
     await expect(page.locator('.command-opening')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
     await expect(
@@ -49,7 +61,6 @@ for (const [width, height] of [
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await page.screenshot({ path: `test-results/direct-home-${width}.png`, fullPage: true });
   });
 }
 test('home draft opens existing Talk with no automatic send or browser persistence', async ({
@@ -61,6 +72,7 @@ test('home draft opens existing Talk with no automatic send or browser persisten
     await route.fulfill({ json: syntheticWorkspace });
   });
   await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.locator('.home-compose summary').click();
   await page
     .getByRole('textbox', { name: 'What are we working on?' })
     .fill('Help me plan my grooming ritual and next training session.');
@@ -90,6 +102,7 @@ for (const changed of [true, false])
       ),
     );
     await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+    await page.locator('.home-compose summary').click();
     await page
       .getByRole('textbox', { name: 'What are we working on?' })
       .fill('Private synthetic thought');
@@ -102,6 +115,7 @@ test('phone composer stays reachable when the viewport shortens for a keyboard',
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.locator('.home-compose summary').click();
   await page
     .getByRole('textbox', { name: 'What are we working on?' })
     .fill('A synthetic keyboard draft');
@@ -123,6 +137,7 @@ test('member home retains world access and draft controls at enlarged text', asy
   await page.setViewportSize({ width: 360, height: 640 });
   await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
   await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+  await page.locator('.home-compose summary').click();
   const field = page.getByRole('textbox', { name: 'What are we working on?' });
   await field.fill('Synthetic large text draft');
   await page.getByRole('button', { name: 'Continue in Talk' }).scrollIntoViewIfNeeded();
@@ -130,6 +145,26 @@ test('member home retains world access and draft controls at enlarged text', asy
   await expect(
     page
       .getByRole('navigation', { name: 'Your operating spaces' })
-      .getByRole('link', { name: /Grooming/ }),
-  ).toHaveAttribute('href', '/app/grooming');
+      .getByRole('link', { name: /Presence/ }),
+  ).toHaveAttribute('href', '/app/presence');
+});
+
+test('Fold continuity keeps the open home draft and selected source', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.getByRole('button', { name: /Energy/ }).click();
+  await page.locator('.home-compose summary').click();
+  await page
+    .getByRole('textbox', { name: 'What are we working on?' })
+    .fill('Keep this synthetic thought through unfolding.');
+  await page.setViewportSize({ width: 768, height: 900 });
+  await expect(page.getByRole('textbox', { name: 'What are we working on?' })).toHaveValue(
+    'Keep this synthetic thought through unfolding.',
+  );
+  await expect(page.locator('.home-compose')).toHaveAttribute('open', '');
+  await expect(page.getByRole('button', { name: /Energy/ })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

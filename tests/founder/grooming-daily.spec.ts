@@ -36,7 +36,7 @@ test('member chamber saves, reviews, records and restores the actual private rit
   await page.reload();
   await page.getByRole('button', { name: 'evening', exact: true }).click();
   await expect(page.locator('#grooming-area')).toContainText('Synthetic daily evening');
-  await page.getByRole('button', { name: 'I’ve done it' }).click();
+  await page.getByRole('button', { name: 'Add a practice note' }).click();
   await expect(
     page
       .getByRole('dialog')

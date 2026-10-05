@@ -719,7 +719,7 @@ export function AureliusWorkspace({
                       Sending shares this conversation’s recent messages
                       {councilSelection ? ' with the selected Council specialists' : ''}
                       {includeContext
-                        ? `, profile, active goal, confirmed memories, daily records and relevant seven-day training/grooming summaries${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
+                        ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
                         : ''}{' '}
                       with our AI service. Read-only web research may consult public sources; returned sources are linked in saved replies. Nothing is automatically added to memory.
                     </>

@@ -31,7 +31,7 @@ for (const width of [360, 768, 1440]) {
     });
     await page.goto('/experience/world?world=grooming');
     await page.getByRole('link', { name: 'Enter Grooming' }).click();
-    await expect(page.getByRole('heading', { name: 'Your standard. Made daily.' })).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Your standard. On your terms.' })).toBeFocused();
     await page.getByRole('button', { name: 'Explore a ritual' }).click();
     await expect(page.getByRole('dialog')).toContainText('SAMPLE / NOT SAVED TO AN ACCOUNT');
     await finalStep(page);
@@ -109,7 +109,7 @@ test('member recording retries the same request after a lost response (API fixtu
     });
   });
   await page.goto('/experience/grooming');
-  await page.getByRole('button', { name: 'Start today’s ritual' }).click();
+  await page.getByRole('button', { name: 'Review your routine' }).click();
   await finalStep(page);
   await page.getByRole('button', { name: 'Record this practice' }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText(
@@ -229,7 +229,7 @@ test('quick completion, linked products and optional feedback need no step-by-st
   });
   await page.setViewportSize({ width: 344, height: 850 });
   await page.goto('/experience/grooming');
-  await page.getByRole('button', { name: 'I’ve done it' }).click();
+  await page.getByRole('button', { name: 'Add a practice note' }).click();
   await expect(
     page
       .getByRole('dialog')
@@ -338,7 +338,7 @@ test('all-steps navigation is a read-only shortcut to the exact saved step', asy
   await page.goto('/experience/grooming');
   await page.getByText('3 steps · 0 linked products', { exact: true }).click();
   await expect(page.locator('.ritual-glance')).toContainText('Shape the beard with care.');
-  await page.getByRole('button', { name: 'Start today’s ritual' }).click();
+  await page.getByRole('button', { name: 'Review your routine' }).click();
   await page.getByRole('button', { name: 'All steps', exact: true }).click();
   await page.getByRole('list', { name: 'Saved ritual steps' }).getByRole('button').nth(1).click();
   await expect(page.locator('.gw-ritual-step')).toHaveText('Shape the beard with care.');
@@ -430,7 +430,7 @@ test('confirmed feedback refreshes progress and invites explicit review without 
     return route.abort();
   });
   await page.goto('/experience/grooming');
-  await page.getByRole('button', { name: 'I’ve done it' }).click();
+  await page.getByRole('button', { name: 'Add a practice note' }).click();
   await page.getByRole('button', { name: 'Too much effort', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Feedback saved.');
   await page.getByRole('button', { name: 'Close Your grooming ritual' }).click();

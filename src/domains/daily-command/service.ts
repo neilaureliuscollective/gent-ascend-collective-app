@@ -59,26 +59,12 @@ export async function readCommand(override?: Arrival): Promise<CommandData> {
       .gte('day', since)
       .lte('day', day),
     client
-      .from('grooming_rituals')
-      .select('id,title,kind')
-      .eq('person_id', person.id)
-      .eq('active', true)
-      .eq('kind', 'morning')
-      .limit(1),
-    client
       .from('grooming_events')
       .select('title,event_date')
       .eq('person_id', person.id)
       .gte('event_date', day)
       .lte('event_date', shiftDay(day, 7))
       .order('event_date')
-      .limit(1),
-    client
-      .from('grooming_goals')
-      .select('title')
-      .eq('person_id', person.id)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
       .limit(1),
     client
       .from('daily_command_records')
@@ -95,9 +81,7 @@ export async function readCommand(override?: Arrival): Promise<CommandData> {
     targetsResult,
     movementResult,
     recoveryResult,
-    ritualResult,
     eventsResult,
-    goalsResult,
     recordsResult,
   ] = results;
   const unavailable: string[] = [];
@@ -118,9 +102,7 @@ export async function readCommand(override?: Arrival): Promise<CommandData> {
   const targets = value(targetsResult, 'Fuel references');
   const movements = value(movementResult, 'Movement') ?? [];
   const recovery = value(recoveryResult, 'Recovery practices') ?? [];
-  const ritual = value(ritualResult, 'Grooming rituals')?.[0];
   const occasion = value(eventsResult, 'Occasions')?.[0];
-  const groomingGoal = value(goalsResult, 'Grooming goals')?.[0];
   const records = value(recordsResult, 'Command history') ?? [];
   const record = records.find((r) => r.day === day) ?? null;
   const yesterday = records.find((r) => r.day === shiftDay(day, -1) && r.outcome);
@@ -240,32 +222,6 @@ export async function readCommand(override?: Arrival): Promise<CommandData> {
   if (priority) report('life', `Saved priority: ${priority}`);
   const blocker = daily?.carryForward?.blocker || null;
   if (blocker) report('life', `Carry-forward blocker: ${blocker}`, daily!.carryForward!.day);
-  if (groomingGoal) report('grooming', `Saved grooming goal: ${groomingGoal.title}`);
-  let ritualDue: string | null = null;
-  if (ritual) {
-    const completion = await client
-      .from('grooming_checkins')
-      .select('occurred_at')
-      .eq('person_id', person.id)
-      .eq('ritual_id', ritual.id)
-      .eq('done', true)
-      .gte('occurred_at', `${shiftDay(day, -1)}T00:00:00Z`)
-      .order('occurred_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (completion.error) unavailable.push('Ritual completion');
-    else {
-      const completed =
-        completion.data && localDay(new Date(completion.data.occurred_at), person.timezone) === day;
-      ritualDue = completed ? null : ritual.title;
-      report(
-        'grooming',
-        `${ritual.title}: ${completed ? 'completion recorded today' : 'no completion recorded today'}`,
-        day,
-        'app-history',
-      );
-    }
-  }
   if (occasion) report('occasion', `Saved occasion: ${occasion.title}`, occasion.event_date);
   const input: DailyCommandSignals = {
     day,
@@ -277,7 +233,7 @@ export async function readCommand(override?: Arrival): Promise<CommandData> {
     priority,
     blocker,
     goal: daily?.goal?.title ?? null,
-    ritual: ritualDue,
+    ritual: null,
     occasion: occasion ? { title: occasion.title, day: occasion.event_date } : null,
     unavailable,
     priorFit: yesterday?.outcome?.fit,

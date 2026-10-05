@@ -205,7 +205,7 @@ export function FirstSession({
           </Link>
         ) : (
           <p className="muted">
-            Your free account includes daily planning, grooming records, training and Collection.{' '}
+            Your free account includes daily planning, Presence, training and Collection.{' '}
             <Link href="/app/membership">Review membership access to Aethelios →</Link>
           </p>
         )}

@@ -16,9 +16,9 @@ const worlds = [
     copy: 'Training, fuel and recovery. One part of the whole man.',
   },
   {
-    href: '/app/grooming',
-    title: 'Grooming Concierge',
-    copy: 'Your appearance, routines and professional direction.',
+    href: '/app/presence',
+    title: 'Presence',
+    copy: 'Appearance, wardrobe, confidence and preparation for the moments that matter.',
   },
   {
     href: '/app/aethelios',

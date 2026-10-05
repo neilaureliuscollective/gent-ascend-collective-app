@@ -45,7 +45,7 @@ export default async function Professional({
             <em>conversation.</em>
           </h1>
           <p>Carry a chosen direction into the chair. Bring back the details worth remembering.</p>
-          <Link href="/app/grooming">← Grooming Concierge</Link>
+          <Link href="/app/presence">← Presence</Link>
         </div>
         <div className="groom-seal" aria-hidden="true">
           GA

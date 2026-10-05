@@ -95,6 +95,7 @@ test('saved completion produces one finite return trace; refresh failure produce
   await page.route('**/api/command', (route) =>
     route.fulfill({ status: 503, json: { error: 'Unavailable' } }),
   );
+  await page.locator('.home-records > summary').click();
   await page.getByRole('button', { name: 'Refresh briefing' }).click();
   await expect(page.locator('.field-space')).toHaveAttribute('data-state', 'stale');
   expect(
