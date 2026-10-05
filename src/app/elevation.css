@@ -629,3 +629,35 @@ html[data-quiet='true'] .connection-arrival {
   cursor: progress;
   filter: saturate(.7);
 }
+
+/* Quiet reward loop: confirm real actions, then disappear. */
+.command-feedback:not(:empty),
+.aurelius-notice:not(:empty),
+.form-feedback:not(:empty) {
+  position: relative;
+  border-left: 1px solid #d7b46b72;
+  padding-left: 12px;
+  color: #b8c7bf;
+}
+.command-feedback:not(:empty)::before,
+.aurelius-notice:not(:empty)::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: .45em;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #e3be74;
+  box-shadow: 0 0 12px #e3be7490;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion='ambient']:not([data-quiet='true']) .command-feedback:not(:empty),
+  html[data-motion='ambient']:not([data-quiet='true']) .aurelius-notice:not(:empty) {
+    animation: ga-confirm 260ms var(--ga-ease) both;
+  }
+}
+@keyframes ga-confirm {
+  from { opacity: .35; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
