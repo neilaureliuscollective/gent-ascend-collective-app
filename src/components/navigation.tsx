@@ -4,11 +4,10 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from './visual/icon';
 const destinations: [string, string, IconName][] = [
-  ['/app', 'Command', 'command'],
-  ['/app/world', 'My world', 'world'],
-  ['/app/collection', 'Collection', 'collection'],
-  ['/app/progress', 'Progress', 'progress'],
-  ['/app/you', 'You', 'person'],
+  ['/app', 'Today', 'command'],
+  ['/app/aethelios', 'Aethelios', 'aethelios'],
+  ['/app/world', 'Life', 'world'],
+  ['/app/collection', 'Collective', 'collection'],
 ];
 export function Navigation() {
   const path = usePathname();
@@ -40,10 +39,15 @@ export function Navigation() {
           aria-current={
             path === href ||
             (href === '/app/collection' && path.startsWith('/app/collection/')) ||
+            (href === '/app/aethelios' && path.startsWith('/app/aethelios')) ||
             (href === '/app/world' &&
               (path.startsWith('/app/performance') ||
                 path.startsWith('/app/grooming') ||
-                path.startsWith('/app/presence')))
+                path.startsWith('/app/presence') ||
+                path.startsWith('/app/progress') ||
+                path.startsWith('/app/studio') ||
+                path.startsWith('/app/goals') ||
+                path.startsWith('/app/ascend-profile'))) 
               ? 'page'
               : undefined
           }
