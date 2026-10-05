@@ -600,3 +600,32 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-horizon::after {
     display: none !important;
   }
 }
+
+/* Rendering budget: keep decorative layers cheap and let content own the frame. */
+.ambient-environment,
+.connection-field {
+  contain: layout paint;
+}
+html[data-quiet='true'] .ambient-horizon::after,
+html[data-quiet='true'] .connection-arrival {
+  animation: none !important;
+}
+@media (max-width: 750px) {
+  .connection-field { display: none; }
+  .ambient-grain { opacity: .035; }
+  .navigation { backdrop-filter: blur(16px) saturate(1.1); }
+  .command-home .field-signal { backdrop-filter: none; }
+}
+@media (max-width: 420px) {
+  body::after { opacity: .42; box-shadow: inset 0 0 80px #0007; }
+  .ambient-horizon { top: 66px; }
+}
+
+/* Competence feedback: actions acknowledge touch immediately without confetti/streak theater. */
+:where(.button,.secondary-button,.command-action,.navigation a,.home-worlds a,.text-button,.text-link) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.button,.secondary-button,.command-action,.navigation a)[aria-busy='true'] {
+  cursor: progress;
+  filter: saturate(.7);
+}
