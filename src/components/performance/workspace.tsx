@@ -44,10 +44,10 @@ import type { Prescription, Program } from '@/domains/performance/schema';
 type View = 'today' | 'train' | 'restore' | 'fuel' | 'movement' | 'review';
 export function PerformanceWorkspace({ initial, initialView = "today" }: { initial: PerformanceData; initialView?: View }) {
   const handoff = useConversationDraft();
-  const consumedHandoff = useRef(false);
-  const [handoffText, setHandoffText] = useState('');
+  const [initialHandoff] = useState(() => handoff?.take('performance', initial.owner) ?? null);
+  const [handoffText] = useState(initialHandoff?.text ?? '');
   const [data, setData] = useState(initial);
-  const [view, setView] = useState<View>(initialView);
+  const [view, setView] = useState<View>(initialHandoff ? 'train' : initialView);
   const [editing, setEditorValue] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(
     null,
   );
@@ -61,7 +61,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
   const [device, setDevice] = useState<DeviceDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [savingSet, setSavingSet] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(initialHandoff ? 'Aethelios carried your request into Performance.' : '');
   const [error, setError] = useState('');
   const [syncState, setSyncState] = useState('');
   const [conflict, setConflict] = useState(false);
@@ -78,17 +78,6 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
   const direction = todayDirection(data);
   const weekly = weeklyReview(data);
   const adjustment = nextAdjustment(data);
-  useEffect(() => {
-    const pending = handoff?.pending;
-    if (consumedHandoff.current || !pending || pending.target !== 'performance') return;
-    consumedHandoff.current = true;
-    if (pending.ownerId === owner) {
-      setHandoffText(pending.text);
-      setView('train');
-      setNotice('Aethelios carried your request into Performance.');
-    }
-    handoff.stage(null);
-  }, [handoff, owner]);
   function setLocal(row: DeviceDraft | null) {
     const current = deviceRef.current;
     if (
