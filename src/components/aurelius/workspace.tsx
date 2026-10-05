@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
 import { CouncilPanel } from './council-panel';
 import { councilFromVersion, councilPromptVersion, councilLabel, type CouncilSelection } from '@/domains/intelligence/council';
@@ -40,6 +41,7 @@ export function AureliusWorkspace({
   founderLinked?: boolean;
 }) {
   const [preview, setPreview] = useState(false);
+  const router = useRouter();
   const { moving } = useAppearance();
   const composer = useRef<HTMLTextAreaElement>(null);
   const tableReview=useRef<{open:()=>void}>(null);
@@ -61,6 +63,7 @@ export function AureliusWorkspace({
   const [tab, setTab] = useState<'conversation' | 'memory' | 'context'>('conversation');
   const [includeContext, setIncludeContext] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [revision, setRevision] = useState<{sourceTurnId:string;revisionKind:'edit'}|null>(null);
@@ -363,8 +366,35 @@ export function AureliusWorkspace({
     follow.current = true;
     composer.current?.focus();
   }
-  const blocked = busy || loading || deleting;
+  const blocked = busy || loading || deleting || orchestrating;
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
+
+  async function prepareCapability() {
+    if (!capability || !data?.ownerId || !['performance','studio'].includes(capability.id) || orchestrating) return;
+    const text = draft.trim() || data.turns.at(-1)?.user_text || '';
+    if (!text) return;
+    setOrchestrating(true);
+    setError('');
+    setNotice(`Preparing ${capability.label}…`);
+    try {
+      const response = await fetch('/api/aurelius/orchestrate', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({target:capability.id,text}),
+        signal:AbortSignal.timeout(30000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? `${capability.label} could not be prepared.`);
+      if (result.ownerId !== data.ownerId) throw new Error('Account changed. Reopen Aethelios before continuing.');
+      handoff?.stage({text,ownerId:data.ownerId,target:capability.id,payload:result});
+      router.push(capability.href);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : `${capability.label} could not be prepared.`);
+      setNotice('');
+    } finally {
+      setOrchestrating(false);
+    }
+  }
   if (!data)
     return (
       <div className="aurelius-unavailable">
@@ -660,14 +690,20 @@ export function AureliusWorkspace({
               {capability && !councilSelection && (
                 <div className="revision-notice" aria-live="polite">
                   <span>Aethelios is routing this through <strong>{capability.label}</strong> intelligence.</span>{' '}
-                  <Link
-                    href={capability.href}
-                    onClick={() => {
-                      if (data.ownerId) handoff?.stage({ text: draft.trim() || data.turns.at(-1)?.user_text || '', ownerId: data.ownerId, target: capability.id });
-                    }}
-                  >
-                    Open {capability.label} only if you want depth ↗
-                  </Link>
+                  {['performance','studio'].includes(capability.id) ? (
+                    <button type="button" className="text-button" disabled={orchestrating} onClick={() => void prepareCapability()}>
+                      {orchestrating ? `Preparing ${capability.label}…` : `Prepare in ${capability.label} ↗`}
+                    </button>
+                  ) : (
+                    <Link
+                      href={capability.href}
+                      onClick={() => {
+                        if (data.ownerId) handoff?.stage({ text: draft.trim() || data.turns.at(-1)?.user_text || '', ownerId: data.ownerId, target: capability.id });
+                      }}
+                    >
+                      Open {capability.label} only if you want depth ↗
+                    </Link>
+                  )}
                 </div>
               )}
               {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
