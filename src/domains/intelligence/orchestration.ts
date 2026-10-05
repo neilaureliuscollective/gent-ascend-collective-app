@@ -8,6 +8,7 @@ import { currentAccess } from '@/domains/access/current';
 import { readPerformance } from '@/domains/performance/service';
 import { defaultProfile } from '@/domains/performance/model';
 import { planSchema } from '@/domains/performance/schema';
+import { readPresence } from '@/domains/presence/service';
 
 const performanceDraftSchema = z.object({
   title: z.string().trim().min(1).max(80),
@@ -18,6 +19,17 @@ const performanceDraftSchema = z.object({
     load: z.number().min(0).max(1500),
     restSeconds: z.number().int().min(15).max(600),
   }).strict()).min(1).max(12),
+}).strict();
+
+const presenceDraftSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  summary: z.string().trim().min(1).max(500),
+  preparations: z.array(z.object({
+    label: z.string().trim().min(1).max(100),
+    timing: z.string().trim().max(100),
+    reason: z.string().trim().max(220),
+  }).strict()).min(1).max(6),
+  ask: z.array(z.string().trim().min(1).max(180)).max(4),
 }).strict();
 
 const studioDraftSchema = z.object({
@@ -34,7 +46,7 @@ const studioDraftSchema = z.object({
 }).strict();
 
 export const orchestrationInput = z.object({
-  target: z.enum(['performance','studio']),
+  target: z.enum(['performance','studio','presence']),
   text: z.string().trim().min(3).max(6000),
 }).strict();
 
@@ -72,6 +84,19 @@ export async function prepareCapabilityDraft(input:z.infer<typeof orchestrationI
       exercises:draft.exercises.map(exercise=>({id:crypto.randomUUID(),...exercise})),
     });
     return {target:'performance' as const,ownerId:person.id,plan};
+  }
+
+  if (input.target === 'presence') {
+    const data = await readPresence();
+    if (data.mode !== 'personal' || !data.ownerId || data.ownerId !== person.id) throw new IntelligenceError('Presence could not verify this account.',403);
+    const result=await generateText({
+      model:model(),
+      output:Output.object({schema:presenceDraftSchema,name:'presence_plan',description:'A reviewable readiness plan for an upcoming moment.'}),
+      instructions:'Prepare a concise readiness plan for how the member shows up. Use only the supplied saved occasion, appearance direction and product notes. Do not invent wardrobe inventory, haircut cadence, appointments, bookings, medical facts or product needs. Do not create daily grooming chores. If important details are unknown, put them in ask rather than guessing. Preparations should be practical and timed around the real moment. Return only the structured draft.',
+      prompt:JSON.stringify({request:input.text,today:data.today,direction:data.direction,occasions:data.occasions,replenishment:data.replenishment}),
+      maxOutputTokens:1000,maxRetries:1,timeout:{totalMs:18000},providerOptions:{openai:{store:false}},
+    });
+    return {target:'presence' as const,ownerId:person.id,presence:result.output};
   }
 
   const result=await generateText({
