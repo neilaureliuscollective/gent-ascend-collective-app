@@ -30,7 +30,7 @@ export function Shell({
           <Link className="wordmark" href="/app" aria-label="Gent Ascend Collective home">
             <Brand />
           </Link>
-          <p className="navigation-label">YOUR ASCENT</p>
+          <p className="navigation-label">GENT ASCEND</p>
           <Navigation />
           <AureliusPanel />
           <AetheliosSpaceNavigation placement="sidebar" />
@@ -55,7 +55,7 @@ export function Shell({
               <Brand compact />
             </Link>
             <span className="topbar-context">
-              GENT ASCEND <span>/</span> YOUR PERSONAL COMMAND
+              GENT ASCEND <span>/</span> PERSONAL INTELLIGENCE
             </span>
             <div className="topbar-actions">
               <UniversalCapture />

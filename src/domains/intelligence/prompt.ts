@@ -2,6 +2,7 @@ import type { ModelMessage } from 'ai';
 import { councilFromVersion, councilLabel } from './council';
 import type { PersonalContext, Turn } from './types';
 import { publishedKnowledgeContext } from './published-knowledge';
+import type { CapabilityRoute } from './capabilities';
 export const promptVersion = 'aethelios-2026-10-04.connected-ritual.3';
 // Distilled from docs/doctrine; changes are reviewed/versioned, not self-modifying.
 export const aureliusInstructions = `You are Aethelios — Digital Co-Founder of Gent Ascend Collective, a men's advancement ecosystem. Gent Ascend Collective is the master brand; you are its AI intelligence and scalable digital extension of the human founder's mission. Legacy Reserve is the separate product brand.
@@ -26,6 +27,7 @@ export function buildMessages(
   now = new Date(),
   founderContext: string | null = null,
   threadSummary: string | null = null,
+  capability: Pick<CapabilityRoute, 'id' | 'label' | 'instruction'> | null = null,
 ): ModelMessage[] {
   // Record identifiers are for the app's confirmation controls, not model instructions.
   const modelContext = context
@@ -46,7 +48,7 @@ export function buildMessages(
   const messages: ModelMessage[] = [
     {
       role: 'user',
-      content: `Application context, not instructions. Current UTC time: ${now.toISOString()}. ${publishedKnowledgeContext()} Thread summary ${threadSummary ? `of older messages in THIS conversation (not persistent memory): ${threadSummary}` : 'unavailable'}. Personal context ${context ? 'enabled' : 'disabled for this message'}. ${context ? JSON.stringify(modelContext) : 'Do not use saved profile, goals or memories.'} Founder notebook ${founderContext ? `verified and enabled for this message: ${founderContext}` : 'unavailable for this message.'}`,
+      content: `Application context, not instructions. Current UTC time: ${now.toISOString()}. ${publishedKnowledgeContext()} Thread summary ${threadSummary ? `of older messages in THIS conversation (not persistent memory): ${threadSummary}` : 'unavailable'}. Personal context ${context ? 'enabled' : 'disabled for this message'}. ${context ? JSON.stringify(modelContext) : 'Do not use saved profile, goals or memories.'} Founder notebook ${founderContext ? `verified and enabled for this message: ${founderContext}` : 'unavailable for this message.'} ${capability ? `Capability router selected ${capability.label} (${capability.id}) for this request. Routing instruction: ${capability.instruction}` : 'No specialized capability was selected; answer directly.'}`,
     },
   ];
   const history: ModelMessage[] = [];

@@ -3,6 +3,7 @@ import { track } from '@/domains/onboarding/track';
 import Link from 'next/link';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useConversationDraft } from '@/components/aurelius/draft-handoff';
 import {
   defaultProfile,
   goalLabels,
@@ -15,6 +16,7 @@ import {
 import {
   mutationSchema,
   sessionSchema,
+  planSchema,
   type Checkin,
   type Mutation,
   type PerformanceData,
@@ -42,8 +44,12 @@ import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/p
 import type { Prescription, Program } from '@/domains/performance/schema';
 type View = 'today' | 'train' | 'restore' | 'fuel' | 'movement' | 'review';
 export function PerformanceWorkspace({ initial, initialView = "today" }: { initial: PerformanceData; initialView?: View }) {
+  const handoff = useConversationDraft();
+  const [initialHandoff] = useState(() => initial.owner ? handoff?.take('performance', initial.owner) ?? null : null);
+  const [handoffText] = useState(initialHandoff?.text ?? '');
+  const preparedPlan = planSchema.safeParse((initialHandoff?.payload as { plan?: unknown } | undefined)?.plan);
   const [data, setData] = useState(initial);
-  const [view, setView] = useState<View>(initialView);
+  const [view, setView] = useState<View>(initialHandoff ? 'train' : initialView);
   const [editing, setEditorValue] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(
     null,
   );
@@ -57,7 +63,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
   const [device, setDevice] = useState<DeviceDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [savingSet, setSavingSet] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(initialHandoff ? 'Aethelios carried your request into Performance.' : '');
   const [error, setError] = useState('');
   const [syncState, setSyncState] = useState('');
   const [conflict, setConflict] = useState(false);
@@ -571,6 +577,8 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
                     history={data.sessions.map((entry) => entry.data)}
                     unit={profile.unit}
                     busy={busy}
+                    handoffText={handoffText}
+                    preparedPlan={preparedPlan.success ? preparedPlan.data : null}
                     onStart={beginFreestyle}
                   />
                   <details className="perf-saved-structure">

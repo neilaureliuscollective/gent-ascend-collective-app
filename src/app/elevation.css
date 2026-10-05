@@ -1,0 +1,663 @@
+/* Gent Ascend Elevation — cockpit materials, zero-layer hierarchy, shy-tech controls.
+   This layer intentionally overrides older visual primitives without changing domain behavior. */
+
+:root {
+  --ga-black: #030706;
+  --ga-black-2: #07100d;
+  --ga-panel: #0b1512;
+  --ga-panel-raised: #101d18;
+  --ga-green: #0d3f34;
+  --ga-green-live: #19644f;
+  --ga-metal: #c99d52;
+  --ga-metal-hot: #eccb87;
+  --ga-silver: #c8d1cc;
+  --ga-line: color-mix(in srgb, var(--ga-metal) 20%, transparent);
+  --ga-line-cool: color-mix(in srgb, #8bc7b2 17%, transparent);
+  --ga-glass: color-mix(in srgb, #0c1713 84%, transparent);
+  --ga-glow: 0 0 34px #1c755832;
+  --ga-shadow-deep: 0 28px 90px #000a;
+  --ga-ease: cubic-bezier(.2,.8,.2,1);
+  --radius: 10px;
+  --font-body: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html {
+  background: var(--ga-black);
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 620px at 58% -12%, #134b3a2b, transparent 62%),
+    linear-gradient(180deg, #07100d 0%, #030706 42%, #020403 100%);
+  letter-spacing: -.006em;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+  box-shadow: inset 0 0 140px #0008;
+  opacity: .62;
+}
+
+/* Atmospheric chassis: always cheap to paint; only opacity/transform animate. */
+.ambient-environment {
+  background:
+    linear-gradient(90deg, transparent 0 48%, #9dbead08 50%, transparent 52%),
+    radial-gradient(900px 520px at 74% 14%, #174f3c30, transparent 68%);
+}
+.ambient-light {
+  height: min(860px, 100svh);
+  background:
+    radial-gradient(700px 360px at 52% -2%, #d9af6815, transparent 62%),
+    radial-gradient(800px 500px at 86% 26%, #1a6c5130, transparent 67%);
+  filter: saturate(.9);
+}
+.ambient-horizon {
+  position: absolute;
+  left: 8%;
+  right: 4%;
+  top: 86px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d9b56d30 18%, #9bcab922 62%, transparent);
+  box-shadow: 0 22px 70px #24715716;
+}
+.ambient-horizon::after {
+  content: '';
+  position: absolute;
+  right: 9%;
+  top: -3px;
+  width: 84px;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #e4c78375, transparent);
+  filter: blur(.3px);
+  opacity: .45;
+}
+.ambient-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 18%, transparent 0 38%, #02040322 72%, #01020185 100%);
+}
+html[data-motion='ambient']:not([data-quiet='true']) .ambient-horizon::after {
+  animation: ga-horizon-scan 9s var(--ga-ease) infinite;
+}
+@keyframes ga-horizon-scan {
+  0%, 74%, 100% { transform: translateX(0); opacity: .18; }
+  82% { transform: translateX(-150px); opacity: .62; }
+  92% { transform: translateX(24px); opacity: .28; }
+}
+
+/* Desktop cockpit rail. */
+@media (min-width: 1101px) {
+  .sidebar {
+    width: 226px;
+    padding: 28px 18px;
+    background:
+      linear-gradient(180deg, #0a1511ed, #030605f5 58%),
+      #050806;
+    border-right: 1px solid #d0aa6320;
+    box-shadow: 22px 0 70px #0004;
+    backdrop-filter: blur(22px) saturate(1.1);
+  }
+  .workspace { margin-left: 226px; }
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    top: 112px;
+    bottom: 28px;
+    right: -1px;
+    width: 1px;
+    background: linear-gradient(transparent, #d9b66c42 28%, #3a7c6730 68%, transparent);
+  }
+  .sidebar .brand-lockup { padding-left: 8px; gap: 12px; }
+  .sidebar .brand-seal { width: 64px; height: 64px; }
+  .sidebar .brand-type { font-size: .92rem; }
+  .navigation-label {
+    margin: 34px 12px 11px;
+    color: #84958d;
+    font-size: .56rem;
+    letter-spacing: .24em;
+  }
+  .navigation { gap: 3px; }
+  .navigation a {
+    min-height: 48px;
+    padding: 11px 12px;
+    border-radius: 6px;
+    color: #8fa098;
+    border-color: transparent;
+    transition: color 140ms var(--ga-ease), background 180ms var(--ga-ease), border-color 180ms var(--ga-ease);
+  }
+  .navigation a .ui-icon { opacity: .72; transition: opacity 140ms var(--ga-ease), transform 180ms var(--ga-ease); }
+  .navigation a:hover { color: #e3e9e5; background: #9bcbb00a; }
+  .navigation a:hover .ui-icon { opacity: 1; transform: translateX(1px); }
+  .navigation a[aria-current='page'] {
+    color: #f5e8cb;
+    background: linear-gradient(90deg, #174a3a72, #0a1511 72%);
+    border-color: #c89c4e36;
+    box-shadow: inset 0 1px #f3d99f0b, 0 10px 28px #0003;
+  }
+  .navigation a[aria-current='page']::before {
+    top: 20%;
+    bottom: 20%;
+    width: 2px;
+    background: linear-gradient(#7a5627, #efcf8d, #7a5627);
+    box-shadow: 0 0 16px #deb96872;
+  }
+}
+
+/* Top sightline — more HUD than toolbar. */
+.topbar {
+  height: 72px;
+  margin-inline: clamp(18px, 3.4vw, 46px);
+  border-color: #d2b16d1a;
+}
+.topbar-context {
+  color: #879b92;
+  letter-spacing: .17em;
+  font-size: .57rem;
+}
+.topbar-context span { color: #bf9957; }
+.topbar-actions { gap: 7px; }
+.avatar {
+  width: 38px; height: 38px;
+  border-color: #d1ab6630;
+  background: linear-gradient(145deg, #15211c, #070b09);
+  box-shadow: inset 0 1px #ffffff08;
+}
+.appearance-controls {
+  opacity: .48;
+  transition: opacity 160ms var(--ga-ease);
+}
+.appearance-controls:hover,
+.appearance-controls:focus-within { opacity: 1; }
+.appearance-controls button {
+  min-height: 38px;
+  border-radius: 5px;
+  font-size: .61rem;
+}
+.shell-ascend-link { color: #81958c; }
+
+/* Premium material model: thin edge, dark volume, no generic floating cards. */
+.surface,
+.panel,
+.domain-card,
+.daily-card,
+.aurelius-surface,
+.aethelios-link-panel,
+.home-compose {
+  border-color: #d5b46f22;
+  background:
+    linear-gradient(135deg, #ffffff05, transparent 26%),
+    linear-gradient(155deg, #101d18e8, #070c0ae8 78%);
+  box-shadow:
+    0 18px 58px #0005,
+    inset 0 1px 0 #ffffff07;
+}
+
+.surface,
+.panel,
+.domain-card,
+.daily-card {
+  position: relative;
+  overflow: hidden;
+}
+.surface::after,
+.panel::after,
+.domain-card::after,
+.daily-card::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, #d7b56e08, transparent 24%, transparent 72%, #70a89306);
+}
+
+.button,
+.secondary-button,
+.command-action {
+  border-radius: 6px;
+  min-height: 44px;
+  letter-spacing: .015em;
+  transition: transform 110ms var(--ga-ease), filter 140ms var(--ga-ease), border-color 140ms var(--ga-ease), background 140ms var(--ga-ease);
+}
+.button,
+.command-action {
+  box-shadow: 0 8px 26px #0005, inset 0 1px #fff4c72e, inset 0 -1px #6847174d;
+}
+@media (hover:hover) and (pointer:fine) {
+  .button:hover:not(:disabled),
+  .command-action:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+}
+.button:active:not(:disabled),
+.command-action:active:not(:disabled),
+.secondary-button:active:not(:disabled) { transform: translateY(1px) scale(.995); }
+
+.text-link,
+.text-button {
+  color: #caae76;
+  transition: color 140ms var(--ga-ease), opacity 140ms var(--ga-ease);
+}
+.text-link:hover,
+.text-button:hover { color: #efd69c; }
+
+/* Today = windshield. Large orientation, minimal furniture. */
+.command-home {
+  max-width: 1440px;
+  margin-inline: auto;
+}
+.command-home .command-environment {
+  position: relative;
+  min-height: min(720px, calc(100dvh - 104px));
+  margin: 0;
+  padding-inline: clamp(18px, 4.2vw, 62px);
+  border-bottom: 1px solid #d3b16d1c;
+}
+.command-home .command-environment::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  inset: 0 0 auto;
+  height: 76%;
+  background:
+    radial-gradient(600px 360px at 75% 38%, #1b644a1c, transparent 70%),
+    linear-gradient(90deg, #d8b36b0a 1px, transparent 1px);
+  background-size: auto, 180px 100%;
+  mask-image: linear-gradient(#0008, transparent);
+  opacity: .65;
+}
+.command-home .command-arrival,
+.command-home .command-moment,
+.command-home .command-field,
+.command-home .command-next,
+.command-home .home-conversation {
+  position: relative;
+  z-index: 1;
+}
+.command-home .command-arrival {
+  color: #82978e;
+  letter-spacing: .12em;
+}
+.command-home .command-kicker {
+  color: #c19d60;
+  font-size: .59rem;
+  letter-spacing: .24em;
+}
+.command-home .command-moment h1 {
+  max-width: 11ch;
+  color: #f3f1e9;
+  font-size: clamp(2.45rem, 5.2vw, 5.25rem);
+  line-height: .99;
+  letter-spacing: -.055em;
+  font-weight: 540;
+}
+.home-brief {
+  max-width: 46ch;
+  color: #aebfb6;
+  font-size: .86rem;
+  line-height: 1.72;
+}
+.command-home .field-space {
+  filter: drop-shadow(0 24px 44px #0005);
+}
+.command-home .field-signal {
+  border-color: #8fc4b21a;
+  background: linear-gradient(140deg, #0a1612b8, #07100d8c);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px #ffffff05;
+}
+.command-home .field-signal strong { color: #f1e4c8; }
+.command-home .signal-label { color: #8fb1a4; }
+
+/* One decisive move. */
+.command-home .command-next {
+  border-block: 1px solid #d0aa6324;
+  background: linear-gradient(90deg, #153d3030, transparent 72%);
+}
+.command-home .command-next > div > span {
+  color: #b18e55;
+  font-size: .57rem;
+  letter-spacing: .19em;
+  text-transform: uppercase;
+}
+.command-home .command-next h2 {
+  color: #f0eee5;
+  letter-spacing: -.035em;
+}
+.command-home .command-next p { color: #8fa298; }
+
+/* Ahead card = signal, not card soup. */
+.command-home .command-next[aria-label='Ahead'] {
+  position: relative;
+  margin-top: 14px;
+  padding: 18px 18px 18px 22px;
+  border: 1px solid #d2ad6740;
+  border-left: 2px solid #d5ad62;
+  background:
+    radial-gradient(420px 180px at 0 50%, #2a755431, transparent 68%),
+    linear-gradient(100deg, #0b1914, #070b09);
+  box-shadow: 0 18px 48px #0004, inset 0 1px #f5ddb00a;
+}
+.command-home .command-next[aria-label='Ahead']::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 20%;
+  width: 5px;
+  height: 60%;
+  border-radius: 99px;
+  background: #e2bf78;
+  box-shadow: 0 0 20px #d5a95786;
+}
+.command-home .command-next[aria-label='Ahead'] > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.command-home .command-next[aria-label='Ahead'] .text-button {
+  min-height: 40px;
+  color: #778b82;
+  font-size: .67rem;
+}
+
+/* Zero-layer Ask field. */
+.home-compose {
+  overflow: hidden;
+  border: 1px solid #b9945332;
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, #133a2d99, #07100de6 72%);
+  box-shadow: 0 16px 46px #0004, inset 0 1px #bce8d809;
+}
+.home-compose summary {
+  min-height: 58px;
+  color: #ece9df;
+  font-size: .86rem;
+}
+.home-compose summary span:last-child {
+  display: inline-grid;
+  place-items: center;
+  width: 28px; height: 28px;
+  border: 1px solid #c8a25a30;
+  border-radius: 50%;
+}
+.home-conversation textarea {
+  min-height: 104px;
+  color: #f3f2ec;
+  caret-color: #e5bd72;
+}
+
+/* Capability rail inspired by a configurable panoramic strip. */
+.home-worlds {
+  border-top: 0;
+  margin-top: 18px;
+  padding: 10px clamp(10px, 1.5vw, 18px);
+  border: 1px solid #d0ac6822;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #0b1512c7, #070b09d9);
+  box-shadow: inset 0 1px #ffffff05, 0 16px 42px #0003;
+}
+.home-worlds a {
+  position: relative;
+  padding: 16px 18px;
+  border-left: 1px solid #d0ac6819;
+}
+.home-worlds a:first-child { border-left: 0; }
+.home-worlds small { color: #758d83; font-size: .55rem; letter-spacing: .17em; }
+.home-worlds strong {
+  color: #dedfd8;
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+  font-weight: 560;
+  letter-spacing: -.025em;
+}
+.home-worlds span { color: #82978e; font-size: .67rem; }
+.home-worlds a::after {
+  content: '';
+  position: absolute;
+  left: 18px; right: 18px; bottom: 7px;
+  height: 1px;
+  background: linear-gradient(90deg, #ddb969, transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms var(--ga-ease);
+}
+@media (hover:hover) and (pointer:fine) {
+  .home-worlds a:hover::after { transform: scaleX(1); }
+  .home-worlds a:hover strong { color: #f4e5c6; }
+}
+
+/* Shy-tech secondary systems: visible structure, quiet controls until requested. */
+.home-records {
+  border-color: #b8975920;
+}
+.home-records > summary {
+  color: #82958c;
+  min-height: 52px;
+}
+.home-records > summary:hover { color: #d7dfda; }
+.home-records[open] > summary { color: #d8c496; }
+.command-depth-nav {
+  gap: 1px;
+}
+.command-depth-nav a,
+.command-depth-nav button {
+  border-radius: 4px;
+}
+
+/* Aethelios = command chamber, not generic chat. */
+.aurelius-surface {
+  border-radius: 12px;
+  border-color: #9ccbb91d;
+  background:
+    radial-gradient(700px 340px at 65% 0%, #15503b20, transparent 70%),
+    linear-gradient(150deg, #0b1713f0, #050807f5);
+  box-shadow: var(--ga-shadow-deep), inset 0 1px #ffffff05;
+}
+.aurelius-toolbar {
+  border-color: #c4a15e1d;
+}
+.aurelius-tabs {
+  padding: 3px;
+  border-radius: 6px;
+  background: #0204037a;
+}
+.aurelius-tabs button {
+  min-height: 38px;
+  border-radius: 4px;
+  color: #7f948b;
+}
+.aurelius-tabs button[aria-pressed='true'] {
+  color: #f0ddb4;
+  border-color: #cda65e2c;
+  background: #14382b8c;
+}
+.conversation-turn {
+  border-color: #a7c7bb16;
+}
+.aurelius-composer {
+  border: 1px solid #c5a35f35;
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, #123328b3, #070d0ad9);
+  box-shadow: 0 -12px 42px #0004, inset 0 1px #ffffff07;
+}
+.aurelius-composer:focus-within {
+  border-color: #d4b16a68;
+  box-shadow: 0 -12px 42px #0004, 0 0 0 1px #2a72552e, inset 0 1px #ffffff09;
+}
+.aurelius-composer textarea { color: #f3f1ea; caret-color: #e5bd72; }
+.revision-notice {
+  border-left: 1px solid #d9b56d5c;
+  color: #bca878;
+}
+
+/* Mobile = four-control cockpit dock. Aethelios is already a primary destination. */
+@media (max-width: 1100px) {
+  .navigation {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: min(460px, calc(100% - 24px));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 6px;
+    border-radius: 16px;
+    border-color: #d1ad673b;
+    background: #07100de8;
+    backdrop-filter: blur(24px) saturate(1.2);
+    box-shadow: 0 20px 62px #000b, inset 0 1px #ffffff08;
+  }
+  .navigation a {
+    min-height: 52px;
+    border-radius: 9px;
+    color: #7f938a;
+  }
+  .navigation a[aria-current='page'] {
+    color: #f2e2c0;
+    background: linear-gradient(145deg, #164532ad, #0a1511);
+  }
+  .aurelius-trigger { display: none; }
+  .workspace > main { padding-bottom: 94px; }
+  .topbar { min-height: 66px; }
+}
+
+@media (max-width: 750px) {
+  .command-home .command-environment {
+    min-height: 0;
+    padding-inline: 18px;
+  }
+  .command-home .command-moment h1 {
+    font-size: clamp(2.25rem, 11vw, 3.45rem);
+    max-width: 9ch;
+  }
+  .command-home .field-space { margin-inline: -8px; }
+  .command-home .command-next[aria-label='Ahead'] { padding: 16px; }
+  .home-worlds {
+    margin-inline: 12px;
+    padding: 4px 14px;
+  }
+  .home-worlds a {
+    border-left: 0;
+    border-bottom: 1px solid #cfaa6518;
+    padding: 15px 2px;
+  }
+  .home-worlds a:last-child { border-bottom: 0; }
+  .home-worlds a::after { left: 2px; right: 55%; }
+}
+
+/* Motion is punctuation, not wallpaper. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion='ambient']:not([data-quiet='true']) .command-home .command-moment {
+    animation: ga-arrive 360ms var(--ga-ease) both;
+  }
+  html[data-motion='ambient']:not([data-quiet='true']) .command-home .command-field {
+    animation: ga-arrive 460ms 45ms var(--ga-ease) both;
+  }
+  html[data-motion='ambient']:not([data-quiet='true']) .command-home .command-next[aria-label='Ahead'] {
+    animation: ga-signal 420ms 90ms var(--ga-ease) both;
+  }
+}
+@keyframes ga-arrive {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ga-signal {
+  from { opacity: 0; transform: translateX(-7px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  .ambient-horizon::after { animation: none !important; }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .sidebar,
+  .navigation,
+  .home-worlds,
+  .home-compose,
+  .aurelius-surface,
+  .aurelius-composer,
+  .command-home .field-signal {
+    backdrop-filter: none;
+    background: #08100d;
+  }
+}
+
+@media (forced-colors: active) {
+  body::after,
+  .ambient-horizon,
+  .ambient-vignette,
+  .command-home .command-environment::before,
+  .surface::after,
+  .panel::after,
+  .domain-card::after,
+  .daily-card::after {
+    display: none !important;
+  }
+}
+
+/* Rendering budget: keep decorative layers cheap and let content own the frame. */
+.ambient-environment,
+.connection-field {
+  contain: layout paint;
+}
+html[data-quiet='true'] .ambient-horizon::after,
+html[data-quiet='true'] .connection-arrival {
+  animation: none !important;
+}
+@media (max-width: 750px) {
+  .connection-field { display: none; }
+  .ambient-grain { opacity: .035; }
+  .navigation { backdrop-filter: blur(16px) saturate(1.1); }
+  .command-home .field-signal { backdrop-filter: none; }
+}
+@media (max-width: 420px) {
+  body::after { opacity: .42; box-shadow: inset 0 0 80px #0007; }
+  .ambient-horizon { top: 66px; }
+}
+
+/* Competence feedback: actions acknowledge touch immediately without confetti/streak theater. */
+:where(.button,.secondary-button,.command-action,.navigation a,.home-worlds a,.text-button,.text-link) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.button,.secondary-button,.command-action,.navigation a)[aria-busy='true'] {
+  cursor: progress;
+  filter: saturate(.7);
+}
+
+/* Quiet reward loop: confirm real actions, then disappear. */
+.command-feedback:not(:empty),
+.aurelius-notice:not(:empty),
+.form-feedback:not(:empty) {
+  position: relative;
+  border-left: 1px solid #d7b46b72;
+  padding-left: 12px;
+  color: #b8c7bf;
+}
+.command-feedback:not(:empty)::before,
+.aurelius-notice:not(:empty)::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: .45em;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #e3be74;
+  box-shadow: 0 0 12px #e3be7490;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion='ambient']:not([data-quiet='true']) .command-feedback:not(:empty),
+  html[data-motion='ambient']:not([data-quiet='true']) .aurelius-notice:not(:empty) {
+    animation: ga-confirm 260ms var(--ga-ease) both;
+  }
+}
+@keyframes ga-confirm {
+  from { opacity: .35; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}

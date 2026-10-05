@@ -108,8 +108,10 @@ export function VisualEnvironment({ children }: { children?: ReactNode }) {
   return (
     <div className="ambient-environment" aria-hidden="true">
       <div className="ambient-light" />
+      <div className="ambient-horizon" />
       {children}
       <div className="ambient-grain" />
+      <div className="ambient-vignette" />
     </div>
   );
 }

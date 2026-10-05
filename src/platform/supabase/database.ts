@@ -72,6 +72,27 @@ export interface Database {
   public: {
     Tables: {
       daily_command_records: Table<import("@/domains/daily-command/model").CommandRecord, never, never>;
+      proactive_signal_receipts: Table<
+        {
+          person_id: string;
+          signal_key: string;
+          disposition: 'opened' | 'dismissed';
+          handled_at: string;
+          expires_at: string;
+        },
+        {
+          person_id: string;
+          signal_key: string;
+          disposition: 'opened' | 'dismissed';
+          handled_at?: string;
+          expires_at: string;
+        },
+        {
+          disposition?: 'opened' | 'dismissed';
+          handled_at?: string;
+          expires_at?: string;
+        }
+      >;
       onboarding_claims: Table<{ person_id: string; request_id: string; focus: 'body' | 'presence' | 'focus'; day: string; intention: string; created_at: string }, never, never>;
       performance_programs: Table<ProgramRow, never, never>;
       performance_session_context: Table<SessionContextRow, never, never>;

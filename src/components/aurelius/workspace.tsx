@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
 import { CouncilPanel } from './council-panel';
 import { councilFromVersion, councilPromptVersion, councilLabel, type CouncilSelection } from '@/domains/intelligence/council';
@@ -14,6 +15,7 @@ import { AureliusPresence } from '../visual/aurelius-presence';
 import { OrbPresentation } from '../visual/orb-presentation';
 import { IntelligenceOrb } from '../public/intelligence-orb';
 import { useAppearance } from '../visual/appearance';
+import { routeCapability } from '@/domains/intelligence/capabilities';
 function priorVersions(turn:Turn,turns:Turn[]) {
   const versions:Turn[]=[];
   let parent=turn.parent_turn_id;
@@ -39,16 +41,17 @@ export function AureliusWorkspace({
   founderLinked?: boolean;
 }) {
   const [preview, setPreview] = useState(false);
+  const router = useRouter();
   const { moving } = useAppearance();
   const composer = useRef<HTMLTextAreaElement>(null);
   const tableReview=useRef<{open:()=>void}>(null);
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
   const handoff = useConversationDraft();
-  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft ? handoff?.pending ?? null : null);
+  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft && !handoff?.peek()?.target ? handoff?.peek() ?? null : null);
   const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
   useEffect(() => {
-    if (homeDraft && handoff?.pending === homeDraft) handoff.stage(null);
+    if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
   const [councilSelection,setCouncilSelection]=useState<CouncilSelection|null>(null);
   const [composerExpanded, setComposerExpanded] = useState(false);
@@ -60,6 +63,7 @@ export function AureliusWorkspace({
   const [tab, setTab] = useState<'conversation' | 'memory' | 'context'>('conversation');
   const [includeContext, setIncludeContext] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [revision, setRevision] = useState<{sourceTurnId:string;revisionKind:'edit'}|null>(null);
@@ -362,7 +366,35 @@ export function AureliusWorkspace({
     follow.current = true;
     composer.current?.focus();
   }
-  const blocked = busy || loading || deleting;
+  const blocked = busy || loading || deleting || orchestrating;
+  const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
+
+  async function prepareCapability() {
+    if (!capability || !data?.ownerId || !['performance','studio','presence'].includes(capability.id) || orchestrating) return;
+    const text = draft.trim() || data.turns.at(-1)?.user_text || '';
+    if (!text) return;
+    setOrchestrating(true);
+    setError('');
+    setNotice(`Preparing ${capability.label}…`);
+    try {
+      const response = await fetch('/api/aurelius/orchestrate', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({target:capability.id,text}),
+        signal:AbortSignal.timeout(30000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? `${capability.label} could not be prepared.`);
+      if (result.ownerId !== data.ownerId) throw new Error('Account changed. Reopen Aethelios before continuing.');
+      handoff?.stage({text,ownerId:data.ownerId,target:capability.id,payload:result});
+      router.push(capability.href);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : `${capability.label} could not be prepared.`);
+      setNotice('');
+    } finally {
+      setOrchestrating(false);
+    }
+  }
   if (!data)
     return (
       <div className="aurelius-unavailable">
@@ -655,6 +687,25 @@ export function AureliusWorkspace({
               </button>
             )}
             <form className={`aurelius-composer ${composerExpanded ? 'is-expanded' : ''}`} onSubmit={event=>{event.preventDefault();if(councilSelection?.kind==='table') {tableReview.current?.open();return;}void sendMessage(draft,revision);}}>
+              {capability && !councilSelection && (
+                <div className="revision-notice" aria-live="polite">
+                  <span>Aethelios is routing this through <strong>{capability.label}</strong> intelligence.</span>{' '}
+                  {['performance','studio','presence'].includes(capability.id) ? (
+                    <button type="button" className="text-button" disabled={orchestrating} onClick={() => void prepareCapability()}>
+                      {orchestrating ? `Preparing ${capability.label}…` : `Prepare in ${capability.label} ↗`}
+                    </button>
+                  ) : (
+                    <Link
+                      href={capability.href}
+                      onClick={() => {
+                        if (data.ownerId) handoff?.stage({ text: draft.trim() || data.turns.at(-1)?.user_text || '', ownerId: data.ownerId, target: capability.id });
+                      }}
+                    >
+                      Open {capability.label} only if you want depth ↗
+                    </Link>
+                  )}
+                </div>
+              )}
               {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
               <label htmlFor="aurelius-message" className="sr-only">
                 Message Aethelios

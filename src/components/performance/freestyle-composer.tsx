@@ -51,14 +51,29 @@ export function FreestyleComposer({
   unit,
   busy,
   onStart,
+  handoffText = '',
+  preparedPlan = null,
 }: {
   history: Session[];
   unit: 'kg' | 'lb';
   busy: boolean;
+  handoffText?: string;
+  preparedPlan?: Plan | null;
   onStart: (plan: Plan) => Promise<void>;
 }) {
-  const [intent, setIntent] = useState<Intent>('upper');
-  const [draft, setDraft] = useState<DraftMovement[]>([]);
+  const initialIntent: Intent = /\b(leg|lower|quad|hamstring|glute|calf)\b/i.test(handoffText)
+    ? 'legs'
+    : /\b(push|chest|shoulder|tricep)\b/i.test(handoffText)
+      ? 'push'
+      : /\b(pull|back|bicep|row)\b/i.test(handoffText)
+        ? 'pull'
+        : /\b(full body|whole body|total body)\b/i.test(handoffText)
+          ? 'full'
+          : /\b(walk|move|mobility|easy|light)\b/i.test(handoffText)
+            ? 'move'
+            : 'upper';
+  const [intent, setIntent] = useState<Intent>(initialIntent);
+  const [draft, setDraft] = useState<DraftMovement[]>(preparedPlan?.exercises ?? []);
   const [manualOpen, setManualOpen] = useState(true);
   const [manualName, setManualName] = useState('');
   const [manualSets, setManualSets] = useState(3);
@@ -112,7 +127,7 @@ export function FreestyleComposer({
     return Promise.resolve();
   }
 
-  const sessionTitle = `${intentLabels[intent]} · freestyle`;
+  const sessionTitle = preparedPlan?.title || `${intentLabels[intent]} · freestyle`;
 
   async function start() {
     setStarting(true);
@@ -130,6 +145,8 @@ export function FreestyleComposer({
           <span className="eyebrow">FREESTYLE / LIVE BUILD</span>
           <h2>Start training. Build the rest as you go.</h2>
           <p>Pick the direction. The workout can begin immediately — then add machines and movements from the floor.</p>
+          {handoffText && <p className="perf-caption"><strong>Aethelios brief:</strong> {handoffText}</p>}
+          {preparedPlan && <p className="perf-caption"><strong>Prepared for review:</strong> {preparedPlan.exercises.length} movements. Edit anything below before you start.</p>}
         </div>
         {lastWorkout && (
           <button type="button" disabled={busy} onClick={() => setDraft(movementFromHistory(lastWorkout))}>

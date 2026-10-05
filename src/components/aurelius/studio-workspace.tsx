@@ -5,13 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { StudioStoryboard, type StudioScene } from './studio-storyboard';
 import { StudioFinish, type StudioFinishRecord } from './studio-finish';
+import { useConversationDraft } from './draft-handoff';
 
 type CreativeType = 'open' | 'brand' | 'campaign' | 'product' | 'personal';
 type Brief = { purpose: string; audience: string; direction: string; palette: string; avoid: string };
 type Project = { id: string; title: string; creative_type: CreativeType; brief: Partial<Brief>; updated_at: string };
 type Version = { id: string; parent_id: string | null; reference_id: string | null; prompt: string; model: string; image_size: string; status: 'pending' | 'complete' | 'failed'; created_at: string };
 type Reference = { id: string; created_at: string };
-type Workspace = { projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; finishes: StudioFinishRecord[]; configured: boolean };
+type Workspace = { owner?: string; projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; finishes: StudioFinishRecord[]; configured: boolean };
 type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = { projects: [], projectId: null, versions: [], references: [], scenes: [], finishes: [], configured: false };
@@ -32,6 +33,7 @@ function imageUrl(id: string, kind: 'version' | 'reference') {
 }
 
 export function StudioWorkspace() {
+  const handoff = useConversationDraft();
   const [data, setData] = useState<Workspace>(empty);
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<View>('create');
@@ -52,14 +54,25 @@ export function StudioWorkspace() {
   const [finishVersion, setFinishVersion] = useState<string | null>(null);
   const project = data.projects.find(item => item.id === selected);
 
-  function accept(next: Workspace) {
+  const accept = useCallback((next: Workspace) => {
     setData(next);
     setSelected(next.projectId);
     const current = next.projects.find(item => item.id === next.projectId);
     setBrief({ ...blankBrief, ...current?.brief });
+    const carried = next.owner ? handoff?.take('studio', next.owner) : null;
+    if (carried) {
+      const payload = carried.payload as { studio?: { title?: string; creativeType?: CreativeType; brief?: Partial<Brief>; prompt?: string } } | undefined;
+      const prepared = payload?.studio;
+      setDraft(prepared?.prompt || carried.text);
+      setNewTitle((prepared?.title || carried.text).slice(0, 72));
+      if (prepared?.creativeType) setNewType(prepared.creativeType);
+      if (prepared?.brief) setBrief({ ...blankBrief, ...prepared.brief });
+      setNaming(true);
+      setView('create');
+    }
     setError('');
     setLoading(false);
-  }
+  }, [handoff]);
   const load = useCallback(async (projectId?: string | null) => {
     try {
       const next = await jsonResponse<Workspace>(await fetch(`/api/studio${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`, { cache: 'no-store' }));
@@ -68,14 +81,14 @@ export function StudioWorkspace() {
       setError((cause as Error).message);
       setLoading(false);
     }
-  }, []);
+  }, [accept]);
   useEffect(() => {
     let active = true;
     fetch('/api/studio', { cache: 'no-store' }).then(response => jsonResponse<Workspace>(response))
       .then(next => { if (active) accept(next); })
       .catch(cause => { if (active) { setError(cause.message); setLoading(false); } });
     return () => { active = false; };
-  }, []);
+  }, [accept]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();

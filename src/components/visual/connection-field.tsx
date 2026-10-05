@@ -10,7 +10,13 @@ const paths = [
 ];
 export function ConnectionField() {
   const path = usePathname();
-  const selected = path === '/app/world' ? 1 : path === '/app/progress' ? 2 : path === '/app/you' ? 3 : 0;
+  const selected = path.startsWith('/app/world') || path.startsWith('/app/progress') || path.startsWith('/app/goals') || path.startsWith('/app/presence') || path.startsWith('/app/performance')
+    ? 1
+    : path.startsWith('/app/collection') || path.startsWith('/app/membership')
+      ? 2
+      : path.startsWith('/app/aethelios') || path.startsWith('/app/studio')
+        ? 3
+        : 0;
   return (
     <div className="connection-field" data-section={path}>
       <svg viewBox="0 0 1440 960" preserveAspectRatio="xMidYMin slice" focusable="false">

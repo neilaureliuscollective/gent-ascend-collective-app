@@ -2,6 +2,7 @@ import { shiftDay } from '@/domains/daily-command/model';
 
 export type PresenceData = {
   mode: 'personal' | 'signed-out';
+  ownerId?: string;
   today: string;
   direction: string | null;
   occasions: { title: string; day: string; note: string }[];
