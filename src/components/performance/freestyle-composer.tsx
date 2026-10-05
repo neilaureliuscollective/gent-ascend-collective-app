@@ -51,13 +51,26 @@ export function FreestyleComposer({
   unit,
   busy,
   onStart,
+  handoffText = '',
 }: {
   history: Session[];
   unit: 'kg' | 'lb';
   busy: boolean;
+  handoffText?: string;
   onStart: (plan: Plan) => Promise<void>;
 }) {
-  const [intent, setIntent] = useState<Intent>('upper');
+  const initialIntent: Intent = /\b(leg|lower|quad|hamstring|glute|calf)\b/i.test(handoffText)
+    ? 'legs'
+    : /\b(push|chest|shoulder|tricep)\b/i.test(handoffText)
+      ? 'push'
+      : /\b(pull|back|bicep|row)\b/i.test(handoffText)
+        ? 'pull'
+        : /\b(full body|whole body|total body)\b/i.test(handoffText)
+          ? 'full'
+          : /\b(walk|move|mobility|easy|light)\b/i.test(handoffText)
+            ? 'move'
+            : 'upper';
+  const [intent, setIntent] = useState<Intent>(initialIntent);
   const [draft, setDraft] = useState<DraftMovement[]>([]);
   const [manualOpen, setManualOpen] = useState(true);
   const [manualName, setManualName] = useState('');
@@ -130,6 +143,7 @@ export function FreestyleComposer({
           <span className="eyebrow">FREESTYLE / LIVE BUILD</span>
           <h2>Start training. Build the rest as you go.</h2>
           <p>Pick the direction. The workout can begin immediately — then add machines and movements from the floor.</p>
+          {handoffText && <p className="perf-caption"><strong>Aethelios brief:</strong> {handoffText}</p>}
         </div>
         {lastWorkout && (
           <button type="button" disabled={busy} onClick={() => setDraft(movementFromHistory(lastWorkout))}>
