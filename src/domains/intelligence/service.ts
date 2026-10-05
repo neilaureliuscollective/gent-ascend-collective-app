@@ -11,6 +11,7 @@ import type { PersonalContext, WorkspaceData, Turn } from './types';
 import { localDay } from '@/domains/daily/model';
 import { readContinuity } from '@/domains/continuity/service';
 import { resolveNextMove } from '@/domains/command/next-move';
+import { capabilityContext } from './capabilities';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -277,7 +278,7 @@ export async function prepareReply(input: {
   const founderContext = input.includeContext && !input.council ? await founderBridgeContext(input.text) : null;
   return {
     model: config.AURELIUS_AI_MODEL,
-    messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary),
+    messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, capabilityContext(input.text)),
     founder: founderContext !== null,
     council: input.council,
     finish: async (
