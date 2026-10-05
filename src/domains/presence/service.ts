@@ -8,6 +8,7 @@ export async function readPresence(): Promise<PresenceData> {
   if (!owner)
     return {
       mode: 'signed-out',
+      ownerId: undefined,
       today: '',
       direction: null,
       occasions: [],
@@ -53,6 +54,7 @@ export async function readPresence(): Promise<PresenceData> {
   const products = value(results[2], 'Product notes');
   return {
     mode: 'personal',
+    ownerId: person.id,
     today,
     direction: profile?.preferred_look || null,
     occasions: (occasions ?? []).map((event) => ({
