@@ -264,7 +264,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
   await page.goto('/app/grooming');
-  await page.getByText('Direction, rituals & private history', {exact:true}).click();
+  await page.getByText('Direction, routines & private history', {exact:true}).click();
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
   const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
   await expect(ritual).toBeVisible();
@@ -292,13 +292,17 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(record.getByLabel('My note')).toHaveValue('Keep this private note.');
   await expect(record.getByLabel('My experience')).toHaveValue('running_low');
   await page.goto('/app/grooming');
-  await page.getByText('Direction, rituals & private history', {exact:true}).click();
+  await page.getByText('Direction, routines & private history', {exact:true}).click();
   const products = page.getByRole('region', {
     name: 'Products linked to Synthetic Cabinet morning',
   });
   await expect(products).toContainText('Synthetic external oil');
   await expect(products).toContainText('Running low');
   await expect(products).not.toContainText('Keep this private note.');
+  await page.goto('/app/presence');
+  await expect(page.getByRole('heading', { name: 'Show up with intention.' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Saved replenishment notes' })).toContainText('Synthetic external oil');
+  await expect(page.getByRole('link', { name: /Prepare with Aethelios/ })).toHaveAttribute('href', '/app/aethelios?starter=presence');
 });
 
 test('authenticated order workspace stays closed without merchant configuration', async ({
