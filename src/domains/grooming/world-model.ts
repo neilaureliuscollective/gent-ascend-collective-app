@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cabinetRelations } from '@/domains/commerce/cabinet-model';
 export const ritualKind = z.enum(['morning', 'evening', 'weekly']);
 export const worldRitual = z.object({
   id: z.uuid(),
@@ -7,6 +8,18 @@ export const worldRitual = z.object({
   steps: z.string(),
   version: z.number().int(),
   lastRecordedAt: z.string().nullable(),
+  products: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        relation: z.enum(cabinetRelations),
+        note: z.string(),
+      }),
+    )
+    .max(12)
+    .default([]),
+  productCount: z.number().int().nonnegative().default(0),
 });
 export const groomingWorldSnapshot = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('guest') }),
@@ -16,13 +29,31 @@ export const groomingWorldSnapshot = z.discriminatedUnion('mode', [
     day: z.iso.date(),
     timezone: z.string(),
     rituals: z.array(worldRitual).max(3),
+    suggestedKind: ritualKind.default('morning'),
+    week: z
+      .array(
+        z.object({
+          day: z.iso.date(),
+          completed: z.number().int().nonnegative(),
+          notes: z.array(z.string()).max(3),
+        }),
+      )
+      .max(7)
+      .default([]),
   }),
 ]);
 export const practiceInput = z
-  .object({ ownerId: z.uuid(), ritualId: z.uuid(), requestId: z.uuid(), day: z.iso.date() })
+  .object({
+    ownerId: z.uuid(),
+    ritualId: z.uuid(),
+    requestId: z.uuid(),
+    day: z.iso.date(),
+    version: z.number().int().min(1),
+  })
   .strict();
 export const practiceReceipt = z.object({
   id: z.uuid(),
+  requestId: z.uuid(),
   ritualId: z.uuid(),
   occurredAt: z.string(),
 });

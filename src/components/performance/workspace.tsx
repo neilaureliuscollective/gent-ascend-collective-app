@@ -1,4 +1,5 @@
 'use client';
+import { track } from '@/domains/onboarding/track';
 import Link from 'next/link';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -112,6 +113,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
           ? 'Saved on device · sync pending'
           : 'Synced to your account',
       );
+      if (result?.draft.status === 'complete' && result.revision === result.syncedRevision) track('first_meaningful_action');
       if (result?.draft.status !== 'active') await reload();
     } catch (caught) {
       setSyncState(

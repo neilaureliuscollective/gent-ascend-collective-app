@@ -47,6 +47,8 @@ export const config = {
   matcher: [
     '/',
     '/experience',
+    '/experience/world',
+    '/experience/grooming',
     '/experience/performance/practice/:path*',
     '/experience/aethelios/:path*',
     '/app/:path*',

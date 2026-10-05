@@ -63,6 +63,8 @@ export function useWorldPriority(open: boolean) {
     document.addEventListener('visibilitychange', refresh);
     window.addEventListener('focus', refresh);
     window.addEventListener('pageshow', refresh);
+    const claimed = () => void reload();
+    window.addEventListener('gent-priority-reload', claimed);
     return () => {
       clearTimeout(timer);
       controller.current?.abort();
@@ -70,6 +72,7 @@ export function useWorldPriority(open: boolean) {
       document.removeEventListener('visibilitychange', refresh);
       window.removeEventListener('focus', refresh);
       window.removeEventListener('pageshow', refresh);
+      window.removeEventListener('gent-priority-reload', claimed);
     };
   }, [reload]);
 

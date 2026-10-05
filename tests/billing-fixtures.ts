@@ -78,12 +78,16 @@ export function testSubscription(tier = 'essential', amount = 1999) {
     id: 'sub_owner',
     created: 1,
     customer: 'cus_owner',
+    livemode: false,
     status: 'active',
     collection_method: 'charge_automatically',
     metadata: { gent_ascend: 'founding-v1' },
     cancel_at_period_end: false,
     latest_invoice: {
       id: 'in_paid',
+      customer: 'cus_owner',
+      livemode: false,
+      parent: { type: 'subscription_details', subscription_details: { subscription: 'sub_owner' } },
       status: 'paid',
       lines: {
         has_more: false,

@@ -36,7 +36,7 @@ export default function Membership() {
         <p className="founding-disclosure">
           {enrollment
             ? 'Founding enrollment is open. Review the current launch terms in your membership account before subscribing.'
-            : 'Founding offer preview. Paid enrollment is not open. Existing invited members can continue using their accounts.'}
+            : 'Founding offer preview. Paid enrollment is not open. Free accounts and existing member access remain separate.'}
         </p>
       </header>
       <section id="founding-levels" className="world-section">
@@ -109,8 +109,8 @@ export default function Membership() {
           separate from your planned founding bundle.
         </p>
         <div className="world-actions">
-          <Link href="/join" className="world-button">
-            Create or access your account →
+          <Link href="/experience/world?claim=1" className="world-button">
+            Begin with a free account →
           </Link>
           <Link href="/app/welcome" className="world-text-link">
             I have an invitation ↗

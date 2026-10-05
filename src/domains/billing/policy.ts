@@ -60,6 +60,9 @@ export function subscriptionSnapshot(
     hold,
   };
   if (!sub) return { ...empty, billing: hold ? 'unpaid' : 'none' };
+  const customer = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+  if (!previous.customer_id || customer !== previous.customer_id || sub.livemode !== config.live)
+    return { ...empty, billing: 'incomplete' };
   const item = sub.items.data.length === 1 ? sub.items.data[0] : null;
   const tier =
     item && item.quantity === 1 && sub.collection_method === 'charge_automatically'
@@ -83,7 +86,15 @@ export function subscriptionSnapshot(
     return { ...empty, tier, billing, until: null };
   }
   const invoice = typeof sub.latest_invoice === 'object' ? sub.latest_invoice : null;
+  const invoiceCustomer =
+    typeof invoice?.customer === 'string' ? invoice.customer : invoice?.customer?.id;
+  const invoiceSubscription = invoice?.parent?.subscription_details?.subscription;
+  const invoiceSubscriptionId =
+    typeof invoiceSubscription === 'string' ? invoiceSubscription : invoiceSubscription?.id;
   const invoiceMatchesPrice =
+    invoiceCustomer === customer &&
+    invoiceSubscriptionId === sub.id &&
+    invoice?.livemode === config.live &&
     !!invoice?.lines &&
     !invoice.lines.has_more &&
     invoice.lines.data.some((line) => {
@@ -147,5 +158,21 @@ export function billingPaidActive(billing: BillingSummary | null, now = Date.now
     !!billing.access_until &&
     Date.parse(billing.access_until) > now &&
     !billing.payment_hold
+  );
+}
+
+export function recoveryPortalSafe(
+  portal: Stripe.BillingPortal.Configuration,
+  config: BillingConfig,
+) {
+  return (
+    portal.active &&
+    portal.livemode === config.live &&
+    portal.features.payment_method_update.enabled &&
+    portal.features.invoice_history.enabled &&
+    portal.features.subscription_cancel.enabled &&
+    portal.features.subscription_cancel.mode === 'at_period_end' &&
+    portal.features.subscription_cancel.proration_behavior === 'none' &&
+    !portal.features.subscription_update.enabled
   );
 }

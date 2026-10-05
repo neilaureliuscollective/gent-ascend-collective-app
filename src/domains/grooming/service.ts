@@ -1,5 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
+import { localDay } from '@/domains/daily/model';
 import { authorizedPerson } from '@/domains/access/authorize';
 import { referenceExtension,referenceType } from '@/domains/studio/image-validation';
 export class GroomingError extends Error {constructor(message:string,public status=400){super(message);}}
@@ -20,7 +21,28 @@ export async function saveProfile(raw:unknown){const input=profileInput.parse(ra
 export async function addGoal(raw:unknown){const input=z.object({title:z.string().trim().min(3).max(160),target_date:z.union([z.iso.date(),z.null()])}).parse(raw),{client,person}=await groomingOwner(true);const result=await client.from('grooming_goals').insert({...input,person_id:person.id});if(result.error)throw new GroomingError('Goal could not be saved.',503);}
 export async function finishGoal(raw:unknown){const id=z.uuid().parse(raw),{client,person}=await groomingOwner(true);const result=await client.from('grooming_goals').update({status:'completed'}).eq('person_id',person.id).eq('id',id).eq('status','active').select('id').maybeSingle();if(result.error||!result.data)throw new GroomingError('Goal could not be completed.',409);}
 export async function setRitual(raw:unknown){const input=z.object({kind:z.enum(['morning','evening','weekly']),title:z.string().trim().min(3).max(100),steps:z.string().trim().min(3).max(1000)}).parse(raw),{client}=await groomingOwner(true);const result=await client.rpc('grooming_set_ritual',{p_kind:input.kind,p_title:input.title,p_steps:input.steps});if(result.error||!result.data)throw new GroomingError('Ritual could not be saved.',503);}
-export async function addCheckin(raw:unknown){const input=z.object({ritual_id:z.uuid(),done:z.boolean(),note:limited(300)}).parse(raw),{client,person}=await groomingOwner(true);const ritual=await client.from('grooming_rituals').select('id').eq('id',input.ritual_id).eq('person_id',person.id).eq('active',true).maybeSingle();if(!ritual.data)throw new GroomingError('Ritual is unavailable.',404);const result=await client.from('grooming_checkins').insert({person_id:person.id,...input});if(result.error)throw new GroomingError('Check-in could not be saved.',503);}
+export async function addCheckin(raw: unknown) {
+  const input = z
+      .object({ ritual_id: z.uuid(), done: z.literal(true), note: limited(300) })
+      .parse(raw),
+    { client, person } = await groomingOwner(true);
+  const ritual = await client
+    .from('grooming_rituals')
+    .select('version')
+    .eq('id', input.ritual_id)
+    .eq('person_id', person.id)
+    .eq('active', true)
+    .maybeSingle();
+  if (!ritual.data) throw new GroomingError('Ritual is unavailable.', 404);
+  const result = await client.rpc('grooming_record_practice', {
+    p_request: crypto.randomUUID(),
+    p_ritual: input.ritual_id,
+    p_version: ritual.data.version,
+    p_day: localDay(new Date(), person.timezone),
+    p_note: input.note,
+  });
+  if (result.error) throw new GroomingError('Check-in could not be confirmed.', 503);
+}
 export async function addProduct(raw:unknown){const input=z.object({name:z.string().trim().min(1).max(120),category:z.enum(['hair','beard','skin','other']),relation:z.enum(['owned','tried','favorite','stopped']),shopify_handle:z.union([limited(120),z.null()]),note:limited(400)}).parse(raw),{client,person}=await groomingOwner(true);const result=await client.from('grooming_products').insert({person_id:person.id,...input});if(result.error)throw new GroomingError('Product could not be saved.',503);}
 export async function addLook(raw:unknown){const input=z.object({title:z.string().trim().min(3).max(100),detail:limited(700),kind:z.enum(['target','service']),service_date:z.union([z.iso.date(),z.null()])}).parse(raw),{client,person}=await groomingOwner(true);const result=await client.from('grooming_looks').insert({person_id:person.id,...input});if(result.error)throw new GroomingError('Look could not be saved.',503);}
 export async function addEvent(raw:unknown){const input=z.object({title:z.string().trim().min(3).max(100),event_date:z.iso.date(),note:limited(300)}).parse(raw),{client,person}=await groomingOwner(true);if(input.event_date<new Date().toISOString().slice(0,10))throw new GroomingError('Choose a future date.');const result=await client.from('grooming_events').insert({person_id:person.id,...input});if(result.error)throw new GroomingError('Occasion could not be saved.',503);}

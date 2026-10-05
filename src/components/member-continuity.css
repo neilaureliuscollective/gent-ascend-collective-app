@@ -1,0 +1,86 @@
+.member-continuity {
+  margin-block: 2rem;
+  padding: clamp(1.2rem, 4vw, 2.4rem);
+  border: 1px solid #c4912f36;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #0b3b3266, #050706);
+  color: var(--text-primary, #f0ece1);
+}
+.member-continuity h2 {
+  max-width: 28ch;
+}
+.continuity-paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+.continuity-paths a {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  padding: 1rem;
+  border-top: 1px solid #c4912f66;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.continuity-paths span,
+.continuity-paths small {
+  color: var(--text-secondary, #c3c3b4);
+}
+.continuity-paths strong {
+  font-size: 1.15rem;
+}
+.continuity-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+.continuity-totals dd {
+  font-size: 1.6rem;
+  margin: 0;
+  color: #e0bb6a;
+}
+.continuity-totals dt {
+  margin-bottom: 0.5rem;
+}
+.continuity-table {
+  overflow-x: auto;
+}
+.continuity-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.continuity-table th,
+.continuity-table td {
+  padding: 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid #ffffff26;
+}
+.continuity-review {
+  margin-top: 1.5rem;
+}
+.continuity-review .text-link {
+  display: block;
+  margin-top: 1rem;
+}
+.member-continuity summary {
+  padding-block: 1rem;
+  cursor: pointer;
+}
+.member-continuity a:focus-visible,
+.member-continuity summary:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 5px;
+}
+@media (max-width: 600px) {
+  .continuity-paths {
+    grid-template-columns: 1fr;
+  }
+  .continuity-totals {
+    grid-template-columns: 1fr 1fr;
+  }
+  .member-continuity {
+    margin-block: 1.5rem;
+  }
+}

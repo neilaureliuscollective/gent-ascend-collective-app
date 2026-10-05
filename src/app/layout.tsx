@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
+import { PerformanceReporting } from '@/components/performance-reporting';
 import { brand } from '@/platform/brand';
 import './globals.css';
 import './interaction.css';
@@ -24,13 +25,16 @@ export const viewport: Viewport = {
   themeColor: brand.themeColor,
   width: 'device-width',
   initialScale: 1,
-  viewportFit: "cover",
+  viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${sora.variable} ${inter.variable}`}>{children}</body>
+      <body className={`${sora.variable} ${inter.variable}`}>
+        {process.env.GENT_PERFORMANCE_ENABLED === 'true' && <PerformanceReporting />}
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
     <main className="console">
@@ -8,6 +9,9 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
       <button className="button" onClick={reset}>
         Try again
       </button>
+      <Link className="text-link" href="/support">
+        Get account help →
+      </Link>
     </main>
   );
 }

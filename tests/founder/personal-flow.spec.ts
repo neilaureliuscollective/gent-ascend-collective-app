@@ -261,6 +261,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
   await page.goto('/app/grooming');
+  await page.getByText('Direction, rituals & private history', {exact:true}).click();
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
   const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
   await expect(ritual).toBeVisible();
@@ -288,6 +289,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(record.getByLabel('My note')).toHaveValue('Keep this private note.');
   await expect(record.getByLabel('My experience')).toHaveValue('running_low');
   await page.goto('/app/grooming');
+  await page.getByText('Direction, rituals & private history', {exact:true}).click();
   const products = page.getByRole('region', {
     name: 'Products linked to Synthetic Cabinet morning',
   });
@@ -317,4 +319,58 @@ test('authenticated order workspace stays closed without merchant configuration'
   await page.getByRole('link', { name: 'My Cabinet' }).click();
   await expect(page).toHaveURL(/\/app\/collection\/cabinet$/);
   await expect(page.getByText('Synthetic external oil', { exact: true })).toBeVisible();
+});
+
+test('free member first session saves and resumes through real Next and Supabase', async ({
+  page,
+}) => {
+  await page.goto('/enter');
+  await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
+  await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
+  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
+  await page.goto('/app/welcome');
+  await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Review membership access to Aethelios' }),
+  ).toBeVisible();
+  await page.getByLabel('Get organized', { exact: true }).check();
+  await page.getByLabel('What matters today?').fill('Synthetic first-session direction');
+  await page.getByLabel('My next move', { exact: true }).fill('Synthetic first-session next move');
+  await page.getByRole('button', { name: 'Save priority and next move' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'priority and next move' }),
+  ).toContainText('saved to Command');
+  await page.goto('/app');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
+  ).not.toBeChecked();
+  await page.reload();
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
+  ).not.toBeChecked();
+  await page.goto('/app/welcome');
+  await expect(page.getByLabel('What matters today?')).toHaveValue(
+    'Synthetic first-session direction',
+  );
+  await page.goto('/app/progress');
+  await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(0);
+  const response = await page.request.get('/api/daily');
+  expect(response.ok()).toBeTruthy();
+  const saved = await response.json();
+  expect(saved.entries.find((entry: { day: string }) => entry.day === saved.today).actions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ title: 'Synthetic first-session next move', done: false }),
+    ]),
+  );
 });

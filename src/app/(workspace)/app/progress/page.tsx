@@ -1,8 +1,11 @@
 import Link from 'next/link';
+import { readContinuity } from '@/domains/continuity/service';
+import { MemberContinuity } from '@/components/member-continuity';
 import { readDaily } from '@/domains/daily/service';
 import { dayLabel } from '@/domains/daily/model';
 export default async function Progress() {
   const daily = await readDaily();
+  const continuity = await readContinuity(undefined, daily).catch(() => null);
   const meaningful = daily.entries.filter(
     (entry) => entry.actions.some((action) => action.done) || entry.reflection || entry.review,
   );
@@ -14,6 +17,12 @@ export default async function Progress() {
         <br />
         <em>over time.</em>
       </h1>
+      {continuity && <MemberContinuity data={continuity} />}
+      {daily.mode === 'personal' && !continuity && (
+        <p role="status">
+          Your connected week is temporarily unavailable. Your daily history remains below.
+        </p>
+      )}
       {daily.mode === 'personal' && meaningful.length ? (
         <div className="loop-history">
           {[...meaningful].reverse().map((entry) => (

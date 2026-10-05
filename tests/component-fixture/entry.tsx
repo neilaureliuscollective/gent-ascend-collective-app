@@ -1,5 +1,10 @@
 import { HomeHandoffFixture } from './home-handoff';
+import { MemberContinuity } from '@/components/member-continuity';
+import { projectContinuity } from '@/domains/continuity/model';
 import { CustomerOrders } from '@/components/commerce/customer-orders';
+import { FirstSession } from '@/components/first-session';
+import { BrowserEntryNotice } from '@/components/browser-entry-notice';
+import '@/app/(workspace)/app/welcome/welcome-entry.css';
 import { DailyCommandWorkspace } from '@/components/daily-command/workspace';
 import { CabinetImport } from '@/components/commerce/cabinet-import';
 import { CabinetSave } from '@/components/commerce/cabinet-controls';
@@ -93,7 +98,56 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'home-handoff' ? <HomeHandoffFixture /> : mode === 'command' ? (
+  mode === 'home-handoff' ? (
+    <HomeHandoffFixture />
+  ) : mode === 'continuity' ? (
+    <main style={{ maxWidth: 1000, margin: 'auto', padding: 16 }}>
+      <p>Synthetic member records · no real account.</p>
+      <MemberContinuity
+        data={projectContinuity(
+          {
+            ...sampleData('2026-10-04'),
+            mode: 'personal',
+            conversation: {
+              id: '60000000-0000-4000-8000-000000000001',
+              title: 'Saved Council decision',
+            },
+          },
+          {
+            sessions: [
+              {
+                id: '1',
+                title: 'Saved strength session',
+                status: 'active',
+                started_at: '2026-10-04T12:00:00Z',
+                ended_at: null,
+              },
+            ],
+            rituals: [{ id: 'r', title: 'Daily beard ritual', kind: 'morning' }],
+            checkins: params.get('unavailable') === '1' ? null : [],
+          },
+        )}
+      />
+    </main>
+  ) : mode === 'first-session' ? (
+    <main style={{ maxWidth: 1000, margin: 'auto', padding: 16 }}>
+      <p>Synthetic member fixture · no real account or model response.</p>
+      <BrowserEntryNotice />
+      <FirstSession
+        canTalk={params.get('paid') === '1'}
+        initial={{
+          mode: 'personal',
+          ownerId: '60000000-0000-4000-8000-000000000001',
+          day: '2026-10-04',
+          timezone: 'America/Chicago',
+          version: 1,
+          intention: 'Make room for deliberate progress',
+          nextAction: null,
+          updatedAt: null,
+        }}
+      />
+    </main>
+  ) : mode === 'command' ? (
     <DailyCommandWorkspace initial={commandFixture} />
   ) : mode === 'commerce-showroom' ? (
     <main className="reserve-commerce">
@@ -260,6 +314,7 @@ createRoot(document.getElementById('root')!).render(
         <p className="eyebrow">Synthetic membership fixture · no database or payments</p>
         <h1>Your membership</h1>
         <MembershipControls
+          founderAudit={params.get('founder-audit') === 'yes'}
           enrollment={params.get('enrollment') !== 'closed'}
           hasCustomer={params.get('customer') === 'yes'}
           hasSubscription={false}

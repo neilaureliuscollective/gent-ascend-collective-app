@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { BrowserEntryNotice } from './browser-entry-notice';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 interface InstallEvent extends Event {
   prompt(): Promise<void>;
@@ -67,6 +68,7 @@ export function InstallGuide() {
   }
   return (
     <section className="panel install-guide" aria-labelledby="install-title">
+      <BrowserEntryNotice />
       <p className="eyebrow">Your phone / Your own space</p>
       <h2 id="install-title">{installed ? 'You’re in the app.' : 'Keep Gent Ascend close.'}</h2>
       <p>
@@ -94,7 +96,7 @@ export function InstallGuide() {
               </li>
             </ol>
             <p>
-              If the browser asks you to sign in again, use your Gent Ascend email and password.
+              If the browser asks you to sign in again, use your Gent Ascend password or the email-code option on the entrance.
             </p>
           </details>
           <details open={platform === 'android'}>
