@@ -36,6 +36,7 @@ export function Navigation() {
         <Link
           key={href}
           href={href}
+          aria-label={href === '/app/world' ? 'Life / My world' : undefined}
           aria-current={
             path === href ||
             (href === '/app/collection' && path.startsWith('/app/collection/')) ||
