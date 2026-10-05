@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { EnergyOrb } from '@/components/world/energy-orb';
 import { Icon } from '@/components/visual/icon';
@@ -17,10 +17,18 @@ type Editor = 'checkin' | 'action' | 'reflection';
 export function DailyDepth({
   initial,
   onChange,
+  onReady,
 }: {
   initial: DailyData;
   onChange: (data: DailyData) => void;
+  onReady?: () => void;
 }) {
+  // Focus after the lazy workspace has actual height, rather than its loading placeholder.
+  useEffect(() => {
+    if (!onReady) return;
+    const frame = requestAnimationFrame(onReady);
+    return () => cancelAnimationFrame(frame);
+  }, [onReady]);
   const data = initial;
   const setData = onChange;
   const [lens, setLens] = useState<'today' | 'evening'>('today');

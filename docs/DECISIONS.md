@@ -344,3 +344,8 @@ Reuse existing identity/account/billing/commerce controls; add a founder-authent
 ## October 4 — Ascend Mirror camera-first scan
 
 Fix the confirmed live camera=() document policy to camera=(self), including client-navigation entry documents, preserving denied microphone/location and explicit user permission. Keep camera frames local; self-host pinned MediaPipe 1.0.1 assets/model and use a bounded CPU web worker for framing/steady capture. Existing OpenAI/private Storage scan pipeline receives only explicitly approved images. No streaming vendor, new database, medical claims, identity matching, or automatic photo upload. Research, model provenance/hash and honest test boundaries: ASCEND_MIRROR.md.
+
+
+## 2026-10-04 — Recover Command home while preserving direct member entry
+
+Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.

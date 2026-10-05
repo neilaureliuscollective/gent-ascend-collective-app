@@ -56,12 +56,12 @@ export function DailyDashboard({
   function openPlan() {
     if (busy || lock.current) return;
     setDepth(true);
-    requestAnimationFrame(() => {
-      const target = document.getElementById('command-depth');
-      target?.scrollIntoView({ behavior: 'auto', block: 'start' });
-      target?.focus({ preventScroll: true });
-    });
   }
+  const focusDepth = useCallback(() => {
+    const target = document.getElementById('command-depth');
+    target?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    target?.focus({ preventScroll: true });
+  }, []);
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
       const response = await fetch('/api/command', {
@@ -317,8 +317,15 @@ export function DailyDashboard({
               ? `${greeting(checkedAt ?? asOf, data.timezone)}, ${data.name}.`
               : 'Your day. Your direction.'}
           </h1>
+          <p className="home-brief">{projection.briefing}</p>
         </div>
-        <HomeConversation key={`${data.mode}:${data.ownerId ?? 'preview'}`} data={data} />
+        <CommandField
+          projection={projection}
+          openPlan={openPlan}
+          status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}
+          changed={changes.length > 0}
+          confirmedRevision={confirmedRevision}
+        />
         <section className="command-next" aria-label="Today’s move">
           <div>
             <span>Now / Today’s move</span>
@@ -353,38 +360,37 @@ export function DailyDashboard({
             </button>
           )}
         </section>
-        <nav className="home-worlds" aria-label="Your operating spaces">
-          <Link prefetch={false} href="/app/presence">
-            Presence <span>↗</span>
-          </Link>
-          <Link prefetch={false} href="/app/performance">
-            Performance <span>↗</span>
-          </Link>
-          <Link prefetch={false} href="/app/collection" className="home-collection">
-            Ascend Collection <span>↗</span>
-          </Link>
-          <Link prefetch={false} href="/app/aethelios">
-            Aethelios & Council <span>↗</span>
-          </Link>
-          <Link prefetch={false} href="/app/world">
-            My world <span>↗</span>
-          </Link>
-        </nav>
-        <div className="home-context-note">
-          <p>{projection.briefing}</p>
-          <small>
-            {projection.briefingSource} ·{' '}
-            {data.mode === 'sample' ? 'fictional records' : 'saved records, no AI assessment'}
-          </small>
-        </div>
-        <CommandField
-          projection={projection}
-          openPlan={openPlan}
-          status={busy ? 'refreshing' : stale ? 'stale' : 'ready'}
-          changed={changes.length > 0}
-          confirmedRevision={confirmedRevision}
-        />
+        <HomeConversation key={`${data.mode}:${data.ownerId ?? 'preview'}`} data={data} />
       </section>
+      <nav className="home-worlds" aria-label="Your operating spaces">
+        <Link prefetch={false} href="/app/presence">
+          <small>HOW YOU SHOW UP</small>
+          <strong>Presence</strong>
+          <span>
+            Prepare for the moment <i aria-hidden="true">↗</i>
+          </span>
+        </Link>
+        <Link prefetch={false} href="/app/performance">
+          <small>YOUR CAPACITY</small>
+          <strong>Performance</strong>
+          <span>
+            Continue your training <i aria-hidden="true">↗</i>
+          </span>
+        </Link>
+        <Link prefetch={false} href="/app/collection" className="home-collection">
+          <small>YOUR ESSENTIALS</small>
+          <strong>Ascend Collection</strong>
+          <span>
+            Explore the collection <i aria-hidden="true">↗</i>
+          </span>
+        </Link>
+        <Link prefetch={false} href="/app/aethelios" className="home-world-secondary">
+          Aethelios & Council <i aria-hidden="true">↗</i>
+        </Link>
+        <Link prefetch={false} href="/app/world" className="home-world-secondary">
+          My world <i aria-hidden="true">↗</i>
+        </Link>
+      </nav>
       {data.mode === 'sample' && (
         <div className="command-mode">
           <span>Sample experience · Fictional records. Changes stay in this view.</span>
@@ -421,7 +427,11 @@ export function DailyDashboard({
           </button>
         </div>
       )}
-      <section className="command-oversight" aria-label="Needs you">
+      <section
+        className="command-oversight"
+        aria-label="Needs you"
+        data-empty={!proposal && projection.decisionsAvailable && !stale}
+      >
         <div>
           <span className="command-section-label">Needs you</span>
           <h2>
@@ -493,78 +503,84 @@ export function DailyDashboard({
       <p className="command-feedback" role="status">
         {busy ? 'Confirming saved state…' : feedback}
       </p>
-      <section className="command-continuity" aria-label="In motion">
-        <span className="command-section-label">In motion</span>
-        <p>
-          {busy
-            ? 'Refreshing saved context…'
-            : stale
-              ? 'Showing the last loaded context. Refresh is unavailable.'
-              : projection.receipts.length
-                ? 'Your saved context is organized. No new input required.'
-                : 'Nothing to prepare right now.'}
-        </p>
-        {!!changes.length && <p className="command-changes">{changes.join(' ')}</p>}
-        {!!projection.receipts.length && (
-          <details className="command-receipts">
-            <summary>What was prepared</summary>
-            <ul>
-              {projection.receipts.map((receipt) => (
-                <li key={receipt.id}>
-                  <strong>{receipt.title}</strong>
-                  <p>{receipt.detail}</p>
-                  <small>{receipt.source}</small>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-        {!!data.openCaptures && (
-          <Link prefetch={false} href="/app/captures">
-            {data.openCaptures} saved {data.openCaptures === 1 ? 'capture' : 'captures'} in your
-            inbox ↗
-          </Link>
-        )}
-        <small>
-          {checkedAt && data.mode === 'personal'
-            ? `Prepared at ${new Intl.DateTimeFormat('en-US', { timeZone: data.timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(checkedAt))}. `
-            : ''}
-          Saved records only. Model context stays under your conversation controls.
-        </small>
-        {data.mode === 'personal' && (
-          <button
-            className="text-button"
-            disabled={busy || depth || !!confirmMove}
-            onClick={() => void reload()}
-          >
-            Refresh briefing
-          </button>
-        )}
-      </section>
-      {data.mode === 'personal' && (
-        <section className="command-readiness" aria-label="Daily Command connection">
-          <div>
-            <span className="command-section-label">Your operating state</span>
-            <h2>
-              {operating?.snapshot?.confidence.known
-                ? operating.snapshot.state
-                : 'Arrival signals incomplete'}
-            </h2>
-            <p>
-              {operating?.snapshot?.reason ??
-                'Your arrival context is unavailable. Open Daily Command to reconnect.'}
-            </p>
-            <small>
-              {operating?.snapshot
-                ? `${operating.snapshot.confidence.known}/3 recovery signals · product guidance, not a health measurement`
-                : 'No state inferred.'}
-            </small>
-          </div>
-          <Link prefetch={false} className="command-action" href="/app/arrival">
-            Arrival & feedback ↗
-          </Link>
+      <details className="home-records">
+        <summary>
+          Your saved context <span aria-hidden="true">+</span>
+        </summary>
+        <p className="home-record-source">{projection.briefingSource}</p>
+        <section className="command-continuity" aria-label="In motion">
+          <span className="command-section-label">In motion</span>
+          <p>
+            {busy
+              ? 'Refreshing saved context…'
+              : stale
+                ? 'Showing the last loaded context. Refresh is unavailable.'
+                : projection.receipts.length
+                  ? 'Your saved context is organized. No new input required.'
+                  : 'Nothing to prepare right now.'}
+          </p>
+          {!!changes.length && <p className="command-changes">{changes.join(' ')}</p>}
+          {!!projection.receipts.length && (
+            <details className="command-receipts">
+              <summary>What was prepared</summary>
+              <ul>
+                {projection.receipts.map((receipt) => (
+                  <li key={receipt.id}>
+                    <strong>{receipt.title}</strong>
+                    <p>{receipt.detail}</p>
+                    <small>{receipt.source}</small>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {!!data.openCaptures && (
+            <Link prefetch={false} href="/app/captures">
+              {data.openCaptures} saved {data.openCaptures === 1 ? 'capture' : 'captures'} in your
+              inbox ↗
+            </Link>
+          )}
+          <small>
+            {checkedAt && data.mode === 'personal'
+              ? `Prepared at ${new Intl.DateTimeFormat('en-US', { timeZone: data.timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(checkedAt))}. `
+              : ''}
+            Saved records only. Model context stays under your conversation controls.
+          </small>
+          {data.mode === 'personal' && (
+            <button
+              className="text-button"
+              disabled={busy || depth || !!confirmMove}
+              onClick={() => void reload()}
+            >
+              Refresh briefing
+            </button>
+          )}
         </section>
-      )}
+        {data.mode === 'personal' && (
+          <section className="command-readiness" aria-label="Daily Command connection">
+            <div>
+              <span className="command-section-label">Your operating state</span>
+              <h2>
+                {operating?.snapshot?.confidence.known
+                  ? operating.snapshot.state
+                  : 'Arrival signals incomplete'}
+              </h2>
+              <p>
+                {operating?.snapshot?.reason ??
+                  'Your arrival context is unavailable. Open Daily Command to reconnect.'}
+              </p>
+              <small>
+                {operating?.snapshot
+                  ? `${operating.snapshot.confidence.known}/3 recovery signals · product guidance, not a health measurement`
+                  : 'No state inferred.'}
+              </small>
+            </div>
+            <Link prefetch={false} className="command-action" href="/app/arrival">
+              Arrival & feedback ↗
+            </Link>
+          </section>
+        )}
+      </details>
       <nav className="command-depth-nav" aria-label="Explore your context">
         <button
           disabled={busy}
@@ -586,7 +602,7 @@ export function DailyDashboard({
       </nav>
       {depth && (
         <div id="command-depth" tabIndex={-1} aria-label="Day workspace">
-          <DailyDepth initial={data} onChange={setData} />
+          <DailyDepth initial={data} onChange={setData} onReady={focusDepth} />
         </div>
       )}
       <dialog

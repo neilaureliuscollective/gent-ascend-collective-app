@@ -34,6 +34,8 @@ test('founder can save a profile and goal without paid membership, then retain c
   for (const entry of ['/', '/experience', '/enter']) {
     await page.goto(entry);
     await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+    await expect(page.locator('.command-presence')).toBeVisible();
+    await page.locator('.home-compose summary').click();
     await expect(page.getByRole('textbox', { name: 'What are we working on?' })).toBeVisible();
     await expect(page.locator('.entrance-panel, .command-opening')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);

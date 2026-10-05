@@ -35,3 +35,7 @@ No connected calendar, persistent wardrobe inventory, explicit haircut-cycle mod
 Typecheck, zero-warning lint, 350 unit tests, production build and migration-ledger check passed. Browser coverage includes Presence at 344/390/768/1440px, empty/degraded states, direct-home access and large text/short viewport, Command arrival/outcome, saved-work continuity, direction draft recovery, and grooming routine retry/edit/feedback journeys. Chromium automation uses synthetic component records for personal views, not live authenticated account evidence. Production route build and signed-out private API denial were checked; live model, hosted session read/write, and physical-device review remain unverified here.
 
 Release status: implementation prepared on a review branch; no production promotion in this phase.
+
+## Combined Command home release
+
+Founder requested live testing of both home restoration (#57) and Presence (#58). Reconciled both sources before release: retained the restored responsive Command hero, current energy renderer, expandable Talk, mounted day-workspace focus fix, and authored operating-space doors. The appearance door uses Presence / Prepare for the moment and `/app/presence`; daily grooming completion pressure stays removed. No new schema or integration is needed. Combined local lint/types, 350 units, production build and migration ledger passed; combined browser/CI/deployment receipts follow independently.
