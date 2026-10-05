@@ -32,7 +32,8 @@ test('connected week labels unavailable practice and preserves reduced motion', 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('http://127.0.0.1:3102/?mode=continuity&unavailable=1');
   await expect(page.getByRole('status')).toContainText('Grooming practice');
-  await expect(page.getByText('Unavailable', { exact: true })).toBeVisible();
+  await expect(page.getByText('Days with grooming practice', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /Presence/ })).toHaveAttribute('href', '/app/presence');
   await page.getByText('See the recorded days', { exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('table')).toContainText('Unknown');

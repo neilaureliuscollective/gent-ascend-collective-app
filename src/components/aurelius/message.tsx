@@ -96,8 +96,8 @@ export const ConversationTurn = memo(function ConversationTurn({
         {ritual && (
           <div className="ritual-chat-proposal">
             <p>{ritual.title} · Proposed ritual</p>
-            <Link href={`/app/grooming?ritualSuggestion=${turn.id}`}>Review ritual change ↗</Link>
-            <small>Review the steps in Grooming. Nothing is saved from this reply.</small>
+            <Link href={`/app/grooming?ritualSuggestion=${turn.id}`}>Review routine change ↗</Link>
+            <small>Review the steps in Presence’s grooming tools. Nothing is saved from this reply.</small>
           </div>
         )}
         <div className="message-tools">

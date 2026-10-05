@@ -130,6 +130,6 @@ test('member home retains world access and draft controls at enlarged text', asy
   await expect(
     page
       .getByRole('navigation', { name: 'Your operating spaces' })
-      .getByRole('link', { name: /Grooming/ }),
-  ).toHaveAttribute('href', '/app/grooming');
+      .getByRole('link', { name: /Presence/ }),
+  ).toHaveAttribute('href', '/app/presence');
 });

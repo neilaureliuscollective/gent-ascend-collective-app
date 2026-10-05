@@ -128,18 +128,18 @@ export function GroomingWorld({
       >
         <Link
           className="gw-grooming-return"
-          href={embedded ? '/app' : '/experience/world?world=grooming'}
+          href={embedded ? '/app/presence' : '/experience/world?world=grooming'}
         >
-          {embedded ? '← Command' : '← Whole-Man World'}
+          {embedded ? '← Presence' : '← Whole-Man World'}
         </Link>
         <div className="gw-grooming-intro">
-          <p className="gw-kicker">THE RITUAL / GENT ASCEND</p>
+          <p className="gw-kicker">PRESENCE / GROOMING</p>
           <h1 id="grooming-world-heading" tabIndex={-1}>
             Your standard.
             <br />
-            <em>Made daily.</em>
+            <em>On your terms.</em>
           </h1>
-          <p>Presence begins with how you care for yourself.</p>
+          <p>Hair, beard and skin. Your direction, at your own pace.</p>
         </div>
         <div className="gw-grooming-mirror" aria-hidden="true">
           <Image
@@ -219,7 +219,7 @@ export function GroomingWorld({
                         ? 'Explore a ritual'
                         : recordedToday
                           ? 'Review your ritual'
-                          : 'Start today’s ritual'}{' '}
+                          : 'Review your routine'}{' '}
                       <span aria-hidden="true">↗</span>
                     </button>
                     {data?.mode === 'personal' && !recordedToday && (
@@ -231,7 +231,7 @@ export function GroomingWorld({
                           setPractice(true);
                         }}
                       >
-                        I’ve done it
+                        Add a practice note
                       </button>
                     )}
                     {data?.mode === 'personal' && (
@@ -301,7 +301,7 @@ export function GroomingWorld({
       </section>
       <ContextSheet
         open={reviewWeek}
-        title="Your week in practice"
+        title="Your optional practice history"
         onClose={() => setReviewWeek(false)}
       >
         <p>Recorded practice · {data?.mode === 'personal' ? data.timezone : ''}</p>

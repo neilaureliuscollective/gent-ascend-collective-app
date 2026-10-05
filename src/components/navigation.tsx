@@ -41,7 +41,9 @@ export function Navigation() {
             path === href ||
             (href === '/app/collection' && path.startsWith('/app/collection/')) ||
             (href === '/app/world' &&
-              (path.startsWith('/app/performance') || path.startsWith('/app/grooming')))
+              (path.startsWith('/app/performance') ||
+                path.startsWith('/app/grooming') ||
+                path.startsWith('/app/presence')))
               ? 'page'
               : undefined
           }

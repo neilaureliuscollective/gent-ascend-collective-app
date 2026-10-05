@@ -1,0 +1,137 @@
+.presence-concierge {
+  position: relative;
+  isolation: isolate;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(18px, 4vw, 52px);
+  color: #efece3;
+  background:
+    radial-gradient(ellipse at 80% 15%, #0b3b3277, transparent 62%),
+    linear-gradient(145deg, #091511, #050706);
+  border-top: 1px solid #c4912f44;
+}
+.presence-concierge a {
+  color: #e0bb6a;
+  text-decoration: none;
+}
+.presence-concierge a:focus-visible,
+.presence-concierge summary:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 5px;
+}
+.presence-back {
+  display: inline-block;
+  padding: 10px 0;
+  font-size: 0.85rem;
+}
+.presence-intro {
+  padding: clamp(36px, 7vw, 80px) 0;
+  max-width: 720px;
+}
+.presence-concierge .eyebrow,
+.presence-services > a > span {
+  color: #e0bb6a;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+.presence-intro h1 {
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(3.2rem, 8vw, 6.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  margin: 22px 0;
+}
+.presence-intro h1 em {
+  font-weight: 400;
+  color: #e0bb6a;
+}
+.presence-concierge p {
+  line-height: 1.7;
+  color: #c4cec7;
+  overflow-wrap: anywhere;
+}
+.presence-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 360px;
+  min-height: 52px;
+  border-bottom: 1px solid #c4912f88;
+  margin-top: 28px;
+}
+.presence-intro small {
+  display: block;
+  color: #b4beb7;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  max-width: 360px;
+  margin-top: 14px;
+}
+.presence-preparation {
+  border-left: 2px solid #c4912f;
+  padding: 8px 0 8px 24px;
+  margin-bottom: 42px;
+}
+.presence-concierge h2 {
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 400;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.presence-services > a {
+  display: grid;
+  grid-template-columns: 190px 1fr 24px;
+  align-items: center;
+  gap: 22px;
+  border-top: 1px solid #c4912f33;
+  padding: 28px 0;
+  min-height: 100px;
+}
+.presence-services h2 {
+  color: #efece3;
+  margin: 0 0 8px;
+}
+.presence-services p {
+  margin: 0;
+}
+.presence-note,
+.presence-depth {
+  border-top: 1px solid #c4912f33;
+  margin-top: 32px;
+  padding-top: 24px;
+}
+.presence-depth summary {
+  cursor: pointer;
+  min-height: 44px;
+  color: #e0bb6a;
+}
+.presence-depth nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+}
+.presence-depth nav a,
+.presence-preparation > a,
+.presence-note > a {
+  display: inline-block;
+  padding: 12px 0;
+  min-height: 44px;
+}
+@media (max-width: 600px) {
+  .presence-services > a {
+    grid-template-columns: 1fr 24px;
+    gap: 14px;
+  }
+  .presence-services > a > span {
+    grid-column: 1/-1;
+  }
+  .presence-preparation {
+    padding-left: 18px;
+  }
+  .presence-depth nav {
+    flex-direction: column;
+    gap: 0;
+  }
+}

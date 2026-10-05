@@ -29,7 +29,7 @@ export const metadata = { title: 'Grooming Concierge | Gent Ascend' };
 export default async function Grooming({
   searchParams,
 }: {
-  searchParams: Promise<{ result?: string; ritualSuggestion?:string }>;
+  searchParams: Promise<{ result?: string; ritualSuggestion?:string; section?:string }>;
 }) {
   const person = await currentPerson();
   if (!person)
@@ -74,10 +74,11 @@ export default async function Grooming({
   }
   return (
     <main className="grooming grooming-daily">
+      <Link className="text-link" href="/app/presence">← Presence</Link>
       <GroomingWorld embedded initialData={world} suggestion={suggestion} />
       {suggestionError&&<p role="alert">{suggestionError}</p>}
-      <details id="ritual-history" className="grooming-full-history" open={!!params.result}>
-      <summary>Direction, rituals & private history</summary>
+      <details id="ritual-history" className="grooming-full-history" open={!!params.result || !!params.section}>
+      <summary>Direction, routines & private history</summary>
       <header className="groom-hero groom-hero-v2">
         <div className="groom-hero-copy">
           <p className="eyebrow">GENT ASCEND / GROOMING CONCIERGE</p>
@@ -86,7 +87,7 @@ export default async function Grooming({
             <br />
             <em>Sharper every time.</em>
           </h1>
-          <p>Observe. Decide. Practice. Remember what actually works.</p>
+          <p>Your saved appearance direction. Keep what works; refine when needed.</p>
         </div>
         <div className="groom-hero-signal" aria-hidden="true">
           <span>STANDARD</span>
@@ -187,8 +188,8 @@ export default async function Grooming({
       </details>
       <section id="ritual" className="groom-section">
         <p className="eyebrow">02 / LIVE RITUAL</p>
-        <h2>Practice the standard. Don’t manage a checklist.</h2>
-        <p>Keep the routine small, visible and easy to record. Refinement belongs behind the action.</p>
+        <h2>Keep the care that works.</h2>
+        <p>Your saved routines are references, not daily obligations. Add a note only when it is useful.</p>
         <div className="groom-three">
           {(['morning', 'evening', 'weekly'] as const).map((kind) => {
             const r = active.find((x) => x.kind === kind),
@@ -217,7 +218,7 @@ export default async function Grooming({
                       Optional note
                       <input name="note" maxLength={300} placeholder="What felt different?" />
                     </label>
-                    <button className="secondary-button">Record today’s practice</button>
+                    <button className="secondary-button">Record practice (optional)</button>
                     {latest && (
                       <small>
                         Last recorded {new Date(latest.occurred_at).toLocaleDateString()}.
@@ -253,7 +254,7 @@ export default async function Grooming({
           </form>
         </GroomingTask>
       </section>
-      <details id="progress" className="groom-disclosure">
+      <details id="progress" className="groom-disclosure" open={params.section === 'progress'}>
         <summary>Visual history</summary>
         <p className="eyebrow">03 / Progress</p>
         <h2>Evidence, in your own light.</h2>
@@ -442,7 +443,7 @@ export default async function Grooming({
           </div>
         )}
       </details>
-      <details id="occasion" className="groom-disclosure">
+      <details id="occasion" className="groom-disclosure" open={params.section === 'occasion'}>
         <summary>Upcoming occasion</summary>
         <p className="eyebrow">05 / Occasion</p>
         <h2>Arrive prepared.</h2>

@@ -46,6 +46,7 @@ export type DailyCommandSignals = {
   priority: string | null;
   blocker: string | null;
   goal: string | null;
+  /** Legacy input retained for saved-record compatibility; never a daily obligation. */
   ritual: string | null;
   occasion: { title: string; day: string } | null;
   priorFit?: DailyCommandOutcome['fit'];
@@ -190,13 +191,17 @@ export function deriveCommand(input: DailyCommandSignals): DailyCommandSnapshot 
       : '';
   const add = (id: string, label: string, detail: string, why: string, href: string) =>
     decisions.push({ id, label, detail, reason: why, href });
-  if (input.occasion)
+  if (
+    input.occasion &&
+    input.occasion.day >= input.day &&
+    input.occasion.day <= shiftDay(input.day, 7)
+  )
     add(
       'occasion',
       'PREPARE',
       `${input.occasion.title} · ${input.occasion.day}`,
-      'A saved grooming occasion is approaching. Review your look and handoff.',
-      '/app/grooming/professional',
+      'A saved occasion is approaching. Review your Presence preparation.',
+      '/app/presence',
     );
   if (input.priority)
     add(
@@ -243,14 +248,6 @@ export function deriveCommand(input: DailyCommandSignals): DailyCommandSnapshot 
       'Check your water and food plan if useful.',
       'Intake is unknown. No deficit is assumed.',
       '/app/performance?space=fuel',
-    );
-  if (input.ritual)
-    add(
-      'groom',
-      'GROOM',
-      input.ritual,
-      'Your saved morning ritual has no completion recorded today.',
-      '/experience/grooming',
     );
   if (!input.priority && decisions.length < 5)
     add(

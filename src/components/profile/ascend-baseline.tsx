@@ -5,7 +5,7 @@ import { baselineStages, factKeys, type FactKey } from '@/domains/ascend-profile
 
 type Fact = {fact_key:FactKey;value:string|null;version:number;source_kind:'user'|'ai_proposal';confirmed_at:string};
 type Proposal = {key:FactKey;value:string;certainty:'clear'|'needs_review';reason:string};
-const labels:Record<FactKey,string>={direction:'Current direction',body:'Body & performance',presence:'Grooming & presence',recovery:'Recovery',work:'Work & responsibility',character:'Character',connection:'Relationships & community',coaching:'How Aethelios should support you',boundary:'Your boundaries'};
+const labels:Record<FactKey,string>={direction:'Current direction',body:'Body & performance',presence:'Presence & appearance',recovery:'Recovery',work:'Work & responsibility',character:'Character',connection:'Relationships & community',coaching:'How Aethelios should support you',boundary:'Your boundaries'};
 export function AscendBaseline({initial}:{initial:Fact[]}) {
   const [facts,setFacts]=useState(initial);
   const [stage,setStage]=useState(0);

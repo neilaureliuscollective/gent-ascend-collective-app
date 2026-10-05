@@ -28,7 +28,7 @@ export async function intelligenceSession() {
 }
 export async function personalContext(question?:string): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const groomingRelevant=!!question && /groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
+  const groomingRelevant=!!question && /presence|appear|wardrobe|outfit|dress|confidence|prepar|meeting|occasion|travel|date|groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
   const continuityPromise = question && /week|progress|train|workout|routine|ritual|groom/i.test(question) ? readContinuity({ client, person }).catch(() => null) : Promise.resolve(undefined);
   const today = localDay(new Date(), person.timezone);
   const [goal, memories, daily, profileFacts, reviews, grooming, captures] = await Promise.all([
@@ -55,6 +55,7 @@ export async function personalContext(question?:string): Promise<PersonalContext
       client.from('grooming_looks').select('title,kind,detail,service_date').eq('person_id',person.id).order('created_at',{ascending:false}).limit(6),
       client.from('grooming_look_previews').select('title,style_id,note,saved_at').eq('person_id',person.id).eq('status','complete').not('saved_at','is',null).order('saved_at',{ascending:false}).limit(4),
       client.from('grooming_scans').select('created_at,summary').eq('person_id',person.id).eq('status','complete').order('created_at',{ascending:false}).limit(2),
+      client.from('grooming_events').select('title,event_date,note').eq('person_id',person.id).gte('event_date',today).order('event_date').limit(6),
       client.from('grooming_checkins').select('ritual_id,occurred_at,note').eq('person_id',person.id).eq('done',true).order('occurred_at',{ascending:false}).limit(7),
     ]):null,
     client.from('life_captures').select('id',{count:'exact',head:true}).eq('person_id',person.id).eq('status','inbox'),
@@ -97,7 +98,7 @@ export async function personalContext(question?:string): Promise<PersonalContext
     daily: dailyRelevant ? (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}) : [],
     dailyBrief: {asOf:new Date().toISOString(),day:today,version:todayEntry?.version??0,intention:todayEntry?.intention??'',actions:orderedActions,openCaptures:captures.count??0,previousReview:previousReview?{day:previousReview.day,tomorrow:previousReview.tomorrow,blocker:previousReview.blocker}:null,nextMove:{title,kind,source,sourceDay}},
     ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
-    grooming:grooming?(()=>{const [p,g,r,products,looks,concepts,scans,practice]=grooming;return {profile:p.data?{hair:p.data.hair_focus,beard:p.data.beard_focus,skin:p.data.skin_focus,look:p.data.preferred_look,effort:p.data.effort,sensitivities:p.data.sensitivities,dislikes:p.data.dislikes}:null,goals:(g.data??[]).map(x=>({title:x.title,date:x.target_date})),rituals:(r.data??[]).map(x=>({id:x.id,version:x.version,kind:x.kind,title:x.title,steps:x.steps})),products:(products.data??[]).map(x=>({name:x.name,relation:x.relation,note:x.note,ritualId:x.ritual_id})),looks:(looks.data??[]).map(x=>({title:x.title,kind:x.kind,detail:x.detail,date:x.service_date})),concepts:(concepts.data??[]).map(x=>({title:x.title,style:x.style_id,note:x.note,at:x.saved_at!})),practice:(practice.data??[]).map(x=>({ritualId:x.ritual_id,at:x.occurred_at,note:x.note})),scans:(scans.data??[]).map(x=>({at:x.created_at,summary:x.summary}))};})():undefined,
+    grooming:grooming?(()=>{const [p,g,r,products,looks,concepts,scans,occasions,practice]=grooming;return {occasions:(occasions.data??[]).map(x=>({title:x.title,day:x.event_date,note:x.note})),profile:p.data?{hair:p.data.hair_focus,beard:p.data.beard_focus,skin:p.data.skin_focus,look:p.data.preferred_look,effort:p.data.effort,sensitivities:p.data.sensitivities,dislikes:p.data.dislikes}:null,goals:(g.data??[]).map(x=>({title:x.title,date:x.target_date})),rituals:(r.data??[]).map(x=>({id:x.id,version:x.version,kind:x.kind,title:x.title,steps:x.steps})),products:(products.data??[]).map(x=>({name:x.name,relation:x.relation,note:x.note,ritualId:x.ritual_id})),looks:(looks.data??[]).map(x=>({title:x.title,kind:x.kind,detail:x.detail,date:x.service_date})),concepts:(concepts.data??[]).map(x=>({title:x.title,style:x.style_id,note:x.note,at:x.saved_at!})),practice:(practice.data??[]).map(x=>({ritualId:x.ritual_id,at:x.occurred_at,note:x.note})),scans:(scans.data??[]).map(x=>({at:x.created_at,summary:x.summary}))};})():undefined,
   };
 }
 export async function conversationTurns(id: string, before?: string) {

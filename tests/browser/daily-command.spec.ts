@@ -31,7 +31,8 @@ for (const width of [344, 768, 1440]) {
     });
     await page.goto('http://127.0.0.1:3102/?mode=command');
     await expect(page.getByRole('heading', { name: 'READY', exact: true })).toBeVisible();
-    await expect(page.locator('.command-decisions li')).toHaveCount(4);
+    await expect(page.locator('.command-decisions li')).toHaveCount(3);
+    await expect(page.locator('.command-decisions')).not.toContainText('GROOM');
     expect(writes).toBe(0);
     await page.getByText('Why this direction', { exact: true }).click();
     await expect(page.getByText('USER-REPORTED / 2026-10-02', { exact: true })).toBeVisible();

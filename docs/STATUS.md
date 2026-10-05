@@ -1,3 +1,9 @@
+## Presence repositioning — 2026-10-05
+
+Implemented the founder-approved Presence hierarchy; see [PRESENCE.md](PRESENCE.md). Command no longer creates grooming tasks from absent routine completion, and compact Home removes ritual compliance counts. `/app/presence` provides preparation and existing appearance intelligence; all grooming routes/data/API contracts remain intact. Upcoming user-saved occasions and member-marked replenishment are honest request-time signals. Aethelios receives relevant saved occasions under existing per-message context consent; wardrobe inventory, haircut cadence, calendar, reminders and background intelligence remain future work.
+
+Validation: typecheck, lint, 350 units, build and ledger passed; responsive browser and preserved grooming journeys checked with synthetic records. Live authenticated/model/physical-device review unverified. No deployment performed.
+
 ## Grooming review publication — October 4, 2026
 
 Founder explicitly approved publication to the canonical repository and a draft PR. [PR #54](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/54) now contains the daily grooming intelligence and ritual precision phases. Reconciled with launch release #53 (`8d40fa0`), preserving web research, continuity and account-claim tests. Remote implementation `d8cf15d` exactly matches the reconciled local source tree `75ae235`.

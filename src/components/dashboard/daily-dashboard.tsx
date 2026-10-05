@@ -354,11 +354,11 @@ export function DailyDashboard({
           )}
         </section>
         <nav className="home-worlds" aria-label="Your operating spaces">
-          <Link prefetch={false} href="/app/grooming">
-            Grooming <span>↗</span>
+          <Link prefetch={false} href="/app/presence">
+            Presence <span>↗</span>
           </Link>
           <Link prefetch={false} href="/app/performance">
-            Training <span>↗</span>
+            Performance <span>↗</span>
           </Link>
           <Link prefetch={false} href="/app/collection" className="home-collection">
             Ascend Collection <span>↗</span>
