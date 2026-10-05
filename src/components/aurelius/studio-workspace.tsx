@@ -54,7 +54,7 @@ export function StudioWorkspace() {
   const [finishVersion, setFinishVersion] = useState<string | null>(null);
   const project = data.projects.find(item => item.id === selected);
 
-  function accept(next: Workspace) {
+  const accept = useCallback((next: Workspace) => {
     setData(next);
     setSelected(next.projectId);
     const current = next.projects.find(item => item.id === next.projectId);
@@ -72,7 +72,7 @@ export function StudioWorkspace() {
     }
     setError('');
     setLoading(false);
-  }
+  }, [handoff]);
   const load = useCallback(async (projectId?: string | null) => {
     try {
       const next = await jsonResponse<Workspace>(await fetch(`/api/studio${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`, { cache: 'no-store' }));
@@ -81,14 +81,14 @@ export function StudioWorkspace() {
       setError((cause as Error).message);
       setLoading(false);
     }
-  }, []);
+  }, [accept]);
   useEffect(() => {
     let active = true;
     fetch('/api/studio', { cache: 'no-store' }).then(response => jsonResponse<Workspace>(response))
       .then(next => { if (active) accept(next); })
       .catch(cause => { if (active) { setError(cause.message); setLoading(false); } });
     return () => { active = false; };
-  }, []);
+  }, [accept]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
