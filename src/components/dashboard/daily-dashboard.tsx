@@ -7,7 +7,7 @@ import { projectCommand, type CommandProjection } from '@/domains/command/projec
 import { commandChanges } from '@/domains/command/changes';
 import { CommandField } from './command-field';
 import type { CommandData } from '@/domains/daily-command/model';
-import { selectProactiveSignal } from '@/domains/intelligence/proactive';
+import { selectProactiveSignal, type ActiveGoalSignalInput } from '@/domains/intelligence/proactive';
 import { ProactiveSignalCard } from './proactive-signal-card';
 import { HomeConversation } from './home-conversation';
 import '@/app/command-living.css';
@@ -31,12 +31,14 @@ export function DailyDashboard({
   asOf,
   dailyCommand,
   handledProactiveKeys = [],
+  activeGoal = null,
 }: {
   initial: DailyData;
   opening?: CommandProjection;
   asOf?: string;
   dailyCommand?: CommandData | null;
   handledProactiveKeys?: string[];
+  activeGoal?: ActiveGoalSignalInput;
 }) {
   const [data, setData] = useState(initial);
   const [operating, setOperating] = useState(dailyCommand ?? null);
@@ -57,7 +59,7 @@ export function DailyDashboard({
   const lock = useRef(false);
   const projection = data === initial && opening ? opening : projectCommand(data);
   const proposal = projection.decisions[0];
-  const proactive = selectProactiveSignal(operating, handledProactiveKeys);
+  const proactive = selectProactiveSignal({ command: operating, goal: activeGoal }, handledProactiveKeys);
   function openPlan() {
     if (busy || lock.current) return;
     setDepth(true);
