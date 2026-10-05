@@ -370,7 +370,7 @@ export function AureliusWorkspace({
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
 
   async function prepareCapability() {
-    if (!capability || !data?.ownerId || !['performance','studio'].includes(capability.id) || orchestrating) return;
+    if (!capability || !data?.ownerId || !['performance','studio','presence'].includes(capability.id) || orchestrating) return;
     const text = draft.trim() || data.turns.at(-1)?.user_text || '';
     if (!text) return;
     setOrchestrating(true);
@@ -690,7 +690,7 @@ export function AureliusWorkspace({
               {capability && !councilSelection && (
                 <div className="revision-notice" aria-live="polite">
                   <span>Aethelios is routing this through <strong>{capability.label}</strong> intelligence.</span>{' '}
-                  {['performance','studio'].includes(capability.id) ? (
+                  {['performance','studio','presence'].includes(capability.id) ? (
                     <button type="button" className="text-button" disabled={orchestrating} onClick={() => void prepareCapability()}>
                       {orchestrating ? `Preparing ${capability.label}…` : `Prepare in ${capability.label} ↗`}
                     </button>
