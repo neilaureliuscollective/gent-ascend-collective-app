@@ -46,10 +46,10 @@ export function AureliusWorkspace({
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
   const handoff = useConversationDraft();
-  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft && !handoff?.pending?.target ? handoff?.pending ?? null : null);
+  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft && !handoff?.peek()?.target ? handoff?.peek() ?? null : null);
   const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
   useEffect(() => {
-    if (homeDraft && handoff?.pending === homeDraft) handoff.stage(null);
+    if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
   const [councilSelection,setCouncilSelection]=useState<CouncilSelection|null>(null);
   const [composerExpanded, setComposerExpanded] = useState(false);
