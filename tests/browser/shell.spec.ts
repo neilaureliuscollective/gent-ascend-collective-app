@@ -5,7 +5,8 @@ for (const width of [360, 768, 1440]) {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto('/app');
-    await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toBeVisible();
+    await expect(page.locator('.sidebar-footer a')).toHaveAttribute('href', '/experience/world');
+    await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

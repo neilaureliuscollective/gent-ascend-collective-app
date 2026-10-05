@@ -93,7 +93,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
 });
 
 for (const platform of ['Android', 'Apple'] as const) {
-  test(`${platform} standalone return opens Command immediately while keeping explicit replay`, async ({
+  test(`${platform} standalone return opens Command immediately without an entrance`, async ({
     page,
   }) => {
     await page.addInitScript((platform) => {
@@ -111,11 +111,9 @@ for (const platform of ['Android', 'Apple'] as const) {
     await page.clock.install();
     await page.goto('/app');
     await expect(page.locator('.command-environment')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Replay arrival' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
     await page.clock.runFor(500);
     await expect(page.locator('.command-opening')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Replay arrival' }).click();
-    await expect(page.locator('.command-opening')).toBeVisible();
     await page.clock.runFor(1900);
     await expect(page.locator('.command-opening')).toHaveCount(0);
   });

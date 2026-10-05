@@ -21,7 +21,19 @@ export async function proxy(request: NextRequest) {
         },
       },
     });
-    await client.auth.getClaims();
+    const { data, error } = await client.auth.getClaims();
+    // Verified identity only. Refresh cookies on the redirect as on any workspace request.
+    if (
+      !error &&
+      data?.claims.sub &&
+      ['/', '/experience', '/enter'].includes(request.nextUrl.pathname)
+    ) {
+      const destination = new URL('/app', request.url);
+      const direct = NextResponse.redirect(destination);
+      for (const cookie of response.cookies.getAll()) direct.cookies.set(cookie);
+      direct.headers.set('Cache-Control', 'private, no-store');
+      return direct;
+    }
   }
   response.headers.set('Cache-Control', 'private, no-store');
   if (
@@ -33,6 +45,8 @@ export async function proxy(request: NextRequest) {
 }
 export const config = {
   matcher: [
+    '/',
+    '/experience',
     '/experience/world',
     '/experience/grooming',
     '/experience/performance/practice/:path*',

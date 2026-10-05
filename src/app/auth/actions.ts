@@ -1,4 +1,6 @@
 'use server';
+import { currentAccess } from '@/domains/access/current';
+import { readPilot } from '@/domains/pilot/service';
 import { currentPerson } from '@/domains/person/current';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -48,8 +50,11 @@ export async function signIn(form: FormData) {
   if (failure) redirect(failed(failure));
   if (form.get('claim') === '1') redirect('/experience/world?claim=1');
   if (form.get('entry') === 'membership') redirect('/app/membership');
-  const person = await currentPerson();
-  redirect(person?.onboarding_completed || person?.priority ? '/app' : '/app/welcome');
+  const [pilot, person] = await Promise.all([readPilot(), currentPerson()]);
+  if (pilot?.beta || pilot?.founder || person?.onboarding_completed || person?.priority)
+    redirect('/app');
+  if ((await currentAccess()).has('aurelius.context')) redirect('/app');
+  redirect('/app/welcome');
 }
 export async function signOut() {
   (await cookies()).set('performance-reset', '1', {

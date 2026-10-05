@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useConversationDraft } from './draft-handoff';
 import { CouncilPanel } from './council-panel';
 import { councilFromVersion, councilPromptVersion, councilLabel, type CouncilSelection } from '@/domains/intelligence/council';
 import type { StreamEvent, Turn, WorkspaceData } from '@/domains/intelligence/types';
@@ -43,7 +44,12 @@ export function AureliusWorkspace({
   const tableReview=useRef<{open:()=>void}>(null);
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
-  const [draft, setDraft] = useState(initialDraft);
+  const handoff = useConversationDraft();
+  const [homeDraft] = useState(() => !compact && !initialConversation && !initialDraft ? handoff?.pending ?? null : null);
+  const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
+  useEffect(() => {
+    if (homeDraft && handoff?.pending === homeDraft) handoff.stage(null);
+  }, [homeDraft, handoff]);
   const [councilSelection,setCouncilSelection]=useState<CouncilSelection|null>(null);
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -100,6 +106,7 @@ export function AureliusWorkspace({
         }
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
+        if (homeDraft && (result as WorkspaceData).ownerId !== homeDraft.ownerId) setDraft('');
         setData(result as WorkspaceData);
         setCouncilSelection(councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version??''));
         setSelected(id);
@@ -120,7 +127,7 @@ export function AureliusWorkspace({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact],
+    [compact, homeDraft],
   );
   function reload(id: string | null = null) {
     setLoading(true);
@@ -169,6 +176,7 @@ export function AureliusWorkspace({
       })
       .then((result) => {
         if (controller.signal.aborted) return;
+        if (homeDraft && (!result || result.ownerId !== homeDraft.ownerId)) setDraft('');
         setPreview(result === null);
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
@@ -185,7 +193,7 @@ export function AureliusWorkspace({
       reading.current?.abort();
       generation.current?.abort();
     };
-  }, [initialConversation]);
+  }, [initialConversation, homeDraft]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;

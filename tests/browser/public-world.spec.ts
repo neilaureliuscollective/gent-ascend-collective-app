@@ -9,7 +9,7 @@ for (const width of [344, 768, 1440]) {
     await expect(
       page.getByRole('heading', { name: 'A life is built from the inside.' }),
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toHaveCount(0);
     await expect(page.locator('.ascend-threshold-mark img')).toBeVisible();
     expect(
       await page
@@ -89,7 +89,8 @@ test('legacy routes retain destinations and the installed app opens Command', as
   expect(manifest.start_url).toBe('/app');
   expect(manifest.display).toBe('standalone');
   expect(manifest.scope).toBe('/');
-  expect((await request.get('/')).headers()['cache-control']).not.toContain('private');
+  // Root entry now varies by verified session; never share its redirect through a cache.
+  expect((await request.get('/')).headers()['cache-control']).toContain('private');
   expect((await request.get('/app/install')).headers()['cache-control']).toContain('private');
 });
 
@@ -135,5 +136,5 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
   await expect(page.getByRole('heading', { name: 'A moment to reconnect.' })).toBeVisible();
   await context.setOffline(false);
   await page.getByRole('link', { name: 'Try Command again' }).click();
-  await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toBeVisible();
 });

@@ -31,12 +31,13 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app');
-  await page.goto('/enter');
-  await expect(page.getByRole('heading', { name: 'The door is yours.' })).toBeVisible();
-  const personalDoor = page.locator('.entrance-panel a.entrance-primary');
-  await expect(personalDoor).toHaveAttribute('href', /\/app(?:\/welcome)?/);
-  await personalDoor.click();
-  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
+  for (const entry of ['/', '/experience', '/enter']) {
+    await page.goto(entry);
+    await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+    await expect(page.getByRole('textbox', { name: 'What are we working on?' })).toBeVisible();
+    await expect(page.locator('.entrance-panel, .command-opening')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
+  }
   await page.goto('/dev');
   await page.getByLabel('Membership scenario').selectOption('free');
   await page.getByLabel('Billing simulation').selectOption('none');

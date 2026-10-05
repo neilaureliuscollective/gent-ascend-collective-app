@@ -188,6 +188,7 @@ export async function readWorkspace(conversationId?: string, before?: string, li
     throw new IntelligenceError('Your workspace could not be loaded.', 503);
   const config = aiConfigSchema.parse(process.env);
   return {
+    ownerId: person.id,
     conversations: (list.data ?? []).slice(0, 40),
     turns: turns.slice(-40),
     memories: memories.data ?? [],
