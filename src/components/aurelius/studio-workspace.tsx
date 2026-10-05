@@ -1,17 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { StudioStoryboard, type StudioScene } from './studio-storyboard';
 import { StudioFinish, type StudioFinishRecord } from './studio-finish';
+import { useConversationDraft } from './draft-handoff';
 
 type CreativeType = 'open' | 'brand' | 'campaign' | 'product' | 'personal';
 type Brief = { purpose: string; audience: string; direction: string; palette: string; avoid: string };
 type Project = { id: string; title: string; creative_type: CreativeType; brief: Partial<Brief>; updated_at: string };
 type Version = { id: string; parent_id: string | null; reference_id: string | null; prompt: string; model: string; image_size: string; status: 'pending' | 'complete' | 'failed'; created_at: string };
 type Reference = { id: string; created_at: string };
-type Workspace = { projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; finishes: StudioFinishRecord[]; configured: boolean };
+type Workspace = { owner?: string; projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; finishes: StudioFinishRecord[]; configured: boolean };
 type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = { projects: [], projectId: null, versions: [], references: [], scenes: [], finishes: [], configured: false };
@@ -32,6 +33,8 @@ function imageUrl(id: string, kind: 'version' | 'reference') {
 }
 
 export function StudioWorkspace() {
+  const handoff = useConversationDraft();
+  const consumedHandoff = useRef(false);
   const [data, setData] = useState<Workspace>(empty);
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<View>('create');
@@ -51,6 +54,18 @@ export function StudioWorkspace() {
   const [forScene, setForScene] = useState<string | null>(null);
   const [finishVersion, setFinishVersion] = useState<string | null>(null);
   const project = data.projects.find(item => item.id === selected);
+  useEffect(() => {
+    const pending = handoff?.pending;
+    if (consumedHandoff.current || !pending || pending.target !== 'studio' || !data.owner) return;
+    consumedHandoff.current = true;
+    if (pending.ownerId === data.owner) {
+      setDraft(pending.text);
+      setNewTitle(pending.text.slice(0, 72));
+      setNaming(true);
+      setView('create');
+    }
+    handoff.stage(null);
+  }, [data.owner, handoff]);
 
   function accept(next: Workspace) {
     setData(next);
