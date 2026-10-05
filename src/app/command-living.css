@@ -568,3 +568,229 @@ html[data-quiet='true'] .command-living .connection-trace {
     line-height: 1.3;
   }
 }
+
+/* Direct member home: utility first, one environment, no entrance animation. */
+.command-home .command-environment {
+  display: block;
+  padding: 0 clamp(18px, 4vw, 52px) 24px;
+}
+.command-home .command-arrival {
+  padding: 18px 0 12px;
+  flex-wrap: wrap;
+}
+.command-home .command-moment {
+  max-width: none;
+  text-align: left;
+  margin: 8px 0 18px;
+  padding: 0;
+}
+.command-home .command-moment h1 {
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  margin: 0;
+  text-wrap: pretty;
+}
+.command-home .command-kicker {
+  margin-bottom: 8px;
+}
+.home-conversation {
+  max-width: 840px;
+  margin: 0 0 20px;
+}
+.home-conversation-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+.home-conversation-heading strong {
+  color: #e0bb6a;
+  font-weight: 500;
+}
+.home-conversation-heading span {
+  font-size: 0.75rem;
+  color: #bdcbbf;
+}
+.home-conversation form {
+  border-bottom: 1px solid #c4912f66;
+  padding: 14px 16px 12px;
+  background: linear-gradient(100deg, #10392ce0, #09241b66);
+}
+.home-conversation label,
+.home-conversation-preview p {
+  display: block;
+  font-size: 1.15rem;
+  color: #f1eee4;
+  margin: 0 0 8px;
+}
+.home-conversation textarea {
+  display: block;
+  width: 100%;
+  min-height: 70px;
+  max-height: 240px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+  color: #f5f0e4;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0;
+  box-shadow: none;
+  scroll-margin-block: 100px;
+}
+.home-conversation textarea::placeholder {
+  color: #a9bcae;
+}
+.home-conversation textarea:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 4px;
+}
+.home-conversation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.home-conversation-actions small {
+  max-width: 230px;
+  font-size: 0.7rem;
+  color: #bdcbbf;
+}
+.home-conversation .command-action {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.home-conversation .command-action:disabled {
+  opacity: 0.55;
+}
+.home-conversation-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.home-resume {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 6px;
+  color: #c7d3c7;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.command-home .command-next {
+  grid-area: auto;
+  margin: 0;
+  padding: 18px 0;
+  gap: 12px;
+}
+.command-home .command-next h2 {
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+}
+.command-home .command-next p {
+  margin-bottom: 0;
+}
+.home-worlds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+  border-block: 1px solid #c4912f30;
+  padding: 6px 0;
+}
+.home-worlds a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  color: #e7e9dc;
+  font-size: 0.85rem;
+}
+.home-worlds a span {
+  color: #c4912f;
+}
+.home-worlds .home-collection {
+  color: #e0bb6a;
+}
+.home-context-note {
+  max-width: 840px;
+  margin: 22px 0 0;
+}
+.home-context-note p {
+  color: #d0dbce;
+  margin: 0 0 6px;
+  line-height: 1.6;
+}
+.home-context-note small {
+  color: #a9bcae;
+  font-size: 0.7rem;
+}
+.command-home .command-field {
+  grid-area: auto;
+  min-width: 0;
+}
+.command-home .field-caption {
+  margin-inline: 0;
+}
+.command-home .signal-detail {
+  margin-inline: 0;
+}
+@media (max-width: 750px) {
+  .command-home .command-arrival {
+    font-size: 0.68rem;
+  }
+  .command-home .command-moment {
+    margin-bottom: 16px;
+  }
+  .home-conversation {
+    margin-bottom: 12px;
+  }
+  .home-conversation form {
+    padding: 12px;
+  }
+  .home-conversation-heading {
+    margin-bottom: 8px;
+  }
+  .home-conversation-actions small {
+    max-width: 145px;
+  }
+  .home-conversation-actions .command-action {
+    font-size: 0.8rem;
+  }
+  .command-home .command-next {
+    padding: 14px 0;
+  }
+  .home-worlds {
+    gap: 0 16px;
+  }
+  .home-worlds a {
+    font-size: 0.8rem;
+  }
+  .home-context-note {
+    margin-top: 18px;
+  }
+}
+@media (forced-colors: active) {
+  .home-conversation form,
+  .home-worlds {
+    border: 1px solid CanvasText;
+  }
+}
+
+@media (max-width: 750px) {
+  .home-conversation-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .home-conversation-actions small {
+    max-width: none;
+  }
+  .home-conversation-actions .command-action {
+    padding-inline: 14px;
+  }
+}

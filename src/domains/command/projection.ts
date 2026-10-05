@@ -129,7 +129,7 @@ export function projectCommand(data: DailyData) {
     canAdopt: (move.kind === 'review' || move.kind === 'goal') && move.title.length <= 100,
     briefing:
       (day.actions.length
-        ? `${completed} of ${day.actions.length} planned actions complete.${completed === day.actions.length ? ' Your saved plan is complete.' : ' One next move is ready below.'}`
+        ? `${completed} of ${day.actions.length} planned actions complete.${completed === day.actions.length ? ' Your saved plan is complete.' : ' Your next move is ready.'}`
         : '') ||
       (day.review ? 'Your confirmed review is saved. Nothing else is required here.' : '') ||
       day.intention ||

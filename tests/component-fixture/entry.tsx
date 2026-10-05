@@ -1,3 +1,4 @@
+import { HomeHandoffFixture } from './home-handoff';
 import { MemberContinuity } from '@/components/member-continuity';
 import { projectContinuity } from '@/domains/continuity/model';
 import { CustomerOrders } from '@/components/commerce/customer-orders';
@@ -97,7 +98,9 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'continuity' ? (
+  mode === 'home-handoff' ? (
+    <HomeHandoffFixture />
+  ) : mode === 'continuity' ? (
     <main style={{ maxWidth: 1000, margin: 'auto', padding: 16 }}>
       <p>Synthetic member records · no real account.</p>
       <MemberContinuity

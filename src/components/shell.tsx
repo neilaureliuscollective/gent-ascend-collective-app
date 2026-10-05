@@ -1,3 +1,4 @@
+import { ConversationDraftProvider } from './aurelius/draft-handoff';
 import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
 import { Navigation } from './navigation';
@@ -16,57 +17,63 @@ export function Shell({
   founder?: boolean;
 }) {
   return (
-    <div className="app-shell">
-      <AppRuntime />
-      <VisualEnvironment>
-        <ConnectionField />
-      </VisualEnvironment>
-      <a className="skip" href="#main">
-        Skip to content
-      </a>
-      <aside className="sidebar">
-        <Link className="wordmark" href="/app" aria-label="Gent Ascend Collective home">
-          <Brand />
-        </Link>
-        <p className="navigation-label">YOUR ASCENT</p>
-        <Navigation />
-        <AureliusPanel />
-        <AetheliosSpaceNavigation placement="sidebar" />
-        <div className="sidebar-footer">
-          <Link href="/" prefetch={false} className="text-link">Explore Gent Ascend ↗</Link>
-          <span className="brand-star" aria-hidden="true">
-            ✦
-          </span>
-          <p>
-            Strength. Discipline.
-            <br />
-            Character. Legacy.
-          </p>
-          <span className="quiet-label">A better standard, built daily.</span>
-        </div>
-      </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <Link href="/app" className="mobile-brand" aria-label="Gent Ascend Collective home">
-            <Brand compact />
+    <ConversationDraftProvider>
+      <div className="app-shell">
+        <AppRuntime />
+        <VisualEnvironment>
+          <ConnectionField />
+        </VisualEnvironment>
+        <a className="skip" href="#main">
+          Skip to content
+        </a>
+        <aside className="sidebar">
+          <Link className="wordmark" href="/app" aria-label="Gent Ascend Collective home">
+            <Brand />
           </Link>
-          <span className="topbar-context">
-            GENT ASCEND <span>/</span> YOUR PERSONAL COMMAND
-          </span>
-          <div className="topbar-actions">
-            <UniversalCapture />
-            <AppearanceControls />
-            <Link href="/app/ascend" className="text-link shell-ascend-link">Ascend</Link>
-            {founder && <Link href="/dev">Developer console</Link>}
-            <Link href="/app/you" className="avatar" aria-label="Your account">
-              <Icon name="person" />
+          <p className="navigation-label">YOUR ASCENT</p>
+          <Navigation />
+          <AureliusPanel />
+          <AetheliosSpaceNavigation placement="sidebar" />
+          <div className="sidebar-footer">
+            <Link href="/experience/world" prefetch={false} className="text-link">
+              Explore Gent Ascend ↗
             </Link>
+            <span className="brand-star" aria-hidden="true">
+              ✦
+            </span>
+            <p>
+              Strength. Discipline.
+              <br />
+              Character. Legacy.
+            </p>
+            <span className="quiet-label">A better standard, built daily.</span>
           </div>
-        </header>
-        <main id="main" tabIndex={-1}>
-          {children}
-        </main>
+        </aside>
+        <div className="workspace">
+          <header className="topbar">
+            <Link href="/app" className="mobile-brand" aria-label="Gent Ascend Collective home">
+              <Brand compact />
+            </Link>
+            <span className="topbar-context">
+              GENT ASCEND <span>/</span> YOUR PERSONAL COMMAND
+            </span>
+            <div className="topbar-actions">
+              <UniversalCapture />
+              <AppearanceControls />
+              <Link href="/app/ascend" className="text-link shell-ascend-link">
+                Ascend
+              </Link>
+              {founder && <Link href="/dev">Developer console</Link>}
+              <Link href="/app/you" className="avatar" aria-label="Your account">
+                <Icon name="person" />
+              </Link>
+            </div>
+          </header>
+          <main id="main" tabIndex={-1}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ConversationDraftProvider>
   );
 }

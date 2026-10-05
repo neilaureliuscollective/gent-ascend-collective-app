@@ -344,7 +344,7 @@ test('recovered Command opens current domains and preserves the separate saved a
   await page.goto('/app');
   await expect(page.locator('.command-environment .gw-energy-orb')).toBeVisible();
   const domains = page.getByRole('navigation', { name: 'Your operating spaces' });
-  await expect(domains.getByRole('link', { name: /Performance/ })).toHaveAttribute(
+  await expect(domains.getByRole('link', { name: /Training/ })).toHaveAttribute(
     'href',
     '/app/performance',
   );
@@ -360,14 +360,12 @@ test('recovered Command opens current domains and preserves the separate saved a
   await expect(page.getByRole('heading', { name: 'Your day is waiting.' })).toBeVisible();
 });
 
-test('member arrival is brief, replayable and respects Still', async ({ page }) => {
+test('member home is immediately usable with no arrival or replay gate', async ({ page }) => {
   await page.goto('/app');
-  await expect(page.locator('.command-opening')).toHaveCount(0, { timeout: 5000 });
-  await page.getByRole('button', { name: 'Replay arrival' }).click();
-  await expect(page.locator('.command-opening')).toBeVisible();
-  await expect(page.locator('.command-opening')).toHaveCount(0, { timeout: 5000 });
+  await expect(page.locator('.command-environment')).toBeVisible();
+  await expect(page.locator('.command-opening')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(page.getByRole('button', { name: 'Replay arrival' })).toBeDisabled();
   await expect(page.locator('.command-environment')).toBeVisible();
 });
 

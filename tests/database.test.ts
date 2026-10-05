@@ -1067,14 +1067,18 @@ describe('Performance programs and immutable decisions',()=>{
 });
 
 describe('Performance progression evidence and approval', () => {
- beforeAll(async()=>{ await db.exec(`delete from public.performance_checkins where person_id=(select id from public.persons where auth_user_id='${founder}')`); });
+ beforeAll(async()=>{
+  await db.exec(`delete from public.performance_checkins where person_id=(select id from public.persons where auth_user_id='${founder}')`);
+  // Recovery eligibility uses the member's calendar day, which can differ from UTC.
+  check.day=(await db.query<{day:string}>(`select ((now() at time zone timezone)::date)::text as day from public.persons where auth_user_id='${founder}'`)).rows[0]!.day;
+ });
  const slot=crypto.randomUUID(),other=crypto.randomUUID(),exercise=crypto.randomUUID();
  const plan={title:'Progression A',unit:'lb' as const,exercises:[{id:exercise,name:'Row',sets:2,reps:8,load:40,restSeconds:90}]};
  const program={title:'Learning cycle',sessions:[{id:slot,plan},{id:other,plan:{...plan,title:'Progression B'}}]};
  const call=(kind:string,version:number,payload:unknown,request=crypto.randomUUID())=>`select public.performance_save('${kind}','${request}',${version},'${JSON.stringify(payload).replaceAll("'","''")}'::jsonb) as version`;
  const review=async()=> (await asUser<{value:import('../src/domains/performance/progression').ProgressionReview[]}>(founder,'select public.performance_progression() as value')).rows[0]!.value;
  let token='',checkVersion=1;
- const check={day:new Date().toISOString().slice(0,10),sleepMinutes:450,energy:4,soreness:'none',weight:null,unit:'lb',calories:null,protein:null,waterMl:null,nutritionComplete:false};
+ const check={day:'',sleepMinutes:450,energy:4,soreness:'none',weight:null,unit:'lb',calories:null,protein:null,waterMl:null,nutritionComplete:false};
  const accept=(request=crypto.randomUUID(),t=token,version=1)=>`select public.performance_progression_accept('${request}',${version},'${slot}','${t}') as version`;
  async function workout(daysAgo:number,mode:'planned'|'lighter'='planned',effort:number|null=7,slotId=slot) {
   const {startProgramSession,preparePlan}=await import('../src/domains/performance/program');

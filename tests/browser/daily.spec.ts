@@ -47,7 +47,7 @@ for (const width of [360, 768, 1440])
     await expect(page.locator('.daily-table-scroll tbody tr')).toHaveCount(30);
     expect(writes).toEqual([]);
     await page.getByRole('button', { name: 'Exit sample' }).click();
-    await expect(page.getByRole('heading', { name: 'A clearer place to begin.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Call a friend' })).toHaveCount(0);
   });
 test('daily editor preserves unsaved text on conflict and reloads only deliberately', async ({
