@@ -45,7 +45,7 @@ import type { Prescription, Program } from '@/domains/performance/schema';
 type View = 'today' | 'train' | 'restore' | 'fuel' | 'movement' | 'review';
 export function PerformanceWorkspace({ initial, initialView = "today" }: { initial: PerformanceData; initialView?: View }) {
   const handoff = useConversationDraft();
-  const [initialHandoff] = useState(() => handoff?.take('performance', initial.owner) ?? null);
+  const [initialHandoff] = useState(() => initial.owner ? handoff?.take('performance', initial.owner) ?? null : null);
   const [handoffText] = useState(initialHandoff?.text ?? '');
   const preparedPlan = planSchema.safeParse((initialHandoff?.payload as { plan?: unknown } | undefined)?.plan);
   const [data, setData] = useState(initial);
