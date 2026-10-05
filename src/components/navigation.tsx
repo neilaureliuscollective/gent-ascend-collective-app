@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from './visual/icon';
 const destinations: [string, string, IconName][] = [
   ['/app', 'Today', 'command'],
-  ['/app/aethelios', 'Aethelios', 'aethelios'],
+  ['/app/aethelios', 'Aethelios', 'spark'],
   ['/app/world', 'Life', 'world'],
   ['/app/collection', 'Collective', 'collection'],
 ];
