@@ -732,6 +732,13 @@ Recovered committed Phase2 `127f4b4` after the interrupted session. Phase3 adds 
 
 Implemented founder-only launch ledger, public/member support paths, existing account/memory-control guidance and optional anonymous scalar Web Vitals reporting. Missing support and actual signup/payment/device/data-process/legal acceptance remain blocked or unknown; no automated ready score or activation. Monitoring is off by default, excludes private text/identifiers and respects privacy signals. Training API unchanged. Local lint/types,322 tests, recorded28-file ledger, final webpack production build and signed-out production-runtime HTTP checks pass. Browser, actual hosted identity/providers, clean CI and physical devices remain open. Exact scope, constrained build evidence and release/rollback: `docs/PUBLIC_LAUNCH_PHASE_4.md`. Public repository publication still awaits explicit authorization after the earlier automatic rejection; no deployment.
 
+## October 4 — Ascend Mirror
+
+Founder approved research, plan and execution after reporting the camera could not open. Confirmed live camera=() as the blocker; allow same-origin camera permission with audio/location still denied. Built full-screen camera-first Mirror, transient on-device MediaPipe worker positioning, 1.4-second steady auto-capture, manual/photo fallbacks, direct three-view review, retakes, optional hair and explicit model-upload approval. Camera/worker lifecycle and private service contracts preserved. No migration required. Nine targeted browser checks pass (including real worker inference on an existing portrait), with 360/768/1440 screenshots inspected. Physical devices and real hosted owner-approved analysis remain unverified. See ASCEND_MIRROR.md. Final gates/publication in the PR release receipt.
+
+Ascend Mirror local final gates: lint, strict types, production build, 326 unit/SQL tests, nine targeted browser checks and recorded migration ledger pass. The inherited SQL test fixture now derives the seeded owner’s database calendar day rather than UTC, resolving midnight-only failures without changing production logic. Full hosted CI/release receipt follows in the PR.
+
+Hosted CI also exposed the same inherited UTC-day assumption in scripts/auth-smoke.mjs after Chicago/UTC midnight diverged. Derive the integration fixture’s progression day from the authenticated owner timezone, retaining all live RPC/assertion/security checks. No production code or migration changed for this correction.
 
 ## Direct member entry — release integration, October 5, 2026
 
@@ -742,3 +749,5 @@ Local integrated lint, strict types, 341 unit/SQL tests, hosted migration ledger
 CI exposed an existing training test date mismatch after UTC midnight: its synthetic recovery check-in used UTC while eligibility uses the member's Chicago day. The fixture now obtains its date from the same member-timezone database calendar, without weakening assertions or changing product SQL. Full validation is rerun before the authorized main merge and production release. Earlier build-only publication restriction and unpublished notes are historical and superseded by this turn's authorization.
 
 Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
+
+Ascend Mirror integration: reconciled the direct-member-entry release a7184fd. Preserve both Mirror and home-handoff browser fixtures; retain the already-merged owner-calendar test fixes. Revalidate the integrated source before release.

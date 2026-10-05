@@ -9,3 +9,6 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 .dev/
+
+# Reproducible, pinned camera guidance assets prepared at build time
+/public/mirror/vision-1.0.1/
