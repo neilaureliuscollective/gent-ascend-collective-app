@@ -595,19 +595,21 @@ export function DailyDashboard({
           </section>
         )}
       </details>
+      <nav className="command-depth-nav" aria-label="Explore your context">
+        <button
+          disabled={busy}
+          aria-expanded={depth}
+          aria-controls="command-depth"
+          onClick={() => (depth ? setDepth(false) : openPlan())}
+        >
+          {depth ? 'Close day workspace' : 'Day workspace'} <span>↗</span>
+        </button>
+      </nav>
       <details className="home-records">
         <summary>
           Open deeper systems <span aria-hidden="true">+</span>
         </summary>
         <nav className="command-depth-nav" aria-label="Deeper systems">
-          <button
-            disabled={busy}
-            aria-expanded={depth}
-            aria-controls="command-depth"
-            onClick={() => (depth ? setDepth(false) : openPlan())}
-          >
-            {depth ? 'Close day workspace' : 'Day workspace'} <span>↗</span>
-          </button>
           <Link prefetch={false} href="/app/studio">
             Studio <span>↗</span>
           </Link>
