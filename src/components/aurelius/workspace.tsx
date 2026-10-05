@@ -14,6 +14,7 @@ import { AureliusPresence } from '../visual/aurelius-presence';
 import { OrbPresentation } from '../visual/orb-presentation';
 import { IntelligenceOrb } from '../public/intelligence-orb';
 import { useAppearance } from '../visual/appearance';
+import { routeCapability } from '@/domains/intelligence/capabilities';
 function priorVersions(turn:Turn,turns:Turn[]) {
   const versions:Turn[]=[];
   let parent=turn.parent_turn_id;
@@ -363,6 +364,7 @@ export function AureliusWorkspace({
     composer.current?.focus();
   }
   const blocked = busy || loading || deleting;
+  const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
   if (!data)
     return (
       <div className="aurelius-unavailable">
@@ -655,6 +657,12 @@ export function AureliusWorkspace({
               </button>
             )}
             <form className={`aurelius-composer ${composerExpanded ? 'is-expanded' : ''}`} onSubmit={event=>{event.preventDefault();if(councilSelection?.kind==='table') {tableReview.current?.open();return;}void sendMessage(draft,revision);}}>
+              {capability && !councilSelection && (
+                <div className="revision-notice" aria-live="polite">
+                  <span>Aethelios is routing this through <strong>{capability.label}</strong> intelligence.</span>{' '}
+                  <Link href={capability.href}>Open {capability.label} only if you want depth ↗</Link>
+                </div>
+              )}
               {revision && <div className="revision-notice">Editing your last message <button type="button" onClick={()=>{setRevision(null);setDraft('');}}>Cancel</button></div>}
               <label htmlFor="aurelius-message" className="sr-only">
                 Message Aethelios
