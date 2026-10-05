@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { dayLabel } from '@/domains/daily/model';
 import { approachingOccasion, type PresenceData } from '@/domains/presence/model';
 import './presence.css';
+import { PresencePreparedPlan } from './prepared-plan';
 
 export function PresenceConcierge({ data }: { data: PresenceData }) {
   const occasion = approachingOccasion(data.occasions, data.today);
@@ -23,6 +24,8 @@ export function PresenceConcierge({ data }: { data: PresenceData }) {
         </Link>
         <small>An editable conversation draft. You choose what to share and send.</small>
       </header>
+
+      {data.mode === 'personal' && data.ownerId && <PresencePreparedPlan ownerId={data.ownerId} />}
 
       {data.mode === 'signed-out' ? (
         <p className="presence-note">
