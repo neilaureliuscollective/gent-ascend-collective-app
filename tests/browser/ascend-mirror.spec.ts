@@ -63,6 +63,11 @@ for (const width of [360, 768, 1440]) {
         () => (window as unknown as { mirrorCamera: { stopped: number } }).mirrorCamera.stopped,
       ),
     ).toBeGreaterThan(0);
+    await page.getByRole('button', { name: 'Add optional hair view' }).click();
+    await expect(page.getByRole('status')).toContainText('Capture when ready.');
+    await expect(page.getByRole('checkbox', { name: 'Auto-capture when steady' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Skip optional view' }).click();
+    await expect(page.locator('.mirror-thumbnails img')).toHaveCount(3);
     await page.getByRole('button', { name: 'Retake front', exact: true }).click();
     await page.getByRole('button', { name: 'Capture now', exact: true }).click();
     await expect(page.getByRole('dialog')).toContainText('Ready for a closer look?');

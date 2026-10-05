@@ -443,7 +443,13 @@ export function GuidedScan() {
               <div className="mirror-instruction">
                 <h3>{names[index]}</h3>
                 <p role="status">
-                  {busy ? 'Capturing…' : live ? guidance : 'Allow camera access to begin.'}
+                  {busy
+                    ? 'Capturing…'
+                    : live
+                      ? view === 'hair'
+                        ? 'Frame your hair or scalp. Capture when ready.'
+                        : guidance
+                      : 'Allow camera access to begin.'}
                 </p>
               </div>
             </div>
@@ -473,17 +479,19 @@ export function GuidedScan() {
               >
                 {starting ? 'Opening camera…' : live ? 'Capture now' : 'Try camera again'}
               </button>
-              <label className="mirror-auto">
-                <input
-                  type="checkbox"
-                  checked={automatic}
-                  onChange={(e) => setAutomatic(e.target.checked)}
-                />
-                Auto-capture when steady
-              </label>
+              {view !== 'hair' && (
+                <label className="mirror-auto">
+                  <input
+                    type="checkbox"
+                    checked={automatic}
+                    onChange={(e) => setAutomatic(e.target.checked)}
+                  />
+                  Auto-capture when steady
+                </label>
+              )}
               <small className="mirror-local">
                 {live
-                  ? tracking
+                  ? tracking && view !== 'hair'
                     ? 'Positioning guidance runs on your device.'
                     : 'Camera ready. Manual capture is available.'
                   : 'No photos are sent until you approve.'}
