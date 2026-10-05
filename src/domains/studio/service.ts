@@ -31,7 +31,7 @@ export async function studioWorkspace(projectId?:string){
   client.from('ai_studio_finishes').select('*').eq('project_id',current).eq('person_id',person.id).limit(100),
  ]):[{data:[],error:null},{data:[],error:null},{data:[],error:null},{data:[],error:null}];
  if(versions.error||references.error||scenes.error||finishes.error) throw new IntelligenceError('Studio history could not be loaded.',503);
- return {projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
+ return {owner:person.id,projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
 }
 import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';
 export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>){
