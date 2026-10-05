@@ -61,8 +61,12 @@ export function StudioWorkspace() {
     setBrief({ ...blankBrief, ...current?.brief });
     const carried = next.owner ? handoff?.take('studio', next.owner) : null;
     if (carried) {
-      setDraft(carried.text);
-      setNewTitle(carried.text.slice(0, 72));
+      const payload = carried.payload as { studio?: { title?: string; creativeType?: CreativeType; brief?: Partial<Brief>; prompt?: string } } | undefined;
+      const prepared = payload?.studio;
+      setDraft(prepared?.prompt || carried.text);
+      setNewTitle((prepared?.title || carried.text).slice(0, 72));
+      if (prepared?.creativeType) setNewType(prepared.creativeType);
+      if (prepared?.brief) setBrief({ ...blankBrief, ...prepared.brief });
       setNaming(true);
       setView('create');
     }
