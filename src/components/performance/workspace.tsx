@@ -3,6 +3,7 @@ import { track } from '@/domains/onboarding/track';
 import Link from 'next/link';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useConversationDraft } from '@/components/aurelius/draft-handoff';
 import {
   defaultProfile,
   goalLabels,
@@ -42,6 +43,9 @@ import { createProgram, nextProgramSlot, startProgramSession } from '@/domains/p
 import type { Prescription, Program } from '@/domains/performance/schema';
 type View = 'today' | 'train' | 'restore' | 'fuel' | 'movement' | 'review';
 export function PerformanceWorkspace({ initial, initialView = "today" }: { initial: PerformanceData; initialView?: View }) {
+  const handoff = useConversationDraft();
+  const consumedHandoff = useRef(false);
+  const [handoffText, setHandoffText] = useState('');
   const [data, setData] = useState(initial);
   const [view, setView] = useState<View>(initialView);
   const [editing, setEditorValue] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(
@@ -74,6 +78,17 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
   const direction = todayDirection(data);
   const weekly = weeklyReview(data);
   const adjustment = nextAdjustment(data);
+  useEffect(() => {
+    const pending = handoff?.pending;
+    if (consumedHandoff.current || !pending || pending.target !== 'performance') return;
+    consumedHandoff.current = true;
+    if (pending.ownerId === owner) {
+      setHandoffText(pending.text);
+      setView('train');
+      setNotice('Aethelios carried your request into Performance.');
+    }
+    handoff.stage(null);
+  }, [handoff, owner]);
   function setLocal(row: DeviceDraft | null) {
     const current = deviceRef.current;
     if (
@@ -571,6 +586,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
                     history={data.sessions.map((entry) => entry.data)}
                     unit={profile.unit}
                     busy={busy}
+                    handoffText={handoffText}
                     onStart={beginFreestyle}
                   />
                   <details className="perf-saved-structure">
