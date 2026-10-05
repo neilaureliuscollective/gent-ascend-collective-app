@@ -731,3 +731,14 @@ Recovered committed Phase2 `127f4b4` after the interrupted session. Phase3 adds 
 ## Public launch Phase4 — release controls, October 4, 2026
 
 Implemented founder-only launch ledger, public/member support paths, existing account/memory-control guidance and optional anonymous scalar Web Vitals reporting. Missing support and actual signup/payment/device/data-process/legal acceptance remain blocked or unknown; no automated ready score or activation. Monitoring is off by default, excludes private text/identifiers and respects privacy signals. Training API unchanged. Local lint/types,322 tests, recorded28-file ledger, final webpack production build and signed-out production-runtime HTTP checks pass. Browser, actual hosted identity/providers, clean CI and physical devices remain open. Exact scope, constrained build evidence and release/rollback: `docs/PUBLIC_LAUNCH_PHASE_4.md`. Public repository publication still awaits explicit authorization after the earlier automatic rejection; no deployment.
+
+
+## Direct member entry — release integration, October 5, 2026
+
+Founder explicitly authorized recovery and production release. Reconciled PR55 with main `e9669df`, preserving public account claims/initialization, seven-day continuity, Council/shared web research and native grooming rituals. Returning beta/founder/paid members skip priority-dependent setup; initialized free members retain direct entry. Public sign-in and explicit direction-claim review remain intact. No new migration, dependencies or provider changes.
+
+Local integrated lint, strict types, 341 unit/SQL tests, hosted migration ledger and production webpack build passed. Vercel preview for candidate `c43d14d` is READY; signed-out home and sign-in return 200, hosted `/dev` returns 404. Phone/Fold browser checks and screenshot review confirm immediate utility and owner-bound unsent Talk handoff. Full CI is running actual local Supabase Auth/PostgREST and authenticated browser acceptance; live hosted member/model and physical-device acceptance remain separate.
+
+CI exposed an existing training test date mismatch after UTC midnight: its synthetic recovery check-in used UTC while eligibility uses the member's Chicago day. The fixture now obtains its date from the same member-timezone database calendar, without weakening assertions or changing product SQL. Full validation is rerun before the authorized main merge and production release. Earlier build-only publication restriction and unpublished notes are historical and superseded by this turn's authorization.
+
+Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
