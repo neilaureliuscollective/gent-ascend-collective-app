@@ -532,8 +532,16 @@ console.log(
 );
 
 // Phase 3 uses real Auth + PostgREST for evidence, approval and replay.
+const progressionOwn = await founder.from('persons').select('timezone').single();
+assert.equal(progressionOwn.error, null);
+const progressionDay = new Intl.DateTimeFormat('en-CA', {
+  timeZone: progressionOwn.data.timezone,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date());
 const progressionCheck = {
-  day: new Date().toISOString().slice(0, 10),
+  day: progressionDay,
   sleepMinutes: 450,
   energy: 4,
   soreness: 'none',
