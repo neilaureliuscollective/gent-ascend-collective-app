@@ -1,0 +1,165 @@
+{
+  "evidence": "Synthetic browser fixture; no authenticated account or live model.",
+  "errors": [],
+  "results": [
+    {
+      "width": 344,
+      "height": 740,
+      "overflow": false,
+      "presence": {
+        "top": 316.8125,
+        "bottom": 452.8125,
+        "width": 136
+      },
+      "move": {
+        "top": 472.8125,
+        "bottom": 667.328125,
+        "width": 308
+      },
+      "talk": {
+        "top": 671.328125,
+        "bottom": 727.328125,
+        "width": 308
+      },
+      "navigation": {
+        "top": 674,
+        "bottom": 740,
+        "width": 344
+      },
+      "canvas": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "presence": {
+        "top": 327.8125,
+        "bottom": 493.8125,
+        "width": 166
+      },
+      "move": {
+        "top": 514.8125,
+        "bottom": 717.328125,
+        "width": 354
+      },
+      "talk": {
+        "top": 721.328125,
+        "bottom": 777.328125,
+        "width": 354
+      },
+      "navigation": {
+        "top": 778,
+        "bottom": 844,
+        "width": 390
+      },
+      "canvas": 0
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "overflow": false,
+      "presence": {
+        "top": 228.484375,
+        "bottom": 364.484375,
+        "width": 136
+      },
+      "move": {
+        "top": 374.484375,
+        "bottom": 561,
+        "width": 324
+      },
+      "talk": {
+        "top": 565,
+        "bottom": 621,
+        "width": 324
+      },
+      "navigation": {
+        "top": 574,
+        "bottom": 640,
+        "width": 360
+      },
+      "canvas": 0
+    },
+    {
+      "width": 768,
+      "height": 900,
+      "overflow": false,
+      "presence": {
+        "top": 297.296875,
+        "bottom": 501.296875,
+        "width": 204
+      },
+      "move": {
+        "top": 358.9375,
+        "bottom": 565.296875,
+        "width": 325.15625
+      },
+      "talk": {
+        "top": 569.296875,
+        "bottom": 625.296875,
+        "width": 325.15625
+      },
+      "navigation": {
+        "top": 834,
+        "bottom": 900,
+        "width": 768
+      },
+      "canvas": 0
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "overflow": false,
+      "presence": {
+        "top": 297.296875,
+        "bottom": 501.296875,
+        "width": 204
+      },
+      "move": {
+        "top": 358.9375,
+        "bottom": 565.296875,
+        "width": 347.890625
+      },
+      "talk": {
+        "top": 569.296875,
+        "bottom": 625.296875,
+        "width": 347.890625
+      },
+      "navigation": {
+        "top": 1114,
+        "bottom": 1180,
+        "width": 820
+      },
+      "canvas": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "presence": {
+        "top": 282.984375,
+        "bottom": 522.984375,
+        "width": 240
+      },
+      "move": {
+        "top": 390.828125,
+        "bottom": 620.59375,
+        "width": 519.640625
+      },
+      "talk": {
+        "top": 624.59375,
+        "bottom": 680.59375,
+        "width": 519.640625
+      },
+      "navigation": {
+        "top": 245.46875,
+        "bottom": 532.46875,
+        "width": 173
+      },
+      "canvas": 0
+    },
+    {
+      "largeTextOverflow": false
+    }
+  ]
+}

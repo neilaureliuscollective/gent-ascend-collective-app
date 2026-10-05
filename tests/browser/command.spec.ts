@@ -273,6 +273,7 @@ test('session loss clears private context and cannot revive it by exiting sample
     route.fulfill({ status: 401, json: { error: 'Sign in' } }),
   );
   await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.locator('.home-records > summary').click();
   await page.getByRole('button', { name: 'Refresh briefing' }).click();
   await expect(page.locator('.field-signal')).toHaveCount(0);
   await expect(page.getByText('Synthetic tester', { exact: false })).toHaveCount(0);
@@ -344,7 +345,7 @@ test('recovered Command opens current domains and preserves the separate saved a
   await page.goto('/app');
   await expect(page.locator('.command-environment .gw-energy-orb')).toBeVisible();
   const domains = page.getByRole('navigation', { name: 'Your operating spaces' });
-  await expect(domains.getByRole('link', { name: /Training/ })).toHaveAttribute(
+  await expect(domains.getByRole('link', { name: /Performance/ })).toHaveAttribute(
     'href',
     '/app/performance',
   );
@@ -388,6 +389,7 @@ test('real arrival summary connects to the preserved workspace and clears on ses
   page,
 }) => {
   await page.goto('http://127.0.0.1:3102/?mode=daily-summary');
+  await page.locator('.home-records > summary').click();
   const connection = page.getByRole('region', { name: 'Daily Command connection' });
   await expect(connection.getByRole('heading', { name: 'READY', exact: true })).toBeVisible();
   await expect(connection.getByRole('link', { name: 'Arrival & feedback' })).toHaveAttribute(
