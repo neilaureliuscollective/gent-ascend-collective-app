@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectProactiveSignal } from '@/domains/intelligence/proactive';
+import { buildProactiveQueue, selectProactiveSignal } from '@/domains/intelligence/proactive';
 import type { CommandData, DailyCommandSnapshot } from '@/domains/daily-command/model';
 
 function command(snapshot: DailyCommandSnapshot): CommandData {
@@ -49,6 +49,27 @@ describe('proactive signals', () => {
     snapshot.reason = 'Take a more conservative day in light of low energy.';
     snapshot.decisions.push({ id: 'training', label: 'RECOVER', detail: 'Consider rest or a lighter session.', reason: snapshot.reason, href: '/app/performance?space=restore' });
     expect(selectProactiveSignal(command(snapshot))).toMatchObject({ id: 'recovery', href: '/app/performance?space=restore' });
+  });
+
+  it('deduplicates handled signals until their receipt expires', () => {
+    const snapshot = base();
+    snapshot.supportingContext.occasion = { title: 'Wedding', day: '2026-10-10' };
+    snapshot.decisions.push({ id: 'occasion', label: 'PREPARE', detail: 'Wedding', reason: 'Approaching', href: '/app/presence' });
+    const queue = buildProactiveQueue(command(snapshot));
+    expect(queue).toHaveLength(1);
+    expect(selectProactiveSignal(command(snapshot), [queue[0]!.key])).toBeNull();
+  });
+
+  it('ranks an approaching occasion above a recovery signal', () => {
+    const snapshot = base();
+    snapshot.state = 'RECOVER';
+    snapshot.reason = 'Low energy';
+    snapshot.supportingContext.occasion = { title: 'Wedding', day: '2026-10-10' };
+    snapshot.decisions.push(
+      { id: 'occasion', label: 'PREPARE', detail: 'Wedding', reason: 'Approaching', href: '/app/presence' },
+      { id: 'training', label: 'RECOVER', detail: 'Lighter day', reason: 'Low energy', href: '/app/performance?space=restore' },
+    );
+    expect(buildProactiveQueue(command(snapshot)).map(item => item.id)).toEqual(['occasion', 'recovery']);
   });
 
   it('does not elevate ordinary training or hydration into an interruption', () => {
