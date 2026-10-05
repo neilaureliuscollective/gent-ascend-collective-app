@@ -1,17 +1,33 @@
 'use client';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useRef, type ReactNode } from 'react';
 import type { CapabilityId } from '@/domains/intelligence/capabilities';
 
 export type Handoff = { text: string; ownerId: string; target?: CapabilityId };
 type DraftHandoff = {
-  pending: Handoff | null;
+  peek: () => Handoff | null;
   stage: (draft: Handoff | null) => void;
+  take: (target?: CapabilityId, ownerId?: string) => Handoff | null;
 };
 const DraftContext = createContext<DraftHandoff | null>(null);
+
 /** Transient route handoff only: never URLs, cookies, browser storage or extra model calls. */
 export function ConversationDraftProvider({ children }: { children: ReactNode }) {
-  const [pending, stage] = useState<Handoff | null>(null);
-  return <DraftContext value={{ pending, stage }}>{children}</DraftContext>;
+  const pending = useRef<Handoff | null>(null);
+  const value = useRef<DraftHandoff>({
+    peek: () => pending.current,
+    stage: (draft) => {
+      pending.current = draft;
+    },
+    take: (target, ownerId) => {
+      const draft = pending.current;
+      if (!draft) return null;
+      if (target && draft.target !== target) return null;
+      if (ownerId && draft.ownerId !== ownerId) return null;
+      pending.current = null;
+      return draft;
+    },
+  });
+  return <DraftContext value={value.current}>{children}</DraftContext>;
 }
 export function useConversationDraft() {
   return useContext(DraftContext);
