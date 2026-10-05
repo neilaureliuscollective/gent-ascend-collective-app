@@ -16,6 +16,7 @@ import {
 import {
   mutationSchema,
   sessionSchema,
+  planSchema,
   type Checkin,
   type Mutation,
   type PerformanceData,
@@ -46,6 +47,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
   const handoff = useConversationDraft();
   const [initialHandoff] = useState(() => handoff?.take('performance', initial.owner) ?? null);
   const [handoffText] = useState(initialHandoff?.text ?? '');
+  const preparedPlan = planSchema.safeParse((initialHandoff?.payload as { plan?: unknown } | undefined)?.plan);
   const [data, setData] = useState(initial);
   const [view, setView] = useState<View>(initialHandoff ? 'train' : initialView);
   const [editing, setEditorValue] = useState<'profile' | 'plan' | 'checkin' | 'program' | null>(
@@ -576,6 +578,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
                     unit={profile.unit}
                     busy={busy}
                     handoffText={handoffText}
+                    preparedPlan={preparedPlan.success ? preparedPlan.data : null}
                     onStart={beginFreestyle}
                   />
                   <details className="perf-saved-structure">
