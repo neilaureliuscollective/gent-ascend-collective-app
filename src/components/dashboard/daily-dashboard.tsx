@@ -7,6 +7,7 @@ import { projectCommand, type CommandProjection } from '@/domains/command/projec
 import { commandChanges } from '@/domains/command/changes';
 import { CommandField } from './command-field';
 import type { CommandData } from '@/domains/daily-command/model';
+import { approachingOccasion, type PresenceData } from '@/domains/presence/model';
 import { HomeConversation } from './home-conversation';
 import '@/app/command-living.css';
 const DailyDepth = dynamic(() => import('./daily-depth').then((module) => module.DailyDepth), {
@@ -28,11 +29,13 @@ export function DailyDashboard({
   opening,
   asOf,
   dailyCommand,
+  presence,
 }: {
   initial: DailyData;
   opening?: CommandProjection;
   asOf?: string;
   dailyCommand?: CommandData | null;
+  presence?: PresenceData | null;
 }) {
   const [data, setData] = useState(initial);
   const [operating, setOperating] = useState(dailyCommand ?? null);
@@ -53,6 +56,7 @@ export function DailyDashboard({
   const lock = useRef(false);
   const projection = data === initial && opening ? opening : projectCommand(data);
   const proposal = projection.decisions[0];
+  const occasion = presence?.mode === 'personal' ? approachingOccasion(presence.occasions, presence.today) : null;
   function openPlan() {
     if (busy || lock.current) return;
     setDepth(true);
@@ -361,6 +365,22 @@ export function DailyDashboard({
           )}
         </section>
         <HomeConversation key={`${data.mode}:${data.ownerId ?? 'preview'}`} data={data} />
+        {occasion && (
+          <section className="command-next" aria-label="Ahead">
+            <div>
+              <span>Ahead / {dayLabel(occasion.day, true)}</span>
+              <h2>{occasion.title}</h2>
+              <p>
+                {occasion.note
+                  ? `${occasion.note} · Aethelios can help you prepare before the moment arrives.`
+                  : 'Aethelios can help you prepare your appearance, wardrobe and timing before the moment arrives.'}
+              </p>
+            </div>
+            <Link prefetch={false} className="command-action" href="/app/aethelios?starter=presence">
+              Prepare with Aethelios <span aria-hidden="true">↗</span>
+            </Link>
+          </section>
+        )}
       </section>
       <nav className="home-worlds" aria-label="Your primary spaces">
         <Link prefetch={false} href="/app/aethelios">
