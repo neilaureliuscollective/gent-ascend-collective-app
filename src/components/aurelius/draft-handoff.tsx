@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useRef, type ReactNode } from 'react';
 import type { CapabilityId } from '@/domains/intelligence/capabilities';
 
 export type Handoff = { text: string; ownerId: string; target?: CapabilityId; payload?: unknown };
@@ -13,7 +13,7 @@ const DraftContext = createContext<DraftHandoff | null>(null);
 /** Transient route handoff only: never URLs, cookies, browser storage or extra model calls. */
 export function ConversationDraftProvider({ children }: { children: ReactNode }) {
   const pending = useRef<Handoff | null>(null);
-  const value = useRef<DraftHandoff>({
+  const value = useMemo<DraftHandoff>(() => ({
     peek: () => pending.current,
     stage: (draft) => {
       pending.current = draft;
@@ -26,8 +26,8 @@ export function ConversationDraftProvider({ children }: { children: ReactNode })
       pending.current = null;
       return draft;
     },
-  });
-  return <DraftContext value={value.current}>{children}</DraftContext>;
+  }), []);
+  return <DraftContext value={value}>{children}</DraftContext>;
 }
 export function useConversationDraft() {
   return useContext(DraftContext);
