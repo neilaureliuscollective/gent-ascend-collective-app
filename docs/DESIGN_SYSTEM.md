@@ -1,3 +1,5 @@
+> Current founder-approved direction (2026-10-06): **Aethelios is the public product and intelligence environment.** Read [AETHELIOS_PUBLIC_FOUNDATION.md](AETHELIOS_PUBLIC_FOUNDATION.md). This supersedes Gent Ascend master-brand, male-only platform, dashboard-first entry and four-destination navigation proposals. Preserve person ownership, access/billing contracts, stable identifiers and optional engines. Phase1 approval covers implementation; its plan excludes production promotion.
+
 # Design system — Gent Ascend
 
 > Current founder-approved direction (2026-09-26): Arrival + Command is implemented on the working branch. Read docs/ARRIVAL_COMMAND.md (or ARRIVAL_COMMAND.md from docs/) for public `/` + member `/app` architecture, honest product previews, Reserve gateway, installation and mobile Aethelios. This supersedes older dashboard-first and commerce-last sequencing below. Production promotion still requires founder approval and the recorded release gates.

@@ -2,7 +2,7 @@ import { productForm } from '@/domains/commerce/product-story';
 export function ConceptVessel({
   title,
   kind,
-  brand = 'Gent Ascend',
+  brand = 'Legacy Reserve',
 }: {
   title: string;
   kind: string;

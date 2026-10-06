@@ -40,7 +40,7 @@ export function ProductExperience({
   const open = product ? launchPurchaseAllowed(product) : false;
   const brand =
     preview?.line ??
-    (product?.collections.nodes.find((c) => /legacy/i.test(c.title))?.title || 'Gent Ascend');
+    (product?.collections.nodes.find((c) => /legacy/i.test(c.title))?.title || 'Legacy Reserve');
   const intro =
     story?.benefit ||
     product?.purpose?.value ||
@@ -321,7 +321,7 @@ export function ProductExperience({
       </section>
       <ProductRelations items={related} basePath={basePath} />
       <section className="reserve-membership-bridge">
-        <span className="world-kicker">Gent Ascend Collective / Beyond the shelf</span>
+        <span className="world-kicker">Legacy Reserve / Beyond the shelf</span>
         <h2>
           The product.
           <br />

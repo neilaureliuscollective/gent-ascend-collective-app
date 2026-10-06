@@ -318,7 +318,7 @@ export function DailyDashboard({
           </span>
         </header>
         <div className="command-moment">
-          <p className="command-kicker">Your Gent Ascend</p>
+          <p className="command-kicker">Your Aethelios</p>
           <h1 id="command-title">
             {data.name
               ? `${greeting(checkedAt ?? asOf, data.timezone)}, ${data.name}.`
@@ -382,7 +382,7 @@ export function DailyDashboard({
           <small>YOUR CONTEXT</small>
           <strong>Life</strong>
           <span>
-            See what Gent Ascend knows <i aria-hidden="true">↗</i>
+            See what Aethelios knows <i aria-hidden="true">↗</i>
           </span>
         </Link>
         <Link prefetch={false} href="/app/collection" className="home-collection">

@@ -130,3 +130,20 @@ describe('Council member context boundary', () => {
     expect(state.bridge).not.toHaveBeenCalled();
   });
 });
+
+it('applies category exclusion before ordinary and Council provider messages and avoids excluded reads', async () => {
+  for (const council of [undefined, input.council]) {
+    state.filters = [];
+    const result = await prepareReply({ ...input, council, contextSources: { profile: false, goals: true, memory: false, daily: false, lifestyle: false } });
+    expect(JSON.stringify(result.messages)).toContain('member-a goal');
+    expect(JSON.stringify(result.messages)).not.toContain('member-a priority');
+    for (const excluded of ['ai_memories', 'daily_entries', 'daily_reviews', 'ascend_profile_facts', 'life_captures']) expect(state.filters.some(filter => filter.table === excluded)).toBe(false);
+    expect(state.bridge).not.toHaveBeenCalled();
+    expect(result.founder).toBe(false);
+  }
+});
+it('all sources excluded performs no saved-context queries', async () => {
+  await prepareReply({ ...input, contextSources: { profile: false, goals: false, memory: false, daily: false, lifestyle: false } });
+  expect(state.filters.some(filter => filter.table === 'goals')).toBe(false);
+  expect(state.bridge).not.toHaveBeenCalled();
+});

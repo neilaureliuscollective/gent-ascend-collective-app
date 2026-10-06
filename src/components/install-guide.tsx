@@ -36,7 +36,7 @@ export function InstallGuide() {
     const complete = () => {
       setPrompt(null);
       setNotice(
-        'Installation accepted. Open Gent Ascend from your Home Screen to check your app experience.',
+        'Installation accepted. Open Aethelios from your Home Screen to check your app experience.',
       );
     };
     window.addEventListener('beforeinstallprompt', available);
@@ -60,7 +60,7 @@ export function InstallGuide() {
           : 'You can install later from this guide or your browser menu.',
       );
     } catch {
-      setNotice('Use your browser menu to install Gent Ascend. The steps are below.');
+      setNotice('Use your browser menu to install Aethelios. The steps are below.');
     } finally {
       setPrompt(null);
       setBusy(false);
@@ -70,15 +70,15 @@ export function InstallGuide() {
     <section className="panel install-guide" aria-labelledby="install-title">
       <BrowserEntryNotice />
       <p className="eyebrow">Your phone / Your own space</p>
-      <h2 id="install-title">{installed ? 'You’re in the app.' : 'Keep Gent Ascend close.'}</h2>
+      <h2 id="install-title">{installed ? 'You’re in the app.' : 'Keep Aethelios close.'}</h2>
       <p>
         {installed
-          ? 'Gent Ascend is open in its standalone app experience.'
-          : 'Add Gent Ascend to your Home Screen, then open its icon to enter your personal OS.'}
+          ? 'Aethelios is open in its standalone app experience.'
+          : 'Add Aethelios to your Home Screen, then open its icon to enter your personal OS.'}
       </p>
       {!installed && prompt && (
         <button className="button" disabled={busy} onClick={() => void install()}>
-          {busy ? 'Opening installation…' : 'Install Gent Ascend'}
+          {busy ? 'Opening installation…' : 'Install Aethelios'}
         </button>
       )}
       {!installed && (
@@ -92,22 +92,22 @@ export function InstallGuide() {
                 <strong>Open as Web App</strong> enabled.
               </li>
               <li>
-                Tap <strong>Add</strong>, return to your Home Screen, and open Gent Ascend.
+                Tap <strong>Add</strong>, return to your Home Screen, and open Aethelios.
               </li>
             </ol>
             <p>
-              If the browser asks you to sign in again, use your Gent Ascend password or the email-code option on the entrance.
+              If the browser asks you to sign in again, use your Aethelios password or the email-code option on the entrance.
             </p>
           </details>
           <details open={platform === 'android'}>
             <summary>Android / Samsung Fold</summary>
             <ol>
-              <li>Open Gent Ascend in Chrome or Samsung Internet.</li>
+              <li>Open Aethelios in Chrome or Samsung Internet.</li>
               <li>
                 Use <strong>Install app</strong> or <strong>Add to Home screen</strong> in the
                 browser menu. Wording varies by browser.
               </li>
-              <li>Confirm, return to your Home Screen, and open the Gent Ascend icon.</li>
+              <li>Confirm, return to your Home Screen, and open the Aethelios icon.</li>
             </ol>
             <p>
               The layout adapts as you fold or unfold your phone. You can also install from Chrome
@@ -119,7 +119,7 @@ export function InstallGuide() {
               <summary>Computer</summary>
               <p>
                 Use your browser’s install icon or app menu when offered. In Safari on Mac, use File
-                → Add to Dock. You can always use Gent Ascend in a browser.
+                → Add to Dock. You can always use Aethelios in a browser.
               </p>
             </details>
           )}
@@ -131,7 +131,7 @@ export function InstallGuide() {
       <details>
         <summary>Refresh an older app icon</summary>
         <p>
-          Open Gent Ascend while connected. If Chrome offers “Review app update” in its menu, accept
+          Open Aethelios while connected. If Chrome offers “Review app update” in its menu, accept
           the new crest. If your Home Screen keeps the older icon, remove the app and install again
           from this browser. Removing the app does not delete records saved to your account; sync
           any offline training drafts first.
@@ -142,7 +142,7 @@ export function InstallGuide() {
         reconnect screen and does not report unsaved work as saved.
       </p>
       <Link href="/app" className="text-link">
-        Open Command →
+        Open Aethelios →
       </Link>
     </section>
   );

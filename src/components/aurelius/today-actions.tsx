@@ -20,7 +20,7 @@ export function TodayActions({ brief, disabled, onChanged }: {
       track('first_meaningful_action');
       setConfirm(null);
       await onChanged();
-      setNotice('Action confirmed complete on Command.');
+      setNotice('Action confirmed complete.');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Completion was not confirmed. Reload your day.');
     } finally { setBusy(false); }
@@ -29,7 +29,7 @@ export function TodayActions({ brief, disabled, onChanged }: {
   return <details className="aethelios-today" aria-label="Today's saved actions">
     <summary>Today’s plan · {open.length} open {open.length === 1 ? 'action' : 'actions'}</summary>
     <div className="aethelios-today-content">
-      <p>Saved state for {brief.day}. Refresh the workspace after changes elsewhere. Aethelios receives this only when personal context is on.</p>
+      <p>Saved state for {brief.day}. Refresh the workspace after changes elsewhere. Aethelios receives this only when the Daily source is selected.</p>
       {brief.intention && <p><strong>Your intention:</strong> {brief.intention}</p>}
       {brief.previousReview?.tomorrow && <p><strong>From {brief.previousReview.day}:</strong> {brief.previousReview.tomorrow}</p>}
       {open.length ? <ul>{open.map(action => <li key={action.id}>
@@ -38,9 +38,9 @@ export function TodayActions({ brief, disabled, onChanged }: {
           <button disabled={busy || disabled} onClick={() => void complete(action.id)}>Confirm complete</button>
           <button disabled={busy} onClick={() => setConfirm(null)}>Cancel</button>
         </span> : <button disabled={busy || disabled} onClick={() => setConfirm(action.id)}>Mark complete</button>}
-      </li>)}</ul> : <p>No open actions saved today. <Link href="/app">Plan one on Command →</Link></p>}
+      </li>)}</ul> : <p>No open actions saved today. <Link href="/app/daily">Plan one in your day →</Link></p>}
       {brief.openCaptures > 0 && <p><Link href="/captures">{brief.openCaptures} thoughts waiting in Capture →</Link></p>}
-      <Link href="/app">Open Command and evening review →</Link>
+      <Link href="/app/daily">Open daily planning and review →</Link>
       {notice && <p role="status">{notice}</p>}
     </div>
   </details>;

@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseConnection } from '@/platform/supabase/connection';
+function clearRetiredBridge(response: NextResponse) {
+  response.cookies.set('aethelios-founder-link', '', { path: '/app', maxAge: 0 });
+  for (const name of ['aethelios-link-state', 'aethelios-link-verifier']) response.cookies.set(name, '', { path: '/api/aethelios-link', maxAge: 0 });
+  return response;
+}
 export async function proxy(request: NextRequest) {
   // Stripe authenticates its raw event body independently of browser cookies.
   if (request.nextUrl.pathname === '/api/billing/webhook') {
@@ -32,7 +37,7 @@ export async function proxy(request: NextRequest) {
       const direct = NextResponse.redirect(destination);
       for (const cookie of response.cookies.getAll()) direct.cookies.set(cookie);
       direct.headers.set('Cache-Control', 'private, no-store');
-      return direct;
+      return clearRetiredBridge(direct);
     }
   }
   response.headers.set('Cache-Control', 'private, no-store');
@@ -41,7 +46,7 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/api/commerce/customer')
   )
     response.headers.set('Referrer-Policy', 'no-referrer');
-  return response;
+  return clearRetiredBridge(response);
 }
 export const config = {
   matcher: [

@@ -1,3 +1,9 @@
+## Aethelios public foundation — 2026-10-06
+
+Recovered founder-approved Phase 1 implemented from main `620e12850afb8d0c9dedb320c032a942e90cf457` on `feat/aethelios-public-foundation`. See [AETHELIOS_PUBLIC_FOUNDATION.md](AETHELIOS_PUBLIC_FOUNDATION.md). Direct conversation entry, Ongoing/Library, explicit saved-source consent shared with Council, specialist preparation consent, retired private bridge, neutral optional setup and new public/PWA identity are implemented. Existing ownership, data, commerce and billing contracts remain.
+
+Local lint, strict types, all 372 unit/SQL tests (48 files), normal Turbopack production build and the recorded 28-file migration ledger check pass. All 36 targeted browser checks passed in one final run (1.9 minutes): `aethelios-foundation.spec.ts`, `aurelius.spec.ts` and `council.spec.ts`, using Chromium 153, three workers and the configured software-rendering flags. The 390×440 keyboard-height case now keeps the composer and Send reachable; at 390×740 conversation reading height exceeds 250px. Search-sheet Escape/focus return and three-destination dock clicks pass. Browser data is synthetic/intercepted; these checks do not demonstrate real Auth, hosted persistence or live AI. No schema migration or production promotion. Full legacy browser-suite reconciliation, real Supabase Auth/PostgREST/founder journeys, live-model evaluation and physical-device acceptance remain open.
+
 ## Combined Command home + Presence release — 2026-10-05
 
 Founder authorized merging and deploying home restoration #57 together with Presence #58 for live testing. Both changes are reconciled in one candidate: integrated Command hero / expandable Talk plus the contextual Presence door, preserving scan, routines, products and history. No new migration. Combined local lint/types, 350 units, build and ledger passed. Combined browser/CI and exact production receipt pending below; no live acceptance claimed yet.

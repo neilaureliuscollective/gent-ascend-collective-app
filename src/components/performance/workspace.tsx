@@ -380,7 +380,7 @@ export function PerformanceWorkspace({ initial, initialView = "today" }: { initi
           <p className="eyebrow">YOUR PRIVATE PERFORMANCE SPACE</p>
           <h2>Begin with your own direction.</h2>
           <p>
-            Connect your Gent Ascend account to build a plan, record your training, and develop a
+            Connect your Aethelios account to build a plan, record your training, and develop a
             clearer picture over time.
           </p>
           <Link className="perf-primary" href="/app/you">

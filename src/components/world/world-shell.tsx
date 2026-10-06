@@ -141,7 +141,7 @@ export function WorldShell({ children }: { children: ReactNode }) {
       </a>
       <header className="gw-header">
         <Link href="/experience" className="gw-wordmark">
-          GENT ASCEND <small>COLLECTIVE</small>
+          AETHELIOS <small>CAPABILITIES</small>
         </Link>
         <div className="gw-preferences">
           <AppearanceControls />

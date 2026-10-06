@@ -5,7 +5,7 @@ import { currentAccess } from '@/domains/access/current';
 import { aiConfigSchema } from './validation';
 import { promptVersion, buildMessages } from './prompt';
 import { councilPromptVersion, type CouncilSelection } from './council';
-import { founderBridgeContext } from './founder-bridge';
+import { legacyContextSources, selectedContext, type ContextSources } from './context-sources';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
 import { localDay } from '@/domains/daily/model';
@@ -27,27 +27,27 @@ export async function intelligenceSession() {
     throw new IntelligenceError('Sign in to use your Aethelios workspace.', 401);
   return { client: identity.client, person };
 }
-export async function personalContext(question?:string): Promise<PersonalContext> {
+export async function personalContext(question?:string, sources: ContextSources = legacyContextSources): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const groomingRelevant=!!question && /presence|appear|wardrobe|outfit|dress|confidence|prepar|meeting|occasion|travel|date|groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
-  const continuityPromise = question && /week|progress|train|workout|routine|ritual|groom/i.test(question) ? readContinuity({ client, person }).catch(() => null) : Promise.resolve(undefined);
+  const groomingRelevant=sources.lifestyle && !!question && /presence|appear|wardrobe|outfit|dress|confidence|prepar|meeting|occasion|travel|date|groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
+  const continuityPromise = sources.daily && sources.lifestyle && question && /week|progress|train|workout|routine|ritual|groom/i.test(question) ? readContinuity({ client, person }).catch(() => null) : Promise.resolve(undefined);
   const today = localDay(new Date(), person.timezone);
   const [goal, memories, daily, profileFacts, reviews, grooming, captures] = await Promise.all([
-    client
+    sources.goals ? client
       .from('goals')
       .select('*')
       .eq('person_id', person.id)
       .eq('status', 'active')
-      .maybeSingle(),
-    client
+      .maybeSingle() : Promise.resolve({data:null,error:null}),
+    sources.memory ? client
       .from('ai_memories')
       .select('*')
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
-      .limit(24),
-    client.from('daily_entries').select('day,version,intention,energy,reflection,actions:daily_actions(id,title,done,position)').eq('person_id', person.id).lte('day',today).order('day', { ascending: false }).limit(3),
-    client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
-    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).lte('day',today).order('day',{ascending:false}).limit(3),
+      .limit(24) : Promise.resolve({data:[],error:null}),
+    sources.daily ? client.from('daily_entries').select('day,version,intention,energy,reflection,actions:daily_actions(id,title,done,position)').eq('person_id', person.id).lte('day',today).order('day', { ascending: false }).limit(3) : Promise.resolve({data:[],error:null}),
+    sources.profile ? client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id) : Promise.resolve({data:[],error:null}),
+    sources.daily ? client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).lte('day',today).order('day',{ascending:false}).limit(3) : Promise.resolve({data:[],error:null}),
     groomingRelevant?Promise.all([
       client.from('grooming_profiles').select('hair_focus,beard_focus,skin_focus,preferred_look,effort,sensitivities,dislikes').eq('person_id',person.id).maybeSingle(),
       client.from('grooming_goals').select('title,target_date').eq('person_id',person.id).eq('status','active').limit(4),
@@ -59,7 +59,7 @@ export async function personalContext(question?:string): Promise<PersonalContext
       client.from('grooming_events').select('title,event_date,note').eq('person_id',person.id).gte('event_date',today).order('event_date').limit(6),
       client.from('grooming_checkins').select('ritual_id,occurred_at,note').eq('person_id',person.id).eq('done',true).order('occurred_at',{ascending:false}).limit(7),
     ]):null,
-    client.from('life_captures').select('id',{count:'exact',head:true}).eq('person_id',person.id).eq('status','inbox'),
+    sources.daily ? client.from('life_captures').select('id',{count:'exact',head:true}).eq('person_id',person.id).eq('status','inbox') : Promise.resolve({data:[],error:null,count:0}),
   ]);
   if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error || captures.error || grooming?.some(result=>result.error))
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
@@ -209,6 +209,7 @@ export async function prepareReply(input: {
   requestId: string;
   text: string;
   includeContext: boolean;
+  contextSources?: ContextSources;
   sourceTurnId?: string;
   revisionKind?: 'retry'|'regenerate'|'edit';
   council?: CouncilSelection;
@@ -225,11 +226,13 @@ export async function prepareReply(input: {
       'Aethelios is waiting for its model connection. Your workspace remains available.',
       503,
     );
+  const sources = input.contextSources ?? legacyContextSources;
+  const hasContext = input.includeContext && Object.values(sources).some(Boolean);
   const common = {
     p_request: input.requestId,
     p_text: input.text,
     p_model: config.AURELIUS_AI_MODEL,
-    p_context: input.includeContext,
+    p_context: hasContext,
     p_prompt_version: input.council ? councilPromptVersion(input.council) : promptVersion,
   };
   const begun = input.sourceTurnId && input.revisionKind
@@ -260,7 +263,7 @@ export async function prepareReply(input: {
   try {
     [history, context] = await Promise.all([
       conversationTurns(input.conversationId),
-      input.includeContext ? personalContext(input.text) : Promise.resolve(null),
+      hasContext ? personalContext(input.text, sources).then(context => selectedContext(context, sources)) : Promise.resolve(null),
     ]);
     threadSummary=await prepareThreadSummary(client,person.id,input.conversationId,history);
   } catch {
@@ -275,7 +278,7 @@ export async function prepareReply(input: {
     );
   }
   // Member Council never requests the founder bridge, even on the founder account.
-  const founderContext = input.includeContext && !input.council ? await founderBridgeContext(input.text) : null;
+  const founderContext = null; // Public runtime never retrieves private-founder context.
   return {
     model: config.AURELIUS_AI_MODEL,
     messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, capabilityContext(input.text)),

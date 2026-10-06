@@ -48,6 +48,7 @@ const studioDraftSchema = z.object({
 export const orchestrationInput = z.object({
   target: z.enum(['performance','studio','presence']),
   text: z.string().trim().min(3).max(6000),
+  useSpecialistContext: z.literal(true),
 }).strict();
 
 function model() {
@@ -72,7 +73,7 @@ export async function prepareCapabilityDraft(input:z.infer<typeof orchestrationI
     }));
     const result=await generateText({
       model:model(),
-      output:Output.object({schema:performanceDraftSchema,name:'performance_draft',description:'A reviewable workout draft for Gent Ascend Performance.'}),
+      output:Output.object({schema:performanceDraftSchema,name:'performance_draft',description:'A reviewable workout draft for Performance.'}),
       instructions:'Create a conservative, practical workout draft from the member request and supplied Performance context. Respect equipment, experience, time and stated limitations. Prefer familiar movements when useful. Missing data is unknown, not permission to invent injuries or capabilities. Do not diagnose, prescribe rehabilitation, or claim the workout is saved. Load 0 means bodyweight or member-selected load. Return only the structured draft.',
       prompt:JSON.stringify({request:input.text,profile,recent}),
       maxOutputTokens:1200,maxRetries:1,timeout:{totalMs:20000},providerOptions:{openai:{store:false}},

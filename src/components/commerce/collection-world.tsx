@@ -49,7 +49,7 @@ export function CollectionWorld({
     <div className="reserve-commerce collection-world">
       <header className="collection-chamber">
         <div className="collection-chamber-copy">
-          <span className="world-kicker">Gent Ascend Collective / Your daily standard</span>
+          <span className="world-kicker">Aethelios / Your daily standard</span>
           <h1>
             The <em>Collection.</em>
           </h1>

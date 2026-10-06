@@ -1,3 +1,5 @@
+> Current founder-approved direction (2026-10-06): **Aethelios is the public product and intelligence environment.** Read [AETHELIOS_PUBLIC_FOUNDATION.md](AETHELIOS_PUBLIC_FOUNDATION.md). This supersedes Gent Ascend master-brand, male-only platform, dashboard-first entry and four-destination navigation proposals. Preserve person ownership, access/billing contracts, stable identifiers and optional engines. Phase1 approval covers implementation; its plan excludes production promotion.
+
 # Gent Ascend Collective — official identity
 
 Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aurelius Collective visual directions, including the historical 1C–1F documents. The existing repository and technical identifiers remain stable.

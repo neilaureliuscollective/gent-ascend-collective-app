@@ -1,0 +1,6 @@
+import Link from 'next/link';
+import Image from 'next/image';
+import { brand } from '@/platform/brand';
+export function AetheliosIntroduction() {
+  return <main id="world-main" className="aethelios-introduction"><div className="introduction-field" aria-hidden="true" /><div className="introduction-copy"><Image src={brand.crest} alt={brand.crestAlt} width={160} height={160} priority /><p className="eyebrow">AETHELIOS / INTELLIGENCE ENVIRONMENT</p><h1>Clear thinking.<br /><em>Work that carries forward.</em></h1><p>Bring the decision, the unfinished idea or the next move. Think it through with Aethelios, choose the context it receives and return to your saved work.</p><div className="button-row"><Link href="/enter" className="button">Open your workspace →</Link><Link href="/join" className="text-link">Create an account →</Link></div><p className="muted">Account access and creation allowances follow your existing plan or invitation. Saved records stay private to your account.</p><div className="introduction-principles"><span>Think and decide</span><span>Continue your work</span><span>Save what matters</span></div><p>Specialist capabilities include Studio, Presence and Performance. Products from Legacy Reserve remain available separately.</p></div></main>;
+}

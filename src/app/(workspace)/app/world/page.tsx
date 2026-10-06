@@ -13,7 +13,7 @@ const worlds = [
   {
     href: '/app/performance',
     title: 'Ascend Performance',
-    copy: 'Training, fuel and recovery. One part of the whole man.',
+    copy: 'Training, fuel and recovery. One part of the whole person.',
   },
   {
     href: '/app/presence',
@@ -39,9 +39,9 @@ const worlds = [
 export default function World() {
   return (
     <>
-      <p className="eyebrow">Gent Ascend / The collective</p>
+      <p className="eyebrow">Aethelios / The collective</p>
       <h1>My world.</h1>
-      <p className="lead">Care for the man. Strengthen the life around him.</p>
+      <p className="lead">Choose a capability when it helps with what you are doing.</p>
       <nav className="world-directory" aria-label="Your worlds">
         {worlds.map((world) => (
           <Link key={world.href} href={world.href}>

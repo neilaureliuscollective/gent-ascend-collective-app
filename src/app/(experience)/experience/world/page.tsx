@@ -1,8 +1,5 @@
-import { connection } from 'next/server';
-import { savedWorld } from '@/domains/onboarding/service';
-import { WholeManWorld } from '@/components/world/whole-man-world';
-export default async function WorldPage() {
-  // Render the URL-selected scene and image hint in the first response instead of a JS-only shell.
-  await connection();
-  return <WholeManWorld initialWorld={await savedWorld()} />;
+import { redirect } from 'next/navigation';
+export default async function LegacyWorld({ searchParams }: { searchParams: Promise<{ claim?: string }> }) {
+  const { claim } = await searchParams;
+  redirect(claim === '1' ? '/app/welcome?claim=1' : '/');
 }

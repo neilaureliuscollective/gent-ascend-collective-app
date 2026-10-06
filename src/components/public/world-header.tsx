@@ -4,14 +4,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { brand } from '@/platform/brand';
-const links = [
-  ['/shop', 'Shop'],
-  ['/reserve', 'The Reserve'],
-  ['/gent-ascend', 'The OS'],
-  ['/aethelios', 'Aethelios'],
-  ['/membership', 'Membership'],
-  ['/about', 'Our story'],
-] as const;
+const links = [['/aethelios', 'Aethelios'], ['/membership', 'Account plans'], ['/support', 'Support'], ['/shop', 'Legacy Reserve']] as const;
 export function WorldHeader() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -31,12 +24,12 @@ export function WorldHeader() {
       <Link
         href="/"
         className="world-wordmark"
-        aria-label="Gent Ascend Collective home"
+        aria-label="Aethelios home"
         onClick={() => setOpen(false)}
       >
         <Image src={brand.crest} alt="" width={48} height={48} />
         <span>
-          GENT ASCEND<small>COLLECTIVE</small>
+          AETHELIOS<small>INTELLIGENCE</small>
         </span>
       </Link>
       <button
@@ -64,7 +57,7 @@ export function WorldHeader() {
           </Link>
         ))}
         <Link className="world-enter" href="/enter" onClick={() => setOpen(false)}>
-          Member entrance <span aria-hidden="true">↗</span>
+          Sign in <span aria-hidden="true">↗</span>
         </Link>
       </nav>
     </header>

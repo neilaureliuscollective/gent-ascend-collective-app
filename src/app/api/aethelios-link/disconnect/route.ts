@@ -19,6 +19,6 @@ export async function POST(request: Request) {
       if (!response.ok) return new Response('Could not disconnect. Please try again.', { status: 503 });
     } catch { return new Response('Could not disconnect. Please try again.', { status: 503 }); }
   }
-  jar.delete(bridgeCookie);
+  jar.set(bridgeCookie, '', { path: '/app', maxAge: 0 });
   return Response.redirect(new URL('/app/aethelios?link=disconnected', request.url), 303);
 }

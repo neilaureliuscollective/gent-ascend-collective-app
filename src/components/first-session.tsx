@@ -13,9 +13,9 @@ export function FirstSession({
   canTalk: boolean;
 }) {
   const [snapshot, setSnapshot] = useState(initial);
-  const [choice, setChoice] = useState<keyof typeof firstSessionPaths>('presence');
+  const [choice, setChoice] = useState<keyof typeof firstSessionPaths>('focus');
   const [intention, setIntention] = useState(initial?.intention ?? '');
-  const [action, setAction] = useState(firstSessionPaths.presence.action as string);
+  const [action, setAction] = useState(firstSessionPaths.focus.action as string);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
@@ -112,9 +112,9 @@ export function FirstSession({
             <Link className="button" href={path.href}>
               {path.destination} →
             </Link>
-            {path.href !== '/app' && (
-              <Link className="text-link" href="/app">
-                Return to my saved plan →
+            {path.href !== '/app/ongoing' && (
+              <Link className="text-link" href="/app/ongoing">
+                Open my saved actions →
               </Link>
             )}
           </div>
@@ -212,7 +212,7 @@ export function FirstSession({
         <Link className="text-link" href="/app/collection">
           Explore Collection →
         </Link>
-        <Link className="text-link" href="/app">
+        <Link className="text-link" href="/app/ongoing">
           Continue to Command →
         </Link>
       </div>

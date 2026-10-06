@@ -9,27 +9,28 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     start_url: '/app',
     shortcuts: [
-      { name: 'Aethelios', url: '/app/aethelios' },
-      { name: 'Your daily Command', url: '/app' },
+      { name: 'Aethelios', url: '/app' },
+      { name: 'Ongoing', url: '/app/ongoing' },
+      { name: 'Library', url: '/app/library' },
     ],
     display: 'standalone',
     background_color: brand.themeColor,
     theme_color: brand.themeColor,
     icons: [
       {
-        src: '/brand/app-crest-20261004-192.png',
+        src: '/brand/aethelios-20261006-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/app-crest-20261004-512.png',
+        src: '/brand/aethelios-20261006-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/app-crest-20261004-maskable-512.png',
+        src: '/brand/aethelios-20261006-maskable-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',

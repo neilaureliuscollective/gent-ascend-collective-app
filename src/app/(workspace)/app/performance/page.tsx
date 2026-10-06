@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { PerformanceWorkspace } from '@/components/performance/workspace';
 import { readPerformance } from '@/domains/performance/service';
 import './performance.css';
-export const metadata = { title: 'Ascend Performance | Gent Ascend Collective' };
+export const metadata = { title: 'Ascend Performance | Aethelios' };
 export default async function PerformancePage({
   searchParams,
 }: {

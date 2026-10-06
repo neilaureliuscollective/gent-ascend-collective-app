@@ -248,20 +248,15 @@ test('anonymous API and hostile origins fail closed', async ({ request }) => {
   ).toBe(401);
 });
 
-test('the global Aethelios panel uses the same saved conversation service', async ({ page }) => {
+test('direct Aethelios opening uses the same saved conversation service', async ({ page }) => {
   await setup(page);
   await page.goto('/app');
-  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
-  await dialog.getByLabel('Message Aethelios').fill('From Command');
-  await dialog.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Reply saved.');
-  await page.keyboard.press('Escape');
-  await expect(dialog).not.toBeVisible();
-  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
-  await dialog.getByLabel('Saved conversations').selectOption({ label: 'From Command' });
-  await expect(dialog.locator('.user-message')).toContainText('From Command');
+  await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
+  await page.getByLabel('Message Aethelios').fill('From the intelligence opening');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await page.reload();
+  await expect(page.locator('.user-message')).toContainText('From the intelligence opening');
 });
 test('stopping a request retains the draft and requires checking saved state', async ({ page }) => {
   await setup(page);
@@ -316,7 +311,7 @@ for (const width of [360, 768, 1440]) {
     await page.screenshot({ path: `test-results/aurelius-context-${width}.png`, fullPage: true });
     await page.getByText('Understand the boundaries').click();
     await expect(
-      page.getByText('Live web research, voice, file uploads', { exact: false }),
+      page.getByText('Read-only web research can support replies', { exact: false }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Conversation', exact: true }).click();
     await expect(page.getByLabel('Message Aethelios')).toHaveValue('An unsent thought');
@@ -352,7 +347,7 @@ for (const width of [360, 1440]) {
     await expect(page.locator('.user-message')).toContainText('Direction for the week');
     if (width < 1101) await expect(library.getByLabel('Search conversations')).not.toBeVisible();
     await page.getByRole('button', { name: 'Context', exact: true }).click();
-    await expect(page.getByText('Personal context is on for your next message')).toBeVisible();
+    await expect(page.getByText('Personal context is off for your next message')).toBeVisible();
     await expect(page.getByText('A meaningful first step', { exact: true })).toBeVisible();
   });
 }

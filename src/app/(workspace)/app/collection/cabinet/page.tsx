@@ -21,7 +21,7 @@ import {
 } from '../actions';
 import '../collection.css';
 export const metadata = {
-  title: 'Your Cabinet | Gent Ascend',
+  title: 'Your Cabinet | Aethelios',
   robots: { index: false, follow: false },
 };
 export default async function Collection({
@@ -61,7 +61,7 @@ export default async function Collection({
   return (
     <section className="member-collection">
       <header className="cabinet-hero">
-        <p className="eyebrow">GENT ASCEND / THE COLLECTION</p>
+        <p className="eyebrow">AETHELIOS / THE COLLECTION</p>
         <h1>
           Your standard.
           <br />
