@@ -52,8 +52,8 @@ export function CouncilPanel({
     <div className="member-council" data-inline-access={!hideAccess} aria-label="Your Council">
       {!hideAccess && (
         <div className="council-access">
-          <button type="button" className="text-button" disabled={disabled} onClick={() => open()}>
-            The Council
+          <button type="button" className="text-button" onClick={() => open()}>
+            Meet the Intelligence Team
           </button>
           {selection ? (
             <>
@@ -69,10 +69,12 @@ export function CouncilPanel({
             </>
           ) : routes.length > 0 ? (
             <span className="council-relevant">
-              Relevant Council · {routes.map((route) => specialist(route.id).name).join(' · ')}
+              Suggested · {routes.map((route) => specialist(route.id).name).join(' · ')}
             </span>
           ) : (
-            <span className="council-relevant">Your private intelligence bench</span>
+            <span className="council-relevant">
+              Aethelios coordinates. Specialists contribute when useful.
+            </span>
           )}
           <button
             type="button"
@@ -88,7 +90,7 @@ export function CouncilPanel({
         <header>
           <div>
             <p className="eyebrow">Aethelios · Your intelligence team</p>
-            <h2 id="council-title">{review ? 'The Table' : 'The Council'}</h2>
+            <h2 id="council-title">{review ? 'The Table' : 'Your Intelligence Team'}</h2>
           </div>
           <button
             type="button"

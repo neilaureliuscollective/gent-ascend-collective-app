@@ -1,3 +1,4 @@
+import { MissionHandoffFixture } from './mission-handoff';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
 import '@/app/(workspace)/app/work/work.css';
@@ -103,7 +104,9 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'company-room' || mode === 'company-job' ? (
+  mode === 'mission' ? (
+    <MissionHandoffFixture />
+  ) : mode === 'company-room' || mode === 'company-job' ? (
     <>
       <p>Synthetic company-room fixture · no account or live model.</p>
       <CompanyRoom

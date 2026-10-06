@@ -3,13 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
+import { MissionCapture } from '@/components/missions/mission-capture';
 import { CouncilPanel } from './council-panel';
 import {
   councilFromVersion,
   councilPromptVersion,
   councilLabel,
-  relevantCouncil,
-  specialist,
+  specialistStarters,
   type CouncilSelection,
 } from '@/domains/intelligence/council';
 import type { StreamEvent, Turn, WorkspaceData } from '@/domains/intelligence/types';
@@ -57,7 +57,10 @@ export function AureliusWorkspace({
   const [selected, setSelected] = useState<string | null>(initialConversation);
   const handoff = useConversationDraft();
   const [homeDraft] = useState(() =>
-    !compact && !initialConversation && !initialDraft && !handoff?.peek()?.target
+    !compact &&
+    !initialDraft &&
+    !handoff?.peek()?.target &&
+    (handoff?.peek()?.conversationId ?? null) === initialConversation
       ? (handoff?.peek() ?? null)
       : null,
   );
@@ -686,53 +689,6 @@ export function AureliusWorkspace({
                 )}
               </>
             )}
-            {!preview && (
-              <div className="council-access">
-                <button
-                  type="button"
-                  className="text-button"
-                  disabled={blocked || needsReload || !data.canChat || !data.configured}
-                  onClick={() => tableReview.current?.open(false)}
-                >
-                  The Council
-                </button>
-                {councilSelection ? (
-                  <>
-                    <span>{councilLabel(councilSelection)}</span>
-                    <button
-                      type="button"
-                      disabled={blocked}
-                      onClick={() => setCouncilSelection(null)}
-                    >
-                      {councilSelection.kind === 'table'
-                        ? 'Leave The Table'
-                        : 'Return to Aethelios'}
-                    </button>
-                  </>
-                ) : (
-                  <span>
-                    Relevant Council ·{' '}
-                    {relevantCouncil(draft.trim() || data.turns.at(-1)?.user_text || '')
-                      .map((route) => specialist(route.id).name)
-                      .join(' · ')}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="text-button"
-                  disabled={
-                    blocked ||
-                    needsReload ||
-                    !data.canChat ||
-                    !data.configured ||
-                    !(draft.trim() || data.turns.at(-1)?.user_text)
-                  }
-                  onClick={() => tableReview.current?.open(true)}
-                >
-                  {councilSelection?.kind === 'table' ? 'Review The Table' : 'Assemble Around This'}
-                </button>
-              </div>
-            )}
             <label className="context-toggle">
               <input
                 type="checkbox"
@@ -763,8 +719,16 @@ export function AureliusWorkspace({
           </TalkDrawer>
         </div>
         {!preview && (
+          <div className="intelligence-work-access">
+            <MissionCapture
+              conversationId={selected}
+              objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
+              disabled={blocked || needsReload || Boolean(data.currentConversation?.archived_at)}
+            />
+          </div>
+        )}
+        {!preview && (
           <CouncilPanel
-            hideAccess
             reviewRef={tableReview}
             question={draft.trim() || data.turns.at(-1)?.user_text || ''}
             selection={councilSelection}
@@ -780,6 +744,8 @@ export function AureliusWorkspace({
             onFocused={(id) => {
               newConversation();
               setCouncilSelection({ kind: 'specialist', specialists: [id] });
+              setDraft(specialistStarters[id]);
+              composer.current?.focus();
             }}
             onAssemble={(question, selection) => {
               setCouncilSelection(selection);
@@ -853,8 +819,8 @@ export function AureliusWorkspace({
                   )}
 
                   <div>
-                    <p className="eyebrow">Aethelios · Digital Co-Founder</p>
-                    <h2>What’s on your mind?</h2>
+                    <p className="eyebrow">Aethelios · Your central intelligence</p>
+                    <h2>What would you like to move forward?</h2>
                     <Link
                       className="text-link aethelios-meet-link"
                       href="/app/aethelios/meet"
@@ -867,15 +833,14 @@ export function AureliusWorkspace({
                   </div>
                 </div>
                 <p>
-                  Bring the ambition, the uncertainty,
-                  <br />
-                  or the decision you’re sitting with.
+                  Tell me what you’re working on and what a useful result looks like. Add a deadline
+                  or constraint if it matters. We’ll start there.
                 </p>
                 <div className="conversation-starters">
                   {[
-                    'Help me understand my company and choose the highest-value next move.',
-                    'Help me sharpen my company positioning.',
-                    'Help me scope a client project.',
+                    'I have an idea to pressure-test. Help me turn it into a clear decision.',
+                    'I need to create something. Help me shape the brief and a useful first draft.',
+                    'I have a project to move forward. Help me identify the next concrete action.',
                   ].map((text) => (
                     <button
                       key={text}

@@ -1474,3 +1474,36 @@ describe('connected company jobs and immutable reviewed work',()=>{
   expect(result.rows[0]).toEqual({table_access:false,rpc_access:false});
  });
 });
+
+// Real SQL/RLS in PGlite; not a GoTrue/PostgREST integration test.
+describe('public Mission ownership and continuity', () => {
+  it('persists direction, denies cross-user access/reassignment and stale writes, preserves conversation on deletion', async () => {
+    const chat = 'cc000000-0000-4000-8000-000000000001';
+    const otherChat = 'cc000000-0000-4000-8000-000000000002';
+    const mission = 'cc000000-0000-4000-8000-000000000003';
+    const owner = `(select id from public.persons where auth_user_id='${founder}')`;
+    const other = `(select id from public.persons where auth_user_id='${member}')`;
+    await db.exec(`insert into public.ai_conversations(id,person_id,title) values('${chat}',${owner},'Mission work'),('${otherChat}',${other},'Other work')`);
+    const insert = (id: string, conversation = chat, person = owner) => `insert into public.intelligence_missions(id,person_id,conversation_id,title,objective) values('${id}',${person},'${conversation}','Launch website','Launch a landscaping website') returning *`;
+    const saved = (await asUser<{ revision: number }>(founder, insert(mission))).rows[0]!;
+    expect(saved.revision).toBe(1);
+    expect((await asUser(member, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
+    expect((await asUser(member, `update public.intelligence_missions set title='Hacked' where id='${mission}' returning id`)).rows).toHaveLength(0);
+    expect((await asUser(member, `delete from public.intelligence_missions where id='${mission}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(founder, insert('cc000000-0000-4000-8000-000000000004', otherChat))).rejects.toThrow();
+    await expect(asUser(member, insert('cc000000-0000-4000-8000-000000000005', chat, other))).rejects.toThrow();
+    await expect(asUser(founder, `update public.intelligence_missions set person_id=${other} where id='${mission}'`)).rejects.toThrow();
+    await expect(asUser(founder, `update public.intelligence_missions set conversation_id='${otherChat}' where id='${mission}'`)).rejects.toThrow();
+    const write = `update public.intelligence_missions set decisions='Review the draft first',next_actions='Prepare homepage brief',status='active',revision=2 where id='${mission}' and revision=1 returning *`;
+    expect((await asUser(founder, write)).rows).toHaveLength(1);
+    expect((await asUser(founder, write)).rows).toHaveLength(0);
+    await expect(asUser(founder, insert('cc000000-0000-4000-8000-000000000006'))).rejects.toThrow();
+    await db.exec('set role anon');
+    try { await expect(db.query('select * from public.intelligence_missions')).rejects.toThrow(); } finally { await db.exec('reset role'); }
+    await asUser(founder, `delete from public.intelligence_missions where id='${mission}' and revision=2`);
+    expect((await asUser(founder, `select id from public.ai_conversations where id='${chat}'`)).rows).toHaveLength(1);
+    await asUser(founder, insert(mission));
+    await asUser(founder, `delete from public.ai_conversations where id='${chat}'`);
+    expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
+  });
+});

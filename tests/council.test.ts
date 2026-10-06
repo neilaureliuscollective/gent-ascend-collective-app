@@ -36,6 +36,12 @@ describe('member Council contract', () => {
     expect(council.find((x) => x.id === 'hermes')?.role).toBe('Growth & commercial operations');
     expect(relevantCouncil('Fix this database bug').map((x) => x.id)).toContain('prometheus');
     expect(relevantCouncil('Plan travel options').map((x) => x.id)).toEqual(['athena']);
+    expect(relevantCouncil('What is an API?')).toEqual([]);
+    expect(relevantCouncil('Pressure-test this business idea')[0]?.id).toBe('athena');
+    expect(
+      relevantCouncil('Review this plan and tell me what could break').map((x) => x.id),
+    ).toContain('themis');
+    expect(relevantCouncil('Help me price and sell this')[0]?.id).toBe('hermes');
     expect(relevantCouncil('Hello')).toEqual([]);
     expect(tableRoutes('A personal question').map((x) => x.id)).toEqual(['athena', 'themis']);
     expect(

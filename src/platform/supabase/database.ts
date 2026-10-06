@@ -71,6 +71,7 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      intelligence_missions: Table<import('@/domains/missions/schema').Mission, Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>, Partial<import('@/domains/missions/schema').Mission>>;
       company_turn_context: Table<{request_id: string; person_id: string; company_id: string; name: string; brief: string; version: number; confirmed_at: string}, never, never>;
       company_jobs: Table<import("@/domains/company-work/schema").WorkJob, never, never>;
       company_work_versions: Table<import("@/domains/company-work/schema").WorkVersion, never, never>;

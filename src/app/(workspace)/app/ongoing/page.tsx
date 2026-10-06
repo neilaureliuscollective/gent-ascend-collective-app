@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { MemberContinuity } from '@/components/member-continuity';
 import { readContinuity } from '@/domains/continuity/service';
 import { Suspense } from 'react';
@@ -16,6 +17,10 @@ export default async function Command() {
   const activeGoal = goals?.find((goal) => goal.status === 'active') ?? null;
   return (
     <>
+      <p>
+        <Link href="/app/missions">Resume your Missions ↗</Link> · Meaningful work, saved direction
+        and next actions.
+      </p>
       <DailyDashboard
         initial={snapshot.data}
         opening={snapshot.opening}

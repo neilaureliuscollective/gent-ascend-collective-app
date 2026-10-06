@@ -42,27 +42,55 @@ export type CouncilRoute = { id: SpecialistId; reason: string };
 export function specialist(id: SpecialistId) {
   return council.find((member) => member.id === id)!;
 }
+export const specialistStarters: Record<SpecialistId, string> = {
+  athena:
+    'Pressure-test my idea. Separate evidence from assumptions, compare options and help me make a decision.',
+  prometheus:
+    'Help me architect an application. Clarify requirements and constraints, then propose a build plan with acceptance checks.',
+  apollo:
+    'Help me develop the creative direction for a launch. Start with the audience, desired response and deliverables.',
+  hermes:
+    'Help me price and sell my offer. Ask about the customer, costs and distribution, then propose a measurable experiment.',
+  themis:
+    'Review my plan and tell me what could break. Prioritize evidence gaps, risks and practical corrections.',
+};
 export function relevantCouncil(text: string): CouncilRoute[] {
   const routes: CouncilRoute[] = [];
-  const add = (id: SpecialistId, reason: string) => routes.push({ id, reason });
-  if (/\b(code|repo|bug|software|api|database|architecture|engineering|build an app)\b/i.test(text))
-    add('prometheus', 'Requirements, systems and a verifiable plan.');
+  const add = (id: SpecialistId, reason: string) => {
+    if (!routes.some((route) => route.id === id)) routes.push({ id, reason });
+  };
+  // A fact question does not merit a second model call. Recommendations never execute.
+  if (
+    /^(?:what is|what's|define|who is|when was)\b/i.test(text.trim()) &&
+    !/\b(review|plan|strategy|my|our|help|compare)\b/i.test(text)
+  )
+    return [];
+  if (
+    /\b(pressure[- ]?test|business idea|weigh|decid(?:e|ing)|decision|compare|strategy|research|planning|plan|travel|trip|career|priorities|opportunity)\b/i.test(
+      text,
+    )
+  )
+    add('athena', 'Frame the decision, compare evidence and pressure-test assumptions.');
+  if (
+    /\b(review|verify|verification|audit|quality|what could break|risk|check|assumption)\b/i.test(
+      text,
+    )
+  )
+    add('themis', 'Examine the evidence, failure modes and corrections before you commit.');
+  if (
+    /\b(code|repo|bug|software|api|database|architect|architecture|engineering|application|build an app|website|technology)\b/i.test(
+      text,
+    )
+  )
+    add('prometheus', 'Shape requirements and systems into a verifiable build plan.');
   if (/\b(brand|design|copy|campaign|creative|content|writing|visual|studio)\b/i.test(text))
-    add('apollo', 'Creative direction and clarity of expression.');
+    add('apollo', 'Turn the brief into a clear creative direction and usable drafts.');
   if (
-    /\b(revenue|pricing|offer|customer|sales|launch|distribution|partnership|business)\b/i.test(
+    /\b(revenue|pric(?:e|ing)|offer|customer|sales|sell|launch|distribution|partnership|growth|commercial)\b/i.test(
       text,
     )
   )
-    add('hermes', 'Commercial assumptions and practical experiments.');
-  if (
-    /\b(strategy|decision|compare|research|plan|planning|travel|trip|career|priorities|opportunity)\b/i.test(
-      text,
-    )
-  )
-    add('athena', 'Options, evidence and tradeoffs.');
-  if (/\b(risk|review|verify|check|quality|assumption|decision|compare)\b/i.test(text))
-    add('themis', 'Evidence gaps, downside and decision quality.');
+    add('hermes', 'Test the offer, pricing and route to customers against practical constraints.');
   return routes.slice(0, 3);
 }
 export function tableRoutes(text: string): CouncilRoute[] {

@@ -1,9 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { FirstSession } from '@/components/first-session';
 import { InstallGuide } from '@/components/install-guide';
 import { currentAccess } from '@/domains/access/current';
-import { readWorldPriority } from '@/domains/daily/world-priority';
 import { readPilot } from '@/domains/pilot/service';
 import { brand } from '@/platform/brand';
 import { claimPilotAction, setPilotPassword, submitFeedbackAction } from './actions';
@@ -27,15 +25,13 @@ export default async function Welcome({
   searchParams: Promise<{ status?: string }>;
 }) {
   const [pilot, params] = await Promise.all([readPilot(), searchParams]);
-  const [access, priority] = pilot
-    ? await Promise.all([currentAccess(), readWorldPriority().catch(() => null)])
-    : [new Set<string>(), null];
+  const access = pilot ? await currentAccess() : new Set<string>();
   return (
     <>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Your first chapter</p>
-          <h1>Welcome to your ascent.</h1>
+          <p className="eyebrow">Aethelios / Your first useful result</p>
+          <h1>Welcome to Aethelios.</h1>
         </div>
       </div>
       {params.status && notices[params.status] && (
@@ -46,17 +42,14 @@ export default async function Welcome({
       {!pilot ? (
         <section className="panel pilot-section">
           <h2>Your own space begins here.</h2>
-          <p>
-            Create a free account or sign in to keep your direction, routines and training
-            connected.
-          </p>
+          <p>Create a free account or sign in to keep your conversations and work connected.</p>
           <Link className="button" href="/enter">
             Create an account or sign in →
           </Link>
         </section>
       ) : (
         <>
-          <section className="pilot-entry" aria-label="Your Gent Ascend space">
+          <section className="pilot-entry" aria-label="Your Aethelios space">
             <Image src={brand.crest} alt="" width={90} height={90} preload />
             <div>
               <p className="eyebrow">YOUR DIRECTION. YOUR WORLD.</p>
@@ -64,10 +57,22 @@ export default async function Welcome({
               <p>Start where it matters today. Your profile can develop as you use your space.</p>
             </div>
           </section>
-          <FirstSession
-            initial={priority?.mode === 'personal' ? priority : null}
-            canTalk={access.has('aurelius.context')}
-          />
+          <section className="pilot-section">
+            <h2>What are you working on?</h2>
+            <p>
+              Bring one idea, decision or project. Aethelios helps you reach a useful first result,
+              then brings in a specialist when it helps.
+            </p>
+            <Link className="button" href="/app/aethelios">
+              Start with Aethelios →
+            </Link>
+            {!access.has('aurelius.context') && (
+              <p>
+                Your account is ready. Model access may require an active plan or beta invitation;
+                saved work remains yours.
+              </p>
+            )}
+          </section>
           <InstallGuide />
           <details className="panel pilot-section">
             <summary>Save a password for future sign-in</summary>

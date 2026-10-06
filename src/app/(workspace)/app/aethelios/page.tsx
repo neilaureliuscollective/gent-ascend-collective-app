@@ -61,10 +61,11 @@ export default async function AetheliosPage({
           ←
         </Link>
         <div>
-          <span className="eyebrow">COMPANY INTELLIGENCE</span>
+          <span className="eyebrow">YOUR INTELLIGENCE ENVIRONMENT</span>
           <h1>Aethelios</h1>
         </div>
         <nav aria-label="Aethelios destinations">
+          <Link href="/app/missions">Missions ↗</Link>
           <Link href="/app/studio">Studio ↗</Link>
           <Link href="/app/aethelios/meet">Meet ↗</Link>
         </nav>

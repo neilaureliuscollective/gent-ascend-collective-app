@@ -1,3 +1,9 @@
+## Public intelligence team + activation — 2026-10-06
+
+Founder-authorized Phase 2 implements visible Intelligence Team access, role starters, explained bounded routing, an outcome-first Talk welcome and first-session entry. Reuses the five existing Council model roles/calls/ledger and Aethelios synthesis. No private founder tools, seeds or context are copied. Public Missions preserve reviewed objective, decisions, questions, next actions and status around an existing owned conversation. Mission participants derive from completed cast receipts; resume stages a bounded owner/conversation-scoped draft without sending. Transcript/Library remain the output record; Ongoing and Studio are linked, not duplicated or falsely automated.
+
+Local lint/typecheck/build and 407 unit/SQL tests pass; 11 focused synthetic/intercepted browser workflows pass, including four responsive widths, context opt-out, saved specialist identity, Mission creation/resume and uncertain-write lock. Additive Mission migration applied to the established public database; live RLS/grants checked, four owner policies and no new advisor issue. No hosted authenticated provider/physical-device acceptance claimed. Exact implementation/research: PUBLIC_INTELLIGENCE_PHASE_2.md; launch gates/evidence: PUBLIC_LAUNCH_GATES_20261006.md. Integration/deployment verification is recorded in the final delivery receipt.
+
 ## Combined Command home + Presence release — 2026-10-05
 
 Founder authorized merging and deploying home restoration #57 together with Presence #58 for live testing. Both changes are reconciled in one candidate: integrated Command hero / expandable Talk plus the contextual Presence door, preserving scan, routines, products and history. No new migration. Combined local lint/types, 350 units, build and ledger passed. Combined browser/CI and exact production receipt pending below; no live acceptance claimed yet.

@@ -35,7 +35,7 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/app/aethelios');
-  await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
   // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
   await expect(page.locator('.welcome-heading .intelligence-orb-static')).toBeVisible();
