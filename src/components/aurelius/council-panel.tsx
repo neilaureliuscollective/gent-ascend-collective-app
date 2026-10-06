@@ -19,8 +19,10 @@ export function CouncilPanel({
   onAssemble,
   onFocused,
   reviewRef,
+  hideAccess = false,
 }: {
-  reviewRef?: Ref<{ open: () => void }>;
+  reviewRef?: Ref<{ open: (asTable?: boolean) => void }>;
+  hideAccess?: boolean;
   question: string;
   selection: CouncilSelection | null;
   disabled: boolean;
@@ -40,46 +42,48 @@ export function CouncilPanel({
     setReview(asTable);
     room.current?.showModal();
   }
-  useImperativeHandle(reviewRef, () => ({ open: () => open(true) }));
+  useImperativeHandle(reviewRef, () => ({ open: (asTable = true) => open(asTable) }));
   function choose(id: SpecialistId, focused = false) {
     if (focused) onFocused(id);
     else onSelect({ kind: 'specialist', specialists: [id] });
     room.current?.close();
   }
   return (
-    <div className="member-council" aria-label="Your Council">
-      <div className="council-access">
-        <button type="button" className="text-button" disabled={disabled} onClick={() => open()}>
-          The Council
-        </button>
-        {selection ? (
-          <>
-            <span className="council-current">{councilLabel(selection)}</span>
-            <button
-              type="button"
-              className="text-button"
-              disabled={disabled}
-              onClick={() => onSelect(null)}
-            >
-              {selection.kind === 'table' ? 'Leave The Table' : 'Return to Aethelios'}
-            </button>
-          </>
-        ) : routes.length > 0 ? (
-          <span className="council-relevant">
-            Relevant Council · {routes.map((route) => specialist(route.id).name).join(' · ')}
-          </span>
-        ) : (
-          <span className="council-relevant">Your private intelligence bench</span>
-        )}
-        <button
-          type="button"
-          className="text-button"
-          disabled={disabled || !question.trim()}
-          onClick={() => open(true)}
-        >
-          {selection?.kind === 'table' ? 'Review The Table' : 'Assemble Around This'}
-        </button>
-      </div>
+    <div className="member-council" data-inline-access={!hideAccess} aria-label="Your Council">
+      {!hideAccess && (
+        <div className="council-access">
+          <button type="button" className="text-button" disabled={disabled} onClick={() => open()}>
+            The Council
+          </button>
+          {selection ? (
+            <>
+              <span className="council-current">{councilLabel(selection)}</span>
+              <button
+                type="button"
+                className="text-button"
+                disabled={disabled}
+                onClick={() => onSelect(null)}
+              >
+                {selection.kind === 'table' ? 'Leave The Table' : 'Return to Aethelios'}
+              </button>
+            </>
+          ) : routes.length > 0 ? (
+            <span className="council-relevant">
+              Relevant Council · {routes.map((route) => specialist(route.id).name).join(' · ')}
+            </span>
+          ) : (
+            <span className="council-relevant">Your private intelligence bench</span>
+          )}
+          <button
+            type="button"
+            className="text-button"
+            disabled={disabled || !question.trim()}
+            onClick={() => open(true)}
+          >
+            {selection?.kind === 'table' ? 'Review The Table' : 'Assemble Around This'}
+          </button>
+        </div>
+      )}
       <dialog ref={room} className="council-dialog" aria-labelledby="council-title">
         <header>
           <div>

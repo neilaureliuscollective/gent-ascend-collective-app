@@ -1,5 +1,16 @@
 import { test, expect, type Page } from './fixtures';
 import type { WorkspaceData, Turn } from '../../src/domains/intelligence/types';
+async function tools(page: Page) {
+  if (!(await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible()))
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+}
+async function closeTools(page: Page) {
+  const close = page.getByRole('button', { name: 'Close Tools & context', exact: true });
+  if (await close.isVisible()) await close.click();
+}
+async function history(page: Page) {
+  await page.getByRole('button', { name: 'Conversations', exact: true }).click();
+}
 async function setup(page: Page, mode: 'normal' | 'interrupted' | 'unconfigured' = 'normal') {
   const state: WorkspaceData = {
     conversations: [],
@@ -124,7 +135,9 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
     'aria-pressed',
     'true',
   );
+  await history(page);
   await page.getByRole('button', { name: 'Start a conversation', exact: true }).click();
+  await history(page);
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
   await page
     .locator('.conversation-list > li > button')
@@ -132,39 +145,52 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
     .click();
   await expect(page.locator('.user-message')).toContainText('Help me choose a next step');
   await page.reload();
+  await history(page);
   await page
     .locator('.conversation-list > li > button')
     .filter({ hasText: 'Help me choose a next step' })
     .click();
   await expect(page.locator('.message-markdown strong')).toBeVisible();
+  await tools(page);
   await page.getByRole('button', { name: 'Delete conversation', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm delete', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
 });
-test('one saved daily action needs a second confirmation before completion', async ({page}) => {
-  const {state}=await setup(page);
-  const id='62000000-0000-4000-8000-000000000001';
-  state.context.dailyBrief={asOf:'2026-09-25T20:00:00.000Z',day:'2026-09-25',version:2,intention:'Finish the plan',actions:[{id,title:'Review the client brief',done:false}],openCaptures:1,previousReview:null};
-  const writes:unknown[]=[];
-  await page.route('**/api/daily/complete',async route=>{
-    const input=route.request().postDataJSON();writes.push(input);
-    state.context.dailyBrief!.actions[0]!.done=true;
-    state.context.dailyBrief!.version=3;
-    await route.fulfill({json:{day:input.day,version:3,actionId:id,done:true}});
+test('one saved daily action needs a second confirmation before completion', async ({ page }) => {
+  const { state } = await setup(page);
+  const id = '62000000-0000-4000-8000-000000000001';
+  state.context.dailyBrief = {
+    asOf: '2026-09-25T20:00:00.000Z',
+    day: '2026-09-25',
+    version: 2,
+    intention: 'Finish the plan',
+    actions: [{ id, title: 'Review the client brief', done: false }],
+    openCaptures: 1,
+    previousReview: null,
+  };
+  const writes: unknown[] = [];
+  await page.route('**/api/daily/complete', async (route) => {
+    const input = route.request().postDataJSON();
+    writes.push(input);
+    state.context.dailyBrief!.actions[0]!.done = true;
+    state.context.dailyBrief!.version = 3;
+    await route.fulfill({ json: { day: input.day, version: 3, actionId: id, done: true } });
   });
   await page.reload();
+  await tools(page);
   await page.getByText('Today’s plan · 1 open action').click();
   await expect(page.getByText('Review the client brief')).toBeVisible();
-  await page.getByRole('button',{name:'Mark complete'}).click();
+  await page.getByRole('button', { name: 'Mark complete' }).click();
   expect(writes).toHaveLength(0);
-  await page.getByRole('button',{name:'Confirm complete'}).click();
+  await page.getByRole('button', { name: 'Confirm complete' }).click();
   await expect(page.getByText('Today’s plan · 0 open actions')).toBeVisible();
-  expect(writes).toEqual([{day:'2026-09-25',actionId:id,version:2}]);
+  expect(writes).toEqual([{ day: '2026-09-25', actionId: id, version: 2 }]);
 });
 test('memory requires explicit confirmation and can be corrected and forgotten', async ({
   page,
 }) => {
   await setup(page);
+  await tools(page);
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await page.getByLabel('What should Aethelios remember?').fill('Prefer brief answers');
   await page.getByRole('button', { name: 'Confirm and remember' }).click();
@@ -182,7 +208,9 @@ test('context opt-out reaches the server and incomplete streams never say saved'
   page,
 }) => {
   const { sent } = await setup(page, 'interrupted');
+  await tools(page);
   await page.getByLabel('Use personal context').uncheck();
+  await closeTools(page);
   await page.getByLabel('Message Aethelios').fill('Keep this draft');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.locator('.aurelius-workspace [role=alert]')).toContainText(
@@ -200,6 +228,7 @@ test('missing model connection leaves memory and saved context usable', async ({
   await expect(
     page.getByText('Aethelios is waiting for its model connection.', { exact: false }),
   ).toBeVisible();
+  await tools(page);
   await page.getByRole('button', { name: 'Context', exact: true }).click();
   await expect(page.getByText('A meaningful first step', { exact: true })).toBeVisible();
 });
@@ -250,9 +279,10 @@ test('anonymous API and hostile origins fail closed', async ({ request }) => {
 
 test('the global Aethelios panel uses the same saved conversation service', async ({ page }) => {
   await setup(page);
-  await page.goto('/app');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/app/work');
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.locator('.aurelius-dialog');
   await expect(dialog.getByRole('heading', { name: 'What’s on your mind?' })).toBeVisible();
   await dialog.getByLabel('Message Aethelios').fill('From Command');
   await dialog.getByRole('button', { name: 'Send', exact: true }).click();
@@ -260,6 +290,7 @@ test('the global Aethelios panel uses the same saved conversation service', asyn
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await dialog.getByLabel('Saved conversations').selectOption({ label: 'From Command' });
   await expect(dialog.locator('.user-message')).toContainText('From Command');
 });
@@ -305,12 +336,14 @@ for (const width of [360, 768, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await tools(page);
     await page.getByRole('button', { name: 'Memory', exact: true }).click();
     await expect(page.getByLabel('What should Aethelios remember?')).toBeDisabled();
     await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
     await page
       .locator('.memory-space form')
       .evaluate((form: HTMLFormElement) => form.requestSubmit());
+    await tools(page);
     await page.getByRole('button', { name: 'Context', exact: true }).click();
     await expect(page.getByText('Preview · no personal data loaded')).toBeVisible();
     await page.screenshot({ path: `test-results/aurelius-context-${width}.png`, fullPage: true });
@@ -319,6 +352,7 @@ for (const width of [360, 768, 1440]) {
       page.getByText('Live web research, voice, file uploads', { exact: false }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Conversation', exact: true }).click();
+    await closeTools(page);
     await expect(page.getByLabel('Message Aethelios')).toHaveValue('An unsent thought');
     expect(writes).toEqual([]);
   });
@@ -340,7 +374,7 @@ for (const width of [360, 1440]) {
     });
     await page.reload();
     const library = page.getByRole('complementary', { name: 'Conversation library' });
-    if (width < 1101) await library.locator('.library-toggle').click();
+    await history(page);
     await library.getByLabel('Search conversations').fill('nothing matches');
     await expect(library.getByText('No matching titles.')).toBeVisible();
     await library.getByLabel('Search conversations').fill('DIRECTION');
@@ -351,8 +385,9 @@ for (const width of [360, 1440]) {
       .click();
     await expect(page.locator('.user-message')).toContainText('Direction for the week');
     if (width < 1101) await expect(library.getByLabel('Search conversations')).not.toBeVisible();
+    await tools(page);
     await page.getByRole('button', { name: 'Context', exact: true }).click();
-    await expect(page.getByText('Personal context is on for your next message')).toBeVisible();
+    await expect(page.getByText('Personal context is off for your next message')).toBeVisible();
     await expect(page.getByText('A meaningful first step', { exact: true })).toBeVisible();
   });
 }

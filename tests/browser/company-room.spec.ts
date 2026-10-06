@@ -20,7 +20,9 @@ for (const width of [360, 768, 1440]) {
     await page.getByRole('button', { name: 'Sharpen the positioning' }).click();
     await expect(page.getByLabel('Work with Synthetic A')).toHaveValue(/positioning/);
     expect(requests).toHaveLength(0);
+    await page.getByRole('button', { name: 'Company tools', exact: true }).click();
     await page.getByLabel('Bring in a specialist').selectOption('athena');
+    await page.getByRole('button', { name: 'Close Company tools', exact: true }).click();
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(page.getByRole('alert')).toHaveText('Synthetic model unavailable');
     expect(requests).toHaveLength(1);
@@ -47,6 +49,7 @@ test('company brief writes require explicit confirmation and a current version',
     });
   });
   await page.goto('http://127.0.0.1:3102/?mode=company-room');
+  await page.getByRole('button', { name: 'Company tools', exact: true }).click();
   await page.getByRole('button', { name: 'Review brief · v1' }).click();
   await page.getByLabel('Confirmed business context').fill('A proposed correction');
   expect(body).toBeUndefined();

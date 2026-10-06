@@ -1,7 +1,6 @@
 'use client';
-import { useEffect, useRef } from 'react';
-export function ConversationViewport({ children }: { children: React.ReactNode }) {
-  const root = useRef<HTMLDivElement>(null);
+import { useEffect, useRef, type RefObject } from 'react';
+export function useTalkViewport(root: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const viewport = window.visualViewport;
     const resize = () => {
@@ -26,9 +25,13 @@ export function ConversationViewport({ children }: { children: React.ReactNode }
       viewport?.removeEventListener('scroll', resize);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [root]);
+}
+export function ConversationViewport({ children }: { children: React.ReactNode }) {
+  const root = useRef<HTMLDivElement>(null);
+  useTalkViewport(root);
   return (
-    <div ref={root} className="aethelios-page">
+    <div ref={root} className="aethelios-page talk-page">
       {children}
     </div>
   );

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { syntheticWork } from '../component-fixture/company-work-data';
 const fixture = 'http://127.0.0.1:3102/?mode=company-job';
 for (const width of [360, 768, 1440])
@@ -55,10 +55,12 @@ for (const width of [360, 768, 1440])
     await page.getByRole('button', { name: 'Brief & presentation', exact: false }).click();
     await expect(page.getByRole('img', { name: 'Slide 1:', exact: false })).toBeVisible();
     await page.getByRole('button', { name: 'Edit deliverable', exact: true }).click();
-    await page.getByLabel('Title', { exact: true }).fill('Revised synthetic positioning');
+    await page
+      .getByRole('textbox', { name: 'Title', exact: true })
+      .fill('Revised synthetic positioning');
     await page.getByRole('button', { name: 'Save new version', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('lost save acknowledgment');
-    await expect(page.getByLabel('Title', { exact: true })).toHaveValue(
+    await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(
       'Revised synthetic positioning',
     );
     await page.getByRole('button', { name: 'Retry exact save', exact: true }).click();
@@ -72,9 +74,11 @@ for (const width of [360, 768, 1440])
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await page.getByRole('button', { name: 'Full-screen work', exact: true }).click();
+    await page.getByRole('button', { name: 'Company tools', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Exit full-screen', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Close Company tools', exact: true }).click();
     await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Company tools', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Full-screen work', exact: true })).toBeVisible();
   });
 test('Studio generation remains behind exact prompt approval', async ({ page }) => {

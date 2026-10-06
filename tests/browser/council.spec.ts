@@ -90,18 +90,27 @@ test('specialist recommendation and manual access remain deliberate and restore 
 }) => {
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Compare my career options');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await expect(page.getByText('Relevant Council · Athena · Themis')).toBeVisible();
+  if (!(await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible()))
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'The Council', exact: true }).click();
   await page.getByRole('button', { name: 'Involve Athena', exact: true }).click();
   expect(sent).toHaveLength(0);
+  if (await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible())
+    await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[0]?.council).toEqual({ kind: 'specialist', specialists: ['athena'] });
   await expect(page.locator('.message-author').last()).toHaveText('Athena');
   await page.reload();
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Return to Aethelios' })).toBeVisible();
   await page.getByRole('button', { name: 'Return to Aethelios' }).click();
+  await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await page.getByLabel('Message Aethelios').fill('Keep it simple');
+  if (await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible())
+    await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[1]?.council).toBeUndefined();
@@ -111,13 +120,15 @@ test('Table reviews exact objective and cast, uses context opt-out, synthesizes,
 }) => {
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Compare two opportunities');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByLabel('Use personal context').uncheck();
   await page.getByRole('button', { name: 'Assemble Around This' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.locator('.council-dialog');
   await expect(dialog.getByText('Personal context is off.', { exact: false })).toBeVisible();
   expect(sent).toHaveLength(0);
   await dialog.getByLabel('What are we examining?').fill('Compare two career opportunities');
   await dialog.getByRole('button', { name: 'Confirm and assemble' }).click();
+  await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[0]).toMatchObject({
     text: 'Compare two career opportunities',
@@ -133,7 +144,9 @@ test('Table reviews exact objective and cast, uses context opt-out, synthesizes,
   await expect(dialog).toBeVisible();
   expect(sent).toHaveLength(1);
   await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Leave The Table' }).click();
+  await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   await expect(page.getByRole('heading', { name: 'Aethelios synthesis' })).toBeVisible();
 });
@@ -142,16 +155,23 @@ test('new specialist conversation shares existing architecture without reusing a
 }) => {
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('A first question');
+  if (await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible())
+    await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
+  if (!(await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible()))
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'The Council', exact: true }).click();
   await page
-    .getByRole('dialog')
+    .locator('.council-dialog')
     .locator('article')
     .filter({ hasText: 'Apollo' })
     .getByRole('button', { name: 'Open focused conversation' })
     .click();
+  await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await page.getByLabel('Message Aethelios').fill('Refine this writing');
+  if (await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible())
+    await page.getByRole('button', { name: 'Close Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[1]?.conversationId).not.toEqual(sent[0]?.conversationId);
@@ -165,8 +185,12 @@ for (const width of [360, 720, 1024, 1920])
     page.on('pageerror', (error) => errors.push(error.message));
     await setup(page);
     await page.getByLabel('Message Aethelios').fill('Plan a strategy');
+    if (
+      !(await page.getByRole('button', { name: 'Close Tools & context', exact: true }).isVisible())
+    )
+      await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
     await page.getByRole('button', { name: 'The Council', exact: true }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.locator('.council-dialog');
     await expect(dialog.getByRole('heading', { name: 'The Council', exact: true })).toBeVisible();
     expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     const bounds = await dialog.boundingBox();
@@ -188,6 +212,7 @@ test('unavailable model blocks Council execution without breaking chat workspace
   page,
 }) => {
   const { sent } = await setup(page, false);
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await expect(page.getByRole('button', { name: 'The Council', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await expect(page.getByLabel('What should Aethelios remember?')).toBeVisible();

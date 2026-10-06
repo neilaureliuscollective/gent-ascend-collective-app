@@ -1,0 +1,372 @@
+/* One scoped layout contract shared by public and company Talk. */
+.talk-drawer.talk-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  margin: 0;
+  width: min(420px, 94vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  max-width: 94vw;
+  padding: 18px;
+  border: 1px solid #c4912f50;
+  background: #081b15;
+  color: #eee9de;
+  border-radius: 0 18px 18px 0;
+  overflow: auto;
+  z-index: 200;
+}
+.talk-drawer::backdrop {
+  background: #020806bb;
+  backdrop-filter: blur(5px);
+}
+.talk-drawer > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.talk-drawer > header h2 {
+  font-size: 20px;
+  margin: 0;
+}
+.talk-drawer button,
+.talk-tool {
+  min-height: 44px;
+}
+.talk-drawer > header button {
+  min-width: 44px;
+  background: transparent;
+  border: 1px solid #c4912f40;
+  border-radius: 12px;
+  color: #edd39c;
+}
+.talk-drawer .conversation-library {
+  display: block;
+  height: auto;
+  border: 0;
+  background: none;
+  overflow: visible;
+}
+.talk-drawer .library-toggle {
+  display: none;
+}
+.talk-drawer .library-body {
+  display: block;
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+}
+.talk-drawer .library-brand {
+  display: none;
+}
+.talk-drawer-body label {
+  display: block;
+  margin-block: 14px;
+}
+.talk-tool {
+  border: 0;
+  background: transparent;
+  color: #e8cc96;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.talk-tool:hover {
+  background: #c4912f14;
+}
+.talk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  min-height: 44px;
+}
+.talk-toolbar .talk-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b8c9c1;
+  font-size: 13px;
+}
+.aethelios-page.talk-page .aethelios-room-heading {
+  flex-wrap: nowrap;
+  min-height: 52px;
+  gap: 8px;
+  margin: 0;
+}
+.aethelios-page.talk-page .aethelios-room-heading h1 {
+  font-size: 19px;
+}
+.aethelios-page.talk-page .aethelios-room-heading .eyebrow {
+  display: none;
+}
+.aethelios-page.talk-page .aethelios-room-heading nav {
+  gap: 2px;
+}
+.aethelios-page.talk-page .aethelios-room-heading nav a {
+  padding: 0 8px;
+  font-size: 12px;
+}
+.aethelios-page.talk-page {
+  padding: max(4px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+.talk-page .talk-layout.talk-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.talk-page .aurelius-workspace {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+.talk-page .conversation-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 20px max(8px, calc((100% - 800px) / 2)) 18px;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+.talk-page .conversation-scroll .aurelius-welcome {
+  padding: 16px 0;
+}
+.talk-page .welcome-heading .orb-presentation {
+  display: none;
+}
+.talk-page .conversation-scroll .message-markdown {
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.talk-page .message-markdown pre,
+.talk-page .message-markdown table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.talk-page .message-markdown table {
+  display: block;
+}
+.talk-page .aurelius-composer,
+.company-room .talk-composer {
+  position: relative;
+  flex: none;
+  width: min(100%, 840px);
+  align-self: center;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid #c4912f50;
+  border-radius: 22px;
+  background: linear-gradient(140deg, #12372c, #0b211a);
+}
+.talk-page .aurelius-composer textarea.talk-input,
+.company-room textarea.talk-input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  max-height: min(200px, 24dvh);
+  margin: 0;
+  padding: 10px 36px 8px 8px;
+  border: 0;
+  border-radius: 0;
+  resize: none;
+  background: transparent;
+  font: 16px/1.5 var(--font-body, sans-serif);
+  color: #eee9de;
+  overflow-y: auto;
+}
+.talk-expand {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  width: 36px;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: #e8cc96;
+}
+.talk-page .composer-controls,
+.company-room .talk-composer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 44px;
+}
+.talk-page .composer-controls .button,
+.company-room .talk-composer-actions .button {
+  margin: 0;
+  min-height: 44px;
+  padding: 6px 14px;
+}
+.talk-page .aurelius-notice {
+  margin: 3px 0 0;
+  font-size: 12px;
+  max-height: 44px;
+  overflow: auto;
+}
+.talk-page .latest-message {
+  position: absolute;
+  bottom: 125px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+}
+.talk-editor.talk-editor {
+  inset: 5dvh 4vw;
+  margin: auto;
+  width: min(850px, 92vw);
+  height: 80dvh;
+  max-height: 90dvh;
+  border-radius: 18px;
+}
+.talk-editor textarea {
+  width: 100%;
+  height: calc(100% - 76px);
+  resize: none;
+  font: 16px/1.6 sans-serif;
+  background: transparent;
+  color: inherit;
+  border: 1px solid #c4912f40;
+  padding: 12px;
+}
+.talk-page :where(button, textarea, a):focus-visible,
+.talk-drawer :where(button, textarea, a, input, select):focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 2px;
+}
+@media (max-height: 570px) {
+  .talk-page .aethelios-room-heading {
+    display: none;
+  }
+  .talk-page .conversation-starters {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talk-page *,
+  .talk-drawer * {
+    scroll-behavior: auto !important;
+  }
+}
+.company-room.talk-company.company-room-focused {
+  top: var(--conversation-top, 0px);
+  bottom: auto;
+  height: var(--conversation-height, 100dvh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+.company-room.talk-company > .talk-company-heading {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 56px;
+  margin: 0;
+  padding: 0;
+  position: static;
+}
+.company-room.talk-company > .talk-company-heading > h1 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  margin: 0;
+}
+.company-room.talk-company > .talk-company-heading > a {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+}
+.company-room.talk-company .company-room-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.company-room.talk-company .company-room-talk {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  margin: 0 auto;
+  width: min(100%, 1000px);
+}
+.company-room.talk-company .talk-company-transcript {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 20px max(8px, calc((100% - 800px) / 2));
+}
+.company-room.talk-company .talk-company-transcript .message-markdown {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.company-room.talk-company
+  .company-room-talk
+  > div:not(.talk-company-transcript):not(.talk-composer-actions):not([hidden]) {
+  overflow-y: auto;
+  min-height: 0;
+}
+.company-room.talk-company .talk-composer-actions > button {
+  margin: 0;
+  font-size: 12px;
+}
+.company-room.talk-company .talk-drawer .company-room-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.company-room.talk-company .talk-drawer aside {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: none;
+}
+.company-room.talk-company .talk-drawer select {
+  max-width: 100%;
+}
+.company-room.talk-company .latest-message {
+  position: absolute;
+  bottom: 125px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.company-room.talk-company > .company-brief-editor,
+.company-room.talk-company > .company-job-creator {
+  overflow: auto;
+  max-height: 70%;
+}
+@media (max-width: 360px) {
+  .talk-toolbar .talk-title {
+    display: none;
+  }
+  .talk-company-heading .talk-tool {
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+}
+/* The old floating shortcut otherwise covers the compact Talk header on phones. */
+.app-shell:has(.talk-page) .aurelius-trigger.is-current,
+.app-shell:has(.company-room-focused) .aurelius-trigger {
+  display: none;
+}
+.member-council[data-inline-access='false'] {
+  display: contents;
+}

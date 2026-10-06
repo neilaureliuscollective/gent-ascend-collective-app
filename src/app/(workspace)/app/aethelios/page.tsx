@@ -4,7 +4,6 @@ import { readWorldPriority } from '@/domains/daily/world-priority';
 import { commandDraft } from '@/domains/daily-command/model';
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import Link from 'next/link';
-import { AppearanceControls } from '@/components/visual/appearance';
 import type { Metadata } from 'next';
 import { aethelios } from '@/platform/intelligence-identity';
 export const metadata: Metadata = {
@@ -65,7 +64,6 @@ export default async function AetheliosPage({
           <span className="eyebrow">COMPANY INTELLIGENCE</span>
           <h1>Aethelios</h1>
         </div>
-        <AppearanceControls />
         <nav aria-label="Aethelios destinations">
           <Link href="/app/studio">Studio ↗</Link>
           <Link href="/app/aethelios/meet">Meet ↗</Link>
