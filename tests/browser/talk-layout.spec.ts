@@ -34,8 +34,14 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
     await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
     const presence = page.getByRole('button', { name: 'Aethelios presence', exact: true });
     await expect(presence).toBeVisible();
+    const orbFill = await page
+      .locator('.talk-presence .intelligence-orb-static')
+      .first()
+      .evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(orbFill).toContain('rgb(11, 59, 50)');
+    expect(orbFill).toContain('rgb(6, 42, 35)');
     if (width === 390)
-      await page.screenshot({ path: '/workspace/scratch/486627af8504/sovereign-talk-phone.png' });
+      await page.screenshot({ path: '/workspace/scratch/486627af8504/deep-green-talk-phone.png' });
     await presence.click();
     await expect(
       page.getByRole('dialog', { name: 'Aethelios presence', exact: true }),

@@ -17,7 +17,7 @@ export function Shell({
 }) {
   return (
     <ConversationDraftProvider>
-      <div className="app-shell aethelios-sovereign">
+      <div className="app-shell aethelios-green">
         <AppRuntime />
         <VisualEnvironment>
           <ConnectionField />

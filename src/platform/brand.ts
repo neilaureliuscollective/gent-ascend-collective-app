@@ -4,9 +4,9 @@ export const brand = {
   shortName: 'Aethelios',
   description:
     'Company-building intelligence for founders and operators. Research, strategy and creative work in one conversational environment.',
-  themeColor: '#080709',
-  crest: '/brand/aethelios-sovereign-20261006.webp',
-  lockup: '/brand/aethelios-sovereign-20261006.webp',
+  themeColor: '#030806',
+  crest: '/brand/aethelios-deep-green-20261006.webp',
+  lockup: '/brand/aethelios-deep-green-20261006.webp',
   crestAlt:
-    'Aethelios gold circular emblem with architectural A, guiding star and laurels on Sovereign purple',
+    'Aethelios gold circular emblem with architectural A, guiding star and laurels on deep signature green',
 } as const;

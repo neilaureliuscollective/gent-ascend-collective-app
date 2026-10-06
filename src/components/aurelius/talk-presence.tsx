@@ -12,14 +12,14 @@ export function TalkPresence({ state }: { state: PresenceState }) {
       <TalkDrawer
         label="Aethelios presence"
         triggerContent={
-          <span className="sovereign-orb">
-            <IntelligenceOrb active={moving} engaged={state === 'working'} sovereign />
+          <span className="talk-orb">
+            <IntelligenceOrb active={moving} engaged={state === 'working'} deepGreen />
           </span>
         }
       >
-        <div className="sovereign-presence-room">
-          <span className="sovereign-orb">
-            <IntelligenceOrb active={moving} engaged={state === 'working'} sovereign />
+        <div className="talk-presence-room">
+          <span className="talk-orb">
+            <IntelligenceOrb active={moving} engaged={state === 'working'} deepGreen />
           </span>
           <h3>Aethelios</h3>
           <p>

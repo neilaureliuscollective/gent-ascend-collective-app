@@ -1,47 +1,47 @@
-/* Founder-approved Aethelios Sovereign. Legacy destinations retain their own identity. */
-.aethelios-sovereign {
-  --sovereign: #421533;
-  --sovereign-shadow: #1a0b17;
-  --sovereign-light: #70264f;
-  --obsidian-950: #080709;
-  --obsidian-900: #100b10;
-  --obsidian-800: #191018;
-  --obsidian-700: #221420;
+/* Founder-approved deep Aethelios green. Legacy destinations retain their own identity. */
+.aethelios-green {
+  --aethelios-green: #062a23;
+  --aethelios-green-shadow: #031812;
+  --aethelios-green-light: #0b3b32;
+  --obsidian-950: #030806;
+  --obsidian-900: #07110d;
+  --obsidian-800: #0a1a14;
+  --obsidian-700: #10251d;
   /* Compatibility aliases for existing reusable materials; technical keys stay stable. */
-  --ascend-green-950: #1a0b17;
-  --ascend-green-900: #2c1024;
-  --ascend-green-800: #421533;
-  --ascend-green-700: #562040;
-  --ascend-green-600: #70264f;
-  --surface-green: #1a0b17;
-  --green: #2c1024;
-  --green-light: #70264f;
-  --enamel: #421533;
-  --background: #080709;
-  --surface: #191018;
-  --text-primary: #eeeaf1;
-  --text-secondary: #c1b5c0;
-  --text: #eeeaf1;
-  --muted: #c1b5c0;
-  background: #080709;
+  --ascend-green-950: #031812;
+  --ascend-green-900: #042018;
+  --ascend-green-800: #062a23;
+  --ascend-green-700: #09352a;
+  --ascend-green-600: #0b3b32;
+  --surface-green: #031812;
+  --green: #042018;
+  --green-light: #0b3b32;
+  --enamel: #062a23;
+  --background: #030806;
+  --surface: #0a1a14;
+  --text-primary: #f5f1e9;
+  --text-secondary: #b9c2ba;
+  --text: #f5f1e9;
+  --muted: #b9c2ba;
+  background: #030806;
   color: var(--text);
 }
-.aethelios-sovereign .sidebar,
-.aethelios-sovereign .mobile-nav {
-  background: linear-gradient(155deg, #1a0b17, #080709 75%);
+.aethelios-green .sidebar,
+.aethelios-green .mobile-nav {
+  background: linear-gradient(155deg, #031812, #030806 75%);
 }
-.aethelios-sovereign :is(.aethelios-page, .company-room-focused) {
-  background: radial-gradient(ellipse at 85% 0, #42153333, transparent 55%), #080709;
+.aethelios-green :is(.aethelios-page, .company-room-focused) {
+  background: radial-gradient(ellipse at 85% 0, #062a2333, transparent 55%), #030806;
 }
-.aethelios-sovereign :is(.aurelius-workspace, .company-room) {
+.aethelios-green :is(.aurelius-workspace, .company-room) {
   background-color: transparent;
 }
-.aethelios-sovereign :is(.talk-drawer, .talk-expanded-editor, .council-dialog) {
-  background: #1a0b17;
-  color: #eeeaf1;
+.aethelios-green :is(.talk-drawer, .talk-expanded-editor, .council-dialog) {
+  background: #031812;
+  color: #f5f1e9;
 }
-.aethelios-sovereign :is(.user-message, .conversation-item.is-active) {
-  background: #42153355;
+.aethelios-green :is(.user-message, .conversation-item.is-active) {
+  background: #062a2355;
 }
 .talk-presence {
   display: inline-flex;
@@ -55,36 +55,36 @@
   padding: 0;
   border: 1px solid #c4912f66;
   border-radius: 50%;
-  background: #1a0b17;
+  background: #031812;
 }
-.sovereign-orb {
+.talk-orb {
   position: relative;
   display: block;
   width: 100%;
   height: 100%;
 }
-.sovereign-orb .intelligence-orb,
-.sovereign-orb canvas {
+.talk-orb .intelligence-orb,
+.talk-orb canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
-.sovereign-orb .intelligence-orb-static {
+.talk-orb .intelligence-orb-static {
   position: absolute;
   inset: 12%;
   border-radius: 50%;
   overflow: hidden;
-  background: radial-gradient(circle at 32% 28%, #70264f, #421533 42%, #1a0b17 75%);
+  background: radial-gradient(circle at 32% 28%, #0b3b32, #062a23 42%, #031812 75%);
   border: 1px solid #c4912f66;
   box-shadow:
-    inset -8px -8px 12px #080709aa,
-    0 0 16px #70264f44;
+    inset -8px -8px 12px #030806aa,
+    0 0 16px #0b3b3244;
 }
-.sovereign-orb .intelligence-orb[data-rendered='true'] .intelligence-orb-static {
+.talk-orb .intelligence-orb[data-rendered='true'] .intelligence-orb-static {
   opacity: 0;
 }
-.sovereign-orb .intelligence-orb-contours {
+.talk-orb .intelligence-orb-contours {
   position: absolute;
   inset: 0;
   background: repeating-radial-gradient(
@@ -95,51 +95,51 @@
   );
   transform: rotate(-25deg) scale(1.4);
 }
-.sovereign-orb .intelligence-orb-light {
+.talk-orb .intelligence-orb-light {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 28%, #b6659144, transparent 35%);
+  background: radial-gradient(circle at 30% 28%, #427b6144, transparent 35%);
 }
 .talk-presence[data-state='working'] > button {
   border-color: #e8c780;
   box-shadow: 0 0 14px #c4912f44;
 }
-.sovereign-presence-room {
+.talk-presence-room {
   text-align: center;
   padding-block: 24px;
 }
-.sovereign-presence-room > .sovereign-orb {
+.talk-presence-room > .talk-orb {
   width: min(320px, 75vw);
   height: min(320px, 75vw);
   margin: 0 auto 24px;
 }
-.sovereign-presence-room p {
+.talk-presence-room p {
   margin-top: 12px;
 }
 @media (forced-colors: active) {
-  .sovereign-orb canvas {
+  .talk-orb canvas {
     display: none;
   }
-  .sovereign-orb .intelligence-orb-static {
+  .talk-orb .intelligence-orb-static {
     opacity: 1 !important;
     border: 2px solid CanvasText;
   }
 }
 
-.aethelios-sovereign .council-dialog header {
-  background: #1a0b17;
+.aethelios-green .council-dialog header {
+  background: #031812;
 }
-.aethelios-sovereign .aethelios-today {
-  background: #42153344;
+.aethelios-green .aethelios-today {
+  background: #062a2344;
 }
-.aethelios-sovereign .talk-title {
-  color: #c1b5c0;
+.aethelios-green .talk-title {
+  color: #b9c2ba;
 }
-.aethelios-sovereign .conversation-starters button {
-  background: linear-gradient(140deg, #42153380, #1a0b17);
-  color: #eeeaf1;
+.aethelios-green .conversation-starters button {
+  background: linear-gradient(140deg, #062a2380, #031812);
+  color: #f5f1e9;
   border-color: #c4912f40;
 }
-.aethelios-sovereign .aurelius-composer {
-  background: linear-gradient(140deg, #321327, #1a0b17);
+.aethelios-green .aurelius-composer {
+  background: linear-gradient(140deg, #082c22, #031812);
 }
