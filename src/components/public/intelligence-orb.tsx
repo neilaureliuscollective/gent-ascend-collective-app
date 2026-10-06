@@ -7,7 +7,7 @@ void main(){gl_Position=vec4(position,0.,1.);}`;
 const fragment = `#version 300 es
 precision highp float;
 uniform vec2 resolution;
-uniform float time,energy,scroll;
+uniform float time,energy,scroll,sovereign;
 out vec4 pixel;
 float hash(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
 float noise(vec3 p){
@@ -21,7 +21,7 @@ void main(){
  float radius=.73*(1.+.018*sin(time*1.4)+energy*.095);
  float r2=dot(p,p);
  float halo=exp(-pow(length(p)/1.04,2.)*3.1);
- vec3 color=vec3(.04,.30,.19)*halo*(.25+energy*.25);
+ vec3 color=(sovereign > .5 ? vec3(.255,.081,.201) : vec3(.04,.30,.19))*halo*(.25+energy*.25);
  float alpha=halo*.30;
  if(r2<radius*radius){
   float depth=sqrt(max(radius*radius-r2,0.));
@@ -39,6 +39,7 @@ void main(){
   body+=vec3(.14,.35,.25)*diffuse*.13;
   body+=vec3(.19,.52,.35)*pow(.5+.5*sin(back.y*36.-atan(back.z,back.x)*8.+time*.4),18.)*.22*(1.-fresnel);
   float edge=1.-smoothstep(radius-.027,radius,length(p));
+  if(sovereign > .5){ body=vec3(body.g*.85,body.g*.27,body.g*.67);  }
   color=mix(color,body,edge);alpha=max(alpha,edge);
  }
  vec2 q=vec2(p.x*.85+p.y*.52,p.y*.85-p.x*.52);
@@ -59,7 +60,15 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
   return shader;
 }
 /** Public, presentation-only adaptation of the founder Aethelios living orb. */
-export function IntelligenceOrb({ active, engaged = false }: { active: boolean; engaged?: boolean }) {
+export function IntelligenceOrb({
+  active,
+  engaged = false,
+  sovereign = false,
+}: {
+  active: boolean;
+  engaged?: boolean;
+  sovereign?: boolean;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const el = canvas.current;
@@ -102,6 +111,7 @@ export function IntelligenceOrb({ active, engaged = false }: { active: boolean; 
       energy: gl.getUniformLocation(program, 'energy'),
       scroll: gl.getUniformLocation(program, 'scroll'),
     };
+    gl.uniform1f(gl.getUniformLocation(program, 'sovereign'), sovereign ? 1 : 0);
     const chapter = el.closest<HTMLElement>('.ascend-emergence');
     let frame = 0,
       visible = false,
@@ -118,7 +128,12 @@ export function IntelligenceOrb({ active, engaged = false }: { active: boolean; 
         last = now;
         elapsed += delta * 0.001;
         const scroll = Number(chapter?.dataset.scrollProgress || 0);
-        energy += (0.14 + (engaged ? 0.35 : 0) + Math.max(0, Math.min(1, (scroll - 0.35) / 0.45)) * 0.22 - energy) * 0.08;
+        energy +=
+          (0.14 +
+            (engaged ? 0.35 : 0) +
+            Math.max(0, Math.min(1, (scroll - 0.35) / 0.45)) * 0.22 -
+            energy) *
+          0.08;
         const size = Math.max(
           1,
           Math.min(500, Math.round(el.clientWidth * Math.min(devicePixelRatio || 1, 1.5))),
@@ -178,7 +193,7 @@ export function IntelligenceOrb({ active, engaged = false }: { active: boolean; 
       gl.deleteShader(vs);
       gl.deleteShader(fs);
     };
-  }, [active, engaged]);
+  }, [active, engaged, sovereign]);
   return (
     <div className="intelligence-orb" aria-hidden="true">
       <div className="intelligence-orb-static">

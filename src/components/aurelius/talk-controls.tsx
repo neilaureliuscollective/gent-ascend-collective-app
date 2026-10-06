@@ -7,8 +7,10 @@ export function TalkDrawer({
   label,
   children,
   disabled = false,
+  triggerContent,
 }: {
   label: string;
+  triggerContent?: ReactNode;
   children: ReactNode | ((close: () => void) => ReactNode);
   disabled?: boolean;
 }) {
@@ -26,6 +28,7 @@ export function TalkDrawer({
         type="button"
         className="talk-tool"
         disabled={disabled}
+        aria-label={label}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={id}
@@ -34,7 +37,7 @@ export function TalkDrawer({
           setOpen(true);
         }}
       >
-        {label}
+        {triggerContent ?? label}
       </button>
       <dialog
         ref={setDialog}

@@ -1,0 +1,145 @@
+/* Founder-approved Aethelios Sovereign. Legacy destinations retain their own identity. */
+.aethelios-sovereign {
+  --sovereign: #421533;
+  --sovereign-shadow: #1a0b17;
+  --sovereign-light: #70264f;
+  --obsidian-950: #080709;
+  --obsidian-900: #100b10;
+  --obsidian-800: #191018;
+  --obsidian-700: #221420;
+  /* Compatibility aliases for existing reusable materials; technical keys stay stable. */
+  --ascend-green-950: #1a0b17;
+  --ascend-green-900: #2c1024;
+  --ascend-green-800: #421533;
+  --ascend-green-700: #562040;
+  --ascend-green-600: #70264f;
+  --surface-green: #1a0b17;
+  --green: #2c1024;
+  --green-light: #70264f;
+  --enamel: #421533;
+  --background: #080709;
+  --surface: #191018;
+  --text-primary: #eeeaf1;
+  --text-secondary: #c1b5c0;
+  --text: #eeeaf1;
+  --muted: #c1b5c0;
+  background: #080709;
+  color: var(--text);
+}
+.aethelios-sovereign .sidebar,
+.aethelios-sovereign .mobile-nav {
+  background: linear-gradient(155deg, #1a0b17, #080709 75%);
+}
+.aethelios-sovereign :is(.aethelios-page, .company-room-focused) {
+  background: radial-gradient(ellipse at 85% 0, #42153333, transparent 55%), #080709;
+}
+.aethelios-sovereign :is(.aurelius-workspace, .company-room) {
+  background-color: transparent;
+}
+.aethelios-sovereign :is(.talk-drawer, .talk-expanded-editor, .council-dialog) {
+  background: #1a0b17;
+  color: #eeeaf1;
+}
+.aethelios-sovereign :is(.user-message, .conversation-item.is-active) {
+  background: #42153355;
+}
+.talk-presence {
+  display: inline-flex;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+}
+.talk-presence > .talk-tool {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #c4912f66;
+  border-radius: 50%;
+  background: #1a0b17;
+}
+.sovereign-orb {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sovereign-orb .intelligence-orb,
+.sovereign-orb canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.sovereign-orb .intelligence-orb-static {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 32% 28%, #70264f, #421533 42%, #1a0b17 75%);
+  border: 1px solid #c4912f66;
+  box-shadow:
+    inset -8px -8px 12px #080709aa,
+    0 0 16px #70264f44;
+}
+.sovereign-orb .intelligence-orb[data-rendered='true'] .intelligence-orb-static {
+  opacity: 0;
+}
+.sovereign-orb .intelligence-orb-contours {
+  position: absolute;
+  inset: 0;
+  background: repeating-radial-gradient(
+    ellipse at 35% 85%,
+    transparent 0 8px,
+    #e8c78022 9px 10px,
+    transparent 11px 18px
+  );
+  transform: rotate(-25deg) scale(1.4);
+}
+.sovereign-orb .intelligence-orb-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 28%, #b6659144, transparent 35%);
+}
+.talk-presence[data-state='working'] > button {
+  border-color: #e8c780;
+  box-shadow: 0 0 14px #c4912f44;
+}
+.sovereign-presence-room {
+  text-align: center;
+  padding-block: 24px;
+}
+.sovereign-presence-room > .sovereign-orb {
+  width: min(320px, 75vw);
+  height: min(320px, 75vw);
+  margin: 0 auto 24px;
+}
+.sovereign-presence-room p {
+  margin-top: 12px;
+}
+@media (forced-colors: active) {
+  .sovereign-orb canvas {
+    display: none;
+  }
+  .sovereign-orb .intelligence-orb-static {
+    opacity: 1 !important;
+    border: 2px solid CanvasText;
+  }
+}
+
+.aethelios-sovereign .council-dialog header {
+  background: #1a0b17;
+}
+.aethelios-sovereign .aethelios-today {
+  background: #42153344;
+}
+.aethelios-sovereign .talk-title {
+  color: #c1b5c0;
+}
+.aethelios-sovereign .conversation-starters button {
+  background: linear-gradient(140deg, #42153380, #1a0b17);
+  color: #eeeaf1;
+  border-color: #c4912f40;
+}
+.aethelios-sovereign .aurelius-composer {
+  background: linear-gradient(140deg, #321327, #1a0b17);
+}

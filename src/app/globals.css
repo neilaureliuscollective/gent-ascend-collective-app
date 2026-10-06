@@ -3,6 +3,7 @@
 @import './dashboard.css';
 @import './command.css';
 @import './elevation.css';
+@import './sovereign.css';
 @theme {
   --color-obsidian: #050706;
   --color-surface: #101311;

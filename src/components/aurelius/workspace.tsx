@@ -17,6 +17,7 @@ import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
 import { TalkDrawer, TalkInput } from './talk-controls';
+import { TalkPresence } from './talk-presence';
 import { AppearanceControls } from '../visual/appearance';
 import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
@@ -513,6 +514,17 @@ export function AureliusWorkspace({
     <div className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''}`}>
       <div className={`aurelius-workspace ${compact ? 'compact' : ''}`}>
         <div className="talk-toolbar">
+          <TalkPresence
+            state={
+              busy
+                ? 'working'
+                : needsReload
+                  ? 'stopped'
+                  : preview || !data.configured
+                    ? 'disconnected'
+                    : 'ready'
+            }
+          />
           {!compact && (
             <TalkDrawer label="Conversations">
               {(close) => (

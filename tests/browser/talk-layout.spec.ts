@@ -32,6 +32,19 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
     await page.route('**/api/aurelius**', (route) => route.fulfill({ json: state }));
     await page.goto('/app/aethelios');
     await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
+    const presence = page.getByRole('button', { name: 'Aethelios presence', exact: true });
+    await expect(presence).toBeVisible();
+    if (width === 390)
+      await page.screenshot({ path: '/workspace/scratch/486627af8504/sovereign-talk-phone.png' });
+    await presence.click();
+    await expect(
+      page.getByRole('dialog', { name: 'Aethelios presence', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('Ready when you are', { exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(presence).toBeFocused();
+    expect(await page.locator('.talk-presence').getAttribute('data-state')).toBe('ready');
+
     await expect(page.getByRole('button', { name: 'Memory', exact: true })).not.toBeVisible();
     const heights = await page.evaluate(() => ({
       app: document.querySelector('.aethelios-page')!.getBoundingClientRect().height,

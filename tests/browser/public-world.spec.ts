@@ -124,7 +124,7 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([
-    '/brand/app-crest-20261004-192.png',
+    '/brand/sovereign-20261006-192.png',
     '/offline.html',
     '/performance-offline.css',
     '/performance-offline.html',

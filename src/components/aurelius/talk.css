@@ -9,14 +9,14 @@
   max-width: 94vw;
   padding: 18px;
   border: 1px solid #c4912f50;
-  background: #081b15;
+  background: #1a0b17;
   color: #eee9de;
   border-radius: 0 18px 18px 0;
   overflow: auto;
   z-index: 200;
 }
 .talk-drawer::backdrop {
-  background: #020806bb;
+  background: #080709bb;
   backdrop-filter: blur(5px);
 }
 .talk-drawer > header {
@@ -136,7 +136,7 @@
   padding: 16px 0;
 }
 .talk-page .welcome-heading .orb-presentation {
-  display: none;
+  display: none; /* Persistent TalkPresence owns the living orb, including existing threads. */
 }
 .talk-page .conversation-scroll .message-markdown {
   overflow-wrap: anywhere;
@@ -160,7 +160,7 @@
   padding: 6px 8px;
   border: 1px solid #c4912f50;
   border-radius: 22px;
-  background: linear-gradient(140deg, #12372c, #0b211a);
+  background: linear-gradient(140deg, #321327, #1a0b17);
 }
 .talk-page .aurelius-composer textarea.talk-input,
 .company-room textarea.talk-input {

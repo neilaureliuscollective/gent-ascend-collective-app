@@ -9,6 +9,7 @@ import { council, type SpecialistId } from '@/domains/intelligence/council';
 import type { readWork } from '@/domains/company-work/service';
 import { frameText } from '@/components/aurelius/frame-text';
 import { TalkDrawer, TalkInput } from '@/components/aurelius/talk-controls';
+import { TalkPresence } from '@/components/aurelius/talk-presence';
 import { useTalkViewport } from '@/components/aurelius/conversation-viewport';
 import { ConversationTurn } from '@/components/aurelius/message';
 import { JobCreator } from './job-creator';
@@ -302,6 +303,7 @@ export function CompanyRoom({
       aria-labelledby="company-room-title"
     >
       <header className="talk-company-heading">
+        <TalkPresence state={busy ? 'working' : needsReload ? 'stopped' : 'ready'} />
         <Link href="/app/work" aria-label="Companies">
           ←
         </Link>

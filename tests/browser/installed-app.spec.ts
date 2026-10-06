@@ -12,9 +12,9 @@ test('fresh installation has one current crest identity across manifest and Appl
   expect(manifest.start_url).toBe('/app');
   expect(manifest.icons).toHaveLength(3);
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
-    '/brand/app-crest-20261004-192.png',
-    '/brand/app-crest-20261004-512.png',
-    '/brand/app-crest-20261004-maskable-512.png',
+    '/brand/sovereign-20261006-192.png',
+    '/brand/sovereign-20261006-512.png',
+    '/brand/sovereign-20261006-maskable-512.png',
   ]);
   for (const icon of manifest.icons) {
     const response = await request.get(icon.src);
@@ -36,7 +36,7 @@ test('fresh installation has one current crest identity across manifest and Appl
     for (let x = 0; x < info.width; x++) {
       if (Math.hypot(x + 0.5 - 256, y + 0.5 - 256) <= 204.8) continue;
       const index = (y * info.width + x) * info.channels;
-      if (data[index] !== 5 || data[index + 1] !== 7 || data[index + 2] !== 6) outside++;
+      if (data[index] !== 8 || data[index + 1] !== 7 || data[index + 2] !== 9) outside++;
     }
   expect(outside).toBe(0);
   await page.goto('/app/install');
@@ -93,7 +93,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
 });
 
 for (const platform of ['Android', 'Apple'] as const) {
-  test(`${platform} standalone return opens Command immediately without an entrance`, async ({
+  test(`${platform} standalone return opens Aethelios immediately without an entrance`, async ({
     page,
   }) => {
     await page.addInitScript((platform) => {
@@ -110,7 +110,7 @@ for (const platform of ['Android', 'Apple'] as const) {
     }, platform);
     await page.clock.install();
     await page.goto('/app');
-    await expect(page.locator('.command-environment')).toBeVisible();
+    await expect(page.locator('.aethelios-page')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
     await page.clock.runFor(500);
     await expect(page.locator('.command-opening')).toHaveCount(0);

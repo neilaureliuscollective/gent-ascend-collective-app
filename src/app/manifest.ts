@@ -17,19 +17,19 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: brand.themeColor,
     icons: [
       {
-        src: '/brand/app-crest-20261004-192.png',
+        src: '/brand/sovereign-20261006-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/app-crest-20261004-512.png',
+        src: '/brand/sovereign-20261006-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/app-crest-20261004-maskable-512.png',
+        src: '/brand/sovereign-20261006-maskable-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
