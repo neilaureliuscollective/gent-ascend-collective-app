@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/app',
     shortcuts: [
       { name: 'Aethelios', url: '/app/aethelios' },
-      { name: 'Your daily Command', url: '/app' },
+      { name: 'Company work', url: '/app/work' },
     ],
     display: 'standalone',
     background_color: brand.themeColor,

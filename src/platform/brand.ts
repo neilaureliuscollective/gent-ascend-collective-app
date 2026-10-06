@@ -1,9 +1,9 @@
 /** Public brand identity. Technical IDs and existing persisted keys stay stable. */
 export const brand = {
-  name: 'Gent Ascend Collective',
-  shortName: 'Gent Ascend',
+  name: 'Aethelios',
+  shortName: 'Aethelios',
   description:
-    'Grooming, personal intelligence, daily practice, and experiences. A connected world built around the modern gentleman.',
+    'Company-building intelligence for founders and operators. Research, strategy and creative work in one conversational environment.',
   themeColor: '#050706',
   crest: '/brand/gent-ascend-full-20261003.webp',
   lockup: '/brand/gent-ascend-full-20261003.webp',

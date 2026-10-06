@@ -1,4 +1,4 @@
-export type CapabilityId = 'studio' | 'performance' | 'presence' | 'life' | 'collective';
+export type CapabilityId = 'studio' | 'performance' | 'presence' | 'life' | 'company';
 
 export type CapabilityRoute = {
   id: CapabilityId;
@@ -13,7 +13,8 @@ const routes: CapabilityRoute[] = [
     id: 'studio',
     label: 'Studio',
     href: '/app/studio',
-    description: 'Creative work, presentations, plans, visual concepts and finished deliverables.',
+    description:
+      'Creative briefs, visual concepts, projects and image versions. Presentation exports are not yet implemented.',
     instruction:
       'Treat this as a Studio-capable request. Do the thinking in conversation first, then shape a clear creative brief or next production step. Do not make the member restate the request when they open Studio.',
   },
@@ -42,21 +43,36 @@ const routes: CapabilityRoute[] = [
       'Treat this as a Life-context request. Connect the question to the member’s priorities and saved context without turning the answer into a dashboard tour.',
   },
   {
-    id: 'collective',
-    label: 'Collective',
-    href: '/app/collection',
-    description: 'Products, services, membership benefits and physical-world support.',
+    id: 'company',
+    label: 'Company work',
+    href: '/app/work',
+    description: 'Research, positioning, offers, product development and company economics.',
     instruction:
-      'Treat this as a Collective-capable request. Recommend products or services only when they solve the stated need; never make commerce the default answer.',
+      'Treat this as company work. Establish the company and outcome, then produce a bounded reviewable brief. Product development is not a shopping request. No company storage, execution or client sharing is implied.',
   },
 ];
 
 const patterns: Array<[CapabilityId, RegExp]> = [
-  ['studio', /\b(presentation|deck|slides?|pitch|investor|proposal|campaign|creative|design|image|visual|document|report|brand plan|business plan)\b/i],
-  ['performance', /\b(workout|training|train|gym|lift|lifting|exercise|strength|cardio|recovery|run|running|fitness|program)\b/i],
-  ['presence', /\b(groom|grooming|hair|beard|skin|wardrobe|outfit|dress|style|appearance|look|date night|wedding|photo shoot|photoshoot|ready for)\b/i],
-  ['collective', /\b(product|products|buy|order|reorder|membership|benefit|supplement|beard oil|shampoo|conditioner|lotion)\b/i],
-  ['life', /\b(goal|goals|progress|priority|priorities|routine|week|life|relationship|family|habit|direction|plan my day|today)\b/i],
+  [
+    'company',
+    /\b(company|business|client|positioning|offer|revenue|pricing|economics|margin|sourcing|product development)\b/i,
+  ],
+  [
+    'studio',
+    /\b(presentation|deck|slides?|pitch|investor|proposal|campaign|creative|design|image|visual|document|report|brand plan|business plan)\b/i,
+  ],
+  [
+    'performance',
+    /\b(workout|training|train|gym|lift|lifting|exercise|strength|cardio|recovery|run|running|fitness|program)\b/i,
+  ],
+  [
+    'presence',
+    /\b(groom|grooming|hair|beard|skin|wardrobe|outfit|dress|style|appearance|look|date night|wedding|photo shoot|photoshoot|ready for)\b/i,
+  ],
+  [
+    'life',
+    /\b(goal|goals|progress|priority|priorities|routine|week|life|relationship|family|habit|direction|plan my day|today)\b/i,
+  ],
 ];
 
 export function routeCapability(text: string): CapabilityRoute | null {

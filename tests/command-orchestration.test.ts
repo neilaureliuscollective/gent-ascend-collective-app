@@ -66,6 +66,10 @@ beforeEach(() => {
             filters.push([table, key, value]);
             return query;
           },
+          is(key: string, value: unknown) {
+            filters.push([table, key, value]);
+            return query;
+          },
           gte() {
             return query;
           },
@@ -128,6 +132,7 @@ describe('bounded Command orchestration', () => {
     expect(
       filters.filter(([, key]) => key === 'person_id').every(([, , owner]) => owner === ownerId),
     ).toBe(true);
+    expect(filters).toContainEqual(['ai_conversations', 'company_id', null]);
     expect(rpc).not.toHaveBeenCalled();
   });
   it('requires deliberate approval and fails closed for unknown/unowned operations', () => {

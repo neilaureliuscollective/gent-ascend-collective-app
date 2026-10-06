@@ -61,7 +61,7 @@ export function AureliusWorkspace({
   const [notice, setNotice] = useState('');
   const [needsReload, setNeedsReload] = useState(false);
   const [tab, setTab] = useState<'conversation' | 'memory' | 'context'>('conversation');
-  const [includeContext, setIncludeContext] = useState(true);
+  const [includeContext, setIncludeContext] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -617,9 +617,9 @@ export function AureliusWorkspace({
                   </p>
                   <div className="conversation-starters">
                     {[
-                      'Brief me on my saved day and help me choose one next step.',
-                      'Challenge an assumption in my current goal.',
-                      'Help me think through a decision.',
+                      'Help me understand my company and choose the highest-value next move.',
+                      'Help me sharpen my company positioning.',
+                      'Help me scope a client project.',
                     ].map((text) => (
                       <button
                         key={text}

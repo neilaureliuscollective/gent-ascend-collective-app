@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 const state = vi.hoisted(() => ({
   owner: 'member-a',
+  companyId: null as string | null,
   filters: [] as Array<{ table: string; column: string; value: unknown }>,
   bridge: vi.fn(async () => 'PRIVATE_FOUNDER_NOTEBOOK'),
 }));
@@ -35,8 +36,10 @@ vi.mock('../src/domains/identity/current', () => ({
           const data =
             table === 'ai_conversations'
               ? single
-                ? { id: 'conversation', context_summary: '', summary_through: null }
+                ? { id: 'conversation', company_id: state.companyId, context_summary: '', summary_through: null }
                 : []
+              : table === 'companies' || table === 'company_turn_context'
+                ? {id: state.companyId, company_id: state.companyId, name: 'Synthetic selected company', brief: 'SELECTED_COMPANY_ONLY', version: 2, confirmed_at: '2026-10-06T00:00:00Z'}
               : table === 'ai_memories'
                 ? [
                     {
@@ -89,6 +92,7 @@ const input = {
 beforeEach(() => {
   vi.stubEnv('OPENAI_API_KEY', 'synthetic-not-live');
   state.owner = 'member-a';
+  state.companyId = null;
   state.filters = [];
   state.bridge.mockClear();
 });
@@ -119,6 +123,12 @@ describe('Council member context boundary', () => {
       ])
         expect(state.filters).toContainEqual({ table, column: 'person_id', value: owner });
   });
+  it('ordinary founder-capable Talk also never retrieves the private notebook', async () => {
+    const result = await prepareReply({ ...input, council: undefined });
+    expect(state.bridge).not.toHaveBeenCalled();
+    expect(result.founder).toBe(false);
+    expect(JSON.stringify(result.messages)).not.toContain('PRIVATE_FOUNDER_NOTEBOOK');
+  });
   it('context opt-out prevents personal context queries and founder bridge access', async () => {
     const result = await prepareReply({
       ...input,
@@ -130,3 +140,32 @@ describe('Council member context boundary', () => {
     expect(state.bridge).not.toHaveBeenCalled();
   });
 });
+
+
+describe('company Talk retrieval boundary', () => {
+  it('uses its confirmed snapshot without querying personal context or the founder bridge', async () => {
+    state.companyId = 'company-a';
+    const result = await prepareReply({...input, companyId: 'company-a', includeContext: false, council: undefined});
+    expect(JSON.stringify(result.messages)).toContain('SELECTED_COMPANY_ONLY');
+    expect(state.filters.some(filter => ['ai_memories','goals','daily_entries','daily_reviews','ascend_profile_facts','grooming_profiles'].includes(filter.table))).toBe(false);
+    expect(state.filters).toContainEqual({table: 'companies', column: 'person_id', value: state.owner});
+    expect(state.filters).toContainEqual({table: 'company_turn_context', column: 'company_id', value: 'company-a'});
+    expect(state.bridge).not.toHaveBeenCalled();
+  });
+  it('denies company threads through the legacy personal-context path', async () => {
+    state.companyId = 'company-a';
+    await expect(prepareReply({...input,council: undefined})).rejects.toThrow('Open this conversation in its company room');
+    expect(state.filters.some(filter => filter.table === 'ai_memories')).toBe(false);
+  });
+  it('does not allow personal context in company mode', async () => {
+    await expect(prepareReply({...input, companyId: 'company-a'})).rejects.toThrow('Unsupported company context');
+  });
+});
+
+ it('gives an explicitly summoned specialist the same company snapshot and no personal retrieval', async () => {
+   state.companyId = 'company-a';
+   const result = await prepareReply({...input, companyId: 'company-a', includeContext: false});
+   expect(result.council).toEqual(input.council);
+   expect(JSON.stringify(result.messages)).toContain('SELECTED_COMPANY_ONLY');
+   expect(state.filters.some(filter => filter.table === 'ai_memories')).toBe(false);
+ });

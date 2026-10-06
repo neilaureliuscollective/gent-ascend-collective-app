@@ -1,7 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
-import { studioSession } from './service';
+import { studioSession, verifyStudioProject } from './service';
 
 export const finishInput = z.object({
   projectId: z.uuid(), versionId: z.uuid(), updatedAt: z.iso.datetime({ offset: true }).nullable(),
@@ -13,6 +13,7 @@ export const finishInput = z.object({
 }).strict();
 
 export async function saveFinish(input: z.infer<typeof finishInput>) {
+  await verifyStudioProject(input.projectId);
   const { client, person } = await studioSession();
   const version = await client.from('ai_studio_versions').select('id').eq('id', input.versionId)
     .eq('project_id', input.projectId).eq('person_id', person.id).eq('status', 'complete').maybeSingle();

@@ -1,3 +1,6 @@
+import { syntheticWork } from './company-work-data';
+import { CompanyRoom } from '@/components/companies/company-room';
+import '@/app/(workspace)/app/work/work.css';
 import { PresenceConcierge } from '@/components/presence/presence-concierge';
 import { GuidedScan } from '@/components/grooming/guided-scan';
 import { HomeHandoffFixture } from './home-handoff';
@@ -100,10 +103,51 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'presence' ? (
+  mode === 'company-room' || mode === 'company-job' ? (
+    <>
+      <p>Synthetic company-room fixture · no account or live model.</p>
+      <CompanyRoom
+        initialWork={mode === 'company-job' ? syntheticWork : undefined}
+        initialConversation={mode === 'company-job' ? syntheticWork.job.conversation_id : undefined}
+        initial={{
+          company: {
+            id: 'c8000000-0000-4000-8000-000000000001',
+            person_id: 'synthetic-owner',
+            name: 'Synthetic A',
+            brief: 'Synthetic brief',
+            version: 1,
+            confirmed_at: '2026-10-06T00:00:00Z',
+            created_at: '2026-10-06T00:00:00Z',
+          },
+          conversations: [],
+          turns: [],
+          hasOlderTurns: false,
+          nextCursor: null,
+          canChat: true,
+        }}
+      />
+    </>
+  ) : mode === 'presence' ? (
     <main style={{ maxWidth: 1100, margin: 'auto' }}>
       <p>Synthetic Presence records · no real account.</p>
-      <PresenceConcierge data={{ mode: 'personal', today: '2026-10-05', direction: 'Considered and understated', occasions: params.get('empty') ? [] : [{ title: 'Investor meeting', day: '2026-10-08', note: 'Charcoal suit, familiar skin care' }], replenishment: [{ name: 'Vitalis', note: 'Member marked running low' }], unavailable: params.get('unavailable') ? ['Occasions'] : [] }} />
+      <PresenceConcierge
+        data={{
+          mode: 'personal',
+          today: '2026-10-05',
+          direction: 'Considered and understated',
+          occasions: params.get('empty')
+            ? []
+            : [
+                {
+                  title: 'Investor meeting',
+                  day: '2026-10-08',
+                  note: 'Charcoal suit, familiar skin care',
+                },
+              ],
+          replenishment: [{ name: 'Vitalis', note: 'Member marked running low' }],
+          unavailable: params.get('unavailable') ? ['Occasions'] : [],
+        }}
+      />
     </main>
   ) : mode === 'mirror' ? (
     <main className="grooming mirror-page">

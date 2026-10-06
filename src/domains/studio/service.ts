@@ -20,7 +20,7 @@ export async function studioSession(){
 }
 export async function studioWorkspace(projectId?:string){
  const {client,person}=await studioSession();
- const projects=await client.from('ai_studio_projects').select('*').eq('person_id',person.id).order('updated_at',{ascending:false}).limit(100);
+ const projects=await client.from('ai_studio_projects').select('*').eq('person_id',person.id).is('company_id',null).order('updated_at',{ascending:false}).limit(100);
  if(projects.error) throw new IntelligenceError('Studio projects could not be loaded.',503);
  const current=projectId ?? projects.data?.[0]?.id;
  if(current && !projects.data?.some(project=>project.id===current)) throw new IntelligenceError('Project not found.',404);
@@ -40,7 +40,8 @@ export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt
   throw error;
  }
 }
-export async function generateStudio(input:z.infer<typeof studioInput>){
+export async function generateStudio(input:z.infer<typeof studioInput>,companyId?:string){
+ await verifyStudioProject(input.projectId,companyId);
  const {client,person}=await studioSession();
  if(!(await currentAccess()).has('studio.create')) throw new IntelligenceError('Studio creation requires Signature, Reserve, or existing invitation access.',403);
  const model=input.mode==='fast'?'gpt-image-2.5-flare':'gpt-image-2.5-sunburst';
@@ -75,14 +76,22 @@ export async function generateStudio(input:z.infer<typeof studioInput>){
   throw error;
  }
 }
-export async function imageBlob(id:string,kind:'version'|'reference'){
+export async function imageBlob(id:string,kind:'version'|'reference',companyId?:string){
  const {client,person}=await studioSession();
  const result=kind==='version'?
-  await client.from('ai_studio_versions').select('storage_key').eq('id',id).eq('person_id',person.id).eq('status','complete').single():
-  await client.from('ai_studio_references').select('storage_key').eq('id',id).eq('person_id',person.id).single();
+  await client.from('ai_studio_versions').select('storage_key,project_id').eq('id',id).eq('person_id',person.id).eq('status','complete').single():
+  await client.from('ai_studio_references').select('storage_key,project_id').eq('id',id).eq('person_id',person.id).single();
  if(result.error||!result.data?.storage_key) throw new IntelligenceError('Image not found.',404);
+ await verifyStudioProject(result.data.project_id,companyId);
  const image=await client.storage.from(bucket).download(result.data.storage_key);
  if(image.error||!image.data) throw new IntelligenceError('Image unavailable.',503);
  return image.data;
 }
 export {bucket};
+
+export async function verifyStudioProject(projectId:string,companyId?:string) {
+ const {client,person}=await studioSession();
+ const result=await client.from('ai_studio_projects').select('id,company_id').eq('id',projectId).eq('person_id',person.id).maybeSingle();
+ if(result.error||!result.data|| (result.data.company_id??null)!==(companyId??null)) throw new IntelligenceError('Studio project scope mismatch.',404);
+ return result.data;
+}

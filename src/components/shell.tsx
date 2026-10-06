@@ -3,7 +3,6 @@ import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
 import { Navigation } from './navigation';
 import { AureliusPanel } from './aurelius-panel';
-import { AetheliosSpaceNavigation } from './aurelius/space-navigation';
 import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
@@ -27,41 +26,41 @@ export function Shell({
           Skip to content
         </a>
         <aside className="sidebar">
-          <Link className="wordmark" href="/app" aria-label="Gent Ascend Collective home">
+          <Link className="wordmark" href="/app" aria-label="Aethelios home">
             <Brand />
           </Link>
-          <p className="navigation-label">GENT ASCEND</p>
+          <p className="navigation-label">AETHELIOS</p>
           <Navigation />
           <AureliusPanel />
-          <AetheliosSpaceNavigation placement="sidebar" />
+
           <div className="sidebar-footer">
-            <Link href="/experience/world" prefetch={false} className="text-link">
-              Explore Gent Ascend ↗
+            <Link href="/app/work" prefetch={false} className="text-link">
+              Company work ↗
             </Link>
             <span className="brand-star" aria-hidden="true">
               ✦
             </span>
             <p>
-              Strength. Discipline.
+              Think. Build.
               <br />
-              Character. Legacy.
+              Operate.
             </p>
-            <span className="quiet-label">A better standard, built daily.</span>
+            <span className="quiet-label">A clearer way to build.</span>
           </div>
         </aside>
         <div className="workspace">
           <header className="topbar">
-            <Link href="/app" className="mobile-brand" aria-label="Gent Ascend Collective home">
+            <Link href="/app" className="mobile-brand" aria-label="Aethelios home">
               <Brand compact />
             </Link>
             <span className="topbar-context">
-              GENT ASCEND <span>/</span> PERSONAL INTELLIGENCE
+              AETHELIOS <span>/</span> COMPANY INTELLIGENCE
             </span>
             <div className="topbar-actions">
               <UniversalCapture />
               <AppearanceControls />
-              <Link href="/app/ascend" className="text-link shell-ascend-link">
-                Ascend
+              <Link href="/app/work" className="text-link shell-ascend-link">
+                Company work
               </Link>
               {founder && <Link href="/dev">Developer console</Link>}
               <Link href="/app/you" className="avatar" aria-label="Your account">

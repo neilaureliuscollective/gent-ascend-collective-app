@@ -21,7 +21,7 @@ export async function PATCH(request:Request){
   if(!input.success) throw new IntelligenceError('Check the project direction.');
   const {client,person}=await studioSession();
   const {projectId,updatedAt,title,creativeType,brief}=input.data;
-  const result=await client.from('ai_studio_projects').update({title,creative_type:creativeType,brief,updated_at:new Date().toISOString()}).eq('id',projectId).eq('person_id',person.id).eq('updated_at',updatedAt).select('id').maybeSingle();
+  const result=await client.from('ai_studio_projects').update({title,creative_type:creativeType,brief,updated_at:new Date().toISOString()}).eq('id',projectId).eq('person_id',person.id).is('company_id',null).eq('updated_at',updatedAt).select('id').maybeSingle();
   if(result.error) throw new IntelligenceError('Project direction could not be saved.',503);
   if(!result.data) throw new IntelligenceError('This project changed elsewhere. Refresh it before saving.',409);
   return privateJson({id:result.data.id});

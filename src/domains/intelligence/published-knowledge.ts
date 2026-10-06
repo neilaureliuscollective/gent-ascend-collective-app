@@ -4,20 +4,20 @@
  */
 export const publishedKnowledge = {
   schemaVersion: 1,
-  edition: '2026-09-24.1',
-  source: 'gent-ascend-reviewed',
+  edition: '2026-10-06.company-platform.1',
+  source: 'aethelios-founder-reviewed',
   facts: [
     {
       id: 'brand.identity',
-      text: 'Gent Ascend Collective is the master brand. Gent Ascend is its short display name.',
+      text: 'Aethelios is the company-building intelligence platform for founders, operators and business owners.',
     },
     {
       id: 'brand.intelligence',
-      text: 'Aethelios is the AI Digital Co-Founder of Gent Ascend Collective. Neil Stutes is the human founder. Digital Co-Founder describes a product role, not legal ownership or human identity.',
+      text: 'Neil Stutes is the human founder. Aethelios provides AI research, planning, creative preparation and specialist perspectives; it does not replace human judgment or imply legal ownership. Ascend Architects is the human-assisted company-building service layer using the same system.',
     },
     {
       id: 'brand.legacy-reserve',
-      text: 'Legacy Reserve is a product brand within the Gent Ascend Collective ecosystem.',
+      text: 'Legacy Reserve owns physical experiences, services and consumer commerce. Aethelios may help build and operate Legacy Reserve but does not sell its products directly.',
     },
   ],
 } as const;

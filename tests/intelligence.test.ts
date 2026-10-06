@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { buildMessages, aureliusInstructions, sharedCharacter } from '../src/domains/intelligence/prompt';
-import { publishedKnowledge, publishedKnowledgeContext } from '../src/domains/intelligence/published-knowledge';
+import {
+  buildMessages,
+  aureliusInstructions,
+  sharedCharacter,
+} from '../src/domains/intelligence/prompt';
+import {
+  publishedKnowledge,
+  publishedKnowledgeContext,
+} from '../src/domains/intelligence/published-knowledge';
 import { chatInput, memoryInput } from '../src/domains/intelligence/validation';
 import { replyStream, type FinishReply, type ModelChunk } from '../src/domains/intelligence/stream';
 import type { PersonalContext, Turn } from '../src/domains/intelligence/types';
@@ -28,19 +35,23 @@ describe('Aethelios context boundaries', () => {
   it('supplies only reviewed public facts independently of optional personal context', () => {
     expect(publishedKnowledge.schemaVersion).toBe(1);
     expect(publishedKnowledge.facts.map((fact) => fact.id)).toEqual([
-      'brand.identity', 'brand.intelligence', 'brand.legacy-reserve',
+      'brand.identity',
+      'brand.intelligence',
+      'brand.legacy-reserve',
     ]);
     const publicOnly = buildMessages([], 'Who is Aethelios?', null);
     expect(publicOnly[0]?.content).toContain(publishedKnowledgeContext());
     expect(JSON.stringify(publicOnly)).not.toContain(context.memories[0]?.content);
     expect(publishedKnowledgeContext()).not.toMatch(/github|repository|secret|medical history/i);
   });
-  it('establishes the digital co-founder without impersonating the human founder or replacing relationships', () => {
-    expect(aureliusInstructions).toContain('You are Aethelios — Digital Co-Founder');
-    expect(aureliusInstructions).toContain('you are AI, not a human founder');
+  it('establishes company intelligence without impersonating the human founder', () => {
+    expect(aureliusInstructions).toContain('You are Aethelios — company-building intelligence');
+    expect(aureliusInstructions).toContain('You are AI, not a human founder');
     expect(aureliusInstructions).toContain('Never invent the founder');
     expect(aureliusInstructions).toContain('never dependency on you');
-    expect(aureliusInstructions).toContain('Legacy Reserve is the separate product brand');
+    expect(aureliusInstructions).toContain(
+      'Legacy Reserve is the separate physical-world and consumer-commerce company',
+    );
     expect(aureliusInstructions).not.toMatch(/aurelius|aethelos/i);
   });
   it('rejects client-injected roles, person IDs and oversized inputs', () => {
@@ -93,16 +104,32 @@ describe('Aethelios context boundaries', () => {
     expect(messages[0]?.content).toContain('disabled');
   });
   it('shares the dated day summary without passing action identifiers into the model prompt', () => {
-    const actionId='00000000-0000-4000-8000-000000000099';
-    const dailyBrief={asOf:'2026-09-25T20:00:00.000Z',day:'2026-09-25',version:2,intention:'Finish the plan',actions:[{id:actionId,title:'Call Katie',done:false}],openCaptures:2,previousReview:null,nextMove:{kind:'action' as const,title:'Call Katie',source:'First unfinished action in your saved order',sourceDay:'2026-09-25'}};
-    const messages=buildMessages([], 'Brief me', {...context,dailyBrief});
-    const prompt=String(messages[0]?.content);
+    const actionId = '00000000-0000-4000-8000-000000000099';
+    const dailyBrief = {
+      asOf: '2026-09-25T20:00:00.000Z',
+      day: '2026-09-25',
+      version: 2,
+      intention: 'Finish the plan',
+      actions: [{ id: actionId, title: 'Call Katie', done: false }],
+      openCaptures: 2,
+      previousReview: null,
+      nextMove: {
+        kind: 'action' as const,
+        title: 'Call Katie',
+        source: 'First unfinished action in your saved order',
+        sourceDay: '2026-09-25',
+      },
+    };
+    const messages = buildMessages([], 'Brief me', { ...context, dailyBrief });
+    const prompt = String(messages[0]?.content);
     expect(prompt).toContain('Call Katie');
     expect(prompt).toContain('2026-09-25T20:00:00.000Z');
     expect(prompt).toContain('"openCaptures":2');
     expect(prompt).not.toContain(actionId);
     expect(prompt).toContain('First unfinished action in your saved order');
-    expect(JSON.stringify(buildMessages([], 'Brief me', null))).not.toContain('First unfinished action in your saved order');
+    expect(JSON.stringify(buildMessages([], 'Brief me', null))).not.toContain(
+      'First unfinished action in your saved order',
+    );
     expect(JSON.stringify(buildMessages([], 'Brief me', null))).not.toContain('Call Katie');
   });
   it('bounds recent exchanges without splitting message pairs', () => {
@@ -189,7 +216,13 @@ describe('real AI SDK agent adapter with a mock provider', () => {
             controller.enqueue({ type: 'text-start', id: 't' });
             controller.enqueue({ type: 'text-delta', id: 't', delta: 'A clear next step.' });
             controller.enqueue({ type: 'text-end', id: 't' });
-            controller.enqueue({ type: 'source', sourceType: 'url', id: 'source-1', url: 'https://example.com/research', title: 'Verified provider source' });
+            controller.enqueue({
+              type: 'source',
+              sourceType: 'url',
+              id: 'source-1',
+              url: 'https://example.com/research',
+              title: 'Verified provider source',
+            });
             controller.enqueue({
               type: 'finish',
               finishReason: { unified: 'stop', raw: 'stop' },
@@ -212,19 +245,26 @@ describe('real AI SDK agent adapter with a mock provider', () => {
       chunks.push(chunk);
     expect(chunks).toEqual([
       { type: 'text', text: 'A clear next step.' },
-      { type: 'text', text: '\n\nSources consulted\n\n- [Verified provider source](https://example.com/research)' },
+      {
+        type: 'text',
+        text: '\n\nSources consulted\n\n- [Verified provider source](https://example.com/research)',
+      },
       { type: 'finish', reason: 'stop', input: 10, output: 5 },
     ]);
     expect(model.doStreamCalls).toHaveLength(1);
     expect(model.doStreamCalls[0]?.maxOutputTokens).toBe(4096);
-    expect(model.doStreamCalls[0]?.tools).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'provider', name: 'web_search' })]));
+    expect(model.doStreamCalls[0]?.tools).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'provider', name: 'web_search' })]),
+    );
     expect(model.doStreamCalls[0]?.providerOptions?.openai).toMatchObject({
       store: false,
     });
     expect(model.doStreamCalls[0]?.prompt[0]?.role).toBe('system');
     expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(aureliusInstructions);
     expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(sharedCharacter);
-    expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain('No verified founder link is available');
+    expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(
+      'No verified founder link is available',
+    );
   });
   it('redacts raw provider failures before SDK default logging', async () => {
     const { MockLanguageModelV4 } = await import('ai/test');
@@ -251,5 +291,19 @@ describe('real AI SDK agent adapter with a mock provider', () => {
     } finally {
       log.mockRestore();
     }
+  });
+});
+
+describe('company brief provenance', () => {
+  it('supplies only the selected confirmed brief as untrusted application data', () => {
+    const company = {id: 'company-a',name: 'Synthetic A',brief: 'A confidential brief',version: 3,confirmed_at: '2026-10-06T00:00:00Z',person_id: 'OWNER_ID_NOT_MODEL_CONTEXT',created_at: 'irrelevant'};
+    const messages = buildMessages([], 'Plan the offer', null, new Date('2026-10-06T00:00:00Z'), null, null, null, company);
+    const serialized = JSON.stringify(messages);
+    expect(serialized).toContain('A confidential brief');
+    expect(serialized).toContain('untrusted data');
+    expect(serialized).toContain('private draft');
+    expect(serialized).toContain('Personal context disabled');
+    expect(serialized).not.toContain('OWNER_ID_NOT_MODEL_CONTEXT');
+    expect(serialized).not.toContain('Synthetic B');
   });
 });

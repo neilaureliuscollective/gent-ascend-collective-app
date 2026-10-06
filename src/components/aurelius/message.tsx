@@ -15,16 +15,19 @@ export const ConversationTurn = memo(function ConversationTurn({
   versions,
   onCopy,
   onRevise,
+  companyWork = false,
 }: {
   turn: Turn;
-  onFeedback: (id: string, feedback: 'helpful' | 'needs_work') => void;
+  companyWork?: boolean;
+  onFeedback?: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
   action?: { proposal?: ActionProposal; onChanged: () => Promise<void> };
   versions?: Turn[];
   onCopy?: () => void;
   onRevise?: (kind: 'retry' | 'regenerate' | 'edit') => void;
 }) {
-  const ritual = turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
+  const ritual =
+    !companyWork && turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
   return (
     <article className="conversation-turn">
       <div className="user-message">
@@ -55,14 +58,23 @@ export const ConversationTurn = memo(function ConversationTurn({
           >
             {ritual
               ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
-              : turn.assistant_text}
+              : companyWork
+                ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
+                : turn.assistant_text}
           </Markdown>
         </div>
         {versions?.map((previous) => (
           <details className="message-version" key={previous.id}>
             <summary>Previous version</summary>
             <div className="message-markdown">
-              <Markdown skipHtml>{previous.assistant_text || 'No completed reply.'}</Markdown>
+              <Markdown
+                skipHtml
+                components={companyWork ? { img: () => <span>[Image omitted]</span> } : undefined}
+              >
+                {(companyWork
+                  ? previous.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
+                  : previous.assistant_text) || 'No completed reply.'}
+              </Markdown>
             </div>
           </details>
         ))}
@@ -75,7 +87,7 @@ export const ConversationTurn = memo(function ConversationTurn({
                 : 'Incomplete reply · not included in future conversation context'}
           </p>
         )}
-        {turn.status === 'complete' && (
+        {turn.status === 'complete' && onFeedback && (
           <div className="message-feedback" aria-label="Rate this reply">
             <button
               disabled={disabled}
@@ -97,7 +109,9 @@ export const ConversationTurn = memo(function ConversationTurn({
           <div className="ritual-chat-proposal">
             <p>{ritual.title} · Proposed ritual</p>
             <Link href={`/app/grooming?ritualSuggestion=${turn.id}`}>Review routine change ↗</Link>
-            <small>Review the steps in Presence’s grooming tools. Nothing is saved from this reply.</small>
+            <small>
+              Review the steps in Presence’s grooming tools. Nothing is saved from this reply.
+            </small>
           </div>
         )}
         <div className="message-tools">

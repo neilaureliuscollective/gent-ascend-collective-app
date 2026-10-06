@@ -5,15 +5,12 @@ import { AppRuntime } from '@/components/app-runtime';
 import type { Metadata } from 'next';
 import { WorldHeader } from '@/components/public/world-header';
 import { CinematicWorld } from '@/components/public/cinematic-world';
-import { CartPanel } from '@/components/commerce/cart-panel';
-import { commerceConfigured } from '@/domains/commerce/shopify';
 import './world.css';
 import './cinematic.css';
 import './commerce-experience.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
-  description:
-    'Gent Ascend Collective connects grooming, personal intelligence, daily practice, and the Reserve at Sanctum. Rooted in Louisiana. Built around the man.',
+  description: 'Aethelios helps founders and operators build, grow and operate companies.',
 };
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,7 +20,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         Skip to content
       </a>
       <WorldHeader />
-      {commerceConfigured() && <CartPanel />}
       {children}
       <footer className="world-footer">
         <div>
@@ -37,26 +33,26 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               sizes="180px"
             />
             <span>
-              GENT ASCEND<small>COLLECTIVE</small>
+              AETHELIOS<small>COMPANY INTELLIGENCE</small>
             </span>
           </Link>
           <p>
             Rooted in Louisiana.
             <br />
-            Built around the man.
+            Built for company builders.
           </p>
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/about">Our story</Link>
           <Link href="/support">Member support</Link>
-          <Link href="/membership">Membership</Link>
-          <Link href="/launch">The launch collection</Link>
+          <Link href="/app/studio">Studio</Link>
+          <Link href="/app/work">Company work</Link>
           <Link href="/reserve">The Reserve</Link>
-          <Link href="/enter">Member entrance</Link>
+          <Link href="/enter">Open Aethelios</Link>
         </nav>
         <div className="footer-note">
           <span>CARE · CHARACTER · DIRECTION</span>
-          <small>© {new Date().getFullYear()} Gent Ascend Collective</small>
+          <small>© {new Date().getFullYear()} Aethelios</small>
         </div>
       </footer>
     </CinematicWorld>

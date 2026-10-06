@@ -1,4 +1,5 @@
 export type Conversation = {
+  company_id?: string | null;
   id: string;
   person_id: string;
   title: string;

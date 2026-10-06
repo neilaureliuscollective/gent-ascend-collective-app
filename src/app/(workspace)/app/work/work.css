@@ -1,0 +1,355 @@
+.company-work {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 56px);
+}
+.company-work header {
+  max-width: 680px;
+  margin-bottom: 36px;
+}
+.company-work h1 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  margin: 14px 0;
+}
+.company-work p {
+  line-height: 1.65;
+  color: var(--text-muted, #adb8b1);
+}
+.company-job-list {
+  border-top: 1px solid #c4912f38;
+}
+.company-job {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 4px;
+  border-bottom: 1px solid #c4912f26;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    background 0.16s,
+    transform 0.16s;
+}
+.company-job:hover {
+  background: #c4912f09;
+  transform: translateX(3px);
+}
+.company-job:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 4px;
+}
+.company-job-number {
+  color: #e0bb6a;
+  font-size: 12px;
+  min-width: 24px;
+}
+.company-job div {
+  flex: 1;
+  min-width: 0;
+}
+.company-job h2 {
+  font-size: clamp(17px, 2.2vw, 22px);
+  margin: 0 0 5px;
+  font-weight: 500;
+}
+.company-job p {
+  font-size: 14px;
+  margin: 0;
+}
+.company-work-note {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #c4912f38;
+}
+.company-work-note h2 {
+  font-size: 21px;
+  font-weight: 500;
+}
+.company-work-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 20px;
+}
+.company-work-links a {
+  color: #e0bb6a;
+}
+@media (max-width: 480px) {
+  .company-job {
+    gap: 12px;
+    padding: 20px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .company-job {
+    transition: none;
+  }
+  .company-job:hover {
+    transform: none;
+  }
+}
+.company-rooms {
+  margin: 32px 0 48px;
+}
+.company-room-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 14px 0;
+}
+.company-room button {
+  cursor: pointer;
+}
+.company-room button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.company-room-actions button:not(.button),
+.company-room-layout aside button {
+  padding: 10px 14px;
+  border: 1px solid #c4912f38;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.company-room [aria-current='page'] {
+  border-color: #e0bb6a;
+}
+.company-room-layout {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  gap: 28px;
+}
+.company-room-layout aside {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.company-room-layout aside h2 {
+  font-size: 18px;
+}
+.company-room textarea,
+.company-brief-editor textarea,
+.company-brief-editor input {
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  margin-top: 8px;
+  background: #101411;
+  color: inherit;
+  border: 1px solid #c4912f55;
+  border-radius: 8px;
+  font: inherit;
+}
+.company-brief-editor label,
+.company-room-talk label {
+  display: block;
+  margin: 18px 0;
+}
+.company-brief-editor {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid #c4912f38;
+  border-radius: 12px;
+}
+.company-room-turn {
+  border-bottom: 1px solid #c4912f26;
+  padding: 18px 0;
+  overflow-wrap: anywhere;
+}
+.company-room-turn h3 {
+  color: #e0bb6a;
+  font-size: 13px;
+}
+.company-room-turn pre {
+  overflow: auto;
+}
+.company-room-turn table {
+  display: block;
+  overflow: auto;
+}
+.company-room-user {
+  white-space: pre-wrap;
+}
+.company-room-boundary {
+  font-size: 12px;
+}
+.company-room .eyebrow {
+  display: block;
+  margin-top: 28px;
+}
+@media (max-width: 700px) {
+  .company-room-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .company-room-layout aside {
+    max-height: 220px;
+    overflow: auto;
+  }
+  .company-brief-editor {
+    padding: 16px;
+  }
+}
+.company-room select {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  color: inherit;
+  background: #101411;
+  border: 1px solid #c4912f55;
+  border-radius: 8px;
+}
+.company-room-turn a {
+  color: #e0bb6a;
+}
+.company-room button:focus-visible,
+.company-rooms button:focus-visible,
+.company-room textarea:focus-visible,
+.company-brief-editor input:focus-visible,
+.company-brief-editor textarea:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 3px;
+}
+
+@font-face {
+  font-family: CompanyPresentation;
+  src: url('/fonts/company-work.ttf') format('truetype');
+  font-display: swap;
+}
+.company-room {
+  max-width: 1440px;
+}
+.company-room h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+.company-room-layout {
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+.company-room-layout aside a {
+  display: block;
+  padding: 12px 8px;
+  border-bottom: 1px solid #c4912f26;
+  color: #dfc995;
+  overflow-wrap: anywhere;
+  min-height: 44px;
+}
+.company-room-talk {
+  min-width: 0;
+}
+.company-room .conversation-turn {
+  margin-block: 24px;
+}
+.company-room fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+.company-room input:not([type='checkbox']) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-block: 8px;
+  padding: 12px;
+  background: #101411;
+  color: inherit;
+  border: 1px solid #c4912f55;
+  border-radius: 8px;
+  font: inherit;
+}
+.company-room input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  vertical-align: middle;
+}
+.company-deliverable {
+  border-bottom: 1px solid #c4912f55;
+  padding-block: 16px 32px;
+  margin-bottom: 24px;
+}
+.company-deliverable h2 {
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  overflow-wrap: anywhere;
+}
+.company-deliverable h3 {
+  margin-top: 24px;
+  color: #e2c187;
+}
+.company-deliverable details {
+  margin: 16px 0;
+  border-left: 1px solid #c4912f44;
+  padding: 12px;
+}
+.company-deliverable summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.company-deliverable p,
+.company-strategy li {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+.company-slide {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #c4912f38;
+  border-radius: 8px;
+  margin: 18px 0;
+  font-family: CompanyPresentation, sans-serif;
+}
+.company-visuals img {
+  width: 100%;
+  max-width: 800px;
+  border-radius: 8px;
+}
+.company-visuals figure {
+  margin: 18px 0;
+}
+.company-visuals figcaption {
+  font-size: 0.8rem;
+  color: #b9c7bb;
+}
+.company-room .message-markdown pre {
+  overflow: auto;
+}
+.company-room .message-tools button {
+  min-height: 44px;
+}
+.company-room textarea:focus-visible,
+.company-room input:focus-visible,
+.company-room select:focus-visible,
+.company-room a:focus-visible,
+.company-room summary:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .company-room-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .company-room-layout aside {
+    max-height: 220px;
+  }
+  .company-deliverable details {
+    padding: 8px;
+  }
+  .company-room-actions {
+    align-items: start;
+  }
+}
+.company-room [hidden] {display:none;}
+.company-room-focused {position:fixed;inset:0;z-index:120;max-width:none;margin:0;background:#050706;overflow:auto;padding:24px max(20px,calc((100vw - 1240px)/2));}
+.company-room-focused>header {position:sticky;top:-24px;z-index:2;padding-block:12px;background:#050706;}
+.company-room-focused .company-room-layout {grid-template-columns:minmax(0,1fr);}
+.company-room-focused .company-room-layout>aside {display:none;}
+.company-room-focused .company-room-talk {max-width:1000px;width:100%;margin:auto;}
+.company-room-focused header .eyebrow {margin-top:8px;}
+@media(max-width:700px){.company-room-focused {padding:16px max(16px,env(safe-area-inset-left));}.company-room-focused>header {top:-16px;}.company-room-focused header>p {display:none;}.company-room-focused h1 {font-size:1.4rem;}}

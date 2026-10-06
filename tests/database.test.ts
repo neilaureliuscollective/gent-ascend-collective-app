@@ -1328,3 +1328,149 @@ describe('account claim: atomic import, isolation and conflict recovery',()=>{
     try {await expect(db.query(call(request,'Train deliberately'))).rejects.toThrow(/permission/);} finally {await db.exec('reset role');}
   });
 });
+
+describe('owner-only company rooms and immutable Talk scope', () => {
+  const authA = 'c9000000-0000-4000-8000-000000000001';
+  const authB = 'c9000000-0000-4000-8000-000000000002';
+  let personA = '';
+  let personB = '';
+  const companyA = 'c9000000-0000-4000-8000-000000000005';
+  const companyB = 'c9000000-0000-4000-8000-000000000006';
+  const thread = 'c9000000-0000-4000-8000-000000000007';
+  const request = 'c9000000-0000-4000-8000-000000000008';
+  const begin = (company = companyA, conversation = thread, req = request) => `select public.company_begin_turn('${company}','${conversation}','${req}','Synthetic Company Sentinel','test-model','company-test')`;
+  beforeAll(async () => {
+    await db.exec(`insert into auth.users(id) values('${authA}'),('${authB}');`);
+    personA = (await db.query<{id: string}>(`select id from public.persons where auth_user_id='${authA}'`)).rows[0]!.id;
+    personB = (await db.query<{id: string}>(`select id from public.persons where auth_user_id='${authB}'`)).rows[0]!.id;
+  });
+  it('permits owner creation, denies forged ownership and preserves brief versions', async () => {
+    await asUser(authA, `insert into public.companies(id,person_id,name,brief) values('${companyA}','${personA}','Synthetic A','A confidential brief'),('${companyB}','${personA}','Synthetic B','B confidential brief')`);
+    expect((await asUser(authB, 'select * from public.companies')).rows).toHaveLength(0);
+    await expect(asUser(authB, `insert into public.companies(person_id,name) values('${personA}','Forged')`)).rejects.toThrow(/row-level security/);
+    expect((await asUser(authB, `update public.companies set name='Intrusion',version=2 where id='${companyA}' returning id`)).rows).toHaveLength(0);
+    await expect(asUser(authA, `update public.companies set person_id='${personB}' where id='${companyA}'`)).rejects.toThrow(/permission denied/);
+    await expect(asUser(authA, `update public.companies set brief='Unversioned' where id='${companyA}'`)).rejects.toThrow(/Invalid brief version/);
+    expect((await asUser(authA, `update public.companies set brief='Reviewed A',version=2 where id='${companyA}' and version=1 returning version`)).rows).toEqual([{version: 2}]);
+    expect((await asUser(authA, `update public.companies set brief='Stale A',version=2 where id='${companyA}' and version=1 returning version`)).rows).toHaveLength(0);
+  });
+  it('reserves a company-bound turn and stores its exact brief snapshot', async () => {
+    await asUser(authA, begin());
+    const row = (await asUser<{ company_id: string; context_included: boolean }>(authA, `select c.company_id,t.context_included from public.ai_turns t join public.ai_conversations c on c.id=t.conversation_id where t.id='${request}'`)).rows[0]!;
+    expect(row).toEqual({company_id: companyA, context_included: false});
+    await asUser(authA, `update public.companies set brief='Later A',version=3 where id='${companyA}'`);
+    expect((await asUser(authA, `select brief,version from public.company_turn_context where request_id='${request}'`)).rows).toEqual([{brief: 'Reviewed A',version: 2}]);
+    expect((await asUser(authB, 'select * from public.company_turn_context')).rows).toHaveLength(0);
+    await expect(asUser(authA, `update public.company_turn_context set brief='Corrupt' where request_id='${request}'`)).rejects.toThrow(/permission denied/);
+    await asUser(authA, `select public.ai_finish_turn('${request}','Synthetic reply','complete')`);
+  });
+  it('rejects cross-company reuse, cross-person access, legacy entry and internal quota bypass', async () => {
+    await expect(asUser(authA, begin(companyB, thread, crypto.randomUUID()))).rejects.toThrow(/scope mismatch/);
+    await expect(asUser(authB, begin(companyA, crypto.randomUUID(), crypto.randomUUID()))).rejects.toThrow(/Company not found/);
+    await expect(asUser(authA, `select public.ai_begin_turn('${thread}','${crypto.randomUUID()}','Personal data','model',true,'legacy')`)).rejects.toThrow(/Use company Talk/);
+    await expect(asUser(authA, `select public.ai_begin_revision('${thread}','${request}','${crypto.randomUUID()}','Personal revision','regenerate','model',true,'legacy')`)).rejects.toThrow(/Use company Talk/);
+    await expect(asUser(authA, `select public.ai_reserve_turn_internal('${thread}','${crypto.randomUUID()}','Bypass','model',true,'legacy')`)).rejects.toThrow(/permission denied/);
+    await expect(db.exec(`update public.ai_conversations set company_id='${companyB}' where id='${thread}'`)).rejects.toThrow(/immutable/);
+    expect((await asUser(authA, "select * from public.ai_search_conversations('Sentinel')")).rows).toHaveLength(0);
+  });
+  it('cannot adopt an existing unassigned thread and rolls back failed reservations', async () => {
+    const legacyThread = crypto.randomUUID(), legacyRequest = crypto.randomUUID();
+    await asUser(authA, `select public.ai_begin_turn('${legacyThread}','${legacyRequest}','Legacy context','model',false,'legacy');`);
+    await asUser(authA, `select public.ai_finish_turn('${legacyRequest}','Legacy reply','complete')`);
+    await expect(asUser(authA, begin(companyA, legacyThread, crypto.randomUUID()))).rejects.toThrow(/scope mismatch/);
+    const failed = crypto.randomUUID();
+    await expect(asUser(authA, `select public.company_begin_turn('${companyA}','${failed}','${crypto.randomUUID()}','','model','company-test')`)).rejects.toThrow();
+    expect((await asUser(authA, `select id from public.ai_conversations where id='${failed}'`)).rows).toHaveLength(0);
+    await expect(asUser(authA, begin(companyA, thread, request))).rejects.toThrow(/Duplicate request/);
+  });
+  it('denies anonymous table reads and function execution', async () => {
+    await db.exec('set role anon');
+    try {
+      await expect(db.query('select * from public.companies')).rejects.toThrow(/permission denied/);
+      await expect(db.query('select * from public.company_turn_context')).rejects.toThrow(/permission denied/);
+      await expect(db.query(begin())).rejects.toThrow(/permission denied/);
+    } finally { await db.exec('reset role'); }
+  });
+});
+
+describe('connected company jobs and immutable reviewed work',()=>{
+ const a='d9000000-0000-4000-8000-000000000001', b='d9000000-0000-4000-8000-000000000002';
+ const ca='d9000000-0000-4000-8000-000000000003',cb='d9000000-0000-4000-8000-000000000004';
+ const job='d9000000-0000-4000-8000-000000000005',conversation='d9000000-0000-4000-8000-000000000006';
+ const v1='d9000000-0000-4000-8000-000000000007',v2='d9000000-0000-4000-8000-000000000008';
+ const turn='d9000000-0000-4000-8000-000000000009';
+ let owner='';
+ const scope=JSON.stringify({request:'Synthetic positioning job',audience:'Founder',outcome:'A deck',constraints:'',acceptance:'A useful brief',evidence:[],figures:[]});
+ const create=`select public.company_create_job('${job}','${ca}','${conversation}','${scope}') as id`;
+ const save=(id=v1,expected=0,company=ca,content='{"title":"Synthetic strategy"}',source='null')=>`select public.company_save_work('${id}','${company}','${job}',${expected},'${content}',${source}) as id`;
+ beforeAll(async()=>{
+  await db.exec(`insert into auth.users(id) values('${a}'),('${b}');`);
+  owner=(await db.query<{id:string}>(`select id from public.persons where auth_user_id='${a}'`)).rows[0]!.id;
+  await asUser(a,`insert into public.companies(id,person_id,name,brief) values('${ca}','${owner}','Synthetic Work A','Original A brief'),('${cb}','${owner}','Synthetic Work B','Other B brief')`);
+ });
+ it('creates once with a fixed thread and retains the confirmed scope/brief',async()=>{
+  expect((await asUser<{id:string}>(a,create)).rows[0]!.id).toBe(job);
+  expect((await asUser<{id:string}>(a,create)).rows[0]!.id).toBe(job);
+  await expect(asUser(b,create)).rejects.toThrow(/Company not found/);
+  await expect(asUser(a,create.replace('Synthetic positioning job','Changed job'))).rejects.toThrow(/request changed/);
+  await asUser(a,`update public.companies set brief='New confirmed A',version=2 where id='${ca}'`);
+  const row=(await asUser<{company_brief:string;brief_version:number;company_id:string}>(a,`select * from public.company_jobs where id='${job}'`)).rows[0]!;
+  expect(row.company_brief).toBe('Original A brief');expect(row.brief_version).toBe(1);expect(row.company_id).toBe(ca);
+  expect((await asUser(b,`select * from public.company_jobs`)).rows).toHaveLength(0);
+  await expect(asUser(a,`update public.company_jobs set company_id='${cb}' where id='${job}'`)).rejects.toThrow(/permission denied/);
+ });
+ it('atomically saves versions, replays exact saves, and rejects stale/cross-company writes',async()=>{
+  expect((await asUser<{id:string}>(a,save())).rows[0]!.id).toBe(v1);
+  expect((await asUser<{id:string}>(a,save())).rows[0]!.id).toBe(v1);
+  await expect(asUser(a,save(v1,0,ca,'{"title":"Changed retry"}'))).rejects.toThrow(/request changed/);
+  await expect(asUser(a,save(v2,0))).rejects.toThrow(/Work changed/);
+  await expect(asUser(a,save(v2,1,cb))).rejects.toThrow(/Job not found/);
+  await expect(asUser(b,save(v2,1))).rejects.toThrow(/Job not found/);
+  expect((await asUser(b,'select * from public.company_work_versions')).rows).toHaveLength(0);
+  await expect(asUser(a,`update public.company_work_versions set content='{}' where id='${v1}'`)).rejects.toThrow(/permission denied/);
+  await expect(asUser(a,`delete from public.company_work_versions where id='${v1}'`)).rejects.toThrow(/permission denied/);
+ });
+ it('reviews an immutable snapshot without silently reviewing later revisions',async()=>{
+  const review=`select public.company_review_work('${ca}','${job}','${v1}')`;
+  await asUser(a,review);
+  const first=(await asUser<{reviewed_at:string}>(a,`select reviewed_at from public.company_work_versions where id='${v1}'`)).rows[0]!.reviewed_at;
+  await asUser(a,review);
+  expect((await asUser<{reviewed_at:string}>(a,`select reviewed_at from public.company_work_versions where id='${v1}'`)).rows[0]!.reviewed_at).toEqual(first);
+  await expect(asUser(b,review)).rejects.toThrow(/Version not found/);
+  await expect(asUser(a,review.replace(ca,cb))).rejects.toThrow(/Version not found/);
+  await asUser(a,save(v2,1,ca,'{"title":"Next strategy"}'));
+  const versions=(await asUser<{revision:number;reviewed_at:string|null;content:{title:string}}>(a,`select * from public.company_work_versions where job_id='${job}' order by revision`)).rows;
+  expect(versions[0]!.content.title).toBe('Synthetic strategy');expect(versions[0]!.reviewed_at).toEqual(first);expect(versions[1]!.reviewed_at).toBeNull();
+ });
+ it('requires a completed generation in this exact job and base revision',async()=>{
+  await asUser(a,`select public.company_begin_turn('${ca}','${conversation}','${turn}','[Job work v2] Create strategy','test-model','company-work')`);
+  await expect(asUser(a,save(turn,2,ca,'{"title":"Model draft"}',`'${turn}'`))).rejects.toThrow(/Completed job turn required/);
+  await asUser(a,`select public.ai_finish_turn('${turn}','Synthetic generated work','complete',10,20)`);
+  await asUser(a,save(turn,2,ca,'{"title":"Model draft"}',`'${turn}'`));
+  await expect(asUser(a,save('d9000000-0000-4000-8000-000000000010',3,ca,'{"title":"Stale model"}',`'${turn}'`))).rejects.toThrow(/Completed job turn required/);
+ });
+ it('allows scoped latest-reply revision and denies legacy/cross-company revision',async()=>{
+  const next='d9000000-0000-4000-8000-000000000011';
+  const revise=(company=ca)=>`select public.company_begin_revision('${company}','${conversation}','${turn}','${next}','Revised discussion','edit','test-model','company-work')`;
+  await expect(asUser(a,revise(cb))).rejects.toThrow(/scope mismatch/);
+  await expect(asUser(b,revise())).rejects.toThrow(/scope mismatch/);
+  await asUser(a,revise());
+  const row=(await asUser<{parent_turn_id:string;revision_kind:string}>(a,`select * from public.ai_turns where id='${next}'`)).rows[0]!;
+  expect(row.parent_turn_id).toBe(turn);expect(row.revision_kind).toBe('edit');
+  await asUser(a,`select public.ai_finish_turn('${next}','Revised draft','complete',10,20)`);
+  await expect(asUser(a,`select public.ai_begin_revision('${conversation}','${next}','d9000000-0000-4000-8000-000000000012','Legacy bypass','edit','test-model',false,'test')`)).rejects.toThrow(/Use company Talk/);
+ });
+ it('binds Studio to the same owner/company/job and prevents adoption',async()=>{
+  const project='d9000000-0000-4000-8000-000000000013',old='d9000000-0000-4000-8000-000000000014';
+  await asUser(a,`insert into public.ai_studio_projects(id,person_id,title,company_id,job_id) values('${project}','${owner}','Job visuals','${ca}','${job}')`);
+  await asUser(a,`insert into public.ai_studio_projects(id,person_id,title) values('${old}','${owner}','Existing global project')`);
+  await expect(asUser(a,`update public.ai_studio_projects set company_id='${cb}' where id='${project}'`)).rejects.toThrow(/immutable/);
+  await expect(asUser(a,`update public.ai_studio_projects set company_id='${ca}',job_id='${job}' where id='${old}'`)).rejects.toThrow(/immutable/);
+  await expect(asUser(a,`insert into public.ai_studio_projects(person_id,title,company_id,job_id) values('${owner}','Wrong company','${cb}','d9000000-0000-4000-8000-000000000099')`)).rejects.toThrow(/foreign key/);
+  expect((await asUser(b,`select * from public.ai_studio_projects where id='${project}'`)).rows).toHaveLength(0);
+ });
+ it('does not expose jobs or atomic writers to anonymous callers',async()=>{
+  const result=await db.query<{table_access:boolean;rpc_access:boolean}>(`select has_table_privilege('anon','public.company_jobs','SELECT') table_access,has_function_privilege('anon','public.company_save_work(uuid,uuid,uuid,integer,jsonb,uuid)','EXECUTE') rpc_access`);
+  expect(result.rows[0]).toEqual({table_access:false,rpc_access:false});
+ });
+});

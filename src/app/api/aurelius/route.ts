@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     if (params.get('archive') === '1') {
       const {client,person}=await intelligenceSession();
       const result=await client.from('ai_conversations').select('*').eq('person_id',person.id)
-        .not('archived_at','is',null).order('archived_at',{ascending:false}).limit(40);
+        .is('company_id',null).not('archived_at','is',null).order('archived_at',{ascending:false}).limit(40);
       if(result.error) throw new IntelligenceError('Archive could not be loaded.',503);
       return privateJson({results:result.data});
     }
@@ -43,7 +43,9 @@ export async function PATCH(request: Request) {
     const input = z.object({id:z.uuid(), title:z.string().trim().min(1).max(80).nullable(), archived:z.boolean().nullable()}).strict().safeParse(await mutationBody(request));
     if (!input.success || (input.data.title===null && input.data.archived===null))
       throw new IntelligenceError('Invalid conversation update.');
-    const {client} = await intelligenceSession();
+    const {client,person} = await intelligenceSession();
+    const scope=await client.from('ai_conversations').select('id').eq('id',input.data.id).eq('person_id',person.id).is('company_id',null).maybeSingle();
+    if(scope.error || !scope.data) throw new IntelligenceError('Conversation not found.',404);
     const result=await client.rpc('ai_update_conversation',{
       p_id:input.data.id,p_title:input.data.title,p_archive:input.data.archived,
     });
@@ -62,6 +64,7 @@ export async function DELETE(request: Request) {
       .delete()
       .eq('id', id.data)
       .eq('person_id', person.id)
+      .is('company_id', null)
       .select('id');
     if (result.error) throw new IntelligenceError('Conversation could not be deleted.', 503);
     if (!result.data?.length) throw new IntelligenceError('Conversation not found.', 404);

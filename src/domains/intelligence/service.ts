@@ -5,7 +5,6 @@ import { currentAccess } from '@/domains/access/current';
 import { aiConfigSchema } from './validation';
 import { promptVersion, buildMessages } from './prompt';
 import { councilPromptVersion, type CouncilSelection } from './council';
-import { founderBridgeContext } from './founder-bridge';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
 import { localDay } from '@/domains/daily/model';
@@ -102,16 +101,16 @@ export async function personalContext(question?:string): Promise<PersonalContext
     grooming:grooming?(()=>{const [p,g,r,products,looks,concepts,scans,occasions,practice]=grooming;return {occasions:(occasions.data??[]).map(x=>({title:x.title,day:x.event_date,note:x.note})),profile:p.data?{hair:p.data.hair_focus,beard:p.data.beard_focus,skin:p.data.skin_focus,look:p.data.preferred_look,effort:p.data.effort,sensitivities:p.data.sensitivities,dislikes:p.data.dislikes}:null,goals:(g.data??[]).map(x=>({title:x.title,date:x.target_date})),rituals:(r.data??[]).map(x=>({id:x.id,version:x.version,kind:x.kind,title:x.title,steps:x.steps})),products:(products.data??[]).map(x=>({name:x.name,relation:x.relation,note:x.note,ritualId:x.ritual_id})),looks:(looks.data??[]).map(x=>({title:x.title,kind:x.kind,detail:x.detail,date:x.service_date})),concepts:(concepts.data??[]).map(x=>({title:x.title,style:x.style_id,note:x.note,at:x.saved_at!})),practice:(practice.data??[]).map(x=>({ritualId:x.ritual_id,at:x.occurred_at,note:x.note})),scans:(scans.data??[]).map(x=>({at:x.created_at,summary:x.summary}))};})():undefined,
   };
 }
-export async function conversationTurns(id: string, before?: string) {
+export async function conversationTurns(id: string, before?: string, companyId?: string) {
   const { client, person } = await intelligenceSession();
   const { data: conversation, error } = await client
     .from('ai_conversations')
-    .select('id')
+    .select('id,company_id')
     .eq('id', id)
     .eq('person_id', person.id)
     .maybeSingle();
   if (error) throw new IntelligenceError('Conversation could not be loaded.', 503);
-  if (!conversation) throw new IntelligenceError('Conversation not found.', 404);
+  if (!conversation || (conversation.company_id ?? null) !== (companyId ?? null)) throw new IntelligenceError('Conversation not found in this workspace.', 404);
   let query = client
     .from('ai_turns')
     .select('*')
@@ -170,7 +169,7 @@ export async function readWorkspace(conversationId?: string, before?: string, li
   const { client, person } = await intelligenceSession();
   const [cursorTime,cursorId]=listBefore?.split('|')??[];
   let conversationQuery=client.from('ai_conversations').select('*').eq('person_id',person.id)
-    .is('archived_at',null).order('updated_at',{ascending:false}).order('id',{ascending:false}).limit(41);
+    .is('company_id',null).is('archived_at',null).order('updated_at',{ascending:false}).order('id',{ascending:false}).limit(41);
   if(cursorTime && cursorId) conversationQuery=conversationQuery.or(`updated_at.lt.${cursorTime},and(updated_at.eq.${cursorTime},id.lt.${cursorId})`);
   const [list, memories, actionProposals, context, access, turns, current] = await Promise.all([
     conversationQuery,
@@ -184,7 +183,7 @@ export async function readWorkspace(conversationId?: string, before?: string, li
     personalContext(),
     currentAccess(),
     conversationId ? conversationTurns(conversationId, before) : Promise.resolve([]),
-    conversationId ? client.from('ai_conversations').select('*').eq('person_id',person.id).eq('id',conversationId).maybeSingle() : Promise.resolve({data:null,error:null}),
+    conversationId ? client.from('ai_conversations').select('*').eq('person_id',person.id).eq('id',conversationId).is('company_id',null).maybeSingle() : Promise.resolve({data:null,error:null}),
   ]);
   if (list.error || memories.error || actionProposals.error || current.error)
     throw new IntelligenceError('Your workspace could not be loaded.', 503);
@@ -209,6 +208,7 @@ export async function prepareReply(input: {
   requestId: string;
   text: string;
   includeContext: boolean;
+  companyId?: string;
   sourceTurnId?: string;
   revisionKind?: 'retry'|'regenerate'|'edit';
   council?: CouncilSelection;
@@ -219,6 +219,18 @@ export async function prepareReply(input: {
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
+  let company: import('@/domains/companies/schema').Company | null = null;
+  if (input.companyId) {
+    if (input.includeContext) throw new IntelligenceError('Unsupported company context.', 400);
+    const result = await client.from('companies').select('*').eq('id', input.companyId).eq('person_id', person.id).maybeSingle();
+    if (result.error) throw new IntelligenceError('Company context unavailable.', 503);
+    if (!result.data) throw new IntelligenceError('Company not found.', 404);
+    company = result.data;
+  } else {
+    const existing = await client.from('ai_conversations').select('company_id').eq('id', input.conversationId).eq('person_id', person.id).maybeSingle();
+    if (existing.error) throw new IntelligenceError('Conversation scope unavailable.', 503);
+    if (existing.data?.company_id) throw new IntelligenceError('Open this conversation in its company room.', 409);
+  }
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY)
     throw new IntelligenceError(
@@ -232,7 +244,11 @@ export async function prepareReply(input: {
     p_context: input.includeContext,
     p_prompt_version: input.council ? councilPromptVersion(input.council) : promptVersion,
   };
-  const begun = input.sourceTurnId && input.revisionKind
+  const begun = company
+    ? input.sourceTurnId && input.revisionKind
+      ? await client.rpc('company_begin_revision',{p_company:company.id,p_conversation:input.conversationId,p_source:input.sourceTurnId,p_request:input.requestId,p_text:input.text,p_kind:input.revisionKind,p_model:config.AURELIUS_AI_MODEL,p_prompt_version:common.p_prompt_version})
+      : await client.rpc('company_begin_turn', { p_company: company.id, p_conversation: input.conversationId, p_request: input.requestId, p_text: input.text, p_model: config.AURELIUS_AI_MODEL, p_prompt_version: common.p_prompt_version })
+    : input.sourceTurnId && input.revisionKind
     ? await client.rpc('ai_begin_revision',{...common,p_conversation:input.conversationId,p_source:input.sourceTurnId,p_kind:input.revisionKind})
     : await client.rpc('ai_begin_turn',{...common,p_conversation:input.conversationId});
   if (begun.error) {
@@ -251,6 +267,15 @@ export async function prepareReply(input: {
       409,
     );
   }
+  // Read the immutable brief snapshot written in the reservation transaction.
+  if (company) {
+    const snapshot = await client.from('company_turn_context').select('*').eq('request_id', input.requestId).eq('person_id', person.id).eq('company_id', company.id).single();
+    if (snapshot.error || !snapshot.data) {
+      await client.rpc('ai_finish_turn', {p_request: input.requestId, p_text: '', p_status: 'failed'});
+      throw new IntelligenceError('Company brief unavailable. No model request was sent.', 503);
+    }
+    company = {...company, name: snapshot.data.name, brief: snapshot.data.brief, version: snapshot.data.version, confirmed_at: snapshot.data.confirmed_at};
+  }
   // Read history only after the reservation, so another completed request cannot
   // be omitted by a stale pre-reservation snapshot. The pending current turn is
   // filtered by buildMessages and supplied once as the final user message.
@@ -259,7 +284,7 @@ export async function prepareReply(input: {
   let threadSummary:string;
   try {
     [history, context] = await Promise.all([
-      conversationTurns(input.conversationId),
+      conversationTurns(input.conversationId, undefined, company?.id),
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
     ]);
     threadSummary=await prepareThreadSummary(client,person.id,input.conversationId,history);
@@ -274,11 +299,11 @@ export async function prepareReply(input: {
       503,
     );
   }
-  // Member Council never requests the founder bridge, even on the founder account.
-  const founderContext = input.includeContext && !input.council ? await founderBridgeContext(input.text) : null;
+  // Public company work never retrieves the separate private founder notebook.
+  const founderContext = null;
   return {
     model: config.AURELIUS_AI_MODEL,
-    messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, capabilityContext(input.text)),
+    messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, company ? null : capabilityContext(input.text), company),
     founder: founderContext !== null,
     council: input.council,
     finish: async (

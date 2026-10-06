@@ -71,6 +71,10 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      company_turn_context: Table<{request_id: string; person_id: string; company_id: string; name: string; brief: string; version: number; confirmed_at: string}, never, never>;
+      company_jobs: Table<import("@/domains/company-work/schema").WorkJob, never, never>;
+      company_work_versions: Table<import("@/domains/company-work/schema").WorkVersion, never, never>;
+      companies: Table<import("@/domains/companies/schema").Company, {id: string; person_id: string; name: string; brief: string}, {name: string; brief: string; version: number; confirmed_at: string}>;
       daily_command_records: Table<import("@/domains/daily-command/model").CommandRecord, never, never>;
       proactive_signal_receipts: Table<
         {
@@ -509,6 +513,8 @@ export interface Database {
         {
           id: string;
           person_id: string;
+          company_id: string | null;
+          job_id: string | null;
           title: string;
           creative_type: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
           brief: {
@@ -525,6 +531,8 @@ export interface Database {
           id: string;
           person_id: string;
           title: string;
+          company_id?: string;
+          job_id?: string;
           creative_type?: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
         },
         {
@@ -740,6 +748,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      company_begin_revision: {Args:{p_company:string;p_conversation:string;p_source:string;p_request:string;p_text:string;p_kind:string;p_model:string;p_prompt_version:string};Returns:string};
+      company_create_job: {Args:{p_id:string;p_company:string;p_conversation:string;p_scope:import("@/domains/company-work/schema").WorkScope};Returns:string};
+      company_save_work: {Args:{p_id:string;p_company:string;p_job:string;p_expected:number;p_content:import("@/domains/company-work/schema").WorkContent;p_source_turn:string|null};Returns:string};
+      company_review_work: {Args:{p_company:string;p_job:string;p_version:string};Returns:string};
       daily_command_save: { Args: { p_request: string; p_day: string; p_version: number; p_kind: string; p_arrival: import("@/domains/daily-command/model").Arrival; p_snapshot: import("@/domains/daily-command/model").DailyCommandSnapshot; p_outcome: import("@/domains/daily-command/model").DailyCommandOutcome | null }; Returns: number };
       onboarding_claim: {
         Args: {
@@ -926,6 +938,10 @@ export interface Database {
       daily_complete_action: {
         Args: { p_day: string; p_action: string; p_version: number };
         Returns: number;
+      };
+      company_begin_turn: {
+        Args: {p_company: string; p_conversation: string; p_request: string; p_text: string; p_model: string; p_prompt_version: string};
+        Returns: string;
       };
       ai_begin_turn: {
         Args: {

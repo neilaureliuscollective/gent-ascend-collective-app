@@ -1,0 +1,54 @@
+.company-arrival {
+  max-width: 1120px;
+  margin: auto;
+  padding: clamp(100px, 14vw, 180px) clamp(24px, 6vw, 80px) 64px;
+  min-height: 80dvh;
+}
+.company-arrival h1 {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 7vw, 82px);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  margin: 24px 0;
+}
+.company-arrival h1 em {
+  font-style: normal;
+  background: linear-gradient(110deg, #f0dcac, #c4912f 48%, #e0bb6a);
+  background-clip: text;
+  color: transparent;
+}
+.company-arrival p {
+  max-width: 690px;
+  line-height: 1.7;
+  color: #bcc6bf;
+  font-size: clamp(16px, 2vw, 19px);
+}
+.company-arrival-actions {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 32px 0;
+}
+.company-arrival-actions a {
+  color: #e0bb6a;
+}
+.company-arrival-method {
+  margin-top: 80px;
+  padding-top: 32px;
+  border-top: 1px solid #c4912f38;
+}
+.company-arrival-method h2 {
+  font-size: clamp(23px, 3vw, 32px);
+  font-weight: 500;
+}
+.company-arrival-method .quiet-label {
+  font-size: 14px;
+}
+@media (forced-colors: active) {
+  .company-arrival h1 em {
+    color: CanvasText;
+    background: none;
+  }
+}

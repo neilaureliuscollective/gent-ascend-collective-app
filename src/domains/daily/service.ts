@@ -47,6 +47,7 @@ export async function readDaily(
         .from('ai_conversations')
         .select('id,title')
         .eq('person_id', person.id)
+        .is('company_id', null)
         .order('updated_at', { ascending: false })
         .limit(1),
       client

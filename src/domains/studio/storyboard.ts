@@ -1,7 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
-import { studioSession } from './service';
+import { studioSession, verifyStudioProject } from './service';
 
 const fields = z.object({
   title: z.string().trim().min(1).max(80),
@@ -15,6 +15,7 @@ export const updateSceneInput = fields.extend({ projectId: z.uuid(), sceneId: z.
 export const deleteSceneInput = z.object({ projectId: z.uuid(), sceneId: z.uuid() }).strict();
 
 export async function createScene(input: z.infer<typeof createSceneInput>) {
+  await verifyStudioProject(input.projectId);
   const { client } = await studioSession();
   const result = await client.rpc('ai_studio_scene_create', {
     p_project: input.projectId, p_title: input.title, p_message: input.message,
@@ -24,6 +25,7 @@ export async function createScene(input: z.infer<typeof createSceneInput>) {
   return { id: result.data };
 }
 export async function updateScene(input: z.infer<typeof updateSceneInput>) {
+  await verifyStudioProject(input.projectId);
   const { client, person } = await studioSession();
   if (input.assetVersionId) {
     const asset = await client.from('ai_studio_versions').select('id').eq('id', input.assetVersionId)
@@ -41,6 +43,7 @@ export async function updateScene(input: z.infer<typeof updateSceneInput>) {
   return { id: result.data.id };
 }
 export async function deleteScene(input: z.infer<typeof deleteSceneInput>) {
+  await verifyStudioProject(input.projectId);
   const { client, person } = await studioSession();
   const result = await client.from('ai_studio_scenes').delete().eq('id', input.sceneId)
     .eq('project_id', input.projectId).eq('person_id', person.id).select('id').maybeSingle();

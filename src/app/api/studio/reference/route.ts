@@ -1,6 +1,6 @@
 import { apiError, mutationBody, privateJson } from '@/domains/intelligence/http';
 import { IntelligenceError } from '@/domains/intelligence/service';
-import { bucket, studioSession } from '@/domains/studio/service';
+import { bucket, studioSession, verifyStudioProject } from '@/domains/studio/service';
 import { maxReferenceBytes, referenceExtension, referenceType } from '@/domains/studio/image-validation';
 import { supabaseConnection } from '@/platform/supabase/connection';
 import { z } from 'zod';
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     const input = preparation.success ? preparation.data : completion.data!;
     const owner = await client.from('ai_studio_projects').select('id').eq('id',input.projectId).eq('person_id',person.id).single();
     if (owner.error || !owner.data) throw new IntelligenceError('Project not found.',404);
+    await verifyStudioProject(input.projectId);
     const auth = await client.auth.getUser();
     if (!auth.data.user) throw new IntelligenceError('Session expired.',401);
     const id = preparation.success ? crypto.randomUUID() : completion.data!.id;

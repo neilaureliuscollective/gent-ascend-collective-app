@@ -1,5 +1,5 @@
-import { CartPanel } from '@/components/commerce/cart-panel';
-export const metadata = { title: 'Your cart', robots: { index: false, follow: false } };
-export default function Cart() {
-  return <CartPanel fullPage basePath="/app/collection" />;
+import { RetiredStorefront } from '@/components/commerce/retired-storefront';
+export const metadata = { title: 'Legacy Reserve', robots: { index: false, follow: false } };
+export default function RetiredCollection() {
+  return <RetiredStorefront />;
 }

@@ -14,8 +14,10 @@ describe('Aethelios capability routing', () => {
     expect(routeCapability('Help me get ready for a wedding Saturday')?.id).toBe('presence');
   });
 
-  it('routes purchases to Collective without making commerce a default', () => {
-    expect(routeCapability('I need to reorder my beard oil')?.id).toBe('collective');
+  it('keeps product development in company work and does not expose retail', () => {
+    expect(routeCapability('Research sourcing for my skincare company')?.id).toBe('company');
+    expect(routeCapability('Analyze pricing for my product development')?.id).toBe('company');
+    expect(routeCapability('I need to reorder a supplement')).toBeNull();
     expect(routeCapability('Help me think through a hard decision')).toBeNull();
   });
 
