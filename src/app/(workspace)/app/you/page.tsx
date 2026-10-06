@@ -22,12 +22,12 @@ export default async function You({
     <>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Your identity</p>
+          <p className="eyebrow">Aethelios / Your identity</p>
           <h1>Your foundation.</h1>
         </div>
         {person && (
           <Link className="text-link" href="/app/ascend-profile">
-            Build your Ascend Profile →
+            Optional context setup →
           </Link>
         )}
       </div>
@@ -81,7 +81,7 @@ export default async function You({
               Founding member guide →
             </Link>
             <Link className="text-link" href="/app/install">
-              Install Gent Ascend →
+              Install Aethelios →
             </Link>
             <Link className="text-link" href="/">
               Explore the public world ↗
@@ -96,7 +96,7 @@ export default async function You({
           <aside className="account-brand">
             <Image
               src={brand.lockup}
-              alt="Gent Ascend Collective — official crest and wordmark"
+              alt="Aethelios — official crest and wordmark"
               width={960}
               height={960}
               sizes="(max-width: 600px) 230px, 420px"
@@ -105,11 +105,11 @@ export default async function You({
             <p className="eyebrow">CHARACTER · DISCIPLINE · ASCENSION · LEGACY</p>
           </aside>
           <section className="panel profile-panel">
-            <p className="eyebrow">YOUR GENT ASCEND ACCOUNT</p>
+            <p className="eyebrow">YOUR AETHELIOS ACCOUNT</p>
             <h2>
-              Build the man
+              Your workspace.
               <br />
-              <em>behind the life.</em>
+              <em>Your direction.</em>
             </h2>
             <p className="account-intro">
               Your direction, daily practice, and personal intelligence. One space to build a better
@@ -120,7 +120,7 @@ export default async function You({
                 {params.error && (
                   <p role="alert">
                     {params.error === 'credentials'
-                      ? 'That email and password were not accepted. Check the password saved for Gent Ascend.'
+                      ? 'That email and password were not accepted. Check the password saved for Aethelios.'
                       : params.error === 'service' || params.error === 'unavailable'
                         ? 'The account service could not complete sign-in. Your account is still intact; please try again shortly.'
                         : 'Sign-in could not be completed. Check your details and try again.'}

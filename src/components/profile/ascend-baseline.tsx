@@ -37,13 +37,13 @@ export function AscendBaseline({initial}:{initial:Fact[]}) {
       if(!response.ok) throw new Error(data.error??'The detail could not be confirmed.');
       setFacts(current=>[...current.filter(f=>f.fact_key!==key),{fact_key:key,value:data.value,version:data.version,source_kind:sourceKind,confirmed_at:new Date().toISOString()}]);
       setProposals(current=>current?.filter(f=>f.key!==key)??null);
-      setEditing(null);setMessage(value?'Confirmed in your Ascend Profile.':'That detail is no longer active.');
+      setEditing(null);setMessage(value?'Confirmed in your context profile.':'That detail is no longer active.');
     } catch(error) {setFailed(true);setMessage(error instanceof Error?error.message:'Save not confirmed. Reload before retrying.');}
     finally {setBusy(false);}
   }
   const next=()=>{setStage(n=>Math.min(5,n+1));setAnswer('');setProposals(null);setMessage('');setFailed(false);};
   return <div className="ascend-baseline">
-    <header><p className="eyebrow">ASCEND PROFILE / {stage+1} OF 6</p><h1>Begin where you are.</h1><p>Aethelios will ask a few direct questions. You decide what he keeps.</p><Link className="text-link" href="/app">Continue your day on Command →</Link></header>
+    <header><p className="eyebrow">OPTIONAL CONTEXT / {stage+1} OF 6</p><h1>Begin where you are.</h1><p>Aethelios will ask a few direct questions. You decide what is kept.</p><Link className="text-link" href="/app">Return to Aethelios →</Link></header>
     <div className="baseline-conversation">
       <div className="baseline-voice"><span className="eyebrow">AETHELIOS</span><p>{baselineStages[stage]?.prompt}</p></div>
       <label htmlFor="baseline-answer">Your answer</label>

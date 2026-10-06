@@ -4,7 +4,7 @@ import './world.css';
 import './world-atlas.css';
 import './grooming-world.css';
 export const metadata: Metadata = {
-  title: 'Your world | Gent Ascend Collective',
+  title: 'Capabilities | Aethelios',
   robots: { index: false, follow: false },
 };
 export default function ExperienceLayout({ children }: { children: React.ReactNode }) {

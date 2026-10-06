@@ -2,7 +2,7 @@ import { PresenceConcierge } from '@/components/presence/presence-concierge';
 import { readPresence } from '@/domains/presence/service';
 
 export const metadata = {
-  title: 'Presence | Gent Ascend',
+  title: 'Presence | Aethelios',
   description: 'Appearance, confidence and preparation. Your private Presence concierge.',
 };
 export default async function Presence() {

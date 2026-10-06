@@ -10,6 +10,7 @@ import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
+import { contextSourceLabels, noContextSources, type ContextSources } from '@/domains/intelligence/context-sources';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
 import { OrbPresentation } from '../visual/orb-presentation';
@@ -33,12 +34,10 @@ export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
   initialConversation = null,
-  founderLinked = false,
 }: {
   compact?: boolean;
   initialDraft?: string;
   initialConversation?: string | null;
-  founderLinked?: boolean;
 }) {
   const [preview, setPreview] = useState(false);
   const router = useRouter();
@@ -61,7 +60,10 @@ export function AureliusWorkspace({
   const [notice, setNotice] = useState('');
   const [needsReload, setNeedsReload] = useState(false);
   const [tab, setTab] = useState<'conversation' | 'memory' | 'context'>('conversation');
-  const [includeContext, setIncludeContext] = useState(true);
+  const [includeContext, setIncludeContext] = useState(false);
+  const [contextSources, setContextSources] = useState<ContextSources>(noContextSources);
+  const hasSelectedContext = includeContext && Object.values(contextSources).some(Boolean);
+  const [specialistConsent, setSpecialistConsent] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -79,7 +81,7 @@ export function AureliusWorkspace({
   const follow = useRef(true);
   const [awayFromLatest, setAwayFromLatest] = useState(false);
   function rememberConversation(id: string | null) {
-    if (compact || !window.location.pathname.endsWith('/aethelios')) return;
+    if (compact || !['/app', '/app/aethelios'].includes(window.location.pathname)) return;
     const url = new URL(window.location.href);
     url.searchParams.delete('starter');
     if (id) url.searchParams.set('conversation', id);
@@ -114,7 +116,7 @@ export function AureliusWorkspace({
         setData(result as WorkspaceData);
         setCouncilSelection(councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version??''));
         setSelected(id);
-        if (!compact && window.location.pathname.endsWith('/aethelios')) {
+        if (!compact && ['/app', '/app/aethelios'].includes(window.location.pathname)) {
           const url = new URL(window.location.href);
           if (id) url.searchParams.set('conversation', id);
           else url.searchParams.delete('conversation');
@@ -227,7 +229,7 @@ export function AureliusWorkspace({
       const response = await fetch('/api/aurelius/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: id, requestId, text, includeContext,...replace,...(requestedCouncil?{council:requestedCouncil}:{}) }),
+        body: JSON.stringify({ conversationId: id, requestId, text, includeContext:hasSelectedContext,contextSources,...replace,...(requestedCouncil?{council:requestedCouncil}:{}) }),
         signal: controller.signal,
       });
       if (!response.ok) {
@@ -242,7 +244,7 @@ export function AureliusWorkspace({
         assistant_text: '',
         status: 'pending',
         model: data.model,
-        context_included: includeContext,
+        context_included: hasSelectedContext,
         prompt_version: requestedCouncil?councilPromptVersion(requestedCouncil):'',
         feedback: null,
         created_at: new Date().toISOString(),
@@ -370,7 +372,7 @@ export function AureliusWorkspace({
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
 
   async function prepareCapability() {
-    if (!capability || !data?.ownerId || !['performance','studio','presence'].includes(capability.id) || orchestrating) return;
+    if (!capability || !data?.ownerId || !['performance','studio','presence'].includes(capability.id) || orchestrating || !specialistConsent) return;
     const text = draft.trim() || data.turns.at(-1)?.user_text || '';
     if (!text) return;
     setOrchestrating(true);
@@ -380,7 +382,7 @@ export function AureliusWorkspace({
       const response = await fetch('/api/aurelius/orchestrate', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({target:capability.id,text}),
+        body:JSON.stringify({target:capability.id,text,useSpecialistContext:specialistConsent}),
         signal:AbortSignal.timeout(30000),
       });
       const result = await response.json();
@@ -489,7 +491,7 @@ export function AureliusWorkspace({
             preview={preview}
           />
         ) : tab === 'context' ? (
-          <ContextPanel data={data} preview={preview} included={includeContext} />
+          <ContextPanel data={data} preview={preview} included={hasSelectedContext} />
         ) : (
           <>
             <div className={`conversation-controls ${compact ? '' : 'full-conversation-controls'}`}>
@@ -539,6 +541,7 @@ export function AureliusWorkspace({
                 </button>
               )}
             </div>
+            {!selected && !preview && data.conversations[0] && <div className="aethelios-continuation"><span className="eyebrow">CONTINUE A CONVERSATION</span><button type="button" className="text-button" disabled={blocked} onClick={() => void reload(data.conversations[0]!.id).catch(() => {})}>{data.conversations[0].title} →</button></div>}
             {confirmDelete && (
               <div className="confirm-row">
                 <p>
@@ -557,7 +560,7 @@ export function AureliusWorkspace({
                 </button>
               </div>
             )}
-            {!preview && <CouncilPanel reviewRef={tableReview} question={draft.trim()||data.turns.at(-1)?.user_text||''} selection={councilSelection} disabled={blocked||needsReload||!data.canChat||!data.configured||Boolean(data.currentConversation?.archived_at)} includeContext={includeContext} onSelect={setCouncilSelection} onFocused={id=>{newConversation();setCouncilSelection({kind:'specialist',specialists:[id]});}} onAssemble={(question,selection)=>{setCouncilSelection(selection);void sendMessage(question,revision,selection);}} />}
+            {!preview && <CouncilPanel reviewRef={tableReview} question={draft.trim()||data.turns.at(-1)?.user_text||''} selection={councilSelection} disabled={blocked||needsReload||!data.canChat||!data.configured||Boolean(data.currentConversation?.archived_at)} includeContext={hasSelectedContext} onSelect={setCouncilSelection} onFocused={id=>{newConversation();setCouncilSelection({kind:'specialist',specialists:[id]});}} onAssemble={(question,selection)=>{setCouncilSelection(selection);void sendMessage(question,revision,selection);}} />}
             {!preview && <TodayActions brief={data.context.dailyBrief} disabled={blocked} onChanged={() => reload(selected)} />}
             <div
               className="conversation-scroll"
@@ -597,7 +600,7 @@ export function AureliusWorkspace({
                     )}
 
                     <div>
-                      <p className="eyebrow">Aethelios · Digital Co-Founder</p>
+                      <p className="eyebrow">Aethelios · Intelligence environment</p>
                       <h2>What’s on your mind?</h2>
                       <Link
                         className="text-link aethelios-meet-link"
@@ -617,8 +620,8 @@ export function AureliusWorkspace({
                   </p>
                   <div className="conversation-starters">
                     {[
-                      'Brief me on my saved day and help me choose one next step.',
-                      'Challenge an assumption in my current goal.',
+                      'Help me organize the commitments on my mind.',
+                      'Help me develop an idea into a useful brief.',
                       'Help me think through a decision.',
                     ].map((text) => (
                       <button
@@ -689,9 +692,10 @@ export function AureliusWorkspace({
             <form className={`aurelius-composer ${composerExpanded ? 'is-expanded' : ''}`} onSubmit={event=>{event.preventDefault();if(councilSelection?.kind==='table') {tableReview.current?.open();return;}void sendMessage(draft,revision);}}>
               {capability && !councilSelection && (
                 <div className="revision-notice" aria-live="polite">
-                  <span>Aethelios is routing this through <strong>{capability.label}</strong> intelligence.</span>{' '}
+                  <span>Suggested capability: <strong>{capability.label}</strong>.</span>{' '}
+                  {['performance','studio','presence'].includes(capability.id) && <label><input type="checkbox" checked={specialistConsent} disabled={blocked} onChange={e => setSpecialistConsent(e.target.checked)} /> Share saved {capability.label} records for this preparation</label>}
                   {['performance','studio','presence'].includes(capability.id) ? (
-                    <button type="button" className="text-button" disabled={orchestrating} onClick={() => void prepareCapability()}>
+                    <button type="button" className="text-button" disabled={blocked || !specialistConsent || !data.canChat || !data.configured} onClick={() => void prepareCapability()}>
                       {orchestrating ? `Preparing ${capability.label}…` : `Prepare in ${capability.label} ↗`}
                     </button>
                   ) : (
@@ -760,6 +764,16 @@ export function AureliusWorkspace({
                   </button>
                 )}
               </div>
+              <details className="context-source-picker">
+                <summary>Context sources · {includeContext ? Object.values(contextSources).filter(Boolean).length : 0} selected</summary>
+                <fieldset disabled={blocked || preview}>
+                  <legend>Choose saved sources for the next message</legend>
+                  {Object.entries(contextSourceLabels).map(([key, label]) => <label key={key}>
+                    <input type="checkbox" checked={contextSources[key as keyof ContextSources]} onChange={e => {setContextSources(previous => ({...previous, [key]: e.target.checked})); setIncludeContext(true);}} /> {label}
+                  </label>)}
+                </fieldset>
+                <p>Sources may contain sensitive information. Selection applies to future messages, including Council. Existing conversation details remain; start a new conversation for a fresh context.</p>
+              </details>
               <details className="composer-privacy">
                 <summary>What Aethelios receives</summary>
                 <p className="composer-disclosure">
@@ -769,8 +783,8 @@ export function AureliusWorkspace({
                     <>
                       Sending shares this conversation’s recent messages
                       {councilSelection ? ' with the selected Council specialists' : ''}
-                      {includeContext
-                        ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
+                      {hasSelectedContext
+                        ? `, plus the saved source categories you selected (${Object.entries(contextSources).filter(([, enabled]) => enabled).map(([key]) => contextSourceLabels[key as keyof ContextSources]).join(', ') || 'none'})`
                         : ''}{' '}
                       with our AI service. Read-only web research may consult public sources; returned sources are linked in saved replies. Nothing is automatically added to memory.
                     </>

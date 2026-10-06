@@ -16,7 +16,7 @@ export default async function Join({
   return (
     <main id="world-main" className="founding-world">
       <header className="world-page-intro founding-intro">
-        <p className="world-kicker">Gent Ascend / Your account</p>
+        <p className="world-kicker">Aethelios / Your account</p>
         <h1>
           Your chapter
           <br />

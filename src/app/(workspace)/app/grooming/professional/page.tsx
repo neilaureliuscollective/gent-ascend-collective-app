@@ -11,7 +11,7 @@ import {
   revokeAction,
 } from './actions';
 import '../grooming.css';
-export const metadata = { title: 'Professional Concierge | Gent Ascend' };
+export const metadata = { title: 'Professional Concierge | Aethelios' };
 export default async function Professional({
   searchParams,
 }: {
@@ -38,7 +38,7 @@ export default async function Professional({
     <main className="grooming">
       <header className="groom-hero">
         <div>
-          <p className="eyebrow">Gent Ascend / Professional Concierge</p>
+          <p className="eyebrow">Aethelios / Professional Concierge</p>
           <h1>
             A better
             <br />

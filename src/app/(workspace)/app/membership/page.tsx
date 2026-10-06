@@ -36,7 +36,7 @@ export default async function Membership({
     <>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Your membership</p>
+          <p className="eyebrow">Aethelios / Your membership</p>
           <h1>Your founding chapter.</h1>
         </div>
       </div>

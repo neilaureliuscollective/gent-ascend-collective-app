@@ -27,9 +27,9 @@ export type ConfirmedFact = z.infer<typeof confirmedFact>;
 
 export const baselineStages = [
   { prompt: 'What matters most in your life right now? What would make the next season feel well spent?', keys: ['direction'] },
-  { prompt: 'How do you want to develop your body and presence? Include only what you want me to consider.', keys: ['body','presence'] },
-  { prompt: 'What supports your energy and recovery today, and what tends to get in the way?', keys: ['recovery'] },
+  { prompt: 'Are there personal preferences or appearance needs you want considered? This is optional.', keys: ['body','presence'] },
+  { prompt: 'What helps you sustain your attention, and what tends to get in the way? Share only what you choose.', keys: ['recovery'] },
   { prompt: 'Where does your work need your best attention? What responsibility is on your mind?', keys: ['work'] },
-  { prompt: 'What kind of man are you working to become, and which relationships matter most to you?', keys: ['character','connection'] },
+  { prompt: 'What kind of person are you working to become, and which relationships matter most to you?', keys: ['character','connection'] },
   { prompt: 'How should I challenge or support you? Where should I stay out of the driver’s seat?', keys: ['coaching','boundary'] },
 ] as const;

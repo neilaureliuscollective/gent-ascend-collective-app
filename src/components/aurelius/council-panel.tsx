@@ -141,7 +141,7 @@ export function CouncilPanel({
             <p className="council-scope">
               Scope: this conversation
               {includeContext
-                ? ', your relevant profile, goal, saved day and confirmed memories'
+                ? ', the saved source categories you selected'
                 : ''}
               . {includeContext ? 'Personal context is on.' : 'Personal context is off.'} Up to
               three specialist model calls and one Aethelios synthesis. Analysis and drafts only;

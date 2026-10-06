@@ -8,7 +8,9 @@ export const metadata: Metadata = {
   description: 'Develop creative projects, references and images with Aethelios.',
 };
 
-export default function StudioPage() {
+export default async function StudioPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
+  const { project } = await searchParams;
+  const initialProject = project && /^[0-9a-f-]{36}$/i.test(project) ? project : null;
   return (
     <div className="studio-page">
       <div className="studio-world-heading">
@@ -20,7 +22,7 @@ export default function StudioPage() {
         <Link className="text-link" href="/app/aethelios">Aethelios Chat ↗</Link>
       </div>
       <AetheliosSpaceNavigation placement="studio" />
-      <StudioWorkspace />
+      <StudioWorkspace key={initialProject} initialProject={initialProject} />
     </div>
   );
 }

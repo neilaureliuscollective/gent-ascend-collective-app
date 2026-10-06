@@ -2,7 +2,7 @@ import { CustomerOrders } from '@/components/commerce/customer-orders';
 import { customerOrdersWorkspace } from '@/domains/commerce/customer-workspace';
 import '../collection.css';
 export const metadata = {
-  title: 'Your orders | Gent Ascend',
+  title: 'Your orders | Aethelios',
   robots: { index: false, follow: false },
 };
 export default async function OrdersPage({

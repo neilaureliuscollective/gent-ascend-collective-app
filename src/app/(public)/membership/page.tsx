@@ -8,14 +8,14 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Founding membership',
-  description: 'Explore the three founding levels of Gent Ascend Collective.',
+  description: 'Explore the three founding levels of Aethelios.',
 };
 export default function Membership() {
   const enrollment = billingConfig(process.env)?.enrollment ?? false;
   return (
     <main id="world-main" className="founding-world">
       <header className="world-page-intro founding-intro">
-        <span className="world-kicker">Gent Ascend Collective / Founding membership</span>
+        <span className="world-kicker">Aethelios / Founding membership</span>
         <h1>
           Your standard.
           <br />
@@ -103,7 +103,7 @@ export default function Membership() {
           <em>Built to develop.</em>
         </h2>
         <p>
-          Your tier will develop as Gent Ascend grows. Founding-rate duration, current usage limits
+          Your tier will develop as Aethelios grows. Founding-rate duration, current usage limits
           and product benefits are governed by the launch terms shown before you subscribe. Future
           standard prices are not yet announced. Physical products ordered separately remain
           separate from your planned founding bundle.

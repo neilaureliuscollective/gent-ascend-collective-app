@@ -35,13 +35,12 @@ describe('Aethelios context boundaries', () => {
     expect(JSON.stringify(publicOnly)).not.toContain(context.memories[0]?.content);
     expect(publishedKnowledgeContext()).not.toMatch(/github|repository|secret|medical history/i);
   });
-  it('establishes the digital co-founder without impersonating the human founder or replacing relationships', () => {
-    expect(aureliusInstructions).toContain('You are Aethelios — Digital Co-Founder');
-    expect(aureliusInstructions).toContain('you are AI, not a human founder');
-    expect(aureliusInstructions).toContain('Never invent the founder');
-    expect(aureliusInstructions).toContain('never dependency on you');
-    expect(aureliusInstructions).toContain('Legacy Reserve is the separate product brand');
-    expect(aureliusInstructions).not.toMatch(/aurelius|aethelos/i);
+  it('establishes a public, inclusive intelligence environment without a founder relationship', () => {
+    expect(aureliusInstructions).toContain('public product and intelligence environment');
+    expect(aureliusInstructions).toContain('every gender');
+    expect(aureliusInstructions).toContain('Never impose a founder relationship');
+    expect(aureliusInstructions).toContain('Preserve human judgment');
+    expect(aureliusInstructions).not.toMatch(/men.s advancement|Gent Ascend Collective is the master/i);
   });
   it('rejects client-injected roles, person IDs and oversized inputs', () => {
     const input = {

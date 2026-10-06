@@ -5,7 +5,7 @@ export const worlds = [
     name: 'Performance',
     theme: 'Body & vitality',
     line: 'Strength for the life you carry.',
-    detail: 'Training, fuel and recovery. One part of the whole man.',
+    detail: 'Training, fuel and recovery. An optional specialist capability.',
     href: '/experience/performance',
     image: '/media/world/life-instrument.webp',
     number: '01',

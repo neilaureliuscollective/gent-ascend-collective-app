@@ -31,7 +31,7 @@ export function CustomerOrders({
       </header>
       {view.state === 'signed-out' ? (
         <>
-          <p>Sign in to your Gent Ascend account before connecting Shopify.</p>
+          <p>Sign in to your Aethelios account before connecting Shopify.</p>
           <Link href="/enter">Sign in →</Link>
         </>
       ) : view.state === 'unconfigured' ? (

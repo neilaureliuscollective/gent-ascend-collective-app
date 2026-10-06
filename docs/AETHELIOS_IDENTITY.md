@@ -1,3 +1,5 @@
+> Current founder-approved direction (2026-10-06): **Aethelios is the public product and intelligence environment.** Read [AETHELIOS_PUBLIC_FOUNDATION.md](AETHELIOS_PUBLIC_FOUNDATION.md). This supersedes Gent Ascend master-brand, male-only platform, dashboard-first entry and four-destination navigation proposals. Preserve person ownership, access/billing contracts, stable identifiers and optional engines. Phase1 approval covers implementation; its plan excludes production promotion.
+
 # Aethelios — Digital Co-Founder
 
 Founder-authorized identity correction, 2026-09-22. This supersedes previous documents that describe Aurelius as the public AI. Historical filenames, migration history and technical identifiers are not public naming guidance.

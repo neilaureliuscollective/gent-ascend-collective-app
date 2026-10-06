@@ -4,7 +4,7 @@ import { scanWorkspace } from '@/domains/grooming/scan';
 import { currentPerson } from '@/domains/person/current';
 import { deleteScanAction } from './actions';
 import '../grooming.css';
-export const metadata = { title: 'Ascend Mirror | Gent Ascend' };
+export const metadata = { title: 'Ascend Mirror | Aethelios' };
 export default async function Scan({
   searchParams,
 }: {

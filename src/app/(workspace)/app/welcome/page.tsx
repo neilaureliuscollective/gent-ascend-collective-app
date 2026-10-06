@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { AccountClaim } from '@/components/world/account-claim';
 import Image from 'next/image';
 import { FirstSession } from '@/components/first-session';
 import { InstallGuide } from '@/components/install-guide';
@@ -32,10 +34,11 @@ export default async function Welcome({
     : [new Set<string>(), null];
   return (
     <>
+      <Suspense fallback={null}><AccountClaim /></Suspense>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Your first chapter</p>
-          <h1>Welcome to your ascent.</h1>
+          <p className="eyebrow">Aethelios / Your first chapter</p>
+          <h1>Welcome to Aethelios.</h1>
         </div>
       </div>
       {params.status && notices[params.status] && (
@@ -47,7 +50,7 @@ export default async function Welcome({
         <section className="panel pilot-section">
           <h2>Your own space begins here.</h2>
           <p>
-            Create a free account or sign in to keep your direction, routines and training
+            Create a free account or sign in to keep your saved decisions, goals and creative work
             connected.
           </p>
           <Link className="button" href="/enter">
@@ -56,7 +59,7 @@ export default async function Welcome({
         </section>
       ) : (
         <>
-          <section className="pilot-entry" aria-label="Your Gent Ascend space">
+          <section className="pilot-entry" aria-label="Your Aethelios space">
             <Image src={brand.crest} alt="" width={90} height={90} preload />
             <div>
               <p className="eyebrow">YOUR DIRECTION. YOUR WORLD.</p>
@@ -64,6 +67,7 @@ export default async function Welcome({
               <p>Start where it matters today. Your profile can develop as you use your space.</p>
             </div>
           </section>
+          <p><Link className="button" href="/app">Open Aethelios now →</Link> <Link href="/app/ascend-profile">Optional context setup →</Link></p>
           <FirstSession
             initial={priority?.mode === 'personal' ? priority : null}
             canTalk={access.has('aurelius.context')}

@@ -66,7 +66,7 @@ export function ConversationLibrary({
         <div className="library-brand">
           <span className="small-orb" aria-hidden="true" />
           <span>
-            AETHELIOS <small>DIGITAL CO-FOUNDER</small>
+            AETHELIOS <small>INTELLIGENCE ENVIRONMENT</small>
           </span>
         </div>
         <button

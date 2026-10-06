@@ -1,30 +1,30 @@
 /** Practical starting options, not generated advice or a saved personal assessment. */
 export const firstSessionPaths = {
   presence: {
-    label: 'Look sharper',
-    title: 'Make your daily grooming deliberate.',
+    label: 'Make a decision',
+    title: 'Find a clear way forward.',
     detail:
-      'Start with a simple ritual you can repeat. Your grooming space keeps your routine and products together.',
-    action: 'Choose my morning grooming ritual',
-    href: '/app/grooming',
-    destination: 'Open Grooming',
+      'Bring a decision, compare the tradeoffs and choose your next step.',
+    action: 'Prepare the decision I need to make',
+    href: '/app?starter=perspective',
+    destination: 'Open Aethelios',
   },
   body: {
-    label: 'Get stronger',
-    title: 'Make room for your next session.',
+    label: 'Create something',
+    title: 'Give an idea a useful form.',
     detail:
-      'Choose a session that fits your time and equipment. Log what you actually do, then build from it.',
-    action: 'Prepare my next training session',
-    href: '/app/performance',
-    destination: 'Open Performance',
+      'Develop a creative brief and review your work in Studio.',
+    action: 'Write a brief for my next creative project',
+    href: '/app/studio',
+    destination: 'Open Studio',
   },
   focus: {
     label: 'Get organized',
     title: 'Give one important thing your attention.',
     detail:
-      'Choose a manageable step for today. Command keeps it ready and lets you record what moved forward.',
+      'Choose a manageable step for today. Ongoing keeps it ready and lets you record what moved forward.',
     action: 'Spend twenty focused minutes on my priority',
-    href: '/app',
-    destination: 'Open Command',
+    href: '/app/ongoing',
+    destination: 'Open Ongoing',
   },
 } as const;

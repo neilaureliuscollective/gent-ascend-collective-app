@@ -13,7 +13,7 @@ const routes: CapabilityRoute[] = [
     id: 'studio',
     label: 'Studio',
     href: '/app/studio',
-    description: 'Creative work, presentations, plans, visual concepts and finished deliverables.',
+    description: 'Creative briefs, image projects, references and visual outputs.',
     instruction:
       'Treat this as a Studio-capable request. Do the thinking in conversation first, then shape a clear creative brief or next production step. Do not make the member restate the request when they open Studio.',
   },
@@ -35,15 +35,15 @@ const routes: CapabilityRoute[] = [
   },
   {
     id: 'life',
-    label: 'Life',
-    href: '/app/world',
+    label: 'Ongoing',
+    href: '/app/ongoing',
     description: 'Goals, progress, routines, priorities and broader life context.',
     instruction:
       'Treat this as a Life-context request. Connect the question to the member’s priorities and saved context without turning the answer into a dashboard tour.',
   },
   {
     id: 'collective',
-    label: 'Collective',
+    label: 'Products',
     href: '/app/collection',
     description: 'Products, services, membership benefits and physical-world support.',
     instruction:
@@ -61,6 +61,8 @@ const patterns: Array<[CapabilityId, RegExp]> = [
 
 export function routeCapability(text: string): CapabilityRoute | null {
   const value = text.trim();
+  // Explicit buying intent takes priority over the appearance noun in that request.
+  if (/\b(buy|order|reorder|purchase|checkout)\b/i.test(value)) return routes.find(route => route.id === 'collective') ?? null;
   if (!value) return null;
   for (const [id, pattern] of patterns) {
     if (pattern.test(value)) return routes.find((route) => route.id === id) ?? null;

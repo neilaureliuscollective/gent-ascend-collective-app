@@ -15,15 +15,14 @@ export function ContextPanel({
       <p className="eyebrow">The person behind the conversation</p>
       <h3>A fuller picture. On your terms.</h3>
       <p>
-        Your profile, active goal and confirmed memories can inform each new message. You choose
-        what to share.
+        Selected saved categories can inform each new message. Choose them beside the composer. Viewing records here does not send them to a model.
       </p>
       <div className="context-scope">
         <span className="context-indicator" data-active={!preview && included} aria-hidden="true" />
         {preview
           ? 'Preview · no personal data loaded'
           : included
-            ? 'Personal context is on for your next message'
+            ? 'Source sharing is enabled; only checked categories enter the next message'
             : 'Personal context is off for your next message'}
       </div>
       <div className="context-cards">
@@ -77,7 +76,7 @@ export function ContextPanel({
       <details className="context-boundaries">
         <summary>Understand the boundaries</summary>
         <p>
-          He receives up to 20 recent completed exchanges within a bounded context window. Older
+          Aethelios receives up to 20 recent completed exchanges within a bounded context window. Older
           conversations are saved, but are not automatically recalled.
         </p>
         <p>
@@ -85,8 +84,7 @@ export function ContextPanel({
           Start a new conversation for a fresh context.
         </p>
         <p>
-          Live web research, voice, file uploads and external actions are not connected in this
-          release.
+          Read-only web research can support replies. Live voice, chat file uploads and external execution are not connected in this release.
         </p>
         {!preview && (
           <p>

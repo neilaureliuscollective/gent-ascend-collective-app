@@ -25,7 +25,7 @@ import {
   deletePhotoAction,
 } from './actions';
 import './grooming.css';
-export const metadata = { title: 'Grooming Concierge | Gent Ascend' };
+export const metadata = { title: 'Grooming Concierge | Aethelios' };
 export default async function Grooming({
   searchParams,
 }: {
@@ -81,7 +81,7 @@ export default async function Grooming({
       <summary>Direction, routines & private history</summary>
       <header className="groom-hero groom-hero-v2">
         <div className="groom-hero-copy">
-          <p className="eyebrow">GENT ASCEND / GROOMING CONCIERGE</p>
+          <p className="eyebrow">AETHELIOS / GROOMING CONCIERGE</p>
           <h1>
             Your standard.
             <br />
