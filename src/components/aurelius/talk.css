@@ -431,3 +431,21 @@
     padding-inline: 0.5rem;
   }
 }
+
+/* Mission controls share the active public theme; no palette override. */
+.talk-mission { min-width: 0; flex: 1 1 100%; }
+.talk-mission-trigger { cursor: pointer; overflow-wrap: anywhere; padding: .4rem 0; }
+.mission-continuity { padding: 1rem 0; min-width: 0; overflow-wrap: anywhere; }
+.mission-continuity h3 { margin: .4rem 0; font-size: 1.25rem; }
+.mission-actions, .mission-recent { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.mission-recent { width: 100%; }
+.mission-actions button, .mission-actions a { min-height: 44px; }
+.mission-proposal { border: 1px solid var(--muted); padding: .8rem; margin: 1rem 0; }
+.mission-proposal label, .mission-proposal .quiet-label { display: block; margin: .5rem 0; }
+.mission-proposal textarea { width: 100%; max-width: 100%; }
+.mission-output-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.studio-mission-return { grid-column: 1 / -1; }
+dialog.mission-dialog { width: min(760px, 96vw); max-height: 90dvh; overflow-y: auto; background: var(--surface); color: var(--text); }
+@media (max-width: 720px) {
+ dialog.mission-dialog { width: calc(100vw - 1rem); height: calc(100dvh - 2rem); max-height: calc(100dvh - 2rem); padding: 1rem; border-radius: 1rem; }
+}

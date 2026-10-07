@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const state = vi.hoisted(() => ({
   owner: 'member-a',
   companyId: null as string | null,
+  missionConversation: 'cd000000-0000-4000-8000-000000000001',
+  missionFailure:false,
+  rpcCalls:[] as string[],
   filters: [] as Array<{ table: string; column: string; value: unknown }>,
   bridge: vi.fn(async () => 'PRIVATE_FOUNDER_NOTEBOOK'),
 }));
@@ -29,12 +32,12 @@ vi.mock('../src/domains/person/current', () => ({
 vi.mock('../src/domains/identity/current', () => ({
   currentIdentity: async () => ({
     client: {
-      rpc: async () => ({ data: true, error: null }),
+      rpc: async (name:string) => { state.rpcCalls.push(name); return name==='mission_capture_context' ? {data:state.missionFailure?null:{objective:'SELECTED_MISSION_ONLY',revision:2},error:state.missionFailure?{code:'40001'}:null} : {data:true,error:null}; },
       from: (table: string) => {
         const owner = state.owner;
         const result = (single = false) => {
           const data =
-            table === 'ai_conversations'
+            table === 'intelligence_missions' ? {conversation_id:state.missionConversation} : table === 'ai_conversations'
               ? single
                 ? { id: 'conversation', company_id: state.companyId, context_summary: '', summary_through: null }
                 : []
@@ -94,6 +97,9 @@ beforeEach(() => {
   state.owner = 'member-a';
   state.companyId = null;
   state.filters = [];
+  state.rpcCalls=[];
+  state.missionFailure=false;
+  state.missionConversation=input.conversationId;
   state.bridge.mockClear();
 });
 describe('Council member context boundary', () => {
@@ -169,3 +175,28 @@ describe('company Talk retrieval boundary', () => {
    expect(JSON.stringify(result.messages)).toContain('SELECTED_COMPANY_ONLY');
    expect(state.filters.some(filter => filter.table === 'ai_memories')).toBe(false);
  });
+
+describe('Mission context in real reply preparation',()=>{
+ it('includes the captured revision for Council with personal context disabled',async()=>{
+  const prepared=await prepareReply({...input,includeContext:false,mission:{id:'mission-a',revision:2}});
+  expect(JSON.stringify(prepared.messages)).toContain('SELECTED_MISSION_ONLY');
+  expect(state.rpcCalls).toContain('mission_capture_context');
+  expect(state.filters.some(f=>f.table==='ai_memories')).toBe(false);
+  expect(state.filters).toContainEqual({table:'intelligence_missions',column:'person_id',value:'member-a'});
+ });
+ it('does not fetch Mission state without the explicit scope',async()=>{
+  const prepared=await prepareReply({...input,includeContext:false});
+  expect(JSON.stringify(prepared.messages)).not.toContain('SELECTED_MISSION_ONLY');
+  expect(state.rpcCalls).not.toContain('mission_capture_context');
+ });
+ it('rejects cross-conversation and stale Mission context before a model request',async()=>{
+  state.missionConversation='another-conversation';
+  await expect(prepareReply({...input,mission:{id:'mission-a',revision:2}})).rejects.toThrow('No model request was sent');
+  state.missionConversation=input.conversationId;state.missionFailure=true;
+  await expect(prepareReply({...input,mission:{id:'mission-a',revision:2}})).rejects.toThrow('No model request was sent');
+  expect(state.rpcCalls).toContain('ai_finish_turn');
+ });
+ it('rejects Mission context in a company room',async()=>{
+  await expect(prepareReply({...input,includeContext:false,companyId:'company-a',mission:{id:'mission-a',revision:2}})).rejects.toThrow('cannot enter a company room');
+ });
+});

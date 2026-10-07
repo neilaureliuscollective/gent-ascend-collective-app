@@ -4,14 +4,14 @@ export default function PublicHome() {
   return (
     <main id="world-main" className="company-arrival">
       <section aria-labelledby="arrival-title">
-        <span className="eyebrow">AETHELIOS / COMPANY-BUILDING INTELLIGENCE</span>
+        <span className="eyebrow">AETHELIOS / PERSONAL INTELLIGENCE OS</span>
         <h1 id="arrival-title">
           Bring the ambition.
           <br />
-          <em>Build the company.</em>
+          <em>Move your world forward.</em>
         </h1>
         <p>
-          Research the opportunity. Sharpen the offer. Shape the next move. Aethelios brings
+          Bring a decision, a personal project or a business ambition. Aethelios brings
           conversation, specialist perspectives and creative work into one considered environment.
         </p>
         <div className="company-arrival-actions">

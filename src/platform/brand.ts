@@ -3,7 +3,7 @@ export const brand = {
   name: 'Aethelios',
   shortName: 'Aethelios',
   description:
-    'Company-building intelligence for founders and operators. Research, strategy and creative work in one conversational environment.',
+    'Your Personal Intelligence OS. Conversations, decisions, creative work and ongoing Missions in one connected environment.',
   themeColor: '#030806',
   crest: '/brand/aethelios-deep-green-20261006.webp',
   lockup: '/brand/aethelios-deep-green-20261006.webp',
