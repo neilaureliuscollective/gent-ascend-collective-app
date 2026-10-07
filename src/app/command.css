@@ -8,9 +8,7 @@
   isolation: isolate;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% 54%, #0e4a3d55, transparent 51%),
-    radial-gradient(ellipse at 85% 2%, #c4912f12, transparent 40%),
-    linear-gradient(155deg, #0d1915, #050706 65%);
+    radial-gradient( ellipse at 50% 54%, color-mix(in srgb, var(--aether-petrol) 33.33%, transparent), transparent 51% ), radial-gradient(ellipse at 85% 2%, #c4912f12, transparent 40%), linear-gradient(155deg, var(--aether-surface), var(--aether-obsidian) 65%);
   border-radius: 28px;
   box-shadow:
     inset 0 1px #d7bb7430,
@@ -21,7 +19,7 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: linear-gradient(110deg, transparent 20%, #adc7b508 45%, transparent 65%);
+  background: linear-gradient( 110deg, transparent 20%, color-mix(in srgb, var(--aether-silver) 3.14%, transparent) 45%, transparent 65% );
   pointer-events: none;
 }
 .command-arrival {
@@ -93,7 +91,7 @@
 .field-horizon {
   position: absolute;
   inset: 45% 12% 0;
-  background: radial-gradient(ellipse at center, #28796328, transparent 70%);
+  background: radial-gradient( ellipse at center, color-mix(in srgb, var(--aether-luminous) 15.69%, transparent), transparent 70% );
   transform: perspective(550px) rotateX(55deg);
   border-radius: 50%;
   border-bottom: 1px solid #b1914740;
@@ -124,7 +122,7 @@
 }
 .field-orbit {
   fill: none;
-  stroke: #83bfa329;
+  stroke: color-mix(in srgb, var(--aether-silver) 16.08%, transparent);
   stroke-width: 1;
 }
 .field-orbit.outer {
@@ -169,7 +167,7 @@
   max-width: 245px;
   text-align: left;
   border: 0;
-  background: linear-gradient(110deg, #0a1713ee, #0a171322);
+  background: linear-gradient( 110deg, color-mix(in srgb, var(--aether-midnight) 93.33%, transparent), color-mix(in srgb, var(--aether-midnight) 13.33%, transparent) );
   border-radius: 0;
   padding: 14px 18px;
   color: #f0efe5;
@@ -182,7 +180,7 @@
 .field-signal:hover,
 .field-signal[aria-expanded='true'] {
   transform: translateY(-3px);
-  background: linear-gradient(110deg, #153b2fee, #0a171377);
+  background: linear-gradient( 110deg, color-mix(in srgb, var(--aether-petrol) 93.33%, transparent), color-mix(in srgb, var(--aether-midnight) 46.67%, transparent) );
   box-shadow: inset 2px 0 #ddbd76;
 }
 .field-signal .signal-mark {
@@ -190,7 +188,7 @@
   right: 10px;
   top: 14px;
   font-size: 0.65rem;
-  color: #859888;
+  color: var(--aether-silver);
 }
 .signal-label {
   display: block;
@@ -230,7 +228,7 @@
 .signal-detail {
   margin: 0 38px 24px;
   padding: 24px;
-  background: #0b211a;
+  background: var(--aether-surface);
   border-left: 2px solid #d6ad60;
   display: flex;
   justify-content: space-between;
@@ -299,8 +297,8 @@
 .trajectory-bar {
   width: 8px;
   border-radius: 5px;
-  background: linear-gradient(#e5c27f, #1c7960);
-  box-shadow: 0 0 14px #689e5933;
+  background: linear-gradient(#e5c27f, var(--aether-luminous));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--aether-luminous) 20%, transparent);
 }
 .trajectory-bar[data-gap='true'] {
   background: #777b72;
@@ -318,7 +316,7 @@
   justify-content: space-between;
   gap: 30px;
   padding: 30px 38px 36px;
-  background: linear-gradient(90deg, #17362955, transparent);
+  background: linear-gradient( 90deg, color-mix(in srgb, var(--aether-deep) 33.33%, transparent), transparent );
   border-top: 1px solid #b6a46725;
 }
 .command-next > div > span,
@@ -349,7 +347,7 @@
   gap: 18px;
   flex-shrink: 0;
   background: #e1c08b;
-  color: #152219;
+  color: var(--aether-silver);
   border: 0;
   border-radius: 50px;
   padding: 14px 22px;
@@ -557,7 +555,7 @@
   .field-signal {
     width: 44%;
     padding: 10px 12px;
-    background: linear-gradient(110deg, #0b1d18ee, #0b1d1888);
+    background: linear-gradient( 110deg, color-mix(in srgb, var(--aether-surface) 93.33%, transparent), color-mix(in srgb, var(--aether-surface) 53.33%, transparent) );
     max-width: none;
   }
   .signal-0 {
@@ -733,10 +731,10 @@ html[data-quiet='true'] .command-briefing * {
   transition: none !important;
 }
 html[data-material='solid'] .field-signal {
-  background: #0a1a14;
+  background: var(--aether-surface);
 }
 html[data-material='solid'] .command-environment {
-  background: radial-gradient(ellipse at 50% 50%, #0b3b32, #050706 70%);
+  background: radial-gradient(ellipse at 50% 50%, var(--aether-petrol), var(--aether-obsidian) 70%);
 }
 @media (forced-colors: active) {
   .field-connections,
@@ -774,7 +772,7 @@ html[data-material='solid'] .command-environment {
 }
 .field-signal:hover,
 .field-signal[aria-expanded='true'] {
-  background: radial-gradient(ellipse at left, #20644b44, transparent);
+  background: radial-gradient( ellipse at left, color-mix(in srgb, var(--aether-petrol) 26.67%, transparent), transparent );
   box-shadow: none;
   border-left-color: #ddbd76;
 }
@@ -789,7 +787,7 @@ html[data-material='solid'] .command-environment {
 .signal-completion i {
   width: 15px;
   height: 2px;
-  background: #71857555;
+  background: color-mix(in srgb, var(--aether-luminous) 33.33%, transparent);
 }
 .signal-completion i[data-done='true'] {
   background: #ddbd76;
@@ -1213,14 +1211,14 @@ html[data-material='solid'] .command-environment {
   inset: -18%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(ellipse, #398e6533, transparent 68%);
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-luminous) 20%, transparent), transparent 68% );
 }
 .field-horizon {
   border: 0;
-  background: radial-gradient(ellipse at center, #27785f40, transparent 70%);
+  background: radial-gradient( ellipse at center, color-mix(in srgb, var(--aether-luminous) 25.1%, transparent), transparent 70% );
 }
 .field-connections path {
-  stroke: #70b29966;
+  stroke: color-mix(in srgb, var(--aether-silver) 40%, transparent);
   stroke-dasharray: none;
 }
 .field-connections g[data-selected='true'] path {
@@ -1234,7 +1232,7 @@ html[data-material='solid'] .command-environment {
 .field-signal:hover,
 .field-signal[aria-expanded='true'] {
   border-left: 0;
-  background: radial-gradient(ellipse at left, #24634c33, transparent);
+  background: radial-gradient( ellipse at left, color-mix(in srgb, var(--aether-petrol) 20%, transparent), transparent );
   box-shadow: none;
 }
 .field-signal[aria-expanded='true'] .signal-label {
@@ -1252,18 +1250,16 @@ html[data-material='solid'] .command-environment {
   border-radius: 6px;
   box-shadow: none;
   background:
-    linear-gradient(90deg, #050d0ce8, #071b14be 55%, #050d0cd9),
-    url('/media/world/whole-man-chamber-v2.webp') center 58% / cover no-repeat;
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 90.98%, transparent), color-mix(in srgb, var(--aether-surface) 74.51%, transparent) 55%, color-mix(in srgb, var(--aether-obsidian) 85.1%, transparent) ), url('/media/world/whole-man-chamber-v2.webp') center 58% / cover no-repeat;
 }
 .command-environment:before {
-  background: radial-gradient(ellipse at 68% 53%, #277c5033, transparent 55%);
+  background: radial-gradient( ellipse at 68% 53%, color-mix(in srgb, var(--aether-luminous) 20%, transparent), transparent 55% );
 }
 @media (max-width: 750px) {
   .command-environment {
     border-radius: 4px;
     background:
-      linear-gradient(180deg, #06110ee8, #081b14b8 52%, #050d0cee),
-      url('/media/world/whole-man-chamber-v2.webp') center/cover no-repeat;
+      linear-gradient( 180deg, color-mix(in srgb, var(--aether-midnight) 90.98%, transparent), color-mix(in srgb, var(--aether-surface) 72.16%, transparent) 52%, color-mix(in srgb, var(--aether-obsidian) 93.33%, transparent) ), url('/media/world/whole-man-chamber-v2.webp') center/cover no-repeat;
   }
 }
 .shell-energy-icon {
@@ -1347,7 +1343,7 @@ html[data-material='solid'] .command-environment {
     stroke: #e2c991;
   }
   to {
-    stroke: #65977c;
+    stroke: var(--aether-luminous);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1409,7 +1405,7 @@ html[data-motion='still'] .field-space[data-changed='true'] .field-connections p
   display: grid;
   place-content: center;
   text-align: center;
-  background: radial-gradient(ellipse, #0b3b32d9, #050706f5);
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-petrol) 85.1%, transparent), color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) );
   animation: command-opening 1.8s ease both;
 }
 .command-opening > span {

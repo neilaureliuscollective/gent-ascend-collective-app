@@ -3,7 +3,7 @@
   isolation: isolate;
   height: 410svh;
   scroll-margin-top: 122px;
-  background: #030b08;
+  background: var(--aether-obsidian);
   color: #eee9dd;
 }
 .life-system-stage {
@@ -17,7 +17,7 @@
   gap: clamp(20px, 4vw, 80px);
   padding: 42px 6vw 68px;
   overflow: hidden;
-  background: #030a08;
+  background: var(--aether-obsidian);
 }
 .life-system-environment,
 .life-system-environment-shade {
@@ -30,8 +30,7 @@
   object-position: center;
 }
 .life-system-environment-shade {
-  background: linear-gradient(90deg, #020604f5 0%, #020604d4 31%, #02060473 58%, #02060417 100%),
-    linear-gradient(0deg, #020604bd, transparent 40%);
+  background: linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) 0%, color-mix(in srgb, var(--aether-obsidian) 83.14%, transparent) 31%, color-mix(in srgb, var(--aether-obsidian) 45.1%, transparent) 58%, color-mix(in srgb, var(--aether-obsidian) 9.02%, transparent) 100% ), linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 74.12%, transparent), transparent 40% );
 }
 .life-system-stage::before {
   content: '';
@@ -130,8 +129,7 @@
   border: 1px solid #d0ac643c;
   border-radius: 50%;
   box-shadow:
-    0 0 90px #28644618,
-    inset 0 0 100px #28644620;
+    0 0 90px color-mix(in srgb, var(--aether-petrol) 9.41%, transparent), inset 0 0 100px color-mix(in srgb, var(--aether-petrol) 12.55%, transparent);
   transform: rotate(calc((var(--step, 1) - 1) * 28deg));
   transition: transform 700ms cubic-bezier(0.2, 0.65, 0.2, 1);
   pointer-events: none;
@@ -150,7 +148,7 @@
 }
 .life-system-orbits::after {
   inset: 24%;
-  border-color: #6e9b7945;
+  border-color: color-mix(in srgb, var(--aether-luminous) 27.06%, transparent);
 }
 .life-system-orbits i:first-child {
   width: 9px;
@@ -180,10 +178,9 @@
   padding: 12px;
   border: 1px solid #d4bc7765;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 22%, #285742, #09241a 66%, #04130e);
+  background: radial-gradient( circle at 38% 22%, var(--aether-petrol), var(--aether-surface) 66%, var(--aether-midnight) );
   box-shadow:
-    0 0 55px #c4912f18,
-    inset 0 0 45px #0d3024;
+    0 0 55px #c4912f18, inset 0 0 45px var(--aether-deep);
 }
 .life-system-center strong {
   font:
@@ -365,7 +362,7 @@
     padding: 10px 14px;
     color: #f1dfad;
     border: 1px solid #c4912f99;
-    background: #103c2d;
+    background: var(--aether-petrol);
     font: inherit;
     letter-spacing: 0.09em;
     cursor: pointer;
@@ -609,8 +606,7 @@
     object-position: 60% center;
   }
   .life-system[data-directed='true'] .life-system-environment-shade {
-    background: linear-gradient(90deg, #020604e5, #0206047a 66%, #02060429),
-      linear-gradient(0deg, #020604e8, transparent 58%);
+    background: linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 89.8%, transparent), color-mix(in srgb, var(--aether-obsidian) 47.84%, transparent) 66%, color-mix(in srgb, var(--aether-obsidian) 16.08%, transparent) ), linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 90.98%, transparent), transparent 58% );
   }
   .life-system[data-directed='true'] .life-system-orbits { display: none; }
   .life-system[data-directed='true'] .life-system-intro {
@@ -634,7 +630,7 @@
 @media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
   .life-system[data-directed='true'] .life-system-environment img { object-position: 52% 26%; }
   .life-system[data-directed='true'] .life-system-environment-shade {
-    background: linear-gradient(0deg, #020604f7 0%, #020604e8 34%, #02060491 65%, #02060434 100%);
+    background: linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 96.86%, transparent) 0%, color-mix(in srgb, var(--aether-obsidian) 90.98%, transparent) 34%, color-mix(in srgb, var(--aether-obsidian) 56.86%, transparent) 65%, color-mix(in srgb, var(--aether-obsidian) 20.39%, transparent) 100% );
   }
   .life-system[data-directed='true'] .life-system-story { width: 96%; margin-top: 18px; }
   .life-system[data-directed='true'] .life-system-disclosure { margin-bottom: 8px; }

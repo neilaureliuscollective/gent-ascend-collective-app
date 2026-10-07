@@ -1,3 +1,24 @@
+# Public Aethelios · Aether Petrol visual migration · 2026-10-07
+
+Implemented the founder-approved Black × Gold × Aether Petrol system on the existing public product. Scope and audit: [AETHER_PETROL.md](AETHER_PETROL.md). One shared palette feeds CSS, active orb shaders and browser metadata. Core/legacy reachable surfaces, Talk/Council/Missions/Studio chrome, navigation, account/pricing, SVG/static fallback, app and Apple icons are aligned. Technical aliases remain for component compatibility; errors/warnings and content assets retain their meaning. No domain service, database, model routing, access, billing or persistence code changed.
+
+Responsive corrections found during visual QA: the longer descriptor now wraps in both narrow public headers and the desktop rail; mobile Talk no longer covers main navigation; Council controls retain 44px targets while leaving over 60% of the conversation surface for messages in the tested normal-height viewports. Existing keyboard-height handling and draft preservation pass.
+
+Observed validation:
+- Lint and strict typecheck: PASS.
+- Production build: PASS (Next 16.3.5 / Node 24).
+- Unit suite: 56 files / 409 tests PASS, including 2 new contrast-role checks.
+- Focused Playwright regression: 26 PASS (Aether identity/icons/fallback, company navigation, Council, Mission handoff/conflict, Talk draft/editor/focus/short-screen). Phone widths 320/344/360/390/412, Fold/tablet 720/768/1024, desktop 1440/1920, and large display 2560 covered across cases. Used local Chromium; API interceptions are explicitly synthetic, not live AI.
+- Actual local page screenshots: Talk, public home, sign-in, membership, profile, Work and Studio. No horizontal overflow in the final inspected narrow/desktop layouts. Orb WebGL successfully rendered; reduced-motion fallback and Escape/focus restoration passed.
+- Migration ledger snapshot: 28 application-owned migrations verified. No migration changes; this is not a real Supabase integration test.
+- `git diff --check`: PASS.
+
+Review screenshots: [desktop Talk](evidence/aether-petrol/talk.webp), [phone](evidence/aether-petrol/mobile.webp), [unfolded](evidence/aether-petrol/fold.webp), [public home](evidence/aether-petrol/home.webp).
+
+Remaining release checks: physical Samsung Fold/TV performance, installed-device PWA icon refresh, and real Supabase/live-model behavior were not retested in this visual-only environment. Production promotion remains separately gated by founder approval. No deployment performed.
+
+---
+
 ## Public intelligence team + activation — 2026-10-06
 
 Founder-authorized Phase 2 implements visible Intelligence Team access, role starters, explained bounded routing, an outcome-first Talk welcome and first-session entry. Reuses the five existing Council model roles/calls/ledger and Aethelios synthesis. No private founder tools, seeds or context are copied. Public Missions preserve reviewed objective, decisions, questions, next actions and status around an existing owned conversation. Mission participants derive from completed cast receipts; resume stages a bounded owner/conversation-scoped draft without sending. Transcript/Library remain the output record; Ongoing and Studio are linked, not duplicated or falsely automated.

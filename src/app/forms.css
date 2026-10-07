@@ -38,7 +38,7 @@ textarea {
   resize: vertical;
   min-height: 80px;
   padding: 12px;
-  background: #0b1311;
+  background: var(--aether-midnight);
   border: 1px solid #78634b;
   color: #f4efe6;
   border-radius: 4px;
@@ -70,7 +70,7 @@ select {
 }
 .secondary-button {
   border: 1px solid #d6ae6260;
-  background: #121e1b;
+  background: var(--aether-surface);
   color: #f1d99e;
   padding: 10px 16px;
   border-radius: 4px;

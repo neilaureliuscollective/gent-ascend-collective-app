@@ -5,7 +5,7 @@
   margin: auto;
   padding: clamp(24px, 5vw, 64px) clamp(16px, 4vw, 42px);
   overflow-wrap: anywhere;
-  background: radial-gradient(ellipse at 80% 0%, #0b3b325c, transparent 65%);
+  background: radial-gradient( ellipse at 80% 0%, color-mix(in srgb, var(--aether-petrol) 36.08%, transparent), transparent 65% );
 }
 .command-arrival h1 {
   font-size: clamp(3.6rem, 14vw, 7rem);
@@ -116,7 +116,7 @@
   width: 100%;
   min-width: 0;
   min-height: 48px;
-  background: #091a14;
+  background: var(--aether-surface);
   color: #f2eee3;
   border: 1px solid #ffffff35;
   border-radius: 6px;
@@ -165,7 +165,7 @@
     transition: background 0.18s;
   }
   .command-decisions a:hover {
-    background: #0b3b3233;
+    background: color-mix(in srgb, var(--aether-petrol) 20%, transparent);
   }
 }
 @media (forced-colors: active) {

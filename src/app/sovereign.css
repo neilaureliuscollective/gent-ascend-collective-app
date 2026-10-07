@@ -1,47 +1,30 @@
-/* Founder-approved deep Aethelios green. Legacy destinations retain their own identity. */
-.aethelios-green {
-  --aethelios-green: #062a23;
-  --aethelios-green-shadow: #031812;
-  --aethelios-green-light: #0b3b32;
-  --obsidian-950: #030806;
-  --obsidian-900: #07110d;
-  --obsidian-800: #0a1a14;
-  --obsidian-700: #10251d;
-  /* Compatibility aliases for existing reusable materials; technical keys stay stable. */
-  --ascend-green-950: #031812;
-  --ascend-green-900: #042018;
-  --ascend-green-800: #062a23;
-  --ascend-green-700: #09352a;
-  --ascend-green-600: #0b3b32;
-  --surface-green: #031812;
-  --green: #042018;
-  --green-light: #0b3b32;
-  --enamel: #062a23;
-  --background: #030806;
-  --surface: #0a1a14;
-  --text-primary: #f5f1e9;
-  --text-secondary: #b9c2ba;
-  --text: #f5f1e9;
-  --muted: #b9c2ba;
-  background: #030806;
-  color: var(--text);
+/* Public Aethelios: midnight space, petrol depth, restrained intelligent light. */
+.aethelios-aether {
+  background: var(--aether-obsidian);
+  color: var(--aether-text);
 }
-.aethelios-green .sidebar,
-.aethelios-green .mobile-nav {
-  background: linear-gradient(155deg, #031812, #030806 75%);
+.aethelios-aether .sidebar,
+.aethelios-aether .mobile-nav {
+  background: linear-gradient(155deg, var(--aether-midnight), var(--aether-obsidian) 75%);
 }
-.aethelios-green :is(.aethelios-page, .company-room-focused) {
-  background: radial-gradient(ellipse at 85% 0, #062a2333, transparent 55%), #030806;
+.aethelios-aether :is(.aethelios-page, .company-room-focused) {
+  background:
+    radial-gradient(
+      ellipse at 85% 0,
+      color-mix(in srgb, var(--aether-deep) 20%, transparent),
+      transparent 55%
+    ),
+    var(--aether-obsidian);
 }
-.aethelios-green :is(.aurelius-workspace, .company-room) {
+.aethelios-aether :is(.aurelius-workspace, .company-room) {
   background-color: transparent;
 }
-.aethelios-green :is(.talk-drawer, .talk-expanded-editor, .council-dialog) {
-  background: #031812;
-  color: #f5f1e9;
+.aethelios-aether :is(.talk-drawer, .talk-expanded-editor, .council-dialog) {
+  background: var(--aether-midnight);
+  color: var(--aether-text);
 }
-.aethelios-green :is(.user-message, .conversation-item.is-active) {
-  background: #062a2355;
+.aethelios-aether :is(.user-message, .conversation-item.is-active) {
+  background: color-mix(in srgb, var(--aether-deep) 33.33%, transparent);
 }
 .talk-presence {
   display: inline-flex;
@@ -55,7 +38,7 @@
   padding: 0;
   border: 1px solid #c4912f66;
   border-radius: 50%;
-  background: #031812;
+  background: var(--aether-midnight);
 }
 .talk-orb {
   position: relative;
@@ -75,11 +58,10 @@
   inset: 12%;
   border-radius: 50%;
   overflow: hidden;
-  background: radial-gradient(circle at 32% 28%, #0b3b32, #062a23 42%, #031812 75%);
+  background: radial-gradient( circle at 32% 28%, var(--aether-petrol), var(--aether-deep) 42%, var(--aether-midnight) 75% );
   border: 1px solid #c4912f66;
   box-shadow:
-    inset -8px -8px 12px #030806aa,
-    0 0 16px #0b3b3244;
+    inset -8px -8px 12px color-mix(in srgb, var(--aether-obsidian) 66.67%, transparent), 0 0 16px color-mix(in srgb, var(--aether-petrol) 26.67%, transparent);
 }
 .talk-orb .intelligence-orb[data-rendered='true'] .intelligence-orb-static {
   opacity: 0;
@@ -98,7 +80,7 @@
 .talk-orb .intelligence-orb-light {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 28%, #427b6144, transparent 35%);
+  background: radial-gradient( circle at 30% 28%, color-mix(in srgb, var(--aether-luminous) 26.67%, transparent), transparent 35% );
 }
 .talk-presence[data-state='working'] > button {
   border-color: #e8c780;
@@ -126,20 +108,24 @@
   }
 }
 
-.aethelios-green .council-dialog header {
-  background: #031812;
+.aethelios-aether .council-dialog header {
+  background: var(--aether-midnight);
 }
-.aethelios-green .aethelios-today {
-  background: #062a2344;
+.aethelios-aether .aethelios-today {
+  background: color-mix(in srgb, var(--aether-deep) 26.67%, transparent);
 }
-.aethelios-green .talk-title {
-  color: #b9c2ba;
+.aethelios-aether .talk-title {
+  color: var(--aether-silver);
 }
-.aethelios-green .conversation-starters button {
-  background: linear-gradient(140deg, #062a2380, #031812);
-  color: #f5f1e9;
+.aethelios-aether .conversation-starters button {
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--aether-deep) 50.2%, transparent),
+    var(--aether-midnight)
+  );
+  color: var(--aether-text);
   border-color: #c4912f40;
 }
-.aethelios-green .aurelius-composer {
-  background: linear-gradient(140deg, #082c22, #031812);
+.aethelios-aether .aurelius-composer {
+  background: linear-gradient(140deg, var(--aether-deep), var(--aether-midnight));
 }

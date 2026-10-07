@@ -19,7 +19,9 @@ for (const width of [360, 768, 1440]) {
     await expect(page.getByLabel('Message Aethelios')).toHaveValue(
       /scope an Ascend Architects engagement/,
     );
+    await page.getByRole('button', { name: 'Tools & context' }).click();
     await expect(page.getByRole('checkbox', { name: 'Use personal context' })).not.toBeChecked();
+    await page.keyboard.press('Escape');
     await page.screenshot({ path: `test-results/company-talk-${width}.png`, fullPage: true });
   });
 }

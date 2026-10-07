@@ -6,8 +6,7 @@
   padding: clamp(18px, 4vw, 52px);
   color: #efece3;
   background:
-    radial-gradient(ellipse at 80% 15%, #0b3b3277, transparent 62%),
-    linear-gradient(145deg, #091511, #050706);
+    radial-gradient( ellipse at 80% 15%, color-mix(in srgb, var(--aether-petrol) 46.67%, transparent), transparent 62% ), linear-gradient(145deg, var(--aether-midnight), var(--aether-obsidian));
   border-top: 1px solid #c4912f44;
 }
 .presence-concierge a {

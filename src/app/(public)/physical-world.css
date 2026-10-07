@@ -7,7 +7,7 @@
   height: 100svh;
   overflow: hidden;
   scroll-margin-top: 122px;
-  background: #040c09;
+  background: var(--aether-obsidian);
 }
 .reserve-world-environment,
 .reserve-world-shade,
@@ -23,8 +23,7 @@
 .reserve-world-shade {
   z-index: 1;
   background:
-    linear-gradient(90deg, #020806f5 0%, #03100cda 28%, #061a1370 57%, transparent 85%),
-    linear-gradient(0deg, #020806dd, transparent 22%, transparent 75%, #0208065c);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) 0%, color-mix(in srgb, var(--aether-midnight) 85.49%, transparent) 28%, color-mix(in srgb, var(--aether-surface) 43.92%, transparent) 57%, transparent 85% ), linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 86.67%, transparent), transparent 22%, transparent 75%, color-mix(in srgb, var(--aether-obsidian) 36.08%, transparent) );
 }
 .reserve-world-copy,
 .collective-world-copy {
@@ -86,9 +85,8 @@
   overflow: hidden;
   border: 1px solid #c69d576e;
   box-shadow:
-    0 28px 60px #0009,
-    inset 0 0 0 6px #06150f88;
-  background: #051810;
+    0 28px 60px #0009, inset 0 0 0 6px color-mix(in srgb, var(--aether-midnight) 53.33%, transparent);
+  background: var(--aether-midnight);
 }
 .reserve-world-craft img {
   object-fit: cover;
@@ -99,7 +97,7 @@
   inset: auto 0 0;
   padding: 18px 16px 12px;
   color: #f2dca9;
-  background: linear-gradient(transparent, #030b08e8 50%);
+  background: linear-gradient( transparent, color-mix(in srgb, var(--aether-obsidian) 90.98%, transparent) 50% );
   font:
     9px/1.4 var(--font-sans),
     sans-serif;
@@ -112,8 +110,7 @@
 .collective-world-shade {
   z-index: 1;
   background:
-    linear-gradient(90deg, #030907f7 0%, #030b09e8 25%, #030b0985 50%, transparent 80%),
-    linear-gradient(0deg, #020806d9, transparent 24%, transparent 72%, #0208066b);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 96.86%, transparent) 0%, color-mix(in srgb, var(--aether-obsidian) 90.98%, transparent) 25%, color-mix(in srgb, var(--aether-obsidian) 52.16%, transparent) 50%, transparent 80% ), linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 85.1%, transparent), transparent 24%, transparent 72%, color-mix(in srgb, var(--aether-obsidian) 41.96%, transparent) );
 }
 .collective-world-copy {
   padding-top: clamp(130px, 19svh, 225px);
@@ -128,7 +125,7 @@
   align-items: center;
   justify-content: center;
   padding: 125px 7vw 140px;
-  background: radial-gradient(ellipse at 50% 43%, #16422c 0%, #081f16 39%, #020806 75%), #030b08;
+  background: radial-gradient( ellipse at 50% 43%, var(--aether-petrol) 0%, var(--aether-surface) 39%, var(--aether-obsidian) 75% ), var(--aether-obsidian);
 }
 .estate-invitation::before {
   content: '';
@@ -136,8 +133,7 @@
   inset: 6% max(4vw, 20px);
   border: 1px solid #bf9b553e;
   box-shadow:
-    inset 0 0 95px #0008,
-    0 0 100px #154b322a;
+    inset 0 0 95px #0008, 0 0 100px color-mix(in srgb, var(--aether-petrol) 16.47%, transparent);
   pointer-events: none;
 }
 .estate-invitation::after {
@@ -191,7 +187,7 @@
   }
   .reserve-world-shade,
   .collective-world-shade {
-    background: linear-gradient(0deg, #030b08 0%, #030b08f1 29%, #030b088a 54%, transparent 80%);
+    background: linear-gradient( 0deg, var(--aether-obsidian) 0%, color-mix(in srgb, var(--aether-obsidian) 94.51%, transparent) 29%, color-mix(in srgb, var(--aether-obsidian) 54.12%, transparent) 54%, transparent 80% );
   }
   .reserve-world-copy,
   .collective-world-copy {

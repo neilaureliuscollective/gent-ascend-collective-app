@@ -9,14 +9,14 @@
   max-width: 94vw;
   padding: 18px;
   border: 1px solid #c4912f50;
-  background: #031812;
-  color: #eee9de;
+  background: var(--aether-midnight);
+  color: var(--aether-text);
   border-radius: 0 18px 18px 0;
   overflow: auto;
   z-index: 200;
 }
 .talk-drawer::backdrop {
-  background: #030806bb;
+  background: color-mix(in srgb, var(--aether-obsidian) 73.33%, transparent);
   backdrop-filter: blur(5px);
 }
 .talk-drawer > header {
@@ -88,7 +88,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #b8c9c1;
+  color: var(--aether-silver);
   font-size: 13px;
 }
 .aethelios-page.talk-page .aethelios-room-heading {
@@ -160,7 +160,7 @@
   padding: 6px 8px;
   border: 1px solid #c4912f50;
   border-radius: 22px;
-  background: linear-gradient(140deg, #082c22, #031812);
+  background: linear-gradient(140deg, var(--aether-deep), var(--aether-midnight));
 }
 .talk-page .aurelius-composer textarea.talk-input,
 .company-room textarea.talk-input {
@@ -175,7 +175,7 @@
   resize: none;
   background: transparent;
   font: 16px/1.5 var(--font-body, sans-serif);
-  color: #eee9de;
+  color: var(--aether-text);
   overflow-y: auto;
 }
 .talk-expand {
@@ -401,8 +401,8 @@
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #c4912f44;
-  background: #071b16;
-  color: #f0ece2;
+  background: var(--aether-surface);
+  color: var(--aether-text);
   border-radius: 0.5rem;
 }
 .mission-editor textarea {

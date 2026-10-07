@@ -2,7 +2,7 @@
   --founding-gold: #e0bb6a;
 }
 .founding-intro {
-  background: radial-gradient(ellipse at 80% 20%, #163f3266, transparent 65%);
+  background: radial-gradient( ellipse at 80% 20%, color-mix(in srgb, var(--aether-petrol) 40%, transparent), transparent 65% );
 }
 .founding-intro .founding-disclosure {
   max-width: 55rem;
@@ -21,7 +21,7 @@
   border-top: 1px solid #c4912f66;
 }
 .founding-level--signature {
-  background: linear-gradient(180deg, #0b3b3280, transparent);
+  background: linear-gradient( 180deg, color-mix(in srgb, var(--aether-petrol) 50.2%, transparent), transparent );
   padding-inline: 1.5rem;
 }
 .founding-level h2 {
@@ -93,7 +93,7 @@
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: radial-gradient(ellipse at center, #163e32, #070909 75%);
+  background: radial-gradient(ellipse at center, var(--aether-petrol), #070909 75%);
 }
 .launch-image img {
   width: 100%;
@@ -167,8 +167,8 @@
   width: 100%;
   min-width: 0;
   padding: 0.85rem;
-  border: 1px solid #45534b;
-  background: #0b1712;
+  border: 1px solid var(--aether-petrol);
+  background: var(--aether-midnight);
   color: #f3edde;
   border-radius: 6px;
 }

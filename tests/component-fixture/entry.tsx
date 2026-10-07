@@ -40,6 +40,7 @@ import { validationErrors, type FormAction } from '@/domains/shared/form-state';
 import type { GoalRow } from '@/platform/supabase/database';
 import '@/app/globals.css';
 import '@/app/interaction.css';
+import '@/app/aether-materials.css';
 import { GroomingDirectionEditor } from '@/components/grooming/direction';
 import '@/app/(workspace)/app/grooming/grooming.css';
 import { CollectionShowroom } from '@/components/commerce/collection-showroom';

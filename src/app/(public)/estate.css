@@ -1,6 +1,6 @@
 /* A continuous brand journey. All copy remains readable without animation/JS. */
 .estate-home {
-  background: #071f1a;
+  background: var(--aether-surface);
   color: #f5f1e9;
   isolation: isolate;
 }
@@ -39,7 +39,7 @@
   position: sticky;
   top: 78px;
   overflow: hidden;
-  background: #0b3b32;
+  background: var(--aether-petrol);
 }
 .estate-landscape,
 .estate-opening-shade,
@@ -53,8 +53,7 @@
 }
 .estate-opening-shade {
   background:
-    linear-gradient(90deg, #03110ddb, transparent 80%),
-    linear-gradient(0deg, #051d18b0, transparent 35%);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-midnight) 85.88%, transparent), transparent 80% ), linear-gradient( 0deg, color-mix(in srgb, var(--aether-surface) 69.02%, transparent), transparent 35% );
 }
 .estate-hero-copy {
   position: relative;
@@ -95,7 +94,7 @@
   padding: 17px 23px;
   border: 1px solid #c4912f9c;
   border-radius: 4px;
-  background: linear-gradient(115deg, #0b3b32ee, #071f1acc);
+  background: linear-gradient( 115deg, color-mix(in srgb, var(--aether-petrol) 93.33%, transparent), color-mix(in srgb, var(--aether-surface) 80%, transparent) );
   box-shadow:
     inset 0 1px #f7df9c26,
     0 8px 28px #0003;
@@ -105,7 +104,7 @@
   transition: background 0.2s;
 }
 .estate-primary:hover {
-  background: #155745;
+  background: var(--aether-petrol);
 }
 .estate-threshold {
   position: absolute;
@@ -128,7 +127,7 @@
   color: #d7dcd0;
 }
 .estate-veil {
-  background: #08291f;
+  background: var(--aether-deep);
   opacity: 0;
   pointer-events: none;
   z-index: 3;
@@ -157,7 +156,7 @@
   display: flex;
   justify-content: center;
   gap: clamp(12px, 4vw, 65px);
-  background: #061c17ee;
+  background: color-mix(in srgb, var(--aether-surface) 93.33%, transparent);
   backdrop-filter: blur(16px);
   border-block: 1px solid #c4912f30;
   padding: 18px 12px;
@@ -196,8 +195,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, #03170dd9, transparent 77%),
-    linear-gradient(0deg, #061f17 0%, transparent 20%);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-midnight) 85.1%, transparent), transparent 77% ), linear-gradient(0deg, var(--aether-surface) 0%, transparent 20%);
 }
 .estate-scene-copy {
   position: relative;
@@ -228,8 +226,7 @@
 .estate-collection {
   padding: 80px 7vw 90px;
   background:
-    radial-gradient(ellipse at 41% 48%, #164b36 0%, #08271d 37%, transparent 72%),
-    linear-gradient(135deg, #020806, #071c15 65%, #030906);
+    radial-gradient( ellipse at 41% 48%, var(--aether-petrol) 0%, var(--aether-deep) 37%, transparent 72% ), linear-gradient( 135deg, var(--aether-obsidian), var(--aether-surface) 65%, var(--aether-obsidian) );
   border-bottom: 1px solid #c4912f38;
 }
 .estate-collection-heading h2 {
@@ -311,7 +308,7 @@
   color: #f5dda6;
 }
 .estate-intelligence {
-  background: radial-gradient(ellipse at 75% 40%, #146b58 0, #0b3b32 26%, #071f1a 65%);
+  background: radial-gradient( ellipse at 75% 40%, var(--aether-luminous) 0, var(--aether-petrol) 26%, var(--aether-surface) 65% );
   perspective: 1200px;
 }
 .estate-intelligence-lines {
@@ -344,11 +341,9 @@
     80px Georgia,
     serif;
   color: #dec68c;
-  background: radial-gradient(circle at 35% 28%, #297a5e, #0b352a 40%, #020d09 70%);
+  background: radial-gradient( circle at 35% 28%, var(--aether-luminous), var(--aether-deep) 40%, var(--aether-obsidian) 70% );
   box-shadow:
-    inset -20px -30px 55px #000,
-    0 0 100px #63a47c30,
-    inset 2px 2px 3px #e8cb8660;
+    inset -20px -30px 55px #000, 0 0 100px color-mix(in srgb, var(--aether-silver) 18.82%, transparent), inset 2px 2px 3px #e8cb8660;
 }
 .estate-orbit > i {
   position: absolute;
@@ -401,7 +396,7 @@
 .estate-legacy-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, #061b13, #061b1366 60%, #061b1399);
+  background: linear-gradient( 0deg, var(--aether-surface), color-mix(in srgb, var(--aether-surface) 40%, transparent) 60%, color-mix(in srgb, var(--aether-surface) 60%, transparent) );
 }
 .estate-legacy-copy {
   position: relative;
@@ -421,7 +416,7 @@
 .estate-invitation {
   text-align: center;
   padding: 90px 7vw 120px;
-  background: radial-gradient(ellipse at 50% 0%, #134b36, #061a12 65%);
+  background: radial-gradient(ellipse at 50% 0%, var(--aether-petrol), var(--aether-surface) 65%);
 }
 .estate-invitation > img {
   margin: 0 auto 30px;
@@ -490,7 +485,7 @@
     object-position: 62% center;
   }
   .estate-opening-shade {
-    background: linear-gradient(0deg, #031910f5 0%, #03191099 48%, #03191033 100%);
+    background: linear-gradient( 0deg, color-mix(in srgb, var(--aether-surface) 96.08%, transparent) 0%, color-mix(in srgb, var(--aether-surface) 60%, transparent) 48%, color-mix(in srgb, var(--aether-surface) 20%, transparent) 100% );
   }
   .estate-hero-copy {
     padding: clamp(140px, 30svh, 260px) 7vw 60px;
@@ -552,7 +547,7 @@
     scroll-margin-top: 137px;
   }
   .estate-scene-shade {
-    background: linear-gradient(0deg, #062319 0%, #062319 22%, #062319d9 40%, transparent 72%);
+    background: linear-gradient( 0deg, var(--aether-surface) 0%, var(--aether-surface) 22%, color-mix(in srgb, var(--aether-surface) 85.1%, transparent) 40%, transparent 72% );
   }
   .estate-scene-copy h2 {
     font-size: 44px;
@@ -725,7 +720,7 @@
 .public-world:has(.estate-home) .world-header {
   position: fixed;
   height: 78px;
-  background: #051a14ed;
+  background: color-mix(in srgb, var(--aether-surface) 92.94%, transparent);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid #c4912f30;
 }

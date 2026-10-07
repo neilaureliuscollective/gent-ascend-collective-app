@@ -11,14 +11,14 @@ import './entrance.css';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
-  title: 'Enter Gent Ascend',
+  title: 'Enter Aethelios',
   robots: { index: false, follow: false },
 };
 
 const errors: Record<string, string> = {
   invalid: 'Enter a valid email and password.',
   credentials:
-    'That email and password were not accepted. Check the password saved for Gent Ascend.',
+    'That email and password were not accepted. Check the password saved for Aethelios.',
   service:
     'The account service could not complete sign-in. Your account is intact; try again shortly.',
   unavailable: 'The account service is unavailable here. Try again shortly.',
@@ -43,7 +43,7 @@ export default async function Enter({
           <i />
         </div>
         <div className="entrance-copy">
-          <p className="entrance-kicker">GENT ASCEND COLLECTIVE / THE PERSONAL WORLD</p>
+          <p className="entrance-kicker">AETHELIOS / PERSONAL INTELLIGENCE OS</p>
           <div className="entrance-emblem">
             <Image src={brand.crest} alt="" width={172} height={172} preload />
           </div>
@@ -60,7 +60,7 @@ export default async function Enter({
           </h1>
           <p className="entrance-statement">
             {identity
-              ? 'Your place inside Gent Ascend is ready when you are.'
+              ? 'Your place inside Aethelios is ready when you are.'
               : 'Create your own direction, daily practice and personal space.'}
           </p>
           <div className="entrance-threads" aria-hidden="true">
@@ -110,7 +110,7 @@ export default async function Enter({
                   required
                 />
                 <button className="entrance-primary" type="submit">
-                  Enter Gent Ascend <span aria-hidden="true">↗</span>
+                  Enter Aethelios <span aria-hidden="true">↗</span>
                 </button>
               </form>
               <p className="entrance-note">

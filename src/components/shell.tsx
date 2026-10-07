@@ -17,7 +17,7 @@ export function Shell({
 }) {
   return (
     <ConversationDraftProvider>
-      <div className="app-shell aethelios-green">
+      <div className="app-shell aethelios-aether">
         <AppRuntime />
         <VisualEnvironment>
           <ConnectionField />
@@ -54,7 +54,7 @@ export function Shell({
               <Brand compact />
             </Link>
             <span className="topbar-context">
-              AETHELIOS <span>/</span> COMPANY INTELLIGENCE
+              AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
             </span>
             <div className="topbar-actions">
               <UniversalCapture />

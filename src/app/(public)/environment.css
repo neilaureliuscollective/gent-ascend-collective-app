@@ -14,7 +14,7 @@
 .atmosphere-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #041c16c9, #06271f44 70%, #03151022);
+  background: linear-gradient( 90deg, color-mix(in srgb, var(--aether-surface) 78.82%, transparent), color-mix(in srgb, var(--aether-deep) 26.67%, transparent) 70%, color-mix(in srgb, var(--aether-midnight) 13.33%, transparent) );
 }
 .atmosphere-light {
   position: absolute;
@@ -35,8 +35,7 @@
   inset: 35% 0 0;
   opacity: 0.25;
   background:
-    radial-gradient(ellipse at 65% 80%, #8baf9133, transparent 58%),
-    radial-gradient(ellipse at 20% 65%, #e3bf7120, transparent 45%);
+    radial-gradient( ellipse at 65% 80%, color-mix(in srgb, var(--aether-silver) 20%, transparent), transparent 58% ), radial-gradient(ellipse at 20% 65%, #e3bf7120, transparent 45%);
   animation: estate-air 24s ease-in-out infinite alternate;
 }
 .atmosphere-stars {
@@ -57,10 +56,10 @@
   opacity: 0.18;
 }
 .atmosphere-sanctuary .atmosphere-shade {
-  background: linear-gradient(90deg, #031710dc, #03171060 50%, transparent 85%);
+  background: linear-gradient( 90deg, color-mix(in srgb, var(--aether-midnight) 86.27%, transparent), color-mix(in srgb, var(--aether-midnight) 37.65%, transparent) 50%, transparent 85% );
 }
 .atmosphere-celestial .atmosphere-shade {
-  background: linear-gradient(90deg, #041a15ed, #041a1577 48%, #061c1544);
+  background: linear-gradient( 90deg, color-mix(in srgb, var(--aether-surface) 92.94%, transparent), color-mix(in srgb, var(--aether-surface) 46.67%, transparent) 48%, color-mix(in srgb, var(--aether-surface) 26.67%, transparent) );
 }
 @keyframes estate-air {
   from {
@@ -97,12 +96,11 @@
 }
 .estate-collection-heading {
   max-width: 720px;
-  text-shadow: 0 2px 25px #031b15;
+  text-shadow: 0 2px 25px var(--aether-surface);
 }
 .estate-collection .atmosphere-shade {
   background:
-    linear-gradient(180deg, #041a14b0, transparent 40%, #041c16d9),
-    linear-gradient(90deg, transparent 35%, #041c16bc 64%);
+    linear-gradient( 180deg, color-mix(in srgb, var(--aether-surface) 69.02%, transparent), transparent 40%, color-mix(in srgb, var(--aether-surface) 85.1%, transparent) ), linear-gradient( 90deg, transparent 35%, color-mix(in srgb, var(--aether-surface) 73.73%, transparent) 64% );
 }
 .estate-product-image {
   border: 0;
@@ -140,11 +138,11 @@
 }
 .estate-product-copy {
   padding: 30px 22px;
-  background: linear-gradient(110deg, #051e18db, #061b15b0);
+  background: linear-gradient( 110deg, color-mix(in srgb, var(--aether-surface) 85.88%, transparent), color-mix(in srgb, var(--aether-surface) 69.02%, transparent) );
   border-left: 1px solid #c4912f66;
 }
 .estate-product-selector {
-  background: #041b15cc;
+  background: color-mix(in srgb, var(--aether-surface) 80%, transparent);
   border: 1px solid #bd965144;
   border-radius: 4px;
   padding: 0 12px;
@@ -169,14 +167,14 @@
 }
 .estate-orbit-core {
   border: 1px solid #ceab67;
-  background: radial-gradient(circle at 35% 25%, #387d61, #082e24 50%, #030f0b);
+  background: radial-gradient( circle at 35% 25%, var(--aether-luminous), var(--aether-deep) 50%, var(--aether-midnight) );
   box-shadow:
     inset -20px -30px 55px #000,
     0 0 60px #cfad4533;
 }
 .estate-loop {
   z-index: 3;
-  background: #042119b8;
+  background: color-mix(in srgb, var(--aether-surface) 72.16%, transparent);
   padding: 20px;
   border: 1px solid #c4912f55;
   bottom: 38px;
@@ -193,7 +191,7 @@
   box-shadow:
     0 0 70px #d5aa3924,
     0 24px 40px #0007;
-  background: #031911;
+  background: var(--aether-surface);
 }
 .estate-seal-mount img {
   border-radius: 50%;
@@ -202,7 +200,7 @@
 }
 .estate-invitation .estate-primary {
   background: linear-gradient(115deg, #ad7b2a, #edcd7a 42%, #c4912f);
-  color: #09231a !important;
+  color: var(--aether-silver) !important;
   box-shadow:
     inset 0 0 0 2px #ffe8a866,
     0 7px 30px #0005;
@@ -252,7 +250,7 @@
     object-position: 24% top;
   }
   .estate-collection .atmosphere-shade {
-    background: linear-gradient(#041d16b8, transparent 30%, #041d16d9 60%);
+    background: linear-gradient( color-mix(in srgb, var(--aether-surface) 72.16%, transparent), transparent 30%, color-mix(in srgb, var(--aether-surface) 85.1%, transparent) 60% );
   }
   .estate-product-image {
     height: 355px;
@@ -273,7 +271,7 @@
     object-position: 75% top;
   }
   .atmosphere-celestial .atmosphere-shade {
-    background: linear-gradient(0deg, #041e17f5 25%, #041e1766 68%, #041e1722);
+    background: linear-gradient( 0deg, color-mix(in srgb, var(--aether-surface) 96.08%, transparent) 25%, color-mix(in srgb, var(--aether-surface) 40%, transparent) 68%, color-mix(in srgb, var(--aether-surface) 13.33%, transparent) );
   }
   .estate-sculpture,
   .estate-orbit {
@@ -332,7 +330,7 @@
   bottom: -5px;
   height: 25px;
   border-radius: 50% / 25%;
-  background: linear-gradient(#31664c, #0b3023 35%, #bc9557 39%, #3f361e 43%, #08291e 48%, #051a12);
+  background: linear-gradient( var(--aether-luminous), var(--aether-deep) 35%, #bc9557 39%, #3f361e 43%, var(--aether-deep) 48%, var(--aether-surface) );
   box-shadow: 0 20px 22px #0007;
   z-index: -1;
 }
@@ -359,11 +357,11 @@
 }
 .estate-index {
   backdrop-filter: none;
-  background: #061c17;
+  background: var(--aether-surface);
 }
 .public-world:has(.estate-home) .world-header {
   backdrop-filter: none;
-  background: #051a14;
+  background: var(--aether-surface);
 }
 .estate-journey {
   --scene-inset: 122px;

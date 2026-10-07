@@ -19,20 +19,25 @@ export function IntelligenceNetwork() {
       const centerX = node.clientWidth / 2;
       const centerY = node.clientHeight / 2;
       setPaths(
-        Array.from(node.querySelectorAll<HTMLElement>('[data-intelligence-signal]')).map((signal) => {
-          const x = signal.offsetLeft + signal.offsetWidth / 2;
-          const y = signal.offsetTop + signal.offsetHeight / 2;
-          const bendX = centerX + (x - centerX) * 0.28;
-          const bendY = centerY + (y - centerY) * 0.16;
-          return `M ${x} ${y} Q ${bendX} ${bendY} ${centerX} ${centerY}`;
-        }),
+        Array.from(node.querySelectorAll<HTMLElement>('[data-intelligence-signal]')).map(
+          (signal) => {
+            const x = signal.offsetLeft + signal.offsetWidth / 2;
+            const y = signal.offsetTop + signal.offsetHeight / 2;
+            const bendX = centerX + (x - centerX) * 0.28;
+            const bendY = centerY + (y - centerY) * 0.16;
+            return `M ${x} ${y} Q ${bendX} ${bendY} ${centerX} ${centerY}`;
+          },
+        ),
       );
     };
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     measure();
     void document.fonts.ready.then(measure);
-    return () => { mounted = false; observer.disconnect(); };
+    return () => {
+      mounted = false;
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -42,7 +47,7 @@ export function IntelligenceNetwork() {
         <defs>
           <linearGradient id="intelligence-connection-light" x1="0" y1="0" x2="1" y2="1">
             <stop stopColor="#d9b36c" />
-            <stop offset=".58" stopColor="#78c49a" />
+            <stop offset=".58" stopColor="#287E8C" />
             <stop offset="1" stopColor="#d9b36c" />
           </linearGradient>
         </defs>
@@ -56,7 +61,10 @@ export function IntelligenceNetwork() {
       </svg>
       {signals.map((label, index) => (
         <span key={label} data-intelligence-signal={index}>
-          <b><small>{String(index + 1).padStart(2, '0')}</small>{label}</b>
+          <b>
+            <small>{String(index + 1).padStart(2, '0')}</small>
+            {label}
+          </b>
         </span>
       ))}
     </div>

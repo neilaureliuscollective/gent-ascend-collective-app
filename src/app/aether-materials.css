@@ -1,0 +1,259 @@
+/* Shared interaction materials. Layout and domain behavior remain owned by existing components. */
+:root {
+  accent-color: var(--aether-luminous);
+}
+::selection {
+  background: var(--aether-petrol);
+  color: var(--aether-text);
+}
+body :where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--aether-luminous);
+  outline-offset: 4px;
+  /* Silver outer separation keeps the focus ring visible over petrol controls. */
+  box-shadow: 0 0 0 1px var(--aether-silver);
+}
+body .button,
+body .button-primary,
+body .aurelius-send {
+  background: linear-gradient(145deg, var(--aether-deep), var(--aether-surface));
+  color: var(--aether-text);
+  border: 1px solid var(--aether-luminous);
+  box-shadow:
+    inset 0 1px 0 #ffffff08,
+    0 8px 24px #0003;
+}
+body .button:hover,
+body .button-primary:hover,
+body .aurelius-send:hover {
+  background: var(--aether-deep);
+}
+body .button.secondary,
+body .button.ghost {
+  background: var(--aether-surface);
+  border-color: var(--aether-border);
+}
+body .navigation a[aria-current='page'],
+body .mobile-nav a[aria-current='page'],
+body .aethelios-space-navigation a[aria-current='page'],
+body .conversation-list button[aria-current],
+body .conversation-item.is-active {
+  color: var(--aether-text);
+  background: linear-gradient(110deg, var(--aether-deep), var(--aether-surface));
+  border-color: var(--aether-border-active);
+  box-shadow: inset 2px 0 var(--aether-luminous);
+}
+body .navigation a[aria-current='page']::before {
+  background: var(--aether-luminous);
+  box-shadow: none;
+}
+body .navigation a[aria-current='page'] .ui-icon {
+  color: var(--aether-silver);
+}
+body .sidebar,
+body .mobile-nav,
+body .topbar {
+  border-color: var(--aether-border);
+}
+body .surface,
+body .panel,
+body .daily-card,
+body .company-room,
+body .council-dialog {
+  background: linear-gradient(145deg, var(--aether-elevated), var(--aether-surface));
+  border-color: var(--aether-border);
+}
+body .council-roster article,
+body .company-job-list,
+body .company-job,
+body .member-council {
+  border-color: var(--aether-border);
+}
+body .council-current,
+body .council-role,
+body .council-reason {
+  color: var(--aether-silver);
+}
+body .council-dialog header {
+  background: var(--aether-elevated);
+}
+body .talk-page .aurelius-composer,
+body .company-room .talk-composer,
+body .aethelios-aether .aurelius-composer {
+  background: linear-gradient(145deg, var(--aether-elevated), var(--aether-midnight));
+  border-color: var(--aether-border-active);
+}
+body .talk-page .aurelius-composer:focus-within,
+body .company-room .talk-composer:focus-within {
+  border-color: var(--aether-luminous);
+  box-shadow: 0 0 0 1px var(--aether-glow);
+}
+body .talk-drawer.talk-drawer,
+body .talk-expanded-editor {
+  background: var(--aether-midnight);
+  border-color: var(--aether-border);
+}
+body .talk-presence > .talk-tool {
+  background: var(--aether-obsidian);
+  border-color: var(--aether-border-active);
+}
+body .talk-orb .intelligence-orb-static,
+body .intelligence-orb-static {
+  background: radial-gradient(
+    circle at 29% 22%,
+    var(--aether-luminous) 0%,
+    var(--aether-deep) 16%,
+    var(--aether-obsidian) 58%,
+    var(--aether-petrol) 95%
+  );
+  border: 1px solid var(--aether-luminous);
+  box-shadow:
+    inset -4px -4px 12px var(--aether-petrol),
+    0 0 22px var(--aether-glow);
+}
+body .talk-orb .intelligence-orb-contours {
+  opacity: 0.25;
+  background: none;
+}
+body .talk-orb .intelligence-orb-light {
+  background: radial-gradient(circle at 28% 24%, #a8b0b430, transparent 23%);
+}
+body .talk-presence[data-state='working'] > button {
+  border-color: var(--aether-luminous);
+  box-shadow: 0 0 14px var(--aether-glow);
+}
+body .aethelios-aether .conversation-starters button {
+  background: var(--aether-surface);
+  color: var(--aether-text);
+  border-color: var(--aether-border);
+}
+body .aethelios-aether .conversation-starters button:hover {
+  border-color: var(--aether-luminous);
+}
+body .brand-type {
+  color: var(--aether-gold-light);
+  font-family: var(--font-editorial);
+}
+body .brand-type small {
+  color: var(--aether-silver);
+  font-family: var(--font-body);
+}
+body .company-arrival h1 {
+  font-family: var(--font-editorial);
+}
+body .company-arrival h1 em {
+  background: none;
+  color: var(--aether-text);
+}
+body .company-arrival p {
+  color: var(--aether-silver);
+}
+body .company-arrival {
+  background: radial-gradient(ellipse at 80% 18%, var(--aether-glow), transparent 55%);
+}
+@media (forced-colors: active) {
+  body :where(a, button, input, textarea, select, summary):focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+  body .navigation a[aria-current='page'],
+  body .mobile-nav a[aria-current='page'] {
+    border: 2px solid Highlight;
+  }
+  body .talk-orb .intelligence-orb-static {
+    border-color: CanvasText;
+  }
+}
+body .talk-tool,
+body .talk-drawer-actions button,
+body .aurelius-meta,
+body .council-role,
+body .company-job-number {
+  color: var(--aether-silver);
+}
+body .talk-tool:hover {
+  background: var(--aether-deep);
+  color: var(--aether-text);
+}
+body .talk-drawer-actions button,
+body .mission-editor input,
+body .mission-editor textarea,
+body .mission-editor select {
+  border-color: var(--aether-border-active);
+  color: var(--aether-text);
+}
+body .secondary-button {
+  background: var(--aether-surface);
+  color: var(--aether-text);
+  border-color: var(--aether-border-active);
+}
+body .secondary-button:hover {
+  background: var(--aether-deep);
+}
+body .aurelius-workspace,
+body .conversation-feed,
+body .company-room-focused {
+  color: var(--aether-text);
+}
+/* The longer OS descriptor must wrap inside the existing narrow desktop rail. */
+body .sidebar .brand-type small {
+  white-space: normal;
+  max-width: 158px;
+  letter-spacing: 0.14em;
+  line-height: 1.8;
+}
+body .company-arrival-actions .button {
+  color: var(--aether-text);
+}
+/* Keep the existing three destinations reachable above full-screen Talk on phones/Fold. */
+@media (max-width: 1100px) {
+  body .app-shell:has(.talk-page) .sidebar { position: relative; z-index: 40; }
+  body .app-shell .navigation {
+    bottom: 0;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 4px max(12px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    border-radius: 0;
+    border: 0;
+    border-top: 1px solid var(--aether-border);
+    background: var(--aether-midnight);
+    box-shadow: 0 -8px 24px #0003;
+  }
+  body .app-shell .navigation a { min-height: 48px; }
+  body .aethelios-page.talk-page {
+    height: calc(var(--conversation-height, 100dvh) - var(--interaction-nav-space, 64px));
+  }
+}
+body .world-button,
+body .entrance-primary {
+  background: linear-gradient(145deg, var(--aether-deep), var(--aether-surface));
+  color: var(--aether-text);
+  border-color: var(--aether-luminous);
+  box-shadow: 0 8px 24px #0003;
+}
+@media (max-width: 1100px) {
+  body .talk-page .council-access {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 8px;
+  }
+  body .talk-page .council-relevant { display: none; }
+  body .talk-page .council-access .text-button {
+    font-size: .7rem;
+    line-height: 1.35;
+    padding: 4px 2px;
+    min-height: 44px;
+    min-width: 0;
+    color: var(--aether-silver);
+  }
+  body .talk-page .member-council { padding-block: 0; }
+  body .aethelios-page.talk-page .aethelios-room-heading { min-height: 48px; }
+  body .talk-page .talk-toolbar .talk-tool { font-size: 12px; line-height: 1.4; }
+}
+@media (max-width: 600px) {
+  body .world-header { gap: 12px; }
+  body .world-wordmark { flex: 1; min-width: 0; gap: 8px; }
+  body .world-wordmark img { width: 36px; height: 36px; flex-shrink: 0; }
+  body .world-wordmark > span { min-width: 0; font-size: .78rem; }
+  body .world-wordmark small { max-width: 140px; white-space: normal; letter-spacing: .15em; line-height: 1.6; }
+  body .world-menu-toggle { flex-shrink: 0; padding-inline: 12px; }
+}

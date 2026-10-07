@@ -17,19 +17,19 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: brand.themeColor,
     icons: [
       {
-        src: '/brand/deep-green-20261006-192.png',
+        src: '/brand/aether-20261007-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/deep-green-20261006-512.png',
+        src: '/brand/aether-20261007-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/deep-green-20261006-maskable-512.png',
+        src: '/brand/aether-20261007-maskable-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',

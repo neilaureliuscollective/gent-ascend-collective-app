@@ -5,7 +5,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     <span className={`brand-lockup ${compact ? 'brand-compact' : ''}`}>
       <Image src={brand.crest} width={64} height={64} sizes="64px" alt="" className="brand-seal" />
       <span className="brand-type">
-        AETHELIOS<small>COMPANY INTELLIGENCE</small>
+        AETHELIOS<small>PERSONAL INTELLIGENCE OS</small>
       </span>
     </span>
   );
