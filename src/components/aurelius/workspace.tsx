@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
+import { TalkMission, type SelectedMissionContext } from '@/components/missions/mission-continuity';
 import { MissionCapture } from '@/components/missions/mission-capture';
 import { CouncilPanel } from './council-panel';
 import {
@@ -76,6 +77,7 @@ export function AureliusWorkspace({
   const [needsReload, setNeedsReload] = useState(false);
   const [tab, setTab] = useState<'conversation' | 'memory' | 'context'>('conversation');
   const [includeContext, setIncludeContext] = useState(false);
+  const [missionContext,setMissionContext]=useState<SelectedMissionContext|null>(null);
   const [deleting, setDeleting] = useState(false);
   const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -323,6 +325,7 @@ export function AureliusWorkspace({
           requestId,
           text,
           includeContext,
+          ...(missionContext?.enabled && missionContext.conversationId===id ? {mission:{id:missionContext.id,revision:missionContext.revision}} : {}),
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
         }),
@@ -706,6 +709,7 @@ export function AureliusWorkspace({
                 ) : (
                   <>
                     Sending shares this conversation’s recent messages
+                    {missionContext?.enabled && missionContext.conversationId===selected ? ", the selected Mission’s reviewed direction and linked output excerpts" : ""}
                     {councilSelection ? ' with the selected Council specialists' : ''}
                     {includeContext
                       ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
@@ -720,11 +724,12 @@ export function AureliusWorkspace({
         </div>
         {!preview && (
           <div className="intelligence-work-access">
-            <MissionCapture
+            {missionContext?.conversationId===selected && <button type="button" className="text-button" onClick={()=>{const dialog=document.getElementById('mission-context') as HTMLDialogElement|null;dialog?.showModal();}}>Mission direction</button>}
+            {missionContext?.conversationId!==selected && <MissionCapture
               conversationId={selected}
               objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
               disabled={blocked || needsReload || Boolean(data.currentConversation?.archived_at)}
-            />
+            />}
           </div>
         )}
         {!preview && (
@@ -785,6 +790,7 @@ export function AureliusWorkspace({
             aria-label="Conversation messages"
             aria-busy={busy}
           >
+            {!preview && <TalkMission key={selected??'recent'} conversationId={selected} turnId={data?.turns.filter(t=>t.status==='complete').at(-1)?.id} onContext={setMissionContext}/>}
             {data.hasOlderTurns && (
               <button
                 type="button"

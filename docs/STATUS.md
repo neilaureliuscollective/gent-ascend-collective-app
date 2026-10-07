@@ -772,3 +772,20 @@ CI exposed an existing training test date mismatch after UTC midnight: its synth
 Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
 
 Ascend Mirror integration: reconciled the direct-member-entry release a7184fd. Preserve both Mirror and home-handoff browser fixtures; retain the already-merged owner-calendar test fixes. Revalidate the integrated source before release.
+
+## Public Mission Continuity — 2026-10-07
+
+Implemented on `feat/public-mission-continuity`, based on public main `a8a03e59bbf187a8bdd678f7903c8a5e151860e9`. Founder authorized the build after the research plan. See `docs/MISSION_CONTINUITY.md` for scope, data and rollback details.
+
+Delivered selected-Mission context with immutable revision receipts, independent context control, reviewed direction proposals, pinned replies, persistent personal Studio handoff/return, linked image receipts, continuation UI and focused public identity cleanup. Separate company work and existing auth/access/billing/model infrastructure remain intact. No production deployment or hosted migration was performed.
+
+Verification on the final implementation:
+
+- ESLint, Next strict typecheck and production Turbopack build: pass.
+- All 414 unit/SQL tests across 55 files: pass. Added service scope/opt-out/stale checks and SQL isolation, stale acceptance, replay, anonymous privilege denial, pin and deletion-preservation checks. PGlite applies the complete migration set; it is not hosted Supabase Auth/PostgREST.
+- Recorded migration ledger: pass; this compares the 28 previously recorded file hashes, not live hosted migration state. The new additive migration remains unapplied to production.
+- All 22 focused browser cases in Missions, Council and Talk layout: pass against a fixed production artifact plus synthetic component fixtures. Includes 320–1920px coverage across suites, reduced motion, input/editor preservation, proposal acceptance, conflicts, context toggling, Studio URL/refresh/return and zero automatic generation on resume.
+- Browser regression initially exposed extra mobile toolbar height; continuation content now lives in the scrollable conversation with native modal details, and empty Council assembly controls appear when there is an actual question. Existing transcript-space assertions remain unchanged. Reply-status assertions now target the reply receipt instead of all status regions. Reviewed the 390px Mission dialog screenshot.
+- Real two-account hosted sessions, live model and Studio generations, physical Fold/iPhone/DeX keyboards and operational public-launch acceptance: not run. No fixtures are presented as live acceptance.
+
+Next: apply the reviewed additive migration in the intended environment and complete live-account/provider/device acceptance before separately approved production promotion. Broader launch hardening, file/context capabilities and Council World remain later phases. Code implementation is complete; release acceptance remains open.

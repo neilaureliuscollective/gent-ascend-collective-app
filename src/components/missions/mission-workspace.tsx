@@ -1,10 +1,10 @@
 'use client';
+import { MissionContinuity } from './mission-continuity';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { jsonRequest } from '@/components/aurelius/memory-editor';
-import { missionStatuses, missionResumeDraft, type Mission } from '@/domains/missions/schema';
-import { useConversationDraft } from '@/components/aurelius/draft-handoff';
+import { missionStatuses, type Mission } from '@/domains/missions/schema';
 import { specialist, type SpecialistId } from '@/domains/intelligence/council';
 export function MissionWorkspace({
   initial,
@@ -19,7 +19,6 @@ export function MissionWorkspace({
   const [uncertain, setUncertain] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const router = useRouter();
-  const handoff = useConversationDraft();
   async function mutate(remove = false) {
     setBusy(true);
     setError('');
@@ -52,7 +51,6 @@ export function MissionWorkspace({
     }
   }
   const disabled = busy || uncertain;
-  const dirty = JSON.stringify(value) !== JSON.stringify(initial);
   return (
     <section className="mission-editor">
       <p className="eyebrow">Mission · Direction, continuity, next action</p>
@@ -61,6 +59,8 @@ export function MissionWorkspace({
         {participants.map((id) => ` · ${specialist(id).name}`).join('')}. Based on up to 500
         completed turn receipts; planned invitations are not participants.
       </p>
+      <MissionContinuity mission={value}/>
+      <details><summary>Edit saved direction</summary>
       <label>
         Name
         <input
@@ -124,6 +124,7 @@ export function MissionWorkspace({
           onChange={(e) => setValue({ ...value, next_actions: e.target.value })}
         />
       </label>
+      </details>
       <p>
         Research and outputs stay in the saved conversation. Only context you enable is sent to the
         model. Decisions recorded here do not approve external actions.
@@ -147,27 +148,9 @@ export function MissionWorkspace({
         <Link href={`/app/aethelios?conversation=${value.conversation_id}`}>
           Open work & outputs ↗
         </Link>
-        <button
-          className="secondary-button"
-          disabled={
-            disabled || dirty || !handoff || ['archived', 'completed'].includes(value.status)
-          }
-          onClick={() => {
-            handoff?.stage({
-              text: missionResumeDraft(value),
-              ownerId: value.person_id,
-              conversationId: value.conversation_id,
-            });
-            router.push(`/app/aethelios?conversation=${value.conversation_id}`);
-          }}
-        >
-          Prepare next move
-        </button>
-        <Link href="/app/studio">Create in Studio ↗</Link>
       </div>
       <p className="council-scope">
-        Prepare next move opens a draft for review. You choose when to send. Save edits before
-        preparing it. Studio remains a separate creation step; no asset is generated automatically.
+        Continue in Talk restores the saved conversation. Its Mission context control determines whether reviewed direction is included; no message is sent automatically.
       </p>
       <button className="text-button" disabled={disabled} onClick={() => setConfirmDelete(true)}>
         Delete Mission

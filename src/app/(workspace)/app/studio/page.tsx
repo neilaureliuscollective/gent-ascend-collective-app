@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
@@ -8,7 +9,9 @@ export const metadata: Metadata = {
   description: 'Develop creative projects, references and images with Aethelios.',
 };
 
-export default function StudioPage() {
+export default async function StudioPage({searchParams}:{searchParams:Promise<{project?:string}>}) {
+  const {project}=await searchParams;
+  if(project&&!z.uuid().safeParse(project).success) return <p>Invalid Studio project link.</p>;
   return (
     <div className="studio-page">
       <div className="studio-world-heading">
@@ -20,7 +23,7 @@ export default function StudioPage() {
         <Link className="text-link" href="/app/aethelios">Aethelios Chat ↗</Link>
       </div>
       <AetheliosSpaceNavigation placement="studio" />
-      <StudioWorkspace />
+      <StudioWorkspace key={project??'studio'} initialProject={project}/>
     </div>
   );
 }

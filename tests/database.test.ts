@@ -1507,3 +1507,50 @@ describe('public Mission ownership and continuity', () => {
     expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
   });
 });
+
+describe('Mission continuity security and recovery',()=>{
+ it('isolates records, rejects stale proposals, recovers handoffs, and preserves creative work after deletion',async()=>{
+  const conversation='e7100000-0000-4000-8000-000000000001';
+  const mission='e7100000-0000-4000-8000-000000000002';
+  const turn='e7100000-0000-4000-8000-000000000003';
+  const pending='e7100000-0000-4000-8000-000000000004';
+  const proposal='e7100000-0000-4000-8000-000000000005';
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  await db.exec(`insert into ai_conversations(id,person_id,title) values('${conversation}','${owner}','Mission fixture');
+   insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values
+   ('${turn}','${owner}','${conversation}','My objective is a garden plan','Consider native planting','complete','test',false,'test'),
+   ('${pending}','${owner}','${conversation}','Continue','','pending','test',false,'test');`);
+  await asUser(founder,`insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${conversation}','Garden','Plan a garden')`);
+  const direction=JSON.stringify({title:'Garden',objective:'Plan a garden',decisions:'Use native planting',open_questions:'Budget?',next_actions:'Measure the garden'});
+  await expect(asUser(member,`select mission_capture_context('${pending}','${mission}',1)`)).rejects.toThrow(/unavailable/);
+  const snapshot=await asUser<{mission_capture_context:{revision:number}}>(founder,`select mission_capture_context('${pending}','${mission}',1)`);
+  expect(snapshot.rows[0]!.mission_capture_context.revision).toBe(1);
+  await expect(asUser(founder,`select mission_capture_context('${pending}','${mission}',2)`)).rejects.toThrow(/changed/);
+  await asUser(founder,`select mission_store_proposal('${proposal}','${mission}','${turn}',1,'${direction}')`);
+  await expect(asUser(member,`select mission_decide_proposal('${proposal}',true,'${direction}')`)).rejects.toThrow(/unavailable/);
+  await asUser(founder,`select mission_decide_proposal('${proposal}',true,'${direction}')`);
+  await asUser(founder,`select mission_decide_proposal('${proposal}',true,'${direction}')`);
+  expect((await asUser<{revision:number}>(founder,`select revision from intelligence_missions where id='${mission}'`)).rows[0]!.revision).toBe(2);
+  await expect(asUser(founder,`select mission_decide_proposal('${proposal}',false,null)`)).rejects.toThrow(/changed/);
+  await expect(asUser(founder,`select mission_store_proposal('e7100000-0000-4000-8000-000000000009','${mission}','${turn}',1,'${direction}')`)).rejects.toThrow(/changed/);
+  const stale='e7100000-0000-4000-8000-000000000010';
+  await asUser(founder,`select mission_store_proposal('${stale}','${mission}','${turn}',2,'${direction}')`);
+  await asUser(founder,`update intelligence_missions set revision=3 where id='${mission}'`);
+  await expect(asUser(founder,`select mission_decide_proposal('${stale}',true,'${direction}')`)).rejects.toThrow(/changed/);
+  expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','public.mission_open_studio(uuid,integer)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+  await asUser(founder,`select mission_pin_output('${mission}','${turn}')`);
+  await asUser(founder,`select mission_pin_output('${mission}','${turn}')`);
+  await expect(asUser(founder,`select mission_pin_output('${mission}','${pending}')`)).rejects.toThrow(/Completed/);
+  expect((await asUser(founder,`select * from mission_outputs where mission_id='${mission}'`)).rows).toHaveLength(1);
+  for(const table of ['mission_proposals','mission_outputs','mission_turn_context']) expect((await asUser(member,`select * from ${table} where mission_id='${mission}'`)).rows).toHaveLength(0);
+  await expect(asUser(member,`select mission_open_studio('${mission}',3)`)).rejects.toThrow(/unavailable/);
+  const project=(await asUser<{mission_open_studio:string}>(founder,`select mission_open_studio('${mission}',3)`)).rows[0]!.mission_open_studio;
+  expect((await asUser<{mission_open_studio:string}>(founder,`select mission_open_studio('${mission}',3)`)).rows[0]!.mission_open_studio).toBe(project);
+  expect((await asUser(member,`select * from mission_studio_links where mission_id='${mission}'`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update mission_studio_links set project_id='${turn}' where mission_id='${mission}'`)).rejects.toThrow(/permission/);
+  await asUser(founder,`delete from intelligence_missions where id='${mission}'`);
+  expect((await asUser(founder,`select * from ai_studio_projects where id='${project}'`)).rows).toHaveLength(1);
+  expect((await asUser(founder,`select * from ai_conversations where id='${conversation}'`)).rows).toHaveLength(1);
+  expect((await asUser(founder,`select * from mission_studio_links where mission_id='${mission}'`)).rows).toHaveLength(0);
+ });
+});
