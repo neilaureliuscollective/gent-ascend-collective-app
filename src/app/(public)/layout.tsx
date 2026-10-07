@@ -33,7 +33,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               sizes="180px"
             />
             <span>
-              AETHELIOS<small>COMPANY INTELLIGENCE</small>
+              AETHELIOS<small>PERSONAL INTELLIGENCE OS</small>
             </span>
           </Link>
           <p>

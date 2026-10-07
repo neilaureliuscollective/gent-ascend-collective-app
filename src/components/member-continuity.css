@@ -3,8 +3,8 @@
   padding: clamp(1.2rem, 4vw, 2.4rem);
   border: 1px solid #c4912f36;
   border-radius: 1.25rem;
-  background: linear-gradient(135deg, #0b3b3266, #050706);
-  color: var(--text-primary, #f0ece1);
+  background: linear-gradient( 135deg, color-mix(in srgb, var(--aether-petrol) 40%, transparent), var(--aether-obsidian) );
+  color: var(--text-primary, var(--aether-text));
 }
 .member-continuity h2 {
   max-width: 28ch;
@@ -26,7 +26,7 @@
 }
 .continuity-paths span,
 .continuity-paths small {
-  color: var(--text-secondary, #c3c3b4);
+  color: var(--text-secondary, var(--aether-silver));
 }
 .continuity-paths strong {
   font-size: 1.15rem;

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useId, useRef } from 'react';
+import palette from '@/platform/visual/aether-palette.json';
 
 /** Decorative presence only: no simulated listening or request state. */
 export function EnergyOrb({
@@ -33,18 +34,18 @@ export function EnergyOrb({
       <svg viewBox="0 0 240 240" fill="none" className="gw-energy-fallback">
         <defs>
           <radialGradient id={`${id}-body`} cx=".35" cy=".3" r=".75">
-            <stop stopColor="#238b5a" />
-            <stop offset=".5" stopColor="#0b3b32" />
-            <stop offset="1" stopColor="#03100b" />
+            <stop stopColor={palette.petrol} />
+            <stop offset=".5" stopColor={palette.deep} />
+            <stop offset="1" stopColor={palette.obsidian} />
           </radialGradient>
           <radialGradient id={`${id}-halo`}>
-            <stop stopColor="#41d58b" stopOpacity=".3" />
-            <stop offset="1" stopColor="#41d58b" stopOpacity="0" />
+            <stop stopColor={palette.luminous} stopOpacity=".3" />
+            <stop offset="1" stopColor={palette.luminous} stopOpacity="0" />
           </radialGradient>
           <linearGradient id={`${id}-flow`} x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="#83edb0" />
-            <stop offset=".65" stopColor="#238b5a" />
-            <stop offset="1" stopColor="#dfb75d" />
+            <stop stopColor={palette.silver} />
+            <stop offset=".65" stopColor={palette.petrol} />
+            <stop offset="1" stopColor={palette.luminous} />
           </linearGradient>
           <clipPath id={`${id}-clip`}>
             <circle cx="120" cy="120" r="77" />
@@ -57,8 +58,8 @@ export function EnergyOrb({
           rx="110"
           ry="32"
           transform="rotate(-29 120 120)"
-          stroke="#c4912f"
-          strokeOpacity=".4"
+          stroke={palette.luminous}
+          strokeOpacity=".12"
           strokeWidth=".65"
         />
         <circle
@@ -66,7 +67,7 @@ export function EnergyOrb({
           cy="120"
           r="77"
           fill={`url(#${id}-body)`}
-          stroke="#68c99a"
+          stroke={palette.luminous}
           strokeOpacity=".45"
         />
         <g clipPath={`url(#${id}-clip)`} stroke={`url(#${id}-flow)`}>
@@ -75,17 +76,17 @@ export function EnergyOrb({
               key={i}
               d={`M35 ${51 + i * 8} C75 ${26 + i * 8} 84 ${79 + i * 8} 121 ${49 + i * 8} S166 ${63 + i * 8} 209 ${29 + i * 8}`}
               strokeWidth={i % 3 === 0 ? 1.8 : 0.8}
-              opacity={0.4 + (i % 3) * 0.15}
+              opacity={0.12 + (i % 3) * 0.06}
             />
           ))}
         </g>
         <path
           d="M24 164Q58 195 159 142Q231 103 214 79"
-          stroke="#d7b15b"
-          strokeOpacity=".35"
+          stroke={palette.luminous}
+          strokeOpacity=".12"
           strokeWidth=".6"
         />
-        <circle cx="211" cy="94" r="2" fill="#f5cf7f" />
+        <circle cx="211" cy="94" r="2" fill={palette.silver} />
       </svg>
     </div>
   );

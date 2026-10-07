@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { aetherMaterial } from '@/platform/visual/aether-material';
 
 const vertex = `#version 300 es
 in vec2 position;
@@ -21,7 +22,7 @@ void main(){
  float radius=.73*(1.+.018*sin(time*1.4)+energy*.095);
  float r2=dot(p,p);
  float halo=exp(-pow(length(p)/1.04,2.)*3.1);
- vec3 color=(deepGreen > .5 ? vec3(.025,.20,.13) : vec3(.04,.30,.19))*halo*(.25+energy*.25);
+ vec3 color=${aetherMaterial.atmosphere}*halo*(.25+energy*.25);
  float alpha=halo*.30;
  if(r2<radius*radius){
   float depth=sqrt(max(radius*radius-r2,0.));
@@ -32,21 +33,22 @@ void main(){
   vec3 rotated=vec3(n.x*cos(turn)-n.z*sin(turn),n.y,n.x*sin(turn)+n.z*cos(turn));
   float flow=noise(rotated*4.8+vec3(0.,time*.16,0.));
   float strands=pow(.5+.5*sin(rotated.y*26.+atan(rotated.z,rotated.x)*5.+flow*7.-time*.55),9.);
-  vec3 body=mix(vec3(.006,.025,.021),vec3(.035,.35,.24),.30+flow*.38+diffuse*.22);
-  body+=vec3(.27,.79,.56)*(strands*(.21+energy*.19)+pow(max(dot(n,normalize(vec3(-.42,.34,1.))),0.),10.)*.26);
-  body+=vec3(.37,.91,.68)*fresnel*(.48+energy*.24);
-  body+=vec3(.33,.85,.66)*exp(-pow(length(p-vec2(-.13,.12))/.19,2.))*(.32+energy*.52);
-  body+=vec3(.14,.35,.25)*diffuse*.13;
-  body+=vec3(.19,.52,.35)*pow(.5+.5*sin(back.y*36.-atan(back.z,back.x)*8.+time*.4),18.)*.22*(1.-fresnel);
+  vec3 body=mix(${aetherMaterial.core},${aetherMaterial.deep},.10+flow*.14+diffuse*.08);
+  body+=${aetherMaterial.edge}*(strands*(.035+energy*.07)+pow(max(dot(n,normalize(vec3(-.42,.34,1.))),0.),10.)*.26);
+  body+=${aetherMaterial.edge}*fresnel*(.85+energy*.24);
+  body+=${aetherMaterial.highlight}*pow(max(dot(n,light),0.),50.)*.30;
+  body+=${aetherMaterial.edge}*exp(-pow(length(p-vec2(-.13,.12))/.19,2.))*(.08+energy*.15);
+  body+=${aetherMaterial.atmosphere}*diffuse*.13;
+  body+=${aetherMaterial.edge}*pow(.5+.5*sin(back.y*36.-atan(back.z,back.x)*8.+time*.4),18.)*.025*(1.-fresnel);
   float edge=1.-smoothstep(radius-.027,radius,length(p));
-  if(deepGreen > .5){ body*=vec3(.72,.68,.72);  }
+  if(deepGreen > .5){ body*=.92;  }
   color=mix(color,body,edge);alpha=max(alpha,edge);
  }
  vec2 q=vec2(p.x*.85+p.y*.52,p.y*.85-p.x*.52);
  float arc=exp(-abs(length(vec2(q.x/1.04,q.y/.23))-1.)*170.)*smoothstep(-.32,.35,q.y);
- color+=vec3(.77,.51,.22)*arc*(.24+scroll*.12+energy*.15);alpha=max(alpha,arc*.65);
+ color+=${aetherMaterial.edge}*arc*.09;alpha=max(alpha,arc*.12);
  float spark=exp(-dot(p-vec2(.77,.13),p-vec2(.77,.13))*900.);
- color+=vec3(.95,.70,.36)*spark*.65;alpha=max(alpha,spark*.7);
+ color+=${aetherMaterial.highlight}*spark*.16;alpha=max(alpha,spark*.2);
  pixel=vec4(color,clamp(alpha,0.,1.));
 }`;
 function compile(gl: WebGL2RenderingContext, type: number, source: string) {

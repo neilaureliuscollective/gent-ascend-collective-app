@@ -33,7 +33,7 @@ export function WorldHeader() {
       >
         <Image src={brand.crest} alt="" width={48} height={48} />
         <span>
-          AETHELIOS<small>COMPANY INTELLIGENCE</small>
+          AETHELIOS<small>PERSONAL INTELLIGENCE OS</small>
         </span>
       </Link>
       <button

@@ -23,7 +23,7 @@
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #0b1914;
+  background: var(--aether-surface);
   color: #eee8dc;
   padding: 0.85rem;
   margin: 0.5rem 0 1rem;

@@ -2,7 +2,7 @@
   position: relative;
   isolation: isolate;
   scroll-margin-top: 122px;
-  background: #030a08;
+  background: var(--aether-obsidian);
 }
 .ritual-sequence-stage {
   position: relative;
@@ -12,7 +12,7 @@
   isolation: isolate;
   min-height: min(900px, 100svh);
   overflow: hidden;
-  background: #06120e;
+  background: var(--aether-midnight);
   display: flex;
   align-items: center;
 }
@@ -32,8 +32,7 @@
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(90deg, #030907ee 0%, #030b09d6 21%, #030d0b66 49%, transparent 76%),
-    linear-gradient(0deg, #020806d9, transparent 20%, transparent 77%, #02080680);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 93.33%, transparent) 0%, color-mix(in srgb, var(--aether-obsidian) 83.92%, transparent) 21%, color-mix(in srgb, var(--aether-obsidian) 40%, transparent) 49%, transparent 76% ), linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 85.1%, transparent), transparent 20%, transparent 77%, color-mix(in srgb, var(--aether-obsidian) 50.2%, transparent) );
 }
 .ritual-beat-copy {
   position: relative;
@@ -164,14 +163,7 @@
     object-position: 52% 10%;
   }
   .ritual-beat-shade {
-    background: linear-gradient(
-      0deg,
-      #030b08 0%,
-      #030b08f0 24%,
-      #030b08ae 48%,
-      transparent 77%,
-      #030b0866
-    );
+    background: linear-gradient( 0deg, var(--aether-obsidian) 0%, color-mix(in srgb, var(--aether-obsidian) 94.12%, transparent) 24%, color-mix(in srgb, var(--aether-obsidian) 68.24%, transparent) 48%, transparent 77%, color-mix(in srgb, var(--aether-obsidian) 40%, transparent) );
   }
   .ritual-beat-copy {
     position: absolute;

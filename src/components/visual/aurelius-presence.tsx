@@ -70,16 +70,16 @@ export function AureliusPresence({
       <svg className="presence-fallback" viewBox="0 0 240 240" fill="none">
         <defs>
           <radialGradient id={`${id}-sphere`} cx=".33" cy=".25" r=".8">
-            <stop stopColor="#527c6f" />
-            <stop offset=".13" stopColor="#184d3e" />
-            <stop offset=".4" stopColor="#0B3B32" />
-            <stop offset=".76" stopColor="#071F1A" />
-            <stop offset="1" stopColor="#050706" />
+            <stop stopColor="#287E8C" />
+            <stop offset=".13" stopColor="#145463" />
+            <stop offset=".4" stopColor="#0C3542" />
+            <stop offset=".76" stopColor="#091217" />
+            <stop offset="1" stopColor="#06090D" />
           </radialGradient>
           <radialGradient id={`${id}-well`}>
-            <stop stopColor="#61a28b" stopOpacity=".45" />
-            <stop offset=".5" stopColor="#146B58" stopOpacity=".22" />
-            <stop offset="1" stopColor="#071F1A" stopOpacity="0" />
+            <stop stopColor="#287E8C" stopOpacity=".45" />
+            <stop offset=".5" stopColor="#145463" stopOpacity=".22" />
+            <stop offset="1" stopColor="#091217" stopOpacity="0" />
           </radialGradient>
           <linearGradient
             id={`${id}-gold`}
@@ -108,7 +108,7 @@ export function AureliusPresence({
           >
             <stop stopColor="#F6DCAE" stopOpacity=".65" />
             <stop offset=".3" stopColor="#F6DCAE" stopOpacity="0" />
-            <stop offset="1" stopColor="#79ad98" stopOpacity=".2" />
+            <stop offset="1" stopColor="#A8B0B4" stopOpacity=".2" />
           </linearGradient>
           <clipPath id={`${id}-clip`}>
             <circle cx="120" cy="117" r="74" />
@@ -146,7 +146,7 @@ export function AureliusPresence({
           cy="117"
           r="74"
           fill={`url(#${id}-sphere)`}
-          stroke="#6caa9044"
+          stroke="#287E8C44"
           strokeWidth=".6"
         />
         <g clipPath={`url(#${id}-clip)`}>

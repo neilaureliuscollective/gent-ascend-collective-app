@@ -1,3 +1,5 @@
+> Superseded for the PUBLIC Aethelios visual palette on 2026-10-07: see [AETHER_PETROL.md](AETHER_PETROL.md). Earlier artwork/direction below is historical; accessibility and lifecycle safeguards remain.
+
 # Gent Ascend Collective — official identity
 
 Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aurelius Collective visual directions, including the historical 1C–1F documents. The existing repository and technical identifiers remain stable.

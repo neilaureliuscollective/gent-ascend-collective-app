@@ -8,8 +8,7 @@
   isolation: isolate;
   overflow: clip;
   background:
-    radial-gradient(ellipse at 72% 24%, #16482f38, transparent 53%),
-    linear-gradient(180deg, #07100d 0%, #081710 48%, #050b08 100%);
+    radial-gradient( ellipse at 72% 24%, color-mix(in srgb, var(--aether-petrol) 21.96%, transparent), transparent 53% ), linear-gradient( 180deg, var(--aether-midnight) 0%, var(--aether-midnight) 48%, var(--aether-obsidian) 100% );
   padding-bottom: 24px;
 }
 .command-living::before {
@@ -19,9 +18,7 @@
   inset: 0 0 auto;
   height: min(1100px, 100%);
   background:
-    linear-gradient(180deg, #04100b42 0%, #05110c52 38%, #07140fc9 77%, #07130f 100%),
-    linear-gradient(90deg, #040b08c9, #06150c38 60%, #040b08a8),
-    url('/media/world/whole-man-chamber-v2.webp') center top / cover no-repeat;
+    linear-gradient( 180deg, color-mix(in srgb, var(--aether-midnight) 25.88%, transparent) 0%, color-mix(in srgb, var(--aether-midnight) 32.16%, transparent) 38%, color-mix(in srgb, var(--aether-midnight) 78.82%, transparent) 77%, var(--aether-midnight) 100% ), linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 78.82%, transparent), color-mix(in srgb, var(--aether-midnight) 21.96%, transparent) 60%, color-mix(in srgb, var(--aether-obsidian) 65.88%, transparent) ), url('/media/world/whole-man-chamber-v2.webp') center top / cover no-repeat;
   mask-image: linear-gradient(#000 0%, #000 62%, transparent 100%);
   pointer-events: none;
 }
@@ -31,17 +28,7 @@
   z-index: -1;
   inset: 0;
   background:
-    radial-gradient(ellipse at 71% 23%, #5bba7930, transparent 34%),
-    radial-gradient(ellipse at 28% 68%, #bc984011, transparent 43%),
-    linear-gradient(
-      114deg,
-      transparent 24%,
-      #c4912f06 24.15%,
-      transparent 24.4%,
-      transparent 78%,
-      #c4912f08 78.15%,
-      transparent 78.4%
-    );
+    radial-gradient( ellipse at 71% 23%, color-mix(in srgb, var(--aether-silver) 18.82%, transparent), transparent 34% ), radial-gradient(ellipse at 28% 68%, #bc984011, transparent 43%), linear-gradient( 114deg, transparent 24%, #c4912f06 24.15%, transparent 24.4%, transparent 78%, #c4912f08 78.15%, transparent 78.4% );
   pointer-events: none;
 }
 .command-living .command-environment {
@@ -80,7 +67,7 @@
 }
 .command-living .field-horizon {
   inset: 53% 10% -2%;
-  background: radial-gradient(ellipse, #4e996328 0%, #397c5420 30%, transparent 70%);
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-luminous) 15.69%, transparent) 0%, color-mix(in srgb, var(--aether-luminous) 12.55%, transparent) 30%, transparent 70% );
   border-radius: 50%;
 }
 .command-living .field-presence-anchor {
@@ -96,7 +83,7 @@
   animation: none;
 }
 .command-living .field-connections .connection-halo {
-  stroke: #63b68c;
+  stroke: var(--aether-silver);
   stroke-width: 9;
   opacity: 0.07;
 }
@@ -111,7 +98,7 @@
   opacity: 0;
 }
 .command-living .connection-anchor-halo {
-  fill: #6db591;
+  fill: var(--aether-silver);
   opacity: 0.12;
 }
 .command-living .connection-anchor {
@@ -135,7 +122,7 @@
 .command-living .field-signal {
   min-height: 64px;
   padding: 12px 16px;
-  background: linear-gradient(100deg, #07160cbb, #0a1d1259 80%, transparent);
+  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-midnight) 73.33%, transparent), color-mix(in srgb, var(--aether-surface) 34.9%, transparent) 80%, transparent );
   color: #f2eee2;
   transform: none;
   transition:
@@ -153,7 +140,7 @@
 .command-living .field-signal:hover,
 .command-living .field-signal[aria-expanded='true'] {
   transform: none;
-  background: linear-gradient(100deg, #153522e8, #12291866 80%, transparent);
+  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-deep) 90.98%, transparent), color-mix(in srgb, var(--aether-deep) 40%, transparent) 80%, transparent );
   box-shadow: none;
 }
 .command-living .signal-label {
@@ -166,7 +153,7 @@
   color: #c0cdbd;
 }
 .command-living .signal-detail {
-  background: linear-gradient(105deg, #0b2317ed, #08170ff0);
+  background: linear-gradient( 105deg, color-mix(in srgb, var(--aether-surface) 92.94%, transparent), color-mix(in srgb, var(--aether-midnight) 94.12%, transparent) );
   border-left: 1px solid #d5b66b;
   box-shadow:
     inset 0 1px #c4912f1a,
@@ -201,7 +188,7 @@
   pointer-events: none;
   z-index: -1;
   inset: -1px -20px 0;
-  background: radial-gradient(ellipse at 10% 0%, #27613d21, transparent 75%);
+  background: radial-gradient( ellipse at 10% 0%, color-mix(in srgb, var(--aether-petrol) 12.94%, transparent), transparent 75% );
 }
 .command-living .command-feedback:empty {
   min-height: 0;
@@ -222,9 +209,9 @@
   padding: 24px 18px;
   font-size: clamp(1.25rem, 2vw, 1.7rem);
   text-decoration: none;
-  background: linear-gradient(135deg, #173c2529, transparent 85%);
+  background: linear-gradient( 135deg, color-mix(in srgb, var(--aether-petrol) 16.08%, transparent), transparent 85% );
   border-top: 1px solid #c8ae6266;
-  border-bottom: 1px solid #667d5924;
+  border-bottom: 1px solid color-mix(in srgb, var(--aether-luminous) 14.12%, transparent);
   transition: background 0.25s ease;
 }
 .command-living .command-domains a::after {
@@ -237,7 +224,7 @@
   background: linear-gradient(#c8ae6288, transparent);
 }
 .command-living .command-domains a:hover {
-  background: linear-gradient(135deg, #2b614339, transparent 85%);
+  background: linear-gradient( 135deg, color-mix(in srgb, var(--aether-petrol) 22.35%, transparent), transparent 85% );
 }
 .command-living .command-domains span {
   margin-top: 12px;
@@ -267,8 +254,7 @@
   }
   .command-living::after {
     background:
-      radial-gradient(ellipse at 50% 16%, #479d6325, transparent 40%),
-      radial-gradient(ellipse at 25% 60%, #b9942810, transparent 50%);
+      radial-gradient( ellipse at 50% 16%, color-mix(in srgb, var(--aether-luminous) 14.51%, transparent), transparent 40% ), radial-gradient(ellipse at 25% 60%, #b9942810, transparent 50%);
   }
   .command-living .command-arrival {
     padding: 14px 16px 8px;
@@ -379,7 +365,7 @@
   }
 }
 html[data-material='solid'] .command-living {
-  background: #08140e;
+  background: var(--aether-midnight);
 }
 html[data-material='solid'] .command-living::before,
 html[data-material='solid'] .command-living::after {
@@ -389,7 +375,7 @@ html[data-material='solid'] .command-living .command-environment {
   background: transparent;
 }
 html[data-material='solid'] .command-living .field-signal {
-  background: #0c2016;
+  background: var(--aether-surface);
 }
 html[data-motion='still'] .command-living .connection-trace,
 html[data-quiet='true'] .command-living .connection-trace {
@@ -543,8 +529,7 @@ html[data-quiet='true'] .command-living .connection-trace {
 }
 .command-living .command-opening {
   background:
-    radial-gradient(ellipse at 64% 40%, #174b2d9c, transparent 60%),
-    linear-gradient(135deg, #06110bd9, #081a11dd);
+    radial-gradient( ellipse at 64% 40%, color-mix(in srgb, var(--aether-petrol) 61.18%, transparent), transparent 60% ), linear-gradient( 135deg, color-mix(in srgb, var(--aether-midnight) 85.1%, transparent), color-mix(in srgb, var(--aether-surface) 86.67%, transparent) );
 }
 /* Route-local shell reflow keeps enlarged text clear of Capture and the presence shortcut. */
 @media (max-width: 1100px) {
@@ -703,7 +688,7 @@ html[data-quiet='true'] .command-living .connection-trace {
 }
 .home-compose {
   border-block: 1px solid #c4912f40;
-  background: linear-gradient(100deg, #10392c99, #09241b33);
+  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-petrol) 60%, transparent), color-mix(in srgb, var(--aether-surface) 20%, transparent) );
 }
 .home-compose summary {
   display: flex;

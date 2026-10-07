@@ -11,7 +11,7 @@
   min-height: 100svh;
   padding: 125px max(30px, 7vw) 115px;
   overflow: clip;
-  background: #071b16;
+  background: var(--aether-surface);
 }
 .gw-atmosphere {
   position: absolute;
@@ -46,8 +46,7 @@
 }
 .gw-atmosphere-shade {
   background:
-    linear-gradient(90deg, #04130eee, #04130e55 50%, #04130e15),
-    linear-gradient(180deg, #030c09a6 0%, transparent 30%, #04100b44 65%, #030c09f5 100%);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-midnight) 93.33%, transparent), color-mix(in srgb, var(--aether-midnight) 33.33%, transparent) 50%, color-mix(in srgb, var(--aether-midnight) 8.24%, transparent) ), linear-gradient( 180deg, color-mix(in srgb, var(--aether-obsidian) 65.1%, transparent) 0%, transparent 30%, color-mix(in srgb, var(--aether-midnight) 26.67%, transparent) 65%, color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) 100% );
 }
 .gw-light-shaft {
   position: absolute;
@@ -55,7 +54,7 @@
   top: -20%;
   width: 20%;
   height: 110%;
-  background: linear-gradient(90deg, transparent, #dfb76510 45%, #97cdb515 50%, transparent);
+  background: linear-gradient( 90deg, transparent, #dfb76510 45%, color-mix(in srgb, var(--aether-silver) 8.24%, transparent) 50%, transparent );
   transform: rotate(17deg);
   opacity: 0.5;
   animation: gw-light-breath 12s ease-in-out infinite alternate;
@@ -124,7 +123,7 @@
   position: absolute;
   inset: 7%;
   border-radius: 50%;
-  border: 1px solid #b2d3ba25;
+  border: 1px solid color-mix(in srgb, var(--aether-silver) 14.51%, transparent);
 }
 .gw-orbit-plane > div:last-child {
   position: absolute;
@@ -177,7 +176,7 @@
   position: absolute;
   inset: 4% -5% 20%;
   border-radius: 50%;
-  background: radial-gradient(ellipse, #38775a55, #0b3b3222 45%, transparent 70%);
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-luminous) 33.33%, transparent), color-mix(in srgb, var(--aether-petrol) 13.33%, transparent) 45%, transparent 70% );
   animation: gw-light-breath 8s ease-in-out infinite alternate;
   animation-play-state: paused;
 }
@@ -192,7 +191,7 @@
   padding: 7px 4px;
   border: 0;
   border-radius: 14px;
-  background: radial-gradient(ellipse, #061710ed 10%, #061710a8 60%, transparent 73%);
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-midnight) 92.94%, transparent) 10%, color-mix(in srgb, var(--aether-midnight) 65.88%, transparent) 60%, transparent 73% );
   color: #d4ddce;
   text-align: center;
   touch-action: manipulation;
@@ -243,7 +242,7 @@
 }
 .gw-world-node[aria-pressed='true'] .gw-node-glyph {
   background: #ddbd79;
-  color: #07140e;
+  color: var(--aether-silver);
   border-color: #efdca7;
   box-shadow: 0 0 23px #c4912f45;
 }
@@ -300,7 +299,7 @@
   margin-top: 18px;
   border: 1px solid #e2bc6b80;
   border-radius: 6px;
-  background: linear-gradient(125deg, #174638ed, #0b2b23f5);
+  background: linear-gradient( 125deg, color-mix(in srgb, var(--aether-petrol) 92.94%, transparent), color-mix(in srgb, var(--aether-deep) 96.08%, transparent) );
   box-shadow:
     inset 0 1px #f9dea52b,
     0 8px 30px #0004;
@@ -311,7 +310,7 @@
   font-size: 1.15rem;
 }
 .gw-world-enter:hover {
-  background: #205642;
+  background: var(--aether-petrol);
   border-color: #f1d18e;
 }
 .gw-world-enter:active {
@@ -367,10 +366,10 @@
   transition: none;
 }
 .gw-atlas[data-solid='true'] .gw-world-node {
-  background: #071b14;
+  background: var(--aether-surface);
 }
 .gw-atlas[data-solid='true'] .gw-world-enter {
-  background: #133e30;
+  background: var(--aether-petrol);
 }
 .gent-world .context-sheet .gw-direction {
   display: block;
@@ -386,7 +385,7 @@
   display: grid;
   place-items: center;
   min-height: 100svh;
-  background: #071b16;
+  background: var(--aether-surface);
   color: #ddc793;
 }
 @keyframes gw-chamber-breath {
@@ -426,14 +425,7 @@
     justify-content: center;
   }
   .gw-atmosphere-shade {
-    background: linear-gradient(
-      180deg,
-      #03100cb0,
-      #03100c22 26%,
-      #03100c11 52%,
-      #03100cdd 74%,
-      #030c09fa 100%
-    );
+    background: linear-gradient( 180deg, color-mix(in srgb, var(--aether-midnight) 69.02%, transparent), color-mix(in srgb, var(--aether-midnight) 13.33%, transparent) 26%, color-mix(in srgb, var(--aether-midnight) 6.67%, transparent) 52%, color-mix(in srgb, var(--aether-midnight) 86.67%, transparent) 74%, color-mix(in srgb, var(--aether-obsidian) 98.04%, transparent) 100% );
   }
   .gw-chamber img {
     object-position: center 46%;
@@ -631,7 +623,7 @@
   opacity: 0.38;
 }
 .gw-atmosphere-shade {
-  background: radial-gradient(ellipse at 68% 45%, #064b3522, #030c0ae8 78%);
+  background: radial-gradient( ellipse at 68% 45%, color-mix(in srgb, var(--aether-petrol) 13.33%, transparent), color-mix(in srgb, var(--aether-obsidian) 90.98%, transparent) 78% );
 }
 .gw-energy-field {
   position: absolute;
@@ -639,8 +631,7 @@
   opacity: 0.24;
   transform: perspective(650px) rotateX(64deg);
   background-image:
-    linear-gradient(#64c89820 1px, transparent 1px),
-    linear-gradient(90deg, #64c89820 1px, transparent 1px);
+    linear-gradient( color-mix(in srgb, var(--aether-silver) 12.55%, transparent) 1px, transparent 1px ), linear-gradient( 90deg, color-mix(in srgb, var(--aether-silver) 12.55%, transparent) 1px, transparent 1px );
   background-size: 75px 75px;
   mask-image: radial-gradient(ellipse, black, transparent 65%);
 }
@@ -649,17 +640,16 @@
   position: absolute;
   inset: -12%;
   pointer-events: none;
-  background: radial-gradient(ellipse, #15986d18, transparent 66%);
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-luminous) 9.41%, transparent), transparent 66% );
 }
 .gw-node-glyph {
   position: relative;
   width: 36px;
   height: 36px;
-  background: radial-gradient(circle at 35% 25%, #257c5b99, #061c16 70%);
-  border-color: #75cca078;
+  background: radial-gradient( circle at 35% 25%, color-mix(in srgb, var(--aether-luminous) 60%, transparent), var(--aether-surface) 70% );
+  border-color: color-mix(in srgb, var(--aether-silver) 47.06%, transparent);
   box-shadow:
-    inset 0 0 12px #35ce8733,
-    0 0 16px #35ce8712;
+    inset 0 0 12px color-mix(in srgb, var(--aether-silver) 20%, transparent), 0 0 16px color-mix(in srgb, var(--aether-silver) 7.06%, transparent);
 }
 .gw-node-glyph svg {
   width: 25px;
@@ -689,11 +679,10 @@
 }
 .gw-world-node[aria-pressed='true'] .gw-node-glyph {
   color: #ffdfa0;
-  background: radial-gradient(circle at 35% 25%, #438666, #082b20 70%);
+  background: radial-gradient(circle at 35% 25%, var(--aether-luminous), var(--aether-deep) 70%);
   border-color: #e5c779;
   box-shadow:
-    inset 0 0 14px #67d79b44,
-    0 0 22px #c4912f40;
+    inset 0 0 14px color-mix(in srgb, var(--aether-silver) 26.67%, transparent), 0 0 22px #c4912f40;
 }
 .gw-world-connections path[data-selected='true'] {
   stroke-dasharray: 3 7;
@@ -711,7 +700,7 @@
 }
 @media (max-width: 900px) {
   .gw-atmosphere-shade {
-    background: radial-gradient(ellipse at 50% 42%, #064b3511, #030c0aee 80%);
+    background: radial-gradient( ellipse at 50% 42%, color-mix(in srgb, var(--aether-petrol) 6.67%, transparent), color-mix(in srgb, var(--aether-obsidian) 93.33%, transparent) 80% );
   }
   .gw-node-glyph {
     width: 31px;
@@ -823,14 +812,14 @@
   padding: 16px;
   border: 1px solid #ba995050;
   border-radius: 8px;
-  background: #061b15;
+  background: var(--aether-surface);
   color: #f3ead7;
   font: inherit;
   font-size: 1rem;
   line-height: 1.6;
 }
 .gw-priority-editor textarea::placeholder {
-  color: #94ab9d;
+  color: var(--aether-silver);
 }
 .gw-priority-editor .gw-muted {
   margin-block: 12px;

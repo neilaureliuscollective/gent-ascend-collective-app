@@ -2,7 +2,7 @@
   max-width: 1200px;
   margin: auto;
   padding: clamp(24px, 5vw, 70px);
-  background: radial-gradient(ellipse at top right, #0b3b3270, transparent 65%);
+  background: radial-gradient( ellipse at top right, color-mix(in srgb, var(--aether-petrol) 43.92%, transparent), transparent 65% );
   color: var(--text, #f1eee3);
 }
 .cabinet-hero {
@@ -75,7 +75,7 @@
 .cabinet-form textarea {
   width: 100%;
   padding: 12px;
-  background: #071612;
+  background: var(--aether-midnight);
   border: 1px solid #c4912f60;
   color: inherit;
   border-radius: 4px;
@@ -104,7 +104,7 @@
 .cabinet-image {
   height: 260px;
   position: relative;
-  background: #0c211b;
+  background: var(--aether-surface);
   border-bottom: 1px solid #c4912f88;
 }
 .cabinet-image img {
@@ -131,14 +131,19 @@
 }
 
 .cabinet-import {margin-block:3rem;padding-block:2rem;border-block:1px solid var(--line,#c4912f33);}
-.cabinet-import fieldset {display:grid;gap:.75rem;max-height:22rem;overflow:auto;border:0;padding:1rem 0;}
-.cabinet-import label {display:flex;gap:.75rem;align-items:center;overflow-wrap:anywhere;}
-.cabinet-import input[type=checkbox] {width:1.25rem;height:1.25rem;flex:none;accent-color:#c4912f;}
+.cabinet-import fieldset {display:grid;gap:0.75rem;max-height:22rem;overflow:auto;border:0;padding:1rem 0;}
+.cabinet-import label {display:flex;gap:0.75rem;align-items:center;overflow-wrap:anywhere;}
+.cabinet-import input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  accent-color: #c4912f;
+}
 .cabinet-import form {margin-block:1.5rem;}
 
 .customer-orders {overflow-wrap:anywhere;}
 .customer-order-actions {display:flex;flex-wrap:wrap;align-items:center;gap:1rem;margin-block:2rem;}
 .customer-order-list {list-style:none;padding:0;display:grid;gap:1.5rem;}
 .customer-order-list li {padding-block:1.5rem;border-block-start:1px solid #c4912f33;}
-.customer-order-list p {margin-block:.5rem;}
+.customer-order-list p {margin-block:0.5rem;}
 .customer-account-name {color:#e0bb6a;}

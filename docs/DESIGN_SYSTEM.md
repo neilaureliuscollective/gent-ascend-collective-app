@@ -1,3 +1,5 @@
+> Superseded for the PUBLIC Aethelios visual palette on 2026-10-07: see [AETHER_PETROL.md](AETHER_PETROL.md). Earlier artwork/direction below is historical; accessibility and lifecycle safeguards remain.
+
 # Design system — Gent Ascend
 
 > Current founder-approved direction (2026-09-26): Arrival + Command is implemented on the working branch. Read docs/ARRIVAL_COMMAND.md (or ARRIVAL_COMMAND.md from docs/) for public `/` + member `/app` architecture, honest product previews, Reserve gateway, installation and mobile Aethelios. This supersedes older dashboard-first and commerce-last sequencing below. Production promotion still requires founder approval and the recorded release gates.

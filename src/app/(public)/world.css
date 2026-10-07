@@ -1,7 +1,7 @@
 .public-world {
   --world-cream: #eee9dc;
   --world-gold: #d4ad68;
-  background: #050907;
+  background: var(--aether-obsidian);
   color: var(--world-cream);
   overflow: clip;
   font-family: var(--font-body), sans-serif;
@@ -51,7 +51,7 @@
   gap: 28px;
   padding: 0 4.8%;
   border-bottom: 1px solid #eee9dc24;
-  background: linear-gradient(#02070580, transparent);
+  background: linear-gradient( color-mix(in srgb, var(--aether-obsidian) 50.2%, transparent), transparent );
 }
 .world-wordmark {
   display: flex;
@@ -117,7 +117,7 @@
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  background: #0b1810;
+  background: var(--aether-midnight);
 }
 .world-scene > img,
 .world-scene > video {
@@ -138,8 +138,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, #020907b5, #02090742 48%, transparent 75%),
-    linear-gradient(0deg, #050907 1%, transparent 40%, #02080630);
+    linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 70.98%, transparent), color-mix(in srgb, var(--aether-obsidian) 25.88%, transparent) 48%, transparent 75% ), linear-gradient( 0deg, var(--aether-obsidian) 1%, transparent 40%, color-mix(in srgb, var(--aether-obsidian) 18.82%, transparent) );
 }
 .scene-orbit {
   position: absolute;
@@ -181,7 +180,7 @@
   text-transform: uppercase;
 }
 .scene-caption button {
-  background: #05100b80;
+  background: color-mix(in srgb, var(--aether-midnight) 50.2%, transparent);
   color: #eee2c7;
   border: 1px solid #c3b18940;
   padding: 8px 12px;
@@ -254,7 +253,7 @@
   justify-content: space-between;
   gap: 40px;
   background: #c4912f;
-  color: #061009 !important;
+  color: var(--aether-silver) !important;
   font-size: 0.71rem;
   font-weight: 600;
   min-height: 54px;
@@ -376,10 +375,10 @@
   max-width: 270px;
 }
 .world-doorways a:hover {
-  background: #0c241880;
+  background: color-mix(in srgb, var(--aether-surface) 50.2%, transparent);
 }
 .world-collection {
-  background: #09130f;
+  background: var(--aether-midnight);
   border-block: 1px solid #c0af751a;
 }
 .section-heading {
@@ -410,7 +409,7 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 35%, #304333, #14261c 40%, #08120e 80%);
+  background: radial-gradient( ellipse at 50% 35%, var(--aether-petrol), var(--aether-surface) 40%, var(--aether-midnight) 80% );
   border: 1px solid #e4d4a516;
 }
 .object-halo {
@@ -435,7 +434,7 @@
   width: 85%;
   height: 30%;
   border-radius: 50%;
-  background: linear-gradient(#344435, #07100a 52%);
+  background: linear-gradient(var(--aether-petrol), var(--aether-midnight) 52%);
   box-shadow:
     0 -1px 1px #c0b78b60,
     0 -15px 35px #0003;
@@ -445,16 +444,8 @@
   position: relative;
   width: 28%;
   height: 49%;
-  background: linear-gradient(
-    95deg,
-    #030605,
-    #151e17 17%,
-    #26342a 33%,
-    #0c130e 59%,
-    #070b08 90%,
-    #293829
-  );
-  border: 1px solid #58654b60;
+  background: linear-gradient( 95deg, var(--aether-obsidian), var(--aether-surface) 17%, var(--aether-deep) 33%, var(--aether-midnight) 59%, var(--aether-obsidian) 90%, var(--aether-petrol) );
+  border: 1px solid color-mix(in srgb, var(--aether-luminous) 37.65%, transparent);
   border-radius: 15% 15% 7% 7%;
   box-shadow:
     18px 20px 25px #0008,
@@ -471,7 +462,7 @@
   height: 25%;
   top: -20%;
   left: 19%;
-  background: linear-gradient(90deg, #0b0d0a, #354036 26%, #131a12 70%, #030403);
+  background: linear-gradient( 90deg, var(--aether-obsidian), var(--aether-petrol) 26%, var(--aether-surface) 70%, var(--aether-obsidian) );
   border-radius: 7% 7% 0 0;
   border-bottom: 3px solid #b4914f;
   box-shadow: 0 -1px 0 #9d9b77;
@@ -500,7 +491,7 @@
   letter-spacing: 0.19em;
 }
 .collection-object--wash {
-  background: radial-gradient(ellipse at 50% 35%, #233d34, #10251d 40%, #08120e 80%);
+  background: radial-gradient( ellipse at 50% 35%, var(--aether-petrol), var(--aether-surface) 40%, var(--aether-midnight) 80% );
 }
 .collection-object--wash .object-vessel {
   height: 58%;
@@ -515,7 +506,7 @@
   left: 10%;
 }
 .collection-object--balm {
-  background: radial-gradient(ellipse at 50% 35%, #3b392b, #23261b 40%, #0d140d 80%);
+  background: radial-gradient(ellipse at 50% 35%, #3b392b, #23261b 40%, var(--aether-midnight) 80%);
 }
 .collection-object--balm .object-vessel {
   width: 46%;
@@ -568,7 +559,7 @@
   align-items: center;
   min-height: 750px;
   padding: 95px 9% 95px 4%;
-  background: radial-gradient(ellipse at 20% 50%, #0c3324 0, transparent 53%), #040a07;
+  background: radial-gradient(ellipse at 20% 50%, var(--aether-deep) 0, transparent 53%), var(--aether-obsidian);
   border-bottom: 1px solid #c0af751a;
   overflow: hidden;
 }
@@ -585,7 +576,7 @@
   width: 82%;
   height: 82%;
   transform: rotate(-25deg);
-  box-shadow: 0 0 60px #1c69451c;
+  box-shadow: 0 0 60px color-mix(in srgb, var(--aether-luminous) 10.98%, transparent);
 }
 .intelligence-ring:after {
   position: absolute;
@@ -602,7 +593,7 @@
   width: 66%;
   height: 66%;
   border-style: dashed;
-  border-color: #7ca58358;
+  border-color: color-mix(in srgb, var(--aether-silver) 34.51%, transparent);
   transform: rotate(27deg);
   animation: world-orbit 90s linear infinite;
 }
@@ -616,18 +607,9 @@
   width: 46%;
   height: 46%;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 28%,
-    #4b795344,
-    #0f3923 25%,
-    #08130c 58%,
-    #cda85a38 92%,
-    #263d22
-  );
+  background: radial-gradient( circle at 35% 28%, color-mix(in srgb, var(--aether-luminous) 26.67%, transparent), var(--aether-petrol) 25%, var(--aether-midnight) 58%, #cda85a38 92%, var(--aether-petrol) );
   box-shadow:
-    inset -12px -8px 25px #000b,
-    inset 1px 1px 3px #e3c677,
-    0 0 75px #386d3f2b;
+    inset -12px -8px 25px #000b, inset 1px 1px 3px #e3c677, 0 0 75px color-mix(in srgb, var(--aether-luminous) 16.86%, transparent);
   display: grid;
   place-items: center;
   border: 1px solid #b4a65d80;
@@ -643,7 +625,7 @@
   position: absolute;
   font-size: 0.5rem;
   letter-spacing: 0.3em;
-  color: #83977c;
+  color: var(--aether-silver);
 }
 .axis-top {
   top: 3%;
@@ -680,7 +662,7 @@
 }
 .reserve-architecture {
   aspect-ratio: 1;
-  background: radial-gradient(ellipse at 50% 25%, #204b3d, #09130f 65%);
+  background: radial-gradient(ellipse at 50% 25%, var(--aether-petrol), var(--aether-midnight) 65%);
   display: grid;
   place-items: center;
   position: relative;
@@ -739,7 +721,7 @@
 .world-statement {
   text-align: center;
   padding: 115px 7%;
-  background: linear-gradient(#0a160f, #07120c);
+  background: linear-gradient(var(--aether-midnight), var(--aether-midnight));
   border-block: 1px solid #ac975625;
 }
 .world-statement h2 {
@@ -750,7 +732,7 @@
 .world-invitation {
   padding: 100px 9%;
   position: relative;
-  background: radial-gradient(ellipse at 95% 90%, #143325, #050907 60%);
+  background: radial-gradient(ellipse at 95% 90%, var(--aether-deep), var(--aether-obsidian) 60%);
 }
 .world-invitation h2 {
   margin: 20px 0 25px;
@@ -810,7 +792,7 @@
 }
 .world-page-intro {
   padding: 185px 9% 70px;
-  background: radial-gradient(ellipse at 90% 20%, #18382a, #050907 70%);
+  background: radial-gradient(ellipse at 90% 20%, var(--aether-petrol), var(--aether-obsidian) 70%);
 }
 .world-page-intro h1 {
   font-size: clamp(3.7rem, 7vw, 7rem);
@@ -829,7 +811,7 @@
 .preview-notice {
   padding: 22px 26px;
   border-left: 2px solid #b38c47;
-  background: #101e16;
+  background: var(--aether-surface);
   margin: 30px 0;
   color: #c5cbbb;
   font-size: 0.8rem;
@@ -873,7 +855,7 @@
   border: 1px solid #c4912f9e;
   border-radius: 40px;
   padding: 13px 18px;
-  background: #10271f;
+  background: var(--aether-deep);
   color: #f1e5cd;
   cursor: pointer;
   box-shadow: 0 12px 42px #0009;
@@ -894,7 +876,7 @@
   min-height: 230px;
   position: relative;
   padding: 32px;
-  background: radial-gradient(circle at 80% 20%, #175044, #0c1b15 70%);
+  background: radial-gradient(circle at 80% 20%, var(--aether-petrol), var(--aether-surface) 70%);
   border: 1px solid #a782423f;
   color: #efe9dd;
 }
@@ -925,7 +907,7 @@
   aspect-ratio: 0.88;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle, #254238, #0d1712 70%);
+  background: radial-gradient(circle, var(--aether-petrol), var(--aether-midnight) 70%);
   overflow: hidden;
 }
 .commerce-image img {
@@ -968,7 +950,7 @@
   height: auto;
   max-height: 680px;
   object-fit: contain;
-  background: #10231b;
+  background: var(--aether-surface);
 }
 .commerce-product-copy {
   position: sticky;
@@ -1002,7 +984,7 @@
   width: 100%;
   border: 1px solid #b997665c;
   color: #f3ebda;
-  background: #0c2018;
+  background: var(--aether-surface);
   padding: 12px;
   margin-top: 7px;
   font: inherit;
@@ -1044,7 +1026,7 @@
   width: min(510px, 100%);
   height: 100%;
   overflow-y: auto;
-  background: #07140f;
+  background: var(--aether-midnight);
   border-left: 1px solid #be985754;
   padding: 28px;
   display: flex;
@@ -1100,7 +1082,7 @@
   width: 96px;
   height: 112px;
   object-fit: contain;
-  background: #11251c;
+  background: var(--aether-surface);
 }
 .cart-lines li > div {
   flex: 1;
@@ -1218,7 +1200,7 @@
   display: grid;
   grid-template-columns: 0.7fr 1.3fr;
   border: 1px solid #c5a76e40;
-  background: linear-gradient(135deg, #102e20, #050c08);
+  background: linear-gradient(135deg, var(--aether-deep), var(--aether-obsidian));
   padding: 40px;
   gap: 40px;
   box-shadow: 0 25px 80px #0004;
@@ -1287,7 +1269,7 @@
 .membership-standard {
   padding: 35px;
   border: 1px solid #b89b5845;
-  background: #0b2117;
+  background: var(--aether-surface);
   margin-top: 40px;
   max-width: 720px;
 }
@@ -1414,7 +1396,7 @@
     top: 82px;
     left: 0;
     right: 0;
-    background: #07160ff7;
+    background: color-mix(in srgb, var(--aether-midnight) 96.86%, transparent);
     padding: 25px 7% 35px;
     border-bottom: 1px solid #d5b67650;
     backdrop-filter: blur(20px);
@@ -1445,8 +1427,7 @@
   }
   .scene-shade {
     background:
-      linear-gradient(90deg, #020907bd, #02090775 60%, #02090720),
-      linear-gradient(0deg, #050907, transparent 60%);
+      linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 74.12%, transparent), color-mix(in srgb, var(--aether-obsidian) 45.88%, transparent) 60%, color-mix(in srgb, var(--aether-obsidian) 12.55%, transparent) ), linear-gradient(0deg, var(--aether-obsidian), transparent 60%);
   }
   .editorial-split {
     gap: 7%;
@@ -1843,7 +1824,7 @@
   margin-block: 30px;
 }
 .editorial-media-slot .scene-shade {
-  background: linear-gradient(0deg, #050907bb, transparent 60%);
+  background: linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 73.33%, transparent), transparent 60% );
 }
 
 /* Full official seal is a deliberate closing identity moment. */

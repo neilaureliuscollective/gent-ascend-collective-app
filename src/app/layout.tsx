@@ -4,6 +4,7 @@ import { PerformanceReporting } from '@/components/performance-reporting';
 import { brand } from '@/platform/brand';
 import './globals.css';
 import './interaction.css';
+import './aether-materials.css';
 const sora = localFont({
   src: '../assets/fonts/sora.woff2',
   variable: '--font-display',
