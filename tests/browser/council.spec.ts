@@ -100,7 +100,7 @@ test('team is visible, explains routing, involves a specialist and restores save
   await dialog.getByRole('button', { name: 'Involve Athena', exact: true }).click();
   expect(sent).toHaveLength(0);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   expect(sent[0]?.council).toEqual({ kind: 'specialist', specialists: ['athena'] });
   expect(sent[0]?.includeContext).toBe(false);
   await page.reload();
@@ -108,7 +108,7 @@ test('team is visible, explains routing, involves a specialist and restores save
   await page.getByRole('button', { name: 'Return to Aethelios' }).click();
   await page.getByLabel('Message Aethelios').fill('Keep it simple');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   expect(sent[1]?.council).toBeUndefined();
 });
 test('Table reviews objective and cast, synthesizes with context off, and persists', async ({
@@ -122,7 +122,7 @@ test('Table reviews objective and cast, synthesizes with context off, and persis
   expect(sent).toHaveLength(0);
   await dialog.getByLabel('What are we examining?').fill('Compare two career opportunities');
   await dialog.getByRole('button', { name: 'Confirm and assemble' }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   expect(sent[0]).toMatchObject({
     includeContext: false,
     council: { kind: 'table', specialists: ['athena', 'themis'] },
@@ -137,7 +137,7 @@ test('focused conversation prepares a useful starter without sending or inheriti
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Research a decision');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   await page.getByRole('button', { name: 'Meet the Intelligence Team' }).click();
   await page
     .locator('.council-roster article')
@@ -147,7 +147,7 @@ test('focused conversation prepares a useful starter without sending or inheriti
   await expect(page.getByLabel('Message Aethelios')).toHaveValue(/creative direction/);
   expect(sent).toHaveLength(1);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   expect(sent[1]?.conversationId).not.toEqual(sent[0]?.conversationId);
   expect(sent[1]?.council).toEqual({ kind: 'specialist', specialists: ['apollo'] });
 });
@@ -195,7 +195,7 @@ test('first useful outcome becomes a reviewed private Mission without a second A
   });
   await page.getByLabel('Message Aethelios').fill('Launch my landscaping website');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   await page.getByRole('button', { name: 'Save as Mission' }).click();
   await page.getByLabel('Mission name').fill('Landscaping website');
   await page.getByLabel('Next action (optional)').fill('Review homepage brief');

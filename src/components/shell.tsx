@@ -54,7 +54,7 @@ export function Shell({
               <Brand compact />
             </Link>
             <span className="topbar-context">
-              AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
+              AETHELIOS <span>/</span> PERSONAL INTELLIGENCE
             </span>
             <div className="topbar-actions">
               <UniversalCapture />

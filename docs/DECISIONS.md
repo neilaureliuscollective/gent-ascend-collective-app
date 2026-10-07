@@ -349,3 +349,7 @@ Fix the confirmed live camera=() document policy to camera=(self), including cli
 ## 2026-10-04 — Recover Command home while preserving direct member entry
 
 Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.
+
+## 2026-10-07 — Public Mission Deliverables
+
+Choose durable, versioned personal text work before expanding autonomous agents. Reuse saved completed replies and existing session/RLS infrastructure; no new model or package. Research: Anthropic “Building effective agents” (simple workflows and human checkpoints), Microsoft Research Human-AI Interaction guidelines (efficient correction), installed Next 16 route-handler/data-security guides. Full scope, ownership, boundaries, limits and release gates: `MISSION_DELIVERABLES.md`.

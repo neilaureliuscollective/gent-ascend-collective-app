@@ -71,6 +71,12 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      mission_deliverables: Table<import('@/domains/missions/deliverable-schema').Deliverable, never, never>;
+      mission_deliverable_versions: Table<import('@/domains/missions/deliverable-schema').DeliverableVersion, never, never>;
+      mission_proposals: Table<import('@/domains/missions/continuity-schema').MissionProposal, never, never>;
+      mission_studio_links: Table<{mission_id:string;person_id:string;project_id:string;source_revision:number;created_at:string},never,never>;
+      mission_outputs: Table<{id:string;person_id:string;mission_id:string;turn_id:string;created_at:string},never,never>;
+      mission_turn_context: Table<{turn_id:string;person_id:string;mission_id:string;revision:number;direction:Record<string,unknown>},never,never>;
       intelligence_missions: Table<import('@/domains/missions/schema').Mission, Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>, Partial<import('@/domains/missions/schema').Mission>>;
       company_turn_context: Table<{request_id: string; person_id: string; company_id: string; name: string; brief: string; version: number; confirmed_at: string}, never, never>;
       company_jobs: Table<import("@/domains/company-work/schema").WorkJob, never, never>;
@@ -747,8 +753,17 @@ export interface Database {
         never
       >;
     };
-    Views: Record<string, never>;
+    Views: {mission_deliverable_summaries: {Row: import('@/domains/missions/deliverable-schema').Deliverable & {title:string;reviewed:boolean}; Relationships: []}};
     Functions: {
+      mission_delete_deliverable: {Args:{p_id:string;p_expected:number};Returns:string};
+      mission_create_deliverable: {Args:{p_mission:string;p_turn:string;p_revision:number};Returns:string};
+      mission_save_deliverable: {Args:{p_id:string;p_version:string;p_expected:number;p_title:string;p_body:string;p_acceptance:string};Returns:string};
+      mission_review_deliverable: {Args:{p_id:string;p_version:string;p_note:string};Returns:string};
+      mission_capture_context: {Args:{p_turn:string;p_mission:string;p_revision:number};Returns:Record<string,unknown>};
+      mission_store_proposal: {Args:{p_id:string;p_mission:string;p_turn:string;p_revision:number;p_direction:import('@/domains/missions/continuity-schema').Direction;p_input?:number;p_output?:number;p_elapsed?:number};Returns:string};
+      mission_decide_proposal: {Args:{p_id:string;p_accept:boolean;p_direction:import('@/domains/missions/continuity-schema').Direction|null};Returns:string};
+      mission_pin_output: {Args:{p_mission:string;p_turn:string};Returns:string};
+      mission_open_studio: {Args:{p_mission:string;p_revision:number};Returns:string};
       company_begin_revision: {Args:{p_company:string;p_conversation:string;p_source:string;p_request:string;p_text:string;p_kind:string;p_model:string;p_prompt_version:string};Returns:string};
       company_create_job: {Args:{p_id:string;p_company:string;p_conversation:string;p_scope:import("@/domains/company-work/schema").WorkScope};Returns:string};
       company_save_work: {Args:{p_id:string;p_company:string;p_job:string;p_expected:number;p_content:import("@/domains/company-work/schema").WorkContent;p_source_turn:string|null};Returns:string};

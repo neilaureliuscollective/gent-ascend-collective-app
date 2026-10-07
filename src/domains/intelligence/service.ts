@@ -1,3 +1,4 @@
+import { missionContextMessage } from '@/domains/missions/continuity-schema';
 import 'server-only';
 import { currentIdentity } from '@/domains/identity/current';
 import { currentPerson } from '@/domains/person/current';
@@ -208,6 +209,7 @@ export async function prepareReply(input: {
   requestId: string;
   text: string;
   includeContext: boolean;
+  mission?: {id:string;revision:number};
   companyId?: string;
   sourceTurnId?: string;
   revisionKind?: 'retry'|'regenerate'|'edit';
@@ -219,6 +221,7 @@ export async function prepareReply(input: {
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
+  if(input.companyId && input.mission) throw new IntelligenceError('Mission context cannot enter a company room.',400);
   let company: import('@/domains/companies/schema').Company | null = null;
   if (input.companyId) {
     if (input.includeContext) throw new IntelligenceError('Unsupported company context.', 400);
@@ -282,11 +285,19 @@ export async function prepareReply(input: {
   let history: Turn[];
   let context: PersonalContext | null;
   let threadSummary:string;
+  let missionDirection: Record<string,unknown> | null=null;
   try {
     [history, context] = await Promise.all([
       conversationTurns(input.conversationId, undefined, company?.id),
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
     ]);
+    if(input.mission) {
+      const match=await client.from('intelligence_missions').select('conversation_id').eq('id',input.mission.id).eq('person_id',person.id).single();
+      if(match.error||match.data?.conversation_id!==input.conversationId) throw new IntelligenceError('Mission scope changed.',409);
+      const captured=await client.rpc('mission_capture_context',{p_turn:input.requestId,p_mission:input.mission.id,p_revision:input.mission.revision});
+      if(captured.error||!captured.data) throw new IntelligenceError('Mission changed. Reload before continuing.',409);
+      missionDirection=captured.data;
+    }
     threadSummary=await prepareThreadSummary(client,person.id,input.conversationId,history);
   } catch {
     await client.rpc('ai_finish_turn', {
@@ -303,7 +314,7 @@ export async function prepareReply(input: {
   const founderContext = null;
   return {
     model: config.AURELIUS_AI_MODEL,
-    messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, company ? null : capabilityContext(input.text), company),
+    messages: [...(missionDirection ? [{role: 'user' as const, content: missionContextMessage(missionDirection)}] : []), ...buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, company ? null : capabilityContext(input.text), company)],
     founder: founderContext !== null,
     council: input.council,
     finish: async (

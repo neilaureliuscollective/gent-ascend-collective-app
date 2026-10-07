@@ -1,3 +1,4 @@
+import { DeliverableFixture } from './deliverable';
 import { MissionHandoffFixture } from './mission-handoff';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
@@ -105,7 +106,7 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'mission' ? (
+  mode === 'deliverable' ? (<DeliverableFixture/>) : mode === 'mission' ? (
     <MissionHandoffFixture />
   ) : mode === 'company-room' || mode === 'company-job' ? (
     <>

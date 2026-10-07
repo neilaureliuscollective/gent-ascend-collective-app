@@ -10,7 +10,7 @@ import './cinematic.css';
 import './commerce-experience.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
-  description: 'Aethelios helps founders and operators build, grow and operate companies.',
+  description: 'Aethelios connects your ideas, decisions and ongoing work in one Personal Intelligence OS.',
 };
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -39,7 +39,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <p>
             Rooted in Louisiana.
             <br />
-            Built for company builders.
+            Built around your next move.
           </p>
         </div>
         <nav aria-label="Footer navigation">
