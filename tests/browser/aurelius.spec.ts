@@ -127,7 +127,7 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Help me choose a next step');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   await expect(page.locator('.message-markdown strong')).toHaveText('one deliberate action');
   await expect(page.locator('.message-markdown img')).toHaveCount(0);
   expect(await page.evaluate(() => Object.hasOwn(window, 'compromised'))).toBe(false);
@@ -294,7 +294,7 @@ test('the global Aethelios panel uses the same saved conversation service', asyn
   await expect(dialog.getByLabel('Message Aethelios')).toBeVisible();
   await dialog.getByLabel('Message Aethelios').fill('From Command');
   await dialog.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Reply saved.');
+  await expect(dialog.locator('.aurelius-notice')).toContainText('Reply saved.');
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
@@ -374,7 +374,7 @@ for (const width of [360, 1440]) {
     const { state } = await setup(page);
     await page.getByLabel('Message Aethelios').fill('Direction for the week');
     await page.getByRole('button', { name: 'Send', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Reply saved.');
+    await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
     state.conversations.push({
       id: '50000000-0000-4000-8000-000000000008',
       person_id: 'synthetic',
@@ -436,7 +436,7 @@ test('mobile conversation keeps room for reading and reopens its saved URL', asy
   await setup(page);
   await page.getByLabel('Message Aethelios').fill('Give me one useful action');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
   await expect(page).toHaveURL(/\/app\/aethelios\?conversation=/);
   await page.reload();
   await expect(page.locator('.user-message')).toContainText('Give me one useful action');

@@ -19,7 +19,9 @@ for (const width of [360, 768, 1440]) {
     } else {
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(
-        page.getByRole('dialog').getByText('Sign in to use your Aethelios workspace.', { exact: false }),
+        page
+          .getByRole('dialog')
+          .getByText('Sign in to use your Aethelios workspace.', { exact: false }),
       ).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -47,6 +49,8 @@ test('production runtime denies developer routes and query bypass', async ({ pag
     (await request.post('/dev', { data: { membership: 'admin', token: 'fake' } })).status(),
   ).toBeGreaterThanOrEqual(400);
   await page.goto('/app?dev=true');
+  await expect(page).toHaveURL('/app/aethelios');
+  await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Developer console' })).toHaveCount(0);
   await page.goto('/app/you');
   await expect(

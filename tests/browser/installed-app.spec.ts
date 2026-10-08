@@ -37,7 +37,7 @@ test('fresh installation has one current crest identity across manifest and Appl
   await page.goto('/app/install');
   for (const [relation, size] of [
     ['apple-touch-icon', 180],
-    ['icon', 64],
+    ['icon', 512],
   ] as const) {
     const href = await page.locator(`link[rel="${relation}"]`).getAttribute('href');
     expect(href).toBeTruthy();
