@@ -7,7 +7,7 @@ test('public member arrival offers free entry and founder console stays closed',
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 344, height: 740 });
   await page.goto('/app/welcome');
-  await expect(page.getByRole('heading', { name: 'Welcome to your ascent.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome to Aethelios.' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your own space begins here.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Create an account or sign in' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(

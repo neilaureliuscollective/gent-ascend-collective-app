@@ -1,11 +1,10 @@
 import palette from './visual/aether-palette.json';
-
 /** Public brand identity. Technical IDs and existing persisted keys stay stable. */
 export const brand = {
   name: 'Aethelios',
   shortName: 'Aethelios',
   description:
-    'A personal intelligence OS. Understand, build and continue your work, ideas and ambitions in one considered environment.',
+    'Your Personal Intelligence OS. Conversations, decisions, creative work and ongoing Missions in one connected environment.',
   themeColor: palette.obsidian,
   crest: '/brand/aethelios-aether-20261007.webp',
   lockup: '/brand/aethelios-aether-20261007.webp',

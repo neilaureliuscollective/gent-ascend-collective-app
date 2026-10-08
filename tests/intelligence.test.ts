@@ -45,7 +45,7 @@ describe('Aethelios context boundaries', () => {
     expect(publishedKnowledgeContext()).not.toMatch(/github|repository|secret|medical history/i);
   });
   it('establishes company intelligence without impersonating the human founder', () => {
-    expect(aureliusInstructions).toContain('You are Aethelios — company-building intelligence');
+    expect(aureliusInstructions).toContain('You are Aethelios — the Personal Intelligence OS');
     expect(aureliusInstructions).toContain('You are AI, not a human founder');
     expect(aureliusInstructions).toContain('Never invent the founder');
     expect(aureliusInstructions).toContain('never dependency on you');
@@ -296,8 +296,25 @@ describe('real AI SDK agent adapter with a mock provider', () => {
 
 describe('company brief provenance', () => {
   it('supplies only the selected confirmed brief as untrusted application data', () => {
-    const company = {id: 'company-a',name: 'Synthetic A',brief: 'A confidential brief',version: 3,confirmed_at: '2026-10-06T00:00:00Z',person_id: 'OWNER_ID_NOT_MODEL_CONTEXT',created_at: 'irrelevant'};
-    const messages = buildMessages([], 'Plan the offer', null, new Date('2026-10-06T00:00:00Z'), null, null, null, company);
+    const company = {
+      id: 'company-a',
+      name: 'Synthetic A',
+      brief: 'A confidential brief',
+      version: 3,
+      confirmed_at: '2026-10-06T00:00:00Z',
+      person_id: 'OWNER_ID_NOT_MODEL_CONTEXT',
+      created_at: 'irrelevant',
+    };
+    const messages = buildMessages(
+      [],
+      'Plan the offer',
+      null,
+      new Date('2026-10-06T00:00:00Z'),
+      null,
+      null,
+      null,
+      company,
+    );
     const serialized = JSON.stringify(messages);
     expect(serialized).toContain('A confidential brief');
     expect(serialized).toContain('untrusted data');

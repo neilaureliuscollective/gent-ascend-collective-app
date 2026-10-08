@@ -34,8 +34,8 @@ export function Shell({
           <AureliusPanel />
 
           <div className="sidebar-footer">
-            <Link href="/app/work" prefetch={false} className="text-link">
-              Company work ↗
+            <Link href="/app/library" prefetch={false} className="text-link">
+              Saved work ↗
             </Link>
             <span className="brand-star" aria-hidden="true">
               ✦
@@ -54,13 +54,13 @@ export function Shell({
               <Brand compact />
             </Link>
             <span className="topbar-context">
-              AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
+              AETHELIOS <span>/</span> PERSONAL INTELLIGENCE
             </span>
             <div className="topbar-actions">
               <UniversalCapture />
               <AppearanceControls />
               <Link href="/app/work" className="text-link shell-ascend-link">
-                Company work
+                Your work
               </Link>
               {founder && <Link href="/dev">Developer console</Link>}
               <Link href="/app/you" className="avatar" aria-label="Your account">

@@ -1059,59 +1059,362 @@ console.log(
 );
 
 // Company rooms: real Auth/PostgREST gate, synthetic local data only; no model call.
-const companyA = crypto.randomUUID(), companyB = crypto.randomUUID();
-const companyThread = crypto.randomUUID(), companyRequest = crypto.randomUUID();
-const companyRows = await member.from('companies').insert([
-  {id: companyA,person_id: memberPerson.id,name: 'Synthetic company A',brief: 'A private brief'},
-  {id: companyB,person_id: memberPerson.id,name: 'Synthetic company B',brief: 'B private brief'},
-]).select('*');
+const companyA = crypto.randomUUID(),
+  companyB = crypto.randomUUID();
+const companyThread = crypto.randomUUID(),
+  companyRequest = crypto.randomUUID();
+const companyRows = await member
+  .from('companies')
+  .insert([
+    {
+      id: companyA,
+      person_id: memberPerson.id,
+      name: 'Synthetic company A',
+      brief: 'A private brief',
+    },
+    {
+      id: companyB,
+      person_id: memberPerson.id,
+      name: 'Synthetic company B',
+      brief: 'B private brief',
+    },
+  ])
+  .select('*');
 assert.equal(companyRows.error, null);
 assert.equal(companyRows.data.length, 2);
-assert.equal((await founder.from('companies').select('id').in('id',[companyA,companyB])).data.length, 0);
+assert.equal(
+  (await founder.from('companies').select('id').in('id', [companyA, companyB])).data.length,
+  0,
+);
 assert.ok((await anon.from('companies').select('id')).error);
-assert.ok((await founder.from('companies').insert({person_id: memberPerson.id,name: 'Forged company'})).error);
-const companyArgs = {p_company: companyA,p_conversation: companyThread,p_request: companyRequest,p_text: 'Synthetic Company Isolation Sentinel',p_model: 'test-model',p_prompt_version: 'company-integration-test'};
+assert.ok(
+  (await founder.from('companies').insert({ person_id: memberPerson.id, name: 'Forged company' }))
+    .error,
+);
+const companyArgs = {
+  p_company: companyA,
+  p_conversation: companyThread,
+  p_request: companyRequest,
+  p_text: 'Synthetic Company Isolation Sentinel',
+  p_model: 'test-model',
+  p_prompt_version: 'company-integration-test',
+};
 assert.equal((await member.rpc('company_begin_turn', companyArgs)).error, null);
-assert.equal((await member.rpc('ai_finish_turn', {p_request: companyRequest,p_text: 'Synthetic reply',p_status: 'complete'})).error, null);
-const contextSnapshot = await member.from('company_turn_context').select('brief,version').eq('request_id',companyRequest).single();
+assert.equal(
+  (
+    await member.rpc('ai_finish_turn', {
+      p_request: companyRequest,
+      p_text: 'Synthetic reply',
+      p_status: 'complete',
+    })
+  ).error,
+  null,
+);
+const contextSnapshot = await member
+  .from('company_turn_context')
+  .select('brief,version')
+  .eq('request_id', companyRequest)
+  .single();
 assert.equal(contextSnapshot.error, null);
-assert.deepEqual(contextSnapshot.data, {brief: 'A private brief',version: 1});
-const changedBrief = await member.from('companies').update({brief: 'Reviewed A',version: 2}).eq('id',companyA).eq('version',1).select('version');
+assert.deepEqual(contextSnapshot.data, { brief: 'A private brief', version: 1 });
+const changedBrief = await member
+  .from('companies')
+  .update({ brief: 'Reviewed A', version: 2 })
+  .eq('id', companyA)
+  .eq('version', 1)
+  .select('version');
 assert.equal(changedBrief.error, null);
-assert.deepEqual(changedBrief.data, [{version: 2}]);
-assert.equal((await member.from('companies').update({brief: 'Stale A',version: 2}).eq('id',companyA).eq('version',1).select('id')).data.length, 0);
-assert.equal((await member.from('company_turn_context').select('brief').eq('request_id',companyRequest).single()).data.brief, 'A private brief');
-assert.ok((await member.rpc('company_begin_turn',{...companyArgs,p_company: companyB,p_request: crypto.randomUUID()})).error);
-assert.ok((await founder.rpc('company_begin_turn',{...companyArgs,p_request: crypto.randomUUID()})).error);
-assert.ok((await member.rpc('ai_begin_turn',{p_conversation: companyThread,p_request: crypto.randomUUID(),p_text: 'Global context',p_model: 'test',p_context: true,p_prompt_version: 'legacy'})).error);
-assert.equal((await member.rpc('ai_search_conversations',{p_query: 'Isolation Sentinel',p_limit: 30})).data.length, 0);
-assert.equal((await founder.from('company_turn_context').select('request_id').eq('request_id',companyRequest)).data.length, 0);
-assert.equal((await member.from('ai_conversations').delete().eq('id',companyThread)).error, null);
-console.log('PASS: company ownership, two-company scope, immutable snapshot, stale brief, legacy search exclusion and cross-user denial');
+assert.deepEqual(changedBrief.data, [{ version: 2 }]);
+assert.equal(
+  (
+    await member
+      .from('companies')
+      .update({ brief: 'Stale A', version: 2 })
+      .eq('id', companyA)
+      .eq('version', 1)
+      .select('id')
+  ).data.length,
+  0,
+);
+assert.equal(
+  (
+    await member
+      .from('company_turn_context')
+      .select('brief')
+      .eq('request_id', companyRequest)
+      .single()
+  ).data.brief,
+  'A private brief',
+);
+assert.ok(
+  (
+    await member.rpc('company_begin_turn', {
+      ...companyArgs,
+      p_company: companyB,
+      p_request: crypto.randomUUID(),
+    })
+  ).error,
+);
+assert.ok(
+  (await founder.rpc('company_begin_turn', { ...companyArgs, p_request: crypto.randomUUID() }))
+    .error,
+);
+assert.ok(
+  (
+    await member.rpc('ai_begin_turn', {
+      p_conversation: companyThread,
+      p_request: crypto.randomUUID(),
+      p_text: 'Global context',
+      p_model: 'test',
+      p_context: true,
+      p_prompt_version: 'legacy',
+    })
+  ).error,
+);
+assert.equal(
+  (await member.rpc('ai_search_conversations', { p_query: 'Isolation Sentinel', p_limit: 30 })).data
+    .length,
+  0,
+);
+assert.equal(
+  (await founder.from('company_turn_context').select('request_id').eq('request_id', companyRequest))
+    .data.length,
+  0,
+);
+assert.equal((await member.from('ai_conversations').delete().eq('id', companyThread)).error, null);
+console.log(
+  'PASS: company ownership, two-company scope, immutable snapshot, stale brief, legacy search exclusion and cross-user denial',
+);
 
 // Connected work: real local Auth/PostgREST gate; no provider or image calls.
-const workJob=crypto.randomUUID(),workThread=crypto.randomUUID(),workVersion=crypto.randomUUID();
-const workScope={request:'Synthetic positioning engagement',audience:'Founder',outcome:'A brief and deck',constraints:'No invented economics',acceptance:'A clear offer',evidence:[],figures:[]};
-const jobArgs={p_id:workJob,p_company:companyA,p_conversation:workThread,p_scope:workScope};
-assert.equal((await member.rpc('company_create_job',jobArgs)).error,null);
-assert.equal((await member.rpc('company_create_job',jobArgs)).data,workJob);
-assert.ok((await founder.rpc('company_create_job',jobArgs)).error);
-assert.equal((await founder.from('company_jobs').select('id').eq('id',workJob)).data.length,0);
-const workContent={title:'Synthetic strategy',summary:'A founder-reviewed proposal.',positioning:'A clear distinction.',offer:'A bounded engagement.',actions:['Confirm the evidence.'],gaps:[],slides:[{title:'Synthetic positioning',body:'A reviewed company draft.',bullets:[],figureIds:[],notes:'Private synthetic note'}]};
-const workSave={p_id:workVersion,p_company:companyA,p_job:workJob,p_expected:0,p_content:workContent,p_source_turn:null};
-assert.equal((await member.rpc('company_save_work',workSave)).error,null);
-assert.equal((await member.rpc('company_save_work',workSave)).data,workVersion);
-assert.ok((await member.rpc('company_save_work',{...workSave,p_id:crypto.randomUUID()})).error);
-assert.ok((await member.rpc('company_save_work',{...workSave,p_company:companyB})).error);
-assert.ok((await founder.rpc('company_save_work',workSave)).error);
-assert.equal((await founder.from('company_work_versions').select('id').eq('id',workVersion)).data.length,0);
-const reviewArgs={p_company:companyA,p_job:workJob,p_version:workVersion};
-assert.equal((await member.rpc('company_review_work',reviewArgs)).error,null);
-const reviewed=(await member.from('company_work_versions').select('reviewed_at').eq('id',workVersion).single()).data.reviewed_at;
+const workJob = crypto.randomUUID(),
+  workThread = crypto.randomUUID(),
+  workVersion = crypto.randomUUID();
+const workScope = {
+  request: 'Synthetic positioning engagement',
+  audience: 'Founder',
+  outcome: 'A brief and deck',
+  constraints: 'No invented economics',
+  acceptance: 'A clear offer',
+  evidence: [],
+  figures: [],
+};
+const jobArgs = {
+  p_id: workJob,
+  p_company: companyA,
+  p_conversation: workThread,
+  p_scope: workScope,
+};
+assert.equal((await member.rpc('company_create_job', jobArgs)).error, null);
+assert.equal((await member.rpc('company_create_job', jobArgs)).data, workJob);
+assert.ok((await founder.rpc('company_create_job', jobArgs)).error);
+assert.equal((await founder.from('company_jobs').select('id').eq('id', workJob)).data.length, 0);
+const workContent = {
+  title: 'Synthetic strategy',
+  summary: 'A founder-reviewed proposal.',
+  positioning: 'A clear distinction.',
+  offer: 'A bounded engagement.',
+  actions: ['Confirm the evidence.'],
+  gaps: [],
+  slides: [
+    {
+      title: 'Synthetic positioning',
+      body: 'A reviewed company draft.',
+      bullets: [],
+      figureIds: [],
+      notes: 'Private synthetic note',
+    },
+  ],
+};
+const workSave = {
+  p_id: workVersion,
+  p_company: companyA,
+  p_job: workJob,
+  p_expected: 0,
+  p_content: workContent,
+  p_source_turn: null,
+};
+assert.equal((await member.rpc('company_save_work', workSave)).error, null);
+assert.equal((await member.rpc('company_save_work', workSave)).data, workVersion);
+assert.ok(
+  (await member.rpc('company_save_work', { ...workSave, p_id: crypto.randomUUID() })).error,
+);
+assert.ok((await member.rpc('company_save_work', { ...workSave, p_company: companyB })).error);
+assert.ok((await founder.rpc('company_save_work', workSave)).error);
+assert.equal(
+  (await founder.from('company_work_versions').select('id').eq('id', workVersion)).data.length,
+  0,
+);
+const reviewArgs = { p_company: companyA, p_job: workJob, p_version: workVersion };
+assert.equal((await member.rpc('company_review_work', reviewArgs)).error, null);
+const reviewed = (
+  await member.from('company_work_versions').select('reviewed_at').eq('id', workVersion).single()
+).data.reviewed_at;
 assert.ok(reviewed);
-assert.equal((await member.rpc('company_review_work',reviewArgs)).error,null);
-assert.equal((await member.from('company_work_versions').select('reviewed_at').eq('id',workVersion).single()).data.reviewed_at,reviewed);
-assert.ok((await founder.rpc('company_review_work',reviewArgs)).error);
-assert.ok((await member.from('company_work_versions').update({content:{title:'Forbidden mutation'}}).eq('id',workVersion)).error);
+assert.equal((await member.rpc('company_review_work', reviewArgs)).error, null);
+assert.equal(
+  (await member.from('company_work_versions').select('reviewed_at').eq('id', workVersion).single())
+    .data.reviewed_at,
+  reviewed,
+);
+assert.ok((await founder.rpc('company_review_work', reviewArgs)).error);
+assert.ok(
+  (
+    await member
+      .from('company_work_versions')
+      .update({ content: { title: 'Forbidden mutation' } })
+      .eq('id', workVersion)
+  ).error,
+);
 assert.ok((await anon.from('company_jobs').select('id')).error);
-console.log('PASS: connected company job replay, immutable versions, stale/cross-company/cross-user denial and exact review receipt');
+console.log(
+  'PASS: connected company job replay, immutable versions, stale/cross-company/cross-user denial and exact review receipt',
+);
+
+// Phase 1: real local Auth/PostgREST continuity and immutable work; no model calls.
+const missionThread = crypto.randomUUID(),
+  missionTurn = crypto.randomUUID(),
+  missionId = crypto.randomUUID();
+assert.equal(
+  (
+    await member.rpc('ai_begin_turn', {
+      p_conversation: missionThread,
+      p_request: missionTurn,
+      p_text: 'Synthetic Mission objective',
+      p_model: 'synthetic-no-model-call',
+      p_context: false,
+      p_prompt_version: 'phase-one-integration',
+    })
+  ).error,
+  null,
+);
+assert.equal(
+  (
+    await member
+      .from('intelligence_missions')
+      .insert({
+        id: missionId,
+        person_id: memberPerson.id,
+        conversation_id: missionThread,
+        title: 'Synthetic persistent project',
+        objective: 'Create a verified local work receipt',
+        status: 'active',
+        decisions: 'Use synthetic records only',
+        next_actions: 'Review the document',
+      })
+  ).error,
+  null,
+);
+const captureArgs = { p_turn: missionTurn, p_mission: missionId, p_revision: 1 };
+const captured = await member.rpc('mission_capture_context', captureArgs);
+assert.equal(captured.error, null);
+assert.equal(captured.data.objective, 'Create a verified local work receipt');
+assert.ok((await founder.rpc('mission_capture_context', captureArgs)).error);
+assert.equal(
+  (
+    await member.rpc('ai_finish_turn', {
+      p_request: missionTurn,
+      p_text: 'Synthetic saved work product',
+      p_status: 'complete',
+      p_input: 0,
+      p_output: 0,
+    })
+  ).data,
+  true,
+);
+const createArgs = { p_mission: missionId, p_turn: missionTurn, p_revision: 1 };
+const createdDoc = await member.rpc('mission_create_deliverable', createArgs);
+assert.equal(createdDoc.error, null);
+const docId = createdDoc.data;
+assert.equal((await member.rpc('mission_create_deliverable', createArgs)).data, docId);
+assert.ok((await founder.rpc('mission_create_deliverable', createArgs)).error);
+assert.equal(
+  (await founder.from('mission_deliverable_versions').select('id').eq('deliverable_id', docId)).data
+    .length,
+  0,
+);
+assert.ok((await anon.from('mission_deliverables').select('id')).error);
+const versionId = crypto.randomUUID(),
+  saveArgs = {
+    p_id: docId,
+    p_version: versionId,
+    p_expected: 1,
+    p_title: 'Synthetic revised document',
+    p_body: 'Explicitly revised synthetic work',
+    p_acceptance: 'Verify title and content',
+  };
+assert.equal((await member.rpc('mission_save_deliverable', saveArgs)).error, null);
+assert.equal((await member.rpc('mission_save_deliverable', saveArgs)).error, null);
+assert.ok(
+  (await member.rpc('mission_save_deliverable', { ...saveArgs, p_version: crypto.randomUUID() }))
+    .error,
+);
+assert.ok((await founder.rpc('mission_save_deliverable', saveArgs)).error);
+assert.equal(
+  (
+    await member.rpc('mission_review_deliverable', {
+      p_id: docId,
+      p_version: versionId,
+      p_note: 'Synthetic content checked against the accepted objective',
+    })
+  ).error,
+  null,
+);
+const versions = await member
+  .from('mission_deliverable_versions')
+  .select('id,revision,body,reviewed_at')
+  .eq('deliverable_id', docId)
+  .order('revision');
+assert.equal(versions.error, null);
+assert.equal(versions.data.length, 2);
+assert.equal(versions.data[0].body, 'Synthetic saved work product');
+assert.ok(versions.data[1].reviewed_at);
+const studio = await member.rpc('mission_open_studio', { p_mission: missionId, p_revision: 1 });
+assert.equal(studio.error, null);
+assert.equal(
+  (await member.rpc('mission_open_studio', { p_mission: missionId, p_revision: 1 })).data,
+  studio.data,
+);
+assert.equal(
+  (await founder.from('mission_studio_links').select('*').eq('mission_id', missionId)).data.length,
+  0,
+);
+assert.equal((await member.from('intelligence_missions').delete().eq('id', missionId)).error, null);
+const retained = await member
+  .from('mission_deliverable_summaries')
+  .select('mission_id,revision')
+  .eq('id', docId)
+  .single();
+assert.equal(retained.error, null);
+assert.equal(retained.data.mission_id, null);
+assert.equal(retained.data.revision, 2);
+assert.equal(
+  (await member.from('ai_studio_projects').select('id').eq('id', studio.data)).data.length,
+  1,
+);
+assert.ok((await founder.rpc('mission_delete_deliverable', { p_id: docId, p_expected: 2 })).error);
+assert.equal(
+  (await member.rpc('mission_delete_deliverable', { p_id: docId, p_expected: 2 })).error,
+  null,
+);
+assert.equal((await member.from('ai_conversations').delete().eq('id', missionThread)).error, null);
+assert.equal((await member.from('ai_studio_projects').delete().eq('id', studio.data)).error, null);
+console.log(
+  'PASS: Mission context, immutable deliverable replay/review/history, retained detached work, Studio continuity and real authenticated cross-account/anonymous denial',
+);
+
+// Technology: real local session/PostgREST acceptance, no provider or service-role use.
+{
+ const id=crypto.randomUUID(),version=crypto.randomUUID();
+ const brief={name:'Local synthetic studio',industry:'grooming-beauty',vision:'A synthetic service-business preview.',headline:'Care with intention',about:'Synthetic data for local acceptance only.',services:[{name:'Consultation',description:'Preview only',price:'$45'}],hours:'By appointment',contact:'Synthetic contact',bookingUrl:''};
+ const args={p_id:id,p_version:version,p_expected:0,p_brief:brief};
+ const {error:denied}=await member.rpc('technology_save',args);assert.ok(denied,'member has no Technology grant');
+ const {error:created}=await founder.rpc('technology_save',args);assert.equal(created,null);
+ const {error:replay}=await founder.rpc('technology_save',args);assert.equal(replay,null);
+ const {data:hidden,error:readError}=await member.from('technology_projects').select('*').eq('id',id);assert.equal(readError,null);assert.equal(hidden.length,0);
+ const {error:direct}=await founder.from('technology_site_versions').update({reviewed_at:new Date().toISOString()}).eq('id',version);assert.ok(direct);
+ const {error:unreviewed}=await founder.rpc('technology_reserve',{p_id:id,p_run:crypto.randomUUID(),p_expected:1});assert.ok(unreviewed);
+ const {error:review}=await founder.rpc('technology_review',{p_id:id,p_version:version});assert.equal(review,null);
+ const {error:forged}=await founder.rpc('technology_settle',{p_run:crypto.randomUUID(),p_owner:people[0].id,p_brief:brief,p_input:1,p_output:1});assert.ok(forged,'ordinary sessions cannot report/refund provider usage');
+ console.log('PASS: Technology real local ownership, grant denial, immutable writes, replay, review and trusted settlement boundary');
+}

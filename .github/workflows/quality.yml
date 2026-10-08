@@ -5,6 +5,7 @@ permissions:
 jobs:
   application:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -13,6 +14,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:ledger
+      - run: npm run test:release
       - run: npm run check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -32,6 +34,7 @@ jobs:
           if-no-files-found: ignore
   database:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,10 +44,24 @@ jobs:
       - run: npm ci
       - run: npx supabase start
       - run: npx supabase db reset --local
+      - run: npm run release:preflight -- --local
       - run: node scripts/dev-setup.mjs --running
       - run: npx supabase db advisors --local --type security --level warn --fail-on none
       - run: npm run test:integration
+      - run: npm run release:accounts -- --local
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-acceptance-evidence
+          path: test-results/public-account-acceptance.json
+          if-no-files-found: ignore
       - run: npx playwright install --with-deps chromium
       - run: npm run test:founder
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: founder-evidence
+          path: test-results
+          if-no-files-found: ignore
       - if: always()
         run: npx supabase stop --no-backup

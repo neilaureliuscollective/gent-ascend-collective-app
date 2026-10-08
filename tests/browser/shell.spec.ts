@@ -4,9 +4,9 @@ for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto('/app');
-    await expect(page.locator('.sidebar-footer a')).toHaveAttribute('href', '/experience/world');
-    await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toBeVisible();
+    await page.goto('/app/work');
+    await expect(page.locator('.sidebar-footer a')).toHaveAttribute('href', '/app/library');
+    await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
@@ -15,20 +15,19 @@ for (const width of [360, 768, 1440]) {
     if (width <= 1100) {
       await expect(page).toHaveURL('/app/aethelios');
       await expect(page.getByLabel('Message Aethelios')).toBeInViewport();
-      await page.getByRole('link', { name: 'Back to Command' }).click();
+      await page.goto('/app/work');
     } else {
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(
-        page.getByText('Sign in to use your Aethelios workspace.', { exact: false }),
+        page
+          .getByRole('dialog')
+          .getByText('Sign in to use your Aethelios workspace.', { exact: false }),
       ).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).not.toBeVisible();
       await expect(trigger).toBeFocused();
     }
-    await page
-      .getByRole('navigation', { name: 'Main navigation' })
-      .getByRole('link', { name: 'My world', exact: false })
-      .click();
+    await page.goto('/app/world');
     await expect(page.getByRole('heading', { name: 'My world.' })).toBeVisible();
     await page.getByRole('link', { name: 'Progress', exact: false }).click();
     await expect(
@@ -38,7 +37,7 @@ for (const width of [360, 768, 1440]) {
     ).toBeVisible();
     expect(errors).toEqual([]);
     if (width === 360 || width === 1440) {
-      await page.goto('/app');
+      await page.goto('/app/work');
       await page.screenshot({ path: `test-results/command-${width}.png`, fullPage: true });
     }
   });
@@ -50,6 +49,8 @@ test('production runtime denies developer routes and query bypass', async ({ pag
     (await request.post('/dev', { data: { membership: 'admin', token: 'fake' } })).status(),
   ).toBeGreaterThanOrEqual(400);
   await page.goto('/app?dev=true');
+  await expect(page).toHaveURL('/app/aethelios');
+  await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Developer console' })).toHaveCount(0);
   await page.goto('/app/you');
   await expect(

@@ -1507,3 +1507,207 @@ describe('public Mission ownership and continuity', () => {
     expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
   });
 });
+
+describe('Mission continuity security and recovery',()=>{
+ it('isolates records, rejects stale proposals, recovers handoffs, and preserves creative work after deletion',async()=>{
+  const conversation='e7100000-0000-4000-8000-000000000001';
+  const mission='e7100000-0000-4000-8000-000000000002';
+  const turn='e7100000-0000-4000-8000-000000000003';
+  const pending='e7100000-0000-4000-8000-000000000004';
+  const proposal='e7100000-0000-4000-8000-000000000005';
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  await db.exec(`insert into ai_conversations(id,person_id,title) values('${conversation}','${owner}','Mission fixture');
+   insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values
+   ('${turn}','${owner}','${conversation}','My objective is a garden plan','Consider native planting','complete','test',false,'test'),
+   ('${pending}','${owner}','${conversation}','Continue','','pending','test',false,'test');`);
+  await asUser(founder,`insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${conversation}','Garden','Plan a garden')`);
+  const direction=JSON.stringify({title:'Garden',objective:'Plan a garden',decisions:'Use native planting',open_questions:'Budget?',next_actions:'Measure the garden'});
+  await expect(asUser(member,`select mission_capture_context('${pending}','${mission}',1)`)).rejects.toThrow(/unavailable/);
+  const snapshot=await asUser<{mission_capture_context:{revision:number}}>(founder,`select mission_capture_context('${pending}','${mission}',1)`);
+  expect(snapshot.rows[0]!.mission_capture_context.revision).toBe(1);
+  await expect(asUser(founder,`select mission_capture_context('${pending}','${mission}',2)`)).rejects.toThrow(/changed/);
+  await asUser(founder,`select mission_store_proposal('${proposal}','${mission}','${turn}',1,'${direction}')`);
+  await expect(asUser(member,`select mission_decide_proposal('${proposal}',true,'${direction}')`)).rejects.toThrow(/unavailable/);
+  await asUser(founder,`select mission_decide_proposal('${proposal}',true,'${direction}')`);
+  await asUser(founder,`select mission_decide_proposal('${proposal}',true,'${direction}')`);
+  expect((await asUser<{revision:number}>(founder,`select revision from intelligence_missions where id='${mission}'`)).rows[0]!.revision).toBe(2);
+  await expect(asUser(founder,`select mission_decide_proposal('${proposal}',false,null)`)).rejects.toThrow(/changed/);
+  await expect(asUser(founder,`select mission_store_proposal('e7100000-0000-4000-8000-000000000009','${mission}','${turn}',1,'${direction}')`)).rejects.toThrow(/changed/);
+  const stale='e7100000-0000-4000-8000-000000000010';
+  await asUser(founder,`select mission_store_proposal('${stale}','${mission}','${turn}',2,'${direction}')`);
+  await asUser(founder,`update intelligence_missions set revision=3 where id='${mission}'`);
+  await expect(asUser(founder,`select mission_decide_proposal('${stale}',true,'${direction}')`)).rejects.toThrow(/changed/);
+  expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','public.mission_open_studio(uuid,integer)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+  await asUser(founder,`select mission_pin_output('${mission}','${turn}')`);
+  await asUser(founder,`select mission_pin_output('${mission}','${turn}')`);
+  await expect(asUser(founder,`select mission_pin_output('${mission}','${pending}')`)).rejects.toThrow(/Completed/);
+  expect((await asUser(founder,`select * from mission_outputs where mission_id='${mission}'`)).rows).toHaveLength(1);
+  for(const table of ['mission_proposals','mission_outputs','mission_turn_context']) expect((await asUser(member,`select * from ${table} where mission_id='${mission}'`)).rows).toHaveLength(0);
+  await expect(asUser(member,`select mission_open_studio('${mission}',3)`)).rejects.toThrow(/unavailable/);
+  const project=(await asUser<{mission_open_studio:string}>(founder,`select mission_open_studio('${mission}',3)`)).rows[0]!.mission_open_studio;
+  expect((await asUser<{mission_open_studio:string}>(founder,`select mission_open_studio('${mission}',3)`)).rows[0]!.mission_open_studio).toBe(project);
+  expect((await asUser(member,`select * from mission_studio_links where mission_id='${mission}'`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update mission_studio_links set project_id='${turn}' where mission_id='${mission}'`)).rejects.toThrow(/permission/);
+  await asUser(founder,`delete from intelligence_missions where id='${mission}'`);
+  expect((await asUser(founder,`select * from ai_studio_projects where id='${project}'`)).rows).toHaveLength(1);
+  expect((await asUser(founder,`select * from ai_conversations where id='${conversation}'`)).rows).toHaveLength(1);
+  expect((await asUser(founder,`select * from mission_studio_links where mission_id='${mission}'`)).rows).toHaveLength(0);
+ });
+});
+
+describe('Mission deliverable ownership, immutable versions and review',()=>{
+ it('creates from a completed personal reply, guards stale edits, binds reviews, retains work, and snapshots exact versions',async()=>{
+  const chat='e7200000-0000-4000-8000-000000000001', mission='e7200000-0000-4000-8000-000000000002', turn='e7200000-0000-4000-8000-000000000003',pending='e7200000-0000-4000-8000-000000000004',v2='e7200000-0000-4000-8000-000000000005',v3='e7200000-0000-4000-8000-000000000006';
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  await db.exec(`insert into ai_conversations(id,person_id,title) values('${chat}','${owner}','Deliverable fixture');insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values ('${turn}','${owner}','${chat}','Draft my plan','A complete original draft','complete','test',false,'test'),('${pending}','${owner}','${chat}','Continue','','pending','test',false,'test');`);
+  await asUser(founder,`insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${chat}','Plan','Prepare a plan')`);
+  const create=`select mission_create_deliverable('${mission}','${turn}',1) as id`;
+  await expect(asUser(member,create)).rejects.toThrow(/unavailable/);
+  await expect(asUser(founder,`select mission_create_deliverable('${mission}','${pending}',1)`)).rejects.toThrow(/Completed/);
+  await expect(asUser(founder,`select mission_create_deliverable('${mission}','${turn}',null)`)).rejects.toThrow(/changed/);
+  const id=(await asUser<{id:string}>(founder,create)).rows[0]!.id;
+  expect((await asUser<{id:string}>(founder,create)).rows[0]!.id).toBe(id);
+  const v1=(await asUser<{id:string}>(founder,`select id from mission_deliverable_versions where deliverable_id='${id}'`)).rows[0]!.id;
+  await expect(asUser(founder,`select mission_review_deliverable('${id}','${v1}','Checked')`)).rejects.toThrow(/criteria/);
+  const save=`select mission_save_deliverable('${id}','${v2}',1,'Final brief','Revised draft','Check the audience and dates')`;
+  await asUser(founder,save);await asUser(founder,save);
+  await expect(asUser(founder,save.replace('Revised draft','Changed replay'))).rejects.toThrow(/changed/);
+  await expect(asUser(founder,save.replace(v2,v3))).rejects.toThrow(/changed/);
+  await expect(asUser(member,save)).rejects.toThrow(/unavailable/);
+  await expect(asUser(founder,`select mission_review_deliverable('${id}','${v1}','Checked')`)).rejects.toThrow(/changed/);
+  const review=`select mission_review_deliverable('${id}','${v2}','Checked audience; dates remain estimates')`;
+  await asUser(founder,review);await asUser(founder,review);
+  await expect(asUser(founder,review.replace('dates remain estimates','dates confirmed'))).rejects.toThrow(/changed/);
+  const snap=(await asUser<{s:{deliverables:Array<{version_id:string;reviewed_by_user:boolean;excerpt:string}>}}>(founder,`select mission_capture_context('${pending}','${mission}',1) as s`)).rows[0]!.s;
+  expect(snap.deliverables[0]).toMatchObject({version_id:v2,reviewed_by_user:true,excerpt:'Revised draft'});
+  await asUser(founder,`select mission_save_deliverable('${id}','${v3}',2,'Final brief','Third draft','Check audience')`);
+  expect((await asUser<{reviewed:boolean}>(founder,`select reviewed from mission_deliverable_summaries where id='${id}'`)).rows[0]!.reviewed).toBe(false);
+  expect((await asUser<{s:unknown}>(founder,`select mission_capture_context('${pending}','${mission}',1) as s`)).rows[0]!.s).toEqual(snap);
+  for(const table of ['mission_deliverables','mission_deliverable_versions','mission_deliverable_summaries']) expect((await asUser(member,`select * from ${table}`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update mission_deliverable_versions set body='overwrite' where id='${v1}'`)).rejects.toThrow(/permission/);
+  expect((await db.query<{ok:boolean}>("select has_function_privilege('anon','mission_save_deliverable(uuid,uuid,integer,text,text,text)','execute') as ok")).rows[0]!.ok).toBe(false);
+  await asUser(founder,`delete from intelligence_missions where id='${mission}'`);
+  expect((await asUser<{mission_id:string|null}>(founder,`select mission_id from mission_deliverables where id='${id}'`)).rows[0]!.mission_id).toBe(null);
+  expect((await asUser(founder,`select * from mission_deliverable_versions where deliverable_id='${id}'`)).rows).toHaveLength(3);
+  await db.exec(`delete from ai_conversations where id='${chat}'`);
+  expect((await asUser<{source_turn_id:string|null}>(founder,`select source_turn_id from mission_deliverables where id='${id}'`)).rows[0]!.source_turn_id).toBe(null);
+  await expect(asUser(member,`select mission_delete_deliverable('${id}',3)`)).rejects.toThrow(/unavailable/);
+  await expect(asUser(founder,`select mission_delete_deliverable('${id}',2)`)).rejects.toThrow(/changed/);
+  await asUser(founder,`select mission_delete_deliverable('${id}',3)`);
+  expect((await asUser(founder,`select * from mission_deliverable_versions where deliverable_id='${id}'`)).rows).toHaveLength(0);
+ });
+});
+
+
+describe('read-only release catalog preflight', () => {
+  it('observes the complete contract without touching records, and detects unsafe grants', async () => {
+    const sql = await readFile('scripts/public-release-preflight.sql', 'utf8');
+    type Snapshot = { contract: string; checks: { stage: string; object: string; present: boolean; ok: boolean }[] };
+    const snapshot = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+    expect(snapshot.contract).toBe('public-mission-v1');
+    expect(snapshot.checks.filter((c) => !c.ok)).toEqual([]);
+    await db.exec('begin; grant execute on function public.mission_pin_output(uuid,uuid) to anon; grant update(body) on public.mission_deliverable_versions to authenticated;');
+    try {
+      const unsafe = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+      expect(unsafe.checks.find((c) => c.object === 'function:public.mission_pin_output(uuid,uuid)')?.ok).toBe(false);
+      expect(unsafe.checks.find((c) => c.object === 'table:mission_deliverable_versions')?.ok).toBe(false);
+      await db.exec('alter policy mission_outputs_owner on public.mission_outputs using (true or person_id in (select id from public.persons where auth_user_id=(select auth.uid())));');
+      const broad = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+      expect(broad.checks.find((c) => c.object === 'table:mission_outputs')?.ok).toBe(false);
+    } finally { await db.exec('rollback'); }
+  });
+});
+
+describe('Technology owner/version/budget boundary', () => {
+  const project = 'ee800000-0000-4000-8000-000000000001',
+    v1 = 'ee800000-0000-4000-8000-000000000002',
+    v2 = 'ee800000-0000-4000-8000-000000000003',
+    run = 'ee800000-0000-4000-8000-000000000004';
+  const brief = {
+    name: 'Studio North',
+    industry: 'grooming-beauty',
+    vision: 'A welcoming local grooming studio.',
+    headline: 'Care with intention',
+    about: 'A local studio focused on thoughtful care.',
+    services: [{ name: 'Haircut', description: 'An attentive appointment.', price: '$45' }],
+    hours: 'Tue–Sat',
+    contact: 'Call the studio',
+    bookingUrl: '',
+  };
+  const literal = JSON.stringify(brief).replaceAll("'", "''");
+  it('requires grant, hides owners and guards immutable review and paid settlement', async () => {
+    await db.exec(
+      `insert into public.technology_grants(person_id,expires_at) select id,now()+interval '1 day' from public.persons where auth_user_id='${founder}' on conflict do nothing`,
+    );
+    const save = `select public.technology_save('${project}','${v1}',0,'${literal}')`;
+    await expect(asUser(member, save)).rejects.toThrow(/access/);
+    await asUser(founder, save);
+    await asUser(founder, save);
+    expect((await asUser(member, 'select * from public.technology_projects')).rows).toHaveLength(0);
+    await expect(
+      asUser(founder, `update public.technology_site_versions set brief='{}'`),
+    ).rejects.toThrow(/permission/);
+    await expect(
+      asUser(founder, `select public.technology_reserve('${project}','${run}',1)`),
+    ).rejects.toThrow(/Review/);
+    await asUser(founder, `select public.technology_review('${project}','${v1}')`);
+    await asUser(founder, `select public.technology_save('${project}','${v2}',1,'${literal}')`);
+    await expect(
+      asUser(founder, `select public.technology_review('${project}','${v1}')`),
+    ).rejects.toThrow(/changed/);
+    await asUser(founder, `select public.technology_review('${project}','${v2}')`);
+    await asUser(founder, `select public.technology_reserve('${project}','${run}',2)`);
+    await expect(
+      asUser(
+        founder,
+        `select public.technology_settle('${run}',(select id from public.persons where auth_user_id='${founder}'),'${literal}',10,10)`,
+      ),
+    ).rejects.toThrow(/permission/);
+    await expect(
+      asUser(founder, `select public.technology_reserve('${project}',gen_random_uuid(),2)`),
+    ).rejects.toThrow(/reconciliation/);
+    await db.exec(
+      `set role service_role;select public.technology_settle('${run}',(select id from public.persons where auth_user_id='${founder}'),null,null,null);reset role`,
+    );
+    expect(
+      (
+        await asUser(
+          founder,
+          `select status,actual_micros from public.technology_runs where id='${run}'`,
+        )
+      ).rows[0],
+    ).toEqual({ status: 'uncertain', actual_micros: null });
+  });
+});
+
+describe('Technology successful settlement and monthly ceilings',()=>{
+ it('creates an unreviewed immutable AI version, retains history, and enforces owner-wide monthly reservation ceiling',async()=>{
+ const owner=(await db.query<{id:string}>(`select id from public.persons where auth_user_id='${member}'`)).rows[0]!.id;
+ await db.exec(`insert into public.technology_grants values('${owner}',now()+interval '1 day')`);
+ const p='ee810000-0000-4000-8000-000000000001',v='ee810000-0000-4000-8000-000000000002',r='ee810000-0000-4000-8000-000000000003';
+ const brief=JSON.stringify({name:'Studio South',industry:'grooming-beauty',vision:'A welcoming service business.',headline:'Care with intention',about:'A local studio focused on care.',services:[{name:'Haircut',description:'An appointment.',price:'$45'}],hours:'',contact:'',bookingUrl:''});
+ await asUser(member,`select public.technology_save('${p}','${v}',0,'${brief}')`);
+ await asUser(member,`select public.technology_review('${p}','${v}')`);
+ await asUser(member,`select public.technology_reserve('${p}','${r}',1)`);
+ await db.exec(`set role service_role;select public.technology_settle('${r}','${owner}','${brief}',1200,800);reset role`);
+ const rows=(await asUser<{revision:number;reviewed_at:string|null}>(member,`select revision,reviewed_at from public.technology_site_versions where project_id='${p}' order by revision`)).rows;
+ expect(rows).toHaveLength(2);expect(rows[0]!.reviewed_at).not.toBeNull();expect(rows[1]).toEqual({revision:2,reviewed_at:null});
+ expect((await asUser(member,`select actual_micros from public.technology_runs where id='${r}'`)).rows[0]).toEqual({actual_micros:10400});
+ await asUser(member,`select public.technology_review('${p}',(select id from public.technology_site_versions where project_id='${p}' and revision=2))`);
+ await db.exec(`insert into public.technology_runs(id,person_id,project_id,source_revision,status,actual_micros) select gen_random_uuid(),'${owner}','${p}',2,'succeeded',1000000 from generate_series(1,9)`);
+ await expect(asUser(member,`select public.technology_reserve('${p}',gen_random_uuid(),2)`)).rejects.toThrow(/allowance/);
+ await db.exec(`delete from public.technology_grants where person_id='${owner}'`);
+ await expect(asUser(member,`select public.technology_review('${p}',(select id from public.technology_site_versions where project_id='${p}' and revision=2))`)).rejects.toThrow(/access/);
+ expect((await asUser(member,`select id from public.technology_projects where id='${p}'`)).rows).toHaveLength(1);
+ });
+});
+
+describe('Technology SQL brief validation cannot be bypassed by direct RPC',()=>{
+ it('rejects credential links, null industry and unsupported executable fields',async()=>{
+ const base={name:'Studio West',industry:'grooming-beauty',vision:'A welcoming local service business.',headline:'Care with intention',about:'A studio focused on thoughtful care.',services:[{name:'Haircut',description:'Care',price:'$45'}],hours:'',contact:'',bookingUrl:''};
+ for(const b of [{...base,bookingUrl:'https://name:password@example.com'},{...base,industry:null},{...base,script:'alert(1)'}]){
+ const literal=JSON.stringify(b).replaceAll("'","''");
+ await expect(asUser(founder,`select public.technology_save(gen_random_uuid(),gen_random_uuid(),0,'${literal}')`)).rejects.toThrow(/Invalid business brief/);
+ }
+ });
+});

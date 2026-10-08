@@ -30,6 +30,21 @@ for (const id of ['00000000-0000-4000-8000-000000000001', '00000000-0000-4000-80
   const { error } = await admin.auth.admin.updateUserById(id, { password, email_confirm: true });
   if (error) throw new Error('Local seed identity missing; run npm run db:reset. ' + error.message);
 }
+
+// Explicit expiring Technology grant for the verified synthetic local founder only.
+const { data: localPerson, error: localPersonError } = await admin
+  .from('persons')
+  .select('id')
+  .eq('auth_user_id', '00000000-0000-4000-8000-000000000001')
+  .single();
+if (localPersonError) throw new Error('Local founder mapping unavailable.');
+const { error: technologyGrantError } = await admin
+  .from('technology_grants')
+  .upsert({
+    person_id: localPerson.id,
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+if (technologyGrantError) throw new Error('Local Technology migration/grant unavailable.');
 writeFileSync(
   '.env.development.local',
   `APP_ENV=local
