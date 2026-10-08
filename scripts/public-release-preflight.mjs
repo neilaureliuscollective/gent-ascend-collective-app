@@ -21,7 +21,7 @@ export const migrationFiles = [
   ],
   [
     '20261008221240_technology_verified_build.sql',
-    'a8e13674b04d9e9b1f3cbaa224714c99429cf99801f6af6747ac9daa7b615fda',
+    'eaed1ad929a1b9256776f8af85df4b5eae106f2bbe16451b070890743625d0ec',
   ],
 ];
 const columns = {

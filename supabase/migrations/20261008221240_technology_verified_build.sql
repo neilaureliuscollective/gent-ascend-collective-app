@@ -6,9 +6,9 @@ create table public.technology_builds(
  status text not null default 'queued' check(status in('queued','running','ready')),
  lease uuid,lease_until timestamptz,attempts integer not null default 0 check(attempts between 0 and 5),
  html text,sha256 text,checks jsonb,created_at timestamptz not null default now(),finished_at timestamptz,
- unique(version_id,template),foreign key(person_id,project_id) references public.technology_projects(person_id,id),
- foreign key(person_id,version_id) references public.technology_site_versions(person_id,id),
- check((status='ready' and html is not null and octet_length(html)<=100000 and sha256 ~ '^[a-f0-9]{64}$' and checks is not null and finished_at is not null) or (status<>'ready' and html is null and sha256 is null and checks is null and finished_at is null))
+ unique(version_id,template),foreign key(person_id,project_id) references public.technology_projects(person_id,id) on delete cascade,
+ foreign key(person_id,version_id) references public.technology_site_versions(person_id,id) on delete cascade,
+ check((status='ready' and html is not null and octet_length(html)<=100000 and sha256 is not null and sha256 ~ '^[a-f0-9]{64}$' and checks is not null and finished_at is not null) or (status<>'ready' and html is null and sha256 is null and checks is null and finished_at is null))
 );
 create index technology_build_owner on public.technology_builds(person_id,created_at);
 alter table public.technology_builds enable row level security;

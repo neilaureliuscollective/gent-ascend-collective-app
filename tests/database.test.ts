@@ -1739,5 +1739,7 @@ describe('Technology verified builds',()=>{
  expect((await asUser<{status:string;attempts:number}>(founder,`select status,attempts from public.technology_builds where id='${b}'`)).rows[0]).toEqual({status:'ready',attempts:2});
  await expect(asUser(founder,`select public.technology_build_queue('${b}','${p}','${v2}')`)).rejects.toThrow(/changed/);
  await db.exec('set role anon');try{await expect(db.query('select * from public.technology_builds')).rejects.toThrow(/permission/);}finally{await db.exec('reset role');}
+ await db.exec(`delete from public.technology_projects where id='${p}'`);
+ expect((await db.query(`select id from public.technology_builds where id='${b}'`)).rows).toHaveLength(0);
  });
 });
