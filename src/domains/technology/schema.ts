@@ -5,6 +5,7 @@ export const bookingUrl = text(500).refine((value) => {
   try {
     const u = new URL(value);
     return (
+      !/\s/.test(value) &&
       u.protocol === 'https:' &&
       !u.username &&
       !u.password &&
@@ -98,6 +99,7 @@ export type Workspace = {
   runs: Run[];
   canCreate: boolean;
   generationAvailable: boolean;
+  remainingMicros: number;
   mission: { id: string; revision: number; title: string; objective: string } | null;
 };
 export const initialBrief: Brief = {

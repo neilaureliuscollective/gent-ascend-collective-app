@@ -24,6 +24,7 @@ describe('Technology contract', () => {
       'javascript:alert(1)',
       'http://example.com',
       'https://user:secret@example.com',
+      'https://example.com/a b',
       'https://127.0.0.1',
       'https://localhost',
       'https://[::1]',

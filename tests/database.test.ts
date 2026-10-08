@@ -1701,3 +1701,13 @@ describe('Technology successful settlement and monthly ceilings',()=>{
  expect((await asUser(member,`select id from public.technology_projects where id='${p}'`)).rows).toHaveLength(1);
  });
 });
+
+describe('Technology SQL brief validation cannot be bypassed by direct RPC',()=>{
+ it('rejects credential links, null industry and unsupported executable fields',async()=>{
+ const base={name:'Studio West',industry:'grooming-beauty',vision:'A welcoming local service business.',headline:'Care with intention',about:'A studio focused on thoughtful care.',services:[{name:'Haircut',description:'Care',price:'$45'}],hours:'',contact:'',bookingUrl:''};
+ for(const b of [{...base,bookingUrl:'https://name:password@example.com'},{...base,industry:null},{...base,script:'alert(1)'}]){
+ const literal=JSON.stringify(b).replaceAll("'","''");
+ await expect(asUser(founder,`select public.technology_save(gen_random_uuid(),gen_random_uuid(),0,'${literal}')`)).rejects.toThrow(/Invalid business brief/);
+ }
+ });
+});

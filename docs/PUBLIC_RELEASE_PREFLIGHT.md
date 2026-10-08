@@ -1,3 +1,5 @@
+> Technology Foundation update (2026-10-08): this candidate adds a third ordered migration, `20261008180000_technology_foundation.sql`, and catalog checks for its owner-only/read-only tables, mutation RPCs and service-only settlement. Rehearsal/promotion must include all three migrations in order. Historical receipts below describe the prior two-stage build; they do not accept Technology. See TECHNOLOGY_FOUNDATION.md and STATUS.md for the current scope and receipts.
+
 # Public Aethelios — release preflight phase
 
 Founder authorized research, plan and execution on October 8, 2026 after recovering PR #64. This phase extends its exact head `69c9bfafe92fffc9e16b7297d6e1fa3d11799eb8`; it does not rebuild the intelligence architecture or introduce another application.

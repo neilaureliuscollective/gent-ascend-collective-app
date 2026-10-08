@@ -366,7 +366,7 @@ export function TechnologyWorkspace() {
                       : 'Saved brief needs your review'}
                 </p>
                 <p>
-                  Schema-validated template · escaped text · four pages. User review does not
+                  Fixed four-page template · safe text-only preview. User review does not
                   certify factual accuracy or production readiness.
                 </p>
                 <button
@@ -420,7 +420,13 @@ export function TechnologyWorkspace() {
                     available.
                   </p>
                 )}
-                {data.runs.map((r) => (
+                {typeof data.remainingMicros === 'number' && (
+                  <p>
+                    ${(data.remainingMicros / 1e6).toFixed(2)} of the $10 pilot allowance remains
+                    this UTC calendar month. Unresolved reservations continue to block generation.
+                  </p>
+                )}
+                {data.runs.slice(0, 10).map((r) => (
                   <p key={r.id}>
                     Run {r.id.slice(0, 8)} · {r.status} ·{' '}
                     {r.actual_micros === null
@@ -429,7 +435,7 @@ export function TechnologyWorkspace() {
                   </p>
                 ))}
                 {busy && (
-                  <p role="status">Saving or generating… No background coworkers are running.</p>
+                  <p role="status">Working on your request…</p>
                 )}
                 {locked && (
                   <button

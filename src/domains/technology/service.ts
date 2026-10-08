@@ -34,7 +34,7 @@ export async function readTechnology(missionId?: string): Promise<Workspace> {
       .select('*')
       .eq('person_id', person.id)
       .order('created_at', { ascending: false })
-      .limit(100),
+      .limit(500),
     currentFounderAccess(),
   ]);
   if ([grants, projects, versions, runs].some((r) => r.error))
@@ -60,6 +60,13 @@ export async function readTechnology(missionId?: string): Promise<Workspace> {
     canCreate:
       founder || Boolean(grants.data && new Date(grants.data.expires_at).getTime() > Date.now()),
     generationAvailable: configured(),
+    remainingMicros: Math.max(
+      0,
+      generationPolicy.monthlyMicros -
+        (runs.data ?? [])
+          .filter((run) => run.created_at.slice(0, 7) === new Date().toISOString().slice(0, 7))
+          .reduce((sum, run) => sum + (run.actual_micros ?? run.reserved_micros), 0),
+    ),
     mission,
   };
 }

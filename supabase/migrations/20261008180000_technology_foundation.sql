@@ -17,7 +17,7 @@ begin
  end loop;
  for u in select unnest(array['name','vision','headline','about','hours','contact','bookingUrl']) loop if jsonb_typeof(b->u)<>'string' then return false; end if; end loop;
  if length(trim(b->>'name')) not between 2 and 100 or length(trim(b->>'vision')) not between 10 and 2000 or length(trim(b->>'headline')) not between 3 and 150 or length(trim(b->>'about')) not between 10 and 2000 or length(b->>'hours')>500 or length(b->>'contact')>500 or length(b->>'bookingUrl')>500 then return false; end if;
- u:=b->>'bookingUrl'; if u<>'' and (u !~ '^https://[^/@:[:space:]]+([:/?#]|$)' or u ~* '^https://(localhost|127\.|0\.|\[|[^/]*\.local([:/]|$))') then return false; end if;
+ u:=b->>'bookingUrl'; if u<>'' and (u ~ '[[:space:]]' or u ~ '^https://[^/?#]*@' or u !~ '^https://[^/@:[:space:]]+([:/?#]|$)' or u ~* '^https://(localhost|127\.|0\.|\[|[^/]*\.local([:/]|$))') then return false; end if;
  return true;
 end $$;
 alter table public.technology_site_versions add constraint technology_valid_brief check(public.technology_validate_brief(brief));
