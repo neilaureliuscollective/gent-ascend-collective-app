@@ -1711,3 +1711,33 @@ describe('Technology SQL brief validation cannot be bypassed by direct RPC',()=>
  }
  });
 });
+
+// Verified-build state machine: SQL/RLS emulation, not hosted Auth acceptance.
+describe('Technology verified builds',()=>{
+ it('pins exact review, deduplicates jobs, fences expired workers and preserves ready artifacts',async()=>{
+ const p='ef900000-0000-4000-8000-000000000001',v='ef900000-0000-4000-8000-000000000002',v2='ef900000-0000-4000-8000-000000000003',b='ef900000-0000-4000-8000-000000000004',lease='ef900000-0000-4000-8000-000000000005',next='ef900000-0000-4000-8000-000000000006';
+ const brief=JSON.stringify({name:'Build Studio',industry:'grooming-beauty',vision:'A reviewed local business.',headline:'Considered care',about:'A carefully considered studio.',services:[{name:'Haircut',description:'Care',price:'$45'}],hours:'',contact:'',bookingUrl:''});
+ const owner=(await db.query<{id:string}>(`select id from public.persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ await db.exec(`insert into public.technology_grants values('${owner}',now()+interval '1 day') on conflict(person_id) do update set expires_at=excluded.expires_at`);
+ await asUser(founder,`select public.technology_save('${p}','${v}',0,'${brief}')`);
+ await expect(asUser(founder,`select public.technology_build_queue('${b}','${p}','${v}')`)).rejects.toThrow(/Review/);
+ await asUser(founder,`select public.technology_review('${p}','${v}')`);
+ await asUser(founder,`select public.technology_build_queue('${b}','${p}','${v}')`);
+ const replay=(await asUser<{id:string}>(founder,`select public.technology_build_queue(gen_random_uuid(),'${p}','${v}') as id`)).rows[0]!.id;expect(replay).toBe(b);
+ await expect(asUser(member,`select public.technology_build_claim('${b}','${lease}')`)).rejects.toThrow();
+ expect((await asUser(member,`select * from public.technology_builds where id='${b}'`)).rows).toHaveLength(0);
+ await expect(asUser(founder,`update public.technology_builds set status='ready' where id='${b}'`)).rejects.toThrow(/permission/);
+ await asUser(founder,`select public.technology_build_claim('${b}','${lease}')`);
+ await expect(asUser(founder,`select public.technology_build_claim('${b}','${next}')`)).rejects.toThrow(/running/);
+ await db.exec(`update public.technology_builds set lease_until=now()-interval '1 second' where id='${b}'`);
+ await asUser(founder,`select public.technology_build_claim('${b}','${next}')`);
+ const finish=(token:string)=>`select public.technology_build_finish('${b}','${owner}','${token}','<!doctype html>','${'a'.repeat(64)}','{"passed":true,"validator":"static-service-v1"}')`;
+ await expect(asUser(founder,finish(next))).rejects.toThrow(/permission/);
+ await db.exec('set role service_role');try{await expect(db.query(finish(lease))).rejects.toThrow(/lease/);await db.query(finish(next));}finally{await db.exec('reset role');}
+ await asUser(founder,`select public.technology_save('${p}','${v2}',1,'${brief}')`);
+ await expect(asUser(founder,`select public.technology_build_queue(gen_random_uuid(),'${p}','${v}')`)).rejects.toThrow(/Review/);
+ expect((await asUser<{status:string;attempts:number}>(founder,`select status,attempts from public.technology_builds where id='${b}'`)).rows[0]).toEqual({status:'ready',attempts:2});
+ await expect(asUser(founder,`select public.technology_build_queue('${b}','${p}','${v2}')`)).rejects.toThrow(/changed/);
+ await db.exec('set role anon');try{await expect(db.query('select * from public.technology_builds')).rejects.toThrow(/permission/);}finally{await db.exec('reset role');}
+ });
+});
