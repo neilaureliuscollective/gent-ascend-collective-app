@@ -6,12 +6,18 @@ import {
   changeDeliverable,
   exportDeliverable,
   readDeliverable,
+  readDeliverableVersion,
 } from '@/domains/missions/deliverables';
 export async function GET(request: Request) {
   try {
     const params = new URL(request.url).searchParams;
     const id = z.uuid().safeParse(params.get('id'));
     if (!id.success) throw new IntelligenceError('Invalid deliverable.');
+    if (params.has('selected')) {
+      const selected = z.uuid().safeParse(params.get('selected'));
+      if (!selected.success) throw new IntelligenceError('Invalid version.');
+      return privateJson(await readDeliverableVersion(id.data, selected.data));
+    }
     if (params.has('version')) {
       const version = z.uuid().safeParse(params.get('version'));
       if (!version.success) throw new IntelligenceError('Invalid version.');

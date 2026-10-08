@@ -1,69 +1,26 @@
-import { expect, test } from './fixtures';
-
-test('native sharing uses only the canonical product path', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'share', {
-      configurable: true,
-      value: async (data: ShareData) => {
-        localStorage.setItem('share-fixture', JSON.stringify(data));
-      },
+import { test, expect } from './fixtures';
+// The former storefront is retired in main. Product records and orders retain separate tests.
+for (const width of [344, 768, 1440])
+  test('retired commerce boundary /shop/vitalis at ' + width + 'px', async ({ page, request }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const writes: string[] = [];
+    page.on('request', (r) => {
+      if (r.method() !== 'GET' && r.url().includes('/api/commerce')) writes.push(r.url());
     });
+    await page.goto('/shop/vitalis');
+    await expect(page.getByRole('heading', { name: 'A separate destination.' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Aethelios ↗', exact: true })).toHaveAttribute(
+      'href',
+      '/app/aethelios',
+    );
+    await expect(page.getByRole('link', { name: 'Earlier order history' })).toHaveAttribute(
+      'href',
+      '/app/collection/orders',
+    );
+    await expect(page.getByRole('button', { name: /Add to cart|Checkout/ })).toHaveCount(0);
+    expect(writes).toEqual([]);
+    expect((await request.get('/shop/vitalis')).headers()['cache-control']).toContain('private');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
   });
-  await page.goto('/shop/vitalis?campaign=example#formula');
-  await page.getByRole('button', { name: 'Share this product' }).click();
-  await expect(page.getByText('Share completed.', { exact: true })).toBeVisible();
-  const shared = await page.evaluate(() => JSON.parse(localStorage.getItem('share-fixture')!));
-  expect(shared.url).toBe('http://127.0.0.1:3100/shop/vitalis');
-  expect(shared.title).toBe('Vitalis');
-});
-
-test('copy and denied sharing provide a usable manual link', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        writeText: async (url: string) => {
-          localStorage.setItem('copy-fixture', url);
-        },
-      },
-    });
-    Object.defineProperty(navigator, 'share', {
-      configurable: true,
-      value: async () => {
-        throw new DOMException('Denied', 'NotAllowedError');
-      },
-    });
-  });
-  await page.goto('/shop/vitalis?private=exclude');
-  await page.getByRole('button', { name: 'Copy product link' }).click();
-  await expect(page.getByText('Product link copied.', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('copy-fixture'))).toBe(
-    'http://127.0.0.1:3100/shop/vitalis',
-  );
-  await page.getByRole('button', { name: 'Share this product' }).click();
-  const link = page.getByRole('textbox', { name: 'Product link', exact: true });
-  await expect(link).toHaveValue('http://127.0.0.1:3100/shop/vitalis');
-  await link.focus();
-  expect(await link.evaluate((element: HTMLInputElement) => element.selectionEnd)).toBe(
-    'http://127.0.0.1:3100/shop/vitalis'.length,
-  );
-});
-
-test('cancelling native share is quiet and product metadata preserves the launch indexing gate', async ({
-  page,
-}) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'share', {
-      configurable: true,
-      value: async () => {
-        throw new DOMException('Cancelled', 'AbortError');
-      },
-    });
-  });
-  await page.goto('/shop/vitalis');
-  await page.getByRole('button', { name: 'Share this product' }).click();
-  await expect(page.getByRole('button', { name: 'Share this product' })).toBeEnabled();
-  await expect(page.locator('.reserve-product-share input')).toHaveCount(0);
-  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Vitalis');
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
-});

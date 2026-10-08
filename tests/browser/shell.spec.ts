@@ -4,9 +4,9 @@ for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto('/app');
-    await expect(page.locator('.sidebar-footer a')).toHaveAttribute('href', '/experience/world');
-    await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toBeVisible();
+    await page.goto('/app/work');
+    await expect(page.locator('.sidebar-footer a')).toHaveAttribute('href', '/app/library');
+    await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
@@ -38,7 +38,7 @@ for (const width of [360, 768, 1440]) {
     ).toBeVisible();
     expect(errors).toEqual([]);
     if (width === 360 || width === 1440) {
-      await page.goto('/app');
+      await page.goto('/app/work');
       await page.screenshot({ path: `test-results/command-${width}.png`, fullPage: true });
     }
   });

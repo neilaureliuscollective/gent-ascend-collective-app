@@ -22,14 +22,29 @@ export async function readDeliverable(id: string) {
   if (!doc.data) throw new IntelligenceError('Deliverable not found.', 404);
   const versions = await client
     .from('mission_deliverable_versions')
-    .select('*')
+    .select('id,person_id,deliverable_id,revision,title,source,reviewed_at,created_at')
     .eq('person_id', person.id)
     .eq('deliverable_id', id)
     .order('revision', { ascending: false })
     .limit(100);
   if (versions.error || !versions.data?.length)
     throw new IntelligenceError('Versions could not be loaded.', 503);
-  return { deliverable: doc.data, versions: versions.data };
+  const current = await readDeliverableVersion(id, versions.data[0]!.id);
+  return { deliverable: doc.data, versions: versions.data, current };
+}
+/** Exact version retrieval is owner- and document-bound, including exports. */
+export async function readDeliverableVersion(id: string, versionId: string) {
+  const { client, person } = await intelligenceSession();
+  const result = await client
+    .from('mission_deliverable_versions')
+    .select('*')
+    .eq('person_id', person.id)
+    .eq('deliverable_id', id)
+    .eq('id', versionId)
+    .maybeSingle();
+  if (result.error) throw new IntelligenceError('Version could not be loaded.', 503);
+  if (!result.data) throw new IntelligenceError('Version not found.', 404);
+  return result.data;
 }
 export async function changeDeliverable(input: z.infer<typeof deliverableAction>) {
   const { client } = await intelligenceSession();
@@ -67,8 +82,5 @@ export async function changeDeliverable(input: z.infer<typeof deliverableAction>
   return { id: input.action === 'create' ? result.data : input.id };
 }
 export async function exportDeliverable(id: string, versionId: string) {
-  const { versions } = await readDeliverable(id);
-  const version = versions.find((v) => v.id === versionId);
-  if (!version) throw new IntelligenceError('Version not found.', 404);
-  return deliverableExport(version);
+  return deliverableExport(await readDeliverableVersion(id, versionId));
 }

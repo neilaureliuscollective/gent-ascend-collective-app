@@ -28,7 +28,11 @@ export function DeliverableFixture() {
     <>
       <p>Synthetic deliverable · no real account</p>
       <DeliverableWorkspace
-        initial={{ deliverable: fixtureDocument, versions: [fixtureVersion] }}
+        initial={{
+          deliverable: fixtureDocument,
+          versions: [fixtureVersion],
+          current: fixtureVersion,
+        }}
       />
     </>
   );

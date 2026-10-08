@@ -3,7 +3,7 @@ import { test, expect } from './fixtures';
 test('motion and solid-surface choices persist; OS reduced motion always wins', async ({
   page,
 }) => {
-  await page.goto('/app');
+  await page.goto('/app/work');
   await page.getByRole('button', { name: 'Pause ambient motion' }).click();
   await page.getByRole('button', { name: 'Use solid surfaces' }).click();
   await page.reload();
@@ -35,10 +35,12 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/app/aethelios');
-  await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'What would you like to move forward?' }),
+  ).toBeVisible();
   // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
-  await expect(page.locator('.welcome-heading .intelligence-orb-static')).toBeVisible();
+  await expect(page.locator('.talk-presence .intelligence-orb-static')).toBeVisible();
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
   await page.getByLabel('Message Aethelios').fill('Still usable without graphics');
   expect(errors).toEqual([]);
@@ -58,6 +60,7 @@ for (const viewport of [
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
     await page.getByRole('button', { name: 'Context', exact: true }).click();
     await expect(page.getByText('Preview · no personal data loaded')).toBeVisible();
   });
@@ -70,6 +73,7 @@ test('200 percent text remains navigable and permits reading and composing', asy
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel('Message Aethelios').fill('Larger text');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('Larger text');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
 });
@@ -77,13 +81,13 @@ test('200 percent text remains navigable and permits reading and composing', asy
 test('connected light follows navigation and becomes still while reading a dialog', async ({
   page,
 }) => {
-  await page.goto('/app');
-  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app');
+  await page.goto('/app/work');
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app/work');
   await expect(page.locator('.connection-selected')).toHaveCount(1);
   await expect(page.locator('.connection-arrival')).toHaveCSS('animation-iteration-count', '1');
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-  await navigation.getByRole('link', { name: 'My world' }).click();
-  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app/world');
+  await navigation.getByRole('link', { name: 'Studio' }).click();
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app/studio');
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
   await expect(page.locator('.ambient-light')).toHaveCSS('animation-play-state', 'paused');
@@ -94,5 +98,5 @@ test('connected light follows navigation and becomes still while reading a dialo
   await expect(page.locator('.connection-arrival')).toBeHidden();
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.connection-field')).toBeHidden();
-  await expect(navigation.getByRole('link', { name: 'My world' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Studio' })).toBeVisible();
 });

@@ -1,18 +1,19 @@
 import { test, expect } from './fixtures';
 
 for (const width of [344, 768, 1440]) {
-  test(`Gent Ascend identity and account layout at ${width}px`, async ({ page, request }) => {
+  test(`Aethelios identity and account layout at ${width}px`, async ({ page, request }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.goto('/app');
-    await expect(page).toHaveTitle('Gent Ascend Collective');
+    await expect(page).toHaveTitle(/Aethelios/);
     await expect(
-      page.getByRole('link', { name: 'Gent Ascend Collective home' }).filter({ visible: true }),
+      page.getByRole('link', { name: 'Aethelios home' }).filter({ visible: true }),
     ).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
     if (width > 1100) {
       const nav = await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox();
       const launcher = await page
-        .getByRole('button', { name: 'Aethelios', exact: true })
+        .locator('.aurelius-trigger')
+        .filter({ visible: true })
         .boundingBox();
       expect(launcher!.y).toBeGreaterThanOrEqual(nav!.y + nav!.height);
     }
@@ -22,9 +23,7 @@ for (const width of [344, 768, 1440]) {
       animations: 'disabled',
     });
     await page.goto('/app/you');
-    await expect(
-      page.getByRole('heading', { name: 'Build the man behind the life.' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your account. Your context.' })).toBeVisible();
     await expect(page.locator('.account-brand img')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -44,9 +43,9 @@ for (const width of [344, 768, 1440]) {
       'Aethelios',
     );
     const manifest = await (await request.get('/manifest.webmanifest')).json();
-    expect(manifest.name).toBe('Gent Ascend Collective');
-    expect(manifest.short_name).toBe('Gent Ascend');
-    expect(manifest.theme_color).toBe('#050706');
+    expect(manifest.name).toBe('Aethelios');
+    expect(manifest.short_name).toBe('Aethelios');
+    expect(manifest.theme_color).toBe('#06090D');
     for (const icon of manifest.icons) expect((await request.get(icon.src)).ok()).toBe(true);
   });
 }

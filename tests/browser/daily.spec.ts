@@ -7,7 +7,7 @@ for (const width of [360, 768, 1440])
     page.on('request', (r) => {
       if (r.method() !== 'GET' && r.url().includes('/api/')) writes.push(r.url());
     });
-    await page.goto('/app');
+    await page.goto('/app/daily');
     await page.getByRole('button', { name: 'Explore a sample day' }).click();
     await page.getByRole('button', { name: /^Day workspace/ }).click();
     await expect(page.locator('.command-mode')).toBeVisible();
@@ -162,7 +162,7 @@ test('dashboard conversation starter is a draft, never an automatic model reques
   page.on('request', (r) => {
     if (r.method() === 'POST' && r.url().includes('/api/aurelius')) writes.push(r.url());
   });
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.getByRole('link', { name: 'Plan with Aethelios' }).click();
   await expect(page.getByLabel('Message Aethelios')).toHaveValue(
@@ -233,7 +233,7 @@ test('short-screen daily editor supports keyboard dismissal, focus return and la
 }) => {
   await page.setViewportSize({ width: 360, height: 640 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.addStyleTag({ content: 'html { font-size: 200%; }' });

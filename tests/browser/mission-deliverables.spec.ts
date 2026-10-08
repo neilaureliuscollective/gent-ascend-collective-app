@@ -50,7 +50,20 @@ for (const width of [320, 720, 1440])
         }
         return r.fulfill({ json: { id: doc.id } });
       }
-      return r.fulfill({ json: { deliverable: { ...doc, revision }, versions } });
+      const selected = new URL(r.request().url()).searchParams.get('selected');
+      if (selected) return r.fulfill({ json: versions.find((v) => v.id === selected) });
+      return r.fulfill({
+        json: {
+          deliverable: { ...doc, revision },
+          versions: versions.map((version) => ({
+            id: version.id,
+            revision: version.revision,
+            title: version.title,
+            reviewed_at: version.reviewed_at,
+          })),
+          current: versions[0],
+        },
+      });
     });
     await page.goto('http://127.0.0.1:3102/?mode=deliverable');
     await expect(page.getByLabel('Work product')).toHaveValue(v.body);
@@ -91,7 +104,7 @@ test('ambiguous save retains edits and locks mutations until an explicit reload'
       posts++;
       return r.fulfill({ status: 409, json: { error: 'Work changed. Reload first.' } });
     }
-    return r.fulfill({ json: { deliverable: doc, versions: [v] } });
+    return r.fulfill({ json: { deliverable: doc, versions: [v], current: v } });
   });
   await page.goto('http://127.0.0.1:3102/?mode=deliverable');
   await page.getByLabel('Work product').fill('Unsaved valuable draft');
@@ -176,4 +189,13 @@ test('deletion requires confirmation and targets the current saved revision', as
   page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Delete deliverable', exact: true }).click();
   await expect.poll(() => deletes).toBe(1);
+});
+
+test('in-app link navigation can be cancelled without losing a private draft', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/?mode=deliverable');
+  await page.getByLabel('Work product').fill('Keep this unsaved work');
+  page.once('dialog', (d) => d.dismiss());
+  await page.getByRole('link', { name: 'All saved deliverables' }).click();
+  await expect(page.getByLabel('Work product')).toHaveValue('Keep this unsaved work');
+  expect(page.url()).toContain('mode=deliverable');
 });

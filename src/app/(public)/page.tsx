@@ -18,13 +18,13 @@ export default function PublicHome() {
           <Link href="/enter" className="button">
             Open Aethelios ↗
           </Link>
-          <Link href="/app/work">Explore company work ↗</Link>
+          <Link href="/app/work">Explore your work ↗</Link>
         </div>
       </section>
       <section className="company-arrival-method" aria-labelledby="method-title">
         <h2 id="method-title">Start with the work that matters.</h2>
         <p>
-          Company research. Positioning. Launch plans. Commercial analysis. Creative briefs. Begin
+          Decisions. Learning. Personal projects. Research. Business plans. Creative briefs. Begin
           in Talk and bring in a specialist when the problem calls for one.
         </p>
         <p>

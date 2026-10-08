@@ -118,7 +118,9 @@ async function setup(page: Page, mode: 'normal' | 'interrupted' | 'unconfigured'
     });
   });
   await page.goto('/app/aethelios');
-  await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'What would you like to move forward?' }),
+  ).toBeVisible();
   return { state, sent };
 }
 test('saved conversation, safe formatting, feedback and return to history', async ({ page }) => {
@@ -138,7 +140,9 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
   await history(page);
   await page.getByRole('button', { name: 'Start a conversation', exact: true }).click();
   await history(page);
-  await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'What would you like to move forward?' }),
+  ).toBeVisible();
   await page
     .locator('.conversation-list > li > button')
     .filter({ hasText: 'Help me choose a next step' })
@@ -154,7 +158,9 @@ test('saved conversation, safe formatting, feedback and return to history', asyn
   await tools(page);
   await page.getByRole('button', { name: 'Delete conversation', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm delete', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'What would you like to move forward?' }),
+  ).toBeVisible();
 });
 test('one saved daily action needs a second confirmation before completion', async ({ page }) => {
   const { state } = await setup(page);
@@ -247,7 +253,9 @@ for (const width of [360, 768, 1440])
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeInViewport();
+    await expect(
+      page.getByRole('heading', { name: 'What would you like to move forward?' }),
+    ).toBeInViewport();
     await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeInViewport();
     await page.screenshot({ path: `test-results/aurelius-${width}.png`, fullPage: true });
     expect(errors).toEqual([]);
@@ -283,7 +291,7 @@ test('the global Aethelios panel uses the same saved conversation service', asyn
   await page.goto('/app/work');
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   const dialog = page.locator('.aurelius-dialog');
-  await expect(dialog.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
+  await expect(dialog.getByLabel('Message Aethelios')).toBeVisible();
   await dialog.getByLabel('Message Aethelios').fill('From Command');
   await dialog.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Reply saved.');
@@ -327,7 +335,9 @@ for (const width of [360, 768, 1440]) {
     });
     await page.goto('/app/aethelios');
     await expect(page.getByText('Sign in to use your Aethelios workspace.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeInViewport();
+    await expect(
+      page.getByRole('heading', { name: 'What would you like to move forward?' }),
+    ).toBeInViewport();
     await page.screenshot({ path: `test-results/aurelius-preview-${width}.png`, fullPage: true });
     await page.getByLabel('Message Aethelios').fill('An unsent thought');
     await page.getByLabel('Message Aethelios').press('Control+Enter');
@@ -349,7 +359,7 @@ for (const width of [360, 768, 1440]) {
     await page.screenshot({ path: `test-results/aurelius-context-${width}.png`, fullPage: true });
     await page.getByText('Understand the boundaries').click();
     await expect(
-      page.getByText('Live web research, voice, file uploads', { exact: false }),
+      page.getByText('Read-only web research can consult public sources', { exact: false }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Conversation', exact: true }).click();
     await closeTools(page);

@@ -105,12 +105,8 @@ export default async function You({
             <p className="eyebrow">CHARACTER · DISCIPLINE · ASCENSION · LEGACY</p>
           </aside>
           <section className="panel profile-panel">
-            <p className="eyebrow">YOUR GENT ASCEND ACCOUNT</p>
-            <h2>
-              Your direction. Your world.
-              <br />
-              <em>behind the life.</em>
-            </h2>
+            <p className="eyebrow">YOUR AETHELIOS ACCOUNT</p>
+            <h2>Your account. Your context.</h2>
             <p className="account-intro">
               Your direction, daily practice, and personal intelligence. One space to build a better
               standard.

@@ -1,20 +1,34 @@
 import { z } from 'zod';
-export const councilInput = z.object({
-  kind:z.enum(['specialist','table']),
-  specialists:z.array(z.enum(['athena','prometheus','apollo','hermes','themis'])).min(1).max(3),
-}).strict().refine(v=>new Set(v.specialists).size===v.specialists.length && (v.kind==='specialist'?v.specialists.length===1:v.specialists.length>=2),{message:'Choose one specialist or two to three Table specialists.'});
+import { contextSourcesSchema } from './context-sources';
+export const councilInput = z
+  .object({
+    kind: z.enum(['specialist', 'table']),
+    specialists: z
+      .array(z.enum(['athena', 'prometheus', 'apollo', 'hermes', 'themis']))
+      .min(1)
+      .max(3),
+  })
+  .strict()
+  .refine(
+    (v) =>
+      new Set(v.specialists).size === v.specialists.length &&
+      (v.kind === 'specialist' ? v.specialists.length === 1 : v.specialists.length >= 2),
+    { message: 'Choose one specialist or two to three Table specialists.' },
+  );
 export const chatInput = z
   .object({
     conversationId: z.uuid(),
     requestId: z.uuid(),
     text: z.string().trim().min(1).max(6000),
     includeContext: z.boolean(),
-    mission: z.object({id:z.uuid(),revision:z.number().int().positive()}).strict().optional(),
+    savedSources: contextSourcesSchema.optional(),
+    mission: z.object({ id: z.uuid(), revision: z.number().int().positive() }).strict().optional(),
     council: councilInput.optional(),
     sourceTurnId: z.uuid().optional(),
-    revisionKind: z.enum(['retry','regenerate','edit']).optional(),
+    revisionKind: z.enum(['retry', 'regenerate', 'edit']).optional(),
   })
-  .strict().refine(v=>Boolean(v.sourceTurnId)===Boolean(v.revisionKind));
+  .strict()
+  .refine((v) => Boolean(v.sourceTurnId) === Boolean(v.revisionKind));
 export const memoryInput = z
   .object({
     id: z.uuid(),

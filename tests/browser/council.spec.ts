@@ -210,3 +210,28 @@ test('first useful outcome becomes a reviewed private Mission without a second A
   });
   expect(sent).toHaveLength(1);
 });
+
+test('Talk source selection is explicit and survives specialist selection without broadening consent', async ({
+  page,
+}) => {
+  const { sent } = await setup(page);
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await page.getByLabel('Use personal context', { exact: true }).check();
+  for (const label of [
+    'Profile and confirmed preferences',
+    'Active goal',
+    'Confirmed memories',
+    'Daily actions and reflections',
+    'Presence and training summaries',
+  ])
+    await expect(page.getByLabel(label, { exact: true })).not.toBeChecked();
+  await page.getByLabel('Active goal', { exact: true }).check();
+  await page.getByRole('button', { name: 'Close Tools & context' }).click();
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Compare my next steps');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0]).toMatchObject({
+    includeContext: true,
+    savedSources: { profile: false, goals: true, memory: false, daily: false, lifestyle: false },
+  });
+});

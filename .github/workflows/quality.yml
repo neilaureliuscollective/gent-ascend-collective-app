@@ -5,6 +5,7 @@ permissions:
 jobs:
   application:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +33,7 @@ jobs:
           if-no-files-found: ignore
   database:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,5 +48,11 @@ jobs:
       - run: npm run test:integration
       - run: npx playwright install --with-deps chromium
       - run: npm run test:founder
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: founder-evidence
+          path: test-results
+          if-no-files-found: ignore
       - if: always()
         run: npx supabase stop --no-backup

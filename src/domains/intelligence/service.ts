@@ -12,6 +12,7 @@ import { localDay } from '@/domains/daily/model';
 import { readContinuity } from '@/domains/continuity/service';
 import { resolveNextMove } from '@/domains/command/next-move';
 import { capabilityContext } from './capabilities';
+import { effectiveSources, selectedContext, type ContextSources } from './context-sources';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -27,54 +28,203 @@ export async function intelligenceSession() {
     throw new IntelligenceError('Sign in to use your Aethelios workspace.', 401);
   return { client: identity.client, person };
 }
-export async function personalContext(question?:string): Promise<PersonalContext> {
+export async function personalContext(
+  question?: string,
+  sources?: ContextSources,
+): Promise<PersonalContext> {
   const { client, person } = await intelligenceSession();
-  const groomingRelevant=!!question && /presence|appear|wardrobe|outfit|dress|confidence|prepar|meeting|occasion|travel|date|groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(question);
-  const continuityPromise = question && /week|progress|train|workout|routine|ritual|groom/i.test(question) ? readContinuity({ client, person }).catch(() => null) : Promise.resolve(undefined);
+  const groomingRelevant =
+    (!sources || sources.lifestyle) &&
+    !!question &&
+    /presence|appear|wardrobe|outfit|dress|confidence|prepar|meeting|occasion|travel|date|groom|hair|beard|skin|scalp|shav|cut|style|look|ritual|wedding|photo|product/i.test(
+      question,
+    );
+  const continuityPromise =
+    (!sources || (sources.daily && sources.lifestyle && sources.goals)) &&
+    question &&
+    /week|progress|train|workout|routine|ritual|groom/i.test(question)
+      ? readContinuity({ client, person }).catch(() => null)
+      : Promise.resolve(undefined);
   const today = localDay(new Date(), person.timezone);
   const [goal, memories, daily, profileFacts, reviews, grooming, captures] = await Promise.all([
-    client
-      .from('goals')
-      .select('*')
-      .eq('person_id', person.id)
-      .eq('status', 'active')
-      .maybeSingle(),
-    client
-      .from('ai_memories')
-      .select('*')
-      .eq('person_id', person.id)
-      .order('confirmed_at', { ascending: false })
-      .limit(24),
-    client.from('daily_entries').select('day,version,intention,energy,reflection,actions:daily_actions(id,title,done,position)').eq('person_id', person.id).lte('day',today).order('day', { ascending: false }).limit(3),
-    client.from('ascend_profile_facts').select('fact_key,value,confirmed_at,source_kind').eq('person_id',person.id),
-    client.from('daily_reviews').select('day,progress,blocker,tomorrow,confirmed_at').eq('person_id',person.id).lte('day',today).order('day',{ascending:false}).limit(3),
-    groomingRelevant?Promise.all([
-      client.from('grooming_profiles').select('hair_focus,beard_focus,skin_focus,preferred_look,effort,sensitivities,dislikes').eq('person_id',person.id).maybeSingle(),
-      client.from('grooming_goals').select('title,target_date').eq('person_id',person.id).eq('status','active').limit(4),
-      client.from('grooming_rituals').select('id,version,kind,title,steps').eq('person_id',person.id).eq('active',true).limit(3),
-      client.from('grooming_products').select('name,relation,note,ritual_id').eq('person_id',person.id).order('created_at',{ascending:false}).limit(10),
-      client.from('grooming_looks').select('title,kind,detail,service_date').eq('person_id',person.id).order('created_at',{ascending:false}).limit(6),
-      client.from('grooming_look_previews').select('title,style_id,note,saved_at').eq('person_id',person.id).eq('status','complete').not('saved_at','is',null).order('saved_at',{ascending:false}).limit(4),
-      client.from('grooming_scans').select('created_at,summary').eq('person_id',person.id).eq('status','complete').order('created_at',{ascending:false}).limit(2),
-      client.from('grooming_events').select('title,event_date,note').eq('person_id',person.id).gte('event_date',today).order('event_date').limit(6),
-      client.from('grooming_checkins').select('ritual_id,occurred_at,note').eq('person_id',person.id).eq('done',true).order('occurred_at',{ascending:false}).limit(7),
-    ]):null,
-    client.from('life_captures').select('id',{count:'exact',head:true}).eq('person_id',person.id).eq('status','inbox'),
+    !sources || sources.goals
+      ? client
+          .from('goals')
+          .select('*')
+          .eq('person_id', person.id)
+          .eq('status', 'active')
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    !sources || sources.memory
+      ? client
+          .from('ai_memories')
+          .select('*')
+          .eq('person_id', person.id)
+          .order('confirmed_at', { ascending: false })
+          .limit(24)
+      : Promise.resolve({ data: [], error: null }),
+    !sources || sources.daily
+      ? client
+          .from('daily_entries')
+          .select(
+            'day,version,intention,energy,reflection,actions:daily_actions(id,title,done,position)',
+          )
+          .eq('person_id', person.id)
+          .lte('day', today)
+          .order('day', { ascending: false })
+          .limit(3)
+      : Promise.resolve({ data: [], error: null, count: 0 }),
+    !sources || sources.profile
+      ? client
+          .from('ascend_profile_facts')
+          .select('fact_key,value,confirmed_at,source_kind')
+          .eq('person_id', person.id)
+      : Promise.resolve({ data: [], error: null, count: 0 }),
+    !sources || sources.daily
+      ? client
+          .from('daily_reviews')
+          .select('day,progress,blocker,tomorrow,confirmed_at')
+          .eq('person_id', person.id)
+          .lte('day', today)
+          .order('day', { ascending: false })
+          .limit(3)
+      : Promise.resolve({ data: [], error: null, count: 0 }),
+    groomingRelevant
+      ? Promise.all([
+          client
+            .from('grooming_profiles')
+            .select(
+              'hair_focus,beard_focus,skin_focus,preferred_look,effort,sensitivities,dislikes',
+            )
+            .eq('person_id', person.id)
+            .maybeSingle(),
+          client
+            .from('grooming_goals')
+            .select('title,target_date')
+            .eq('person_id', person.id)
+            .eq('status', 'active')
+            .limit(4),
+          client
+            .from('grooming_rituals')
+            .select('id,version,kind,title,steps')
+            .eq('person_id', person.id)
+            .eq('active', true)
+            .limit(3),
+          client
+            .from('grooming_products')
+            .select('name,relation,note,ritual_id')
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          client
+            .from('grooming_looks')
+            .select('title,kind,detail,service_date')
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(6),
+          client
+            .from('grooming_look_previews')
+            .select('title,style_id,note,saved_at')
+            .eq('person_id', person.id)
+            .eq('status', 'complete')
+            .not('saved_at', 'is', null)
+            .order('saved_at', { ascending: false })
+            .limit(4),
+          client
+            .from('grooming_scans')
+            .select('created_at,summary')
+            .eq('person_id', person.id)
+            .eq('status', 'complete')
+            .order('created_at', { ascending: false })
+            .limit(2),
+          client
+            .from('grooming_events')
+            .select('title,event_date,note')
+            .eq('person_id', person.id)
+            .gte('event_date', today)
+            .order('event_date')
+            .limit(6),
+          client
+            .from('grooming_checkins')
+            .select('ritual_id,occurred_at,note')
+            .eq('person_id', person.id)
+            .eq('done', true)
+            .order('occurred_at', { ascending: false })
+            .limit(7),
+        ])
+      : null,
+    !sources || sources.daily
+      ? client
+          .from('life_captures')
+          .select('id', { count: 'exact', head: true })
+          .eq('person_id', person.id)
+          .eq('status', 'inbox')
+      : Promise.resolve({ data: [], error: null, count: 0 }),
   ]);
-  if (goal.error || memories.error || daily.error || profileFacts.error || reviews.error || captures.error || grooming?.some(result=>result.error))
+  if (
+    goal.error ||
+    memories.error ||
+    daily.error ||
+    profileFacts.error ||
+    reviews.error ||
+    captures.error ||
+    grooming?.some((result) => result.error)
+  )
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
-  const reviewByDay=new Map((reviews.data??[]).map(review=>[review.day,review]));
-  const tokens=new Set((question??'').toLowerCase().match(/[a-z]{4,}/g)??[]);
-  const ranked=(memories.data??[]).map(row=>({row,score:[...tokens].reduce((n,word)=>n+(row.content.toLowerCase().includes(word)?1:0),0)}));
-  const selected=question ? ranked.sort((a,b)=>b.score-a.score).filter(item=>item.score>0).slice(0,6).map(item=>item.row) : memories.data??[];
-  const dailyRelevant=!question || /today|tomorrow|daily|routine|week|progress|energy|sleep|reflect|yesterday|plan/i.test(question);
-  const todayEntry=(daily.data??[]).find(entry=>entry.day===today);
-  const previousReview=(reviews.data??[]).find(review=>review.day<today);
-  const orderedActions=(todayEntry?.actions??[]).slice().sort((a,b)=>a.position-b.position).map(({id,title,done})=>({id,title,done}));
-  const { title, kind, source, sourceDay } = resolveNextMove({ day: today, actions: orderedActions, reviewed: reviewByDay.has(today), previousReview: previousReview ?? null, goalStep: goal.data?.next_step ?? null });
+  const reviewByDay = new Map((reviews.data ?? []).map((review) => [review.day, review]));
+  const tokens = new Set((question ?? '').toLowerCase().match(/[a-z]{4,}/g) ?? []);
+  const ranked = (memories.data ?? []).map((row) => ({
+    row,
+    score: [...tokens].reduce(
+      (n, word) => n + (row.content.toLowerCase().includes(word) ? 1 : 0),
+      0,
+    ),
+  }));
+  const selected = question
+    ? ranked
+        .sort((a, b) => b.score - a.score)
+        .filter((item) => item.score > 0)
+        .slice(0, 6)
+        .map((item) => item.row)
+    : (memories.data ?? []);
+  const dailyRelevant =
+    !question ||
+    /today|tomorrow|daily|routine|week|progress|energy|sleep|reflect|yesterday|plan/i.test(
+      question,
+    );
+  const todayEntry = (daily.data ?? []).find((entry) => entry.day === today);
+  const previousReview = (reviews.data ?? []).find((review) => review.day < today);
+  const orderedActions = (todayEntry?.actions ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map(({ id, title, done }) => ({ id, title, done }));
+  const { title, kind, source, sourceDay } = resolveNextMove({
+    day: today,
+    actions: orderedActions,
+    reviewed: reviewByDay.has(today),
+    previousReview: previousReview ?? null,
+    goalStep: goal.data?.next_step ?? null,
+  });
   const continuity = await continuityPromise;
   return {
-    continuity: continuity ? { start: continuity.start, today: continuity.today, timezone: continuity.timezone, recordedDays: continuity.recordedDays, actionsCompleted: continuity.actionsCompleted, actionsPlanned: continuity.actionsPlanned, sessionsCompleted: continuity.sessionsCompleted, practiceDays: continuity.practiceDays, reviewedDays: continuity.reviewedDays, nextAction: continuity.nextAction, activeSession: continuity.activeSession ? { title: continuity.activeSession.title } : null, unavailable: continuity.unavailable } : continuity,
+    continuity: continuity
+      ? {
+          start: continuity.start,
+          today: continuity.today,
+          timezone: continuity.timezone,
+          recordedDays: continuity.recordedDays,
+          actionsCompleted: continuity.actionsCompleted,
+          actionsPlanned: continuity.actionsPlanned,
+          sessionsCompleted: continuity.sessionsCompleted,
+          practiceDays: continuity.practiceDays,
+          reviewedDays: continuity.reviewedDays,
+          nextAction: continuity.nextAction,
+          activeSession: continuity.activeSession
+            ? { title: continuity.activeSession.title }
+            : null,
+          unavailable: continuity.unavailable,
+        }
+      : continuity,
     profile: {
       name: person.display_name,
       priority: person.priority,
@@ -96,10 +246,105 @@ export async function personalContext(question?:string): Promise<PersonalContext
       kind,
       confirmed_at,
     })),
-    daily: dailyRelevant ? (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {const review=reviewByDay.get(day);return {day,intention,energy,reflection,actions:actions ?? [],review:review?{progress:review.progress,blocker:review.blocker,tomorrow:review.tomorrow,confirmedAt:review.confirmed_at}:null};}) : [],
-    dailyBrief: {asOf:new Date().toISOString(),day:today,version:todayEntry?.version??0,intention:todayEntry?.intention??'',actions:orderedActions,openCaptures:captures.count??0,previousReview:previousReview?{day:previousReview.day,tomorrow:previousReview.tomorrow,blocker:previousReview.blocker}:null,nextMove:{title,kind,source,sourceDay}},
-    ascendProfile: (profileFacts.data ?? []).filter(fact=>fact.value!==null).map(fact=>({key:fact.fact_key,value:fact.value!,confirmedAt:fact.confirmed_at,source:fact.source_kind})),
-    grooming:grooming?(()=>{const [p,g,r,products,looks,concepts,scans,occasions,practice]=grooming;return {occasions:(occasions.data??[]).map(x=>({title:x.title,day:x.event_date,note:x.note})),profile:p.data?{hair:p.data.hair_focus,beard:p.data.beard_focus,skin:p.data.skin_focus,look:p.data.preferred_look,effort:p.data.effort,sensitivities:p.data.sensitivities,dislikes:p.data.dislikes}:null,goals:(g.data??[]).map(x=>({title:x.title,date:x.target_date})),rituals:(r.data??[]).map(x=>({id:x.id,version:x.version,kind:x.kind,title:x.title,steps:x.steps})),products:(products.data??[]).map(x=>({name:x.name,relation:x.relation,note:x.note,ritualId:x.ritual_id})),looks:(looks.data??[]).map(x=>({title:x.title,kind:x.kind,detail:x.detail,date:x.service_date})),concepts:(concepts.data??[]).map(x=>({title:x.title,style:x.style_id,note:x.note,at:x.saved_at!})),practice:(practice.data??[]).map(x=>({ritualId:x.ritual_id,at:x.occurred_at,note:x.note})),scans:(scans.data??[]).map(x=>({at:x.created_at,summary:x.summary}))};})():undefined,
+    daily: dailyRelevant
+      ? (daily.data ?? []).map(({ day, intention, energy, reflection, actions }) => {
+          const review = reviewByDay.get(day);
+          return {
+            day,
+            intention,
+            energy,
+            reflection,
+            actions: actions ?? [],
+            review: review
+              ? {
+                  progress: review.progress,
+                  blocker: review.blocker,
+                  tomorrow: review.tomorrow,
+                  confirmedAt: review.confirmed_at,
+                }
+              : null,
+          };
+        })
+      : [],
+    dailyBrief: {
+      asOf: new Date().toISOString(),
+      day: today,
+      version: todayEntry?.version ?? 0,
+      intention: todayEntry?.intention ?? '',
+      actions: orderedActions,
+      openCaptures: captures.count ?? 0,
+      previousReview: previousReview
+        ? {
+            day: previousReview.day,
+            tomorrow: previousReview.tomorrow,
+            blocker: previousReview.blocker,
+          }
+        : null,
+      nextMove: { title, kind, source, sourceDay },
+    },
+    ascendProfile: (profileFacts.data ?? [])
+      .filter((fact) => fact.value !== null)
+      .map((fact) => ({
+        key: fact.fact_key,
+        value: fact.value!,
+        confirmedAt: fact.confirmed_at,
+        source: fact.source_kind,
+      })),
+    grooming: grooming
+      ? (() => {
+          const [p, g, r, products, looks, concepts, scans, occasions, practice] = grooming;
+          return {
+            occasions: (occasions.data ?? []).map((x) => ({
+              title: x.title,
+              day: x.event_date,
+              note: x.note,
+            })),
+            profile: p.data
+              ? {
+                  hair: p.data.hair_focus,
+                  beard: p.data.beard_focus,
+                  skin: p.data.skin_focus,
+                  look: p.data.preferred_look,
+                  effort: p.data.effort,
+                  sensitivities: p.data.sensitivities,
+                  dislikes: p.data.dislikes,
+                }
+              : null,
+            goals: (g.data ?? []).map((x) => ({ title: x.title, date: x.target_date })),
+            rituals: (r.data ?? []).map((x) => ({
+              id: x.id,
+              version: x.version,
+              kind: x.kind,
+              title: x.title,
+              steps: x.steps,
+            })),
+            products: (products.data ?? []).map((x) => ({
+              name: x.name,
+              relation: x.relation,
+              note: x.note,
+              ritualId: x.ritual_id,
+            })),
+            looks: (looks.data ?? []).map((x) => ({
+              title: x.title,
+              kind: x.kind,
+              detail: x.detail,
+              date: x.service_date,
+            })),
+            concepts: (concepts.data ?? []).map((x) => ({
+              title: x.title,
+              style: x.style_id,
+              note: x.note,
+              at: x.saved_at!,
+            })),
+            practice: (practice.data ?? []).map((x) => ({
+              ritualId: x.ritual_id,
+              at: x.occurred_at,
+              note: x.note,
+            })),
+            scans: (scans.data ?? []).map((x) => ({ at: x.created_at, summary: x.summary })),
+          };
+        })()
+      : undefined,
   };
 }
 export async function conversationTurns(id: string, before?: string, companyId?: string) {
@@ -111,7 +356,8 @@ export async function conversationTurns(id: string, before?: string, companyId?:
     .eq('person_id', person.id)
     .maybeSingle();
   if (error) throw new IntelligenceError('Conversation could not be loaded.', 503);
-  if (!conversation || (conversation.company_id ?? null) !== (companyId ?? null)) throw new IntelligenceError('Conversation not found in this workspace.', 404);
+  if (!conversation || (conversation.company_id ?? null) !== (companyId ?? null))
+    throw new IntelligenceError('Conversation not found in this workspace.', 404);
   let query = client
     .from('ai_turns')
     .select('*')
@@ -125,53 +371,110 @@ export async function conversationTurns(id: string, before?: string, companyId?:
   if (turns.error) throw new IntelligenceError('Conversation could not be loaded.', 503);
   return (turns.data ?? []).reverse();
 }
-async function auxiliaryCall<T extends {text:string;input:number|null;output:number|null}>(client:Awaited<ReturnType<typeof intelligenceSession>>['client'],kind:'title'|'summary',run:()=>Promise<T|null>) {
-  const id=crypto.randomUUID();
-  const reserved=await client.rpc('ai_reserve_auxiliary',{p_id:id,p_kind:kind});
-  if(reserved.error || !reserved.data) return null;
-  const result=await run();
-  if(result) await client.rpc('ai_finish_auxiliary',{p_id:id,p_input:result.input,p_output:result.output});
+async function auxiliaryCall<
+  T extends { text: string; input: number | null; output: number | null },
+>(
+  client: Awaited<ReturnType<typeof intelligenceSession>>['client'],
+  kind: 'title' | 'summary',
+  run: () => Promise<T | null>,
+) {
+  const id = crypto.randomUUID();
+  const reserved = await client.rpc('ai_reserve_auxiliary', { p_id: id, p_kind: kind });
+  if (reserved.error || !reserved.data) return null;
+  const result = await run();
+  if (result)
+    await client.rpc('ai_finish_auxiliary', {
+      p_id: id,
+      p_input: result.input,
+      p_output: result.output,
+    });
   return result;
 }
-async function prepareThreadSummary(client:Awaited<ReturnType<typeof intelligenceSession>>['client'], personId:string, conversationId:string, history:Turn[]) {
-  const record=await client.from('ai_conversations').select('context_summary,summary_through').eq('id',conversationId).eq('person_id',personId).single();
-  if(record.error || !record.data) throw new Error('Thread summary unavailable');
-  let summary=record.data.context_summary || '';
-  let through=record.data.summary_through ?? null;
-  const complete=history.filter(t=>t.status==='complete' && !history.some(newer=>newer.parent_turn_id===t.id));
-  if(complete.length<=20) return summary;
-  const cutoff=complete.at(-20)!.created_at;
-  let throughTime:string|null=null;
-  if(through) {
-    const marker=await client.from('ai_turns').select('created_at').eq('id',through).eq('person_id',personId).single();
-    if(marker.error || !marker.data) throw new Error('Summary marker unavailable');
-    throughTime=marker.data.created_at;
+async function prepareThreadSummary(
+  client: Awaited<ReturnType<typeof intelligenceSession>>['client'],
+  personId: string,
+  conversationId: string,
+  history: Turn[],
+) {
+  const record = await client
+    .from('ai_conversations')
+    .select('context_summary,summary_through')
+    .eq('id', conversationId)
+    .eq('person_id', personId)
+    .single();
+  if (record.error || !record.data) throw new Error('Thread summary unavailable');
+  let summary = record.data.context_summary || '';
+  let through = record.data.summary_through ?? null;
+  const complete = history.filter(
+    (t) => t.status === 'complete' && !history.some((newer) => newer.parent_turn_id === t.id),
+  );
+  if (complete.length <= 20) return summary;
+  const cutoff = complete.at(-20)!.created_at;
+  let throughTime: string | null = null;
+  if (through) {
+    const marker = await client
+      .from('ai_turns')
+      .select('created_at')
+      .eq('id', through)
+      .eq('person_id', personId)
+      .single();
+    if (marker.error || !marker.data) throw new Error('Summary marker unavailable');
+    throughTime = marker.data.created_at;
   }
-  for(let batch=0;batch<6;batch++) {
-    let query=client.from('ai_turns').select('id,user_text,assistant_text,created_at,parent_turn_id,status')
-      .eq('person_id',personId).eq('conversation_id',conversationId).eq('status','complete')
-      .lt('created_at',cutoff).order('created_at',{ascending:true}).limit(40);
-    if(throughTime) query=query.gt('created_at',throughTime);
-    const older=await query;
-    if(older.error) throw new Error('Older history unavailable');
-    const rows=(older.data??[]).filter(t=>!older.data?.some(newer=>newer.parent_turn_id===t.id));
-    if(!older.data?.length) return summary;
-    const revised=await auxiliaryCall(client,'summary',()=>summarizeThread(summary,rows));
-    if(!revised) throw new Error('Thread summary could not be prepared');
-    const last=older.data.at(-1)!;
-    const saved=await client.rpc('ai_save_thread_summary',{p_id:conversationId,p_summary:revised.text,p_through:last.id,p_expected:through});
-    if(saved.error || !saved.data) throw new Error('Thread summary could not be saved');
-    summary=revised.text;through=last.id;throughTime=last.created_at;
-    if(older.data.length<40) return summary;
+  for (let batch = 0; batch < 6; batch++) {
+    let query = client
+      .from('ai_turns')
+      .select('id,user_text,assistant_text,created_at,parent_turn_id,status')
+      .eq('person_id', personId)
+      .eq('conversation_id', conversationId)
+      .eq('status', 'complete')
+      .lt('created_at', cutoff)
+      .order('created_at', { ascending: true })
+      .limit(40);
+    if (throughTime) query = query.gt('created_at', throughTime);
+    const older = await query;
+    if (older.error) throw new Error('Older history unavailable');
+    const rows = (older.data ?? []).filter(
+      (t) => !older.data?.some((newer) => newer.parent_turn_id === t.id),
+    );
+    if (!older.data?.length) return summary;
+    const revised = await auxiliaryCall(client, 'summary', () => summarizeThread(summary, rows));
+    if (!revised) throw new Error('Thread summary could not be prepared');
+    const last = older.data.at(-1)!;
+    const saved = await client.rpc('ai_save_thread_summary', {
+      p_id: conversationId,
+      p_summary: revised.text,
+      p_through: last.id,
+      p_expected: through,
+    });
+    if (saved.error || !saved.data) throw new Error('Thread summary could not be saved');
+    summary = revised.text;
+    through = last.id;
+    throughTime = last.created_at;
+    if (older.data.length < 40) return summary;
   }
   throw new Error('Thread is too long to prepare safely');
 }
-export async function readWorkspace(conversationId?: string, before?: string, listBefore?: string): Promise<WorkspaceData> {
+export async function readWorkspace(
+  conversationId?: string,
+  before?: string,
+  listBefore?: string,
+): Promise<WorkspaceData> {
   const { client, person } = await intelligenceSession();
-  const [cursorTime,cursorId]=listBefore?.split('|')??[];
-  let conversationQuery=client.from('ai_conversations').select('*').eq('person_id',person.id)
-    .is('company_id',null).is('archived_at',null).order('updated_at',{ascending:false}).order('id',{ascending:false}).limit(41);
-  if(cursorTime && cursorId) conversationQuery=conversationQuery.or(`updated_at.lt.${cursorTime},and(updated_at.eq.${cursorTime},id.lt.${cursorId})`);
+  const [cursorTime, cursorId] = listBefore?.split('|') ?? [];
+  let conversationQuery = client
+    .from('ai_conversations')
+    .select('*')
+    .eq('person_id', person.id)
+    .is('company_id', null)
+    .is('archived_at', null)
+    .order('updated_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(41);
+  if (cursorTime && cursorId)
+    conversationQuery = conversationQuery.or(
+      `updated_at.lt.${cursorTime},and(updated_at.eq.${cursorTime},id.lt.${cursorId})`,
+    );
   const [list, memories, actionProposals, context, access, turns, current] = await Promise.all([
     conversationQuery,
     client
@@ -180,11 +483,24 @@ export async function readWorkspace(conversationId?: string, before?: string, li
       .eq('person_id', person.id)
       .order('confirmed_at', { ascending: false })
       .limit(24),
-    client.from('ai_action_proposals').select('*').eq('person_id',person.id).order('proposed_at',{ascending:false}).limit(100),
+    client
+      .from('ai_action_proposals')
+      .select('*')
+      .eq('person_id', person.id)
+      .order('proposed_at', { ascending: false })
+      .limit(100),
     personalContext(),
     currentAccess(),
     conversationId ? conversationTurns(conversationId, before) : Promise.resolve([]),
-    conversationId ? client.from('ai_conversations').select('*').eq('person_id',person.id).eq('id',conversationId).is('company_id',null).maybeSingle() : Promise.resolve({data:null,error:null}),
+    conversationId
+      ? client
+          .from('ai_conversations')
+          .select('*')
+          .eq('person_id', person.id)
+          .eq('id', conversationId)
+          .is('company_id', null)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
   if (list.error || memories.error || actionProposals.error || current.error)
     throw new IntelligenceError('Your workspace could not be loaded.', 503);
@@ -200,7 +516,10 @@ export async function readWorkspace(conversationId?: string, before?: string, li
     configured: Boolean(config.OPENAI_API_KEY),
     model: config.AURELIUS_AI_MODEL,
     hasOlderTurns: turns.length > 40,
-    nextConversationCursor: (list.data ?? []).length > 40 && list.data?.[39] ? `${list.data[39].updated_at}|${list.data[39].id}` : null,
+    nextConversationCursor:
+      (list.data ?? []).length > 40 && list.data?.[39]
+        ? `${list.data[39].updated_at}|${list.data[39].id}`
+        : null,
     currentConversation: current.data,
   };
 }
@@ -209,10 +528,11 @@ export async function prepareReply(input: {
   requestId: string;
   text: string;
   includeContext: boolean;
-  mission?: {id:string;revision:number};
+  savedSources?: ContextSources;
+  mission?: { id: string; revision: number };
   companyId?: string;
   sourceTurnId?: string;
-  revisionKind?: 'retry'|'regenerate'|'edit';
+  revisionKind?: 'retry' | 'regenerate' | 'edit';
   council?: CouncilSelection;
 }) {
   const { client, person } = await intelligenceSession();
@@ -221,18 +541,31 @@ export async function prepareReply(input: {
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
-  if(input.companyId && input.mission) throw new IntelligenceError('Mission context cannot enter a company room.',400);
+  if (input.companyId && input.mission)
+    throw new IntelligenceError('Mission context cannot enter a company room.', 400);
   let company: import('@/domains/companies/schema').Company | null = null;
   if (input.companyId) {
-    if (input.includeContext) throw new IntelligenceError('Unsupported company context.', 400);
-    const result = await client.from('companies').select('*').eq('id', input.companyId).eq('person_id', person.id).maybeSingle();
+    if (input.includeContext || Object.values(input.savedSources ?? {}).some(Boolean))
+      throw new IntelligenceError('Unsupported company context.', 400);
+    const result = await client
+      .from('companies')
+      .select('*')
+      .eq('id', input.companyId)
+      .eq('person_id', person.id)
+      .maybeSingle();
     if (result.error) throw new IntelligenceError('Company context unavailable.', 503);
     if (!result.data) throw new IntelligenceError('Company not found.', 404);
     company = result.data;
   } else {
-    const existing = await client.from('ai_conversations').select('company_id').eq('id', input.conversationId).eq('person_id', person.id).maybeSingle();
+    const existing = await client
+      .from('ai_conversations')
+      .select('company_id')
+      .eq('id', input.conversationId)
+      .eq('person_id', person.id)
+      .maybeSingle();
     if (existing.error) throw new IntelligenceError('Conversation scope unavailable.', 503);
-    if (existing.data?.company_id) throw new IntelligenceError('Open this conversation in its company room.', 409);
+    if (existing.data?.company_id)
+      throw new IntelligenceError('Open this conversation in its company room.', 409);
   }
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY)
@@ -249,11 +582,32 @@ export async function prepareReply(input: {
   };
   const begun = company
     ? input.sourceTurnId && input.revisionKind
-      ? await client.rpc('company_begin_revision',{p_company:company.id,p_conversation:input.conversationId,p_source:input.sourceTurnId,p_request:input.requestId,p_text:input.text,p_kind:input.revisionKind,p_model:config.AURELIUS_AI_MODEL,p_prompt_version:common.p_prompt_version})
-      : await client.rpc('company_begin_turn', { p_company: company.id, p_conversation: input.conversationId, p_request: input.requestId, p_text: input.text, p_model: config.AURELIUS_AI_MODEL, p_prompt_version: common.p_prompt_version })
+      ? await client.rpc('company_begin_revision', {
+          p_company: company.id,
+          p_conversation: input.conversationId,
+          p_source: input.sourceTurnId,
+          p_request: input.requestId,
+          p_text: input.text,
+          p_kind: input.revisionKind,
+          p_model: config.AURELIUS_AI_MODEL,
+          p_prompt_version: common.p_prompt_version,
+        })
+      : await client.rpc('company_begin_turn', {
+          p_company: company.id,
+          p_conversation: input.conversationId,
+          p_request: input.requestId,
+          p_text: input.text,
+          p_model: config.AURELIUS_AI_MODEL,
+          p_prompt_version: common.p_prompt_version,
+        })
     : input.sourceTurnId && input.revisionKind
-    ? await client.rpc('ai_begin_revision',{...common,p_conversation:input.conversationId,p_source:input.sourceTurnId,p_kind:input.revisionKind})
-    : await client.rpc('ai_begin_turn',{...common,p_conversation:input.conversationId});
+      ? await client.rpc('ai_begin_revision', {
+          ...common,
+          p_conversation: input.conversationId,
+          p_source: input.sourceTurnId,
+          p_kind: input.revisionKind,
+        })
+      : await client.rpc('ai_begin_turn', { ...common, p_conversation: input.conversationId });
   if (begun.error) {
     if (begun.error.code === 'P0001')
       throw new IntelligenceError(
@@ -272,33 +626,64 @@ export async function prepareReply(input: {
   }
   // Read the immutable brief snapshot written in the reservation transaction.
   if (company) {
-    const snapshot = await client.from('company_turn_context').select('*').eq('request_id', input.requestId).eq('person_id', person.id).eq('company_id', company.id).single();
+    const snapshot = await client
+      .from('company_turn_context')
+      .select('*')
+      .eq('request_id', input.requestId)
+      .eq('person_id', person.id)
+      .eq('company_id', company.id)
+      .single();
     if (snapshot.error || !snapshot.data) {
-      await client.rpc('ai_finish_turn', {p_request: input.requestId, p_text: '', p_status: 'failed'});
+      await client.rpc('ai_finish_turn', {
+        p_request: input.requestId,
+        p_text: '',
+        p_status: 'failed',
+      });
       throw new IntelligenceError('Company brief unavailable. No model request was sent.', 503);
     }
-    company = {...company, name: snapshot.data.name, brief: snapshot.data.brief, version: snapshot.data.version, confirmed_at: snapshot.data.confirmed_at};
+    company = {
+      ...company,
+      name: snapshot.data.name,
+      brief: snapshot.data.brief,
+      version: snapshot.data.version,
+      confirmed_at: snapshot.data.confirmed_at,
+    };
   }
   // Read history only after the reservation, so another completed request cannot
   // be omitted by a stale pre-reservation snapshot. The pending current turn is
   // filtered by buildMessages and supplied once as the final user message.
   let history: Turn[];
   let context: PersonalContext | null;
-  let threadSummary:string;
-  let missionDirection: Record<string,unknown> | null=null;
+  let threadSummary: string;
+  let missionDirection: Record<string, unknown> | null = null;
   try {
     [history, context] = await Promise.all([
       conversationTurns(input.conversationId, undefined, company?.id),
-      input.includeContext ? personalContext(input.text) : Promise.resolve(null),
+      input.includeContext
+        ? personalContext(input.text, effectiveSources(true, input.savedSources)).then((value) =>
+            selectedContext(value, effectiveSources(true, input.savedSources)),
+          )
+        : Promise.resolve(null),
     ]);
-    if(input.mission) {
-      const match=await client.from('intelligence_missions').select('conversation_id').eq('id',input.mission.id).eq('person_id',person.id).single();
-      if(match.error||match.data?.conversation_id!==input.conversationId) throw new IntelligenceError('Mission scope changed.',409);
-      const captured=await client.rpc('mission_capture_context',{p_turn:input.requestId,p_mission:input.mission.id,p_revision:input.mission.revision});
-      if(captured.error||!captured.data) throw new IntelligenceError('Mission changed. Reload before continuing.',409);
-      missionDirection=captured.data;
+    if (input.mission) {
+      const match = await client
+        .from('intelligence_missions')
+        .select('conversation_id')
+        .eq('id', input.mission.id)
+        .eq('person_id', person.id)
+        .single();
+      if (match.error || match.data?.conversation_id !== input.conversationId)
+        throw new IntelligenceError('Mission scope changed.', 409);
+      const captured = await client.rpc('mission_capture_context', {
+        p_turn: input.requestId,
+        p_mission: input.mission.id,
+        p_revision: input.mission.revision,
+      });
+      if (captured.error || !captured.data)
+        throw new IntelligenceError('Mission changed. Reload before continuing.', 409);
+      missionDirection = captured.data;
     }
-    threadSummary=await prepareThreadSummary(client,person.id,input.conversationId,history);
+    threadSummary = await prepareThreadSummary(client, person.id, input.conversationId, history);
   } catch {
     await client.rpc('ai_finish_turn', {
       p_request: input.requestId,
@@ -314,7 +699,21 @@ export async function prepareReply(input: {
   const founderContext = null;
   return {
     model: config.AURELIUS_AI_MODEL,
-    messages: [...(missionDirection ? [{role: 'user' as const, content: missionContextMessage(missionDirection)}] : []), ...buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, company ? null : capabilityContext(input.text), company)],
+    messages: [
+      ...(missionDirection
+        ? [{ role: 'user' as const, content: missionContextMessage(missionDirection) }]
+        : []),
+      ...buildMessages(
+        history.filter((turn) => !history.some((newer) => newer.parent_turn_id === turn.id)),
+        input.text,
+        context,
+        new Date(),
+        founderContext,
+        threadSummary,
+        company ? null : capabilityContext(input.text),
+        company,
+      ),
+    ],
     founder: founderContext !== null,
     council: input.council,
     finish: async (
@@ -339,9 +738,18 @@ export async function prepareReply(input: {
         .eq('person_id', person.id)
         .single();
       if (row.error || !row.data) throw new IntelligenceError('Reply could not be loaded.', 503);
-      if(status==='complete' && history.filter(turn=>turn.status==='complete').length===0) {
-        const title=await auxiliaryCall(client,'title',()=>generateConversationTitle(input.text,text));
-        if(title) await client.rpc('ai_set_generated_title',{p_id:input.conversationId,p_title:title.text});
+      if (
+        status === 'complete' &&
+        history.filter((turn) => turn.status === 'complete').length === 0
+      ) {
+        const title = await auxiliaryCall(client, 'title', () =>
+          generateConversationTitle(input.text, text),
+        );
+        if (title)
+          await client.rpc('ai_set_generated_title', {
+            p_id: input.conversationId,
+            p_title: title.text,
+          });
       }
       return row.data;
     },

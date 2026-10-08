@@ -353,3 +353,9 @@ Founder approved the researched home recovery after reporting a visual regressio
 ## 2026-10-07 — Public Mission Deliverables
 
 Choose durable, versioned personal text work before expanding autonomous agents. Reuse saved completed replies and existing session/RLS infrastructure; no new model or package. Research: Anthropic “Building effective agents” (simple workflows and human checkpoints), Microsoft Research Human-AI Interaction guidelines (efficient correction), installed Next 16 route-handler/data-security guides. Full scope, ownership, boundaries, limits and release gates: `MISSION_DELIVERABLES.md`.
+
+## 2026-10-08 — Public Intelligence OS Phase 1
+
+Founder approved execution of the researched Phase 1 plan. Consolidate PR #63 (which already contains #62 and current main), selectively recover #60 consent/bridge behavior, and preserve approved Petrol assets and company/Studio/billing boundaries. Source categories are explicit, excluded reads are gated, and an older client without categories fails closed to no saved personal sources. Work/Library is an owner-filtered metadata projection over existing schemas. Immutable deliverable history is loaded lazily; exact-version export remains Markdown. Session drafts are bounded in memory with explicit restoration and no browser persistence.
+
+See PHASE_ONE_UNIFICATION.md for migration/rollback prerequisites, provider exposure and acceptance limits; PHASE_ONE_REGRESSION.md accounts for all 107 historical browser failures. Hosted acceptance remains separate from fixtures and disposable local Supabase. No paid service purchase, live billing change, production schema application or production promotion is part of this candidate publication.

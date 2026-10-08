@@ -1,5 +1,10 @@
 'use client';
 import Link from 'next/link';
+import {
+  recoverDeliverableDraft,
+  retainDeliverableDraft,
+  clearDeliverableDraft,
+} from './deliverable-drafts';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { jsonRequest } from '@/components/aurelius/memory-editor';
@@ -8,11 +13,18 @@ import {
   type Deliverable,
   type DeliverableVersion,
 } from '@/domains/missions/deliverable-schema';
-type State = { deliverable: Deliverable; versions: DeliverableVersion[] };
+type State = {
+  deliverable: Deliverable;
+  versions: Pick<DeliverableVersion, 'id' | 'revision' | 'title' | 'reviewed_at'>[];
+  current: DeliverableVersion;
+};
 export function DeliverableWorkspace({ initial }: { initial: State }) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const latest = data.versions[0]!;
+  const latest = data.current;
+  const [recovered, setRecovered] = useState(() =>
+    recoverDeliverableDraft(initial.deliverable.person_id, initial.deliverable.id),
+  );
   const [draft, setDraft] = useState({
     title: latest.title,
     body: latest.body,
@@ -23,19 +35,40 @@ export function DeliverableWorkspace({ initial }: { initial: State }) {
   const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [history, setHistory] = useState<string | null>(null);
+  const [history, setHistory] = useState<DeliverableVersion | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const dirty =
     draft.title !== latest.title ||
     draft.body !== latest.body ||
     draft.acceptance !== latest.acceptance;
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !note) return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
+    // Capture links before Next's navigation handler. Drafts stay in this view;
+    // no private text is persisted to unscoped browser storage.
+    const navigate = (event: MouseEvent) => {
+      const link = (event.target as Element).closest?.('a[href]');
+      if (!link || link.hasAttribute('download')) return;
+      const url = new URL(link.getAttribute('href')!, location.href);
+      if (url.pathname === '/api/missions/deliverables') return;
+      if (!window.confirm('Leave this deliverable and discard unsaved edits or review notes?')) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
     window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+    document.addEventListener('click', navigate, true);
+    return () => {
+      window.removeEventListener('beforeunload', warn);
+      document.removeEventListener('click', navigate, true);
+    };
+  }, [dirty, note]);
+  useEffect(() => {
+    if (recovered) return;
+    retainDeliverableDraft(data.deliverable.person_id, data.deliverable.id, latest, draft, note);
+  }, [data.deliverable.person_id, data.deliverable.id, latest, draft, note, recovered]);
   async function remove() {
     if (
       !window.confirm(
@@ -51,6 +84,7 @@ export function DeliverableWorkspace({ initial }: { initial: State }) {
         id: data.deliverable.id,
         expected: data.deliverable.revision,
       });
+      clearDeliverableDraft(data.deliverable.id);
       router.push('/app/missions/deliverables');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Deletion was not confirmed.');
@@ -59,15 +93,45 @@ export function DeliverableWorkspace({ initial }: { initial: State }) {
       setBusy(false);
     }
   }
-  const selected = data.versions.find((v) => v.id === history);
+  const selected = history;
+  async function loadHistory(versionId: string) {
+    if (historyLoading) return;
+    setHistoryLoading(true);
+    setError('');
+    setHistory(null);
+    try {
+      const response = await fetch(
+        `/api/missions/deliverables?id=${data.deliverable.id}&selected=${versionId}`,
+        { cache: 'no-store' },
+      );
+      const version = await response.json();
+      if (!response.ok) throw new Error(version.error ?? 'Version unavailable.');
+      if (
+        version.id !== versionId ||
+        version.deliverable_id !== data.deliverable.id ||
+        version.person_id !== data.deliverable.person_id
+      )
+        throw new Error('Version scope changed.');
+      setHistory(version);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Version unavailable.');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
   async function refresh() {
     const response = await fetch(`/api/missions/deliverables?id=${data.deliverable.id}`, {
       cache: 'no-store',
     });
     const next = await response.json();
     if (!response.ok) throw new Error(next.error);
+    if (
+      next.deliverable?.person_id !== data.deliverable.person_id ||
+      next.deliverable?.id !== data.deliverable.id
+    )
+      throw new Error('Account or document changed. Reopen saved work.');
     setData(next);
-    const version = next.versions[0] as DeliverableVersion;
+    const version = next.current as DeliverableVersion;
     setDraft({ title: version.title, body: version.body, acceptance: version.acceptance });
     setNote('');
     setHistory(null);
@@ -110,6 +174,37 @@ export function DeliverableWorkspace({ initial }: { initial: State }) {
     <section className="mission-editor deliverable-workspace" aria-label="Deliverable workspace">
       <p className="eyebrow">Aethelios · Saved work</p>
       <h1>{latest.title}</h1>
+      {recovered && (
+        <aside role="status">
+          <p>
+            An unsaved draft from this account remains in this open session.
+            {recovered.base !== latest.id
+              ? ' Saved work has changed; compare carefully before saving.'
+              : ''}
+          </p>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setDraft(recovered.draft);
+              setNote(recovered.note);
+              setRecovered(undefined);
+            }}
+          >
+            Restore unsaved draft
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => {
+              clearDeliverableDraft(data.deliverable.id);
+              setRecovered(undefined);
+            }}
+          >
+            Discard recovered draft
+          </button>
+        </aside>
+      )}
       <p>
         Version {latest.revision} ·{' '}
         {latest.reviewed_at ? 'Reviewed by you' : 'Draft — not reviewed'}
@@ -252,12 +347,18 @@ export function DeliverableWorkspace({ initial }: { initial: State }) {
         <ul>
           {data.versions.map((v) => (
             <li key={v.id}>
-              <button type="button" className="text-button" onClick={() => setHistory(v.id)}>
+              <button
+                type="button"
+                className="text-button"
+                disabled={historyLoading}
+                onClick={() => void loadHistory(v.id)}
+              >
                 Version {v.revision} · {v.reviewed_at ? 'Reviewed by you' : 'Draft'}
               </button>
             </li>
           ))}
         </ul>
+        {historyLoading && <p role="status">Loading selected version…</p>}
         {selected && (
           <article aria-label="Historical version">
             <h3>

@@ -1,3 +1,5 @@
+> Public Intelligence OS Phase 1 (2026-10-08): founder approved unification. Read docs/PHASE_ONE_UNIFICATION.md. Universal personal/professional scope supersedes older company-only/lifestyle doctrine. Preserve Petrol/gold, existing company boundaries, source consent, confirmed memory and stream receipts. Production promotion requires acceptance receipts and an explicit release decision.
+
 > Public Aethelios visual update (2026-10-07): the founder approved BLACK × GOLD × AETHER PETROL. Read docs/AETHER_PETROL.md. This supersedes all green/plum brand guidance below for this repository. Use src/platform/visual/aether-palette.json as the color source; retain existing functional/accessibility guards. Public descriptor: PERSONAL INTELLIGENCE OS.
 
 # Gent Ascend Collective — canonical project rules

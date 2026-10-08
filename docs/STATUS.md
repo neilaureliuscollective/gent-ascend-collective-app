@@ -1,3 +1,13 @@
+## 2026-10-08 — Public Intelligence OS Phase 1 candidate
+
+Implemented on an isolated branch deriving from #63: category consent and excluded-read guards; separate specialist preparation consent; private bridge retirement/cookie cleanup; unified Work and owner-scoped saved-work finder; lazy deliverable versions/exact exports; account/document-scoped session draft recovery; inclusive entry/prompt/first-session direction; regression reconciliation and bounded CI.
+
+Observed local lint/types/build and 425 unit/SQL tests passed (58 files). Core browser checks passed 33/33 before the final regression reconciliation; a frozen complete suite receipt is still pending. Rebuilding during an earlier broad run invalidated that run and it is discarded. No claim of production or live-model acceptance is made.
+
+Required local Auth/PostgREST smoke now includes Mission snapshots, deliverable replay/stale edits/exact review/retained documents and linked Studio isolation. Docker is unavailable in this runner; these new real-service checks await CI receipts. Supabase has no existing isolated development branch. Hosted two-account round trips, live provider context evaluation within an approved budget, physical-device review, and migration/grant receipts remain open. Production, live billing and production schema are unchanged. Candidate is not eligible for production promotion while mandatory gates are open.
+
+Details: PHASE_ONE_UNIFICATION.md and PHASE_ONE_REGRESSION.md.
+
 # Public Aethelios · Aether Petrol visual migration · 2026-10-07
 
 Implemented the founder-approved Black × Gold × Aether Petrol system on the existing public product. Scope and audit: [AETHER_PETROL.md](AETHER_PETROL.md). One shared palette feeds CSS, active orb shaders and browser metadata. Core/legacy reachable surfaces, Talk/Council/Missions/Studio chrome, navigation, account/pricing, SVG/static fallback, app and Apple icons are aligned. Technical aliases remain for component compatibility; errors/warnings and content assets retain their meaning. No domain service, database, model routing, access, billing or persistence code changed.

@@ -1,4 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+vi.mock('server-only', () => ({}));
+const cookieSet = vi.hoisted(() => vi.fn());
+vi.mock('next/headers', () => ({ cookies: async () => ({ set: cookieSet }) }));
 import { GET as cartGet, POST as cartPost } from '@/app/api/commerce/cart/route';
 import { GET as bridgeStart } from '@/app/api/aethelios-link/start/route';
 import { GET as bridgeCallback } from '@/app/api/aethelios-link/callback/route';
@@ -11,6 +14,16 @@ describe('company platform boundaries', () => {
       expect(response.status).toBe(410);
       expect(response.headers.get('cache-control')).toBe('private, no-store');
     }
+  });
+  it('expires the historical bridge cookies at their original paths', async () => {
+    cookieSet.mockClear();
+    await bridgeStart();
+    expect(cookieSet).toHaveBeenCalledWith('aethelios-founder-link', '', {
+      path: '/app',
+      maxAge: 0,
+    });
+    for (const name of ['aethelios-link-state', 'aethelios-link-verifier'])
+      expect(cookieSet).toHaveBeenCalledWith(name, '', { path: '/api/aethelios-link', maxAge: 0 });
   });
   it('does not invent an external shop and rejects unsafe destination configuration', () => {
     for (const value of [

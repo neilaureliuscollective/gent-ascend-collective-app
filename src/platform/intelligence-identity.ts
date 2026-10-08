@@ -1,9 +1,9 @@
 /** Public identity; independent of stable persistence and API identifiers. */
 export const aethelios = {
   name: 'Aethelios',
-  title: 'Company-building intelligence',
+  title: 'Personal Intelligence OS',
   description:
-    'Aethelios helps founders and operators research, plan, build and operate their companies.',
+    'Aethelios helps people research, create, make decisions and continue meaningful personal and professional work.',
   portrait: '/brand/aethelios-portrait.webp',
   portraitAlt:
     'Aethelios: a composed gentleman with full, precisely groomed hair and beard, wearing deep green, with laurel, column, and navigation-star tattoos on his forearm.',
