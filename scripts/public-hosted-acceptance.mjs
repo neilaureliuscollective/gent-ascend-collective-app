@@ -302,6 +302,14 @@ export async function runAcceptance(owner, other, anon, accounts, report) {
         assert.equal(result.data, null);
       }
     }
+    // Private-bucket RLS alone cannot detect an accidentally public endpoint.
+    const publicUrl = anon.storage.from(bucket).getPublicUrl(ids.storage).data.publicUrl;
+    const publicResponse = await fetch(publicUrl, {
+      redirect: 'error',
+      signal: AbortSignal.timeout(10000),
+    });
+    await publicResponse.body?.cancel();
+    assert.ok([400, 403, 404].includes(publicResponse.status));
     const forged = await other.storage
       .from(bucket)
       .upload(ids.storage.replace('.png', '-forged.png'), image, { contentType: 'image/png' });

@@ -21,7 +21,7 @@ The immediate useful slice is executable acceptance, rather than more product su
 3. Completed synthetic reply promotion, idempotent deliverable creation and anonymous/cross-account denial.
 4. Immutable version history, stale/direct/cross-account write rejection and exact review replay.
 5. Idempotent Studio linkage and preservation of deliverable/project after Mission removal.
-6. Private Studio Storage: upload/readback of one synthetic pixel, foreign/anonymous download and signing denial, forged owner-path upload rejection, foreign-delete survival and owner cleanup.
+6. Private Studio Storage: upload/readback of one synthetic pixel, foreign/anonymous download and signing denial, unsigned public endpoint denial, forged owner-path upload rejection, foreign-delete survival and owner cleanup.
 
 No model is called. Synthetic reply completion exercises persistence, not provider quality or the application's model request path. Account provisioning and migrations are intentionally external to the runner. It never resets, seeds a whole project, lists unrelated work, uses an admin key, buys infrastructure or promotes code.
 
