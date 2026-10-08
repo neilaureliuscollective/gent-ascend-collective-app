@@ -65,6 +65,9 @@ for (const width of [320, 720, 1440])
     await expect(page.getByText('Saved brief needs your review')).toBeVisible();
     await page.getByRole('button', { name: /Version 1 · Reviewed/ }).click();
     await expect(page.getByRole('heading', { name: brief.headline })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Confirm this saved brief' })).toBeDisabled();
+    await page.getByRole('button', { name: 'Return to current working preview' }).click();
+    await expect(page.getByRole('button', { name: 'Confirm this saved brief' })).toBeEnabled();
     await page.getByRole('button', { name: 'Contact', exact: true }).click();
     await expect(
       page.getByRole('button', { name: 'Preview only · messages are not sent' }),

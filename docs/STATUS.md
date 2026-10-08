@@ -6,6 +6,9 @@ Local receipts: lint/typecheck, 61 Vitest files / 442 tests and production build
 
 The isolated candidate inherits unmerged PR #64. Production main and both hosted projects are unchanged. Do not promote without exact-candidate CI, isolated migration rehearsal, real account/provider/device acceptance and explicit release approval.
 
+
+Additional candidate `05a4c378` real Next/two-account Technology journey PASS in CI run 37840763159, together with the existing founder flows. Current finalization adds a historical-preview approval guard and immutable template identity; their exact final CI receipt is linked on PR #65. Code remains isolated and release approval is still required.
+
 ---
 
 ## 2026-10-08 — Account acceptance phase

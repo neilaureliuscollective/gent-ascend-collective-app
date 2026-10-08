@@ -71,6 +71,7 @@ export function TechnologyWorkspace() {
   }, [dirty]);
   const project = data?.projects.find((p) => p.id === id),
     latest = data?.versions.find((v) => v.project_id === id && v.revision === project?.revision);
+  const historical = Boolean(view && view.id !== latest?.id);
   const unresolved = data?.runs.some((r) => r.status !== 'succeeded');
   async function send(body: unknown, selected = id) {
     setBusy(true);
@@ -366,8 +367,8 @@ export function TechnologyWorkspace() {
                       : 'Saved brief needs your review'}
                 </p>
                 <p>
-                  Fixed four-page template · safe text-only preview. User review does not
-                  certify factual accuracy or production readiness.
+                  Fixed four-page template · safe text-only preview. User review does not certify
+                  factual accuracy or production readiness.
                 </p>
                 <button
                   disabled={
@@ -376,7 +377,8 @@ export function TechnologyWorkspace() {
                     busy ||
                     locked ||
                     !data.canCreate ||
-                    Boolean(latest.reviewed_at)
+                    Boolean(latest.reviewed_at) ||
+                    historical
                   }
                   onClick={() => send({ action: 'review', id, versionId: latest!.id })}
                 >
@@ -395,7 +397,8 @@ export function TechnologyWorkspace() {
                     locked ||
                     unresolved ||
                     !data.canCreate ||
-                    !data.generationAvailable
+                    !data.generationAvailable ||
+                    historical
                   }
                   onClick={() => {
                     if (
@@ -434,9 +437,7 @@ export function TechnologyWorkspace() {
                       : `$${(r.actual_micros / 1e6).toFixed(4)} recorded`}
                   </p>
                 ))}
-                {busy && (
-                  <p role="status">Working on your request…</p>
-                )}
+                {busy && <p role="status">Working on your request…</p>}
                 {locked && (
                   <button
                     disabled={busy}
@@ -456,6 +457,9 @@ export function TechnologyWorkspace() {
                 {view ? `Saved history · version ${view.revision}` : 'Working preview'} · private,
                 not deployed
               </p>
+              {view && (
+                <button onClick={() => setView(null)}>Return to current working preview</button>
+              )}
               <SitePreview brief={view?.brief ?? brief} />
               {project?.mission_id && (
                 <Link href={`/app/missions?id=${project.mission_id}`}>

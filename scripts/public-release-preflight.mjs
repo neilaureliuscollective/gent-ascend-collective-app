@@ -17,7 +17,7 @@ export const migrationFiles = [
   ],
   [
     '20261008180000_technology_foundation.sql',
-    'f1370a1db5a1a446937e34d11001282565e6ad12dc08b55c54ac5f8e34f6a43f',
+    'fd314e0a8df45ebe094215587e8757ba82c1b313c8e89ad0cf41a78a75607eac',
   ],
 ];
 const columns = {

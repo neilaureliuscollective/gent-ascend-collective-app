@@ -78,6 +78,7 @@ export type Version = {
   project_id: string;
   revision: number;
   brief: Brief;
+  template_version: 'service-business-v1';
   reviewed_at: string | null;
   created_at: string;
 };
