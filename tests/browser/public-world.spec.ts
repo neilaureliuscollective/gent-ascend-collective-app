@@ -5,7 +5,10 @@ for (const width of [344, 768, 1440])
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Move your world forward/ })).toBeVisible();
-    await page.getByRole('link', { name: 'Open Aethelios', exact: true }).click();
+    await page
+      .locator('main')
+      .getByRole('link', { name: /^Open Aethelios/ })
+      .click();
     await expect(page).toHaveURL('/enter');
     await expect(page.getByRole('heading', { name: 'The world becomes yours.' })).toBeVisible();
     await expect(
@@ -82,7 +85,7 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
     .toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('gent-ascend-fallback-v4');
+    const cache = await caches.open('gent-ascend-fallback-v5');
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([

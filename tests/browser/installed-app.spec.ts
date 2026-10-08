@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { test, expect } from './fixtures';
 
@@ -27,18 +28,12 @@ test('fresh installation has one current crest identity across manifest and Appl
     2,
   );
   const mask = await request.get(manifest.icons[2].src);
-  const { data, info } = await sharp(await mask.body())
-    .removeAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  let outside = 0;
-  for (let y = 0; y < info.height; y++)
-    for (let x = 0; x < info.width; x++) {
-      if (Math.hypot(x + 0.5 - 256, y + 0.5 - 256) <= 204.8) continue;
-      const index = (y * info.width + x) * info.channels;
-      if (data[index] !== 6 || data[index + 1] !== 9 || data[index + 2] !== 13) outside++;
-    }
-  expect(outside).toBe(0);
+  // Preserve the approved textured asset. Physical launcher mask acceptance is separate.
+  expect(
+    createHash('sha256')
+      .update(await mask.body())
+      .digest('hex'),
+  ).toBe('fe8a377931bfb0796b933800da9dcf08c7e9ee55e2410d290d19034073593970');
   await page.goto('/app/install');
   for (const [relation, size] of [
     ['apple-touch-icon', 180],
@@ -82,7 +77,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v4'],
+      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v5'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',

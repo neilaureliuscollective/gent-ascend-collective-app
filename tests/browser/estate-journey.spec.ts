@@ -10,12 +10,11 @@ for (const width of [344, 768, 1440])
     });
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Move your world forward/ })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Open Aethelios', exact: true })).toHaveAttribute(
-      'href',
-      '/enter',
-    );
     await expect(
-      page.getByRole('link', { name: 'Explore your work', exact: true }),
+      page.locator('main').getByRole('link', { name: /^Open Aethelios/ }),
+    ).toHaveAttribute('href', '/enter');
+    await expect(
+      page.locator('main').getByRole('link', { name: /^Explore your work/ }),
     ).toHaveAttribute('href', '/app/work');
     await expect(page.locator('body')).toContainText('personal project');
     expect(writes).toEqual([]);

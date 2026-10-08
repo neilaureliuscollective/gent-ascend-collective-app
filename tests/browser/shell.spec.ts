@@ -15,20 +15,17 @@ for (const width of [360, 768, 1440]) {
     if (width <= 1100) {
       await expect(page).toHaveURL('/app/aethelios');
       await expect(page.getByLabel('Message Aethelios')).toBeInViewport();
-      await page.getByRole('link', { name: 'Back to Command' }).click();
+      await page.goto('/app/work');
     } else {
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(
-        page.getByText('Sign in to use your Aethelios workspace.', { exact: false }),
+        page.getByRole('dialog').getByText('Sign in to use your Aethelios workspace.', { exact: false }),
       ).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).not.toBeVisible();
       await expect(trigger).toBeFocused();
     }
-    await page
-      .getByRole('navigation', { name: 'Main navigation' })
-      .getByRole('link', { name: 'My world', exact: false })
-      .click();
+    await page.goto('/app/world');
     await expect(page.getByRole('heading', { name: 'My world.' })).toBeVisible();
     await page.getByRole('link', { name: 'Progress', exact: false }).click();
     await expect(

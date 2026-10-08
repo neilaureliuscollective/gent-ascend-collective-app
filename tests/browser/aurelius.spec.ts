@@ -225,7 +225,7 @@ test('context opt-out reaches the server and incomplete streams never say saved'
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('Keep this draft');
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeDisabled();
   expect(sent[0]).toMatchObject({ includeContext: false });
-  await expect(page.getByRole('status')).not.toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).not.toContainText('Reply saved.');
 });
 test('missing model connection leaves memory and saved context usable', async ({ page }) => {
   await setup(page, 'unconfigured');

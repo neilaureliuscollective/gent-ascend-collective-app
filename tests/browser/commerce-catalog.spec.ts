@@ -19,7 +19,9 @@ for (const width of [344, 768, 1440])
     );
     await expect(page.getByRole('button', { name: /Add to cart|Checkout/ })).toHaveCount(0);
     expect(writes).toEqual([]);
-    expect((await request.get('/shop')).headers()['cache-control']).toContain('private');
+    const retired = await request.get('/api/commerce/cart');
+    expect(retired.status()).toBe(410);
+    expect(retired.headers()['cache-control']).toContain('private');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

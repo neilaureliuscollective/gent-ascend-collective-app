@@ -340,6 +340,7 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.getByRole('button', { name: 'Enter Aethelios' }).click();
   await expect(page).toHaveURL(/\/app(?:\/welcome|\/aethelios)?$/);
   await page.goto('/app/welcome');
+  await page.getByText('Plan a first next move', { exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Review membership access to Aethelios' }),
@@ -368,6 +369,7 @@ test('free member first session saves and resumes through real Next and Supabase
     page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
   ).not.toBeChecked();
   await page.goto('/app/welcome');
+  await page.getByText('Plan a first next move', { exact: true }).click();
   await expect(page.getByLabel('What matters today?')).toHaveValue(
     'Synthetic first-session direction',
   );

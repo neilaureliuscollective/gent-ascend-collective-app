@@ -40,7 +40,7 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   ).toBeVisible();
   // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
-  await expect(page.locator('.talk-presence .intelligence-orb-static')).toBeVisible();
+  await expect(page.locator('.talk-presence > .talk-tool .intelligence-orb-static')).toBeVisible();
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
   await page.getByLabel('Message Aethelios').fill('Still usable without graphics');
   expect(errors).toEqual([]);
@@ -91,7 +91,7 @@ test('connected light follows navigation and becomes still while reading a dialo
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
   await expect(page.locator('.ambient-light')).toHaveCSS('animation-play-state', 'paused');
-  await expect(page.locator('.connection-arrival')).toHaveCSS('animation-play-state', 'paused');
+  await expect(page.locator('.connection-arrival')).toHaveCSS('animation-name', 'none');
   await page.keyboard.press('Escape');
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'false');
   await page.getByRole('button', { name: 'Pause ambient motion' }).click();

@@ -3654,6 +3654,3 @@ html[data-motion='ambient']:not([data-quiet='true'])
   .aethelios-page .aurelius-composer textarea { min-height:44px; }
   .aethelios-page .conversation-scroll { padding-block:0; }
 }
-
-/* Decorative route motion pauses while any reading dialog is open. */
-html[data-quiet='true'] .connection-arrival { animation-play-state: paused; }

@@ -59,3 +59,13 @@ Local results and outstanding gates are recorded at the top of STATUS.md. A pass
 | Company work/model/visual paths         | Exact job/brief scope and existing revision contracts                                                             | Reconcile all model/image/tool costs with subscription budgets                                     |
 
 No provider defaults, live tiers, prices or customer demand assumptions are changed in Phase 1.
+
+### Validation follow-up — 2026-10-08
+
+The first published candidate (`8781a294`) passed the GitHub Actions real local Supabase reset and authenticated integration script. Receipt: run `37796238541`, database job `113376304944`. The two additive Mission migrations applied successfully. The integration script passed Mission context, immutable deliverable replay/review/history, retained detached work, Studio continuity, and authenticated cross-account/anonymous denial. This is a real local database receipt, not a hosted-production acceptance receipt.
+
+Ten of eleven authenticated browser flows passed on that candidate. The remaining flow exposed a pre-existing unreachable FirstSession component after Welcome moved to Talk-first onboarding. Restore that existing owner-scoped planning component under optional “Plan a first next move”; preserve the primary Talk entry. The expanded authenticated flow must pass again on the corrected candidate.
+
+The frozen broad local browser run produced 307 passes and 39 failures with a 30-second override and four restricted single-process workers. Most failures were stale surface selectors or assertions about retired static storefront pages; some were Chromium process/teardown failures. Keep the configured 90-second limit and rerun affected suites with two workers. Correct quiet-mode checks to assert the existing `animation-name: none` contract rather than adding a redundant animation-play-state CSS override. Preserve the approved textured maskable PNG by checksum; physical launcher mask acceptance remains a separate device gate.
+
+One genuine handoff defect was found: service-worker fallback v4 cached the previous icon. Fallback v5 caches the approved Aether icon, removes obsolete fallback caches without reloading drafts, and retains static-only caching. Offline/installation copy now names Aethelios. Do not interpret these browser fixtures as proof of provider, billing or hosted Supabase readiness.

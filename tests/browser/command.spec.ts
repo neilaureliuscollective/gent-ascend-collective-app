@@ -344,7 +344,8 @@ test('recovered Command opens current domains and preserves the separate saved a
 }) => {
   await page.goto('/app/daily');
   await expect(page.locator('.command-environment .gw-energy-orb')).toBeVisible();
-  const domains = page.getByRole('navigation', { name: 'Your operating spaces' });
+  await page.getByText('Open deeper systems', { exact: false }).click();
+  const domains = page.getByRole('navigation', { name: 'Deeper systems' });
   await expect(domains.getByRole('link', { name: /Performance/ })).toHaveAttribute(
     'href',
     '/app/performance',

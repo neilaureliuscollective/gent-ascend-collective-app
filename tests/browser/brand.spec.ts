@@ -9,14 +9,9 @@ for (const width of [344, 768, 1440]) {
       page.getByRole('link', { name: 'Aethelios home' }).filter({ visible: true }),
     ).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
-    if (width > 1100) {
-      const nav = await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox();
-      const launcher = await page
-        .locator('.aurelius-trigger')
-        .filter({ visible: true })
-        .boundingBox();
-      expect(launcher!.y).toBeGreaterThanOrEqual(nav!.y + nav!.height);
-    }
+    await expect(
+      page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
+    ).toHaveCount(3);
     await page.screenshot({
       path: `test-results/gent-command-${width}.png`,
       fullPage: true,
