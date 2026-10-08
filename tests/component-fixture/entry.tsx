@@ -1,3 +1,4 @@
+import { TechnologyWorkspace } from '@/components/technology/technology-workspace';
 import { DeliverableFixture } from './deliverable';
 import { SavedWorkReadiness } from '@/components/missions/saved-work-readiness';
 import { savedWorkRelations } from '@/domains/release/saved-work';
@@ -108,6 +109,7 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
+  mode === 'technology' ? <TechnologyWorkspace/> :
   mode === 'release-foundation' ? (
     <main style={{ maxWidth: 1160, margin: '0 auto', padding: '32px 20px' }}>
       <p className="eyebrow">Synthetic component fixture · no database</p>

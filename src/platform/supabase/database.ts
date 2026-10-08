@@ -71,6 +71,11 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      technology_grants: Table<{ person_id: string; expires_at: string }, never, never>;
+      technology_projects: Table<import('@/domains/technology/schema').Project, never, never>;
+      technology_site_versions: Table<import('@/domains/technology/schema').Version, never, never>;
+      technology_runs: Table<import('@/domains/technology/schema').Run, never, never>;
+
       mission_deliverables: Table<import('@/domains/missions/deliverable-schema').Deliverable, never, never>;
       mission_deliverable_versions: Table<import('@/domains/missions/deliverable-schema').DeliverableVersion, never, never>;
       mission_proposals: Table<import('@/domains/missions/continuity-schema').MissionProposal, never, never>;
@@ -755,6 +760,33 @@ export interface Database {
     };
     Views: {mission_deliverable_summaries: {Row: import('@/domains/missions/deliverable-schema').Deliverable & {title:string;reviewed:boolean}; Relationships: []}};
     Functions: {
+      technology_save: {
+        Args: {
+          p_id: string;
+          p_version: string;
+          p_expected: number;
+          p_brief: import('@/domains/technology/schema').Brief;
+          p_mission?: string | null;
+          p_mission_revision?: number | null;
+        };
+        Returns: string;
+      };
+      technology_review: { Args: { p_id: string; p_version: string }; Returns: string };
+      technology_reserve: {
+        Args: { p_id: string; p_run: string; p_expected: number };
+        Returns: string;
+      };
+      technology_settle: {
+        Args: {
+          p_run: string;
+          p_owner: string;
+          p_brief: import('@/domains/technology/schema').Brief | null;
+          p_input: number | null;
+          p_output: number | null;
+        };
+        Returns: string;
+      };
+
       mission_delete_deliverable: {Args:{p_id:string;p_expected:number};Returns:string};
       mission_create_deliverable: {Args:{p_mission:string;p_turn:string;p_revision:number};Returns:string};
       mission_save_deliverable: {Args:{p_id:string;p_version:string;p_expected:number;p_title:string;p_body:string;p_acceptance:string};Returns:string};

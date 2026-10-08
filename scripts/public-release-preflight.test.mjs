@@ -23,11 +23,12 @@ test('fully absent additive stages preserve exact migration order', () => {
   assert.equal(result.catalogStatus, 'pending');
   assert.deepEqual(
     result.stages.map((s) => s.status),
-    ['pending', 'pending'],
+    ['pending', 'pending', 'pending'],
   );
   assert.deepEqual(result.migrationOrder, [
     '20261007190000_mission_continuity.sql',
     '20261007210000_mission_deliverables.sql',
+    '20261008180000_technology_foundation.sql',
   ]);
 });
 test('prerequisite drift, partial application and reversed stage dependencies block', () => {
@@ -65,4 +66,4 @@ test('rejects unknown fields in check identities and never reflects private payl
     (error) => !error.message.includes('private payload'),
   );
 });
-test('the two reviewed migration sources retain exact hashes', verifyMigrationFiles);
+test('the three reviewed migration sources retain exact hashes', verifyMigrationFiles);

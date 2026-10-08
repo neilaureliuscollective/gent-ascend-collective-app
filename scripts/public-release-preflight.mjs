@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 export const migrationFiles = [
+  // Technology follows the two Mission prerequisites.
+
   [
     '20261007190000_mission_continuity.sql',
     '0b6b96f3f0e85e0966eb105ab4a8071e54b0daa33789f146d1e04de920bca1f4',
@@ -12,6 +14,10 @@ export const migrationFiles = [
   [
     '20261007210000_mission_deliverables.sql',
     '39c1797b4ad94d5cbf0b4154396b4aed9d3382cfd8e52ac47fd209f67667fce2',
+  ],
+  [
+    '20261008180000_technology_foundation.sql',
+    '944c27ed7973524dfa797f043bcaf62ac5dba205009c8c219218dfeae166e44b',
   ],
 ];
 const columns = {
@@ -58,6 +64,18 @@ export const expectedChecks = [
     'mission_review_deliverable(uuid,uuid,text)',
     'mission_delete_deliverable(uuid,integer)',
   ].map((signature) => ['deliverables', `function:public.${signature}`]),
+  ...[
+    'technology_grants',
+    'technology_projects',
+    'technology_site_versions',
+    'technology_runs',
+  ].map((table) => ['technology', `table:${table}`]),
+  ...[
+    'technology_save(uuid,uuid,integer,jsonb,uuid,integer)',
+    'technology_review(uuid,uuid)',
+    'technology_reserve(uuid,uuid,integer)',
+  ].map((signature) => ['technology', `function:public.${signature}`]),
+  ['technology', 'broker:technology_settle'],
 ];
 
 // An operator-supplied snapshot is advisory evidence, not a signed receipt or
@@ -91,7 +109,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
   }
   if (seen.size !== allowed.size) throw new Error('Catalog snapshot is incomplete.');
   const failures = snapshot.checks.filter((check) => !check.ok);
-  const stages = ['continuity', 'deliverables'].map((stage) => {
+  const stages = ['continuity', 'deliverables', 'technology'].map((stage) => {
     const checks = snapshot.checks.filter((check) => check.stage === stage);
     return {
       stage,
@@ -106,7 +124,11 @@ export function evaluateSnapshot(input, now = Date.now()) {
   const blocked =
     prerequisiteFailures.length > 0 ||
     stages.some((stage) => stage.status === 'blocked') ||
-    (stages[0].status === 'pending' && stages[1].status !== 'pending');
+    stages.some(
+      (stage, index) =>
+        stage.status === 'pending' &&
+        stages.slice(index + 1).some((next) => next.status !== 'pending'),
+    );
   return {
     contract: snapshot.contract,
     observedAt: new Date(observed).toISOString(),
@@ -122,7 +144,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
       ? 'Resolve prerequisite drift or partially present objects before applying anything.'
       : stages.every((stage) => stage.status === 'observed')
         ? 'Catalog checks observed. Complete hosted account, provider and device acceptance before release.'
-        : 'Rehearse the two exact additive migrations in isolation, then record an explicit release decision.',
+        : 'Rehearse the three exact additive migrations in isolation, then record an explicit release decision.',
     releaseApproved: false,
     scope:
       'Operator-supplied catalog snapshot only; no hosted Auth, Storage, provider, device or migration-ledger acceptance.',

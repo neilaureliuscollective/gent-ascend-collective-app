@@ -40,12 +40,37 @@ export async function readSavedWork() {
     [missions, documents, conversations, projects, companies, jobs].some((result) => result.error)
   )
     throw new IntelligenceError('Saved work could not be loaded. Reload before continuing.', 503);
+  // Additive rollout: missing Technology tables must not break existing Saved Work.
+  const technology = await client
+    .from('technology_projects')
+    .select('*')
+    .eq('person_id', person.id)
+    .order('updated_at', { ascending: false })
+    .limit(5);
+  const technologyVersions = technology.error
+    ? null
+    : await client
+        .from('technology_site_versions')
+        .select('*')
+        .eq('person_id', person.id)
+        .limit(500);
   const names = new Map((companies.data ?? []).map((c) => [c.id, c.name]));
   const scope = (id: string | null) =>
     id ? `Company · ${names.get(id) ?? 'Private room'}` : 'Personal';
   return {
     ownerId: person.id,
     items: [
+      ...(technology.data ?? []).map((p) => ({
+        id: p.id,
+        kind: 'Technology project',
+        title:
+          technologyVersions?.data?.find((v) => v.project_id === p.id && v.revision === p.revision)
+            ?.brief.name ?? 'Website preview',
+        scope: 'Personal',
+        detail: `Private preview · version ${p.revision}`,
+        date: p.updated_at,
+        href: `/app/work/technology?project=${p.id}`,
+      })),
       ...(jobs.data ?? []).map((job) => ({
         id: job.id,
         kind: 'Company work',

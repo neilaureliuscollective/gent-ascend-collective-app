@@ -1,3 +1,13 @@
+## 2026-10-08 — Technology Creation Foundation (review candidate)
+
+Implemented Work → Technology, bounded service-business brief and four-page private preview, immutable history, exact saved-version review, personal Mission source/return and Saved Work metadata. Optional one-call copy refinement reserves allowance first and uses trusted server-only settlement; unresolved outcomes remain locked. Creation is founder/explicit expiring grant only. One additive migration; no hosted writes or production deployment. Scope and conservative reconciliation/lifecycle limits: TECHNOLOGY_FOUNDATION.md.
+
+Local receipts: lint/typecheck, 61 Vitest files / 441 tests and production build PASS. Recorded migration ledger PASS; 11 release-contract tests PASS. Synthetic Technology browser save/review/revision/history/resume PASS at 320/720/1440 pixels; desktop screenshot inspected. Final targeted browser regression and real local Supabase CI receipts are pending. Real hosted persistence, live provider usage/quality and physical devices are not accepted by these fixtures. Full 355-test local browser sweep was stopped in favor of changed-flow regressions; full sweep remains in CI. Docker is unavailable in this runner, so real local Auth/PostgREST must run in the disposable database CI job. No model spend or paid infrastructure was incurred.
+
+The isolated candidate inherits unmerged PR #64. Production main and both hosted projects are unchanged. Do not promote without exact-candidate CI, isolated migration rehearsal, real account/provider/device acceptance and explicit release approval.
+
+---
+
 ## 2026-10-08 — Account acceptance phase
 
 Built the bounded two-account acceptance runner for PR #64: verified user/person mapping, Mission context, deliverable replay/isolation, immutable versions/review, detached work/Studio preservation and private Storage read/sign/upload/delete isolation. Ordinary sessions only; no model calls, admin access, migration/reset or infrastructure purchase. Scoped manifest binds the exact clean Git tree, expires within 24 hours and rejects both known hosted main projects. Failure-safe cleanup and a redacted JSON receipt are part of the gate. CI runs the same path against disposable local Supabase and retains evidence. See PUBLIC_HOSTED_ACCEPTANCE.md.

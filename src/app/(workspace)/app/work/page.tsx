@@ -18,6 +18,13 @@ export default function WorkPage() {
           Continue in Talk ↗
         </Link>
       </header>
+      <Link className="company-job" href="/app/work/technology">
+        <div>
+          <h2>Aethelios Technology</h2>
+          <p>Create a saved service-business website preview. Review, refine and continue.</p>
+        </div>
+        <span aria-hidden="true">↗</span>
+      </Link>
       <SavedWork missionsOnly />
       <CompanyRooms />
       <h2>Explore a job in unassigned Talk</h2>

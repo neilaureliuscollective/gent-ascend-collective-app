@@ -1617,3 +1617,87 @@ describe('read-only release catalog preflight', () => {
     } finally { await db.exec('rollback'); }
   });
 });
+
+describe('Technology owner/version/budget boundary', () => {
+  const project = 'ee800000-0000-4000-8000-000000000001',
+    v1 = 'ee800000-0000-4000-8000-000000000002',
+    v2 = 'ee800000-0000-4000-8000-000000000003',
+    run = 'ee800000-0000-4000-8000-000000000004';
+  const brief = {
+    name: 'Studio North',
+    industry: 'grooming-beauty',
+    vision: 'A welcoming local grooming studio.',
+    headline: 'Care with intention',
+    about: 'A local studio focused on thoughtful care.',
+    services: [{ name: 'Haircut', description: 'An attentive appointment.', price: '$45' }],
+    hours: 'Tue–Sat',
+    contact: 'Call the studio',
+    bookingUrl: '',
+  };
+  const literal = JSON.stringify(brief).replaceAll("'", "''");
+  it('requires grant, hides owners and guards immutable review and paid settlement', async () => {
+    await db.exec(
+      `insert into public.technology_grants(person_id,expires_at) select id,now()+interval '1 day' from public.persons where auth_user_id='${founder}' on conflict do nothing`,
+    );
+    const save = `select public.technology_save('${project}','${v1}',0,'${literal}')`;
+    await expect(asUser(member, save)).rejects.toThrow(/access/);
+    await asUser(founder, save);
+    await asUser(founder, save);
+    expect((await asUser(member, 'select * from public.technology_projects')).rows).toHaveLength(0);
+    await expect(
+      asUser(founder, `update public.technology_site_versions set brief='{}'`),
+    ).rejects.toThrow(/permission/);
+    await expect(
+      asUser(founder, `select public.technology_reserve('${project}','${run}',1)`),
+    ).rejects.toThrow(/Review/);
+    await asUser(founder, `select public.technology_review('${project}','${v1}')`);
+    await asUser(founder, `select public.technology_save('${project}','${v2}',1,'${literal}')`);
+    await expect(
+      asUser(founder, `select public.technology_review('${project}','${v1}')`),
+    ).rejects.toThrow(/changed/);
+    await asUser(founder, `select public.technology_review('${project}','${v2}')`);
+    await asUser(founder, `select public.technology_reserve('${project}','${run}',2)`);
+    await expect(
+      asUser(
+        founder,
+        `select public.technology_settle('${run}',(select id from public.persons where auth_user_id='${founder}'),'${literal}',10,10)`,
+      ),
+    ).rejects.toThrow(/permission/);
+    await expect(
+      asUser(founder, `select public.technology_reserve('${project}',gen_random_uuid(),2)`),
+    ).rejects.toThrow(/reconciliation/);
+    await db.exec(
+      `set role service_role;select public.technology_settle('${run}',(select id from public.persons where auth_user_id='${founder}'),null,null,null);reset role`,
+    );
+    expect(
+      (
+        await asUser(
+          founder,
+          `select status,actual_micros from public.technology_runs where id='${run}'`,
+        )
+      ).rows[0],
+    ).toEqual({ status: 'uncertain', actual_micros: null });
+  });
+});
+
+describe('Technology successful settlement and monthly ceilings',()=>{
+ it('creates an unreviewed immutable AI version, retains history, and enforces owner-wide monthly reservation ceiling',async()=>{
+ const owner=(await db.query<{id:string}>(`select id from public.persons where auth_user_id='${member}'`)).rows[0]!.id;
+ await db.exec(`insert into public.technology_grants values('${owner}',now()+interval '1 day')`);
+ const p='ee810000-0000-4000-8000-000000000001',v='ee810000-0000-4000-8000-000000000002',r='ee810000-0000-4000-8000-000000000003';
+ const brief=JSON.stringify({name:'Studio South',industry:'grooming-beauty',vision:'A welcoming service business.',headline:'Care with intention',about:'A local studio focused on care.',services:[{name:'Haircut',description:'An appointment.',price:'$45'}],hours:'',contact:'',bookingUrl:''});
+ await asUser(member,`select public.technology_save('${p}','${v}',0,'${brief}')`);
+ await asUser(member,`select public.technology_review('${p}','${v}')`);
+ await asUser(member,`select public.technology_reserve('${p}','${r}',1)`);
+ await db.exec(`set role service_role;select public.technology_settle('${r}','${owner}','${brief}',1200,800);reset role`);
+ const rows=(await asUser<{revision:number;reviewed_at:string|null}>(member,`select revision,reviewed_at from public.technology_site_versions where project_id='${p}' order by revision`)).rows;
+ expect(rows).toHaveLength(2);expect(rows[0]!.reviewed_at).not.toBeNull();expect(rows[1]).toEqual({revision:2,reviewed_at:null});
+ expect((await asUser(member,`select actual_micros from public.technology_runs where id='${r}'`)).rows[0]).toEqual({actual_micros:10400});
+ await asUser(member,`select public.technology_review('${p}',(select id from public.technology_site_versions where project_id='${p}' and revision=2))`);
+ await db.exec(`insert into public.technology_runs(id,person_id,project_id,source_revision,status,actual_micros) select gen_random_uuid(),'${owner}','${p}',2,'succeeded',1000000 from generate_series(1,9)`);
+ await expect(asUser(member,`select public.technology_reserve('${p}',gen_random_uuid(),2)`)).rejects.toThrow(/allowance/);
+ await db.exec(`delete from public.technology_grants where person_id='${owner}'`);
+ await expect(asUser(member,`select public.technology_review('${p}',(select id from public.technology_site_versions where project_id='${p}' and revision=2))`)).rejects.toThrow(/access/);
+ expect((await asUser(member,`select id from public.technology_projects where id='${p}'`)).rows).toHaveLength(1);
+ });
+});

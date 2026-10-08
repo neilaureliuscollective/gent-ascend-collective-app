@@ -145,6 +145,7 @@ export function MissionWorkspace({
         >
           {busy ? 'Saving…' : 'Save direction'}
         </button>
+        <Link href={`/app/work/technology?mission=${value.id}`}>Create a Technology preview ↗</Link>
         <Link href={`/app/aethelios?conversation=${value.conversation_id}`}>
           Open work & outputs ↗
         </Link>

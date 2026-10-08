@@ -18,7 +18,11 @@ with required_columns(relation, column_name, data_type) as (values
  ('continuity','mission_outputs','mission_outputs_owner'),
  ('continuity','mission_turn_context','mission_context_owner'),
  ('deliverables','mission_deliverables','deliverables_owner'),
- ('deliverables','mission_deliverable_versions','deliverable_versions_owner')
+ ('deliverables','mission_deliverable_versions','deliverable_versions_owner'),
+ ('technology','technology_grants','technology_owner_read'),
+ ('technology','technology_projects','technology_owner_read'),
+ ('technology','technology_site_versions','technology_owner_read'),
+ ('technology','technology_runs','technology_owner_read')
 ), functions(stage, signature) as (values
  ('continuity','public.mission_capture_context(uuid,uuid,integer)'),
  ('continuity','public.mission_store_proposal(uuid,uuid,uuid,integer,jsonb,integer,integer,integer)'),
@@ -28,7 +32,10 @@ with required_columns(relation, column_name, data_type) as (values
  ('deliverables','public.mission_create_deliverable(uuid,uuid,integer)'),
  ('deliverables','public.mission_save_deliverable(uuid,uuid,integer,text,text,text)'),
  ('deliverables','public.mission_review_deliverable(uuid,uuid,text)'),
- ('deliverables','public.mission_delete_deliverable(uuid,integer)')
+ ('deliverables','public.mission_delete_deliverable(uuid,integer)'),
+ ('technology','public.technology_save(uuid,uuid,integer,jsonb,uuid,integer)'),
+ ('technology','public.technology_review(uuid,uuid)'),
+ ('technology','public.technology_reserve(uuid,uuid,integer)')
 ), checks as (
  select 'prerequisite' as stage, 'column:' || r.relation || '.' || r.column_name as object,
    a.attname is not null as present,
@@ -64,6 +71,13 @@ with required_columns(relation, column_name, data_type) as (values
      and has_function_privilege('authenticated',p.oid,'EXECUTE')
      and not has_function_privilege('anon',p.oid,'EXECUTE'),false)
  from functions f left join pg_proc p on p.oid=to_regprocedure(f.signature)
+ union all
+ select 'technology','broker:technology_settle',p.oid is not null,
+ coalesce(p.prosecdef and array_to_string(p.proconfig,',') in ('search_path=""','search_path=')
+ and has_function_privilege('service_role',p.oid,'EXECUTE')
+ and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+ and not has_function_privilege('anon',p.oid,'EXECUTE'),false)
+ from (select 1) seed left join pg_proc p on p.oid=to_regprocedure('public.technology_settle(uuid,uuid,jsonb,integer,integer)')
  union all
  select 'deliverables','view:mission_deliverable_summaries',c.oid is not null,
    coalesce(c.relkind='v' and 'security_invoker=true'=any(c.reloptions)

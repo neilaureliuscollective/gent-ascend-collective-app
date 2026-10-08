@@ -1402,3 +1402,19 @@ assert.equal((await member.from('ai_studio_projects').delete().eq('id', studio.d
 console.log(
   'PASS: Mission context, immutable deliverable replay/review/history, retained detached work, Studio continuity and real authenticated cross-account/anonymous denial',
 );
+
+// Technology: real local session/PostgREST acceptance, no provider or service-role use.
+{
+ const id=crypto.randomUUID(),version=crypto.randomUUID();
+ const brief={name:'Local synthetic studio',industry:'grooming-beauty',vision:'A synthetic service-business preview.',headline:'Care with intention',about:'Synthetic data for local acceptance only.',services:[{name:'Consultation',description:'Preview only',price:'$45'}],hours:'By appointment',contact:'Synthetic contact',bookingUrl:''};
+ const args={p_id:id,p_version:version,p_expected:0,p_brief:brief};
+ const {error:denied}=await member.rpc('technology_save',args);assert.ok(denied,'member has no Technology grant');
+ const {error:created}=await founder.rpc('technology_save',args);assert.equal(created,null);
+ const {error:replay}=await founder.rpc('technology_save',args);assert.equal(replay,null);
+ const {data:hidden,error:readError}=await member.from('technology_projects').select('*').eq('id',id);assert.equal(readError,null);assert.equal(hidden.length,0);
+ const {error:direct}=await founder.from('technology_site_versions').update({reviewed_at:new Date().toISOString()}).eq('id',version);assert.ok(direct);
+ const {error:unreviewed}=await founder.rpc('technology_reserve',{p_id:id,p_run:crypto.randomUUID(),p_expected:1});assert.ok(unreviewed);
+ const {error:review}=await founder.rpc('technology_review',{p_id:id,p_version:version});assert.equal(review,null);
+ const {error:forged}=await founder.rpc('technology_settle',{p_run:crypto.randomUUID(),p_owner:people[0].id,p_brief:brief,p_input:1,p_output:1});assert.ok(forged,'ordinary sessions cannot report/refund provider usage');
+ console.log('PASS: Technology real local ownership, grant denial, immutable writes, replay, review and trusted settlement boundary');
+}
