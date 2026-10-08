@@ -1,3 +1,11 @@
+## Official Public Aethelios install icon correction — 2026-10-08
+
+Rebuilt the founder-supplied metallic gold A / laurels / celestial crest on imperial teal-blue using built-in image generation. No lettering. Full-bleed rounded-square composition for regular Android/iPhone icons; separately generated circular composition for Android masks. Versioned manifest URLs, regenerated 180px Apple touch icon and 64px browser icon. Source masters and reproducible sizing script committed. Existing in-app logo and functionality unchanged.
+
+Validation: lint, typecheck, 56 test files / 409 tests, optimized production build passed. Icon dimensions and opaque output checked; visual review completed. Physical iPhone/Samsung installation remains a device check. Existing installed icons may require removal and reinstall after release.
+
+Sources: https://www.w3.org/TR/2023/WD-appmanifest-20230125/ (central safe circle); https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/ (Apple touch icon precedence); installed Next.js 16.3.5 metadata icon documentation. Image prompts: faithfully reconstruct supplied A/star/laurels/circle/gold rounded-square border and imperial teal-blue celestial backdrop, no text or mat; Android adaptation removes outer square frame while preserving same circular crest on seamless background. Asset processing resizes, blends background edges and ensures opaque PNGs.
+
 # Public Aethelios · Aether Petrol visual migration · 2026-10-07
 
 Implemented the founder-approved Black × Gold × Aether Petrol system on the existing public product. Scope and audit: [AETHER_PETROL.md](AETHER_PETROL.md). One shared palette feeds CSS, active orb shaders and browser metadata. Core/legacy reachable surfaces, Talk/Council/Missions/Studio chrome, navigation, account/pricing, SVG/static fallback, app and Apple icons are aligned. Technical aliases remain for component compatibility; errors/warnings and content assets retain their meaning. No domain service, database, model routing, access, billing or persistence code changed.
