@@ -13,9 +13,11 @@ export function FirstSession({
   canTalk: boolean;
 }) {
   const [snapshot, setSnapshot] = useState(initial);
-  const [choice, setChoice] = useState<keyof typeof firstSessionPaths>('presence');
+  const [choice, setChoice] = useState<keyof typeof firstSessionPaths>('project');
   const [intention, setIntention] = useState(initial?.intention ?? '');
-  const [action, setAction] = useState(firstSessionPaths.presence.action as string);
+  const [action, setAction] = useState(
+    initial?.nextAction ?? (firstSessionPaths.project.action as string),
+  );
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
@@ -84,7 +86,7 @@ export function FirstSession({
         throw new Error('Your account or day changed.');
       setSnapshot(confirmed);
       setSaved(true);
-      setMessage('Your priority and next move are saved to Command.');
+      setMessage('Your priority and next move are saved to your daily plan.');
       track('first_meaningful_action');
     } catch (error) {
       setUncertain(true);
@@ -112,8 +114,8 @@ export function FirstSession({
             <Link className="button" href={path.href}>
               {path.destination} →
             </Link>
-            {path.href !== '/app' && (
-              <Link className="text-link" href="/app">
+            {path.href !== '/app/daily' && (
+              <Link className="text-link" href="/app/daily">
                 Return to my saved plan →
               </Link>
             )}
@@ -205,15 +207,16 @@ export function FirstSession({
           </Link>
         ) : (
           <p className="muted">
-            Your free account includes daily planning, Presence, training and Collection.{' '}
+            Your free account includes saved daily planning. Intelligence access depends on your
+            current membership.{' '}
             <Link href="/app/membership">Review membership access to Aethelios →</Link>
           </p>
         )}
-        <Link className="text-link" href="/app/collection">
-          Explore Collection →
+        <Link className="text-link" href="/app/work">
+          Explore your work →
         </Link>
-        <Link className="text-link" href="/app">
-          Continue to Command →
+        <Link className="text-link" href="/app/daily">
+          Continue to my daily plan →
         </Link>
       </div>
     </section>

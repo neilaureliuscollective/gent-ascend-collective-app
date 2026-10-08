@@ -1,0 +1,38 @@
+# Phase 1 regression reconciliation
+
+Historical PR #63 CI run `37679540647` reported 107 browser failures and 259 passes. The table accounts for all 107; classification is not a substitute for the current complete suite receipt.
+
+| Suite                         | Historical failures | Reconciliation                                                                                                                                               |
+| ----------------------------- | ------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| aethelios-identity.spec.ts    |                   3 | Obsolete identity text and inline Orb expectations; inclusive identity and current drawer need verification.                                                 |
+| appearance.spec.ts            |                   6 | Primary navigation/Orb contracts changed; retain reduced motion, graphics loss, keyboard and enlarged-text checks.                                           |
+| aurelius.spec.ts              |                   1 | Compact panel lacks full-page welcome heading; use the actual composer while retaining persistence.                                                          |
+| brand.spec.ts                 |                   3 | Superseded name, Petrol metadata and account copy.                                                                                                           |
+| cabinet.spec.ts               |                   1 | Retired Collection entry label; retained Cabinet route remains tested.                                                                                       |
+| cinematic-world.spec.ts       |                   2 | Retired product storefront; verify truthful retirement.                                                                                                      |
+| collection-world.spec.ts      |                   3 | Retired product storefront; verify truthful retirement.                                                                                                      |
+| command-living.spec.ts        |                   3 | Preserved daily workspace moved from /app to /app/daily.                                                                                                     |
+| command.spec.ts               |                  15 | Preserved daily workspace route and changed depth/source selectors; recovery/security assertions retained.                                                   |
+| commerce-catalog.spec.ts      |                   3 | Retired storefront interaction contract; replace with explicit retirement, no-checkout and preserved-record links. Active component/domain coverage remains. |
+| commerce-discovery.spec.ts    |                   6 | Retired storefront interaction contract; replace with explicit retirement, no-checkout and preserved-record links. Active component/domain coverage remains. |
+| commerce-experience.spec.ts   |                   4 | Retired storefront interaction contract; replace with explicit retirement, no-checkout and preserved-record links. Active component/domain coverage remains. |
+| commerce-handoff.spec.ts      |                   4 | Retired storefront interaction contract; replace with explicit retirement, no-checkout and preserved-record links. Active component/domain coverage remains. |
+| commerce-sharing.spec.ts      |                   3 | Retired storefront interaction contract; replace with explicit retirement, no-checkout and preserved-record links. Active component/domain coverage remains. |
+| daily.spec.ts                 |                   5 | Preserved daily workspace moved from /app to /app/daily.                                                                                                     |
+| direct-home.spec.ts           |                   9 | Fixture layout/selectors drifted; expanded editor adds a second textarea. Preserve owner/session and no-auto-send checks.                                    |
+| estate-journey.spec.ts        |                  11 | Gender-specific scroll story removed in main; verify inclusive direct entry.                                                                                 |
+| estate-motion.spec.ts         |                   9 | Gender-specific scroll story removed in main; verify reduced-motion direct entry.                                                                            |
+| installed-app.spec.ts         |                   1 | Approved Petrol icon URLs and mask background replace green.                                                                                                 |
+| interaction-migration.spec.ts |                   1 | Main navigation is now three primary destinations.                                                                                                           |
+| orb.spec.ts                   |                   5 | Orb exploration moved to a presence drawer; composer expansion is a modal.                                                                                   |
+| pilot.spec.ts                 |                   1 | First-session heading changed to Aethelios.                                                                                                                  |
+| public-world.spec.ts          |                   5 | Replaced public arrival/storefront; retain redirect, private cache, offline and install safeguards.                                                          |
+| shell.spec.ts                 |                   3 | Talk is primary home, Work is unified and footer links saved work.                                                                                           |
+
+No auth, RLS, hostile-origin, private-cache, session-loss or offline assertions are intentionally waived. Obsolete retail purchasing and scroll-story interaction suites are replaced because their application surfaces were already retired before Phase 1, not because tests were hard to pass. Surviving daily/commerce domain and component tests still run.
+
+The old application job cancelled after six hours cannot be assigned a proven root cause from its cancellation status alone. Application/database jobs now have 60/40-minute bounds and database browser evidence is retained. Current run durations and failures must establish whether another underlying hang exists.
+
+The first frozen consolidated run (four restricted workers, explicit 30s override) returned 307 passed / 39 failed. Follow-up reconciles current primary navigation, scoped public/dialog locators, static retirement API cache boundaries and approved icon checksum. Real fixes: offline-cache icon handoff and recovered optional saved-planning entry. Process/teardown failures are rerun under the configured 90s timeout with two workers; no tests are skipped. Hosted acceptance remains separate.
+
+Corrected candidate `d91f46ef` broad native Chromium CI: 342/346 passed (run 37797715436). Four follow-ups retain the original assertions' purpose: check the visible Talk heading instead of its intentionally hidden redundant brand bar; validate the approved browser icon at its actual 512px size; scope reply-persistence notices separately from Mission status; wait for the intentional `/app` → Talk redirect before navigating again. No application security gate is removed. Final exact-head receipts and outstanding hosted/device/provider gates are recorded on PR #64; earlier run counts above describe their specific candidates.

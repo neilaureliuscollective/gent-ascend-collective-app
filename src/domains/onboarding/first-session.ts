@@ -1,5 +1,15 @@
 /** Practical starting options, not generated advice or a saved personal assessment. */
 export const firstSessionPaths = {
+  project: {
+    label: 'Move a project forward',
+    title: 'Give meaningful work a durable direction.',
+    detail:
+      'Talk through your objective, then save a Mission with decisions and a next action. Reopen the same work when you return.',
+    action: 'Define one project objective and its next step',
+    href: '/app/aethelios?starter=first-session',
+    destination: 'Open Talk',
+  },
+
   presence: {
     label: 'Look sharper',
     title: 'Make your daily grooming deliberate.',
@@ -24,7 +34,7 @@ export const firstSessionPaths = {
     detail:
       'Choose a manageable step for today. Command keeps it ready and lets you record what moved forward.',
     action: 'Spend twenty focused minutes on my priority',
-    href: '/app',
-    destination: 'Open Command',
+    href: '/app/daily',
+    destination: 'Open my daily plan',
   },
 } as const;

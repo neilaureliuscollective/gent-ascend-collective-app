@@ -16,7 +16,7 @@ test('public entrance rejects invalid credentials without leaving the world', as
   await page.goto('/enter');
   await page.getByLabel('Email').fill('not-invited@example.test');
   await page.getByLabel('Password').fill('incorrect-password');
-  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await page.getByRole('button', { name: 'Enter Aethelios' }).click();
   await expect(page).toHaveURL(/\/enter\?error=credentials$/);
   await expect(page.locator('.entrance-error')).toContainText(
     'email and password were not accepted',
@@ -30,13 +30,11 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   for (const entry of ['/', '/experience', '/enter']) {
     await page.goto(entry);
-    await expect(page).toHaveURL('http://127.0.0.1:3103/app');
-    await expect(page.locator('.command-presence')).toBeVisible();
-    await page.locator('.home-compose summary').click();
-    await expect(page.getByRole('textbox', { name: 'What are we working on?' })).toBeVisible();
+    await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
+    await expect(page.getByLabel('Message Aethelios')).toBeVisible();
     await expect(page.locator('.entrance-panel, .command-opening')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
   }
@@ -121,7 +119,7 @@ test('Fuel & Body persists references and daily records through the real app and
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   await page.goto('/app/performance');
   await page.getByRole('button', { name: 'Fuel & Body', exact: true }).click();
   await page.getByRole('button', { name: /(?:Set|Edit) my references/ }).click();
@@ -151,7 +149,7 @@ test('Restore saves a practice and recovery check-in through the real authentica
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   await page.goto('/app/performance');
   await page.getByRole('button', { name: 'Restore', exact: true }).click();
   await page.getByRole('button', { name: /^(Choose|Edit) today’s practice$/ }).click();
@@ -192,7 +190,7 @@ test('Movement persists activity and removal through the real authenticated app'
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   await page.goto('/app/performance');
   await page.getByRole('button', { name: 'Movement', exact: true }).click();
   await page.getByRole('button', { name: 'Record activity', exact: true }).click();
@@ -229,7 +227,7 @@ test('Daily Command saves arrival and feedback through real Auth, then reloads t
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   await page.goto('/app/arrival');
   const commandResponse = await page.request.get('/api/daily-command');
   const commandData = await commandResponse.json();
@@ -262,9 +260,9 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   await page.goto('/app/grooming');
-  await page.getByText('Direction, routines & private history', {exact:true}).click();
+  await page.getByText('Direction, routines & private history', { exact: true }).click();
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
   const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
   await expect(ritual).toBeVisible();
@@ -292,7 +290,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(record.getByLabel('My note')).toHaveValue('Keep this private note.');
   await expect(record.getByLabel('My experience')).toHaveValue('running_low');
   await page.goto('/app/grooming');
-  await page.getByText('Direction, routines & private history', {exact:true}).click();
+  await page.getByText('Direction, routines & private history', { exact: true }).click();
   const products = page.getByRole('region', {
     name: 'Products linked to Synthetic Cabinet morning',
   });
@@ -301,8 +299,13 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(products).not.toContainText('Keep this private note.');
   await page.goto('/app/presence');
   await expect(page.getByRole('heading', { name: 'Show up with intention.' })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Saved replenishment notes' })).toContainText('Synthetic external oil');
-  await expect(page.getByRole('link', { name: /Prepare with Aethelios/ })).toHaveAttribute('href', '/app/aethelios?starter=presence');
+  await expect(
+    page.getByRole('complementary', { name: 'Saved replenishment notes' }),
+  ).toContainText('Synthetic external oil');
+  await expect(page.getByRole('link', { name: /Prepare with Aethelios/ })).toHaveAttribute(
+    'href',
+    '/app/aethelios?starter=presence',
+  );
 });
 
 test('authenticated order workspace stays closed without merchant configuration', async ({
@@ -311,7 +314,7 @@ test('authenticated order workspace stays closed without merchant configuration'
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
   await page.goto('/app/collection/orders');
   await expect(page.getByText(/Shopify account connection is not open yet/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Connect Shopify account' })).toHaveCount(0);
@@ -334,9 +337,16 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.goto('/enter');
   await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
   await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
-  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
-  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
+  await page.getByRole('button', { name: 'Enter Aethelios' }).click();
+  await expect(page).toHaveURL(/\/app(?:\/welcome|\/aethelios)?$/);
+  const finderResponse = await page.request.get('/api/workspace');
+  expect(finderResponse.ok()).toBe(true);
+  expect(finderResponse.headers()['cache-control']).toContain('private');
+  const finder = await finderResponse.json();
+  expect(finder.ownerId).toMatch(/^[0-9a-f-]{36}$/);
+  expect(Array.isArray(finder.items)).toBe(true);
   await page.goto('/app/welcome');
+  await page.getByText('Plan a first next move', { exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Review membership access to Aethelios' }),
@@ -347,8 +357,8 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.getByRole('button', { name: 'Save priority and next move' }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'priority and next move' }),
-  ).toContainText('saved to Command');
-  await page.goto('/app');
+  ).toContainText('saved to your daily plan');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await expect(
     page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
@@ -365,13 +375,20 @@ test('free member first session saves and resumes through real Next and Supabase
     page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
   ).not.toBeChecked();
   await page.goto('/app/welcome');
+  await page.getByText('Plan a first next move', { exact: true }).click();
   await expect(page.getByLabel('What matters today?')).toHaveValue(
     'Synthetic first-session direction',
+  );
+  const restoredPriority = await (await page.request.get('/api/world/priority')).json();
+  await expect(page.getByLabel('My next move', { exact: true })).toHaveValue(
+    restoredPriority.nextAction,
   );
   await page.goto('/app/progress');
   await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(
+    0,
+  );
   const response = await page.request.get('/api/daily');
   expect(response.ok()).toBeTruthy();
   const saved = await response.json();

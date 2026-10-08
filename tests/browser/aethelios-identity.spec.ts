@@ -4,9 +4,9 @@ for (const width of [344, 768, 1440]) {
   test(`Aethelios introduction, portrait, and conversation at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.goto('/app/aethelios/meet');
-    await expect(page).toHaveTitle('Meet Aethelios · Gent Ascend');
+    await expect(page).toHaveTitle('Meet Aethelios · Aethelios');
     await expect(page.getByRole('heading', { name: /The mission.*Made present/ })).toBeVisible();
-    await expect(page.locator('body')).toContainText('The founder remains the human source.');
+    await expect(page.locator('body')).toContainText('You keep the decisions.');
     await expect(page.locator('body')).not.toContainText('Aurelius');
     await expect(page.locator('.aethelios-portrait img')).toBeVisible();
     expect(
@@ -24,23 +24,17 @@ for (const width of [344, 768, 1440]) {
     await page.getByRole('link', { name: 'Talk with Aethelios' }).click();
     await expect(page).toHaveURL(/\/aethelios$/);
     await expect(page.getByLabel('Message Aethelios')).toBeVisible();
-    await expect(page.getByText('Aethelios · Digital Co-Founder')).toBeVisible();
+    await expect(page.getByText('Aethelios · Your central intelligence')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
-    await page.getByRole('button', { name: 'Explore the Orb' }).click();
-    for (const label of ['Insight', 'Milestone']) {
-      await page
-        .getByRole('group', { name: 'Orb motion preview' })
-        .getByRole('button', { name: label, exact: true })
-        .click();
-      await expect(page.locator('.orb-presentation .account-intelligence-orb')).toHaveAttribute(
-        'data-state',
-        `preview-${label.toLowerCase()}`,
-      );
-    }
+    await page.getByRole('button', { name: 'Aethelios presence', exact: true }).click();
+    await expect(page.getByText('Your conversation stays in place. Microphone off.')).toBeVisible();
+    await page.keyboard.press('Escape');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await expect(page.locator('.orb-presentation .account-intelligence-orb')).toBeInViewport({
+    await expect(
+      page.getByRole('button', { name: 'Aethelios presence', exact: true }),
+    ).toBeInViewport({
       ratio: 1,
     });
     await page.screenshot({ path: `test-results/aethelios-orb-${width}.png`, fullPage: true });

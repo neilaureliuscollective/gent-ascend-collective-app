@@ -1,3 +1,29 @@
+## 2026-10-08 — Account acceptance phase
+
+Built the bounded two-account acceptance runner for PR #64: verified user/person mapping, Mission context, deliverable replay/isolation, immutable versions/review, detached work/Studio preservation and private Storage read/sign/upload/delete isolation. Ordinary sessions only; no model calls, admin access, migration/reset or infrastructure purchase. Scoped manifest binds the exact clean Git tree, expires within 24 hours and rejects both known hosted main projects. Failure-safe cleanup and a redacted JSON receipt are part of the gate. CI runs the same path against disposable local Supabase and retains evidence. See PUBLIC_HOSTED_ACCEPTANCE.md.
+
+Local standalone release checks: 11 passed. Final exact-head lint/application/database acceptance is recorded on PR #64. Hosted acceptance is pending: no isolated branch exists. Its cost and disposable-account provisioning must be resolved before hosted rehearsal; provider/device review and an explicit release decision still follow. The previous preview remains unpromoted.
+
+## 2026-10-08 — Public release preflight phase
+
+Continued from PR #64 head `69c9bfafe92fffc9e16b7297d6e1fa3d11799eb8`. The founder launch ledger now shows eight bounded, zero-row session probes behind person-bound founder authorization. A read-only catalog/CLI preflight checks migration prerequisites and additive schema/grant contracts, rejects partial/stale/incomplete evidence and preserves exact migration hashes/order. CI now runs the preflight contract tests and catalog inspection on its disposable real local Supabase database.
+
+Read-only hosted receipt at `2026-10-08T17:04:22.486175Z`: all 25 checked prerequisites passed; all 17 additive objects are absent. Both Mission migrations remain unapplied. No hosted writes, live-provider calls, paid infrastructure, billing changes, merge or production promotion occurred. See PUBLIC_RELEASE_PREFLIGHT.md for research, commands, exact scope, historical catalog receipt and the remaining release sequence.
+
+Local lint, strict types, production build, 430 unit/SQL tests, six preflight tests and the recorded migration ledger passed. All six focused browser checks passed at 360/768/1440px, including denied non-founder access and available/unavailable diagnostic layouts; the phone screenshot was inspected. PGlite catalog tests detect unsafe anonymous RPC grants, direct version-column write grants and broadened owner policies. The local Docker-backed gate cannot run here because Docker is unavailable; its exact-head CI receipt remains pending. Hosted two-account/Auth/Storage, isolated rehearsal, live-provider and physical-device acceptance remain open. These diagnostics do not certify a production release.
+
+The prior Phase 1 exact-head CI completed successfully in run `37799643937`: 425 unit/SQL tests, 348 browser checks and 11 real local authenticated flows. Older pending final-CI wording below is historical; it does not close hosted/provider/device gates.
+
+## 2026-10-08 — Public Intelligence OS Phase 1 candidate
+
+Implemented on an isolated branch deriving from #63: category consent and excluded-read guards; separate specialist preparation consent; private bridge retirement/cookie cleanup; unified Work and owner-scoped saved-work finder; lazy deliverable versions/exact exports; account/document-scoped session draft recovery; inclusive entry/prompt/first-session direction; regression reconciliation and bounded CI.
+
+Observed local lint/types/build and 425 unit/SQL tests passed (58 files). Core browser checks passed 33/33 before the final regression reconciliation; a frozen complete suite receipt is still pending. Rebuilding during an earlier broad run invalidated that run and it is discarded. No claim of production or live-model acceptance is made.
+
+Real local Auth/PostgREST smoke and all 11 authenticated browser flows passed in GitHub Actions run 37797715436 on candidate d91f46ef. Mission snapshots, deliverable replay/stale edits/exact review/retained documents, linked Studio isolation and recovered optional first-session planning have real local receipts. The final follow-up additionally checks the authenticated saved-work route and restoration of the actual next action; those receipts are pending. Supabase has no existing isolated development branch. Hosted two-account round trips, live provider context evaluation within an approved budget, physical-device review, and migration/grant receipts remain open. Production, live billing and production schema are unchanged. Candidate is not eligible for production promotion while mandatory gates are open.
+
+Details: PHASE_ONE_UNIFICATION.md and PHASE_ONE_REGRESSION.md.
+
 # Public Aethelios · Aether Petrol visual migration · 2026-10-07
 
 Implemented the founder-approved Black × Gold × Aether Petrol system on the existing public product. Scope and audit: [AETHER_PETROL.md](AETHER_PETROL.md). One shared palette feeds CSS, active orb shaders and browser metadata. Core/legacy reachable surfaces, Talk/Council/Missions/Studio chrome, navigation, account/pricing, SVG/static fallback, app and Apple icons are aligned. Technical aliases remain for component compatibility; errors/warnings and content assets retain their meaning. No domain service, database, model routing, access, billing or persistence code changed.
@@ -793,3 +819,30 @@ CI exposed an existing training test date mismatch after UTC midnight: its synth
 Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
 
 Ascend Mirror integration: reconciled the direct-member-entry release a7184fd. Preserve both Mirror and home-handoff browser fixtures; retain the already-merged owner-calendar test fixes. Revalidate the integrated source before release.
+
+## Public Mission Continuity — 2026-10-07
+
+Implemented on `feat/public-mission-continuity`, based on public main `a8a03e59bbf187a8bdd678f7903c8a5e151860e9`. Founder authorized the build after the research plan. See `docs/MISSION_CONTINUITY.md` for scope, data and rollback details.
+
+Delivered selected-Mission context with immutable revision receipts, independent context control, reviewed direction proposals, pinned replies, persistent personal Studio handoff/return, linked image receipts, continuation UI and focused public identity cleanup. Separate company work and existing auth/access/billing/model infrastructure remain intact. No production deployment or hosted migration was performed.
+
+Verification on the final implementation:
+
+- ESLint, Next strict typecheck and production Turbopack build: pass.
+- All 414 unit/SQL tests across 55 files: pass. Added service scope/opt-out/stale checks and SQL isolation, stale acceptance, replay, anonymous privilege denial, pin and deletion-preservation checks. PGlite applies the complete migration set; it is not hosted Supabase Auth/PostgREST.
+- Recorded migration ledger: pass; this compares the 28 previously recorded file hashes, not live hosted migration state. The new additive migration remains unapplied to production.
+- All 22 focused browser cases in Missions, Council and Talk layout: pass against a fixed production artifact plus synthetic component fixtures. Includes 320–1920px coverage across suites, reduced motion, input/editor preservation, proposal acceptance, conflicts, context toggling, Studio URL/refresh/return and zero automatic generation on resume.
+- Browser regression initially exposed extra mobile toolbar height; continuation content now lives in the scrollable conversation with native modal details, and empty Council assembly controls appear when there is an actual question. Existing transcript-space assertions remain unchanged. Reply-status assertions now target the reply receipt instead of all status regions. Reviewed the 390px Mission dialog screenshot.
+- Real two-account hosted sessions, live model and Studio generations, physical Fold/iPhone/DeX keyboards and operational public-launch acceptance: not run. No fixtures are presented as live acceptance.
+
+Next: apply the reviewed additive migration in the intended environment and complete live-account/provider/device acceptance before separately approved production promotion. Broader launch hardening, file/context capabilities and Council World remain later phases. Code implementation is complete; release acceptance remains open.
+
+## 2026-10-07 — Public Mission Deliverables build
+
+Implemented personal work-product promotion from completed Mission replies, immutable editable versions, saved acceptance criteria, exact-version user review, private Markdown export, version history and confirmed deletion. Added owner-only tables/RPCs and a security-invoker summary view. Saved work survives Mission/source-conversation removal; opt-in Mission context captures bounded excerpts with exact version IDs. No new model calls or autonomous execution. Integrated merged Aether Petrol assets/tokens alongside the previously unmerged Mission Continuity phase; preserved company delivery and Studio architecture.
+
+Validation: 419 tests across 57 unit/SQL files passed; migration suite applied the additive schema in PGlite with minimal Auth/Storage adapters, exercising ownership, source-state rejection, null/stale revisions, idempotence, changed replay, exact-version review, immutable context receipts, view RLS, anonymous denial and deletion lifecycle. The recorded migration ledger check passed for 28 historical files, not hosted state. Production build passed. Final browser/lint/typecheck receipt follows below.
+
+Release remains pending: no hosted migration or deployment. Apply Mission Continuity then Mission Deliverables before deploying the integrated code. Actual two-account Supabase Auth/PostgREST, live-model excerpt usefulness, physical Fold/iPhone/DeX behavior and full launch acceptance are unrun. Browser results use synthetic intercepted data, not live accounts/providers. Research, phase plan, payload limits, preservation decisions and rollout/rollback are in `MISSION_DELIVERABLES.md`.
+
+Final local receipt: lint, typecheck and production build passed. All 24 focused browser checks passed across Deliverables, Missions, Talk layout and Aether brand; widths 320–2560px across these suites. Cases cover promotion, saved-version review/export references, history retention, new-version review reset, confirmed deletion, ambiguous-save recovery, Studio handoff and Talk draft/viewport preservation. Reviewed a 390px deliverable-editor screenshot. All ten imported brand assets match the merged GitHub blob hashes. `git diff --check` passed. No entire-browser-suite or hosted acceptance claim.

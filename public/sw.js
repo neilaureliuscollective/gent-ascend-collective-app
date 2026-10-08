@@ -1,4 +1,4 @@
-const FALLBACK_CACHE = 'gent-ascend-fallback-v4';
+const FALLBACK_CACHE = 'gent-ascend-fallback-v5';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
@@ -6,7 +6,7 @@ self.addEventListener('install', (event) => {
       .then((cache) =>
         cache.addAll([
           '/offline.html',
-          '/brand/app-crest-20261004-192.png',
+          '/brand/aether-20261007-192.png',
           '/performance-offline.html',
           '/performance-offline.css',
           '/performance-offline.js',
@@ -62,7 +62,7 @@ self.addEventListener('fetch', (event) => {
             ? '/performance-offline.html'
             : '/offline.html',
         )) ||
-        new Response('Gent Ascend needs a connection. Reconnect and reload.', {
+        new Response('Aethelios needs a connection. Reconnect and reload.', {
           status: 503,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         })

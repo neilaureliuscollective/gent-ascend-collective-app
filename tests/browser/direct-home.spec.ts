@@ -40,6 +40,9 @@ for (const [width, height] of [
     expect(presence!.y + presence!.height).toBeLessThan(height - 90);
     expect(move!.y).toBeLessThan(height - 90);
     if (width <= 1100) {
+      await page
+        .locator('.command-next .command-action')
+        .evaluate((el) => el.scrollIntoView({ block: 'center' }));
       const action = await page.locator('.command-next .command-action').boundingBox();
       const navigation = await page
         .getByRole('navigation', { name: 'Main navigation' })
@@ -53,11 +56,12 @@ for (const [width, height] of [
     await expect(composer).toBeFocused();
     await expect(page.locator('.command-opening')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
+    await page.getByText('Open deeper systems', { exact: false }).click();
     await expect(
       page
-        .getByRole('navigation', { name: 'Your operating spaces' })
-        .getByRole('link', { name: /Ascend Collection/ }),
-    ).toHaveAttribute('href', '/app/collection');
+        .getByRole('navigation', { name: 'Deeper systems' })
+        .getByRole('link', { name: /Studio/ }),
+    ).toHaveAttribute('href', '/app/studio');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -77,7 +81,7 @@ test('home draft opens existing Talk with no automatic send or browser persisten
     .getByRole('textbox', { name: 'What are we working on?' })
     .fill('Help me plan my grooming ritual and next training session.');
   await page.getByRole('button', { name: 'Continue in Talk' }).click();
-  await expect(page.locator('.aurelius-composer textarea')).toHaveValue(
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue(
     'Help me plan my grooming ritual and next training session.',
   );
   expect(posts).toEqual([]);
@@ -107,7 +111,7 @@ for (const changed of [true, false])
       .getByRole('textbox', { name: 'What are we working on?' })
       .fill('Private synthetic thought');
     await page.getByRole('button', { name: 'Continue in Talk' }).click();
-    await expect(page.locator('.aurelius-composer textarea')).toHaveValue('');
+    await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue('');
   });
 
 test('phone composer stays reachable when the viewport shortens for a keyboard', async ({
@@ -142,9 +146,10 @@ test('member home retains world access and draft controls at enlarged text', asy
   await field.fill('Synthetic large text draft');
   await page.getByRole('button', { name: 'Continue in Talk' }).scrollIntoViewIfNeeded();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByText('Open deeper systems', { exact: false }).click();
   await expect(
     page
-      .getByRole('navigation', { name: 'Your operating spaces' })
+      .getByRole('navigation', { name: 'Deeper systems' })
       .getByRole('link', { name: /Presence/ }),
   ).toHaveAttribute('href', '/app/presence');
 });

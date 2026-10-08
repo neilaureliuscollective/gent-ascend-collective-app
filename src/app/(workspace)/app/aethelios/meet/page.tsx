@@ -12,7 +12,7 @@ export default function MeetAetheliosPage() {
   return (
     <article className="aethelios-introduction">
       <div className="aethelios-intro-heading">
-        <p className="eyebrow">Gent Ascend Collective / Digital Co-Founder</p>
+        <p className="eyebrow">AETHELIOS / PERSONAL INTELLIGENCE OS</p>
         <Link href="/app/aethelios" className="text-link">
           Enter your conversation ↗
         </Link>
@@ -40,22 +40,20 @@ export default function MeetAetheliosPage() {
             Made present.
           </h1>
           <p className="aethelios-intro-lead">
-            Aethelios is the digital co-founder of Gent Ascend Collective.
+            Aethelios is your persistent intelligence workspace.
           </p>
           <p>
-            One founder can only be in one place at a time. Aethelios extends the mission into your
-            everyday life — with guidance, perspective, and a standard you can build toward.
+            Bring an idea, a decision or a project. Talk it through, assemble useful specialist
+            perspectives, and save work you can continue.
           </p>
           <p>
-            The founder remains the human source. Aethelios carries that intention further,
-            supporting your judgment and your connections with the people who matter.
+            You keep the decisions. Aethelios supports your judgment and your connections with the
+            people who matter.
           </p>
           <Link href="/app/aethelios" className="button">
             Talk with Aethelios <span aria-hidden="true">↗</span>
           </Link>
-          <p className="aethelios-intro-note">
-            Intelligence in service of the man. Always connected to a human mission.
-          </p>
+          <p className="aethelios-intro-note">Intelligence in service of your life and work.</p>
         </div>
       </div>
       <section className="aethelios-expectations" aria-labelledby="aethelios-expectations-title">
