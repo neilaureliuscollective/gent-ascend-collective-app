@@ -1,3 +1,13 @@
+## 2026-10-08 — Public release preflight phase
+
+Continued from PR #64 head `69c9bfafe92fffc9e16b7297d6e1fa3d11799eb8`. The founder launch ledger now shows eight bounded, zero-row session probes behind person-bound founder authorization. A read-only catalog/CLI preflight checks migration prerequisites and additive schema/grant contracts, rejects partial/stale/incomplete evidence and preserves exact migration hashes/order. CI now runs the preflight contract tests and catalog inspection on its disposable real local Supabase database.
+
+Read-only hosted receipt at `2026-10-08T17:04:22.486175Z`: all 25 checked prerequisites passed; all 17 additive objects are absent. Both Mission migrations remain unapplied. No hosted writes, live-provider calls, paid infrastructure, billing changes, merge or production promotion occurred. See PUBLIC_RELEASE_PREFLIGHT.md for research, commands, exact scope, historical catalog receipt and the remaining release sequence.
+
+Local lint, strict types, production build, 430 unit/SQL tests, six preflight tests and the recorded migration ledger passed. All six focused browser checks passed at 360/768/1440px, including denied non-founder access and available/unavailable diagnostic layouts; the phone screenshot was inspected. PGlite catalog tests detect unsafe anonymous RPC grants, direct version-column write grants and broadened owner policies. The local Docker-backed gate cannot run here because Docker is unavailable; its exact-head CI receipt remains pending. Hosted two-account/Auth/Storage, isolated rehearsal, live-provider and physical-device acceptance remain open. These diagnostics do not certify a production release.
+
+The prior Phase 1 exact-head CI completed successfully in run `37799643937`: 425 unit/SQL tests, 348 browser checks and 11 real local authenticated flows. Older pending final-CI wording below is historical; it does not close hosted/provider/device gates.
+
 ## 2026-10-08 — Public Intelligence OS Phase 1 candidate
 
 Implemented on an isolated branch deriving from #63: category consent and excluded-read guards; separate specialist preparation consent; private bridge retirement/cookie cleanup; unified Work and owner-scoped saved-work finder; lazy deliverable versions/exact exports; account/document-scoped session draft recovery; inclusive entry/prompt/first-session direction; regression reconciliation and bounded CI.

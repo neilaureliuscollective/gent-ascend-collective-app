@@ -14,6 +14,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:ledger
+      - run: npm run test:release
       - run: npm run check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -43,6 +44,7 @@ jobs:
       - run: npm ci
       - run: npx supabase start
       - run: npx supabase db reset --local
+      - run: npm run release:preflight -- --local
       - run: node scripts/dev-setup.mjs --running
       - run: npx supabase db advisors --local --type security --level warn --fail-on none
       - run: npm run test:integration

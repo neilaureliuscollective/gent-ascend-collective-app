@@ -1597,3 +1597,23 @@ describe('Mission deliverable ownership, immutable versions and review',()=>{
   expect((await asUser(founder,`select * from mission_deliverable_versions where deliverable_id='${id}'`)).rows).toHaveLength(0);
  });
 });
+
+
+describe('read-only release catalog preflight', () => {
+  it('observes the complete contract without touching records, and detects unsafe grants', async () => {
+    const sql = await readFile('scripts/public-release-preflight.sql', 'utf8');
+    type Snapshot = { contract: string; checks: { stage: string; object: string; present: boolean; ok: boolean }[] };
+    const snapshot = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+    expect(snapshot.contract).toBe('public-mission-v1');
+    expect(snapshot.checks.filter((c) => !c.ok)).toEqual([]);
+    await db.exec('begin; grant execute on function public.mission_pin_output(uuid,uuid) to anon; grant update(body) on public.mission_deliverable_versions to authenticated;');
+    try {
+      const unsafe = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+      expect(unsafe.checks.find((c) => c.object === 'function:public.mission_pin_output(uuid,uuid)')?.ok).toBe(false);
+      expect(unsafe.checks.find((c) => c.object === 'table:mission_deliverable_versions')?.ok).toBe(false);
+      await db.exec('alter policy mission_outputs_owner on public.mission_outputs using (true or person_id in (select id from public.persons where auth_user_id=(select auth.uid())));');
+      const broad = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+      expect(broad.checks.find((c) => c.object === 'table:mission_outputs')?.ok).toBe(false);
+    } finally { await db.exec('rollback'); }
+  });
+});
