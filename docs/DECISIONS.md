@@ -369,3 +369,7 @@ See PHASE_ONE_UNIFICATION.md for migration/rollback prerequisites, provider expo
 ## 2026-10-08 — Technology Creation Foundation
 
 Choose a fixed, structured service-business renderer before sandboxed autonomous development. Both creation paths converge on a strict reviewed brief; append immutable versions and reuse personal Missions/Saved Work. A trusted server-only settlement RPC prevents ordinary clients from reporting fake provider usage or reclaiming reserved allowance. Unknown outcomes retain reservations with no automatic retry. Use a single economical Technology-only model; preserve Talk defaults and shared identity/visual system. No new package, hosting service, production promotion or customer publishing. Current official OpenAI Structured Outputs and installed AI SDK/Next contracts were reviewed before implementing `Output.object`; technical scope, pricing assumptions, reconciliation limits and acceptance: TECHNOLOGY_FOUNDATION.md. Source: https://developers.openai.com/api/docs/guides/structured-outputs ; installed Next 16 route-handler and server/client boundary guides.
+
+## 2026-10-08 — Technology verified artifacts
+
+Use persisted owner-bound jobs, fenced leases and script-free static HTML export for the existing service template before adopting arbitrary-code executors. No new paid provider. Current Next installed route docs, Supabase RLS docs and MDN iframe docs inspected. Details and explicit roadmap limits: TECHNOLOGY_VERIFIED_BUILD.md.

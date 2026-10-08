@@ -8,6 +8,7 @@ import {
   type Workspace,
   type Version,
 } from '@/domains/technology/schema';
+import { VerifiedBuilds } from './verified-builds';
 import { SitePreview } from './site-preview';
 import './technology.css';
 export function TechnologyWorkspace() {
@@ -465,6 +466,20 @@ export function TechnologyWorkspace() {
                 <Link href={`/app/missions?id=${project.mission_id}`}>
                   Continue the originating Mission ↗
                 </Link>
+              )}
+              {project && latest && (
+                <VerifiedBuilds
+                  projectId={project.id}
+                  versionId={latest.id}
+                  eligible={Boolean(
+                    latest.reviewed_at &&
+                    !dirty &&
+                    !historical &&
+                    !busy &&
+                    !locked &&
+                    data.canCreate,
+                  )}
+                />
               )}
               <h2>Version history</h2>
               {data.versions

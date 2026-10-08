@@ -71,6 +71,7 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      technology_builds: Table<import('@/domains/technology/build-schema').Build, never, never>;
       technology_grants: Table<{ person_id: string; expires_at: string }, never, never>;
       technology_projects: Table<import('@/domains/technology/schema').Project, never, never>;
       technology_site_versions: Table<import('@/domains/technology/schema').Version, never, never>;
@@ -771,6 +772,9 @@ export interface Database {
         };
         Returns: string;
       };
+      technology_build_queue: { Args: {p_id: string; p_project: string; p_version: string}; Returns: string };
+      technology_build_claim: { Args: {p_id: string; p_lease: string}; Returns: boolean };
+      technology_build_finish: { Args: {p_id: string; p_owner: string; p_lease: string; p_html: string; p_hash: string; p_checks: ReturnType<typeof import('@/domains/technology/artifact').checkArtifact>}; Returns: boolean };
       technology_review: { Args: { p_id: string; p_version: string }; Returns: string };
       technology_reserve: {
         Args: { p_id: string; p_run: string; p_expected: number };

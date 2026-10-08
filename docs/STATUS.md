@@ -1,3 +1,15 @@
+## 2026-10-08 — Technology Phase 2: Verified service-site builds
+
+Recovered Phase 1 at `e429cfae`: final CI run `37841632399` passed application/database jobs, 442 unit/SQL tests, all 355 browser checks and 12 actual local authenticated journeys. Phase 1 remains an unmerged development candidate; production has not changed.
+
+Phase 2 adds persistent queued/running/ready jobs bound to an exact reviewed website version, request deduplication, expiring fenced leases, explicit interruption recovery, static artifact checks, SHA-256 receipts, isolated browser inspection and private downloadable standalone HTML. Existing manual previews and inference allowance/reconciliation remain intact. One additive migration; release preflight now binds all four exact migration hashes and checks build RLS/mutation/trusted-settlement privileges. No arbitrary generated scripts, paid executor, live model calls, hosted changes, billing changes, customer publication or production promotion. Scope/research/limitations: TECHNOLOGY_VERIFIED_BUILD.md.
+
+Local acceptance: zero-warning lint, strict types, 63 Vitest files / 452 tests, production webpack build, recorded migration ledger and 11 release-contract tests PASS. Seven focused browser fixture checks PASS at 320/720/1440px, including saved-job interruption recovery, exported-document internal navigation, sandbox isolation, responsive overflow, prior preview/version review and ambiguous AI cost locks. The inspector uses a sandboxed Blob document so section links stay in the built website; object URLs are revoked on close/replacement/unmount. These fixtures are not hosted/model/physical-device acceptance. Build output used tmpfs because of runner disk pressure; normal production code/config is unchanged.
+
+Database CI is expanded to exercise actual Next queue/build/export/inspection and cross-account list/export/resume denial with disposable local Supabase. Exact Phase 2 CI remains pending at publication. Hosted migration rehearsal, provider/device acceptance and an explicit release decision remain open; this candidate is not represented as live. Managed arbitrary-code execution is deferred; this completes the verified fixed-template build slice.
+
+---
+
 ## 2026-10-08 — Technology Creation Foundation (review candidate)
 
 Implemented Work → Technology, bounded service-business brief and four-page private preview, immutable history, exact saved-version review, personal Mission source/return and Saved Work metadata. Optional one-call copy refinement reserves allowance first and uses trusted server-only settlement; unresolved outcomes remain locked. Creation is founder/explicit expiring grant only. One additive migration; no hosted writes or production deployment. Scope and conservative reconciliation/lifecycle limits: TECHNOLOGY_FOUNDATION.md.

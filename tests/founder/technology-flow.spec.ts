@@ -33,6 +33,22 @@ test('Technology survives real save/review/revision/reload and another account c
   await expect(page.getByRole('button', { name: 'Confirm this saved brief' })).toBeEnabled();
   await page.getByRole('button', { name: 'Confirm this saved brief' }).click();
   await expect(page.getByText('Exact saved version reviewed by you')).toBeVisible();
+  await page.getByRole('button', { name: 'Prepare website build' }).click();
+  await page.getByRole('button', { name: 'Build / resume saved job' }).click();
+  const download = page.getByRole('link', { name: 'Download website HTML' });
+  await expect(download).toBeVisible();
+  const exportPath = (await download.getAttribute('href'))!;
+  const artifact = await page.request.get(exportPath);
+  expect(artifact.ok()).toBe(true);
+  expect(artifact.headers()['cache-control']).toBe('private, no-store');
+  expect(await artifact.text()).toContain('Synthetic Technology Studio');
+  const buildList = await (await page.request.get('/api/technology/builds')).json();
+  const buildId = buildList.builds[0].id;
+  await page.getByRole('button', { name: 'Inspect isolated website' }).click();
+  await expect(
+    page.frameLocator('iframe').getByRole('heading', { name: 'Care with intention' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Close website inspection' }).click();
   await page.getByLabel('Headline', { exact: true }).fill('A considered beginning');
   await page.getByRole('button', { name: 'Save new version' }).click();
   await expect(page.getByText('Saved brief needs your review')).toBeVisible();
@@ -74,6 +90,18 @@ test('Technology survives real save/review/revision/reload and another account c
       },
     });
     expect(denied.status()).toBe(409);
+    expect((await (await member.request.get('/api/technology/builds')).json()).builds).toHaveLength(
+      0,
+    );
+    expect((await member.request.get(exportPath)).status()).toBe(404);
+    expect(
+      (
+        await member.request.post('/api/technology/builds', {
+          headers: { Origin: 'http://127.0.0.1:3103' },
+          data: { action: 'resume', id: buildId },
+        })
+      ).status(),
+    ).toBe(409);
     await member.goto('/app/work/technology');
     await expect(
       member.getByText(

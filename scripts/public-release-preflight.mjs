@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 export const migrationFiles = [
-  // Technology follows the two Mission prerequisites.
+  // Technology foundation and verified builds follow the two Mission prerequisites.
 
   [
     '20261007190000_mission_continuity.sql',
@@ -18,6 +18,10 @@ export const migrationFiles = [
   [
     '20261008180000_technology_foundation.sql',
     'fd314e0a8df45ebe094215587e8757ba82c1b313c8e89ad0cf41a78a75607eac',
+  ],
+  [
+    '20261008221240_technology_verified_build.sql',
+    'eaed1ad929a1b9256776f8af85df4b5eae106f2bbe16451b070890743625d0ec',
   ],
 ];
 const columns = {
@@ -76,6 +80,10 @@ export const expectedChecks = [
     'technology_reserve(uuid,uuid,integer)',
   ].map((signature) => ['technology', `function:public.${signature}`]),
   ['technology', 'broker:technology_settle'],
+  ['builds', 'table:technology_builds'],
+  ['builds', 'function:public.technology_build_queue(uuid,uuid,uuid)'],
+  ['builds', 'function:public.technology_build_claim(uuid,uuid)'],
+  ['builds', 'broker:technology_build_finish'],
 ];
 
 // An operator-supplied snapshot is advisory evidence, not a signed receipt or
@@ -109,7 +117,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
   }
   if (seen.size !== allowed.size) throw new Error('Catalog snapshot is incomplete.');
   const failures = snapshot.checks.filter((check) => !check.ok);
-  const stages = ['continuity', 'deliverables', 'technology'].map((stage) => {
+  const stages = ['continuity', 'deliverables', 'technology', 'builds'].map((stage) => {
     const checks = snapshot.checks.filter((check) => check.stage === stage);
     return {
       stage,
@@ -144,7 +152,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
       ? 'Resolve prerequisite drift or partially present objects before applying anything.'
       : stages.every((stage) => stage.status === 'observed')
         ? 'Catalog checks observed. Complete hosted account, provider and device acceptance before release.'
-        : 'Rehearse the three exact additive migrations in isolation, then record an explicit release decision.',
+        : 'Rehearse the four exact additive migrations in isolation, then record an explicit release decision.',
     releaseApproved: false,
     scope:
       'Operator-supplied catalog snapshot only; no hosted Auth, Storage, provider, device or migration-ledger acceptance.',

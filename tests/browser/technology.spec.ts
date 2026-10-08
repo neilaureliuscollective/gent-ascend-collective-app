@@ -49,6 +49,9 @@ for (const width of [320, 720, 1440])
       }
       await route.fulfill({ json: data });
     });
+    await page.route('**/api/technology/builds**', (route) =>
+      route.fulfill({ json: { builds: [] } }),
+    );
     await page.goto('http://127.0.0.1:3102/?mode=technology');
     await page.getByLabel('Business name', { exact: true }).fill(brief.name);
     await page.getByLabel('Your vision').fill(brief.vision);
@@ -122,6 +125,9 @@ test('an ambiguous paid outcome locks writes and reload prevents duplicate gener
     }
     await route.fulfill({ json: data });
   });
+  await page.route('**/api/technology/builds**', (route) =>
+    route.fulfill({ json: { builds: [] } }),
+  );
   await page.goto('http://127.0.0.1:3102/?mode=technology');
   await page.getByRole('button', { name: /Studio North · v1/ }).click();
   await page.getByRole('button', { name: 'Refine copy with Aethelios' }).click();
