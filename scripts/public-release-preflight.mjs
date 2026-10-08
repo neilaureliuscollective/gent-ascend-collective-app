@@ -79,6 +79,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
   for (const check of snapshot.checks) {
     if (
       !check ||
+      !allowed.has(check.object) ||
       allowed.get(check.object) !== check.stage ||
       seen.has(check.object) ||
       typeof check.present !== 'boolean' ||

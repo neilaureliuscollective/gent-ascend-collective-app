@@ -53,6 +53,9 @@ test('rejects stale, incomplete, duplicated and falsely successful snapshots', (
   const falseSuccess = snapshot();
   falseSuccess.checks[0].present = false;
   assert.throws(() => evaluateSnapshot(falseSuccess, now), /invalid/);
+  const absentIdentity = snapshot();
+  absentIdentity.checks[0] = { present: true, ok: true };
+  assert.throws(() => evaluateSnapshot(absentIdentity, now), /invalid/);
 });
 test('rejects unknown fields in check identities and never reflects private payloads', () => {
   const input = snapshot();
