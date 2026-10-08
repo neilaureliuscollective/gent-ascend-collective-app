@@ -48,6 +48,13 @@ jobs:
       - run: node scripts/dev-setup.mjs --running
       - run: npx supabase db advisors --local --type security --level warn --fail-on none
       - run: npm run test:integration
+      - run: npm run release:accounts -- --local
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-acceptance-evidence
+          path: test-results/public-account-acceptance.json
+          if-no-files-found: ignore
       - run: npx playwright install --with-deps chromium
       - run: npm run test:founder
       - uses: actions/upload-artifact@v4

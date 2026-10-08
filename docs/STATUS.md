@@ -1,3 +1,9 @@
+## 2026-10-08 — Account acceptance phase
+
+Built the bounded two-account acceptance runner for PR #64: verified user/person mapping, Mission context, deliverable replay/isolation, immutable versions/review, detached work/Studio preservation and private Storage read/sign/upload/delete isolation. Ordinary sessions only; no model calls, admin access, migration/reset or infrastructure purchase. Scoped manifest binds the exact clean Git tree, expires within 24 hours and rejects both known hosted main projects. Failure-safe cleanup and a redacted JSON receipt are part of the gate. CI runs the same path against disposable local Supabase and retains evidence. See PUBLIC_HOSTED_ACCEPTANCE.md.
+
+Local standalone release checks: 11 passed. Final exact-head lint/application/database acceptance is recorded on PR #64. Hosted acceptance is pending: no isolated branch exists. Its cost and disposable-account provisioning must be resolved before hosted rehearsal; provider/device review and an explicit release decision still follow. The previous preview remains unpromoted.
+
 ## 2026-10-08 — Public release preflight phase
 
 Continued from PR #64 head `69c9bfafe92fffc9e16b7297d6e1fa3d11799eb8`. The founder launch ledger now shows eight bounded, zero-row session probes behind person-bound founder authorization. A read-only catalog/CLI preflight checks migration prerequisites and additive schema/grant contracts, rejects partial/stale/incomplete evidence and preserves exact migration hashes/order. CI now runs the preflight contract tests and catalog inspection on its disposable real local Supabase database.
