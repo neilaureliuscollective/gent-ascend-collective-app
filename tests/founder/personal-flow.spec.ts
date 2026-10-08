@@ -339,6 +339,12 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
   await page.getByRole('button', { name: 'Enter Aethelios' }).click();
   await expect(page).toHaveURL(/\/app(?:\/welcome|\/aethelios)?$/);
+  const finderResponse = await page.request.get('/api/workspace');
+  expect(finderResponse.ok()).toBe(true);
+  expect(finderResponse.headers()['cache-control']).toContain('private');
+  const finder = await finderResponse.json();
+  expect(finder.ownerId).toMatch(/^[0-9a-f-]{36}$/);
+  expect(Array.isArray(finder.items)).toBe(true);
   await page.goto('/app/welcome');
   await page.getByText('Plan a first next move', { exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
@@ -372,6 +378,10 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.getByText('Plan a first next move', { exact: true }).click();
   await expect(page.getByLabel('What matters today?')).toHaveValue(
     'Synthetic first-session direction',
+  );
+  const restoredPriority = await (await page.request.get('/api/world/priority')).json();
+  await expect(page.getByLabel('My next move', { exact: true })).toHaveValue(
+    restoredPriority.nextAction,
   );
   await page.goto('/app/progress');
   await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();

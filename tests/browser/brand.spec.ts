@@ -5,9 +5,8 @@ for (const width of [344, 768, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     await page.goto('/app');
     await expect(page).toHaveTitle(/Aethelios/);
-    await expect(
-      page.getByRole('link', { name: 'Aethelios home' }).filter({ visible: true }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
+    // Narrow Talk intentionally hides the redundant mobile brand bar to retain reading room.
     await expect(page.locator('body')).not.toContainText('Aurelius');
     await expect(
       page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),

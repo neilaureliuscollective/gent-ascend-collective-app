@@ -15,7 +15,9 @@ export function FirstSession({
   const [snapshot, setSnapshot] = useState(initial);
   const [choice, setChoice] = useState<keyof typeof firstSessionPaths>('project');
   const [intention, setIntention] = useState(initial?.intention ?? '');
-  const [action, setAction] = useState(firstSessionPaths.project.action as string);
+  const [action, setAction] = useState(
+    initial?.nextAction ?? (firstSessionPaths.project.action as string),
+  );
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
