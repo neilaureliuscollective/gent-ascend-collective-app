@@ -12,9 +12,9 @@ test('fresh installation has one current crest identity across manifest and Appl
   expect(manifest.start_url).toBe('/app');
   expect(manifest.icons).toHaveLength(3);
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
-    '/brand/deep-green-20261006-192.png',
-    '/brand/deep-green-20261006-512.png',
-    '/brand/deep-green-20261006-maskable-512.png',
+    '/brand/aethelios-app-20261008-192.png',
+    '/brand/aethelios-app-20261008-512.png',
+    '/brand/aethelios-app-20261008-maskable-512.png',
   ]);
   for (const icon of manifest.icons) {
     const response = await request.get(icon.src);
@@ -31,20 +31,42 @@ test('fresh installation has one current crest identity across manifest and Appl
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  let outside = 0;
-  for (let y = 0; y < info.height; y++)
-    for (let x = 0; x < info.width; x++) {
-      if (Math.hypot(x + 0.5 - 256, y + 0.5 - 256) <= 204.8) continue;
-      const index = (y * info.width + x) * info.channels;
-      if (data[index] !== 3 || data[index + 1] !== 8 || data[index + 2] !== 6) outside++;
-    }
-  expect(outside).toBe(0);
+  // Safe-area surround extends the blue master texture without black corners.
+  for (const [x, y] of [
+    [0, 0],
+    [511, 0],
+    [0, 511],
+    [511, 511],
+  ] as const) {
+    const index = (y * info.width + x) * info.channels;
+    expect(data[index + 2]!).toBeGreaterThan(data[index]!);
+    expect(data[index + 2]!).toBeGreaterThan(10);
+  }
+  expect((await sharp(await mask.body()).metadata()).hasAlpha).toBe(false);
+  const master = await request.get('/brand/aethelios-app-20261008-master.png');
+  const masterMetadata = await sharp(await master.body()).metadata();
+  expect([masterMetadata.width, masterMetadata.height, masterMetadata.hasAlpha]).toEqual([
+    1024,
+    1024,
+    false,
+  ]);
+  const apple = await request.get('/apple-touch-icon.png');
+  expect(apple.url()).toContain('/brand/aethelios-app-20261008-apple-180.png');
+  for (const size of [192, 512]) {
+    const legacy = await request.get(`/brand/icon-v2-${size}.png`);
+    expect(legacy.url()).toContain(`/brand/aethelios-app-20261008-${size}.png`);
+  }
+  const favicon = await request.get('/favicon.ico');
+  expect(favicon.ok()).toBe(true);
+  expect((await favicon.body()).readUInt16LE(4)).toBe(3);
   await page.goto('/app/install');
   for (const [relation, size] of [
     ['apple-touch-icon', 180],
     ['icon', 64],
   ] as const) {
-    const href = await page.locator(`link[rel="${relation}"]`).getAttribute('href');
+    const href = await page
+      .locator(`link[rel="${relation}"][type="image/png"]`)
+      .getAttribute('href');
     expect(href).toBeTruthy();
     const image = await request.get(href!);
     expect(image.ok()).toBe(true);
@@ -82,7 +104,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v4'],
+      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v5'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',
