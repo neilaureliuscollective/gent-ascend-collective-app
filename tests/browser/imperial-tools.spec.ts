@@ -1,5 +1,32 @@
 import { test, expect } from './fixtures';
 
+test('Studio authentication notices stay readable on carbon surfaces', async ({ page }) => {
+  await page.route('**/api/studio', (route) =>
+    route.fulfill({
+      status: 401,
+      json: { error: 'Sign in to use your Aethelios workspace.' },
+    }),
+  );
+  await page.goto('/app/studio');
+  const notice = page.locator('.studio-main').getByRole('alert');
+  await expect(notice).toHaveText('Sign in to use your Aethelios workspace.');
+  const contrast = await notice.evaluate((el) => {
+    const luminance = (color: string) =>
+      color
+        .match(/[\d.]+/g)!
+        .slice(0, 3)
+        .map(Number)
+        .map((v) => v / 255)
+        .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+        .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i]!, 0);
+    const style = getComputedStyle(el);
+    const a = luminance(style.color),
+      b = luminance(style.backgroundColor);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  });
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
+});
+
 test('Material conversation retains readable saved replies and stone writing space', async ({
   page,
 }) => {
