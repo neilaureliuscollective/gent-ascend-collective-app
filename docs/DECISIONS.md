@@ -1,3 +1,7 @@
+# Imperial Steel homepage — 2026-10-09
+
+Translate the founder's supplied material reference into HTML/CSS, retaining current product messaging and real destinations. Add brushed steel, carbon and stone tokens instead of replacing the approved workspace palette. Use static directional light, thin metallic seams, an aria-hidden CSS presence, one principal gold action, and generous cream reading space. Existing SVG icons avoid font-dependent arrows. No new renderer or library. See [IMPERIAL_STEEL.md](IMPERIAL_STEEL.md) for verified project/deployment identity, available official research sources, inaccessible external references, material roles and release boundaries. Founder authorized production release for this phase; preserve pending creation branches separately.
+
 # Imperial workspace — 2026-10-09
 
 Founder approved the existing ivory/green/gold direction and asked to execute it across the application. Keep one coordinated green family rather than introduce blue or a third hue. Use ivory and cream for reading, dimensional green for navigation/orb materials, and Reserve Gold for selected actions. Preserve existing routes, providers, private data boundaries and official crest artwork. Implementation and scope: [IMPERIAL_WORKSPACE.md](IMPERIAL_WORKSPACE.md).
