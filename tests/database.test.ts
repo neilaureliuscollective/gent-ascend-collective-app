@@ -1813,3 +1813,24 @@ it('captures immutable website context only for the owner, current version and o
  expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_capture_context(uuid,uuid,integer)','execute') as allowed")).rows[0]!.allowed).toBe(false);
  await db.exec(`delete from technology_projects where id='${p}';delete from ai_conversations where id in ('${chat}','${otherChat}')`);
 });
+
+it('additional pages retain strict SQL bounds, immutable versions, stale-write and owner guards', async () => {
+ const p='f5000000-0000-4000-8000-000000000001',v='f5000000-0000-4000-8000-000000000002';
+ const b={name:'Synthetic pages',industry:'professional-services',vision:'A synthetic business website.',headline:'Considered work',about:'A synthetic service for testing.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:'',pages:[{slug:'process',title:'Our process',layout:'cards',sections:[{heading:'Discussion',body:'Discuss the service you need.'}]}]};
+ const json=(value:unknown)=>JSON.stringify(value).replaceAll("'","''");
+ const save=(id:string,expected:number,value:unknown)=>`select technology_save('${p}','${id}',${expected},'${json(value)}')`;
+ await asUser(founder,save(v,0,b));
+ await asUser(founder,save(v,0,b));
+ await expect(asUser(member,save(crypto.randomUUID(),1,b))).rejects.toThrow();
+ for(const pages of [null,[b.pages[0],b.pages[0]],Array(4).fill(b.pages[0]),[{...b.pages[0],slug:'about'}],[{...b.pages[0],slug:'../evil'}],[{...b.pages[0],layout:'script'}],[{...b.pages[0],sections:[]}],[{...b.pages[0],sections:[{heading:'Test',body:'x'.repeat(601)}]}]]) {
+  const valid=await db.query<{ok:boolean}>(`select technology_validate_brief('${json({...b,pages})}') as ok`);expect(valid.rows[0]!.ok).toBe(false);
+  await expect(asUser(founder,save(crypto.randomUUID(),1,{...b,pages}))).rejects.toThrow(/Invalid/);
+ }
+ const changed={...b,pages:[{...b.pages[0],title:'A revised process'}]};
+ await asUser(founder,save(crypto.randomUUID(),1,changed));
+ await expect(asUser(founder,save(crypto.randomUUID(),1,b))).rejects.toThrow(/changed/);
+ expect((await asUser<{brief:typeof b}>(founder,`select brief from technology_site_versions where id='${v}'`)).rows[0]!.brief).toEqual(b);
+ expect((await asUser(member,`select * from technology_site_versions where project_id='${p}'`)).rows).toHaveLength(0);
+ expect((await db.query<{allowed:boolean}>("select has_function_privilege('authenticated','technology_validate_brief(jsonb)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+ await db.exec(`delete from technology_projects where id='${p}'`);
+});

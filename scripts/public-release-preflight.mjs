@@ -31,6 +31,10 @@ export const migrationFiles = [
     '20261009005242_technology_talk_context.sql',
     '395658cf398e106ce20e42afe252cbee15f098a86ccec69f223c8e8da12fff63',
   ],
+  [
+    '20261009013900_technology_flexible_pages.sql',
+    '071c2a81f09541adbb6dd151fdfa90e20bc90915425f69a79071e2d8ee073006',
+  ],
 ];
 const columns = {
   persons: ['id', 'auth_user_id'],
@@ -93,6 +97,7 @@ export const expectedChecks = [
   ['builds', 'function:public.technology_build_claim(uuid,uuid)'],
   ['builds', 'broker:technology_build_finish'],
   ['design', 'validator:technology_validate_brief'],
+  ['pages', 'validator:technology_validate_design_brief'],
   ['website-talk', 'table:technology_turn_context'],
   ['website-talk', 'function:public.technology_capture_context(uuid,uuid,integer)'],
 ];
@@ -135,6 +140,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
     'builds',
     'design',
     'website-talk',
+    'pages',
   ].map((stage) => {
     const checks = snapshot.checks.filter((check) => check.stage === stage);
     return {

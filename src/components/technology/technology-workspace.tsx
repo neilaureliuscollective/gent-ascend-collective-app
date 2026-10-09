@@ -9,6 +9,7 @@ import {
   type Workspace,
   type Version,
 } from '@/domains/technology/schema';
+import { PageComposer } from './page-composer';
 import { VerifiedBuilds } from './verified-builds';
 import { SitePreview } from './site-preview';
 import './technology.css';
@@ -266,9 +267,9 @@ export function TechnologyWorkspace() {
                 <div className="technology-quality" aria-label="Website conversation">
                   <h2>Describe the next revision.</h2>
                   <p>
-                    Editing {latest.brief.name} · v{latest.revision}. Copy and design changes create
-                    an unreviewed version. New pages, images and custom functionality are not
-                    supported yet.
+                    Editing {latest.brief.name} · v{latest.revision}. Copy, design and informational
+                    page changes create an unreviewed version. Review suggested text before using
+                    it. Images and custom functionality require future work.
                   </p>
                   <label>
                     Website revision request
@@ -549,6 +550,10 @@ export function TechnologyWorkspace() {
                     />
                   </label>
                 </details>
+                <PageComposer
+                  pages={brief.pages ?? []}
+                  onChange={(pages) => patch('pages', pages)}
+                />
                 <button onClick={save} disabled={!dirty || (!project && data.projects.length >= 5)}>
                   Save new version
                 </button>

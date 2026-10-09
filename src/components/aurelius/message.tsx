@@ -81,6 +81,9 @@ export const ConversationTurn = memo(function ConversationTurn({
                 .map((s) => `${s.name}${s.price ? ` · ${s.price}` : ''}`)
                 .join(' / ')}
             </p>
+            {Boolean(website.pages?.length) && (
+              <p>Additional pages: {website.pages!.map((p) => p.title).join(' / ')}</p>
+            )}
             <small>
               Suggested brief saved in this reply. Review it through the website planning controls
               before creating a project.

@@ -32,6 +32,15 @@ test('Technology survives real save/review/revision/reload and another account c
   await page.getByText('Design direction', { exact: true }).click();
   await page.getByLabel('Website palette').selectOption('ivory');
   await page.getByLabel('Hero composition').selectOption('split');
+  await page.getByText('Additional pages', { exact: true }).click();
+  await page.getByRole('button', { name: 'Add informational page' }).click();
+  await page.getByLabel('Page 1 title', { exact: true }).fill('Our process');
+  await page.getByLabel('Page 1 address').fill('our-process');
+  await page.getByLabel('Page 1 layout').selectOption('cards');
+  await page.getByLabel('Page 1 section 1 heading').fill('Discuss your needs');
+  await page
+    .getByLabel('Page 1 section 1 text')
+    .fill('A synthetic conversation about service requirements.');
   await page.getByRole('button', { name: 'Save new version' }).click();
   await expect(page.getByRole('button', { name: 'Confirm this saved brief' })).toBeEnabled();
   await page.getByRole('button', { name: 'Confirm this saved brief' }).click();
@@ -46,6 +55,9 @@ test('Technology survives real save/review/revision/reload and another account c
   expect(artifact.headers()['cache-control']).toBe('private, no-store');
   const html = await artifact.text();
   expect(html).toContain('Synthetic Technology Studio');
+  expect(html).toContain('id="our-process"');
+  expect(html).toContain('href="#our-process"');
+  expect(html).toContain('page-sections cards');
   expect(html).toContain('background:#f5f1e8');
   expect(html).toContain('grid-template-columns:minmax(0,1fr) minmax(0,1fr)');
   const buildList = await (await page.request.get('/api/technology/builds')).json();
@@ -69,6 +81,7 @@ test('Technology survives real save/review/revision/reload and another account c
       v.brief.name === 'Synthetic Technology Studio' && v.revision === 2,
   );
   expect(version).toBeTruthy();
+  expect(version.brief.pages[0].title).toBe('Our process');
   expect(version.brief.design.palette).toBe('ivory');
   expect(version.brief.design.hero).toBe('split');
   await page.goto('/app/library');
