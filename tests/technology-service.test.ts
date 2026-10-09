@@ -109,3 +109,47 @@ it('does not claim settlement succeeded when the database retains the reservatio
   state.broker.mockResolvedValue({ error: null, data: 'run' });
   await expect(mutateTechnology(command)).rejects.toThrow(/reconciliation/);
 });
+it('applies a natural-language design request with the same reservation and records its source', async () => {
+  const design = {
+    palette: 'ivory',
+    hero: 'centered',
+    typography: 'serif',
+    spacing: 'spacious',
+    audience: '',
+    goal: '',
+    rationale: 'A quieter editorial hierarchy.',
+    cta: 'Explore services',
+    request: '',
+  };
+  state.generate.mockResolvedValue({
+    output: { ...state.brief, design },
+    usage: { inputTokens: 1000, outputTokens: 700 },
+  });
+  await mutateTechnology({ ...command, instruction: 'Make the homepage more luxurious.' });
+  expect(state.generate.mock.calls[0]![0].prompt).toContain('Make the homepage more luxurious.');
+  expect(state.sessionRpc).toHaveBeenCalledWith(
+    'technology_reserve',
+    expect.objectContaining({ p_expected: 1 }),
+  );
+  expect(state.broker).toHaveBeenCalledWith(
+    'technology_settle',
+    expect.objectContaining({
+      p_brief: expect.objectContaining({
+        design: expect.objectContaining({ request: 'Make the homepage more luxurious.' }),
+      }),
+    }),
+  );
+});
+it('a conversational request cannot change confirmed prices or remove services', async () => {
+  state.generate.mockResolvedValue({
+    output: { ...state.brief, services: [{ ...state.brief.services[0], price: '$999' }] },
+    usage: { inputTokens: 1, outputTokens: 1 },
+  });
+  await expect(mutateTechnology({ ...command, instruction: 'Change everything.' })).rejects.toThrow(
+    /reconciliation/,
+  );
+  expect(state.broker).toHaveBeenCalledWith(
+    'technology_settle',
+    expect.objectContaining({ p_brief: null }),
+  );
+});

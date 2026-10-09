@@ -1743,3 +1743,46 @@ describe('Technology verified builds',()=>{
  expect((await db.query(`select id from public.technology_builds where id='${b}'`)).rows).toHaveLength(0);
  });
 });
+
+// Full-chain SQL emulation; actual Auth/PostgREST is a separate CI gate.
+it('validates versioned design in the database and prevents direct JSON contract bypass', async () => {
+  const core = {
+    name: 'Design Studio',
+    industry: 'professional-services',
+    vision: 'A local design studio.',
+    headline: 'Considered design',
+    about: 'A considered independent studio.',
+    services: [{ name: 'Consultation', description: 'Personal care.', price: '$45' }],
+    hours: '',
+    contact: '',
+    bookingUrl: '',
+  };
+  const design = {
+    palette: 'ivory',
+    hero: 'split',
+    typography: 'serif',
+    spacing: 'spacious',
+    audience: 'Local clients',
+    goal: 'Service discovery',
+    rationale: 'Editorial hierarchy',
+    cta: 'Explore services',
+    request: 'Make it refined.',
+  };
+  for (const [b, expected] of [
+    [core, true],
+    [{ ...core, design }, true],
+    [{ ...core, design: null }, false],
+    [{ ...core, design: { ...design, script: 'evil' } }, false],
+    [{ ...core, design: { ...design, palette: 'red' } }, false],
+    [{ ...core, design: { ...design, request: 'x'.repeat(1001) } }, false],
+  ] as const) {
+    const result = await db.query<{ ok: boolean }>(
+      'select public.technology_validate_brief($1::jsonb) as ok',
+      [JSON.stringify(b)],
+    );
+    expect(result.rows[0]!.ok).toBe(expected);
+  }
+  await expect(asUser(founder, `select public.technology_validate_brief('{}')`)).rejects.toThrow(
+    /permission/,
+  );
+});

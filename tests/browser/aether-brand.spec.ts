@@ -26,7 +26,7 @@ test('Aether manifest and all installed icon variants resolve', async ({ request
   expect(manifest.theme_color).toBe('#06090D');
   expect(manifest.background_color).toBe('#06090D');
   for (const icon of manifest.icons) {
-    expect(icon.src).toContain('aether-20261007');
+    expect(icon.src).toContain('aethelios-official-20261008');
     expect((await request.get(icon.src)).ok()).toBe(true);
   }
 });

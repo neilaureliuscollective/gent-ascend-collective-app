@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   briefSchema,
+  defaultDesign,
   initialBrief,
   type Brief,
   type Workspace,
@@ -20,6 +21,8 @@ export function TechnologyWorkspace() {
     [brief, setBrief] = useState<Brief>(initialBrief),
     [view, setView] = useState<Version | null>(null),
     [path, setPath] = useState('guided');
+  const [instruction, setInstruction] = useState('');
+  const [source, setSource] = useState<{ turnId: string; revision: number } | null>(null);
   const [baseline, setBaseline] = useState(JSON.stringify(initialBrief));
   const dirty = JSON.stringify(brief) !== baseline;
   async function load(selected: string | null = id) {
@@ -53,6 +56,18 @@ export function TechnologyWorkspace() {
         setBrief(initialBrief);
         setBaseline(JSON.stringify(initialBrief));
         setView(null);
+      }
+      setSource(null);
+      setInstruction('');
+      if (project && query.get('turn')) {
+        const handoff = await fetch(
+          `/api/technology/handoff?project=${project.id}&turn=${encodeURIComponent(query.get('turn')!)}`,
+          { cache: 'no-store' },
+        );
+        const h = await handoff.json();
+        if (!handoff.ok) throw new Error(h.error || 'Website request unavailable.');
+        setInstruction(h.instruction);
+        setSource({ turnId: h.turnId, revision: h.revision });
       }
       setLocked(false);
     } finally {
@@ -127,11 +142,11 @@ export function TechnologyWorkspace() {
   return (
     <section className="technology-workspace">
       <header>
-        <span className="eyebrow">AETHELIOS / TECHNOLOGY · CREATION FOUNDATION</span>
+        <span className="eyebrow">AETHELIOS / TECHNOLOGY · CREATION ENGINE</span>
         <h1>Give your vision a working shape.</h1>
         <p>
-          A saved, four-page service-business preview. Review the brief, refine the copy, and
-          continue from the same project.
+          A saved service-business website. Shape its design, request revisions, and continue from
+          the same project.
         </p>
         <Link href="/app/work">← Your work</Link>
       </header>
@@ -215,6 +230,81 @@ export function TechnologyWorkspace() {
                 >
                   Use this Mission objective in the brief
                 </button>
+              )}
+              {project && latest && (
+                <div className="technology-quality" aria-label="Website conversation">
+                  <h2>Describe the next revision.</h2>
+                  <p>
+                    Editing {latest.brief.name} · v{latest.revision}. Copy and design changes create
+                    an unreviewed version. New pages, images and custom functionality are not
+                    supported yet.
+                  </p>
+                  <label>
+                    Website revision request
+                    <textarea
+                      maxLength={1000}
+                      value={instruction}
+                      disabled={busy || locked || historical}
+                      placeholder="Make the homepage more luxurious with an ivory palette and a centered hero."
+                      onChange={(e) => {
+                        setInstruction(e.target.value);
+                        setSource(null);
+                      }}
+                    />
+                  </label>
+                  {source && (
+                    <p>
+                      Selected completed Talk request · source {source.turnId.slice(0, 8)} · project
+                      v{source.revision}. Only your selected request and this brief are sent.
+                    </p>
+                  )}
+                  <button
+                    disabled={
+                      !latest.reviewed_at ||
+                      dirty ||
+                      busy ||
+                      locked ||
+                      historical ||
+                      unresolved ||
+                      !data.canCreate ||
+                      !data.generationAvailable ||
+                      instruction.trim().length < 3 ||
+                      (source !== null && source.revision !== project.revision)
+                    }
+                    onClick={() => {
+                      if (
+                        confirm(
+                          'Send this website brief and revision request to OpenAI and reserve up to $1 of your pilot allowance?',
+                        )
+                      )
+                        send({
+                          action: 'generate',
+                          id,
+                          runId: crypto.randomUUID(),
+                          expected: project.revision,
+                          consent: true,
+                          ...(source
+                            ? { sourceTurnId: source.turnId }
+                            : { instruction: instruction.trim() }),
+                        });
+                    }}
+                  >
+                    Apply requested revision
+                  </button>
+                  {project.conversation_id && (
+                    <Link
+                      href={`/app/aethelios?technology=${project.id}&conversation=${project.conversation_id}`}
+                    >
+                      Discuss this website in Talk ↗
+                    </Link>
+                  )}
+                  {latest.brief.design?.request && (
+                    <p>Last saved request: {latest.brief.design.request}</p>
+                  )}
+                  {latest.brief.design?.rationale && (
+                    <p>Design decision: {latest.brief.design.rationale}</p>
+                  )}
+                </div>
               )}
               <fieldset disabled={busy || locked || !data.canCreate}>
                 <legend>Business brief {project ? `· version ${project.revision}` : ''}</legend>
@@ -354,6 +444,80 @@ export function TechnologyWorkspace() {
                     onChange={(e) => patch('bookingUrl', e.target.value)}
                   />
                 </label>
+                <details>
+                  <summary>Design direction</summary>
+                  <p>
+                    These choices are saved with each version. Manual changes use no AI allowance.
+                  </p>
+                  {(
+                    [
+                      [
+                        'palette',
+                        'Website palette',
+                        [
+                          ['petrol', 'Petrol & gold'],
+                          ['ivory', 'Ivory & brass'],
+                          ['slate', 'Slate & silver'],
+                        ],
+                      ],
+                      [
+                        'hero',
+                        'Hero composition',
+                        [
+                          ['editorial', 'Editorial'],
+                          ['centered', 'Centered'],
+                          ['split', 'Split composition'],
+                        ],
+                      ],
+                      [
+                        'typography',
+                        'Heading typography',
+                        [
+                          ['serif', 'Classic serif'],
+                          ['sans', 'Modern sans'],
+                        ],
+                      ],
+                      [
+                        'spacing',
+                        'Section spacing',
+                        [
+                          ['spacious', 'Spacious'],
+                          ['compact', 'Compact'],
+                        ],
+                      ],
+                    ] as const
+                  ).map(([key, label, options]) => (
+                    <label key={key}>
+                      {label}
+                      <select
+                        value={(brief.design ?? defaultDesign)[key]}
+                        onChange={(e) =>
+                          patch('design', {
+                            ...defaultDesign,
+                            ...brief.design,
+                            [key]: e.target.value,
+                          })
+                        }
+                      >
+                        {options.map(([value, name]) => (
+                          <option key={value} value={value}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                  <label>
+                    Primary website action
+                    <input
+                      maxLength={60}
+                      value={brief.design?.cta ?? defaultDesign.cta}
+                      onChange={(e) =>
+                        patch('design', { ...defaultDesign, ...brief.design, cta: e.target.value })
+                      }
+                    />
+                  </label>
+                </details>
                 <button onClick={save} disabled={!dirty || (!project && data.projects.length >= 5)}>
                   Save new version
                 </button>
@@ -368,8 +532,8 @@ export function TechnologyWorkspace() {
                       : 'Saved brief needs your review'}
                 </p>
                 <p>
-                  Fixed four-page template · safe text-only preview. User review does not certify
-                  factual accuracy or production readiness.
+                  Versioned service-business structure · safe text-only preview. User review does
+                  not certify factual accuracy or production readiness.
                 </p>
                 <button
                   disabled={

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
 import { TalkMission, type SelectedMissionContext } from '@/components/missions/mission-continuity';
+import { TalkWebsite } from '@/components/technology/talk-website';
 import { MissionCapture } from '@/components/missions/mission-capture';
 import { CouncilPanel } from './council-panel';
 import {
@@ -764,6 +765,7 @@ export function AureliusWorkspace({
         </div>
         {!preview && (
           <div className="intelligence-work-access">
+            <TalkWebsite turns={data.turns} conversationId={selected} />
             {missionContext?.conversationId === selected && (
               <button
                 type="button"

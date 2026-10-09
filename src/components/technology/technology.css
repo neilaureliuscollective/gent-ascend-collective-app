@@ -155,3 +155,80 @@
     padding-bottom: 100px;
   }
 }
+.technology-preview[data-designed='true'] {
+  background: var(--site-bg);
+  color: var(--site-fg);
+}
+.technology-preview[data-designed='true'] header,
+.technology-preview[data-designed='true'] button {
+  background: var(--site-bg);
+  color: var(--site-accent);
+  border-color: var(--site-border);
+}
+.technology-preview[data-designed='true'] header > span,
+.technology-preview[data-designed='true'] a {
+  color: var(--site-accent);
+}
+.technology-preview[data-designed='true'] p,
+.technology-preview[data-designed='true'] footer {
+  color: var(--site-muted);
+}
+.technology-preview[data-designed='true'] h2 {
+  font-family: var(--site-heading);
+}
+.technology-preview[data-designed='true'] main {
+  padding-block: var(--site-space);
+}
+.technology-preview[data-hero='centered'] main {
+  text-align: center;
+}
+.technology-preview[data-hero='split'] main {
+  border-left: 8px solid var(--site-accent);
+}
+.technology-workspace details {
+  padding-block: 12px;
+}
+.technology-quality > a {
+  display: block;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .technology-preview[data-hero='centered'] main {
+    text-align: left;
+  }
+  .technology-preview[data-hero='split'] main {
+    border-left-width: 3px;
+  }
+}
+
+.technology-preview[data-hero='split'] main[data-page='Home'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+.technology-preview[data-hero='split'] main[data-page='Home'] h2 {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+.technology-preview[data-hero='split'] main[data-page='Home'] > :not(h2) {
+  grid-column: 2;
+}
+@media (max-width: 600px) {
+  .technology-preview[data-hero='split'] main[data-page='Home'] {
+    display: block;
+  }
+}
+.technology-preview[data-designed='true'] .eyebrow {
+  color: var(--site-accent);
+}
+.technology-preview[data-designed='true'] button[aria-current='page'] {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.technology-preview[data-designed='true'] button:focus-visible,
+.technology-preview[data-designed='true'] a:focus-visible {
+  outline: 2px solid var(--site-fg);
+  outline-offset: 3px;
+}
