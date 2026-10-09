@@ -24,4 +24,7 @@
       var(--imperial-obsidian)
     );
   --imperial-elevation: 0 24px 60px #080d0b20, inset 0 1px #ffffff20;
+  --imperial-environment-canvas:
+    radial-gradient(ellipse at 72% 12%, #7d878020, transparent 55%),
+    linear-gradient(118deg, #293631, #4a5450 44%, #343e39 75%, #121417);
 }

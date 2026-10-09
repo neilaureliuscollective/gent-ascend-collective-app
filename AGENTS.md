@@ -1,3 +1,5 @@
+> Founder correction (2026-10-09): steel trim was rejected. Talk and Studio now require material-led steel/carbon/green environments with stone writing/brief islands. This supersedes earlier ivory-canvas and controls-only restrictions for these routes. Preserve green/gold identity, real functionality and accessibility. Production promotion requires founder approval.
+
 > Next workspace phase (2026-10-09): selective steel controls in Talk and Studio are authorized for implementation and preview. Preserve ivory reading/editing surfaces, AI behavior and access controls. Production promotion requires founder approval.
 
 > Imperial Steel homepage (2026-10-09): founder authorized implementation and production release. Read docs/IMPERIAL_STEEL.md. Add steel/carbon/stone materials to the homepage; preserve the approved green/ivory internal workspace and original crest. Do not merge the pending creation stack in this phase.

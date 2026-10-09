@@ -1,5 +1,59 @@
 import { test, expect } from './fixtures';
 
+test('Material conversation retains readable saved replies and stone writing space', async ({
+  page,
+}) => {
+  await page.route('**/api/aurelius**', (route) =>
+    route.fulfill({
+      json: {
+        ownerId: 'synthetic',
+        conversations: [],
+        memories: [],
+        actionProposals: [],
+        canChat: true,
+        configured: true,
+        model: 'synthetic',
+        context: {
+          profile: {
+            name: 'Synthetic',
+            priority: 'Build',
+            timezone: 'UTC',
+            units: 'metric',
+            updatedAt: '2026-10-09',
+          },
+          goal: null,
+          memories: [],
+        },
+        turns: [
+          {
+            id: 'synthetic',
+            person_id: 'synthetic',
+            conversation_id: 'synthetic',
+            user_text: 'Review my material direction.',
+            assistant_text: 'Keep the writing space clear and the environment dimensional.',
+            status: 'complete',
+            model: 'synthetic',
+            context_included: false,
+            prompt_version: 'synthetic',
+            feedback: null,
+            created_at: '2026-10-09',
+            finished_at: '2026-10-09',
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto('/app/aethelios');
+  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(246, 244, 237)');
+  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(246, 244, 237)');
+  await expect(page.locator('.assistant-message')).toHaveCSS('background-color', 'rgb(18, 20, 23)');
+  await expect(page.locator('.aurelius-composer')).toHaveCSS(
+    'background-color',
+    'rgb(251, 248, 242)',
+  );
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
+});
+
 // Synthetic project responses exercise controls without provider calls or private data.
 for (const width of [360, 768, 1440]) {
   test(`Steel Studio controls preserve project drafts at ${width}px`, async ({ page }) => {
@@ -47,6 +101,14 @@ for (const width of [360, 768, 1440]) {
     expect(material.foreground).toBe('rgb(246, 244, 237)');
     expect(material.background).toContain('rgb(74, 84, 80)');
     expect(material.overflow).toBe(false);
+    await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(18, 20, 23)');
+    await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(74, 84, 80)');
+    await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(213, 217, 207)');
+    await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(24, 53, 43)');
+    await expect(page.locator('.studio-direction')).toHaveCSS(
+      'background-color',
+      'rgb(246, 244, 237)',
+    );
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.screenshot({
       path: `/workspace/steel-tools-review/studio-${width}.png`,
