@@ -1,0 +1,366 @@
+/* Material-first Talk / Studio. Ivory belongs to work, not the entire canvas. */
+.app-shell.imperial-workspace:has(.talk-page, .studio-page) {
+  --imperial-environment-text: #f6f4ed;
+  --imperial-environment-muted: #d5d9cf;
+  background: var(--imperial-carbon);
+  color: var(--imperial-environment-text);
+}
+.app-shell.imperial-workspace:has(.studio-page) .workspace,
+.app-shell.imperial-workspace .talk-page {
+  background: var(--imperial-environment-canvas);
+  background-color: #4a5450;
+  color: var(--imperial-environment-text);
+}
+.app-shell.imperial-workspace .talk-page::before {
+  background:
+    linear-gradient(112deg, transparent 65%, #d5d9cf10 65.1%, transparent 65.4%),
+    radial-gradient(ellipse at 65% 30%, #d5d9cf18, transparent 60%);
+  opacity: 1;
+}
+.app-shell.imperial-workspace:has(.talk-page, .studio-page) .topbar {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  border-bottom-color: var(--imperial-metal-edge);
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace:has(.talk-page, .studio-page)
+  .topbar
+  :is(.brand-type, .topbar-context, .text-link, .appearance-controls button) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .talk-page :is(.aethelios-room-heading h1, .aurelius-welcome h2) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace
+  .talk-page
+  :is(.aethelios-room-heading .eyebrow, .aurelius-welcome p, .workspace-preview-note p) {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace
+  .talk-page
+  :is(.aethelios-room-heading a, .workspace-preview-note a, .aethelios-meet-link) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .talk-page .aethelios-room-heading nav a {
+  background: #12141750;
+  border-color: var(--imperial-metal-edge);
+}
+.app-shell.imperial-workspace .talk-page .talk-toolbar {
+  background: var(--imperial-signature);
+  background-color: var(--imperial-carbon);
+  border-color: #d5d9cf55;
+}
+.app-shell.imperial-workspace .talk-page .aurelius-welcome {
+  background: var(--imperial-signature);
+  background-color: #12382d;
+  border: 1px solid var(--imperial-metal-edge);
+  border-radius: 22px;
+  padding: clamp(20px, 3vw, 38px);
+  margin: 12px auto;
+  box-shadow:
+    inset 0 1px #ffffff20,
+    0 20px 50px #080d0b30;
+}
+.app-shell.imperial-workspace .talk-page .welcome-heading h2 {
+  font: 400 clamp(1.9rem, 3.6vw, 3.5rem)/1.08 var(--font-editorial);
+  letter-spacing: -0.035em;
+  max-width: 580px;
+}
+.app-shell.imperial-workspace .talk-page .conversation-starters button {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  color: var(--imperial-stone);
+  border-color: #d5d9cf55;
+  box-shadow:
+    inset 0 1px #ffffff18,
+    0 8px 20px #080d0b20;
+}
+.app-shell.imperial-workspace .talk-page .conversation-starters button:hover {
+  border-color: var(--aether-gold-light);
+  background: var(--imperial-signature);
+}
+.app-shell.imperial-workspace .talk-page .assistant-message {
+  --aether-text: var(--imperial-stone);
+  background: #121417;
+  color: var(--imperial-stone);
+  border: 1px solid var(--imperial-metal-edge);
+  border-radius: 16px;
+  padding: clamp(14px, 2vw, 24px);
+}
+.app-shell.imperial-workspace
+  .talk-page
+  .assistant-message
+  :is(
+    .message-author,
+    .message-state,
+    .message-tools button,
+    .message-feedback button,
+    h1,
+    h2,
+    h3,
+    h4
+  ) {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace .talk-page .assistant-message a {
+  color: #e4bd70;
+}
+.app-shell.imperial-workspace .talk-page .user-message {
+  --aether-text: var(--imperial-stone);
+  background: var(--imperial-signature);
+  background-color: #12382d;
+  color: var(--imperial-stone);
+  border-color: var(--imperial-metal-edge);
+}
+.app-shell.imperial-workspace .talk-page .user-message .message-author {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace .talk-page .aurelius-composer {
+  border: 1px solid #d5d9cf;
+  box-shadow:
+    0 12px 40px #080d0b55,
+    inset 0 1px #ffffff;
+}
+.app-shell.imperial-workspace .studio-page {
+  background: transparent;
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .studio-page::before {
+  opacity: 1;
+  background: radial-gradient(ellipse at 90% 0, #c4912f0c, transparent 45%);
+}
+.app-shell.imperial-workspace .studio-page .studio-world-heading {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  border: 1px solid var(--imperial-metal-edge);
+  border-radius: 20px;
+  padding: clamp(20px, 3vw, 40px);
+  margin-bottom: 18px;
+  box-shadow:
+    inset 0 1px #ffffff20,
+    0 18px 40px #080d0b30;
+}
+.app-shell.imperial-workspace
+  .studio-page
+  :is(.studio-world-heading h1, .studio-project-heading h2, .studio-intro h3, .studio-empty h2) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace
+  .studio-page
+  :is(
+    .studio-world-heading p,
+    .studio-world-heading a,
+    .studio-project-heading span,
+    .studio-project-heading .eyebrow,
+    .studio-project-heading a,
+    .studio-intro p,
+    .studio-empty p,
+    .studio-side-note,
+    .studio-projects > p
+  ) {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace .studio-page .aethelios-space-navigation {
+  background: #121417;
+  border-color: var(--imperial-metal-edge);
+}
+.app-shell.imperial-workspace .studio-page .aethelios-space-navigation a {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .studio-page .aethelios-space-navigation a[aria-current] {
+  background: #12382d;
+  box-shadow: inset 0 -2px var(--aether-gold);
+}
+.app-shell.imperial-workspace .studio-page .studio-surface {
+  background: var(--imperial-carbon);
+  border-color: var(--imperial-metal-edge);
+  box-shadow: 0 24px 70px #080d0b55;
+}
+.app-shell.imperial-workspace .studio-page .studio-projects {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  color: var(--imperial-stone);
+  border-color: var(--imperial-metal-edge);
+}
+.app-shell.imperial-workspace .studio-page .studio-projects .studio-section-head {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace .studio-page .studio-projects nav button {
+  color: var(--imperial-stone);
+  background: #12141760;
+  border-color: var(--imperial-metal-edge);
+}
+.app-shell.imperial-workspace .studio-page .studio-projects nav button small {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace .studio-page .studio-projects nav button.selected {
+  background: var(--imperial-signature);
+  background-color: #12382d;
+  border-color: #e4bd7070;
+}
+.app-shell.imperial-workspace .studio-page .studio-side-note {
+  background: transparent;
+  border: 0;
+}
+.app-shell.imperial-workspace .studio-page .studio-side-note p {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace .studio-page .studio-main {
+  background:
+    radial-gradient(ellipse at 90% 0%, #4a545030, transparent 65%), var(--imperial-carbon);
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .studio-page .studio-main :is(h1, h2, h3, h4) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace
+  .studio-page
+  .studio-main
+  :is(.studio-scene, .studio-scene-editor, .studio-finish-preview)
+  :is(h1, h2, h3, h4) {
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace
+  .studio-page
+  :is(.studio-library-empty button, .studio-library-head button) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .studio-page .studio-world-heading .brand-star {
+  color: var(--aether-gold-light);
+}
+.app-shell.imperial-workspace
+  .studio-page
+  :is(
+    .studio-library-empty,
+    .studio-story-empty,
+    .studio-finish-hint,
+    .studio-library-head h4 span
+  ) {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace:has(.talk-page, .studio-page) .topbar .brand-type small {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace:has(.talk-page, .studio-page) .topbar .capture-trigger {
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace .studio-page .studio-view-tabs.imperial-control-surface {
+  background: var(--imperial-steel-surface);
+}
+.app-shell.imperial-workspace .studio-page .studio-paths button {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  color: var(--imperial-stone);
+  border-color: var(--imperial-metal-edge);
+  box-shadow: inset 0 1px #ffffff20;
+}
+.app-shell.imperial-workspace .studio-page .studio-paths :is(small, span, b) {
+  color: var(--imperial-environment-muted);
+}
+.app-shell.imperial-workspace .studio-page .studio-paths button:hover {
+  background: var(--imperial-signature);
+  border-color: #e4bd7080;
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .studio-page .studio-notice {
+  background: #12382d;
+  color: var(--imperial-stone);
+  border-color: #e4bd7040;
+}
+/* Deliberate stone work islands, surrounded by the material environment. */
+.app-shell.imperial-workspace .studio-page .studio-direction {
+  background: var(--imperial-stone);
+  color: var(--aether-ink);
+  border-radius: 16px;
+  padding: clamp(18px, 3vw, 30px);
+}
+.app-shell.imperial-workspace .studio-page .studio-direction .studio-intro :is(h3, p),
+.app-shell.imperial-workspace .studio-page .studio-direction .eyebrow {
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace .studio-page .studio-composer :is(.eyebrow, .studio-controls label) {
+  color: var(--aether-ink);
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace
+  :is(
+    .talk-page,
+    .studio-world-heading,
+    .studio-projects,
+    .studio-main,
+    .studio-paths button,
+    .studio-view-tabs.imperial-control-surface,
+    .conversation-starters button,
+    .aurelius-welcome
+  ) {
+  background: #293631;
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace .studio-page .studio-view-tabs.imperial-control-surface {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace:has(.talk-page, .studio-page) .topbar .capture-trigger {
+    color: ButtonText;
+  }
+  .app-shell.imperial-workspace .talk-page .aurelius-welcome {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace
+    .studio-page
+    :is(
+      .studio-world-heading,
+      .studio-projects,
+      .studio-main,
+      .studio-direction,
+      .studio-paths button
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace:has(.talk-page, .studio-page),
+  .app-shell.imperial-workspace
+    :is(
+      .talk-page,
+      .workspace,
+      .topbar,
+      .studio-page,
+      .studio-world-heading,
+      .studio-surface,
+      .studio-projects,
+      .studio-main,
+      .studio-direction,
+      .studio-paths button,
+      .conversation-starters button,
+      .assistant-message,
+      .user-message
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace
+    :is(.talk-page, .studio-page, .topbar)
+    :is(h1, h2, h3, h4, p, a, small, span, label, button, .eyebrow) {
+    color: CanvasText;
+  }
+  .app-shell.imperial-workspace .studio-page .aethelios-space-navigation {
+    background: Canvas;
+    border-color: CanvasText;
+  }
+  .app-shell.imperial-workspace .studio-page .aethelios-space-navigation a[aria-current] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}

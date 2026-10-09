@@ -49,6 +49,9 @@ test('production runtime denies developer routes and query bypass', async ({ pag
     (await request.post('/dev', { data: { membership: 'admin', token: 'fake' } })).status(),
   ).toBeGreaterThanOrEqual(400);
   await page.goto('/app?dev=true');
+  // The entry route streams a redirect; wait for it before the next navigation.
+  await page.waitForURL('**/app/aethelios');
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Developer console' })).toHaveCount(0);
   await page.goto('/app/you');
   await expect(
