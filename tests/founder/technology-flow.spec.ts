@@ -321,16 +321,14 @@ test('owned Studio imagery persists as a private website copy, exports without r
   ).toBeNull();
   expect(
     (
-      await owner
-        .from('ai_studio_references')
-        .insert({
-          id: sourceId,
-          person_id: person.id,
-          project_id: studio.data!.id,
-          storage_key: key,
-          media_type: 'image/png',
-          byte_size: bytes.length,
-        })
+      await owner.from('ai_studio_references').insert({
+        id: sourceId,
+        person_id: person.id,
+        project_id: studio.data!.id,
+        storage_key: key,
+        media_type: 'image/png',
+        byte_size: bytes.length,
+      })
     ).error,
   ).toBeNull();
   const b = {
@@ -408,6 +406,30 @@ test('owned Studio imagery persists as a private website copy, exports without r
     'src',
     `/api/technology/images?id=${image}`,
   );
+  await page.getByRole('button', { name: 'Review release package' }).click();
+  await page
+    .getByRole('checkbox', {
+      name: 'I reviewed this exact build and approve preparing its downloadable files.',
+    })
+    .check();
+  await page.getByRole('button', { name: 'Approve release package' }).click();
+  const releaseLink = page.getByRole('link', { name: 'Download release ZIP' });
+  await expect(releaseLink).toBeVisible();
+  const releasePath = (await releaseLink.getAttribute('href'))!;
+  const packet = await page.request.get(releasePath);
+  expect(packet.ok()).toBe(true);
+  expect(packet.headers()['cache-control']).toBe('private, no-store');
+  const { unzipSync, strFromU8 } = await import('fflate');
+  const files = unzipSync(await packet.body());
+  expect(strFromU8(files['index.html']!)).toBe(html);
+  expect(JSON.parse(strFromU8(files['manifest.json']!))).toMatchObject({
+    revision: 2,
+    sha256: artifact.headers()['x-artifact-sha256'],
+    publishEnabled: false,
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Review release package' }).click();
+  await expect(releaseLink).toHaveAttribute('href', releasePath);
   const context = await browser.newContext({ baseURL: 'http://127.0.0.1:3103' });
   try {
     const member = await context.newPage();
@@ -424,6 +446,13 @@ test('owned Studio imagery persists as a private website copy, exports without r
       404,
     );
     expect((await member.request.get(path)).status()).toBe(404);
+    expect((await member.request.get(releasePath)).status()).toBe(404);
+    expect((await member.request.get(`/api/technology/releases?build=${build}`)).status()).toBe(
+      404,
+    );
+    await page.getByRole('button', { name: 'Revoke package approval' }).click();
+    await expect(page.getByText(/Approval revoked.*Not published/)).toBeVisible();
+    expect((await page.request.get(releasePath)).status()).toBe(409);
   } finally {
     await context.close();
     await owner.auth.signOut();

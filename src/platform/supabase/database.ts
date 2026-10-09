@@ -72,6 +72,7 @@ export interface Database {
   public: {
     Tables: {
       technology_images: Table<import('@/domains/technology/image-schema').WebsiteImage, never, never>;
+      technology_releases: Table<import('@/domains/technology/release-schema').WebsiteRelease, never, never>;
       technology_builds: Table<import('@/domains/technology/build-schema').Build, never, never>;
       technology_turn_context: Table<{ turn_id: string; person_id: string; project_id: string; revision: number; created_at: string }, never, never>;
       technology_grants: Table<{ person_id: string; expires_at: string }, never, never>;
@@ -779,6 +780,8 @@ export interface Database {
       technology_build_finish: { Args: {p_id: string; p_owner: string; p_lease: string; p_html: string; p_hash: string; p_checks: ReturnType<typeof import('@/domains/technology/artifact').checkArtifact>}; Returns: boolean };
       technology_image_begin: {Args:{p_id:string;p_project:string;p_expected:number;p_source:string;p_kind:string;p_lease:string};Returns:string|null};
       technology_image_finish: {Args:{p_id:string;p_owner:string;p_lease:string;p_data:string|null;p_hash:string|null};Returns:boolean};
+      technology_release_approve: {Args:{p_id:string;p_build:string;p_hash:string;p_consent:boolean};Returns:string};
+      technology_release_revoke: {Args:{p_id:string};Returns:boolean};
       technology_capture_context: { Args: { p_turn: string; p_project: string; p_revision: number }; Returns: Record<string, unknown> };
       technology_review: { Args: { p_id: string; p_version: string }; Returns: string };
       technology_reserve: {

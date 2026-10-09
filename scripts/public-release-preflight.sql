@@ -27,7 +27,8 @@ with required_columns(relation, column_name, data_type) as (values
  ('technology','technology_runs','technology_owner_read'),
  ('builds','technology_builds','technology_build_owner_read'),
  ('website-talk','technology_turn_context','technology_context_owner_read'),
- ('images','technology_images','technology_images_owner_read')
+ ('images','technology_images','technology_images_owner_read'),
+ ('releases','technology_releases','technology_release_owner_read')
 ), functions(stage, signature) as (values
  ('continuity','public.mission_capture_context(uuid,uuid,integer)'),
  ('continuity','public.mission_store_proposal(uuid,uuid,uuid,integer,jsonb,integer,integer,integer)'),
@@ -44,7 +45,9 @@ with required_columns(relation, column_name, data_type) as (values
  ('builds','public.technology_build_queue(uuid,uuid,uuid)'),
  ('builds','public.technology_build_claim(uuid,uuid)'),
  ('website-talk','public.technology_capture_context(uuid,uuid,integer)'),
- ('images','public.technology_image_begin(uuid,uuid,integer,uuid,text,uuid)')
+ ('images','public.technology_image_begin(uuid,uuid,integer,uuid,text,uuid)'),
+ ('releases','public.technology_release_approve(uuid,uuid,text,boolean)'),
+ ('releases','public.technology_release_revoke(uuid)')
 ), checks as (
  select 'prerequisite' as stage, 'column:' || r.relation || '.' || r.column_name as object,
    a.attname is not null as present,
@@ -151,6 +154,15 @@ with required_columns(relation, column_name, data_type) as (values
  select 'images','constraint:technology_build_payload',c.oid is not null,
  coalesce(c.contype='c' and c.convalidated and pg_get_constraintdef(c.oid) like '%250000%',false)
  from (select 1) seed left join pg_constraint c on c.conrelid=to_regclass('public.technology_builds') and c.conname='technology_build_payload'
+ union all
+ select 'releases','constraint:technology_release_owner',c.oid is not null,
+ coalesce(c.contype='f' and c.convalidated and c.confrelid=to_regclass('public.technology_builds') and c.conkey=array[
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='person_id'),
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='project_id'),
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='version_id'),
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='build_id')
+ ]::smallint[],false)
+ from (select 1) seed left join pg_constraint c on c.conrelid=to_regclass('public.technology_releases') and c.conname='technology_release_owner'
 )
 select jsonb_build_object(
  'contract','public-mission-v1',

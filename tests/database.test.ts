@@ -30,10 +30,10 @@ beforeAll(async () => {
   for (const file of (await readdir('supabase/migrations'))
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
-    if (file === '20261009023308_technology_owned_images.sql')
+    if (file === '20261009023308_technology_owned_images.sql' || file === '20261009041047_technology_release_packages.sql')
       await db.exec('alter default privileges in schema public grant all on tables to anon,authenticated');
     await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
-    if (file === '20261009023308_technology_owned_images.sql')
+    if (file === '20261009023308_technology_owned_images.sql' || file === '20261009041047_technology_release_packages.sql')
       await db.exec('alter default privileges in schema public revoke all on tables from anon,authenticated');
   }
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
@@ -889,6 +889,53 @@ describe('confirmed evening review and next-day continuity',()=>{
   const entry=(await asUser<{version:number}>(founder,`select version from public.daily_entries where day=${today}`)).rows[0]!.version;
   expect(entry).toBe(dayVersion);
  });
+});
+async function releaseBuild(project: string, expected: number) {
+  const version=crypto.randomUUID(),build=crypto.randomUUID(),lease=crypto.randomUUID();
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  const brief={name:'Synthetic release',industry:'professional-services',vision:'A synthetic release website.',headline:'Considered work',about:'Synthetic services.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:''};
+  await asUser(founder,`select technology_save('${project}','${version}',${expected},'${JSON.stringify(brief)}');`);
+  await asUser(founder,`select technology_review('${project}','${version}')`);
+  await asUser(founder,`select technology_build_queue('${build}','${project}','${version}')`);
+  await asUser(founder,`select technology_build_claim('${build}','${lease}')`);
+  await db.query(`select technology_build_finish('${build}','${owner}','${lease}','synthetic bounded html','${'a'.repeat(64)}','{"passed":true,"validator":"static-service-v1"}')`);
+  return build;
+}
+it('release approvals bind current reviewed builds, enforce consent/ownership and retain terminal revoked receipts',async()=>{
+  const project=crypto.randomUUID(),id=crypto.randomUUID(),hash='a'.repeat(64),build=await releaseBuild(project,0);
+  const approve=(receipt=id,source=build,h=hash,consent=true)=>`select technology_release_approve('${receipt}','${source}','${h}',${consent}) as id`;
+  await expect(asUser(founder,approve(id,build,hash,false))).rejects.toThrow(/consent/);
+  await expect(asUser(founder,approve(id,build,'b'.repeat(64)))).rejects.toThrow(/exact/);
+  await expect(asUser(member,approve())).rejects.toThrow();
+  expect((await asUser<{id:string}>(founder,approve())).rows[0]!.id).toBe(id);
+  expect((await asUser<{id:string}>(founder,approve(crypto.randomUUID()))).rows[0]!.id).toBe(id);
+  const next=await releaseBuild(project,1);
+  expect((await asUser<{id:string}>(founder,approve())).rows[0]!.id).toBe(id);
+  await expect(asUser(founder,approve(id,next))).rejects.toThrow(/changed/);
+  expect((await asUser(member,`select * from technology_releases where id='${id}'`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update technology_releases set sha256='${'b'.repeat(64)}' where id='${id}'`)).rejects.toThrow(/permission/);
+  expect((await db.query<{allowed:boolean}>("select has_table_privilege('anon','technology_releases','select,insert,update,delete') as allowed")).rows[0]!.allowed).toBe(false);
+  expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_release_approve(uuid,uuid,text,boolean)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+  await expect(asUser(member,`select technology_release_revoke('${id}')`)).rejects.toThrow();
+  await asUser(founder,`select technology_release_revoke('${id}')`);
+  const revoked=(await asUser<{revoked_at:string}>(founder,`select revoked_at from technology_releases where id='${id}'`)).rows[0]!.revoked_at;
+  await asUser(founder,`select technology_release_revoke('${id}')`);
+  await asUser(founder,approve(crypto.randomUUID()));
+  expect((await asUser<{revoked_at:string}>(founder,`select revoked_at from technology_releases where id='${id}'`)).rows[0]!.revoked_at).toEqual(revoked);
+  await db.exec(`delete from technology_projects where id='${project}'`);
+  expect((await db.query(`select id from technology_releases where id='${id}'`)).rows).toHaveLength(0);
+});
+it('release preparation rejects stale new approvals and bounds history without refunding revoked receipts',async()=>{
+  const project=crypto.randomUUID(),first=await releaseBuild(project,0),hash='a'.repeat(64);
+  const second=await releaseBuild(project,1);
+  await expect(asUser(founder,`select technology_release_approve(gen_random_uuid(),'${first}','${hash}',true)`)).rejects.toThrow(/current/);
+  const approve=(build:string)=>asUser<{id:string}>(founder,`select technology_release_approve(gen_random_uuid(),'${build}','${hash}',true) as id`);
+  const id=(await approve(second)).rows[0]!.id;
+  await asUser(founder,`select technology_release_revoke('${id}')`);
+  for(let n=2;n<21;n++)await approve(await releaseBuild(project,n));
+  await expect(approve(await releaseBuild(project,21))).rejects.toThrow(/allowance/);
+  expect((await asUser(founder,`select id from technology_releases where project_id='${project}'`)).rows).toHaveLength(20);
+  await db.exec(`delete from technology_projects where id='${project}'`);
 });
 afterAll(() => db.close());
 
