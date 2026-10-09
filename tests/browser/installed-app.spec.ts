@@ -13,9 +13,9 @@ test('fresh installation has one current crest identity across manifest and Appl
   expect(manifest.start_url).toBe('/app');
   expect(manifest.icons).toHaveLength(3);
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
-    '/brand/aether-20261007-192.png',
-    '/brand/aether-20261007-512.png',
-    '/brand/aether-20261007-maskable-512.png',
+    '/brand/aethelios-official-20261008-192.png',
+    '/brand/aethelios-official-20261008-512.png',
+    '/brand/aethelios-official-20261008-maskable-512.png',
   ]);
   for (const icon of manifest.icons) {
     const response = await request.get(icon.src);
@@ -33,11 +33,11 @@ test('fresh installation has one current crest identity across manifest and Appl
     createHash('sha256')
       .update(await mask.body())
       .digest('hex'),
-  ).toBe('fe8a377931bfb0796b933800da9dcf08c7e9ee55e2410d290d19034073593970');
+  ).toBe('c59d84f494c4c374960dc2857ff515dc4680a9e55f562c2aa002d3cdab7ee67e');
   await page.goto('/app/install');
   for (const [relation, size] of [
     ['apple-touch-icon', 180],
-    ['icon', 512],
+    ['icon', 64],
   ] as const) {
     const href = await page.locator(`link[rel="${relation}"]`).getAttribute('href');
     expect(href).toBeTruthy();
