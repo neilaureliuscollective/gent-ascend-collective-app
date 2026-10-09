@@ -61,6 +61,7 @@ export function AccountClaim({
   const node = useRef<HTMLDivElement>(null),
     widget = useRef<string | null>(null),
     lock = useRef(false);
+  const completed = useRef(false);
   async function load() {
     try {
       const response = await fetch('/api/account/auth', { cache: 'no-store' });
@@ -230,7 +231,6 @@ export function AccountClaim({
       setBusy(false);
     }
   }
-  const completed = useRef(false);
   useEffect(() => {
     if (
       standalone ||
