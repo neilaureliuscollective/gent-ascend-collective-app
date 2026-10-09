@@ -121,3 +121,140 @@ test('Technology survives real save/review/revision/reload and another account c
     await other.close();
   }
 });
+
+// Real local Auth/PostgREST receipt. Synthetic reply; no provider execution.
+test('website Talk context and planning proposal persist with real Auth and reject another account', async ({
+  page,
+}) => {
+  const { createClient } = await import('@supabase/supabase-js');
+  const owner = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL!,
+    (env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
+    {
+      auth: { persistSession: false },
+    },
+  );
+  const other = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL!,
+    (env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
+    {
+      auth: { persistSession: false },
+    },
+  );
+  expect(
+    (
+      await owner.auth.signInWithPassword({
+        email: 'founder@aurelius.test',
+        password: env.AURELIUS_FOUNDER_PASSWORD!,
+      })
+    ).error,
+  ).toBeNull();
+  expect(
+    (
+      await other.auth.signInWithPassword({
+        email: 'member@aurelius.test',
+        password: env.AURELIUS_FOUNDER_PASSWORD!,
+      })
+    ).error,
+  ).toBeNull();
+  const person = (await owner.from('persons').select('id').single()).data!;
+  const chat = crypto.randomUUID(),
+    turn = crypto.randomUUID(),
+    mission = crypto.randomUUID(),
+    project = crypto.randomUUID(),
+    version = crypto.randomUUID();
+  const brief = {
+    name: 'Synthetic Planning Studio',
+    industry: 'professional-services',
+    vision: 'A synthetic conversational business website.',
+    headline: 'A considered approach',
+    about: 'A synthetic professional studio for testing.',
+    services: [{ name: 'Consultation', description: '', price: '' }],
+    hours: '',
+    contact: '',
+    bookingUrl: '',
+  };
+  expect(
+    (
+      await owner.rpc('ai_begin_turn', {
+        p_conversation: chat,
+        p_request: turn,
+        p_text: 'Propose a website brief',
+        p_model: 'synthetic-no-model-call',
+        p_context: false,
+        p_prompt_version: 'synthetic:website-planning-v1',
+      })
+    ).error,
+  ).toBeNull();
+  expect(
+    (
+      await owner.from('intelligence_missions').insert({
+        id: mission,
+        person_id: person.id,
+        conversation_id: chat,
+        title: 'Synthetic Website Planning',
+        objective: brief.vision,
+        status: 'active',
+        decisions: '',
+        open_questions: '',
+        next_actions: '',
+      })
+    ).error,
+  ).toBeNull();
+  expect(
+    (
+      await owner.rpc('technology_save', {
+        p_id: project,
+        p_version: version,
+        p_expected: 0,
+        p_brief: brief,
+        p_mission: mission,
+        p_mission_revision: 1,
+      })
+    ).error,
+  ).toBeNull();
+  const args = { p_turn: turn, p_project: project, p_revision: 1 };
+  const captured = await owner.rpc('technology_capture_context', args);
+  expect(captured.error).toBeNull();
+  expect(captured.data).toMatchObject({ revision: 1, versionId: version, brief });
+  expect((await other.rpc('technology_capture_context', args)).error).not.toBeNull();
+  expect(
+    (await owner.rpc('technology_capture_context', { ...args, p_revision: 2 })).error,
+  ).not.toBeNull();
+  expect(
+    (await other.from('technology_turn_context').select('*').eq('turn_id', turn)).data,
+  ).toEqual([]);
+  expect(
+    (
+      await owner.rpc('ai_finish_turn', {
+        p_request: turn,
+        p_text: 'Synthetic proposal.\n```aethelios-website\n' + JSON.stringify(brief) + '\n```',
+        p_status: 'complete',
+        p_input: 0,
+        p_output: 0,
+      })
+    ).error,
+  ).toBeNull();
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await page.goto(`/app/work/technology?mission=${mission}&proposal=${turn}`);
+  await expect(page.getByLabel('Business name', { exact: true })).toHaveValue(brief.name);
+  const proposal = await page.request.get(
+    `/api/technology/proposal?mission=${mission}&turn=${turn}`,
+  );
+  expect(proposal.ok()).toBe(true);
+  expect(proposal.headers()['cache-control']).toBe('private, no-store');
+  await page.goto(`/app/aethelios?conversation=${chat}&technology=${project}`);
+  await expect(
+    page.getByRole('checkbox', { name: 'Include this website brief in my next Talk message' }),
+  ).not.toBeChecked();
+  const receipt = await owner
+    .from('technology_turn_context')
+    .select('revision,project_id')
+    .eq('turn_id', turn)
+    .single();
+  expect(receipt.data).toEqual({ revision: 1, project_id: project });
+  await owner.auth.signOut();
+  await other.auth.signOut();
+});

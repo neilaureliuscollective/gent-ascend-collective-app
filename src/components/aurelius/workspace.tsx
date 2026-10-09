@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
 import { TalkMission, type SelectedMissionContext } from '@/components/missions/mission-continuity';
-import { TalkWebsite } from '@/components/technology/talk-website';
+import { planningVersion } from '@/domains/technology/planning';
+import { TalkWebsite, type SelectedWebsiteContext } from '@/components/technology/talk-website';
 import { MissionCapture } from '@/components/missions/mission-capture';
 import { CouncilPanel } from './council-panel';
 import {
@@ -84,6 +85,8 @@ export function AureliusWorkspace({
   const [includeContext, setIncludeContext] = useState(false);
   const [savedSources, setSavedSources] = useState<ContextSources>(noContextSources);
   const [useSpecialistContext, setUseSpecialistContext] = useState(false);
+  const [websiteContext, setWebsiteContext] = useState<SelectedWebsiteContext | null>(null);
+  const [websitePlanning, setWebsitePlanning] = useState(false);
   const [missionContext, setMissionContext] = useState<SelectedMissionContext | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [orchestrating, setOrchestrating] = useState(false);
@@ -131,6 +134,11 @@ export function AureliusWorkspace({
         setPreview(false);
         if (homeDraft && (result as WorkspaceData).ownerId !== homeDraft.ownerId) setDraft('');
         setData(result as WorkspaceData);
+        setWebsitePlanning(
+          Boolean(
+            (result as WorkspaceData).turns.at(-1)?.prompt_version?.endsWith(`:${planningVersion}`),
+          ),
+        );
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
@@ -261,6 +269,9 @@ export function AureliusWorkspace({
         setPreview(result === null);
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
+        setWebsitePlanning(
+          Boolean(result?.turns.at(-1)?.prompt_version?.endsWith(`:${planningVersion}`)),
+        );
         setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version ?? ''));
         setLoading(false);
       })
@@ -336,6 +347,10 @@ export function AureliusWorkspace({
           ...(missionContext?.enabled && missionContext.conversationId === id
             ? { mission: { id: missionContext.id, revision: missionContext.revision } }
             : {}),
+          ...(!requestedCouncil && websiteContext?.enabled && websiteContext.conversationId === id
+            ? { website: { id: websiteContext.id, revision: websiteContext.revision } }
+            : {}),
+          ...(!requestedCouncil && websitePlanning ? { websitePlanning: true } : {}),
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
         }),
@@ -453,6 +468,8 @@ export function AureliusWorkspace({
   }
   function newConversation() {
     setSelected(null);
+    setWebsitePlanning(false);
+    setWebsiteContext(null);
     setCouncilSelection(null);
     rememberConversation(null);
     setAwayFromLatest(false);
@@ -746,6 +763,10 @@ export function AureliusWorkspace({
                     {missionContext?.enabled && missionContext.conversationId === selected
                       ? ', the selected Mission’s reviewed direction and linked output excerpts'
                       : ''}
+                    {websiteContext?.enabled && websiteContext.conversationId === selected
+                      ? `, the selected saved website v${websiteContext.revision} brief`
+                      : ''}
+                    {websitePlanning ? ', website planning instructions' : ''}
                     {councilSelection ? ' with the selected Council specialists' : ''}
                     {includeContext
                       ? `, selected saved sources: ${
@@ -765,7 +786,16 @@ export function AureliusWorkspace({
         </div>
         {!preview && (
           <div className="intelligence-work-access">
-            <TalkWebsite turns={data.turns} conversationId={selected} />
+            <TalkWebsite
+              key={`${data.ownerId ?? 'unknown'}:${selected ?? 'new'}`}
+              turns={data.turns}
+              conversationId={selected}
+              onContext={setWebsiteContext}
+              planning={websitePlanning}
+              onPlanning={setWebsitePlanning}
+              mission={missionContext}
+              disabled={busy || needsReload || Boolean(councilSelection)}
+            />
             {missionContext?.conversationId === selected && (
               <button
                 type="button"
@@ -802,7 +832,13 @@ export function AureliusWorkspace({
               Boolean(data.currentConversation?.archived_at)
             }
             includeContext={includeContext}
-            onSelect={setCouncilSelection}
+            onSelect={(value) => {
+              setCouncilSelection(value);
+              if (value) {
+                setWebsitePlanning(false);
+                setWebsiteContext(null);
+              }
+            }}
             onFocused={(id) => {
               newConversation();
               setCouncilSelection({ kind: 'specialist', specialists: [id] });
