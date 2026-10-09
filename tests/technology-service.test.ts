@@ -153,3 +153,56 @@ it('a conversational request cannot change confirmed prices or remove services',
     expect.objectContaining({ p_brief: null }),
   );
 });
+it('adds requested informational pages through the existing metered revision path', async () => {
+  const pages = [
+    {
+      slug: 'process',
+      title: 'Our process',
+      layout: 'cards',
+      sections: [{ heading: 'Discussion', body: 'Discuss the service you need.' }],
+    },
+  ];
+  const design = {
+    palette: 'petrol',
+    hero: 'editorial',
+    typography: 'serif',
+    spacing: 'spacious',
+    audience: '',
+    goal: '',
+    rationale: 'Clear process sections.',
+    cta: 'Explore services',
+    request: '',
+  };
+  state.generate.mockResolvedValue({
+    output: { ...state.brief, design, pages },
+    usage: { inputTokens: 1000, outputTokens: 800 },
+  });
+  await mutateTechnology({ ...command, instruction: 'Add a process page.' });
+  expect(state.generate).toHaveBeenCalledOnce();
+  expect(state.generate.mock.calls[0]![0].maxRetries).toBe(0);
+  expect(state.broker).toHaveBeenCalledWith(
+    'technology_settle',
+    expect.objectContaining({ p_brief: expect.objectContaining({ pages }) }),
+  );
+});
+it('ordinary copy refinement cannot quietly add a page', async () => {
+  state.generate.mockResolvedValue({
+    output: {
+      ...state.brief,
+      pages: [
+        {
+          slug: 'process',
+          title: 'Process',
+          layout: 'stacked',
+          sections: [{ heading: 'Discussion', body: 'Discuss your needs.' }],
+        },
+      ],
+    },
+    usage: { inputTokens: 10, outputTokens: 10 },
+  });
+  await expect(mutateTechnology(command)).rejects.toThrow(/reconciliation/);
+  expect(state.broker).toHaveBeenCalledWith(
+    'technology_settle',
+    expect.objectContaining({ p_brief: null }),
+  );
+});

@@ -373,3 +373,7 @@ Choose a fixed, structured service-business renderer before sandboxed autonomous
 ## 2026-10-08 — Technology verified artifacts
 
 Use persisted owner-bound jobs, fenced leases and script-free static HTML export for the existing service template before adopting arbitrary-code executors. No new paid provider. Current Next installed route docs, Supabase RLS docs and MDN iframe docs inspected. Details and explicit roadmap limits: TECHNOLOGY_VERIFIED_BUILD.md.
+
+## 2026-10-09 — Technology Phase 5: bounded page composition
+
+Extend the native reviewed website brief with up to three informational pages and audited text-section layouts; reuse immutable versions, owner RLS, metered exact-version revisions and static exports. Research: Lovable Plan mode (https://docs.lovable.dev/features/plan-mode), Replit Visual Editor (https://docs.replit.com/design/visual-editor), Vercel Sandbox (https://vercel.com/docs/sandbox), accessed 2026-10-09. Keep deterministic edits free of additional AI calls and executable generation behind future isolation/spend controls. Owned imagery requires a separate immutable asset/export lifecycle and is deferred. See TECHNOLOGY_FLEXIBLE_PAGES.md for migration order, rollback compatibility and release gates.

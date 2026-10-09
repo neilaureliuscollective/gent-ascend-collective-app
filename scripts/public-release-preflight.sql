@@ -116,6 +116,12 @@ with required_columns(relation, column_name, data_type) as (values
  and c.conname='technology_valid_brief' and c.convalidated
  and pg_get_constraintdef(c.oid) like '%technology_validate_brief(brief)%'),false)
  from (select 1) seed left join pg_proc p on p.oid=to_regprocedure('public.technology_validate_brief(jsonb)')
+ union all
+ select 'pages','validator:technology_validate_design_brief',p.oid is not null,
+ coalesce(not p.prosecdef and p.provolatile='i' and array_to_string(p.proconfig,',') in ('search_path=""','search_path=')
+ and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+ and not has_function_privilege('anon',p.oid,'EXECUTE'),false)
+ from (select 1) seed left join pg_proc p on p.oid=to_regprocedure('public.technology_validate_design_brief(jsonb)')
 )
 select jsonb_build_object(
  'contract','public-mission-v1',

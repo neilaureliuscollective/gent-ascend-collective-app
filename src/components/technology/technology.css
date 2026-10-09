@@ -232,3 +232,29 @@
   outline: 2px solid var(--site-fg);
   outline-offset: 3px;
 }
+
+.technology-page-sections.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+}
+.technology-page-sections.cards article {
+  padding: 20px;
+  border: 1px solid var(--site-border, #62757d);
+  border-radius: 12px;
+}
+.technology-page-sections h3,
+.technology-page-sections p {
+  overflow-wrap: anywhere;
+}
+.technology-page-editor {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--aether-border);
+  border-radius: 12px;
+}
+.technology-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

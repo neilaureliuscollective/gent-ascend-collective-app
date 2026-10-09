@@ -39,6 +39,30 @@ export const defaultDesign: z.infer<typeof designSchema> = {
   cta: 'Explore services',
   request: '',
 };
+export const pageSchema = z
+  .object({
+    slug: text(48)
+      .min(2)
+      .regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/)
+      .refine(
+        (value) => !['home', 'services', 'about', 'contact'].includes(value),
+        'Use a unique additional page address.',
+      ),
+    title: text(60).min(2),
+    layout: z.enum(['stacked', 'cards']),
+    sections: z
+      .array(z.object({ heading: text(80).min(2), body: text(600).min(3) }).strict())
+      .min(1)
+      .max(3),
+  })
+  .strict();
+export const pagesSchema = z
+  .array(pageSchema)
+  .max(3)
+  .refine(
+    (pages) => new Set(pages.map((p) => p.slug)).size === pages.length,
+    'Page addresses must be unique.',
+  );
 export const briefSchema = z
   .object({
     name: text(100).min(2),
@@ -54,6 +78,7 @@ export const briefSchema = z
     contact: text(500),
     bookingUrl,
     design: designSchema.optional(),
+    pages: pagesSchema.optional(),
   })
   .strict();
 export type Brief = z.infer<typeof briefSchema>;

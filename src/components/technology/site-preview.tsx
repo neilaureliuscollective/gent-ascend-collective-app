@@ -4,6 +4,10 @@ import { bookingUrl, type Brief } from '@/domains/technology/schema';
 import { palettes } from '@/domains/technology/design';
 export function SitePreview({ brief }: { brief: Brief }) {
   const [page, setPage] = useState('Home');
+  const pages = brief.pages ?? [];
+  const names = ['Home', 'Services', 'About', 'Contact', ...pages.map((p) => p.slug)];
+  const active = names.includes(page) ? page : 'Home';
+  const custom = pages.find((p) => p.slug === active);
   const safe = bookingUrl.safeParse(brief.bookingUrl);
   const d = brief.design,
     colors = d ? palettes[d.palette] : null;
@@ -29,20 +33,20 @@ export function SitePreview({ brief }: { brief: Brief }) {
       <header>
         <span>{brief.name || 'Your business'}</span>
         <nav aria-label="Preview pages">
-          {['Home', 'Services', 'About', 'Contact'].map((p) => (
+          {names.map((p) => (
             <button
               type="button"
               key={p}
-              aria-current={page === p ? 'page' : undefined}
+              aria-current={active === p ? 'page' : undefined}
               onClick={() => setPage(p)}
             >
-              {p}
+              {pages.find((v) => v.slug === p)?.title ?? p}
             </button>
           ))}
         </nav>
       </header>
-      <main data-page={page}>
-        {page === 'Home' && (
+      <main data-page={active}>
+        {active === 'Home' && (
           <>
             <span className="eyebrow">
               {brief.industry === 'grooming-beauty'
@@ -56,7 +60,7 @@ export function SitePreview({ brief }: { brief: Brief }) {
             </button>
           </>
         )}
-        {page === 'Services' && (
+        {active === 'Services' && (
           <>
             <h2>Services</h2>
             {brief.services.map((s, i) => (
@@ -69,13 +73,13 @@ export function SitePreview({ brief }: { brief: Brief }) {
             ))}
           </>
         )}
-        {page === 'About' && (
+        {active === 'About' && (
           <>
             <h2>About {brief.name}</h2>
             <p>{brief.about}</p>
           </>
         )}
-        {page === 'Contact' && (
+        {active === 'Contact' && (
           <>
             <h2>Visit & connect</h2>
             <p>{brief.contact}</p>
@@ -99,6 +103,19 @@ export function SitePreview({ brief }: { brief: Brief }) {
               </label>
               <button disabled>Preview only · messages are not sent</button>
             </form>
+          </>
+        )}
+        {custom && (
+          <>
+            <h2>{custom.title}</h2>
+            <div className={`technology-page-sections ${custom.layout}`}>
+              {custom.sections.map((s, i) => (
+                <article key={i}>
+                  <h3>{s.heading}</h3>
+                  <p>{s.body}</p>
+                </article>
+              ))}
+            </div>
           </>
         )}
       </main>
