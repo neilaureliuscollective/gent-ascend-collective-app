@@ -238,6 +238,11 @@ test('website Talk context and planning proposal persist with real Auth and reje
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
+  const proposalResponse = await page.request.get(
+    `/api/technology/proposal?mission=${mission}&turn=${turn}`,
+  );
+  expect(proposalResponse.ok()).toBe(true);
   await page.goto(`/app/work/technology?mission=${mission}&proposal=${turn}`);
   await expect(page.getByLabel('Business name', { exact: true })).toHaveValue(brief.name);
   const proposal = await page.request.get(
