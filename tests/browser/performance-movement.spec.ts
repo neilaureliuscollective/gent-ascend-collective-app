@@ -1,7 +1,8 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { movementFixture } from '../component-fixture/performance';
 import type { Mutation } from '../../src/domains/performance/schema';
-const url = 'http://127.0.0.1:3102/?mode=performance-movement';
+const url = componentUrl('/?mode=performance-movement');
 for (const width of [344, 390, 768, 1440])
   test(`Movement record round trip at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 });
@@ -110,5 +111,7 @@ test('Library replacement previews before save and starts a separate manual iden
     payload: { exercises: [{ name: 'Goblet squat', load: 0, progression: 'manual' }] },
   });
   if (writes[0]?.kind === 'plan')
-    expect(writes[0].payload.exercises[0]!.id).not.toBe(movementFixture.plan!.data.exercises[0]!.id);
+    expect(writes[0].payload.exercises[0]!.id).not.toBe(
+      movementFixture.plan!.data.exercises[0]!.id,
+    );
 });

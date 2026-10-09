@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 const mission = {
   id: 'dd000000-0000-4000-8000-000000000001',
@@ -31,7 +32,7 @@ async function mockMission(page: import('@playwright/test').Page) {
 test('resume exposes reviewed Mission scope without staging or sending a synthetic prompt', async ({
   page,
 }) => {
-  await page.setViewportSize({width:390,height:844});
+  await page.setViewportSize({ width: 390, height: 844 });
   let sends = 0;
   await mockMission(page);
   await page.route('**/api/aurelius**', (r) => {
@@ -60,12 +61,12 @@ test('resume exposes reviewed Mission scope without staging or sending a synthet
       },
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=mission&talk=1');
+  await page.goto(componentUrl('/?mode=mission&talk=1'));
   await expect(page.locator('.talk-mission-trigger')).toContainText('context on');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('');
   await page.locator('.talk-mission-trigger').click();
   await expect(page.getByText('Draft the homepage brief').first()).toBeVisible();
-  await page.screenshot({path:'/tmp/public-mission-dialog.png'});
+  await page.screenshot({ path: '/tmp/public-mission-dialog.png' });
   await page.getByRole('checkbox', { name: /Use this Mission/ }).uncheck();
   await expect(page.locator('.talk-mission-trigger')).toContainText('context off');
   expect(sends).toBe(0);
@@ -82,7 +83,7 @@ test('Mission conflict keeps edits, locks replay and requests saved-state recove
       json: { error: 'Mission changed. Reload before editing again.' },
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=mission');
+  await page.goto(componentUrl('/?mode=mission'));
   await page.getByText('Edit saved direction', { exact: true }).click();
   await page.getByRole('textbox', { name: 'Next actions', exact: true }).fill('Revised next step');
   await page.getByRole('button', { name: 'Save direction', exact: true }).click();
@@ -128,7 +129,7 @@ test('reviewed proposals preserve edits and require explicit acceptance', async 
       },
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=mission');
+  await page.goto(componentUrl('/?mode=mission'));
   await expect(page.getByText('Review proposed direction')).toBeVisible();
   expect(accepted).toBe(null);
   await page.locator('.mission-proposal textarea').fill('Review my revised draft');
@@ -141,7 +142,7 @@ for (const width of [360, 720, 1440])
   test(`Mission detail stays usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await mockMission(page);
-    await page.goto('http://127.0.0.1:3102/?mode=mission');
+    await page.goto(componentUrl('/?mode=mission'));
     await expect(page.getByRole('button', { name: 'Prepare creative project' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,

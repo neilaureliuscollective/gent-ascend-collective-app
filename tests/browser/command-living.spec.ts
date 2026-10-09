@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 
 test('living connections stay attached through Fold resize and source inspection', async ({
@@ -73,7 +74,7 @@ test('saved completion produces one finite return trace; refresh failure produce
   await page.route('**/api/command', (route) =>
     route.fulfill({ json: { data, asOf: '2026-09-21T14:00:00Z' } }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   await expect(page.locator('.connection-trace')).toHaveCount(3);
   await expect(page.locator('.connection-trace[data-flow]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Mark complete' }).click();
@@ -107,7 +108,7 @@ test('saved completion produces one finite return trace; refresh failure produce
 
 test('Still and unknown context retain usable controls without active traces', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=empty');
+  await page.goto(componentUrl('/?mode=daily&state=empty'));
   await expect(page.locator('.field-signal')).toHaveCount(0);
   await expect(page.locator('.connection-filament')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Open day workspace', exact: true })).toBeVisible();

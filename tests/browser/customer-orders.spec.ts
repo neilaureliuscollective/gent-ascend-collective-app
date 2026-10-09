@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 for (const width of [360, 768, 1440]) {
   test(`read-only Shopify order history is explicit and fits ${width}px`, async ({ page }) => {
@@ -7,10 +8,10 @@ for (const width of [360, 768, 1440]) {
       writes++;
       return route.fulfill({
         status: 303,
-        headers: { location: 'http://127.0.0.1:3102/?mode=customer-orders&state=disconnected' },
+        headers: { location: componentUrl('/?mode=customer-orders&state=disconnected') },
       });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=customer-orders');
+    await page.goto(componentUrl('/?mode=customer-orders'));
     await expect(page.getByText(/Synthetic Shopify order fixture/)).toBeVisible();
     await expect(page.getByText('Connected Shopify account:', { exact: false })).toContainText(
       'Synthetic customer',
@@ -47,17 +48,17 @@ for (const width of [360, 768, 1440]) {
 test('unconfigured, signed-out, provider-error and empty-order views remain distinct', async ({
   page,
 }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=customer-orders&state=unconfigured');
+  await page.goto(componentUrl('/?mode=customer-orders&state=unconfigured'));
   await expect(page.getByText(/account connection is not open yet/)).toBeVisible();
   await expect(page.getByRole('button')).toHaveCount(0);
-  await page.goto('http://127.0.0.1:3102/?mode=customer-orders&state=signed-out');
+  await page.goto(componentUrl('/?mode=customer-orders&state=signed-out'));
   await expect(page.getByRole('link', { name: 'Sign in', exact: false })).toBeVisible();
   await expect(page.getByRole('button')).toHaveCount(0);
-  await page.goto('http://127.0.0.1:3102/?mode=customer-orders&state=unavailable&failed=1');
+  await page.goto(componentUrl('/?mode=customer-orders&state=unavailable&failed=1'));
   await expect(page.getByRole('alert')).toHaveCount(2);
   await expect(page.getByText(/No orders returned/)).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Retry order history' })).toBeVisible();
-  await page.goto('http://127.0.0.1:3102/?mode=customer-orders&empty=1');
+  await page.goto(componentUrl('/?mode=customer-orders&empty=1'));
   await expect(page.getByText(/No orders returned/)).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
 });

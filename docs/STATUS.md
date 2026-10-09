@@ -863,3 +863,10 @@ Recommended order: E1 Launch Core Recovery & Acceptance → E2 Entities Advisor 
 Validation: reran 410 unit/SQL tests and recorded 28-file migration hash check, passed. Six relevant synthetic browser workflows passed; three additional security/Mission cases passed against corrected matching-origin/isolated fixture endpoints after the first audit configuration encountered stale services. These are nine workflows across valid runs, not one green full suite or hosted/model acceptance. Current main CI's production check and real local Auth integration pass; e2e/founder-browser steps fail. Read-only live home/Talk/Studio checks at 820/1440px also returned 200 without overflow or page errors; physical devices remain unverified. Detailed evidence: /workspace/entities-audit/.
 
 Research, boundaries and source register: [AETHELIOS_ENTITIES_ARCHITECTURE.md](AETHELIOS_ENTITIES_ARCHITECTURE.md). Actionable scope, acceptance criteria, founder dependencies and release/rollback plan: [ENTITIES_NEXT_PHASE.md](ENTITIES_NEXT_PHASE.md). Await founder approval of E1 before product work.
+
+
+## E1 Launch Core — recovered candidate, October 9, 2026
+
+Founder approved E1 implementation. Branch `feat/e1-launch-core` recovers #64/#63 onto current main without importing the Technology stack, preserving Imperial Steel and the current installed icon. Direct account entry/recovery, shared durable provider budget reservations, review-gated policy routes and isolated browser-test ports are implemented. See [E1_LAUNCH_CORE.md](E1_LAUNCH_CORE.md) for behavior, support procedure and limits.
+
+Initial recovered candidate: lint/typecheck, 431 unit/SQL tests and production build passed. Extended implementation: 441 unit/SQL tests and 11 release-runner tests passed; lint/typecheck/build passed. These include SQL emulation, not live Supabase Auth or provider acceptance. Full browser and actual database receipts are recorded separately after execution. Production is unchanged; E1 is not launch-complete until hosted acceptance, reviewed pricing/allowances/policies/support and exact-candidate founder promotion approval.

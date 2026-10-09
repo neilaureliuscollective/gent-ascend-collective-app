@@ -5,10 +5,14 @@ import { serverClient } from '@/platform/supabase/server';
 import { currentIdentity } from '@/domains/identity/current';
 import { accountConfig } from '@/domains/onboarding/config';
 import { claimReturn } from '@/domains/onboarding/model';
+const entry = z.enum(['claim', 'account', 'recover']).default('claim');
+const destination = (value: 'claim' | 'account' | 'recover') =>
+  value === 'claim' ? claimReturn : '/app/welcome';
 const input = z.discriminatedUnion('action', [
   z
     .object({
       action: z.literal('send'),
+      entry,
       email: z.email().max(254),
       captchaToken: z.string().max(4096).default(''),
     })
@@ -16,17 +20,20 @@ const input = z.discriminatedUnion('action', [
   z
     .object({
       action: z.literal('verify'),
+      entry,
       email: z.email().max(254),
       code: z.string().regex(/^\d{6,10}$/),
     })
     .strict(),
-  z.object({ action: z.literal('google') }).strict(),
+  z.object({ action: z.literal('google'), entry }).strict(),
 ]);
 export async function GET() {
-  const config = accountConfig(process.env);
+  const signup = accountConfig(process.env);
+  const config = accountConfig(process.env, { returning: true });
   return privateJson({
     authenticated: !!(await currentIdentity()),
-    ready: !!config,
+    ready: !!signup,
+    recoveryReady: !!config,
     google: config?.google ?? false,
     siteKey: config?.siteKey ?? '',
     captchaRequired: config?.captchaRequired ?? false,
@@ -37,21 +44,21 @@ export async function POST(request: Request) {
     const parsed = input.safeParse(await mutationBody(request, 6144));
     if (!parsed.success)
       return privateJson({ error: 'Check your email or verification code.' }, 400);
-    const config = accountConfig(process.env);
+    const value = parsed.data;
+    const config = accountConfig(process.env, { returning: value.entry === 'recover' });
     if (!config)
       return privateJson(
-        { error: 'Free account signup is being prepared. Your draft stays on this device.' },
+        { error: 'Account access is being prepared. Your draft stays on this device.' },
         503,
       );
     const client = await serverClient();
     if (!client) return privateJson({ error: 'Account access is temporarily unavailable.' }, 503);
-    const value = parsed.data;
     if (value.action === 'google') {
       if (!config.google) return privateJson({ error: 'Continue with email instead.' }, 503);
       const { data, error } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${config.origin}/auth/confirm?entry=claim`,
+          redirectTo: `${config.origin}/auth/confirm?entry=${value.entry}`,
           skipBrowserRedirect: true,
         },
       });
@@ -65,9 +72,9 @@ export async function POST(request: Request) {
       const { error } = await client.auth.signInWithOtp({
         email: value.email,
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser: value.entry !== 'recover',
           captchaToken: value.captchaToken || undefined,
-          emailRedirectTo: `${config.origin}/auth/confirm?entry=claim`,
+          emailRedirectTo: `${config.origin}/auth/confirm?entry=${value.entry}`,
         },
       });
       if (error)
@@ -84,7 +91,7 @@ export async function POST(request: Request) {
         { error: 'That code was not accepted. Check it or request a new one.' },
         400,
       );
-    return privateJson({ destination: claimReturn });
+    return privateJson({ destination: destination(value.entry) });
   } catch (error) {
     return privateJson(
       {

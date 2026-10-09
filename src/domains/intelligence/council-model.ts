@@ -1,5 +1,5 @@
 import 'server-only';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI } from '@/platform/openai/provider';
 import { generateText, type ModelMessage } from 'ai';
 import { aureliusInstructions, sharedCharacter } from './prompt';
 import { aiConfigSchema } from './validation';

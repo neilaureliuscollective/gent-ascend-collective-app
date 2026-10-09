@@ -1,6 +1,6 @@
 import 'server-only';
 import { readDeliverables } from './deliverables';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI } from '@/platform/openai/provider';
 import { generateText, Output } from 'ai';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { currentAccess } from '@/domains/access/current';

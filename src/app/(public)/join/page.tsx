@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { signIn } from '@/app/auth/actions';
 import { currentIdentity } from '@/domains/identity/current';
-import { registrationConfig } from '@/domains/identity/registration-config';
-import { MembershipRegistration } from '@/components/membership-registration';
+import { AccountClaim } from '@/components/world/account-claim';
+import '@/app/(experience)/experience/world.css';
+
 import '../founding-launch.css';
 export const dynamic = 'force-dynamic';
 export default async function Join({
@@ -10,45 +11,35 @@ export default async function Join({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const config = registrationConfig(process.env),
-    identity = await currentIdentity(),
+  const identity = await currentIdentity(),
     params = await searchParams;
   return (
     <main id="world-main" className="founding-world">
       <header className="world-page-intro founding-intro">
-        <p className="world-kicker">Gent Ascend / Your account</p>
+        <p className="world-kicker">Public Aethelios / Your account</p>
         <h1>
           Your chapter
           <br />
           <em>starts here.</em>
         </h1>
         <p>
-          Create your account, confirm your email, then review the founding offer. Creating an
-          account does not subscribe you or charge you.
+          Confirm your email and make a place for your intelligence and saved work. Creating an
+          account does not subscribe you, charge you, or grant AI access.
         </p>
       </header>
       <section className="world-section membership-arrival">
         {identity ? (
           <>
             <h2>Your account is ready.</h2>
-            <Link className="world-button" href="/app/membership">
-              Your membership →
+            <Link className="world-button" href="/app/welcome">
+              Open Aethelios →
             </Link>
           </>
         ) : (
           <>
             <div>
               <h2>Create an account</h2>
-              {config ? (
-                <MembershipRegistration
-                  siteKey={config.siteKey}
-                  captchaRequired={config.captchaRequired}
-                />
-              ) : (
-                <p>
-                  Public account registration is not open yet. Existing invited members can sign in.
-                </p>
-              )}
+              <AccountClaim standalone />
             </div>
             <div>
               <h2>Already here?</h2>
@@ -71,6 +62,9 @@ export default async function Join({
                 />
                 <button className="world-button">Sign in →</button>
               </form>
+              <Link className="world-text-link" href="/enter?entry=recover">
+                Forgot your password? Use an email code →
+              </Link>
             </div>
           </>
         )}

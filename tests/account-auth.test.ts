@@ -77,6 +77,57 @@ describe('free account auth boundary', () => {
       },
     });
   });
+  it('recovers an existing account without creating users, while signup stays closed', async () => {
+    mock.config.mockImplementation((_env: unknown, options?: { returning?: boolean }) =>
+      options?.returning
+        ? { origin: 'https://gent.test', captchaRequired: true, siteKey: 'public', google: false }
+        : null,
+    );
+    const config = await GET();
+    expect(await config.json()).toMatchObject({ ready: false, recoveryReady: true });
+    const result = await POST(
+      request({
+        action: 'send',
+        entry: 'recover',
+        email: 'synthetic@example.test',
+        captchaToken: 'proof',
+      }),
+    );
+    expect(result.status).toBe(200);
+    expect(mock.send).toHaveBeenCalledWith({
+      email: 'synthetic@example.test',
+      options: {
+        shouldCreateUser: false,
+        captchaToken: 'proof',
+        emailRedirectTo: 'https://gent.test/auth/confirm?entry=recover',
+      },
+    });
+    expect(
+      (
+        await POST(
+          request({
+            action: 'send',
+            entry: 'account',
+            email: 'synthetic@example.test',
+            captchaToken: 'proof',
+          }),
+        )
+      ).status,
+    ).toBe(503);
+    expect(mock.send).toHaveBeenCalledTimes(1);
+    expect(
+      await (
+        await POST(
+          request({
+            action: 'verify',
+            entry: 'recover',
+            email: 'synthetic@example.test',
+            code: '123456',
+          }),
+        )
+      ).json(),
+    ).toEqual({ destination: '/app/welcome' });
+  });
   it('accepts verified email only and returns a fixed world destination', async () => {
     mock.verify.mockResolvedValueOnce({ error: { message: 'Expired' } });
     expect(

@@ -1,7 +1,8 @@
+import { componentUrl } from './fixtures';
 import type { Session } from '../../src/domains/performance/schema';
 import { test, expect } from './fixtures';
 import { performanceFixture } from '../component-fixture/performance';
-const fixture = 'http://127.0.0.1:3102/?mode=performance';
+const fixture = componentUrl('/?mode=performance');
 for (const width of [344, 768, 1440])
   test(`Performance navigation and workout controls fit ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
@@ -13,10 +14,8 @@ for (const width of [344, 768, 1440])
       animations: 'disabled',
     });
     await page.getByRole('button', { name: 'Enter training' }).click();
-  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Start saved workout →' }),
-    ).toBeVisible();
+    await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Start saved workout →' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

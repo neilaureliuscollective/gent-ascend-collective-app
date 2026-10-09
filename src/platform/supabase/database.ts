@@ -755,6 +755,8 @@ export interface Database {
     };
     Views: {mission_deliverable_summaries: {Row: import('@/domains/missions/deliverable-schema').Deliverable & {title:string;reviewed:boolean}; Relationships: []}};
     Functions: {
+      ai_budget_reserve: { Args: { p_id: string; p_model: string; p_family: string; p_input_bytes: number }; Returns: { maxOutputTokens: number; maxToolCalls: number } };
+      ai_budget_receipt: { Args: { p_id: string; p_status: number }; Returns: boolean };
       mission_delete_deliverable: {Args:{p_id:string;p_expected:number};Returns:string};
       mission_create_deliverable: {Args:{p_mission:string;p_turn:string;p_revision:number};Returns:string};
       mission_save_deliverable: {Args:{p_id:string;p_version:string;p_expected:number;p_title:string;p_body:string;p_acceptance:string};Returns:string};

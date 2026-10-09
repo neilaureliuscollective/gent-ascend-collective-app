@@ -1,3 +1,4 @@
+import { budgetedFetch } from '@/platform/openai/budget';
 import 'server-only';
 import { z } from 'zod';
 import { GroomingError } from './service';
@@ -10,7 +11,7 @@ function outputText(output:{type:string;content?:{type:string;text?:string}[]}[]
 export const openAIAnalysis:GroomingAnalysisProvider={async analyze(images,context){
  const key=process.env.OPENAI_API_KEY;if(!key)throw new GroomingError('Ascend Scan is not connected yet.',503);
  const content:[{type:'input_text';text:string},...{type:'input_image';image_url:string}[]]=[{type:'input_text',text:`Assess grooming appearance only. Views in order: ${images.map(i=>i.view).join(', ')}. User-confirmed context: ${context.slice(0,600)}. Return one JSON object with keys usable:boolean, qualityNote:string, summary:string, nextStep:string, observations: array of {area:'skin'|'hair'|'beard',description:string,confidence:'low'|'medium'|'high'}. At most 2 observations per area. Describe only visible appearance; do not infer disease, diagnose, quantify density/pores/dryness, or claim a before/after measurement. If lighting, framing or blur limit interpretation, mark unusable and ask for a retake. Be candid about uncertain views. Recommendations should be practical and not push a purchase. No percentages.`},...images.map(i=>({type:'input_image' as const,image_url:`data:${i.type};base64,${Buffer.from(i.bytes).toString('base64')}`}))];
- const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.AURELIUS_AI_MODEL||'gpt-6-astra',store:false,input:[{role:'user',content}],text:{format:{type:'json_object'}}}),signal:AbortSignal.timeout(120000),cache:'no-store'});
+ const response=await budgetedFetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.AURELIUS_AI_MODEL||'gpt-6-astra',store:false,input:[{role:'user',content}],text:{format:{type:'json_object'}}}),signal:AbortSignal.timeout(120000),cache:'no-store'});
  if(!response.ok)throw new GroomingError('Scan analysis is temporarily unavailable.',response.status===429?429:503);
  const json=await response.json() as {output?:{type:string;content?:{type:string;text?:string}[]}[]};
  try{return assessmentSchema.parse(JSON.parse(outputText(json.output??[])));}catch{throw new GroomingError('Scan analysis could not be interpreted. Try again.',502);}

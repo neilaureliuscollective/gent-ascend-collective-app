@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { outcomesFixture } from '../component-fixture/performance';
 for (const width of [344, 390, 768, 1440]) {
@@ -10,7 +11,7 @@ for (const width of [344, 390, 768, 1440]) {
       if (route.request().method() !== 'GET') writes.push(route.request().postDataJSON());
       await route.fulfill({ json: outcomesFixture });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=performance-outcomes');
+    await page.goto(componentUrl('/?mode=performance-outcomes'));
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     const section = page.getByRole('region', { name: 'Latest change outcome' });
     await expect(section.getByRole('heading', { name: 'Did the change hold?' })).toBeVisible();

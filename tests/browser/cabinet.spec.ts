@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 for (const width of [360, 768, 1440]) {
   test(`Cabinet retains a failed draft and reviewed state at ${width}px`, async ({ page }) => {
@@ -12,7 +13,7 @@ for (const width of [360, 768, 1440]) {
         },
       });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=cabinet');
+    await page.goto(componentUrl('/?mode=cabinet'));
     await page.getByLabel('My experience').selectOption('running_low');
     await page.getByLabel('My note').fill('My bottle is almost empty');
     await page.getByLabel('Grooming ritual').selectOption({ label: 'Morning ritual' });

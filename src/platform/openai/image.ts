@@ -1,3 +1,4 @@
+import { budgetedFetch } from '@/platform/openai/budget';
 import 'server-only';
 export class ImageGenerationError extends Error {constructor(message:string,public status=503){super(message);}}
 export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string}){
@@ -5,7 +6,7 @@ export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt
  if(!key) throw new ImageGenerationError('Image generation is not connected yet.',503);
  const content:({type:'input_text';text:string}|{type:'input_image';image_url:string})[]=[{type:'input_text',text:`Create one image. ${prompt}`}];
  if(reference) content.push({type:'input_image',image_url:`data:${reference.type};base64,${Buffer.from(reference.bytes).toString('base64')}`});
- const response=await fetch('https://api.openai.com/v1/responses',{
+ const response=await budgetedFetch('https://api.openai.com/v1/responses',{
   method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
   body:JSON.stringify({model:process.env.AURELIUS_AI_MODEL||'gpt-6-astra',store:false,
    input:[{role:'user',content}],tool_choice:{type:'image_generation'},

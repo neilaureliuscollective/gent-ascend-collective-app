@@ -33,3 +33,8 @@ export const test =
         },
       })
     : base;
+
+export const appUrl = (path = '') =>
+  `http://127.0.0.1:${process.env.PLAYWRIGHT_APP_PORT ?? 3100}${path}`;
+export const componentUrl = (path = '') =>
+  `http://127.0.0.1:${process.env.PLAYWRIGHT_COMPONENT_PORT ?? 3102}${path}`;

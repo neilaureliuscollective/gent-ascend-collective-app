@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 const base = {
   mode: 'personal',
@@ -27,7 +28,7 @@ for (const width of [360, 768, 1440]) {
         json: { ...base, version: 2, intention: input.intention, nextAction: input.nextAction },
       });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=first-session&paid=1');
+    await page.goto(componentUrl('/?mode=first-session&paid=1'));
     await page.getByLabel('Get stronger', { exact: true }).check();
     await page.getByLabel('What matters today?').fill('Build a consistent week');
     await page
@@ -72,7 +73,7 @@ test('unknown save preserves draft and requires readback; account changes cannot
     writes++;
     return route.fulfill({ status: 503, json: { error: 'Save acknowledgment lost.' } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=first-session');
+  await page.goto(componentUrl('/?mode=first-session'));
   await expect(page.getByRole('link', { name: /Talk this through/ })).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: 'Review membership access to Aethelios' }),
@@ -104,7 +105,7 @@ test('Facebook entry explains browser handoff and excludes private draft from co
       value: 'Mozilla/5.0 Android FBAN/FB4A FBAV/500',
     }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=first-session&private=draft');
+  await page.goto(componentUrl('/?mode=first-session&private=draft'));
   await expect(page.getByRole('complementary', { name: 'Open in your browser' })).toContainText(
     'Device drafts stay in the browser',
   );
@@ -122,5 +123,5 @@ test('Facebook entry explains browser handoff and excludes private draft from co
     await new Promise((resolve) => setTimeout(resolve, 10));
     return copied;
   });
-  expect(value).toBe('http://127.0.0.1:3102/enter');
+  expect(value).toBe(componentUrl('/enter'));
 });

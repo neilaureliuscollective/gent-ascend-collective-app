@@ -102,7 +102,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v5'],
+      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v6'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',

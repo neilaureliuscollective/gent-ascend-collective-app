@@ -1,5 +1,6 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
-const fixture = 'http://127.0.0.1:3102';
+const fixture = componentUrl('');
 test('profile validation preserves edits, focuses errors and saves a new version', async ({
   page,
 }) => {

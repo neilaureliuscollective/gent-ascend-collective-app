@@ -1,5 +1,6 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
-const fixture = 'http://127.0.0.1:3102/?mode=performance';
+const fixture = componentUrl('/?mode=performance');
 for (const width of [360, 375, 390, 412, 430, 768, 1440])
   test(`direction sheet fits ${width} and retains edits`, async ({ page }) => {
     await page.setViewportSize({ width, height: 740 });

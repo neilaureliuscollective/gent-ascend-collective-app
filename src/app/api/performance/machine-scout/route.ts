@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI } from '@/platform/openai/provider';
 import { authorizedPerson } from '@/domains/access/authorize';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 

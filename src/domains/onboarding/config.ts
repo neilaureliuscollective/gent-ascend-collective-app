@@ -1,6 +1,9 @@
-export function accountConfig(env: Record<string, string | undefined>) {
+export function accountConfig(
+  env: Record<string, string | undefined>,
+  options: { returning?: boolean } = {},
+) {
   if (
-    env.ACCOUNT_SIGNUP_ENABLED !== 'true' ||
+    (!options.returning && env.ACCOUNT_SIGNUP_ENABLED !== 'true') ||
     env.ACCOUNT_AUTH_READY !== 'true' ||
     !env.NEXT_PUBLIC_SUPABASE_URL ||
     !env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY

@@ -142,6 +142,19 @@ describe('membership registration without invitation privileges', () => {
     expect(new URL(denied.headers.get('location')!).pathname).toBe('/app/welcome');
     expect(fake.verify).toHaveBeenCalledTimes(2);
   });
+  it('returns verified standalone accounts to onboarding and secures invalid callback redirects', async () => {
+    for (const entry of ['account', 'recover']) {
+      const response = await GET(
+        new NextRequest(
+          `http://127.0.0.1:3100/auth/confirm?code=synthetic&entry=${entry}&next=https://attacker.example`,
+        ),
+      );
+      expect(new URL(response.headers.get('location')!).pathname).toBe('/app/welcome');
+    }
+    const invalid = await GET(new NextRequest('http://127.0.0.1:3100/auth/confirm?type=recovery'));
+    expect(invalid.headers.get('cache-control')).toBe('no-store');
+    expect(invalid.headers.get('referrer-policy')).toBe('no-referrer');
+  });
   it('supports the default PKCE email callback without accepting unverified browser identity', async () => {
     const response = await GET(
       new NextRequest('http://127.0.0.1:3100/auth/confirm?code=synthetic'),

@@ -1,6 +1,9 @@
 // Browser-only component fixture; not an application route or identity bypass.
 import { createServer } from 'vite';
 import { resolve } from 'node:path';
+const port = Number(process.env.PLAYWRIGHT_COMPONENT_PORT ?? 3102);
+if (!Number.isInteger(port) || port < 1024 || port > 65535)
+  throw new Error('Invalid component-test port');
 const server = await createServer({
   root: resolve('tests/component-fixture'),
   configFile: false,
@@ -14,6 +17,6 @@ const server = await createServer({
     },
   },
   css: { postcss: resolve('.') },
-  server: { host: '127.0.0.1', port: 3102, strictPort: true, fs: { allow: [resolve('.')] } },
+  server: { host: '127.0.0.1', port, strictPort: true, fs: { allow: [resolve('.')] } },
 });
 await server.listen();

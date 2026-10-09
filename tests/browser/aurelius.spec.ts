@@ -1,3 +1,4 @@
+import { appUrl } from './fixtures';
 import { test, expect, type Page } from './fixtures';
 import type { WorkspaceData, Turn } from '../../src/domains/intelligence/types';
 async function tools(page: Page) {
@@ -273,7 +274,7 @@ test('anonymous API and hostile origins fail closed', async ({ request }) => {
   expect(
     (
       await request.post('/api/aurelius/memory', {
-        headers: { Origin: 'http://127.0.0.1:3100' },
+        headers: { Origin: appUrl('') },
         data: {
           id: '50000000-0000-4000-8000-000000000001',
           content: 'Not authorized',

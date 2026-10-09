@@ -1,6 +1,7 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { learningFixture } from '../component-fixture/performance';
-const fixture = 'http://127.0.0.1:3102/?mode=performance-learning';
+const fixture = componentUrl('/?mode=performance-learning');
 for (const width of [344, 768, 1440])
   test(`progression evidence and approval stay readable at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 });
@@ -88,7 +89,9 @@ test('stale progression keeps its explanation until records are explicitly reloa
   await page.getByRole('button', { name: 'Review', exact: true }).click();
   await page.getByRole('button', { name: 'Approve Cable row: 8 → 9 reps', exact: true }).click();
   await expect(
-    page.getByText('Your evidence changed. Reload saved records before deciding.', { exact: true }).first(),
+    page
+      .getByText('Your evidence changed. Reload saved records before deciding.', { exact: true })
+      .first(),
   ).toBeVisible();
   expect(writes).toBe(1);
   await page.getByRole('button', { name: 'Reload saved records', exact: true }).click();

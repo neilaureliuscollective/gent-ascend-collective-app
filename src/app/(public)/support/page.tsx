@@ -8,7 +8,7 @@ export default function Support() {
   return (
     <main id="world-main">
       <header className="world-page-intro">
-        <span className="world-kicker">Gent Ascend Collective / Support</span>
+        <span className="world-kicker">Public Aethelios / Support</span>
         <h1>
           Keep your
           <br />
@@ -22,8 +22,13 @@ export default function Support() {
             <span className="world-kicker">Your account</span>
             <h2>Return to your day.</h2>
             <p>
+              <Link className="world-text-link" href="/enter?entry=recover">
+                Forgot your password? Use an email code →
+              </Link>
+            </p>
+            <p>
               Use the same sign-in method you used to create your account. In Facebook’s browser,
-              open Gent Ascend in your normal browser before signing in.
+              open Aethelios in your normal browser before signing in.
             </p>
             <Link className="world-text-link" href="/join">
               Account entrance →

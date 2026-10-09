@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { commandFixture } from '../component-fixture/daily-command';
 for (const width of [344, 768, 1440]) {
@@ -29,7 +30,7 @@ for (const width of [344, 768, 1440]) {
       }
       await route.fulfill({ json: data });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=command');
+    await page.goto(componentUrl('/?mode=command'));
     await expect(page.getByRole('heading', { name: 'READY', exact: true })).toBeVisible();
     await expect(page.locator('.command-decisions li')).toHaveCount(3);
     await expect(page.locator('.command-decisions')).not.toContainText('GROOM');
@@ -63,7 +64,7 @@ test('Daily Command retains a conflicting draft and requires reload', async ({ p
   await page.route('**/api/daily-command', (route) =>
     route.fulfill({ status: 409, json: { error: 'The command changed. Reload before saving.' } }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=command');
+  await page.goto(componentUrl('/?mode=command'));
   await page.getByText('Morning arrival · optional', { exact: true }).click();
   await page.getByLabel('Sleep · minutes').fill('330');
   await page.getByRole('button', { name: 'Save arrival & command' }).click();

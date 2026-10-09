@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { approvedPolicies } from '@/domains/release/policies';
 import Image from 'next/image';
 import { brand } from '@/platform/brand';
 import { AppRuntime } from '@/components/app-runtime';
@@ -12,9 +13,11 @@ import '../imperial-ascend.css';
 import '../imperial-steel.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
-  description: 'Aethelios connects your ideas, decisions and ongoing work in one Personal Intelligence OS.',
+  description:
+    'Aethelios connects your ideas, decisions and ongoing work in one Personal Intelligence OS.',
 };
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
+  const policies = approvedPolicies(process.env);
   return (
     <CinematicWorld>
       <AppRuntime />
@@ -47,6 +50,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <nav aria-label="Footer navigation">
           <Link href="/about">Our story</Link>
           <Link href="/support">Member support</Link>
+          {policies && (
+            <>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+            </>
+          )}
           <Link href="/app/studio">Studio</Link>
           <Link href="/app/work">Company work</Link>
           <Link href="/reserve">The Reserve</Link>

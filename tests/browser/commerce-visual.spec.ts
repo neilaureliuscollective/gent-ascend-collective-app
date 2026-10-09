@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { expect, test } from './fixtures';
 
 for (const width of [344, 768, 1440]) {
@@ -11,7 +12,7 @@ for (const width of [344, 768, 1440]) {
         body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="800" height="1000" fill="#eeeeea"/><rect x="260" y="170" width="280" height="610" rx="32" fill="#111a16"/><rect x="260" y="350" width="280" height="260" fill="#c4912f"/><text x="400" y="480" text-anchor="middle" font-size="28">SYNTHETIC</text></svg>',
       }),
     );
-    await page.goto('http://127.0.0.1:3102/?mode=commerce&story=missing');
+    await page.goto(componentUrl('/?mode=commerce&story=missing'));
     await expect(
       page.getByRole('button', { name: /Enlarge Fixture Vitalis image 1/ }),
     ).toBeVisible();
@@ -63,7 +64,7 @@ for (const width of [344, 768, 1440]) {
         body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="800" height="1000" fill="#12362c"/></svg>',
       }),
     );
-    await page.goto('http://127.0.0.1:3102/?mode=commerce-showroom');
+    await page.goto(componentUrl('/?mode=commerce-showroom'));
     const hero = page.locator('.reserve-hero-object');
     await hero.scrollIntoViewIfNeeded();
     await expect(hero.locator('.reserve-photo-frame')).toBeVisible();

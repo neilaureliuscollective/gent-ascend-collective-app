@@ -1,3 +1,4 @@
+import { appUrl } from './fixtures';
 import { test, expect, type Page } from './fixtures';
 const ownerId = '60000000-0000-4000-8000-000000000001',
   ritualId = '65000000-0000-4000-8000-000000000001';
@@ -31,7 +32,9 @@ for (const width of [360, 768, 1440]) {
     });
     await page.goto('/experience/world?world=grooming');
     await page.getByRole('link', { name: 'Enter Grooming' }).click();
-    await expect(page.getByRole('heading', { name: 'Your standard. On your terms.' })).toBeFocused();
+    await expect(
+      page.getByRole('heading', { name: 'Your standard. On your terms.' }),
+    ).toBeFocused();
     await page.getByRole('button', { name: 'Explore a ritual' }).click();
     await expect(page.getByRole('dialog')).toContainText('SAMPLE / NOT SAVED TO AN ACCOUNT');
     await finalStep(page);
@@ -163,7 +166,7 @@ test('real guest API is private and rejects recording without identity', async (
   expect(read.headers()['cache-control']).toContain('no-store');
   expect(await read.json()).toEqual({ mode: 'guest' });
   const write = await request.post('/api/world/grooming', {
-    headers: { origin: 'http://127.0.0.1:3100' },
+    headers: { origin: appUrl('') },
     data: {
       ownerId,
       ritualId,

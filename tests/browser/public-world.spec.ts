@@ -85,7 +85,7 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
     .toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('gent-ascend-fallback-v5');
+    const cache = await caches.open('gent-ascend-fallback-v6');
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([

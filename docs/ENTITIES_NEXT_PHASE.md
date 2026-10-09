@@ -1,6 +1,6 @@
 # Proposed next build — E1: Launch Core Recovery & Acceptance
 
-October 9, 2026. Awaiting founder phase approval. This plan is actionable; no product implementation, infrastructure purchase, database change, merge or deployment occurred during the architecture assignment. Context: [AETHELIOS_ENTITIES_ARCHITECTURE.md](AETHELIOS_ENTITIES_ARCHITECTURE.md).
+October 9, 2026. Founder approved E1 implementation; see [E1_LAUNCH_CORE.md](E1_LAUNCH_CORE.md) for candidate progress and outstanding release gates. This plan is actionable; no product implementation, infrastructure purchase, database change, merge or deployment occurred during the architecture assignment. Context: [AETHELIOS_ENTITIES_ARCHITECTURE.md](AETHELIOS_ENTITIES_ARCHITECTURE.md).
 
 ## Ranked next three phases
 

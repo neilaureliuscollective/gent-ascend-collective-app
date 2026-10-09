@@ -35,6 +35,36 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
 });
 
+describe('Public Aethelios provider budget', () => {
+  it('reserves atomically with trusted ceilings, isolates receipts and retains failed calls', async () => {
+    const id='ec100000-0000-4000-8000-000000000001';
+    const call=(request:string=id)=>`select public.ai_budget_reserve('${request}','synthetic-model','text',100)`;
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id in(select id from public.persons where auth_user_id='${founder}')`);
+    await expect(asUser(founder,call())).rejects.toThrow(/not configured/);
+    await db.exec(`update aethelios_budget.policy set enabled=true,daily_project_microusd=3,daily_person_microusd=2;
+      insert into aethelios_budget.ceilings values('synthetic-model','text',1,1000,1200,2)`);
+    // These are deliberately tiny synthetic accounting units, not provider prices.
+    try {
+      const first=await asUser(founder,call());
+      expect(first.rows[0]).toMatchObject({ai_budget_reserve:{maxOutputTokens:1200,maxToolCalls:2}});
+      await expect(asUser(founder,call())).rejects.toThrow(/duplicate key/);
+      expect((await asUser(member,`select * from public.ai_provider_reservations where id='${id}'`)).rows).toHaveLength(0);
+      expect((await asUser(member,`select public.ai_budget_receipt('${id}',200)`)).rows[0]).toMatchObject({ai_budget_receipt:false});
+      await expect(asUser(member,call('ec100000-0000-4000-8000-000000000002'))).rejects.toThrow(/access required/);
+      await expect(asUser(founder,`update public.ai_provider_reservations set reserved_microusd=0`)).rejects.toThrow(/permission denied/);
+      await expect(asUser(founder,`update aethelios_budget.policy set daily_person_microusd=100000`)).rejects.toThrow(/permission denied/);
+      await asUser(founder,`select public.ai_budget_receipt('${id}',503)`);
+      await asUser(founder,call('ec100000-0000-4000-8000-000000000003'));
+      await expect(asUser(founder,call('ec100000-0000-4000-8000-000000000004'))).rejects.toThrow(/allowance reached/);
+      await expect(asUser(founder,`select public.ai_budget_reserve('ec100000-0000-4000-8000-000000000005','unknown','text',100)`)).rejects.toThrow(/not configured/);
+    } finally {
+      await db.exec(`delete from public.ai_provider_reservations; delete from aethelios_budget.ceilings;
+        update aethelios_budget.policy set enabled=false,daily_project_microusd=null,daily_person_microusd=null;
+        update public.membership_accounts set beta_access=false where person_id in(select id from public.persons where auth_user_id='${founder}')`);
+    }
+  });
+});
+
 describe('migration, seeds and owner security', () => {
   it('atomically records daily rituals, safely replays receipts and preserves reviewed version history', async () => {
     const today = `(now() at time zone (select timezone from public.persons where auth_user_id='${founder}'))::date`;

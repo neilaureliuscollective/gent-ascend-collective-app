@@ -10,7 +10,9 @@ for (const width of [360, 768, 1440]) {
     await mainNav.getByRole('link', { name: 'Work', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
     await expect(
-      page.getByText('Company rooms keep confirmed briefs and Talk history separate', { exact: false }),
+      page.getByText('Company rooms keep confirmed briefs and Talk history separate', {
+        exact: false,
+      }),
     ).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),

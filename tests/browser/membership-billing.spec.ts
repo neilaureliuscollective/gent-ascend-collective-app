@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { expect, test } from './fixtures';
 
 for (const width of [344, 768, 1440]) {
@@ -41,7 +42,7 @@ test('recurring consent is required, failed checkout preserves the chosen plan, 
           : { url: 'https://attacker.example/pay' },
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=membership');
+  await page.goto(componentUrl('/?mode=membership'));
   await page.getByLabel('Your founding level').selectOption('signature');
   await page.getByRole('button', { name: 'Continue to secure checkout ↗' }).click();
   expect(calls).toBe(0);
@@ -69,7 +70,7 @@ test('turning off enrollment keeps billing management and refresh available', as
     expect(route.request().postDataJSON()).toEqual({ action: 'refresh' });
     await route.fulfill({ json: { refreshed: true } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=membership&enrollment=closed&customer=yes');
+  await page.goto(componentUrl('/?mode=membership&enrollment=closed&customer=yes'));
   await expect(page.getByRole('button', { name: 'Continue to secure checkout ↗' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Manage billing securely ↗' })).toBeVisible();
   await page.getByRole('button', { name: 'Refresh payment status' }).click();
@@ -105,7 +106,7 @@ test('founder readiness is explicit, preserves unknown acceptance and recovers f
     });
   });
   await page.setViewportSize({ width: 360, height: 900 });
-  await page.goto('http://127.0.0.1:3102/?mode=membership&enrollment=closed&founder-audit=yes');
+  await page.goto(componentUrl('/?mode=membership&enrollment=closed&founder-audit=yes'));
   expect(calls).toBe(0);
   await page.getByText('Founder / Revenue readiness', { exact: true }).click();
   await page.getByRole('button', { name: 'Check billing readiness' }).click();

@@ -1,7 +1,8 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { programFixture } from '../component-fixture/performance';
 import type { Session } from '../../src/domains/performance/schema';
-const fixture = 'http://127.0.0.1:3102/?mode=performance-program';
+const fixture = componentUrl('/?mode=performance-program');
 for (const width of [344, 768, 1440])
   test(`program preparation stays readable and requires acceptance at ${width}px`, async ({
     page,
@@ -15,7 +16,7 @@ for (const width of [344, 768, 1440])
     await page.goto(fixture);
     await expect(page.getByRole('region', { name: 'Training cycle' })).toContainText('Strength A');
     await page.getByRole('button', { name: 'Enter training' }).click();
-  await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
+    await page.getByText('Use a plan or repeating program instead', { exact: true }).click();
     await page.getByRole('button', { name: 'Fewer sets', exact: true }).click();
     await expect(page.getByText('Cable row: 3 → 2 sets')).toBeVisible();
     await expect(page.getByText('No check-in today. Recovery is unknown.')).toBeVisible();
@@ -120,7 +121,9 @@ test('program builder stages distinct sessions and retains edits after a conflic
   await page.getByRole('button', { name: 'Save training plan', exact: true }).click();
   expect(body).toBeUndefined();
   await page.getByRole('button', { name: 'Save program', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Your training plan' }).getByRole('alert')).toContainText('Program changed elsewhere');
+  await expect(
+    page.getByRole('dialog', { name: 'Your training plan' }).getByRole('alert'),
+  ).toContainText('Program changed elsewhere');
   await expect(page.getByLabel('Program name')).toHaveValue('My A / B / C cycle');
   await expect(page.getByRole('heading', { name: 'Home session C' })).toBeVisible();
   expect(body).toMatchObject({

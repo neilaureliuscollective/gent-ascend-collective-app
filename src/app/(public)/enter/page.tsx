@@ -8,6 +8,8 @@ import { currentIdentity } from '@/domains/identity/current';
 import { parseEnvironment } from '@/platform/environment';
 import { brand } from '@/platform/brand';
 import './entrance.css';
+import '@/app/(experience)/experience/world.css';
+import { AccountClaim } from '@/components/world/account-claim';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -17,8 +19,7 @@ export const metadata: Metadata = {
 
 const errors: Record<string, string> = {
   invalid: 'Enter a valid email and password.',
-  credentials:
-    'That email and password were not accepted. Check the password saved for Aethelios.',
+  credentials: 'That email and password were not accepted. Check the password saved for Aethelios.',
   service:
     'The account service could not complete sign-in. Your account is intact; try again shortly.',
   unavailable: 'The account service is unavailable here. Try again shortly.',
@@ -27,7 +28,7 @@ const errors: Record<string, string> = {
 export default async function Enter({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; entry?: string }>;
+  searchParams: Promise<{ error?: string; entry?: string; status?: string }>;
 }) {
   const [identity, params] = await Promise.all([currentIdentity(), searchParams]);
   const person = identity ? await currentPerson() : null;
@@ -80,6 +81,15 @@ export default async function Enter({
                 Open my space <span aria-hidden="true">↗</span>
               </Link>
             </>
+          ) : params.entry === 'recover' ? (
+            <>
+              <h2>Return with an email code.</h2>
+              <p>Confirm access to the email already attached to your account.</p>
+              {params.status === 'auth' && (
+                <p role="alert">That sign-in link could not be confirmed. Request a new code.</p>
+              )}
+              <AccountClaim standalone recovery />
+            </>
           ) : connected ? (
             <>
               <p className="entrance-kicker">YOUR ACCOUNT</p>
@@ -114,9 +124,9 @@ export default async function Enter({
                 </button>
               </form>
               <p className="entrance-note">
-                New here or forgot your password?{' '}
-                <Link href="/experience/world?claim=1">Create an account or use an email code</Link>
-                . Free access requires no invitation.
+                New here or forgot your password? <Link href="/join">Create an account</Link> or{' '}
+                <Link href="/enter?entry=recover">use an email code</Link>. Intelligence access
+                remains separate from your account.
               </p>
             </>
           ) : (

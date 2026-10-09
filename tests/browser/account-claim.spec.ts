@@ -61,12 +61,12 @@ for (const width of [360, 768, 1440]) {
     await page.getByRole('button', { name: 'Save my direction' }).click();
     await expect(page).toHaveURL(/[?&]claim=1/);
     const dialog = page.getByRole('dialog', { name: 'Make this yours.' });
-    await expect(dialog).toContainText('Free account. No payment required.');
+    await expect(dialog).toContainText('No payment required to create an account.');
     await page.screenshot({ path: testInfo.outputPath('claim.png'), animations: 'disabled' });
     await page.getByLabel('Email', { exact: true }).fill('synthetic@example.test');
     await page.getByRole('button', { name: 'Continue with email' }).click();
     await page.getByLabel('Verification code').fill('123456');
-    await page.getByRole('button', { name: 'Continue my ascent' }).click();
+    await page.getByRole('button', { name: 'Enter Aethelios' }).click();
     await expect(page.getByRole('heading', { name: 'Your direction is saved.' })).toBeVisible();
     expect(imports).toBe(1);
     expect(await page.evaluate(() => localStorage.getItem('gent-direction-draft-v1'))).toBeNull();

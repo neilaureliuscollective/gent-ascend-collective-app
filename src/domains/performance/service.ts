@@ -306,7 +306,7 @@ export async function explainPerformance(requestId: string) {
   const data = await readPerformance();
   if (!data.profile) throw new IntelligenceError('Set your direction before requesting a review.');
   const [{ createOpenAI }, { generateText }, { aiConfigSchema }] = await Promise.all([
-    import('@ai-sdk/openai'),
+    import('@/platform/openai/provider'),
     import('ai'),
     import('@/domains/intelligence/validation'),
   ]);

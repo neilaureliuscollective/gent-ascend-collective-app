@@ -1,3 +1,4 @@
+import { appUrl, componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { sampleData } from '../../src/domains/daily/model';
 for (const width of [360, 768, 1440])
@@ -69,7 +70,7 @@ test('daily editor preserves unsaved text on conflict and reloads only deliberat
     }
     return route.fulfill({ json: data });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.getByRole('button', { name: 'Update your check-in' }).click();
   await page.getByLabel('What matters most today?').fill('Keep this draft');
@@ -87,18 +88,16 @@ test('daily editor preserves unsaved text on conflict and reloads only deliberat
   await expect(page.getByRole('heading', { name: 'A saved intention' })).toBeVisible();
 });
 test('completion endpoint rejects unsigned and hostile-origin requests', async ({ request }) => {
-  const url = 'http://127.0.0.1:3100/api/daily/complete';
+  const url = appUrl('/api/daily/complete');
   const input = { day: '2026-09-25', actionId: '62000000-0000-4000-8000-000000000001', version: 1 };
   expect(
     (
       await request.post(url, { data: input, headers: { Origin: 'https://hostile.example' } })
     ).status(),
   ).toBe(403);
-  expect(
-    (
-      await request.post(url, { data: input, headers: { Origin: 'http://127.0.0.1:3100' } })
-    ).status(),
-  ).toBe(401);
+  expect((await request.post(url, { data: input, headers: { Origin: appUrl('') } })).status()).toBe(
+    401,
+  );
 });
 test('evening review stays a draft until confirmed and allows correction', async ({ page }) => {
   const data = { ...sampleData('2026-09-21'), mode: 'personal' as const, name: 'Synthetic tester' };
@@ -134,7 +133,7 @@ test('evening review stays a draft until confirmed and allows correction', async
     };
     return route.fulfill({ json: data });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await page.getByRole('button', { name: 'Leave a reflection' }).click();
   await page
@@ -190,9 +189,7 @@ test('daily API rejects anonymous reads/writes and hostile origins', async ({ re
     ).status(),
   ).toBe(403);
   expect(
-    (
-      await request.put('/api/daily', { headers: { Origin: 'http://127.0.0.1:3100' }, data: input })
-    ).status(),
+    (await request.put('/api/daily', { headers: { Origin: appUrl('') }, data: input })).status(),
   ).toBe(401);
 });
 test('review API rejects hostile origins and unsigned requests', async ({ request }) => {
@@ -212,13 +209,13 @@ test('review API rejects hostile origins and unsigned requests', async ({ reques
   expect(
     (
       await request.post('/api/daily/review', {
-        headers: { Origin: 'http://127.0.0.1:3100' },
+        headers: { Origin: appUrl('') },
         data: input,
       })
     ).status(),
   ).toBe(401);
   const confirmation = await request.put('/api/daily/review', {
-    headers: { Origin: 'http://127.0.0.1:3100', 'Content-Type': 'application/json' },
+    headers: { Origin: appUrl(''), 'Content-Type': 'application/json' },
     data: JSON.stringify({
       ...input,
       expectedReviewVersion: 0,

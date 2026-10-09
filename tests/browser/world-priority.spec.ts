@@ -1,3 +1,4 @@
+import { appUrl } from './fixtures';
 import { test, expect, type Page } from './fixtures';
 
 const base = {
@@ -126,7 +127,7 @@ test('guest endpoint is private and mutation requires a session', async ({ reque
   expect(read.headers()['cache-control']).toContain('no-store');
   expect(await read.json()).toEqual({ mode: 'guest' });
   const write = await request.put('/api/world/priority', {
-    headers: { origin: 'http://127.0.0.1:3100' },
+    headers: { origin: appUrl('') },
     data: {
       ownerId: base.ownerId,
       day: base.day,

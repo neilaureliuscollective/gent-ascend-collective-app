@@ -38,6 +38,11 @@ describe('account claim boundaries', () => {
       google: false,
       captchaRequired: true,
     });
+    expect(accountConfig({ ...env, ACCOUNT_SIGNUP_ENABLED: 'false' })).toBeNull();
+    expect(
+      accountConfig({ ...env, ACCOUNT_SIGNUP_ENABLED: 'false' }, { returning: true }),
+    ).not.toBeNull();
+    expect(accountConfig({ ...env, ACCOUNT_AUTH_READY: 'false' }, { returning: true })).toBeNull();
     for (const patch of [
       { ACCOUNT_AUTH_READY: 'false' },
       { NEXT_PUBLIC_TURNSTILE_SITE_KEY: '' },

@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 const ownerId = '60000000-0000-4000-8000-000000000001';
 const syntheticWorkspace = {
@@ -31,7 +32,7 @@ for (const [width, height] of [
   test(`direct home utility and world access at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+    await page.goto(componentUrl('/?mode=home-handoff'));
     await expect(
       page.getByRole('heading', { name: 'Good morning, Synthetic tester.' }),
     ).toBeVisible();
@@ -75,7 +76,7 @@ test('home draft opens existing Talk with no automatic send or browser persisten
     if (route.request().method() !== 'GET') posts.push(route.request().url());
     await route.fulfill({ json: syntheticWorkspace });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(componentUrl('/?mode=home-handoff'));
   await page.locator('.home-compose summary').click();
   await page
     .getByRole('textbox', { name: 'What are we working on?' })
@@ -105,7 +106,7 @@ for (const changed of [true, false])
           : { status: 401, json: { error: 'Sign in' } },
       ),
     );
-    await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+    await page.goto(componentUrl('/?mode=home-handoff'));
     await page.locator('.home-compose summary').click();
     await page
       .getByRole('textbox', { name: 'What are we working on?' })
@@ -118,7 +119,7 @@ test('phone composer stays reachable when the viewport shortens for a keyboard',
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(componentUrl('/?mode=home-handoff'));
   await page.locator('.home-compose summary').click();
   await page
     .getByRole('textbox', { name: 'What are we working on?' })
@@ -139,7 +140,7 @@ test('phone composer stays reachable when the viewport shortens for a keyboard',
 });
 test('member home retains world access and draft controls at enlarged text', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 640 });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(componentUrl('/?mode=home-handoff'));
   await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
   await page.locator('.home-compose summary').click();
   const field = page.getByRole('textbox', { name: 'What are we working on?' });
@@ -156,7 +157,7 @@ test('member home retains world access and draft controls at enlarged text', asy
 
 test('Fold continuity keeps the open home draft and selected source', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(componentUrl('/?mode=home-handoff'));
   await page.getByRole('button', { name: /Energy/ }).click();
   await page.locator('.home-compose summary').click();
   await page

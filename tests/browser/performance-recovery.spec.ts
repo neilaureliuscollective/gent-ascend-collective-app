@@ -1,7 +1,8 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { recoveryFixture } from '../component-fixture/performance';
 import type { Mutation } from '../../src/domains/performance/schema';
-const url = 'http://127.0.0.1:3102/?mode=performance-recovery';
+const url = componentUrl('/?mode=performance-recovery');
 for (const width of [344, 390, 768, 1440])
   test(`recovery capture and next-day evidence at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 });

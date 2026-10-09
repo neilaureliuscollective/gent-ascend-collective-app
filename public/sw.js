@@ -1,4 +1,4 @@
-const FALLBACK_CACHE = 'gent-ascend-fallback-v5';
+const FALLBACK_CACHE = 'gent-ascend-fallback-v6';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches

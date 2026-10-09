@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 for (const width of [360, 768, 1440]) {
   test(`Cabinet import requires a reviewed confirmation and retains browser saves at ${width}px`, async ({
@@ -38,7 +39,7 @@ for (const width of [360, 768, 1440]) {
             : { error: '', message: '1 product added to your Cabinet.' },
       });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=cabinet-import');
+    await page.goto(componentUrl('/?mode=cabinet-import'));
     await expect(page.getByRole('checkbox', { name: 'vitalis', exact: true })).not.toBeChecked();
     await expect(page.getByRole('button', { name: 'Review selected products' })).toBeDisabled();
     expect(imports).toBe(0);
@@ -75,7 +76,7 @@ test('product account save is explicit and keeps the browser selection separate'
     saves++;
     return route.fulfill({ json: { error: '', message: 'Saved to your Cabinet.' } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=commerce&account=true');
+  await page.goto(componentUrl('/?mode=commerce&account=true'));
   expect(saves).toBe(0);
   await page.getByRole('button', { name: 'Save to my Cabinet' }).click();
   await expect(page.getByText('Saved to your Cabinet.', { exact: true })).toBeVisible();

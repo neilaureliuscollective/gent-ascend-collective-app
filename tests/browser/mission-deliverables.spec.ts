@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 const doc = {
   id: 'e7400000-0000-4000-8000-000000000001',
@@ -65,7 +66,7 @@ for (const width of [320, 720, 1440])
         },
       });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=deliverable');
+    await page.goto(componentUrl('/?mode=deliverable'));
     await expect(page.getByLabel('Work product')).toHaveValue(v.body);
     await expect(page.getByRole('button', { name: 'Mark this version reviewed' })).toBeDisabled();
     await page.getByLabel('Work product').fill('Revised homepage with a clear audience');
@@ -106,7 +107,7 @@ test('ambiguous save retains edits and locks mutations until an explicit reload'
     }
     return r.fulfill({ json: { deliverable: doc, versions: [v], current: v } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=deliverable');
+  await page.goto(componentUrl('/?mode=deliverable'));
   await page.getByLabel('Work product').fill('Unsaved valuable draft');
   await page.getByRole('button', { name: 'Save new version' }).click();
   await expect(page.getByRole('alert')).toContainText('Work changed');
@@ -167,7 +168,7 @@ test('Mission promotes an explicit completed reply without model generation', as
       },
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=mission');
+  await page.goto(componentUrl('/?mode=mission'));
   await page.getByText('Saved decisions & outputs', { exact: true }).click();
   await page.getByText('Saved reply ·', { exact: false }).click();
   await page.getByRole('button', { name: 'Create deliverable', exact: true }).click();
@@ -182,7 +183,7 @@ test('deletion requires confirmation and targets the current saved revision', as
     deletes++;
     return r.fulfill({ json: { id: doc.id } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=deliverable');
+  await page.goto(componentUrl('/?mode=deliverable'));
   page.once('dialog', (d) => d.dismiss());
   await page.getByRole('button', { name: 'Delete deliverable', exact: true }).click();
   expect(deletes).toBe(0);
@@ -192,7 +193,7 @@ test('deletion requires confirmation and targets the current saved revision', as
 });
 
 test('in-app link navigation can be cancelled without losing a private draft', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=deliverable');
+  await page.goto(componentUrl('/?mode=deliverable'));
   await page.getByLabel('Work product').fill('Keep this unsaved work');
   page.once('dialog', (d) => d.dismiss());
   await page.getByRole('link', { name: 'All saved deliverables' }).click();

@@ -1,5 +1,5 @@
 import 'server-only';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI } from '@/platform/openai/provider';
 import { generateText } from 'ai';
 import type { ModelMessage } from 'ai';
 import { streamAurelius } from './agent';

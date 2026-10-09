@@ -18,6 +18,7 @@ import { track } from '@/domains/onboarding/track';
 type Config = {
   authenticated: boolean;
   ready: boolean;
+  recoveryReady?: boolean;
   google: boolean;
   siteKey: string;
   captchaRequired: boolean;
@@ -37,7 +38,10 @@ type Captcha = {
 };
 const captcha = () => (window as Window & { turnstile?: Captcha }).turnstile;
 
-export function AccountClaim() {
+export function AccountClaim({
+  standalone = false,
+  recovery = false,
+}: { standalone?: boolean; recovery?: boolean } = {}) {
   const params = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false),
@@ -81,12 +85,12 @@ export function AccountClaim() {
     const sync = () => setDraft(readDraft());
     window.addEventListener('gent-direction-change', sync);
     window.addEventListener('storage', sync);
-    if (params.get('claim') === '1') show();
+    if (standalone || params.get('claim') === '1') show();
     return () => {
       window.removeEventListener('gent-direction-change', sync);
       window.removeEventListener('storage', sync);
     };
-  }, [params]);
+  }, [params, standalone]);
   useEffect(() => {
     if (!open || !scriptReady || !config?.siteKey || !node.current || !captcha()) return;
     widget.current = captcha()!.render(node.current, {
@@ -127,10 +131,20 @@ export function AccountClaim() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           action === 'google'
-            ? { action }
+            ? { action, entry: standalone ? (recovery ? 'recover' : 'account') : 'claim' }
             : action === 'send'
-              ? { action, email, captchaToken: token }
-              : { action, email, code },
+              ? {
+                  action,
+                  email,
+                  captchaToken: token,
+                  entry: standalone ? (recovery ? 'recover' : 'account') : 'claim',
+                }
+              : {
+                  action,
+                  email,
+                  code,
+                  entry: standalone ? (recovery ? 'recover' : 'account') : 'claim',
+                },
         ),
         signal: AbortSignal.timeout(15000),
       });
@@ -143,7 +157,7 @@ export function AccountClaim() {
       }
       if (action === 'verify') {
         setConfig((value) => (value ? { ...value, authenticated: true } : value));
-        router.replace(claimReturn);
+        router.replace(standalone ? result.destination : claimReturn);
         router.refresh();
       }
     } catch (error) {
@@ -216,7 +230,16 @@ export function AccountClaim() {
   }
   const completed = useRef(false);
   useEffect(() => {
-    if (!open || !config?.authenticated || saved || completed.current || receipt || problem) return;
+    if (
+      standalone ||
+      !open ||
+      !config?.authenticated ||
+      saved ||
+      completed.current ||
+      receipt ||
+      problem
+    )
+      return;
     completed.current = true;
     let method: 'google' | 'email' | 'existing' = 'existing';
     try {
@@ -232,205 +255,230 @@ export function AccountClaim() {
     completed.current = false;
     if (params.get('claim')) router.replace('/experience/world');
   }
-  return (
+  const content = (
+    <div className="gw-account-claim" data-saved={saved}>
+      <BrowserEntryNotice />
+      {!standalone && <EnergyOrb moving={false} />}
+      <p className="gw-kicker">
+        {recovery
+          ? 'RETURN TO YOUR ACCOUNT'
+          : saved
+            ? 'YOUR FIRST CHAPTER'
+            : 'YOUR DIRECTION. YOUR WORLD.'}
+      </p>
+      {draft?.intention && <blockquote>{draft.intention}</blockquote>}
+      {saved ? (
+        <>
+          <h3>{draft?.intention ? 'Your direction is saved.' : 'Your free account is ready.'}</h3>
+          <p>Choose a practical next move and save it to Command.</p>
+          <Link className="gw-action" href="/app/welcome" onClick={() => setOpen(false)}>
+            Begin my first session →
+          </Link>
+          <Link
+            className="gw-action"
+            href={focuses[draft?.focus ?? 'body'].href}
+            onClick={() => setOpen(false)}
+          >
+            Continue to{' '}
+            {draft?.focus === 'presence'
+              ? 'Grooming'
+              : draft?.focus === 'focus'
+                ? 'your day'
+                : 'Performance'}{' '}
+            ↗
+          </Link>
+          <button onClick={close}>Return to my world</button>
+        </>
+      ) : standalone && config?.authenticated ? (
+        <Link className="gw-action" href="/app/welcome">
+          Open Aethelios →
+        </Link>
+      ) : config?.authenticated ? (
+        <>
+          {receipt?.status === 'conflict' ? (
+            <>
+              <h3>You already have a direction for today.</h3>
+              <p>Your saved priority: {receipt.intention}</p>
+              <button className="gw-action" disabled={busy} onClick={() => void keep(true)}>
+                Replace it with this direction
+              </button>
+              <button
+                onClick={() => {
+                  clearDraft(draft?.id);
+                  close();
+                }}
+              >
+                Keep my saved priority
+              </button>
+            </>
+          ) : receipt?.status === 'day_changed' ? (
+            <>
+              <p>A new day has begun. Save this direction for {receipt.day}?</p>
+              <button className="gw-action" disabled={busy} onClick={() => void keep()}>
+                Save for today
+              </button>
+            </>
+          ) : (
+            <>
+              <p>
+                {busy
+                  ? 'Keeping your direction…'
+                  : 'Your account is connected. Keep your direction here.'}
+              </p>
+              <button className="gw-action" disabled={busy} onClick={() => void keep()}>
+                {busy ? 'Saving…' : 'Save my direction'}
+              </button>
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <p>
+            {draft?.intention
+              ? 'Keep your direction and build from here.'
+              : recovery
+                ? 'Use a code sent to your existing account email. No password required.'
+                : 'Your personal intelligence, conversations, and reviewed saved work.'}
+          </p>
+          <p className="gw-muted">
+            No payment required to create an account. Intelligence access requires an eligible beta
+            grant or membership.
+          </p>
+          {!config ? (
+            <button
+              className="gw-action"
+              onClick={() => {
+                setProblem('');
+                void load();
+              }}
+            >
+              Load account options
+            </button>
+          ) : !(recovery ? config.recoveryReady : config.ready) ? (
+            <>
+              <p>Account entry is being prepared. Your draft stays on this device.</p>
+              <Link href={standalone ? '/enter' : '/enter?entry=claim'}>
+                Already have an account? Sign in ↗
+              </Link>
+              {standalone && !recovery && config.recoveryReady && (
+                <Link href="/enter?entry=recover">Use an email code ↗</Link>
+              )}
+            </>
+          ) : (
+            <>
+              {config.google && (
+                <button
+                  className="gw-action gw-google"
+                  disabled={busy}
+                  onClick={() => void auth('google')}
+                >
+                  Continue with Google
+                </button>
+              )}
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void auth(sent ? 'verify' : 'send');
+                }}
+              >
+                <label htmlFor="claim-email">Email</label>
+                <input
+                  id="claim-email"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  required
+                  value={email}
+                  disabled={busy || sent}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                {sent && (
+                  <>
+                    <p>Enter the code sent to {email}. Return here to complete sign-in.</p>
+                    <label htmlFor="claim-code">Verification code</label>
+                    <input
+                      id="claim-code"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      pattern="[0-9]{6,10}"
+                      minLength={6}
+                      maxLength={10}
+                      required
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                    />
+                  </>
+                )}
+                {config.siteKey && (
+                  <>
+                    <Script
+                      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+                      onReady={() => setScriptReady(true)}
+                      onError={() =>
+                        setProblem('The security check could not load. Retry shortly.')
+                      }
+                    />
+                    <div ref={node} />
+                  </>
+                )}
+                <button
+                  className="gw-action"
+                  disabled={busy || (!sent && config.captchaRequired && !token)}
+                >
+                  {busy ? 'Connecting…' : sent ? 'Enter Aethelios' : 'Continue with email'}
+                </button>
+              </form>
+              {sent && (
+                <>
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      setSent(false);
+                      setCode('');
+                      setProblem('');
+                    }}
+                  >
+                    Use a different email
+                  </button>
+                  <button
+                    disabled={busy || (config.captchaRequired && !token)}
+                    onClick={() => {
+                      if (Date.now() < resendAt) {
+                        setProblem('Wait a minute before requesting another code.');
+                        return;
+                      }
+                      void auth('send');
+                    }}
+                  >
+                    Send a new code
+                  </button>
+                </>
+              )}
+              <Link href={standalone ? '/enter' : '/enter?entry=claim'}>
+                Use my existing password ↗
+              </Link>
+            </>
+          )}
+        </>
+      )}
+      {problem && <p role="alert">{problem}</p>}
+      {!standalone && !saved && (
+        <button disabled={busy} onClick={close}>
+          Keep exploring
+        </button>
+      )}
+    </div>
+  );
+  return standalone ? (
+    content
+  ) : (
     <ContextSheet
       open={open}
       title={saved ? 'Your world is ready.' : 'Make this yours.'}
       busy={busy}
       onClose={close}
     >
-      <div className="gw-account-claim" data-saved={saved}>
-        <BrowserEntryNotice />
-        <EnergyOrb moving={false} />
-        <p className="gw-kicker">{saved ? 'YOUR FIRST CHAPTER' : 'YOUR DIRECTION. YOUR WORLD.'}</p>
-        {draft?.intention && <blockquote>{draft.intention}</blockquote>}
-        {saved ? (
-          <>
-            <h3>{draft?.intention ? 'Your direction is saved.' : 'Your free account is ready.'}</h3>
-            <p>Choose a practical next move and save it to Command.</p>
-            <Link className="gw-action" href="/app/welcome" onClick={() => setOpen(false)}>
-              Begin my first session →
-            </Link>
-            <Link
-              className="gw-action"
-              href={focuses[draft?.focus ?? 'body'].href}
-              onClick={() => setOpen(false)}
-            >
-              Continue to{' '}
-              {draft?.focus === 'presence'
-                ? 'Grooming'
-                : draft?.focus === 'focus'
-                  ? 'your day'
-                  : 'Performance'}{' '}
-              ↗
-            </Link>
-            <button onClick={close}>Return to my world</button>
-          </>
-        ) : config?.authenticated ? (
-          <>
-            {receipt?.status === 'conflict' ? (
-              <>
-                <h3>You already have a direction for today.</h3>
-                <p>Your saved priority: {receipt.intention}</p>
-                <button className="gw-action" disabled={busy} onClick={() => void keep(true)}>
-                  Replace it with this direction
-                </button>
-                <button
-                  onClick={() => {
-                    clearDraft(draft?.id);
-                    close();
-                  }}
-                >
-                  Keep my saved priority
-                </button>
-              </>
-            ) : receipt?.status === 'day_changed' ? (
-              <>
-                <p>A new day has begun. Save this direction for {receipt.day}?</p>
-                <button className="gw-action" disabled={busy} onClick={() => void keep()}>
-                  Save for today
-                </button>
-              </>
-            ) : (
-              <>
-                <p>
-                  {busy
-                    ? 'Keeping your direction…'
-                    : 'Your account is connected. Keep your direction here.'}
-                </p>
-                <button className="gw-action" disabled={busy} onClick={() => void keep()}>
-                  {busy ? 'Saving…' : 'Save my direction'}
-                </button>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <p>
-              {draft?.intention
-                ? 'Keep your direction and build from here.'
-                : 'A place for your training, daily direction, and personal profile.'}
-            </p>
-            <p className="gw-muted">
-              Free account. No payment required. Paid benefits remain separate.
-            </p>
-            {!config ? (
-              <button
-                className="gw-action"
-                onClick={() => {
-                  setProblem('');
-                  void load();
-                }}
-              >
-                Load account options
-              </button>
-            ) : !config.ready ? (
-              <>
-                <p>Free signup is being prepared. Your draft stays on this device.</p>
-                <Link href="/enter?entry=claim">Already have an account? Sign in ↗</Link>
-              </>
-            ) : (
-              <>
-                {config.google && (
-                  <button
-                    className="gw-action gw-google"
-                    disabled={busy}
-                    onClick={() => void auth('google')}
-                  >
-                    Continue with Google
-                  </button>
-                )}
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void auth(sent ? 'verify' : 'send');
-                  }}
-                >
-                  <label htmlFor="claim-email">Email</label>
-                  <input
-                    id="claim-email"
-                    type="email"
-                    autoComplete="email"
-                    maxLength={254}
-                    required
-                    value={email}
-                    disabled={busy || sent}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  {sent && (
-                    <>
-                      <p>Enter the code sent to {email}. Return here to keep your direction.</p>
-                      <label htmlFor="claim-code">Verification code</label>
-                      <input
-                        id="claim-code"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        pattern="[0-9]{6,10}"
-                        minLength={6}
-                        maxLength={10}
-                        required
-                        value={code}
-                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                      />
-                    </>
-                  )}
-                  {config.siteKey && (
-                    <>
-                      <Script
-                        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-                        onReady={() => setScriptReady(true)}
-                        onError={() =>
-                          setProblem('The security check could not load. Retry shortly.')
-                        }
-                      />
-                      <div ref={node} />
-                    </>
-                  )}
-                  <button
-                    className="gw-action"
-                    disabled={busy || (!sent && config.captchaRequired && !token)}
-                  >
-                    {busy ? 'Connecting…' : sent ? 'Continue my ascent' : 'Continue with email'}
-                  </button>
-                </form>
-                {sent && (
-                  <>
-                    <button
-                      disabled={busy}
-                      onClick={() => {
-                        setSent(false);
-                        setCode('');
-                        setProblem('');
-                      }}
-                    >
-                      Use a different email
-                    </button>
-                    <button
-                      disabled={busy || (config.captchaRequired && !token)}
-                      onClick={() => {
-                        if (Date.now() < resendAt) {
-                          setProblem('Wait a minute before requesting another code.');
-                          return;
-                        }
-                        void auth('send');
-                      }}
-                    >
-                      Send a new code
-                    </button>
-                  </>
-                )}
-                <Link href="/enter?entry=claim">Use my existing password ↗</Link>
-              </>
-            )}
-          </>
-        )}
-        {problem && <p role="alert">{problem}</p>}
-        {!saved && (
-          <button disabled={busy} onClick={close}>
-            Keep exploring
-          </button>
-        )}
-      </div>
+      {content}
     </ContextSheet>
   );
 }

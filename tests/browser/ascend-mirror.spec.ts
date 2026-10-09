@@ -1,3 +1,4 @@
+import { appUrl, componentUrl } from './fixtures';
 import { test, expect, type Page } from './fixtures';
 async function cameraFixture(page: Page, denied = false) {
   await page.addInitScript((denied) => {
@@ -40,7 +41,7 @@ for (const width of [360, 768, 1440]) {
       posts++;
       return route.fulfill({ status: 503, json: { error: 'Assessment temporarily unavailable.' } });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=mirror');
+    await page.goto(componentUrl('/?mode=mirror'));
     expect(
       await page.evaluate(
         () => (window as unknown as { mirrorCamera: { calls: number } }).mirrorCamera.calls,
@@ -81,7 +82,7 @@ for (const width of [360, 768, 1440]) {
 }
 test('camera permission denial offers recovery and photo fallback', async ({ page }) => {
   await cameraFixture(page, true);
-  await page.goto('http://127.0.0.1:3102/?mode=mirror');
+  await page.goto(componentUrl('/?mode=mirror'));
   await page.getByRole('button', { name: 'Start scan', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Allow camera access');
   await expect(page.getByRole('button', { name: 'Try camera again' })).toBeEnabled();
@@ -104,7 +105,7 @@ test('automatic steady capture advances three views and never sends before appro
   page.on('request', (r) => {
     if (r.method() === 'POST' && r.url().includes('/api/grooming/scan')) posts++;
   });
-  await page.goto('http://127.0.0.1:3102/?mode=mirror');
+  await page.goto(componentUrl('/?mode=mirror'));
   await page.getByRole('button', { name: 'Start scan', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Ready for a closer look?', {
     timeout: 20000,
@@ -113,7 +114,7 @@ test('automatic steady capture advances three views and never sends before appro
   expect(posts).toBe(0);
 });
 test('real self-hosted MediaPipe worker processes an image on-device', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=mirror');
+  await page.goto(componentUrl('/?mode=mirror'));
   const reading = await page.evaluate(async () => {
     const image = new Image();
     image.src = '/brand/aethelios-portrait.webp';
@@ -179,7 +180,7 @@ test('native camera API is allowed by the production document policy (synthetic 
   try {
     const context = await browser.newContext({ permissions: ['camera'] });
     const page = await context.newPage();
-    await page.goto('http://127.0.0.1:3100/enter');
+    await page.goto(appUrl('/enter'));
     const result = await page.evaluate(async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' },
@@ -211,7 +212,7 @@ test('closing during delayed camera permission discards and stops the late strea
       },
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=mirror');
+  await page.goto(componentUrl('/?mode=mirror'));
   await page.getByRole('button', { name: 'Start scan', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Opening camera…' })).toBeVisible();
   await page.getByRole('button', { name: 'Close Ascend Mirror' }).click();

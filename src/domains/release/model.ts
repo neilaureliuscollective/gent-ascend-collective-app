@@ -1,12 +1,9 @@
 import { accountConfig } from '@/domains/onboarding/config';
 import { billingConfig } from '@/domains/billing/config';
 
-export function supportEmail(env: Record<string, string | undefined>) {
-  const email = env.GENT_SUPPORT_EMAIL ?? env.MEMBERSHIP_SUPPORT_EMAIL ?? '';
-  return email.length <= 254 && /^[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)
-    ? email
-    : null;
-}
+import { supportEmail } from './contact';
+import { approvedPolicies } from './policies';
+export { supportEmail } from './contact';
 export type ReleaseCheck = {
   name: string;
   status: 'configured' | 'blocked' | 'unknown';
@@ -74,8 +71,13 @@ export function releaseReadiness(env: Record<string, string | undefined>) {
     },
     {
       name: 'Published terms and privacy',
-      status: 'unknown',
+      status: approvedPolicies(env) ? 'configured' : 'blocked',
       next: 'Confirm the applicable privacy, software billing and merchant terms before accepting public customers. Support guidance is not a legal policy.',
+    },
+    {
+      name: 'Shared provider allowance',
+      status: env.GENT_AI_BUDGET_ENABLED === 'true' ? 'configured' : 'blocked',
+      next: 'Verify reviewed database ceilings and person/project allowances, model/tool input and output bounds, concurrent reservations, failure retention and actual provider billing. Configuration alone is not budget acceptance.',
     },
     {
       name: 'Public release',

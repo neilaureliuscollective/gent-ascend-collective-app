@@ -1,3 +1,4 @@
+import { appUrl, componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 for (const [width, height] of [
   [344, 740],
@@ -28,7 +29,7 @@ for (const [width, height] of [
     await page.screenshot({ path: `test-results/command-${width}x${height}.png`, fullPage: true });
   });
 test('degraded decision status never becomes a false all clear', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=unavailable');
+  await page.goto(componentUrl('/?mode=daily&state=unavailable'));
   await expect(
     page.getByRole('heading', { name: 'Decision status is unavailable.' }),
   ).toBeVisible();
@@ -36,7 +37,7 @@ test('degraded decision status never becomes a false all clear', async ({ page }
   await page.screenshot({ path: 'test-results/command-degraded.png', fullPage: true });
 });
 test('empty account has no manufactured signals', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=empty');
+  await page.goto(componentUrl('/?mode=daily&state=empty'));
   await expect(page.locator('.field-signal')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Nothing needs you right now.' })).toBeVisible();
   await page.screenshot({ path: 'test-results/command-empty.png', fullPage: true });
@@ -45,7 +46,7 @@ test('decision timeout blocks replay until deliberate saved-state reload', async
   await page.route('**/api/aurelius/actions', (route) =>
     route.fulfill({ status: 503, json: { error: 'Decision not confirmed.' } }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=pending');
+  await page.goto(componentUrl('/?mode=daily&state=pending'));
   await page.getByRole('button', { name: 'Approve action' }).click();
   await expect(page.getByRole('button', { name: 'Approve action' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Reload saved context' })).toBeVisible();
@@ -83,7 +84,7 @@ test('approved suggestion refreshes real saved state before all clear', async ({
       },
     }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=pending');
+  await page.goto(componentUrl('/?mode=daily&state=pending'));
   await page.getByRole('button', { name: 'Approve action' }).click();
   await expect(page.getByRole('heading', { name: 'Nothing needs you right now.' })).toBeVisible();
   expect(requests).toEqual([
@@ -117,7 +118,7 @@ test('bounded Command scene pauses offscreen and is removed by Still', async ({ 
 });
 
 test('failed opening stays truthful and offers deliberate retry', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=command-error');
+  await page.goto(componentUrl('/?mode=command-error'));
   await expect(
     page.getByRole('heading', { name: 'Your saved context is unavailable.' }),
   ).toBeVisible();
@@ -166,7 +167,7 @@ test('prepared review move requires confirmation and one acknowledged saved-stat
       await route.fulfill({ json: { saved: true, day: '2026-09-21' } });
     } else await route.fulfill({ json: { data: saved, asOf: '2026-09-21T14:00:00Z' } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=carry');
+  await page.goto(componentUrl('/?mode=daily&state=carry'));
   await expect(page.locator('.command-next')).toContainText('Call the partner');
   await page.setViewportSize({ width: 344, height: 740 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -204,7 +205,7 @@ test('direct completion is deliberate, versioned and restores keyboard focus', a
   await page.route('**/api/command', (route) =>
     route.fulfill({ json: { data, asOf: '2026-09-21T14:00:00Z' } }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   const trigger = page.getByRole('button', { name: 'Mark complete' });
   await trigger.click();
   expect(requests).toEqual([]);
@@ -225,7 +226,7 @@ test('acknowledged write with failed readback blocks replay until refresh succee
   await page.route('**/api/command', (route) =>
     route.fulfill({ status: 503, json: { error: 'Unavailable' } }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   await page.getByRole('button', { name: 'Mark complete' }).click();
   await page.getByRole('button', { name: 'Confirm completion', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Mark complete' })).toBeDisabled();
@@ -250,7 +251,7 @@ test('return refresh is bounded, reports real differences and protects a deeper 
     reads++;
     return route.fulfill({ json: { data, asOf: '2026-09-21T14:00:00Z' } });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   await page.clock.fastForward(61000);
   expect(reads).toBe(0); // There is no background polling.
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
@@ -272,7 +273,7 @@ test('session loss clears private context and cannot revive it by exiting sample
   await page.route('**/api/command', (route) =>
     route.fulfill({ status: 401, json: { error: 'Sign in' } }),
   );
-  await page.goto('http://127.0.0.1:3102/?mode=daily');
+  await page.goto(componentUrl('/?mode=daily'));
   await page.locator('.home-records > summary').filter({ hasText: 'Your saved context' }).click();
   await page.getByRole('button', { name: 'Refresh briefing' }).click();
   await expect(page.locator('.field-signal')).toHaveCount(0);
@@ -283,7 +284,7 @@ test('session loss clears private context and cannot revive it by exiting sample
 });
 
 test('additional saved suggestions disclose progressively without urgency', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=daily&state=several');
+  await page.goto(componentUrl('/?mode=daily&state=several'));
   await expect(page.getByRole('heading', { name: 'One decision at a time.' })).toBeVisible();
   await expect(page.locator('.command-oversight')).toContainText('Protect 30 minutes for writing');
   const more = page.locator('.command-more-decisions');
@@ -308,7 +309,7 @@ test('Command preparation API denies anonymous and hostile-origin writes in prod
   expect(read.status()).toBe(401);
   expect(read.headers()['cache-control']).toBe('private, no-store');
   const write = await request.post('/api/command', {
-    headers: { origin: 'http://127.0.0.1:3100' },
+    headers: { origin: appUrl('') },
     data,
   });
   expect(write.status()).toBe(401);
@@ -390,7 +391,7 @@ test('Fold resize retains selected saved signal without overflow', async ({ page
 test('real arrival summary connects to the preserved workspace and clears on session loss', async ({
   page,
 }) => {
-  await page.goto('http://127.0.0.1:3102/?mode=daily-summary');
+  await page.goto(componentUrl('/?mode=daily-summary'));
   await page.locator('.home-records > summary').filter({ hasText: 'Your saved context' }).click();
   const connection = page.getByRole('region', { name: 'Daily Command connection' });
   await expect(connection.getByRole('heading', { name: 'READY', exact: true })).toBeVisible();
@@ -415,7 +416,7 @@ test('Command without JavaScript explains the workspace requirement and keeps a 
   });
   try {
     const page = await context.newPage();
-    await page.goto('http://127.0.0.1:3100/app');
+    await page.goto(appUrl('/app'));
     await expect(
       page.getByText('If this screen stays here, enable JavaScript', { exact: false }),
     ).toBeVisible();

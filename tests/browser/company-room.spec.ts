@@ -1,3 +1,4 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 const companyId = 'c8000000-0000-4000-8000-000000000001';
 for (const width of [360, 768, 1440]) {
@@ -15,7 +16,7 @@ for (const width of [360, 768, 1440]) {
         body: JSON.stringify({ error: 'Synthetic model unavailable' }),
       });
     });
-    await page.goto('http://127.0.0.1:3102/?mode=company-room');
+    await page.goto(componentUrl('/?mode=company-room'));
     await expect(page.getByRole('heading', { name: 'Synthetic A', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Sharpen the positioning' }).click();
     await expect(page.getByLabel('Work with Synthetic A')).toHaveValue(/positioning/);
@@ -48,7 +49,7 @@ test('company brief writes require explicit confirmation and a current version',
       body: JSON.stringify({ error: 'The brief changed. Reload before editing again.' }),
     });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=company-room');
+  await page.goto(componentUrl('/?mode=company-room'));
   await page.getByRole('button', { name: 'Company tools', exact: true }).click();
   await page.getByRole('button', { name: 'Review brief · v1' }).click();
   await page.getByLabel('Confirmed business context').fill('A proposed correction');

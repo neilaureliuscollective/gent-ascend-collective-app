@@ -1,6 +1,7 @@
+import { componentUrl } from './fixtures';
 import { test, expect } from './fixtures';
 import { syntheticWork } from '../component-fixture/company-work-data';
-const fixture = 'http://127.0.0.1:3102/?mode=company-job';
+const fixture = componentUrl('/?mode=company-job');
 for (const width of [360, 768, 1440])
   test(`company work retains edits and reviews the exact version at ${width}px`, async ({
     page,
