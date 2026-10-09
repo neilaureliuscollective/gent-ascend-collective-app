@@ -70,6 +70,7 @@ test('200 percent text remains navigable and permits reading and composing', asy
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel('Message Aethelios').fill('Larger text');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('Larger text');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await expect(page.getByText('Preview · sign in to confirm and save memories.')).toBeVisible();
 });
