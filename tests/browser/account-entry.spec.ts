@@ -34,6 +34,7 @@ for (const width of [360, 820, 1440]) {
     ).toBeVisible();
     await page.locator('#claim-email').fill('synthetic@example.test');
     await page.getByRole('button', { name: 'Continue with email', exact: true }).click();
+    await expect(page.locator('#claim-code')).toBeVisible();
     expect(requests[0]).toMatchObject({
       action: 'send',
       entry: 'account',
@@ -54,6 +55,7 @@ for (const width of [360, 820, 1440]) {
     await expect(page.getByRole('heading', { name: 'Return with an email code.' })).toBeVisible();
     await page.locator('#claim-email').fill('synthetic@example.test');
     await page.getByRole('button', { name: 'Continue with email', exact: true }).click();
+    await expect(page.locator('#claim-code')).toBeVisible();
     expect(requests.at(-1)).toMatchObject({ action: 'send', entry: 'recover' });
     await expect(page.getByRole('link', { name: 'Use my existing password' })).toHaveAttribute(
       'href',
