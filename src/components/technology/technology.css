@@ -220,3 +220,10 @@
     display: block;
   }
 }
+.technology-preview[data-designed='true'] .eyebrow {
+  color: var(--site-accent);
+}
+.technology-preview[data-designed='true'] button[aria-current='page'] {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
