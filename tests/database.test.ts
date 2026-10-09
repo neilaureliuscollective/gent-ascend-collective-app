@@ -1507,3 +1507,58 @@ describe('public Mission ownership and continuity', () => {
     expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
   });
 });
+
+// These are SQL/RLS contract tests, not live OAuth/Auth assertions.
+describe('business connection database controls', () => {
+  const id = 'b1000000-0000-4000-8000-000000000001',
+    company = 'b1000000-0000-4000-8000-000000000002',
+    lease = 'b1000000-0000-4000-8000-000000000003';
+  const owner = `(select id from public.persons where auth_user_id='${founder}')`;
+  it('rejects foreign company links and denies browser credential access', async () => {
+    await asUser(
+      founder,
+      `insert into public.companies(id,person_id,name,brief) values('${company}',${owner},'Synthetic business','Testing only')`,
+    );
+    await expect(
+      asUser(member, `select public.business_begin('${id}','${company}')`),
+    ).rejects.toThrow(/Company unavailable/);
+    await asUser(founder, `select public.business_begin('${id}','${company}')`);
+    expect(
+      (await asUser(member, `select * from public.business_connections where id='${id}'`)).rows,
+    ).toHaveLength(0);
+    await expect(asUser(founder, 'select * from business_private.credentials')).rejects.toThrow(
+      /permission denied/,
+    );
+    await expect(
+      asUser(founder, `select public.business_control('read',${owner},'${id}',null)`),
+    ).rejects.toThrow(/permission denied/);
+    await expect(
+      asUser(founder, `update public.business_connections set status='active' where id='${id}'`),
+    ).rejects.toThrow(/permission denied/);
+  });
+  it('serializes exchange and refresh, refuses invalid leases and cannot resurrect a disconnected link', async () => {
+    const call = (command: string, l: string | null = lease, payload: unknown = {}) =>
+      `select public.business_control('${command}',${owner},'${id}',${l ? "'" + l + "'" : 'null'},'${JSON.stringify(payload)}'::jsonb)`;
+    const payload = {
+      subject: member,
+      providerId: 'synthetic-provider',
+      providerName: 'Synthetic',
+      timezone: 'America/Chicago',
+      grantId: lease,
+      expiresAt: '2099-01-01T00:00:00Z',
+      ciphertext: 'synthetic-ciphertext',
+    };
+    await db.query(call('exchange'));
+    await expect(db.query(call('exchange'))).rejects.toThrow(/in progress/);
+    await expect(db.query(call('finish', null, payload))).rejects.toThrow(/Lease changed/);
+    await db.query(call('finish', lease, payload));
+    await db.query(call('refresh'));
+    await expect(db.query(call('refresh'))).rejects.toThrow(/in progress/);
+    await db.query(call('disconnect', null));
+    await expect(db.query(call('finish', lease, payload))).rejects.toThrow(/Disconnected/);
+    expect(
+      (await db.query(`select * from business_private.credentials where connection_id='${id}'`))
+        .rows,
+    ).toHaveLength(0);
+  });
+});

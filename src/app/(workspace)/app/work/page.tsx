@@ -17,6 +17,9 @@ export default function WorkPage() {
           Continue in Talk ↗
         </Link>
       </header>
+      <Link className="button" href="/app/business-connections">
+        Business Connections ↗
+      </Link>
       <CompanyRooms />
       <h2>Explore a job in unassigned Talk</h2>
       <div className="company-job-list" aria-label="Start company work">
