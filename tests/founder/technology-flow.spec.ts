@@ -29,6 +29,9 @@ test('Technology survives real save/review/revision/reload and another account c
   await page.getByLabel('About your business').fill('A synthetic studio for local testing only.');
   await page.getByLabel('Service 1', { exact: true }).fill('Consultation');
   await page.getByLabel('Price as displayed').fill('$45');
+  await page.getByText('Design direction', { exact: true }).click();
+  await page.getByLabel('Website palette').selectOption('ivory');
+  await page.getByLabel('Hero composition').selectOption('split');
   await page.getByRole('button', { name: 'Save new version' }).click();
   await expect(page.getByRole('button', { name: 'Confirm this saved brief' })).toBeEnabled();
   await page.getByRole('button', { name: 'Confirm this saved brief' }).click();
@@ -41,7 +44,10 @@ test('Technology survives real save/review/revision/reload and another account c
   const artifact = await page.request.get(exportPath);
   expect(artifact.ok()).toBe(true);
   expect(artifact.headers()['cache-control']).toBe('private, no-store');
-  expect(await artifact.text()).toContain('Synthetic Technology Studio');
+  const html = await artifact.text();
+  expect(html).toContain('Synthetic Technology Studio');
+  expect(html).toContain('background:#f5f1e8');
+  expect(html).toContain('grid-template-columns:minmax(0,1fr) minmax(0,1fr)');
   const buildList = await (await page.request.get('/api/technology/builds')).json();
   const buildId = buildList.builds[0].id;
   await page.getByRole('button', { name: 'Inspect isolated website' }).click();
@@ -63,6 +69,8 @@ test('Technology survives real save/review/revision/reload and another account c
       v.brief.name === 'Synthetic Technology Studio' && v.revision === 2,
   );
   expect(version).toBeTruthy();
+  expect(version.brief.design.palette).toBe('ivory');
+  expect(version.brief.design.hero).toBe('split');
   await page.goto('/app/library');
   await expect(page.getByRole('link', { name: /Synthetic Technology Studio/ })).toBeVisible();
   const other = await browser.newContext({ baseURL: 'http://127.0.0.1:3103' });

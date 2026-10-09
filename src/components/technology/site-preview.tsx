@@ -1,11 +1,31 @@
 'use client';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { bookingUrl, type Brief } from '@/domains/technology/schema';
+import { palettes } from '@/domains/technology/design';
 export function SitePreview({ brief }: { brief: Brief }) {
   const [page, setPage] = useState('Home');
   const safe = bookingUrl.safeParse(brief.bookingUrl);
+  const d = brief.design,
+    colors = d ? palettes[d.palette] : null;
+  const style = colors
+    ? ({
+        '--site-bg': colors.background,
+        '--site-fg': colors.foreground,
+        '--site-accent': colors.accent,
+        '--site-muted': colors.muted,
+        '--site-border': colors.border,
+        '--site-heading': d?.typography === 'serif' ? 'Georgia,serif' : 'system-ui,sans-serif',
+        '--site-space': d?.spacing === 'spacious' ? '48px' : '24px',
+      } as CSSProperties)
+    : undefined;
   return (
-    <section className="technology-preview" aria-label="Website preview">
+    <section
+      className="technology-preview"
+      data-hero={d?.hero}
+      data-designed={Boolean(d)}
+      style={style}
+      aria-label="Website preview"
+    >
       <header>
         <span>{brief.name || 'Your business'}</span>
         <nav aria-label="Preview pages">
@@ -21,7 +41,7 @@ export function SitePreview({ brief }: { brief: Brief }) {
           ))}
         </nav>
       </header>
-      <main>
+      <main data-page={page}>
         {page === 'Home' && (
           <>
             <span className="eyebrow">
@@ -32,7 +52,7 @@ export function SitePreview({ brief }: { brief: Brief }) {
             <h2>{brief.headline || 'Your next chapter starts here.'}</h2>
             <p>{brief.about || 'Describe your business to shape this preview.'}</p>
             <button type="button" onClick={() => setPage('Services')}>
-              Explore services
+              {d?.cta ?? 'Explore services'}
             </button>
           </>
         )}

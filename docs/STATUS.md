@@ -1,3 +1,11 @@
+## 2026-10-09 — Technology Phase 3: conversational website revisions
+
+Recovered exact Phase 2 candidate `e19a695a` (CI 37854218494 success) and integrated production main `3e826f5e` locally, retaining its official installation icon. PRs #64/#65/#67 remain development work; #66's icon proposal is superseded by main. Vercel production READY at `3e826f5e`; read-only public database inspection found Mission and Technology additive tables absent. No hosted migration, merge or production promotion.
+
+Added exact-version natural-language website refinement using existing metered provider infrastructure; 36 audited design compositions, saved rationale/request, manual design controls, deterministic styled exports and scoped completed-user-request handoff from the originating Talk conversation. Existing Work/Mission/Saved Work links and independent Studio remain. Facts/prices/integration links cannot be changed by AI; old briefs remain compatible. New strict SQL validator/preflight is additive; all four prior migration hashes unchanged. Scope/research/release/rollback limits: TECHNOLOGY_INTELLIGENT_CREATION.md.
+
+Local observed checks: 464 unit/SQL/service tests, zero-warning lint, strict types, optimized webpack production build, 11 release-contract tests and recorded migration ledger passed. Ten focused browser fixtures passed at 320/720/1440px, including history, uncertain-spend lock, recovery/export and conversational design revision. API/provider fixtures are synthetic, not hosted/live-model acceptance. Screenshot review confirms narrow-screen wrap/spacing. Real Supabase/Auth browser gates are queued for exact-candidate CI; this container has no Docker executable. Isolated hosted rehearsal, provider cost/quality, physical devices and explicit founder release decision remain. No new paid service or billing changes.
+
 ## 2026-10-08 — Technology Phase 2: Verified service-site builds
 
 Recovered Phase 1 at `e429cfae`: final CI run `37841632399` passed application/database jobs, 442 unit/SQL tests, all 355 browser checks and 12 actual local authenticated journeys. Phase 1 remains an unmerged development candidate; production has not changed.
@@ -48,6 +56,13 @@ Observed local lint/types/build and 425 unit/SQL tests passed (58 files). Core b
 Real local Auth/PostgREST smoke and all 11 authenticated browser flows passed in GitHub Actions run 37797715436 on candidate d91f46ef. Mission snapshots, deliverable replay/stale edits/exact review/retained documents, linked Studio isolation and recovered optional first-session planning have real local receipts. The final follow-up additionally checks the authenticated saved-work route and restoration of the actual next action; those receipts are pending. Supabase has no existing isolated development branch. Hosted two-account round trips, live provider context evaluation within an approved budget, physical-device review, and migration/grant receipts remain open. Production, live billing and production schema are unchanged. Candidate is not eligible for production promotion while mandatory gates are open.
 
 Details: PHASE_ONE_UNIFICATION.md and PHASE_ONE_REGRESSION.md.
+## Official Public Aethelios install icon correction — 2026-10-08
+
+Rebuilt the founder-supplied metallic gold A / laurels / celestial crest on imperial teal-blue using built-in image generation. No lettering. Full-bleed rounded-square composition for regular Android/iPhone icons; separately generated circular composition for Android masks. Versioned manifest URLs, regenerated 180px Apple touch icon and 64px browser icon. Source masters and reproducible sizing script committed. Existing in-app logo and functionality unchanged.
+
+Validation: lint, typecheck, 56 test files / 409 tests, optimized production build passed. Icon dimensions and opaque output checked; visual review completed. Physical iPhone/Samsung installation remains a device check. Existing installed icons may require removal and reinstall after release.
+
+Sources: https://www.w3.org/TR/2023/WD-appmanifest-20230125/ (central safe circle); https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/ (Apple touch icon precedence); installed Next.js 16.3.5 metadata icon documentation. Image prompts: faithfully reconstruct supplied A/star/laurels/circle/gold rounded-square border and imperial teal-blue celestial backdrop, no text or mat; Android adaptation removes outer square frame while preserving same circular crest on seamless background. Asset processing resizes, blends background edges and ensures opaque PNGs.
 
 # Public Aethelios · Aether Petrol visual migration · 2026-10-07
 

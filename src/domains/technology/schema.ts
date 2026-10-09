@@ -15,6 +15,30 @@ export const bookingUrl = text(500).refine((value) => {
     return false;
   }
 }, 'Use a public HTTPS booking link without credentials.');
+export const designSchema = z
+  .object({
+    palette: z.enum(['petrol', 'ivory', 'slate']),
+    hero: z.enum(['editorial', 'centered', 'split']),
+    typography: z.enum(['serif', 'sans']),
+    spacing: z.enum(['spacious', 'compact']),
+    audience: text(200),
+    goal: text(200),
+    rationale: text(500),
+    cta: text(60).min(2),
+    request: text(1000),
+  })
+  .strict();
+export const defaultDesign: z.infer<typeof designSchema> = {
+  palette: 'petrol',
+  hero: 'editorial',
+  typography: 'serif',
+  spacing: 'spacious',
+  audience: '',
+  goal: '',
+  rationale: '',
+  cta: 'Explore services',
+  request: '',
+};
 export const briefSchema = z
   .object({
     name: text(100).min(2),
@@ -29,6 +53,7 @@ export const briefSchema = z
     hours: text(500),
     contact: text(500),
     bookingUrl,
+    design: designSchema.optional(),
   })
   .strict();
 export type Brief = z.infer<typeof briefSchema>;
@@ -60,10 +85,13 @@ export const commandSchema = z.discriminatedUnion('action', [
       runId: z.uuid(),
       expected: z.number().int().positive(),
       consent: z.literal(true),
+      instruction: text(1000).min(3).optional(),
+      sourceTurnId: z.uuid().optional(),
     })
     .strict(),
 ]);
 export type Project = {
+  conversation_id?: string | null;
   id: string;
   person_id: string;
   mission_id: string | null;
