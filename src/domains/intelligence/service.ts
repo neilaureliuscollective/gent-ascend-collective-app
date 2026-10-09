@@ -1,3 +1,8 @@
+import {
+  planningInstructions,
+  planningVersion,
+  websiteContextMessage,
+} from '@/domains/technology/planning';
 import { missionContextMessage } from '@/domains/missions/continuity-schema';
 import 'server-only';
 import { currentIdentity } from '@/domains/identity/current';
@@ -530,6 +535,8 @@ export async function prepareReply(input: {
   includeContext: boolean;
   savedSources?: ContextSources;
   mission?: { id: string; revision: number };
+  website?: { id: string; revision: number };
+  websitePlanning?: true;
   companyId?: string;
   sourceTurnId?: string;
   revisionKind?: 'retry' | 'regenerate' | 'edit';
@@ -541,6 +548,13 @@ export async function prepareReply(input: {
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
+  if (
+    (input.websitePlanning && (input.website || input.council)) ||
+    (input.website && input.council)
+  )
+    throw new IntelligenceError('Choose one website conversation mode.', 400);
+  if (input.companyId && (input.website || input.websitePlanning))
+    throw new IntelligenceError('Website context cannot enter a company room.', 400);
   if (input.companyId && input.mission)
     throw new IntelligenceError('Mission context cannot enter a company room.', 400);
   let company: import('@/domains/companies/schema').Company | null = null;
@@ -578,7 +592,11 @@ export async function prepareReply(input: {
     p_text: input.text,
     p_model: config.AURELIUS_AI_MODEL,
     p_context: input.includeContext,
-    p_prompt_version: input.council ? councilPromptVersion(input.council) : promptVersion,
+    p_prompt_version: input.websitePlanning
+      ? `${promptVersion}:${planningVersion}`
+      : input.council
+        ? councilPromptVersion(input.council)
+        : promptVersion,
   };
   const begun = company
     ? input.sourceTurnId && input.revisionKind
@@ -656,6 +674,7 @@ export async function prepareReply(input: {
   let context: PersonalContext | null;
   let threadSummary: string;
   let missionDirection: Record<string, unknown> | null = null;
+  let websiteMessage: string | null = null;
   try {
     [history, context] = await Promise.all([
       conversationTurns(input.conversationId, undefined, company?.id),
@@ -683,6 +702,16 @@ export async function prepareReply(input: {
         throw new IntelligenceError('Mission changed. Reload before continuing.', 409);
       missionDirection = captured.data;
     }
+    if (input.website) {
+      const captured = await client.rpc('technology_capture_context', {
+        p_turn: input.requestId,
+        p_project: input.website.id,
+        p_revision: input.website.revision,
+      });
+      if (captured.error || !captured.data)
+        throw new IntelligenceError('Website context changed.', 409);
+      websiteMessage = websiteContextMessage(captured.data);
+    }
     threadSummary = await prepareThreadSummary(client, person.id, input.conversationId, history);
   } catch {
     await client.rpc('ai_finish_turn', {
@@ -700,6 +729,10 @@ export async function prepareReply(input: {
   return {
     model: config.AURELIUS_AI_MODEL,
     messages: [
+      ...(input.websitePlanning
+        ? [{ role: 'system' as const, content: planningInstructions }]
+        : []),
+      ...(websiteMessage ? [{ role: 'user' as const, content: websiteMessage }] : []),
       ...(missionDirection
         ? [{ role: 'user' as const, content: missionContextMessage(missionDirection) }]
         : []),

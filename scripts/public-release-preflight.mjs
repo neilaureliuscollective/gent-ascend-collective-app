@@ -27,6 +27,10 @@ export const migrationFiles = [
     '20261009001910_technology_design_engine.sql',
     '26a438905982991761ad076b2d25e5be8c5abe301bfd0c02afa3b41ed5f01a78',
   ],
+  [
+    '20261009005242_technology_talk_context.sql',
+    '395658cf398e106ce20e42afe252cbee15f098a86ccec69f223c8e8da12fff63',
+  ],
 ];
 const columns = {
   persons: ['id', 'auth_user_id'],
@@ -89,6 +93,8 @@ export const expectedChecks = [
   ['builds', 'function:public.technology_build_claim(uuid,uuid)'],
   ['builds', 'broker:technology_build_finish'],
   ['design', 'validator:technology_validate_brief'],
+  ['website-talk', 'table:technology_turn_context'],
+  ['website-talk', 'function:public.technology_capture_context(uuid,uuid,integer)'],
 ];
 
 // An operator-supplied snapshot is advisory evidence, not a signed receipt or
@@ -122,7 +128,14 @@ export function evaluateSnapshot(input, now = Date.now()) {
   }
   if (seen.size !== allowed.size) throw new Error('Catalog snapshot is incomplete.');
   const failures = snapshot.checks.filter((check) => !check.ok);
-  const stages = ['continuity', 'deliverables', 'technology', 'builds', 'design'].map((stage) => {
+  const stages = [
+    'continuity',
+    'deliverables',
+    'technology',
+    'builds',
+    'design',
+    'website-talk',
+  ].map((stage) => {
     const checks = snapshot.checks.filter((check) => check.stage === stage);
     return {
       stage,

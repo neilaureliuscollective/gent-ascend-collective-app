@@ -23,7 +23,8 @@ with required_columns(relation, column_name, data_type) as (values
  ('technology','technology_projects','technology_owner_read'),
  ('technology','technology_site_versions','technology_owner_read'),
  ('technology','technology_runs','technology_owner_read'),
- ('builds','technology_builds','technology_build_owner_read')
+ ('builds','technology_builds','technology_build_owner_read'),
+ ('website-talk','technology_turn_context','technology_context_owner_read')
 ), functions(stage, signature) as (values
  ('continuity','public.mission_capture_context(uuid,uuid,integer)'),
  ('continuity','public.mission_store_proposal(uuid,uuid,uuid,integer,jsonb,integer,integer,integer)'),
@@ -38,7 +39,8 @@ with required_columns(relation, column_name, data_type) as (values
  ('technology','public.technology_review(uuid,uuid)'),
  ('technology','public.technology_reserve(uuid,uuid,integer)'),
  ('builds','public.technology_build_queue(uuid,uuid,uuid)'),
- ('builds','public.technology_build_claim(uuid,uuid)')
+ ('builds','public.technology_build_claim(uuid,uuid)'),
+ ('website-talk','public.technology_capture_context(uuid,uuid,integer)')
 ), checks as (
  select 'prerequisite' as stage, 'column:' || r.relation || '.' || r.column_name as object,
    a.attname is not null as present,

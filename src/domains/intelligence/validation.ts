@@ -23,12 +23,15 @@ export const chatInput = z
     includeContext: z.boolean(),
     savedSources: contextSourcesSchema.optional(),
     mission: z.object({ id: z.uuid(), revision: z.number().int().positive() }).strict().optional(),
+    website: z.object({ id: z.uuid(), revision: z.number().int().positive() }).strict().optional(),
+    websitePlanning: z.literal(true).optional(),
     council: councilInput.optional(),
     sourceTurnId: z.uuid().optional(),
     revisionKind: z.enum(['retry', 'regenerate', 'edit']).optional(),
   })
   .strict()
-  .refine((v) => Boolean(v.sourceTurnId) === Boolean(v.revisionKind));
+  .refine((v) => Boolean(v.sourceTurnId) === Boolean(v.revisionKind))
+  .refine((v) => !(v.websitePlanning && (v.website || v.council)) && !(v.website && v.council));
 export const memoryInput = z
   .object({
     id: z.uuid(),

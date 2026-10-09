@@ -1786,3 +1786,30 @@ it('validates versioned design in the database and prevents direct JSON contract
     /permission/,
   );
 });
+
+it('captures immutable website context only for the owner, current version and originating pending Talk turn', async()=>{
+ const chat='f2100000-0000-4000-8000-000000000001', mission='f2100000-0000-4000-8000-000000000002', turn='f2100000-0000-4000-8000-000000000003', p='f2100000-0000-4000-8000-000000000004', v='f2100000-0000-4000-8000-000000000005', otherChat='f2100000-0000-4000-8000-000000000006', otherTurn='f2100000-0000-4000-8000-000000000007';
+ const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ const brief=JSON.stringify({name:'Synthetic Studio',industry:'professional-services',vision:'A synthetic business website',headline:'Care with intention',about:'A carefully considered local studio',services:[{name:'Consultation',description:'',price:''}],hours:'',contact:'',bookingUrl:''});
+ await db.exec(`insert into ai_conversations(id,person_id,title) values('${chat}','${owner}','Website'),('${otherChat}','${owner}','Other');
+ insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values('${turn}','${owner}','${chat}','Refine this','','pending','test',false,'test'),('${otherTurn}','${owner}','${otherChat}','Other','','pending','test',false,'test');
+ insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${chat}','Website','A synthetic business website');`);
+ await asUser(founder,`select technology_save('${p}','${v}',0,'${brief}','${mission}',1)`);
+ const capture=(t=turn,r=1)=>`select technology_capture_context('${t}','${p}',${r}) as receipt`;
+ await expect(asUser(member,capture())).rejects.toThrow();
+ await expect(asUser(founder,capture(otherTurn))).rejects.toThrow(/conversation/);
+ await expect(asUser(founder,capture(turn,2))).rejects.toThrow(/changed/);
+ const receipt=(await asUser<{receipt:{revision:number;versionId:string}}>(founder,capture())).rows[0]!.receipt;
+ expect(receipt.revision).toBe(1);expect(receipt.versionId).toBe(v);
+ await asUser(founder,capture());
+ expect((await asUser(founder,`select * from technology_turn_context where turn_id='${turn}'`)).rows).toHaveLength(1);
+ expect((await asUser(member,`select * from technology_turn_context where turn_id='${turn}'`)).rows).toHaveLength(0);
+ await expect(asUser(founder,`update technology_turn_context set revision=2 where turn_id='${turn}'`)).rejects.toThrow(/permission/);
+ await db.exec(`update ai_turns set status='complete' where id='${turn}'`);
+ await expect(asUser(founder,capture())).rejects.toThrow(/conversation/);
+ await asUser(founder,`select technology_save('${p}',gen_random_uuid(),1,'${brief}')`);
+ expect((await asUser<{revision:number}>(founder,`select revision from technology_turn_context where turn_id='${turn}'`)).rows[0]!.revision).toBe(1);
+ await expect(asUser(founder,capture(otherTurn))).rejects.toThrow(/changed/);
+ expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_capture_context(uuid,uuid,integer)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+ await db.exec(`delete from technology_projects where id='${p}';delete from ai_conversations where id in ('${chat}','${otherChat}')`);
+});

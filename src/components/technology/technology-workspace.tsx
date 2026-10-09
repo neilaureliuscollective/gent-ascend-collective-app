@@ -21,12 +21,14 @@ export function TechnologyWorkspace() {
     [brief, setBrief] = useState<Brief>(initialBrief),
     [view, setView] = useState<Version | null>(null),
     [path, setPath] = useState('guided');
+  const [proposalNotice, setProposalNotice] = useState('');
   const [instruction, setInstruction] = useState('');
   const [source, setSource] = useState<{ turnId: string; revision: number } | null>(null);
   const [baseline, setBaseline] = useState(JSON.stringify(initialBrief));
   const dirty = JSON.stringify(brief) !== baseline;
   async function load(selected: string | null = id) {
     setBusy(true);
+    setProposalNotice('');
     try {
       const query = new URLSearchParams(window.location.search);
       const mission = query.get('mission');
@@ -59,6 +61,20 @@ export function TechnologyWorkspace() {
       }
       setSource(null);
       setInstruction('');
+      if (!project && query.get('proposal') && mission) {
+        const proposal = await fetch(
+          `/api/technology/proposal?mission=${encodeURIComponent(mission)}&turn=${encodeURIComponent(query.get('proposal')!)}`,
+          { cache: 'no-store' },
+        );
+        const proposed = await proposal.json();
+        if (!proposal.ok || proposed.missionRevision !== workspace.mission?.revision)
+          throw new Error(proposed.error || 'Source Mission changed. Reload before reviewing.');
+        const parsed = briefSchema.parse(proposed.brief);
+        setBrief(parsed);
+        setProposalNotice(
+          'Suggested website brief from Talk. Confirm every fact, service, price and design choice before saving. It has not been built or verified.',
+        );
+      }
       if (project && query.get('turn')) {
         const handoff = await fetch(
           `/api/technology/handoff?project=${project.id}&turn=${encodeURIComponent(query.get('turn')!)}`,
@@ -150,6 +166,11 @@ export function TechnologyWorkspace() {
         </p>
         <Link href="/app/work">← Your work</Link>
       </header>
+      {proposalNotice && (
+        <p role="status" className="technology-quality">
+          {proposalNotice}
+        </p>
+      )}
       {error && (
         <p role="alert" className="technology-error">
           {error}
@@ -179,6 +200,7 @@ export function TechnologyWorkspace() {
               onClick={() => {
                 if (dirty && !confirm('Discard unsaved changes?')) return;
                 setId(null);
+                setProposalNotice('');
                 setBrief(initialBrief);
                 setBaseline(JSON.stringify(initialBrief));
                 setView(null);
@@ -223,6 +245,15 @@ export function TechnologyWorkspace() {
                   ? 'Describe the outcome, then confirm the supported requirements below. SaaS, stores and custom code are not supported in this foundation.'
                   : 'Choose a service category and define your business. The same reviewed brief powers both paths.'}
               </p>
+              {!project && (
+                <p>
+                  Start with a conversation:{' '}
+                  <Link href="/app/aethelios">
+                    open Talk → Tools & context → “Plan a website with Aethelios” ↗
+                  </Link>
+                  . Capture the conversation as a Mission to bring its proposal here for review.
+                </p>
+              )}
               {data.mission && (
                 <button
                   disabled={busy || locked || !data.canCreate}

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { parseWebsiteProposal, planningVersion } from '@/domains/technology/planning';
 import { parseRitualSuggestion } from '@/domains/grooming/ritual-model';
 import { memo } from 'react';
 import { councilFromVersion, councilLabel } from '@/domains/intelligence/council';
@@ -26,6 +27,14 @@ export const ConversationTurn = memo(function ConversationTurn({
   onCopy?: () => void;
   onRevise?: (kind: 'retry' | 'regenerate' | 'edit') => void;
 }) {
+  const websitePlanning = !companyWork && turn.prompt_version?.endsWith(`:${planningVersion}`);
+  const website =
+    websitePlanning && turn.status === 'complete'
+      ? parseWebsiteProposal(turn.assistant_text)
+      : null;
+  const replyText = websitePlanning
+    ? turn.assistant_text.replace(/```aethelios-website\s*\n[\s\S]*?(?:\n```|$)/g, '')
+    : turn.assistant_text;
   const ritual =
     !companyWork && turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
   return (
@@ -60,9 +69,24 @@ export const ConversationTurn = memo(function ConversationTurn({
               ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
               : companyWork
                 ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
-                : turn.assistant_text}
+                : replyText}
           </Markdown>
         </div>
+        {website && (
+          <div className="ritual-chat-proposal">
+            <strong>{website.name} · Proposed website</strong>
+            <p>{website.headline}</p>
+            <p>
+              {website.services
+                .map((s) => `${s.name}${s.price ? ` · ${s.price}` : ''}`)
+                .join(' / ')}
+            </p>
+            <small>
+              Suggested brief saved in this reply. Review it through the website planning controls
+              before creating a project.
+            </small>
+          </div>
+        )}
         {versions?.map((previous) => (
           <details className="message-version" key={previous.id}>
             <summary>Previous version</summary>
