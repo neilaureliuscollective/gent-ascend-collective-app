@@ -18,7 +18,8 @@ export async function GET(request: Request) {
         'Cache-Control': 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
         'X-Artifact-SHA256': b.hash,
-        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        'Content-Security-Policy':
+          "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
       },
     });
   } catch (e) {

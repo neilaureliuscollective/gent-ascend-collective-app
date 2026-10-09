@@ -35,9 +35,15 @@ export const migrationFiles = [
     '20261009013900_technology_flexible_pages.sql',
     '071c2a81f09541adbb6dd151fdfa90e20bc90915425f69a79071e2d8ee073006',
   ],
+  [
+    '20261009023308_technology_owned_images.sql',
+    'f5051b63891c426119604425f8d4eff184a2f4b4048aea9b8dc1f4c4a72c514a',
+  ],
 ];
 const columns = {
   persons: ['id', 'auth_user_id'],
+  ai_studio_references: ['id', 'person_id', 'project_id', 'storage_key'],
+  ai_studio_versions: ['id', 'person_id', 'project_id', 'storage_key', 'status'],
   intelligence_missions: [
     'id',
     'person_id',
@@ -98,6 +104,12 @@ export const expectedChecks = [
   ['builds', 'broker:technology_build_finish'],
   ['design', 'validator:technology_validate_brief'],
   ['pages', 'validator:technology_validate_design_brief'],
+  ['images', 'table:technology_images'],
+  ['images', 'function:public.technology_image_begin(uuid,uuid,integer,uuid,text,uuid)'],
+  ['images', 'broker:technology_image_finish'],
+  ['images', 'constraint:technology_image_owner'],
+  ['images', 'constraint:technology_build_payload'],
+  ['images', 'validator:technology_validate_pages_brief'],
   ['website-talk', 'table:technology_turn_context'],
   ['website-talk', 'function:public.technology_capture_context(uuid,uuid,integer)'],
 ];
@@ -141,6 +153,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
     'design',
     'website-talk',
     'pages',
+    'images',
   ].map((stage) => {
     const checks = snapshot.checks.filter((check) => check.stage === stage);
     return {

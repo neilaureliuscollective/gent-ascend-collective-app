@@ -9,6 +9,7 @@ import {
   type Workspace,
   type Version,
 } from '@/domains/technology/schema';
+import { WebsiteImages } from './website-images';
 import { PageComposer } from './page-composer';
 import { VerifiedBuilds } from './verified-builds';
 import { SitePreview } from './site-preview';
@@ -153,7 +154,11 @@ export function TechnologyWorkspace() {
     );
   }
   function patch(key: keyof Brief, value: unknown) {
-    setBrief((b) => ({ ...b, [key]: value }));
+    setBrief((b) => {
+      const next = { ...b, [key]: value };
+      if (value === undefined) delete next[key];
+      return next;
+    });
     setView(null);
   }
   return (
@@ -269,7 +274,8 @@ export function TechnologyWorkspace() {
                   <p>
                     Editing {latest.brief.name} · v{latest.revision}. Copy, design and informational
                     page changes create an unreviewed version. Review suggested text before using
-                    it. Images and custom functionality require future work.
+                    it. Owned imagery can be selected below. Custom functionality requires future
+                    work.
                   </p>
                   <label>
                     Website revision request
@@ -550,6 +556,15 @@ export function TechnologyWorkspace() {
                     />
                   </label>
                 </details>
+                {project && (
+                  <WebsiteImages
+                    key={project.id}
+                    projectId={project.id}
+                    revision={project.revision}
+                    image={brief.image}
+                    onChange={(image) => patch('image', image)}
+                  />
+                )}
                 <PageComposer
                   pages={brief.pages ?? []}
                   onChange={(pages) => patch('pages', pages)}

@@ -277,3 +277,155 @@ test('website Talk context and planning proposal persist with real Auth and reje
   await owner.auth.signOut();
   await other.auth.signOut();
 });
+
+test('owned Studio imagery persists as a private website copy, exports without remote URLs and produces a disabled publication manifest', async ({
+  page,
+  browser,
+}) => {
+  const { createClient } = await import('@supabase/supabase-js');
+  const sharp = (await import('sharp')).default;
+  const owner = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL!,
+    (env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
+    { auth: { persistSession: false } },
+  );
+  expect(
+    (
+      await owner.auth.signInWithPassword({
+        email: 'founder@aurelius.test',
+        password: env.AURELIUS_FOUNDER_PASSWORD!,
+      })
+    ).error,
+  ).toBeNull();
+  const user = (await owner.auth.getUser()).data.user!;
+  const person = (await owner.from('persons').select('id').eq('auth_user_id', user.id).single())
+    .data!;
+  const studio = await owner
+    .from('ai_studio_projects')
+    .insert({ person_id: person.id, title: 'Synthetic website imagery', creative_type: 'brand' })
+    .select('id')
+    .single();
+  expect(studio.error).toBeNull();
+  const sourceId = crypto.randomUUID(),
+    project = crypto.randomUUID(),
+    versionId = crypto.randomUUID();
+  const key = `${user.id}/${studio.data!.id}/${sourceId}.png`;
+  const bytes = await sharp({
+    create: { width: 1200, height: 800, channels: 3, background: '#145463' },
+  })
+    .png()
+    .toBuffer();
+  expect(
+    (await owner.storage.from('aethelios-studio').upload(key, bytes, { contentType: 'image/png' }))
+      .error,
+  ).toBeNull();
+  expect(
+    (
+      await owner
+        .from('ai_studio_references')
+        .insert({
+          id: sourceId,
+          person_id: person.id,
+          project_id: studio.data!.id,
+          storage_key: key,
+          media_type: 'image/png',
+          byte_size: bytes.length,
+        })
+    ).error,
+  ).toBeNull();
+  const b = {
+    name: 'Synthetic imagery site',
+    industry: 'professional-services',
+    vision: 'A synthetic service website with owned imagery.',
+    headline: 'Considered work',
+    about: 'A synthetic studio for local testing.',
+    services: [{ name: 'Consultation', description: 'Discuss your needs.', price: '' }],
+    hours: '',
+    contact: '',
+    bookingUrl: '',
+  };
+  expect(
+    (
+      await owner.rpc('technology_save', {
+        p_id: project,
+        p_version: versionId,
+        p_expected: 0,
+        p_brief: b,
+      })
+    ).error,
+  ).toBeNull();
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
+  await page.goto(`/app/work/technology?project=${project}`);
+  await page.getByText('Website imagery', { exact: true }).click();
+  await page.getByLabel('Personal Studio image').selectOption(`reference:${sourceId}`);
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: 'Prepare selected image' }).click();
+  await expect(page.getByLabel('Homepage image').locator('option')).toHaveCount(2);
+  const image = (await page
+    .getByLabel('Homepage image')
+    .locator('option')
+    .nth(1)
+    .getAttribute('value'))!;
+  await page.getByLabel('Homepage image').selectOption(image);
+  await page.getByLabel('Image description').fill('A synthetic petrol studio image');
+  await page.getByRole('button', { name: 'Save new version' }).click();
+  await expect(page.getByRole('button', { name: 'Confirm this saved brief' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Confirm this saved brief' }).click();
+  await page.getByRole('button', { name: 'Prepare website build' }).click();
+  await page.getByRole('button', { name: 'Build / resume saved job' }).click();
+  const download = page.getByRole('link', { name: 'Download website HTML' });
+  await expect(download).toBeVisible();
+  const path = (await download.getAttribute('href'))!;
+  const artifact = await page.request.get(path);
+  const html = await artifact.text();
+  expect(html).toContain('data:image/jpeg;base64,/9j/');
+  expect(html).toContain('alt="A synthetic petrol studio image"');
+  expect(html).toContain('img-src data:');
+  expect(html).not.toContain('/storage/');
+  const original = await page.request.get(`/api/technology/images?id=${image}`);
+  expect(original.ok()).toBe(true);
+  expect(original.headers()['cache-control']).toBe('private, no-store');
+  expect((await owner.storage.from('aethelios-studio').remove([key])).error).toBeNull();
+  const retained = await page.request.get(`/api/technology/images?id=${image}`);
+  expect(await retained.body()).toEqual(await original.body());
+  const build = path.split('export=')[1]!;
+  const report = await page.request.get(`/api/technology/publication?build=${build}`);
+  expect(report.ok()).toBe(true);
+  expect(await report.json()).toMatchObject({
+    projectId: project,
+    versionId: expect.any(String),
+    revision: 2,
+    publishEnabled: false,
+    budgetMicros: 0,
+    sha256: artifact.headers()['x-artifact-sha256'],
+  });
+  expect((await page.request.post('/api/technology/publication')).status()).toBe(405);
+  await page.reload();
+  await expect(page.locator('.technology-preview img')).toHaveAttribute(
+    'src',
+    `/api/technology/images?id=${image}`,
+  );
+  const context = await browser.newContext({ baseURL: 'http://127.0.0.1:3103' });
+  try {
+    const member = await context.newPage();
+    await member.goto('/enter');
+    await member.getByLabel('Email').fill('member@aurelius.test');
+    await member.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
+    await member.getByRole('button', { name: 'Enter Aethelios' }).click();
+    await expect(member).toHaveURL(/\/app\/aethelios$/);
+    expect((await member.request.get(`/api/technology/images?id=${image}`)).status()).toBe(404);
+    expect((await member.request.get(`/api/technology/images?project=${project}`)).status()).toBe(
+      404,
+    );
+    expect((await member.request.get(`/api/technology/publication?build=${build}`)).status()).toBe(
+      404,
+    );
+    expect((await member.request.get(path)).status()).toBe(404);
+  } finally {
+    await context.close();
+    await owner.auth.signOut();
+  }
+});

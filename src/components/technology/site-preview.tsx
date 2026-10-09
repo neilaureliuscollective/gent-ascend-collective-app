@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element -- Private session-bound images must bypass shared optimization. */
 import { useState, type CSSProperties } from 'react';
 import { bookingUrl, type Brief } from '@/domains/technology/schema';
 import { palettes } from '@/domains/technology/design';
@@ -54,6 +55,13 @@ export function SitePreview({ brief }: { brief: Brief }) {
                 : 'Expertise with purpose.'}
             </span>
             <h2>{brief.headline || 'Your next chapter starts here.'}</h2>
+            {brief.image && (
+              <img
+                className="technology-site-image"
+                src={`/api/technology/images?id=${brief.image.assetId}`}
+                alt={brief.image.alt}
+              />
+            )}
             <p>{brief.about || 'Describe your business to shape this preview.'}</p>
             <button type="button" onClick={() => setPage('Services')}>
               {d?.cta ?? 'Explore services'}
@@ -76,6 +84,13 @@ export function SitePreview({ brief }: { brief: Brief }) {
         {active === 'About' && (
           <>
             <h2>About {brief.name}</h2>
+            {brief.image && (
+              <img
+                className="technology-site-image"
+                src={`/api/technology/images?id=${brief.image.assetId}`}
+                alt={brief.image.alt}
+              />
+            )}
             <p>{brief.about}</p>
           </>
         )}

@@ -2,6 +2,8 @@
 -- A passing catalog inspection is not hosted Auth/RLS behavior acceptance.
 with required_columns(relation, column_name, data_type) as (values
  ('persons','id','uuid'), ('persons','auth_user_id','uuid'),
+ ('ai_studio_references','id','uuid'), ('ai_studio_references','person_id','uuid'), ('ai_studio_references','project_id','uuid'), ('ai_studio_references','storage_key','text'),
+ ('ai_studio_versions','id','uuid'), ('ai_studio_versions','person_id','uuid'), ('ai_studio_versions','project_id','uuid'), ('ai_studio_versions','storage_key','text'), ('ai_studio_versions','status','text'),
  ('intelligence_missions','id','uuid'), ('intelligence_missions','person_id','uuid'),
  ('intelligence_missions','conversation_id','uuid'), ('intelligence_missions','revision','integer'),
  ('intelligence_missions','title','text'), ('intelligence_missions','objective','text'),
@@ -24,7 +26,8 @@ with required_columns(relation, column_name, data_type) as (values
  ('technology','technology_site_versions','technology_owner_read'),
  ('technology','technology_runs','technology_owner_read'),
  ('builds','technology_builds','technology_build_owner_read'),
- ('website-talk','technology_turn_context','technology_context_owner_read')
+ ('website-talk','technology_turn_context','technology_context_owner_read'),
+ ('images','technology_images','technology_images_owner_read')
 ), functions(stage, signature) as (values
  ('continuity','public.mission_capture_context(uuid,uuid,integer)'),
  ('continuity','public.mission_store_proposal(uuid,uuid,uuid,integer,jsonb,integer,integer,integer)'),
@@ -40,7 +43,8 @@ with required_columns(relation, column_name, data_type) as (values
  ('technology','public.technology_reserve(uuid,uuid,integer)'),
  ('builds','public.technology_build_queue(uuid,uuid,uuid)'),
  ('builds','public.technology_build_claim(uuid,uuid)'),
- ('website-talk','public.technology_capture_context(uuid,uuid,integer)')
+ ('website-talk','public.technology_capture_context(uuid,uuid,integer)'),
+ ('images','public.technology_image_begin(uuid,uuid,integer,uuid,text,uuid)')
 ), checks as (
  select 'prerequisite' as stage, 'column:' || r.relation || '.' || r.column_name as object,
    a.attname is not null as present,
@@ -122,6 +126,31 @@ with required_columns(relation, column_name, data_type) as (values
  and not has_function_privilege('authenticated',p.oid,'EXECUTE')
  and not has_function_privilege('anon',p.oid,'EXECUTE'),false)
  from (select 1) seed left join pg_proc p on p.oid=to_regprocedure('public.technology_validate_design_brief(jsonb)')
+ union all
+ select 'images','broker:technology_image_finish',p.oid is not null,
+ coalesce(p.prosecdef and array_to_string(p.proconfig,',') in ('search_path=""','search_path=')
+ and has_function_privilege('service_role',p.oid,'EXECUTE')
+ and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+ and not has_function_privilege('anon',p.oid,'EXECUTE'),false)
+ from (select 1) seed left join pg_proc p on p.oid=to_regprocedure('public.technology_image_finish(uuid,uuid,uuid,text,text)')
+ union all
+ select 'images','validator:technology_validate_pages_brief',p.oid is not null,
+ coalesce(not p.prosecdef and p.provolatile='i' and array_to_string(p.proconfig,',') in ('search_path=""','search_path=')
+ and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+ and not has_function_privilege('anon',p.oid,'EXECUTE'),false)
+ from (select 1) seed left join pg_proc p on p.oid=to_regprocedure('public.technology_validate_pages_brief(jsonb)')
+ union all
+ select 'images','constraint:technology_image_owner',c.oid is not null,
+ coalesce(c.contype='f' and c.convalidated and c.confrelid=to_regclass('public.technology_images') and c.conkey=array[
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='person_id'),
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='project_id'),
+ (select attnum from pg_attribute where attrelid=c.conrelid and attname='image_asset_id')
+ ]::smallint[],false)
+ from (select 1) seed left join pg_constraint c on c.conrelid=to_regclass('public.technology_site_versions') and c.conname='technology_image_owner'
+ union all
+ select 'images','constraint:technology_build_payload',c.oid is not null,
+ coalesce(c.contype='c' and c.convalidated and pg_get_constraintdef(c.oid) like '%250000%',false)
+ from (select 1) seed left join pg_constraint c on c.conrelid=to_regclass('public.technology_builds') and c.conname='technology_build_payload'
 )
 select jsonb_build_object(
  'contract','public-mission-v1',

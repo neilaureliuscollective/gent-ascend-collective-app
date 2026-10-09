@@ -30,7 +30,11 @@ beforeAll(async () => {
   for (const file of (await readdir('supabase/migrations'))
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
+    if (file === '20261009023308_technology_owned_images.sql')
+      await db.exec('alter default privileges in schema public grant all on tables to anon,authenticated');
     await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
+    if (file === '20261009023308_technology_owned_images.sql')
+      await db.exec('alter default privileges in schema public revoke all on tables from anon,authenticated');
   }
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
 });
@@ -1833,4 +1837,56 @@ it('additional pages retain strict SQL bounds, immutable versions, stale-write a
  expect((await asUser(member,`select * from technology_site_versions where project_id='${p}'`)).rows).toHaveLength(0);
  expect((await db.query<{allowed:boolean}>("select has_function_privilege('authenticated','technology_validate_brief(jsonb)','execute') as allowed")).rows[0]!.allowed).toBe(false);
  await db.exec(`delete from technology_projects where id='${p}'`);
+});
+
+it('owned image imports fence leases, reject foreign scopes and preserve website snapshots after Studio removal',async()=>{
+ expect((await db.query<{allowed:boolean}>("select has_table_privilege('anon','technology_images','select,insert,update,delete') as allowed")).rows[0]!.allowed).toBe(false);
+ expect((await db.query<{allowed:boolean}>("select has_table_privilege('authenticated','technology_images','insert,update,delete,truncate,references,trigger') as allowed")).rows[0]!.allowed).toBe(false);
+ const p='f6000000-0000-4000-8000-000000000001',v='f6000000-0000-4000-8000-000000000002',studio='f6000000-0000-4000-8000-000000000003',ref='f6000000-0000-4000-8000-000000000004',image='f6000000-0000-4000-8000-000000000005',lease=crypto.randomUUID();
+ const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ const b={name:'Synthetic images',industry:'professional-services',vision:'A synthetic business website.',headline:'Considered work',about:'A synthetic service for testing.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:''};
+ const json=(value:unknown)=>JSON.stringify(value).replaceAll("'","''");
+ await asUser(founder,`select technology_save('${p}','${v}',0,'${json(b)}')`);
+ await db.exec(`insert into ai_studio_projects(id,person_id,title) values('${studio}','${owner}','Synthetic image');insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${ref}','${owner}','${studio}','${founder}/${studio}/${ref}.png','image/png',100)`);
+ const begin=(l=lease)=>`select technology_image_begin('${image}','${p}',1,'${ref}','reference','${l}') as key`;
+ await expect(asUser(member,begin())).rejects.toThrow();
+ expect((await asUser<{key:string}>(founder,begin())).rows[0]!.key).toContain(founder);
+ await expect(asUser(founder,begin(crypto.randomUUID()))).rejects.toThrow(/active/);
+ await expect(asUser(founder,`select technology_save('${p}',gen_random_uuid(),1,'${json({...b,image:{assetId:image,alt:'A synthetic interior'}})}')`)).rejects.toThrow(/ready/);
+ await expect(asUser(founder,`select technology_image_finish('${image}','${owner}','${lease}',null,null)`)).rejects.toThrow(/permission/);
+ const data='data:image/jpeg;base64,/9j/AA==',hash='a'.repeat(64);
+ expect((await db.query<{ok:boolean}>(`select technology_image_finish('${image}','${owner}','${crypto.randomUUID()}','${data}','${hash}') as ok`)).rows[0]!.ok).toBe(false);
+ await db.query(`select technology_image_finish('${image}','${owner}','${lease}','${data}','${hash}')`);
+ expect((await asUser<{key:string|null}>(founder,begin())).rows[0]!.key).toBeNull();
+ await asUser(founder,`select technology_save('${p}',gen_random_uuid(),1,'${json({...b,image:{assetId:image,alt:'A synthetic interior'}})}')`);
+ await expect(asUser(founder,`update technology_images set data_url=null where id='${image}'`)).rejects.toThrow(/permission/);
+ expect((await asUser(member,`select * from technology_images where id='${image}'`)).rows).toHaveLength(0);
+ await db.exec(`delete from ai_studio_projects where id='${studio}'`);
+ expect((await asUser<{data_url:string}>(founder,`select data_url from technology_images where id='${image}'`)).rows[0]!.data_url).toBe(data);
+ expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_image_begin(uuid,uuid,integer,uuid,text,uuid)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+ await db.exec(`delete from technology_projects where id='${p}'`);
+});
+
+it('image recovery is lease-fenced, limited to three attempts and four imports per project, and excludes company Studio sources',async()=>{
+ const p='f6500000-0000-4000-8000-000000000001',studio='f6500000-0000-4000-8000-000000000002',image=crypto.randomUUID();
+ const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ const foreign=(await db.query<{id:string}>(`select id from persons where auth_user_id='${member}'`)).rows[0]!.id;
+ const refs=Array.from({length:5},()=>crypto.randomUUID()),otherStudio=crypto.randomUUID(),otherRef=crypto.randomUUID();
+ await db.exec(`insert into technology_projects(id,person_id) values('${p}','${owner}');insert into ai_studio_projects(id,person_id,title) values('${studio}','${owner}','Synthetic own'),('${otherStudio}','${foreign}','Synthetic foreign');`);
+ for(const ref of refs)await db.exec(`insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${ref}','${owner}','${studio}','${founder}/${studio}/${ref}.png','image/png',100)`);
+ await db.exec(`insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${otherRef}','${foreign}','${otherStudio}','${member}/${otherStudio}/${otherRef}.png','image/png',100)`);
+ const begin=(id:string,ref:string,lease:string)=>`select technology_image_begin('${id}','${p}',1,'${ref}','reference','${lease}')`;
+ await expect(asUser(founder,begin(crypto.randomUUID(),otherRef,crypto.randomUUID()))).rejects.toThrow(/unavailable/);
+ const company=crypto.randomUUID(),companyJob=crypto.randomUUID(),companyChat=crypto.randomUUID();
+ const companyStudio=crypto.randomUUID(),companyRef=crypto.randomUUID();
+ await db.exec(`insert into companies(id,person_id,name) values('${company}','${owner}','Synthetic image company');insert into ai_conversations(id,person_id,company_id,title) values('${companyChat}','${owner}','${company}','Synthetic image job');insert into company_jobs(id,person_id,company_id,conversation_id,company_name,company_brief,brief_version,scope) values('${companyJob}','${owner}','${company}','${companyChat}','Synthetic image company','',1,'{}');insert into ai_studio_projects(id,person_id,title,company_id,job_id) values('${companyStudio}','${owner}','Synthetic company','${company}','${companyJob}');insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${companyRef}','${owner}','${companyStudio}','${founder}/${companyStudio}/${companyRef}.png','image/png',100)`);
+ await expect(asUser(founder,begin(crypto.randomUUID(),companyRef,crypto.randomUUID()))).rejects.toThrow(/unavailable/);
+ const one=crypto.randomUUID(),two=crypto.randomUUID(),three=crypto.randomUUID();
+ await asUser(founder,begin(image,refs[0]!,one));await db.query(`select technology_image_finish('${image}','${owner}','${one}',null,null)`);
+ await asUser(founder,begin(image,refs[0]!,two));await db.exec(`update technology_images set lease_until=now()-interval '1 second' where id='${image}'`);await asUser(founder,begin(image,refs[0]!,three));
+ expect((await db.query<{ok:boolean}>(`select technology_image_finish('${image}','${owner}','${two}',null,null) as ok`)).rows[0]!.ok).toBe(false);
+ await db.query(`select technology_image_finish('${image}','${owner}','${three}',null,null)`);await expect(asUser(founder,begin(image,refs[0]!,crypto.randomUUID()))).rejects.toThrow(/attempts/);
+ for(const ref of refs.slice(1,4)){const id=crypto.randomUUID(),lease=crypto.randomUUID();await asUser(founder,begin(id,ref,lease));await db.query(`select technology_image_finish('${id}','${owner}','${lease}',null,null)`);}
+ await expect(asUser(founder,begin(crypto.randomUUID(),refs[4]!,crypto.randomUUID()))).rejects.toThrow(/allowance/);
+ await db.exec(`delete from technology_projects where id='${p}';delete from ai_studio_projects where id in('${studio}','${otherStudio}','${companyStudio}');delete from company_jobs where id='${companyJob}';delete from ai_conversations where id='${companyChat}';delete from companies where id='${company}'`);
 });
