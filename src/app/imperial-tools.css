@@ -1,0 +1,111 @@
+/* Shared precision controls; reading, editing and transcript surfaces stay ivory. */
+.app-shell.imperial-workspace .imperial-control-surface {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  color: var(--imperial-stone);
+  border: 1px solid var(--imperial-metal-edge);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px #ffffff20,
+    0 6px 18px #080d0b0c;
+}
+.app-shell.imperial-workspace .talk-toolbar.imperial-control-surface {
+  padding: 6px;
+}
+.app-shell.imperial-workspace
+  .imperial-control-surface
+  :is(.talk-tool, .talk-title, h2, .eyebrow, button) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .imperial-control-surface button:focus-visible {
+  outline-color: var(--aether-gold-light);
+  box-shadow: 0 0 0 2px var(--imperial-carbon);
+}
+.app-shell.imperial-workspace .imperial-control-surface .talk-tool:hover {
+  background: #ffffff10;
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .talk-drawer > header {
+  background: var(--imperial-brush), var(--imperial-steel-surface);
+  background-color: var(--imperial-steel);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .talk-drawer > header :is(h2, button) {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace .talk-drawer > header button:focus-visible {
+  outline-color: var(--aether-gold-light);
+  box-shadow: 0 0 0 2px var(--imperial-carbon);
+}
+.app-shell.imperial-workspace .studio-section-head.imperial-control-surface {
+  padding: 14px;
+  margin: -6px -1px 22px;
+  gap: 12px;
+}
+.app-shell.imperial-workspace .studio-section-head.imperial-control-surface > button {
+  color: var(--imperial-stone);
+  border-color: #d5d9cf88;
+  background: #080d0b30;
+}
+.app-shell.imperial-workspace .studio-view-tabs.imperial-control-surface {
+  gap: 4px;
+  padding: 6px;
+  margin: 20px 0 28px;
+}
+.app-shell.imperial-workspace .studio-view-tabs.imperial-control-surface button {
+  color: var(--imperial-stone);
+}
+.app-shell.imperial-workspace
+  .studio-view-tabs.imperial-control-surface
+  button[aria-pressed='true'] {
+  background: var(--aether-petrol);
+  border-color: #e4bd7080;
+  box-shadow: inset 0 -2px var(--aether-gold-light);
+}
+.app-shell.imperial-workspace .studio-projects nav button.selected {
+  background: var(--imperial-signature);
+  color: var(--imperial-stone);
+  border-color: var(--imperial-metal-edge);
+  box-shadow: inset 2px 0 var(--aether-gold-light);
+}
+.app-shell.imperial-workspace .studio-projects nav button.selected small {
+  color: #d5d9cf;
+}
+.app-shell.imperial-workspace .studio-composer {
+  border-color: #4a545080;
+  box-shadow:
+    inset 0 1px #ffffff,
+    0 8px 24px #080d0b0c;
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace
+  :is(.imperial-control-surface, .talk-drawer > header) {
+  background: var(--imperial-carbon);
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace
+    :is(.imperial-control-surface, .talk-drawer > header, .studio-projects nav button.selected) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace
+    :is(.imperial-control-surface, .talk-drawer > header, .studio-projects nav button.selected)
+    :is(h2, button, span, small, .eyebrow) {
+    color: CanvasText;
+  }
+  .app-shell.imperial-workspace .imperial-control-surface button[aria-pressed='true'] {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .app-shell.imperial-workspace
+    :is(.imperial-control-surface, .talk-drawer > header)
+    button:focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+}

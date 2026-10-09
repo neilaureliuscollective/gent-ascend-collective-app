@@ -188,7 +188,7 @@ export function StudioWorkspace() {
 
   return <section className="studio-surface" aria-label="Aethelios Studio">
     <aside className="studio-projects" aria-label="Project navigation">
-      <div className="studio-section-head"><div><p className="eyebrow">WORKSPACES</p><h2>Projects</h2></div><button type="button" onClick={() => setNaming(value => !value)} disabled={busy}>+ New</button></div>
+      <div className="studio-section-head imperial-control-surface"><div><p className="eyebrow">WORKSPACES</p><h2>Projects</h2></div><button type="button" onClick={() => setNaming(value => !value)} disabled={busy}>+ New</button></div>
       {naming && <form className="studio-new-project" onSubmit={createProject}>
         <label htmlFor="studio-title">Project name</label>
         <input id="studio-title" value={newTitle} onChange={event => setNewTitle(event.target.value)} minLength={1} maxLength={80} required autoFocus placeholder="The next thing you're building" />
@@ -204,7 +204,7 @@ export function StudioWorkspace() {
       {error && <p role="alert" className="studio-error">{error}</p>}
       {!selected ? <div className="studio-empty"><p className="eyebrow">AETHELIOS STUDIO</p><h2>Make the vision visible.</h2><p>Build a brand world, shape a campaign, explore a product, or see a personal idea before it exists. Every project keeps its direction, references and finished images together.</p><button className="button" type="button" onClick={() => setNaming(true)} disabled={busy}>Start a project ↗</button></div> : <>
         <div className="studio-project-heading"><div><p className="eyebrow">{paths.find(path => path.type === project?.creative_type)?.title ?? 'Creative project'}</p><h2>{project?.title}</h2><span>{data.versions.filter(version => version.status === 'complete').length} images · {data.references.length} references</span></div><Link href="/app/aethelios">Talk it through with Aethelios ↗</Link></div>
-        <div className="studio-view-tabs" role="group" aria-label="Studio workspace views">
+        <div className="studio-view-tabs imperial-control-surface" role="group" aria-label="Studio workspace views">
           {(['create', 'storyboard', 'finish', 'library', 'direction'] as const).map(tab => <button key={tab} type="button" aria-pressed={view === tab} onClick={() => setView(tab)}>{tab === 'create' ? 'Create' : tab === 'storyboard' ? 'Storyboard' : tab === 'finish' ? 'Finish' : tab === 'library' ? 'Library' : 'Direction'}</button>)}
         </div>
         {view === 'storyboard' && <StudioStoryboard key={selected} projectId={selected} scenes={data.scenes} versions={data.versions} disabled={busy} onChanged={() => load(selected)} onCreateFrame={createSceneFrame} onFinishImage={finishImage} />}

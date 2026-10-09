@@ -33,3 +33,9 @@ The hero presence is a decorative server-rendered CSS composition, aria-hidden a
 No provider, authentication, entitlement, storage or database behavior changed. No migrations or secrets added. The obsolete shell test expected the retired Command/My world navigation; it is updated to assert the actual Talk/Work/Studio navigation, active state and presence-dialog focus return. The existing production developer-route denial test is retained.
 
 Production release uses a feature branch, GitHub PR and the repository's Vercel Git integration. No direct CLI deployment or branch-protection bypass. Main's inherited broad browser/founder jobs were already failing before this phase; distinguish their outcomes from the homepage and preserved workspace acceptance. Record actual validation and deployment receipts in STATUS.md, including any remaining blocker rather than inventing live status.
+
+## Next phase — precision workspace controls
+
+Talk and Studio selectively adopt steel control surfaces while transcripts, drafts and creative briefs stay ivory. Shared material tokens now load in the root layout, including direct member visits. Talk toolbar and drawer headers gain steel framing; Studio project heading, view selector and selected project gain coordinated steel/green materials. No provider, authorization, database, navigation or entitlement behavior changes. No dependencies or motion were added. Solid material and forced-color fallbacks remain available.
+
+Review screenshots use synthetic Studio responses, not live provider acceptance. Preview promotion requires founder review. Pending creation-stack PRs remain separate.

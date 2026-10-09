@@ -516,7 +516,7 @@ export function AureliusWorkspace({
   return (
     <div className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''}`}>
       <div className={`aurelius-workspace ${compact ? 'compact' : ''}`}>
-        <div className="talk-toolbar">
+        <div className="talk-toolbar imperial-control-surface">
           <TalkPresence
             state={
               busy

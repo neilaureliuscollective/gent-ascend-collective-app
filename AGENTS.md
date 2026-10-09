@@ -1,3 +1,5 @@
+> Next workspace phase (2026-10-09): selective steel controls in Talk and Studio are authorized for implementation and preview. Preserve ivory reading/editing surfaces, AI behavior and access controls. Production promotion requires founder approval.
+
 > Imperial Steel homepage (2026-10-09): founder authorized implementation and production release. Read docs/IMPERIAL_STEEL.md. Add steel/carbon/stone materials to the homepage; preserve the approved green/ivory internal workspace and original crest. Do not merge the pending creation stack in this phase.
 
 > Public Aethelios visual update (2026-10-09): the founder approved ivory, architectural cream, Imperial Green, Mineral Green, Reserve Gold and green-black, replacing blue/petrol and the previous black-first direction. Read docs/IMPERIAL_WORKSPACE.md. Use src/platform/visual/aether-palette.json as the color source; retain existing functional/accessibility guards and official crest artwork. Public descriptor: PERSONAL INTELLIGENCE OS. Production promotion still requires founder approval.
