@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import type { BuildSummary } from '@/domains/technology/build-schema';
+import { WebsiteReleaseReview } from './website-release';
 export function VerifiedBuilds({
   projectId,
   versionId,
@@ -91,6 +92,12 @@ export function VerifiedBuilds({
                   Static document checks passed. Booking, forms and publication remain unverified.
                 </p>
                 <a href={`/api/technology/builds?export=${b.id}`}>Download website HTML</a>
+                <WebsiteReleaseReview
+                  key={b.id}
+                  buildId={b.id}
+                  sha256={b.sha256!}
+                  eligible={eligible && b.version_id === versionId}
+                />
                 <button
                   disabled={busy}
                   onClick={async () => {

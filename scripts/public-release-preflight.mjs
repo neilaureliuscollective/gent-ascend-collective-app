@@ -39,6 +39,10 @@ export const migrationFiles = [
     '20261009023308_technology_owned_images.sql',
     'f5051b63891c426119604425f8d4eff184a2f4b4048aea9b8dc1f4c4a72c514a',
   ],
+  [
+    '20261009041047_technology_release_packages.sql',
+    '349ab2942942bed1b95450f96cb79d7128c8f3bedbc6059ccdc6e9c42de71589',
+  ],
 ];
 const columns = {
   persons: ['id', 'auth_user_id'],
@@ -110,6 +114,10 @@ export const expectedChecks = [
   ['images', 'constraint:technology_image_owner'],
   ['images', 'constraint:technology_build_payload'],
   ['images', 'validator:technology_validate_pages_brief'],
+  ['releases', 'table:technology_releases'],
+  ['releases', 'function:public.technology_release_approve(uuid,uuid,text,boolean)'],
+  ['releases', 'function:public.technology_release_revoke(uuid)'],
+  ['releases', 'constraint:technology_release_owner'],
   ['website-talk', 'table:technology_turn_context'],
   ['website-talk', 'function:public.technology_capture_context(uuid,uuid,integer)'],
 ];
@@ -154,6 +162,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
     'website-talk',
     'pages',
     'images',
+    'releases',
   ].map((stage) => {
     const checks = snapshot.checks.filter((check) => check.stage === stage);
     return {
@@ -189,7 +198,7 @@ export function evaluateSnapshot(input, now = Date.now()) {
       ? 'Resolve prerequisite drift or partially present objects before applying anything.'
       : stages.every((stage) => stage.status === 'observed')
         ? 'Catalog checks observed. Complete hosted account, provider and device acceptance before release.'
-        : 'Rehearse the four exact additive migrations in isolation, then record an explicit release decision.',
+        : 'Rehearse the exact ordered additive migrations in isolation, then record an explicit release decision.',
     releaseApproved: false,
     scope:
       'Operator-supplied catalog snapshot only; no hosted Auth, Storage, provider, device or migration-ledger acceptance.',

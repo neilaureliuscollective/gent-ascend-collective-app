@@ -381,3 +381,8 @@ Extend the native reviewed website brief with up to three informational pages an
 ## 2026-10-09 — Technology Phase 6: owned raster snapshots
 
 Use session-authorized personal Studio downloads and immutable per-website normalized JPEG copies instead of signed/remote URLs in briefs. Bound native decoding, ownership, leases, attempts and storage; no additional AI image generation. Add an exact-version/hash read-only publication manifest with hosting disabled. Research: Supabase private buckets (https://supabase.com/docs/guides/storage/buckets/fundamentals), sharp constructor/output/security/0.35.5 changelog (https://sharp.pixelplumbing.com), Vercel for Platforms (https://vercel.com/docs/platforms), accessed 2026-10-09. See TECHNOLOGY_OWNED_IMAGERY.md for source-lifetime behavior, export bounds, rollback incompatibilities and isolated hosted release gates.
+
+
+## 2026-10-09 — Technology Phase 7 release preparation
+
+Native exact-build approval and bounded portable ZIPs precede paid hosting activation. Owner approval of files is separate from domain, infrastructure budget and production release authority. Terminal revocation blocks future package downloads but cannot recall offline copies. Explicitly revoke Supabase default grants; use session-owned RPCs and a composite release/build identity FK. Pin existing fflate 0.8.3 for three fixed-name stored ZIP entries. Sources: https://vercel.com/docs/platforms ; https://vercel.com/docs/deployment-checks ; https://supabase.com/docs/guides/database/postgres/row-level-security ; https://github.com/101arrowz/fflate . Full scope and pending hosted acceptance: docs/TECHNOLOGY_RELEASE_PACKAGES.md.
