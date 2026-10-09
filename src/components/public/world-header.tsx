@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { brand } from '@/platform/brand';
+import { Icon } from '@/components/visual/icon';
 const links = [
   ['/app/aethelios', 'Talk'],
   ['/app/work', 'Company work'],
@@ -61,7 +62,7 @@ export function WorldHeader() {
           </Link>
         ))}
         <Link className="world-enter" href="/enter" onClick={() => setOpen(false)}>
-          Open Aethelios <span aria-hidden="true">↗</span>
+          Open Aethelios <Icon name="arrow" />
         </Link>
       </nav>
     </header>
