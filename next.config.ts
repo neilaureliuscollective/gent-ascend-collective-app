@@ -8,11 +8,24 @@ const config: NextConfig = {
     return [
       // Retained installation URLs must never serve the retired star artwork.
       ...[192, 512].flatMap((size) =>
-        [`/brand/icon-${size}.png`, `/brand/icon-v2-${size}.png`].map((source) => ({
+        [
+          `/brand/icon-${size}.png`,
+          `/brand/icon-v2-${size}.png`,
+          `/brand/app-crest-20261004-${size}.png`,
+          `/brand/deep-green-20261006-${size}.png`,
+          `/brand/aethelios-official-20261008-${size}.png`,
+        ].map((source) => ({
           source,
-          destination: `/brand/app-crest-20261004-${size}.png`,
+          destination: `/brand/aethelios-imperial-steel-20261009-${size}.png`,
           permanent: false,
         })),
+      ),
+      ...['app-crest-20261004', 'deep-green-20261006', 'aethelios-official-20261008'].map(
+        (version) => ({
+          source: `/brand/${version}-maskable-512.png`,
+          destination: '/brand/aethelios-imperial-steel-20261009-maskable-512.png',
+          permanent: false,
+        }),
       ),
       ...['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'].map((source) => ({
         source,

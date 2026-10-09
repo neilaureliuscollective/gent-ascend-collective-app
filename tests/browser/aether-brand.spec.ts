@@ -29,7 +29,7 @@ test('Imperial manifest and official installed icon variants resolve', async ({ 
   expect(manifest.theme_color).toBe('#F5F1E8');
   expect(manifest.background_color).toBe('#F5F1E8');
   for (const icon of manifest.icons) {
-    expect(icon.src).toContain('aethelios-official-20261008');
+    expect(icon.src).toContain('aethelios-imperial-steel-20261009');
     expect((await request.get(icon.src)).ok()).toBe(true);
   }
 });
