@@ -9,6 +9,7 @@ export const chatInput = z
     requestId: z.uuid(),
     text: z.string().trim().min(1).max(6000),
     includeContext: z.boolean(),
+    mission: z.object({id:z.uuid(),revision:z.number().int().positive()}).strict().optional(),
     council: councilInput.optional(),
     sourceTurnId: z.uuid().optional(),
     revisionKind: z.enum(['retry','regenerate','edit']).optional(),

@@ -801,3 +801,30 @@ CI exposed an existing training test date mismatch after UTC midnight: its synth
 Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
 
 Ascend Mirror integration: reconciled the direct-member-entry release a7184fd. Preserve both Mirror and home-handoff browser fixtures; retain the already-merged owner-calendar test fixes. Revalidate the integrated source before release.
+
+## Public Mission Continuity — 2026-10-07
+
+Implemented on `feat/public-mission-continuity`, based on public main `a8a03e59bbf187a8bdd678f7903c8a5e151860e9`. Founder authorized the build after the research plan. See `docs/MISSION_CONTINUITY.md` for scope, data and rollback details.
+
+Delivered selected-Mission context with immutable revision receipts, independent context control, reviewed direction proposals, pinned replies, persistent personal Studio handoff/return, linked image receipts, continuation UI and focused public identity cleanup. Separate company work and existing auth/access/billing/model infrastructure remain intact. No production deployment or hosted migration was performed.
+
+Verification on the final implementation:
+
+- ESLint, Next strict typecheck and production Turbopack build: pass.
+- All 414 unit/SQL tests across 55 files: pass. Added service scope/opt-out/stale checks and SQL isolation, stale acceptance, replay, anonymous privilege denial, pin and deletion-preservation checks. PGlite applies the complete migration set; it is not hosted Supabase Auth/PostgREST.
+- Recorded migration ledger: pass; this compares the 28 previously recorded file hashes, not live hosted migration state. The new additive migration remains unapplied to production.
+- All 22 focused browser cases in Missions, Council and Talk layout: pass against a fixed production artifact plus synthetic component fixtures. Includes 320–1920px coverage across suites, reduced motion, input/editor preservation, proposal acceptance, conflicts, context toggling, Studio URL/refresh/return and zero automatic generation on resume.
+- Browser regression initially exposed extra mobile toolbar height; continuation content now lives in the scrollable conversation with native modal details, and empty Council assembly controls appear when there is an actual question. Existing transcript-space assertions remain unchanged. Reply-status assertions now target the reply receipt instead of all status regions. Reviewed the 390px Mission dialog screenshot.
+- Real two-account hosted sessions, live model and Studio generations, physical Fold/iPhone/DeX keyboards and operational public-launch acceptance: not run. No fixtures are presented as live acceptance.
+
+Next: apply the reviewed additive migration in the intended environment and complete live-account/provider/device acceptance before separately approved production promotion. Broader launch hardening, file/context capabilities and Council World remain later phases. Code implementation is complete; release acceptance remains open.
+
+## 2026-10-07 — Public Mission Deliverables build
+
+Implemented personal work-product promotion from completed Mission replies, immutable editable versions, saved acceptance criteria, exact-version user review, private Markdown export, version history and confirmed deletion. Added owner-only tables/RPCs and a security-invoker summary view. Saved work survives Mission/source-conversation removal; opt-in Mission context captures bounded excerpts with exact version IDs. No new model calls or autonomous execution. Integrated merged Aether Petrol assets/tokens alongside the previously unmerged Mission Continuity phase; preserved company delivery and Studio architecture.
+
+Validation: 419 tests across 57 unit/SQL files passed; migration suite applied the additive schema in PGlite with minimal Auth/Storage adapters, exercising ownership, source-state rejection, null/stale revisions, idempotence, changed replay, exact-version review, immutable context receipts, view RLS, anonymous denial and deletion lifecycle. The recorded migration ledger check passed for 28 historical files, not hosted state. Production build passed. Final browser/lint/typecheck receipt follows below.
+
+Release remains pending: no hosted migration or deployment. Apply Mission Continuity then Mission Deliverables before deploying the integrated code. Actual two-account Supabase Auth/PostgREST, live-model excerpt usefulness, physical Fold/iPhone/DeX behavior and full launch acceptance are unrun. Browser results use synthetic intercepted data, not live accounts/providers. Research, phase plan, payload limits, preservation decisions and rollout/rollback are in `MISSION_DELIVERABLES.md`.
+
+Final local receipt: lint, typecheck and production build passed. All 24 focused browser checks passed across Deliverables, Missions, Talk layout and Aether brand; widths 320–2560px across these suites. Cases cover promotion, saved-version review/export references, history retention, new-version review reset, confirmed deletion, ambiguous-save recovery, Studio handoff and Talk draft/viewport preservation. Reviewed a 390px deliverable-editor screenshot. All ten imported brand assets match the merged GitHub blob hashes. `git diff --check` passed. No entire-browser-suite or hosted acceptance claim.
