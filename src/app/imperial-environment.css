@@ -269,6 +269,11 @@
   color: var(--imperial-stone);
   border-color: #e4bd7040;
 }
+.app-shell.imperial-workspace .studio-page .studio-error {
+  color: #f2bc9c;
+  background: var(--imperial-carbon);
+  border-color: #f2bc9c80;
+}
 /* Deliberate stone work islands, surrounded by the material environment. */
 .app-shell.imperial-workspace .studio-page .studio-direction {
   background: var(--imperial-stone);

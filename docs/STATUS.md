@@ -835,3 +835,11 @@ Final local lint, strict types, all 410 unit/SQL tests and production build pass
 Pixel estimates of light regions (all channels >170, channel spread <55; includes text and controls) show phone Talk reduced from 85.3% to 10.6%, desktop Talk 6.7%, Studio Create phone 2.5% / desktop 1.6%, desktop brief 13.7%. These viewport measurements verify that material fields dominate; they are not a universal luxury design ratio. Screenshots, coverage method and validation logs are in `/workspace/steel-rebalance-review/`.
 
 Correction is submitted through existing PR #77 for founder review. Production promotion remains separate and was not performed. Vercel preview verification and broad CI results are recorded in the PR; the environment proxy previously blocked direct preview hostname access.
+
+## Imperial Steel production release — October 9, 2026
+
+Founder authorized live promotion. PR #77 merged as `37f6465`; GitHub Production deployment 6965235230 reports success through the verified Vercel project. Live www.gentascend.com phone/desktop checks confirmed steel Talk canvas, steel Studio rail/carbon main, no page errors/overflow, presence focus return and unsent expanded-draft preservation. Public home/entry worked and hosted /dev returned 404. Evidence: /workspace/steel-live-review/. Authenticated provider acceptance remains separate; existing broader CI failures were not represented as green.
+
+Production screenshot review found the inherited dark error text insufficiently readable on Studio's new carbon surface. The release follow-up gives Studio notices a light warm foreground (#F2BC9C) on Carbon Shadow, with an intercepted 401 browser regression check. This is a contrast correction; authentication and error behavior remain unchanged.
+
+Notice follow-up validation: lint, strict types and production build passed; the synthetic 401 browser check passed and verifies rendered contrast >=4.5:1. No API or authorization logic changed.
