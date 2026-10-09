@@ -1,3 +1,6 @@
+import { DeliverableFixture } from './deliverable';
+import { SavedWorkReadiness } from '@/components/missions/saved-work-readiness';
+import { savedWorkRelations } from '@/domains/release/saved-work';
 import { MissionHandoffFixture } from './mission-handoff';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
@@ -105,7 +108,14 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'mission' ? (
+  mode === 'release-foundation' ? (
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: '32px 20px' }}>
+      <p className="eyebrow">Synthetic component fixture · no database</p>
+      <SavedWorkReadiness report={{ checkedAt: '2026-10-08T17:00:00.000Z', checks: savedWorkRelations.map((relation) => ({
+        relation, status: params.get('state') === 'accessible' ? 'accessible' : relation === 'intelligence_missions' ? 'accessible' : 'unavailable',
+      })) }} />
+    </main>
+  ) : mode === 'deliverable' ? (<DeliverableFixture/>) : mode === 'mission' ? (
     <MissionHandoffFixture />
   ) : mode === 'company-room' || mode === 'company-job' ? (
     <>

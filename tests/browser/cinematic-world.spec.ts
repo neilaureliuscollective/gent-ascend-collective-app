@@ -1,35 +1,30 @@
 import { test, expect } from './fixtures';
-
-test('Vitalis preview preserves honest product inspection without approved media', async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/shop/vitalis');
-  await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
-  await expect(page.getByText('Product photography forthcoming')).toBeVisible();
-  await expect(page.getByRole('button', { name: /(?:Explore|Inspect) in 3D/ })).toHaveCount(0);
-  await expect(page.locator('#atelier canvas')).toHaveCount(0);
-  expect(errors).toEqual([]);
-});
-
-test('reduced motion and unsupported graphics retain usable content', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.addInitScript(() => {
-    const get = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (
-      this: HTMLCanvasElement,
-      ...args: Parameters<typeof get>
-    ) {
-      if (String(args[0]).startsWith('webgl')) return null;
-      return get.apply(this, args);
-    } as typeof get;
-  });
-  await page.goto('/shop/vitalis');
-  await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
-  await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
-  await expect(page.getByText('Product photography forthcoming')).toBeVisible();
-  await page.getByRole('link', { name: 'The ritual', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Make it your ritual.' })).toBeVisible();
-  await expect(page.locator('.atelier-canvas canvas')).toHaveCount(0);
-});
+// The former storefront is retired in main. Product records and orders retain separate tests.
+for (const width of [344, 768, 1440])
+  test(
+    'retired commerce boundary /shop/world/vitalis at ' + width + 'px',
+    async ({ page, request }) => {
+      await page.setViewportSize({ width, height: 900 });
+      const writes: string[] = [];
+      page.on('request', (r) => {
+        if (r.method() !== 'GET' && r.url().includes('/api/commerce')) writes.push(r.url());
+      });
+      await page.goto('/shop/world/vitalis');
+      await expect(page.getByRole('heading', { name: 'A separate destination.' })).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'Open Aethelios ↗', exact: true }),
+      ).toHaveAttribute('href', '/app/aethelios');
+      await expect(page.getByRole('link', { name: 'Earlier order history' })).toHaveAttribute(
+        'href',
+        '/app/collection/orders',
+      );
+      await expect(page.getByRole('button', { name: /Add to cart|Checkout/ })).toHaveCount(0);
+      expect(writes).toEqual([]);
+      expect((await request.get('/shop/world/vitalis')).headers()['cache-control']).toContain(
+        'private',
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+    },
+  );

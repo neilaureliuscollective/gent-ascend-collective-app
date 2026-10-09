@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { commandFixture } from '../component-fixture/daily-command';
 for (const width of [344, 768, 1440]) {
   test(`Daily Command explains, saves arrival and closes the loop at ${width}`, async ({

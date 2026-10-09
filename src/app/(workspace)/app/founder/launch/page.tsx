@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { readReleaseReadiness } from '@/domains/release/service';
+import { SavedWorkReadiness } from '@/components/missions/saved-work-readiness';
 export const dynamic = 'force-dynamic';
 export default async function ReleaseReadiness() {
   const report = await readReleaseReadiness();
@@ -33,6 +34,7 @@ export default async function ReleaseReadiness() {
           Inspect billing configuration →
         </Link>
       </section>
+      <SavedWorkReadiness report={report.savedWork} />
       <div className="personal-grid">
         {report.checks.map((check) => (
           <section className="panel" key={check.name}>

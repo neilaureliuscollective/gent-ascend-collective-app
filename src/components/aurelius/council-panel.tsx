@@ -76,14 +76,14 @@ export function CouncilPanel({
               Aethelios coordinates. Specialists contribute when useful.
             </span>
           )}
-          <button
+          {question.trim() && <button
             type="button"
             className="text-button"
             disabled={disabled || !question.trim()}
             onClick={() => open(true)}
           >
             {selection?.kind === 'table' ? 'Review The Table' : 'Assemble Around This'}
-          </button>
+          </button>}
         </div>
       )}
       <dialog ref={room} className="council-dialog" aria-labelledby="council-title">

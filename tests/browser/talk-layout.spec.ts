@@ -38,9 +38,10 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
       .locator('.talk-presence .intelligence-orb-static')
       .first()
       .evaluate((el) => getComputedStyle(el).backgroundImage);
-    expect(orbFill).toContain('rgb(67, 128, 105)');
-    expect(orbFill).toContain('rgb(32, 84, 67)');
-    if (width === 390) await page.screenshot({ path: 'test-results/aether-talk-phone.png' });
+    expect(orbFill).toContain('rgb(40, 126, 140)');
+    expect(orbFill).toContain('rgb(12, 53, 66)');
+    if (width === 320 || width === 390)
+      await page.screenshot({ path: `/tmp/public-talk-${width}.png` });
     await presence.click();
     await expect(
       page.getByRole('dialog', { name: 'Aethelios presence', exact: true }),

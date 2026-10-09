@@ -1,3 +1,5 @@
+> E1 Launch Core (2026-10-09): founder approved recovery and implementation. Preserve Imperial Steel, current install icons, company isolation and confirmed-memory/save guards. Recover PR #64/#63 without duplicating ancestors. Universal personal/professional use supersedes company-only scope. Follow docs/ENTITIES_NEXT_PHASE.md; reviewed candidate approval and hosted acceptance precede production promotion.
+
 > Founder correction (2026-10-09): steel trim was rejected. Talk and Studio now require material-led steel/carbon/green environments with stone writing/brief islands. This supersedes earlier ivory-canvas and controls-only restrictions for these routes. Preserve green/gold identity, real functionality and accessibility. Production promotion requires founder approval.
 
 > Next workspace phase (2026-10-09): selective steel controls in Talk and Studio are authorized for implementation and preview. Preserve ivory reading/editing surfaces, AI behavior and access controls. Production promotion requires founder approval.

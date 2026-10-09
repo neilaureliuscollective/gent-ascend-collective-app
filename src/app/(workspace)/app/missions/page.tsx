@@ -21,7 +21,7 @@ export default async function MissionsPage({
   } catch {
     return (
       <section>
-        <h1>Missions</h1>
+        <h1>Missions</h1><Link href="/app/missions/deliverables">Saved deliverables ↗</Link>
         <p>Missions could not be loaded. Your saved conversations remain in Talk.</p>
         <Link href="/app/aethelios">Return to Aethelios ↗</Link>
       </section>
@@ -55,7 +55,7 @@ export default async function MissionsPage({
   return (
     <section className="mission-list">
       <p className="eyebrow">Aethelios · Ongoing work</p>
-      <h1>Missions</h1>
+      <h1>Missions</h1><Link href="/app/missions/deliverables">Saved deliverables ↗</Link>
       <p>Meaningful conversations with an objective and a next move. Your work stays with you.</p>
       <Link className="button" href="/app/aethelios">
         Start with Aethelios ↗
