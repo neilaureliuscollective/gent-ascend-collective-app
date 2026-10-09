@@ -343,19 +343,21 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.getByRole('button', { name: 'Enter Aethelios' }).click();
   await expect(page).toHaveURL(/\/app\/(?:aethelios|welcome)$/);
   await page.goto('/app/welcome');
-  await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Review membership access to Aethelios' }),
-  ).toBeVisible();
-  await page.getByLabel('Get organized', { exact: true }).check();
-  await page.getByLabel('What matters today?').fill('Synthetic first-session direction');
-  await page.getByLabel('My next move', { exact: true }).fill('Synthetic first-session next move');
-  await page.getByRole('button', { name: 'Save priority and next move' }).click();
-  await expect(
-    page.getByRole('status').filter({ hasText: 'priority and next move' }),
-  ).toContainText('saved to Command');
+  await expect(page.getByRole('heading', { name: 'Welcome to Aethelios.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start with Aethelios' })).toBeVisible();
+  // Arrival now introduces Aethelios; daily planning lives in the Day workspace.
   await page.goto('/app/daily');
   await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await page.getByRole('button', { name: 'Take a moment to check in' }).click();
+  await page.getByLabel('What matters most today?').fill('Synthetic first-session direction');
+  await page.getByRole('button', { name: '3 Steady', exact: true }).click();
+  await page.getByLabel('Hours slept').fill('7');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
+  await page.getByRole('button', { name: 'Add a deliberate action' }).click();
+  await page.getByLabel('One action you can take').fill('Synthetic first-session next move');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
   await expect(
     page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
   ).toBeVisible();
@@ -370,12 +372,8 @@ test('free member first session saves and resumes through real Next and Supabase
   await expect(
     page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
   ).not.toBeChecked();
-  await page.goto('/app/welcome');
-  await expect(page.getByLabel('What matters today?')).toHaveValue(
-    'Synthetic first-session direction',
-  );
   await page.goto('/app/progress');
-  await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Progress, over time.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(
     0,
