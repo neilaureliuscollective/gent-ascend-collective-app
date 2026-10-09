@@ -6,6 +6,8 @@ import type { Database } from '@/platform/supabase/database';
 import type { z } from 'zod';
 import { buildCommand } from './build-schema';
 import { renderArtifact, checkArtifact } from './artifact';
+import { readImage } from './images';
+import { briefSchema } from './schema';
 export async function listBuilds() {
   const { client, person } = await intelligenceSession();
   const r = await client
@@ -60,7 +62,9 @@ export async function mutateBuild(command: z.infer<typeof buildCommand>) {
     v.data.template_version !== 'service-business-v1'
   )
     throw new IntelligenceError('Build source unavailable.', 503);
-  const html = renderArtifact(v.data.brief),
+  const brief = briefSchema.parse(v.data.brief);
+  const image = brief.image ? await readImage(brief.image.assetId, b.data.project_id) : undefined;
+  const html = renderArtifact(brief, image),
     checks = checkArtifact(html),
     sha256 = createHash('sha256').update(html).digest('hex');
   if (!checks.passed)

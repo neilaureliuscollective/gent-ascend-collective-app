@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imageRefSchema } from './image-schema';
 const text = (max: number) => z.string().trim().max(max);
 export const bookingUrl = text(500).refine((value) => {
   if (!value) return true;
@@ -79,6 +80,7 @@ export const briefSchema = z
     bookingUrl,
     design: designSchema.optional(),
     pages: pagesSchema.optional(),
+    image: imageRefSchema.optional(),
   })
   .strict();
 export type Brief = z.infer<typeof briefSchema>;

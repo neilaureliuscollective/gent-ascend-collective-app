@@ -206,3 +206,31 @@ it('ordinary copy refinement cannot quietly add a page', async () => {
     expect.objectContaining({ p_brief: null }),
   );
 });
+it('conversational revisions cannot introduce an unreviewed image reference', async () => {
+  const design = {
+    palette: 'petrol',
+    hero: 'editorial',
+    typography: 'serif',
+    spacing: 'spacious',
+    audience: '',
+    goal: '',
+    rationale: 'A considered layout.',
+    cta: 'Explore services',
+    request: '',
+  };
+  state.generate.mockResolvedValue({
+    output: {
+      ...state.brief,
+      design,
+      image: { assetId: crypto.randomUUID(), alt: 'An invented image' },
+    },
+    usage: { inputTokens: 100, outputTokens: 100 },
+  });
+  await expect(mutateTechnology({ ...command, instruction: 'Add any image.' })).rejects.toThrow(
+    /reconciliation/,
+  );
+  expect(state.broker).toHaveBeenCalledWith(
+    'technology_settle',
+    expect.objectContaining({ p_brief: null }),
+  );
+});
