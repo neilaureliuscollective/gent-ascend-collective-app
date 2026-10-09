@@ -843,3 +843,11 @@ Founder authorized live promotion. PR #77 merged as `37f6465`; GitHub Production
 Production screenshot review found the inherited dark error text insufficiently readable on Studio's new carbon surface. The release follow-up gives Studio notices a light warm foreground (#F2BC9C) on Carbon Shadow, with an intercepted 401 browser regression check. This is a contrast correction; authentication and error behavior remain unchanged.
 
 Notice follow-up validation: lint, strict types and production build passed; the synthetic 401 browser check passed and verifies rendered contrast >=4.5:1. No API or authorization logic changed.
+
+## Imperial Steel installed-app icon — October 9, 2026
+
+Install-only artwork replaces the blue/cosmic background with brushed Imperial Steel, deep Imperial Green and Reserve Gold while preserving the A/star/laurel/circular crest identity. The existing in-app logo and UI are unchanged. Versioned 192/512px manifest images, an Android maskable rendition, Apple 180px and browser 64px exports share the new artwork. Existing blue and older install URLs redirect to the replacement; fallback cache v5 updates the static icon without reloading unsaved work or deleting unrelated caches. App id, start URL, scope, names and authentication remain unchanged. Reproduce exports with `node scripts/current-app-icons.mjs`.
+
+Local lint, strict types, all 410 unit/SQL tests and production build passed. All seven focused installation/browser checks passed and cover current metadata/assets, safe gold-art bounds, legacy URL redirects, cache upgrade, unrelated-cache/draft preservation and simulated Android/Apple standalone entry. Offline fallback returns to the existing Talk destination; its obsolete Command-heading test expectation was corrected after observing the real redirect. Launcher screenshots simulate common crop shapes, not physical-device installation. Evidence: /workspace/icon-review/.
+
+Operating-system icon refresh timing is outside the service worker's control. Existing installations may require the browser's Review app update or removal/reinstallation (sync local drafts first); saved account records are independent of the launcher icon. Actual Samsung/iPhone installation remains a founder-device check. No migrations, secrets, dependencies or intelligence functionality changed.

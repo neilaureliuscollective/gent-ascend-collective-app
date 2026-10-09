@@ -12,9 +12,9 @@ test('fresh installation has one current crest identity across manifest and Appl
   expect(manifest.start_url).toBe('/app');
   expect(manifest.icons).toHaveLength(3);
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
-    '/brand/deep-green-20261006-192.png',
-    '/brand/deep-green-20261006-512.png',
-    '/brand/deep-green-20261006-maskable-512.png',
+    '/brand/aethelios-imperial-steel-20261009-192.png',
+    '/brand/aethelios-imperial-steel-20261009-512.png',
+    '/brand/aethelios-imperial-steel-20261009-maskable-512.png',
   ]);
   for (const icon of manifest.icons) {
     const response = await request.get(icon.src);
@@ -32,13 +32,21 @@ test('fresh installation has one current crest identity across manifest and Appl
     .raw()
     .toBuffer({ resolveWithObject: true });
   let outside = 0;
+  let gold = 0;
   for (let y = 0; y < info.height; y++)
     for (let x = 0; x < info.width; x++) {
-      if (Math.hypot(x + 0.5 - 256, y + 0.5 - 256) <= 204.8) continue;
       const index = (y * info.width + x) * info.channels;
-      if (data[index] !== 3 || data[index + 1] !== 8 || data[index + 2] !== 6) outside++;
+      const red = data[index]!;
+      const green = data[index + 1]!;
+      const blue = data[index + 2]!;
+      const isGold = red > 90 && red > green + 10 && green > blue + 15;
+      if (isGold) {
+        gold++;
+        if (Math.hypot(x + 0.5 - 256, y + 0.5 - 256) > 204.8) outside++;
+      }
     }
   expect(outside).toBe(0);
+  expect(gold).toBeGreaterThan(1000);
   await page.goto('/app/install');
   for (const [relation, size] of [
     ['apple-touch-icon', 180],
@@ -55,12 +63,24 @@ test('fresh installation has one current crest identity across manifest and Appl
   await expect(page.getByText(/Review app update/)).toBeVisible();
 });
 
+test('retired blue installation URLs resolve to the current phone artwork', async ({ request }) => {
+  for (const suffix of ['192', '512', 'maskable-512']) {
+    const response = await request.get(`/brand/aethelios-official-20261008-${suffix}.png`, {
+      maxRedirects: 0,
+    });
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toBe(
+      `/brand/aethelios-imperial-steel-20261009-${suffix}.png`,
+    );
+  }
+});
+
 test('fallback upgrade removes old app cache without reloading the open workspace or unrelated caches', async ({
   page,
 }) => {
   await page.goto('/enter');
   await page.evaluate(async () => {
-    const old = await caches.open('gent-ascend-fallback-v3');
+    const old = await caches.open('gent-ascend-fallback-v4');
     await old.put('/brand/icon-v2-192.png', new Response('old-icon'));
     const unrelated = await caches.open('unrelated-test-cache');
     await unrelated.put('/keep', new Response('keep'));
@@ -82,7 +102,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v4'],
+      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v5'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',

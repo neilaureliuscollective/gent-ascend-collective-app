@@ -120,11 +120,11 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
     .toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('gent-ascend-fallback-v4');
+    const cache = await caches.open('gent-ascend-fallback-v5');
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([
-    '/brand/deep-green-20261006-192.png',
+    '/brand/aethelios-imperial-steel-20261009-192.png',
     '/offline.html',
     '/performance-offline.css',
     '/performance-offline.html',
@@ -136,5 +136,6 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
   await expect(page.getByRole('heading', { name: 'A moment to reconnect.' })).toBeVisible();
   await context.setOffline(false);
   await page.getByRole('link', { name: 'Try Command again' }).click();
-  await expect(page.getByRole('heading', { name: 'Your day. Your direction.' })).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/aethelios$/);
+  await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
 });
