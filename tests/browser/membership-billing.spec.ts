@@ -17,7 +17,7 @@ for (const width of [344, 768, 1440]) {
     await page.getByRole('link', { name: 'Sign in →', exact: true }).click();
     await expect(page).toHaveURL(/\/join/);
     await expect(
-      page.getByText('Public account registration is not open yet.', { exact: false }),
+      page.getByText('Account entry is being prepared.', { exact: false }),
     ).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -61,7 +61,7 @@ test('recurring consent is required, failed checkout preserves the chosen plan, 
   await expect(page.getByRole('status')).toHaveText(
     'The payment destination could not be verified.',
   );
-  await expect(page).toHaveURL(/3102/);
+  await expect(page).toHaveURL(componentUrl('/?mode=membership'));
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/membership-controls-344.png', fullPage: true });
 });

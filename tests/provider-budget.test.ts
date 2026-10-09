@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 const mock = vi.hoisted(() => ({ client: vi.fn(), rpc: vi.fn(), fetch: vi.fn() }));
 vi.mock('@/platform/supabase/server', () => ({ serverClient: mock.client }));
+import { generateText } from 'ai';
+import { createOpenAI } from '@/platform/openai/provider';
 import { budgetedFetch, requestFamily } from '@/platform/openai/budget';
 beforeEach(() => {
   vi.stubEnv('GENT_AI_BUDGET_ENABLED', 'true');
@@ -47,6 +49,47 @@ describe('durable provider allowance boundary', () => {
     const body = JSON.parse(mock.fetch.mock.calls[0]![1].body);
     expect(body).toMatchObject({ max_output_tokens: 1200, max_tool_calls: 2 });
     expect(mock.rpc.mock.calls[1]![0]).toBe('ai_budget_receipt');
+  });
+  it('enforces reservations through the real SDK Responses transport', async () => {
+    mock.fetch.mockResolvedValueOnce(
+      Response.json({
+        id: 'resp_synthetic',
+        created_at: 1,
+        object: 'response',
+        status: 'completed',
+        model: 'synthetic-model',
+        output: [
+          {
+            id: 'msg_synthetic',
+            type: 'message',
+            role: 'assistant',
+            status: 'completed',
+            content: [{ type: 'output_text', text: 'Synthetic transport proof.', annotations: [] }],
+          },
+        ],
+        usage: {
+          input_tokens: 10,
+          output_tokens: 4,
+          total_tokens: 14,
+          input_tokens_details: { cached_tokens: 0 },
+          output_tokens_details: { reasoning_tokens: 0 },
+        },
+      }),
+    );
+    const result = await generateText({
+      model: createOpenAI({ apiKey: 'synthetic-key' }).responses('synthetic-model'),
+      prompt: 'Transport fixture',
+      maxOutputTokens: 4096,
+      maxRetries: 0,
+      providerOptions: { openai: { store: false } },
+    });
+    expect(result.text).toBe('Synthetic transport proof.');
+    expect(mock.rpc.mock.calls[0]![0]).toBe('ai_budget_reserve');
+    expect(JSON.parse(mock.fetch.mock.calls[0]![1].body)).toMatchObject({
+      model: 'synthetic-model',
+      max_output_tokens: 1200,
+      store: false,
+    });
   });
   it('fails closed without a session, reservation or valid policy and never invokes the provider', async () => {
     mock.client.mockResolvedValueOnce(null);

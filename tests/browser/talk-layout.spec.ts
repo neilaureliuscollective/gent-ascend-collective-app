@@ -38,8 +38,8 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
       .locator('.talk-presence .intelligence-orb-static')
       .first()
       .evaluate((el) => getComputedStyle(el).backgroundImage);
-    expect(orbFill).toContain('rgb(40, 126, 140)');
-    expect(orbFill).toContain('rgb(12, 53, 66)');
+    expect(orbFill).toContain('rgb(32, 84, 67)');
+    expect(orbFill).toContain('rgb(13, 33, 27)');
     if (width === 320 || width === 390)
       await page.screenshot({ path: `/tmp/public-talk-${width}.png` });
     await presence.click();

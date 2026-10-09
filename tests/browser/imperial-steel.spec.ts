@@ -11,7 +11,7 @@ for (const width of [320, 360, 412, 768, 1024, 1440, 2560]) {
     await page.goto('/');
     await expect(page.locator('.public-world')).toHaveAttribute('data-material', 'imperial-steel');
     await expect(
-      page.getByRole('heading', { name: /Bring the ambition.*Build the company/ }),
+      page.getByRole('heading', { name: /Move your world forward/ }),
     ).toBeVisible();
     await expect(page.locator('.imperial-presence')).toHaveAttribute('aria-hidden', 'true');
     await expect(page.locator('.imperial-presence canvas')).toHaveCount(0);
