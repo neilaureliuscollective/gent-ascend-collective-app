@@ -24,6 +24,7 @@
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "format": "prettier --write .",
     "test:founder": "playwright test --config playwright.founder.config.ts",
+    "test:creation": "playwright test --config playwright.creation.config.ts",
     "test:ai:live": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local node_modules/vitest/vitest.mjs run --config vitest.ai.config.ts",
     "prebuild": "node scripts/prepare-mirror.mjs",
     "pretest:e2e": "node scripts/prepare-mirror.mjs",
