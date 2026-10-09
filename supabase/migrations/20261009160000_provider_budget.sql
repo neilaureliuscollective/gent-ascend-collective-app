@@ -17,7 +17,7 @@ create table aethelios_budget.ceilings (
  primary key(model,family)
 );
 create table public.ai_provider_reservations (
- id uuid primary key, person_id uuid not null references public.persons(id) on delete cascade,
+ id uuid primary key, person_id uuid references public.persons(id) on delete set null,
  created_at timestamptz not null default now(), model text not null,
  family text not null, reserved_microusd bigint not null check(reserved_microusd>0),
  http_status integer check(http_status between 100 and 599)
@@ -67,5 +67,6 @@ begin
 end $$;
 revoke all on function public.ai_budget_reserve(uuid,text,text,integer),public.ai_budget_receipt(uuid,integer) from public,anon;
 grant execute on function public.ai_budget_reserve(uuid,text,text,integer),public.ai_budget_receipt(uuid,integer) to authenticated;
+-- Account deletion anonymizes ownership but does not release project spend.
 -- HTTP acceptance is not completion or actual billed spend. Full ceilings remain
 -- charged against the allowance on failures/unknown outcomes. No automatic refunds.

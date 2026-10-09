@@ -54,6 +54,8 @@ export async function POST(request: Request) {
     const client = await serverClient();
     if (!client) return privateJson({ error: 'Account access is temporarily unavailable.' }, 503);
     if (value.action === 'google') {
+      if (value.entry === 'recover')
+        return privateJson({ error: 'Use an email code to recover your existing account.' }, 400);
       if (!config.google) return privateJson({ error: 'Continue with email instead.' }, 503);
       const { data, error } = await client.auth.signInWithOAuth({
         provider: 'google',

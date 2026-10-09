@@ -39,7 +39,7 @@ for (const width of [344, 768, 1440]) {
     const manifest = await (await request.get('/manifest.webmanifest')).json();
     expect(manifest.name).toBe('Aethelios');
     expect(manifest.short_name).toBe('Aethelios');
-    expect(manifest.theme_color).toBe('#06090D');
+    expect(manifest.theme_color).toBe('#F5F1E8');
     for (const icon of manifest.icons) expect((await request.get(icon.src)).ok()).toBe(true);
   });
 }

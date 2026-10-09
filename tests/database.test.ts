@@ -57,6 +57,14 @@ describe('Public Aethelios provider budget', () => {
       await asUser(founder,call('ec100000-0000-4000-8000-000000000003'));
       await expect(asUser(founder,call('ec100000-0000-4000-8000-000000000004'))).rejects.toThrow(/allowance reached/);
       await expect(asUser(founder,`select public.ai_budget_reserve('ec100000-0000-4000-8000-000000000005','unknown','text',100)`)).rejects.toThrow(/not configured/);
+      const deleted='ec100000-0000-4000-8000-000000000099';
+      await db.exec(`insert into auth.users(id,email,raw_user_meta_data) values('${deleted}','deleted@example.test','{}');
+        update aethelios_budget.policy set daily_project_microusd=3;
+        insert into public.ai_provider_reservations(id,person_id,model,family,reserved_microusd)
+          select 'ec100000-0000-4000-8000-000000000098',id,'synthetic-model','text',1 from public.persons where auth_user_id='${deleted}';
+        delete from auth.users where id='${deleted}'`);
+      expect((await db.query(`select person_id from public.ai_provider_reservations where id='ec100000-0000-4000-8000-000000000098'`)).rows[0]).toEqual({person_id:null});
+      expect((await db.query(`select sum(reserved_microusd) as reserved from public.ai_provider_reservations`)).rows[0]).toMatchObject({reserved:'3'});
     } finally {
       await db.exec(`delete from public.ai_provider_reservations; delete from aethelios_budget.ceilings;
         update aethelios_budget.policy set enabled=false,daily_project_microusd=null,daily_person_microusd=null;

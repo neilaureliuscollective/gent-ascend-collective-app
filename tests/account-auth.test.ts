@@ -128,6 +128,11 @@ describe('free account auth boundary', () => {
       ).json(),
     ).toEqual({ destination: '/app/welcome' });
   });
+  it('does not let a recovery request start OAuth and create a new user', async () => {
+    const result = await POST(request({ action: 'google', entry: 'recover' }));
+    expect(result.status).toBe(400);
+    expect(mock.google).not.toHaveBeenCalled();
+  });
   it('accepts verified email only and returns a fixed world destination', async () => {
     mock.verify.mockResolvedValueOnce({ error: { message: 'Expired' } });
     expect(

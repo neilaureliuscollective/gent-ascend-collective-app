@@ -44,6 +44,7 @@ export function AccountClaim({
 }: { standalone?: boolean; recovery?: boolean } = {}) {
   const params = useSearchParams();
   const router = useRouter();
+  const claimRequested = params.get('claim') === '1';
   const [open, setOpen] = useState(false),
     [config, setConfig] = useState<Config | null>(null),
     [draft, setDraft] = useState<DirectionDraft | null>(null);
@@ -74,6 +75,7 @@ export function AccountClaim({
   }
   useEffect(() => {
     const show = () => {
+      completed.current = false;
       setDraft(readDraft());
       setOpen(true);
       setSaved(false);
@@ -85,12 +87,12 @@ export function AccountClaim({
     const sync = () => setDraft(readDraft());
     window.addEventListener('gent-direction-change', sync);
     window.addEventListener('storage', sync);
-    if (standalone || params.get('claim') === '1') show();
+    if (standalone || claimRequested) show();
     return () => {
       window.removeEventListener('gent-direction-change', sync);
       window.removeEventListener('storage', sync);
     };
-  }, [params, standalone]);
+  }, [claimRequested, standalone]);
   useEffect(() => {
     if (!open || !scriptReady || !config?.siteKey || !node.current || !captcha()) return;
     widget.current = captcha()!.render(node.current, {
@@ -366,7 +368,7 @@ export function AccountClaim({
             </>
           ) : (
             <>
-              {config.google && (
+              {config.google && !recovery && (
                 <button
                   className="gw-action gw-google"
                   disabled={busy}

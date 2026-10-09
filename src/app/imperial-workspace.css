@@ -448,3 +448,9 @@ body:has(.imperial-workspace)::after {
     box-shadow: none;
   }
 }
+
+/* Saved-work navigation remains readable on the architectural cream canvas. */
+.app-shell.imperial-workspace .company-work-links a {
+  color: var(--aether-ink);
+  text-decoration-color: var(--aether-gold);
+}
