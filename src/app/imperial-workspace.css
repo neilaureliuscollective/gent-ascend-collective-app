@@ -1,0 +1,450 @@
+/* Approved Imperial materials. Scoped roles preserve existing route/layout contracts. */
+.app-shell.imperial-workspace {
+  color-scheme: light;
+  --aether-obsidian: var(--aether-ivory);
+  --aether-midnight: var(--aether-cream);
+  --aether-surface: var(--aether-ivory);
+  --aether-elevated: #fbf8f2;
+  --aether-deep: #dfe8dd;
+  --aether-text: var(--aether-ink);
+  --aether-silver: var(--aether-quiet);
+  --aether-muted: var(--aether-quiet);
+  --aether-border: #18352b26;
+  --aether-border-active: #20544366;
+  --aether-luminous: var(--aether-mineral);
+  --text-primary: var(--aether-ink);
+  --text-secondary: var(--aether-quiet);
+  --text-muted: var(--aether-quiet);
+  --text: var(--aether-ink);
+  --muted: var(--aether-quiet);
+  --background: var(--aether-ivory);
+  --surface: #fbf8f2;
+  --surface-black: var(--aether-cream);
+  --surface-green: #dfe8dd;
+  --border: #18352b26;
+  --border-strong: #20544366;
+  --ga-panel: var(--aether-ivory);
+  --ga-panel-raised: #fbf8f2;
+  --ga-shadow-deep: 0 20px 60px #0d211b18;
+  --shadow: 0 16px 40px #0d211b0c, inset 0 1px #fff9;
+  background: var(--aether-ivory);
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace :is(.workspace, .aethelios-page, .company-room-focused) {
+  background: linear-gradient(135deg, #fbf8f2, var(--aether-ivory) 65%, var(--aether-cream));
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace .connection-field {
+  opacity: 0.08;
+}
+body:has(.imperial-workspace)::after {
+  box-shadow: inset 0 0 100px #0d211b0c;
+}
+.app-shell.imperial-workspace .workspace :is(h1, h2, h3, h4) {
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace
+  :is(
+    .company-job p,
+    .company-work-note p,
+    .workspace-preview-note p,
+    .studio-intro p,
+    .studio-controls label,
+    .studio-projects nav button small
+  ) {
+  color: var(--aether-quiet);
+}
+.app-shell.imperial-workspace
+  :is(
+    .aethelios-space-navigation a,
+    .workspace-preview-note a,
+    .company-work-note a,
+    .capture-trigger,
+    .capture-proposal,
+    .capture-options a,
+    .capture-options button:not(.button),
+    .studio-world-heading > a,
+    .studio-section-head > button,
+    .studio-source button,
+    .context-sheet-surface > header button
+  ) {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace .context-sheet-surface {
+  background: var(--aether-ivory);
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace .studio-projects {
+  box-shadow: var(--shadow);
+}
+.app-shell.imperial-workspace .studio-surface {
+  background: var(--aether-ivory);
+  box-shadow: var(--shadow);
+}
+.app-shell.imperial-workspace .studio-page::before {
+  opacity: 0.3;
+}
+.app-shell.imperial-workspace .studio-projects nav button.selected {
+  background: #dfe8dd;
+  border-color: var(--aether-mineral);
+  box-shadow: inset 3px 0 var(--aether-mineral);
+}
+.app-shell.imperial-workspace
+  :is(
+    .studio-brief-grid label,
+    .studio-reference-upload,
+    .studio-reference-upload input,
+    .studio-card-copy details,
+    .studio-finish-controls > label,
+    .studio-finish-pair label,
+    .studio-finish-preview p,
+    .studio-finish-preview small
+  ) {
+  color: var(--aether-quiet);
+}
+.app-shell.imperial-workspace .studio-library-head h4 span {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace .studio-finish-preview {
+  background: var(--aether-cream);
+}
+.app-shell.imperial-workspace .sidebar .brand-star {
+  color: var(--aether-gold-light);
+}
+.app-shell.imperial-workspace .topbar .brand-type {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace
+  :is(.aethelios-room-heading a, .aurelius-tabs button, .library-section-heading button) {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace .appearance-controls {
+  opacity: 1;
+}
+.app-shell.imperial-workspace .appearance-controls button {
+  color: var(--aether-quiet);
+}
+.app-shell.imperial-workspace :is(.sidebar, .navigation, .mobile-nav) {
+  --aether-obsidian: #0d211b;
+  --aether-midnight: #10291f;
+  --aether-surface: #10291f;
+  --aether-elevated: #163d2e;
+  --aether-deep: var(--aether-mineral);
+  --aether-text: var(--aether-ivory);
+  --aether-silver: #ced6c9;
+  --aether-border: #f5f1e826;
+  --text: var(--aether-ivory);
+  --text-primary: var(--aether-ivory);
+  --text-secondary: #ced6c9;
+  --text-muted: #ced6c9;
+  --muted: #ced6c9;
+  background:
+    radial-gradient(ellipse at 100% 0, #32665070, transparent 60%),
+    linear-gradient(155deg, var(--aether-petrol), #0d211b);
+  color: var(--aether-ivory);
+  border-color: #e4bd7038;
+}
+.app-shell.imperial-workspace
+  .sidebar
+  :is(.navigation-label, .quiet-label, .text-link, .sidebar-footer p) {
+  color: #ced6c9;
+}
+.app-shell.imperial-workspace .navigation a[aria-current='page'] {
+  color: var(--aether-ivory);
+  background: #ffffff0c;
+  border-color: #e4bd7066;
+  box-shadow: inset 2px 0 var(--aether-gold-light);
+}
+.app-shell.imperial-workspace .navigation a[aria-current='page']::before {
+  background: var(--aether-gold-light);
+}
+.app-shell.imperial-workspace .topbar {
+  background: var(--aether-ivory);
+  color: var(--aether-ink);
+  border-color: var(--aether-border);
+  backdrop-filter: none;
+}
+.app-shell.imperial-workspace :is(h1, .studio-empty h2, .company-work > header h1) {
+  font-family: var(--font-editorial);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+.app-shell.imperial-workspace
+  :is(
+    .eyebrow,
+    .quiet-label,
+    .muted,
+    .text-link,
+    .topbar-context,
+    .studio-world-heading > div > p,
+    .studio-empty > p,
+    .company-work > header > p
+  ) {
+  color: var(--aether-quiet);
+}
+.app-shell.imperial-workspace
+  :is(
+    .surface,
+    .panel,
+    .studio-main,
+    .company-room,
+    .company-job,
+    .company-job-list,
+    .council-dialog,
+    .talk-drawer.talk-drawer,
+    .talk-expanded-editor,
+    .aurelius-dialog
+  ) {
+  background: #fbf8f2;
+  color: var(--aether-ink);
+  border-color: var(--aether-border);
+  box-shadow: var(--shadow);
+}
+.app-shell.imperial-workspace :is(.conversation-library, .studio-projects) {
+  background: var(--aether-cream);
+  color: var(--aether-ink);
+  border-color: var(--aether-border);
+}
+.app-shell.imperial-workspace
+  :is(
+    .conversation-list button,
+    .studio-projects nav button,
+    .studio-paths button,
+    .conversation-starters button
+  ) {
+  color: var(--aether-ink);
+  background: #fbf8f2;
+  border-color: var(--aether-border);
+}
+.app-shell.imperial-workspace
+  :is(
+    .conversation-list button[aria-current],
+    .conversation-item.is-active,
+    .studio-projects nav button[aria-current]
+  ) {
+  background: #dfe8dd;
+  border-color: var(--aether-mineral);
+  box-shadow: inset 2px 0 var(--aether-mineral);
+}
+.app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send) {
+  background: linear-gradient(
+    115deg,
+    var(--aether-gold),
+    var(--aether-gold-light) 48%,
+    var(--aether-gold)
+  );
+  color: var(--aether-ink);
+  border: 1px solid #8f6d32;
+  box-shadow:
+    inset 0 1px #fff9,
+    0 6px 16px #0d211b12;
+}
+.app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send):hover {
+  background: var(--aether-gold-light);
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace
+  :is(.button.secondary, .button.ghost, .secondary-button, .latest-message) {
+  background: var(--aether-ivory);
+  color: var(--aether-ink);
+  border-color: #506158;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace
+  :is(input:not([type='checkbox']):not([type='radio']), textarea, select) {
+  background: #fbf8f2;
+  color: var(--aether-ink);
+  border-color: #8c998b;
+}
+.app-shell.imperial-workspace :is(input, textarea)::placeholder {
+  color: var(--aether-quiet);
+  opacity: 1;
+}
+.app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer, .studio-composer) {
+  background: #fbf8f2;
+  color: var(--aether-ink);
+  border-color: #8c998b;
+  box-shadow:
+    inset 0 1px #fff,
+    0 8px 30px #0d211b0c;
+}
+.app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer):focus-within {
+  border-color: var(--aether-mineral);
+  box-shadow: 0 0 0 1px var(--aether-mineral);
+}
+.app-shell.imperial-workspace :is(.talk-input, .aurelius-composer textarea) {
+  background: transparent;
+}
+.app-shell.imperial-workspace
+  :is(
+    .talk-tool,
+    .talk-expand,
+    .text-button,
+    .talk-drawer-actions button,
+    .talk-drawer > header button,
+    .conversation-item-actions button,
+    .conversation-rename button,
+    .library-more,
+    .message-tools button,
+    .revision-notice,
+    .revision-notice button,
+    .message-version summary,
+    .studio-view-tabs button,
+    .studio-card-actions button,
+    .studio-card-actions a,
+    .studio-project-heading a,
+    .studio-library-entry,
+    .studio-library-head button
+  ) {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace
+  :is(.talk-tool:hover, .studio-view-tabs button[aria-pressed='true'], .studio-paths button:hover) {
+  background: #dfe8dd;
+  color: var(--aether-ink);
+}
+.app-shell.imperial-workspace
+  :is(
+    .studio-paths small,
+    .studio-project-heading span,
+    .studio-card-copy small,
+    .studio-side-note,
+    .aurelius-welcome > p,
+    .aurelius-composer .composer-controls,
+    .message-author,
+    .message-state
+  ) {
+  color: var(--aether-quiet);
+}
+.app-shell.imperial-workspace
+  :is(.studio-paths span, .studio-paths b, .company-job-number, .brand-star) {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace
+  :is(
+    .studio-side-note,
+    .studio-notice,
+    .company-work-note,
+    .aurelius-notice:not(:empty),
+    .user-message,
+    .company-room-scopes
+  ) {
+  background: #dfe8dd;
+  color: var(--aether-ink);
+  border-color: var(--aether-border-active);
+}
+.app-shell.imperial-workspace
+  :is(
+    .message-markdown pre,
+    .message-markdown blockquote,
+    .studio-card,
+    .studio-placeholder,
+    .studio-source,
+    .studio-library-entry
+  ) {
+  background: var(--aether-cream);
+  color: var(--aether-ink);
+  border-color: var(--aether-border);
+}
+.app-shell.imperial-workspace .message-markdown a {
+  color: var(--aether-mineral);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.app-shell.imperial-workspace :is(.studio-error, [role='alert']) {
+  color: #782e24;
+}
+/* Orb materials stay dark and green even inside the ivory reading environment. */
+.app-shell.imperial-workspace
+  :is(
+    .council-current,
+    .council-role,
+    .council-reason,
+    .company-room-layout aside a,
+    .company-room-actions button:not(.button),
+    .studio-card-copy summary,
+    .studio-library-empty button,
+    .studio-reference-grid button,
+    .studio-scene-number,
+    .studio-scene-content strong
+  ) {
+  color: var(--aether-mineral);
+}
+.app-shell.imperial-workspace
+  :is(
+    .studio-library-empty,
+    .studio-story-empty small,
+    .studio-story-empty > p:last-child,
+    .studio-scene-number span,
+    .studio-scene-frame-empty,
+    .studio-scene-content > p:not(.eyebrow),
+    .studio-scene-fields label,
+    .studio-scene-fields small,
+    .studio-scene-picker,
+    .studio-scene-confirm
+  ) {
+  color: var(--aether-quiet);
+}
+.app-shell.imperial-workspace .studio-scene-message {
+  color: var(--aether-ink) !important;
+}
+.app-shell.imperial-workspace :is(.studio-scene, .studio-scene-editor, .studio-scene-content form) {
+  background: #fbf8f2;
+  color: var(--aether-ink);
+  border-color: var(--aether-border);
+}
+.app-shell.imperial-workspace :is(.intelligence-orb, .talk-presence > .talk-tool) {
+  --aether-obsidian: #0d211b;
+  --aether-deep: var(--aether-mineral);
+  --aether-luminous: #438069;
+}
+.app-shell.imperial-workspace .talk-presence > .talk-tool {
+  background: #0d211b;
+  border-color: var(--aether-gold);
+}
+.app-shell.imperial-workspace :where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--aether-mineral);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 2px var(--aether-ivory);
+}
+.app-shell.imperial-workspace :is(.sidebar, .navigation) :focus-visible {
+  outline-color: var(--aether-gold-light);
+  box-shadow: 0 0 0 2px #0d211b;
+}
+.app-shell.imperial-workspace ::selection {
+  background: var(--aether-petrol);
+  color: var(--aether-ivory);
+}
+.app-shell.imperial-workspace dialog::backdrop {
+  background: #0d211b99;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.imperial-workspace :is(a, button, .intelligence-orb-static) {
+    transition: none;
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace
+    :is(
+      .sidebar,
+      .navigation,
+      .topbar,
+      .studio-main,
+      .studio-projects,
+      .company-job,
+      .talk-drawer,
+      .aurelius-composer,
+      .talk-composer,
+      .button
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace :where(a, button, input, textarea, select, summary):focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+}

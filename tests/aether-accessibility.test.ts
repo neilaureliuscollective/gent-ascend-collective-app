@@ -32,4 +32,13 @@ describe('Public Aethelios readable materials', () => {
     expect(contrast(palette.luminous, palette.obsidian)).toBeGreaterThanOrEqual(3);
     expect(contrast(palette.silver, palette.petrol)).toBeGreaterThanOrEqual(3);
   });
+  it('keeps ivory reading surfaces and gold actions readable', () => {
+    for (const background of [palette.ivory, palette.cream, '#FBF8F2', '#DFE8DD']) {
+      for (const foreground of [palette.ink, palette.quiet, palette.mineral]) {
+        expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    expect(contrast(palette.ink, palette.gold)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(palette.gold, palette.obsidian)).toBeGreaterThanOrEqual(4.5);
+  });
 });

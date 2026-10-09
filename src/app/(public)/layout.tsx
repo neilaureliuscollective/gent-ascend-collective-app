@@ -9,6 +9,7 @@ import './world.css';
 import './cinematic.css';
 import './commerce-experience.css';
 import '../imperial-ascend.css';
+import '../imperial-steel.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
   description: 'Aethelios helps founders and operators build, grow and operate companies.',

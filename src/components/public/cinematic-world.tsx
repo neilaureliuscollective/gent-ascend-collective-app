@@ -144,6 +144,7 @@ export function CinematicWorld({ children }: { children: React.ReactNode }) {
         ref={root}
         className="public-world"
         data-imperial={pathname === '/' || pathname === '/enter' ? 'editorial' : undefined}
+        data-material={pathname === '/' ? 'imperial-steel' : undefined}
         data-world-still={still}
       >
         <div className="journey-progress" aria-hidden="true" />

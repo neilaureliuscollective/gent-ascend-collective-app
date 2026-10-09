@@ -1,15 +1,14 @@
 /* Imperial Ascend: opt-in semantic materials. Existing workspace tokens stay intact. */
 :root {
-  --ascend-green: #12382d;
-  --ascend-deep: #0d211b;
-  --ascend-mineral: #205443;
-  --ascend-ivory: #f5f1e8;
-  --ascend-cream: #e9e0d0;
-  --ascend-ink: #18352b;
-  --ascend-muted: #506158;
-  --ascend-gold: #c4912f;
-  --ascend-champagne: #e4bd70;
-  --ascend-blue: #143f57;
+  --ascend-green: var(--aether-petrol);
+  --ascend-deep: var(--aether-obsidian);
+  --ascend-mineral: var(--aether-mineral);
+  --ascend-ivory: var(--aether-ivory);
+  --ascend-cream: var(--aether-cream);
+  --ascend-ink: var(--aether-ink);
+  --ascend-muted: var(--aether-quiet);
+  --ascend-gold: var(--aether-gold);
+  --ascend-champagne: var(--aether-gold-light);
   --ascend-edge: #8c998b;
   --ascend-material-ivory: linear-gradient(
     135deg,

@@ -6,7 +6,7 @@ export const brand = {
   shortName: 'Aethelios',
   description:
     'A personal intelligence OS. Understand, build and continue your work, ideas and ambitions in one considered environment.',
-  themeColor: palette.obsidian,
+  themeColor: palette.ivory,
   crest: '/brand/aethelios-aether-20261007.webp',
   lockup: '/brand/aethelios-aether-20261007.webp',
   crestAlt:
