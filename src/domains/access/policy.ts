@@ -23,6 +23,7 @@ export interface AccessState {
   billing: BillingState;
   beta: boolean;
   founder?: boolean;
+  professionalUntil?: string | null;
   trialEndsAt?: string | null;
   accessUntil?: string | null;
 }
@@ -42,11 +43,12 @@ export function calculateCapabilities(
   ]);
   const future = (value: string | null | undefined) =>
     !!value && new Date(value).getTime() > now.getTime();
+  const professional = future(state.professionalUntil);
   const paid =
     (state.billing === 'active' && future(state.accessUntil)) ||
     (state.billing === 'trialing' && future(state.trialEndsAt)) ||
     (state.billing === 'canceled' && future(state.accessUntil));
-  if (state.founder || state.beta || (state.tier !== 'free' && paid)) {
+  if (state.founder || state.beta || professional || (state.tier !== 'free' && paid)) {
     granted.add('progress.read');
     granted.add('aurelius.context');
   }
@@ -54,6 +56,7 @@ export function calculateCapabilities(
   if (
     state.founder ||
     state.beta ||
+    professional ||
     (paid && ['aurelius', 'health', 'signature', 'reserve'].includes(state.tier))
   )
     granted.add('studio.create');

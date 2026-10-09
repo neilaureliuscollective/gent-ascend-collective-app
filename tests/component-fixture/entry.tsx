@@ -1,3 +1,5 @@
+import { BusinessConnections } from '@/components/business-connections/workspace';
+import '@/app/(workspace)/app/business-connections/connections.css';
 import { MissionHandoffFixture } from './mission-handoff';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
@@ -105,7 +107,12 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'mission' ? (
+  mode === 'business-connections' ? (
+    <main className="business-connections">
+      <h1>Business Connections · Synthetic fixture</h1>
+      <BusinessConnections />
+    </main>
+  ) : mode === 'mission' ? (
     <MissionHandoffFixture />
   ) : mode === 'company-room' || mode === 'company-job' ? (
     <>

@@ -13,6 +13,7 @@ Implemented the founder-approved Black × Gold × Aether Petrol system on the ex
 Responsive corrections found during visual QA: the longer descriptor now wraps in both narrow public headers and the desktop rail; mobile Talk no longer covers main navigation; Council controls retain 44px targets while leaving over 60% of the conversation surface for messages in the tested normal-height viewports. Existing keyboard-height handling and draft preservation pass.
 
 Observed validation:
+
 - Lint and strict typecheck: PASS.
 - Production build: PASS (Next 16.3.5 / Node 24).
 - Unit suite: 56 files / 409 tests PASS, including 2 new contrast-role checks.
@@ -42,6 +43,7 @@ Founder authorized merging and deploying home restoration #57 together with Pres
 Implemented the founder-approved Presence hierarchy; see [PRESENCE.md](PRESENCE.md). Command no longer creates grooming tasks from absent routine completion, and compact Home removes ritual compliance counts. `/app/presence` provides preparation and existing appearance intelligence; all grooming routes/data/API contracts remain intact. Upcoming user-saved occasions and member-marked replenishment are honest request-time signals. Aethelios receives relevant saved occasions under existing per-message context consent; wardrobe inventory, haircut cadence, calendar, reminders and background intelligence remain future work.
 
 Validation: typecheck, lint, 350 units, build and ledger passed; responsive browser and preserved grooming journeys checked with synthetic records. Live authenticated/model/physical-device review unverified. No deployment performed.
+
 # Command home recovery · October 4, 2026
 
 Founder-approved recovery built from main `930ca72`. Direct member entry now opens a single integrated green/obsidian/gold Command composition: greeting and saved briefing, current energy presence, today's next move and expandable Talk. Grooming/Performance/Collection have authored home doors; saved context and arrival explanations are disclosed below. Existing navigation, source ownership, confirmed writes and model-consent behavior are preserved. The lazy day workspace now focuses after its real content mounts, resolving a browser-observed scroll race.
@@ -63,6 +65,7 @@ Local lint, types, 295 unit/SQL tests, production build, inherited migration led
 # Grooming — Daily Ritual Intelligence · October 4, 2026
 
 Founder-approved next grooming phase implemented on an isolated review branch from `6abfd6d`. Member Grooming opens the shared cinematic daily chamber, with local-time ritual selection, guided/quick completion, real Cabinet product links, optional feedback, bounded weekly history, reviewed version edits, private photo comparison and saved Aethelios draft review. Original scans, looks, professional handoffs and history remain. The additive migration provides atomic daily completion/replay and reviewed edits with product-link retention. Local lint/types, 294 unit/SQL tests, production build and inherited migration ledger pass; 27 targeted final browser checks and four retained-direction checks pass. Review publication was blocked by automatic approval review requiring explicit source-export permission; no remote CI run is claimed. Real Auth/PostgREST and member-browser gates are added to CI, not claimed from fixtures. Hosted migration, live model/device acceptance and production release remain open. Scope and semantics: `GROOMING_DAILY_INTELLIGENCE.md`.
+
 # Public launch Phase 1 · October 4, 2026
 
 Public account entry and first-session continuity are implemented on a review branch from main `6abfd6d`. Recover the unmerged free-account claim build from PR #41, then add three authored starting paths, reviewed priority/next-move saving, returning-account routing, and Facebook browser guidance. Free identity remains separate from membership privileges. Local lint, types, 303 unit/SQL tests, 11 targeted browser checks, migration ledger and webpack production build pass. Real Auth acceptance and normal production build run in CI; hosted email/Google, migration activation, live AI and physical device acceptance are not claimed. Production remains unchanged. Scope and activation ledger: `PUBLIC_LAUNCH_PHASE_1.md`.
@@ -80,6 +83,7 @@ Implemented account saves on published member product pages, explicit reviewed b
 Implemented `/app/collection/cabinet` inside the native Collection world with private synced product records extending the existing Grooming Vault, stable Shopify GID saves, member-reported use status, notes, owner-bound ritual links, external products and paginated history. Added My World/Grooming entry points. Repeat saves preserve existing personal state; versioned mutations reject stale edits. No new storefront, purchase claims, discount activation or AI sales flow. Scope, research, sequencing and release limits: `MEMBER_PRODUCT_CABINET.md`.
 
 Local lint, types, 269 unit/SQL tests, production build, migration ledger and whitespace checks pass. GitHub real Auth/PostgREST integration and seven founder browser tests pass. Hosted additive migration is applied with owner-only RLS and immutable identity grants verified. Cabinet browser tests caught a native select reset after rejected saves; draft preservation is corrected. Existing preview tests now match the approved media policy, and the catalog renders without a streamed loading boundary so its full shelf remains usable without JavaScript. Founder removal acceptance waits for the acknowledged dialog close before reloading. Full combined release browser checks and production promotion are pending. Signed-in cross-device acceptance remains unverified; this increment does not complete the full member commerce plans.
+
 ## 2026-10-04 — Native Collection world
 
 Founder authorized research, planning and execution of a permanent product world. Implemented `/app/collection`, member product pages and cart, a fifth main navigation destination, and a top-level World entry. Shared commerce components preserve public defaults and Shopify purchase/launch boundaries. Research, naming rationale and next phases: `docs/COLLECTION_WORLD.md`.
@@ -133,6 +137,7 @@ Founder-directed refinement of the live product presentation: photo-aligned meta
 # Commerce photography and cinematic refinement — 2026-10-02
 
 Founder-approved visual correction: Shopify photos no longer depend on editorial `mediaApproved`; fabricated packaging fallbacks removed from commerce. Larger dimensional product scenes, green/gold lighting, staggered shelves and scoped native-scroll choreography implemented. Lint/typecheck/build and 223 unit tests passed; browser verification and publication results recorded in the release handoff. See [COMMERCE_VISUAL_REFINEMENT.md](COMMERCE_VISUAL_REFINEMENT.md). Physical Fold performance remains founder review.
+
 # Free account claim — October 2, 2026
 
 Founder-approved Phase 1 implemented on `feat/free-account-claim`. Existing cinematic entrance retained. World direction now becomes a recoverable 24-hour device draft; optional branded signup sheet supports Google + email OTP, fixed return routing, atomic owner-derived import and persisted focus. Free signup is independent of billing and fails closed until verified configuration is enabled. Existing password/invitation/membership flows retained. Sample workout/grooming activity is never promoted to actual history. Account creation never grants AI/beta/paid/clinical access.
@@ -243,7 +248,6 @@ Implemented on an isolated review branch: personal direction, editable strength 
 
 Local lint, TypeScript, 103 tests, production build, ledger check and production HTTP boundaries pass. All seven Performance browser scenarios and real Supabase Auth/PostgREST integration pass in CI. Full regression results are recorded on draft PR #26; live OpenAI and physical-device verification remain pending. No hosted migration or production deployment.
 
-
 # Founding memberships Phase 2 — 2026-10-02
 
 Implemented locally on `feat/founding-membership-billing`, continuing the Phase 1 foundation. `/join` provides gated public Auth registration and membership sign-in; verified email callbacks return to `/app/membership`. The account screen exposes current paid status, cancellation/end date, support contact, recurring terms consent, hosted checkout, the billing portal and owner-triggered refresh. New customers can choose the canonical $19.99 / $49.99 / $74.99 monthly USD prices. Paid sign-in/welcome no longer requires claiming a pilot invitation.
@@ -277,7 +281,6 @@ The account chat now occupies its own full-height room on phone, unfolded and de
 Lint, strict typecheck, 91 unit tests, migration ledger and production build pass. The focused browser tests were updated for the shared orb and larger composer, but were not executed: the Chromium download returned an invalid archive in this runner. A real signed-in phone/Fold keyboard, scroll, animation and WebGL review is still required before a production claim.
 
 ---
-
 
 # Threshold and LifeOS visual correction — 2026-09-27
 
@@ -657,7 +660,6 @@ Restore now has focused recovery capture, a seven-day history with per-metric de
 
 Movement adds completed cardio/mobility records, separate seven-day summaries and original-unit history. The starter exercise library supports previewed replacements and manual progression settings while retaining completed prescriptions. Owner-only RPCs preserve immutable revisions, exact retries, stale protection and bounded date windows. Local lint/types, 150 unit/SQL tests and production build pass; final browser/Auth/CI evidence is recorded on the Phase 7 PR. [Scope and research](ASCEND_PERFORMANCE_PHASE_7.md). No hosted migration or production promotion. Two core V1 phases remain: Physical Twin/integrated intelligence; integration/release.
 
-
 # Founding launch commerce phase 1 — 2026-10-02
 
 Implemented on `feat/founding-launch-foundation`: canonical $19.99 / $49.99 / $74.99 USD monthly founding offer definitions, a responsive `/membership` comparison, and `/launch` gallery combining Shopify products with labeled Vitalis, hair-care, body-care and Hydros concept studies. Native expandable sections distinguish the invitation-access app foundation from planned tier benefits and one-time bundles. Shop and footer expose the launch entry.
@@ -768,6 +770,7 @@ Observed local verification: lint, strict typecheck, production build, migration
 Live integration remains open: `npm run test:integration` cannot run because `.env.development.local` is absent, and Docker/local Supabase is unavailable. No real signed-in Supabase/PostgREST, live model or physical phone/GPU/battery acceptance is claimed. Browser/model fixtures are synthetic; SQL tests use emulation. The implementation is locally committed; no main merge, hosted migration or production deployment. Automatic approval review rejected the GitHub branch push because publication to this public repository was not explicitly authorized in this build-only turn; no alternate publishing path was used.
 
 Recommended Phase Two: refine Now with existing real grooming/training signals, then validate the signed-in operating loop on physical iPhone/Fold devices before promotion.
+
 ## 2026-10-04 — Public launch Phase 2: connected daily experience
 
 Recovered completed Phase 1 from PR52 ebd224a. Added session-bound Command return paths and a seven-day Progress projection across real Daily, training and grooming records. Editable weekly coaching uses consented context and existing reviewed saves. Shared read-only OpenAI search now reaches member Aethelios, specialists and Table; provider source links persist with saved text. No dependencies, migrations, entitlement changes or production activation. Local lint/types, 311 tests, webpack production build and migration ledger pass. Browser download failed; full interaction and real Supabase acceptance run through CI, with actual model and physical-device checks still pending. Scope/research/limits: PUBLIC_LAUNCH_PHASE_2.md. Two consolidated build phases remain, plus recorded acceptance gates.
@@ -801,3 +804,7 @@ CI exposed an existing training test date mismatch after UTC midnight: its synth
 Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
 
 Ascend Mirror integration: reconciled the direct-member-entry release a7184fd. Preserve both Mirror and home-handoff browser fixtures; retain the already-merged owner-calendar test fixes. Revalidate the integrated source before release.
+
+## October 9 — Connected Business Phases 1–2 (review branches)
+
+Public Aethelios now has an opt-in managed-OAuth business link to Reserve: separately confirmed accounts, explicit professional consent, encrypted broker credentials, owner/company-scoped metadata and fresh read-only schedule snapshots. Time-bounded professional membership is independent of personal billing and business authority. Business replies reuse existing Company Talk/model/quota/persistence, with per-reply consent and source receipts; personal context is excluded. The next approved build adds Fix It Shop copy/service-description proposals and independent approval in Reserve. No auto-publication or additional AI engine. Additive migrations/flags and actual account configuration require staged release; Reserve OAuth was disabled at inspection. See BUSINESS_CONNECTIONS_PHASE_1.md and BUSINESS_WEBSITES_PHASE_2.md for exact setup, acceptance and limitations. No hosted database, production merge or deployment performed.

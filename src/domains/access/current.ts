@@ -23,6 +23,16 @@ export async function currentAccess() {
     trialEndsAt: data.trial_ends_at,
     accessUntil: data.access_until,
   };
+  if (process.env.BUSINESS_CONNECTIONS_ENABLED === 'true') {
+    const { data: grant, error: grantError } = await identity.client
+      .from('professional_access_grants')
+      .select('*')
+      .eq('person_id', person.id)
+      .maybeSingle();
+    if (grantError) throw new Error('Professional access could not be verified.');
+    if (grant && !grant.revoked_at && new Date(grant.starts_at).getTime() <= Date.now())
+      state.professionalUntil = grant.expires_at;
+  }
   const env = parseEnvironment(process.env);
   if (env.harnessEnabled && identity.authUserId === founderAuthId && env.AURELIUS_DEV_TOKEN) {
     const { requireLocalHarness } = await import('@/domains/development/guard');
