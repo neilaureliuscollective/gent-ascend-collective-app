@@ -3,8 +3,8 @@ import './company-arrival.css';
 export default function PublicHome() {
   return (
     <main id="world-main" className="company-arrival">
-      <section aria-labelledby="arrival-title">
-        <span className="eyebrow">AETHELIOS / COMPANY-BUILDING INTELLIGENCE</span>
+      <section className="imperial-arrival-hero" aria-labelledby="arrival-title">
+        <span className="eyebrow imperial-kicker">AETHELIOS / COMPANY-BUILDING INTELLIGENCE</span>
         <h1 id="arrival-title">
           Bring the ambition.
           <br />
@@ -21,7 +21,11 @@ export default function PublicHome() {
           <Link href="/app/work">Explore company work ↗</Link>
         </div>
       </section>
-      <section className="company-arrival-method" aria-labelledby="method-title">
+      <section
+        className="company-arrival-method imperial-material-green"
+        aria-labelledby="method-title"
+      >
+        <span className="imperial-kicker">01 / THE INTELLIGENCE ENVIRONMENT</span>
         <h2 id="method-title">Start with the work that matters.</h2>
         <p>
           Company research. Positioning. Launch plans. Commercial analysis. Creative briefs. Begin
@@ -35,6 +39,44 @@ export default function PublicHome() {
           Available today: conversation, read-only research, Council perspectives and Studio
           creative projects. Company sharing and execution workflows are coming in later phases.
         </p>
+      </section>
+      <section className="imperial-workspaces" aria-labelledby="workspace-title">
+        <div className="imperial-section-heading">
+          <span className="imperial-kicker">ONE ENVIRONMENT / THREE WAYS TO WORK</span>
+          <h2 id="workspace-title">From thought to possibility.</h2>
+        </div>
+        <div className="imperial-workspace-grid">
+          {[
+            {
+              number: '01',
+              title: 'Talk',
+              detail: 'Explore the question. Find a clearer direction.',
+              href: '/app/aethelios',
+            },
+            {
+              number: '02',
+              title: 'Company work',
+              detail: 'Bring structure to your next considered move.',
+              href: '/app/work',
+            },
+            {
+              number: '03',
+              title: 'Studio',
+              detail: 'Give your ideas a visual expression.',
+              href: '/app/studio',
+            },
+          ].map((space) => (
+            <Link key={space.href} href={space.href} className="imperial-workspace">
+              <span className="imperial-kicker">{space.number}</span>
+              <h3>{space.title}</h3>
+              <p>{space.detail}</p>
+              <span className="imperial-workspace-action">
+                Open {space.title}
+                <span aria-hidden="true"> ↗</span>
+              </span>
+            </Link>
+          ))}
+        </div>
       </section>
     </main>
   );

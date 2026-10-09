@@ -1,0 +1,294 @@
+/* Imperial Ascend: opt-in semantic materials. Existing workspace tokens stay intact. */
+:root {
+  --ascend-green: #12382d;
+  --ascend-deep: #0d211b;
+  --ascend-mineral: #205443;
+  --ascend-ivory: #f5f1e8;
+  --ascend-cream: #e9e0d0;
+  --ascend-ink: #18352b;
+  --ascend-muted: #506158;
+  --ascend-gold: #c4912f;
+  --ascend-champagne: #e4bd70;
+  --ascend-blue: #143f57;
+  --ascend-edge: #8c998b;
+  --ascend-material-ivory: linear-gradient(
+    135deg,
+    #fbf8f2,
+    var(--ascend-ivory) 58%,
+    var(--ascend-cream)
+  );
+  --ascend-material-green:
+    radial-gradient(ellipse at 85% 0%, #326650 0%, transparent 55%),
+    linear-gradient(145deg, var(--ascend-green), var(--ascend-deep));
+  --ascend-material-metal: linear-gradient(
+    115deg,
+    var(--ascend-gold),
+    var(--ascend-champagne) 48%,
+    var(--ascend-gold)
+  );
+}
+.imperial-material-green {
+  background: var(--ascend-material-green);
+  color: var(--ascend-ivory);
+  box-shadow:
+    inset 0 1px 0 #ffffff24,
+    0 24px 60px #0d211b20;
+}
+.public-world[data-imperial='editorial'] {
+  color-scheme: light;
+  background: var(--ascend-material-ivory);
+  color: var(--ascend-ink);
+  --world-paper: var(--ascend-ink);
+}
+.public-world[data-imperial='editorial'] .public-orbital-field,
+.public-world[data-imperial='editorial'] .journey-progress {
+  display: none;
+}
+.public-world[data-imperial='editorial'] .world-header {
+  background: var(--ascend-ivory);
+  color: var(--ascend-ink);
+  border-bottom: 1px solid #18352b26;
+  backdrop-filter: none;
+  box-shadow: 0 4px 30px #0d211b08;
+}
+.public-world[data-imperial='editorial']
+  :is(.world-wordmark, .world-wordmark small, .world-nav a, .world-menu-toggle) {
+  color: var(--ascend-ink);
+}
+.public-world[data-imperial='editorial'] .world-nav {
+  background: var(--ascend-ivory);
+}
+.public-world[data-imperial='editorial'] .world-enter {
+  border-color: var(--ascend-edge);
+}
+.public-world[data-imperial='editorial'] :is(a, button, input, textarea):focus-visible {
+  outline: 2px solid var(--ascend-green);
+  outline-offset: 5px;
+  box-shadow: 0 0 0 2px var(--ascend-ivory);
+}
+.public-world[data-imperial='editorial'] ::selection {
+  color: var(--ascend-ivory);
+  background: var(--ascend-green);
+}
+.public-world[data-imperial='editorial'] .company-arrival {
+  max-width: 1360px;
+  background: none;
+  padding: clamp(128px, 12vw, 180px) clamp(24px, 6vw, 88px) 88px;
+}
+.public-world[data-imperial='editorial'] .company-arrival h1 {
+  color: var(--ascend-ink);
+  font-family: var(--font-editorial);
+  font-size: clamp(42px, 6.7vw, 94px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  margin: 28px 0;
+}
+.public-world[data-imperial='editorial'] .company-arrival h1 em {
+  color: var(--ascend-green);
+  background: none;
+  font-style: italic;
+}
+.public-world[data-imperial='editorial'] .company-arrival p {
+  color: var(--ascend-muted);
+  max-width: 620px;
+}
+.public-world[data-imperial='editorial'] .imperial-kicker {
+  display: block;
+  color: var(--ascend-muted);
+  font: 600 10px/1.7 var(--font-body);
+  letter-spacing: 0.18em;
+}
+.imperial-arrival-hero {
+  padding-bottom: 32px;
+  border-bottom: 1px solid #18352b26;
+}
+.public-world[data-imperial='editorial'] :is(.company-arrival-actions .button, .entrance-primary) {
+  background: var(--ascend-material-metal);
+  color: var(--ascend-deep);
+  border: 1px solid #8f6d32;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px #fff9,
+    0 4px 0 #8f6d3226,
+    0 8px 20px #0d211b12;
+  min-height: 48px;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.public-world[data-imperial='editorial']
+  :is(.company-arrival-actions .button, .entrance-primary):active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px #fff9;
+}
+.public-world[data-imperial='editorial'] .company-arrival-actions > a:not(.button) {
+  color: var(--ascend-ink);
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.public-world[data-imperial='editorial'] .company-arrival-method {
+  margin-top: 48px;
+  padding: clamp(28px, 4vw, 56px);
+  border: 1px solid #e4bd7038;
+  border-radius: 18px;
+}
+.public-world[data-imperial='editorial'] .company-arrival-method :is(h2, p) {
+  color: var(--ascend-ivory);
+}
+.public-world[data-imperial='editorial'] .company-arrival-method .imperial-kicker {
+  color: var(--ascend-champagne);
+}
+.public-world[data-imperial='editorial'] .company-arrival-method .quiet-label {
+  color: var(--ascend-cream);
+  border-top: 1px solid #f5f1e82b;
+  padding-top: 20px;
+}
+.imperial-workspaces {
+  margin-top: 64px;
+}
+.imperial-section-heading h2 {
+  font-family: var(--font-editorial);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 400;
+  margin: 16px 0 28px;
+}
+.imperial-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.imperial-workspace {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0;
+  color: var(--ascend-ink);
+  border-top: 1px solid var(--ascend-edge);
+  text-decoration: none;
+  min-width: 0;
+}
+.imperial-workspace h3 {
+  font: 400 28px/1.2 var(--font-editorial);
+  margin: 22px 0 12px;
+}
+.public-world[data-imperial='editorial'] .imperial-workspace p {
+  font-size: 15px;
+  margin: 0 0 24px;
+}
+.imperial-workspace-action {
+  margin-top: auto;
+  font-size: 13px;
+  font-weight: 600;
+}
+.imperial-workspace:hover .imperial-workspace-action {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.public-world[data-imperial='editorial'] .world-footer {
+  background: var(--ascend-material-green);
+  color: var(--ascend-ivory);
+}
+.public-world[data-imperial='editorial'] .world-footer :is(a, p, small, .footer-note) {
+  color: var(--ascend-cream);
+}
+.public-world[data-imperial='editorial'] .world-motion-control {
+  color: var(--ascend-ink);
+  background: var(--ascend-ivory);
+  border-color: var(--ascend-edge);
+}
+/* Existing sign-in actions, fields and errors are retained without auth changes. */
+.public-world[data-imperial='editorial'] :is(.entrance-world, .entrance-stage) {
+  background: var(--ascend-material-ivory);
+  color: var(--ascend-ink);
+}
+.public-world[data-imperial='editorial'] .entrance-stage::before,
+.public-world[data-imperial='editorial'] .entrance-stage::after {
+  border-color: #18352b20;
+}
+.public-world[data-imperial='editorial'] .entrance-depth {
+  opacity: 0.2;
+}
+.public-world[data-imperial='editorial'] .entrance-copy :is(h1, h1 em) {
+  color: var(--ascend-green);
+  background: none;
+}
+.public-world[data-imperial='editorial'] .entrance-copy :is(p, .entrance-threads) {
+  color: var(--ascend-muted);
+}
+.public-world[data-imperial='editorial'] .entrance-copy .entrance-kicker {
+  color: var(--ascend-muted) !important;
+}
+.public-world[data-imperial='editorial'] .entrance-panel {
+  background: var(--ascend-material-green);
+  color-scheme: dark;
+  color: var(--ascend-ivory);
+  border: 1px solid #e4bd7040;
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px #ffffff20,
+    0 24px 60px #0d211b26;
+}
+.public-world[data-imperial='editorial'] .entrance-panel :is(h2, p, label, a) {
+  color: var(--ascend-ivory);
+}
+.public-world[data-imperial='editorial'] .entrance-panel .entrance-primary {
+  color: var(--ascend-deep);
+}
+.public-world[data-imperial='editorial'] .entrance-panel input:not([type='hidden']) {
+  background: var(--ascend-deep);
+  color: var(--ascend-ivory);
+  border: 1px solid #a4b6a7;
+  font-size: 16px;
+}
+.public-world[data-imperial='editorial'] .entrance-panel .entrance-error {
+  color: var(--ascend-ivory);
+  background: var(--ascend-deep);
+  border: 1px solid var(--ascend-champagne);
+}
+@media (max-width: 700px) {
+  .imperial-workspace-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .public-world[data-imperial='editorial'] .company-arrival-method {
+    margin-top: 28px;
+  }
+  .imperial-workspaces {
+    margin-top: 40px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-world[data-imperial='editorial'] *,
+  .public-world[data-imperial='editorial'] *::before,
+  .public-world[data-imperial='editorial'] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (forced-colors: active) {
+  .public-world[data-imperial='editorial']
+    :is(
+      .company-arrival-method,
+      .entrance-panel,
+      .world-header,
+      .world-footer,
+      .world-motion-control
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .public-world[data-imperial='editorial'] :is(a, button, input, textarea):focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+}
+/* The original entrance uses important dark-canvas copy; override only this variant. */
+.public-world[data-imperial='editorial'] .entrance-copy .entrance-statement {
+  color: var(--ascend-muted) !important;
+}

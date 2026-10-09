@@ -140,7 +140,12 @@ export function CinematicWorld({ children }: { children: React.ReactNode }) {
   }, [pathname, still]);
   return (
     <StillContext value={still}>
-      <div ref={root} className="public-world" data-world-still={still}>
+      <div
+        ref={root}
+        className="public-world"
+        data-imperial={pathname === '/' || pathname === '/enter' ? 'editorial' : undefined}
+        data-world-still={still}
+      >
         <div className="journey-progress" aria-hidden="true" />
         <div className="public-orbital-field" aria-hidden="true">
           <OrbitSignature />

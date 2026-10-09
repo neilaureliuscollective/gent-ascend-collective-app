@@ -8,6 +8,7 @@ import { CinematicWorld } from '@/components/public/cinematic-world';
 import './world.css';
 import './cinematic.css';
 import './commerce-experience.css';
+import '../imperial-ascend.css';
 export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
   description: 'Aethelios helps founders and operators build, grow and operate companies.',
