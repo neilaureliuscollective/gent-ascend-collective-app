@@ -251,6 +251,7 @@ test('website Talk context and planning proposal persist with real Auth and reje
   expect(proposal.ok()).toBe(true);
   expect(proposal.headers()['cache-control']).toBe('private, no-store');
   await page.goto(`/app/aethelios?conversation=${chat}&technology=${project}`);
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await expect(
     page.getByRole('checkbox', { name: 'Include this website brief in my next Talk message' }),
   ).not.toBeChecked();

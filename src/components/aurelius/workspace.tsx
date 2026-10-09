@@ -616,6 +616,18 @@ export function AureliusWorkspace({
           </button>
           <TalkDrawer label="Tools & context">
             <AppearanceControls />
+            {!preview && (
+              <TalkWebsite
+                key={`${data.ownerId ?? 'unknown'}:${selected ?? 'new'}`}
+                turns={data.turns}
+                conversationId={selected}
+                onContext={setWebsiteContext}
+                planning={websitePlanning}
+                onPlanning={setWebsitePlanning}
+                mission={missionContext}
+                disabled={busy || needsReload || Boolean(councilSelection)}
+              />
+            )}
             <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
               <button aria-pressed={tab === 'conversation'} onClick={() => setTab('conversation')}>
                 Conversation
@@ -786,16 +798,6 @@ export function AureliusWorkspace({
         </div>
         {!preview && (
           <div className="intelligence-work-access">
-            <TalkWebsite
-              key={`${data.ownerId ?? 'unknown'}:${selected ?? 'new'}`}
-              turns={data.turns}
-              conversationId={selected}
-              onContext={setWebsiteContext}
-              planning={websitePlanning}
-              onPlanning={setWebsitePlanning}
-              mission={missionContext}
-              disabled={busy || needsReload || Boolean(councilSelection)}
-            />
             {missionContext?.conversationId === selected && (
               <button
                 type="button"

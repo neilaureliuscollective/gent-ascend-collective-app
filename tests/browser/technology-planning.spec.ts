@@ -95,12 +95,14 @@ test('saved website Talk context is explicit and sends only identity/revision', 
     });
   });
   await page.goto(`http://127.0.0.1:3102/?mode=mission&talk=1&technology=${project}`);
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   const consent = page.getByRole('checkbox', {
     name: 'Include this website brief in my next Talk message',
   });
   await expect(consent).not.toBeChecked();
   await consent.check();
   await expect(page.getByText('Sends the exact saved v3 brief')).toBeVisible();
+  await page.keyboard.press('Escape');
   await page.getByLabel('Message Aethelios').fill('How could the homepage be more luxurious?');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect.poll(() => body).not.toBeNull();
@@ -157,7 +159,9 @@ test('planning mode survives a saved reply and presents a business proposal with
     });
   });
   await page.goto('http://127.0.0.1:3102/?mode=mission&talk=1');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await expect(page.getByRole('checkbox', { name: 'Plan a website with Aethelios' })).toBeChecked();
+  await page.keyboard.press('Escape');
   await expect(page.getByText('Studio North · Proposed website')).toBeVisible();
   await expect(page.locator('.message-markdown')).not.toContainText('bookingUrl');
   await page.getByLabel('Message Aethelios').fill('What should I clarify before saving?');

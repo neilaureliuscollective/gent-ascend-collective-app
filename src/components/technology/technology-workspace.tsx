@@ -249,7 +249,7 @@ export function TechnologyWorkspace() {
                 <p>
                   Start with a conversation:{' '}
                   <Link href="/app/aethelios">
-                    open Talk and select “Plan a website with Aethelios” ↗
+                    open Talk → Tools & context → “Plan a website with Aethelios” ↗
                   </Link>
                   . Capture the conversation as a Mission to bring its proposal here for review.
                 </p>
