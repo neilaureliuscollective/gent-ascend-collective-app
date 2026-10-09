@@ -37,7 +37,7 @@ export const migrationFiles = [
   ],
   [
     '20261009023308_technology_owned_images.sql',
-    '88fe20705a8612f10d055a32e2491bab0ea0b14fbbab104ce9a6fd2f8ca8f66b',
+    'f5051b63891c426119604425f8d4eff184a2f4b4048aea9b8dc1f4c4a72c514a',
   ],
 ];
 const columns = {

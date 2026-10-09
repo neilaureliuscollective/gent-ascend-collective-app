@@ -30,7 +30,11 @@ beforeAll(async () => {
   for (const file of (await readdir('supabase/migrations'))
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
+    if (file === '20261009023308_technology_owned_images.sql')
+      await db.exec('alter default privileges in schema public grant all on tables to anon,authenticated');
     await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
+    if (file === '20261009023308_technology_owned_images.sql')
+      await db.exec('alter default privileges in schema public revoke all on tables from anon,authenticated');
   }
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
 });
@@ -1836,6 +1840,8 @@ it('additional pages retain strict SQL bounds, immutable versions, stale-write a
 });
 
 it('owned image imports fence leases, reject foreign scopes and preserve website snapshots after Studio removal',async()=>{
+ expect((await db.query<{allowed:boolean}>("select has_table_privilege('anon','technology_images','select,insert,update,delete') as allowed")).rows[0]!.allowed).toBe(false);
+ expect((await db.query<{allowed:boolean}>("select has_table_privilege('authenticated','technology_images','insert,update,delete,truncate,references,trigger') as allowed")).rows[0]!.allowed).toBe(false);
  const p='f6000000-0000-4000-8000-000000000001',v='f6000000-0000-4000-8000-000000000002',studio='f6000000-0000-4000-8000-000000000003',ref='f6000000-0000-4000-8000-000000000004',image='f6000000-0000-4000-8000-000000000005',lease=crypto.randomUUID();
  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
  const b={name:'Synthetic images',industry:'professional-services',vision:'A synthetic business website.',headline:'Considered work',about:'A synthetic service for testing.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:''};

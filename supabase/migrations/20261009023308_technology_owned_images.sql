@@ -13,6 +13,7 @@ create table public.technology_images(
 );
 create index technology_images_owner on public.technology_images(person_id,project_id);
 alter table public.technology_images enable row level security;
+revoke all on public.technology_images from public,anon,authenticated;
 grant select on public.technology_images to authenticated;
 create policy technology_images_owner_read on public.technology_images for select to authenticated using(person_id in(select id from public.persons where auth_user_id=(select auth.uid())));
 create function public.technology_image_begin(p_id uuid,p_project uuid,p_expected integer,p_source uuid,p_kind text,p_lease uuid) returns text
