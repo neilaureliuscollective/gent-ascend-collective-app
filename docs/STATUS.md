@@ -801,3 +801,11 @@ CI exposed an existing training test date mismatch after UTC midnight: its synth
 Phase Two remains a focused refinement of Now from existing real grooming/training signals, with physical iPhone/Fold daily-loop acceptance.
 
 Ascend Mirror integration: reconciled the direct-member-entry release a7184fd. Preserve both Mirror and home-handoff browser fixtures; retain the already-merged owner-calendar test fixes. Revalidate the integrated source before release.
+
+## Imperial workspace — October 9, 2026
+
+Founder-approved ivory, architectural cream, Imperial Green, Mineral Green, Reserve Gold and green-black now coordinate public arrival/entrance with Talk, Work and Studio. Blue/petrol UI tones are replaced with green; the historical `petrol` token name remains an internal compatibility alias. Light reading/editing surfaces, green navigation/orb materials, gold actions, restrained shadows, readable secondary copy, focus and reduced-motion guards preserve existing routes and behavior. Official crest artwork is retained. Research and scope: [IMPERIAL_WORKSPACE.md](IMPERIAL_WORKSPACE.md).
+
+Local validation: lint and strict TypeScript passed; all 410 unit/SQL tests passed; final Next production build passed; all 33 targeted production-runtime browser tests passed across 320–2560px, covering arrival/entrance, presence dialog/focus, editor drafts, Team/Table, company handoffs, installed icons and rendered text contrast. The 28-file migration ledger matches the recorded hosted snapshot; no migration was added or applied. Twelve production-runtime screenshot captures across public pages, Talk, Work and Studio at phone/fold/desktop widths returned HTTP 200 with no page errors or horizontal overflow. Review artifacts are in `/workspace/imperial-review/` in the current cloud workspace.
+
+This is a local visual candidate, not a production deployment or live provider acceptance. Authenticated production, actual physical devices, and a complete accessibility audit remain unverified. Known baseline shell tests with obsolete navigation expectations were not included in the focused run. The recovered eight-phase creation integration is a separate pending phase and was not merged during this visual update. Next: founder visual review, then separately authorized merge/deployment and hosted verification.

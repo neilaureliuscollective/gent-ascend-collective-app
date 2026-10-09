@@ -17,7 +17,7 @@ export function Shell({
 }) {
   return (
     <ConversationDraftProvider>
-      <div className="app-shell aethelios-aether">
+      <div className="app-shell aethelios-aether imperial-workspace">
         <AppRuntime />
         <VisualEnvironment>
           <ConnectionField />

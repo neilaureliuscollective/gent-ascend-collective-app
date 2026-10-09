@@ -1,4 +1,4 @@
-> Public Aethelios visual update (2026-10-07): the founder approved BLACK × GOLD × AETHER PETROL. Read docs/AETHER_PETROL.md. This supersedes all green/plum brand guidance below for this repository. Use src/platform/visual/aether-palette.json as the color source; retain existing functional/accessibility guards. Public descriptor: PERSONAL INTELLIGENCE OS.
+> Public Aethelios visual update (2026-10-09): the founder approved ivory, architectural cream, Imperial Green, Mineral Green, Reserve Gold and green-black, replacing blue/petrol and the previous black-first direction. Read docs/IMPERIAL_WORKSPACE.md. Use src/platform/visual/aether-palette.json as the color source; retain existing functional/accessibility guards and official crest artwork. Public descriptor: PERSONAL INTELLIGENCE OS. Production promotion still requires founder approval.
 
 # Gent Ascend Collective — canonical project rules
 
