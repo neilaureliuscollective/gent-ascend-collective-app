@@ -61,3 +61,9 @@ New AI agent execution, paid Architect enrollment, executable server previews, c
 | Reserve $74.99 | Historical offer only; retain price matching and paid access, no automatic Architect upgrade |
 | aurelius / health | Historical identifiers and access remain valid; not new launch membership names |
 | Architect $129 | New staged catalog/contract; not accepted by existing checkout/schema and no paid agent grant |
+
+## Review receipts
+
+Member draft PR: https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/82, stacked on Phase One PR #81's `feat/human-ascendance-foundation`. Implementation commit `598f424`. Corporate draft PR: https://github.com/neilaureliuscollective/aethelios-human-ascendance/pull/1, stacked on `feat/corporate-headquarters`. Review Phase One dependencies before retargeting/merging. No merge or production promotion authorized.
+
+At publication, member GitHub application/database checks and Vercel preview were pending. Prior failures remain documented; pending is not pass. Corporate account billing/spending rejection recurred before any step in run 38034950383. Environment startup guidance was appended to the reusable onboarding draft; saving the draft does not apply or publish a cloud snapshot.
