@@ -359,3 +359,7 @@ Fix the confirmed live camera=() document policy to camera=(self), including cli
 ## 2026-10-04 — Recover Command home while preserving direct member entry
 
 Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.
+
+## 2026-10-10 — Architect owner storage and bounded AI revisions
+
+Continue existing HTML/CSS workshop with additive owner-only version storage and an expiring operational execution allowance, separate from commercial tier names. Reserve atomically before one direct OpenAI structured-output call; no retries/tools/personal context and no automatic source replacement. Disabled server defaults preserve existing production until migration/Auth/provider acceptance. Reviewed installed Next route handler and AI SDK/OpenAI adapter source plus prior official Supabase RLS guidance. See ARCHITECT_CLOUD.md for exact limits, privacy/provenance boundaries and unrun acceptance gates. No provider migration or live billing change.

@@ -22,9 +22,11 @@ export default function Architect() {
       <section className="ecosystem-note">
         <h2>The next engineering milestone</h2>
         <p>
-          Metered AI development, authenticated cloud projects, GitHub changes, executable previews
-          and approved deployment handoffs are under development. Architect enrollment remains gated
-          until those workflows are validated. This free workshop does not unlock an AI agent.
+          Cloud project storage and bounded AI revision requests are implemented behind separate
+          configuration and execution grants; staging acceptance remains pending. GitHub changes,
+          executable previews and approved deployment handoffs are under development. Architect
+          enrollment remains gated until those workflows are validated. This free workshop does not
+          unlock an AI agent.
         </p>
         <Link href="/app/entities#prometheus">Explore the technical Entity →</Link>
         <p>

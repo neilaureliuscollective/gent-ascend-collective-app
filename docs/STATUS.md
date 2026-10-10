@@ -865,3 +865,7 @@ Operating-system icon refresh timing is outside the service worker's control. Ex
 ## Phase Two review implementation — 2026-10-10
 
 Four-plan launch catalog and historical subscription compatibility documented; test-only launch-price/capability contracts do not activate billing. Real static Architect workflow implemented at /app/architect with source editing, restricted preview, bounded revision history, validation, JSON reopening and HTML export. Talk starter stages a user-reviewed website JSON request under existing access/quotas; no automatic model call or context transfer. AI development jobs, cloud project persistence, GitHub and deployment remain gated. Health Systems Atlas education and Legacy Reserve Lifestyle introduction added. No schema/provider/production mutation. See PHASE_TWO.md and COMMERCIAL_READINESS.md for limitations, research and launch gates.
+
+## Next Architect build — 2026-10-10
+
+Review implementation adds optional owner-only cloud projects/version history, content deletion, expiring operational execution grants and atomic reservation limits. AI produces a proposed static HTML/CSS revision only after consent and reservation; owner reviews/applies/saves explicitly. Existing local workshop stays available. Defaults disabled, additive migration unapplied, no grants/billing/production changes. See ARCHITECT_CLOUD.md. Real Supabase Auth and live provider acceptance remain open; SQL emulation and intercepted browser workflows are distinct evidence.

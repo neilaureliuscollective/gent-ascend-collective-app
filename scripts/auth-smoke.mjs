@@ -1115,3 +1115,25 @@ assert.ok((await founder.rpc('company_review_work',reviewArgs)).error);
 assert.ok((await member.from('company_work_versions').update({content:{title:'Forbidden mutation'}}).eq('id',workVersion)).error);
 assert.ok((await anon.from('company_jobs').select('id')).error);
 console.log('PASS: connected company job replay, immutable versions, stale/cross-company/cross-user denial and exact review receipt');
+
+// Architect: real local Auth/PostgREST acceptance. No operational grant or model call.
+const architectProject = crypto.randomUUID();
+const architectVersion = crypto.randomUUID();
+const architectContent = { version: 1, name: 'Synthetic integration website', brief: 'No real customer data.', html: '<main><h1>Synthetic source</h1></main>', css: 'body{font-family:system-ui}' };
+const architectSave = { p_project: architectProject, p_version: architectVersion, p_expected: 0, p_content: architectContent };
+try {
+  assert.equal((await member.rpc('architect_save', architectSave)).data, 1);
+  assert.equal((await member.rpc('architect_save', architectSave)).data, 1);
+  assert.equal((await member.from('architect_versions').select('id').eq('project_id', architectProject)).data.length, 1);
+  assert.ok((await member.rpc('architect_save', { ...architectSave, p_version: crypto.randomUUID() })).error);
+  assert.equal((await founder.from('architect_projects').select('id').eq('id', architectProject)).data.length, 0);
+  assert.ok((await founder.rpc('architect_save', architectSave)).error);
+  assert.ok((await founder.rpc('architect_delete', { p_project: architectProject })).error);
+  assert.ok((await anon.from('architect_projects').select('id')).error);
+  assert.ok((await member.from('architect_allowances').insert({person_id:memberPerson.id,expires_at:new Date(Date.now()+86400000).toISOString(),monthly_jobs:20})).error);
+  assert.ok((await member.rpc('architect_reserve',{p_id:crypto.randomUUID(),p_project:architectProject,p_expected:1,p_hash:'a'.repeat(64),p_model:'gpt-4.1-mini'})).error);
+} finally {
+  assert.equal((await member.rpc('architect_delete', {p_project:architectProject})).error, null);
+}
+assert.equal((await member.from('architect_versions').select('id').eq('project_id',architectProject)).data.length, 0);
+console.log('PASS: Architect real local Auth, owner versions, replay, stale/cross-user/anonymous denial, grant escalation denial and source deletion; no model call');
