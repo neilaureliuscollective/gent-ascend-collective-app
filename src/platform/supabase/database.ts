@@ -18,7 +18,7 @@ import type {
 } from '@/domains/intelligence/types';
 import type { FactKey } from '@/domains/ascend-profile/schema';
 // Initial migration contract. Replace with CLI-generated types after a validated
-// local Supabase reset; this file deliberately describes only shipped tables.
+// local Supabase reset; this file describes reviewed table/RPC contracts; new Architect tables require the additive staging migration.
 type Relationship = {
   foreignKeyName: string;
   columns: string[];
@@ -71,6 +71,10 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      architect_projects: Table<import('@/domains/architect/cloud-types').CloudProject, never, never>;
+      architect_versions: Table<import('@/domains/architect/cloud-types').CloudVersion, never, never>;
+      architect_jobs: Table<import('@/domains/architect/cloud-types').ArchitectJob, never, never>;
+      architect_allowances: Table<{person_id:string;expires_at:string;monthly_jobs:number}, never, never>;
       intelligence_missions: Table<import('@/domains/missions/schema').Mission, Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>, Partial<import('@/domains/missions/schema').Mission>>;
       company_turn_context: Table<{request_id: string; person_id: string; company_id: string; name: string; brief: string; version: number; confirmed_at: string}, never, never>;
       company_jobs: Table<import("@/domains/company-work/schema").WorkJob, never, never>;
@@ -749,6 +753,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      architect_save: {Args:{p_project:string;p_version:string;p_expected:number;p_content:import('@/domains/architect/project').WebProject};Returns:number};
+      architect_delete: {Args:{p_project:string};Returns:undefined};
+      architect_reserve: {Args:{p_id:string;p_project:string;p_expected:number;p_hash:string;p_model:string};Returns:string};
+      architect_finish: {Args:{p_id:string;p_output:import('@/domains/architect/project').WebProject|null};Returns:undefined};
       company_begin_revision: {Args:{p_company:string;p_conversation:string;p_source:string;p_request:string;p_text:string;p_kind:string;p_model:string;p_prompt_version:string};Returns:string};
       company_create_job: {Args:{p_id:string;p_company:string;p_conversation:string;p_scope:import("@/domains/company-work/schema").WorkScope};Returns:string};
       company_save_work: {Args:{p_id:string;p_company:string;p_job:string;p_expected:number;p_content:import("@/domains/company-work/schema").WorkContent;p_source_turn:string|null};Returns:string};

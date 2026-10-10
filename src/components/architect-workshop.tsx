@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
+import { ArchitectCloud } from './architect-cloud';
 import {
   checkProject,
   exportDocument,
@@ -11,6 +12,7 @@ import {
   type WebProject,
 } from '@/domains/architect/project';
 export function ArchitectWorkshop() {
+  const [cloudKey, setCloudKey] = useState(0);
   const [name, setName] = useState('My next idea');
   const [brief, setBrief] = useState('A focused website for my new project.');
   const [project, setProject] = useState<WebProject | null>(null);
@@ -22,6 +24,7 @@ export function ArchitectWorkshop() {
   const [issues, setIssues] = useState<string[] | null>(null);
   const file = useRef<HTMLInputElement>(null);
   function load(p: WebProject) {
+    setCloudKey((k) => k + 1);
     setProject(p);
     setRevisions([p]);
     setPreview(previewDocument(p, document));
@@ -47,8 +50,9 @@ export function ArchitectWorkshop() {
     <section className="architect-workshop" aria-label="Architect static website workshop">
       <p>
         This working preview creates static HTML/CSS websites. The starter is a template, not
-        AI-generated code. No account data or code is sent to a model. JavaScript, uploads to a
-        server and deployment are not supported here.
+        AI-generated code. Local tools make no model call. Optional cloud AI sends only the saved
+        source and request after explicit consent. JavaScript execution, arbitrary file uploads and
+        deployment are not supported here.
       </p>
       <p>
         <Link href="/app/aethelios?starter=architect-workshop" prefetch={false}>
@@ -85,6 +89,17 @@ export function ArchitectWorkshop() {
           publishing.
         </p>
       </details>
+      <ArchitectCloud
+        key={cloudKey}
+        project={project}
+        onLoad={(p) => {
+          setProject(p);
+          setRevisions((r) => [...r.slice(-9), p]);
+          setPreview(previewDocument(p, document));
+          setIssues(null);
+          setStatus('Cloud source loaded locally for inspection.');
+        }}
+      />
       <div className="architect-start">
         <label>
           Project name
@@ -234,7 +249,8 @@ export function ArchitectWorkshop() {
           </div>
           <p>
             Preview strips active content and external links. Export contains your original source.
-            Saved project files stay on your device; no automatic recovery or cloud sync.
+            Downloaded project files stay on your device. Optional cloud saves are explicit; no
+            automatic sync.
           </p>
           {!!revisions.length && (
             <details>
@@ -266,6 +282,7 @@ export function ArchitectWorkshop() {
                   'Clear this project and its tab history? Download project JSON first to keep it.',
                 )
               ) {
+                setCloudKey((k) => k + 1);
                 setProject(null);
                 setRevisions([]);
                 setPreview('');
