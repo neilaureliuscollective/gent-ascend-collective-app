@@ -7,14 +7,14 @@ export default function PublicHome() {
     <main id="world-main" className="company-arrival">
       <section className="imperial-arrival-hero" aria-labelledby="arrival-title">
         <div className="imperial-hero-copy">
-          <span className="eyebrow imperial-kicker">AETHELIOS / COMPANY-BUILDING INTELLIGENCE</span>
+          <span className="eyebrow imperial-kicker">AETHELIOS / PERSONAL INTELLIGENCE OS</span>
           <h1 id="arrival-title">
             Bring the ambition.
             <br />
-            <em>Build the company.</em>
+            <em>Move your world forward.</em>
           </h1>
           <p>
-            Research the opportunity. Sharpen the offer. Shape the next move. Aethelios brings
+            Bring a decision, a personal project or a business ambition. Aethelios brings
             conversation, specialist perspectives and creative work into one considered environment.
           </p>
           <div className="company-arrival-actions">
@@ -22,7 +22,7 @@ export default function PublicHome() {
               Open Aethelios <Icon name="arrow" className="imperial-entry-arrow" />
             </Link>
             <Link href="/app/work">
-              Explore company work <Icon name="arrow" className="imperial-entry-arrow" />
+              Explore your work <Icon name="arrow" className="imperial-entry-arrow" />
             </Link>
           </div>
         </div>
@@ -32,7 +32,7 @@ export default function PublicHome() {
         <span className="imperial-kicker">01 / THE INTELLIGENCE ENVIRONMENT</span>
         <h2 id="method-title">Start with the work that matters.</h2>
         <p>
-          Company research. Positioning. Launch plans. Commercial analysis. Creative briefs. Begin
+          Decisions. Learning. Personal projects. Research. Business plans. Creative briefs. Begin
           in Talk and bring in a specialist when the problem calls for one.
         </p>
         <p>
@@ -62,7 +62,7 @@ export default function PublicHome() {
             },
             {
               number: '02',
-              title: 'Company work',
+              title: 'Work',
               detail: 'Bring structure to your next considered move.',
               href: '/app/work',
             },

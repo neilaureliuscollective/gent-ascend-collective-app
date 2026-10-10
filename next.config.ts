@@ -1,7 +1,19 @@
 import type { NextConfig } from 'next';
+import { execFileSync } from 'node:child_process';
 import { parseEnvironment } from './src/platform/environment';
 parseEnvironment(process.env);
+function creationCommit() {
+  try {
+    const sha =
+      process.env.VERCEL_GIT_COMMIT_SHA ??
+      execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    return /^[a-f0-9]{40}$/.test(sha) ? sha : '';
+  } catch {
+    return '';
+  }
+}
 const config: NextConfig = {
+  env: { CREATION_BUILD_COMMIT: creationCommit() },
   poweredByHeader: false,
   images: { remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }] },
   async redirects() {

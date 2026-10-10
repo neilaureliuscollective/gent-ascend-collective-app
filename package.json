@@ -19,12 +19,16 @@
     "db:reset": "supabase db reset --local && node scripts/dev-setup.mjs --running",
     "db:types": "supabase gen types typescript --local > src/platform/supabase/database.generated.ts",
     "db:ledger": "node scripts/check-migration-ledger.mjs",
+    "release:preflight": "node scripts/public-release-preflight.mjs",
+    "test:release": "node --test scripts/public-release-preflight.test.mjs scripts/public-hosted-acceptance.test.mjs",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "format": "prettier --write .",
     "test:founder": "playwright test --config playwright.founder.config.ts",
+    "test:creation": "playwright test --config playwright.creation.config.ts",
     "test:ai:live": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local node_modules/vitest/vitest.mjs run --config vitest.ai.config.ts",
     "prebuild": "node scripts/prepare-mirror.mjs",
-    "pretest:e2e": "node scripts/prepare-mirror.mjs"
+    "pretest:e2e": "node scripts/prepare-mirror.mjs",
+    "release:accounts": "node scripts/public-hosted-acceptance.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "4.0.72",
@@ -34,6 +38,7 @@
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
     "ai": "7.0.107",
+    "fflate": "0.8.3",
     "gsap": "^3.15.0",
     "next": "16.3.5",
     "pdf-lib": "1.17.1",
@@ -41,6 +46,7 @@
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
     "server-only": "0.0.1",
+    "sharp": "0.35.5",
     "stripe": "23.0.0",
     "three": "0.186.0",
     "zod": "4.6.5"

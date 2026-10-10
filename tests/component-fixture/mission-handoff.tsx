@@ -18,7 +18,7 @@ export const syntheticMission: Mission = {
   updated_at: '2026-10-06T00:00:00Z',
 };
 export function MissionHandoffFixture() {
-  const [talk, setTalk] = useState(false);
+  const [talk, setTalk] = useState(new URLSearchParams(location.search).has('talk'));
   useEffect(() => {
     const open = () => setTalk(true);
     window.addEventListener('fixture-router-push', open);

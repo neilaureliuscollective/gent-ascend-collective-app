@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 for (const width of [360, 768, 1440]) {
   test(`read-only Shopify order history is explicit and fits ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });

@@ -30,7 +30,11 @@ beforeAll(async () => {
   for (const file of (await readdir('supabase/migrations'))
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
+    if (file === '20261009023308_technology_owned_images.sql' || file === '20261009041047_technology_release_packages.sql')
+      await db.exec('alter default privileges in schema public grant all on tables to anon,authenticated');
     await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
+    if (file === '20261009023308_technology_owned_images.sql' || file === '20261009041047_technology_release_packages.sql')
+      await db.exec('alter default privileges in schema public revoke all on tables from anon,authenticated');
   }
   await db.exec(await readFile('supabase/seed.sql', 'utf8'));
 });
@@ -886,6 +890,53 @@ describe('confirmed evening review and next-day continuity',()=>{
   expect(entry).toBe(dayVersion);
  });
 });
+async function releaseBuild(project: string, expected: number) {
+  const version=crypto.randomUUID(),build=crypto.randomUUID(),lease=crypto.randomUUID();
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  const brief={name:'Synthetic release',industry:'professional-services',vision:'A synthetic release website.',headline:'Considered work',about:'Synthetic services.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:''};
+  await asUser(founder,`select technology_save('${project}','${version}',${expected},'${JSON.stringify(brief)}');`);
+  await asUser(founder,`select technology_review('${project}','${version}')`);
+  await asUser(founder,`select technology_build_queue('${build}','${project}','${version}')`);
+  await asUser(founder,`select technology_build_claim('${build}','${lease}')`);
+  await db.query(`select technology_build_finish('${build}','${owner}','${lease}','synthetic bounded html','${'a'.repeat(64)}','{"passed":true,"validator":"static-service-v1"}')`);
+  return build;
+}
+it('release approvals bind current reviewed builds, enforce consent/ownership and retain terminal revoked receipts',async()=>{
+  const project=crypto.randomUUID(),id=crypto.randomUUID(),hash='a'.repeat(64),build=await releaseBuild(project,0);
+  const approve=(receipt=id,source=build,h=hash,consent=true)=>`select technology_release_approve('${receipt}','${source}','${h}',${consent}) as id`;
+  await expect(asUser(founder,approve(id,build,hash,false))).rejects.toThrow(/consent/);
+  await expect(asUser(founder,approve(id,build,'b'.repeat(64)))).rejects.toThrow(/exact/);
+  await expect(asUser(member,approve())).rejects.toThrow();
+  expect((await asUser<{id:string}>(founder,approve())).rows[0]!.id).toBe(id);
+  expect((await asUser<{id:string}>(founder,approve(crypto.randomUUID()))).rows[0]!.id).toBe(id);
+  const next=await releaseBuild(project,1);
+  expect((await asUser<{id:string}>(founder,approve())).rows[0]!.id).toBe(id);
+  await expect(asUser(founder,approve(id,next))).rejects.toThrow(/changed/);
+  expect((await asUser(member,`select * from technology_releases where id='${id}'`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update technology_releases set sha256='${'b'.repeat(64)}' where id='${id}'`)).rejects.toThrow(/permission/);
+  expect((await db.query<{allowed:boolean}>("select has_table_privilege('anon','technology_releases','select,insert,update,delete') as allowed")).rows[0]!.allowed).toBe(false);
+  expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_release_approve(uuid,uuid,text,boolean)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+  await expect(asUser(member,`select technology_release_revoke('${id}')`)).rejects.toThrow();
+  await asUser(founder,`select technology_release_revoke('${id}')`);
+  const revoked=(await asUser<{revoked_at:string}>(founder,`select revoked_at from technology_releases where id='${id}'`)).rows[0]!.revoked_at;
+  await asUser(founder,`select technology_release_revoke('${id}')`);
+  await asUser(founder,approve(crypto.randomUUID()));
+  expect((await asUser<{revoked_at:string}>(founder,`select revoked_at from technology_releases where id='${id}'`)).rows[0]!.revoked_at).toEqual(revoked);
+  await db.exec(`delete from technology_projects where id='${project}'`);
+  expect((await db.query(`select id from technology_releases where id='${id}'`)).rows).toHaveLength(0);
+});
+it('release preparation rejects stale new approvals and bounds history without refunding revoked receipts',async()=>{
+  const project=crypto.randomUUID(),first=await releaseBuild(project,0),hash='a'.repeat(64);
+  const second=await releaseBuild(project,1);
+  await expect(asUser(founder,`select technology_release_approve(gen_random_uuid(),'${first}','${hash}',true)`)).rejects.toThrow(/current/);
+  const approve=(build:string)=>asUser<{id:string}>(founder,`select technology_release_approve(gen_random_uuid(),'${build}','${hash}',true) as id`);
+  const id=(await approve(second)).rows[0]!.id;
+  await asUser(founder,`select technology_release_revoke('${id}')`);
+  for(let n=2;n<21;n++)await approve(await releaseBuild(project,n));
+  await expect(approve(await releaseBuild(project,21))).rejects.toThrow(/allowance/);
+  expect((await asUser(founder,`select id from technology_releases where project_id='${project}'`)).rows).toHaveLength(20);
+  await db.exec(`delete from technology_projects where id='${project}'`);
+});
 afterAll(() => db.close());
 
 describe('founding member pilot authorization', () => {
@@ -1506,4 +1557,383 @@ describe('public Mission ownership and continuity', () => {
     await asUser(founder, `delete from public.ai_conversations where id='${chat}'`);
     expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
   });
+});
+
+describe('Mission continuity security and recovery',()=>{
+ it('isolates records, rejects stale proposals, recovers handoffs, and preserves creative work after deletion',async()=>{
+  const conversation='e7100000-0000-4000-8000-000000000001';
+  const mission='e7100000-0000-4000-8000-000000000002';
+  const turn='e7100000-0000-4000-8000-000000000003';
+  const pending='e7100000-0000-4000-8000-000000000004';
+  const proposal='e7100000-0000-4000-8000-000000000005';
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  await db.exec(`insert into ai_conversations(id,person_id,title) values('${conversation}','${owner}','Mission fixture');
+   insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values
+   ('${turn}','${owner}','${conversation}','My objective is a garden plan','Consider native planting','complete','test',false,'test'),
+   ('${pending}','${owner}','${conversation}','Continue','','pending','test',false,'test');`);
+  await asUser(founder,`insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${conversation}','Garden','Plan a garden')`);
+  const direction=JSON.stringify({title:'Garden',objective:'Plan a garden',decisions:'Use native planting',open_questions:'Budget?',next_actions:'Measure the garden'});
+  await expect(asUser(member,`select mission_capture_context('${pending}','${mission}',1)`)).rejects.toThrow(/unavailable/);
+  const snapshot=await asUser<{mission_capture_context:{revision:number}}>(founder,`select mission_capture_context('${pending}','${mission}',1)`);
+  expect(snapshot.rows[0]!.mission_capture_context.revision).toBe(1);
+  await expect(asUser(founder,`select mission_capture_context('${pending}','${mission}',2)`)).rejects.toThrow(/changed/);
+  await asUser(founder,`select mission_store_proposal('${proposal}','${mission}','${turn}',1,'${direction}')`);
+  await expect(asUser(member,`select mission_decide_proposal('${proposal}',true,'${direction}')`)).rejects.toThrow(/unavailable/);
+  await asUser(founder,`select mission_decide_proposal('${proposal}',true,'${direction}')`);
+  await asUser(founder,`select mission_decide_proposal('${proposal}',true,'${direction}')`);
+  expect((await asUser<{revision:number}>(founder,`select revision from intelligence_missions where id='${mission}'`)).rows[0]!.revision).toBe(2);
+  await expect(asUser(founder,`select mission_decide_proposal('${proposal}',false,null)`)).rejects.toThrow(/changed/);
+  await expect(asUser(founder,`select mission_store_proposal('e7100000-0000-4000-8000-000000000009','${mission}','${turn}',1,'${direction}')`)).rejects.toThrow(/changed/);
+  const stale='e7100000-0000-4000-8000-000000000010';
+  await asUser(founder,`select mission_store_proposal('${stale}','${mission}','${turn}',2,'${direction}')`);
+  await asUser(founder,`update intelligence_missions set revision=3 where id='${mission}'`);
+  await expect(asUser(founder,`select mission_decide_proposal('${stale}',true,'${direction}')`)).rejects.toThrow(/changed/);
+  expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','public.mission_open_studio(uuid,integer)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+  await asUser(founder,`select mission_pin_output('${mission}','${turn}')`);
+  await asUser(founder,`select mission_pin_output('${mission}','${turn}')`);
+  await expect(asUser(founder,`select mission_pin_output('${mission}','${pending}')`)).rejects.toThrow(/Completed/);
+  expect((await asUser(founder,`select * from mission_outputs where mission_id='${mission}'`)).rows).toHaveLength(1);
+  for(const table of ['mission_proposals','mission_outputs','mission_turn_context']) expect((await asUser(member,`select * from ${table} where mission_id='${mission}'`)).rows).toHaveLength(0);
+  await expect(asUser(member,`select mission_open_studio('${mission}',3)`)).rejects.toThrow(/unavailable/);
+  const project=(await asUser<{mission_open_studio:string}>(founder,`select mission_open_studio('${mission}',3)`)).rows[0]!.mission_open_studio;
+  expect((await asUser<{mission_open_studio:string}>(founder,`select mission_open_studio('${mission}',3)`)).rows[0]!.mission_open_studio).toBe(project);
+  expect((await asUser(member,`select * from mission_studio_links where mission_id='${mission}'`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update mission_studio_links set project_id='${turn}' where mission_id='${mission}'`)).rejects.toThrow(/permission/);
+  await asUser(founder,`delete from intelligence_missions where id='${mission}'`);
+  expect((await asUser(founder,`select * from ai_studio_projects where id='${project}'`)).rows).toHaveLength(1);
+  expect((await asUser(founder,`select * from ai_conversations where id='${conversation}'`)).rows).toHaveLength(1);
+  expect((await asUser(founder,`select * from mission_studio_links where mission_id='${mission}'`)).rows).toHaveLength(0);
+ });
+});
+
+describe('Mission deliverable ownership, immutable versions and review',()=>{
+ it('creates from a completed personal reply, guards stale edits, binds reviews, retains work, and snapshots exact versions',async()=>{
+  const chat='e7200000-0000-4000-8000-000000000001', mission='e7200000-0000-4000-8000-000000000002', turn='e7200000-0000-4000-8000-000000000003',pending='e7200000-0000-4000-8000-000000000004',v2='e7200000-0000-4000-8000-000000000005',v3='e7200000-0000-4000-8000-000000000006';
+  const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+  await db.exec(`insert into ai_conversations(id,person_id,title) values('${chat}','${owner}','Deliverable fixture');insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values ('${turn}','${owner}','${chat}','Draft my plan','A complete original draft','complete','test',false,'test'),('${pending}','${owner}','${chat}','Continue','','pending','test',false,'test');`);
+  await asUser(founder,`insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${chat}','Plan','Prepare a plan')`);
+  const create=`select mission_create_deliverable('${mission}','${turn}',1) as id`;
+  await expect(asUser(member,create)).rejects.toThrow(/unavailable/);
+  await expect(asUser(founder,`select mission_create_deliverable('${mission}','${pending}',1)`)).rejects.toThrow(/Completed/);
+  await expect(asUser(founder,`select mission_create_deliverable('${mission}','${turn}',null)`)).rejects.toThrow(/changed/);
+  const id=(await asUser<{id:string}>(founder,create)).rows[0]!.id;
+  expect((await asUser<{id:string}>(founder,create)).rows[0]!.id).toBe(id);
+  const v1=(await asUser<{id:string}>(founder,`select id from mission_deliverable_versions where deliverable_id='${id}'`)).rows[0]!.id;
+  await expect(asUser(founder,`select mission_review_deliverable('${id}','${v1}','Checked')`)).rejects.toThrow(/criteria/);
+  const save=`select mission_save_deliverable('${id}','${v2}',1,'Final brief','Revised draft','Check the audience and dates')`;
+  await asUser(founder,save);await asUser(founder,save);
+  await expect(asUser(founder,save.replace('Revised draft','Changed replay'))).rejects.toThrow(/changed/);
+  await expect(asUser(founder,save.replace(v2,v3))).rejects.toThrow(/changed/);
+  await expect(asUser(member,save)).rejects.toThrow(/unavailable/);
+  await expect(asUser(founder,`select mission_review_deliverable('${id}','${v1}','Checked')`)).rejects.toThrow(/changed/);
+  const review=`select mission_review_deliverable('${id}','${v2}','Checked audience; dates remain estimates')`;
+  await asUser(founder,review);await asUser(founder,review);
+  await expect(asUser(founder,review.replace('dates remain estimates','dates confirmed'))).rejects.toThrow(/changed/);
+  const snap=(await asUser<{s:{deliverables:Array<{version_id:string;reviewed_by_user:boolean;excerpt:string}>}}>(founder,`select mission_capture_context('${pending}','${mission}',1) as s`)).rows[0]!.s;
+  expect(snap.deliverables[0]).toMatchObject({version_id:v2,reviewed_by_user:true,excerpt:'Revised draft'});
+  await asUser(founder,`select mission_save_deliverable('${id}','${v3}',2,'Final brief','Third draft','Check audience')`);
+  expect((await asUser<{reviewed:boolean}>(founder,`select reviewed from mission_deliverable_summaries where id='${id}'`)).rows[0]!.reviewed).toBe(false);
+  expect((await asUser<{s:unknown}>(founder,`select mission_capture_context('${pending}','${mission}',1) as s`)).rows[0]!.s).toEqual(snap);
+  for(const table of ['mission_deliverables','mission_deliverable_versions','mission_deliverable_summaries']) expect((await asUser(member,`select * from ${table}`)).rows).toHaveLength(0);
+  await expect(asUser(founder,`update mission_deliverable_versions set body='overwrite' where id='${v1}'`)).rejects.toThrow(/permission/);
+  expect((await db.query<{ok:boolean}>("select has_function_privilege('anon','mission_save_deliverable(uuid,uuid,integer,text,text,text)','execute') as ok")).rows[0]!.ok).toBe(false);
+  await asUser(founder,`delete from intelligence_missions where id='${mission}'`);
+  expect((await asUser<{mission_id:string|null}>(founder,`select mission_id from mission_deliverables where id='${id}'`)).rows[0]!.mission_id).toBe(null);
+  expect((await asUser(founder,`select * from mission_deliverable_versions where deliverable_id='${id}'`)).rows).toHaveLength(3);
+  await db.exec(`delete from ai_conversations where id='${chat}'`);
+  expect((await asUser<{source_turn_id:string|null}>(founder,`select source_turn_id from mission_deliverables where id='${id}'`)).rows[0]!.source_turn_id).toBe(null);
+  await expect(asUser(member,`select mission_delete_deliverable('${id}',3)`)).rejects.toThrow(/unavailable/);
+  await expect(asUser(founder,`select mission_delete_deliverable('${id}',2)`)).rejects.toThrow(/changed/);
+  await asUser(founder,`select mission_delete_deliverable('${id}',3)`);
+  expect((await asUser(founder,`select * from mission_deliverable_versions where deliverable_id='${id}'`)).rows).toHaveLength(0);
+ });
+});
+
+
+describe('read-only release catalog preflight', () => {
+  it('observes the complete contract without touching records, and detects unsafe grants', async () => {
+    const sql = await readFile('scripts/public-release-preflight.sql', 'utf8');
+    type Snapshot = { contract: string; checks: { stage: string; object: string; present: boolean; ok: boolean }[] };
+    const snapshot = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+    expect(snapshot.contract).toBe('public-mission-v1');
+    expect(snapshot.checks.filter((c) => !c.ok)).toEqual([]);
+    await db.exec('begin; grant execute on function public.mission_pin_output(uuid,uuid) to anon; grant update(body) on public.mission_deliverable_versions to authenticated;');
+    try {
+      const unsafe = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+      expect(unsafe.checks.find((c) => c.object === 'function:public.mission_pin_output(uuid,uuid)')?.ok).toBe(false);
+      expect(unsafe.checks.find((c) => c.object === 'table:mission_deliverable_versions')?.ok).toBe(false);
+      await db.exec('alter policy mission_outputs_owner on public.mission_outputs using (true or person_id in (select id from public.persons where auth_user_id=(select auth.uid())));');
+      const broad = (await db.query<{ snapshot: Snapshot }>(sql)).rows[0]!.snapshot;
+      expect(broad.checks.find((c) => c.object === 'table:mission_outputs')?.ok).toBe(false);
+    } finally { await db.exec('rollback'); }
+  });
+});
+
+describe('Technology owner/version/budget boundary', () => {
+  const project = 'ee800000-0000-4000-8000-000000000001',
+    v1 = 'ee800000-0000-4000-8000-000000000002',
+    v2 = 'ee800000-0000-4000-8000-000000000003',
+    run = 'ee800000-0000-4000-8000-000000000004';
+  const brief = {
+    name: 'Studio North',
+    industry: 'grooming-beauty',
+    vision: 'A welcoming local grooming studio.',
+    headline: 'Care with intention',
+    about: 'A local studio focused on thoughtful care.',
+    services: [{ name: 'Haircut', description: 'An attentive appointment.', price: '$45' }],
+    hours: 'Tue–Sat',
+    contact: 'Call the studio',
+    bookingUrl: '',
+  };
+  const literal = JSON.stringify(brief).replaceAll("'", "''");
+  it('requires grant, hides owners and guards immutable review and paid settlement', async () => {
+    await db.exec(
+      `insert into public.technology_grants(person_id,expires_at) select id,now()+interval '1 day' from public.persons where auth_user_id='${founder}' on conflict do nothing`,
+    );
+    const save = `select public.technology_save('${project}','${v1}',0,'${literal}')`;
+    await expect(asUser(member, save)).rejects.toThrow(/access/);
+    await asUser(founder, save);
+    await asUser(founder, save);
+    expect((await asUser(member, 'select * from public.technology_projects')).rows).toHaveLength(0);
+    await expect(
+      asUser(founder, `update public.technology_site_versions set brief='{}'`),
+    ).rejects.toThrow(/permission/);
+    await expect(
+      asUser(founder, `select public.technology_reserve('${project}','${run}',1)`),
+    ).rejects.toThrow(/Review/);
+    await asUser(founder, `select public.technology_review('${project}','${v1}')`);
+    await asUser(founder, `select public.technology_save('${project}','${v2}',1,'${literal}')`);
+    await expect(
+      asUser(founder, `select public.technology_review('${project}','${v1}')`),
+    ).rejects.toThrow(/changed/);
+    await asUser(founder, `select public.technology_review('${project}','${v2}')`);
+    await asUser(founder, `select public.technology_reserve('${project}','${run}',2)`);
+    await expect(
+      asUser(
+        founder,
+        `select public.technology_settle('${run}',(select id from public.persons where auth_user_id='${founder}'),'${literal}',10,10)`,
+      ),
+    ).rejects.toThrow(/permission/);
+    await expect(
+      asUser(founder, `select public.technology_reserve('${project}',gen_random_uuid(),2)`),
+    ).rejects.toThrow(/reconciliation/);
+    await db.exec(
+      `set role service_role;select public.technology_settle('${run}',(select id from public.persons where auth_user_id='${founder}'),null,null,null);reset role`,
+    );
+    expect(
+      (
+        await asUser(
+          founder,
+          `select status,actual_micros from public.technology_runs where id='${run}'`,
+        )
+      ).rows[0],
+    ).toEqual({ status: 'uncertain', actual_micros: null });
+  });
+});
+
+describe('Technology successful settlement and monthly ceilings',()=>{
+ it('creates an unreviewed immutable AI version, retains history, and enforces owner-wide monthly reservation ceiling',async()=>{
+ const owner=(await db.query<{id:string}>(`select id from public.persons where auth_user_id='${member}'`)).rows[0]!.id;
+ await db.exec(`insert into public.technology_grants values('${owner}',now()+interval '1 day')`);
+ const p='ee810000-0000-4000-8000-000000000001',v='ee810000-0000-4000-8000-000000000002',r='ee810000-0000-4000-8000-000000000003';
+ const brief=JSON.stringify({name:'Studio South',industry:'grooming-beauty',vision:'A welcoming service business.',headline:'Care with intention',about:'A local studio focused on care.',services:[{name:'Haircut',description:'An appointment.',price:'$45'}],hours:'',contact:'',bookingUrl:''});
+ await asUser(member,`select public.technology_save('${p}','${v}',0,'${brief}')`);
+ await asUser(member,`select public.technology_review('${p}','${v}')`);
+ await asUser(member,`select public.technology_reserve('${p}','${r}',1)`);
+ await db.exec(`set role service_role;select public.technology_settle('${r}','${owner}','${brief}',1200,800);reset role`);
+ const rows=(await asUser<{revision:number;reviewed_at:string|null}>(member,`select revision,reviewed_at from public.technology_site_versions where project_id='${p}' order by revision`)).rows;
+ expect(rows).toHaveLength(2);expect(rows[0]!.reviewed_at).not.toBeNull();expect(rows[1]).toEqual({revision:2,reviewed_at:null});
+ expect((await asUser(member,`select actual_micros from public.technology_runs where id='${r}'`)).rows[0]).toEqual({actual_micros:10400});
+ await asUser(member,`select public.technology_review('${p}',(select id from public.technology_site_versions where project_id='${p}' and revision=2))`);
+ await db.exec(`insert into public.technology_runs(id,person_id,project_id,source_revision,status,actual_micros) select gen_random_uuid(),'${owner}','${p}',2,'succeeded',1000000 from generate_series(1,9)`);
+ await expect(asUser(member,`select public.technology_reserve('${p}',gen_random_uuid(),2)`)).rejects.toThrow(/allowance/);
+ await db.exec(`delete from public.technology_grants where person_id='${owner}'`);
+ await expect(asUser(member,`select public.technology_review('${p}',(select id from public.technology_site_versions where project_id='${p}' and revision=2))`)).rejects.toThrow(/access/);
+ expect((await asUser(member,`select id from public.technology_projects where id='${p}'`)).rows).toHaveLength(1);
+ });
+});
+
+describe('Technology SQL brief validation cannot be bypassed by direct RPC',()=>{
+ it('rejects credential links, null industry and unsupported executable fields',async()=>{
+ const base={name:'Studio West',industry:'grooming-beauty',vision:'A welcoming local service business.',headline:'Care with intention',about:'A studio focused on thoughtful care.',services:[{name:'Haircut',description:'Care',price:'$45'}],hours:'',contact:'',bookingUrl:''};
+ for(const b of [{...base,bookingUrl:'https://name:password@example.com'},{...base,industry:null},{...base,script:'alert(1)'}]){
+ const literal=JSON.stringify(b).replaceAll("'","''");
+ await expect(asUser(founder,`select public.technology_save(gen_random_uuid(),gen_random_uuid(),0,'${literal}')`)).rejects.toThrow(/Invalid business brief/);
+ }
+ });
+});
+
+// Verified-build state machine: SQL/RLS emulation, not hosted Auth acceptance.
+describe('Technology verified builds',()=>{
+ it('pins exact review, deduplicates jobs, fences expired workers and preserves ready artifacts',async()=>{
+ const p='ef900000-0000-4000-8000-000000000001',v='ef900000-0000-4000-8000-000000000002',v2='ef900000-0000-4000-8000-000000000003',b='ef900000-0000-4000-8000-000000000004',lease='ef900000-0000-4000-8000-000000000005',next='ef900000-0000-4000-8000-000000000006';
+ const brief=JSON.stringify({name:'Build Studio',industry:'grooming-beauty',vision:'A reviewed local business.',headline:'Considered care',about:'A carefully considered studio.',services:[{name:'Haircut',description:'Care',price:'$45'}],hours:'',contact:'',bookingUrl:''});
+ const owner=(await db.query<{id:string}>(`select id from public.persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ await db.exec(`insert into public.technology_grants values('${owner}',now()+interval '1 day') on conflict(person_id) do update set expires_at=excluded.expires_at`);
+ await asUser(founder,`select public.technology_save('${p}','${v}',0,'${brief}')`);
+ await expect(asUser(founder,`select public.technology_build_queue('${b}','${p}','${v}')`)).rejects.toThrow(/Review/);
+ await asUser(founder,`select public.technology_review('${p}','${v}')`);
+ await asUser(founder,`select public.technology_build_queue('${b}','${p}','${v}')`);
+ const replay=(await asUser<{id:string}>(founder,`select public.technology_build_queue(gen_random_uuid(),'${p}','${v}') as id`)).rows[0]!.id;expect(replay).toBe(b);
+ await expect(asUser(member,`select public.technology_build_claim('${b}','${lease}')`)).rejects.toThrow();
+ expect((await asUser(member,`select * from public.technology_builds where id='${b}'`)).rows).toHaveLength(0);
+ await expect(asUser(founder,`update public.technology_builds set status='ready' where id='${b}'`)).rejects.toThrow(/permission/);
+ await asUser(founder,`select public.technology_build_claim('${b}','${lease}')`);
+ await expect(asUser(founder,`select public.technology_build_claim('${b}','${next}')`)).rejects.toThrow(/running/);
+ await db.exec(`update public.technology_builds set lease_until=now()-interval '1 second' where id='${b}'`);
+ await asUser(founder,`select public.technology_build_claim('${b}','${next}')`);
+ const finish=(token:string)=>`select public.technology_build_finish('${b}','${owner}','${token}','<!doctype html>','${'a'.repeat(64)}','{"passed":true,"validator":"static-service-v1"}')`;
+ await expect(asUser(founder,finish(next))).rejects.toThrow(/permission/);
+ await db.exec('set role service_role');try{await expect(db.query(finish(lease))).rejects.toThrow(/lease/);await db.query(finish(next));}finally{await db.exec('reset role');}
+ await asUser(founder,`select public.technology_save('${p}','${v2}',1,'${brief}')`);
+ await expect(asUser(founder,`select public.technology_build_queue(gen_random_uuid(),'${p}','${v}')`)).rejects.toThrow(/Review/);
+ expect((await asUser<{status:string;attempts:number}>(founder,`select status,attempts from public.technology_builds where id='${b}'`)).rows[0]).toEqual({status:'ready',attempts:2});
+ await expect(asUser(founder,`select public.technology_build_queue('${b}','${p}','${v2}')`)).rejects.toThrow(/changed/);
+ await db.exec('set role anon');try{await expect(db.query('select * from public.technology_builds')).rejects.toThrow(/permission/);}finally{await db.exec('reset role');}
+ await db.exec(`delete from public.technology_projects where id='${p}'`);
+ expect((await db.query(`select id from public.technology_builds where id='${b}'`)).rows).toHaveLength(0);
+ });
+});
+
+// Full-chain SQL emulation; actual Auth/PostgREST is a separate CI gate.
+it('validates versioned design in the database and prevents direct JSON contract bypass', async () => {
+  const core = {
+    name: 'Design Studio',
+    industry: 'professional-services',
+    vision: 'A local design studio.',
+    headline: 'Considered design',
+    about: 'A considered independent studio.',
+    services: [{ name: 'Consultation', description: 'Personal care.', price: '$45' }],
+    hours: '',
+    contact: '',
+    bookingUrl: '',
+  };
+  const design = {
+    palette: 'ivory',
+    hero: 'split',
+    typography: 'serif',
+    spacing: 'spacious',
+    audience: 'Local clients',
+    goal: 'Service discovery',
+    rationale: 'Editorial hierarchy',
+    cta: 'Explore services',
+    request: 'Make it refined.',
+  };
+  for (const [b, expected] of [
+    [core, true],
+    [{ ...core, design }, true],
+    [{ ...core, design: null }, false],
+    [{ ...core, design: { ...design, script: 'evil' } }, false],
+    [{ ...core, design: { ...design, palette: 'red' } }, false],
+    [{ ...core, design: { ...design, request: 'x'.repeat(1001) } }, false],
+  ] as const) {
+    const result = await db.query<{ ok: boolean }>(
+      'select public.technology_validate_brief($1::jsonb) as ok',
+      [JSON.stringify(b)],
+    );
+    expect(result.rows[0]!.ok).toBe(expected);
+  }
+  await expect(asUser(founder, `select public.technology_validate_brief('{}')`)).rejects.toThrow(
+    /permission/,
+  );
+});
+
+it('captures immutable website context only for the owner, current version and originating pending Talk turn', async()=>{
+ const chat='f2100000-0000-4000-8000-000000000001', mission='f2100000-0000-4000-8000-000000000002', turn='f2100000-0000-4000-8000-000000000003', p='f2100000-0000-4000-8000-000000000004', v='f2100000-0000-4000-8000-000000000005', otherChat='f2100000-0000-4000-8000-000000000006', otherTurn='f2100000-0000-4000-8000-000000000007';
+ const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ const brief=JSON.stringify({name:'Synthetic Studio',industry:'professional-services',vision:'A synthetic business website',headline:'Care with intention',about:'A carefully considered local studio',services:[{name:'Consultation',description:'',price:''}],hours:'',contact:'',bookingUrl:''});
+ await db.exec(`insert into ai_conversations(id,person_id,title) values('${chat}','${owner}','Website'),('${otherChat}','${owner}','Other');
+ insert into ai_turns(id,person_id,conversation_id,user_text,assistant_text,status,model,context_included,prompt_version) values('${turn}','${owner}','${chat}','Refine this','','pending','test',false,'test'),('${otherTurn}','${owner}','${otherChat}','Other','','pending','test',false,'test');
+ insert into intelligence_missions(id,person_id,conversation_id,title,objective) values('${mission}','${owner}','${chat}','Website','A synthetic business website');`);
+ await asUser(founder,`select technology_save('${p}','${v}',0,'${brief}','${mission}',1)`);
+ const capture=(t=turn,r=1)=>`select technology_capture_context('${t}','${p}',${r}) as receipt`;
+ await expect(asUser(member,capture())).rejects.toThrow();
+ await expect(asUser(founder,capture(otherTurn))).rejects.toThrow(/conversation/);
+ await expect(asUser(founder,capture(turn,2))).rejects.toThrow(/changed/);
+ const receipt=(await asUser<{receipt:{revision:number;versionId:string}}>(founder,capture())).rows[0]!.receipt;
+ expect(receipt.revision).toBe(1);expect(receipt.versionId).toBe(v);
+ await asUser(founder,capture());
+ expect((await asUser(founder,`select * from technology_turn_context where turn_id='${turn}'`)).rows).toHaveLength(1);
+ expect((await asUser(member,`select * from technology_turn_context where turn_id='${turn}'`)).rows).toHaveLength(0);
+ await expect(asUser(founder,`update technology_turn_context set revision=2 where turn_id='${turn}'`)).rejects.toThrow(/permission/);
+ await db.exec(`update ai_turns set status='complete' where id='${turn}'`);
+ await expect(asUser(founder,capture())).rejects.toThrow(/conversation/);
+ await asUser(founder,`select technology_save('${p}',gen_random_uuid(),1,'${brief}')`);
+ expect((await asUser<{revision:number}>(founder,`select revision from technology_turn_context where turn_id='${turn}'`)).rows[0]!.revision).toBe(1);
+ await expect(asUser(founder,capture(otherTurn))).rejects.toThrow(/changed/);
+ expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_capture_context(uuid,uuid,integer)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+ await db.exec(`delete from technology_projects where id='${p}';delete from ai_conversations where id in ('${chat}','${otherChat}')`);
+});
+
+it('additional pages retain strict SQL bounds, immutable versions, stale-write and owner guards', async () => {
+ const p='f5000000-0000-4000-8000-000000000001',v='f5000000-0000-4000-8000-000000000002';
+ const b={name:'Synthetic pages',industry:'professional-services',vision:'A synthetic business website.',headline:'Considered work',about:'A synthetic service for testing.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:'',pages:[{slug:'process',title:'Our process',layout:'cards',sections:[{heading:'Discussion',body:'Discuss the service you need.'}]}]};
+ const json=(value:unknown)=>JSON.stringify(value).replaceAll("'","''");
+ const save=(id:string,expected:number,value:unknown)=>`select technology_save('${p}','${id}',${expected},'${json(value)}')`;
+ await asUser(founder,save(v,0,b));
+ await asUser(founder,save(v,0,b));
+ await expect(asUser(member,save(crypto.randomUUID(),1,b))).rejects.toThrow();
+ for(const pages of [null,[b.pages[0],b.pages[0]],Array(4).fill(b.pages[0]),[{...b.pages[0],slug:'about'}],[{...b.pages[0],slug:'../evil'}],[{...b.pages[0],layout:'script'}],[{...b.pages[0],sections:[]}],[{...b.pages[0],sections:[{heading:'Test',body:'x'.repeat(601)}]}]]) {
+  const valid=await db.query<{ok:boolean}>(`select technology_validate_brief('${json({...b,pages})}') as ok`);expect(valid.rows[0]!.ok).toBe(false);
+  await expect(asUser(founder,save(crypto.randomUUID(),1,{...b,pages}))).rejects.toThrow(/Invalid/);
+ }
+ const changed={...b,pages:[{...b.pages[0],title:'A revised process'}]};
+ await asUser(founder,save(crypto.randomUUID(),1,changed));
+ await expect(asUser(founder,save(crypto.randomUUID(),1,b))).rejects.toThrow(/changed/);
+ expect((await asUser<{brief:typeof b}>(founder,`select brief from technology_site_versions where id='${v}'`)).rows[0]!.brief).toEqual(b);
+ expect((await asUser(member,`select * from technology_site_versions where project_id='${p}'`)).rows).toHaveLength(0);
+ expect((await db.query<{allowed:boolean}>("select has_function_privilege('authenticated','technology_validate_brief(jsonb)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+ await db.exec(`delete from technology_projects where id='${p}'`);
+});
+
+it('owned image imports fence leases, reject foreign scopes and preserve website snapshots after Studio removal',async()=>{
+ expect((await db.query<{allowed:boolean}>("select has_table_privilege('anon','technology_images','select,insert,update,delete') as allowed")).rows[0]!.allowed).toBe(false);
+ expect((await db.query<{allowed:boolean}>("select has_table_privilege('authenticated','technology_images','insert,update,delete,truncate,references,trigger') as allowed")).rows[0]!.allowed).toBe(false);
+ const p='f6000000-0000-4000-8000-000000000001',v='f6000000-0000-4000-8000-000000000002',studio='f6000000-0000-4000-8000-000000000003',ref='f6000000-0000-4000-8000-000000000004',image='f6000000-0000-4000-8000-000000000005',lease=crypto.randomUUID();
+ const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ const b={name:'Synthetic images',industry:'professional-services',vision:'A synthetic business website.',headline:'Considered work',about:'A synthetic service for testing.',services:[{name:'Consultation',description:'Discuss your needs.',price:''}],hours:'',contact:'',bookingUrl:''};
+ const json=(value:unknown)=>JSON.stringify(value).replaceAll("'","''");
+ await asUser(founder,`select technology_save('${p}','${v}',0,'${json(b)}')`);
+ await db.exec(`insert into ai_studio_projects(id,person_id,title) values('${studio}','${owner}','Synthetic image');insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${ref}','${owner}','${studio}','${founder}/${studio}/${ref}.png','image/png',100)`);
+ const begin=(l=lease)=>`select technology_image_begin('${image}','${p}',1,'${ref}','reference','${l}') as key`;
+ await expect(asUser(member,begin())).rejects.toThrow();
+ expect((await asUser<{key:string}>(founder,begin())).rows[0]!.key).toContain(founder);
+ await expect(asUser(founder,begin(crypto.randomUUID()))).rejects.toThrow(/active/);
+ await expect(asUser(founder,`select technology_save('${p}',gen_random_uuid(),1,'${json({...b,image:{assetId:image,alt:'A synthetic interior'}})}')`)).rejects.toThrow(/ready/);
+ await expect(asUser(founder,`select technology_image_finish('${image}','${owner}','${lease}',null,null)`)).rejects.toThrow(/permission/);
+ const data='data:image/jpeg;base64,/9j/AA==',hash='a'.repeat(64);
+ expect((await db.query<{ok:boolean}>(`select technology_image_finish('${image}','${owner}','${crypto.randomUUID()}','${data}','${hash}') as ok`)).rows[0]!.ok).toBe(false);
+ await db.query(`select technology_image_finish('${image}','${owner}','${lease}','${data}','${hash}')`);
+ expect((await asUser<{key:string|null}>(founder,begin())).rows[0]!.key).toBeNull();
+ await asUser(founder,`select technology_save('${p}',gen_random_uuid(),1,'${json({...b,image:{assetId:image,alt:'A synthetic interior'}})}')`);
+ await expect(asUser(founder,`update technology_images set data_url=null where id='${image}'`)).rejects.toThrow(/permission/);
+ expect((await asUser(member,`select * from technology_images where id='${image}'`)).rows).toHaveLength(0);
+ await db.exec(`delete from ai_studio_projects where id='${studio}'`);
+ expect((await asUser<{data_url:string}>(founder,`select data_url from technology_images where id='${image}'`)).rows[0]!.data_url).toBe(data);
+ expect((await db.query<{allowed:boolean}>("select has_function_privilege('anon','technology_image_begin(uuid,uuid,integer,uuid,text,uuid)','execute') as allowed")).rows[0]!.allowed).toBe(false);
+ await db.exec(`delete from technology_projects where id='${p}'`);
+});
+
+it('image recovery is lease-fenced, limited to three attempts and four imports per project, and excludes company Studio sources',async()=>{
+ const p='f6500000-0000-4000-8000-000000000001',studio='f6500000-0000-4000-8000-000000000002',image=crypto.randomUUID();
+ const owner=(await db.query<{id:string}>(`select id from persons where auth_user_id='${founder}'`)).rows[0]!.id;
+ const foreign=(await db.query<{id:string}>(`select id from persons where auth_user_id='${member}'`)).rows[0]!.id;
+ const refs=Array.from({length:5},()=>crypto.randomUUID()),otherStudio=crypto.randomUUID(),otherRef=crypto.randomUUID();
+ await db.exec(`insert into technology_projects(id,person_id) values('${p}','${owner}');insert into ai_studio_projects(id,person_id,title) values('${studio}','${owner}','Synthetic own'),('${otherStudio}','${foreign}','Synthetic foreign');`);
+ for(const ref of refs)await db.exec(`insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${ref}','${owner}','${studio}','${founder}/${studio}/${ref}.png','image/png',100)`);
+ await db.exec(`insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${otherRef}','${foreign}','${otherStudio}','${member}/${otherStudio}/${otherRef}.png','image/png',100)`);
+ const begin=(id:string,ref:string,lease:string)=>`select technology_image_begin('${id}','${p}',1,'${ref}','reference','${lease}')`;
+ await expect(asUser(founder,begin(crypto.randomUUID(),otherRef,crypto.randomUUID()))).rejects.toThrow(/unavailable/);
+ const company=crypto.randomUUID(),companyJob=crypto.randomUUID(),companyChat=crypto.randomUUID();
+ const companyStudio=crypto.randomUUID(),companyRef=crypto.randomUUID();
+ await db.exec(`insert into companies(id,person_id,name) values('${company}','${owner}','Synthetic image company');insert into ai_conversations(id,person_id,company_id,title) values('${companyChat}','${owner}','${company}','Synthetic image job');insert into company_jobs(id,person_id,company_id,conversation_id,company_name,company_brief,brief_version,scope) values('${companyJob}','${owner}','${company}','${companyChat}','Synthetic image company','',1,'{}');insert into ai_studio_projects(id,person_id,title,company_id,job_id) values('${companyStudio}','${owner}','Synthetic company','${company}','${companyJob}');insert into ai_studio_references(id,person_id,project_id,storage_key,media_type,byte_size) values('${companyRef}','${owner}','${companyStudio}','${founder}/${companyStudio}/${companyRef}.png','image/png',100)`);
+ await expect(asUser(founder,begin(crypto.randomUUID(),companyRef,crypto.randomUUID()))).rejects.toThrow(/unavailable/);
+ const one=crypto.randomUUID(),two=crypto.randomUUID(),three=crypto.randomUUID();
+ await asUser(founder,begin(image,refs[0]!,one));await db.query(`select technology_image_finish('${image}','${owner}','${one}',null,null)`);
+ await asUser(founder,begin(image,refs[0]!,two));await db.exec(`update technology_images set lease_until=now()-interval '1 second' where id='${image}'`);await asUser(founder,begin(image,refs[0]!,three));
+ expect((await db.query<{ok:boolean}>(`select technology_image_finish('${image}','${owner}','${two}',null,null) as ok`)).rows[0]!.ok).toBe(false);
+ await db.query(`select technology_image_finish('${image}','${owner}','${three}',null,null)`);await expect(asUser(founder,begin(image,refs[0]!,crypto.randomUUID()))).rejects.toThrow(/attempts/);
+ for(const ref of refs.slice(1,4)){const id=crypto.randomUUID(),lease=crypto.randomUUID();await asUser(founder,begin(id,ref,lease));await db.query(`select technology_image_finish('${id}','${owner}','${lease}',null,null)`);}
+ await expect(asUser(founder,begin(crypto.randomUUID(),refs[4]!,crypto.randomUUID()))).rejects.toThrow(/allowance/);
+ await db.exec(`delete from technology_projects where id='${p}';delete from ai_studio_projects where id in('${studio}','${otherStudio}','${companyStudio}');delete from company_jobs where id='${companyJob}';delete from ai_conversations where id='${companyChat}';delete from companies where id='${company}'`);
 });

@@ -359,3 +359,45 @@ Fix the confirmed live camera=() document policy to camera=(self), including cli
 ## 2026-10-04 — Recover Command home while preserving direct member entry
 
 Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.
+
+## 2026-10-07 — Public Mission Deliverables
+
+Choose durable, versioned personal text work before expanding autonomous agents. Reuse saved completed replies and existing session/RLS infrastructure; no new model or package. Research: Anthropic “Building effective agents” (simple workflows and human checkpoints), Microsoft Research Human-AI Interaction guidelines (efficient correction), installed Next 16 route-handler/data-security guides. Full scope, ownership, boundaries, limits and release gates: `MISSION_DELIVERABLES.md`.
+
+## 2026-10-08 — Public Intelligence OS Phase 1
+
+Founder approved execution of the researched Phase 1 plan. Consolidate PR #63 (which already contains #62 and current main), selectively recover #60 consent/bridge behavior, and preserve approved Petrol assets and company/Studio/billing boundaries. Source categories are explicit, excluded reads are gated, and an older client without categories fails closed to no saved personal sources. Work/Library is an owner-filtered metadata projection over existing schemas. Immutable deliverable history is loaded lazily; exact-version export remains Markdown. Session drafts are bounded in memory with explicit restoration and no browser persistence.
+
+See PHASE_ONE_UNIFICATION.md for migration/rollback prerequisites, provider exposure and acceptance limits; PHASE_ONE_REGRESSION.md accounts for all 107 historical browser failures. Hosted acceptance remains separate from fixtures and disposable local Supabase. No paid service purchase, live billing change, production schema application or production promotion is part of this candidate publication.
+
+
+2026-10-08 — Public saved-work release preflight. Extend the existing founder launch ledger instead of a new admin surface. Eight four-second session-bound HEAD probes inspect no records; catalog/CLI observations remain separate from hosted Auth/RLS/provider/device acceptance. Preserve both additive Mission migrations by SHA-256 and report partial application before promotion, without rewriting shared Reserve history. Sources: [Supabase select](https://supabase.com/docs/reference/javascript/select), [abortSignal](https://supabase.com/docs/reference/javascript/using-modifiers-abortsignal), [PostgreSQL 17 row security](https://www.postgresql.org/docs/17/ddl-rowsecurity.html), [pg_proc](https://www.postgresql.org/docs/17/catalog-pg-proc.html), [CREATE VIEW](https://www.postgresql.org/docs/17/sql-createview.html), and installed Next 16 request-time/data-security guides. Full scope, catalog receipt and limits: PUBLIC_RELEASE_PREFLIGHT.md.
+
+
+2026-10-08 — Executable account acceptance. Close the real-account/Storage gap with a bounded session-only runner, shared by disposable local CI and independently verified isolated hosted staging. Reject known live projects, privileged API keys, changed candidates, expired scope and mismatched identities before synthetic writes. Preserve existing local-only harness and migration history. Do not interpret an operator manifest or passing database contract as provider/device/application acceptance or production authorization. Official Supabase branching, API-key and Storage contracts and the concrete provisioning dependency are recorded in PUBLIC_HOSTED_ACCEPTANCE.md.
+
+## 2026-10-08 — Technology Creation Foundation
+
+Choose a fixed, structured service-business renderer before sandboxed autonomous development. Both creation paths converge on a strict reviewed brief; append immutable versions and reuse personal Missions/Saved Work. A trusted server-only settlement RPC prevents ordinary clients from reporting fake provider usage or reclaiming reserved allowance. Unknown outcomes retain reservations with no automatic retry. Use a single economical Technology-only model; preserve Talk defaults and shared identity/visual system. No new package, hosting service, production promotion or customer publishing. Current official OpenAI Structured Outputs and installed AI SDK/Next contracts were reviewed before implementing `Output.object`; technical scope, pricing assumptions, reconciliation limits and acceptance: TECHNOLOGY_FOUNDATION.md. Source: https://developers.openai.com/api/docs/guides/structured-outputs ; installed Next 16 route-handler and server/client boundary guides.
+
+## 2026-10-08 — Technology verified artifacts
+
+Use persisted owner-bound jobs, fenced leases and script-free static HTML export for the existing service template before adopting arbitrary-code executors. No new paid provider. Current Next installed route docs, Supabase RLS docs and MDN iframe docs inspected. Details and explicit roadmap limits: TECHNOLOGY_VERIFIED_BUILD.md.
+
+## 2026-10-09 — Technology Phase 5: bounded page composition
+
+Extend the native reviewed website brief with up to three informational pages and audited text-section layouts; reuse immutable versions, owner RLS, metered exact-version revisions and static exports. Research: Lovable Plan mode (https://docs.lovable.dev/features/plan-mode), Replit Visual Editor (https://docs.replit.com/design/visual-editor), Vercel Sandbox (https://vercel.com/docs/sandbox), accessed 2026-10-09. Keep deterministic edits free of additional AI calls and executable generation behind future isolation/spend controls. Owned imagery requires a separate immutable asset/export lifecycle and is deferred. See TECHNOLOGY_FLEXIBLE_PAGES.md for migration order, rollback compatibility and release gates.
+
+## 2026-10-09 — Technology Phase 6: owned raster snapshots
+
+Use session-authorized personal Studio downloads and immutable per-website normalized JPEG copies instead of signed/remote URLs in briefs. Bound native decoding, ownership, leases, attempts and storage; no additional AI image generation. Add an exact-version/hash read-only publication manifest with hosting disabled. Research: Supabase private buckets (https://supabase.com/docs/guides/storage/buckets/fundamentals), sharp constructor/output/security/0.35.5 changelog (https://sharp.pixelplumbing.com), Vercel for Platforms (https://vercel.com/docs/platforms), accessed 2026-10-09. See TECHNOLOGY_OWNED_IMAGERY.md for source-lifetime behavior, export bounds, rollback incompatibilities and isolated hosted release gates.
+
+
+## 2026-10-09 — Technology Phase 7 release preparation
+
+Native exact-build approval and bounded portable ZIPs precede paid hosting activation. Owner approval of files is separate from domain, infrastructure budget and production release authority. Terminal revocation blocks future package downloads but cannot recall offline copies. Explicitly revoke Supabase default grants; use session-owned RPCs and a composite release/build identity FK. Pin existing fflate 0.8.3 for three fixed-name stored ZIP entries. Sources: https://vercel.com/docs/platforms ; https://vercel.com/docs/deployment-checks ; https://supabase.com/docs/guides/database/postgres/row-level-security ; https://github.com/101arrowz/fflate . Full scope and pending hosted acceptance: docs/TECHNOLOGY_RELEASE_PACKAGES.md.
+
+
+## 2026-10-09 — Technology Phase 8 deployment-bound acceptance
+
+Keep the recovered creation stack unchanged and verify its actual application path through normal login. Bind hosted acceptance to exact clean candidate commit/tree, independently attested dataless staging reference, immutable protected preview and two verified synthetic accounts; preflight runtime before credentials or writes. Retain all local CI, owner/RLS and migration gates. No customer publishing, paid provisioning or production writes are authorized by development approval. Current Supabase branching pricing is usage-based, outside the spend cap; obtain organization pricing and explicit approval for a short-lived rehearsal. Use existing Playwright/Supabase user clients, origin-scoped Vercel OIDC access and bounded redacted receipts. Details and primary sources: [Phase 8](TECHNOLOGY_HOSTED_ACCEPTANCE.md). Hosted/provider/device/founder gates remain pending; neither READY preview nor local real-Auth acceptance is a production release decision.

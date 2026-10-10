@@ -31,8 +31,7 @@ test('Cabinet signed-out route and world entry are accessible', async ({ page })
   await expect(page.getByRole('heading', { name: 'Your Cabinet.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Sign in →' })).toBeVisible();
   await page.goto('/app/collection');
-  await expect(page.getByRole('link', { name: 'Your Cabinet', exact: true })).toHaveAttribute(
-    'href',
-    '/app/collection/cabinet',
-  );
+  await expect(
+    page.getByRole('link', { name: 'Saved product records', exact: true }),
+  ).toHaveAttribute('href', '/app/collection/cabinet');
 });

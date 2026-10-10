@@ -38,6 +38,8 @@ export function Navigation() {
           aria-current={
             path === href ||
             path.startsWith(href + '/') ||
+            (href === '/app/work' &&
+              (path.startsWith('/app/missions') || path === '/app/library')) ||
             (href === '/app/aethelios' && path.startsWith('/app/companies/'))
               ? 'page'
               : undefined

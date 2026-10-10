@@ -12,7 +12,7 @@ type Brief = { purpose: string; audience: string; direction: string; palette: st
 type Project = { id: string; title: string; creative_type: CreativeType; brief: Partial<Brief>; updated_at: string };
 type Version = { id: string; parent_id: string | null; reference_id: string | null; prompt: string; model: string; image_size: string; status: 'pending' | 'complete' | 'failed'; created_at: string };
 type Reference = { id: string; created_at: string };
-type Workspace = { owner?: string; projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; finishes: StudioFinishRecord[]; configured: boolean };
+type Workspace = { owner?: string; projects: Project[]; projectId: string | null; versions: Version[]; references: Reference[]; scenes: StudioScene[]; finishes: StudioFinishRecord[]; configured: boolean; mission?: {id:string;title:string} | null };
 type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = { projects: [], projectId: null, versions: [], references: [], scenes: [], finishes: [], configured: false };
@@ -32,7 +32,7 @@ function imageUrl(id: string, kind: 'version' | 'reference') {
   return `/api/studio/image?id=${id}&kind=${kind}`;
 }
 
-export function StudioWorkspace() {
+export function StudioWorkspace({initialProject}: {initialProject?:string}) {
   const handoff = useConversationDraft();
   const [data, setData] = useState<Workspace>(empty);
   const [selected, setSelected] = useState<string | null>(null);
@@ -84,11 +84,11 @@ export function StudioWorkspace() {
   }, [accept]);
   useEffect(() => {
     let active = true;
-    fetch('/api/studio', { cache: 'no-store' }).then(response => jsonResponse<Workspace>(response))
+    fetch(`/api/studio${initialProject ? `?project=${encodeURIComponent(initialProject)}` : ''}`, { cache: 'no-store' }).then(response => jsonResponse<Workspace>(response))
       .then(next => { if (active) accept(next); })
       .catch(cause => { if (active) { setError(cause.message); setLoading(false); } });
     return () => { active = false; };
-  }, [accept]);
+  }, [accept,initialProject]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
@@ -187,6 +187,7 @@ export function StudioWorkspace() {
   function finishImage(versionId: string) { setFinishVersion(versionId); setView('finish'); }
 
   return <section className="studio-surface" aria-label="Aethelios Studio">
+    {data.mission&&<p className="studio-mission-return"><Link href={`/app/missions?id=${data.mission.id}`}>← Return to {data.mission.title}</Link></p>}
     <aside className="studio-projects" aria-label="Project navigation">
       <div className="studio-section-head imperial-control-surface"><div><p className="eyebrow">WORKSPACES</p><h2>Projects</h2></div><button type="button" onClick={() => setNaming(value => !value)} disabled={busy}>+ New</button></div>
       {naming && <form className="studio-new-project" onSubmit={createProject}>
