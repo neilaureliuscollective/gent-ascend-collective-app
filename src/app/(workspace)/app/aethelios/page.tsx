@@ -1,3 +1,4 @@
+import { council, specialistStarters } from '@/domains/intelligence/council';
 import { presenceStarter } from '@/domains/presence/model';
 import { readCommand } from '@/domains/daily-command/service';
 import { readWorldPriority } from '@/domains/daily/world-priority';
@@ -20,6 +21,9 @@ export default async function AetheliosPage({
   const params = await searchParams;
   const linked = false;
   const starters: Record<string, string> = {
+    ...Object.fromEntries(
+      council.map((entity) => [`entity-${entity.id}`, specialistStarters[entity.id]]),
+    ),
     'weekly-review':
       'Review my last seven days using my saved personal context if I enable it. Distinguish missing records from zero activity. Help me identify what worked, what got in the way, and one realistic adjustment for next week. Ask only what is needed. Propose changes for my review; do not claim to save them.',
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',

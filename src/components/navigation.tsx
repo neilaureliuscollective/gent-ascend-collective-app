@@ -7,6 +7,7 @@ const destinations: [string, string, IconName][] = [
   ['/app/aethelios', 'Talk', 'spark'],
   ['/app/work', 'Work', 'command'],
   ['/app/studio', 'Studio', 'collection'],
+  ['/app/ecosystem', 'Ecosystem', 'person'],
 ];
 export function Navigation() {
   const path = usePathname();
@@ -38,6 +39,8 @@ export function Navigation() {
           aria-current={
             path === href ||
             path.startsWith(href + '/') ||
+            (href === '/app/ecosystem' &&
+              ['/app/health', '/app/entities', '/app/life'].includes(path)) ||
             (href === '/app/aethelios' && path.startsWith('/app/companies/'))
               ? 'page'
               : undefined

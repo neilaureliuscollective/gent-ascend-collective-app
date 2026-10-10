@@ -6,7 +6,7 @@ for (const width of [360, 768, 1440]) {
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
     const mainNav = page.getByRole('navigation', { name: 'Main navigation' });
-    await expect(mainNav.getByRole('link')).toHaveCount(3);
+    await expect(mainNav.getByRole('link')).toHaveCount(4);
     await mainNav.getByRole('link', { name: 'Work', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
     await expect(

@@ -39,9 +39,12 @@ const worlds = [
 export default function World() {
   return (
     <>
-      <p className="eyebrow">Gent Ascend / The collective</p>
+      <p className="eyebrow">AETHELIOS / THE HUMAN ASCENDANCE</p>
       <h1>My world.</h1>
-      <p className="lead">Care for the man. Strengthen the life around him.</p>
+      <p className="lead">Care for the person. Strengthen the life around them.</p>
+      <Link href="/app/ecosystem" className="text-link">
+        Explore the Aethelios ecosystem →
+      </Link>
       <nav className="world-directory" aria-label="Your worlds">
         {worlds.map((world) => (
           <Link key={world.href} href={world.href}>
