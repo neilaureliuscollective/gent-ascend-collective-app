@@ -47,9 +47,10 @@ export const ecosystem = [
     href: '/app/work',
     status: 'Company work implemented',
     description:
-      'Company rooms, reviewed briefs, research and deliverable versions. Technical guidance is available; repository execution is not.',
+      'Company rooms, reviewed briefs, research and deliverable versions. A static website workshop supports code, isolated previews, revisions and export; repository execution remains under development.',
     links: [
       ['Company work', '/app/work'],
+      ['Architect workshop', '/app/architect'],
       ['Technical Entity', '/app/entities#prometheus'],
     ],
   },
@@ -65,11 +66,12 @@ export const ecosystem = [
   {
     id: 'lifestyle',
     name: 'Lifestyle',
-    href: '/app/collection',
+    href: '/app/lifestyle',
     status: 'Existing experiences',
     description:
-      'Presence, Grooming, Performance and the Collection. Independent brands and commerce retain their boundaries.',
+      'Legacy Reserve is the premium grooming and personal-care brand within Aethelios Lifestyle. Shopify remains the physical-product commerce system.',
     links: [
+      ['Legacy Reserve', '/app/lifestyle'],
       ['Presence', '/app/presence'],
       ['The Collection', '/app/collection'],
       ['Performance', '/app/performance'],

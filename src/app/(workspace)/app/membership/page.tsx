@@ -7,6 +7,7 @@ import { billingConfig } from '@/domains/billing/config';
 import { foundingPlan, foundingPrice } from '@/domains/billing/founding-catalog';
 import { MembershipControls } from '@/components/membership-controls';
 import './membership.css';
+import { launchPlans, launchPrice } from '@/domains/billing/launch-catalog';
 
 export const dynamic = 'force-dynamic';
 export default async function Membership({
@@ -36,10 +37,26 @@ export default async function Membership({
     <>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Your membership</p>
-          <h1>Your founding chapter.</h1>
+          <p className="eyebrow">AETHELIOS / Your membership</p>
+          <h1>Your intelligence membership.</h1>
         </div>
       </div>
+      <section className="panel">
+        <h2>The launch direction</h2>
+        <ul>
+          {launchPlans.map((p) => (
+            <li key={p.id}>
+              {p.name} — {launchPrice(p.monthlyCents)}
+              {p.monthlyCents > 0 ? '/ month' : ''}
+            </li>
+          ))}
+        </ul>
+        <p>
+          Existing billing remains on its verified historical catalog. No automatic Reserve
+          conversion. Architect enrollment and expanded allowances remain closed until acceptance.
+        </p>
+        <Link href="/membership">Review available foundations and planned benefits →</Link>
+      </section>
       <div className="membership-grid">
         <section className="panel">
           <p className="eyebrow">Your account</p>

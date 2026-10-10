@@ -1,0 +1,93 @@
+.architect-workshop {
+  padding: clamp(16px, 3vw, 36px);
+  background: var(--ivory, #f5f0e6);
+  color: #17352b;
+  border: 1px solid #a89565;
+  border-radius: 12px;
+}
+.architect-workshop label {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  font-weight: 600;
+}
+.architect-workshop input,
+.architect-workshop textarea,
+.architect-workshop select {
+  background: #fffdf7;
+  color: #102d24;
+  border: 1px solid #667c70;
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.architect-workshop input[type='file'] {
+  width: auto;
+  max-width: 100%;
+}
+.architect-editors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.architect-editors textarea {
+  min-height: 300px;
+  font-family: monospace;
+  font-size: 14px;
+}
+.architect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.architect-workshop button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #567363;
+  border-radius: 6px;
+  background: #e7eadf;
+  color: #14382c;
+  cursor: pointer;
+}
+.architect-workshop button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.architect-workshop .button {
+  background: #164b38;
+  color: #fff9e7;
+}
+.architect-workshop :focus-visible {
+  outline: 3px solid #97691d;
+  outline-offset: 3px;
+}
+.architect-preview {
+  overflow: hidden;
+  border: 1px solid #647c6d;
+  background: #fff;
+}
+.architect-preview iframe {
+  display: block;
+  border: 0;
+  min-height: 560px;
+  margin: auto;
+}
+.architect-workshop [role='status'] {
+  min-height: 3em;
+  margin-top: 20px;
+}
+.architect-workshop p {
+  line-height: 1.65;
+}
+@media (max-width: 760px) {
+  .architect-editors {
+    grid-template-columns: 1fr;
+  }
+  .architect-workshop button {
+    max-width: 100%;
+  }
+  .architect-editors textarea {
+    min-height: 230px;
+  }
+}

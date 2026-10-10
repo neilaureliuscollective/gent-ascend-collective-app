@@ -3,7 +3,14 @@ for (const width of [320, 344, 390, 768, 1440, 2560]) {
   test(`ecosystem routes and retained navigation at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    for (const path of ['/app/ecosystem', '/app/entities', '/app/life', '/app/health']) {
+    for (const path of [
+      '/app/ecosystem',
+      '/app/entities',
+      '/app/life',
+      '/app/health',
+      '/app/architect',
+      '/app/lifestyle',
+    ]) {
       expect((await page.goto(path))?.status()).toBe(200);
       await expect(page.locator('h1')).toBeVisible();
       expect(

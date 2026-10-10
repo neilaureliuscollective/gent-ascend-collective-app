@@ -40,7 +40,13 @@ export function Navigation() {
             path === href ||
             path.startsWith(href + '/') ||
             (href === '/app/ecosystem' &&
-              ['/app/health', '/app/entities', '/app/life'].includes(path)) ||
+              [
+                '/app/health',
+                '/app/entities',
+                '/app/life',
+                '/app/architect',
+                '/app/lifestyle',
+              ].includes(path)) ||
             (href === '/app/aethelios' && path.startsWith('/app/companies/'))
               ? 'page'
               : undefined
