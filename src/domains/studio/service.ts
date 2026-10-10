@@ -31,7 +31,11 @@ export async function studioWorkspace(projectId?:string){
   client.from('ai_studio_finishes').select('*').eq('project_id',current).eq('person_id',person.id).limit(100),
  ]):[{data:[],error:null},{data:[],error:null},{data:[],error:null},{data:[],error:null}];
  if(versions.error||references.error||scenes.error||finishes.error) throw new IntelligenceError('Studio history could not be loaded.',503);
- return {owner:person.id,projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
+ const link=current?await client.from('mission_studio_links').select('mission_id').eq('project_id',current).eq('person_id',person.id).maybeSingle():null;
+ if(link?.error) throw new IntelligenceError('Studio Mission link unavailable.',503);
+ const mission=link?.data?await client.from('intelligence_missions').select('id,title').eq('id',link.data.mission_id).eq('person_id',person.id).single():null;
+ if(mission?.error) throw new IntelligenceError('Studio Mission unavailable.',503);
+ return {mission:mission?.data??null,owner:person.id,projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
 }
 import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';
 export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>){

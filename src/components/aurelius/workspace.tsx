@@ -3,6 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
+import { TalkMission, type SelectedMissionContext } from '@/components/missions/mission-continuity';
+import { planningVersion } from '@/domains/technology/planning';
+import { TalkWebsite, type SelectedWebsiteContext } from '@/components/technology/talk-website';
 import { MissionCapture } from '@/components/missions/mission-capture';
 import { CouncilPanel } from './council-panel';
 import {
@@ -20,6 +23,11 @@ import { TalkDrawer, TalkInput } from './talk-controls';
 import { TalkPresence } from './talk-presence';
 import { AppearanceControls } from '../visual/appearance';
 import { ConversationLibrary } from './conversation-library';
+import {
+  contextSourceLabels,
+  noContextSources,
+  type ContextSources,
+} from '@/domains/intelligence/context-sources';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
@@ -42,7 +50,6 @@ export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
   initialConversation = null,
-  founderLinked = false,
 }: {
   compact?: boolean;
   initialDraft?: string;
@@ -76,6 +83,11 @@ export function AureliusWorkspace({
   const [needsReload, setNeedsReload] = useState(false);
   const [tab, setTab] = useState<'conversation' | 'memory' | 'context'>('conversation');
   const [includeContext, setIncludeContext] = useState(false);
+  const [savedSources, setSavedSources] = useState<ContextSources>(noContextSources);
+  const [useSpecialistContext, setUseSpecialistContext] = useState(false);
+  const [websiteContext, setWebsiteContext] = useState<SelectedWebsiteContext | null>(null);
+  const [websitePlanning, setWebsitePlanning] = useState(false);
+  const [missionContext, setMissionContext] = useState<SelectedMissionContext | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -122,6 +134,11 @@ export function AureliusWorkspace({
         setPreview(false);
         if (homeDraft && (result as WorkspaceData).ownerId !== homeDraft.ownerId) setDraft('');
         setData(result as WorkspaceData);
+        setWebsitePlanning(
+          Boolean(
+            (result as WorkspaceData).turns.at(-1)?.prompt_version?.endsWith(`:${planningVersion}`),
+          ),
+        );
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
@@ -252,6 +269,9 @@ export function AureliusWorkspace({
         setPreview(result === null);
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
+        setWebsitePlanning(
+          Boolean(result?.turns.at(-1)?.prompt_version?.endsWith(`:${planningVersion}`)),
+        );
         setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version ?? ''));
         setLoading(false);
       })
@@ -323,6 +343,14 @@ export function AureliusWorkspace({
           requestId,
           text,
           includeContext,
+          savedSources,
+          ...(missionContext?.enabled && missionContext.conversationId === id
+            ? { mission: { id: missionContext.id, revision: missionContext.revision } }
+            : {}),
+          ...(!requestedCouncil && websiteContext?.enabled && websiteContext.conversationId === id
+            ? { website: { id: websiteContext.id, revision: websiteContext.revision } }
+            : {}),
+          ...(!requestedCouncil && websitePlanning ? { websitePlanning: true } : {}),
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
         }),
@@ -440,6 +468,8 @@ export function AureliusWorkspace({
   }
   function newConversation() {
     setSelected(null);
+    setWebsitePlanning(false);
+    setWebsiteContext(null);
     setCouncilSelection(null);
     rememberConversation(null);
     setAwayFromLatest(false);
@@ -476,7 +506,7 @@ export function AureliusWorkspace({
       const response = await fetch('/api/aurelius/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target: capability.id, text }),
+        body: JSON.stringify({ target: capability.id, text, useSpecialistContext }),
         signal: AbortSignal.timeout(30000),
       });
       const result = await response.json();
@@ -586,6 +616,18 @@ export function AureliusWorkspace({
           </button>
           <TalkDrawer label="Tools & context">
             <AppearanceControls />
+            {!preview && (
+              <TalkWebsite
+                key={`${data.ownerId ?? 'unknown'}:${selected ?? 'new'}`}
+                turns={data.turns}
+                conversationId={selected}
+                onContext={setWebsiteContext}
+                planning={websitePlanning}
+                onPlanning={setWebsitePlanning}
+                mission={missionContext}
+                disabled={busy || needsReload || Boolean(councilSelection)}
+              />
+            )}
             <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
               <button aria-pressed={tab === 'conversation'} onClick={() => setTab('conversation')}>
                 Conversation
@@ -605,7 +647,10 @@ export function AureliusWorkspace({
                 preview={preview}
               />
             ) : tab === 'context' ? (
-              <ContextPanel data={data} preview={preview} included={includeContext} />
+              <>
+                <Link href="/app/library">Find all saved work ↗</Link>
+                <ContextPanel data={data} preview={preview} included={includeContext} />
+              </>
             ) : (
               <>
                 <div
@@ -698,6 +743,27 @@ export function AureliusWorkspace({
               />
               Use personal context
             </label>
+            {includeContext && (
+              <fieldset disabled={blocked}>
+                <legend>Saved sources for the next message</legend>
+                {Object.entries(contextSourceLabels).map(([key, label]) => (
+                  <label className="context-toggle" key={key}>
+                    <input
+                      type="checkbox"
+                      checked={savedSources[key as keyof ContextSources]}
+                      onChange={(e) =>
+                        setSavedSources({ ...savedSources, [key]: e.target.checked })
+                      }
+                    />
+                    {label}
+                  </label>
+                ))}
+                <p>
+                  Conversation and selected Mission context remain separate. No source is selected
+                  automatically.
+                </p>
+              </fieldset>
+            )}
             <details className="composer-privacy">
               <summary>What Aethelios receives</summary>
               <p className="composer-disclosure">
@@ -706,9 +772,21 @@ export function AureliusWorkspace({
                 ) : (
                   <>
                     Sending shares this conversation’s recent messages
+                    {missionContext?.enabled && missionContext.conversationId === selected
+                      ? ', the selected Mission’s reviewed direction and linked output excerpts'
+                      : ''}
+                    {websiteContext?.enabled && websiteContext.conversationId === selected
+                      ? `, the selected saved website v${websiteContext.revision} brief`
+                      : ''}
+                    {websitePlanning ? ', website planning instructions' : ''}
                     {councilSelection ? ' with the selected Council specialists' : ''}
                     {includeContext
-                      ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
+                      ? `, selected saved sources: ${
+                          Object.entries(contextSourceLabels)
+                            .filter(([key]) => savedSources[key as keyof ContextSources])
+                            .map(([, label]) => label)
+                            .join(', ') || 'none'
+                        }`
                       : ''}{' '}
                     with our AI service. Read-only web research may consult public sources; returned
                     sources are linked in saved replies. Nothing is automatically added to memory.
@@ -720,11 +798,27 @@ export function AureliusWorkspace({
         </div>
         {!preview && (
           <div className="intelligence-work-access">
-            <MissionCapture
-              conversationId={selected}
-              objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
-              disabled={blocked || needsReload || Boolean(data.currentConversation?.archived_at)}
-            />
+            {missionContext?.conversationId === selected && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => {
+                  const dialog = document.getElementById(
+                    'mission-context',
+                  ) as HTMLDialogElement | null;
+                  dialog?.showModal();
+                }}
+              >
+                Mission direction
+              </button>
+            )}
+            {missionContext?.conversationId !== selected && (
+              <MissionCapture
+                conversationId={selected}
+                objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
+                disabled={blocked || needsReload || Boolean(data.currentConversation?.archived_at)}
+              />
+            )}
           </div>
         )}
         {!preview && (
@@ -740,7 +834,13 @@ export function AureliusWorkspace({
               Boolean(data.currentConversation?.archived_at)
             }
             includeContext={includeContext}
-            onSelect={setCouncilSelection}
+            onSelect={(value) => {
+              setCouncilSelection(value);
+              if (value) {
+                setWebsitePlanning(false);
+                setWebsiteContext(null);
+              }
+            }}
             onFocused={(id) => {
               newConversation();
               setCouncilSelection({ kind: 'specialist', specialists: [id] });
@@ -785,6 +885,14 @@ export function AureliusWorkspace({
             aria-label="Conversation messages"
             aria-busy={busy}
           >
+            {!preview && (
+              <TalkMission
+                key={selected ?? 'recent'}
+                conversationId={selected}
+                turnId={data?.turns.filter((t) => t.status === 'complete').at(-1)?.id}
+                onContext={setMissionContext}
+              />
+            )}
             {data.hasOlderTurns && (
               <button
                 type="button"
@@ -939,16 +1047,27 @@ export function AureliusWorkspace({
                   intelligence.
                 </span>{' '}
                 {['performance', 'studio', 'presence'].includes(capability.id) ? (
-                  <button
-                    type="button"
-                    className="text-button"
-                    disabled={orchestrating}
-                    onClick={() => void prepareCapability()}
-                  >
-                    {orchestrating
-                      ? `Preparing ${capability.label}…`
-                      : `Prepare in ${capability.label} ↗`}
-                  </button>
+                  <>
+                    <label className="context-toggle">
+                      <input
+                        type="checkbox"
+                        checked={useSpecialistContext}
+                        onChange={(e) => setUseSpecialistContext(e.target.checked)}
+                        disabled={orchestrating}
+                      />
+                      Use saved specialist records for preparation
+                    </label>
+                    <button
+                      type="button"
+                      className="text-button"
+                      disabled={orchestrating}
+                      onClick={() => void prepareCapability()}
+                    >
+                      {orchestrating
+                        ? `Preparing ${capability.label}…`
+                        : `Prepare in ${capability.label} ↗`}
+                    </button>
+                  </>
                 ) : (
                   <Link
                     href={capability.href}

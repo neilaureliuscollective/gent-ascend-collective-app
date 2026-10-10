@@ -38,7 +38,7 @@ for (const width of [360, 768, 1440]) {
     ).toHaveAttribute('href', '/app/aethelios?starter=first-session');
     expect(writes).toBe(0);
     await page.getByRole('button', { name: 'Save priority and next move' }).click();
-    await expect(page.getByRole('status')).toContainText('saved to Command');
+    await expect(page.getByRole('status')).toContainText('saved to your daily plan');
     expect(writes).toBe(1);
     await expect(page.getByRole('link', { name: 'Open Performance' })).toHaveAttribute(
       'href',
@@ -46,7 +46,7 @@ for (const width of [360, 768, 1440]) {
     );
     await expect(page.getByRole('link', { name: 'Return to my saved plan' })).toHaveAttribute(
       'href',
-      '/app',
+      '/app/daily',
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

@@ -4,12 +4,12 @@
  */
 export const publishedKnowledge = {
   schemaVersion: 1,
-  edition: '2026-10-06.company-platform.1',
+  edition: '2026-10-08.personal-intelligence.1',
   source: 'aethelios-founder-reviewed',
   facts: [
     {
       id: 'brand.identity',
-      text: 'Aethelios is the company-building intelligence platform for founders, operators and business owners.',
+      text: 'Aethelios is the Personal Intelligence OS for personal life, professional work, entrepreneurship, creative projects, learning and everyday decisions.',
     },
     {
       id: 'brand.intelligence',

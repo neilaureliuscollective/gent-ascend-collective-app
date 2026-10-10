@@ -5,6 +5,9 @@ import { POST } from '../src/app/api/monitoring/performance/route';
 const founder = vi.hoisted(() => vi.fn());
 vi.mock('server-only', () => ({}));
 vi.mock('@/domains/access/founder', () => ({ currentFounderAccess: founder }));
+vi.mock('@/domains/release/saved-work-service', () => ({
+  probeSavedWork: vi.fn(async () => ({ checkedAt: '2026-10-08T17:00:00.000Z', checks: [] })),
+}));
 import { readReleaseReadiness } from '../src/domains/release/service';
 afterEach(() => {
   vi.unstubAllEnvs();

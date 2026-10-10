@@ -10,7 +10,7 @@ for (const [width, height] of [
   test(`Command clarity and source inspection ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/app');
+    await page.goto('/app/daily');
     await expect(page.locator('.command-briefing')).toBeVisible();
     await expect(page.locator('.command-briefing input,.command-briefing textarea')).toHaveCount(0);
     await page.getByRole('button', { name: 'Explore a sample day' }).click();
@@ -51,7 +51,7 @@ test('decision timeout blocks replay until deliberate saved-state reload', async
   await expect(page.getByRole('button', { name: 'Reload saved context' })).toBeVisible();
 });
 test('signal inspection and depth support keyboard', async ({ page }) => {
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   const energy = page.getByRole('button', { name: /Energy/ });
   await energy.focus();
@@ -95,7 +95,7 @@ test('approved suggestion refreshes real saved state before all clear', async ({
   ]);
 });
 test('bounded Command scene pauses offscreen and is removed by Still', async ({ page }) => {
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   const canvas = page.locator('.command-presence canvas');
   await expect(canvas).toHaveCount(1);
@@ -127,7 +127,7 @@ test('failed opening stays truthful and offers deliberate retry', async ({ page 
 test('Command uses the current energy identity in motion, Still and graphics loss', async ({
   page,
 }) => {
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   const presence = page.locator('.command-presence');
   await expect(presence).toHaveClass(/gw-energy-orb/);
@@ -273,7 +273,7 @@ test('session loss clears private context and cannot revive it by exiting sample
     route.fulfill({ status: 401, json: { error: 'Sign in' } }),
   );
   await page.goto('http://127.0.0.1:3102/?mode=daily');
-  await page.locator('.home-records > summary').click();
+  await page.locator('.home-records > summary').filter({ hasText: 'Your saved context' }).click();
   await page.getByRole('button', { name: 'Refresh briefing' }).click();
   await expect(page.locator('.field-signal')).toHaveCount(0);
   await expect(page.getByText('Synthetic tester', { exact: false })).toHaveCount(0);
@@ -324,7 +324,7 @@ test('enlarged text preserves source inspection and linear field controls on a s
 }) => {
   await page.setViewportSize({ width: 360, height: 640 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   await page.addStyleTag({ content: 'html{font-size:200%}' });
   const energy = page.getByRole('button', { name: /Energy/ });
@@ -342,9 +342,10 @@ test('enlarged text preserves source inspection and linear field controls on a s
 test('recovered Command opens current domains and preserves the separate saved arrival path', async ({
   page,
 }) => {
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await expect(page.locator('.command-environment .gw-energy-orb')).toBeVisible();
-  const domains = page.getByRole('navigation', { name: 'Your operating spaces' });
+  await page.getByText('Open deeper systems', { exact: false }).click();
+  const domains = page.getByRole('navigation', { name: 'Deeper systems' });
   await expect(domains.getByRole('link', { name: /Performance/ })).toHaveAttribute(
     'href',
     '/app/performance',
@@ -353,13 +354,17 @@ test('recovered Command opens current domains and preserves the separate saved a
     'href',
     '/app/presence',
   );
-  await expect(page.getByRole('region', { name: 'Talk with Aethelios' }).getByRole('link', { name: /Sign in to talk/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Talk with Aethelios' })
+      .getByRole('link', { name: /Sign in to talk/ }),
+  ).toBeVisible();
   await page.goto('/app/arrival');
   await expect(page.getByRole('heading', { name: 'Your day is waiting.' })).toBeVisible();
 });
 
 test('member home is immediately usable with no arrival or replay gate', async ({ page }) => {
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await expect(page.locator('.command-environment')).toBeVisible();
   await expect(page.locator('.command-opening')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
@@ -369,7 +374,7 @@ test('member home is immediately usable with no arrival or replay gate', async (
 
 test('Fold resize retains selected saved signal without overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/app');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   await page.getByRole('button', { name: /Energy/ }).click();
   await page.setViewportSize({ width: 820, height: 1180 });
@@ -386,7 +391,7 @@ test('real arrival summary connects to the preserved workspace and clears on ses
   page,
 }) => {
   await page.goto('http://127.0.0.1:3102/?mode=daily-summary');
-  await page.locator('.home-records > summary').click();
+  await page.locator('.home-records > summary').filter({ hasText: 'Your saved context' }).click();
   const connection = page.getByRole('region', { name: 'Daily Command connection' });
   await expect(connection.getByRole('heading', { name: 'READY', exact: true })).toBeVisible();
   await expect(connection.getByRole('link', { name: 'Arrival & feedback' })).toHaveAttribute(

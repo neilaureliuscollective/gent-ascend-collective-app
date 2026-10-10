@@ -27,13 +27,25 @@ export function ContextPanel({
             : 'Personal context is off for your next message'}
       </div>
       <div className="context-cards">
-        {!preview && data.context.dailyBrief && <article>
-          <span className="eyebrow">TODAY / SAVED SNAPSHOT</span>
-          <h4>{data.context.dailyBrief.day}</h4>
-          <p>{data.context.dailyBrief.actions.length} saved actions · {data.context.dailyBrief.openCaptures} open captures</p>
-          {data.context.dailyBrief.previousReview?.tomorrow && <p>Carried forward from {data.context.dailyBrief.previousReview.day}: {data.context.dailyBrief.previousReview.tomorrow}</p>}
-          <p>Read at {data.context.dailyBrief.asOf.slice(11,16)} UTC. Reload to see later changes.</p>
-        </article>}
+        {!preview && data.context.dailyBrief && (
+          <article>
+            <span className="eyebrow">TODAY / SAVED SNAPSHOT</span>
+            <h4>{data.context.dailyBrief.day}</h4>
+            <p>
+              {data.context.dailyBrief.actions.length} saved actions ·{' '}
+              {data.context.dailyBrief.openCaptures} open captures
+            </p>
+            {data.context.dailyBrief.previousReview?.tomorrow && (
+              <p>
+                Carried forward from {data.context.dailyBrief.previousReview.day}:{' '}
+                {data.context.dailyBrief.previousReview.tomorrow}
+              </p>
+            )}
+            <p>
+              Read at {data.context.dailyBrief.asOf.slice(11, 16)} UTC. Reload to see later changes.
+            </p>
+          </article>
+        )}
         <article>
           <span className="eyebrow">01 / Your foundation</span>
           <h4>{preview ? 'Your perspective starts here.' : data.context.profile.name}</h4>
@@ -77,16 +89,16 @@ export function ContextPanel({
       <details className="context-boundaries">
         <summary>Understand the boundaries</summary>
         <p>
-          He receives up to 20 recent completed exchanges within a bounded context window. Older
-          conversations are saved, but are not automatically recalled.
+          Aethelios receives a bounded window from this conversation, with a thread summary when
+          needed. Other conversations are saved but are not automatically recalled.
         </p>
         <p>
           Turning personal context off does not remove details already written in this conversation.
           Start a new conversation for a fresh context.
         </p>
         <p>
-          Live web research, voice, file uploads and external actions are not connected in this
-          release.
+          Read-only web research can consult public sources. Studio accepts image references.
+          General document uploads, live voice and external actions are not connected.
         </p>
         {!preview && (
           <p>

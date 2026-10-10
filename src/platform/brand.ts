@@ -1,5 +1,4 @@
 import palette from './visual/aether-palette.json';
-
 /** Public brand identity. Technical IDs and existing persisted keys stay stable. */
 export const brand = {
   name: 'Aethelios',

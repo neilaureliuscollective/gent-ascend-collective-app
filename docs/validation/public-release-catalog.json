@@ -1,0 +1,262 @@
+[
+  {
+    "snapshot": {
+      "checks": [
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "constraint:mission_owner_identity",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "function:public.mission_capture_context(uuid,uuid,integer)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "function:public.mission_decide_proposal(uuid,boolean,jsonb)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "function:public.mission_open_studio(uuid,integer)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "function:public.mission_pin_output(uuid,uuid)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "function:public.mission_store_proposal(uuid,uuid,uuid,integer,jsonb,integer,integer,integer)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "table:mission_outputs",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "table:mission_proposals",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "table:mission_studio_links",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "continuity",
+          "object": "table:mission_turn_context",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "function:public.mission_create_deliverable(uuid,uuid,integer)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "function:public.mission_delete_deliverable(uuid,integer)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "function:public.mission_review_deliverable(uuid,uuid,text)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "function:public.mission_save_deliverable(uuid,uuid,integer,text,text,text)",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "table:mission_deliverable_versions",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "table:mission_deliverables",
+          "present": false
+        },
+        {
+          "ok": false,
+          "stage": "deliverables",
+          "object": "view:mission_deliverable_summaries",
+          "present": false
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_studio_projects.brief",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_studio_projects.company_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_studio_projects.creative_type",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_studio_projects.id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_studio_projects.person_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_studio_projects.title",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_turns.assistant_text",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_turns.conversation_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_turns.id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_turns.person_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:ai_turns.status",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.conversation_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.decisions",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.next_actions",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.objective",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.open_questions",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.person_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.revision",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.status",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:intelligence_missions.title",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:persons.auth_user_id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "column:persons.id",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "owner-key:ai_studio_projects",
+          "present": true
+        },
+        {
+          "ok": true,
+          "stage": "prerequisite",
+          "object": "owner-key:ai_turns",
+          "present": true
+        }
+      ],
+      "contract": "public-mission-v1",
+      "observed_at": "2026-10-08T17:04:22.486175+00:00"
+    }
+  }
+]

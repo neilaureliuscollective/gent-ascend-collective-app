@@ -62,7 +62,7 @@ self.addEventListener('fetch', (event) => {
             ? '/performance-offline.html'
             : '/offline.html',
         )) ||
-        new Response('Gent Ascend needs a connection. Reconnect and reload.', {
+        new Response('Aethelios needs a connection. Reconnect and reload.', {
           status: 503,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         })
