@@ -7,6 +7,7 @@ const destinations: [string, string, IconName][] = [
   ['/app/aethelios', 'Talk', 'spark'],
   ['/app/work', 'Work', 'command'],
   ['/app/studio', 'Studio', 'collection'],
+  ['/app/lifestyle', 'Lifestyle', 'collection'],
   ['/app/ecosystem', 'Ecosystem', 'world'],
 ];
 export function Navigation() {
@@ -31,7 +32,12 @@ export function Navigation() {
     };
   }, []);
   return (
-    <nav ref={ref} aria-label="Main navigation" className="navigation">
+    <nav
+      ref={ref}
+      aria-label="Main navigation"
+      className="navigation"
+      style={{ gridTemplateColumns: `repeat(${destinations.length}, minmax(0, 1fr))` }}
+    >
       {destinations.map(([href, label, icon]) => (
         <Link
           key={href}
@@ -39,7 +45,8 @@ export function Navigation() {
           aria-current={
             path === href ||
             path.startsWith(href + '/') ||
-            (href === '/app/aethelios' && path.startsWith('/app/companies/'))
+            (href === '/app/aethelios' && path.startsWith('/app/companies/')) ||
+            (href === '/app/lifestyle' && path.startsWith('/app/collection'))
               ? 'page'
               : undefined
           }

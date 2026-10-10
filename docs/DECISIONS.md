@@ -359,3 +359,7 @@ Fix the confirmed live camera=() document policy to camera=(self), including cli
 ## 2026-10-04 — Recover Command home while preserving direct member entry
 
 Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.
+
+## 2026-10-10 — Aethelios Lifestyle commerce restoration
+
+Founder explicitly authorized restoring consumer commerce inside Public Aethelios. Reuse Shopify Storefront/cart/PDP modules rather than a second commerce backend. Pin latest stable 2026-10; introduce a merchant-selected Legacy Reserve collection and an expandable brand registry, scoped Imperial Obsidian, server-only cart identity, and public checkout pricing. Customer identity and future benefits remain separately gated. No production release, invented stock, discount or AI tool activation. Research/architecture: [LIFESTYLE_PHASE_ONE.md](LIFESTYLE_PHASE_ONE.md). Observed validation and merchant/runner limits: [LIFESTYLE_VALIDATION.md](LIFESTYLE_VALIDATION.md).

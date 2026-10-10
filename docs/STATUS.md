@@ -860,3 +860,7 @@ Implemented reusable member semantic materials, dark Talk composer and support s
 ## Official install crest — 2026-10-10
 
 Founder supplied the new official green-and-gold ascending-A logo and authorized the text-free install adaptation and production release. Manifest any 192/512, Android maskable 512, Apple touch 180 and browser 64 assets now use the adapted crest. Reproducible masters and export script are retained. New versioned URLs and offline fallback cache v6 avoid stale artwork; legacy install URLs redirect to the current versions. No in-app crest, account, entitlement, provider or data contracts change. See IMPERIAL_OBSIDIAN_INSTALL_ICON.md for validation and device-refresh limitations.
+
+## Aethelios Lifestyle Phase One — 2026-10-10
+
+Restored review-branch Shopify commerce inside the member app; added /app/lifestyle and Legacy Reserve destination, live-only merchant-assortment catalog/PDP/cart, private cart projections and checkout handoff. Ordinary public Shopify pricing; no active membership offers, database changes or AI behavior changes. See [LIFESTYLE_PHASE_ONE.md](LIFESTYLE_PHASE_ONE.md) and [LIFESTYLE_VALIDATION.md](LIFESTYLE_VALIDATION.md). Merchant credentials/publication, actual checkout acceptance, browser/screenshots and founder release approval remain open; customers cannot yet be confirmed able to purchase from this branch.

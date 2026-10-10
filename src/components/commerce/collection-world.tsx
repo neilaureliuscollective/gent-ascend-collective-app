@@ -20,10 +20,14 @@ export function CollectionWorld({
   entries,
   failed,
   savedOnly = false,
+  brand,
+  catalogStatus = 'ready',
 }: {
   entries: CollectionEntry[];
   failed: boolean;
   savedOnly?: boolean;
+  brand?: string;
+  catalogStatus?: 'ready' | 'empty' | 'unconfigured' | 'error';
 }) {
   const [chapter, setChapter] = useState(savedOnly ? 'saved' : 'all');
   const [query, setQuery] = useState('');
@@ -49,12 +53,21 @@ export function CollectionWorld({
     <div className="reserve-commerce collection-world">
       <header className="collection-chamber">
         <div className="collection-chamber-copy">
-          <span className="world-kicker">Gent Ascend Collective / Your daily standard</span>
+          <span className="world-kicker">AETHELIOS LIFESTYLE / Your daily standard</span>
           <h1>
-            The <em>Collection.</em>
+            {brand ? (
+              <>
+                {brand}
+                <em>.</em>
+              </>
+            ) : (
+              <>
+                The <em>Collection.</em>
+              </>
+            )}
           </h1>
           <p>
-            Grooming. Performance. Recovery.
+            Grooming. Personal care. Daily ritual.
             <br />
             Find what earns a place in your day.
           </p>
@@ -75,7 +88,7 @@ export function CollectionWorld({
         </div>
         <div className="collection-chamber-caption" aria-hidden="true">
           <span>CARE / DISCIPLINE / RITUAL</span>
-          <span>THE GENT ASCEND STANDARD</span>
+          <span>THE HUMAN ASCENDANCE</span>
         </div>
       </header>
       <section id="collection" className="collection-browse" aria-labelledby="collection-heading">
@@ -92,8 +105,14 @@ export function CollectionWorld({
         </div>
         {failed && (
           <p className="preview-notice" role="status">
-            Live products are temporarily unavailable. These previews cannot be ordered.{' '}
-            <button onClick={() => window.location.reload()}>Try again</button>
+            Live products are temporarily unavailable. Current prices and availability could not be
+            verified. <button onClick={() => window.location.reload()}>Try again</button>
+          </p>
+        )}
+        {catalogStatus === 'unconfigured' && (
+          <p className="preview-notice" role="status">
+            Live product availability is not connected yet. Products are not available to order
+            here.
           </p>
         )}
         <div className="collection-search-row">
@@ -186,7 +205,9 @@ export function CollectionWorld({
             <p>
               {chapter === 'saved'
                 ? 'Save a product from its page to revisit it here.'
-                : 'Try another search or include products being prepared for release.'}
+                : entries.length
+                  ? 'Try another search or include unavailable products.'
+                  : 'No published products are available in this collection yet.'}
             </p>
             <button className="world-button" onClick={reset}>
               Explore all essentials
@@ -203,12 +224,12 @@ export function CollectionWorld({
           <em>A standard you return to.</em>
         </h2>
         <p>
-          Explore ingredients, directions and release details on each product page. Bring your
-          questions to Aethelios before you choose.
+          Explore verified product details, options and availability on each product page. Product
+          purchases do not require a paid membership.
         </p>
         <div className="collection-entry-actions">
-          <Link href="/app/aethelios" className="world-button">
-            Talk with Aethelios
+          <Link href="/app/lifestyle" className="world-button">
+            Aethelios Lifestyle
           </Link>
           <Link href="/app/membership" className="world-text-link">
             Your membership

@@ -42,6 +42,16 @@ export function ProductPurchase({ product }: { product: Product }) {
       <div className="commerce-price">
         {variant ? formatMoney(variant.price) : 'Select an option'}
       </div>
+      {variant?.compareAtPrice &&
+        variant.compareAtPrice.currencyCode === variant.price.currencyCode &&
+        Number(variant.compareAtPrice.amount) > Number(variant.price.amount) && (
+          <p>
+            Regular price <s>{formatMoney(variant.compareAtPrice)}</s>
+          </p>
+        )}
+      {variant?.currentlyNotInStock && (
+        <p role="status">Available on backorder. Review fulfillment timing before checkout.</p>
+      )}
       {variant && (
         <p className="reserve-order-summary" aria-live="polite">
           {quantity} × {variant.title} · Item subtotal{' '}

@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { commerceEvent } from './commerce-events';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Cart } from '@/domains/commerce/shopify';
+import type { PublicCart } from '@/domains/commerce/cart-public';
 import { formatMoney } from './money';
 import { launchLabel, launchPurchaseAllowed } from '@/domains/commerce/launch-policy';
 
@@ -17,7 +17,7 @@ export function CartPanel({
   basePath?: string;
 }) {
   const [open, setOpen] = useState(fullPage);
-  const [cart, setCart] = useState<Cart | null>(null);
+  const [cart, setCart] = useState<PublicCart | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

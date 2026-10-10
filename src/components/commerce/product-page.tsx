@@ -3,6 +3,7 @@ import { currentPerson } from '@/domains/person/current';
 import { CabinetSave } from './cabinet-controls';
 import { saveProductAction } from '@/app/(workspace)/app/collection/actions';
 import { notFound } from 'next/navigation';
+import { brandProducts, lifestyleCollectionHandle } from '@/domains/commerce/lifestyle';
 import { previewProduct } from '@/domains/catalog/preview';
 import { commerceConfigured, getProduct, listProducts } from '@/domains/commerce/shopify';
 import { readProductStory } from '@/domains/commerce/product-story';
@@ -17,9 +18,11 @@ import { ProductExperience } from '@/components/commerce/product-experience';
 export async function ProductPage({
   handle,
   basePath = '/shop',
+  liveOnly = false,
 }: {
   handle: string;
   basePath?: string;
+  liveOnly?: boolean;
 }) {
   let failed = false;
   const product = commerceConfigured()
@@ -28,7 +31,28 @@ export async function ProductPage({
         return null;
       })
     : null;
-  const preview = previewProduct(handle);
+  const preview = liveOnly ? undefined : previewProduct(handle);
+  if (liveOnly && (failed || !commerceConfigured()))
+    return (
+      <section className="collection-opening" role="status">
+        <h1>Product availability could not be verified.</h1>
+        <p>
+          {failed
+            ? 'Please refresh before choosing a product.'
+            : 'Live product availability is not connected yet.'}
+        </p>
+        <Link href="/app/collection">Return to the collection →</Link>
+      </section>
+    );
+  if (
+    liveOnly &&
+    product &&
+    !brandProducts(
+      [product],
+      lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
+    ).length
+  )
+    notFound();
   if (!product && !preview) notFound();
   const member = basePath === '/app/collection';
   const person = member && product ? await currentPerson() : null;
