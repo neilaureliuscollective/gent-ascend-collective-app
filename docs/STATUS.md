@@ -860,3 +860,7 @@ Implemented reusable member semantic materials, dark Talk composer and support s
 ## Official install crest — 2026-10-10
 
 Founder supplied the new official green-and-gold ascending-A logo and authorized the text-free install adaptation and production release. Manifest any 192/512, Android maskable 512, Apple touch 180 and browser 64 assets now use the adapted crest. Reproducible masters and export script are retained. New versioned URLs and offline fallback cache v6 avoid stale artwork; legacy install URLs redirect to the current versions. No in-app crest, account, entitlement, provider or data contracts change. See IMPERIAL_OBSIDIAN_INSTALL_ICON.md for validation and device-refresh limitations.
+
+## Luminous Obsidian second pass — 2026-10-10
+
+Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.

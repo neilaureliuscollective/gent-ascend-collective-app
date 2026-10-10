@@ -1,3 +1,4 @@
+import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
 import { legacyReserveDestination } from '@/platform/ecosystem';
 import './ecosystem.css';
@@ -13,7 +14,8 @@ export default function EcosystemPage() {
   const reserve = legacyReserveDestination(process.env.LEGACY_RESERVE_PUBLIC_URL);
   return (
     <section className="io-ecosystem" aria-labelledby="ecosystem-title">
-      <header className="io-ecosystem-hero">
+      <header className="io-ecosystem-hero io-hero">
+        <AmbientHorizon />
         <p className="eyebrow">AETHELIOS / THE HUMAN ASCENDANCE</p>
         <h1 id="ecosystem-title">
           One world.
