@@ -55,3 +55,5 @@ Member branch: `feat/human-ascendance-foundation`, implementation `e3d2d1974c26a
 Corporate branch: [feat/corporate-headquarters](https://github.com/neilaureliuscollective/aethelios-human-ascendance/tree/feat/corporate-headquarters), implementation `497ffb2688e11eb37f1d53ae8141369417f6cd0d`. Native push and remote SHA verified; no remote main exists for a PR base. No main branch invented.
 
 Cloud install/start instructions and required domain additions are saved as a review draft, separate from website deployment. Reusable steps prepare both repositories; publication of the cloud snapshot is user-managed.
+
+At delivery, GitHub application/database checks and the Vercel preview build were still in progress. Their outcomes are not included in local PASS counts; review PR #81 checks before promotion.
