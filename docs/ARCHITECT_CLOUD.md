@@ -49,3 +49,7 @@ The existing local-only `npm run test:integration` script now includes Architect
 - Focused Playwright: 22 passed across Architect cloud/local, Ecosystem and retained Talk. Two cloud lifecycle tests intercept API responses and are explicitly not live Auth; they exercise identical UUID/snapshot retry after a simulated uncertain save, explicit consent, proposal review, local application, cloud revision save and deletion. Signed-out real route denies access with no inference request. Existing static preview isolation/export/reopening and 320–2560 px navigation checks passed.
 - Recorded hosted migration ledger hashes unchanged; additive SQL tested in PGlite only. No hosted migration, grants, live provider call, customer charge, DNS or production promotion.
 - Extended local-only `test:integration` acceptance is unrun. No production readiness claim; provider prices/usage and real Auth/RLS need dedicated acceptance.
+
+## Review receipts
+
+Draft PR: https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/83, stacked on Phase Two PR #82. Implementation commit `93cb7f1`. Phase One/Two review dependencies remain unmerged. Corporate repository was not modified for this technical slice. Startup guidance for the new tests, disabled flags and unapplied migration was appended to the reusable cloud configuration draft; saving that draft is not activation or snapshot publication.
