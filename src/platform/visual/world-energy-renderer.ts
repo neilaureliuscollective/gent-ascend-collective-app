@@ -43,7 +43,7 @@ void main(){
 
  vec2 q=vec2(p.x*.85+p.y*.52,p.y*.85-p.x*.52);
  float arc=exp(-abs(length(vec2(q.x/1.04,q.y/.23))-1.)*170.)*smoothstep(-.32,.35,q.y);
- color+=${aetherMaterial.edge}*arc*.09;alpha=max(alpha,arc*.12);
+ color+=${aetherMaterial.gold}*arc*.24;alpha=max(alpha,arc*.30);
  float spark=exp(-dot(p-vec2(.77,.13),p-vec2(.77,.13))*900.);
  color+=${aetherMaterial.highlight}*spark*.16;alpha=max(alpha,spark*.2);
  pixel=vec4(color,clamp(alpha,0.,1.));

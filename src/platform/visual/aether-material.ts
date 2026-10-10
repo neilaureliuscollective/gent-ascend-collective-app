@@ -9,5 +9,6 @@ export const aetherMaterial = {
   deep: vector(palette.deep),
   atmosphere: vector(palette.petrol),
   edge: vector(palette.luminous),
-  highlight: vector(palette.silver),
+  highlight: vector(palette['aether-glow']),
+  gold: vector(palette['gold-light']),
 };

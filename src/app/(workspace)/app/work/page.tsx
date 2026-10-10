@@ -1,3 +1,4 @@
+import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
 import { companyJobs } from '@/domains/company-work/starters';
 import './work.css';
@@ -6,7 +7,8 @@ export const metadata = { title: 'Work · Mission Command' };
 export default function WorkPage() {
   return (
     <section className="company-work" aria-labelledby="company-work-title">
-      <header>
+      <header className="io-hero io-hero-work">
+        <AmbientHorizon />
         <span className="eyebrow">AETHELIOS / MISSION COMMAND</span>
         <h1 id="company-work-title">What are we building?</h1>
         <p>
