@@ -1042,6 +1042,7 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
 .app-shell.imperial-workspace .talk-page .welcome-heading .account-intelligence-orb {
   width: 140px;
   height: 140px;
+  margin-inline: auto;
 }
 .app-shell.imperial-workspace .talk-page .welcome-heading .orb-preview-toggle {
   display: none;
