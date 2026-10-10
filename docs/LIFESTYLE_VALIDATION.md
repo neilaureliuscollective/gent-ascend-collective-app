@@ -42,3 +42,7 @@ The focused fixture suite writes five view types at three widths to `docs/eviden
 Founder-provided shop: `1yjonr-ym.myshopify.com`. No Storefront credential is bound to the execution environment; the runtime's store/network configuration was not changed. Actual Headless collection publication, product inventory/pricing, cart mutations and Shopify checkout contents have **not** been verified.
 
 No charges, orders, customer export, inventory modifications, live discount creation, Stripe subscription changes, production deployment or merge occurred. Standard-command CI, screenshots, merchant acceptance and founder approval remain required before commercial release.
+
+## Upstream reconciliation
+
+Main advanced to 2307e1e81a242c78737ff5b7780234544075e737 during review preparation. A review-branch merge preserves its complete tree (including the approved crest and Imperial Obsidian member environment), keeps Ecosystem alongside Lifestyle, and appends both status entries. Only navigation and STATUS overlapped. The 421-test and production build results precede this upstream reconciliation; integrated-branch CI and browser acceptance remain required.

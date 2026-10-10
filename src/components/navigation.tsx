@@ -8,6 +8,7 @@ const destinations: [string, string, IconName][] = [
   ['/app/work', 'Work', 'command'],
   ['/app/studio', 'Studio', 'collection'],
   ['/app/lifestyle', 'Lifestyle', 'collection'],
+  ['/app/ecosystem', 'Ecosystem', 'world'],
 ];
 export function Navigation() {
   const path = usePathname();

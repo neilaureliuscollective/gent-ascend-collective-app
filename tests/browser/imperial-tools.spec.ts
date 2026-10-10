@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 
-test('Studio authentication notices stay readable on carbon surfaces', async ({ page }) => {
+test('Studio authentication notices stay readable on Obsidian surfaces', async ({ page }) => {
   await page.route('**/api/studio', (route) =>
     route.fulfill({
       status: 401,
@@ -27,7 +27,7 @@ test('Studio authentication notices stay readable on carbon surfaces', async ({ 
   expect(contrast).toBeGreaterThanOrEqual(4.5);
 });
 
-test('Material conversation retains readable saved replies and stone writing space', async ({
+test('Material conversation retains readable saved replies and dark writing space', async ({
   page,
 }) => {
   await page.route('**/api/aurelius**', (route) =>
@@ -71,19 +71,21 @@ test('Material conversation retains readable saved replies and stone writing spa
     }),
   );
   await page.goto('/app/aethelios');
-  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(246, 244, 237)');
-  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(246, 244, 237)');
-  await expect(page.locator('.assistant-message')).toHaveCSS('background-color', 'rgb(18, 20, 23)');
+  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(220, 233, 214)');
+  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(220, 233, 214)');
+  await expect(page.locator('.assistant-message')).toHaveCSS('color', 'rgb(220, 233, 214)');
   await expect(page.locator('.aurelius-composer')).toHaveCSS(
-    'background-color',
-    'rgb(251, 248, 242)',
+    'background-image',
+    /rgb\(23, 56, 43\)/,
   );
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
 });
 
 // Synthetic project responses exercise controls without provider calls or private data.
 for (const width of [360, 768, 1440]) {
-  test(`Steel Studio controls preserve project drafts at ${width}px`, async ({ page }) => {
+  test(`Imperial Obsidian Studio controls preserve project drafts at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.route('**/api/studio', (route) =>
@@ -116,29 +118,29 @@ for (const width of [360, 768, 1440]) {
       ),
     ).toBeVisible();
     await tabs.getByRole('button', { name: 'Direction', exact: true }).click();
-    await page.getByLabel('Color direction').fill('Green, steel and ivory');
+    await page.getByLabel('Color direction').fill('Obsidian, green and gold');
     await tabs.getByRole('button', { name: 'Library', exact: true }).click();
     await tabs.getByRole('button', { name: 'Direction', exact: true }).click();
-    await expect(page.getByLabel('Color direction')).toHaveValue('Green, steel and ivory');
+    await expect(page.getByLabel('Color direction')).toHaveValue('Obsidian, green and gold');
     const material = await tabs.evaluate((el) => ({
       foreground: getComputedStyle(el.querySelector('button')!).color,
       background: getComputedStyle(el).backgroundImage,
       overflow: document.documentElement.scrollWidth > innerWidth,
     }));
-    expect(material.foreground).toBe('rgb(246, 244, 237)');
-    expect(material.background).toContain('rgb(74, 84, 80)');
+    expect(material.foreground).toBe('rgb(220, 233, 214)');
+    expect(material.background).toBe('none');
     expect(material.overflow).toBe(false);
-    await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(18, 20, 23)');
-    await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(74, 84, 80)');
-    await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(213, 217, 207)');
-    await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(24, 53, 43)');
+    await expect(page.locator('.studio-main')).toHaveCSS('background-image', /rgb\(16, 36, 28\)/);
+    await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(16, 36, 28)');
+    await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(174, 194, 173)');
+    await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(174, 194, 173)');
     await expect(page.locator('.studio-direction')).toHaveCSS(
       'background-color',
-      'rgb(246, 244, 237)',
+      'rgb(16, 36, 28)',
     );
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.screenshot({
-      path: `/workspace/steel-tools-review/studio-${width}.png`,
+      path: `test-results/imperial-obsidian-studio-${width}.png`,
       fullPage: true,
     });
     await page.locator('html').evaluate((el) => el.setAttribute('data-material', 'solid'));

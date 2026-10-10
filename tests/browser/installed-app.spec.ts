@@ -12,9 +12,9 @@ test('fresh installation has one current crest identity across manifest and Appl
   expect(manifest.start_url).toBe('/app');
   expect(manifest.icons).toHaveLength(3);
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
-    '/brand/aethelios-imperial-steel-20261009-192.png',
-    '/brand/aethelios-imperial-steel-20261009-512.png',
-    '/brand/aethelios-imperial-steel-20261009-maskable-512.png',
+    '/brand/aethelios-imperial-obsidian-20261010-192.png',
+    '/brand/aethelios-imperial-obsidian-20261010-512.png',
+    '/brand/aethelios-imperial-obsidian-20261010-maskable-512.png',
   ]);
   for (const icon of manifest.icons) {
     const response = await request.get(icon.src);
@@ -70,7 +70,7 @@ test('retired blue installation URLs resolve to the current phone artwork', asyn
     });
     expect(response.status()).toBe(307);
     expect(response.headers().location).toBe(
-      `/brand/aethelios-imperial-steel-20261009-${suffix}.png`,
+      `/brand/aethelios-imperial-obsidian-20261010-${suffix}.png`,
     );
   }
 });
@@ -102,7 +102,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v5'],
+      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v6'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',

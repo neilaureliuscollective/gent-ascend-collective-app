@@ -1,4 +1,4 @@
-const FALLBACK_CACHE = 'gent-ascend-fallback-v5';
+const FALLBACK_CACHE = 'gent-ascend-fallback-v6';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
@@ -6,7 +6,7 @@ self.addEventListener('install', (event) => {
       .then((cache) =>
         cache.addAll([
           '/offline.html',
-          '/brand/aethelios-imperial-steel-20261009-192.png',
+          '/brand/aethelios-imperial-obsidian-20261010-192.png',
           '/performance-offline.html',
           '/performance-offline.css',
           '/performance-offline.js',
