@@ -7,8 +7,6 @@ import './interaction.css';
 import './aether-materials.css';
 import './imperial-materials.css';
 import './imperial-workspace.css';
-import './imperial-tools.css';
-import './imperial-environment.css';
 const sora = localFont({
   src: '../assets/fonts/sora.woff2',
   variable: '--font-display',

@@ -38,8 +38,8 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
       .locator('.talk-presence .intelligence-orb-static')
       .first()
       .evaluate((el) => getComputedStyle(el).backgroundImage);
-    expect(orbFill).toContain('rgb(67, 128, 105)');
-    expect(orbFill).toContain('rgb(32, 84, 67)');
+    expect(orbFill).toContain('rgb(71, 118, 90)');
+    expect(orbFill).toContain('rgb(23, 56, 43)');
     if (width === 390) await page.screenshot({ path: 'test-results/aether-talk-phone.png' });
     await presence.click();
     await expect(

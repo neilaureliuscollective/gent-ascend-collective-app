@@ -2,12 +2,12 @@ import Link from 'next/link';
 import { companyJobs } from '@/domains/company-work/starters';
 import './work.css';
 import { CompanyRooms } from '@/components/companies/company-rooms';
-export const metadata = { title: 'Company work' };
+export const metadata = { title: 'Work · Mission Command' };
 export default function WorkPage() {
   return (
     <section className="company-work" aria-labelledby="company-work-title">
       <header>
-        <span className="eyebrow">AETHELIOS / COMPANY WORK</span>
+        <span className="eyebrow">AETHELIOS / MISSION COMMAND</span>
         <h1 id="company-work-title">What are we building?</h1>
         <p>
           Start with the company and the outcome. Aethelios helps shape the work; you keep the
@@ -16,6 +16,17 @@ export default function WorkPage() {
         <Link className="button" href="/app/aethelios">
           Continue in Talk ↗
         </Link>
+        <nav className="io-work-links" aria-label="Work environments">
+          <Link className="secondary-button" href="/app/missions">
+            Missions ↗
+          </Link>
+          <Link className="secondary-button" href="/app/ongoing">
+            Commitments ↗
+          </Link>
+          <Link className="secondary-button" href="/app/studio">
+            Creative projects ↗
+          </Link>
+        </nav>
       </header>
       <CompanyRooms />
       <h2>Explore a job in unassigned Talk</h2>
@@ -33,6 +44,20 @@ export default function WorkPage() {
           </Link>
         ))}
       </div>
+      <aside className="io-architect" aria-labelledby="architect-title">
+        <p className="eyebrow">AETHELIOS ARCHITECT</p>
+        <h2 id="architect-title">Shape what comes next.</h2>
+        <p>
+          Develop an idea, clarify requirements and plan your next build in Talk. A dedicated coding
+          workflow remains in development.
+        </p>
+        <div className="io-work-links">
+          <Link className="secondary-button" href="/app/aethelios">
+            Plan a build in Talk ↗
+          </Link>
+          <span className="io-preview-label">Coding workflow · in development</span>
+        </div>
+      </aside>
       <aside className="company-work-note">
         <h2>Keep useful work moving.</h2>
         <p>
