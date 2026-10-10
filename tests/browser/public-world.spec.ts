@@ -124,7 +124,7 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([
-    '/brand/aethelios-imperial-steel-20261009-192.png',
+    '/brand/aethelios-imperial-obsidian-20261010-192.png',
     '/offline.html',
     '/performance-offline.css',
     '/performance-offline.html',
