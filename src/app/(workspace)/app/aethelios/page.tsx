@@ -24,6 +24,8 @@ export default async function AetheliosPage({
     ...Object.fromEntries(
       council.map((entity) => [`entity-${entity.id}`, specialistStarters[entity.id]]),
     ),
+    'architect-workshop':
+      'Help me create a static website for this idea: [describe my website]. Return a single JSON object with exactly version:1, name (under 80 characters), brief (under 2000 characters), html and css (each under 40000 characters). HTML is body content with main and h1 landmarks; CSS is separate. Use no JavaScript, forms, external assets, links except local anchors, trackers, secrets or unsupported integrations. Do not claim you ran checks or deployed it. I will review the source and paste the JSON into the Architect workshop for an isolated preview and export. Ask about unclear requirements first.',
     'weekly-review':
       'Review my last seven days using my saved personal context if I enable it. Distinguish missing records from zero activity. Help me identify what worked, what got in the way, and one realistic adjustment for next week. Ask only what is needed. Propose changes for my review; do not claim to save them.',
     plan: 'Help me choose what matters most today and turn it into a manageable plan.',

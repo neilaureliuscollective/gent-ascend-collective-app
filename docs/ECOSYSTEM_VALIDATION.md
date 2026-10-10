@@ -57,3 +57,12 @@ Corporate branch: [feat/corporate-headquarters](https://github.com/neilaureliusc
 Cloud install/start instructions and required domain additions are saved as a review draft, separate from website deployment. Reusable steps prepare both repositories; publication of the cloud snapshot is user-managed.
 
 At delivery, GitHub application/database checks and the Vercel preview build were still in progress. Their outcomes are not included in local PASS counts; review PR #81 checks before promotion.
+
+## Phase Two — 2026-10-10
+
+- Local lint, typecheck and production build passed. Frozen Phase One dependency installation retained; no manifest/lockfile changes.
+- `npm test`: 58 files / 416 tests passed, including existing billing, capability, ownership and SQL emulation tests plus five new project/launch-contract tests.
+- `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e -- tests/browser/architect.spec.ts tests/browser/ecosystem.spec.ts tests/browser/talk-layout.spec.ts --workers=2`: 19 passed. Architect source/edit/preview/revision/check/export/reopen tested at 344/390/1440; unsafe scripts and external links/images removed, sandbox asserted and no external test-origin request observed. Talk handoff prepares a draft without a POST. Four-plan disclosure checked. Ecosystem including Architect/Lifestyle checked at 320/344/390/768/1440/2560, active navigation and no horizontal overflow. Health state-only behavior and retained Talk draft/editor/mobile flow passed.
+- `npm run db:ledger` passed against the recorded hosted ledger snapshot. No migration changes and no hosted database operation.
+- Diff review: no credential values, privileged client, live billing mutation, database reset, private founder data, medical ingestion, production deployment or DNS operation introduced. Raw exported customer source remains untrusted and requires review before independent execution/publication.
+- These results are local tests, not live provider acceptance. Phase One member CI application and database failures remain unresolved. Real Auth/PostgREST/founder tests remain unrun here due the prior confirmed PostgreSQL image/storage limitation. Architect model output, Stripe launch checkout and merchant acceptance were not tested live. Agent execution and new Architect enrollment are closed.
