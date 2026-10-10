@@ -40,10 +40,18 @@ Cold full local Supabase images exhausted the 32GB VFS-backed Docker storage. Ev
 
 The initial build download needed the managed proxy and allowed `storage.googleapis.com`; this was resolved with `NODE_USE_ENV_PROXY=1` and the saved allowlist. TLS and model SHA-256 verification were never disabled. A supported `SUPABASE_HOME` avoids the read-only default home; no credential values were printed.
 
-GitHub API calls to `api.github.com` returned Forbidden; its required domain is saved in the configuration draft. Native Git publication results are recorded in the delivery receipt. No GitHub API token was requested merely because the CLI status failed. Corporate repository has no existing main/default commit to serve as a PR base. No new main/production branch is created by this phase.
+GitHub API calls to `api.github.com` returned Forbidden; its required domain is saved in the configuration draft. Native Git publication succeeded for both feature branches, and draft member PR #81 was created through the supported GitHub CLI flow despite earlier REST failures. No GitHub API token was requested merely because the CLI status failed. Corporate repository has no existing main/default commit to serve as a PR base. No new main/production branch is created by this phase.
 
 The entire historical browser suite, real authenticated/model acceptance, physical Samsung Fold/DeX and installed-device checks were not rerun. Historical STATUS reports broad legacy failures; those are not claimed fixed or freshly reproduced. Only relevant scenario outcomes above are represented as verified.
 
 No live Stripe product, Supabase schema, member account, domain or production deployment was changed. Cross-site origins and corporate inbox remain unset until founder verification. SSO and sensitive Health services remain planned.
 
 Evidence: [directory desktop](evidence/ecosystem/directory-desktop.png), [directory phone](evidence/ecosystem/directory-phone.png), [Health desktop](evidence/ecosystem/health-desktop.png), [Health phone](evidence/ecosystem/health-phone.png).
+
+## Delivery receipt
+
+Member branch: `feat/human-ascendance-foundation`, implementation `e3d2d1974c26a7e94e2f5f779ba262b77155535e`. [Draft PR #81](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/81), base main. Native push and remote SHA verified. Subsequent documentation receipt commits stay on this same review branch. No merge/deployment performed.
+
+Corporate branch: [feat/corporate-headquarters](https://github.com/neilaureliuscollective/aethelios-human-ascendance/tree/feat/corporate-headquarters), implementation `497ffb2688e11eb37f1d53ae8141369417f6cd0d`. Native push and remote SHA verified; no remote main exists for a PR base. No main branch invented.
+
+Cloud install/start instructions and required domain additions are saved as a review draft, separate from website deployment. Reusable steps prepare both repositories; publication of the cloud snapshot is user-managed.
