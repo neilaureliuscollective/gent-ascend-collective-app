@@ -7,6 +7,7 @@ import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
 import { AppRuntime } from './app-runtime';
+import { ecosystemOrigin } from '@/platform/ecosystem-links';
 import { UniversalCapture } from './capture/universal-capture';
 export function Shell({
   children,
@@ -15,6 +16,7 @@ export function Shell({
   children: React.ReactNode;
   founder?: boolean;
 }) {
+  const corporate = ecosystemOrigin(process.env.AETHELIOS_CORPORATE_ORIGIN);
   return (
     <ConversationDraftProvider>
       <div className="app-shell aethelios-aether imperial-workspace">
@@ -45,7 +47,12 @@ export function Shell({
               <br />
               Operate.
             </p>
-            <span className="quiet-label">A clearer way to build.</span>
+            <span className="quiet-label">The Human Ascendance.</span>
+            {corporate && (
+              <a href={corporate} rel="noreferrer" className="text-link">
+                Aethelios company ↗
+              </a>
+            )}
           </div>
         </aside>
         <div className="workspace">

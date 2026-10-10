@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import { PerformanceReporting } from '@/components/performance-reporting';
 import { brand } from '@/platform/brand';
 import './globals.css';
+import './ecosystem.css';
 import './interaction.css';
 import './aether-materials.css';
 import './imperial-materials.css';

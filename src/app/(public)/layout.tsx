@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ecosystemOrigin } from '@/platform/ecosystem-links';
 import Image from 'next/image';
 import { brand } from '@/platform/brand';
 import { AppRuntime } from '@/components/app-runtime';
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
   description: 'Aethelios helps founders and operators build, grow and operate companies.',
 };
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
+  const corporate = ecosystemOrigin(process.env.AETHELIOS_CORPORATE_ORIGIN);
   return (
     <CinematicWorld>
       <AppRuntime />
@@ -46,6 +48,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/about">Our story</Link>
+          {corporate && (
+            <a href={corporate} rel="noreferrer">
+              Aethelios company ↗
+            </a>
+          )}
           <Link href="/support">Member support</Link>
           <Link href="/app/studio">Studio</Link>
           <Link href="/app/work">Company work</Link>
@@ -53,7 +60,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/enter">Open Aethelios</Link>
         </nav>
         <div className="footer-note">
-          <span>CARE · CHARACTER · DIRECTION</span>
+          <span>THE HUMAN ASCENDANCE</span>
           <small>© {new Date().getFullYear()} Aethelios</small>
         </div>
       </footer>
