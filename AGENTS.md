@@ -1,3 +1,5 @@
+> Founder direction (2026-10-10): IMPERIAL OBSIDIAN supersedes all earlier ivory/steel visual directions. Read docs/IMPERIAL_OBSIDIAN.md. Preserve official crest, real functionality, access controls and separate repositories. No production merge or deployment without founder approval.
+
 > Founder correction (2026-10-09): steel trim was rejected. Talk and Studio now require material-led steel/carbon/green environments with stone writing/brief islands. This supersedes earlier ivory-canvas and controls-only restrictions for these routes. Preserve green/gold identity, real functionality and accessibility. Production promotion requires founder approval.
 
 > Next workspace phase (2026-10-09): selective steel controls in Talk and Studio are authorized for implementation and preview. Preserve ivory reading/editing surfaces, AI behavior and access controls. Production promotion requires founder approval.
