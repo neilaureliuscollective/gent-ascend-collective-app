@@ -13,7 +13,7 @@ for (const width of [360, 768, 1440]) {
       await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
     }
     await page.screenshot({ path: `test-results/imperial-enter-${width}.png`, fullPage: true });
-    await expect(page.locator('.entrance-statement')).toHaveCSS('color', 'rgb(80, 97, 88)');
+    await expect(page.locator('.entrance-statement')).toHaveCSS('color', 'rgb(173, 181, 175)');
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'From thought to possibility.' })).toBeVisible();
     await expect(page.locator('.imperial-workspace')).toHaveCount(3);

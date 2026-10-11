@@ -71,12 +71,12 @@ test('Material conversation retains readable saved replies and dark writing spac
     }),
   );
   await page.goto('/app/aethelios');
-  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(220, 233, 214)');
-  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(220, 233, 214)');
-  await expect(page.locator('.assistant-message')).toHaveCSS('color', 'rgb(220, 233, 214)');
+  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(230, 231, 226)');
+  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(230, 231, 226)');
+  await expect(page.locator('.assistant-message')).toHaveCSS('color', 'rgb(230, 231, 226)');
   await expect(page.locator('.aurelius-composer')).toHaveCSS(
     'background-image',
-    /rgb\(23, 56, 43\)/,
+    /rgb\(32, 39, 40\)/,
   );
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
 });
@@ -127,16 +127,16 @@ for (const width of [360, 768, 1440]) {
       background: getComputedStyle(el).backgroundImage,
       overflow: document.documentElement.scrollWidth > innerWidth,
     }));
-    expect(material.foreground).toBe('rgb(220, 233, 214)');
-    expect(material.background).toBe('none');
+    expect(material.foreground).toBe('rgb(173, 181, 175)');
+    expect(material.background).toContain('rgb(16, 20, 21)');
     expect(material.overflow).toBe(false);
-    await expect(page.locator('.studio-main')).toHaveCSS('background-image', /rgb\(16, 36, 28\)/);
-    await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(16, 36, 28)');
-    await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(174, 194, 173)');
-    await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(174, 194, 173)');
+    await expect(page.locator('.studio-main')).toHaveCSS('background-image', /rgb\(16, 20, 21\)/);
+    await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(16, 20, 21)');
+    await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(173, 181, 175)');
+    await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(173, 181, 175)');
     await expect(page.locator('.studio-direction')).toHaveCSS(
       'background-color',
-      'rgb(16, 36, 28)',
+      'rgb(16, 20, 21)',
     );
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.screenshot({

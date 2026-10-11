@@ -13,7 +13,18 @@
   padding: 155px clamp(30px, 8vw, 160px) 100px;
   overflow: hidden;
   background:
-    radial-gradient( ellipse at 38% 43%, color-mix(in srgb, var(--aether-petrol) 33.33%, transparent), transparent 41% ), radial-gradient(ellipse at 70% 80%, #72541b18, transparent 40%), linear-gradient( 145deg, var(--aether-obsidian), var(--aether-surface) 52%, var(--aether-obsidian) );
+    radial-gradient(
+      ellipse at 38% 43%,
+      color-mix(in srgb, var(--aether-petrol) 33.33%, transparent),
+      transparent 41%
+    ),
+    radial-gradient(ellipse at 70% 80%, #72541b18, transparent 40%),
+    linear-gradient(
+      145deg,
+      var(--aether-obsidian),
+      var(--aether-surface) 52%,
+      var(--aether-obsidian)
+    );
 }
 .entrance-stage::before,
 .entrance-stage::after {
@@ -109,7 +120,12 @@
 .entrance-panel {
   padding: clamp(30px, 3.5vw, 52px);
   border: 1px solid #c0a16a75;
-  background: linear-gradient( 150deg, color-mix(in srgb, var(--aether-deep) 90.98%, transparent), color-mix(in srgb, var(--aether-midnight) 90.98%, transparent) 58%, color-mix(in srgb, var(--aether-obsidian) 94.9%, transparent) );
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--aether-deep) 90.98%, transparent),
+    color-mix(in srgb, var(--aether-midnight) 90.98%, transparent) 58%,
+    color-mix(in srgb, var(--aether-obsidian) 94.9%, transparent)
+  );
   box-shadow:
     inset 0 1px #e3bc7240,
     0 28px 90px #0009;
@@ -269,5 +285,38 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+}
+
+/* Entrance shares the same dark account material as the intelligence workspace. */
+.public-world[data-imperial='editorial'] .entrance-stage {
+  background: var(--io-hero-material);
+}
+.public-world[data-imperial='editorial'] .entrance-panel {
+  background: var(--io-material);
+  border-color: var(--io-divider);
+  color: var(--io-text);
+  box-shadow: var(--io-elevation);
+}
+.public-world[data-imperial='editorial'] .entrance-panel :is(h2, h3, p, label, a) {
+  color: var(--io-text);
+}
+.public-world[data-imperial='editorial'] .entrance-panel :is(input, select) {
+  background: var(--io-environment);
+  color: var(--io-text);
+  border-color: var(--io-selected-edge);
+}
+.public-world[data-imperial='editorial'] .entrance-primary {
+  background: var(--io-metal);
+  color: var(--io-text);
+  border-color: var(--io-selected-edge);
+}
+@media (forced-colors: active) {
+  .public-world[data-imperial='editorial']
+    :is(.entrance-stage, .entrance-panel, .entrance-primary) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
   }
 }

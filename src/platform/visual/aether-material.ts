@@ -6,8 +6,8 @@ function vector(hex: string) {
 }
 export const aetherMaterial = {
   core: vector(palette.obsidian),
-  deep: vector(palette.deep),
-  atmosphere: vector(palette.petrol),
+  deep: vector(palette['intelligence-deep']),
+  atmosphere: vector(palette['intelligence-support']),
   edge: vector(palette.luminous),
   highlight: vector(palette['aether-glow']),
   gold: vector(palette['gold-light']),

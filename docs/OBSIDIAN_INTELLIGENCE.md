@@ -1,0 +1,28 @@
+# Obsidian Intelligence — October 11, 2026
+
+Canonical source: `neilaureliuscollective/gent-ascend-collective-app`, starting at `32d1c4cffa8fe1960a97d96eca2176e16251c2e8`. The local checkout and authenticated GitHub source match. Vercel project `prj_xH0Cd8eUZZe9i48xdDjEoaPH4mj7` / `gent-ascend-collective-app`, team `team_LJpmefIarra3F19Ad9QpGqMx`. Existing Git production workflow deploys `main`, with custom domains `gentascend.com` and `www.gentascend.com`. Founder explicitly authorized implementation, push, merge and production release in this assignment. Earlier approval restrictions in historical visual documents are superseded by that authorization.
+
+## Design decisions and research
+
+Obsidian is the architectural foundation; green is intelligence; gold is authority. Shared `aether-palette.json` feeds generated CSS, orb shaders and browser/manifest theme color. Historical token/selector names remain compatibility contracts, not separate themes. The authoritative member stylesheet is `imperial-workspace.css`; public composition styles consume the same material roles. Reciprocal `aether-*` / `io-*` aliases were removed to prevent CSS variable cycles. No new dependencies or rendering layers.
+
+- [Apple dark mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode) and [materials](https://developer.apple.com/design/human-interface-guidelines/materials): distinguish base and raised surfaces, keep foreground hierarchy readable, use translucency selectively. Official indexed summaries were available; direct page retrieval returned JavaScript-only shells.
+- [Material color roles](https://m3.material.io/styles/color/the-color-system/key-colors-tones): tonal surface containers separate elevation from brand-colored fills. Direct retrieval likewise requires JavaScript. Applied as obsidian, dark graphite, raised graphite, and fine platinum dividers.
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/), [target size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), [focus not obscured](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum): visible focus, preserved native semantics, substantial touch targets and content reflow. Token contrast and actual browser behavior are verified separately.
+- [Carbon color foundations](https://www.carbondesignsystem.com/building-blocks/foundations/color/overview) and [USWDS tokens](https://designsystem.digital.gov/design-tokens/): semantic layers and shared typography/spacing decisions, rather than page-by-page color duplication. No identifiable interface copied.
+- [web.dev animation performance](https://web.dev/articles/animations-guide): compositor-oriented transform/opacity motion; no particles, additional pointer-driven lights or new animation loops. The existing WebGL orb retains bounded resolution, visibility gating, low-power preference, cleanup and static fallback.
+- [Samsung web guide](https://developer.samsung.com/browser/android/web-developer-guide.html) and [foldable design](https://developer.samsung.com/one-ui/largescreen-and-foldable/designing_for_foldable.html): responsive continuity, phone and expanded layouts. Browser viewport tests approximate Fold cover/unfolded/landscape and DeX; physical hardware and Samsung keyboard behavior cannot be claimed from Chromium viewport tests.
+- Installed Next.js 16.3.5 documentation: `01-app/01-getting-started/11-css.md` and `01-app/03-api-reference/05-config/01-next-config-js/useTypeScriptCli.md`. Preserve global stylesheet order. TypeScript 6 compiler API retains build-time type validation while avoiding the managed runner's detached CLI subprocess problem. Standalone `next typegen && tsc --noEmit` is also run.
+- [React effects](https://react.dev/reference/react/useEffect): preserve renderer lifecycle cleanup. Existing conversation behavior keeps response streaming, explicit save/error status, user-controlled context and draft state; the visual pass does not change AI behavior.
+
+## Implemented surfaces
+
+Global shell, navigation, active markers, headers, cards, forms, dialogs, account surfaces, loading/empty states and appearance preferences share graphite materials. Buttons use platinum text on graphite; green is reserved for send/activation and gold for marks/focus/meaningful detail. Talk removes the nested welcome card and ornate toolbar material, keeps reading space and compact composer, preserves the green core/gold orbit, and distinguishes only actual supported request/saved/stopped/disconnected states. No invented live listening/speaking capability is implied.
+
+Work retains company rooms, starters, mission and commitment links, with neutral cards, clear hierarchy and restrained interactions. Studio uses a neutral media canvas, quieter project rail, selected-state intelligence markers, dark controls and retained paper roles only for actual document previews. Ecosystem retains its truthful informational offerings and existing navigation/access boundary. Public arrival, entry/account materials and offline fallbacks now share the same architectural palette. Original crest/icon artwork is preserved. One unified application and its founder/public permissions remain intact.
+
+No Auth, ownership, provider, payment, database, data or entitlement logic changed. No migrations. Tests using synthetic API responses remain fixture tests, not live AI/Auth acceptance.
+
+## Validation and release receipt
+
+Updated after rendered review and release. No compilation-only visual acceptance is claimed. Full live authenticated journeys, physical Fold/DeX keyboard behavior and real upload/generation require their actual service/device environments and remain distinguished from synthetic interaction checks.

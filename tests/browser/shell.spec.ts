@@ -8,7 +8,7 @@ for (const width of [360, 768, 1440]) {
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
     const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-    await expect(navigation.getByRole('link')).toHaveCount(3);
+    await expect(navigation.getByRole('link')).toHaveCount(4);
     await expect(navigation.getByRole('link', { name: 'Talk', exact: true })).toHaveAttribute(
       'aria-current',
       'page',
