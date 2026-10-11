@@ -5,7 +5,7 @@
   --world-gold: #e0bb6a;
 }
 .member-collection .reserve-commerce {
-  background: radial-gradient( ellipse at 85% 12%, color-mix(in srgb, var(--aether-petrol) 43.92%, transparent), transparent 45% ), var(--aether-obsidian);
+  background: radial-gradient( ellipse at 85% 12%, color-mix(in srgb, var(--aether-deep) 43.92%, transparent), transparent 45% ), var(--aether-obsidian);
 }
 .member-collection a {
   text-decoration: none;
@@ -172,7 +172,7 @@
 .collection-world-footer {
   padding: 50px 6% 70px;
   border-top: 1px solid #c4912f40;
-  background: linear-gradient( 145deg, color-mix(in srgb, var(--aether-petrol) 43.92%, transparent), var(--aether-obsidian) );
+  background: linear-gradient( 145deg, color-mix(in srgb, var(--aether-deep) 43.92%, transparent), var(--aether-obsidian) );
 }
 .member-collection .collection-world-footer h2 {
   font-size: clamp(2.3rem, 4vw, 4rem);

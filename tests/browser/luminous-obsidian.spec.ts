@@ -26,7 +26,7 @@ test('Talk keeps its draft and compact composer through appearance changes', asy
   await input.fill('A founder review draft');
   await input.focus();
   await expect(input).toBeFocused();
-  await expect(composer).toHaveCSS('border-color', 'rgb(79, 174, 126)');
+  await expect(composer).toHaveCSS('border-color', 'rgb(54, 137, 108)');
   // Talk hides the global topbar; exercise the shared preference event directly.
   await page.evaluate(() => {
     localStorage.setItem('aurelius-material', 'solid');

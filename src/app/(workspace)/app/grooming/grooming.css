@@ -53,7 +53,7 @@
   min-height: 420px;
   padding: clamp(26px, 5vw, 72px);
   background:
-    radial-gradient( circle at 82% 30%, color-mix(in srgb, var(--aether-petrol) 50%, transparent), transparent 38% ), linear-gradient( 135deg, var(--aether-midnight), var(--aether-midnight) 48%, var(--aether-obsidian) );
+    radial-gradient( circle at 82% 30%, color-mix(in srgb, var(--aether-deep) 50%, transparent), transparent 38% ), linear-gradient( 135deg, var(--aether-midnight), var(--aether-midnight) 48%, var(--aether-obsidian) );
   border: 1px solid var(--g-line);
   border-radius: 12px;
   overflow: hidden;
@@ -105,7 +105,7 @@
   letter-spacing: 0.22em;
 }
 .groom-notice {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   border-left: 3px solid #c4912f;
   padding: 14px 18px;
 }
@@ -496,7 +496,7 @@
   padding: 24px 0 28px;
   border: 0;
   border-radius: 0;
-  background: radial-gradient( ellipse at 75% 30%, color-mix(in srgb, var(--aether-petrol) 40%, transparent), transparent 70% );
+  background: radial-gradient( ellipse at 75% 30%, color-mix(in srgb, var(--aether-deep) 40%, transparent), transparent 70% );
 }
 .groom-hero:after,
 .groom-seal {
@@ -869,7 +869,7 @@
   gap:3px;
   border-radius:50%;
   border:1px solid rgba(224, 187, 106, 0.34);
-  background:radial-gradient( circle, color-mix(in srgb, var(--aether-petrol) 48%, transparent), color-mix(in srgb, var(--aether-midnight) 60%, transparent) 58%, color-mix(in srgb, var(--aether-obsidian) 90%, transparent) );
+  background:radial-gradient( circle, color-mix(in srgb, var(--aether-deep) 48%, transparent), color-mix(in srgb, var(--aether-midnight) 60%, transparent) 58%, color-mix(in srgb, var(--aether-obsidian) 90%, transparent) );
   box-shadow:0 0 0 14px rgba(196, 145, 47, 0.035), 0 0 52px color-mix(in srgb, var(--aether-luminous) 16%, transparent);
 }
 .groom-hero-signal span,.groom-hero-signal small{
@@ -933,7 +933,7 @@
   text-decoration:none!important;
   background:linear-gradient( 145deg, color-mix(in srgb, var(--aether-deep) 66%, transparent), color-mix(in srgb, var(--aether-midnight) 72%, transparent) )!important;
 }
-.groom-quick-v2 a:hover{border-color:rgba(224, 187, 106, 0.48)!important;background:linear-gradient( 145deg, color-mix(in srgb, var(--aether-petrol) 72%, transparent), color-mix(in srgb, var(--aether-surface) 80%, transparent) )!important}
+.groom-quick-v2 a:hover{border-color:rgba(224, 187, 106, 0.48)!important;background:linear-gradient( 145deg, color-mix(in srgb, var(--aether-deep) 72%, transparent), color-mix(in srgb, var(--aether-surface) 80%, transparent) )!important}
 .groom-quick-v2 a>span{font-size:0.62rem;color:#c4912f;letter-spacing:0.08em}
 .groom-quick-v2 a>strong{font-size:0.92rem;color:#eee8db}
 .groom-quick-v2 a>small{font-size:0.68rem;color:#82978d;white-space:normal;line-height:1.35}
@@ -1151,7 +1151,7 @@
   border-color: rgba(224, 187, 106, 0.72);
   background: linear-gradient(
     145deg,
-    color-mix(in srgb, var(--aether-petrol) 90%, transparent),
+    color-mix(in srgb, var(--aether-deep) 90%, transparent),
     color-mix(in srgb, var(--aether-surface) 92%, transparent)
   );
   box-shadow:

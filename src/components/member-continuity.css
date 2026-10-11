@@ -3,7 +3,7 @@
   padding: clamp(1.2rem, 4vw, 2.4rem);
   border: 1px solid #c4912f36;
   border-radius: 1.25rem;
-  background: linear-gradient( 135deg, color-mix(in srgb, var(--aether-petrol) 40%, transparent), var(--aether-obsidian) );
+  background: linear-gradient( 135deg, color-mix(in srgb, var(--aether-deep) 40%, transparent), var(--aether-obsidian) );
   color: var(--text-primary, var(--aether-text));
 }
 .member-continuity h2 {

@@ -1,67 +1,45 @@
-/* Imperial Obsidian: one semantic material contract for every member environment. */
+/* Obsidian Intelligence: authoritative member materials. Historical selector names are stable contracts. */
 :root {
-  --io-environment: #07130f;
-  --io-navigation: var(--aether-midnight);
+  --io-environment: var(--aether-obsidian);
+  --io-navigation: var(--aether-surface);
   --io-raised: var(--aether-deep);
-  --io-interaction: var(--aether-mineral);
-  --io-text: #dce9d6;
-  --io-secondary: #aec2ad;
-  --io-gold: #c4912f;
-  --io-highlight: #e8c980;
+  --io-interaction: var(--aether-intelligence-deep);
+  --io-text: var(--aether-text);
+  --io-secondary: var(--aether-silver);
+  --io-muted: var(--aether-muted);
+  --io-gold: var(--aether-gold);
+  --io-highlight: var(--aether-gold-light);
   --io-divider: var(--aether-border);
   --io-selected-edge: var(--aether-border-active);
-  --io-focus: #e8c980;
-  --io-overlay: #07130fe8;
+  --io-focus: var(--aether-gold-light);
+  --io-overlay: #050708e8;
   --io-error: #f2bc9c;
-  --io-success: #b8dbac;
-  --io-disabled: #829480;
-  --io-document: #f5f1e8;
-  --io-document-ink: #18352b;
-  --io-emerald: var(--aether-emerald);
+  --io-success: #a8d5bd;
+  --io-disabled: #7f8984;
+  --io-document: var(--aether-ivory);
+  --io-document-ink: var(--aether-ink);
+  --io-emerald: var(--aether-intelligence-active);
   --io-aether: var(--aether-aether-glow);
-  --io-alloy: var(--aether-gold-alloy);
-  --io-glow-quiet: 0 0 18px #4fae7e12;
-  --io-glow-active: 0 0 24px #4fae7e28, inset 0 0 18px #4fae7e0c;
-  --io-glow-hero: 0 0 80px #2d6b521c;
-  --io-glow-gold: 0 0 24px #c4912f24;
-  --io-material:
-    radial-gradient(ellipse at 0 0, #4fae7e20, transparent 65%),
-    linear-gradient(145deg, #143528d9, #0d1e18f5 64%, #07130ff5);
-  --io-composer:
-    radial-gradient(ellipse at 50% 0, #4fae7e18, transparent 75%),
-    linear-gradient(165deg, #143528, #0d1e18 78%);
-  --io-metal: linear-gradient(
-    112deg,
-    #c4912f,
-    #c4912f 12%,
-    #e8c980 36%,
-    #f1dfaa 43%,
-    #c4912f 62%,
-    #e8c980 84%,
-    #c4912f
-  );
-  --io-elevation: 0 24px 56px #0006, 0 4px 10px #0004, inset 0 1px #7be7b123, inset 0 -1px #0008;
-  --io-illumination:
-    radial-gradient(ellipse at 88% 0, #2d6b5238, transparent 50%),
-    radial-gradient(ellipse at 15% 48%, #4fae7e0d, transparent 55%);
+  --io-alloy: var(--aether-gold-muted);
+  --io-radius: 16px;
+  --io-space: clamp(16px, 2.5vw, 32px);
+  --io-duration: 180ms;
+  --io-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --io-glow-quiet: 0 0 24px #36896c0a;
+  --io-glow-active: 0 0 24px #36896c18;
+  --io-glow-hero: 0 0 64px #36896c0c;
+  --io-glow-gold: 0 0 20px #c4912f12;
+  --io-material: linear-gradient(145deg, #20272880, #101415 65%);
+  --io-composer: linear-gradient(165deg, #202728, #101415 80%);
+  --io-metal: linear-gradient(145deg, #202728, #171c1d);
+  --io-elevation: 0 18px 48px #0004, inset 0 1px #e6e7e20a;
+  --io-illumination: radial-gradient(ellipse at 88% 0, #214c3c12, transparent 46%);
   --io-hero-material:
-    radial-gradient(ellipse at 95% 20%, #4fae7e4c, transparent 54%),
-    radial-gradient(ellipse at 25% 0, #7be7b112, transparent 48%),
-    linear-gradient(125deg, #143528e6, #0d1e18 50%, #07130f);
+    radial-gradient(ellipse at 95% 25%, #214c3c28, transparent 45%),
+    linear-gradient(125deg, #171c1d, #101415 55%, #080a0b);
 }
 .app-shell.imperial-workspace {
   color-scheme: dark;
-  --aether-obsidian: var(--io-environment);
-  --aether-midnight: var(--io-navigation);
-  --aether-surface: var(--io-navigation);
-  --aether-elevated: var(--io-raised);
-  --aether-deep: var(--io-raised);
-  --aether-text: var(--io-text);
-  --aether-silver: var(--io-secondary);
-  --aether-muted: var(--io-secondary);
-  --aether-border: var(--io-divider);
-  --aether-border-active: var(--io-selected-edge);
-  --aether-luminous: var(--io-emerald);
   --text-primary: var(--io-text);
   --text-secondary: var(--io-secondary);
   --text-muted: var(--io-secondary);
@@ -85,7 +63,6 @@
   color: var(--io-text);
 }
 .app-shell.imperial-workspace :is(.sidebar, .navigation, .mobile-nav) {
-  background: linear-gradient(165deg, #17382b, #10241c 50%, #07130f);
   color: var(--io-secondary);
   border-color: var(--io-divider);
 }
@@ -96,19 +73,10 @@
   color: var(--io-secondary);
 }
 .app-shell.imperial-workspace .navigation a:hover {
-  background: #38604938;
+  background: #214c3c38;
   color: var(--io-text);
 }
-.app-shell.imperial-workspace .navigation a[aria-current='page'] {
-  color: var(--io-highlight);
-  background: linear-gradient(120deg, #38604966, #17382b);
-  border-color: #c4912f55;
-  box-shadow:
-    inset 2px 0 var(--io-gold),
-    inset 0 1px #dce9d60a;
-}
 .app-shell.imperial-workspace .topbar {
-  background: var(--io-navigation);
   color: var(--io-text);
   border-color: var(--io-divider);
   backdrop-filter: none;
@@ -134,7 +102,7 @@
   color: var(--io-text);
 }
 .app-shell.imperial-workspace :is(h1, .studio-empty h2, .company-work > header h1) {
-  font-family: var(--font-editorial);
+  font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: -0.025em;
 }
@@ -160,17 +128,17 @@
 }
 .app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send) {
   background: var(--io-metal);
-  color: var(--io-environment);
-  border: 1px solid #e8c98088;
+  color: var(--io-text);
+  border: 1px solid var(--io-selected-edge);
   box-shadow:
-    inset 0 1px #e8c980,
+    inset 0 1px #e6e7e212,
     0 5px 18px #0004;
 }
 .app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send):hover:not(:disabled) {
   background: var(--io-metal);
   box-shadow:
     var(--io-glow-gold),
-    inset 0 1px #f1dfaa,
+    inset 0 1px #e6e7e21a,
     0 8px 24px #0006;
 }
 .app-shell.imperial-workspace
@@ -194,17 +162,6 @@
 .app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer, .studio-composer) {
   background: var(--io-composer);
   color: var(--io-text);
-  border-color: var(--io-selected-edge);
-  box-shadow:
-    0 12px 32px #0005,
-    inset 0 1px #dce9d60c;
-}
-.app-shell.imperial-workspace
-  :is(.aurelius-composer, .talk-composer, .studio-composer):focus-within {
-  border-color: var(--io-highlight);
-  box-shadow:
-    0 0 0 1px #e8c98066,
-    0 12px 32px #0005;
 }
 .app-shell.imperial-workspace :is(.talk-input, .aurelius-composer textarea) {
   background: transparent;
@@ -238,7 +195,7 @@
 }
 .app-shell.imperial-workspace
   :is(.talk-tool:hover, .studio-view-tabs button[aria-pressed='true'], .studio-paths button:hover) {
-  background: #38604955;
+  background: #214c3c55;
   color: var(--io-text);
 }
 .app-shell.imperial-workspace
@@ -268,7 +225,7 @@
   color: var(--io-text);
   background: var(--io-material);
   border-color: var(--io-divider);
-  box-shadow: inset 0 1px #dce9d608;
+  box-shadow: inset 0 1px #e6e7e208;
 }
 .app-shell.imperial-workspace
   :is(
@@ -277,7 +234,7 @@
     .studio-projects nav button.selected,
     .studio-projects nav button[aria-current]
   ) {
-  background: #38604944;
+  background: #202728;
   border-color: #c4912f66;
   box-shadow: inset 2px 0 var(--io-gold);
 }
@@ -331,7 +288,6 @@
 }
 /* Talk keeps its viewport/keyboard layout, scroll ownership and compact composer. */
 .app-shell.imperial-workspace .talk-page::before {
-  background: radial-gradient(ellipse at 65% 18%, #38604918, transparent 58%);
   opacity: 1;
 }
 .app-shell.imperial-workspace .talk-page .aethelios-room-heading {
@@ -344,19 +300,13 @@
 .app-shell.imperial-workspace .talk-toolbar.imperial-control-surface {
   padding: 3px 8px;
   border-radius: 12px;
-  border: 1px solid var(--io-divider);
 }
 .app-shell.imperial-workspace .talk-page .aurelius-welcome {
-  max-width: 800px;
   margin: 16px auto;
-  padding: clamp(18px, 3vw, 36px);
-  border: 1px solid var(--io-divider);
   border-radius: 22px;
-  background: var(--io-hero-material);
-  box-shadow: var(--io-elevation);
 }
 .app-shell.imperial-workspace .talk-page .welcome-heading h2 {
-  font: 400 clamp(1.8rem, 3vw, 3rem)/1.16 var(--font-editorial);
+  font: 500 clamp(1.65rem, 3vw, 2.6rem)/1.2 var(--font-display);
   letter-spacing: -0.025em;
 }
 .app-shell.imperial-workspace .talk-page .assistant-message {
@@ -369,7 +319,6 @@
 }
 .app-shell.imperial-workspace .talk-presence > .talk-tool {
   background: var(--io-navigation);
-  border-color: #c4912f55;
 }
 /* Studio: dark production tools; document previews retain their own paper roles. */
 .app-shell.imperial-workspace .studio-world-heading {
@@ -395,9 +344,6 @@
 .app-shell.imperial-workspace .studio-view-tabs.imperial-control-surface {
   padding: 6px;
   border-radius: 12px;
-}
-.app-shell.imperial-workspace .studio-view-tabs button[aria-pressed='true'] {
-  box-shadow: inset 0 -2px var(--io-gold);
 }
 .app-shell.imperial-workspace
   :is(
@@ -622,20 +568,20 @@ html[data-material='solid']
 }
 .app-shell.imperial-workspace .aethelios-space-navigation a[aria-current='page'] {
   color: var(--io-text);
-  background: #38604944;
+  background: #202728;
   box-shadow: inset 0 -2px var(--io-gold);
 }
 
 /* Luminous Obsidian: shared illumination, optics and ceremonial metal. */
 .app-shell.imperial-workspace :is(.sidebar, .navigation, .mobile-nav) {
-  background: linear-gradient(155deg, #143528ed, #0d1e18fa 46%, #07130f);
+  background: linear-gradient(155deg, #101415, #080a0b 75%);
   box-shadow:
     inset -1px 0 #7be7b11a,
     12px 0 48px #0003;
 }
 .app-shell.imperial-workspace .topbar {
-  background: linear-gradient(100deg, #0d1e18f2, #143528dc, #0d1e18f2);
-  border-bottom-color: #4fae7e3d;
+  background: #101415ed;
+  border-bottom-color: var(--io-divider);
   box-shadow:
     inset 0 -1px #c4912f12,
     0 8px 32px #0003;
@@ -648,16 +594,10 @@ html[data-material='solid']
   }
 }
 .app-shell.imperial-workspace .navigation a[aria-current='page'] {
-  background: radial-gradient(ellipse at 0 50%, #4fae7e36, transparent 85%), #143528;
-  border-color: #c4912f6b;
-  box-shadow:
-    inset 2px 0 var(--io-highlight),
-    inset 0 1px #7be7b126,
-    var(--io-glow-active);
+  background: linear-gradient(110deg, #214c3c24, #171c1d);
 }
 .app-shell.imperial-workspace .navigation a[aria-current='page'] svg {
-  color: var(--io-highlight);
-  filter: drop-shadow(0 0 5px #c4912f55);
+  filter: none;
 }
 .app-shell.imperial-workspace :is(.io-halo, .io-halo-quiet) {
   box-shadow: var(--io-glow-quiet);
@@ -674,15 +614,7 @@ html[data-material='solid']
   border-color: var(--io-divider);
   box-shadow: var(--io-elevation);
 }
-.app-shell.imperial-workspace .io-architect {
-  border-color: #c4912f55;
-  box-shadow:
-    inset 0 1px #e8c98038,
-    var(--io-elevation),
-    var(--io-glow-gold);
-}
 .app-shell.imperial-workspace .io-division-number {
-  color: var(--io-aether);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -692,7 +624,6 @@ html[data-material='solid']
   width: 18px;
   height: 1px;
   background: var(--io-emerald);
-  box-shadow: 0 0 8px #4fae7e80;
 }
 .app-shell.imperial-workspace
   :is(.conversation-starters button, .studio-paths button, .company-job) {
@@ -706,22 +637,22 @@ html[data-material='solid']
     .studio-view-tabs button[aria-pressed='true'],
     .aethelios-space-navigation a[aria-current='page']
   ) {
-  background: linear-gradient(125deg, #2d6b524d, #143528);
-  border-color: #4fae7e77;
+  background: linear-gradient(125deg, #214c3c30, #171c1d);
+  border-color: #36896c77;
   color: var(--io-text);
   box-shadow:
     inset 0 -2px var(--io-gold),
     var(--io-glow-active);
 }
 .app-shell.imperial-workspace :is(.talk-toolbar, .studio-view-tabs, .aethelios-space-navigation) {
-  background: linear-gradient(170deg, #143528b8, #07130ff2);
+  background: linear-gradient(170deg, #171c1db8, #080a0bf2);
   border-color: var(--io-divider);
   box-shadow:
     inset 0 1px #7be7b116,
     0 8px 24px #0003;
 }
 .app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer, .studio-composer) {
-  border-color: #4fae7e66;
+  border-color: var(--io-divider);
   box-shadow:
     inset 0 1px #7be7b12b,
     inset 0 -1px #0008,
@@ -733,7 +664,7 @@ html[data-material='solid']
   border-color: var(--io-emerald);
   box-shadow:
     inset 0 1px #7be7b155,
-    0 0 0 1px #4fae7e40,
+    0 0 0 1px #36896c40,
     var(--io-glow-active),
     0 16px 40px #0007;
 }
@@ -743,8 +674,8 @@ html[data-material='solid']
   overflow: hidden;
   isolation: isolate;
   box-shadow:
-    inset 0 1px #f1dfaa,
-    inset 0 -2px #8e642080,
+    inset 0 1px #e6e7e21a,
+    inset 0 -1px #0006,
     0 6px 18px #0005,
     var(--io-glow-gold);
   transition: transform 180ms ease;
@@ -766,7 +697,7 @@ html[data-material='solid']
   position: relative;
   isolation: isolate;
   background: var(--io-hero-material);
-  border-color: #4fae7e45;
+  border-color: #36896c45;
   box-shadow:
     inset 0 1px #7be7b136,
     inset 0 -1px #c4912f26,
@@ -783,8 +714,7 @@ html[data-material='solid']
   inset: auto 8% 0;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, #4fae7e55, #e8c980b3, #4fae7e55, transparent);
-  box-shadow: 0 0 18px #4fae7e50;
+  background: linear-gradient(90deg, transparent, #36896c55, #e0bb6ab3, #36896c55, transparent);
 }
 .io-horizon {
   position: absolute;
@@ -796,29 +726,29 @@ html[data-material='solid']
   transform: translateY(-50%);
   opacity: 0.8;
   z-index: 0;
-  background: radial-gradient(circle, #4fae7e1c, transparent 68%);
+  background: radial-gradient(circle, #36896c1c, transparent 68%);
 }
 .io-horizon-core {
   position: absolute;
   inset: 24%;
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 24%, #7be7b199, #2d6b52a8 28%, #0d1e18 62%, #07130f);
-  border: 1px solid #4fae7e80;
+  background: radial-gradient(circle at 32% 24%, #7be7b199, #214c3ca8 28%, #183d30 62%, #050708);
+  border: 1px solid #36896c80;
   box-shadow:
     inset -16px -24px 30px #0008,
     inset 1px 1px 16px #7be7b138,
-    0 0 48px #4fae7e40;
+    0 0 48px #36896c40;
 }
 .io-horizon-orbit {
   position: absolute;
   inset: 35% 8%;
   border-radius: 50%;
-  border: 1px solid #4fae7e66;
+  border: 1px solid #36896c66;
   transform: rotate(-24deg);
-  box-shadow: 0 0 14px #4fae7e12;
+  box-shadow: 0 0 14px #36896c12;
 }
 .io-horizon-orbit-gold {
-  border-color: #e8c98088;
+  border-color: #e0bb6a88;
   transform: rotate(28deg);
 }
 .io-horizon-flare {
@@ -826,8 +756,8 @@ html[data-material='solid']
   top: 66%;
   inset-inline: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #4fae7e40, #e8c980aa, transparent);
-  box-shadow: 0 0 16px #4fae7e66;
+  background: linear-gradient(90deg, transparent, #36896c40, #e0bb6aaa, transparent);
+  box-shadow: 0 0 16px #36896c66;
 }
 .app-shell.imperial-workspace .studio-world-heading .io-horizon {
   width: 250px;
@@ -835,18 +765,18 @@ html[data-material='solid']
   right: 18%;
 }
 .app-shell.imperial-workspace :is(.talk-orb, .account-intelligence-orb) .intelligence-orb-static {
-  background: radial-gradient(circle at 32% 26%, #7be7b1, #2d6b52 24%, #143528 52%, #07130f 82%);
+  background: radial-gradient(circle at 32% 26%, #7be7b1, #36896c 24%, #183d30 52%, #050708 82%);
   border-color: #7be7b188;
   box-shadow:
     inset -16px -20px 30px #0009,
     inset 1px 1px 14px #7be7b144,
-    0 0 32px #4fae7e40;
+    0 0 32px #36896c40;
 }
 .app-shell.imperial-workspace :is(.talk-orb, .account-intelligence-orb) .intelligence-orb::after {
   content: '';
   position: absolute;
   inset: 37% 2%;
-  border: 1px solid #e8c98099;
+  border: 1px solid #e0bb6a99;
   border-bottom-color: #8e642044;
   border-radius: 50%;
   transform: rotate(-28deg);
@@ -854,12 +784,12 @@ html[data-material='solid']
   pointer-events: none;
 }
 .app-shell.imperial-workspace .account-intelligence-orb .intelligence-orb {
-  filter: drop-shadow(0 0 24px #4fae7e35);
+  filter: drop-shadow(0 0 24px #36896c35);
 }
 .app-shell.imperial-workspace .talk-page::before {
   background:
-    radial-gradient(ellipse at 85% 15%, #2d6b522e, transparent 60%),
-    radial-gradient(ellipse at 10% 85%, #4fae7e0e, transparent 50%);
+    radial-gradient(ellipse at 85% 15%, #214c3c2e, transparent 60%),
+    radial-gradient(ellipse at 10% 85%, #36896c0e, transparent 50%);
 }
 @keyframes io-shimmer {
   to {
@@ -877,7 +807,7 @@ html[data-material='solid']
 @media (hover: hover) and (pointer: fine) {
   .app-shell.imperial-workspace
     :is(.conversation-starters button, .studio-paths button, .company-job):hover {
-    border-color: #4fae7e77;
+    border-color: #36896c77;
     box-shadow: var(--io-elevation), var(--io-glow-active);
     background: var(--io-material);
     transform: translateY(-2px);
@@ -900,9 +830,9 @@ html[data-motion='ambient'][data-quiet='false'] .app-shell.imperial-workspace .i
 }
 @media (max-width: 1100px) {
   .app-shell.imperial-workspace .navigation {
-    border-top-color: #4fae7e66;
+    border-top-color: var(--io-divider);
     box-shadow:
-      inset 0 1px #e8c98022,
+      inset 0 1px #e0bb6a22,
       0 -12px 32px #0005;
   }
   .app-shell.imperial-workspace .navigation a[aria-current='page'] {
@@ -1056,5 +986,368 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
 @media (max-height: 700px) {
   .app-shell.imperial-workspace .talk-page .welcome-heading .orb-presentation {
     display: none;
+  }
+}
+
+/* Technical typography, consistent across creative and operational tools. */
+.app-shell.imperial-workspace
+  :is(.studio-projects .studio-section-head h2, .studio-project-heading h2) {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+.app-shell.imperial-workspace .mission-list article {
+  margin-block: 16px;
+  padding: var(--io-space);
+  background: var(--io-material);
+  border: 1px solid var(--io-divider);
+  border-radius: var(--io-radius);
+}
+.app-shell.imperial-workspace .studio-intro h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.app-shell.imperial-workspace .workspace-loading {
+  max-width: 480px;
+  margin: clamp(24px, 8vh, 80px) auto;
+  padding: var(--io-space);
+  border: 1px solid var(--io-divider);
+  border-radius: var(--io-radius);
+  background: var(--io-material);
+}
+.app-shell.imperial-workspace .workspace-loading-help {
+  font-size: 0.85rem;
+  color: var(--io-secondary);
+}
+.app-shell.imperial-workspace .workspace-loading-help summary {
+  cursor: pointer;
+  min-height: 44px;
+}
+@media (max-width: 600px) {
+  .app-shell.imperial-workspace .talk-toolbar .talk-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .app-shell.imperial-workspace .talk-toolbar {
+    justify-content: space-between;
+  }
+}
+/* Final component roles share the same graphite material hierarchy. */
+.app-shell.imperial-workspace .navigation a[aria-current='page'] {
+  color: var(--io-text);
+  border-color: var(--io-divider);
+  box-shadow:
+    inset 2px 0 var(--io-emerald),
+    inset 0 1px #e6e7e208;
+}
+.app-shell.imperial-workspace .navigation a[aria-current='page'] svg {
+  color: var(--io-highlight);
+}
+.app-shell.imperial-workspace :is(.topbar, .sidebar, .navigation) {
+  box-shadow: none;
+}
+.app-shell.imperial-workspace
+  :is(.surface, .panel, .company-job, .studio-card, .io-division, .io-plan) {
+  border-radius: var(--io-radius);
+}
+.app-shell.imperial-workspace :is(.button, .button-primary, .secondary-button, .aurelius-send) {
+  min-height: 44px;
+  transition:
+    transform var(--io-duration) var(--io-ease),
+    border-color var(--io-duration) ease;
+}
+.app-shell.imperial-workspace :is(.button, .button-primary):hover:not(:disabled) {
+  color: var(--io-text);
+  border-color: var(--io-highlight);
+  box-shadow:
+    inset 0 1px #e6e7e212,
+    0 8px 24px #0004;
+}
+.app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send)::after {
+  display: none;
+}
+.app-shell.imperial-workspace .aurelius-send {
+  background: linear-gradient(145deg, #214c3c, #183d30);
+  color: var(--io-text);
+  border-color: var(--io-emerald);
+  box-shadow: inset 0 1px #7be7b118;
+}
+.app-shell.imperial-workspace .aurelius-send:hover:not(:disabled) {
+  background: #214c3c;
+  color: var(--io-text);
+  box-shadow: var(--io-glow-active);
+}
+.app-shell.imperial-workspace :is(input, textarea, select) {
+  caret-color: var(--io-aether);
+}
+.app-shell.imperial-workspace :is(.appearance-controls button, .avatar, .capture-trigger) {
+  background: var(--io-navigation);
+  border-color: var(--io-divider);
+  color: var(--io-secondary);
+}
+.app-shell.imperial-workspace
+  :is(
+    .daily-card,
+    .mission-card,
+    .memory-entry,
+    .ongoing-card,
+    .council-roster article,
+    .council-entity-card,
+    .context-sheet,
+    .capture-dialog,
+    .account-section,
+    .profile-form,
+    .goal-editor,
+    .company-brief-editor,
+    .company-deliverable
+  ) {
+  background: var(--io-material);
+  border-color: var(--io-divider);
+  color: var(--io-text);
+}
+.app-shell.imperial-workspace
+  :is(
+    .council-dialog header,
+    .council-roster article,
+    .company-room-layout aside,
+    .company-room-scopes,
+    .studio-section-head
+  ) {
+  background: var(--io-navigation);
+  border-color: var(--io-divider);
+}
+.app-shell.imperial-workspace :is(.company-room, .company-rooms) {
+  padding: var(--io-space);
+  border: 1px solid var(--io-divider);
+  border-radius: var(--io-radius);
+  background: var(--io-material);
+}
+.app-shell.imperial-workspace .company-room-focused {
+  border-radius: 0;
+  background: var(--io-environment);
+}
+.app-shell.imperial-workspace .company-job-number {
+  color: var(--io-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.app-shell.imperial-workspace .company-job > span:last-child {
+  color: var(--io-highlight);
+}
+.app-shell.imperial-workspace .io-architect {
+  border-color: var(--io-divider);
+  box-shadow:
+    inset 2px 0 var(--io-alloy),
+    var(--io-elevation);
+}
+.app-shell.imperial-workspace .io-division-number {
+  color: var(--io-secondary);
+}
+.app-shell.imperial-workspace .io-division-number::before {
+  box-shadow: none;
+}
+.app-shell.imperial-workspace .io-hero::after {
+  opacity: 0.45;
+  box-shadow: none;
+}
+/* Talk is one open environment. The orb, transcript and composer own the hierarchy. */
+.app-shell.imperial-workspace .talk-toolbar.imperial-control-surface {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace .talk-page .aurelius-welcome {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: clamp(16px, 2.5vw, 28px);
+  max-width: 720px;
+}
+.app-shell.imperial-workspace .talk-page .welcome-heading h2 {
+  text-wrap: balance;
+}
+.app-shell.imperial-workspace .talk-page .user-message {
+  background: var(--io-raised);
+  border-color: var(--io-divider);
+  box-shadow: inset 0 1px #e6e7e208;
+}
+.app-shell.imperial-workspace .talk-page .message-markdown {
+  line-height: 1.75;
+}
+.app-shell.imperial-workspace :is(.talk-drawer, .talk-expanded-editor, .context-sheet-surface) {
+  box-shadow: 0 32px 100px #0009;
+  max-width: calc(100vw - 24px);
+}
+.app-shell.imperial-workspace .talk-presence > .talk-tool {
+  border-color: var(--io-divider);
+  box-shadow: none;
+}
+.app-shell.imperial-workspace .talk-presence[data-state='working'] > .talk-tool {
+  border-color: var(--io-emerald);
+  box-shadow: var(--io-glow-active);
+}
+.app-shell.imperial-workspace .talk-presence[data-state='saved'] > .talk-tool {
+  border-color: var(--io-highlight);
+}
+.app-shell.imperial-workspace .talk-presence[data-state='stopped'] > .talk-tool {
+  border-color: var(--io-error);
+}
+.app-shell.imperial-workspace .talk-presence[data-state='disconnected'] .talk-orb {
+  opacity: 0.65;
+}
+/* Studio uses a neutral canvas for the media, with a quieter project rail. */
+.app-shell.imperial-workspace .studio-surface {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  gap: 20px;
+}
+.app-shell.imperial-workspace .studio-main {
+  background: var(--io-material);
+  box-shadow: inset 0 1px #e6e7e208;
+}
+.app-shell.imperial-workspace .studio-projects {
+  background: var(--io-navigation);
+  box-shadow: none;
+}
+.app-shell.imperial-workspace .studio-empty {
+  max-width: 580px;
+  margin: clamp(24px, 5vw, 72px) auto;
+  padding: clamp(12px, 2vw, 24px);
+}
+.app-shell.imperial-workspace .studio-empty h2 {
+  margin: 16px 0;
+  text-wrap: balance;
+}
+.app-shell.imperial-workspace .studio-empty .button {
+  margin-top: 24px;
+}
+.app-shell.imperial-workspace .studio-projects nav button.selected {
+  background: var(--io-raised);
+  border-color: var(--io-divider);
+  box-shadow: inset 2px 0 var(--io-emerald);
+}
+.app-shell.imperial-workspace
+  :is(
+    .studio-view-tabs button,
+    .studio-projects button,
+    .studio-card-actions button,
+    .studio-library-head button
+  ) {
+  min-height: 44px;
+}
+.app-shell.imperial-workspace :is(.studio-placeholder, .studio-source) {
+  background: var(--io-environment);
+  border-color: var(--io-divider);
+}
+.app-shell.imperial-workspace .studio-view-tabs button[aria-pressed='true'] {
+  background: var(--io-raised);
+  border-color: var(--io-divider);
+  box-shadow: inset 0 -2px var(--io-emerald);
+}
+.app-shell.imperial-workspace :is(.io-division h2, .io-membership h2) {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+@media (max-width: 1100px) {
+  .app-shell.imperial-workspace .navigation a[aria-current='page'] {
+    box-shadow: inset 0 2px var(--io-emerald);
+  }
+}
+@media (max-width: 700px) {
+  .app-shell.imperial-workspace
+    :is(.company-work > header, .studio-world-heading, .io-ecosystem-hero) {
+    border-radius: 18px;
+    padding: 24px;
+  }
+  .app-shell.imperial-workspace :is(.company-room, .company-rooms) {
+    padding: 16px;
+  }
+  .app-shell.imperial-workspace .company-room-focused {
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .app-shell.imperial-workspace .studio-empty {
+    margin-block: 16px;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .app-shell.imperial-workspace
+    :is(.company-job, .conversation-starters button, .studio-paths button):hover {
+    background: var(--io-raised);
+    border-color: var(--io-selected-edge);
+    box-shadow:
+      inset 0 1px #e6e7e212,
+      0 12px 32px #0004;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion='ambient'][data-quiet='false']
+    .app-shell.imperial-workspace
+    .talk-presence[data-state='working']
+    .intelligence-orb::after {
+    animation: io-orbit-process 8s linear infinite;
+  }
+}
+@keyframes io-orbit-process {
+  to {
+    transform: rotate(332deg);
+  }
+}
+html[data-motion='still'] .app-shell.imperial-workspace *::after,
+html[data-quiet='true'] .app-shell.imperial-workspace .talk-presence .intelligence-orb::after {
+  animation: none !important;
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace
+  :is(
+    .studio-main,
+    .company-room,
+    .company-rooms,
+    .studio-view-tabs,
+    .aethelios-space-navigation,
+    .talk-toolbar
+  ) {
+  background: var(--io-navigation);
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.imperial-workspace :is(.button, .button-primary, .secondary-button, .aurelius-send) {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace
+    :is(.navigation a[aria-current='page'], .studio-view-tabs button[aria-pressed='true']) {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .app-shell.imperial-workspace
+    :is(
+      .button,
+      .button-primary,
+      .aurelius-send,
+      .studio-main,
+      .studio-projects,
+      .company-room,
+      .company-rooms,
+      .daily-card,
+      .mission-card,
+      .capture-dialog
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send):hover:not(:disabled) {
+    background: ButtonFace;
+    color: ButtonText;
   }
 }

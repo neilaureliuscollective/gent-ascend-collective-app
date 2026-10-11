@@ -1,0 +1,79 @@
+name: Obsidian visual verification
+on:
+  push:
+    branches: [feat/obsidian-intelligence, main]
+  pull_request:
+    paths:
+      - 'src/app/**'
+      - 'src/platform/visual/**'
+      - 'tests/browser/**'
+      - '.github/workflows/obsidian-visual.yml'
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run db:ledger
+      - run: npx playwright install --with-deps chromium
+      - name: Verify product reflow, materials and preserved interactions
+        run: >-
+          npx playwright test
+          tests/browser/obsidian-intelligence.spec.ts
+          tests/browser/luminous-obsidian.spec.ts
+          tests/browser/imperial-tools.spec.ts
+          tests/browser/talk-layout.spec.ts
+          tests/browser/shell.spec.ts
+          tests/browser/imperial-obsidian.spec.ts
+          tests/browser/imperial-steel.spec.ts
+          tests/browser/imperial-ascend.spec.ts
+          tests/browser/aether-brand.spec.ts
+          tests/browser/aurelius.spec.ts
+          tests/browser/company-work.spec.ts
+          tests/browser/company-room.spec.ts
+          tests/browser/missions.spec.ts
+          --workers=2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obsidian-rendered-evidence
+          path: test-results
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obsidian-review-images
+          path: |
+            test-results/obsidian--*-390.png
+            test-results/obsidian--*-1440.png
+            test-results/imperial-obsidian-studio-*.png
+          if-no-files-found: ignore
+  production-entry:
+    if: github.ref == 'refs/heads/main'
+    needs: visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Verify the actual custom production domain
+        run: npx playwright test --config playwright.production.config.ts --workers=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obsidian-live-production-evidence
+          path: test-results
+          if-no-files-found: ignore

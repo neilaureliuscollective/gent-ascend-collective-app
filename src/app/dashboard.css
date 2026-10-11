@@ -150,7 +150,7 @@
   border-radius: 26px;
   padding: 28px 30px 20px;
   background:
-    radial-gradient( ellipse at 100% 45%, color-mix(in srgb, var(--aether-petrol) 56.47%, transparent), transparent 58% ), linear-gradient(125deg, #24221d, #111111 57%, var(--aether-midnight));
+    radial-gradient( ellipse at 100% 45%, color-mix(in srgb, var(--aether-deep) 56.47%, transparent), transparent 58% ), linear-gradient(125deg, #24221d, #111111 57%, var(--aether-midnight));
   box-shadow:
     inset 0 1px 0 #f1d79d38,
     inset 0 -1px 0 #000,
@@ -1245,7 +1245,7 @@ html[data-material='solid'] .daily-editor::backdrop {
 .studio-projects nav{display:grid;gap:0.3rem}
 .studio-projects button,.studio-card-actions button,.studio-card-actions a,.studio-source button{font:inherit;color:#e9dec6;background:transparent;border:0;cursor:pointer;text-align:left}
 .studio-projects nav button{padding:0.8rem;border-radius:9px;overflow-wrap:anywhere}
-.studio-projects nav button:hover,.studio-projects nav button.selected{background:color-mix(in srgb, var(--aether-petrol) 75%, transparent);color:#fff}
+.studio-projects nav button:hover,.studio-projects nav button.selected{background:color-mix(in srgb, var(--aether-deep) 75%, transparent);color:#fff}
 .studio-empty{max-width:38rem;margin:8vh auto;line-height:1.65}
 .studio-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:1rem;margin-bottom:2rem}
 .studio-card{border:1px solid rgba(196, 145, 47, 0.22);border-radius:12px;overflow:hidden;background:var(--aether-midnight)}
@@ -1275,7 +1275,7 @@ html[data-material='solid'] .daily-editor::backdrop {
 .studio-page .aethelios-space-navigation.is-studio { margin: 0 0 18px; }
 .studio-surface { grid-template-columns: minmax(210px,260px) minmax(0,1fr); gap: 0; min-height: min(780px,calc(100dvh - 240px)); border: 1px solid #c4912f46; border-radius: 20px; overflow: hidden; background: color-mix(in srgb, var(--aether-midnight) 73.73%, transparent); box-shadow: 0 24px 90px #0008; }
 .studio-projects,.studio-main { border: 0; border-radius: 0; background: transparent; }
-.studio-projects { border-right: 1px solid #c4912f30; padding: 22px 15px; background: linear-gradient( 165deg, color-mix(in srgb, var(--aether-petrol) 45.88%, transparent), var(--aether-obsidian) 75% ); }
+.studio-projects { border-right: 1px solid #c4912f30; padding: 22px 15px; background: linear-gradient( 165deg, color-mix(in srgb, var(--aether-deep) 45.88%, transparent), var(--aether-obsidian) 75% ); }
 .studio-projects .studio-section-head { padding-inline: 7px; }
 .studio-projects .studio-section-head h2 { font: 400 1.5rem var(--font-editorial); }
 .studio-projects .studio-section-head > button { color: #e9c98e; border: 1px solid #c4912f66; border-radius: 8px; padding: 7px 10px; min-height: 40px; white-space: nowrap; }
@@ -1302,7 +1302,7 @@ html[data-material='solid'] .daily-editor::backdrop {
 .studio-intro h3 { margin: 6px 0 8px; font: 400 clamp(1.65rem,3vw,2.5rem)/1.16 var(--font-editorial); }
 .studio-intro p:last-child { color: #aebfb4; line-height: 1.6; margin: 0; max-width: 670px; font-size: 0.8rem; }
 .studio-paths { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px; margin-bottom: 26px; }
-.studio-paths button { min-height: 150px; display: flex; flex-direction: column; align-items: start; gap: 10px; position: relative; padding: 18px 14px; text-align: left; border: 1px solid #c4912f3b; border-radius: 13px; background: linear-gradient( 155deg, color-mix(in srgb, var(--aether-petrol) 58.04%, transparent), var(--aether-midnight) 72% ); color: #f0e4cf; cursor: pointer; }
+.studio-paths button { min-height: 150px; display: flex; flex-direction: column; align-items: start; gap: 10px; position: relative; padding: 18px 14px; text-align: left; border: 1px solid #c4912f3b; border-radius: 13px; background: linear-gradient( 155deg, color-mix(in srgb, var(--aether-deep) 58.04%, transparent), var(--aether-midnight) 72% ); color: #f0e4cf; cursor: pointer; }
 .studio-paths button:hover,.studio-paths button:focus-visible { border-color: #e8bf6e; background: linear-gradient(155deg, var(--aether-petrol), var(--aether-surface) 72%); }
 .studio-paths span { color: #c4912f; font-size: 0.65rem; letter-spacing: 0.15em; }
 .studio-paths strong { font: 400 1.06rem var(--font-editorial); }
@@ -1394,7 +1394,7 @@ html[data-material='solid'] .daily-editor::backdrop {
 @media(max-width: 920px) { .studio-finish-room { grid-template-columns: 1fr; }.studio-finish-preview { min-height: 280px; }.studio-finish-preview canvas { max-height: 560px; } }
 @media(max-width: 420px) { .studio-finish-pair { grid-template-columns: 1fr; }.studio-finish-preview { padding: 10px; } }
 
-.first-day-guide { display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,1.2fr); gap: 24px; padding: 22px; margin: 18px 0; border: 1px solid rgba(196, 145, 47, 0.34); border-radius: 18px; background: linear-gradient( 115deg, color-mix(in srgb, var(--aether-petrol) 45%, transparent), color-mix(in srgb, var(--aether-obsidian) 88%, transparent) ); }
+.first-day-guide { display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,1.2fr); gap: 24px; padding: 22px; margin: 18px 0; border: 1px solid rgba(196, 145, 47, 0.34); border-radius: 18px; background: linear-gradient( 115deg, color-mix(in srgb, var(--aether-deep) 45%, transparent), color-mix(in srgb, var(--aether-obsidian) 88%, transparent) ); }
 .first-day-guide h2 { margin: 8px 0; }
 .first-day-guide p { max-width: 44ch; margin: 0; color: #c9d4cd; }
 .first-day-guide ol { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 0; margin: 0; list-style: none; }

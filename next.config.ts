@@ -3,6 +3,8 @@ import { parseEnvironment } from './src/platform/environment';
 parseEnvironment(process.env);
 const config: NextConfig = {
   poweredByHeader: false,
+  // TypeScript 6 exposes the compiler API; avoid detached CLI subprocesses in managed runners.
+  experimental: { useTypeScriptCli: false },
   images: { remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }] },
   async redirects() {
     return [

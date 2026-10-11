@@ -184,7 +184,7 @@
   box-shadow: 0 0 45px #c4912f15;
 }
 .gw-enter:hover {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
 }
 .gw-entry-note {
   display: block;
@@ -362,14 +362,14 @@
   min-height: 50px;
   border: 1px solid #bda1647a;
   padding: 14px 22px;
-  background: color-mix(in srgb, var(--aether-petrol) 93.33%, transparent);
+  background: color-mix(in srgb, var(--aether-deep) 93.33%, transparent);
   color: #f3deb2 !important;
   font-size: 0.82rem;
   margin-top: 24px;
   max-width: 100%;
 }
 .gw-action:hover {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
 }
 .gw-all {
   border: 0;
@@ -422,7 +422,7 @@
   font-size: 0.8rem;
 }
 .gw-choices input:checked + span {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   border-color: #dec58a;
   color: #f3deb2;
 }
@@ -969,7 +969,7 @@ html:has(.gent-world) {
   z-index: 2;
   opacity: 0;
   pointer-events: none;
-  background: radial-gradient( ellipse at center, color-mix(in srgb, var(--aether-petrol) 80%, transparent), var(--aether-obsidian) 75% );
+  background: radial-gradient( ellipse at center, color-mix(in srgb, var(--aether-deep) 80%, transparent), var(--aether-obsidian) 75% );
   color: #e8cb8b;
 }
 .gw-cinematic-arrival .gw-energy-orb {
@@ -1019,7 +1019,7 @@ html:has(.gent-world) {
   margin: 0;
   padding: 1.4rem;
   border-left: 2px solid #c4912f;
-  background: linear-gradient( 120deg, color-mix(in srgb, var(--aether-petrol) 43.92%, transparent), transparent );
+  background: linear-gradient( 120deg, color-mix(in srgb, var(--aether-deep) 43.92%, transparent), transparent );
   font-size: clamp(1.25rem, 4vw, 1.8rem);
   overflow-wrap: anywhere;
 }
