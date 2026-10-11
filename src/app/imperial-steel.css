@@ -202,6 +202,8 @@
   margin-bottom: 24px;
 }
 .public-world[data-material='imperial-steel'] .company-arrival-method h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
   grid-column: 1;
   grid-row: 2 / 4;
   font-size: clamp(38px, 4vw, 60px);

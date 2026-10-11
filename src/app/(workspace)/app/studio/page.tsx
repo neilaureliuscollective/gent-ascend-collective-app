@@ -2,7 +2,6 @@ import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
-import { AetheliosSpaceNavigation } from '@/components/aurelius/space-navigation';
 
 export const metadata: Metadata = {
   title: 'Aethelios Studio',
@@ -25,7 +24,6 @@ export default function StudioPage() {
           Aethelios Chat ↗
         </Link>
       </div>
-      <AetheliosSpaceNavigation placement="studio" />
       <StudioWorkspace />
     </div>
   );

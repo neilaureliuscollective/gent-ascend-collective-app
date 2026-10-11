@@ -28,6 +28,16 @@ for (const viewport of [
     ]) {
       await page.goto(route);
       await expect(page.locator('main').first()).toBeVisible();
+      await expect(page.locator('.workspace-loading')).toHaveCount(0);
+      const ready: Record<string, string> = {
+        '/': '#arrival-title',
+        '/enter': '#entrance-title',
+        '/app/aethelios': '.aurelius-composer',
+        '/app/work': '#company-work-title',
+        '/app/studio': '.studio-empty h2',
+        '/app/ecosystem': '#ecosystem-title',
+      };
+      if (ready[route]) await expect(page.locator(ready[route])).toBeVisible();
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         route,
@@ -108,6 +118,8 @@ for (const width of [390, 720, 1440]) {
         route,
       ).toBe(true);
       await expect(page.locator('body')).toBeVisible();
+      await expect(page.locator('.workspace-loading')).toHaveCount(0);
+      if (route === '/experience/world') await expect(page.locator('.gent-world')).toBeVisible();
       await page.screenshot({
         path: `test-results/obsidian-support-${route.replaceAll('/', '-')}-${width}.png`,
         fullPage: true,

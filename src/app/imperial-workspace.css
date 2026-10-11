@@ -1002,6 +1002,43 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
   border: 1px solid var(--io-divider);
   border-radius: var(--io-radius);
 }
+.app-shell.imperial-workspace .studio-intro h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.app-shell.imperial-workspace .workspace-loading {
+  max-width: 480px;
+  margin: clamp(24px, 8vh, 80px) auto;
+  padding: var(--io-space);
+  border: 1px solid var(--io-divider);
+  border-radius: var(--io-radius);
+  background: var(--io-material);
+}
+.app-shell.imperial-workspace .workspace-loading-help {
+  font-size: 0.85rem;
+  color: var(--io-secondary);
+}
+.app-shell.imperial-workspace .workspace-loading-help summary {
+  cursor: pointer;
+  min-height: 44px;
+}
+@media (max-width: 600px) {
+  .app-shell.imperial-workspace .talk-toolbar .talk-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .app-shell.imperial-workspace .talk-toolbar {
+    justify-content: space-between;
+  }
+}
 /* Final component roles share the same graphite material hierarchy. */
 .app-shell.imperial-workspace .navigation a[aria-current='page'] {
   color: var(--io-text);
