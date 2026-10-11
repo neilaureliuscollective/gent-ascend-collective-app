@@ -1,6 +1,6 @@
 .public-world {
-  --world-cream: #eee9dc;
-  --world-gold: #d4ad68;
+  --world-cream: var(--aether-text);
+  --world-gold: var(--aether-gold-light);
   background: var(--aether-obsidian);
   color: var(--world-cream);
   overflow: clip;
@@ -17,8 +17,8 @@
 }
 .public-world h1,
 .public-world h2 {
-  font-family: var(--font-editorial);
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 500;
   letter-spacing: -0.045em;
   line-height: 1.07;
 }

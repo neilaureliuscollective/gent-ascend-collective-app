@@ -288,6 +288,26 @@
   }
 }
 
+.public-world .entrance-emblem img,
+.public-world .footer-crest {
+  border-radius: 50%;
+}
+.public-world .footer-crest {
+  width: 104px;
+  height: 104px;
+}
+.public-world[data-imperial='editorial'] .entrance-copy h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6.5vw, 6.5rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+.public-world[data-imperial='editorial'] .entrance-panel h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  line-height: 1.2;
+}
 /* Entrance shares the same dark account material as the intelligence workspace. */
 .public-world[data-imperial='editorial'] .entrance-stage {
   background: var(--io-hero-material);

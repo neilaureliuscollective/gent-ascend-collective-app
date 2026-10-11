@@ -1,7 +1,7 @@
-/* Emerald is the material of the world. Motion is progressive; copy never waits for it. */
+/* Obsidian is the architectural world; green illuminates intelligence. Copy never waits for motion. */
 .public-world {
   background: var(--aether-deep);
-  --world-cream: #f1ecdf;
+  --world-cream: var(--aether-text);
   --world-gold: #e3bf79;
   --scene-progress: 0.5;
   --scene-shift: 0px;
