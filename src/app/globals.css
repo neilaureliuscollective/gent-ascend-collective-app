@@ -630,7 +630,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
 }
 .intelligence-card {
   background:
-    radial-gradient( ellipse at 100% 20%, color-mix(in srgb, var(--aether-petrol) 60%, transparent), transparent 75% ), linear-gradient(140deg, var(--aether-deep), var(--aether-midnight));
+    radial-gradient( ellipse at 100% 20%, color-mix(in srgb, var(--aether-deep) 60%, transparent), transparent 75% ), linear-gradient(140deg, var(--aether-deep), var(--aether-midnight));
 }
 .intelligence-card-body {
   display: flex;
@@ -775,7 +775,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient( 145deg, color-mix(in srgb, var(--aether-petrol) 72.16%, transparent), color-mix(in srgb, var(--aether-surface) 90.98%, transparent) );
+  background: linear-gradient( 145deg, color-mix(in srgb, var(--aether-deep) 72.16%, transparent), color-mix(in srgb, var(--aether-surface) 90.98%, transparent) );
   border: 1px solid #d8b67944;
   border-radius: 18px;
   color: #f0d6a2;
@@ -1023,7 +1023,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   align-items: center;
   gap: 14px;
   border: 1px solid #afd3c929;
-  background: linear-gradient( 140deg, color-mix(in srgb, var(--aether-petrol) 50.2%, transparent), var(--aether-surface) );
+  background: linear-gradient( 140deg, color-mix(in srgb, var(--aether-deep) 50.2%, transparent), var(--aether-surface) );
   color: var(--aether-silver);
   padding: 12px 14px;
   border-radius: 12px;
@@ -1387,7 +1387,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: linear-gradient( 120deg, color-mix(in srgb, var(--aether-petrol) 43.92%, transparent), var(--aether-surface) );
+  background: linear-gradient( 120deg, color-mix(in srgb, var(--aether-deep) 43.92%, transparent), var(--aether-surface) );
   margin: 22px 0;
 }
 .memory-empty > span {
@@ -2827,7 +2827,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
   border-radius: 7px;
 }
 .navigation a[aria-current='page'] {
-  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-petrol) 69.02%, transparent), var(--aether-obsidian) );
+  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-deep) 69.02%, transparent), var(--aether-obsidian) );
   border-color: #c4912f40;
 }
 .surface,
@@ -2909,7 +2909,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
   color: var(--aether-silver);
 }
 .aurelius-trigger {
-  background: linear-gradient( 140deg, color-mix(in srgb, var(--aether-petrol) 85.1%, transparent), color-mix(in srgb, var(--aether-obsidian) 92.94%, transparent) );
+  background: linear-gradient( 140deg, color-mix(in srgb, var(--aether-deep) 85.1%, transparent), color-mix(in srgb, var(--aether-obsidian) 92.94%, transparent) );
 }
 .aurelius-surface {
   border-radius: 14px;

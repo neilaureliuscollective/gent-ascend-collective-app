@@ -52,8 +52,8 @@ jobs:
         with:
           name: obsidian-review-images
           path: |
-            test-results/obsidian-*-390.png
-            test-results/obsidian-*-1440.png
+            test-results/obsidian--*-390.png
+            test-results/obsidian--*-1440.png
             test-results/imperial-obsidian-studio-*.png
           if-no-files-found: ignore
   production-entry:

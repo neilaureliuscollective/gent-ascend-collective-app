@@ -88,3 +88,30 @@ test('public to workspace navigation keeps one shell and isolated public card st
   await expect(page.getByRole('heading', { name: 'Make the vision visible.' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+for (const width of [390, 720, 1440]) {
+  test(`Supporting account and ecosystem tools retain graphite surfaces at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 960 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const route of [
+      '/app/grooming',
+      '/app/performance',
+      '/app/collection',
+      '/app/membership',
+      '/experience/world',
+    ]) {
+      await page.goto(route);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+        route,
+      ).toBe(true);
+      await expect(page.locator('body')).toBeVisible();
+      await page.screenshot({
+        path: `test-results/obsidian-support-${route.replaceAll('/', '-')}-${width}.png`,
+        fullPage: true,
+      });
+    }
+  });
+}

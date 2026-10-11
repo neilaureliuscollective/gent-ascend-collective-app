@@ -180,7 +180,7 @@
 .field-signal:hover,
 .field-signal[aria-expanded='true'] {
   transform: translateY(-3px);
-  background: linear-gradient( 110deg, color-mix(in srgb, var(--aether-petrol) 93.33%, transparent), color-mix(in srgb, var(--aether-midnight) 46.67%, transparent) );
+  background: linear-gradient( 110deg, color-mix(in srgb, var(--aether-deep) 93.33%, transparent), color-mix(in srgb, var(--aether-midnight) 46.67%, transparent) );
   box-shadow: inset 2px 0 #ddbd76;
 }
 .field-signal .signal-mark {
@@ -1405,7 +1405,7 @@ html[data-motion='still'] .field-space[data-changed='true'] .field-connections p
   display: grid;
   place-content: center;
   text-align: center;
-  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-petrol) 85.1%, transparent), color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) );
+  background: radial-gradient( ellipse, color-mix(in srgb, var(--aether-deep) 85.1%, transparent), color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) );
   animation: command-opening 1.8s ease both;
 }
 .command-opening > span {

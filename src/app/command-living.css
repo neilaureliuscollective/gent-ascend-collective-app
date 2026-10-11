@@ -529,7 +529,7 @@ html[data-quiet='true'] .command-living .connection-trace {
 }
 .command-living .command-opening {
   background:
-    radial-gradient( ellipse at 64% 40%, color-mix(in srgb, var(--aether-petrol) 61.18%, transparent), transparent 60% ), linear-gradient( 135deg, color-mix(in srgb, var(--aether-midnight) 85.1%, transparent), color-mix(in srgb, var(--aether-surface) 86.67%, transparent) );
+    radial-gradient( ellipse at 64% 40%, color-mix(in srgb, var(--aether-deep) 61.18%, transparent), transparent 60% ), linear-gradient( 135deg, color-mix(in srgb, var(--aether-midnight) 85.1%, transparent), color-mix(in srgb, var(--aether-surface) 86.67%, transparent) );
 }
 /* Route-local shell reflow keeps enlarged text clear of Capture and the presence shortcut. */
 @media (max-width: 1100px) {
@@ -688,7 +688,7 @@ html[data-quiet='true'] .command-living .connection-trace {
 }
 .home-compose {
   border-block: 1px solid #c4912f40;
-  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-petrol) 60%, transparent), color-mix(in srgb, var(--aether-surface) 20%, transparent) );
+  background: linear-gradient( 100deg, color-mix(in srgb, var(--aether-deep) 60%, transparent), color-mix(in srgb, var(--aether-surface) 20%, transparent) );
 }
 .home-compose summary {
   display: flex;

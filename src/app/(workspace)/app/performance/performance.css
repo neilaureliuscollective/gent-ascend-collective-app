@@ -40,7 +40,7 @@
   font-weight: 500;
 }
 .performance-world button:hover {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   border-color: #b7cbb8;
 }
 .performance-world button:disabled {
@@ -115,7 +115,7 @@
   color: var(--perf-muted);
 }
 .perf-nav button[aria-pressed='true'] {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   color: #efdab0;
 }
 .perf-nav span {
@@ -510,7 +510,7 @@
   opacity: 0.7;
 }
 .perf-set[data-done='true'] > button {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   color: #d7dcb8;
 }
 .perf-session-close {
@@ -847,7 +847,7 @@
   flex: 1;
 }
 .perf-choice button[aria-pressed='true'] {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   border-color: #e0bb6a;
   color: #e0bb6a;
 }
@@ -1085,7 +1085,7 @@
 }
 .perf-day-state button[aria-pressed='true'] {
   border-color: #c4912f;
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   color: #f4dfb2;
 }
 .perf-weight-figure {
@@ -1165,7 +1165,7 @@
   flex: 1 1 130px;
 }
 .perf-recovery-options button[aria-pressed='true'] {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   color: #f5f1e9;
   border-color: #c4912f;
 }
@@ -1267,7 +1267,7 @@
   border-color: rgba(224, 187, 106, 0.72);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--aether-petrol) 82%, transparent),
+    color-mix(in srgb, var(--aether-deep) 82%, transparent),
     color-mix(in srgb, var(--aether-surface) 90%, transparent)
   );
   box-shadow:
@@ -1293,7 +1293,7 @@
 .perf-training-mode .perf-set input{width:100%;min-height:56px;padding:8px 4px;font-size:1.28rem;font-weight:520;border-radius:10px;background:var(--aether-surface);border:1px solid rgba(196, 145, 47, 0.2);color:#f4efe4}
 .perf-training-mode .perf-set>button{grid-column:2;width:100%;min-height:50px;margin:0;border-radius:10px}
 .perf-training-mode .perf-set-record{background:linear-gradient(135deg, var(--aether-petrol), var(--aether-petrol));border-color:#c4912f;color:#f7f0df;font-weight:650}
-.perf-training-mode .perf-set-recorded{background:color-mix(in srgb, var(--aether-petrol) 58%, transparent);color:#b8cdbf}
+.perf-training-mode .perf-set-recorded{background:color-mix(in srgb, var(--aether-deep) 58%, transparent);color:#b8cdbf}
 .perf-training-mode .perf-set[data-done='true'] {
   opacity: 0.72;
 }
@@ -1349,7 +1349,7 @@
 .perf-machine-result h4{margin:0.55rem 0 0.15rem;font-size:1.55rem;font-weight:470;color:#f1eadc}
 .perf-machine-pattern{margin:0 0 0.8rem;color:#d8b96f;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em}
 .perf-machine-muscles{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
-.perf-machine-muscles span{padding:5px 8px;border-radius:999px;background:color-mix(in srgb, var(--aether-petrol) 70%, transparent);border:1px solid rgba(224, 187, 106, 0.16);font-size:0.7rem;color:#dce9e2}
+.perf-machine-muscles span{padding:5px 8px;border-radius:999px;background:color-mix(in srgb, var(--aether-deep) 70%, transparent);border:1px solid rgba(224, 187, 106, 0.16);font-size:0.7rem;color:#dce9e2}
 .perf-machine-result>p{font-size:0.85rem;line-height:1.5;color:#b9c8c1}
 .perf-machine-result small{display:block;margin:8px 0 14px;color:#80968c;line-height:1.45}
 .perf-quick-add{display:grid;gap:10px}
@@ -1371,7 +1371,7 @@
 .perf-last-time span{font-size:0.6rem;letter-spacing:0.12em;color:#91a69d}
 .perf-last-time strong{font-size:1rem;color:#eee5d3;font-weight:520}
 .perf-last-time small{font-size:0.72rem;color:#91a69d}
-.perf-live-intelligence>button{justify-self:start;min-height:44px;padding:8px 12px;background:color-mix(in srgb, var(--aether-petrol) 70%, transparent);border:1px solid rgba(224, 187, 106, 0.35);color:#f0e5c7}
+.perf-live-intelligence>button{justify-self:start;min-height:44px;padding:8px 12px;background:color-mix(in srgb, var(--aether-deep) 70%, transparent);border:1px solid rgba(224, 187, 106, 0.35);color:#f0e5c7}
 @media(min-width: 700px){
   .perf-live-intelligence{grid-template-columns:minmax(0,1fr) auto;align-items:center}
   .perf-live-intelligence>button{grid-column:1/-1}

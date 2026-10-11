@@ -2,7 +2,7 @@
   --founding-gold: #e0bb6a;
 }
 .founding-intro {
-  background: radial-gradient( ellipse at 80% 20%, color-mix(in srgb, var(--aether-petrol) 40%, transparent), transparent 65% );
+  background: radial-gradient( ellipse at 80% 20%, color-mix(in srgb, var(--aether-deep) 40%, transparent), transparent 65% );
 }
 .founding-intro .founding-disclosure {
   max-width: 55rem;
@@ -21,7 +21,7 @@
   border-top: 1px solid #c4912f66;
 }
 .founding-level--signature {
-  background: linear-gradient( 180deg, color-mix(in srgb, var(--aether-petrol) 50.2%, transparent), transparent );
+  background: linear-gradient( 180deg, color-mix(in srgb, var(--aether-deep) 50.2%, transparent), transparent );
   padding-inline: 1.5rem;
 }
 .founding-level h2 {

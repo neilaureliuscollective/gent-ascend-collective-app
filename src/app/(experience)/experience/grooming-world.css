@@ -711,7 +711,7 @@
 }
 .ritual-view-switch button[aria-pressed='true'] {
   color: #fff2d0;
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   border-color: #d8b668;
 }
 .ritual-step-map {

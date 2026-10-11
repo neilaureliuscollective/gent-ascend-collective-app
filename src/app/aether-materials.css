@@ -3,7 +3,7 @@
   accent-color: var(--aether-luminous);
 }
 ::selection {
-  background: var(--aether-petrol);
+  background: var(--aether-deep);
   color: var(--aether-text);
 }
 body :where(a, button, input, textarea, select, summary):focus-visible {
