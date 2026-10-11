@@ -47,6 +47,8 @@
   z-index: -1;
 }
 .public-world[data-material='imperial-steel'] .imperial-arrival-hero h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
   font-size: clamp(46px, 5.7vw, 88px);
   line-height: 0.99;
   letter-spacing: -0.045em;

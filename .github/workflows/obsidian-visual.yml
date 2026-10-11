@@ -47,3 +47,33 @@ jobs:
           name: obsidian-rendered-evidence
           path: test-results
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obsidian-review-images
+          path: |
+            test-results/obsidian-*-390.png
+            test-results/obsidian-*-1440.png
+            test-results/imperial-obsidian-studio-*.png
+          if-no-files-found: ignore
+  production-entry:
+    if: github.ref == 'refs/heads/main'
+    needs: visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Verify the actual custom production domain
+        run: npx playwright test --config playwright.production.config.ts --workers=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obsidian-live-production-evidence
+          path: test-results
+          if-no-files-found: ignore

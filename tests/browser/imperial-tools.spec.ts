@@ -128,15 +128,15 @@ for (const width of [360, 768, 1440]) {
       overflow: document.documentElement.scrollWidth > innerWidth,
     }));
     expect(material.foreground).toBe('rgb(173, 181, 175)');
-    expect(material.background).toContain('rgb(16, 20, 21)');
+    expect(material.background).toBe('none');
     expect(material.overflow).toBe(false);
     await expect(page.locator('.studio-main')).toHaveCSS('background-image', /rgb\(16, 20, 21\)/);
     await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(16, 20, 21)');
     await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(173, 181, 175)');
     await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(173, 181, 175)');
     await expect(page.locator('.studio-direction')).toHaveCSS(
-      'background-color',
-      'rgb(16, 20, 21)',
+      'background-image',
+      /rgb\(16, 20, 21\)/,
     );
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.screenshot({

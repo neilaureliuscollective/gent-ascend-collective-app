@@ -989,6 +989,19 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
   }
 }
 
+/* Technical typography, consistent across creative and operational tools. */
+.app-shell.imperial-workspace
+  :is(.studio-projects .studio-section-head h2, .studio-project-heading h2) {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+.app-shell.imperial-workspace .mission-list article {
+  margin-block: 16px;
+  padding: var(--io-space);
+  background: var(--io-material);
+  border: 1px solid var(--io-divider);
+  border-radius: var(--io-radius);
+}
 /* Final component roles share the same graphite material hierarchy. */
 .app-shell.imperial-workspace .navigation a[aria-current='page'] {
   color: var(--io-text);
@@ -1256,7 +1269,14 @@ html[data-quiet='true'] .app-shell.imperial-workspace .talk-presence .intelligen
 }
 html[data-material='solid']
   .app-shell.imperial-workspace
-  :is(.studio-main, .company-room, .company-rooms) {
+  :is(
+    .studio-main,
+    .company-room,
+    .company-rooms,
+    .studio-view-tabs,
+    .aethelios-space-navigation,
+    .talk-toolbar
+  ) {
   background: var(--io-navigation);
   box-shadow: none;
 }

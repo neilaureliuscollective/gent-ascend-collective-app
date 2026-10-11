@@ -72,3 +72,19 @@ test('navigation and writing remain accessible with enlarged text and forced col
   await expect(page.locator('.aurelius-composer')).toHaveCSS('background-image', 'none');
   await expect(input).toBeInViewport();
 });
+
+test('public to workspace navigation keeps one shell and isolated public card styles', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('.company-arrival-actions a[href="/app/work"]').click();
+  await expect(page).toHaveURL('/app/work');
+  await expect(page.locator('.app-shell')).toHaveCSS('display', 'block');
+  const navigation = page.getByRole('navigation', { name: 'Main navigation' });
+  await navigation.getByRole('link', { name: 'Talk', exact: true }).click();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeInViewport();
+  await navigation.getByRole('link', { name: 'Studio', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Make the vision visible.' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
