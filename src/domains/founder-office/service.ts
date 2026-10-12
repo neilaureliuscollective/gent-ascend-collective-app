@@ -6,6 +6,7 @@ import { createWork, readWork } from '@/domains/company-work/service';
 import { inspectPlatform, platformEvidence } from './platform';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { founderRequest, founderScope } from './schema';
+import { workContractReady } from '@/domains/company-work/activation';
 import { taskReadiness } from '@/domains/company-work/tasks';
 import { workScope, workContent } from '@/domains/company-work/schema';
 
@@ -222,6 +223,7 @@ export async function readFounderOffice() {
         (r) => r.input_tokens === null || r.output_tokens === null,
       ).length,
       bounded: recordedUsage.length === 300 || turns.data?.length === 300,
+      workContractReady: workContractReady(),
       modelConfigured: Boolean(config.OPENAI_API_KEY),
       model: config.AURELIUS_AI_MODEL,
       commerceConfigured: Boolean(

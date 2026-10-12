@@ -30,6 +30,7 @@ export const founderOfficeFixture: FounderOfficeData = {
     outputTokens: 0,
     incompleteUsage: 0,
     bounded: false,
+    workContractReady: true,
     modelConfigured: true,
     model: 'synthetic-model',
     commerceConfigured: false,

@@ -90,7 +90,7 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
         setResult(work);
         setMessage('Mission saved. Prepare its deliverable when you are ready.');
       }
-      if (generate && data.operations.modelConfigured) {
+      if (generate && data.operations.modelConfigured && data.operations.workContractReady) {
         if (alive.current)
           setMessage(
             `${specialist(request.specialistId).name} is preparing the company deliverable…`,
@@ -346,7 +346,9 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
               </button>
             </details>
             <button className="button" type="submit" disabled={!companyId}>
-              {data.operations.modelConfigured ? 'Prepare and save work' : 'Save mission'}
+              {data.operations.modelConfigured && data.operations.workContractReady
+                ? 'Prepare and save work'
+                : 'Save mission'}
             </button>
             {data.operations.modelConfigured && (
               <button
@@ -383,7 +385,9 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
             {!result?.versions.length && (
               <button
                 className="button"
-                disabled={busy || !data.operations.modelConfigured}
+                disabled={
+                  busy || !data.operations.modelConfigured || !data.operations.workContractReady
+                }
                 onClick={() => void execute()}
               >
                 {result
@@ -427,6 +431,12 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
           </p>
         )}
       </section>
+      {!data.operations.workContractReady && (
+        <p role="status">
+          Task plans, approvals and deliverable generation are awaiting release validation. You can
+          save objectives and review existing work.
+        </p>
+      )}
       <PortfolioBriefing configured={data.operations.modelConfigured} onSaved={refresh} />
       <section id="founder-attention" className="panel" aria-labelledby="founder-attention-title">
         <h2 id="founder-attention-title">Portfolio & saved missions</h2>
