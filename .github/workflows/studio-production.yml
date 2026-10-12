@@ -7,7 +7,7 @@ on:
       - 'playwright.studio-production.config.ts'
       - '.github/workflows/studio-production.yml'
   push:
-    branches: [feat/studio-production-house-20261012]
+    branches: [feat/studio-production-house-20261012, feat/studio-narration-20261012]
 concurrency:
   group: studio-production-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -31,7 +31,7 @@ jobs:
       - name: Inspect exported artifacts independently
         run: |
           python - <<'PY'
-          import zipfile, pathlib
+          import zipfile, pathlib, wave
           with zipfile.ZipFile('test-results/studio-campaign-pack.zip') as archive:
               assert archive.testzip() is None
               assert set(archive.namelist()) == {'square.png','portrait.png','landscape.png','layout.json','readme.md'}
@@ -40,6 +40,11 @@ jobs:
           video = pathlib.Path('test-results/studio-motion-film.webm').read_bytes()
           assert len(video) > 1000
           assert video[:4] == b'\x1aE\xdf\xa3' or b'ftyp' in video[:32]
+          with wave.open('test-results/studio-narration.wav') as narration:
+              assert narration.getnchannels() == 1 and narration.getsampwidth() == 2
+              assert narration.getnframes() / narration.getframerate() == 2
+          captions = pathlib.Path('test-results/studio-campaign-captions.vtt').read_text()
+          assert captions.startswith('WEBVTT') and '00:00:00.000 --> 00:00:02.000' in captions
           PY
       - uses: actions/upload-artifact@v4
         if: always()

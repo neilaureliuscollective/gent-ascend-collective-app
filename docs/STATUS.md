@@ -1,3 +1,7 @@
+## Studio Narration — October 12, 2026
+
+Review candidate stacked on unmerged PR #94: Narration room with explicit one-request approval, active GPT-Audio-1.5 adapter, private saved WAV clips, owner-bound recovery, narrated Campaign films and scene-timed VTT/SRT export. One additive unapplied migration; generation defaults off until staging/provider acceptance. Sora/Videos API is retired, so it is not implemented. Scope, current official research and exact activation checklist: [STUDIO_NARRATION.md](STUDIO_NARRATION.md). Provider fixture and SQL-emulation success are separate from live OpenAI/Auth/Storage acceptance; no production release.
+
 ## Aethelios Studio production house — October 12, 2026
 
 Review candidate: saved project brand kits, original-logo Finish compositing, editable multi-format campaign exports, and a native motion-film pilot from owned saved images with optional own audio. Reuses existing image generation, Supabase project JSONB, storyboard and finish services; no migration, new provider or production release. Image acknowledgement recovery preserves potentially committed originals, and Talk-prepared briefs survive project creation. Native film is not AI-generated footage and remains local until downloaded. Scope, research, exact acceptance limits and founder setup: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md). Local lint, types, 442 unit/SQL tests and ledger pass; build/browser/preview receipts are tracked in the candidate PR. Live authenticated OpenAI/Storage and physical-device acceptance remain separate.

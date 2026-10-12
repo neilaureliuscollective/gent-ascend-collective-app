@@ -367,3 +367,7 @@ The founder brief supersedes commerce retirement. Reconcile draft #86 with actua
 ## 2026-10-12 — Studio production house before additional media vendors
 
 Founder approved execution of the researched Studio direction. Extend owned project brief JSONB with a bounded brand kit, reuse existing image/version/storyboard/finish services, and provide useful editable image packs and real browser-native motion video before introducing asynchronous generative footage. Preserve original logo artwork through owned reference compositing. Native motion/export requires no new provider key or migration; future AI footage requires durable jobs and live provider/cost acceptance. No pending creation-stack merge or production deployment. Evidence and staged vision: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md).
+
+## 2026-10-12 — Active narration before a separate footage vendor
+
+Official model/deprecation evidence supersedes the historical Sora video guide: Videos API shut down September 24. Dedicated legacy TTS also has a January 6 sunset. Use active GPT-Audio-1.5 Chat Completions for this bounded narration slice with transcript comparison, actual WAV validation, explicit generation consent and private owner/usage ledgers. Generation stays default-off until migration and actual provider acceptance. Runway footage is researched but needs application-specific commercial/auth acceptance and a durable audited job design. No speculative video table, new provider bill, hosted migration or production deployment. [STUDIO_NARRATION.md](STUDIO_NARRATION.md).

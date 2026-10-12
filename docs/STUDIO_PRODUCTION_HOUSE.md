@@ -41,3 +41,7 @@ Local lint, strict types, 442 unit/SQL-emulation tests and migration ledger pass
 No new credentials are needed for the native motion/export rooms. Existing image generation requires a server-only OPENAI_API_KEY in the intended Vercel environment, permission for the existing image models, a compatible Responses model, and the existing Studio migrations/private bucket/RLS. Do not send credentials in chat. An ordinary authenticated founder/member session must test: create project, upload original reference/logo, generate/refine, save/reopen brand and finished layout, produce/download film, and confirm another account cannot read the originals. A present key or successful deployment is not proof of provider acceptance.
 
 Production merge/deployment is separate from this reviewed implementation candidate. No hosted migration or external merchant/provider configuration was performed.
+
+### October 12 follow-up research correction
+
+[STUDIO_NARRATION.md](STUDIO_NARRATION.md) supersedes the earlier future-Sora suggestion: the official model/deprecation ledger confirms Sora 2 and Videos API shut down September 24, 2026. The still-visible video guide is historical. Native motion remains implemented; the next candidate adds active OpenAI narration and scene subtitle exports while an independent footage provider remains a future accepted integration.
