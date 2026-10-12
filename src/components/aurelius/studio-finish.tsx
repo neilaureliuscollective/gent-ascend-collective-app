@@ -504,6 +504,7 @@ export function StudioFinish({
               <label>
                 Headline
                 <textarea
+                  aria-label="Headline"
                   value={draft.headline}
                   maxLength={120}
                   onChange={(event) => change({ ...draft, headline: event.target.value })}
@@ -513,6 +514,7 @@ export function StudioFinish({
               <label>
                 Supporting line
                 <textarea
+                  aria-label="Supporting line"
                   value={draft.supporting}
                   maxLength={180}
                   onChange={(event) => change({ ...draft, supporting: event.target.value })}
