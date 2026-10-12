@@ -24,3 +24,33 @@ test('founder memory persists through the real Next API and can be removed', asy
   await row.getByRole('button', { name: 'Confirm forget' }).click();
   await expect(row).toHaveCount(0);
 });
+test('Studio activation report is founder-only and never claims live acceptance', async ({
+  page,
+  browser,
+}) => {
+  await page.goto('/dev');
+  await page.getByLabel('Local entry token').fill(token!);
+  await page.getByRole('button', { name: 'Enter as founder' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/founder/studio');
+  await expect(
+    page.getByRole('heading', { name: 'Connect the creative environment.' }),
+  ).toBeVisible();
+  const response = await page.request.get('/api/studio/readiness');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['cache-control']).toContain('no-store');
+  const report = await response.json();
+  expect(report.liveAccepted).toBe(false);
+  expect(report.schemas).toHaveLength(8);
+  expect(report.schemas.every((check: { status: string }) => check.status === 'detected')).toBe(
+    true,
+  );
+  const anonymous = await browser.newContext();
+  try {
+    const denied = await anonymous.request.get('http://127.0.0.1:3103/api/studio/readiness');
+    expect(denied.status()).toBe(403);
+    expect(await denied.json()).not.toHaveProperty('configuration');
+  } finally {
+    await anonymous.close();
+  }
+});

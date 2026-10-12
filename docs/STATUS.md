@@ -1,3 +1,27 @@
+## Studio activation preparation — October 12, 2026
+
+Read-only hosted audit confirms existing image tables/RLS/private image bucket; narration/footage schema/buckets/RPCs and Vercel activation/Runway/signing variables are absent. Founder-only readiness page/API adds fixed configuration statuses and session-bound owner-filtered zero-row schema probes, explicitly never inferring live acceptance. Stale founder selectors/routes are updated with real persistence/denial assertions retained. No hosted migration, provider bill/configuration or production release. Exact evidence, founder staging requirements and remaining launch gates: [STUDIO_ACTIVATION.md](STUDIO_ACTIVATION.md).
+
+## Studio premium control room — October 12, 2026
+
+Review candidate preserves the complete production-house/Narration/Footage/Delivery stack. Adds a unified dimensional project stage, actual saved-image preview, numbered production-room controls and workflow hierarchy in the latest Obsidian brand, plus conditional code splitting for specialist rooms. Existing owner/consent/cost safeguards are unchanged. No provider activation, migration or production release. Research, acceptance limits and **three remaining v1 launch phases**: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md). Visual inspection, real provider/hosted security acceptance and measured hardware performance remain open.
+
+## Studio Delivery — October 12, 2026
+
+Review candidate stacked on unmerged Footage #96: Delivery room connects selected saved images, AI clips and narration into an actual campaign ZIP with copy, scene-timed captions, provenance labels and SHA-256 file hashes. Exact local review snapshot, bounded authenticated reads, cancellation and honest all-or-nothing failure; no paid generation, new migration or automatic publishing. Audio/video depend on the earlier provider activation gates. Research, scope and founder acceptance boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md). No production release.
+
+## Studio AI Footage — October 12, 2026
+
+Review candidate stacked on unmerged Narration #95/production house #94: Footage room with active Runway Gen-4.5 text-to-video adapter, signed reviewed estimates/task receipts, explicit one-render authorization, durable owner jobs/spending reservations, private validated MP4 preservation/playback/download and uncertainty recovery without paid retries. One additive unapplied migration; feature defaults off pending app-specific Runway setup and real acceptance. Text-only standalone clips; no timeline, automatic background copying or production release. Official current contracts, limitations and exact founder setup: [STUDIO_FOOTAGE.md](STUDIO_FOOTAGE.md). Fixture/SQL/browser gates are separate from actual paid provider and hosted Auth/Storage acceptance.
+
+## Studio Narration — October 12, 2026
+
+Review candidate stacked on unmerged PR #94: Narration room with explicit one-request approval, active GPT-Audio-1.5 adapter, private saved WAV clips, owner-bound recovery, narrated Campaign films and scene-timed VTT/SRT export. One additive unapplied migration; generation defaults off until staging/provider acceptance. Sora/Videos API is retired, so it is not implemented. Scope, current official research and exact activation checklist: [STUDIO_NARRATION.md](STUDIO_NARRATION.md). Provider fixture and SQL-emulation success are separate from live OpenAI/Auth/Storage acceptance; no production release.
+
+## Aethelios Studio production house — October 12, 2026
+
+Review candidate: saved project brand kits, original-logo Finish compositing, editable multi-format campaign exports, and a native motion-film pilot from owned saved images with optional own audio. Reuses existing image generation, Supabase project JSONB, storyboard and finish services; no migration, new provider or production release. Image acknowledgement recovery preserves potentially committed originals, and Talk-prepared briefs survive project creation. Native film is not AI-generated footage and remains local until downloaded. Scope, research, exact acceptance limits and founder setup: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md). Local lint, types, 442 unit/SQL tests and ledger pass; build/browser/preview receipts are tracked in the candidate PR. Live authenticated OpenAI/Storage and physical-device acceptance remain separate.
+
 ## Lifestyle published-catalog fix — October 12, 2026
 
 The first Lifestyle release incorrectly required an unconfigured `legacy-reserve` collection for all discovery, product and cart paths. The correction uses actual Headless-published products by default, separates brand curation and preserves optional explicit whole-catalog restriction through SHOPIFY_LIFESTYLE_COLLECTION. Missing explicit collections fail closed. Scope, official sources and acceptance limitations: [LIFESTYLE_CATALOG_FIX.md](LIFESTYLE_CATALOG_FIX.md). Exact checks and release receipts are tracked in the fix PR; no invented stock, merchant publication or payment action.
@@ -883,6 +907,16 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
+
+## Studio integration and single-database correction — October 12, 2026
+
+PR #99 consolidates the complete production-house, Narration, Footage, Delivery and premium Studio stack against main. Founder readiness checks are session-bound and read-only. Founder explicitly directs using the existing Gent Ascend Supabase only; the extra hosted staging requirement is withdrawn. Hosted Narration/Footage schema, provider credentials/budgets and live acceptance remain incomplete. No hosted migration, paid generation or production deployment was performed.
+
+At integration commit 87079f0: 481 unit/SQL tests, lint/types/build, 12 Studio browser checks and all 12 real-local-Supabase founder tests passed. Visual CI passed on retry after browser screenshot-capture errors. Broader application E2E is not represented as green. Current documentation/setup-copy correction changes no generation or authorization behavior.
+
+## Studio hosted media connection — October 12, 2026
+
+Applied the exact reviewed Narration and Footage migrations to the existing Gent Ascend database, reconciled source versions/hashes with hosted history and passed all 20 read-only catalog contract checks. Existing image bucket, member records and shared services were preserved. Added repeatable verification SQL and a regression for missing owner policy/anonymous RPC permission. No extra hosted database, reset, seed, paid generation, feature activation or production app release. Advisor warnings are reviewed and reported, not hidden. Remaining provider credentials/budgets and ordinary-account live acceptance: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).
 ## Founder Office activation candidate — 2026-10-11
 
 Inside the canonical public application, implemented account-bound Founder Office entry, independent founder access when membership provisioning is absent, owner-keyed UI continuity, private company/source/figure context, MARA/CASSIAN/CASSIUS on the shared specialist system, public Entities naming, saved company deliverables, dependent task plans, human approval/rejection history, bounded portfolio briefings with personal Mission continuity, and fixed public canonical-platform inspection. Existing memory, Talk, Company Rooms, Studio, immutable work versions and owner RLS are reused. No new application, database, signup system, dependency or migration. Retired private-app bridge network residue is removed.

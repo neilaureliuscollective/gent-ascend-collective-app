@@ -71,7 +71,7 @@ export function StudioStoryboard({ projectId, scenes, versions, disabled, onChan
   </div>;
 
   return <section className="studio-storyboard" aria-label="Project storyboard">
-    <div className="studio-intro"><p className="eyebrow">THE STORYBOARD</p><h3>Build the story before the assets.</h3><p>Sequence the moments, develop a frame for each one, and keep the campaign coherent. Motion notes are a plan for future video work; no video is generated here.</p></div>
+    <div className="studio-intro"><p className="eyebrow">THE STORYBOARD</p><h3>Build the story before the assets.</h3><p>Sequence the moments, develop a frame for each one, and keep the campaign coherent. Motion notes guide future footage. The Motion pilot below renders saved images into a campaign film.</p></div>
     <div className="studio-story-actions"><span>{scenes.length} / 8 scenes</span><div><button type="button" onClick={() => window.print()} disabled={!scenes.length}>Print board ↗</button><button type="button" className="button" onClick={() => { setDraft(blank); setAdding(true); }} disabled={disabled || busy || scenes.length >= 8}>+ Add scene</button></div></div>
     {error && <p role="alert" className="studio-error">{error}</p>}
     {!scenes.length && !adding && <div className="studio-story-empty"><p className="eyebrow">A STARTING ARC</p><h4>One idea. Four deliberate moments.</h4><div>{suggestions.map((suggestion, index) => <button key={suggestion.title} type="button" onClick={() => startWith(suggestion.title, suggestion.note)}><span>0{index + 1}</span><strong>{suggestion.title}</strong><small>{suggestion.note}</small></button>)}</div><p>Choose a starting moment or add your own scene. This is a suggested structure you can adapt.</p></div>}
