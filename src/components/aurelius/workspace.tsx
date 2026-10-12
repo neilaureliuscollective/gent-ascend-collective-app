@@ -24,7 +24,7 @@ import {
   intelligenceStatus,
   type IntelligenceOperation,
 } from '@/platform/visual/intelligence-motion';
-import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { IntelligenceActivity, IntelligenceResponse } from '../intelligence-motion/presence';
 import { TalkPresence } from './talk-presence';
 import { AppearanceControls } from '../visual/appearance';
 import { ConversationLibrary } from './conversation-library';
@@ -184,7 +184,7 @@ export function AureliusWorkspace({
       el.scrollTop = before.top + el.scrollHeight - before.height;
       olderScroll.current = null;
     }
-  }, [data?.turns]);
+  }, [data?.turns, busy, operation.id]);
   async function loadOlder() {
     const first = data?.turns[0];
     if (!selected || !first || loadingOlder) return;
@@ -279,7 +279,7 @@ export function AureliusWorkspace({
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
-  }, [data?.turns]);
+  }, [data?.turns, busy, operation.id]);
   async function sendMessage(
     messageText: string,
     replace?: { sourceTurnId: string; revisionKind: 'retry' | 'regenerate' | 'edit' } | null,
@@ -842,7 +842,7 @@ export function AureliusWorkspace({
                 {loadingOlder ? 'Loading…' : 'Load older messages'}
               </button>
             )}
-            {!data.turns.length ? (
+            {!data.turns.length && !busy ? (
               <div className="aurelius-welcome">
                 <div className="welcome-heading">
                   {compact ? (
@@ -910,6 +910,7 @@ export function AureliusWorkspace({
                   <ConversationTurn
                     key={turn.id}
                     turn={turn}
+                    operation={turn.id === operation.id ? operation : undefined}
                     onFeedback={(id, value) => void feedback(id, value)}
                     disabled={blocked}
                     versions={priorVersions(turn, data.turns)}
@@ -944,6 +945,9 @@ export function AureliusWorkspace({
                     }
                   />
                 ))
+            )}
+            {busy && !data.turns.some((turn) => turn.id === operation.id) && (
+              <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
             )}
           </div>
           {!preview && (!data.configured || !data.canChat) && (

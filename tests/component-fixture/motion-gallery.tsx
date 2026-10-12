@@ -35,17 +35,17 @@ function Gallery() {
         <AppearanceControls />
       </header>
       <p className="gallery-disclosure">
-        Phase 1 visual review · no operation is running. Microphone off. No audio, model requests or
-        saved records.
+        Visible response signature review · no operation is running. Microphone off. No audio, model
+        requests or saved records.
       </p>
       <section className="gallery-stage" aria-label="Selected state preview">
-        <IntelligencePresence key={phase} operation={operation} size="large" />
+        <IntelligencePresence key={phase} operation={operation} size="large" variant="signal" />
         <div>
           <IntelligenceStatus operation={operation} />
           <h2>One signature. Every scale.</h2>
           <p>
-            Emerald intelligence within obsidian. A restrained gold orbit. Immediate feedback that
-            leaves room for your work.
+            Emerald intelligence within obsidian. Interwoven emerald light with a restrained gold
+            edge. Immediate feedback that leaves room for your work.
           </p>
           <label>
             Preview state

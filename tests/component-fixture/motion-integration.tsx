@@ -85,13 +85,18 @@ function emit(event: StreamEvent) {
 window.fetch = async (input, init) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (url.startsWith('/api/aurelius/chat') || url.startsWith('/api/company-talk/chat')) {
+    if (new URLSearchParams(location.search).get('holdHeaders') === '1')
+      await new Promise((resolve) => setTimeout(resolve, 1800));
     const body = JSON.parse(String(init?.body));
     turn = {
       id: body.requestId,
       person_id: 'synthetic-owner',
       conversation_id: body.conversationId,
       user_text: body.text,
-      assistant_text: 'Synthetic response for motion verification.',
+      assistant_text:
+        new URLSearchParams(location.search).get('longReply') === '1'
+          ? 'Synthetic long response with useful text.\n\n'.repeat(80)
+          : 'Synthetic response for motion verification.',
       status: 'complete',
       model: 'synthetic-fixture',
       context_included: false,
@@ -178,7 +183,13 @@ function Review() {
           </button>
           <button
             onClick={() =>
-              emit({ type: 'delta', text: 'Synthetic response for motion verification.' })
+              emit({
+                type: 'delta',
+                text:
+                  new URLSearchParams(location.search).get('longReply') === '1'
+                    ? 'Synthetic long response with useful text.\n\n'.repeat(80)
+                    : 'Synthetic response for motion verification.',
+              })
             }
           >
             Emit response text

@@ -48,3 +48,23 @@
     padding: 8px;
   }
 }
+/* Isolate the real workspace from the server Shell's desktop sidebar grid. */
+.motion-integration-review {
+  display: block;
+  min-height: 100dvh;
+}
+.review-workspace .aurelius-layout {
+  display: block;
+  height: 700px;
+  min-height: 0;
+}
+.review-workspace .aurelius-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.review-workspace .conversation-scroll {
+  flex: 1;
+  min-height: 0;
+}

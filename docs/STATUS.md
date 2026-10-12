@@ -1,3 +1,5 @@
+> Intelligence motion visibility correction (2026-10-12): founder reported the corner-only orb failed the intended experience. Added a primary interwoven emerald signature at the actual response, immediate pre-header feedback, shared Work/Studio signal, hidden-waiting fix and rendered visibility/actual-motion acceptance. Research: docs/INTELLIGENCE_MOTION_VISIBILITY.md. Connected verification pending; no new live claim yet.
+
 > Intelligence motion continuation (2026-10-12): reconciled released main 3619f67 (Live/Studio/Imperial Emerald). Shared motion now observes real Live phases and measured audio without changing its transport or activation. Fixed an account-claim auto-save lock race exposed by broad CI; full exact-head checks and production verification remain release gates.
 
 ## Aethelios Intelligence Motion release candidate — October 12, 2026
