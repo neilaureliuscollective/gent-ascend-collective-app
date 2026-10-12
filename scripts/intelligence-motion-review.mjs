@@ -7,6 +7,9 @@ for (const name of [
   'visible-response-waiting-768.png',
   'visible-response-waiting-1440.png',
   'visible-response-long-768.png',
+  'guiding-voice-390.png',
+  'guiding-voice-1440.png',
+  'guiding-studio.png',
 ]) {
   const file = `test-results/${name}`;
   if (

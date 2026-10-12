@@ -64,14 +64,14 @@ test('motion mark pauses offscreen and respects Still without a repeating comple
   const mark = page.locator('.gallery-stage .im-presence');
   await expect(mark).toHaveAttribute('data-animate', 'true');
   await page.getByLabel('Preview state').selectOption('searching');
-  const orbit = mark.locator('.im-ribbon-three');
+  const orbit = mark.locator('.identity-flow');
   await expect(orbit).not.toHaveCSS('animation-name', 'none');
   await page.getByLabel('Preview state').selectOption('complete');
-  await expect(mark.locator('.im-resolution')).toHaveCSS('animation-iteration-count', '1');
+  await expect(mark.locator('.identity-focus')).toHaveCSS('animation-iteration-count', '1');
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(mark).toHaveAttribute('data-animate', 'false');
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole('button', { name: 'Pause ambient motion' }).click();
   await expect(mark).toHaveAttribute('data-motion', 'still');
-  await expect(mark.locator('.im-resolution')).toHaveCSS('animation-name', 'none');
+  await expect(mark.locator('.identity-focus')).toHaveCSS('animation-name', 'none');
 });

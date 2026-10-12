@@ -84,6 +84,7 @@ for (const width of [390, 1440])
     await expect(dialog.getByRole('status')).toHaveText('Listening');
     await expect(dialog.locator('.im-presence')).toHaveAttribute('data-phase', 'listening');
     await expect(dialog.locator('.im-presence')).toHaveAttribute('data-motion', 'still');
+    await page.screenshot({ path: `test-results/guiding-voice-${width}.png`, fullPage: true });
     await page.evaluate(() => {
       (
         window as unknown as { voiceChannel: { onmessage: (e: { data: string }) => void } }
