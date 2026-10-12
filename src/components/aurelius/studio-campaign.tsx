@@ -206,6 +206,7 @@ export function StudioCampaign({
               disabled={running}
               onChange={(e) => {
                 onClearNarration?.();
+                setLoadedNarration(null);
                 setAudio(e.target.files?.[0] ?? null);
                 setResult(null);
               }}

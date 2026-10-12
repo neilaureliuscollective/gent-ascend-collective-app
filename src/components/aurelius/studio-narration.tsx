@@ -47,7 +47,7 @@ export function StudioNarration({
     const controller = new AbortController();
     fetch(`/api/studio/narration?project=${projectId}`, {
       cache: 'no-store',
-      signal: controller.signal,
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
     })
       .then(async (response) => {
         const value = await response.json();
@@ -64,7 +64,15 @@ export function StudioNarration({
   }, [projectId]);
   async function generate(event: React.FormEvent) {
     event.preventDefault();
-    if (submitted.current || busy || !approved || !data?.enabled || !data.canCreate || uncertain)
+    if (
+      submitted.current ||
+      busy ||
+      !approved ||
+      !data?.enabled ||
+      !data.canCreate ||
+      uncertain ||
+      data.items.some((item) => item.status === 'pending')
+    )
       return;
     submitted.current = true;
     setBusy(true);
@@ -265,10 +273,11 @@ export function StudioNarration({
               !approved ||
               script.trim().length < 3 ||
               !title.trim() ||
-              Boolean(uncertain)
+              Boolean(uncertain) ||
+              data.items.some((item) => item.status === 'pending')
             }
           >
-            {busy ? 'Saving narration…' : 'Generate approved narration'}
+            {busy ? 'Working…' : 'Generate approved narration'}
           </button>
           <button
             type="button"
