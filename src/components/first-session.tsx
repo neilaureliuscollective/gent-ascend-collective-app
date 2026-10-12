@@ -112,8 +112,8 @@ export function FirstSession({
             <Link className="button" href={path.href}>
               {path.destination} →
             </Link>
-            {path.href !== '/app' && (
-              <Link className="text-link" href="/app">
+            {path.href !== '/app/daily' && (
+              <Link className="text-link" href="/app/daily">
                 Return to my saved plan →
               </Link>
             )}
@@ -212,7 +212,7 @@ export function FirstSession({
         <Link className="text-link" href="/app/collection">
           Explore Collection →
         </Link>
-        <Link className="text-link" href="/app">
+        <Link className="text-link" href="/app/daily">
           Continue to Command →
         </Link>
       </div>

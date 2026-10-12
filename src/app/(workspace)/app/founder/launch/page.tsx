@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { readReleaseReadiness } from '@/domains/release/service';
+import { LivePreflight } from '@/components/live/preflight';
 export const dynamic = 'force-dynamic';
 export default async function ReleaseReadiness() {
   const report = await readReleaseReadiness();
@@ -42,6 +43,7 @@ export default async function ReleaseReadiness() {
           </section>
         ))}
       </div>
+      <LivePreflight />
       <div className="world-actions">
         <Link className="text-link" href="/support">
           View member support →

@@ -1,3 +1,5 @@
+import { LiveArtifactsFixture } from './live-artifacts';
+import { LiveVoiceFixture } from './live-voice';
 import { MissionHandoffFixture } from './mission-handoff';
 import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
 import { CollectionWorld } from '@/components/commerce/collection-world';
@@ -110,7 +112,11 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode.startsWith('lifestyle') ? (
+  mode === 'live-artifacts' ? (
+    <LiveArtifactsFixture />
+  ) : mode === 'live-voice' ? (
+    <LiveVoiceFixture />
+  ) : mode.startsWith('lifestyle') ? (
     <div className="member-collection public-world imperial-obsidian">
       <p className="preview-notice">
         Synthetic commerce fixture · no live merchandise, orders or payments.

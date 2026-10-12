@@ -63,6 +63,12 @@ export async function signOut() {
     httpOnly: false,
   });
   const client = await serverClient();
+  if (client && process.env.AETHELIOS_LIVE_ENABLED === 'true') {
+    const { endLive } = await import('@/domains/live/service');
+    const sessions = await client.from('ai_live_sessions').select('id').is('ended_at', null);
+    if (sessions.error) throw new Error('Voice cleanup must be confirmed before signing out.');
+    await Promise.all((sessions.data ?? []).map(session => endLive(session.id)));
+  }
   await client?.auth.signOut();
   redirect('/');
 }
