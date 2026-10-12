@@ -119,6 +119,7 @@ export function AureliusWorkspace({
     null,
   );
   const generation = useRef<AbortController | null>(null);
+  const cancelReply = useRef<(() => void) | null>(null);
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
@@ -340,6 +341,12 @@ export function AureliusWorkspace({
     timing.mark('acknowledged');
     let accepted = false;
     let saved = false;
+    cancelReply.current = () => {
+      // Read the request's acknowledgement directly, even before React commits it.
+      if (saved) return;
+      setOperation(observedOperation(requestId, 'cancelled', 'uncertain'));
+      controller.abort();
+    };
     const painted = frameText((reply) => {
       setData((previous) =>
         previous
@@ -471,6 +478,7 @@ export function AureliusWorkspace({
       timing.mark('ended');
       painted.finish(!saved);
       generation.current = null;
+      cancelReply.current = null;
       setBusy(false);
     }
   }
@@ -1098,11 +1106,9 @@ export function AureliusWorkspace({
                 <button
                   type="button"
                   className="secondary-button"
+                  disabled={operation.persistence === 'confirmed'}
                   onPointerDown={(event) => retainComposerFocus(event, composer.current)}
-                  onClick={() => {
-                    setOperation(observedOperation(operation.id, 'cancelled', 'uncertain'));
-                    generation.current?.abort();
-                  }}
+                  onClick={() => cancelReply.current?.()}
                 >
                   Stop reply
                 </button>

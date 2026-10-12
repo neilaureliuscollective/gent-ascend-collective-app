@@ -133,6 +133,12 @@ window.fetch = async (input, init) => {
   if (url.startsWith('/api/company-talk')) return json(room);
   if (url.startsWith('/api/company-work')) return json({ jobs: [] });
   if (url.startsWith('/api/aurelius')) {
+    if (
+      url.includes('conversationId=') &&
+      base.turns.length &&
+      new URLSearchParams(location.search).get('holdReload') === '1'
+    )
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     if (new URLSearchParams(location.search).get('history') === '1')
       return json({
         ...base,

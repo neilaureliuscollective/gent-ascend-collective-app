@@ -265,3 +265,20 @@ test.describe('touch composer actions', () => {
     await expect(input(page)).toHaveValue('Next thought');
   });
 });
+
+test('a confirmed answer cannot become interrupted while its saved list refreshes', async ({
+  page,
+}) => {
+  await page.goto(`${fixture}?holdReload=1`);
+  await input(page).fill('Synthetic saved answer');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+  await expect(page.locator('.talk-presence')).toHaveAttribute('data-phase', 'complete');
+  await expect(page.getByRole('button', { name: 'Stop reply' })).toBeDisabled();
+  await input(page).fill('Next draft during saved-list refresh');
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
+  await expect(page.locator('.talk-presence')).toHaveAttribute('data-phase', 'complete');
+  await expect(input(page)).toHaveValue('Next draft during saved-list refresh');
+  await expect(page.locator('.conversation-turn')).toHaveCount(1);
+});
