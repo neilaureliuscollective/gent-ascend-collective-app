@@ -98,6 +98,31 @@ it('denies non-founders before any configuration/database/provider work', async 
   expect(fetch).not.toHaveBeenCalled();
   await expect(readLivePreflight(true)).rejects.toMatchObject({ status: 403 });
 });
+it('reports expiry configuration without exposing credentials or promoting flags into acceptance', () => {
+  const configured = preflightConfiguration({
+    ...env,
+    AETHELIOS_LIVE_EXPIRY_ENABLED: 'true',
+    SUPABASE_SERVICE_ROLE_KEY: 'PRIVATE_WORKER_KEY',
+    CRON_SECRET: 'PRIVATE_SCHEDULER_SECRET_AT_LEAST_32_CHARACTERS',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://synthetic.supabase.co',
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'synthetic-public',
+  });
+  expect(configured.expiry).toEqual({
+    enabled: true,
+    workerCredentialConfigured: true,
+    schedulerSecretConfigured: true,
+    databaseConnectionConfigured: true,
+    scheduleAcceptance: 'unverified',
+    providerCleanupAcceptance: 'unverified',
+  });
+  expect(JSON.stringify(configured)).not.toContain('PRIVATE_WORKER_KEY');
+  expect(JSON.stringify(configured)).not.toContain('PRIVATE_SCHEDULER_SECRET');
+  expect(
+    preflightConfiguration({ ...env, CRON_SECRET: ' '.repeat(40) }).expiry
+      .schedulerSecretConfigured,
+  ).toBe(false);
+  expect(preflightConfiguration(env).expiry.enabled).toBe(false);
+});
 it('uses owner-scoped zero-row queries and no automatic provider call or privileged RPC', async () => {
   const fetch = vi.fn();
   vi.stubGlobal('fetch', fetch);

@@ -8,7 +8,7 @@ import { hangup, validTag } from './cleanup';
 
 export function expiryAuthorization(request: Request) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || secret.length < 32) return false;
+  if (!secret || secret.trim().length < 32) return false;
   const expected = Buffer.from(`Bearer ${secret}`);
   const received = Buffer.from(request.headers.get('authorization') ?? '');
   return received.length === expected.length && timingSafeEqual(received, expected);

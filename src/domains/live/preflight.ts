@@ -32,6 +32,17 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
       !!model &&
       (environment === 'local' || controlsDeclared),
     launchAcceptance: 'unverified' as const,
+    expiry: {
+      enabled: env.AETHELIOS_LIVE_EXPIRY_ENABLED === 'true',
+      workerCredentialConfigured: !!env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
+      schedulerSecretConfigured: (env.CRON_SECRET?.trim().length ?? 0) >= 32,
+      databaseConnectionConfigured:
+        environment === 'production' ||
+        (!!env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+          !!env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()),
+      scheduleAcceptance: 'unverified' as const,
+      providerCleanupAcceptance: 'unverified' as const,
+    },
   };
 }
 export type ProviderPreflight = {

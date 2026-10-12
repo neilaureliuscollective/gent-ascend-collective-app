@@ -37,6 +37,10 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('executes the local expiry fixture as one prepared statement without retaining synthetic rows', async () => {
+    await db.query(await readFile('tests/fixtures/live-expiry-acceptance.sql', 'utf8'));
+    expect((await db.query("select id from public.ai_live_sessions where id='f1000000-0000-4000-8000-000000000001'")).rows).toEqual([]);
+  });
   it('confirms one owned reviewed daily action atomically, fences stale drafts and verifies idempotent receipts', async () => {
     const owner = `(select id from public.persons where auth_user_id='${founder}')`;
     const conversation = 'ab000000-0000-4000-8000-000000000040';
