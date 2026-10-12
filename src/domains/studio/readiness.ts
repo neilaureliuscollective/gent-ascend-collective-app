@@ -16,7 +16,7 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
     {
       name: 'Narration activation',
       status: env.STUDIO_NARRATION_ENABLED === 'true' ? 'detected' : 'disabled',
-      next: 'Enable STUDIO_NARRATION_ENABLED only after approved staging schema, private audio and real generation/reopen acceptance.',
+      next: 'Enable STUDIO_NARRATION_ENABLED only after reviewed schema in the existing Gent Ascend database, private audio and real generation/reopen acceptance.',
     },
     {
       name: 'Runway application key',
@@ -36,7 +36,7 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
     {
       name: 'Live acceptance',
       status: 'unverified',
-      next: 'This read-only report does not generate media, verify billing, test private bucket configuration or prove two-account RLS. Record ordinary-login staging acceptance separately.',
+      next: 'This read-only report does not generate media, verify billing, test private bucket configuration or prove two-account RLS. Record ordinary-login acceptance in a protected preview using the existing database.',
     },
   ];
 }

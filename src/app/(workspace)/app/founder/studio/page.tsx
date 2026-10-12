@@ -38,10 +38,10 @@ export default async function StudioSetup() {
         <h2>Staging before activation.</h2>
         <ol>
           <li>
-            Choose a separate protected staging database and preserve all pending Studio work.
+            Use the existing Gent Ascend Supabase and preserve all pending Studio work.
           </li>
           <li>Review/apply compatible migrations and verify private buckets/RPC ownership.</li>
-          <li>Set application credentials and budgets in the staging environment.</li>
+          <li>Set application credentials and budgets in the protected preview environment.</li>
           <li>
             Use ordinary login to approve one narration and one short clip; verify costs,
             save/reopen, recovery and another account’s denial.

@@ -387,3 +387,7 @@ Founder requested premium futuristic design and an honest path to live. Preserve
 ## 2026-10-12 — Founder Studio activation probes before hosted changes
 
 Actual read-only Vercel/catalog evidence shows image foundations but missing narration/footage deployment contracts. Require an explicitly designated staging destination rather than guessing production. Add founder-grant-protected fixed-value readiness and owner-scoped zero-row schema probes; never infer model, storage or billing acceptance from key/table presence. Repair stale founder acceptance routes/selectors while keeping real Auth/persistence assertions. No service role, credential decryption, mutation, provider call or production release. [STUDIO_ACTIVATION.md](STUDIO_ACTIVATION.md).
+
+## 2026-10-12 — One canonical Supabase for Studio
+
+Founder explicitly rejected a separate hosted staging database. This supersedes the earlier staging-destination requirement: use the existing Gent Ascend Supabase only. Protected preview and real local Supabase CI remain useful verification environments, not requirements for another hosted project. No hosted reset/seeding, automatic paid generation or production promotion follows from this correction. The complete integration candidate is PR #99 against main; reviewed additive Narration/Footage migrations and actual hosted provider/owner acceptance remain open.

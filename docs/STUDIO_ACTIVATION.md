@@ -6,7 +6,7 @@ Stacked on premium #98 and the complete #94–#97 Studio foundation. This phase 
 
 Read Vercel variable metadata with `decrypt=false`; retained/output only names and target scopes. The canonical project has OPENAI_API_KEY and Supabase public connection variables scoped to production/preview. No STUDIO_NARRATION_ENABLED, STUDIO_FOOTAGE_ENABLED, RUNWAYML_API_SECRET or STUDIO_FOOTAGE_SIGNING_KEY were present in the audited metadata. Presence does not prove validity, model permission or budgets. No plaintext credential was read or printed.
 
-Confirmed the canonical Gent Ascend database from FOUNDER_ACTIVATION.md and read only catalog/bucket metadata. Existing ai_studio_projects/references/versions/scenes/finishes/usage tables have RLS enabled. Existing aethelios-studio bucket is private and limited to 10,485,760 bytes. Narration/footage tables and audio/video buckets are absent, and footage functions count is zero. RLS enabled is not a test of policy correctness; no member records were inspected. The old standalone Aethelios database was not queried or changed. No distinct staging destination was evident from the selected connected project inventory; the production database is not treated as staging.
+Confirmed the canonical Gent Ascend database from FOUNDER_ACTIVATION.md and read only catalog/bucket metadata. Existing ai_studio_projects/references/versions/scenes/finishes/usage tables have RLS enabled. Existing aethelios-studio bucket is private and limited to 10,485,760 bytes. Narration/footage tables and audio/video buckets are absent, and footage functions count is zero. RLS enabled is not a test of policy correctness; no member records were inspected. The old standalone Aethelios database was not queried or changed. Founder direction now explicitly keeps one existing Gent Ascend Supabase. Protected preview refers to the application deployment, not another hosted database. Never reset or seed the shared hosted database.
 
 ## Implemented
 
@@ -17,10 +17,10 @@ Confirmed the canonical Gent Ascend database from FOUNDER_ACTIVATION.md and read
 
 ## Exact founder requirements
 
-1. Designate a protected **separate staging Supabase project/branch** and its matching Vercel preview environment. The existing public canonical database must not be guessed as staging. Review the full pending Studio stack before consolidation; do not replace unrelated PRs.
-2. Review compatible Narration `20261012120000_studio_narration.sql` and Footage `20261012180000_studio_footage.sql` on staging, including private buckets, table/RPC privileges and owner isolation. Hosted migration is not performed in this phase.
-3. Confirm existing server-only OPENAI_API_KEY has current image/GPT-Audio-1.5 permissions and a budget. Set app-specific RUNWAYML_API_SECRET and independent random STUDIO_FOOTAGE_SIGNING_KEY (at least 32 characters) as Vercel Secrets on the intended staging target. Preserve the signing key. Do not send keys in chat or reuse a Shopify/connector token.
-4. Keep flags off until storage/RPC and budget checks pass. Then conduct ordinary authenticated staging acceptance: approve one short narration and 5s clip, compare provider charges, inspect real outputs/host, privately save/reopen/seek/download, test uncertain acknowledgement recovery and another account's denial. Enable only accepted features. The read-only report cannot replace this test.
+1. Use **the existing Gent Ascend Supabase only**, with the protected Vercel preview candidate. No additional hosted project or branch is required. PR #99 consolidates the complete Studio stack against main while preserving earlier PRs and unrelated work.
+2. Review compatible Narration `20261012120000_studio_narration.sql` and Footage `20261012180000_studio_footage.sql` for the existing database, including private buckets, table/RPC privileges and owner isolation. Hosted migration is not performed in this phase.
+3. Confirm existing server-only OPENAI_API_KEY has current image/GPT-Audio-1.5 permissions and a budget. Set app-specific RUNWAYML_API_SECRET and independent random STUDIO_FOOTAGE_SIGNING_KEY (at least 32 characters) as Vercel Secrets on the protected preview target. Preserve the signing key. Do not send keys in chat or reuse a Shopify/connector token.
+4. Keep flags off until storage/RPC and budget checks pass. Then conduct ordinary authenticated preview acceptance against the existing database: approve one short narration and 5s clip, compare provider charges, inspect real outputs/host, privately save/reopen/seek/download, test uncertain acknowledgement recovery and another account's denial. Enable only accepted features. The read-only report cannot replace this test.
 5. Complete physical-device/performance/visual acceptance and review production migration/merge/flag/rollback changes before founder approval to release.
 
 ## Research and verification
@@ -29,4 +29,4 @@ Retrieved current [Supabase RLS](https://supabase.com/docs/guides/database/postg
 
 Unit tests cover secret nonserialization, founder denial before probes, owner/zero-row query contracts and ambiguous failure classification. Real local Supabase CI and focused Studio/browser/visual receipts are recorded in the PR. Local browser bind and Supabase CLI home are sandbox-blocked; do not equate fixtures/PGlite with hosted Auth acceptance. No new migration is added. No real paid generation, hosted two-account/Storage acceptance or production release is claimed.
 
-The three-phase v1 launch plan remains open: phase one is prepared but cannot finish until a staging destination, credentials/budgets and actual provider acceptance are supplied. Do not reduce the remaining count merely because an activation page exists.
+The three-phase v1 launch plan remains open: phase one is prepared but cannot finish until the missing schema, credentials/budgets and actual provider acceptance are completed. Do not reduce the remaining count merely because an activation page exists.

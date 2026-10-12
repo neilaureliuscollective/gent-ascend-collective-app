@@ -26,7 +26,7 @@ export async function studioReadiness() {
               ? 'missing'
               : 'unavailable'
             : 'detected',
-          next: 'Checks expected columns through your session without reading rows. Does not verify RPC definitions, RLS policy correctness or private storage. Review migrations on approved staging.',
+          next: 'Checks expected columns through your session without reading rows. Does not verify RPC definitions, RLS policy correctness or private storage. Review additive migrations for the existing Gent Ascend database.',
         };
       } catch {
         return {

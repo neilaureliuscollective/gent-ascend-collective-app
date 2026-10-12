@@ -907,3 +907,9 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
+
+## Studio integration and single-database correction — October 12, 2026
+
+PR #99 consolidates the complete production-house, Narration, Footage, Delivery and premium Studio stack against main. Founder readiness checks are session-bound and read-only. Founder explicitly directs using the existing Gent Ascend Supabase only; the extra hosted staging requirement is withdrawn. Hosted Narration/Footage schema, provider credentials/budgets and live acceptance remain incomplete. No hosted migration, paid generation or production deployment was performed.
+
+At integration commit 87079f0: 481 unit/SQL tests, lint/types/build, 12 Studio browser checks and all 12 real-local-Supabase founder tests passed. Visual CI passed on retry after browser screenshot-capture errors. Broader application E2E is not represented as green. Current documentation/setup-copy correction changes no generation or authorization behavior.
