@@ -1,3 +1,5 @@
+import { FirstSession } from '@/components/first-session';
+import { readWorldPriority } from '@/domains/daily/world-priority';
 import Link from 'next/link';
 import Image from 'next/image';
 import { InstallGuide } from '@/components/install-guide';
@@ -26,6 +28,7 @@ export default async function Welcome({
 }) {
   const [pilot, params] = await Promise.all([readPilot(), searchParams]);
   const access = pilot ? await currentAccess() : new Set<string>();
+  const priority = pilot ? await readWorldPriority() : null;
   return (
     <>
       <div className="page-heading compact-heading">
@@ -73,6 +76,10 @@ export default async function Welcome({
               </p>
             )}
           </section>
+          <FirstSession
+            initial={priority?.mode === 'personal' ? priority : null}
+            canTalk={access.has('aurelius.context')}
+          />
           <InstallGuide />
           <details className="panel pilot-section">
             <summary>Save a password for future sign-in</summary>

@@ -10,11 +10,13 @@ test('founder memory persists through the real Next API and can be removed', asy
   await page.getByRole('button', { name: 'Enter as founder' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
   await page.goto('/app/aethelios');
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await page.getByLabel('What should Aethelios remember?').fill('Synthetic browser memory');
   await page.getByRole('button', { name: 'Confirm and remember' }).click();
   await expect(page.locator('.memory-list')).toContainText('Synthetic browser memory');
   await page.reload();
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   const row = page.locator('.memory-list li').filter({ hasText: 'Synthetic browser memory' });
   await expect(row).toBeVisible();
