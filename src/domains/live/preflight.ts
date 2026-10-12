@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { parseEnvironment } from '@/platform/environment';
 import { liveModels } from './diagnostics';
 import { previewBinding } from './preview-binding';
+import { expiryReadiness } from './expiry-readiness';
 export const preflightProbe = z.object({ checkProvider: z.literal(true) }).strict();
 export function preflightConfiguration(env: Record<string, string | undefined>) {
   let environment: 'local' | 'preview' | 'production' | 'invalid' = 'invalid';
@@ -34,12 +35,12 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
       keyConfigured &&
       !!model &&
       (environment === 'local' ||
-        (controlsDeclared && previewBinding(env) === 'configuration-matched')),
+        (controlsDeclared &&
+          previewBinding(env) === 'configuration-matched' &&
+          expiryReadiness(env).configured)),
     launchAcceptance: 'unverified' as const,
     expiry: {
-      enabled: env.AETHELIOS_LIVE_EXPIRY_ENABLED === 'true',
-      workerCredentialConfigured: !!env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
-      schedulerSecretConfigured: (env.CRON_SECRET?.trim().length ?? 0) >= 32,
+      ...expiryReadiness(env),
       databaseConnectionConfigured:
         environment === 'production' ||
         (!!env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&

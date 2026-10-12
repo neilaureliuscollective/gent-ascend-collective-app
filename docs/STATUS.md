@@ -978,3 +978,7 @@ Read-only canonical inspection returned absent Live session/event/artifact/expir
 ## Live schema installed on canonical Gent — October 12, 2026
 
 Applied all seven reviewed Live migrations to the existing database, verified hosted ledger, RLS/direct-write/worker permissions and missing-identity denial without seeding accounts. Branch-specific canonical-pilot configuration is prepared; voice/expiry/readiness remain off. Full local suite: 83 files / 556 tests. Source f6516d98 passes connected Live, visual and Lifestyle jobs; broad Quality is still separate. No provider voice/device measurements or public activation. Receipts and remaining worker/scheduler setup: [hosted schema](AETHELIOS_LIVE_HOSTED_SCHEMA.md).
+
+## Live worker setup and admission check — October 12, 2026
+
+Generated/stored a branch-specific Preview scheduler Secret; OpenAI credentials and Production settings remain unchanged. Hosted admission and preflight share explicit cleanup-configuration requirements, rejecting missing worker authority, weak scheduler secret or disabled expiry before voice work. Corrected preflight's obsolete separate-database wording. Worker service-role credential cannot be retrieved by the connected tools; requested its placement in the existing Vercel Preview branch scope without exposing it. Real scheduling/provider termination and voice enablement remain pending. See [worker setup](AETHELIOS_LIVE_WORKER_SETUP.md).

@@ -20,6 +20,9 @@ beforeEach(() => {
   vi.stubEnv('AETHELIOS_LIVE_ENABLED', 'true');
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'false');
   vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'false');
+  vi.stubEnv('AETHELIOS_LIVE_EXPIRY_ENABLED', 'true');
+  vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'synthetic-worker');
+  vi.stubEnv('CRON_SECRET', 'synthetic-scheduler-secret-at-least-32-characters');
   vi.stubEnv('OPENAI_API_KEY', 'synthetic-test-key');
   vi.stubEnv('AETHELIOS_LIVE_MODEL', 'gpt-realtime');
 });
@@ -57,4 +60,24 @@ it('recognizes founder-only canonical pilot without another database while retai
   vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', undefined);
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
   expect(liveConfig()).toMatchObject({ canonicalPilot: true, model: 'gpt-realtime' });
+});
+
+it('rejects a declared-ready hosted preview without each independent cleanup requirement', () => {
+  vi.stubEnv('APP_ENV', 'preview');
+  vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'true');
+  vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', undefined);
+  vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://volpzkfsnmtztrovexcw.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable');
+  for (const [name, missing] of [
+    ['SUPABASE_SERVICE_ROLE_KEY', ' '],
+    ['CRON_SECRET', 'short'],
+    ['AETHELIOS_LIVE_EXPIRY_ENABLED', 'false'],
+  ] as const) {
+    const original = process.env[name];
+    vi.stubEnv(name, missing);
+    expect(() => liveConfig()).toThrow(/cleanup is not configured/);
+    vi.stubEnv(name, original);
+  }
+  expect(liveConfig().canonicalPilot).toBe(true);
 });

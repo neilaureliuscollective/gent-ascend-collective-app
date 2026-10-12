@@ -69,7 +69,15 @@ afterEach(() => {
 });
 it('keeps configured credentials separate from admission and launch acceptance, rejecting production/invalid combinations', () => {
   const report = preflightConfiguration(env);
-  expect(report.admissionConfigured).toBe(true);
+  expect(report.admissionConfigured).toBe(false);
+  expect(
+    preflightConfiguration({
+      ...env,
+      AETHELIOS_LIVE_EXPIRY_ENABLED: 'true',
+      SUPABASE_SERVICE_ROLE_KEY: 'PRIVATE_WORKER',
+      CRON_SECRET: 'PRIVATE_SCHEDULER_SECRET_AT_LEAST_32_CHARACTERS',
+    }).admissionConfigured,
+  ).toBe(true);
   expect(report.launchAcceptance).toBe('unverified');
   expect(JSON.stringify(report)).not.toContain('PRIVATE_PROVIDER_KEY');
   expect(
@@ -112,6 +120,7 @@ it('reports expiry configuration without exposing credentials or promoting flags
   });
   expect(configured.expiry).toEqual({
     enabled: true,
+    configured: true,
     workerCredentialConfigured: true,
     schedulerSecretConfigured: true,
     databaseConnectionConfigured: true,

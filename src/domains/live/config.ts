@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parseEnvironment } from '@/platform/environment';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { previewBinding } from './preview-binding';
+import { expiryReadiness } from './expiry-readiness';
 export function liveConfig() {
   const env = parseEnvironment(process.env);
   if (process.env.AETHELIOS_LIVE_ENABLED !== 'true' || env.mode === 'production')
@@ -14,6 +15,11 @@ export function liveConfig() {
     );
   if (env.mode === 'preview' && previewBinding(process.env) !== 'configuration-matched')
     throw new IntelligenceError('The voice preview database binding is missing or unsafe.', 403);
+  if (env.mode === 'preview' && !expiryReadiness(process.env).configured)
+    throw new IntelligenceError(
+      'Independent voice cleanup is not configured for this preview.',
+      403,
+    );
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new IntelligenceError('The voice connection is not configured.', 503);
   // Explicit pilot model; changes require a separate provider and cost validation.

@@ -76,8 +76,14 @@ export function LivePreflight() {
             <dd>{report.controlsDeclared ? 'Yes — declaration only' : 'No'}</dd>
             <dt>Preview database binding</dt>
             <dd>
-              {report.previewDatabaseBinding} — configuration only; isolated target acceptance is
+              {report.previewDatabaseBinding} — configuration only; hosted access verification is
               still required.
+            </dd>
+            <dt>Database pilot scope</dt>
+            <dd>
+              {report.canonicalPilot
+                ? 'Existing Gent database · founder-only admission'
+                : 'Configured local or isolated target'}
             </dd>
             <dt>Admission configuration</dt>
             <dd>

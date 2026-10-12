@@ -1,3 +1,5 @@
+> October 12 configuration update: CRON_SECRET has now been generated and stored as a Secret solely for the integration branch Preview. The historical no-credential-change statement below predates this setup. Worker database authority and active scheduled delivery remain unresolved; voice/expiry/readiness stay off. See [worker setup](AETHELIOS_LIVE_WORKER_SETUP.md).
+
 # Independent Live expiry — implementation candidate, October 12, 2026
 
 ## Decision and researched constraints

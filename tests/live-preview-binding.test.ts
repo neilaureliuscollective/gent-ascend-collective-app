@@ -68,6 +68,9 @@ it('permits explicitly enabled canonical account pilot without requiring a secon
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'synthetic-publishable',
     AETHELIOS_LIVE_ENABLED: 'true',
     AETHELIOS_LIVE_CONTROL_READY: 'true',
+    AETHELIOS_LIVE_EXPIRY_ENABLED: 'true',
+    SUPABASE_SERVICE_ROLE_KEY: 'synthetic-worker',
+    CRON_SECRET: 'synthetic-scheduler-secret-at-least-32-characters',
     OPENAI_API_KEY: 'synthetic',
   };
   expect(previewBinding(shared)).toBe('configuration-matched');
