@@ -45,6 +45,7 @@ test('Studio uses waiting until its synchronous endpoint confirms the save', asy
   await page.getByLabel('Describe what you want to see').fill('Synthetic visual direction');
   await page.getByRole('button', { name: 'Create image' }).click();
   await expect(page.locator('.studio-main .im-status')).toHaveText('Waiting for response');
+  await page.screenshot({ path: 'test-results/guiding-studio.png', fullPage: true });
   await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
   await expect(page.locator('.studio-main .im-status')).toHaveText('Saved');
 });

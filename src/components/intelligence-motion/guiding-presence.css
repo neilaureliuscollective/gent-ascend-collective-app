@@ -1,38 +1,5 @@
 .identity-presence.im-presence {
-  width: min(320px, 70vw);
-}
-.voice-note {
-  text-align: center;
-  max-width: 560px;
-  margin: 0 auto;
-  line-height: 1.6;
-  color: #b9c9c1;
-}
-.construction {
-  margin: 40px 0;
-  max-width: 760px;
-  line-height: 1.7;
-  color: #b9c9c1;
-}
-.pose-board {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-}
-.pose-board article {
-  text-align: center;
-  border: 1px solid #174438;
-  border-radius: 16px;
-  padding: 12px;
-  font-size: 12px;
-}
-.pose-board .identity-presence {
-  width: 100%;
-  max-width: 140px;
-  margin: auto;
-}
-.identity-presence {
-  width: 144px;
+  width: clamp(104px, 12vw, 144px);
   flex-shrink: 0;
   --cycle: 4s;
   --gain: 0.65;

@@ -23,7 +23,9 @@ test('save confirmation, voice envelope and Still preserve truthful presentation
 }) => {
   await page.goto('http://127.0.0.1:3102/identity-studies.html');
   const presence = page.locator('.presence-anchor .identity-presence');
-  await page.getByLabel('Operation pose').selectOption('complete');
+  await page
+    .getByRole('combobox', { name: 'Operation pose', exact: true })
+    .selectOption('complete');
   await page.getByLabel('Save receipt').selectOption('pending');
   await expect(presence).toHaveAttribute('data-phase', 'saving');
   await expect(page.getByRole('status')).toHaveText('Saving · Preview');
@@ -33,9 +35,13 @@ test('save confirmation, voice envelope and Still preserve truthful presentation
   await page.getByLabel('Save receipt').selectOption('not-applicable');
   await page.getByLabel('Illustrative voice envelope').fill('0.8');
   await expect(presence).toHaveCSS('--level', '0');
-  await page.getByLabel('Operation pose').selectOption('speaking');
+  await page
+    .getByRole('combobox', { name: 'Operation pose', exact: true })
+    .selectOption('speaking');
   await expect(presence).toHaveCSS('--level', '0.8');
-  await page.getByLabel('Operation pose').selectOption('thinking');
+  await page
+    .getByRole('combobox', { name: 'Operation pose', exact: true })
+    .selectOption('thinking');
   await page.getByLabel('Still', { exact: true }).check();
   expect(
     await presence

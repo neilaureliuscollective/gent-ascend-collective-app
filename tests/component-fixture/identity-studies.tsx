@@ -274,6 +274,7 @@ function App() {
         <label>
           Operation pose
           <select
+            aria-label="Operation pose"
             value={phase}
             onChange={(event) => {
               setPlaying(false);
