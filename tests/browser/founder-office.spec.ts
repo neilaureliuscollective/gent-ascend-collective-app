@@ -81,7 +81,14 @@ test('Founder job controls save versioned task and approval snapshots without cl
   page.on('pageerror', (error) => console.log('Synthetic Founder fixture error:', error.message));
   let work = structuredClone(syntheticWork);
   const mutations: Array<{ endpoint: string; body: Record<string, unknown> }> = [];
-  await page.route('**/api/company-work?*', (route) => route.fulfill({ json: { jobs: [] } }));
+  await page.route('**/api/company-work?*', (route) =>
+    route.fulfill({
+      json:
+        new URL(route.request().url()).searchParams.get('format') === 'preview'
+          ? { slides: [] }
+          : { jobs: [] },
+    }),
+  );
   await page.route('**/api/founder-office/tasks', async (route) => {
     const body = route.request().postDataJSON();
     mutations.push({ endpoint: 'tasks', body });
