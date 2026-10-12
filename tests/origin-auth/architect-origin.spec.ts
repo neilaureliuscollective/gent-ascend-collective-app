@@ -73,16 +73,34 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+      document.querySelector('.origin-workspace')?.scrollTo(0, 0);
+    });
     await page.screenshot({
       path: `test-results/architect-origin-real-workspace-${width}.png`,
       fullPage: false,
     });
-    await page.getByLabel('Editable Markdown').scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: 'Focus canvas', exact: true }).click();
+    await page.getByRole('button', { name: 'Preview', exact: true }).click();
+    await page.getByRole('article', { name: 'Document preview' }).scrollIntoViewIfNeeded();
     await page.screenshot({
       path: `test-results/architect-origin-real-document-${width}.png`,
       fullPage: false,
     });
+    await page.getByRole('button', { name: 'Split', exact: true }).click();
+    await page.getByRole('button', { name: 'Show Aethelios tools', exact: true }).click();
+    await page.getByRole('button', { name: 'Aethelios menu' }).click();
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Health', exact: true }),
+    ).toBeInViewport();
+    await page.screenshot({
+      path: `test-results/architect-immersive-real-menu-${width}.png`,
+      fullPage: false,
+    });
+    await page.keyboard.press('Escape');
   }
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await expect(page.getByRole('button', { name: /Revision 1 —/ })).toBeVisible();

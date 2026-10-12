@@ -797,3 +797,17 @@
 .origin-conversation[hidden] {
   display: none;
 }
+/* Keep sustained reading on the approved carbon material. */
+.environment-main .origin-active .origin-plane {
+  background: var(--io-environment);
+}
+.environment-immersive .connection-field {
+  display: none;
+}
+@media (min-width: 1101px) {
+  .origin-view-split .origin-document-preview {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+  }
+}

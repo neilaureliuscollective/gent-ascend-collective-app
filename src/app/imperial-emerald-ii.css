@@ -1,0 +1,186 @@
+/* Imperial Emerald II — refinement of the existing unified material contracts.
+   Static lighting only. Reading, media, native dialogs and viewport ownership stay intact. */
+:root {
+  --io-satin: linear-gradient(145deg, var(--aether-deep), var(--aether-surface) 85%);
+  --io-living: radial-gradient(ellipse at 46% 0%, var(--aether-emerald-active), transparent 68%),
+    linear-gradient(125deg, var(--aether-emerald-imperial), var(--aether-deep) 78%);
+  --io-gilded: linear-gradient(125deg, #202A20, var(--aether-obsidian) 76%);
+  --io-chamber: var(--io-living);
+  --io-glass: var(--io-satin);
+  --io-material: var(--io-satin);
+  --io-composer: var(--io-satin);
+  --io-metal: var(--io-gilded);
+  --io-hero-material: var(--io-living);
+}
+.app-shell.imperial-workspace :is(.company-work > header, .founder-office > .io-hero, .studio-direction, .io-ecosystem-hero, .io-division-intelligence),
+:is(.imperial-workspace, .imperial-obsidian) .lifestyle-hero {
+  --io-secondary: var(--aether-featured-secondary);
+  --io-highlight: color-mix(in srgb, var(--aether-gold-light) 65%, var(--aether-text));
+}
+.app-shell.imperial-workspace :is(.company-work > header, .founder-office > .io-hero, .studio-direction, .io-ecosystem-hero, .io-division-intelligence) :is(p, .quiet-label) { color: var(--io-secondary); }
+.app-shell.imperial-workspace :is(.company-work > header, .founder-office > .io-hero, .studio-direction, .io-ecosystem-hero, .io-division-intelligence) .eyebrow,
+:is(.imperial-workspace, .imperial-obsidian) .lifestyle-hero .world-kicker { color: var(--io-text); }
+:is(.imperial-workspace, .imperial-obsidian) .lifestyle-hero p { color: var(--aether-featured-secondary); }
+::selection { background: var(--io-selection); color: var(--io-text); }
+.app-shell.imperial-workspace :is(.sidebar, .navigation) { scrollbar-width: thin; }
+.app-shell.imperial-workspace .navigation a { border-radius: 10px; }
+.app-shell.imperial-workspace :is(.button, .secondary-button, .talk-tool, .navigation a) {
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.app-shell.imperial-workspace :is(.button, .secondary-button):active:not(:disabled) {
+  transform: translateY(1px);
+}
+.app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer) textarea.talk-input {
+  background: transparent;
+  border: 0;
+}
+.app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer):focus-within {
+  border-color: var(--io-highlight);
+  box-shadow: 0 0 0 1px var(--io-highlight), inset 0 1px var(--io-reflection);
+}
+.app-shell.imperial-workspace :is(.button, .secondary-button, .talk-tool):disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace :is(.aurelius-send, .founder-command .button, .studio-composer .button) {
+  background: var(--io-gilded);
+  border-color: color-mix(in srgb, var(--io-gold) 55%, var(--io-divider));
+}
+.app-shell.imperial-workspace :is(.talk-drawer.talk-drawer, .capture-dialog, .context-sheet-surface) {
+  background: linear-gradient(155deg, var(--io-floating), var(--io-navigation) 65%);
+}
+/* The welcome identity is bounded and static; existing request/Live presence remains separate. */
+.talk-welcome-orb { position: relative; width: 124px; height: 124px; flex: none; pointer-events: none; }
+.talk-welcome-orb canvas { display: none; }
+.talk-welcome-orb .intelligence-orb { position: absolute; inset: 0; }
+.talk-welcome-orb .intelligence-orb-static {
+  position: absolute; inset: 12%; border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle at 32% 25%, var(--aether-emerald-active), var(--aether-emerald-imperial) 38%, var(--aether-obsidian) 78%);
+  border: 1px solid var(--aether-border-active);
+  box-shadow: inset -8px -10px 20px #0008;
+}
+.talk-welcome-orb .intelligence-orb-light {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 24%, #d6b76a26, transparent 34%);
+}
+.talk-welcome-orb .intelligence-orb-contours { display: none; }
+.talk-welcome-orb::after {
+  content: ''; position: absolute; inset: 16% 0; border: 1px solid #d6b76a55;
+  border-radius: 50%; transform: rotate(-24deg) scaleY(0.45);
+}
+.app-shell.imperial-workspace .talk-page .is-new-conversation .conversation-scroll {
+  display: flex; flex-direction: column; justify-content: safe center;
+}
+.app-shell.imperial-workspace .talk-page .welcome-heading {
+  display: flex; align-items: center; gap: 22px;
+}
+.app-shell.imperial-workspace .talk-page .aurelius-welcome {
+  width: min(100%, 720px); margin-inline: auto; padding: 16px;
+}
+.app-shell.imperial-workspace .talk-page .welcome-heading h2 {
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem); line-height: 1.25;
+}
+.app-shell.imperial-workspace .talk-page .aurelius-welcome > p { margin-block: 16px; }
+.app-shell.imperial-workspace .talk-page .conversation-starters {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+}
+.app-shell.imperial-workspace .talk-page .conversation-starters button {
+  min-width: 0; min-height: 44px; padding: 14px; font-size: 0.8125rem; line-height: 1.6;
+  background: var(--io-satin); border-color: var(--io-divider); text-align: left;
+}
+.app-shell.imperial-workspace .talk-page .conversation-turn { margin-bottom: 28px; }
+.app-shell.imperial-workspace .talk-page .user-message {
+  max-width: min(90%, 640px); margin-left: auto; padding: 14px 18px; border-radius: 16px 16px 4px 16px;
+}
+.app-shell.imperial-workspace .talk-page .assistant-message {
+  border: 0; padding: 20px 4px 0; background: transparent; box-shadow: none;
+}
+.app-shell.imperial-workspace .talk-page .message-markdown { font-size: 1rem; line-height: 1.8; }
+.app-shell.imperial-workspace .talk-page .message-markdown :is(h2, h3, h4) { margin-block: 1.4em 0.6em; line-height: 1.35; }
+.app-shell.imperial-workspace .talk-page .message-markdown p { margin-block: 0.75em; color: var(--io-text); }
+.app-shell.imperial-workspace .talk-page :is(.message-tools, .message-feedback) {
+  gap: 8px; margin-top: 8px;
+}
+.app-shell.imperial-workspace .talk-page :is(.message-tools, .message-feedback) button {
+  min-height: 44px; padding: 6px 8px; font-size: 0.75rem; color: var(--io-secondary);
+}
+/* Founder attention: bounded snapshot, no new provider calls or inferred activity. */
+.founder-attention { min-width: 0; }
+.founder-attention > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.founder-attention h2 { margin-top: 8px; font-size: clamp(1.3rem, 2vw, 1.8rem); }
+.founder-attention-note { font-size: 0.8125rem; margin: 12px 0 18px; max-width: 75ch; }
+.founder-attention-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--io-divider); border: 1px solid var(--io-divider); border-radius: 16px; }
+.founder-attention-group { min-width: 0; padding: 18px; background: var(--io-satin); }
+.founder-attention-group:first-child { border-radius: 15px 0 0 15px; }
+.founder-attention-group:last-child { border-radius: 0 15px 15px 0; }
+.founder-attention-group h3 { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9375rem; line-height: 1.5; letter-spacing: -0.015em; }
+.founder-attention-group h3 > span { color: var(--io-highlight); font-variant-numeric: tabular-nums; }
+.founder-attention-group :is(p, small) { font-size: 0.8125rem; color: var(--io-secondary); }
+.founder-attention-group > p { margin-top: 12px; }
+.founder-attention-group ul { list-style: none; padding: 0; margin: 12px 0 0; }
+.founder-attention-group li + li { border-top: 1px solid var(--io-divider); }
+.founder-attention-group li a { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; min-height: 44px; overflow-wrap: anywhere; }
+.founder-attention-group li a > span { color: var(--io-text); font-size: 0.875rem; }
+.founder-attention-group > a { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.8125rem; }
+.imperial-workspace .founder-office > .io-hero { padding: clamp(22px, 3vw, 36px); background: var(--io-living); }
+.imperial-workspace .founder-office > .io-hero h1 { font-size: clamp(1.8rem, 3vw, 2.8rem); margin-block: 12px; }
+.imperial-workspace .founder-office .panel { padding: clamp(18px, 2vw, 28px); }
+.imperial-workspace .founder-office .founder-command { background: var(--io-satin); }
+/* Creative/editorial surfaces keep their own composition on the shared materials. */
+.app-shell.imperial-workspace .studio-world-heading { background: transparent; box-shadow: none; border: 0; border-bottom: 1px solid var(--io-divider); border-radius: 0; }
+.app-shell.imperial-workspace .studio-direction { background: var(--io-living); }
+.app-shell.imperial-workspace .studio-view-tabs button { min-height: 44px; }
+.app-shell.imperial-workspace .studio-projects { scrollbar-width: thin; }
+.app-shell.imperial-workspace .io-division { background: var(--io-satin); }
+.app-shell.imperial-workspace .io-division-intelligence { background: var(--io-living); }
+:is(.imperial-workspace, .imperial-obsidian) .lifestyle-hero { background: var(--io-living); border-bottom-color: var(--io-divider); }
+:is(.imperial-workspace, .imperial-obsidian) .lifestyle-brands { background: var(--io-satin); }
+:is(.imperial-workspace, .imperial-obsidian) .reserve-card-copy h3 { line-height: 1.35; overflow-wrap: anywhere; }
+:is(.imperial-workspace, .imperial-obsidian) .reserve-card-price strong { color: var(--io-text); font-size: 1rem; font-variant-numeric: tabular-nums; }
+:is(.imperial-workspace, .imperial-obsidian) .reserve-card-price { flex-wrap: wrap; gap: 8px 16px; }
+@media (max-width: 1200px) {
+  .founder-attention-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .founder-attention-group { border-radius: 0; }
+  .founder-attention-group:first-child { border-top-left-radius: 15px; }
+  .founder-attention-group:nth-child(2) { border-top-right-radius: 15px; }
+  .founder-attention-group:nth-last-child(2) { border-bottom-left-radius: 15px; }
+  .founder-attention-group:last-child { border-bottom-right-radius: 15px; }
+}
+@media (max-width: 700px) {
+  .app-shell.imperial-workspace .talk-page .welcome-heading { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .talk-welcome-orb { width: 88px; height: 88px; }
+  .app-shell.imperial-workspace .talk-page .conversation-starters { grid-template-columns: 1fr; }
+  .app-shell.imperial-workspace .talk-page .conversation-starters button { padding: 10px 12px; }
+  .founder-attention > header { flex-wrap: wrap; }
+  .founder-attention-grid { grid-template-columns: 1fr; }
+  .founder-attention-group:nth-child(n) { border-radius: 0; }
+  .founder-attention-group:first-child { border-radius: 15px 15px 0 0; }
+  .founder-attention-group:last-child { border-radius: 0 0 15px 15px; }
+}
+@media (max-height: 650px) {
+  .talk-welcome-orb { display: none; }
+  .app-shell.imperial-workspace .talk-page .aurelius-welcome { padding-block: 8px; }
+  .app-shell.imperial-workspace .talk-page .conversation-starters { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.imperial-workspace :is(.button, .secondary-button, .talk-tool, .navigation a) { transition: none; }
+  .app-shell.imperial-workspace :is(.button, .secondary-button):active { transform: none; }
+}
+html[data-material='solid'] {
+  --io-satin: var(--io-navigation); --io-living: var(--io-emerald-imperial); --io-gilded: var(--io-environment);
+}
+html[data-material='solid'] .app-shell.imperial-workspace :is(.talk-drawer.talk-drawer, .capture-dialog, .context-sheet-surface) { background: var(--io-navigation); }
+html[data-material='solid'] .talk-welcome-orb .intelligence-orb-static { background: var(--io-emerald-imperial); box-shadow: none; }
+@media (prefers-contrast: more) {
+  .founder-attention-grid { border-color: var(--io-text); }
+  .founder-attention-group { outline: 1px solid var(--io-secondary); }
+}
+@media (forced-colors: active) {
+  :root { --io-satin: Canvas; --io-living: Canvas; --io-gilded: ButtonFace; }
+  .talk-welcome-orb { display: none; }
+  .app-shell.imperial-workspace :is(.talk-drawer.talk-drawer, .capture-dialog, .context-sheet-surface) { background: Canvas; }
+  .app-shell.imperial-workspace :is(.aurelius-send, .founder-command .button, .studio-composer .button) { background: ButtonFace; border-color: ButtonText; color: ButtonText; }
+  .founder-attention-grid { background: Canvas; border-color: CanvasText; }
+  .founder-attention-group { background: Canvas; color: CanvasText; }
+  .founder-attention-group :is(h3 > span, p, small, li a > span) { color: CanvasText; }
+}

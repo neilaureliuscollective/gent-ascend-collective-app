@@ -37,7 +37,11 @@ export function EnvironmentFrame({
             <span className="environment-name">
               ARCHITECT <span>/ CREATION ENVIRONMENT</span>
             </span>
-            <button className="environment-menu-button" onClick={() => menu.current?.showModal()}>
+            <button
+              className="environment-menu-button"
+              aria-haspopup="dialog"
+              onClick={() => menu.current?.showModal()}
+            >
               Aethelios menu
             </button>
           </header>
