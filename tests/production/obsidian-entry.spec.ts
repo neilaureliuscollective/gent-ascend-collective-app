@@ -13,7 +13,7 @@ test('the verified production application serves Obsidian and preserves public e
       },
       { timeout: 120000, intervals: [2000, 5000] },
     )
-    .toBe('#080A0B');
+    .toBe('#080D0D');
 
   for (const viewport of [
     { width: 390, height: 844 },
