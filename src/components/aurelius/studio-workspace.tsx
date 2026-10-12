@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StudioScene } from './studio-storyboard';
+import { StudioNarration } from './studio-narration';
 import { StudioCampaign } from './studio-campaign';
 import { StudioBrandKit } from './studio-brand-kit';
 import { readBrandKit, type BrandKit } from '@/domains/studio/brand';
@@ -48,7 +49,7 @@ type Workspace = {
   configured: boolean;
   canCreate?: boolean;
 };
-type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish';
+type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish' | 'narration';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = {
   projects: [],
@@ -110,6 +111,7 @@ export function StudioWorkspace() {
   const [error, setError] = useState('');
   const [busyLabel, setBusyLabel] = useState('Working…');
   const [newTitle, setNewTitle] = useState('');
+  const [narrationId, setNarrationId] = useState<string | null>(null);
   const [preparedNew, setPreparedNew] = useState(false);
   const [newType, setNewType] = useState<CreativeType>('open');
   const [naming, setNaming] = useState(false);
@@ -212,6 +214,7 @@ export function StudioWorkspace() {
         }),
       );
       await load(result.id);
+      setNarrationId(null);
       setNewTitle('');
       setNaming(false);
       setDraft(initialPrompt);
@@ -474,6 +477,7 @@ export function StudioWorkspace() {
                   setReference(null);
                   setForScene(null);
                   setFinishVersion(null);
+                  setNarrationId(null);
                   setLoading(true);
                   setView('create');
                   void load(item.id);
@@ -538,7 +542,9 @@ export function StudioWorkspace() {
               role="group"
               aria-label="Studio workspace views"
             >
-              {(['create', 'storyboard', 'finish', 'library', 'direction'] as const).map((tab) => (
+              {(
+                ['create', 'storyboard', 'narration', 'finish', 'library', 'direction'] as const
+              ).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -551,16 +557,31 @@ export function StudioWorkspace() {
                       ? 'Campaign'
                       : tab === 'finish'
                         ? 'Finish'
-                        : tab === 'library'
-                          ? 'Library'
-                          : 'Direction'}
+                        : tab === 'narration'
+                          ? 'Narration'
+                          : tab === 'library'
+                            ? 'Library'
+                            : 'Direction'}
                 </button>
               ))}
             </div>
+            {view === 'narration' && selected && (
+              <StudioNarration
+                key={selected}
+                projectId={selected}
+                scenes={data.scenes}
+                onUse={(id) => {
+                  setNarrationId(id);
+                  setView('storyboard');
+                }}
+              />
+            )}
             {view === 'storyboard' && (
               <StudioCampaign
                 key={selected}
                 projectId={selected}
+                narrationId={narrationId}
+                onClearNarration={() => setNarrationId(null)}
                 title={project?.title ?? 'Campaign'}
                 brand={readBrandKit(project?.brief.brand)}
                 scenes={data.scenes}

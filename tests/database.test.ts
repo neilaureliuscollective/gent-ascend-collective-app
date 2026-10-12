@@ -1507,3 +1507,29 @@ describe('public Mission ownership and continuity', () => {
     expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
   });
 });
+
+
+describe('Studio narration owner and quota boundary',()=>{
+ it('reserves one approved request, persists its exact source and isolates originals',async()=>{
+  const project='ac000000-0000-4000-8000-000000000001',id='ac000000-0000-4000-8000-000000000002';
+  await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',(select id from public.persons where auth_user_id='${founder}'),'Narration fixture')`);
+  const begin=`select public.ai_studio_narration_begin('${id}','${project}','Opening','Made with intention.','alloy','clear') as saved`;
+  expect((await asUser<{saved:boolean}>(founder,begin)).rows[0]!.saved).toBe(true);
+  expect((await asUser<{saved:boolean}>(founder,begin)).rows[0]!.saved).toBe(false);
+  expect((await asUser(member,`select * from public.ai_studio_narrations where id='${id}'`)).rows).toHaveLength(0);
+  await expect(asUser(member,begin)).rejects.toThrow('unavailable');
+  await expect(asUser(founder,`update public.ai_studio_narration_usage set created_at=now()-interval '2 days'`)).rejects.toThrow('permission denied');
+  await expect(asUser(founder,`select public.ai_studio_narration_begin(gen_random_uuid(),'${project}','Again','Short script','alloy','clear')`)).rejects.toThrow('concurrent');
+  await expect(asUser(founder,`select public.ai_studio_narration_finish('${id}','complete','${member}/${project}/${id}.wav',1)`)).rejects.toThrow('Invalid');
+  await expect(asUser(founder,`select public.ai_studio_narration_finish('${id}','complete','${founder}/${project}/${id}.wav',null)`)).rejects.toThrow('Invalid');
+  expect((await asUser<{saved:boolean}>(founder,`select public.ai_studio_narration_finish('${id}','complete','${founder}/${project}/${id}.wav',2) as saved`)).rows[0]!.saved).toBe(true);
+  expect((await asUser<{saved:boolean}>(founder,`select public.ai_studio_narration_finish('${id}','failed') as saved`)).rows[0]!.saved).toBe(false);
+  await asUser(founder,`insert into storage.objects(bucket_id,name) values('aethelios-studio-audio','${founder}/${project}/${id}.wav')`);
+  expect((await asUser(member,`select * from storage.objects where bucket_id='aethelios-studio-audio'`)).rows).toHaveLength(0);
+  await expect(asUser(member,`insert into storage.objects(bucket_id,name) values('aethelios-studio-audio','${founder}/${project}/intrusion.wav')`)).rejects.toThrow();
+  for(let i=0;i<2;i++){const extra=crypto.randomUUID();await asUser(founder,`select public.ai_studio_narration_begin('${extra}','${project}','Another','Short script','ash','calm')`);await asUser(founder,`select public.ai_studio_narration_finish('${extra}','failed')`);}
+  await expect(asUser(founder,`select public.ai_studio_narration_begin(gen_random_uuid(),'${project}','Fourth','Short script','coral','confident')`)).rejects.toThrow('limit');
+  await db.exec(`delete from public.ai_studio_projects where id='${project}'`);
+  expect((await asUser<{count:number}>(founder,'select count(*)::int as count from public.ai_studio_narration_usage')).rows[0]!.count).toBe(3);
+ });
+});

@@ -38,6 +38,7 @@ export async function renderMotionFilm({
   seconds,
   motion,
   audio,
+  requireFullAudio = false,
   signal,
   onProgress,
 }: {
@@ -48,6 +49,7 @@ export async function renderMotionFilm({
   seconds: 2 | 4 | 6;
   motion: boolean;
   audio: File | null;
+  requireFullAudio?: boolean;
   signal: AbortSignal;
   onProgress: (value: number) => void;
 }) {
@@ -140,6 +142,10 @@ export async function renderMotionFilm({
       context = new AudioContext();
       await boundedWait(context.resume(), signal, 5000);
       const buffer = await boundedWait(context.decodeAudioData(await audio.arrayBuffer()), signal);
+      if (requireFullAudio && buffer.duration > shots.length * seconds)
+        throw new Error(
+          'The narration is longer than this film. Add scenes, increase seconds per scene or create a shorter narration.',
+        );
       if (buffer.numberOfChannels > 2 || buffer.sampleRate > 48000)
         throw new Error('Choose a mono or stereo soundtrack at 48 kHz or below.');
       source = context.createBufferSource();

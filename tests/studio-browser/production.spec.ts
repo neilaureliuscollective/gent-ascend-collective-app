@@ -241,3 +241,114 @@ test('cancelled rendering never presents a finished film', async ({ page }) => {
   ).toContainText('cancelled');
   await expect(page.getByRole('button', { name: 'Download film', exact: false })).toHaveCount(0);
 });
+
+test('narration requires fresh approval, saves a clip, plays real WAV audio, and produces a narrated campaign with scene subtitles', async ({
+  page,
+}) => {
+  await setup(page);
+  const wav = Buffer.alloc(44 + 32000);
+  wav.write('RIFF');
+  wav.writeUInt32LE(wav.length - 8, 4);
+  wav.write('WAVEfmt ', 8);
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(8000, 24);
+  wav.writeUInt32LE(16000, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write('data', 36);
+  wav.writeUInt32LE(32000, 40);
+  for (let i = 0; i < 16000; i++)
+    wav.writeInt16LE(Math.round(Math.sin((i * 2 * Math.PI * 220) / 8000) * 1000), 44 + i * 2);
+  const workspace = {
+    available: true,
+    enabled: true,
+    canCreate: true,
+    items: [] as Record<string, unknown>[],
+  };
+  let generations = 0;
+  await page.route('**/api/studio/narration**', async (route) => {
+    if (new URL(route.request().url()).pathname.endsWith('/audio'))
+      return route.fulfill({ contentType: 'audio/wav', body: wav });
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON();
+      expect(body.approved).toBe(true);
+      generations++;
+      workspace.items = [
+        {
+          ...body,
+          model: 'gpt-audio-1.5',
+          status: 'complete',
+          duration: 2,
+          created_at: '2026-10-12T00:00:00Z',
+        },
+      ];
+      return route.fulfill({ status: 201, json: { id: body.id } });
+    }
+    return route.fulfill({ json: workspace });
+  });
+  const tabs = page.getByRole('group', { name: 'Studio workspace views' });
+  await tabs.getByRole('button', { name: 'Narration', exact: true }).click();
+  await page.getByRole('button', { name: 'Prepare from campaign copy', exact: true }).click();
+  await expect(page.getByLabel('Narration script', { exact: true })).toHaveValue(
+    'Made with intention.',
+  );
+  const generate = page.getByRole('button', { name: 'Generate approved narration', exact: true });
+  await expect(generate).toBeDisabled();
+  const approval = page.getByRole('checkbox', {
+    name: 'I approve this script and authorize one AI narration request.',
+  });
+  await approval.check();
+  await page.getByLabel('Narration voice', { exact: true }).selectOption('ash');
+  await expect(approval).not.toBeChecked();
+  await expect(generate).toBeDisabled();
+  await approval.check();
+  await generate.click();
+  const audio = page.getByLabel('AI narration: Campaign narration');
+  await expect(audio).toBeVisible();
+  await audio.evaluate(async (node) => {
+    await (node as HTMLAudioElement).play();
+  });
+  await expect
+    .poll(() => audio.evaluate((node) => (node as HTMLAudioElement).currentTime))
+    .toBeGreaterThan(0.2);
+  expect(generations).toBe(1);
+  const audioDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download WAV', exact: false }).click();
+  await (await audioDownload).saveAs('test-results/studio-narration.wav');
+  await page.getByRole('button', { name: 'Use in campaign film', exact: true }).click();
+  await page.getByLabel('Seconds per scene').selectOption('2');
+  await page.getByRole('button', { name: 'Render motion film', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Download film', exact: false })).toBeVisible({
+    timeout: 20000,
+  });
+  const subtitleDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export VTT captions', exact: false }).click();
+  await (await subtitleDownload).saveAs('test-results/studio-campaign-captions.vtt');
+});
+test('narration remains honest and script exportable before backend activation', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.route('**/api/studio/narration**', (route) =>
+    route.fulfill({ json: { available: false, enabled: false, canCreate: false, items: [] } }),
+  );
+  await page
+    .getByRole('group', { name: 'Studio workspace views' })
+    .getByRole('button', { name: 'Narration', exact: true })
+    .click();
+  await expect(page.getByRole('region', { name: 'Narration production' })).toContainText(
+    'awaiting activation',
+  );
+  await page.getByLabel('Narration script', { exact: true }).fill('A reviewed script.');
+  await page
+    .getByRole('checkbox', {
+      name: 'I approve this script and authorize one AI narration request.',
+    })
+    .check();
+  await expect(
+    page.getByRole('button', { name: 'Generate approved narration', exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Export script', exact: false })).toBeEnabled();
+});
