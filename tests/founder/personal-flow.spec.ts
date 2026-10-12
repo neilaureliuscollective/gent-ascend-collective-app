@@ -347,7 +347,9 @@ test('free member welcome and daily work save and resume through real Next and S
   await expect(page.getByRole('link', { name: 'Start with Aethelios' })).toBeVisible();
   await page.goto('/app/daily');
   await page.getByRole('button', { name: /^Day workspace/ }).click();
-  await page.getByRole('button', { name: 'Take a moment to check in' }).click();
+  await page
+    .getByRole('button', { name: /^(Take a moment to check in|Update your check-in)$/ })
+    .click();
   await page.getByLabel('What matters most today?').fill('Synthetic first-session direction');
   await page.getByRole('button', { name: 'Save your day', exact: true }).click();
   await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
