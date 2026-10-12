@@ -31,10 +31,12 @@ export function campaignCopy(title: string, scenes: CampaignScene[]) {
       .join('\n')
   );
 }
-export function chooseVideoMime(supported: (mime: string) => boolean) {
+export function chooseVideoMime(supported: (mime: string) => boolean, withAudio = false) {
   return (
-    ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/mp4', 'video/webm'].find(supported) ??
-    null
+    (withAudio
+      ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/mp4', 'video/webm']
+      : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/mp4', 'video/webm']
+    ).find(supported) ?? null
   );
 }
 export function motionFrame(elapsed: number, frames: number, seconds: number) {

@@ -74,6 +74,9 @@ describe('Studio production contracts', () => {
   it('bounds render timing and selects an actually supported MIME type', () => {
     expect(chooseVideoMime((m) => m === 'video/mp4')).toBe('video/mp4');
     expect(chooseVideoMime(() => false)).toBeNull();
+    expect(chooseVideoMime((m) => m === 'video/webm;codecs=vp9,opus', true)).toBe(
+      'video/webm;codecs=vp9,opus',
+    );
     expect(motionFrame(3, 2, 2)).toMatchObject({ index: 1, progress: 0.5, complete: false });
     expect(motionFrame(4, 2, 2)).toMatchObject({ index: 1, complete: true });
     expect(() => motionFrame(0, 9, 2)).toThrow();

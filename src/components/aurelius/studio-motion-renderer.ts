@@ -55,7 +55,7 @@ export async function renderMotionFilm({
     throw new Error(
       'Video export is unavailable in this browser. Your images and campaign copy remain exportable.',
     );
-  const mime = chooseVideoMime((type) => MediaRecorder.isTypeSupported(type));
+  const mime = chooseVideoMime((type) => MediaRecorder.isTypeSupported(type), Boolean(audio));
   if (!mime) throw new Error('No supported video format is available in this browser.');
   if (shots.length < 1 || shots.length > 8)
     throw new Error('Choose one to eight completed campaign frames.');
