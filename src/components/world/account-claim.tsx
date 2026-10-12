@@ -39,6 +39,7 @@ const captcha = () => (window as Window & { turnstile?: Captcha }).turnstile;
 
 export function AccountClaim() {
   const params = useSearchParams();
+  const claimRequested = params.get('claim') === '1';
   const router = useRouter();
   const [open, setOpen] = useState(false),
     [config, setConfig] = useState<Config | null>(null),
@@ -81,12 +82,12 @@ export function AccountClaim() {
     const sync = () => setDraft(readDraft());
     window.addEventListener('gent-direction-change', sync);
     window.addEventListener('storage', sync);
-    if (params.get('claim') === '1') show();
+    if (claimRequested) show();
     return () => {
       window.removeEventListener('gent-direction-change', sync);
       window.removeEventListener('storage', sync);
     };
-  }, [params]);
+  }, [claimRequested]);
   useEffect(() => {
     if (!open || !scriptReady || !config?.siteKey || !node.current || !captcha()) return;
     widget.current = captcha()!.render(node.current, {
