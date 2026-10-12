@@ -5,9 +5,10 @@ export function filterCatalog(entries: CollectionEntry[], query: string, readyOn
   return entries.filter((entry) => {
     if (readyOnly && entry.orderable !== true) return false;
     // Public catalog language only; no clinical or personalized fit inference.
-    const text = `${entry.title} ${entry.kind} ${entry.brand} ${entry.summary}`.toLocaleLowerCase(
-      'en',
-    );
+    const text =
+      `${entry.title} ${entry.kind} ${entry.brand} ${entry.summary} ${entry.searchText ?? ''} ${entry.size ?? ''} ${entry.scent ?? ''}`.toLocaleLowerCase(
+        'en',
+      );
     return words.every((word) => text.includes(word));
   });
 }

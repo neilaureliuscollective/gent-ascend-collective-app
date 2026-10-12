@@ -126,7 +126,21 @@ createRoot(document.getElementById('root')!).render(
       ) : mode === 'lifestyle-cart' ? (
         <CartPanel fullPage basePath="/app/collection" />
       ) : (
-        <ProductExperience product={commerceFixture} basePath="/app/collection" />
+        <ProductExperience
+          product={
+            params.get('story') === 'missing'
+              ? {
+                  ...commerceFixture,
+                  story: null,
+                  ingredients: null,
+                  directions: null,
+                  description:
+                    'Published synthetic description. Ingredients and directions are supplied in this text, not separate fields.',
+                }
+              : commerceFixture
+          }
+          basePath="/app/collection"
+        />
       )}
     </div>
   ) : mode === 'mission' ? (

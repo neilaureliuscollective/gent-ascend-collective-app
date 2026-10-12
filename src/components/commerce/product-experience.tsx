@@ -16,6 +16,8 @@ import type { resolveRelated } from '@/domains/commerce/discovery';
 import { ProductRelations } from './product-relations';
 import { ProductView } from './product-view';
 import { ProductShare } from './product-share';
+import { productExcerpt } from '@/domains/commerce/product-copy';
+import type { PurchasePolicy } from './purchase-terms';
 
 type Preview = NonNullable<ReturnType<typeof previewProduct>>;
 export function ProductExperience({
@@ -25,6 +27,7 @@ export function ProductExperience({
   related = [],
   basePath = '/shop',
   cabinetControl,
+  policies = [],
 }: {
   product?: Product;
   preview?: Preview;
@@ -32,6 +35,7 @@ export function ProductExperience({
   related?: ReturnType<typeof resolveRelated>;
   basePath?: string;
   cabinetControl?: ReactNode;
+  policies?: PurchasePolicy[];
 }) {
   const title = product?.title ?? preview!.name;
   const handle = product?.handle ?? preview!.handle;
@@ -39,15 +43,14 @@ export function ProductExperience({
   const story = readProductStory(product?.story);
   const live = Boolean(product);
   const open = product ? launchPurchaseAllowed(product) : false;
-  const brand =
-    preview?.line ??
-    (product ? productBrand(product) : 'Aethelios Lifestyle');
-  const intro =
+  const brand = preview?.line ?? (product ? productBrand(product) : 'Aethelios Lifestyle');
+  const intro = productExcerpt(
     story?.benefit ||
-    product?.purpose?.value ||
-    product?.description ||
-    preview?.summary ||
-    'A considered part of your daily ritual.';
+      product?.purpose?.value ||
+      product?.description ||
+      preview?.summary ||
+      'A considered part of your daily ritual.',
+  );
   const images = product?.images.nodes.length
     ? product.images.nodes
     : product?.featuredImage
@@ -106,14 +109,10 @@ export function ProductExperience({
               Live availability is temporarily unavailable. This is a collection preview.
             </p>
           )}
-          <ProductShare
-            handle={product?.handle ?? preview!.handle}
-            title={product?.title ?? preview!.name}
-          />
           {product ? (
             <>
-              <ProductPurchase product={product} />
-              <PurchaseTerms story={story} />
+              <ProductPurchase product={product} basePath={basePath} />
+              <PurchaseTerms story={story} policies={policies} />
             </>
           ) : (
             <div className="reserve-preview-release">
@@ -129,6 +128,7 @@ export function ProductExperience({
           )}
           <CollectionSave basePath={basePath} handle={handle} />
           {cabinetControl}
+          <ProductShare handle={handle} title={title} />
         </div>
       </section>
       <nav className="reserve-product-nav" aria-label="Product chapters">
@@ -147,7 +147,15 @@ export function ProductExperience({
           </h2>
         </div>
         <div>
-          <p>{story?.fit || preview?.story || product?.purpose?.value || intro}</p>
+          {story?.fit || preview?.story || product?.purpose?.value ? (
+            <p>{story?.fit || preview?.story || product?.purpose?.value}</p>
+          ) : null}
+          {product?.description && (
+            <details id="product-description" className="reserve-description" open={!story?.fit}>
+              <summary>Product description</summary>
+              <p>{product.description}</p>
+            </details>
+          )}
           {story?.quality && <p>{story.quality}</p>}
           {!story?.fit && beard && (
             <div className="reserve-education">
@@ -206,6 +214,7 @@ export function ProductExperience({
         <FormulaExplorer
           handle={handle}
           ingredients={product?.ingredients?.value}
+          descriptionAvailable={Boolean(product?.description)}
           highlights={story?.highlights ?? (developmentBlend ? vitalisDevelopmentHighlights : [])}
           label={
             story?.factsLabel ??
@@ -253,8 +262,16 @@ export function ProductExperience({
           ) : (
             <div className="reserve-ritual-pending">
               <span aria-hidden="true">◇</span>
-              <h3>A deliberate beginning.</h3>
-              <p>Application amount and frequency will be confirmed with the finished formula.</p>
+              <h3>Directions</h3>
+              <p>
+                A separate directions field has not been published here. Follow the merchant&apos;s
+                description and product label.
+              </p>
+              {product?.description && (
+                <a className="world-text-link" href="#product-description">
+                  Review product description →
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -373,7 +390,8 @@ export function ProductExperience({
               Do I need a membership to purchase?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              No. Products that are open for ordering can be purchased independently of a paid Aethelios membership.
+              No. Products that are open for ordering can be purchased independently of a paid
+              Aethelios membership.
             </p>
           </details>
           {!open && (

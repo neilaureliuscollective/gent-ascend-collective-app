@@ -1,3 +1,7 @@
+## Lifestyle purchase confidence — October 12, 2026
+
+Founder-approved Phase One improves live-catalog discovery, purchase-first product hierarchy, authentic Lifestyle photography, structured-content fallbacks, real Shopify policy links, public product metadata and uncertain-cart recovery. Current-variant stock and complete bounded cart reads remain server-authoritative. Corrected Lifestyle fixture routing and the five-destination production assertion preserve the checks. No merchant product/policy changes, migrations, AI expansion or production promotion. Scope, current evidence and open merchant/device/revenue gates: [LIFESTYLE_PURCHASE_CONFIDENCE.md](LIFESTYLE_PURCHASE_CONFIDENCE.md). Final exact-source CI/preview receipts are recorded in the review PR.
+
 ## Lifestyle published-catalog fix — October 12, 2026
 
 The first Lifestyle release incorrectly required an unconfigured `legacy-reserve` collection for all discovery, product and cart paths. The correction uses actual Headless-published products by default, separates brand curation and preserves optional explicit whole-catalog restriction through SHOPIFY_LIFESTYLE_COLLECTION. Missing explicit collections fail closed. Scope, official sources and acceptance limitations: [LIFESTYLE_CATALOG_FIX.md](LIFESTYLE_CATALOG_FIX.md). Exact checks and release receipts are tracked in the fix PR; no invented stock, merchant publication or payment action.

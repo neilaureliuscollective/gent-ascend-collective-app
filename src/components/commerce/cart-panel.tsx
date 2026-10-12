@@ -26,7 +26,11 @@ export function CartPanel({
   const loadVersion = useRef(0);
   const mutationPending = useRef(false);
   const held =
-    cart?.lines.nodes.some((line) => !launchPurchaseAllowed(line.merchandise.product)) ?? false;
+    cart?.lines.nodes.some(
+      (line) =>
+        !launchPurchaseAllowed(line.merchandise.product) ||
+        line.merchandise.availableForSale === false,
+    ) ?? false;
   const load = useCallback(async () => {
     if (mutationPending.current) return;
     const version = ++loadVersion.current;
@@ -87,6 +91,7 @@ export function CartPanel({
     setError('');
     try {
       const response = await fetch('/api/commerce/cart', {
+        signal: AbortSignal.timeout(20000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, lineId, quantity }),
@@ -95,7 +100,9 @@ export function CartPanel({
       if (!response.ok) throw new Error(result.error ?? 'Unable to update cart.');
       setCart(result.cart);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to update cart.');
+      setError(
+        `${reason instanceof Error ? reason.message : 'Unable to update cart.'} Refresh the cart to confirm its current contents before making another change.`,
+      );
     } finally {
       mutationPending.current = false;
       setBusy(false);
@@ -139,7 +146,7 @@ export function CartPanel({
       )}
       {loading ? (
         <p role="status">Loading your selection…</p>
-      ) : !cart?.lines.nodes.length ? (
+      ) : error && !cart ? null : !cart?.lines.nodes.length ? (
         <div className="cart-empty">
           <p>Your cart is ready when you are.</p>
           <Link href={basePath} onClick={() => setOpen(false)}>
@@ -176,9 +183,13 @@ export function CartPanel({
                     {line.merchandise.product.title}
                   </Link>
                   <span>{line.merchandise.title}</span>
-                  {!launchPurchaseAllowed(line.merchandise.product) && (
+                  {(!launchPurchaseAllowed(line.merchandise.product) ||
+                    line.merchandise.availableForSale === false) && (
                     <p className="cart-error">
-                      {launchLabel(line.merchandise.product)} · Remove this item to continue.
+                      {line.merchandise.availableForSale === false
+                        ? 'Currently unavailable'
+                        : launchLabel(line.merchandise.product)}{' '}
+                      · Remove this item to continue.
                     </p>
                   )}
                   <strong>{formatMoney(line.cost.totalAmount)}</strong>
@@ -187,7 +198,7 @@ export function CartPanel({
                       Quantity{' '}
                       <select
                         value={line.quantity}
-                        disabled={busy || held}
+                        disabled={busy || held || Boolean(error)}
                         onChange={(event) =>
                           void change('update', line.id, Number(event.target.value))
                         }
@@ -204,7 +215,7 @@ export function CartPanel({
                     <button
                       type="button"
                       aria-label={`Remove ${line.merchandise.product.title} from cart`}
-                      disabled={busy}
+                      disabled={busy || Boolean(error)}
                       onClick={() => void change('remove', line.id)}
                     >
                       Remove

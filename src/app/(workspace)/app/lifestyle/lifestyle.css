@@ -153,3 +153,113 @@
     display: none;
   }
 }
+
+/* Purchase confidence: shared public/member composition, using active tokens. */
+.lifestyle-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(24px, 5vw, 80px);
+  align-items: center;
+}
+.lifestyle-hero-copy {
+  min-width: 0;
+}
+.lifestyle-hero-product {
+  display: block;
+  min-width: 0;
+  color: var(--aether-text);
+  text-decoration: none;
+}
+.lifestyle-hero-product img {
+  display: block;
+  width: 100%;
+  height: clamp(280px, 36vw, 500px);
+  object-fit: contain;
+  border: 1px solid var(--aether-border);
+  background: var(--aether-surface);
+}
+.lifestyle-hero-product > span {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 18px;
+  font-size: 1rem;
+}
+.lifestyle-hero-product small {
+  color: var(--aether-silver);
+}
+.imperial-obsidian .collection-search-row {
+  flex-wrap: wrap;
+  align-items: end;
+}
+.imperial-obsidian .collection-search-row select {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 10px 16px;
+  color: var(--aether-text);
+  background: var(--aether-surface);
+  border: 1px solid var(--aether-border-active);
+  border-radius: 4px;
+}
+.reserve-description {
+  scroll-margin-top: 100px;
+}
+.reserve-description summary {
+  cursor: pointer;
+  min-height: 48px;
+  color: var(--aether-text);
+  padding-block: 12px;
+}
+.reserve-description p {
+  white-space: pre-line;
+}
+.reserve-purchase-terms nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.reserve-purchase-terms nav a,
+.commerce-status a {
+  display: inline-block;
+  padding: 12px 0;
+}
+.imperial-obsidian .reserve-product-purpose {
+  max-width: 55ch;
+}
+.imperial-obsidian .reserve-photo-frame {
+  background: var(--aether-surface);
+  border-color: var(--aether-border-active);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+.imperial-obsidian .reserve-photo-aura,
+.imperial-obsidian .reserve-photo-window::after {
+  display: none;
+}
+.imperial-obsidian .reserve-photo-window img {
+  animation: none !important;
+}
+@media (max-width: 700px) {
+  .lifestyle-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding-bottom: 75px;
+  }
+  .lifestyle-hero h1 {
+    font-size: clamp(3rem, 12vw, 4.5rem);
+  }
+  .lifestyle-coordinate {
+    margin-bottom: 24px;
+  }
+  .lifestyle-hero-product img {
+    height: 300px;
+  }
+}
+@media (forced-colors: active) {
+  .lifestyle-hero-product img,
+  .imperial-obsidian .collection-search-row select {
+    border: 1px solid CanvasText;
+  }
+}
