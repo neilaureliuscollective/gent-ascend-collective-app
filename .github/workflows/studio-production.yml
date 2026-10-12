@@ -1,0 +1,46 @@
+name: Studio production-room acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'playwright.studio-production.config.ts'
+      - '.github/workflows/studio-production.yml'
+  push:
+    branches: [feat/studio-production-house-20261012]
+permissions:
+  contents: read
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run db:ledger
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.studio-production.config.ts
+      - name: Inspect exported artifacts independently
+        run: |
+          python - <<'PY'
+          import zipfile, pathlib
+          with zipfile.ZipFile('test-results/studio-campaign-pack.zip') as archive:
+              assert archive.testzip() is None
+              assert set(archive.namelist()) == {'square.png','portrait.png','landscape.png','layout.json','readme.md'}
+              for name in ['square.png','portrait.png','landscape.png']:
+                  assert archive.read(name).startswith(b'\x89PNG\r\n\x1a\n')
+          video = pathlib.Path('test-results/studio-motion-film.webm').read_bytes()
+          assert len(video) > 1000
+          assert video[:4] == b'\x1aE\xdf\xa3' or b'ftyp' in video[:32]
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-production-evidence
+          path: test-results
+          if-no-files-found: ignore

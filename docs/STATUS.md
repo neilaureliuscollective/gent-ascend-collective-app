@@ -1,3 +1,7 @@
+## Aethelios Studio production house — October 12, 2026
+
+Review candidate: saved project brand kits, original-logo Finish compositing, editable multi-format campaign exports, and a native motion-film pilot from owned saved images with optional own audio. Reuses existing image generation, Supabase project JSONB, storyboard and finish services; no migration, new provider or production release. Image acknowledgement recovery preserves potentially committed originals, and Talk-prepared briefs survive project creation. Native film is not AI-generated footage and remains local until downloaded. Scope, research, exact acceptance limits and founder setup: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md). Local lint, types, 439 unit/SQL tests and ledger pass; build/browser/preview receipts are tracked in the candidate PR. Live authenticated OpenAI/Storage and physical-device acceptance remain separate.
+
 ## Lifestyle published-catalog fix — October 12, 2026
 
 The first Lifestyle release incorrectly required an unconfigured `legacy-reserve` collection for all discovery, product and cart paths. The correction uses actual Headless-published products by default, separates brand curation and preserves optional explicit whole-catalog restriction through SHOPIFY_LIFESTYLE_COLLECTION. Missing explicit collections fail closed. Scope, official sources and acceptance limitations: [LIFESTYLE_CATALOG_FIX.md](LIFESTYLE_CATALOG_FIX.md). Exact checks and release receipts are tracked in the fix PR; no invented stock, merchant publication or payment action.

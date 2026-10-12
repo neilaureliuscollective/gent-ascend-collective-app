@@ -363,3 +363,7 @@ Founder approved the researched home recovery after reporting a visual regressio
 ## 2026-10-12 — Public Lifestyle commerce restoration
 
 The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.
+
+## 2026-10-12 — Studio production house before additional media vendors
+
+Founder approved execution of the researched Studio direction. Extend owned project brief JSONB with a bounded brand kit, reuse existing image/version/storyboard/finish services, and provide useful editable image packs and real browser-native motion video before introducing asynchronous generative footage. Preserve original logo artwork through owned reference compositing. Native motion/export requires no new provider key or migration; future AI footage requires durable jobs and live provider/cost acceptance. No pending creation-stack merge or production deployment. Evidence and staged vision: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md).

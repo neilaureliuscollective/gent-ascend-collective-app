@@ -2,6 +2,7 @@ import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
+import './studio-production.css';
 
 export const metadata: Metadata = {
   title: 'Aethelios Studio',
@@ -18,7 +19,7 @@ export default function StudioPage() {
           <h1>
             Studio<span className="brand-star">✦</span>
           </h1>
-          <p>From an idea to a world you can see.</p>
+          <p>From direction to images, campaigns and motion.</p>
         </div>
         <Link className="text-link" href="/app/aethelios">
           Aethelios Chat ↗

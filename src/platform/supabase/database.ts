@@ -518,13 +518,7 @@ export interface Database {
           job_id: string | null;
           title: string;
           creative_type: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
-          brief: {
-            purpose?: string;
-            audience?: string;
-            direction?: string;
-            palette?: string;
-            avoid?: string;
-          };
+          brief: Partial<import('@/domains/studio/brand').StudioBrief>;
           created_at: string;
           updated_at: string;
         },
@@ -535,17 +529,12 @@ export interface Database {
           company_id?: string;
           job_id?: string;
           creative_type?: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
+          brief?: Partial<import('@/domains/studio/brand').StudioBrief>;
         },
         {
           title?: string;
           creative_type?: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
-          brief?: {
-            purpose: string;
-            audience: string;
-            direction: string;
-            palette: string;
-            avoid: string;
-          };
+          brief?: import('@/domains/studio/brand').StudioBrief;
           updated_at?: string;
         }
       >;
