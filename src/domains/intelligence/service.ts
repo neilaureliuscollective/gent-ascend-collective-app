@@ -1,4 +1,5 @@
 import 'server-only';
+import { after } from 'next/server';
 import { currentIdentity } from '@/domains/identity/current';
 import { currentPerson } from '@/domains/person/current';
 import { currentAccess } from '@/domains/access/current';
@@ -507,17 +508,30 @@ export async function readWorkspace(
     currentConversation: current.data,
   };
 }
-export async function prepareReply(input: {
-  conversationId: string;
-  requestId: string;
-  text: string;
-  includeContext: boolean;
-  companyId?: string;
-  sourceTurnId?: string;
-  revisionKind?: 'retry' | 'regenerate' | 'edit';
-  council?: CouncilSelection;
-}) {
+export async function prepareReply(
+  input: {
+    conversationId: string;
+    requestId: string;
+    text: string;
+    includeContext: boolean;
+    companyId?: string;
+    sourceTurnId?: string;
+    revisionKind?: 'retry' | 'regenerate' | 'edit';
+    council?: CouncilSelection;
+  },
+  measured: (
+    stage:
+      | 'session'
+      | 'authority'
+      | 'scope'
+      | 'reservation'
+      | 'history-context'
+      | 'summary'
+      | 'artifact-context',
+  ) => void = () => {},
+) {
   const { client, person } = await intelligenceSession();
+  measured('session');
   const founder = await currentFounderAccess();
   const selection =
     input.council ?? (founder ? explicitlyRequestedCoworkers(input.text) : undefined);
@@ -528,6 +542,7 @@ export async function prepareReply(input: {
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
+  measured('authority');
   if (process.env.AETHELIOS_LIVE_ENABLED === 'true') {
     const voice = await client
       .from('ai_live_sessions')
@@ -572,6 +587,7 @@ export async function prepareReply(input: {
       'Aethelios is waiting for its model connection. Your workspace remains available.',
       503,
     );
+  measured('scope');
   const common = {
     p_request: input.requestId,
     p_text: input.text,
@@ -623,6 +639,7 @@ export async function prepareReply(input: {
       409,
     );
   }
+  measured('reservation');
   // Read the immutable brief snapshot written in the reservation transaction.
   if (company) {
     const snapshot = await client
@@ -660,9 +677,12 @@ export async function prepareReply(input: {
       conversationTurns(input.conversationId, undefined, company?.id),
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
     ]);
+    measured('history-context');
     threadSummary = await prepareThreadSummary(client, person.id, input.conversationId, history);
+    measured('summary');
     if (!company && process.env.AETHELIOS_LIVE_ENABLED === 'true')
       artifactContext = await selectedArtifactContext(client, person.id, input.conversationId);
+    measured('artifact-context');
   } catch {
     await client.rpc('ai_finish_turn', {
       p_request: input.requestId,
@@ -721,14 +741,20 @@ export async function prepareReply(input: {
         status === 'complete' &&
         history.filter((turn) => turn.status === 'complete').length === 0
       ) {
-        const title = await auxiliaryCall(client, 'title', () =>
-          generateConversationTitle(input.text, text),
-        );
-        if (title)
-          await client.rpc('ai_set_generated_title', {
-            p_id: input.conversationId,
-            p_title: title.text,
-          });
+        after(async () => {
+          try {
+            const title = await auxiliaryCall(client, 'title', () =>
+              generateConversationTitle(input.text, text),
+            );
+            if (title)
+              await client.rpc('ai_set_generated_title', {
+                p_id: input.conversationId,
+                p_title: title.text,
+              });
+          } catch {
+            /* Auxiliary title failure cannot invalidate a saved reply. */
+          }
+        });
       }
       return row.data;
     },

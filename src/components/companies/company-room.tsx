@@ -6,7 +6,6 @@ import type { readCompanyTalk } from '@/domains/companies/service';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import { IntelligenceStatus, IntelligenceResponse } from '../intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
-import type { StreamEvent } from '@/domains/intelligence/types';
 import { companyJobs } from '@/domains/company-work/starters';
 import {
   council,
@@ -17,6 +16,7 @@ import {
 } from '@/domains/intelligence/council';
 import { CouncilPanel } from '@/components/aurelius/council-panel';
 import type { readWork } from '@/domains/company-work/service';
+import { readConversationStream } from '@/platform/conversation/read-stream';
 import { frameText } from '@/components/aurelius/frame-text';
 import { TalkDrawer, TalkInput } from '@/components/aurelius/talk-controls';
 import { TalkPresence } from '@/components/aurelius/talk-presence';
@@ -294,44 +294,33 @@ export function CompanyRoom({
       accepted = true;
       setConversation(id);
       remember(id);
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('Reply unavailable.');
-      const decoder = new TextDecoder();
-      let buffer = '';
-      while (true) {
-        const chunk = await reader.read();
-        buffer += decoder.decode(chunk.value, { stream: !chunk.done });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-        for (const line of lines.filter(Boolean)) {
-          const event = JSON.parse(line) as StreamEvent;
-          if (event.type === 'activity') {
-            if (event.phase === 'saving') painted.finish(true);
-            setOperation(observedOperation(motionId, event.phase, 'pending'));
-          } else if (event.type === 'delta') {
-            setOperation((previous) =>
-              previous.id === motionId && ['searching', 'generating'].includes(previous.phase)
-                ? previous
-                : observedOperation(motionId, 'generating', 'pending'),
-            );
-            painted.append(event.text);
-          } else if (event.type === 'error') throw new Error(event.message);
-          else if (event.type === 'saved') {
-            painted.finish();
-            saved = true;
-            setOperation(observedOperation(motionId, 'complete', 'confirmed'));
-            setData((previous) => ({ ...previous, turns: [...previous.turns, event.turn] }));
-          }
+      setDraft((current) => (current.trim() === text ? '' : current));
+      for await (const event of readConversationStream(response.body)) {
+        if (event.type === 'activity') {
+          if (event.phase === 'saving') painted.finish(true);
+          setOperation(observedOperation(motionId, event.phase, 'pending'));
+        } else if (event.type === 'delta') {
+          setOperation((previous) =>
+            previous.id === motionId && ['searching', 'generating'].includes(previous.phase)
+              ? previous
+              : observedOperation(motionId, 'generating', 'pending'),
+          );
+          painted.append(event.text);
+        } else if (event.type === 'error') throw new Error(event.message);
+        else if (event.type === 'saved') {
+          painted.finish();
+          saved = true;
+          setOperation(observedOperation(motionId, 'complete', 'confirmed'));
+          setData((previous) => ({ ...previous, turns: [...previous.turns, event.turn] }));
         }
-        if (chunk.done) break;
       }
       if (!saved) throw new Error('Reply did not confirm a save. Reload before trying again.');
-      setDraft('');
       setRevision(null);
       setPartial('');
       setSent('');
       setData(await read(id));
     } catch (error) {
+      if (accepted && !saved) setDraft((current) => current || text);
       setOperation(
         observedOperation(
           motionId,
@@ -738,7 +727,7 @@ export function CompanyRoom({
               value={draft}
               onChange={setDraft}
               inputRef={composer}
-              disabled={busy}
+              disabled={busy && outputMode}
               placeholder={`Message ${data.company.name}…`}
             />
             <div className="talk-composer-actions">

@@ -1,5 +1,14 @@
 'use client';
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import './talk.css';
 
 /** Native modal focus/escape behavior; draft and transcript stay mounted behind it. */
@@ -97,23 +106,34 @@ export function TalkInput({
   const editor = useRef<HTMLDialogElement>(null);
   const expanded = useRef<HTMLTextAreaElement>(null);
   const caret = useRef({ start: 0, end: 0 });
+  const resize = useCallback(() => {
+    const field = inputRef.current;
+    if (!field) return;
+    const vp = window.visualViewport;
+    const height = vp?.scale === 1 ? vp.height : window.innerHeight;
+    const limit = Math.max(44, Math.min(200, height * 0.24));
+    field.style.height = '0px';
+    field.style.height = `${Math.max(44, Math.min(field.scrollHeight, limit))}px`;
+  }, [inputRef]);
+  useLayoutEffect(resize, [value, resize]);
   useEffect(() => {
-    const resize = () => {
-      const field = inputRef.current;
-      if (!field) return;
-      const vp = window.visualViewport;
-      const height = vp?.scale === 1 ? vp.height : window.innerHeight;
-      field.style.height = '0px';
-      field.style.height = `${Math.max(44, Math.min(field.scrollHeight, 200, height * 0.24))}px`;
+    const viewport = window.visualViewport;
+    let frame: number | null = null;
+    const schedule = () => {
+      if (frame === null)
+        frame = requestAnimationFrame(() => {
+          frame = null;
+          resize();
+        });
     };
-    resize();
-    window.visualViewport?.addEventListener('resize', resize);
-    window.addEventListener('resize', resize);
+    viewport?.addEventListener('resize', schedule);
+    window.addEventListener('resize', schedule);
     return () => {
-      window.visualViewport?.removeEventListener('resize', resize);
-      window.removeEventListener('resize', resize);
+      viewport?.removeEventListener('resize', schedule);
+      window.removeEventListener('resize', schedule);
+      if (frame !== null) cancelAnimationFrame(frame);
     };
-  }, [value, inputRef]);
+  }, [resize]);
   return (
     <>
       <label className="sr-only" htmlFor={id}>

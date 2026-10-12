@@ -14,33 +14,42 @@ export function liveMotionOperation(
     phase: 'idle' | 'connecting' | 'listening' | 'speaking' | 'ended' | 'error';
     muted: boolean;
     playbackBlocked: boolean;
+    recovering?: boolean;
+    speechDetected?: boolean;
+    responsePending?: boolean;
   },
   levels?: { input: number; output: number },
 ): IntelligenceOperation {
-  const phase =
-    state.phase === 'idle'
-      ? 'ready'
-      : state.phase === 'ended'
-        ? 'cancelled'
-        : state.phase === 'error'
-          ? 'failed'
-          : state.phase === 'listening' && state.muted
-            ? 'ready'
-            : state.phase === 'speaking' && state.playbackBlocked
-              ? 'waiting'
-              : state.phase;
+  const phase = state.recovering
+    ? 'connecting'
+    : state.phase === 'listening' && !state.muted && state.responsePending
+      ? 'thinking'
+      : state.phase === 'idle'
+        ? 'ready'
+        : state.phase === 'ended'
+          ? 'cancelled'
+          : state.phase === 'error'
+            ? 'failed'
+            : state.phase === 'listening' && state.muted
+              ? 'ready'
+              : state.phase === 'speaking' && state.playbackBlocked
+                ? 'waiting'
+                : state.phase;
   return {
     ...observedOperation(state.sessionId ?? 'live-idle', phase),
-    label:
-      state.phase === 'ended'
-        ? 'Session ended'
-        : state.phase === 'error'
-          ? 'Connection unavailable'
-          : state.muted && state.phase === 'listening'
-            ? 'Microphone muted'
-            : state.playbackBlocked && state.phase === 'speaking'
-              ? 'Voice playback blocked'
-              : undefined,
+    label: state.recovering
+      ? 'Reconnecting'
+      : state.speechDetected && !state.muted
+        ? 'Speech detected'
+        : state.phase === 'ended'
+          ? 'Session ended'
+          : state.phase === 'error'
+            ? 'Connection unavailable'
+            : state.muted && state.phase === 'listening'
+              ? 'Microphone muted'
+              : state.playbackBlocked && state.phase === 'speaking'
+                ? 'Voice playback blocked'
+                : undefined,
     audioLevel: phase === 'listening' ? levels?.input : phase === 'speaking' ? levels?.output : 0,
   };
 }

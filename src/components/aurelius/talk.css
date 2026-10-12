@@ -167,9 +167,9 @@
   display: block;
   width: 100%;
   min-height: 44px;
-  max-height: min(200px, 24dvh);
+  max-height: max(44px, min(200px, 24dvh));
   margin: 0;
-  padding: 10px 36px 8px 8px;
+  padding: 10px 44px 8px 8px;
   border: 0;
   border-radius: 0;
   resize: none;
@@ -182,8 +182,8 @@
   position: absolute;
   right: 8px;
   top: 6px;
-  width: 36px;
-  min-height: 40px;
+  width: 44px;
+  min-height: 44px;
   border: 0;
   background: transparent;
   color: #e8cc96;

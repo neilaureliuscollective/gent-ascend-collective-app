@@ -5,6 +5,7 @@ export function motionPresentationPhase(operation: IntelligenceOperation): Intel
     return operation.phase === 'cancelled' ? 'cancelled' : 'failed';
   if (operation.phase === 'complete' && operation.persistence === 'pending') return 'saving';
   if (['failed', 'cancelled'].includes(operation.phase)) return operation.phase;
-  if (operation.label) return 'ready';
+  if (operation.label && !['Reconnecting', 'Speech detected'].includes(operation.label))
+    return 'ready';
   return operation.phase;
 }

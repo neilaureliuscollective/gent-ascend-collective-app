@@ -16,14 +16,23 @@ export function useTalkViewport(root: RefObject<HTMLElement | null>) {
         `${useVisual ? viewport.offsetTop : 0}px`,
       );
     };
+    let frame: number | null = null;
+    const schedule = () => {
+      if (frame === null)
+        frame = requestAnimationFrame(() => {
+          frame = null;
+          resize();
+        });
+    };
     resize();
-    viewport?.addEventListener('resize', resize);
-    viewport?.addEventListener('scroll', resize);
-    window.addEventListener('resize', resize);
+    viewport?.addEventListener('resize', schedule);
+    viewport?.addEventListener('scroll', schedule);
+    window.addEventListener('resize', schedule);
     return () => {
-      viewport?.removeEventListener('resize', resize);
-      viewport?.removeEventListener('scroll', resize);
-      window.removeEventListener('resize', resize);
+      if (frame !== null) cancelAnimationFrame(frame);
+      viewport?.removeEventListener('resize', schedule);
+      viewport?.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
     };
   }, [root]);
 }

@@ -14,10 +14,12 @@ import {
   specialistStarters,
   type CouncilSelection,
 } from '@/domains/intelligence/council';
-import type { StreamEvent, Turn, WorkspaceData } from '@/domains/intelligence/types';
+import type { Turn, WorkspaceData } from '@/domains/intelligence/types';
 import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
+import { readConversationStream } from '@/platform/conversation/read-stream';
+import { conversationTiming } from '@/platform/conversation/timing';
 import { TalkDrawer, TalkInput } from './talk-controls';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import {
@@ -74,6 +76,22 @@ export function AureliusWorkspace({
   useEffect(() => {
     if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
+  const draftSnapshot = useRef({ text: draft, ownerId: '', conversationId: initialConversation });
+  useEffect(() => {
+    draftSnapshot.current = { text: draft, ownerId: data?.ownerId ?? '', conversationId: selected };
+  }, [draft, data?.ownerId, selected]);
+  useEffect(
+    () => () => {
+      const snapshot = draftSnapshot.current;
+      if (!compact && snapshot.text && snapshot.ownerId && !handoff?.peek()?.target)
+        handoff?.stage({
+          text: snapshot.text,
+          ownerId: snapshot.ownerId,
+          conversationId: snapshot.conversationId ?? undefined,
+        });
+    },
+    [compact, handoff],
+  );
   const [councilSelection, setCouncilSelection] = useState<CouncilSelection | null>(null);
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState<IntelligenceOperation>(
@@ -310,8 +328,12 @@ export function AureliusWorkspace({
         : `Waiting for ${councilLabel(requestedCouncil)}…`,
     );
     follow.current = true;
+    const timing = conversationTiming();
+    timing.mark('acknowledged');
+    let accepted = false;
     let saved = false;
     const painted = frameText((reply) => {
+      timing.mark('first-paint');
       setData((previous) =>
         previous
           ? {
@@ -325,10 +347,33 @@ export function AureliusWorkspace({
           : previous,
       );
     });
+    const pending: Turn = {
+      id: requestId,
+      person_id: '',
+      conversation_id: id,
+      user_text: text,
+      assistant_text: '',
+      status: 'pending',
+      model: data.model,
+      context_included: includeContext,
+      prompt_version: requestedCouncil ? councilPromptVersion(requestedCouncil) : '',
+      feedback: null,
+      created_at: new Date().toISOString(),
+      finished_at: null,
+      parent_turn_id: replace?.sourceTurnId ?? null,
+      revision_kind: replace?.revisionKind ?? null,
+    };
+    setData((previous) =>
+      previous ? { ...previous, turns: [...previous.turns, pending] } : previous,
+    );
     try {
       const response = await fetch('/api/aurelius/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Aethelios-Motion': '1' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Aethelios-Motion': '1',
+          ...(timing.enabled ? { 'X-Aethelios-Diagnostics': '1' } : {}),
+        },
         body: JSON.stringify({
           conversationId: id,
           requestId,
@@ -343,35 +388,21 @@ export function AureliusWorkspace({
         const result = await response.json();
         throw new Error(result.error ?? 'The message could not be sent.');
       }
-      const pending: Turn = {
-        id: requestId,
-        person_id: '',
-        conversation_id: id,
-        user_text: text,
-        assistant_text: '',
-        status: 'pending',
-        model: data.model,
-        context_included: includeContext,
-        prompt_version: requestedCouncil ? councilPromptVersion(requestedCouncil) : '',
-        feedback: null,
-        created_at: new Date().toISOString(),
-        finished_at: null,
-        parent_turn_id: replace?.sourceTurnId ?? null,
-        revision_kind: replace?.revisionKind ?? null,
-      };
+      accepted = true;
+      timing.mark('accepted');
+      setDraft((current) => (current === messageText ? '' : current));
       setSelected(id);
       rememberConversation(id);
-      setData((previous) =>
-        previous ? { ...previous, turns: [...previous.turns, pending] } : previous,
-      );
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reply stream was received.');
-      const decoder = new TextDecoder();
-      let buffer = '';
-      const consume = (line: string) => {
-        if (!line.trim()) return;
-        const item = JSON.parse(line) as StreamEvent;
-        if (item.type === 'activity') {
+      for await (const item of readConversationStream(response.body)) {
+        timing.mark('first-event');
+        if (item.type === 'timing') {
+          if (timing.enabled)
+            window.dispatchEvent(
+              new CustomEvent('aethelios:timing', {
+                detail: { source: 'server', stage: item.stage, elapsedMs: item.elapsedMs },
+              }),
+            );
+        } else if (item.type === 'activity') {
           if (item.phase === 'saving') painted.finish(true);
           setOperation(observedOperation(requestId, item.phase, 'pending'));
           setNotice(`${intelligenceStatus(observedOperation(requestId, item.phase))}…`);
@@ -382,10 +413,12 @@ export function AureliusWorkspace({
               ? previous
               : observedOperation(requestId, 'generating', 'pending'),
           );
+          timing.mark('first-text');
           painted.append(item.text);
         } else if (item.type === 'saved') {
           painted.finish();
           saved = true;
+          timing.mark('saved');
           setOperation(observedOperation(requestId, 'complete', 'confirmed'));
           setData((previous) =>
             previous
@@ -396,23 +429,19 @@ export function AureliusWorkspace({
               : previous,
           );
         } else if (item.type === 'error') throw new Error(item.message);
-      };
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-        for (const line of lines) consume(line);
       }
-      buffer += decoder.decode();
-      if (buffer.trim()) consume(buffer);
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
-      setDraft('');
       setRevision(null);
       setNotice('Reply saved.');
       await reload(id);
     } catch (e) {
+      if (accepted && !saved) setDraft((current) => current || messageText);
+      if (!accepted)
+        setData((previous) =>
+          previous
+            ? { ...previous, turns: previous.turns.filter((turn) => turn.id !== requestId) }
+            : previous,
+        );
       setOperation(
         observedOperation(
           requestId,
@@ -432,6 +461,7 @@ export function AureliusWorkspace({
       setNeedsReload(true);
       setNotice('');
     } finally {
+      timing.mark('ended');
       painted.finish(!saved);
       generation.current = null;
       setBusy(false);
@@ -879,14 +909,24 @@ export function AureliusWorkspace({
                     </Link>
                   </div>
                 </div>
-                <p>
-                  Share an idea, a question or the work ahead. We’ll find the next useful step.
-                </p>
+                <p>Share an idea, a question or the work ahead. We’ll find the next useful step.</p>
                 <div className="conversation-starters">
                   {[
-                    { label: 'Pressure-test an idea', draft: 'I have an idea to pressure-test. Help me turn it into a clear decision.' },
-                    { label: 'Shape a creative brief', draft: 'I need to create something. Help me shape the brief and a useful first draft.' },
-                    { label: 'Move a project forward', draft: 'I have a project to move forward. Help me identify the next concrete action.' },
+                    {
+                      label: 'Pressure-test an idea',
+                      draft:
+                        'I have an idea to pressure-test. Help me turn it into a clear decision.',
+                    },
+                    {
+                      label: 'Shape a creative brief',
+                      draft:
+                        'I need to create something. Help me shape the brief and a useful first draft.',
+                    },
+                    {
+                      label: 'Move a project forward',
+                      draft:
+                        'I have a project to move forward. Help me identify the next concrete action.',
+                    },
                   ].map((suggestion) => (
                     <button
                       key={suggestion.label}
@@ -1036,7 +1076,7 @@ export function AureliusWorkspace({
               inputRef={composer}
               value={draft}
               onChange={setDraft}
-              disabled={blocked}
+              disabled={liveBusy || loading || deleting || orchestrating}
               placeholder={
                 councilSelection?.kind === 'specialist'
                   ? `Message ${councilLabel(councilSelection)}…`
@@ -1051,7 +1091,10 @@ export function AureliusWorkspace({
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => generation.current?.abort()}
+                  onClick={() => {
+                    setOperation(observedOperation(operation.id, 'cancelled', 'uncertain'));
+                    generation.current?.abort();
+                  }}
                 >
                   Stop reply
                 </button>

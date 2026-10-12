@@ -87,6 +87,11 @@ window.fetch = async (input, init) => {
   if (url.startsWith('/api/aurelius/chat') || url.startsWith('/api/company-talk/chat')) {
     if (new URLSearchParams(location.search).get('holdHeaders') === '1')
       await new Promise((resolve) => setTimeout(resolve, 1800));
+    if (new URLSearchParams(location.search).get('rejectHeaders') === '1')
+      return new Response(JSON.stringify({ error: 'Synthetic rejection' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' },
+      });
     const body = JSON.parse(String(init?.body));
     turn = {
       id: body.requestId,

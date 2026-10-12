@@ -14,7 +14,7 @@ class FakePC {
     onclose: null as null | (() => void),
   };
   ontrack = null;
-  onconnectionstatechange = null;
+  onconnectionstatechange: (() => void) | null = null;
   constructor() {
     FakePC.instances.push(this);
   }
@@ -89,13 +89,11 @@ it('exports content-free diagnostics with trusted configuration and preserves th
   );
   const controller = new LiveController();
   await controller.start(conversation, false, 'marin');
-  FakePC.instances
-    .at(-1)!
-    .event({
-      type: 'conversation.item.input_audio_transcription.completed',
-      item_id: 'private-id',
-      transcript: 'PRIVATE TRANSCRIPT',
-    });
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'private-id',
+    transcript: 'PRIVATE TRANSCRIPT',
+  });
   const first = await controller.exportDiagnostics();
   expect(first.voice).toBe('marin');
   expect(first.model).toBe('gpt-realtime');
@@ -204,4 +202,71 @@ it('preserves owned visual selection through minimize/end and clears it for a di
   expect(controller.getSnapshot().artifactWorkspace.selectedPartId).toBe('tools');
   controller.bindConversation('00000000-0000-4000-8000-000000000098');
   expect(controller.getSnapshot().artifactWorkspace.selectedId).toBeNull();
+});
+
+it('shows speech detection and processing from real provider events', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  pc.event({ type: 'input_audio_buffer.speech_started' });
+  expect(controller.getSnapshot().speechDetected).toBe(true);
+  pc.event({ type: 'input_audio_buffer.speech_stopped' });
+  expect(controller.getSnapshot().responsePending).toBe(true);
+  expect(controller.getSnapshot().speechDetected).toBe(false);
+  pc.event({ type: 'response.created', response: { id: 'current' } });
+  controller.interrupt();
+  expect(controller.getSnapshot().responsePending).toBe(false);
+  expect(controller.getSnapshot().phase).toBe('listening');
+  await controller.end();
+});
+it('retains one admission during transient ICE recovery and cleans up a sustained disconnect', async () => {
+  vi.useFakeTimers();
+  try {
+    const controller = new LiveController();
+    await controller.start(conversation, false);
+    const pc = FakePC.instances.at(-1)!;
+    pc.connectionState = 'disconnected';
+    (pc.onconnectionstatechange as unknown as () => void)();
+    expect(controller.getSnapshot().recovering).toBe(true);
+    await vi.advanceTimersByTimeAsync(1000);
+    pc.connectionState = 'connected';
+    (pc.onconnectionstatechange as unknown as () => void)();
+    expect(controller.getSnapshot().recovering).toBe(false);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(controller.getSnapshot().phase).toBe('listening');
+    expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
+    pc.connectionState = 'disconnected';
+    (pc.onconnectionstatechange as unknown as () => void)();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(controller.getSnapshot().phase).toBe('ended');
+    expect(stop).toHaveBeenCalledOnce();
+    expect(controller.getSnapshot().cleanupPending).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+it('allows a permission-denied session to retry only after cleanup', async () => {
+  const mic = vi.mocked(navigator.mediaDevices.getUserMedia);
+  mic.mockRejectedValueOnce(new Error('Permission denied'));
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  expect(controller.getSnapshot().phase).toBe('error');
+  expect(controller.getSnapshot().cleanupPending).toBe(false);
+  await controller.start(conversation, false);
+  expect(controller.getSnapshot().phase).toBe('listening');
+  await controller.end();
+});
+
+it('ignores stale playback-stop events from an interrupted response', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  pc.event({ type: 'response.created', response: { id: 'old' } });
+  pc.event({ type: 'output_audio_buffer.started', response_id: 'old' });
+  controller.interrupt();
+  pc.event({ type: 'response.created', response: { id: 'new' } });
+  pc.event({ type: 'output_audio_buffer.started', response_id: 'new' });
+  pc.event({ type: 'output_audio_buffer.cleared', response_id: 'old' });
+  expect(controller.getSnapshot().phase).toBe('speaking');
+  await controller.end();
 });

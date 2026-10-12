@@ -9,6 +9,25 @@ import type { ActionProposal } from '@/domains/intelligence/types';
 import { ActionReview } from './action-review';
 import { IntelligenceResponse } from '@/components/intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
+
+// Stable saved answers do not reparse Markdown when the composer or active turn updates.
+const ReplyMarkdown = memo(function ReplyMarkdown({ text }: { text: string }) {
+  return (
+    <Markdown
+      skipHtml
+      components={{
+        img: () => <span>[Image omitted]</span>,
+        a: ({ href, children }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {text}
+    </Markdown>
+  );
+});
 export const ConversationTurn = memo(function ConversationTurn({
   turn,
   onFeedback,
@@ -51,28 +70,15 @@ export const ConversationTurn = memo(function ConversationTurn({
           </span>
         )}
         <div className="message-markdown">
-          <Markdown
-            skipHtml
-            components={{
-              img: () => <span>[Image omitted]</span>,
-              a: ({ href, children }) => (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  referrerPolicy="no-referrer"
-                >
-                  {children}
-                </a>
-              ),
-            }}
-          >
-            {ritual
-              ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
-              : companyWork
-                ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
-                : turn.assistant_text}
-          </Markdown>
+          <ReplyMarkdown
+            text={
+              ritual
+                ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
+                : companyWork
+                  ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
+                  : turn.assistant_text
+            }
+          />
         </div>
         {versions?.map((previous) => (
           <details className="message-version" key={previous.id}>
