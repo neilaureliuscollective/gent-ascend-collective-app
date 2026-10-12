@@ -440,3 +440,23 @@
     color: #000;
   }
 }
+
+/* Once a project is open, its working surfaces lead the composition. */
+.origin-hero-active {
+  padding: 20px 28px;
+}
+.origin-hero-active h1 {
+  font-size: clamp(1.3rem, 2vw, 1.85rem);
+  margin: 10px 0;
+}
+.origin-hero-active > p:last-of-type {
+  display: none;
+}
+.origin-hero-active .origin-links {
+  margin-top: 10px;
+}
+@media (max-width: 480px) {
+  .origin-hero-active {
+    padding: 18px;
+  }
+}

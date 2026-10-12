@@ -117,7 +117,7 @@ describe('Origin real SQL transactions and owner policy (PGlite; not Supabase Au
       (
         await asUser(
           owner,
-          `select public.architect_origin_finish('${id}',${literal({ reply: 'Unapproved research', changes: [], document: null, sources: [], kind: 'Research dossier', model: 'synthetic', researchAvailable: false })}) as finished`,
+          `select public.architect_origin_finish('${id}',${literal({ reply: 'Unapproved research', changes: [{ section: 'research', content: 'Unapproved finding', reason: 'Verify before acceptance' }], document: null, sources: [{ url: 'https://example.com/primary', title: 'Synthetic reference', provenance: 'provider' }], kind: 'Research dossier', model: 'synthetic', researchAvailable: true })}) as finished`,
         )
       ).rows,
     ).toEqual([{ finished: true }]);

@@ -58,6 +58,16 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     .getByLabel('Selected document')
     .selectOption({ label: `${name} — Business plan · approved` });
   await expect(page.getByLabel('Editable Markdown')).toContainText('conservative launch budget');
+  for (const width of [390, 720, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: `test-results/architect-origin-real-document-${width}.png`,
+      fullPage: true,
+    });
+  }
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await expect(page.getByRole('button', { name: /Revision 1 —/ })).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-origin-real-auth.png', fullPage: true });

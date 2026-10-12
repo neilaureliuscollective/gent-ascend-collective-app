@@ -61,6 +61,12 @@ async function request<T>(url: string, body?: unknown, signal?: AbortSignal): Pr
   if (!response.ok) throw new Error(data.error || 'Request unavailable.');
   return data;
 }
+function projectLocation(id: string | null) {
+  const url = new URL(location.href);
+  if (id) url.searchParams.set('project', id);
+  else url.searchParams.delete('project');
+  window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+}
 function download(name: string, content: string) {
   const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
   const a = document.createElement('a');
@@ -97,6 +103,7 @@ export function ArchitectOrigin({
   const [history, setHistory] = useState<OriginVersion | null>(null);
   const [loaded, setLoaded] = useState(!enabled);
   const abort = useRef<AbortController | null>(null);
+  const projectTitle = useRef<HTMLHeadingElement | null>(null);
   const dirty = !!draft && !!selected && JSON.stringify(draft) !== JSON.stringify(selected.content);
   const locked = busy || !!pending;
   const activeDoc = draft?.documents.find((d) => d.id === documentId);
@@ -175,7 +182,8 @@ export function ArchitectOrigin({
       setHistory(null);
       setSurface('Conversation');
       setUncertainRun(false);
-      window.history.replaceState(null, '', `?project=${project.id}`);
+      requestAnimationFrame(() => projectTitle.current?.focus());
+      projectLocation(project.id);
       setMessage(
         `Resumed revision ${fresh.revision}. Exploration is separate from approved direction.`,
       );
@@ -277,6 +285,7 @@ export function ArchitectOrigin({
         updated_at: new Date().toISOString(),
       };
       setSelected(project);
+      if (!selected) requestAnimationFrame(() => projectTitle.current?.focus());
       setDraft(structuredClone(input.content));
       setPending(null);
       setIdea('');
@@ -286,7 +295,7 @@ export function ArchitectOrigin({
         projects: [project, ...old.projects.filter((p) => p.id !== project.id)],
         ...(selected?.id !== project.id ? { versions: [], runs: [] } : {}),
       }));
-      window.history.replaceState(null, '', `?project=${project.id}`);
+      projectLocation(project.id);
       setMessage(`Saved revision ${result.revision}. Confirmed by the server.`);
       try {
         const data = await request<Library>(`/api/architect-origin?project=${project.id}`);
@@ -393,7 +402,7 @@ export function ArchitectOrigin({
   }
   return (
     <section className="origin" aria-labelledby="origin-title" aria-busy={busy}>
-      <header className="origin-hero">
+      <header className={`origin-hero${selected ? ' origin-hero-active' : ''}`}>
         <p className="eyebrow">AETHELIOS ARCHITECT / ORIGIN</p>
         <h1 id="origin-title">Where vision becomes creation.</h1>
         <p>Envision without limits. Create with purpose.</p>
@@ -435,7 +444,7 @@ export function ArchitectOrigin({
             setDraft(null);
             setError('');
             setMessage('');
-            window.history.replaceState(null, '', location.pathname);
+            projectLocation(null);
           }}
         >
           New vision +
@@ -529,7 +538,9 @@ export function ArchitectOrigin({
                 <p className="eyebrow">
                   {draft.discipline} / {draft.status} / REVISION {selected.revision}
                 </p>
-                <h2>{selected.content.name}</h2>
+                <h2 ref={projectTitle} tabIndex={-1}>
+                  {selected.content.name}
+                </h2>
               </div>
               <div className="origin-links">
                 <button
