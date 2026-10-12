@@ -18,7 +18,7 @@ Confirmed the canonical Gent Ascend database from FOUNDER_ACTIVATION.md and read
 ## Exact founder requirements
 
 1. Use **the existing Gent Ascend Supabase only**, with the protected Vercel preview candidate. No additional hosted project or branch is required. PR #99 consolidates the complete Studio stack against main while preserving earlier PRs and unrelated work.
-2. Review compatible Narration `20261012120000_studio_narration.sql` and Footage `20261012180000_studio_footage.sql` for the existing database, including private buckets, table/RPC privileges and owner isolation. Hosted migration is not performed in this phase.
+2. **Completed in the next connection phase:** reviewed Narration `20261012095748_studio_narration.sql` and Footage `20261012095801_studio_footage.sql` are applied to the existing database; 20/20 read-only contract checks passed. See [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md) for exact hosted receipts and remaining ordinary-account acceptance.
 3. Confirm existing server-only OPENAI_API_KEY has current image/GPT-Audio-1.5 permissions and a budget. Set app-specific RUNWAYML_API_SECRET and independent random STUDIO_FOOTAGE_SIGNING_KEY (at least 32 characters) as Vercel Secrets on the protected preview target. Preserve the signing key. Do not send keys in chat or reuse a Shopify/connector token.
 4. Keep flags off until storage/RPC and budget checks pass. Then conduct ordinary authenticated preview acceptance against the existing database: approve one short narration and 5s clip, compare provider charges, inspect real outputs/host, privately save/reopen/seek/download, test uncertain acknowledgement recovery and another account's denial. Enable only accepted features. The read-only report cannot replace this test.
 5. Complete physical-device/performance/visual acceptance and review production migration/merge/flag/rollback changes before founder approval to release.
@@ -30,3 +30,7 @@ Retrieved current [Supabase RLS](https://supabase.com/docs/guides/database/postg
 Unit tests cover secret nonserialization, founder denial before probes, owner/zero-row query contracts and ambiguous failure classification. Real local Supabase CI and focused Studio/browser/visual receipts are recorded in the PR. Local browser bind and Supabase CLI home are sandbox-blocked; do not equate fixtures/PGlite with hosted Auth acceptance. No new migration is added. No real paid generation, hosted two-account/Storage acceptance or production release is claimed.
 
 The three-phase v1 launch plan remains open: phase one is prepared but cannot finish until the missing schema, credentials/budgets and actual provider acceptance are completed. Do not reduce the remaining count merely because an activation page exists.
+
+## Subsequent connection receipt
+
+The original absence audit above is historical. The media schema is now applied to the same database, with source versions/hashes reconciled. This preparation phase itself did not deploy the application or activate providers. Current connection status and remaining requirements: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).

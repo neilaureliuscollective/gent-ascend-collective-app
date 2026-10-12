@@ -391,3 +391,7 @@ Actual read-only Vercel/catalog evidence shows image foundations but missing nar
 ## 2026-10-12 — One canonical Supabase for Studio
 
 Founder explicitly rejected a separate hosted staging database. This supersedes the earlier staging-destination requirement: use the existing Gent Ascend Supabase only. Protected preview and real local Supabase CI remain useful verification environments, not requirements for another hosted project. No hosted reset/seeding, automatic paid generation or production promotion follows from this correction. The complete integration candidate is PR #99 against main; reviewed additive Narration/Footage migrations and actual hosted provider/owner acceptance remain open.
+
+## Additive Studio media connection on one Supabase — October 12, 2026
+
+Applied the exact reviewed Narration and Footage migrations to the existing Gent Ascend database, reconciled source versions/hashes with hosted history and passed all 20 read-only catalog contract checks. Existing image bucket, member records and shared services were preserved. Added repeatable verification SQL and a regression for missing owner policy/anonymous RPC permission. No extra hosted database, reset, seed, paid generation, feature activation or production app release. Advisor warnings are reviewed and reported, not hidden. Remaining provider credentials/budgets and ordinary-account live acceptance: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).

@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+
+// This suite always targets synthetic components, including when run by the broad gate.
+test.use({ baseURL: 'http://127.0.0.1:3102' });
 for (const width of [344, 390, 720, 768, 1440, 1920]) {
   test(`Lifestyle discovery and cart at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });

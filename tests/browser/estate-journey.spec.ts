@@ -1,11 +1,14 @@
 import { test, expect } from './fixtures';
 
+// Retained legacy composition, explicitly tested apart from the current public homepage.
+const estateFixture = 'http://127.0.0.1:3102/?mode=archived-estate';
+
 for (const width of [344, 768, 1440]) {
   test(`Ascend entry keeps the story and direct exits usable at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('/');
+    await page.goto(estateFixture);
     await expect(
       page.getByRole('heading', { name: 'A life is built from the inside.' }),
     ).toBeVisible();
@@ -60,7 +63,7 @@ for (const width of [344, 768, 1440]) {
 test('reduced motion retains the complete sequence and destinations', async ({ page }) => {
   await page.setViewportSize({ width: 344, height: 660 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto(estateFixture);
   await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
   await expect(page.locator('.ascend-man-resolution')).toBeVisible();
   await page.locator('#the-intelligence').scrollIntoViewIfNeeded();
@@ -80,7 +83,7 @@ test('reduced motion retains the complete sequence and destinations', async ({ p
 
 test('desktop LifeOS stages advance and reverse with native scroll', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/#the-system');
+  await page.goto(estateFixture + '#the-system');
   const system = page.locator('#the-system');
   await expect(system).toHaveAttribute('data-active', '1');
   await page.evaluate(() => {
@@ -99,7 +102,7 @@ test('desktop LifeOS stages advance and reverse with native scroll', async ({ pa
 
 test('desktop ritual moves from preparation to the object and back', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/#the-ritual');
+  await page.goto(estateFixture + '#the-ritual');
   const ritual = page.locator('#the-ritual');
   await expect(ritual).toHaveAttribute('data-directed', 'true');
   await expect(ritual).toHaveAttribute('data-active', '1');
@@ -128,7 +131,7 @@ for (const width of [344, 768]) {
   test(`Fold-width ${width} ritual keeps both moments readable`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 344 ? 660 : 900 });
     if (width === 344) await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/#the-ritual');
+    await page.goto(estateFixture + '#the-ritual');
     await expect(page.locator('#the-ritual')).toHaveAttribute(
       'data-directed',
       width === 344 ? 'false' : 'true',
@@ -146,20 +149,16 @@ for (const width of [344, 768]) {
     await expect(
       page.getByRole('heading', { name: 'Care becomes something you carry.' }),
     ).toBeVisible();
-    await page
-      .locator('#ritual-object')
-      .getByRole('link', { name: /Inspect Vitalis/ })
-      .click();
-    await expect(page).toHaveURL('/shop/vitalis#atelier');
-    await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
-    await expect(page.getByText('Product photography forthcoming')).toBeVisible();
+    await expect(
+      page.locator('#ritual-object').getByRole('link', { name: /Inspect Vitalis/ }),
+    ).toHaveAttribute('href', '/shop/vitalis#atelier');
   });
 }
 
 for (const width of [344, 768, 1440]) {
   test(`physical world and final door stay usable at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 344 ? 660 : 900 });
-    await page.goto('/#the-reserve');
+    await page.goto(estateFixture + '#the-reserve');
     await expect(
       page.getByRole('heading', { name: 'A place where care has a face.' }),
     ).toBeVisible();

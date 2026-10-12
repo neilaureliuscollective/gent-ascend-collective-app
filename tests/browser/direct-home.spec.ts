@@ -55,8 +55,8 @@ for (const [width, height] of [
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
     await expect(
       page
-        .getByRole('navigation', { name: 'Your operating spaces' })
-        .getByRole('link', { name: /Ascend Collection/ }),
+        .getByRole('navigation', { name: 'Your primary spaces' })
+        .getByRole('link', { name: /Collective/ }),
     ).toHaveAttribute('href', '/app/collection');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -77,7 +77,7 @@ test('home draft opens existing Talk with no automatic send or browser persisten
     .getByRole('textbox', { name: 'What are we working on?' })
     .fill('Help me plan my grooming ritual and next training session.');
   await page.getByRole('button', { name: 'Continue in Talk' }).click();
-  await expect(page.locator('.aurelius-composer textarea')).toHaveValue(
+  await expect(page.getByRole('textbox', { name: 'Message Aethelios', exact: true })).toHaveValue(
     'Help me plan my grooming ritual and next training session.',
   );
   expect(posts).toEqual([]);
@@ -107,7 +107,9 @@ for (const changed of [true, false])
       .getByRole('textbox', { name: 'What are we working on?' })
       .fill('Private synthetic thought');
     await page.getByRole('button', { name: 'Continue in Talk' }).click();
-    await expect(page.locator('.aurelius-composer textarea')).toHaveValue('');
+    await expect(page.getByRole('textbox', { name: 'Message Aethelios', exact: true })).toHaveValue(
+      '',
+    );
   });
 
 test('phone composer stays reachable when the viewport shortens for a keyboard', async ({
@@ -142,9 +144,10 @@ test('member home retains world access and draft controls at enlarged text', asy
   await field.fill('Synthetic large text draft');
   await page.getByRole('button', { name: 'Continue in Talk' }).scrollIntoViewIfNeeded();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByText('Open deeper systems', { exact: false }).click();
   await expect(
     page
-      .getByRole('navigation', { name: 'Your operating spaces' })
+      .getByRole('navigation', { name: 'Deeper systems' })
       .getByRole('link', { name: /Presence/ }),
   ).toHaveAttribute('href', '/app/presence');
 });

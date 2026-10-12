@@ -1,11 +1,14 @@
 import { test, expect } from './fixtures';
 
+// Retained preview components; actual public routes use the current live-only catalog contract.
+const productFixture = 'http://127.0.0.1:3102/?mode=archived-commerce-product&handle=vitalis';
+
 test('Vitalis preview preserves honest product inspection without approved media', async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/shop/vitalis');
+  await page.goto(productFixture);
   await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
   await expect(page.getByText('Product photography forthcoming')).toBeVisible();
   await expect(page.getByRole('button', { name: /(?:Explore|Inspect) in 3D/ })).toHaveCount(0);
@@ -25,7 +28,7 @@ test('reduced motion and unsupported graphics retain usable content', async ({ p
       return get.apply(this, args);
     } as typeof get;
   });
-  await page.goto('/shop/vitalis');
+  await page.goto(productFixture);
   await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
   await expect(page.locator('#atelier .reserve-gallery')).toBeVisible();
   await expect(page.getByText('Product photography forthcoming')).toBeVisible();

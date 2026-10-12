@@ -4,6 +4,29 @@ import { readFile, readdir } from 'node:fs/promises';
 const db = new PGlite();
 const founder = '00000000-0000-4000-8000-000000000001';
 const member = '00000000-0000-4000-8000-000000000002';
+describe('Studio media catalog acceptance', () => {
+  it('checks deployed media contracts and detects a missing owner policy or anonymous RPC grant', async () => {
+    const sql = await readFile('supabase/verification/studio_media_readiness.sql', 'utf8');
+    const baseline = (await db.query<{ name: string; passed: boolean }>(sql)).rows;
+    expect(baseline).toHaveLength(20);
+    expect(baseline.every((check) => check.passed)).toBe(true);
+    await db.exec('begin');
+    try {
+      await db.exec(
+        'drop policy studio_narrations_owner on public.ai_studio_narrations; grant execute on function public.ai_studio_footage_begin(uuid) to anon',
+      );
+      const failed = (await db.query<{ name: string; passed: boolean }>(sql)).rows.filter(
+        (check) => !check.passed,
+      );
+      expect(failed.map((check) => check.name)).toEqual([
+        'owner-policy:ai_studio_narrations',
+        'rpc:public.ai_studio_footage_begin(uuid)',
+      ]);
+    } finally {
+      await db.exec('rollback');
+    }
+  });
+});
 async function asUser<T>(id: string, sql: string) {
   await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${id}',false)`);
   try {
