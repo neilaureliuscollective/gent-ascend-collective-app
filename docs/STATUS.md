@@ -891,3 +891,7 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
+
+### 2026-10-12 — Lifestyle Phase Three: discovery continuity
+
+Implemented on the open purchase-confidence/atelier stack: URL-backed public/member catalog search, supported chapter/brand/availability/sort, Back/reload reconstruction, removable applied filters. Unsupported filters and mixed-currency price sorting recover safely. Existing browser selection remains distinct from purchases; no private identifiers or new tracking. Production unchanged. Local and hosted validation receipts are recorded in the Phase Three PR; live merchant checkout, policies and approved attribute/copy gates remain outstanding. See `docs/LIFESTYLE_DISCOVERY_CONTINUITY.md`.

@@ -422,3 +422,14 @@
 .reserve-zoom .atelier-zoom-toolbar button {
   margin: 0;
 }
+
+/* Applied search text must wrap even when a query has no spaces. */
+.collection-chapters[aria-label='Applied filters'] {
+  flex-wrap: wrap;
+}
+.collection-chapters[aria-label='Applied filters'] button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
