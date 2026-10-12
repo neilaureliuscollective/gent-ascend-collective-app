@@ -383,3 +383,7 @@ Connect existing saved Studio media into a reviewed portable handoff using owner
 ## 2026-10-12 — Studio control-room finish before v1 launch
 
 Founder requested premium futuristic design and an honest path to live. Preserve all previous Studio builds, current Obsidian/platinum/gold identity and provider cost/ownership safeguards. Improve room hierarchy and real saved-media presentation with static materials, bounded motion and conditional client code splitting. Launch plan is three phases: staged integration/provider acceptance, product/security/device acceptance, approved production promotion. Advanced timeline/source animation/music remain post-v1 unless explicitly made launch requirements. Sources and gates: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md).
+
+## 2026-10-12 — Founder Studio activation probes before hosted changes
+
+Actual read-only Vercel/catalog evidence shows image foundations but missing narration/footage deployment contracts. Require an explicitly designated staging destination rather than guessing production. Add founder-grant-protected fixed-value readiness and owner-scoped zero-row schema probes; never infer model, storage or billing acceptance from key/table presence. Repair stale founder acceptance routes/selectors while keeping real Auth/persistence assertions. No service role, credential decryption, mutation, provider call or production release. [STUDIO_ACTIVATION.md](STUDIO_ACTIVATION.md).

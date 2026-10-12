@@ -1,3 +1,7 @@
+## Studio activation preparation — October 12, 2026
+
+Read-only hosted audit confirms existing image tables/RLS/private image bucket; narration/footage schema/buckets/RPCs and Vercel activation/Runway/signing variables are absent. Founder-only readiness page/API adds fixed configuration statuses and session-bound owner-filtered zero-row schema probes, explicitly never inferring live acceptance. Stale founder selectors/routes are updated with real persistence/denial assertions retained. No hosted migration, provider bill/configuration or production release. Exact evidence, founder staging requirements and remaining launch gates: [STUDIO_ACTIVATION.md](STUDIO_ACTIVATION.md).
+
 ## Studio premium control room — October 12, 2026
 
 Review candidate preserves the complete production-house/Narration/Footage/Delivery stack. Adds a unified dimensional project stage, actual saved-image preview, numbered production-room controls and workflow hierarchy in the latest Obsidian brand, plus conditional code splitting for specialist rooms. Existing owner/consent/cost safeguards are unchanged. No provider activation, migration or production release. Research, acceptance limits and **three remaining v1 launch phases**: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md). Visual inspection, real provider/hosted security acceptance and measured hardware performance remain open.
