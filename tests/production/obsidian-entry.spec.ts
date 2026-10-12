@@ -13,7 +13,7 @@ test('the verified production application serves Obsidian and preserves public e
       },
       { timeout: 120000, intervals: [2000, 5000] },
     )
-    .toBe('#080D0D');
+    .toBe('#070B0A');
 
   for (const viewport of [
     { width: 390, height: 844 },
@@ -49,7 +49,7 @@ test('the verified production application serves Obsidian and preserves public e
       if (route.startsWith('/app/')) {
         await expect(page.locator('.imperial-workspace')).toHaveCSS(
           'background-color',
-          'rgb(8, 13, 13)',
+          'rgb(7, 11, 10)',
         );
         const navigation = page.getByRole('navigation', { name: 'Main navigation' });
         await expect(navigation.getByRole('link')).toHaveCount(6);
