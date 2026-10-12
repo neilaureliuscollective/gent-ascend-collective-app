@@ -419,8 +419,9 @@ test('Command without JavaScript explains the workspace requirement and keeps a 
     await expect(
       page.getByText('If this screen stays here, enable JavaScript', { exact: false }),
     ).toBeVisible();
-    await page.getByText('Having trouble opening your workspace?').click();
-    const fallback = page.locator('nav[aria-label="Workspace fallback"]:visible');
+    const fallback = page
+      .locator('noscript')
+      .getByRole('navigation', { name: 'Workspace fallback' });
     await expect(fallback.getByRole('link', { name: 'Your account' })).toHaveAttribute(
       'href',
       '/enter',

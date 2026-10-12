@@ -135,7 +135,7 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
   await page.goto('/app/progress');
   await expect(page.getByRole('heading', { name: 'A moment to reconnect.' })).toBeVisible();
   await context.setOffline(false);
-  await page.getByRole('link', { name: 'Try Command again' }).click();
+  await page.getByRole('link', { name: 'Try Talk again' }).click();
   await expect(page).toHaveURL(/\/app\/aethelios$/);
   await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
 });

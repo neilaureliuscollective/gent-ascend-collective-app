@@ -24,7 +24,12 @@ test('the public living orb serves the member conversation without requesting au
   ).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(presence).not.toBeVisible();
-  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Tools & context', exact: true })
+    .getByRole('button', { name: 'Pause ambient motion' })
+    .click();
+  await page.keyboard.press('Escape');
   await expect(orb.locator('.intelligence-orb-static')).toBeVisible();
   await page.getByLabel('Message Aethelios').fill('My unsent thought');
   expect(writes).toEqual([]);

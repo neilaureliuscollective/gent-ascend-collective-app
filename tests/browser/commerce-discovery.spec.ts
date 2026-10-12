@@ -1,10 +1,13 @@
 import { expect, test } from './fixtures';
+
+// Retained preview components; actual public routes use the current live-only catalog contract.
+const shopFixture = 'http://127.0.0.1:3102/?mode=archived-commerce-shop';
 for (const width of [344, 768, 1440]) {
   test(`guided direction and considered selection at ${width}px`, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/shop');
+    await page.goto(shopFixture);
     const guide = page.locator('#discovery');
     await page.getByRole('link', { name: 'Find your next essential' }).click();
     await expect(
@@ -52,7 +55,7 @@ test('discovery is keyboard usable, optional, and keeps the full shelf available
   browser,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/shop');
+  await page.goto(shopFixture);
   const guide = page.locator('#discovery');
   await guide.getByRole('radio', { name: /The whole collection/ }).focus();
   await page.keyboard.press('ArrowRight');
@@ -62,28 +65,28 @@ test('discovery is keyboard usable, optional, and keeps the full shelf available
   await expect(guide.getByRole('heading', { name: 'Your direction: Hair & beard' })).toBeFocused();
   const context = await browser.newContext({ javaScriptEnabled: false });
   const staticPage = await context.newPage();
-  await staticPage.goto('/shop');
-  await expect(staticPage.locator('#collection .reserve-collection-card')).toHaveCount(4);
+  await staticPage.goto('http://127.0.0.1:3100/shop');
+  await expect(staticPage.locator('#collection .reserve-collection-card')).toHaveCount(0);
   await expect(
-    staticPage.getByText('The interactive guide needs JavaScript.', { exact: false }),
+    staticPage.getByText('Live product availability is not connected yet.', { exact: false }),
   ).toBeVisible();
   await context.close();
 });
 test('saved selection handles missing catalog entries and storage denial', async ({ page }) => {
-  await page.goto('/shop');
+  await page.goto(shopFixture);
   await page.evaluate(() =>
     localStorage.setItem(
       'gent-ascend-collection-v1',
       JSON.stringify(['missing-product', 'missing-product', 'bad/<handle>']),
     ),
   );
-  await page.goto('/shop?saved=1');
+  await page.goto(shopFixture + '&saved=1');
   await expect(page.locator('.reserve-unresolved-selection')).toContainText(
     '1 saved item is not in this collection view',
   );
   await page.getByRole('button', { name: 'Remove missing-product', exact: true }).click();
   await expect(page.locator('.reserve-unresolved-selection')).toHaveCount(0);
-  await page.goto('/shop');
+  await page.goto(shopFixture);
   await page.evaluate(() => {
     Storage.prototype.setItem = () => {
       throw new Error('Synthetic storage denial');
@@ -118,9 +121,9 @@ test('approved alternatives and ritual chapters disclose reason, price and avail
 });
 
 test('saved selection synchronizes across open tabs', async ({ page }) => {
-  await page.goto('/shop');
+  await page.goto(shopFixture);
   const selection = await page.context().newPage();
-  await selection.goto('/shop?saved=1');
+  await selection.goto(shopFixture + '&saved=1');
   await expect(selection.locator('.reserve-collection-card')).toHaveCount(0);
   await page
     .locator('#collection')

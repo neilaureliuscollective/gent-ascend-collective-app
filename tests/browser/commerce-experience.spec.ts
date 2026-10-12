@@ -1,10 +1,14 @@
 import { expect, test } from './fixtures';
+
+// Retained preview components; actual public routes use the current live-only catalog contract.
+const shopFixture = 'http://127.0.0.1:3102/?mode=archived-commerce-shop';
+const productFixture = 'http://127.0.0.1:3102/?mode=archived-commerce-product&handle=vitalis';
 for (const width of [344, 768, 1440]) {
   test(`educated collection preview and saved selection at ${width}px`, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/shop');
+    await page.goto(shopFixture);
     await expect(page.getByRole('heading', { name: 'A higher daily standard.' })).toBeVisible();
     await page.getByRole('link', { name: 'Discover Vitalis', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Vitalis.' })).toBeVisible();
@@ -43,7 +47,7 @@ for (const width of [344, 768, 1440]) {
 }
 test('reduced motion and keyboard-accessible preview education', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/shop/vitalis');
+  await page.goto(productFixture);
   await expect(page.locator('.public-world')).toHaveAttribute('data-world-still', 'true');
   await expect(page.locator('canvas')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Explore in 3D' })).toHaveCount(0);

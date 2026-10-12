@@ -1,5 +1,9 @@
 name: Quality gates
 on: [push, pull_request]
+# Push and PR events for the same source branch verify one current head.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
