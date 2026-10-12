@@ -379,3 +379,7 @@ Execute a useful default-off text-to-video pilot on the preserved Studio stack. 
 ## 2026-10-12 — Campaign delivery before further paid source animation
 
 Connect existing saved Studio media into a reviewed portable handoff using owner-scoped GET endpoints and the bounded local ZIP writer. Use sequential abortable reads, exact local approval snapshots and hashes; never expose vendor URLs or imply clip synchronization, automatic publishing or independently verified rights. No provider bill, service credentials, migration or production release. Owned-image animation remains a subsequent source-hash/consent/provider-acceptance slice. Current research and boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md).
+
+## 2026-10-12 — Studio control-room finish before v1 launch
+
+Founder requested premium futuristic design and an honest path to live. Preserve all previous Studio builds, current Obsidian/platinum/gold identity and provider cost/ownership safeguards. Improve room hierarchy and real saved-media presentation with static materials, bounded motion and conditional client code splitting. Launch plan is three phases: staged integration/provider acceptance, product/security/device acceptance, approved production promotion. Advanced timeline/source animation/music remain post-v1 unless explicitly made launch requirements. Sources and gates: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md).

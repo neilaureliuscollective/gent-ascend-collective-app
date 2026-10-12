@@ -1,3 +1,7 @@
+## Studio premium control room — October 12, 2026
+
+Review candidate preserves the complete production-house/Narration/Footage/Delivery stack. Adds a unified dimensional project stage, actual saved-image preview, numbered production-room controls and workflow hierarchy in the latest Obsidian brand, plus conditional code splitting for specialist rooms. Existing owner/consent/cost safeguards are unchanged. No provider activation, migration or production release. Research, acceptance limits and **three remaining v1 launch phases**: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md). Visual inspection, real provider/hosted security acceptance and measured hardware performance remain open.
+
 ## Studio Delivery — October 12, 2026
 
 Review candidate stacked on unmerged Footage #96: Delivery room connects selected saved images, AI clips and narration into an actual campaign ZIP with copy, scene-timed captions, provenance labels and SHA-256 file hashes. Exact local review snapshot, bounded authenticated reads, cancellation and honest all-or-nothing failure; no paid generation, new migration or automatic publishing. Audio/video depend on the earlier provider activation gates. Research, scope and founder acceptance boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md). No production release.

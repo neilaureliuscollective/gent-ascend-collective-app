@@ -256,3 +256,202 @@
   border-radius: 10px;
   object-fit: contain;
 }
+
+/* Creative control room. Shared current Obsidian materials, no perpetual decoration. */
+.app-shell.imperial-workspace .studio-workflow-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin: 24px 0;
+  color: var(--aether-silver);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  border-bottom: 1px solid var(--aether-border);
+  padding-bottom: 20px;
+}
+.app-shell.imperial-workspace .studio-project-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  padding: clamp(20px, 3vw, 36px);
+  border: 1px solid var(--aether-border);
+  border-radius: 20px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 95% 0%, var(--aether-gold-glow), transparent 65%),
+    linear-gradient(145deg, var(--aether-elevated), var(--aether-obsidian));
+  box-shadow:
+    inset 0 1px var(--aether-border),
+    0 16px 48px var(--aether-gold-glow);
+}
+.app-shell.imperial-workspace .studio-project-stage h2 {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.6rem, 3vw, 2.8rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+.studio-stage-side {
+  display: grid;
+  gap: 12px;
+  align-content: center;
+  justify-items: end;
+  max-width: 200px;
+}
+.studio-stage-preview {
+  object-fit: cover;
+  width: 180px;
+  height: 120px;
+  border-radius: 12px;
+  border: 1px solid var(--aether-border-active);
+}
+.app-shell.imperial-workspace .studio-room-console {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border-radius: 18px;
+  background: var(--aether-obsidian);
+  border: 1px solid var(--aether-border);
+}
+.app-shell.imperial-workspace .studio-room-console button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 84px;
+  text-align: left;
+  padding: 18px 12px;
+  border: 1px solid var(--aether-border);
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--aether-surface), var(--aether-obsidian));
+  color: var(--aether-text);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+.app-shell.imperial-workspace .studio-room-console button:hover {
+  transform: translateY(-2px);
+  border-color: var(--aether-border-active);
+}
+.app-shell.imperial-workspace .studio-room-console button[aria-pressed='true'] {
+  background: linear-gradient(145deg, var(--aether-elevated), var(--aether-surface));
+  border-color: var(--aether-gold);
+  box-shadow: inset 0 -2px var(--aether-gold);
+  color: var(--aether-text);
+}
+.app-shell.imperial-workspace .studio-room-console button:focus-visible {
+  outline: 2px solid var(--aether-gold-light);
+  outline-offset: 3px;
+}
+.app-shell.imperial-workspace .studio-room-console .studio-room-number {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--aether-silver);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+}
+.studio-room-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.studio-room-copy strong {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.studio-room-copy small {
+  color: var(--aether-silver);
+  font-size: 0.63rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+.studio-room-indicator {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  left: 12px;
+  bottom: 8px;
+  border-radius: 50%;
+  background: var(--aether-gold);
+  opacity: 0;
+}
+button[aria-pressed='true'] .studio-room-indicator {
+  opacity: 1;
+}
+.studio-room-loading {
+  padding: 40px 20px;
+  border: 1px solid var(--aether-border);
+  border-radius: 16px;
+  color: var(--aether-silver);
+}
+@media (max-width: 1100px) {
+  .app-shell.imperial-workspace .studio-room-console {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .app-shell.imperial-workspace .studio-project-stage {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .studio-stage-side {
+    justify-items: start;
+    max-width: 100%;
+  }
+  .studio-stage-preview {
+    display: none;
+  }
+  .app-shell.imperial-workspace .studio-room-console {
+    padding: 6px;
+    gap: 6px;
+  }
+  .app-shell.imperial-workspace .studio-room-console button {
+    padding: 18px 8px;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 7px;
+  }
+  .studio-room-console svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.imperial-workspace .studio-room-console button {
+    transition: none;
+    transform: none;
+  }
+}
+html[data-material='solid'] .app-shell.imperial-workspace .studio-project-stage,
+html[data-material='solid'] .app-shell.imperial-workspace .studio-room-console button {
+  background: var(--aether-surface);
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace
+    :is(.studio-project-stage, .studio-room-console, .studio-room-console button) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace .studio-room-console button[aria-pressed='true'] {
+    border-color: Highlight;
+    outline: 2px solid Highlight;
+  }
+  .studio-room-copy small,
+  .studio-room-number {
+    color: CanvasText !important;
+  }
+}
+
+html[data-motion='still'] .app-shell.imperial-workspace .studio-room-console button {
+  transition: none;
+  transform: none;
+}
