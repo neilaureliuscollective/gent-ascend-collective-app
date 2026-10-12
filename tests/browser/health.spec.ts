@@ -39,6 +39,7 @@ for (const width of [344, 390, 768, 1440]) {
     ).toBeVisible();
     await page.getByText('Inspect source & values', { exact: true }).first().click();
     await expect(page.getByRole('cell', { name: '0 h', exact: true })).toBeVisible();
+    await page.getByText('Inspect source & values', { exact: true }).nth(1).click();
     await expect(page.getByText('Missing is not zero.', { exact: false }).first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

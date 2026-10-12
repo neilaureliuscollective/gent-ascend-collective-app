@@ -1,5 +1,7 @@
 # Health migration reconciliation — release gate
 
+Release update: narrow additive Health dependencies were verified against the actual hosted catalog, real disposable Supabase Auth/Storage checks passed in CI, and only the new Health migration was applied with ingestion/AI off. Mapping and catalog receipt: [HEALTH_RELEASE.md](HEALTH_RELEASE.md). The older discrepancies below remain historical reconciliation work; they were not replayed or repaired. Their resolution and shared privileged-credential review remain gates for sensitive intake activation, not a claim established by this nonclinical foundation release.
+
 Read-only audit on October 12, 2026 of `volpzkfsnmtztrovexcw` (Gent Ascend App). Production code was Vercel READY at main `c0a7f35`. This document is a mapping and unresolved-gate record, not proof of complete deployed SQL equivalence.
 
 | Source migration | Hosted version/name observed |

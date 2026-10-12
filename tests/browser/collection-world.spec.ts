@@ -15,7 +15,7 @@ for (const width of [360, 768, 1440]) {
       'aria-current',
       'page',
     );
-    await expect(nav.getByRole('link')).toHaveCount(5);
+    await expect(nav.getByRole('link')).toHaveCount(6);
     await page.getByRole('link', { name: 'Explore the collection →', exact: true }).click();
     await expect(page).toHaveURL('/app/collection');
     await expect(page.getByRole('heading', { name: 'The Collection.' })).toBeVisible();
@@ -58,3 +58,4 @@ for (const width of [360, 768, 1440]) {
     expect(errors).toEqual([]);
   });
 }
+

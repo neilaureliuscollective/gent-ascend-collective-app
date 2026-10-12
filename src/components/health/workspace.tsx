@@ -1016,7 +1016,7 @@ export function HealthWorkspace({
         onClose={() => setReviewId(null)}
       >
         <div className="health-dialog">
-          {recovery}
+          {reviewId && recovery}
           <p>
             Compare these fields with your original. They become user-reviewed observations only
             after confirmation.
@@ -1075,7 +1075,7 @@ export function HealthWorkspace({
         onClose={() => setEditing(null)}
       >
         <div className="health-dialog">
-          {recovery}
+          {editing && recovery}
           {correction && (
             <>
               <div className="health-edit-grid">
@@ -1131,7 +1131,7 @@ export function HealthWorkspace({
         onClose={() => setDeletion(null)}
       >
         <div className="health-dialog">
-          {recovery}
+          {deletion && recovery}
           <p>
             {deletion === 'all'
               ? 'This removes your Health vault, results, revisions and conversations, and withdraws Health permissions.'
@@ -1163,7 +1163,7 @@ export function HealthWorkspace({
         onClose={() => setTalk(false)}
       >
         <div className="health-dialog health-conversation">
-          {recovery}
+          {talk && recovery}
           <p>
             Selected records stay inside this purpose-specific conversation. No general memory,
             Council or web search.

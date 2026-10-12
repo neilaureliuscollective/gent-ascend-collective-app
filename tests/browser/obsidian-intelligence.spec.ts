@@ -44,7 +44,11 @@ for (const viewport of [
       ).toBe(true);
       if (route.startsWith('/app/')) {
         const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-        await expect(navigation.getByRole('link')).toHaveCount(5);
+        await expect(navigation.getByRole('link')).toHaveCount(6);
+        await expect(navigation.getByRole('link', { name: 'Health', exact: true })).toHaveAttribute(
+          'href',
+          '/app/health',
+        );
         await expect(
           navigation.getByRole('link', { name: 'Lifestyle', exact: true }),
         ).toHaveAttribute('href', '/app/lifestyle');

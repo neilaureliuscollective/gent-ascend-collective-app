@@ -1,0 +1,13 @@
+# Health foundation release — October 12, 2026
+
+Founder explicitly authorized publication to the live unified application. Release PR: https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/107 . Preserved released Founder Office, Studio, Lifestyle, Emerald Obsidian and Live by integrating main `3619f67`, with no history rewrite. Health ends/hides global Live on its routes and excludes unrelated conversation/capture and optional performance reporting.
+
+Only additive `20261012065807_health_foundation.sql` was applied to canonical Supabase `volpzkfsnmtztrovexcw`, recorded as hosted `20261012145252_health_foundation`. SHA-256: `fa78a5c755cd9bcda1cdba13f09cf7c55203dbf43266bc0e60cc56fe70210767`. No historical replay, ledger repair, personal-row read, seed or unrelated hosted migration. Hosted catalog confirms RLS on all ten Health tables, private 8 MiB bucket with immutable originals, no authenticated direct writes and no anonymous/service-role schema or public RPC access. Database administrator/Storage privileged access remains an operator capability; sensitive intake stays disabled pending its dedicated review.
+
+Database ingestion=false and ai=false were verified after migration. Application switches default off as well. This release exposes Health navigation and explicit consent for narrow existing Performance projections. Medical uploads and personalized Health model processing are not activated. Shared-project credential/processor/retention/backup review and physical Fold/DeX/Safari acceptance remain open; wearable/native/FHIR connectivity is not claimed.
+
+Latest local combined source: lint, strict types, 694 unit/SQL/worker/API tests and optimized webpack build passed; exact inherited applied migration hashes verified. Standard npm check/build and real disposable-Supabase Auth/RLS/Storage boundary checks passed in hosted CI. Initial browser failures are retained in CI history: inaccessible review recovery controls corrected by rendering recovery inside the active dialog; missing-data inspection opens the relevant source details; navigation expectations now include Health. Hosted full browser and production receipts are recorded at final acceptance, not inferred from this candidate.
+
+Protected-preview HTTP connector returned deployment_authentication_required even after its bypass retry; this is not a passing HTTP smoke. Production signed-out checks remain required after deployment. No real model, physical-device or medical-record test is inferred from synthetic fixtures.
+
+Rollback: redeploy the previous accepted main artifact. Preserve additive Health schema, jobs and tombstones; keep database/application sensitive switches off. Do not drop private records or restore deleted content.
