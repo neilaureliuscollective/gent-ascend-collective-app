@@ -233,3 +233,19 @@ test('desktop Enter submits a single-line draft', async ({ page }) => {
   await expect(page.locator('.user-message')).toContainText('Desktop single-line thought');
   await page.getByRole('button', { name: 'Stop reply' }).click();
 });
+
+test.describe('touch composer actions', () => {
+  test.use({ hasTouch: true });
+  test('Send and Stop retain editor focus without forced refocusing', async ({ page }) => {
+    await page.goto(fixture);
+    await input(page).fill('Touch-composed thought');
+    await input(page).focus();
+    await page.getByRole('button', { name: 'Send', exact: true }).tap();
+    await expect(input(page)).toHaveValue('');
+    await expect(input(page)).toBeFocused();
+    await page.keyboard.insertText('Next thought');
+    await page.getByRole('button', { name: 'Stop reply' }).tap();
+    await expect(input(page)).toBeFocused();
+    await expect(input(page)).toHaveValue('Next thought');
+  });
+});

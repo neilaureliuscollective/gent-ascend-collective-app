@@ -20,7 +20,7 @@ import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { conversationTiming } from '@/platform/conversation/timing';
-import { TalkDrawer, TalkInput } from './talk-controls';
+import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import {
   intelligenceStatus,
@@ -1098,6 +1098,7 @@ export function AureliusWorkspace({
                 <button
                   type="button"
                   className="secondary-button"
+                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
                   onClick={() => {
                     setOperation(observedOperation(operation.id, 'cancelled', 'uncertain'));
                     generation.current?.abort();
@@ -1117,6 +1118,7 @@ export function AureliusWorkspace({
                     Boolean(data.currentConversation?.archived_at)
                   }
                   type="submit"
+                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
                 >
                   {councilSelection?.kind === 'table' ? 'Review The Table' : 'Send'}{' '}
                   <span aria-hidden="true">↑</span>

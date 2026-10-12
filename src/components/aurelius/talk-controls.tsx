@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
   type RefObject,
+  type PointerEvent,
 } from 'react';
 import './talk.css';
 
@@ -219,4 +220,13 @@ export function TalkInput({
       </dialog>
     </>
   );
+}
+
+/** Touch activation must not transfer focus from the editor and close the native keyboard. */
+export function retainComposerFocus(
+  event: PointerEvent<HTMLButtonElement>,
+  editor: HTMLTextAreaElement | null,
+) {
+  if (event.pointerType === 'touch' && editor && document.activeElement === editor)
+    event.preventDefault();
 }

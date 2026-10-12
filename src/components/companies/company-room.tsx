@@ -18,7 +18,7 @@ import { CouncilPanel } from '@/components/aurelius/council-panel';
 import type { readWork } from '@/domains/company-work/service';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { frameText } from '@/components/aurelius/frame-text';
-import { TalkDrawer, TalkInput } from '@/components/aurelius/talk-controls';
+import { TalkDrawer, TalkInput, retainComposerFocus } from '@/components/aurelius/talk-controls';
 import { TalkPresence } from '@/components/aurelius/talk-presence';
 import { useTalkViewport } from '@/components/aurelius/conversation-viewport';
 import { ConversationTurn } from '@/components/aurelius/message';
@@ -733,12 +733,17 @@ export function CompanyRoom({
             <div className="talk-composer-actions">
               <button
                 className="button"
+                onPointerDown={(event) => retainComposerFocus(event, composer.current)}
                 disabled={busy || needsReload || !data.canChat || !draft.trim()}
               >
                 {outputMode ? 'Generate deliverable version' : 'Send'}
               </button>
               {streaming && (
-                <button type="button" onClick={() => requestRef.current?.abort()}>
+                <button
+                  type="button"
+                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
+                  onClick={() => requestRef.current?.abort()}
+                >
                   Stop
                 </button>
               )}
