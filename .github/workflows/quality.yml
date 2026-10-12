@@ -33,6 +33,10 @@ jobs:
           tests/browser/estate-motion.spec.ts tests/browser/direct-home.spec.ts
           tests/browser/orb.spec.ts tests/browser/pilot.spec.ts
           tests/browser/lifestyle-phase-one.spec.ts --workers=2
+      - name: Live policy and current commerce regressions
+        run: >-
+          npx playwright test tests/browser/ascend-mirror.spec.ts
+          tests/browser/collection-world.spec.ts tests/browser/commerce-discovery.spec.ts --workers=2
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()

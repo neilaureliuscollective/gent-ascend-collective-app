@@ -1,6 +1,13 @@
 import type { ProductStory } from '@/domains/commerce/product-story';
 
-export function PurchaseTerms({ story }: { story: ProductStory | null }) {
+export type PurchasePolicy = { kind: string; title: string; url: string };
+export function PurchaseTerms({
+  story,
+  policies = [],
+}: {
+  story: ProductStory | null;
+  policies?: PurchasePolicy[];
+}) {
   return (
     <details className="reserve-purchase-terms">
       <summary>Delivery, payment & returns</summary>
@@ -27,6 +34,15 @@ export function PurchaseTerms({ story }: { story: ProductStory | null }) {
           </dd>
         </div>
       </dl>
+      {policies.length > 0 && (
+        <nav aria-label="Merchant policies">
+          {policies.map((policy) => (
+            <a key={policy.kind} href={policy.url} target="_blank" rel="noopener noreferrer">
+              {policy.kind === 'shippingPolicy' ? 'Shipping policy' : 'Returns policy'} ↗
+            </a>
+          ))}
+        </nav>
+      )}
       <a href="#release">Read the release details ↓</a>
     </details>
   );

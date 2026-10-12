@@ -1,3 +1,4 @@
+import { SensitiveBoundary, SensitiveLiveProvider } from './health/sensitive-boundary';
 import { ConversationDraftProvider } from './aurelius/draft-handoff';
 import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
@@ -6,7 +7,6 @@ import { AureliusPanel } from './aurelius-panel';
 import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
-import { SensitiveBoundary } from './health/sensitive-boundary';
 import { AppRuntime } from './app-runtime';
 import { UniversalCapture } from './capture/universal-capture';
 export function Shell({
@@ -19,77 +19,88 @@ export function Shell({
   founderOffice?: boolean;
 }) {
   return (
-    <ConversationDraftProvider>
-      <div className="app-shell aethelios-aether imperial-workspace">
-        <AppRuntime />
-        <VisualEnvironment>
-          <ConnectionField />
-        </VisualEnvironment>
-        <a className="skip" href="#main">
-          Skip to content
-        </a>
-        <aside className="sidebar">
-          <Link className="wordmark" href="/app" aria-label="Aethelios home">
-            <Brand />
-          </Link>
-          <p className="navigation-label">AETHELIOS</p>
-          <Navigation />
-          <SensitiveBoundary><AureliusPanel /></SensitiveBoundary>
+    <SensitiveLiveProvider
+      enabled={
+        process.env.AETHELIOS_LIVE_ENABLED === 'true' &&
+        process.env.APP_ENV !== 'production' &&
+        process.env.VERCEL_ENV !== 'production'
+      }
+    >
+      <ConversationDraftProvider>
+        <div className="app-shell aethelios-aether imperial-workspace">
+          <AppRuntime />
+          <VisualEnvironment>
+            <ConnectionField />
+          </VisualEnvironment>
+          <a className="skip" href="#main">
+            Skip to content
+          </a>
+          <aside className="sidebar">
+            <Link className="wordmark" href="/app" aria-label="Aethelios home">
+              <Brand />
+            </Link>
+            <p className="navigation-label">AETHELIOS</p>
+            <Navigation />
+            <SensitiveBoundary>
+              <AureliusPanel />
+            </SensitiveBoundary>
 
-          <div className="sidebar-footer">
-            <Link href="/app/work" prefetch={false} className="text-link">
-              Company work ↗
-            </Link>
-            <span className="brand-star" aria-hidden="true">
-              ✦
-            </span>
-            <p>
-              Think. Build.
-              <br />
-              Operate.
-            </p>
-            <span className="quiet-label">A clearer way to build.</span>
-          </div>
-        </aside>
-        <div className="workspace">
-          <header className="topbar">
-            <Link href="/app" className="mobile-brand" aria-label="Aethelios home">
-              <Brand compact />
-            </Link>
-            <span className="topbar-context">
-              AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
-            </span>
-            <div className="topbar-actions">
-              <SensitiveBoundary><UniversalCapture /></SensitiveBoundary>
-              <AppearanceControls />
-              <Link href="/app/work" className="text-link shell-ascend-link">
-                Company work
+            <div className="sidebar-footer">
+              <Link href="/app/work" prefetch={false} className="text-link">
+                Company work ↗
               </Link>
-              {founder && <Link href="/dev">Developer console</Link>}
-              {founderOffice && (
-                <Link
-                  href="/app/founder"
-                  prefetch={false}
-                  className="text-link shell-founder-link"
-                  aria-label="Founder Office"
-                >
-                  <span className="founder-link-long">Founder Office</span>
-                  <span className="founder-link-short" aria-hidden="true">
-                    Office
-                  </span>
-                </Link>
-              )}
-              <Link href="/app/you" className="avatar" aria-label="Your account">
-                <Icon name="person" />
-              </Link>
+              <span className="brand-star" aria-hidden="true">
+                ✦
+              </span>
+              <p>
+                Think. Build.
+                <br />
+                Operate.
+              </p>
+              <span className="quiet-label">A clearer way to build.</span>
             </div>
-          </header>
-          <main id="main" tabIndex={-1}>
-            {children}
-          </main>
+          </aside>
+          <div className="workspace">
+            <header className="topbar">
+              <Link href="/app" className="mobile-brand" aria-label="Aethelios home">
+                <Brand compact />
+              </Link>
+              <span className="topbar-context">
+                AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
+              </span>
+              <div className="topbar-actions">
+                <SensitiveBoundary>
+                  <UniversalCapture />
+                </SensitiveBoundary>
+                <AppearanceControls />
+                <Link href="/app/work" className="text-link shell-ascend-link">
+                  Company work
+                </Link>
+                {founder && <Link href="/dev">Developer console</Link>}
+                {founderOffice && (
+                  <Link
+                    href="/app/founder"
+                    prefetch={false}
+                    className="text-link shell-founder-link"
+                    aria-label="Founder Office"
+                  >
+                    <span className="founder-link-long">Founder Office</span>
+                    <span className="founder-link-short" aria-hidden="true">
+                      Office
+                    </span>
+                  </Link>
+                )}
+                <Link href="/app/you" className="avatar" aria-label="Your account">
+                  <Icon name="person" />
+                </Link>
+              </div>
+            </header>
+            <main id="main" tabIndex={-1}>
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </ConversationDraftProvider>
+      </ConversationDraftProvider>
+    </SensitiveLiveProvider>
   );
 }
-

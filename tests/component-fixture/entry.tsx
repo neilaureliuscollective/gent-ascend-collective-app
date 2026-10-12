@@ -4,6 +4,8 @@ import { AppearanceControls, VisualEnvironment } from '@/components/visual/appea
 import { ArchivedEstate } from './archived-estate';
 import { CinematicWorld } from '@/components/public/cinematic-world';
 import { WorldHeader } from '@/components/public/world-header';
+import { LiveArtifactsFixture } from './live-artifacts';
+import { LiveVoiceFixture } from './live-voice';
 import { HealthWorkspace, type HealthView } from '@/components/health/workspace';
 import { healthFixture } from './health';
 import { MissionHandoffFixture } from './mission-handoff';
@@ -123,7 +125,24 @@ const lifecycle: FormAction = async (_previous, form) => ({
 });
 createRoot(document.getElementById('root')!).render(
   mode.startsWith('health') ? (
-    <div className='imperial-workspace' style={{background:'#07130F',minHeight:'100vh'}}><p style={{padding:12,color:'#aec2ad'}}>Synthetic Health fixture · no live records or model</p><HealthWorkspace initial={params.get('empty') ? {...healthFixture, records:[],observations:[], wellness:{sleep:[],weight:[],movement:[],recovery:[],unavailable:[]}} : healthFixture} view={(params.get('view') || 'command') as HealthView} /></div>
+    <div className="imperial-workspace" style={{ background: '#07130F', minHeight: '100vh' }}>
+      <p style={{ padding: 12, color: '#aec2ad' }}>
+        Synthetic Health fixture · no live records or model
+      </p>
+      <HealthWorkspace
+        initial={
+          params.get('empty')
+            ? {
+                ...healthFixture,
+                records: [],
+                observations: [],
+                wellness: { sleep: [], weight: [], movement: [], recovery: [], unavailable: [] },
+              }
+            : healthFixture
+        }
+        view={(params.get('view') || 'command') as HealthView}
+      />
+    </div>
   ) : mode.startsWith('archived-commerce') ? (
     <>
       <p role="note">Historical commerce preview fixture · no live catalog, account or checkout.</p>
@@ -156,6 +175,10 @@ createRoot(document.getElementById('root')!).render(
         <ArchivedEstate />
       </CinematicWorld>
     </>
+  ) : mode === 'live-artifacts' ? (
+    <LiveArtifactsFixture />
+  ) : mode === 'live-voice' ? (
+    <LiveVoiceFixture />
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
@@ -176,8 +199,58 @@ createRoot(document.getElementById('root')!).render(
         />
       ) : mode === 'lifestyle-cart' ? (
         <CartPanel fullPage basePath="/app/collection" />
+      ) : mode === 'lifestyle-film' ? (
+        <ProductExperience
+          basePath="/app/collection"
+          product={{
+            ...commerceFixture,
+            story: {
+              value: JSON.stringify({
+                version: 1,
+                status: 'approved',
+                mediaApproved: params.get('approved') !== 'false',
+                videoTranscript: 'Synthetic film transcript. No product claims.',
+                videoCaptions: {
+                  url: 'https://cdn.shopify.com/fixture/captions.vtt',
+                  language: 'en',
+                  label: 'English',
+                },
+              }),
+            },
+            media: {
+              nodes: [
+                {
+                  mediaContentType: 'VIDEO',
+                  videoSources: [
+                    {
+                      url: 'https://cdn.shopify.com/fixture/film.mp4',
+                      format: 'mp4',
+                      mimeType: 'video/mp4',
+                      width: 1280,
+                      height: 720,
+                    },
+                  ],
+                },
+              ],
+            },
+          }}
+        />
       ) : (
-        <ProductExperience product={commerceFixture} basePath="/app/collection" />
+        <ProductExperience
+          product={
+            params.get('story') === 'missing'
+              ? {
+                  ...commerceFixture,
+                  story: null,
+                  ingredients: null,
+                  directions: null,
+                  description:
+                    'Published synthetic description. Ingredients and directions are supplied in this text, not separate fields.',
+                }
+              : commerceFixture
+          }
+          basePath="/app/collection"
+        />
       )}
     </div>
   ) : mode === 'mission' ? (
@@ -583,4 +656,3 @@ createRoot(document.getElementById('root')!).render(
     </main>
   ),
 );
-

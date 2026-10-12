@@ -1,7 +1,7 @@
 {
-  "obsidian": "#080A0B",
+  "obsidian": "#080D0D",
   "midnight": "#050708",
-  "petrol": "#183D30",
+  "petrol": "#174438",
   "deep": "#171C1D",
   "luminous": "#36896C",
   "gold": "#C4912F",
@@ -9,7 +9,7 @@
   "text": "#E6E7E2",
   "silver": "#ADB5AF",
   "muted": "#7F8984",
-  "surface": "#101415",
+  "surface": "#101918",
   "elevated": "#202728",
   "border": "rgba(230,231,226,0.12)",
   "border-active": "rgba(173,181,175,0.38)",
@@ -23,8 +23,11 @@
   "emerald": "#36896C",
   "aether-glow": "#7BE7B1",
   "gold-alloy": "#8E6420",
-  "intelligence-deep": "#183D30",
-  "intelligence-support": "#214C3C",
+  "intelligence-deep": "#102B26",
+  "intelligence-support": "#174438",
+  "emerald-shadow": "#102B26",
+  "emerald-imperial": "#174438",
+  "emerald-active": "#236A52",
   "intelligence-active": "#36896C",
   "gold-muted": "#A98543"
 }

@@ -5,7 +5,12 @@ import { saveProductAction } from '@/app/(workspace)/app/collection/actions';
 import { notFound } from 'next/navigation';
 import { catalogProductAllowed, lifestyleAssortmentHandle } from '@/domains/commerce/lifestyle';
 import { previewProduct } from '@/domains/catalog/preview';
-import { commerceConfigured, getProduct, listProducts } from '@/domains/commerce/shopify';
+import {
+  commerceConfigured,
+  getProduct,
+  listProducts,
+  getPurchasePolicies,
+} from '@/domains/commerce/shopify';
 import { readProductStory } from '@/domains/commerce/product-story';
 import {
   publicCommerceOrigin,
@@ -25,6 +30,9 @@ export async function ProductPage({
   liveOnly?: boolean;
 }) {
   let failed = false;
+  const policiesPromise = commerceConfigured()
+    ? getPurchasePolicies().catch(() => [])
+    : Promise.resolve([]);
   const product = commerceConfigured()
     ? await getProduct(handle).catch(() => {
         failed = true;
@@ -90,6 +98,7 @@ export async function ProductPage({
         unavailable={failed}
         related={related}
         basePath={basePath}
+        policies={await policiesPromise}
         cabinetControl={
           member && product ? (
             <section className="reserve-save" aria-label="Synced Cabinet">

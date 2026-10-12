@@ -1,13 +1,16 @@
 name: Obsidian visual verification
 on:
   push:
-    branches: [feat/obsidian-intelligence, main]
+    branches: [feat/obsidian-intelligence, feat/imperial-emerald-obsidian-20261012, main]
   pull_request:
     paths:
       - 'src/app/**'
       - 'src/platform/visual/**'
       - 'tests/browser/**'
       - '.github/workflows/obsidian-visual.yml'
+concurrency:
+  group: obsidian-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -27,6 +30,8 @@ jobs:
       - name: Verify product reflow, materials and preserved interactions
         run: >-
           npx playwright test
+          tests/browser/founder-office.spec.ts
+          tests/browser/imperial-emerald.spec.ts
           tests/browser/obsidian-intelligence.spec.ts
           tests/browser/luminous-obsidian.spec.ts
           tests/browser/imperial-tools.spec.ts
@@ -41,6 +46,9 @@ jobs:
           tests/browser/company-room.spec.ts
           tests/browser/missions.spec.ts
           --workers=2
+      - name: Export compact rendered review excerpts
+        if: always()
+        run: node scripts/imperial-emerald-review.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -52,6 +60,8 @@ jobs:
         with:
           name: obsidian-review-images
           path: |
+            test-results/emerald-*-390.png
+            test-results/emerald-*-1440.png
             test-results/obsidian--*-390.png
             test-results/obsidian--*-1440.png
             test-results/imperial-obsidian-studio-*.png

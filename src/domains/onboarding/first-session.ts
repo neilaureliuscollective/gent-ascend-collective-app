@@ -24,7 +24,7 @@ export const firstSessionPaths = {
     detail:
       'Choose a manageable step for today. Command keeps it ready and lets you record what moved forward.',
     action: 'Spend twenty focused minutes on my priority',
-    href: '/app',
+    href: '/app/daily',
     destination: 'Open Command',
   },
 } as const;

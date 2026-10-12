@@ -9,7 +9,7 @@ for (const width of [344, 390, 720, 768, 1440, 1920]) {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const mode of ['home', 'brand', 'list', 'product']) {
-      await page.goto(`/?mode=lifestyle-${mode}`);
+      await page.goto(`http://127.0.0.1:3102/?mode=lifestyle-${mode}`);
       await expect(page.getByText('Synthetic commerce fixture', { exact: false })).toBeVisible();
       await expect(page.locator('h1')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -56,7 +56,7 @@ for (const width of [344, 390, 720, 768, 1440, 1920]) {
         },
       });
     });
-    await page.goto('/?mode=lifestyle-cart');
+    await page.goto('http://127.0.0.1:3102/?mode=lifestyle-cart');
     await expect(page.getByText('Synthetic oil')).toBeVisible();
     await page.screenshot({
       path: `docs/evidence/lifestyle/fixture-cart-${width}.png`,
@@ -71,15 +71,15 @@ for (const width of [344, 390, 720, 768, 1440, 1920]) {
   });
 }
 test('search, unavailable catalog and product options remain usable', async ({ page }) => {
-  await page.goto('/?mode=lifestyle-list');
+  await page.goto('http://127.0.0.1:3102/?mode=lifestyle-list');
   await page.getByRole('searchbox').fill('no matching product');
   await expect(page.getByText('No essentials match this view.')).toBeVisible();
-  await page.goto('/?mode=lifestyle-list&error=1');
+  await page.goto('http://127.0.0.1:3102/?mode=lifestyle-list&error=1');
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   await page.route('**/api/commerce/cart', (route) =>
     route.fulfill({ status: 502, json: { error: 'Synthetic cart failure.' } }),
   );
-  await page.goto('/?mode=lifestyle-product');
+  await page.goto('http://127.0.0.1:3102/?mode=lifestyle-product');
   await page
     .getByRole('combobox', { name: 'Choose an option' })
     .selectOption('gid://shopify/ProductVariant/fixture-large');
@@ -90,4 +90,28 @@ test('search, unavailable catalog and product options remain usable', async ({ p
   await page.getByRole('link', { name: 'The formula', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#formula')).toBeInViewport();
+});
+test('purchase confidence keeps incomplete content honest and uncertain additions reviewable', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:3102/?mode=lifestyle-brand&empty=1');
+  await expect(page.getByRole('link', { name: 'Explore Aethelios Lifestyle →' })).toHaveAttribute(
+    'href',
+    '/app/collection',
+  );
+  await expect(page.getByRole('radio', { name: /Hair care/ })).toHaveCount(0);
+  await page.route('**/api/commerce/cart', (route) =>
+    route.fulfill({ status: 502, json: { error: 'Synthetic uncertain response.' } }),
+  );
+  await page.goto('http://127.0.0.1:3102/?mode=lifestyle-product&story=missing');
+  await expect(page.getByText(/finished formula/)).toHaveCount(0);
+  await expect(page.locator('#product-description')).toContainText(
+    'Published synthetic description.',
+  );
+  await page.locator('.commerce-add').click();
+  await expect(page.locator('.commerce-add')).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Review cart →' })).toHaveAttribute(
+    'href',
+    '/app/collection/cart',
+  );
 });

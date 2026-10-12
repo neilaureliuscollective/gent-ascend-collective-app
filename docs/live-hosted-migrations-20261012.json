@@ -1,0 +1,48 @@
+{
+  "project": "volpzkfsnmtztrovexcw",
+  "sourceCommit": "f6516d98ef1d46437e6d46ad55407d082e3dfad5",
+  "migrations": [
+    {
+      "file": "20261011205952_aethelios_live_pilot.sql",
+      "hostedVersion": "20261012083907",
+      "hostedName": "20261011205952_aethelios_live_pilot",
+      "md5": "2e564d74841211f8144b0d2aa99d50f1"
+    },
+    {
+      "file": "20261011230333_live_creation_artifacts.sql",
+      "hostedVersion": "20261012083908",
+      "hostedName": "20261011230333_live_creation_artifacts",
+      "md5": "658dc858799c528bac4595772b3935e1"
+    },
+    {
+      "file": "20261011232952_live_visual_artifacts.sql",
+      "hostedVersion": "20261012083909",
+      "hostedName": "20261011232952_live_visual_artifacts",
+      "md5": "8adcaaac6ff1f9781b7cd34339781a43"
+    },
+    {
+      "file": "20261011234637_live_evidence_charts.sql",
+      "hostedVersion": "20261012083910",
+      "hostedName": "20261011234637_live_evidence_charts",
+      "md5": "01ee91c91165f92d8022e7dd9e059d25"
+    },
+    {
+      "file": "20261012000324_live_coworker_reviews.sql",
+      "hostedVersion": "20261012083911",
+      "hostedName": "20261012000324_live_coworker_reviews",
+      "md5": "edfd4e1719dd484dd635ff1333deafe9"
+    },
+    {
+      "file": "20261012002621_live_reviewed_daily_actions.sql",
+      "hostedVersion": "20261012083912",
+      "hostedName": "20261012002621_live_reviewed_daily_actions",
+      "md5": "7ab67843379fb9f1fb2c5dda39cb9114"
+    },
+    {
+      "file": "20261012041646_live_expiry_leases.sql",
+      "hostedVersion": "20261012083913",
+      "hostedName": "20261012041646_live_expiry_leases",
+      "md5": "ca938f46c59c44379ff12ab7d7f40185"
+    }
+  ]
+}

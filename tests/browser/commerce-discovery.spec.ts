@@ -21,7 +21,7 @@ for (const width of [344, 768, 1440]) {
     ).toBeFocused();
     await expect(guide.getByText('This direction is not open for ordering yet.')).toBeVisible();
     await expect(guide.locator('.reserve-collection-card')).toHaveCount(0);
-    await guide.getByRole('button', { name: 'Include previews' }).click();
+    await guide.getByRole('button', { name: 'Include unavailable products', exact: true }).click();
     await expect(guide.locator('.reserve-collection-card')).toHaveCount(1);
     await expect(guide.getByText(/Editorial hair & beard care preview/)).toBeVisible();
     await page.screenshot({ path: `test-results/commerce-guide-${width}.png`, fullPage: true });

@@ -4,7 +4,31 @@ import { readFile, readdir } from 'node:fs/promises';
 import {emptyWork} from '../src/domains/company-work/schema';
 const db = new PGlite();
 const founder = '00000000-0000-4000-8000-000000000001';
+import {chart as syntheticChart} from './fixtures/evidence-board';
 const member = '00000000-0000-4000-8000-000000000002';
+describe('Studio media catalog acceptance', () => {
+  it('checks deployed media contracts and detects a missing owner policy or anonymous RPC grant', async () => {
+    const sql = await readFile('supabase/verification/studio_media_readiness.sql', 'utf8');
+    const baseline = (await db.query<{ name: string; passed: boolean }>(sql)).rows;
+    expect(baseline).toHaveLength(20);
+    expect(baseline.every((check) => check.passed)).toBe(true);
+    await db.exec('begin');
+    try {
+      await db.exec(
+        'drop policy studio_narrations_owner on public.ai_studio_narrations; grant execute on function public.ai_studio_footage_begin(uuid) to anon',
+      );
+      const failed = (await db.query<{ name: string; passed: boolean }>(sql)).rows.filter(
+        (check) => !check.passed,
+      );
+      expect(failed.map((check) => check.name)).toEqual([
+        'owner-policy:ai_studio_narrations',
+        'rpc:public.ai_studio_footage_begin(uuid)',
+      ]);
+    } finally {
+      await db.exec('rollback');
+    }
+  });
+});
 async function asUser<T>(id: string, sql: string) {
   await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${id}',false)`);
   try {
@@ -37,6 +61,246 @@ beforeAll(async () => {
 });
 
 describe('migration, seeds and owner security', () => {
+  it('executes the local expiry fixture as one prepared statement without retaining synthetic rows', async () => {
+    await db.query(await readFile('tests/fixtures/live-expiry-acceptance.sql', 'utf8'));
+    expect((await db.query("select id from public.ai_live_sessions where id='f1000000-0000-4000-8000-000000000001'")).rows).toEqual([]);
+  });
+  it('confirms one owned reviewed daily action atomically, fences stale drafts and verifies idempotent receipts', async () => {
+    const owner = `(select id from public.persons where auth_user_id='${founder}')`;
+    const conversation = 'ab000000-0000-4000-8000-000000000040';
+    const review = 'ab000000-0000-4000-8000-000000000041';
+    const other = 'ab000000-0000-4000-8000-000000000042';
+    const action = 'ab000000-0000-4000-8000-000000000043';
+    const board = JSON.stringify({kind:'review',basis:'coworker',title:'Synthetic review',summary:'Suggestion only',coworker:'athena',text:'Verify the supplied evidence.',contextScope:'task-only',sourceArtifactId:null,sourcePartId:null});
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id=${owner};
+      update public.persons set timezone='Pacific/Kiritimati' where id=${owner};
+      delete from public.daily_entries where person_id=${owner} and day=(current_timestamp at time zone 'Pacific/Kiritimati')::date;
+      insert into public.ai_conversations(id,person_id,title) values('${conversation}',${owner},'Synthetic reviewed actions');
+      insert into public.ai_conversation_artifacts(id,person_id,conversation_id,operation,prompt,status,visual,review_coworker,review_scope,review_context)
+      values('${review}',${owner},'${conversation}','visual.review','Review this task','complete','${board}','athena','task-only','{}'),
+      ('${other}',${owner},'${conversation}','visual.review','Another task','approval',null,'athena','task-only','{}');`);
+    const day = `(current_timestamp at time zone 'Pacific/Kiritimati')::date`;
+    const call = (id=action, version=0, title='Verify original sources', chosen=review, date=day, zone='Pacific/Kiritimati') => `select public.ai_confirm_reviewed_daily_action('${id}','${conversation}','${chosen}','${title}',${date},${version},'${zone}') as day`;
+    await expect(asUser(member, call())).rejects.toThrow(/Pilot access|Conversation unavailable/);
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id=(select id from public.persons where auth_user_id='${member}')`);
+    await expect(asUser(member, call())).rejects.toThrow(/Conversation unavailable/);
+    await db.exec(`update public.membership_accounts set beta_access=false where person_id=(select id from public.persons where auth_user_id='${member}')`);
+    await expect(asUser(founder, call(action,0,'Verify sources',other))).rejects.toThrow(/review unavailable/);
+    await expect(asUser(founder, call())).rejects.toThrow(/Selected review changed/);
+    await asUser(founder, `select public.ai_select_artifact('${conversation}','${review}')`);
+    await expect(asUser(founder,call(action,0,'Verify sources',review,`${day}-1`))).rejects.toThrow(/day or timezone/);
+    await expect(asUser(founder,call(action,0,'Verify sources',review,day,'UTC'))).rejects.toThrow(/day or timezone/);
+    await expect(asUser(founder,call(action,1))).rejects.toThrow(/Daily record changed/);
+    expect((await asUser(founder,`select id from public.ai_action_proposals where source_review_id='${review}'`)).rows).toEqual([]);
+    await asUser(founder,call());
+    await asUser(founder,call());
+    expect((await asUser(founder,`select id,title,done from public.daily_actions where person_id=${owner} and day=${day}`)).rows).toEqual([{id:action,title:'Verify original sources',done:false}]);
+    expect((await asUser(founder,`select status,source_turn_id,review_version from public.ai_action_proposals where id='${action}'`)).rows).toEqual([{status:'executed',source_turn_id:null,review_version:0}]);
+    expect((await asUser(member,`select id from public.ai_action_proposals where id='${action}'`)).rows).toEqual([]);
+    await expect(asUser(founder,call(action,0,'Changed title'))).rejects.toThrow(/Confirmation changed/);
+    await expect(asUser(founder,call(crypto.randomUUID(),1))).rejects.toThrow(/already has/);
+    // Owner's daily editor can rename/remove the action. A replay must not recreate it or report a saved receipt.
+    await db.exec(`update public.daily_actions set title='User renamed it' where id='${action}'`);
+    await expect(asUser(founder,call())).rejects.toThrow(/changed or was removed/);
+    await db.exec(`update public.daily_actions set title='Verify original sources' where id='${action}';update public.persons set timezone='UTC' where id=${owner}`);
+    // Read-only original receipt remains idempotent after local day/timezone/selection changes.
+    await asUser(founder,call());
+    await db.exec(`update public.ai_conversations set archived_at=now() where id='${conversation}'`);
+    await expect(asUser(founder,call())).rejects.toThrow(/Conversation unavailable/);
+    await db.exec(`update public.ai_conversations set archived_at=null where id='${conversation}';
+      update public.ai_conversation_artifacts set status='complete',visual='${board}' where id='${other}';
+      insert into public.daily_entries(person_id,day,timezone,version) values(${owner},current_date,'UTC',1) on conflict(person_id,day) do update set version=1;
+      delete from public.daily_actions where person_id=${owner} and day=current_date;
+      insert into public.daily_actions(person_id,day,id,title,done,position) select ${owner},current_date,gen_random_uuid(),'Synthetic filled action',false,n from generate_series(0,4) n;`);
+    await asUser(founder,`select public.ai_select_artifact('${conversation}','${other}')`);
+    await expect(asUser(founder,call(crypto.randomUUID(),1,'Sixth action',other,'current_date','UTC'))).rejects.toThrow(/five actions/);
+    expect((await asUser(founder,`select id from public.ai_action_proposals where source_review_id='${other}'`)).rows).toEqual([]);
+    await expect(asUser(founder,`insert into public.ai_action_proposals(id,person_id,title) values(gen_random_uuid(),${owner},'Forged')`)).rejects.toThrow(/permission denied/);
+    expect((await db.query<{allowed:boolean}>(`select has_function_privilege('anon','public.ai_confirm_reviewed_daily_action(uuid,uuid,uuid,text,date,integer,text)','execute') as allowed`)).rows).toEqual([{allowed:false}]);
+    await asUser(founder,`delete from public.ai_conversations where id='${conversation}'`);
+    expect((await asUser(founder,`select source_review_id from public.ai_action_proposals where id='${action}'`)).rows).toEqual([{source_review_id:null}]);
+    await db.exec(`delete from public.ai_action_proposals where id='${action}';delete from public.daily_entries where person_id=${owner} and day in(current_date,${day})`);
+  });
+  it('captures minimal coworker context, fences changed selections and never grants write/research authority',async()=>{
+    const owner="(select id from public.persons where auth_user_id='"+founder+"')";
+    const conversation='ae000000-0000-4000-8000-000000000001',base='af000000-0000-4000-8000-000000000001',review='af000000-0000-4000-8000-000000000002',solo='af000000-0000-4000-8000-000000000003';
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id=${owner};insert into public.ai_conversations(id,person_id,title)values('${conversation}',${owner},'Synthetic coworker test')`);
+    await asUser(founder,`select public.ai_propose_visual_artifact('${base}','${conversation}','visual.chart','Synthetic public chart')`);
+    await asUser(founder,`select public.ai_claim_visual_artifact('${base}',true,'synthetic')`);
+    await asUser(founder,`select public.ai_finish_metered_visual_artifact('${base}','${JSON.stringify(syntheticChart)}','Synthetic chart',1,1,50,2,true)`);
+    await asUser(founder,`select public.ai_select_visual_part('${conversation}','${base}','alpha')`);
+    await asUser(founder,`select public.ai_set_chart_scenario('${conversation}','${base}',10)`);
+    await expect(asUser(founder,`select public.ai_propose_coworker_review(gen_random_uuid(),'${conversation}','Review task','financial','task-only')`)).rejects.toThrow(/Unsupported/);
+    await expect(asUser(member,`select public.ai_propose_coworker_review(gen_random_uuid(),'${conversation}','Review task','athena','task-only')`)).rejects.toThrow(/unavailable/);
+    await asUser(founder,`select public.ai_propose_coworker_review('${review}','${conversation}','Review selected evidence','themis','selected-part')`);
+    expect((await asUser(founder,`select review_context->>'partId' as part,review_context->'part'->>'value' as original,((review_context->>'hypotheticalValue')::numeric=11) as hypothetical from public.ai_conversation_artifacts where id='${review}'`)).rows).toEqual([{part:'alpha',original:'10',hypothetical:true}]);
+    expect((await asUser(member,`select id from public.ai_conversation_artifacts where id='${review}'`)).rows).toEqual([]);
+    await asUser(founder,`select public.ai_set_chart_scenario('${conversation}','${base}',20)`);
+    await expect(asUser(founder,`select public.ai_claim_visual_artifact('${review}',true,'synthetic')`)).rejects.toThrow(/selection changed/);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${review}'`)).rows).toEqual([]);
+    await asUser(founder,`select public.ai_set_chart_scenario('${conversation}','${base}',10)`);
+    await asUser(founder,`select public.ai_claim_visual_artifact('${review}',true,'synthetic')`);
+    expect((await asUser(founder,`select public.ai_claim_visual_artifact('${review}',true,'synthetic') as claimed`)).rows).toEqual([{claimed:false}]);
+    expect((await asUser(founder,`select id from public.ai_turns where id='${review}' and status='pending'`)).rows).toEqual([]);
+    const board={kind:'review',basis:'coworker',title:'Themis scoped review',summary:'Synthetic review',coworker:'themis',text:'Verify the sources before using these figures.',contextScope:'selected-part',sourceArtifactId:base,sourcePartId:'alpha'};
+    await expect(asUser(founder,`select public.ai_finish_metered_visual_artifact('${review}','${JSON.stringify({...board,coworker:'athena'})}','Synthetic review',1,1,50,1,true)`)).rejects.toThrow(/identity mismatch/);
+    await asUser(founder,`select public.ai_finish_metered_visual_artifact('${review}','${JSON.stringify(board)}','Synthetic review',1,1,50,1,true)`);
+    expect((await asUser(founder,`select public.ai_finish_metered_visual_artifact('${review}','${JSON.stringify(board)}','Duplicate',1,1,50,1,true) as saved`)).rows).toEqual([{saved:false}]);
+    await asUser(founder,`select public.ai_select_artifact('${conversation}','${review}')`);
+    await expect(asUser(founder,`select public.ai_propose_coworker_review(gen_random_uuid(),'${conversation}','Recursive review','athena','selected-part')`)).rejects.toThrow(/completed visual part/);
+    await asUser(founder,`select public.ai_propose_coworker_review('${solo}','${conversation}','Review only this task','athena','task-only')`);
+    expect((await asUser(founder,`select review_context from public.ai_conversation_artifacts where id='${solo}'`)).rows).toEqual([{review_context:{}}]);
+    await expect(asUser(founder,`update public.ai_conversation_artifacts set review_context='{}' where id='${review}'`)).rejects.toThrow(/permission denied/);
+    await asUser(founder,`delete from public.ai_conversations where id='${conversation}'`);
+    await db.exec(`delete from public.ai_usage where id in ('${base}','${review}')`);
+  });
+
+  it('keeps chart scenarios owner-bound, preserves original evidence, and meters stages once',async()=>{
+    const owner="(select id from public.persons where auth_user_id='"+founder+"')";
+    const conversation='fc000000-0000-4000-8000-000000000001',job='fd000000-0000-4000-8000-000000000001';
+    const board=JSON.stringify(syntheticChart);
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id=${owner};insert into public.ai_conversations(id,person_id,title)values('${conversation}',${owner},'Synthetic evidence test')`);
+    await asUser(founder,`select public.ai_propose_visual_artifact('${job}','${conversation}','visual.chart','Compare public revenue in USD for 2025')`);
+    await expect(asUser(founder,`select public.ai_set_chart_scenario('${conversation}','${job}',10)`)).rejects.toThrow(/unavailable/);
+    await asUser(founder,`select public.ai_claim_visual_artifact('${job}',true,'synthetic')`);
+    await expect(asUser(founder,`select public.ai_finish_metered_visual_artifact('${job}','${board}','Synthetic chart',null,null,500,2,true)`)).rejects.toThrow(/usage/);
+    await asUser(founder,`select public.ai_finish_metered_visual_artifact('${job}','${board}','Synthetic chart',35,50,500,2,true)`);
+    expect((await asUser(founder,`select public.ai_finish_metered_visual_artifact('${job}','${board}','Duplicate',35,50,500,2,true) as saved`)).rows).toEqual([{saved:false}]);
+    await expect(asUser(member,`select public.ai_set_chart_scenario('${conversation}','${job}',10)`)).rejects.toThrow(/unavailable/);
+    await expect(asUser(founder,`select public.ai_set_chart_scenario('${conversation}','${job}',51)`)).rejects.toThrow(/percentage/);
+    await asUser(founder,`select public.ai_select_visual_part('${conversation}','${job}','alpha')`);
+    await asUser(founder,`select public.ai_set_chart_scenario('${conversation}','${job}',10)`);
+    expect((await asUser(founder,`select part_id,scenario_percent from public.ai_artifact_selection where conversation_id='${conversation}'`)).rows).toEqual([{part_id:'alpha',scenario_percent:10}]);
+    await asUser(founder,`select public.ai_select_visual_part('${conversation}','${job}','beta')`);
+    expect((await asUser(founder,`select part_id,scenario_percent from public.ai_artifact_selection where conversation_id='${conversation}'`)).rows).toEqual([{part_id:'beta',scenario_percent:10}]);
+    expect((await asUser(founder,`select visual->'points'->0->>'value' as original,generation_stages,usage_complete from public.ai_conversation_artifacts where id='${job}'`)).rows).toEqual([{original:'10',generation_stages:2,usage_complete:true}]);
+    await asUser(founder,`select public.ai_select_artifact('${conversation}','${job}')`);
+    expect((await asUser(founder,`select part_id,scenario_percent from public.ai_artifact_selection where conversation_id='${conversation}'`)).rows).toEqual([{part_id:null,scenario_percent:0}]);
+    await expect(asUser(founder,`update public.ai_artifact_selection set scenario_percent=100 where conversation_id='${conversation}'`)).rejects.toThrow(/permission denied/);
+    await asUser(founder,`delete from public.ai_conversations where id='${conversation}'`);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${job}'`)).rows).toHaveLength(1);
+    await db.exec(`delete from public.ai_usage where id='${job}'`);
+  });
+
+  it('keeps visual approvals owner-bound, reserves once without blocking speech, and saves recoverable selected parts',async()=>{
+    const owner="(select id from public.persons where auth_user_id='"+founder+"')";
+    const conversation='fa000000-0000-4000-8000-000000000001',job='fb000000-0000-4000-8000-000000000001',late='fb000000-0000-4000-8000-000000000002',declined='fb000000-0000-4000-8000-000000000003';
+    const board=JSON.stringify({kind:'diagram',basis:'conceptual',title:'Synthetic map',summary:'Illustrative.',nodes:[{id:'voice',label:'Voice',detail:'Audio.'},{id:'tools',label:'Tools',detail:'Reviewed work.'}],edges:[{from:'voice',to:'tools',label:'Delegates'}]});
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id=${owner};insert into public.ai_conversations(id,person_id,title)values('${conversation}',${owner},'Synthetic visual test')`);
+    await asUser(founder,`select public.ai_propose_visual_artifact('${job}','${conversation}','visual.diagram','Map the architecture')`);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${job}'`)).rows).toEqual([]);
+    expect((await asUser(member,`select id from public.ai_conversation_artifacts where id='${job}'`)).rows).toEqual([]);
+    expect((await asUser(member,`select public.ai_claim_visual_artifact('${job}',true,'synthetic') as claimed`)).rows).toEqual([{claimed:false}]);
+    await expect(asUser(member,`select public.ai_propose_visual_artifact(gen_random_uuid(),'${conversation}','visual.diagram','Foreign request')`)).rejects.toThrow(/unavailable/);
+    await expect(asUser(founder,`select public.ai_propose_image_artifact(gen_random_uuid(),'${conversation}','visual.diagram','Wrong adapter',null)`)).rejects.toThrow(/Invalid image/);
+    expect((await asUser(founder,`select public.ai_claim_image_artifact('${job}',true) as claimed`)).rows).toEqual([{claimed:false}]);
+    await asUser(founder,`select public.ai_claim_visual_artifact('${job}',true,'synthetic')`);
+    expect((await asUser(founder,`select public.ai_claim_visual_artifact('${job}',true,'synthetic') as claimed`)).rows).toEqual([{claimed:false}]);
+    expect((await asUser(founder,`select id from public.ai_turns where id='${job}' and status='pending'`)).rows).toEqual([]);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${job}'`)).rows).toHaveLength(1);
+    expect((await asUser(member,`select public.ai_finish_visual_artifact('${job}','${board}','Foreign completion',1,1,50) as saved`)).rows).toEqual([{saved:false}]);
+    await asUser(founder,`select public.ai_finish_visual_artifact('${job}','${board}','Synthetic conceptual map',8,12,50)`);
+    expect((await asUser(founder,`select public.ai_finish_visual_artifact('${job}','${board}','Duplicate',8,12,50) as saved`)).rows).toEqual([{saved:false}]);
+    expect((await asUser(founder,`select id from public.ai_messages where metadata->>'artifactId'='${job}'`)).rows).toHaveLength(1);
+    await asUser(founder,`select public.ai_select_visual_part('${conversation}','${job}','tools')`);
+    expect((await asUser(founder,`select part_id from public.ai_artifact_selection where conversation_id='${conversation}'`)).rows).toEqual([{part_id:'tools'}]);
+    await expect(asUser(member,`select public.ai_select_visual_part('${conversation}','${job}','tools')`)).rejects.toThrow(/unavailable/);
+    await expect(asUser(founder,`select public.ai_select_visual_part('${conversation}','${job}','absent')`)).rejects.toThrow(/unavailable/);
+    await expect(asUser(founder,`select public.ai_propose_image_artifact(gen_random_uuid(),'${conversation}','image.edit','Edit this board',null)`)).rejects.toThrow(/completed image/);
+    await asUser(founder,`select public.ai_select_artifact('${conversation}','${job}')`);
+    expect((await asUser(founder,`select part_id from public.ai_artifact_selection where conversation_id='${conversation}'`)).rows).toEqual([{part_id:null}]);
+    await asUser(founder,`select public.ai_propose_visual_artifact('${declined}','${conversation}','visual.comparison','Compare approaches')`);
+    await asUser(founder,`select public.ai_claim_visual_artifact('${declined}',false,'synthetic')`);
+    expect((await asUser(founder,`select id from public.ai_usage where id='${declined}'`)).rows).toEqual([]);
+    await asUser(founder,`select public.ai_propose_visual_artifact('${late}','${conversation}','visual.diagram','Another map')`);
+    await asUser(founder,`select public.ai_claim_visual_artifact('${late}',true,'synthetic')`);
+    await db.exec(`update public.ai_conversation_artifacts set started_at=now()-interval '3 minutes' where id='${late}'`);
+    await asUser(founder,`select public.ai_reconcile_artifact('${late}')`);
+    expect((await asUser(founder,`select status from public.ai_conversation_artifacts where id='${late}'`)).rows).toEqual([{status:'uncertain'}]);
+    expect((await asUser(founder,`select public.ai_claim_visual_artifact('${late}',true,'synthetic') as claimed`)).rows).toEqual([{claimed:false}]);
+    await asUser(founder,`select public.ai_finish_visual_artifact('${late}','${board}','Late synthetic map',1,2,130000)`);
+    await expect(asUser(founder,`update public.ai_conversation_artifacts set visual='{}' where id='${job}'`)).rejects.toThrow(/permission denied/);
+    await asUser(founder,`delete from public.ai_conversations where id='${conversation}'`);
+    expect((await asUser(founder,`select id from public.ai_conversation_artifacts where id='${job}'`)).rows).toEqual([]);
+    expect((await asUser(founder,`select id from public.ai_usage where id in ('${job}','${late}')`)).rows).toHaveLength(2);
+    // Clean this synthetic test's reservations so later quota assertions remain independent.
+    await db.exec(`delete from public.ai_usage where id in ('${job}','${late}')`);
+  });
+
+  it('binds reviewed image work to owned versions, survives voice end, and never replays an uncertain paid operation',async()=>{
+    const owner="(select id from public.persons where auth_user_id='"+founder+"')";
+    const conversation='eb000000-0000-4000-8000-000000000001',image='ec000000-0000-4000-8000-000000000001',edit='ec000000-0000-4000-8000-000000000002',other='ec000000-0000-4000-8000-000000000003',voice='ed000000-0000-4000-8000-000000000099';
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id=${owner};insert into public.ai_conversations(id,person_id,title) values('${conversation}',${owner},'Synthetic Live city')`);
+    await asUser(founder,`select public.ai_live_reserve('${voice}','${conversation}','synthetic')`);
+    await asUser(founder,`select public.ai_propose_image_artifact('${image}','${conversation}','image.create','A futuristic city',null)`);
+    expect((await asUser(founder,`select id from public.ai_studio_versions where id='${image}'`)).rows).toEqual([]);
+    expect((await asUser(member,`select * from public.ai_conversation_artifacts where id='${image}'`)).rows).toEqual([]);
+    expect((await asUser(member,`select public.ai_claim_image_artifact('${image}',true) as claimed`)).rows).toEqual([{claimed:false}]);
+    await expect(asUser(founder,`select public.ai_select_artifact('${conversation}','${image}')`)).rejects.toThrow(/unavailable/);
+    await asUser(founder,`select public.ai_claim_image_artifact('${image}',true)`);
+    expect((await asUser(founder,`select public.ai_claim_image_artifact('${image}',true) as claimed`)).rows).toEqual([{claimed:false}]);
+    await asUser(founder,`select public.ai_live_end('${voice}','ended')`);
+    expect((await asUser(founder,`select status from public.ai_conversation_artifacts where id='${image}'`)).rows).toEqual([{status:'running'}]);
+    await asUser(founder,`select public.ai_studio_finish('${image}','complete','${founder}/'||(select project_id::text from public.ai_conversation_artifacts where id='${image}')||'/${image}.png')`);
+    await asUser(founder,`select public.ai_reconcile_artifact('${image}')`);
+    await asUser(founder,`select public.ai_reconcile_artifact('${image}')`);
+    expect((await asUser(founder,`select id from public.ai_messages where metadata->>'artifactId'='${image}'`)).rows).toHaveLength(1);
+    await asUser(founder,`select public.ai_propose_image_artifact('${edit}','${conversation}','image.edit','Make the buildings taller',null)`);
+    expect((await asUser(founder,`select base_version_id from public.ai_conversation_artifacts where id='${edit}'`)).rows).toEqual([{base_version_id:image}]);
+        await asUser(founder,`select public.ai_propose_image_artifact('${other}','${conversation}','image.create','A different city',null)`);
+    await asUser(founder,`select public.ai_claim_image_artifact('${other}',true)`);
+        await asUser(founder,`select public.ai_studio_finish('${other}','complete','${founder}/'||(select project_id::text from public.ai_conversation_artifacts where id='${other}')||'/${other}.png')`);
+    await asUser(founder,`select public.ai_reconcile_artifact('${other}')`);
+    await asUser(founder,`select public.ai_select_artifact('${conversation}','${other}')`);
+    await expect(asUser(founder,`select public.ai_claim_image_artifact('${edit}',true)`)).rejects.toThrow(/Selected image changed/);
+        await asUser(founder,`select public.ai_select_artifact('${conversation}','${image}')`);
+    await asUser(founder,`select public.ai_claim_image_artifact('${edit}',true)`);
+    await db.exec(`update public.ai_conversation_artifacts set started_at=now()-interval '6 minutes' where id='${edit}'`);
+    await asUser(founder,`select public.ai_reconcile_artifact('${edit}')`);
+    expect((await asUser(founder,`select status from public.ai_conversation_artifacts where id='${edit}'`)).rows).toEqual([{status:'uncertain'}]);
+    expect((await asUser(founder,`select public.ai_claim_image_artifact('${edit}',true) as claimed`)).rows).toEqual([{claimed:false}]);
+    expect((await asUser(founder,`select id from public.ai_studio_usage where id in('${image}','${edit}','${other}')`)).rows).toHaveLength(3);
+        await asUser(founder,`select public.ai_studio_finish('${edit}','complete','${founder}/'||(select project_id::text from public.ai_conversation_artifacts where id='${edit}')||'/${edit}.png')`);
+    await asUser(founder,`select public.ai_reconcile_artifact('${edit}')`);
+    expect((await asUser(founder,`select artifact_id from public.ai_artifact_selection where conversation_id='${conversation}'`)).rows).toEqual([{artifact_id:edit}]);
+    await expect(asUser(founder,`update public.ai_conversation_artifacts set prompt='Unreviewed' where id='${edit}'`)).rejects.toThrow(/permission denied/);
+    const projects=(await db.query<{project_id:string}>(`select distinct project_id from public.ai_conversation_artifacts where conversation_id='${conversation}'`)).rows;
+    await asUser(founder,`delete from public.ai_conversations where id='${conversation}'`);
+    expect((await asUser(founder,`select id from public.ai_studio_versions where id='${edit}'`)).rows).toHaveLength(1);
+    for(const project of projects)await db.exec(`delete from public.ai_studio_projects where id='${project.project_id}'`);
+    await db.exec(`delete from public.ai_studio_usage where id in('${image}','${edit}','${other}');update public.membership_accounts set beta_access=false where person_id=${owner}`);
+  });
+
+  it('isolates voice reservations, rejects competing sessions and retains quota after deleting history', async () => {
+    const session='e8000000-0000-4000-8000-000000000001';
+    const conversation='e9000000-0000-4000-8000-000000000001';
+    await db.exec(`update public.membership_accounts set beta_access=true where person_id in(select id from public.persons where auth_user_id='${founder}')`);
+    await asUser(founder, `select public.ai_live_reserve('${session}','${conversation}','gpt-realtime')`);
+    await expect(asUser(founder, `select public.ai_live_reserve('e8000000-0000-4000-8000-000000000002','${conversation}','gpt-realtime')`)).rejects.toThrow(/already active/);
+    expect((await asUser(member, `select id from public.ai_live_sessions where id='${session}'`)).rows).toEqual([]);
+    expect((await asUser(member, `select public.ai_live_end('${session}','ended') as ended`)).rows).toEqual([{ended:false}]);
+    await expect(asUser(founder, `update public.ai_live_sessions set expires_at=now()+interval '1 year' where id='${session}'`)).rejects.toThrow(/permission denied/);
+    const job='ea000000-0000-4000-8000-000000000001';
+    await asUser(founder, `select public.ai_live_request_job('${job}','${session}','call_synthetic','Research public information','athena')`);
+    expect((await asUser(member, `select * from public.ai_live_jobs where id='${job}'`)).rows).toEqual([]);
+    expect((await asUser(member, `select public.ai_live_review_job('${job}',true) as approved`)).rows).toEqual([{approved:false}]);
+    expect((await asUser(founder, `select public.ai_live_finish_job('${job}','Unapproved',1,1,1,true,'synthetic') as finished`)).rows).toEqual([{finished:false}]);
+    await asUser(founder, `select public.ai_live_review_job('${job}',true)`);
+    await asUser(founder, `select public.ai_live_finish_job('${job}','Verified synthetic result',5,7,100,true,'synthetic')`);
+    expect((await asUser(founder, `select assistant_text from public.ai_turns where id='${job}'`)).rows).toEqual([{assistant_text:'Verified synthetic result'}]);
+    await asUser(founder, `select public.ai_live_end('${session}','ended')`);
+    await asUser(founder, `select public.ai_live_end('${session}','ended',12,34)`);
+    expect((await asUser(founder, `select input_tokens,output_tokens from public.ai_live_sessions where id='${session}'`)).rows).toEqual([{input_tokens:12,output_tokens:34}]);
+    await db.exec(`delete from public.ai_usage where id='${job}'`);
+    await asUser(founder, `delete from public.ai_conversations where id='${conversation}'`);
+    const row=(await asUser<{conversation_id:string|null;reserved_seconds:number}>(founder, `select conversation_id,reserved_seconds from public.ai_live_sessions where id='${session}'`)).rows[0];
+    expect(row).toEqual({conversation_id:null,reserved_seconds:120});
+    await asUser(founder, `select public.ai_live_end('${session}','ended')`);
+    await expect(asUser(member, `select public.ai_live_reserve('e8000000-0000-4000-8000-000000000003','${conversation}','gpt-realtime')`)).rejects.toThrow(/Pilot access required/);
+    await db.exec(`update public.membership_accounts set beta_access=false where person_id in(select id from public.persons where auth_user_id='${founder}')`);
+  });
+
+
   it('retains task and approval JSON snapshots with immutable receipts and owner isolation',async()=>{
     const company='d7000000-0000-4000-8000-000000000201',job='d7000000-0000-4000-8000-000000000202',conversation='d7000000-0000-4000-8000-000000000203',first='d7000000-0000-4000-8000-000000000204',second='d7000000-0000-4000-8000-000000000205';
     const owner=`(select id from public.persons where auth_user_id='${founder}')`;
@@ -1524,6 +1788,168 @@ describe('public Mission ownership and continuity', () => {
     await asUser(founder, insert(mission));
     await asUser(founder, `delete from public.ai_conversations where id='${chat}'`);
     expect((await asUser(founder, `select * from public.intelligence_missions where id='${mission}'`)).rows).toHaveLength(0);
+  });
+});
+
+
+describe('Studio narration owner and quota boundary',()=>{
+ it('reserves one approved request, persists its exact source and isolates originals',async()=>{
+  const project='ac000000-0000-4000-8000-000000000001',id='ac000000-0000-4000-8000-000000000002';
+  await asUser(founder,`insert into public.ai_studio_projects(id,person_id,title) values('${project}',(select id from public.persons where auth_user_id='${founder}'),'Narration fixture')`);
+  const begin=`select public.ai_studio_narration_begin('${id}','${project}','Opening','Made with intention.','alloy','clear') as saved`;
+  expect((await asUser<{saved:boolean}>(founder,begin)).rows[0]!.saved).toBe(true);
+  expect((await asUser<{saved:boolean}>(founder,begin)).rows[0]!.saved).toBe(false);
+  expect((await asUser(member,`select * from public.ai_studio_narrations where id='${id}'`)).rows).toHaveLength(0);
+  await expect(asUser(member,begin)).rejects.toThrow('unavailable');
+  await expect(asUser(founder,`update public.ai_studio_narration_usage set created_at=now()-interval '2 days'`)).rejects.toThrow('permission denied');
+  await expect(asUser(founder,`select public.ai_studio_narration_begin(gen_random_uuid(),'${project}','Again','Short script','alloy','clear')`)).rejects.toThrow('concurrent');
+  await expect(asUser(founder,`select public.ai_studio_narration_finish('${id}','complete','${member}/${project}/${id}.wav',1)`)).rejects.toThrow('Invalid');
+  await expect(asUser(founder,`select public.ai_studio_narration_finish('${id}','complete','${founder}/${project}/${id}.wav',null)`)).rejects.toThrow('Invalid');
+  expect((await asUser<{saved:boolean}>(founder,`select public.ai_studio_narration_finish('${id}','complete','${founder}/${project}/${id}.wav',2) as saved`)).rows[0]!.saved).toBe(true);
+  expect((await asUser<{saved:boolean}>(founder,`select public.ai_studio_narration_finish('${id}','failed') as saved`)).rows[0]!.saved).toBe(false);
+  await asUser(founder,`insert into storage.objects(bucket_id,name) values('aethelios-studio-audio','${founder}/${project}/${id}.wav')`);
+  expect((await asUser(member,`select * from storage.objects where bucket_id='aethelios-studio-audio'`)).rows).toHaveLength(0);
+  await expect(asUser(member,`insert into storage.objects(bucket_id,name) values('aethelios-studio-audio','${founder}/${project}/intrusion.wav')`)).rejects.toThrow();
+  for(let i=0;i<2;i++){const extra=crypto.randomUUID();await asUser(founder,`select public.ai_studio_narration_begin('${extra}','${project}','Another','Short script','ash','calm')`);await asUser(founder,`select public.ai_studio_narration_finish('${extra}','failed')`);}
+  await expect(asUser(founder,`select public.ai_studio_narration_begin(gen_random_uuid(),'${project}','Fourth','Short script','coral','confident')`)).rejects.toThrow('limit');
+  await db.exec(`delete from public.ai_studio_projects where id='${project}'`);
+  expect((await asUser<{count:number}>(founder,'select count(*)::int as count from public.ai_studio_narration_usage')).rows[0]!.count).toBe(3);
+ });
+});
+
+// PostgreSQL policy/function tests; separate from real Supabase Auth/Storage acceptance.
+describe('Studio footage owner, quote and spending boundary', () => {
+  it('derives costs, prevents duplicate reservations and preserves allowance across project deletion', async () => {
+    const project = 'ad000000-0000-4000-8000-000000000001';
+    const id = 'ad000000-0000-4000-8000-000000000002';
+    const second = 'ad000000-0000-4000-8000-000000000003';
+    const signature = 'a'.repeat(64);
+    await asUser(
+      founder,
+      `insert into public.ai_studio_projects(id,person_id,title) values('${project}',(select id from public.persons where auth_user_id='${founder}'),'Footage fixture')`,
+    );
+    const quote = (key: string, duration: number) =>
+      `select public.ai_studio_footage_quote('${key}','${project}','Clip','Quiet light',${duration},'1280:720',now()+interval '10 minutes','${signature}')`;
+    await asUser(founder, quote(id, 10));
+    expect(
+      (
+        await asUser<{ estimate: number }>(
+          founder,
+          `select estimate from public.ai_studio_footage where id='${id}'`,
+        )
+      ).rows[0]!.estimate,
+    ).toBe(120);
+    expect(
+      (await asUser(member, `select * from public.ai_studio_footage where id='${id}'`)).rows,
+    ).toHaveLength(0);
+    await expect(asUser(member, quote(crypto.randomUUID(), 5))).rejects.toThrow('unavailable');
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          member,
+          `select public.ai_studio_footage_begin('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(false);
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_begin('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_begin('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(false);
+    await asUser(founder, quote(second, 5));
+    await expect(
+      asUser(founder, `select public.ai_studio_footage_begin('${second}')`),
+    ).rejects.toThrow('pending');
+    await asUser(
+      founder,
+      `select public.ai_studio_footage_receipt('${id}','${id}','${signature}')`,
+    );
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_check('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_check('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(false);
+    await expect(
+      asUser(
+        founder,
+        `select public.ai_studio_footage_finish('${id}','complete','${member}/${project}/${id}.mp4',120)`,
+      ),
+    ).rejects.toThrow('Invalid');
+    await asUser(
+      founder,
+      `select public.ai_studio_footage_finish('${id}','complete','${founder}/${project}/${id}.mp4',120)`,
+    );
+    await asUser(
+      founder,
+      `insert into storage.objects(bucket_id,name) values('aethelios-studio-video','${founder}/${project}/${id}.mp4')`,
+    );
+    expect(
+      (
+        await asUser(
+          member,
+          `select * from storage.objects where bucket_id='aethelios-studio-video'`,
+        )
+      ).rows,
+    ).toHaveLength(0);
+    await expect(
+      asUser(
+        member,
+        `insert into storage.objects(bucket_id,name) values('aethelios-studio-video','${founder}/${project}/intrusion.mp4')`,
+      ),
+    ).rejects.toThrow();
+    await asUser(founder, `select public.ai_studio_footage_begin('${second}')`);
+    await asUser(
+      founder,
+      `select public.ai_studio_footage_receipt('${second}','${second}','${signature}')`,
+    );
+    await asUser(founder, `select public.ai_studio_footage_finish('${second}','failed',null,0)`);
+    const third = crypto.randomUUID();
+    await asUser(founder, quote(third, 5));
+    await expect(
+      asUser(founder, `select public.ai_studio_footage_begin('${third}')`),
+    ).rejects.toThrow('allowance');
+    await expect(
+      asUser(founder, `update public.ai_studio_footage_usage set estimate=0`),
+    ).rejects.toThrow('permission denied');
+    await db.exec(`delete from public.ai_studio_projects where id='${project}'`);
+    expect(
+      (
+        await asUser<{ reserved: number }>(
+          founder,
+          `select sum(estimate)::int as reserved from public.ai_studio_footage_usage`,
+        )
+      ).rows[0]!.reserved,
+    ).toBe(180);
+    await db.exec('set role anon');
+    try {
+      await expect(db.query(`select public.ai_studio_footage_begin('${id}')`)).rejects.toThrow(
+        'permission denied',
+      );
+    } finally {
+      await db.exec('reset role');
+    }
   });
 });
 

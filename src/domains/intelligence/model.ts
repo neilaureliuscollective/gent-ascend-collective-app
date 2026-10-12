@@ -5,14 +5,14 @@ import type { ModelMessage } from 'ai';
 import { streamAurelius } from './agent';
 import { aiConfigSchema } from './validation';
 
-export function generateReply(model: string, messages: ModelMessage[], signal: AbortSignal, founder = false) {
+export function generateReply(model: string, messages: ModelMessage[], signal: AbortSignal, founder = false,onSource?:(source:import('./research').ResearchSource)=>void) {
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY) throw new Error('OpenAI is not configured');
   const openai = createOpenAI({
     apiKey: config.OPENAI_API_KEY,
     baseURL: 'https://api.openai.com/v1',
   });
-  return streamAurelius(openai.responses(model), messages, signal, founder);
+  return streamAurelius(openai.responses(model), messages, signal, founder,onSource);
 }
 type AuxiliaryResult={text:string;input:number|null;output:number|null};
 export async function generateConversationTitle(userText:string, assistantText:string):Promise<AuxiliaryResult|null> {

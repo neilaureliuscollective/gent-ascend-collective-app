@@ -325,6 +325,47 @@ export function HealthWorkspace({
       'Inspect access, take your records with you, or remove them.',
     ],
   };
+  const recovery = (notice || uncertain) && (
+    <div className="health-notice" role="status">
+      <p>{notice}</p>
+      {uncertain && (
+        <>
+          <p>The last request may have reached the server. New changes are paused.</p>
+          <button disabled={busy} onClick={() => void send()}>
+            Retry exact request
+          </button>
+          <button
+            disabled={busy}
+            onClick={() =>
+              void reload()
+                .then(() => {
+                  setInspected(true);
+                  setNotice('Records refreshed. Review the saved state before closing recovery.');
+                })
+                .catch((e) => setNotice(e.message))
+            }
+          >
+            Inspect saved status
+          </button>
+          {inspected && (
+            <button
+              disabled={busy}
+              onClick={() => {
+                pending.current = null;
+                setUncertain(false);
+                setInspected(false);
+                setReviewId(null);
+                setEditing(null);
+                setNotice('Recovery closed. The current saved records remain authoritative.');
+              }}
+            >
+              Close recovery after review
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
   return (
     <div className="health-environment" aria-busy={busy}>
       <header className="health-hero">
@@ -382,49 +423,7 @@ export function HealthWorkspace({
           <Link href="/app/performance">Open Performance →</Link>
         </section>
       )}
-      {(notice || uncertain) && (
-        <div className="health-notice" role="status">
-          <p>{notice}</p>
-          {uncertain && (
-            <>
-              <p>The last request may have reached the server. New changes are paused.</p>
-              <button disabled={busy} onClick={() => void send()}>
-                Retry exact request
-              </button>
-              <button
-                disabled={busy}
-                onClick={() =>
-                  void reload()
-                    .then(() => {
-                      setInspected(true);
-                      setNotice(
-                        'Records refreshed. Review the saved state before closing recovery.',
-                      );
-                    })
-                    .catch((e) => setNotice(e.message))
-                }
-              >
-                Inspect saved status
-              </button>
-              {inspected && (
-                <button
-                  disabled={busy}
-                  onClick={() => {
-                    pending.current = null;
-                    setUncertain(false);
-                    setInspected(false);
-                    setReviewId(null);
-                    setEditing(null);
-                    setNotice('Recovery closed. The current saved records remain authoritative.');
-                  }}
-                >
-                  Close recovery after review
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {!reviewId && !editing && !deletion && !talk && recovery}
       {view === 'command' && (
         <>
           <section className="health-section">
@@ -1017,6 +1016,7 @@ export function HealthWorkspace({
         onClose={() => setReviewId(null)}
       >
         <div className="health-dialog">
+          {recovery}
           <p>
             Compare these fields with your original. They become user-reviewed observations only
             after confirmation.
@@ -1075,6 +1075,7 @@ export function HealthWorkspace({
         onClose={() => setEditing(null)}
       >
         <div className="health-dialog">
+          {recovery}
           {correction && (
             <>
               <div className="health-edit-grid">
@@ -1130,6 +1131,7 @@ export function HealthWorkspace({
         onClose={() => setDeletion(null)}
       >
         <div className="health-dialog">
+          {recovery}
           <p>
             {deletion === 'all'
               ? 'This removes your Health vault, results, revisions and conversations, and withdraws Health permissions.'
@@ -1161,6 +1163,7 @@ export function HealthWorkspace({
         onClose={() => setTalk(false)}
       >
         <div className="health-dialog health-conversation">
+          {recovery}
           <p>
             Selected records stay inside this purpose-specific conversation. No general memory,
             Council or web search.

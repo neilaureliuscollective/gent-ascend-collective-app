@@ -54,6 +54,21 @@ beforeEach(() => {
     fn.mockResolvedValue(cart);
 });
 describe('Shopify cart route', () => {
+  it('prevents additions beyond the reviewable cart bound', async () => {
+    mocks.get.mockResolvedValue({
+      ...cart,
+      lines: {
+        nodes: Array.from({ length: 100 }, (_, index) => ({
+          id: `gid://shopify/CartLine/${index}`,
+        })),
+      },
+    });
+    const response = await POST(
+      request({ action: 'add', variantId: 'gid://shopify/ProductVariant/1', quantity: 1 }),
+    );
+    expect(response.status).toBe(409);
+    expect(mocks.add).not.toHaveBeenCalled();
+  });
   it('fails closed without configuration and rejects hostile origins', async () => {
     mocks.configured.mockReturnValue(false);
     expect((await GET(new NextRequest('http://localhost/api/commerce/cart'))).status).toBe(503);

@@ -75,6 +75,11 @@ export async function POST(request: NextRequest) {
     const existing = oldId ? await getCart(oldId, ip) : null;
     if (!existing && oldId) await clearCartId();
     const action = parsed.data;
+    if (action.action === 'add' && existing && existing.lines.nodes.length >= 100)
+      return NextResponse.json(
+        { error: 'Review or remove an item before adding more products to this cart.' },
+        { status: 409, headers: privateHeaders },
+      );
     if (existing && action.action !== 'remove' && !cartLaunchPurchasable(existing))
       return NextResponse.json(
         {
