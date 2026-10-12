@@ -69,14 +69,167 @@ for (const width of [344, 390, 720, 768, 1440]) {
     await page.screenshot({ path: `test-results/fluid-composer-${width}.png`, fullPage: true });
   });
 }
-test('desktop Enter submits, Shift+Enter stays multiline, and Ctrl+Enter submits', async ({
-  page,
-}) => {
+test('desktop Shift+Enter stays multiline, and Ctrl+Enter submits', async ({ page }) => {
   await page.goto(fixture);
   await input(page).fill('Desktop first line');
   await input(page).press('Shift+Enter');
   await expect(input(page)).toHaveValue('Desktop first line\n');
   await input(page).press('Control+Enter');
   await expect(page.getByRole('button', { name: 'Stop reply' })).toBeVisible();
+  await page.getByRole('button', { name: 'Stop reply' }).click();
+});
+
+test('records content-free acknowledgement and response DOM timings', async ({
+  page,
+}, testInfo) => {
+  await page.goto(fixture);
+  await page.evaluate(() => {
+    localStorage.setItem('aethelios-timing', '1');
+    const samples: unknown[] = [];
+    (window as unknown as { fluidSamples: unknown[] }).fluidSamples = samples;
+    window.addEventListener('aethelios:timing', (event) =>
+      samples.push((event as CustomEvent).detail),
+    );
+  });
+  await input(page).fill('PRIVATE SYNTHETIC PROMPT');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await expect(page.locator('.message-markdown')).toContainText('Synthetic response');
+  const samples = await page.evaluate(
+    () =>
+      (window as unknown as { fluidSamples: { stage: string; elapsedMs: number }[] }).fluidSamples,
+  );
+  expect(samples.map((item) => item.stage)).toContain('acknowledgement-render');
+  expect(samples.map((item) => item.stage)).toContain('first-render');
+  expect(JSON.stringify(samples)).not.toMatch(/PRIVATE|PROMPT|response for motion/);
+  for (const item of samples) expect(Object.keys(item).sort()).toEqual(['elapsedMs', 'stage']);
+  console.log('FLUID_TIMING|' + JSON.stringify(samples));
+  await testInfo.attach('synthetic-conversation-timing', {
+    body: JSON.stringify(samples, null, 2),
+    contentType: 'application/json',
+  });
+  await page.getByRole('button', { name: 'Stop reply' }).click();
+});
+
+test('streaming leaves readers in place until they choose the latest message', async ({ page }) => {
+  await page.goto(`${fixture}?longReply=1&history=1`);
+  await expect(page.locator('.conversation-turn')).toHaveCount(40);
+  await input(page).fill('Long synthetic response');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  const transcript = page.locator('.conversation-scroll');
+  await expect
+    .poll(() => transcript.evaluate((el) => el.scrollHeight - el.clientHeight))
+    .toBeGreaterThan(500);
+  await transcript.evaluate((el) => {
+    el.scrollTop = 0;
+    el.dispatchEvent(new Event('scroll'));
+  });
+  await expect(page.getByRole('button', { name: 'Latest message' })).toBeVisible();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await expect.poll(() => transcript.evaluate((el) => el.scrollTop)).toBe(0);
+  await page.getByRole('button', { name: 'Latest message' }).click();
+  await expect.poll(() => transcript.evaluate((el) => el.scrollTop)).toBeGreaterThan(500);
+  await page.getByRole('button', { name: 'Stop reply' }).click();
+});
+test('leaving Talk during streaming aborts the transport and does not paint late content', async ({
+  page,
+}) => {
+  await page.goto(fixture);
+  await page.evaluate(() => {
+    (window as unknown as { streamAborts: number }).streamAborts = 0;
+    window.addEventListener('fixture:stream-aborted', () => {
+      (window as unknown as { streamAborts: number }).streamAborts++;
+    });
+  });
+  await input(page).fill('Synthetic navigation interruption');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(input(page)).toHaveValue('');
+  await page.getByLabel('Surface', { exact: true }).selectOption('studio');
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { streamAborts: number }).streamAborts))
+    .toBe(1);
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await page.getByLabel('Surface', { exact: true }).selectOption('talk');
+  await expect(input(page)).toBeVisible();
+  await expect(page.locator('.conversation-turn')).toHaveCount(0);
+});
+
+test('simulated VisualViewport transitions preserve focus and usable bounds, and ignore pinch zoom', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 344, height: 844 });
+  await page.addInitScript(() => {
+    const viewport = Object.assign(new EventTarget(), {
+      height: 844,
+      width: 344,
+      scale: 1,
+      offsetTop: 0,
+      offsetLeft: 0,
+    });
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
+  });
+  await page.route('**/api/aurelius**', (route) =>
+    route.fulfill({
+      json: {
+        ownerId: 'synthetic-owner',
+        conversations: [],
+        turns: [],
+        memories: [],
+        actionProposals: [],
+        context: {
+          profile: {
+            name: 'Synthetic',
+            priority: '',
+            timezone: 'UTC',
+            units: 'metric',
+            updatedAt: '2026-10-12',
+          },
+          goal: null,
+          memories: [],
+        },
+        canChat: true,
+        configured: true,
+        model: 'synthetic-test-model',
+      },
+    }),
+  );
+  await page.goto('/app/aethelios');
+  await input(page).fill('Keep this draft through simulated keyboard transitions');
+  await input(page).focus();
+  const viewport = page.locator('.aethelios-page');
+  await page.evaluate(() => {
+    Object.assign(window.visualViewport!, { height: 420, offsetTop: 20 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+    window.visualViewport!.dispatchEvent(new Event('scroll'));
+  });
+  await expect(viewport).toHaveCSS('height', '420px');
+  await expect(viewport).toHaveCSS('top', '20px');
+  await expect(input(page)).toBeFocused();
+  expect(
+    (await page.locator('.aurelius-composer').boundingBox())!.y +
+      (await page.locator('.aurelius-composer').boundingBox())!.height,
+  ).toBeLessThanOrEqual(441);
+  await page.evaluate(() => {
+    Object.assign(window.visualViewport!, { height: 420, offsetTop: 20, scale: 2 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+  });
+  await expect(viewport).toHaveCSS('height', '844px');
+  await expect(viewport).toHaveCSS('top', '0px');
+  await page.evaluate(() => {
+    Object.assign(window.visualViewport!, { height: 844, offsetTop: 0, scale: 1 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+  });
+  await expect(input(page)).toHaveValue('Keep this draft through simulated keyboard transitions');
+  await expect(input(page)).toBeFocused();
+});
+
+test('desktop Enter submits a single-line draft', async ({ page }) => {
+  await page.goto(fixture);
+  await input(page).fill('Desktop single-line thought');
+  await input(page).press('Enter');
+  await expect(page.getByRole('button', { name: 'Stop reply' })).toBeVisible();
+  await expect(input(page)).toHaveValue('');
+  await expect(page.locator('.user-message')).toContainText('Desktop single-line thought');
   await page.getByRole('button', { name: 'Stop reply' }).click();
 });

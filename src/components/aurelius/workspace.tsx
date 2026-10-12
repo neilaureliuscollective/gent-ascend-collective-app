@@ -1,7 +1,7 @@
 'use client';
 import { ConversationArtifacts } from '@/components/live/artifacts';
 import { LiveVoiceEntry, useLiveBusy } from '@/components/live/provider';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useConversationDraft } from './draft-handoff';
@@ -97,6 +97,13 @@ export function AureliusWorkspace({
   const [operation, setOperation] = useState<IntelligenceOperation>(
     observedOperation('talk-idle', 'ready'),
   );
+  const streamTiming = useRef<ReturnType<typeof conversationTiming> | null>(null);
+  useLayoutEffect(() => {
+    const turn = data?.turns.find((item) => item.id === operation.id);
+    if (!turn) return;
+    streamTiming.current?.mark('acknowledgement-render');
+    if (turn.assistant_text) streamTiming.current?.mark('first-render');
+  }, [data?.turns, operation.id]);
   const liveBusy = useLiveBusy();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -317,6 +324,8 @@ export function AureliusWorkspace({
     const id = selected ?? crypto.randomUUID();
     const requestId = crypto.randomUUID();
     const text = messageText.trim();
+    const timing = conversationTiming();
+    streamTiming.current = timing;
     const controller = new AbortController();
     generation.current = controller;
     setBusy(true);
@@ -328,12 +337,10 @@ export function AureliusWorkspace({
         : `Waiting for ${councilLabel(requestedCouncil)}…`,
     );
     follow.current = true;
-    const timing = conversationTiming();
     timing.mark('acknowledged');
     let accepted = false;
     let saved = false;
     const painted = frameText((reply) => {
-      timing.mark('first-paint');
       setData((previous) =>
         previous
           ? {

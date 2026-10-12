@@ -3,6 +3,9 @@ import { access } from 'node:fs/promises';
 import sharp from 'sharp';
 let emitted = 0;
 for (const name of [
+  'fluid-composer-344.png',
+  'fluid-composer-390.png',
+  'fluid-composer-720.png',
   'visible-response-waiting-344.png',
   'visible-response-waiting-768.png',
   'visible-response-waiting-1440.png',

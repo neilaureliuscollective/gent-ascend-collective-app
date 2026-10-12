@@ -1,5 +1,12 @@
 export type ConversationMilestone =
-  'acknowledged' | 'accepted' | 'first-event' | 'first-text' | 'first-paint' | 'saved' | 'ended';
+  | 'acknowledged'
+  | 'acknowledgement-render'
+  | 'accepted'
+  | 'first-event'
+  | 'first-text'
+  | 'first-render'
+  | 'saved'
+  | 'ended';
 /** Local, opt-in development measurements. Never receives IDs, prompts or response text. */
 export function conversationTiming() {
   let enabled = false;
