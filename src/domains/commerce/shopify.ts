@@ -70,6 +70,14 @@ export type Product = LaunchMetadata & {
     nodes: {
       mediaContentType: string;
       sources?: { url: string; format: string; filesize: number }[];
+      videoSources?: {
+        url: string;
+        format: string;
+        mimeType: string;
+        width: number;
+        height: number;
+      }[];
+      previewImage?: { url: string; altText: string | null } | null;
     }[];
   };
 };
@@ -124,7 +132,7 @@ const LAUNCH = `tags requiresSellingPlan
   launchWindow: metafield(namespace: "gent_ascend", key: "launch_window") { value }`;
 const PRODUCT = `id handle title description productType vendor availableForSale ${LAUNCH}
   featuredImage { url altText width height }
-  images(first: 6) { nodes { url altText width height } }
+  images(first: 12) { nodes { url altText width height } }
   variants(first: 50) { pageInfo { hasNextPage endCursor } nodes { id title availableForSale currentlyNotInStock price { amount currencyCode } compareAtPrice { amount currencyCode } selectedOptions { name value } } }
   collections(first: 100) { nodes { handle title } }
   purpose: metafield(namespace: "gent_ascend", key: "purpose") { value }
@@ -132,7 +140,10 @@ const PRODUCT = `id handle title description productType vendor availableForSale
   directions: metafield(namespace: "gent_ascend", key: "directions") { value }
   ritual: metafield(namespace: "gent_ascend", key: "ritual") { value }
   story: metafield(namespace: "gent_ascend", key: "product_story") { value }
-  media(first: 8) { nodes { mediaContentType ... on Model3d { sources { url format filesize } } } }`;
+  media(first: 12) { nodes { mediaContentType previewImage { url altText }
+    ... on Model3d { sources { url format filesize } }
+    ... on Video { videoSources: sources { url format mimeType width height } }
+  } }`;
 const CART = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
   lines(first: 100) { pageInfo { hasNextPage endCursor } nodes { id quantity cost { totalAmount { amount currencyCode } }
     merchandise { ... on ProductVariant { id title availableForSale product { handle title ${LAUNCH} collections(first: 100) { nodes { handle title } } featuredImage { url altText width height } } } } } }
