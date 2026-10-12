@@ -510,3 +510,8 @@ html[data-material='solid']
     box-shadow: none;
   }
 }
+
+/* Public header is fixed; member commerce already owns its navigation inset. */
+.public-world:not(.member-collection) .lifestyle-hero {
+  padding-top: clamp(112px, 12vw, 160px);
+}

@@ -34,6 +34,12 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
           'color',
           'rgb(8, 13, 13)',
         );
+        const kicker = await page.locator('.lifestyle-hero .world-kicker').first().boundingBox();
+        const header = await page.locator('.world-header').boundingBox();
+        expect(kicker!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+        const cart = await page.locator('.commerce-cart-trigger').boundingBox();
+        const still = await page.locator('.world-motion-control').boundingBox();
+        expect(still!.x + still!.width).toBeLessThanOrEqual(cart!.x);
       }
       await page.screenshot({
         path: `test-results/emerald-${route.replaceAll('/', '-')}-${width}.png`,

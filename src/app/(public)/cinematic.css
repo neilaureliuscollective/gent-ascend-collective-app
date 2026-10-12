@@ -787,3 +787,9 @@
 @media(max-width: 850px){.public-world .world-doorways>a{min-height:230px}.public-world .world-chapter-nav{margin-inline:14px;top:8px}.public-world .atelier-story{padding:28px}.public-world .intelligence-story{padding:28px}.public-world .world-invitation{margin-inline:6%;padding:40px 28px;}.public-world .atelier-select{flex-wrap:wrap}.public-world .atelier-select button{min-width:75px;}}
 @media(max-width: 500px){.public-world .world-doorways>a{padding:28px;min-height:220px}.public-world .world-chapter-nav{gap:12px;padding-inline:12px}.public-world .world-chapter-nav a{font-size:0.43rem}.public-world .atelier-story h2{font-size:2.55rem;}.public-world .intelligence-story h2{font-size:2.5rem;}}
 @media(prefers-reduced-motion: reduce){.public-world .world-doorways>a,.public-world .collection-card,.public-world .atelier-story,.public-world .world-feature-list>article{transform:none!important;}}
+
+/* Commerce keeps Cart on the right; Still remains independently reachable. */
+.public-world:has(.reserve-commerce) > .world-motion-control {
+  left: max(18px, env(safe-area-inset-left));
+  right: auto;
+}

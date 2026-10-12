@@ -140,7 +140,7 @@
     .company-room,
     .company-job,
     .council-dialog,
-    .talk-drawer.talk-drawer,
+    .talk-drawer,
     .talk-expanded-editor,
     .aurelius-dialog,
     .context-sheet-surface,
@@ -266,7 +266,7 @@
 }
 .app-shell.imperial-workspace
   :is(
-    .aurelius-notice:not(:empty),
+    .aurelius-notice:where(:not(:empty)),
     .studio-notice,
     .company-work-note,
     .company-room-scopes,
