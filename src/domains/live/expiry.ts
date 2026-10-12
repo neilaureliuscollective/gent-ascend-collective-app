@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { supabaseConnection } from '@/platform/supabase/connection';
 import type { Database } from '@/platform/supabase/database';
 import { hangup, validTag } from './cleanup';
+import { parseEnvironment } from '@/platform/environment';
+import { previewBinding } from './preview-binding';
 
 export function expiryAuthorization(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -24,6 +26,9 @@ const claimedCall = z
   })
   .strict();
 export async function sweepExpiredLive() {
+  const environment = parseEnvironment(process.env);
+  if (environment.mode === 'preview' && previewBinding(process.env) !== 'configuration-matched')
+    throw new Error('Expiry preview database binding unavailable');
   const connection = supabaseConnection(process.env);
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const key = process.env.OPENAI_API_KEY;

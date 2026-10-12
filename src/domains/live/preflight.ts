@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { parseEnvironment } from '@/platform/environment';
 import { liveModels } from './diagnostics';
+import { previewBinding } from './preview-binding';
 export const preflightProbe = z.object({ checkProvider: z.literal(true) }).strict();
 export function preflightConfiguration(env: Record<string, string | undefined>) {
   let environment: 'local' | 'preview' | 'production' | 'invalid' = 'invalid';
@@ -24,13 +25,15 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
     keyConfigured,
     enabled,
     controlsDeclared,
+    previewDatabaseBinding: previewBinding(env),
     admissionConfigured:
       environment !== 'invalid' &&
       environment !== 'production' &&
       enabled &&
       keyConfigured &&
       !!model &&
-      (environment === 'local' || controlsDeclared),
+      (environment === 'local' ||
+        (controlsDeclared && previewBinding(env) === 'configuration-matched')),
     launchAcceptance: 'unverified' as const,
     expiry: {
       enabled: env.AETHELIOS_LIVE_EXPIRY_ENABLED === 'true',

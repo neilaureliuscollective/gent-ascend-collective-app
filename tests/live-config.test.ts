@@ -32,6 +32,10 @@ it('requires the separate control readiness gate for hosted previews', () => {
   vi.stubEnv('APP_ENV', 'preview');
   expect(() => liveConfig()).toThrow(/hosting controls/);
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
+  expect(() => liveConfig()).toThrow(/database binding/);
+  vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', 'abcdefghijklmnopqrst');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://abcdefghijklmnopqrst.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable');
   expect(liveConfig().model).toBe('gpt-realtime');
 });
 it('does not enable production even when pilot flags are enabled', () => {

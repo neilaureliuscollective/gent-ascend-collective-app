@@ -27,6 +27,9 @@ const env = {
   AETHELIOS_LIVE_ENABLED: 'true',
   AETHELIOS_LIVE_CONTROL_READY: 'true',
   OPENAI_API_KEY: 'PRIVATE_PROVIDER_KEY',
+  AETHELIOS_LIVE_PREVIEW_PROJECT_REF: 'abcdefghijklmnopqrst',
+  NEXT_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'synthetic-publishable',
 };
 beforeEach(() => {
   vi.clearAllMocks();

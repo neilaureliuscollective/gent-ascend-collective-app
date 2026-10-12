@@ -1,3 +1,7 @@
+## Protected preview database binding — 2026-10-12
+
+Added explicit managed-project pinning for hosted Live admission and preview expiry, blocking canonical production, the separate founder database, missing/mismatched pins and decorated/unsafe URLs before provider or privileged DB work. Founder preflight shows only a configuration category, never a secret or acceptance verdict. Local lint/types and 550 tests pass. Canonical Gent still has no branches; requested temporary-branch cost proposal in its existing organization or an existing isolated preview reference. No hosted schema/key/flag/schedule/production change. First release phase remains inactive until a target is selected and validated. Scope and official sources: [AETHELIOS_LIVE_PREVIEW_ISOLATION.md](AETHELIOS_LIVE_PREVIEW_ISOLATION.md).
+
 ## Founder regression and test-release phase — 2026-10-12
 
 Initial connected repair passed focused integration/build and 10/11 founder flows. The remaining test found Welcome had lost its working FirstSession component. Restored that existing authenticated priority/next-move workflow and routed saved-plan handoffs to `/app/daily`; kept owner/version/quota and unavailable-context safeguards. The final exact candidate must pass real first-session persistence and its added focused browser cases. Production/voice flags and hosted data remain unchanged.

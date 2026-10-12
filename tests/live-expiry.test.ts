@@ -25,6 +25,11 @@ const row = {
 row.call_tag = tag(key, row.person_id, row.id, row.call_id);
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  vi.stubEnv('VERCEL', '');
+  vi.stubEnv('VERCEL_ENV', '');
+  vi.stubEnv('AURELIUS_DEV_HARNESS', 'false');
   vi.stubEnv('CRON_SECRET', secret);
   vi.stubEnv('OPENAI_API_KEY', key);
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'synthetic-worker-key');
@@ -48,6 +53,13 @@ const request = (authorization?: string) =>
 it('rejects missing or incorrect scheduler authority before privileged client creation', async () => {
   expect((await GET(request())).status).toBe(401);
   expect((await GET(request('Bearer wrong'))).status).toBe(401);
+  expect(mocks.create).not.toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
+});
+it('rejects an unpinned hosted preview before privileged database/provider work', async () => {
+  vi.stubEnv('APP_ENV', 'preview');
+  vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', '');
+  await expect(sweepExpiredLive()).rejects.toThrow(/database binding/);
   expect(mocks.create).not.toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
 });
@@ -87,12 +99,10 @@ it('leaves a failed provider call leased for retry without recording confirmatio
 });
 it('isolates a malformed binding while allowing a valid leased call to complete', async () => {
   mocks.rpc.mockImplementation((name: string) => ({
-    abortSignal: vi
-      .fn()
-      .mockResolvedValue({
-        data: name === 'ai_live_claim_expired' ? [{ ...row, call_tag: null }, row] : true,
-        error: null,
-      }),
+    abortSignal: vi.fn().mockResolvedValue({
+      data: name === 'ai_live_claim_expired' ? [{ ...row, call_tag: null }, row] : true,
+      error: null,
+    }),
   }));
   expect(await sweepExpiredLive()).toEqual({ claimed: 2, confirmed: 1, pending: 1 });
   expect(fetch).toHaveBeenCalledTimes(1);

@@ -74,6 +74,11 @@ export function LivePreflight() {
             <dd>{report.enabled ? 'On' : 'Off'}</dd>
             <dt>Hosting controls declared</dt>
             <dd>{report.controlsDeclared ? 'Yes — declaration only' : 'No'}</dd>
+            <dt>Preview database binding</dt>
+            <dd>
+              {report.previewDatabaseBinding} — configuration only; isolated target acceptance is
+              still required.
+            </dd>
             <dt>Admission configuration</dt>
             <dd>
               {report.admissionConfigured

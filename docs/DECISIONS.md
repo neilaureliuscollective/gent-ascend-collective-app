@@ -1,3 +1,7 @@
+# Hosted Live preview isolation — 2026-10-12
+
+Require an explicit preview project pin that matches the managed Supabase URL, and reject both known protected production/founder projects before admission or privileged expiry work. Preview mode/readiness flags alone cannot establish database isolation. Keep local pilot/manual owner cleanup behavior and production voice denial. No automatic infrastructure purchase or hosted migration; target/cost decision precedes configuration. Evidence and acceptance boundaries: [AETHELIOS_LIVE_PREVIEW_ISOLATION.md](AETHELIOS_LIVE_PREVIEW_ISOLATION.md).
+
 # Independent Live expiry control — 2026-10-12
 
 Reuse scheduled Vercel Functions with private Supabase cleanup leases, rather than adding a durable SDK/service for one pilot operation. Normal clients cannot execute worker RPCs; infrastructure alone validates call bindings and confirms cleanup after provider success. User-writable ended flags are not provider termination evidence. Keep the schedule fragment inactive, expiry default off and production voice rejected until minute scheduling, backend authority and real crash/hangup/billing acceptance pass. Official research, measured checks and hard-budget limitations: [AETHELIOS_LIVE_EXPIRY.md](AETHELIOS_LIVE_EXPIRY.md).
