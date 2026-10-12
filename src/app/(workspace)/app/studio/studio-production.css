@@ -247,3 +247,12 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.studio-delivery-preview {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: 240px;
+  margin-top: 12px;
+  border-radius: 10px;
+  object-fit: contain;
+}

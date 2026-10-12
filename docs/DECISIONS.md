@@ -375,3 +375,7 @@ Official model/deprecation evidence supersedes the historical Sora video guide: 
 ## 2026-10-12 — Reviewed Runway footage with signed durable receipts
 
 Execute a useful default-off text-to-video pilot on the preserved Studio stack. Official Runway docs and generated SDK verify active Gen-4.5, stable 2024-11-06 API header, 12-credit/second dated estimates and expiring outputs requiring private copying. Session-bound owner RPCs require additional server HMAC attestation before provider task lookups: an owner must not substitute another tenant's task ID and use the application credential to fetch it. Atomic enduring allowance and one paid POST prevent uncertain-response retries. No provider DELETE, speculative queue platform, hosted migration, global budget claim or production release. Exact evidence/limits/activation: [STUDIO_FOOTAGE.md](STUDIO_FOOTAGE.md).
+
+## 2026-10-12 — Campaign delivery before further paid source animation
+
+Connect existing saved Studio media into a reviewed portable handoff using owner-scoped GET endpoints and the bounded local ZIP writer. Use sequential abortable reads, exact local approval snapshots and hashes; never expose vendor URLs or imply clip synchronization, automatic publishing or independently verified rights. No provider bill, service credentials, migration or production release. Owned-image animation remains a subsequent source-hash/consent/provider-acceptance slice. Current research and boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md).

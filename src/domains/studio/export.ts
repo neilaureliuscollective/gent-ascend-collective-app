@@ -9,10 +9,14 @@ function crc32(bytes: Uint8Array) {
   for (const byte of bytes) crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 255]!;
   return (crc ^ 0xffffffff) >>> 0;
 }
-export function exportZip(files: { name: string; bytes: Uint8Array }[]) {
+export function exportZip(
+  files: { name: string; bytes: Uint8Array }[],
+  profile: 'images' | 'delivery' = 'images',
+) {
   if (
     files.length < 1 ||
-    files.length > 5 ||
+    files.length > (profile === 'delivery' ? 16 : 5) ||
+    new Set(files.map((f) => f.name)).size !== files.length ||
     files.reduce((sum, f) => sum + f.bytes.length, 0) > 50_000_000
   )
     throw new Error('This export is too large. Download individual assets instead.');
@@ -20,7 +24,13 @@ export function exportZip(files: { name: string; bytes: Uint8Array }[]) {
   const central: Uint8Array[] = [];
   let offset = 0;
   for (const file of files) {
-    if (!/^[a-zA-Z0-9_-]+\.(png|json|md)$/.test(file.name))
+    if (
+      !(
+        profile === 'delivery'
+          ? /^[a-zA-Z0-9_-]+\.(png|jpg|webp|mp4|wav|json|md|vtt|srt)$/
+          : /^[a-zA-Z0-9_-]+\.(png|json|md)$/
+      ).test(file.name)
+    )
       throw new Error('Invalid export filename.');
     const name = new TextEncoder().encode(file.name),
       crc = crc32(file.bytes);
