@@ -27,13 +27,25 @@ export function ContextPanel({
             : 'Personal context is off for your next message'}
       </div>
       <div className="context-cards">
-        {!preview && data.context.dailyBrief && <article>
-          <span className="eyebrow">TODAY / SAVED SNAPSHOT</span>
-          <h4>{data.context.dailyBrief.day}</h4>
-          <p>{data.context.dailyBrief.actions.length} saved actions · {data.context.dailyBrief.openCaptures} open captures</p>
-          {data.context.dailyBrief.previousReview?.tomorrow && <p>Carried forward from {data.context.dailyBrief.previousReview.day}: {data.context.dailyBrief.previousReview.tomorrow}</p>}
-          <p>Read at {data.context.dailyBrief.asOf.slice(11,16)} UTC. Reload to see later changes.</p>
-        </article>}
+        {!preview && data.context.dailyBrief && (
+          <article>
+            <span className="eyebrow">TODAY / SAVED SNAPSHOT</span>
+            <h4>{data.context.dailyBrief.day}</h4>
+            <p>
+              {data.context.dailyBrief.actions.length} saved actions ·{' '}
+              {data.context.dailyBrief.openCaptures} open captures
+            </p>
+            {data.context.dailyBrief.previousReview?.tomorrow && (
+              <p>
+                Carried forward from {data.context.dailyBrief.previousReview.day}:{' '}
+                {data.context.dailyBrief.previousReview.tomorrow}
+              </p>
+            )}
+            <p>
+              Read at {data.context.dailyBrief.asOf.slice(11, 16)} UTC. Reload to see later changes.
+            </p>
+          </article>
+        )}
         <article>
           <span className="eyebrow">01 / Your foundation</span>
           <h4>{preview ? 'Your perspective starts here.' : data.context.profile.name}</h4>
@@ -85,8 +97,8 @@ export function ContextPanel({
           Start a new conversation for a fresh context.
         </p>
         <p>
-          Live web research, voice, file uploads and external actions are not connected in this
-          release.
+          Read-only web research is available when the model connection supports it. Voice, general
+          document uploads and external action execution are not connected in this release.
         </p>
         {!preview && (
           <p>

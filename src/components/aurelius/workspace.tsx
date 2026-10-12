@@ -42,12 +42,10 @@ export function AureliusWorkspace({
   compact = false,
   initialDraft = '',
   initialConversation = null,
-  founderLinked = false,
 }: {
   compact?: boolean;
   initialDraft?: string;
   initialConversation?: string | null;
-  founderLinked?: boolean;
 }) {
   const [preview, setPreview] = useState(false);
   const router = useRouter();
@@ -294,7 +292,7 @@ export function AureliusWorkspace({
     setError('');
     setNotice(
       requestedCouncil?.kind === 'table'
-        ? 'The Council is examining your question…'
+        ? 'The selected Entities are examining your question…'
         : `${councilLabel(requestedCouncil)} is thinking…`,
     );
     follow.current = true;
@@ -706,9 +704,9 @@ export function AureliusWorkspace({
                 ) : (
                   <>
                     Sending shares this conversation’s recent messages
-                    {councilSelection ? ' with the selected Council specialists' : ''}
+                    {councilSelection ? ' with the selected specialists' : ''}
                     {includeContext
-                      ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records${founderLinked && !councilSelection ? ', plus relevant private Aethelios teaching and researched knowledge' : ''}`
+                      ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records`
                       : ''}{' '}
                     with our AI service. Read-only web research may consult public sources; returned
                     sources are linked in saved replies. Nothing is automatically added to memory.
@@ -729,6 +727,7 @@ export function AureliusWorkspace({
         )}
         {!preview && (
           <CouncilPanel
+            founder={Boolean(data.founderAccess)}
             reviewRef={tableReview}
             question={draft.trim() || data.turns.at(-1)?.user_text || ''}
             selection={councilSelection}

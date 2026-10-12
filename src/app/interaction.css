@@ -258,6 +258,9 @@
     display: none;
   }
 }
+.founder-link-short {display:none;}
+.shell-founder-link {display:inline-flex;align-items:center;min-height:44px;white-space:nowrap;}
+@media(max-width:1100px){.founder-link-long{display:none;}.founder-link-short{display:inline;}.shell-founder-link{font-size:.75rem;padding:4px;}}
 @media (max-width: 599px) {
   .app-shell .workspace > main h1 {
     font-size: clamp(1.75rem, 7vw, 2.25rem);

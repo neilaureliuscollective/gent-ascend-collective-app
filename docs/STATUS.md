@@ -883,3 +883,63 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
+## Founder Office activation candidate — 2026-10-11
+
+Inside the canonical public application, implemented account-bound Founder Office entry, independent founder access when membership provisioning is absent, owner-keyed UI continuity, private company/source/figure context, MARA/CASSIAN/CASSIUS on the shared specialist system, public Entities naming, saved company deliverables, dependent task plans, human approval/rejection history, bounded portfolio briefings with personal Mission continuity, and fixed public canonical-platform inspection. Existing memory, Talk, Company Rooms, Studio, immutable work versions and owner RLS are reused. No new application, database, signup system, dependency or migration. Retired private-app bridge network residue is removed.
+
+Audit and capability statuses: [FOUNDER_OFFICE_AUDIT.md](FOUNDER_OFFICE_AUDIT.md). Official research/architecture: [FOUNDER_OFFICE_RESEARCH.md](FOUNDER_OFFICE_RESEARCH.md). Exact acceptance and two-stage rollback gates: [FOUNDER_OFFICE_RELEASE.md](FOUNDER_OFFICE_RELEASE.md).
+
+Compatible rollback reader `555b08e` (including the work-contract expansion in `1e90c36`) is a separate local baseline, independently typechecked with 416 passing tests in a detached checkout of this same repository. Original production reader `32d1c4c` cannot safely read additive control fields; retain an accepted compatibility artifact before activating new records. No Git push, PR, hosted grant, merge or deployment. Vercel production remains READY at `32d1c4c`; its broad CI run remains failed. This phase is an implementation candidate, not live founder activation or voice parity.
+
+Final candidate verification, completed 2026-10-12: lint, strict TypeScript and 445 tests across 62 files passed; the recorded 28-file migration hash ledger passed. Optimized webpack/TypeScript compiler-API build completed with original configuration restored; this skips the missing Mirror prebuild asset and does not close the standard build/asset gate. Browser server startup is denied by EPERM. Real local Auth is blocked by absent local configuration/Docker access; live model connection is blocked by missing OPENAI_API_KEY. Supplied authenticated and responsive acceptance tests remain unrun. Reader baseline 555b08e independently passed lint, strict types and 416 tests across 58 files. No hosted changes or deployment.
+
+
+## Founder Office phase two — 2026-10-12
+
+Implemented shared saved-task readiness, portfolio/card visibility of ready/blocked/review tasks, approved-proposal attention while no executor exists, and atomic reopening of completed transitive dependents. Server refuses completed or invalid task preparation before provider invocation. Existing owner-bound reads, founder checks and immutable work-version CAS are retained. No new schema, dependency, external executor or hosted change. Official research and precise acceptance boundaries: [FOUNDER_OFFICE_READINESS.md](FOUNDER_OFFICE_READINESS.md).
+
+451 tests across 63 files passed, including provider-denial and approved-attention regressions. Lint, strict TypeScript and final optimized webpack compilation passed; receipts are in /workspace/next-phase-{lint,types,compile}.log. Documented Next compiler-API mode is now configured permanently with installed TypeScript 6, preserving checks rather than ignoring errors. npm run build still fails at the pinned Mirror asset download (DNS EAI_AGAIN). Browser web-server startup fails with localhost listen EPERM; no responsive/device acceptance is claimed. Migration ledger remains unchanged and passes. Existing live Auth/model/voice and broad remote CI gates remain open. No push, PR, migration or deployment.
+
+## Founder milestone correction phase — 2026-10-12
+
+Added task editing, Coworker reassignment, dependency correction, cancel-edit and removal from the current plan while preserving immutable history. Server requires a separate saved reopening before completed milestones can change scope or disappear. Graph validation prevents cycles and orphaned dependencies; editor revision capture and existing SQL CAS prevent overwriting a changed mission. Existing uncertain-write recovery and founder/owner boundaries are retained. Research and acceptance: [FOUNDER_MILESTONE_CORRECTIONS.md](FOUNDER_MILESTONE_CORRECTIONS.md).
+
+455 tests across 63 files, strict TypeScript, lint and optimized webpack compilation passed; unchanged migration ledger passed. Logs are /workspace/milestone-{tests,types,lint,build}.log. Type checking was rerun after compilation because parallel Next type generation and build initially raced on generated files. Normal build still needs the checksum-verified Mirror asset; live browser/Auth/model/device gates remain as previously recorded. No new migration, dependency, push, PR or deployment. This is candidate source, not live founder activation.
+
+## Founder approval withdrawal phase — 2026-10-12
+
+Implemented explicit founder-only withdrawal for approved proposals at the existing approvals endpoint. The unchanged proposal becomes rejected in a new immutable work version, preserving the prior approval. Pending/rejected/missing requests fail before saving; normal approve/reject semantics remain unchanged. Added inline decision timelines with revision/time/source, approved-to-rejected withdrawal events and honest first-observed states when the loaded history is truncated. Existing exact replay, SQL CAS, owner boundaries and model decision preservation remain intact. No external action is executed or undone. Research and acceptance: [FOUNDER_APPROVAL_WITHDRAWAL.md](FOUNDER_APPROVAL_WITHDRAWAL.md).
+
+458 tests across 64 files, lint, strict TypeScript and optimized webpack compilation passed. Optimized build receipt: /workspace/approval-build.log; test/type/lint receipts: /workspace/approval-{tests,types,lint}.log. Unchanged 28-file migration ledger passed. Normal asset-complete build and real Auth/provider/browser/voice/device gates remain blocked as previously recorded. No schema expansion, dependency, push, PR, migration or deployment. This remains candidate source in the canonical public application.
+
+
+## Founder Office release validation — 2026-10-12
+
+Founder authorized execution of release validation and the gated release process. Production advanced independently to Obsidian release 9d973fe94526cbd5c98f5ea1495c999ddd3f803e. Retrieved all 50 changed text files through GitHub, reconstructed the exact deployed source tree b6942117efee5530a5196a6a7dd244522c28663e, and merged that verified source into the candidate. Preserve current production design; the only conflict was an equivalent Next compiler-mode comment. The local import commit is a source reconstruction, not the original remote release commit. Remote publication will parent the actual canonical production commit and must match the integrated tree.
+
+Added explicit responsive/recovery and real synthetic-Auth founder-persistence checks before the inherited broad suites in Quality gates. No checks are removed or suppressed. Publishing this review branch allows the connected GitHub runner to perform asset-complete builds, real local Supabase/Auth and browser checks unavailable in this sandbox. Live customer/founder production identity, model evaluation, voice and physical-device gates remain separate. Production promotion remains gated on accepted results and compatible rollback readiness.
+
+
+## Founder Office connected release execution receipt — 2026-10-12
+
+Published activation PR #91 and compatible-reader PR #93 through the authenticated GitHub connector after preserving and verifying exact current Obsidian, Lifestyle and catalog source trees. Both branches trigger existing Vercel previews and connected CI. Normal npm check/build and real Supabase Auth/RLS integration smoke have passed on a published activation snapshot. The explicit real authenticated founder persistence journey passed on corrected source; the broad suite exposed additional issues, now repaired in the candidate. Current local candidate passes 478 tests, lint, strict types and optimized compilation. Details, exact commits, preview signed-out route checks and still-open production/model/device/rollback gates: [FOUNDER_RELEASE_VALIDATION.md](FOUNDER_RELEASE_VALIDATION.md). Production is not promoted by this work; historical local-only/no-push phase receipts are superseded by this publication record.
+
+## Founder release acceptance reconciliation — 2026-10-12
+
+Published source 67036c6 completed both database jobs successfully, including all 12 real authenticated founder journeys. Visual and Lifestyle acceptance also passed; broad application browser checks remained failed. Inspected current Command/entry routes and canonical identity metadata, researched official Playwright contracts, and corrected legacy Command/day/appearance test destinations and identity expectations. Added an explicit connected Command/identity step before the preserved broad suite. Published b5e45cac8a017fc50bd7d0e2c3ef0c72faab806f to existing activation PR #91 with a leased fast-forward. Lint and strict TypeScript passed. Current browser checks are pending on that source; no mocked tests are relabeled live, no tests suppressed and no product behavior changed to fit obsolete selectors. Evidence and remaining estate/commerce/fixture reconciliation: FOUNDER_ACCEPTANCE_RECONCILIATION.md. Production promotion remains blocked by broad acceptance, real production-founder/model/device validation and accepted compatible-reader rollback readiness.
+
+## Founder release interaction reconciliation — 2026-10-12
+
+Full authenticated database checks remain green. Focused Command/identity checks reached 40/55; repaired stale tools-drawer/nav/manifest expectations and ambiguous saved-context/deeper-system locators. Added native no-JavaScript workspace guidance with account/home links, preserving authorization and private-context handling. Source research and checks: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or production promotion; connected browser results still govern acceptance.
+
+
+### Founder release acceptance continuation — 2026-10-12
+
+Added a native no-JavaScript explanation to the streamed workspace opening boundary and reconciled current Talk/motion/public/Lifestyle/cache browser contracts. Retained estate components have explicit test-only historical coverage rather than asserting that the old design is the live homepage. See `FOUNDER_ACCEPTANCE_RECONCILIATION.md`. Activation head `50a1892` passed real Auth/RLS and authenticated founder persistence checks, but browser release gates remain unresolved. No production merge, deployment, migration or activation flag change performed.
+
+
+### Current acceptance evidence — 2026-10-12
+
+Remote activation `b77b84a` passed full normal CI check/build, eight Founder Office responsive/recovery checks and real Auth/RLS/founder persistence journeys. Its focused browser suite passed 111 and failed six; corrections are documented in `FOUNDER_ACCEPTANCE_RECONCILIATION.md`. Preview `dpl_BMZ15yHqMcsbhbfT7VAvMZFFL6vD` was READY; signed-out `/api/founder-office` returned 401 and hosted developer routes returned 404. These are read-only boundary checks, not an authenticated production founder or live AI/voice journey.
+
+Root-native fallback, remaining browser/fixture corrections, short cover spacing and current-head CI concurrency are implemented. Local lint, strict types and optimized build passed; updated exact-head browser acceptance remains required. No production merge/promotion, migrations or hosted work-contract activation were performed.

@@ -4,7 +4,9 @@ import { currentPerson } from '@/domains/person/current';
 import { currentAccess } from '@/domains/access/current';
 import { aiConfigSchema } from './validation';
 import { promptVersion, buildMessages } from './prompt';
-import { councilPromptVersion, type CouncilSelection } from './council';
+import { councilPromptVersion, requiresFounder, type CouncilSelection } from './council';
+import { currentFounderAccess } from '@/domains/access/founder';
+import {explicitlyRequestedCoworkers} from '@/domains/founder-office/routing';
 import { generateConversationTitle, summarizeThread } from './model';
 import type { PersonalContext, WorkspaceData, Turn } from './types';
 import { localDay } from '@/domains/daily/model';
@@ -190,6 +192,7 @@ export async function readWorkspace(conversationId?: string, before?: string, li
   const config = aiConfigSchema.parse(process.env);
   return {
     ownerId: person.id,
+    founderAccess: await currentFounderAccess(),
     conversations: (list.data ?? []).slice(0, 40),
     turns: turns.slice(-40),
     memories: memories.data ?? [],
@@ -214,6 +217,10 @@ export async function prepareReply(input: {
   council?: CouncilSelection;
 }) {
   const { client, person } = await intelligenceSession();
+  const founder=await currentFounderAccess();
+  const selection=input.council ?? (founder?explicitlyRequestedCoworkers(input.text):undefined);
+  if (requiresFounder(selection) && !founder)
+    throw new IntelligenceError('Founder Coworkers require verified founder access.', 403);
   if (!(await currentAccess()).has('aurelius.context'))
     throw new IntelligenceError(
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
@@ -242,7 +249,7 @@ export async function prepareReply(input: {
     p_text: input.text,
     p_model: config.AURELIUS_AI_MODEL,
     p_context: input.includeContext,
-    p_prompt_version: input.council ? councilPromptVersion(input.council) : promptVersion,
+    p_prompt_version: selection ? councilPromptVersion(selection) : promptVersion,
   };
   const begun = company
     ? input.sourceTurnId && input.revisionKind
@@ -304,8 +311,8 @@ export async function prepareReply(input: {
   return {
     model: config.AURELIUS_AI_MODEL,
     messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, company ? null : capabilityContext(input.text), company),
-    founder: founderContext !== null,
-    council: input.council,
+    founder,
+    council: selection,
     finish: async (
       text: string,
       status: 'complete' | 'failed' | 'cancelled',
