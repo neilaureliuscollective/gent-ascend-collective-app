@@ -7,6 +7,8 @@ import Markdown from 'react-markdown';
 import type { Turn } from '@/domains/intelligence/types';
 import type { ActionProposal } from '@/domains/intelligence/types';
 import { ActionReview } from './action-review';
+import { IntelligenceResponse } from '@/components/intelligence-motion/presence';
+import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 export const ConversationTurn = memo(function ConversationTurn({
   turn,
   onFeedback,
@@ -16,8 +18,10 @@ export const ConversationTurn = memo(function ConversationTurn({
   onCopy,
   onRevise,
   companyWork = false,
+  operation,
 }: {
   turn: Turn;
+  operation?: IntelligenceOperation;
   companyWork?: boolean;
   onFeedback?: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
@@ -35,10 +39,17 @@ export const ConversationTurn = memo(function ConversationTurn({
         <p>{turn.user_text}</p>
       </div>
       <div className="assistant-message">
-        <span className="message-author">
-          <span className="small-orb" aria-hidden="true" />
-          {councilLabel(councilFromVersion(turn.prompt_version))}
-        </span>
+        {operation ? (
+          <IntelligenceResponse
+            operation={operation}
+            name={councilLabel(councilFromVersion(turn.prompt_version))}
+          />
+        ) : (
+          <span className="message-author">
+            <span className="small-orb" aria-hidden="true" />
+            {councilLabel(councilFromVersion(turn.prompt_version))}
+          </span>
+        )}
         <div className="message-markdown">
           <Markdown
             skipHtml
@@ -78,7 +89,7 @@ export const ConversationTurn = memo(function ConversationTurn({
             </div>
           </details>
         ))}
-        {turn.status !== 'complete' && (
+        {turn.status !== 'complete' && !operation && (
           <p className="message-state">
             {turn.status === 'pending'
               ? 'Reply in progress or interrupted. Reload to check its saved state.'

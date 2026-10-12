@@ -4,7 +4,7 @@ import Markdown from 'react-markdown';
 import { useEffect, useRef, useState } from 'react';
 import type { readCompanyTalk } from '@/domains/companies/service';
 import { observedOperation } from '@/platform/visual/operation-adapters';
-import { IntelligenceStatus } from '../intelligence-motion/presence';
+import { IntelligenceStatus, IntelligenceResponse } from '../intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import type { StreamEvent } from '@/domains/intelligence/types';
 import { companyJobs } from '@/domains/company-work/starters';
@@ -650,6 +650,7 @@ export function CompanyRoom({
                 <ConversationTurn
                   key={turn.id}
                   turn={turn}
+                  operation={turn.id === operation.id ? operation : undefined}
                   disabled={busy}
                   companyWork
                   versions={data.turns.filter((previous) => previous.id === turn.parent_turn_id)}
@@ -679,6 +680,12 @@ export function CompanyRoom({
                   {coworker ? council.find((member) => member.id === coworker)?.name : 'Aethelios'}{' '}
                   · {busy ? 'working' : 'unconfirmed reply'}
                 </h3>
+                <IntelligenceResponse
+                  operation={operation}
+                  name={
+                    coworker ? council.find((member) => member.id === coworker)?.name : 'Aethelios'
+                  }
+                />
                 <Markdown skipHtml>{partial || 'Preparing the response…'}</Markdown>
               </article>
             )}

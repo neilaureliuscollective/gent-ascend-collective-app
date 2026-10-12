@@ -241,3 +241,181 @@ html[data-quiet='true'] .im-presence * {
   max-width: 4px;
   max-height: 4px;
 }
+
+/* Intelligence signature: luminous interwoven emerald planes, local to the work. */
+.im-signal {
+  width: 84px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.im-signal.im-large {
+  width: clamp(100px, 18vw, 148px);
+  height: 76px;
+  aspect-ratio: auto;
+}
+.im-signal > :is(.im-core, .im-orbit, .im-halo) {
+  display: none;
+}
+.im-signal .im-ribbon {
+  inset: 22% 9%;
+  border-radius: 48% 52% 48% 52%;
+  background: conic-gradient(
+    from 30deg,
+    transparent 8%,
+    var(--im-emerald) 23%,
+    var(--im-light) 35%,
+    transparent 49%,
+    var(--im-emerald) 66%,
+    var(--im-light) 79%,
+    transparent 92%
+  );
+  box-shadow: inset 0 0 10px #0008;
+  opacity: 0.88;
+  transform: rotate(-18deg) scaleY(0.54);
+}
+.im-signal .im-ribbon-two {
+  inset: 12% 21%;
+  background: conic-gradient(
+    from 130deg,
+    transparent 12%,
+    var(--im-light) 34%,
+    var(--im-emerald) 48%,
+    transparent 64%,
+    var(--im-light) 80%,
+    transparent 92%
+  );
+  transform: rotate(32deg) scaleY(0.55);
+  opacity: 0.72;
+}
+.im-signal .im-ribbon-three {
+  inset: 24% 12%;
+  background: transparent;
+  border: 1px solid var(--im-gold);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  transform: rotate(-24deg) scaleY(0.5);
+  opacity: 0.65;
+}
+.im-signal .im-lightline {
+  left: 20%;
+  right: 20%;
+  bottom: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--im-light), var(--im-gold), transparent);
+  opacity: 0.65;
+}
+.im-signal[data-animate='true'][data-motion='ambient']:is(
+    [data-phase='waiting'],
+    [data-phase='loading'],
+    [data-phase='connecting'],
+    [data-phase='thinking'],
+    [data-phase='generating'],
+    [data-phase='processing'],
+    [data-phase='searching'],
+    [data-phase='researching'],
+    [data-phase='saving']
+  )
+  .im-ribbon-one {
+  animation: im-weave 3.6s ease-in-out infinite;
+}
+.im-signal[data-animate='true'][data-motion='ambient']:is(
+    [data-phase='waiting'],
+    [data-phase='loading'],
+    [data-phase='connecting'],
+    [data-phase='thinking'],
+    [data-phase='generating'],
+    [data-phase='processing'],
+    [data-phase='searching'],
+    [data-phase='researching'],
+    [data-phase='saving']
+  )
+  .im-ribbon-two {
+  animation: im-counterweave 4.2s ease-in-out infinite;
+}
+.im-signal[data-animate='true'][data-motion='ambient']:is(
+    [data-phase='searching'],
+    [data-phase='researching'],
+    [data-phase='saving']
+  )
+  .im-ribbon-three {
+  animation: im-weave 2.8s ease-in-out infinite reverse;
+}
+.im-signal[data-phase='saving'] .im-ribbon-three {
+  opacity: 1;
+  border-top-width: 2px;
+}
+.im-signal:is([data-phase='failed'], [data-phase='cancelled']) .im-ribbon {
+  opacity: 0.3;
+}
+.im-signal[data-phase='complete'] .im-resolution {
+  inset: 22% 10%;
+  border-radius: 50%;
+  transform: scaleY(0.55);
+}
+@keyframes im-weave {
+  0%,
+  100% {
+    transform: translateX(-4%) rotate(-18deg) scaleY(0.54);
+  }
+  50% {
+    transform: translateX(4%) rotate(18deg) scaleY(0.92);
+  }
+}
+@keyframes im-counterweave {
+  0%,
+  100% {
+    transform: translateY(4%) rotate(32deg) scaleY(0.55);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(-4%) rotate(-30deg) scaleY(0.9);
+    opacity: 0.95;
+  }
+}
+.im-response {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 20px);
+  min-width: 0;
+  min-height: 88px;
+  margin-block: 4px 12px;
+  padding: 6px 12px 6px 0;
+  background: radial-gradient(ellipse at 12% 50%, #236a5229, transparent 65%);
+  border-bottom: 1px solid var(--io-divider, #e6e7e21f);
+}
+.im-response-copy {
+  min-width: 0;
+}
+.im-response-name {
+  display: block;
+  color: var(--io-text, #e6e7e2);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.im-response .im-status {
+  font-size: 0.85rem;
+}
+/* Waiting must remain visible even when the official orb artwork is present. */
+.im-presence[data-artwork='true'] > .im-halo {
+  display: block;
+  inset: -5%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .im-signal .im-ribbon {
+    animation: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .im-response {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .im-response-name {
+    color: CanvasText;
+  }
+}
+/* The toolbar is secondary identity; the response owns attention during text work. */
+.talk-presence > .talk-tool .im-presence * {
+  animation: none !important;
+}

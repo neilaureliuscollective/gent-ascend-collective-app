@@ -85,6 +85,8 @@ function emit(event: StreamEvent) {
 window.fetch = async (input, init) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (url.startsWith('/api/aurelius/chat') || url.startsWith('/api/company-talk/chat')) {
+    if (new URLSearchParams(location.search).get('holdHeaders') === '1')
+      await new Promise((resolve) => setTimeout(resolve, 1800));
     const body = JSON.parse(String(init?.body));
     turn = {
       id: body.requestId,

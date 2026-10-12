@@ -15,10 +15,12 @@ export function IntelligencePresence({
   operation,
   size = 'compact',
   artwork,
+  variant = 'orb',
 }: {
   operation: IntelligenceOperation;
   size?: 'compact' | 'large';
   artwork?: ReactNode;
+  variant?: 'orb' | 'signal';
 }) {
   const { moving } = useAppearance();
   const host = useRef<HTMLSpanElement>(null);
@@ -55,7 +57,7 @@ export function IntelligencePresence({
   return (
     <span
       ref={host}
-      className={`im-presence im-${size}`}
+      className={`im-presence im-${size} im-${variant}`}
       data-phase={phase}
       data-motion={moving ? 'ambient' : 'still'}
       data-persistence={operation.persistence ?? 'not-applicable'}
@@ -73,6 +75,14 @@ export function IntelligencePresence({
         <span />
       </span>
       <span className="im-resolution" />
+      {variant === 'signal' && (
+        <>
+          <span className="im-ribbon im-ribbon-one" />
+          <span className="im-ribbon im-ribbon-two" />
+          <span className="im-ribbon im-ribbon-three" />
+          <span className="im-lightline" />
+        </>
+      )}
     </span>
   );
 }
@@ -87,8 +97,26 @@ export function IntelligenceStatus({ operation }: { operation: IntelligenceOpera
 export function IntelligenceActivity({ operation }: { operation: IntelligenceOperation }) {
   return (
     <div className="im-activity">
-      <IntelligencePresence operation={operation} />
+      <IntelligencePresence operation={operation} variant="signal" />
       <IntelligenceStatus operation={operation} />
+    </div>
+  );
+}
+/** Primary feedback lives with the response, never behind a drawer or toolbar. */
+export function IntelligenceResponse({
+  operation,
+  name = 'Aethelios',
+}: {
+  operation: IntelligenceOperation;
+  name?: string;
+}) {
+  return (
+    <div className="im-response" data-phase={operation.phase} data-operation={operation.id}>
+      <IntelligencePresence operation={operation} variant="signal" size="large" />
+      <div className="im-response-copy">
+        <span className="im-response-name">{name}</span>
+        <IntelligenceStatus operation={operation} />
+      </div>
     </div>
   );
 }

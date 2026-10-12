@@ -64,7 +64,7 @@ test('motion mark pauses offscreen and respects Still without a repeating comple
   const mark = page.locator('.gallery-stage .im-presence');
   await expect(mark).toHaveAttribute('data-animate', 'true');
   await page.getByLabel('Preview state').selectOption('searching');
-  const orbit = mark.locator('.im-orbit');
+  const orbit = mark.locator('.im-ribbon-three');
   await expect(orbit).not.toHaveCSS('animation-name', 'none');
   await page.getByLabel('Preview state').selectOption('complete');
   await expect(mark.locator('.im-resolution')).toHaveCSS('animation-iteration-count', '1');
