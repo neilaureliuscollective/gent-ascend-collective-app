@@ -78,6 +78,7 @@ test('Founder Office saves an exact mission before generating and recovers its d
 test('Founder job controls save versioned task and approval snapshots without claiming external execution', async ({
   page,
 }) => {
+  page.on('pageerror', (error) => console.log('Synthetic Founder fixture error:', error.message));
   let work = structuredClone(syntheticWork);
   const mutations: Array<{ endpoint: string; body: Record<string, unknown> }> = [];
   await page.route('**/api/company-work?*', (route) => route.fulfill({ json: { jobs: [] } }));
@@ -126,7 +127,14 @@ test('Founder job controls save versioned task and approval snapshots without cl
     await route.fulfill({ json: work });
   });
   await page.goto('http://127.0.0.1:3102/?mode=founder-job');
-  await page.getByRole('button', { name: /Brief & presentation/ }).click();
+  const workControl = page.getByRole('button', { name: /Brief & presentation/ });
+  await workControl.waitFor({ timeout: 15000 }).catch(async () => {
+    throw new Error(
+      'Saved-job fixture did not render its controls: ' +
+        (await page.locator('body').innerText()).slice(0, 3000),
+    );
+  });
+  await workControl.click();
   await page.getByLabel('Milestone or task').fill('Review the proposal');
   await page.getByLabel('Task objective').fill('Review the supplied evidence before publication');
   await page.getByLabel('Coworker', { exact: true }).selectOption('mara');

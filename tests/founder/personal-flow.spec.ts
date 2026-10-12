@@ -16,7 +16,7 @@ test('public entrance rejects invalid credentials without leaving the world', as
   await page.goto('/enter');
   await page.getByLabel('Email').fill('not-invited@example.test');
   await page.getByLabel('Password').fill('incorrect-password');
-  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await page.getByRole('button', { name: 'Enter Aethelios' }).click();
   await expect(page).toHaveURL(/\/enter\?error=credentials$/);
   await expect(page.locator('.entrance-error')).toContainText(
     'email and password were not accepted',
@@ -271,7 +271,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
   await page.goto('/app/ongoing');
   await page.goto('/app/grooming');
-  await page.getByText('Direction, routines & private history', {exact:true}).click();
+  await page.getByText('Direction, routines & private history', { exact: true }).click();
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
   const ritual = page.getByRole('dialog', { name: 'Edit ritual structure' });
   await expect(ritual).toBeVisible();
@@ -299,7 +299,7 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(record.getByLabel('My note')).toHaveValue('Keep this private note.');
   await expect(record.getByLabel('My experience')).toHaveValue('running_low');
   await page.goto('/app/grooming');
-  await page.getByText('Direction, routines & private history', {exact:true}).click();
+  await page.getByText('Direction, routines & private history', { exact: true }).click();
   const products = page.getByRole('region', {
     name: 'Products linked to Synthetic Cabinet morning',
   });
@@ -308,8 +308,13 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await expect(products).not.toContainText('Keep this private note.');
   await page.goto('/app/presence');
   await expect(page.getByRole('heading', { name: 'Show up with intention.' })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Saved replenishment notes' })).toContainText('Synthetic external oil');
-  await expect(page.getByRole('link', { name: /Prepare with Aethelios/ })).toHaveAttribute('href', '/app/aethelios?starter=presence');
+  await expect(
+    page.getByRole('complementary', { name: 'Saved replenishment notes' }),
+  ).toContainText('Synthetic external oil');
+  await expect(page.getByRole('link', { name: /Prepare with Aethelios/ })).toHaveAttribute(
+    'href',
+    '/app/aethelios?starter=presence',
+  );
 });
 
 test('authenticated order workspace stays closed without merchant configuration', async ({
@@ -342,7 +347,7 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.goto('/enter');
   await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
   await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
-  await page.getByRole('button', { name: 'Enter Gent Ascend' }).click();
+  await page.getByRole('button', { name: 'Enter Aethelios' }).click();
   await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
   await page.goto('/app/welcome');
   await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
@@ -379,7 +384,9 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.goto('/app/progress');
   await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'records are unavailable' })).toHaveCount(
+    0,
+  );
   const response = await page.request.get('/api/daily');
   expect(response.ok()).toBeTruthy();
   const saved = await response.json();

@@ -18,7 +18,8 @@ test('real signed-in founder saves, reopens and resumes a company mission and de
   await page.goto('/enter');
   await page.getByLabel('Email').fill('founder@aurelius.test');
   await page.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
-  await page.getByRole('button', { name: 'Enter Gent Ascend', exact: true }).click();
+  await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/founder$/);
   await page.goto('/app/founder');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('office.');
   await page.getByRole('button', { name: 'Add a company or project' }).click();
@@ -28,7 +29,7 @@ test('real signed-in founder saves, reopens and resumes a company mission and de
     .getByLabel('Confirmed business context')
     .fill('Synthetic founder acceptance project. No real customer records or financial claims.');
   await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
-  await expect(page.getByLabel('Company or project')).toHaveValue(/^[a-f0-9-]{36}$/);
+  await expect(page.getByLabel('Company or project').locator('option:checked')).toHaveText(company);
   await page.getByLabel('Assigned Coworker').selectOption('mara');
   await page
     .getByLabel('What needs to happen?')
