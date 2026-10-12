@@ -6,7 +6,7 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/app/work');
     const chamber = page.locator('.company-work > header');
-    await expect(chamber).toHaveCSS('background-image', /rgb\(23, 68, 56\)/);
+    await expect(chamber).toHaveCSS('background-image', /rgb\(22, 63, 53\)/);
     await expect(page.locator('.company-job-list').last()).toHaveCSS('gap', '0px');
     await chamber.getByRole('link', { name: 'Continue in Talk' }).focus();
     await expect(chamber.getByRole('link', { name: 'Continue in Talk' })).toBeFocused();
@@ -32,7 +32,7 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
       if (route === '/lifestyle') {
         await expect(page.locator('.lifestyle-hero .world-button')).toHaveCSS(
           'color',
-          'rgb(8, 13, 13)',
+          'rgb(7, 11, 10)',
         );
         const kicker = await page.locator('.lifestyle-hero .world-kicker').first().boundingBox();
         const header = await page.locator('.world-header').boundingBox();

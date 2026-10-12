@@ -13,6 +13,7 @@ import { founderRequest } from '@/domains/founder-office/schema';
 import type { WorkScope } from '@/domains/company-work/schema';
 import { routeFounderCoworker } from '@/domains/founder-office/routing';
 import { PortfolioBriefing } from './portfolio-briefing';
+import { FounderAttention } from './attention';
 
 type RequestReceipt = {
   companyId: string;
@@ -194,6 +195,7 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
           </Link>
         </nav>
       </header>
+      <FounderAttention data={data} />
       <section className="panel founder-command" aria-labelledby="founder-command-title">
         <h2 id="founder-command-title">Assemble the work.</h2>
         <p>

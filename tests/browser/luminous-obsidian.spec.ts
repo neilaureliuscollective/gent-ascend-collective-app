@@ -26,7 +26,7 @@ test('Talk keeps its draft and compact composer through appearance changes', asy
   await input.fill('A founder review draft');
   await input.focus();
   await expect(input).toBeFocused();
-  await expect(composer).toHaveCSS('border-color', 'rgb(54, 137, 108)');
+  await expect(composer).toHaveCSS('border-color', 'rgb(214, 183, 106)');
   // Talk hides the global topbar; exercise the shared preference event directly.
   await page.evaluate(() => {
     localStorage.setItem('aurelius-material', 'solid');
@@ -47,4 +47,15 @@ test('Solid and forced-color modes remove atmospheric hero decoration', async ({
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.io-hero')).toHaveCSS('background-image', 'none');
   await expect(page.getByRole('link', { name: 'Your membership' })).toBeVisible();
+});
+
+test('Compact welcome suggestions stage the existing draft without sending', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/app/aethelios');
+  const input = page.getByLabel('Message Aethelios', { exact: true });
+  await page.getByRole('button', { name: 'Pressure-test an idea', exact: true }).click();
+  await expect(input).toHaveValue('I have an idea to pressure-test. Help me turn it into a clear decision.');
+  await expect(input).toBeFocused();
+  await expect(page.locator('.conversation-turn')).toHaveCount(0);
+  await expect(page.locator('textarea.talk-input')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });

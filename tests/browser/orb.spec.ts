@@ -13,7 +13,7 @@ test('the public living orb serves the member conversation without requesting au
     if (request.method() !== 'GET' && request.url().includes('/api/')) writes.push(request.url());
   });
   await page.goto('/app/aethelios');
-  const orb = page.locator('.orb-presentation .account-intelligence-orb');
+  const orb = page.locator('.talk-welcome-orb');
   await expect(orb.locator('.intelligence-orb')).toBeVisible();
   await expect(orb).toHaveAttribute('data-state', 'disconnected');
   await page.getByRole('button', { name: 'Aethelios presence', exact: true }).click();
@@ -41,7 +41,7 @@ for (const width of [390, 768, 1440]) {
   }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.goto('/app/aethelios');
-    await expect(page.locator('.orb-presentation .account-intelligence-orb')).toBeInViewport();
+    await expect(page.locator('.talk-welcome-orb')).toBeInViewport();
     await page.getByRole('button', { name: 'Expand writing space' }).click();
     const composer = page.getByLabel('Message Aethelios');
     await composer.fill('A detailed thought\n'.repeat(18));
@@ -67,7 +67,7 @@ test('unsupported WebGL preserves the static public orb and the composer', async
     } as typeof getContext;
   });
   await page.goto('/app/aethelios');
-  await expect(page.locator('.orb-presentation .intelligence-orb-static')).toBeVisible();
+  await expect(page.locator('.talk-welcome-orb .intelligence-orb-static')).toBeVisible();
   await page.getByLabel('Message Aethelios').fill('Still usable without graphics');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('Still usable without graphics');
 });

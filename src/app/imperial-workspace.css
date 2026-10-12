@@ -1,19 +1,23 @@
 /* Imperial Emerald Obsidian: authoritative materials. Historical selectors remain contracts. */
 :root {
   --io-environment: var(--aether-obsidian);
-  --io-navigation: var(--aether-surface);
-  --io-raised: var(--aether-deep);
+  --io-navigation: var(--aether-deep);
+  --io-raised: var(--aether-surface);
   --io-interaction: var(--aether-intelligence-deep);
   --io-text: var(--aether-text);
   --io-secondary: var(--aether-silver);
   --io-muted: var(--aether-muted);
+  --io-warning: #D6B76A;
+  --io-danger: #EEABA3;
+  --io-floating: #18372E;
+  --io-selection: #245B48;
   --io-gold: var(--aether-gold);
   --io-highlight: var(--aether-gold-light);
   --io-divider: var(--aether-border);
   --io-selected-edge: var(--aether-border-active);
   --io-focus: var(--aether-gold-light);
   --io-overlay: #050708e8;
-  --io-error: #f2bc9c;
+  --io-error: var(--io-danger);
   --io-success: #a8d5bd;
   --io-disabled: #7f8984;
   --io-document: var(--aether-ivory);
@@ -49,7 +53,7 @@
   --io-glow-gold: 0 0 20px #c4912f12;
   --io-material: linear-gradient(145deg, var(--io-raised), var(--io-navigation) 65%);
   --io-composer: linear-gradient(165deg, var(--io-emerald-shadow), var(--io-navigation) 80%);
-  --io-metal: linear-gradient(145deg, var(--io-raised), var(--io-navigation));
+  --io-metal: linear-gradient(145deg, #19231B, var(--io-environment) 75%);
   --io-elevation: 0 18px 48px #0004, inset 0 1px #e6e7e20a;
   --io-illumination: radial-gradient(
     ellipse at 88% 0,
