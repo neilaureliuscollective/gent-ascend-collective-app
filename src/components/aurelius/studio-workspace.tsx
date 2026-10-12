@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StudioScene } from './studio-storyboard';
+import { StudioFootage } from './studio-footage';
 import { StudioNarration } from './studio-narration';
 import { StudioCampaign } from './studio-campaign';
 import { StudioBrandKit } from './studio-brand-kit';
@@ -49,7 +50,7 @@ type Workspace = {
   configured: boolean;
   canCreate?: boolean;
 };
-type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish' | 'narration';
+type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish' | 'narration' | 'footage';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = {
   projects: [],
@@ -543,7 +544,15 @@ export function StudioWorkspace() {
               aria-label="Studio workspace views"
             >
               {(
-                ['create', 'storyboard', 'narration', 'finish', 'library', 'direction'] as const
+                [
+                  'create',
+                  'storyboard',
+                  'footage',
+                  'narration',
+                  'finish',
+                  'library',
+                  'direction',
+                ] as const
               ).map((tab) => (
                 <button
                   key={tab}
@@ -557,14 +566,19 @@ export function StudioWorkspace() {
                       ? 'Campaign'
                       : tab === 'finish'
                         ? 'Finish'
-                        : tab === 'narration'
-                          ? 'Narration'
-                          : tab === 'library'
-                            ? 'Library'
-                            : 'Direction'}
+                        : tab === 'footage'
+                          ? 'Footage'
+                          : tab === 'narration'
+                            ? 'Narration'
+                            : tab === 'library'
+                              ? 'Library'
+                              : 'Direction'}
                 </button>
               ))}
             </div>
+            {view === 'footage' && selected && (
+              <StudioFootage key={selected} projectId={selected} />
+            )}
             {view === 'narration' && selected && (
               <StudioNarration
                 key={selected}

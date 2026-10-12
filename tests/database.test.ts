@@ -1533,3 +1533,139 @@ describe('Studio narration owner and quota boundary',()=>{
   expect((await asUser<{count:number}>(founder,'select count(*)::int as count from public.ai_studio_narration_usage')).rows[0]!.count).toBe(3);
  });
 });
+
+// PostgreSQL policy/function tests; separate from real Supabase Auth/Storage acceptance.
+describe('Studio footage owner, quote and spending boundary', () => {
+  it('derives costs, prevents duplicate reservations and preserves allowance across project deletion', async () => {
+    const project = 'ad000000-0000-4000-8000-000000000001';
+    const id = 'ad000000-0000-4000-8000-000000000002';
+    const second = 'ad000000-0000-4000-8000-000000000003';
+    const signature = 'a'.repeat(64);
+    await asUser(
+      founder,
+      `insert into public.ai_studio_projects(id,person_id,title) values('${project}',(select id from public.persons where auth_user_id='${founder}'),'Footage fixture')`,
+    );
+    const quote = (key: string, duration: number) =>
+      `select public.ai_studio_footage_quote('${key}','${project}','Clip','Quiet light',${duration},'1280:720',now()+interval '10 minutes','${signature}')`;
+    await asUser(founder, quote(id, 10));
+    expect(
+      (
+        await asUser<{ estimate: number }>(
+          founder,
+          `select estimate from public.ai_studio_footage where id='${id}'`,
+        )
+      ).rows[0]!.estimate,
+    ).toBe(120);
+    expect(
+      (await asUser(member, `select * from public.ai_studio_footage where id='${id}'`)).rows,
+    ).toHaveLength(0);
+    await expect(asUser(member, quote(crypto.randomUUID(), 5))).rejects.toThrow('unavailable');
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          member,
+          `select public.ai_studio_footage_begin('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(false);
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_begin('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_begin('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(false);
+    await asUser(founder, quote(second, 5));
+    await expect(
+      asUser(founder, `select public.ai_studio_footage_begin('${second}')`),
+    ).rejects.toThrow('pending');
+    await asUser(
+      founder,
+      `select public.ai_studio_footage_receipt('${id}','${id}','${signature}')`,
+    );
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_check('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ saved: boolean }>(
+          founder,
+          `select public.ai_studio_footage_check('${id}') as saved`,
+        )
+      ).rows[0]!.saved,
+    ).toBe(false);
+    await expect(
+      asUser(
+        founder,
+        `select public.ai_studio_footage_finish('${id}','complete','${member}/${project}/${id}.mp4',120)`,
+      ),
+    ).rejects.toThrow('Invalid');
+    await asUser(
+      founder,
+      `select public.ai_studio_footage_finish('${id}','complete','${founder}/${project}/${id}.mp4',120)`,
+    );
+    await asUser(
+      founder,
+      `insert into storage.objects(bucket_id,name) values('aethelios-studio-video','${founder}/${project}/${id}.mp4')`,
+    );
+    expect(
+      (
+        await asUser(
+          member,
+          `select * from storage.objects where bucket_id='aethelios-studio-video'`,
+        )
+      ).rows,
+    ).toHaveLength(0);
+    await expect(
+      asUser(
+        member,
+        `insert into storage.objects(bucket_id,name) values('aethelios-studio-video','${founder}/${project}/intrusion.mp4')`,
+      ),
+    ).rejects.toThrow();
+    await asUser(founder, `select public.ai_studio_footage_begin('${second}')`);
+    await asUser(
+      founder,
+      `select public.ai_studio_footage_receipt('${second}','${second}','${signature}')`,
+    );
+    await asUser(founder, `select public.ai_studio_footage_finish('${second}','failed',null,0)`);
+    const third = crypto.randomUUID();
+    await asUser(founder, quote(third, 5));
+    await expect(
+      asUser(founder, `select public.ai_studio_footage_begin('${third}')`),
+    ).rejects.toThrow('allowance');
+    await expect(
+      asUser(founder, `update public.ai_studio_footage_usage set estimate=0`),
+    ).rejects.toThrow('permission denied');
+    await db.exec(`delete from public.ai_studio_projects where id='${project}'`);
+    expect(
+      (
+        await asUser<{ reserved: number }>(
+          founder,
+          `select sum(estimate)::int as reserved from public.ai_studio_footage_usage`,
+        )
+      ).rows[0]!.reserved,
+    ).toBe(180);
+    await db.exec('set role anon');
+    try {
+      await expect(db.query(`select public.ai_studio_footage_begin('${id}')`)).rejects.toThrow(
+        'permission denied',
+      );
+    } finally {
+      await db.exec('reset role');
+    }
+  });
+});
