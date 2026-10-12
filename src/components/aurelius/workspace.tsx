@@ -856,7 +856,11 @@ export function AureliusWorkspace({
                       }
                     />
                   ) : (
-                    <div className="talk-welcome-orb" aria-hidden="true">
+                    <div
+                      className="talk-welcome-orb"
+                      data-state={preview || !data.configured ? 'disconnected' : 'ready'}
+                      aria-hidden="true"
+                    >
                       <IntelligenceOrb active={false} deepGreen />
                     </div>
                   )}
