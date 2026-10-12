@@ -384,3 +384,10 @@ The founder brief supersedes commerce retirement. Reconcile draft #86 with actua
 ## 2026-10-12 — Release acceptance route reconciliation
 
 Use current user-visible routes and identity contracts in preserved Command/appearance/day browser journeys. Keep /app entry redirects intact, target /app/ongoing for Command tests, and expose these checks independently before the unchanged broad suite. Official research and evidence: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or public product changes.
+
+
+### 2026-10-12 — Native opening fallback and current-head acceptance
+
+Official references reviewed: [React Suspense](https://react.dev/reference/react/Suspense), [MDN noscript](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/noscript), and [GitHub workflow concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency). Native no-JavaScript help must precede streamed/async application children. The root owns that explanation and fixed account/public exits; nested duplicate help is removed. This does not grant access or expose private records.
+
+Quality gates now group push/PR verification by workflow, source repository and source branch, cancelling superseded/duplicate verification. Independent repositories/branches/workflows cannot cancel one another. All checks, acceptance artifacts, real local-Supabase isolation tests and the broad browser suite remain required. Only an accepted current head can justify release; cancelled older checks are not acceptance. This workflow does not deploy or enable hosted writes.

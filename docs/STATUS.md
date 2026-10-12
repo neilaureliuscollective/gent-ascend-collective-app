@@ -936,3 +936,10 @@ Full authenticated database checks remain green. Focused Command/identity checks
 ### Founder release acceptance continuation — 2026-10-12
 
 Added a native no-JavaScript explanation to the streamed workspace opening boundary and reconciled current Talk/motion/public/Lifestyle/cache browser contracts. Retained estate components have explicit test-only historical coverage rather than asserting that the old design is the live homepage. See `FOUNDER_ACCEPTANCE_RECONCILIATION.md`. Activation head `50a1892` passed real Auth/RLS and authenticated founder persistence checks, but browser release gates remain unresolved. No production merge, deployment, migration or activation flag change performed.
+
+
+### Current acceptance evidence — 2026-10-12
+
+Remote activation `b77b84a` passed full normal CI check/build, eight Founder Office responsive/recovery checks and real Auth/RLS/founder persistence journeys. Its focused browser suite passed 111 and failed six; corrections are documented in `FOUNDER_ACCEPTANCE_RECONCILIATION.md`. Preview `dpl_BMZ15yHqMcsbhbfT7VAvMZFFL6vD` was READY; signed-out `/api/founder-office` returned 401 and hosted developer routes returned 404. These are read-only boundary checks, not an authenticated production founder or live AI/voice journey.
+
+Root-native fallback, remaining browser/fixture corrections, short cover spacing and current-head CI concurrency are implemented. Local lint, strict types and optimized build passed; updated exact-head browser acceptance remains required. No production merge/promotion, migrations or hosted work-contract activation were performed.

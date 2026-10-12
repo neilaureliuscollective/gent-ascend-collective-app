@@ -1,3 +1,4 @@
+import { previewProduct } from '@/domains/catalog/preview';
 import { OrbPresentation } from '@/components/visual/orb-presentation';
 import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
 import { ArchivedEstate } from './archived-estate';
@@ -119,12 +120,30 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'orb-preview' ? (
-    <VisualEnvironment>
+  mode.startsWith('archived-commerce') ? (
+    <>
+      <p role="note">Historical commerce preview fixture · no live catalog, account or checkout.</p>
+      <CinematicWorld>
+        <WorldHeader />
+        <main className="reserve-commerce">
+          {mode === 'archived-commerce-product' ? (
+            <ProductExperience preview={previewProduct(params.get('handle') ?? 'vitalis')!} />
+          ) : (
+            <CollectionShowroom
+              entries={collectionEntries([])}
+              savedOnly={params.get('saved') === '1'}
+            />
+          )}
+        </main>
+      </CinematicWorld>
+    </>
+  ) : mode === 'orb-preview' ? (
+    <>
+      <VisualEnvironment />
       <p role="note">Synthetic motion preview · no model, microphone or account.</p>
       <AppearanceControls />
       <OrbPresentation state="disconnected" />
-    </VisualEnvironment>
+    </>
   ) : mode === 'archived-estate' ? (
     <>
       <p role="note">Historical estate component fixture · no account or live commerce.</p>

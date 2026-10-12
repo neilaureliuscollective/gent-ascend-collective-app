@@ -55,7 +55,7 @@ test('public arrival and unconnected Lifestyle keep commerce state honest', asyn
   for (const route of ['/shop/cart', '/app/collection/cart']) {
     await page.goto(route);
     await expect(page.getByRole('heading', { name: 'Cart.', exact: true })).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText('Shopping is not open yet.');
+    await expect(page.locator('.cart-error[role="alert"]')).toContainText('Shopping is not open yet.');
     await expect(page.getByRole('button', { name: /checkout/i })).toHaveCount(0);
   }
   const response = await request.post('/api/commerce/cart', {
