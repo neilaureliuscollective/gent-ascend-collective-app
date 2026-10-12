@@ -1,7 +1,7 @@
 name: Obsidian visual verification
 on:
   push:
-    branches: [feat/obsidian-intelligence, main]
+    branches: [feat/obsidian-intelligence, feat/imperial-emerald-obsidian-20261012, main]
   pull_request:
     paths:
       - 'src/app/**'
@@ -27,6 +27,7 @@ jobs:
       - name: Verify product reflow, materials and preserved interactions
         run: >-
           npx playwright test
+          tests/browser/founder-office.spec.ts
           tests/browser/imperial-emerald.spec.ts
           tests/browser/obsidian-intelligence.spec.ts
           tests/browser/luminous-obsidian.spec.ts
@@ -42,6 +43,9 @@ jobs:
           tests/browser/company-room.spec.ts
           tests/browser/missions.spec.ts
           --workers=2
+      - name: Export compact rendered review excerpts
+        if: always()
+        run: node scripts/imperial-emerald-review.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

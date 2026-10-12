@@ -263,7 +263,7 @@ describe('real AI SDK agent adapter with a mock provider', () => {
     expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(aureliusInstructions);
     expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(sharedCharacter);
     expect(model.doStreamCalls[0]?.prompt[0]?.content).toContain(
-      'No verified founder link is available',
+      'No verified founder authority is available',
     );
   });
   it('redacts raw provider failures before SDK default logging', async () => {

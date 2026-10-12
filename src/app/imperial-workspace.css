@@ -1625,3 +1625,23 @@ html[data-material='solid'] .entrance-world .entrance-panel {
     box-shadow: none;
   }
 }
+/* Founder Office stays in the same operational world after current-main integration. */
+.imperial-workspace .founder-office .founder-command {
+  background: var(--io-glass);
+  border-color: var(--io-emerald-edge);
+}
+.imperial-workspace .founder-office .founder-receipt {
+  background: var(--io-emerald-shadow);
+  box-shadow: inset 2px 0 var(--io-gold);
+}
+html[data-material='solid'] .imperial-workspace .founder-office .founder-command {
+  background: var(--io-navigation);
+}
+@media (forced-colors: active) {
+  .imperial-workspace .founder-office :is(.founder-command, .founder-receipt) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+}

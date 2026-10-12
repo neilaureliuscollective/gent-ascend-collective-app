@@ -414,6 +414,23 @@ Fix the confirmed live camera=() document policy to camera=(self), including cli
 
 Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.
 
+
+## 2026-10-12 — Founder Office activation candidate
+
+Keep the founder inside the canonical public application and authorize every private route and Coworker with the existing server-verified founder grant. Reuse owner-scoped company jobs, immutable work versions, conversations and personal missions for deliverables, dependency plans, approvals and portfolio briefings. Approval records do not authorize external execution. Preserve membership-independent founder access and deploy a compatible work reader before expanding stored contracts. Keep direct OpenAI integration; do not introduce another identity system, database or agent SDK. Official research, capability evidence and blocked live acceptance are recorded in FOUNDER_OFFICE_RESEARCH.md, FOUNDER_OFFICE_AUDIT.md and FOUNDER_OFFICE_RELEASE.md.
+
+## 2026-10-12 — Saved mission readiness and dependency recovery
+
+Reuse immutable work versions and the existing bounded dependency graph for deterministic task readiness. Reopening a completed prerequisite explicitly reopens completed descendants in one CAS-protected version; completed tasks require reopening before a model call. Keep approved external proposals in attention until actual execution receipts exist. Use installed Next's documented compiler-API mode with TypeScript 6, retaining independent strict type checking. Official research and acceptance boundaries: FOUNDER_OFFICE_READINESS.md. No new execution infrastructure or privileges.
+
+## 2026-10-12 — Correctable founder milestones
+
+Reuse the existing owner-scoped immutable work-version CAS for task editing, assignment and dependency correction. Require a separate saved reopen before completed-task scope changes or removal; preserve every prior version. Detect editor revision changes without weakening SQL concurrency checks. Official research and boundaries: FOUNDER_MILESTONE_CORRECTIONS.md.
+
+## 2026-10-12 — Approval withdrawal and inspectable decision receipts
+
+Provide a distinct founder-only approved-to-rejected withdrawal transition using existing immutable work-version CAS/replay. Keep approved content fixed, retain prior decisions and derive bounded timelines without inventing execution receipts or complete history. Official research and validation: FOUNDER_APPROVAL_WITHDRAWAL.md. No schema expansion or external execution capability.
+
 ## 2026-10-12 — Public Lifestyle commerce restoration
 
 The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.
@@ -449,3 +466,14 @@ Founder explicitly rejected a separate hosted staging database. This supersedes 
 ## 2026-10-12 — Lifestyle discovery continuity
 
 Use URL-backed catalog state and individually removable filters before comparison or concierge work. Baymard Back/applied-filter research and installed Next 16.3.5 native History API support this slice. Browser saves remain local handles; URL state includes no private records. Search typing replaces history; discrete filters/sorts push history. No new integration, schema, tracking or merchant mutation. See [phase receipt](LIFESTYLE_DISCOVERY_CONTINUITY.md).
+
+## 2026-10-12 — Release acceptance route reconciliation
+
+Use current user-visible routes and identity contracts in preserved Command/appearance/day browser journeys. Keep /app entry redirects intact, target /app/ongoing for Command tests, and expose these checks independently before the unchanged broad suite. Official research and evidence: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or public product changes.
+
+
+### 2026-10-12 — Native opening fallback and current-head acceptance
+
+Official references reviewed: [React Suspense](https://react.dev/reference/react/Suspense), [MDN noscript](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/noscript), and [GitHub workflow concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency). Native no-JavaScript help must precede streamed/async application children. The root owns that explanation and fixed account/public exits; nested duplicate help is removed. This does not grant access or expose private records.
+
+Quality gates now group push/PR verification by workflow, source repository and source branch, cancelling superseded/duplicate verification. Independent repositories/branches/workflows cannot cancel one another. All checks, acceptance artifacts, real local-Supabase isolation tests and the broad browser suite remain required. Only an accepted current head can justify release; cancelled older checks are not acceptance. This workflow does not deploy or enable hosted writes.

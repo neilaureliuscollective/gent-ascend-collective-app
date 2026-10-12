@@ -59,3 +59,60 @@ export function preserveTaskDecisions(
     return saved ? canonical(task) === canonical(saved) : task.status === 'planned';
   });
 }
+
+// Derived from saved decisions only; readiness never starts an execution.
+export function taskReadiness(tasks: MissionTask[], id: string) {
+  const task = tasks.find((item) => item.id === id);
+  if (!task) return { state: 'unavailable' as const, blockers: [] as string[] };
+  if (taskPlanProblem(tasks)) return { state: 'invalid_plan' as const, blockers: [] as string[] };
+  const blockers = task.dependsOn.filter(
+    (dependency) => tasks.find((item) => item.id === dependency)?.status !== 'completed',
+  );
+  const state =
+    task.status === 'completed'
+      ? ('completed' as const)
+      : blockers.length
+        ? ('blocked' as const)
+        : task.status === 'needs_review'
+          ? ('needs_review' as const)
+          : ('ready' as const);
+  return { state, blockers };
+}
+
+// Reopening a prerequisite invalidates completed descendants in the same atomic version.
+export function reopenTaskPlan(tasks: MissionTask[], id: string): MissionTask[] {
+  if (!tasks.some((task) => task.id === id)) return tasks;
+  const affected = new Set([id]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const task of tasks) {
+      if (!affected.has(task.id) && task.dependsOn.some((dependency) => affected.has(dependency))) {
+        affected.add(task.id);
+        changed = true;
+      }
+    }
+  }
+  return tasks.map((task) =>
+    affected.has(task.id) && task.status === 'completed'
+      ? { ...task, status: 'needs_review' }
+      : task,
+  );
+}
+
+export function taskRevisionProblem(previous: MissionTask[], next: MissionTask[]): string | null {
+  for (const saved of previous) {
+    if (saved.status !== 'completed') continue;
+    const replacement = next.find((task) => task.id === saved.id);
+    if (
+      !replacement ||
+      replacement.title !== saved.title ||
+      replacement.objective !== saved.objective ||
+      replacement.assignee !== saved.assignee ||
+      JSON.stringify([...replacement.dependsOn].sort()) !==
+        JSON.stringify([...saved.dependsOn].sort())
+    )
+      return 'Reopen completed milestones before editing or removing them.';
+  }
+  return taskPlanProblem(next);
+}

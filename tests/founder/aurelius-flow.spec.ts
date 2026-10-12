@@ -8,7 +8,7 @@ test('founder memory persists through the real Next API and can be removed', asy
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(token!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app/aethelios');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
   await page.goto('/app/aethelios');
   await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   await page

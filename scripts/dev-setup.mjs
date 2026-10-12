@@ -43,15 +43,13 @@ const founderPerson = await admin
   .single();
 if (founderPerson.error || !founderPerson.data)
   throw new Error('Local founder person missing; reset the synthetic database.');
-const founderGrant = await admin
-  .from('founder_access')
-  .upsert(
-    {
-      person_id: founderPerson.data.id,
-      grant_reason: 'Local synthetic founder development and acceptance only',
-    },
-    { onConflict: 'person_id' },
-  );
+const founderGrant = await admin.from('founder_access').upsert(
+  {
+    person_id: founderPerson.data.id,
+    grant_reason: 'Local synthetic founder development and acceptance only',
+  },
+  { onConflict: 'person_id' },
+);
 if (founderGrant.error) throw new Error('Local founder authority could not be provisioned.');
 writeFileSync(
   '.env.development.local',

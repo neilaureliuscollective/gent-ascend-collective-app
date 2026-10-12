@@ -5,7 +5,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { readCompanyTalk } from '@/domains/companies/service';
 import type { StreamEvent } from '@/domains/intelligence/types';
 import { companyJobs } from '@/domains/company-work/starters';
-import { council, type SpecialistId } from '@/domains/intelligence/council';
+import {
+  council,
+  allSpecialists,
+  councilFromVersion,
+  type SpecialistId,
+  type CouncilSelection,
+} from '@/domains/intelligence/council';
+import { CouncilPanel } from '@/components/aurelius/council-panel';
 import type { readWork } from '@/domains/company-work/service';
 import { frameText } from '@/components/aurelius/frame-text';
 import { TalkDrawer, TalkInput } from '@/components/aurelius/talk-controls';
@@ -15,6 +22,8 @@ import { ConversationTurn } from '@/components/aurelius/message';
 import { JobCreator } from './job-creator';
 import { WorkPanel } from './work-panel';
 import { BriefEditor } from './brief-editor';
+import { MissionTasks } from '@/components/founder-office/mission-tasks';
+import { MissionApprovals } from '@/components/founder-office/mission-approvals';
 type RoomData = Awaited<ReturnType<typeof readCompanyTalk>>;
 export function CompanyRoom({
   initial,
@@ -47,6 +56,7 @@ export function CompanyRoom({
     requestId: string;
     expected: number;
     instruction: string;
+    specialistId?: SpecialistId;
   } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -67,8 +77,20 @@ export function CompanyRoom({
   }, [initial.company.id]);
   const [conversation, setConversation] = useState(initialConversation ?? '');
   const [draft, setDraft] = useState('');
-  const [coworker, setCoworker] = useState<SpecialistId | ''>('');
+  const [coworker, setCoworker] = useState<SpecialistId | ''>(() => {
+    const assigned = initialWork?.job.scope.constraints.match(
+      /^Assigned Coworker: ([a-z]+)\./,
+    )?.[1];
+    return (
+      (initial.founderAccess ? allSpecialists : council).find((member) => member.id === assigned)
+        ?.id ?? ''
+    );
+  });
   const [partial, setPartial] = useState('');
+  const [team, setTeam] = useState<CouncilSelection | null>(() => {
+    const prior = councilFromVersion(initial.turns.at(-1)?.prompt_version ?? '');
+    return prior?.kind === 'table' ? prior : null;
+  });
   const [sent, setSent] = useState('');
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -95,7 +117,12 @@ export function CompanyRoom({
         .map((turn) => {
           const match = turn.user_text.match(/^\[Job work v(\d+)\] ([\s\S]*)$/);
           return match && Number(match[1]) === work.job.revision && match[2]
-            ? { requestId: turn.id, expected: Number(match[1]), instruction: match[2] }
+            ? {
+                requestId: turn.id,
+                expected: Number(match[1]),
+                instruction: match[2],
+                specialistId: councilFromVersion(turn.prompt_version)?.specialists[0],
+              }
             : null;
         })
         .find(Boolean)
@@ -173,9 +200,13 @@ export function CompanyRoom({
       setBusy(false);
     }
   }
-  async function send(recover = false, payload?: NonNullable<typeof generation>) {
+  async function send(
+    recover = false,
+    payload?: NonNullable<typeof generation>,
+    contribution?: { text: string; selection: CouncilSelection },
+  ) {
     const recovery = payload ?? generation;
-    const text = recover && recovery ? recovery.instruction : draft.trim();
+    const text = contribution?.text ?? (recover && recovery ? recovery.instruction : draft.trim());
     if (!text || busy || (needsReload && !recover)) return;
     const id = conversation || crypto.randomUUID();
     const controller = new AbortController();
@@ -189,7 +220,12 @@ export function CompanyRoom({
       work && (outputMode || recover)
         ? recover && recovery
           ? recovery
-          : { requestId: crypto.randomUUID(), expected: work.job.revision, instruction: text }
+          : {
+              requestId: crypto.randomUUID(),
+              expected: work.job.revision,
+              instruction: text,
+              ...(coworker ? { specialistId: coworker } : {}),
+            }
         : null;
     if (outputRequest) setGeneration(outputRequest);
     let saved = false;
@@ -232,7 +268,13 @@ export function CompanyRoom({
           text,
           ...(work ? { jobId: work.job.id } : {}),
           ...(revision ?? {}),
-          ...(coworker ? { council: { kind: 'specialist', specialists: [coworker] } } : {}),
+          ...(contribution?.selection
+            ? { council: contribution.selection }
+            : team
+              ? { council: team }
+              : coworker
+                ? { council: { kind: 'specialist', specialists: [coworker] } }
+                : {}),
         }),
       });
       if (!response.ok) {
@@ -406,13 +448,18 @@ export function CompanyRoom({
             Bring in a specialist
             <select
               value={coworker}
-              disabled={busy || outputMode}
-              onChange={(event) =>
-                setCoworker(council.find((member) => member.id === event.target.value)?.id ?? '')
-              }
+              disabled={busy}
+              onChange={(event) => {
+                setTeam(null);
+                setCoworker(
+                  (data.founderAccess ? allSpecialists : council).find(
+                    (member) => member.id === event.target.value,
+                  )?.id ?? '',
+                );
+              }}
             >
               <option value="">Aethelios · direct conversation</option>
-              {council.map((member) => (
+              {(data.founderAccess ? allSpecialists : council).map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.name} · {member.role}
                 </option>
@@ -427,7 +474,7 @@ export function CompanyRoom({
                 value={outputMode ? 'deliverable' : 'discuss'}
                 onChange={(e) => {
                   setOutputMode(e.target.value === 'deliverable');
-                  if (e.target.value === 'deliverable') setCoworker('');
+                  if (e.target.value === 'deliverable') setTeam(null);
                   setRevision(null);
                 }}
               >
@@ -440,6 +487,31 @@ export function CompanyRoom({
             This room uses its confirmed company brief. Personal memory and other companies remain
             outside this conversation.
           </p>
+          <CouncilPanel
+            founder={Boolean(data.founderAccess)}
+            companyMode
+            question={draft.trim() || data.turns.at(-1)?.user_text || ''}
+            selection={team ?? (coworker ? { kind: 'specialist', specialists: [coworker] } : null)}
+            disabled={busy || outputMode || needsReload || !data.canChat}
+            includeContext={false}
+            onSelect={(selection) => {
+              setTeam(selection?.kind === 'table' ? selection : null);
+              setCoworker(selection?.kind === 'specialist' ? selection.specialists[0]! : '');
+            }}
+            onFocused={(id) => {
+              setCoworker(id);
+              setTeam(null);
+              setDraft(
+                `Review this company through your ${allSpecialists.find((member) => member.id === id)?.role ?? 'specialist'} lens. Use only the confirmed company brief and this conversation.`,
+              );
+            }}
+            onAssemble={(text, selection) => {
+              setTeam(selection);
+              setCoworker('');
+              setDraft(text);
+              void send(false, undefined, { text, selection });
+            }}
+          />
         </TalkDrawer>
       </header>
       {editing && (
@@ -481,7 +553,6 @@ export function CompanyRoom({
                 onRevise={() => {
                   setShowWork(false);
                   setOutputMode(true);
-                  setCoworker('');
                   setDraft(
                     work.versions.length
                       ? 'Revise the offer and opening slide. Preserve the other slides.'
@@ -490,6 +561,12 @@ export function CompanyRoom({
                   document.getElementById('company-composer')?.focus();
                 }}
               />
+              {data.founderAccess && (
+                <MissionTasks work={work} onChanged={setWork} disabled={busy} />
+              )}
+              {data.founderAccess && (
+                <MissionApprovals work={work} onChanged={setWork} disabled={busy} />
+              )}
             </div>
           )}
           <div

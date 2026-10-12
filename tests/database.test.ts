@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFile, readdir } from 'node:fs/promises';
+import {emptyWork} from '../src/domains/company-work/schema';
 const db = new PGlite();
 const founder = '00000000-0000-4000-8000-000000000001';
 import {chart as syntheticChart} from './fixtures/evidence-board';
@@ -276,6 +277,25 @@ describe('migration, seeds and owner security', () => {
     await db.exec(`update public.membership_accounts set beta_access=false where person_id in(select id from public.persons where auth_user_id='${founder}')`);
   });
 
+
+  it('retains task and approval JSON snapshots with immutable receipts and owner isolation',async()=>{
+    const company='d7000000-0000-4000-8000-000000000201',job='d7000000-0000-4000-8000-000000000202',conversation='d7000000-0000-4000-8000-000000000203',first='d7000000-0000-4000-8000-000000000204',second='d7000000-0000-4000-8000-000000000205';
+    const owner=`(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(founder,`insert into public.companies(id,person_id,name,brief) values('${company}',${owner},'Synthetic founder controls','Only synthetic acceptance context')`);
+    const scope={request:'Verify saved founder controls',audience:'Founder',outcome:'An inspectable result',constraints:'No external actions',acceptance:'Immutable version history',evidence:[],figures:[]};
+    await asUser(founder,`select public.company_create_job('${job}','${company}','${conversation}',$scope$${JSON.stringify(scope)}$scope$::jsonb)`);
+    const content={...emptyWork('Synthetic control receipt'),taskPlan:[{id:first,title:'Review the source',objective:'Verify synthetic evidence',assignee:'mara',status:'completed',dependsOn:[]}],approvalRequests:[{id:second,title:'Publish reviewed source',proposal:'Synthetic publication proposal only',kind:'publishing',status:'pending',figureIds:[]}]};
+    const save=(id:string,expected:number,value:unknown)=>`select public.company_save_work('${id}','${company}','${job}',${expected},$receipt$${JSON.stringify(value)}$receipt$::jsonb,null) as id`;
+    expect((await asUser<{id:string}>(founder,save(first,0,content))).rows[0]!.id).toBe(first);
+    expect((await asUser<{id:string}>(founder,save(first,0,content))).rows[0]!.id).toBe(first);
+    const approved={...content,approvalRequests:[{...content.approvalRequests[0]!,status:'approved'}]};
+    expect((await asUser<{id:string}>(founder,save(second,1,approved))).rows[0]!.id).toBe(second);
+    expect((await asUser<{content:unknown}>(founder,`select content from public.company_work_versions where job_id='${job}' order by revision`)).rows.map(row=>row.content)).toEqual([content,approved]);
+    await expect(asUser(founder,save(first,0,approved))).rejects.toThrow(/request changed/);
+    await expect(asUser(member,save(first,0,content))).rejects.toThrow(/not found/);
+    expect((await asUser(member,`select id from public.company_work_versions where job_id='${job}'`)).rows).toEqual([]);
+    await expect(asUser(founder,`update public.company_work_versions set content='{}' where id='${first}'`)).rejects.toThrow();
+  });
   it('atomically records daily rituals, safely replays receipts and preserves reviewed version history', async () => {
     const today = `(now() at time zone (select timezone from public.persons where auth_user_id='${founder}'))::date`;
     const request = 'd7000000-0000-4000-8000-000000000001',

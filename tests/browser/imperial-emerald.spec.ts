@@ -20,7 +20,7 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
       '/lifestyle',
       '/shop',
       '/shop/cart',
-      '/app/founder/launch',
+      '/app/founder',
     ]) {
       await page.goto(route);
       await expect(page.locator('main').first()).toBeVisible();

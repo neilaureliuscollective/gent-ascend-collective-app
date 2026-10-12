@@ -12,9 +12,11 @@ import { UniversalCapture } from './capture/universal-capture';
 export function Shell({
   children,
   founder = false,
+  founderOffice = false,
 }: {
   children: React.ReactNode;
   founder?: boolean;
+  founderOffice?: boolean;
 }) {
   return (
     <LiveConversationProvider
@@ -71,6 +73,19 @@ export function Shell({
                   Company work
                 </Link>
                 {founder && <Link href="/dev">Developer console</Link>}
+                {founderOffice && (
+                  <Link
+                    href="/app/founder"
+                    prefetch={false}
+                    className="text-link shell-founder-link"
+                    aria-label="Founder Office"
+                  >
+                    <span className="founder-link-long">Founder Office</span>
+                    <span className="founder-link-short" aria-hidden="true">
+                      Office
+                    </span>
+                  </Link>
+                )}
                 <Link href="/app/you" className="avatar" aria-label="Your account">
                   <Icon name="person" />
                 </Link>

@@ -5,6 +5,7 @@ import {
   conversationTurns,
 } from '@/domains/intelligence/service';
 import { currentAccess } from '@/domains/access/current';
+import { currentFounderAccess } from '@/domains/access/founder';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { companyInput } from './schema';
 export async function listCompanies() {
@@ -78,15 +79,17 @@ export async function readCompanyTalk(
     const [time, id] = listBefore.split('|');
     query = query.or(`updated_at.lt.${time},and(updated_at.eq.${time},id.lt.${id})`);
   }
-  const [list, turns, access] = await Promise.all([
+  const [list, turns, access, founderAccess] = await Promise.all([
     query,
     conversationId ? conversationTurns(conversationId, before, company.id) : Promise.resolve([]),
     currentAccess(),
+    currentFounderAccess(),
   ]);
   if (list.error) throw new IntelligenceError('Company conversations could not be loaded.', 503);
   const config = aiConfigSchema.parse(process.env);
   return {
     company,
+    founderAccess,
     conversations: (list.data ?? []).slice(0, 40),
     turns: turns.slice(-40),
     hasOlderTurns: turns.length > 40,

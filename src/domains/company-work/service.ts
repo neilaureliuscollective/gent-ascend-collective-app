@@ -8,6 +8,7 @@ import {
 } from '@/domains/intelligence/service';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { currentFounderAccess } from '@/domains/access/founder';
+import { requireWorkContractReady } from './activation';
 import { preserveTaskDecisions } from './tasks';
 import { preserveApprovalDecisions } from './approvals';
 import {
@@ -130,6 +131,8 @@ export async function saveWork(
   sourceTurn: string | null = null,
 ) {
   const work = await readWork(companyId, jobId);
+  if (content.taskPlan !== undefined || content.approvalRequests !== undefined)
+    requireWorkContractReady();
   if (!validateFigures(content, work.job.scope))
     throw new IntelligenceError('Use only figures confirmed in the job scope.', 400);
   const { client } = await intelligenceSession();
@@ -183,6 +186,7 @@ export async function generateWork(
   if (requiresFounder(selection) && !(await currentFounderAccess()))
     throw new IntelligenceError('Founder Coworkers require verified founder access.', 403);
   const work = await readWork(input.companyId, input.jobId);
+  requireWorkContractReady();
   const { client, person } = await intelligenceSession();
   // A saved generation can be recovered without another provider call or another charge.
   const existing = await client

@@ -76,10 +76,6 @@ export default async function Welcome({
               </p>
             )}
           </section>
-          <FirstSession
-            initial={priority?.mode === 'personal' ? priority : null}
-            canTalk={access.has('aurelius.context')}
-          />
           <InstallGuide />
           <FirstSession
             initial={priority?.mode === 'personal' ? priority : null}
