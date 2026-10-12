@@ -11,6 +11,7 @@ import { localDay } from '@/domains/daily/model';
 import { readContinuity } from '@/domains/continuity/service';
 import { resolveNextMove } from '@/domains/command/next-move';
 import { capabilityContext } from './capabilities';
+import { selectedArtifactContext } from '@/domains/artifacts/context-service';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -219,6 +220,11 @@ export async function prepareReply(input: {
       'Aethelios access is not enabled for this account. If you were invited, confirm access in the founding member guide.',
       403,
     );
+  if (process.env.AETHELIOS_LIVE_ENABLED === 'true') {
+    const voice = await client.from('ai_live_sessions').select('id').eq('person_id', person.id).is('ended_at', null).gt('expires_at', new Date().toISOString()).limit(1);
+    if (voice.error) throw new IntelligenceError('Voice session status is unavailable.', 503);
+    if (voice.data?.length) throw new IntelligenceError('End your live voice session before sending a separate Talk request.', 409);
+  }
   let company: import('@/domains/companies/schema').Company | null = null;
   if (input.companyId) {
     if (input.includeContext) throw new IntelligenceError('Unsupported company context.', 400);
@@ -282,12 +288,14 @@ export async function prepareReply(input: {
   let history: Turn[];
   let context: PersonalContext | null;
   let threadSummary:string;
+  let artifactContext='';
   try {
     [history, context] = await Promise.all([
       conversationTurns(input.conversationId, undefined, company?.id),
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
     ]);
     threadSummary=await prepareThreadSummary(client,person.id,input.conversationId,history);
+    if(!company && process.env.AETHELIOS_LIVE_ENABLED==='true')artifactContext=await selectedArtifactContext(client,person.id,input.conversationId);
   } catch {
     await client.rpc('ai_finish_turn', {
       p_request: input.requestId,
@@ -299,12 +307,13 @@ export async function prepareReply(input: {
       503,
     );
   }
+  const messages=buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), null, threadSummary, company ? null : capabilityContext(input.text), company);
+  if(artifactContext)messages.splice(Math.max(0,messages.length-1),0,{role:'user',content:artifactContext});
   // Public company work never retrieves the separate private founder notebook.
-  const founderContext = null;
   return {
     model: config.AURELIUS_AI_MODEL,
-    messages: buildMessages(history.filter(turn=>!history.some(newer=>newer.parent_turn_id===turn.id)), input.text, context, new Date(), founderContext, threadSummary, company ? null : capabilityContext(input.text), company),
-    founder: founderContext !== null,
+    messages,
+    founder: false,
     council: input.council,
     finish: async (
       text: string,

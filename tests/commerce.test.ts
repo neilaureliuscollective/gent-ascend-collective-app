@@ -28,6 +28,45 @@ afterEach(() => {
 });
 
 describe('Shopify commerce contract', () => {
+  it('reads all cart lines before handoff and rejects non-advancing pagination', async () => {
+    const fetch = vi.fn(async (_url: string, options: RequestInit) => {
+      const { variables } = JSON.parse(String(options.body));
+      return new Response(
+        JSON.stringify({
+          data: {
+            cart: {
+              id: 'gid://shopify/Cart/fixture?key=secret',
+              lines: {
+                nodes: [{ id: variables.cursor ? 'second' : 'first' }],
+                pageInfo: { hasNextPage: !variables.cursor, endCursor: 'next' },
+              },
+            },
+          },
+        }),
+      );
+    });
+    vi.stubGlobal('fetch', fetch);
+    expect(
+      (await getCart('gid://shopify/Cart/fixture?key=secret'))?.lines.nodes.map((line) => line.id),
+    ).toEqual(['first', 'second']);
+    expect(JSON.parse(String(fetch.mock.calls[1]![1].body)).variables.cursor).toBe('next');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              data: {
+                cart: {
+                  lines: { nodes: [], pageInfo: { hasNextPage: true, endCursor: 'repeated' } },
+                },
+              },
+            }),
+          ),
+      ),
+    );
+    await expect(getCart('gid://shopify/Cart/fixture?key=secret')).rejects.toThrow();
+  });
   it('queries the selected Shopify collection and never fabricates missing merchandise', async () => {
     const fetch = vi.fn(async (_url: string, options: RequestInit) => {
       const request = JSON.parse(String(options.body));

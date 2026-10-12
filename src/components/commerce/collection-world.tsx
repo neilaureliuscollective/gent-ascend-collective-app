@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useCatalogNavigation } from './catalog-navigation';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { filterCatalog } from '@/domains/commerce/catalog-filter';
 import { CollectionCard } from './collection-card';
@@ -30,25 +31,46 @@ export function CollectionWorld({
   brand?: string;
   catalogStatus?: 'ready' | 'empty' | 'unconfigured' | 'error';
 }) {
-  const [chapter, setChapter] = useState(savedOnly ? 'saved' : 'all');
-  const [query, setQuery] = useState('');
-  const [readyOnly, setReadyOnly] = useState(false);
   const [notice, setNotice] = useState('');
+  const brands = [...new Set(entries.map((entry) => entry.brand))].sort();
+  const priceSortSupported =
+    new Set(
+      entries.filter((entry) => entry.priceAmount !== undefined).map((entry) => entry.currency),
+    ).size === 1;
+  const availableChapters = chapters.filter(
+    ([id]) =>
+      id === 'all' || id === 'saved' || entries.some((entry) => entry.categories.includes(id)),
+  );
+  const {
+    view: { chapter, query, readyOnly, sort, brandFilter },
+    update,
+  } = useCatalogNavigation(
+    availableChapters.map(([id]) => id),
+    brands,
+    priceSortSupported,
+    savedOnly,
+  );
   const saved = useSavedCollection();
   const candidates = entries.filter(
     (entry) =>
       chapter === 'all' ||
       (chapter === 'saved' ? saved.includes(entry.handle) : entry.categories.includes(chapter)),
   );
-  const visible = filterCatalog(candidates, query, readyOnly);
+  const visible = filterCatalog(candidates, query, readyOnly)
+    .filter((entry) => brandFilter === 'all' || entry.brand === brandFilter)
+    .sort((a, b) => {
+      if (sort === 'name') return a.title.localeCompare(b.title);
+      if (!priceSortSupported || !['price-asc', 'price-desc'].includes(sort)) return 0;
+      if (!Number.isFinite(a.priceAmount)) return Number.isFinite(b.priceAmount) ? 1 : 0;
+      if (!Number.isFinite(b.priceAmount)) return -1;
+      return (a.priceAmount! - b.priceAmount!) * (sort === 'price-asc' ? 1 : -1);
+    });
   const missing =
     chapter === 'saved'
       ? saved.filter((handle) => !entries.some((entry) => entry.handle === handle))
       : [];
   function reset() {
-    setQuery('');
-    setReadyOnly(false);
-    setChapter('all');
+    update({ query: '', readyOnly: false, chapter: 'all', brandFilter: 'all', sort: 'featured' });
   }
   return (
     <div className="reserve-commerce collection-world">
@@ -125,41 +147,83 @@ export function CollectionWorld({
               placeholder="Search products or rituals"
               value={query}
               maxLength={120}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => update({ query: event.target.value }, true)}
             />
           </label>
           <label className="collection-availability">
             <input
               type="checkbox"
               checked={readyOnly}
-              onChange={(event) => setReadyOnly(event.target.checked)}
+              onChange={(event) => update({ readyOnly: event.target.checked })}
             />
             Available to order
           </label>
+          <label>
+            Sort products
+            <select value={sort} onChange={(event) => update({ sort: event.target.value })}>
+              <option value="featured">Catalog order</option>
+              <option value="name">Name: A–Z</option>
+              {priceSortSupported && <option value="price-asc">Price: low to high</option>}
+              {priceSortSupported && <option value="price-desc">Price: high to low</option>}
+            </select>
+          </label>
+          {brands.length > 1 && (
+            <label>
+              Brand
+              <select
+                value={brandFilter}
+                onChange={(event) => update({ brandFilter: event.target.value })}
+              >
+                <option value="all">All brands</option>
+                {brands.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
         <div className="collection-chapters" role="group" aria-label="Collection chapters">
-          {chapters
-            .filter(
-              ([id]) =>
-                id === 'all' ||
-                id === 'saved' ||
-                entries.some((entry) => entry.categories.includes(id)),
-            )
-            .map(([id, label]) => (
-              <button key={id} aria-pressed={chapter === id} onClick={() => setChapter(id)}>
-                {label}
-                {id === 'saved' && saved.length ? ` (${saved.length})` : ''}
-              </button>
-            ))}
+          {availableChapters.map(([id, label]) => (
+            <button key={id} aria-pressed={chapter === id} onClick={() => update({ chapter: id })}>
+              {label}
+              {id === 'saved' && saved.length ? ` (${saved.length})` : ''}
+            </button>
+          ))}
         </div>
+        {(query || readyOnly || chapter !== 'all' || brandFilter !== 'all') && (
+          <div className="collection-chapters" role="group" aria-label="Applied filters">
+            {query && (
+              <button onClick={() => update({ query: '' })}>Remove search: {query} ×</button>
+            )}
+            {readyOnly && (
+              <button onClick={() => update({ readyOnly: false })}>
+                Remove available to order ×
+              </button>
+            )}
+            {chapter !== 'all' && (
+              <button onClick={() => update({ chapter: 'all' })}>
+                Remove {availableChapters.find(([id]) => id === chapter)?.[1]} ×
+              </button>
+            )}
+            {brandFilter !== 'all' && (
+              <button onClick={() => update({ brandFilter: 'all' })}>
+                Remove brand: {brandFilter} ×
+              </button>
+            )}
+          </div>
+        )}
         <div className="collection-results">
           <p role="status">
             {visible.length} {visible.length === 1 ? 'essential' : 'essentials'}
             {chapter === 'saved' ? ' in your selection' : ' to explore'}
           </p>
-          {(query || readyOnly || chapter !== 'all') && (
-            <button onClick={reset}>Show all essentials</button>
-          )}
+          {(query ||
+            readyOnly ||
+            chapter !== 'all' ||
+            brandFilter !== 'all' ||
+            sort !== 'featured') && <button onClick={reset}>Show all essentials</button>}
         </div>
         {chapter === 'saved' && (
           <p className="collection-save-note">
@@ -199,9 +263,11 @@ export function CollectionWorld({
         {!visible.length && (
           <div className="collection-empty">
             <h3>
-              {chapter === 'saved' && !query && !readyOnly
-                ? 'Keep what catches your eye.'
-                : 'No essentials match this view.'}
+              {!entries.length && brand
+                ? `${brand} is being prepared.`
+                : chapter === 'saved' && !query && !readyOnly
+                  ? 'Keep what catches your eye.'
+                  : 'No essentials match this view.'}
             </h3>
             <p>
               {chapter === 'saved'
@@ -210,13 +276,21 @@ export function CollectionWorld({
                   ? 'Try another search or include unavailable products.'
                   : 'No published products are available in this collection yet.'}
             </p>
-            <button className="world-button" onClick={reset}>
-              Explore all essentials
-            </button>
+            {entries.length ? (
+              <button className="world-button" onClick={reset}>
+                Explore all essentials
+              </button>
+            ) : brand ? (
+              <Link className="world-button" href={basePath}>
+                Explore Aethelios Lifestyle →
+              </Link>
+            ) : null}
           </div>
         )}
       </section>
-      <CollectionDiscovery entries={entries} basePath={basePath} />
+      {entries.some((entry) => entry.discovery?.length) && (
+        <CollectionDiscovery entries={entries} basePath={basePath} />
+      )}
       <footer className="collection-world-footer">
         <span className="world-kicker">The practice behind the product</span>
         <h2>

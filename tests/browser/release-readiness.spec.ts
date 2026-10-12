@@ -15,5 +15,6 @@ for (const width of [360, 768, 1440]) {
     await expect(page.getByRole('heading', { name: 'Founder access required.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'The launch ledger.' })).toHaveCount(0);
     await expect(page.getByText('Deployment source:', { exact: false })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Aethelios Live hosted preflight' })).toHaveCount(0);
   });
 }

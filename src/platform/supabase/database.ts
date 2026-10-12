@@ -71,12 +71,40 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
-      intelligence_missions: Table<import('@/domains/missions/schema').Mission, Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>, Partial<import('@/domains/missions/schema').Mission>>;
-      company_turn_context: Table<{request_id: string; person_id: string; company_id: string; name: string; brief: string; version: number; confirmed_at: string}, never, never>;
-      company_jobs: Table<import("@/domains/company-work/schema").WorkJob, never, never>;
-      company_work_versions: Table<import("@/domains/company-work/schema").WorkVersion, never, never>;
-      companies: Table<import("@/domains/companies/schema").Company, {id: string; person_id: string; name: string; brief: string}, {name: string; brief: string; version: number; confirmed_at: string}>;
-      daily_command_records: Table<import("@/domains/daily-command/model").CommandRecord, never, never>;
+      intelligence_missions: Table<
+        import('@/domains/missions/schema').Mission,
+        Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>,
+        Partial<import('@/domains/missions/schema').Mission>
+      >;
+      company_turn_context: Table<
+        {
+          request_id: string;
+          person_id: string;
+          company_id: string;
+          name: string;
+          brief: string;
+          version: number;
+          confirmed_at: string;
+        },
+        never,
+        never
+      >;
+      company_jobs: Table<import('@/domains/company-work/schema').WorkJob, never, never>;
+      company_work_versions: Table<
+        import('@/domains/company-work/schema').WorkVersion,
+        never,
+        never
+      >;
+      companies: Table<
+        import('@/domains/companies/schema').Company,
+        { id: string; person_id: string; name: string; brief: string },
+        { name: string; brief: string; version: number; confirmed_at: string }
+      >;
+      daily_command_records: Table<
+        import('@/domains/daily-command/model').CommandRecord,
+        never,
+        never
+      >;
       proactive_signal_receipts: Table<
         {
           person_id: string;
@@ -98,7 +126,18 @@ export interface Database {
           expires_at?: string;
         }
       >;
-      onboarding_claims: Table<{ person_id: string; request_id: string; focus: 'body' | 'presence' | 'focus'; day: string; intention: string; created_at: string }, never, never>;
+      onboarding_claims: Table<
+        {
+          person_id: string;
+          request_id: string;
+          focus: 'body' | 'presence' | 'focus';
+          day: string;
+          intention: string;
+          created_at: string;
+        },
+        never,
+        never
+      >;
       performance_programs: Table<ProgramRow, never, never>;
       performance_session_context: Table<SessionContextRow, never, never>;
       performance_profiles: Table<ProfileRow, never, never>;
@@ -226,7 +265,11 @@ export interface Database {
           shopify_handle?: string | null;
           note?: string;
         },
-        {relation?:import('@/domains/commerce/cabinet-model').CabinetRelation;note?:string;ritual_id?:string|null}
+        {
+          relation?: import('@/domains/commerce/cabinet-model').CabinetRelation;
+          note?: string;
+          ritual_id?: string | null;
+        }
       >;
       grooming_looks: Table<
         {
@@ -509,6 +552,32 @@ export interface Database {
         never,
         never
       >;
+      ai_conversation_artifacts: Table<import('@/domains/artifacts/contract').Artifact & {person_id:string;preview_key:string|null},never,never>;
+      ai_artifact_selection: Table<{person_id:string;conversation_id:string;artifact_id:string;part_id:string|null;scenario_percent:number},never,never>;
+      ai_live_jobs: Table<{
+        id: string; person_id: string; session_id: string; conversation_id: string; call_id: string;
+        task: string; coworker: string|null; status: string; result: string;
+        input_tokens: number; output_tokens: number; duration_ms: number|null; created_at: string;
+      }, never, never>;
+      ai_live_sessions: Table<
+        {
+          id: string;
+          person_id: string;
+          conversation_id: string | null;
+          created_at: string;
+          expires_at: string;
+          ended_at: string | null;
+          call_id: string | null;
+          call_tag: string | null;
+          model: string;
+          reserved_seconds: number;
+          input_tokens: number;
+          output_tokens: number;
+          reason: string | null;
+        },
+        never,
+        never
+      >;
       ai_conversations: Table<Conversation, never, never>;
       ai_studio_projects: Table<
         {
@@ -518,13 +587,7 @@ export interface Database {
           job_id: string | null;
           title: string;
           creative_type: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
-          brief: {
-            purpose?: string;
-            audience?: string;
-            direction?: string;
-            palette?: string;
-            avoid?: string;
-          };
+          brief: Partial<import('@/domains/studio/brand').StudioBrief>;
           created_at: string;
           updated_at: string;
         },
@@ -535,17 +598,12 @@ export interface Database {
           company_id?: string;
           job_id?: string;
           creative_type?: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
+          brief?: Partial<import('@/domains/studio/brand').StudioBrief>;
         },
         {
           title?: string;
           creative_type?: 'open' | 'brand' | 'campaign' | 'product' | 'personal';
-          brief?: {
-            purpose: string;
-            audience: string;
-            direction: string;
-            palette: string;
-            avoid: string;
-          };
+          brief?: import('@/domains/studio/brand').StudioBrief;
           updated_at?: string;
         }
       >;
@@ -614,6 +672,16 @@ export interface Database {
           asset_version_id?: string | null;
           updated_at?: string;
         }
+      >;
+      ai_studio_narrations: Table<
+        import('@/domains/studio/narration').NarrationRecord,
+        never,
+        never
+      >;
+      ai_studio_narration_usage: Table<
+        { id: string; person_id: string; created_at: string },
+        never,
+        never
       >;
       ai_studio_finishes: Table<
         {
@@ -749,11 +817,55 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
-      company_begin_revision: {Args:{p_company:string;p_conversation:string;p_source:string;p_request:string;p_text:string;p_kind:string;p_model:string;p_prompt_version:string};Returns:string};
-      company_create_job: {Args:{p_id:string;p_company:string;p_conversation:string;p_scope:import("@/domains/company-work/schema").WorkScope};Returns:string};
-      company_save_work: {Args:{p_id:string;p_company:string;p_job:string;p_expected:number;p_content:import("@/domains/company-work/schema").WorkContent;p_source_turn:string|null};Returns:string};
-      company_review_work: {Args:{p_company:string;p_job:string;p_version:string};Returns:string};
-      daily_command_save: { Args: { p_request: string; p_day: string; p_version: number; p_kind: string; p_arrival: import("@/domains/daily-command/model").Arrival; p_snapshot: import("@/domains/daily-command/model").DailyCommandSnapshot; p_outcome: import("@/domains/daily-command/model").DailyCommandOutcome | null }; Returns: number };
+      company_begin_revision: {
+        Args: {
+          p_company: string;
+          p_conversation: string;
+          p_source: string;
+          p_request: string;
+          p_text: string;
+          p_kind: string;
+          p_model: string;
+          p_prompt_version: string;
+        };
+        Returns: string;
+      };
+      company_create_job: {
+        Args: {
+          p_id: string;
+          p_company: string;
+          p_conversation: string;
+          p_scope: import('@/domains/company-work/schema').WorkScope;
+        };
+        Returns: string;
+      };
+      company_save_work: {
+        Args: {
+          p_id: string;
+          p_company: string;
+          p_job: string;
+          p_expected: number;
+          p_content: import('@/domains/company-work/schema').WorkContent;
+          p_source_turn: string | null;
+        };
+        Returns: string;
+      };
+      company_review_work: {
+        Args: { p_company: string; p_job: string; p_version: string };
+        Returns: string;
+      };
+      daily_command_save: {
+        Args: {
+          p_request: string;
+          p_day: string;
+          p_version: number;
+          p_kind: string;
+          p_arrival: import('@/domains/daily-command/model').Arrival;
+          p_snapshot: import('@/domains/daily-command/model').DailyCommandSnapshot;
+          p_outcome: import('@/domains/daily-command/model').DailyCommandOutcome | null;
+        };
+        Returns: number;
+      };
       onboarding_claim: {
         Args: {
           p_request: string;
@@ -788,6 +900,44 @@ export interface Database {
       performance_save: {
         Args: { p_kind: string; p_request: string; p_expected: number; p_payload: unknown };
         Returns: number;
+      };
+      ai_studio_footage_quote: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_title: string;
+          p_prompt: string;
+          p_duration: number;
+          p_ratio: string;
+          p_expires: string;
+          p_signature: string;
+        };
+        Returns: boolean;
+      };
+      ai_studio_footage_begin: { Args: { p_id: string }; Returns: boolean };
+      ai_studio_footage_receipt: {
+        Args: { p_id: string; p_provider?: string | null; p_signature?: string | null };
+        Returns: boolean;
+      };
+      ai_studio_footage_check: { Args: { p_id: string }; Returns: boolean };
+      ai_studio_footage_finish: {
+        Args: { p_id: string; p_status: string; p_key?: string | null; p_credits?: number | null };
+        Returns: boolean;
+      };
+      ai_studio_narration_begin: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_title: string;
+          p_script: string;
+          p_voice: string;
+          p_tone: string;
+        };
+        Returns: boolean;
+      };
+      ai_studio_narration_finish: {
+        Args: { p_id: string; p_status: string; p_key?: string | null; p_duration?: number | null };
+        Returns: boolean;
       };
       ai_studio_begin: {
         Args: {
@@ -912,6 +1062,18 @@ export interface Database {
         Args: { p_id: string; p_approve: boolean; p_title: string | null };
         Returns: string | null;
       };
+      ai_confirm_reviewed_daily_action: {
+        Args: {
+          p_id: string;
+          p_conversation: string;
+          p_review: string;
+          p_title: string;
+          p_day: string;
+          p_version: number;
+          p_timezone: string;
+        };
+        Returns: string;
+      };
       ai_reserve_proposal: { Args: { p_request: string }; Returns: boolean };
       ascend_profile_confirm: {
         Args: {
@@ -941,8 +1103,44 @@ export interface Database {
         Returns: number;
       };
       company_begin_turn: {
-        Args: {p_company: string; p_conversation: string; p_request: string; p_text: string; p_model: string; p_prompt_version: string};
+        Args: {
+          p_company: string;
+          p_conversation: string;
+          p_request: string;
+          p_text: string;
+          p_model: string;
+          p_prompt_version: string;
+        };
         Returns: string;
+      };
+      ai_propose_coworker_review:{Args:{p_id:string;p_conversation:string;p_prompt:string;p_coworker:string;p_scope:string};Returns:boolean};
+      ai_propose_visual_artifact:{Args:{p_id:string;p_conversation:string;p_operation:string;p_prompt:string};Returns:boolean};
+      ai_claim_visual_artifact:{Args:{p_id:string;p_approve:boolean;p_model:string};Returns:boolean};
+      ai_set_chart_scenario:{Args:{p_conversation:string;p_artifact:string;p_percent:number};Returns:boolean};
+      ai_finish_metered_visual_artifact:{Args:{p_id:string;p_visual:import('@/domains/artifacts/visual').VisualBoard|null;p_text:string;p_input:number|null;p_output:number|null;p_duration:number;p_stages:number;p_usage_complete:boolean};Returns:boolean};
+      ai_finish_visual_artifact:{Args:{p_id:string;p_visual:import('@/domains/artifacts/visual').VisualBoard|null;p_text:string;p_input:number|null;p_output:number|null;p_duration:number};Returns:boolean};
+      ai_select_visual_part:{Args:{p_conversation:string;p_artifact:string;p_part:string|null};Returns:boolean};
+      ai_live_request_job: {Args:{p_id:string;p_session:string;p_call:string;p_task:string;p_coworker:string|null};Returns:boolean};
+      ai_live_review_job: {Args:{p_id:string;p_approve:boolean};Returns:boolean};
+      ai_live_finish_job: {Args:{p_id:string;p_result:string;p_input:number;p_output:number;p_duration:number;p_success:boolean;p_model:string};Returns:boolean};
+      ai_artifact_preview: {Args:{p_id:string;p_index:number;p_key:string};Returns:boolean};
+      ai_propose_image_artifact: {Args:{p_id:string;p_conversation:string;p_operation:string;p_prompt:string;p_project:string|null};Returns:boolean};
+      ai_select_artifact: {Args:{p_conversation:string;p_artifact:string};Returns:boolean};
+      ai_claim_image_artifact: {Args:{p_id:string;p_approve:boolean};Returns:boolean};
+      ai_reconcile_artifact: {Args:{p_id:string};Returns:boolean};
+      ai_live_reserve: {
+        Args: { p_id: string; p_conversation: string; p_model: string };
+        Returns: string;
+      };
+      ai_live_attach: { Args: { p_id: string; p_call: string; p_tag: string }; Returns: boolean };
+      ai_live_claim_expired: {
+        Args: Record<string, never>;
+        Returns: { id: string; person_id: string; call_id: string; call_tag: string | null; expires_at: string; lease_token: string }[];
+      };
+      ai_live_confirm_expired: { Args: { p_id: string; p_token: string }; Returns: boolean };
+      ai_live_end: {
+        Args: { p_id: string; p_reason: string; p_input?: number; p_output?: number };
+        Returns: boolean;
       };
       ai_begin_turn: {
         Args: {

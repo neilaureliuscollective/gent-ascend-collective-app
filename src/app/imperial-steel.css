@@ -384,3 +384,56 @@
     box-shadow: none;
   }
 }
+
+/* Historical public selector retained; materials belong to the shared Emerald system. */
+.public-world[data-material='imperial-steel'] .company-arrival-method {
+  background: var(--io-chamber);
+  border-color: var(--io-divider);
+}
+.public-world[data-material='imperial-steel'] .imperial-workspace-grid {
+  gap: 1px;
+  background: var(--io-divider);
+  border: 1px solid var(--io-divider);
+}
+.public-world[data-material='imperial-steel'] .imperial-workspace {
+  background: var(--io-glass);
+  border: 0;
+}
+.public-world[data-material='imperial-steel'] .imperial-workspace:hover {
+  background: var(--io-selected);
+}
+.public-world[data-material='imperial-steel'] .imperial-arrival-hero h1 em {
+  color: var(--io-highlight);
+}
+.public-world[data-material='imperial-steel'] .entrance-panel {
+  background: var(--io-glass);
+  border-color: var(--io-emerald-edge);
+}
+.public-world[data-material='imperial-steel'] .world-footer {
+  background: var(--io-navigation);
+  border-color: var(--io-divider);
+}
+html[data-material='solid']
+  .public-world[data-material='imperial-steel']
+  :is(.imperial-arrival-hero, .company-arrival-method, .imperial-workspace, .entrance-panel) {
+  background: var(--io-navigation);
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  .public-world[data-material='imperial-steel']
+    :is(
+      .imperial-arrival-hero,
+      .company-arrival-method,
+      .imperial-workspace,
+      .entrance-panel,
+      .world-footer
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .public-world[data-material='imperial-steel'] .imperial-arrival-hero h1 em {
+    color: CanvasText;
+  }
+}

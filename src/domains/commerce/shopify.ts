@@ -70,6 +70,14 @@ export type Product = LaunchMetadata & {
     nodes: {
       mediaContentType: string;
       sources?: { url: string; format: string; filesize: number }[];
+      videoSources?: {
+        url: string;
+        format: string;
+        mimeType: string;
+        width: number;
+        height: number;
+      }[];
+      previewImage?: { url: string; altText: string | null } | null;
     }[];
   };
 };
@@ -89,6 +97,7 @@ export type ProductSummary = Pick<
   | 'tags'
   | 'story'
 > & {
+  description?: string;
   priceRange: { minVariantPrice: Money };
 };
 export type Cart = {
@@ -97,11 +106,13 @@ export type Cart = {
   totalQuantity: number;
   cost: { subtotalAmount: Money; totalAmount: Money };
   lines: {
+    pageInfo?: { hasNextPage: boolean; endCursor?: string | null };
     nodes: {
       id: string;
       quantity: number;
       cost: { totalAmount: Money };
       merchandise: {
+        availableForSale?: boolean;
         id: string;
         title: string;
         product: LaunchMetadata & {
@@ -121,7 +132,7 @@ const LAUNCH = `tags requiresSellingPlan
   launchWindow: metafield(namespace: "gent_ascend", key: "launch_window") { value }`;
 const PRODUCT = `id handle title description productType vendor availableForSale ${LAUNCH}
   featuredImage { url altText width height }
-  images(first: 6) { nodes { url altText width height } }
+  images(first: 12) { nodes { url altText width height } }
   variants(first: 50) { pageInfo { hasNextPage endCursor } nodes { id title availableForSale currentlyNotInStock price { amount currencyCode } compareAtPrice { amount currencyCode } selectedOptions { name value } } }
   collections(first: 100) { nodes { handle title } }
   purpose: metafield(namespace: "gent_ascend", key: "purpose") { value }
@@ -129,10 +140,13 @@ const PRODUCT = `id handle title description productType vendor availableForSale
   directions: metafield(namespace: "gent_ascend", key: "directions") { value }
   ritual: metafield(namespace: "gent_ascend", key: "ritual") { value }
   story: metafield(namespace: "gent_ascend", key: "product_story") { value }
-  media(first: 8) { nodes { mediaContentType ... on Model3d { sources { url format filesize } } } }`;
+  media(first: 12) { nodes { mediaContentType previewImage { url altText }
+    ... on Model3d { sources { url format filesize } }
+    ... on Video { videoSources: sources { url format mimeType width height } }
+  } }`;
 const CART = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
-  lines(first: 100) { nodes { id quantity cost { totalAmount { amount currencyCode } }
-    merchandise { ... on ProductVariant { id title product { handle title ${LAUNCH} collections(first: 100) { nodes { handle title } } featuredImage { url altText width height } } } } } }
+  lines(first: 100) { pageInfo { hasNextPage endCursor } nodes { id quantity cost { totalAmount { amount currencyCode } }
+    merchandise { ... on ProductVariant { id title availableForSale product { handle title ${LAUNCH} collections(first: 100) { nodes { handle title } } featuredImage { url altText width height } } } } } }
   `;
 
 function config() {
@@ -191,7 +205,7 @@ export const listProducts = cache(async () => {
       `query Catalog($cursor: String) { products(first: 60, after: $cursor, sortKey: CREATED_AT, reverse: true) {
       pageInfo { hasNextPage endCursor }
       nodes {
-      id handle title productType vendor availableForSale ${LAUNCH}
+      id handle title description productType vendor availableForSale ${LAUNCH}
       story: metafield(namespace: "gent_ascend", key: "product_story") { value }
       featuredImage { url altText width height }
       collections(first: 8) { nodes { handle title } }
@@ -211,7 +225,7 @@ export const listCollectionProducts = cache(async (handle: string) => {
       `query LifestyleCollection($handle: String!, $cursor: String) {
         collection(handle: $handle) { products(first: 60, after: $cursor) {
           pageInfo { hasNextPage endCursor }
-          nodes { id handle title productType vendor availableForSale ${LAUNCH}
+          nodes { id handle title description productType vendor availableForSale ${LAUNCH}
             story: metafield(namespace: "gent_ascend", key: "product_story") { value }
             featuredImage { url altText width height }
             collections(first: 100) { nodes { handle title } }
@@ -255,6 +269,29 @@ export const getProduct = cache(async (handle: string) => {
   return data.product?.requiresSellingPlan ? null : data.product;
 });
 
+export const getPurchasePolicies = cache(async () => {
+  const data = await storefront<{
+    shop: {
+      shippingPolicy: { title: string; url: string } | null;
+      refundPolicy: { title: string; url: string } | null;
+    };
+  }>(
+    'query PurchasePolicies { shop { shippingPolicy { title url } refundPolicy { title url } } }',
+    {},
+    { cache: 'force-cache', revalidate: 300 },
+  );
+  return Object.entries(data.shop).flatMap(([kind, policy]) => {
+    if (!policy) return [];
+    try {
+      const url = new URL(policy.url);
+      if (url.protocol !== 'https:' || url.username || url.password || url.port) return [];
+      return [{ kind, title: policy.title, url: url.toString() }];
+    } catch {
+      return [];
+    }
+  });
+});
+
 async function mutateCart(
   field: string,
   query: string,
@@ -279,12 +316,26 @@ async function mutateCart(
 }
 
 export async function getCart(id: string, buyerIp?: string) {
-  const data = await storefront<{ cart: Cart | null }>(
-    `query Cart($id: ID!) { cart(id: $id) { ${CART} } }`,
-    { id },
-    { buyerIp },
-  );
-  return data.cart;
+  const lines = new Map<string, Cart['lines']['nodes'][number]>();
+  const cursors = new Set<string>();
+  let cursor: string | null = null;
+  // Shopify carts are bounded; never hand off a partially reviewed cart.
+  for (let page = 0; page < 3; page++) {
+    const data: { cart: Cart | null } = await storefront(
+      `query Cart($id: ID!, $cursor: String) { cart(id: $id) { ${CART.replace('lines(first: 100)', 'lines(first: 100, after: $cursor)')} } }`,
+      { id, cursor },
+      { buyerIp },
+    );
+    if (!data.cart) return null;
+    for (const line of data.cart.lines.nodes) lines.set(line.id, line);
+    if (!data.cart.lines.pageInfo?.hasNextPage)
+      return { ...data.cart, lines: { nodes: [...lines.values()] } };
+    const next = data.cart.lines.pageInfo.endCursor;
+    if (!next || cursors.has(next)) throw new ShopifyCommerceError('provider');
+    cursors.add(next);
+    cursor = next;
+  }
+  throw new ShopifyCommerceError('provider');
 }
 
 export async function createCart(variantId: string, quantity: number, buyerIp?: string) {
@@ -343,6 +394,7 @@ export function cartLaunchPurchasable(cart: Cart) {
   return cart.lines.nodes.every(
     (line) =>
       Boolean(line.merchandise?.product) &&
+      line.merchandise.availableForSale !== false &&
       launchPurchaseAllowed(line.merchandise.product) &&
       catalogProductAllowed(
         line.merchandise.product,

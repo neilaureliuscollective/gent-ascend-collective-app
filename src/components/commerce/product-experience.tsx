@@ -2,7 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import { launchPurchaseAllowed, launchState, launchLabel } from '@/domains/commerce/launch-policy';
-import { readProductStory, shopifyMediaUrl } from '@/domains/commerce/product-story';
+import { readProductStory } from '@/domains/commerce/product-story';
+import { approvedProductMedia } from '@/domains/commerce/product-media';
 import { productBrand } from '@/domains/commerce/lifestyle';
 import { previewProduct } from '@/domains/catalog/preview';
 import { vitalisDevelopmentHighlights } from '@/domains/catalog/vitalis-development';
@@ -16,6 +17,8 @@ import type { resolveRelated } from '@/domains/commerce/discovery';
 import { ProductRelations } from './product-relations';
 import { ProductView } from './product-view';
 import { ProductShare } from './product-share';
+import { productExcerpt } from '@/domains/commerce/product-copy';
+import type { PurchasePolicy } from './purchase-terms';
 
 type Preview = NonNullable<ReturnType<typeof previewProduct>>;
 export function ProductExperience({
@@ -25,6 +28,7 @@ export function ProductExperience({
   related = [],
   basePath = '/shop',
   cabinetControl,
+  policies = [],
 }: {
   product?: Product;
   preview?: Preview;
@@ -32,6 +36,7 @@ export function ProductExperience({
   related?: ReturnType<typeof resolveRelated>;
   basePath?: string;
   cabinetControl?: ReactNode;
+  policies?: PurchasePolicy[];
 }) {
   const title = product?.title ?? preview!.name;
   const handle = product?.handle ?? preview!.handle;
@@ -39,31 +44,20 @@ export function ProductExperience({
   const story = readProductStory(product?.story);
   const live = Boolean(product);
   const open = product ? launchPurchaseAllowed(product) : false;
-  const brand =
-    preview?.line ??
-    (product ? productBrand(product) : 'Aethelios Lifestyle');
-  const intro =
+  const brand = preview?.line ?? (product ? productBrand(product) : 'Aethelios Lifestyle');
+  const intro = productExcerpt(
     story?.benefit ||
-    product?.purpose?.value ||
-    product?.description ||
-    preview?.summary ||
-    'A considered part of your daily ritual.';
+      product?.purpose?.value ||
+      product?.description ||
+      preview?.summary ||
+      'A considered part of your daily ritual.',
+  );
   const images = product?.images.nodes.length
     ? product.images.nodes
     : product?.featuredImage
       ? [product.featuredImage]
       : [];
-  const model = story?.mediaApproved
-    ? product?.media?.nodes
-        .flatMap((media) => media.sources ?? [])
-        .find(
-          (source) =>
-            source.format.toLowerCase() === 'glb' &&
-            source.filesize > 0 &&
-            source.filesize <= 10000000 &&
-            shopifyMediaUrl(source.url),
-        )?.url
-    : undefined;
+  const { model, film } = approvedProductMedia(product, story);
   const beard = /beard|vitalis/i.test(`${title} ${kind}`);
   const faq = story?.faq ?? [];
   const developmentBlend = !product && handle === 'vitalis';
@@ -74,7 +68,14 @@ export function ProductExperience({
       <ProductView handle={handle} />
       <section className="reserve-product-intro">
         <div id="atelier" className="reserve-product-visual">
-          <ProductGallery title={title} kind={kind} brand={brand} images={images} model={model} />
+          <ProductGallery
+            title={title}
+            kind={kind}
+            brand={brand}
+            images={images}
+            model={model}
+            film={film}
+          />
         </div>
         <div className="reserve-product-copy">
           <Link href={basePath} className="world-text-link">
@@ -106,14 +107,39 @@ export function ProductExperience({
               Live availability is temporarily unavailable. This is a collection preview.
             </p>
           )}
-          <ProductShare
-            handle={product?.handle ?? preview!.handle}
-            title={product?.title ?? preview!.name}
-          />
           {product ? (
             <>
-              <ProductPurchase product={product} />
-              <PurchaseTerms story={story} />
+              <ProductPurchase product={product} basePath={basePath} />
+              <PurchaseTerms story={story} policies={policies} />
+              {(story?.texture || story?.scent.length || story?.highlights.length) && (
+                <details className="atelier-glance">
+                  <summary>Product at a glance</summary>
+                  {(story?.texture || story?.scent.length || story?.highlights.length) && (
+                    <dl className="atelier-decision-facts" aria-label="Approved product details">
+                      {story.texture && (
+                        <div>
+                          <dt>Texture & finish</dt>
+                          <dd>{story.texture}</dd>
+                        </div>
+                      )}
+                      {story.scent.length > 0 && (
+                        <div>
+                          <dt>Scent</dt>
+                          <dd>
+                            {story.scent.map((note) => `${note.label}: ${note.value}`).join(' · ')}
+                          </dd>
+                        </div>
+                      )}
+                      {story.highlights.slice(0, 3).map((item) => (
+                        <div key={item.name}>
+                          <dt>{item.name}</dt>
+                          <dd>{item.role}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </details>
+              )}
             </>
           ) : (
             <div className="reserve-preview-release">
@@ -129,6 +155,7 @@ export function ProductExperience({
           )}
           <CollectionSave basePath={basePath} handle={handle} />
           {cabinetControl}
+          <ProductShare handle={handle} title={title} />
         </div>
       </section>
       <nav className="reserve-product-nav" aria-label="Product chapters">
@@ -147,7 +174,15 @@ export function ProductExperience({
           </h2>
         </div>
         <div>
-          <p>{story?.fit || preview?.story || product?.purpose?.value || intro}</p>
+          {story?.fit || preview?.story || product?.purpose?.value ? (
+            <p>{story?.fit || preview?.story || product?.purpose?.value}</p>
+          ) : null}
+          {product?.description && (
+            <details id="product-description" className="reserve-description" open={!story?.fit}>
+              <summary>Product description</summary>
+              <p>{product.description}</p>
+            </details>
+          )}
           {story?.quality && <p>{story.quality}</p>}
           {!story?.fit && beard && (
             <div className="reserve-education">
@@ -206,6 +241,7 @@ export function ProductExperience({
         <FormulaExplorer
           handle={handle}
           ingredients={product?.ingredients?.value}
+          descriptionAvailable={Boolean(product?.description)}
           highlights={story?.highlights ?? (developmentBlend ? vitalisDevelopmentHighlights : [])}
           label={
             story?.factsLabel ??
@@ -253,8 +289,16 @@ export function ProductExperience({
           ) : (
             <div className="reserve-ritual-pending">
               <span aria-hidden="true">◇</span>
-              <h3>A deliberate beginning.</h3>
-              <p>Application amount and frequency will be confirmed with the finished formula.</p>
+              <h3>Directions</h3>
+              <p>
+                A separate directions field has not been published here. Follow the merchant&apos;s
+                description and product label.
+              </p>
+              {product?.description && (
+                <a className="world-text-link" href="#product-description">
+                  Review product description →
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -324,29 +368,19 @@ export function ProductExperience({
       <section className="reserve-membership-bridge">
         <span className="world-kicker">AETHELIOS / Beyond the shelf</span>
         <h2>
-          The product.
+          Your collection.
           <br />
-          <em>The practice behind it.</em>
+          <em>Your daily practice.</em>
         </h2>
         <p>
-          Your personal workspace brings direction, daily actions, progress, and Aethelios together.
-          Member product offers are being prepared; no product discount is promised with this
-          purchase.
+          Keep saved interests in your Cabinet and connect products to a routine you choose. Saving
+          is separate from purchasing.
         </p>
-        <div className="world-actions">
-          <Link
-            href={basePath === '/shop' ? '/membership' : '/app/membership'}
-            className="world-button"
-          >
-            Explore membership ↗
-          </Link>
-          <Link href={basePath === '/shop' ? '/join' : '/app/you'} className="world-text-link">
-            Explore your account ↗
-          </Link>
-        </div>
+        <Link href="/app/collection/cabinet" className="world-text-link">
+          Open your Cabinet →
+        </Link>
         <small>
-          Creating an account does not subscribe you or charge you. Product purchases do not require
-          a paid membership.
+          Sign in to save across devices. Product purchases do not require a paid membership.
         </small>
       </section>
       <section className="reserve-editorial-section reserve-faq">
@@ -373,7 +407,8 @@ export function ProductExperience({
               Do I need a membership to purchase?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              No. Products that are open for ordering can be purchased independently of a paid Aethelios membership.
+              No. Products that are open for ordering can be purchased independently of a paid
+              Aethelios membership.
             </p>
           </details>
           {!open && (

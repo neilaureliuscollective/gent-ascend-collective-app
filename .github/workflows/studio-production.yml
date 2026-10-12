@@ -1,0 +1,69 @@
+name: Studio production-room acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'playwright.studio-production.config.ts'
+      - '.github/workflows/studio-production.yml'
+  push:
+    branches: [feat/studio-production-house-20261012, feat/studio-narration-20261012, feat/studio-footage-20261012, feat/studio-delivery-20261012, feat/studio-premium-20261012, feat/studio-activation-20261012]
+concurrency:
+  group: studio-production-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run db:ledger
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.studio-production.config.ts
+      - name: Inspect exported artifacts independently
+        run: |
+          python - <<'PY'
+          import zipfile, pathlib, wave, json, hashlib
+          with zipfile.ZipFile('test-results/studio-campaign-pack.zip') as archive:
+              assert archive.testzip() is None
+              assert set(archive.namelist()) == {'square.png','portrait.png','landscape.png','layout.json','readme.md'}
+              for name in ['square.png','portrait.png','landscape.png']:
+                  assert archive.read(name).startswith(b'\x89PNG\r\n\x1a\n')
+          with zipfile.ZipFile('test-results/studio-delivery.zip') as delivery:
+              assert delivery.testzip() is None
+              assert set(delivery.namelist()) == {'asset-01.png','asset-02.mp4','manifest.json','campaign.md','readme.md','scene-captions.vtt','scene-captions.srt'}
+              manifest = json.loads(delivery.read('manifest.json'))
+              for asset in manifest['assets']:
+                  data = delivery.read(asset['file'])
+                  assert hashlib.sha256(data).hexdigest() == asset['sha256']
+                  assert len(data) == asset['bytes']
+              assert '00:00:00.000 --> 00:00:02.000' in delivery.read('scene-captions.vtt').decode()
+              assert b'ftyp' in delivery.read('asset-02.mp4')[:32]
+              assert 'not an assembled' in delivery.read('readme.md').decode()
+          footage = pathlib.Path('test-results/studio-ai-footage.mp4').read_bytes()
+          assert len(footage) > 1000 and b'ftyp' in footage[:32]
+          brief = json.loads(pathlib.Path('test-results/studio-film-brief.json').read_text())
+          assert brief['status'] == 'draft; no generation authorized'
+          video = pathlib.Path('test-results/studio-motion-film.webm').read_bytes()
+          assert len(video) > 1000
+          assert video[:4] == b'\x1aE\xdf\xa3' or b'ftyp' in video[:32]
+          with wave.open('test-results/studio-narration.wav') as narration:
+              assert narration.getnchannels() == 1 and narration.getsampwidth() == 2
+              assert narration.getnframes() / narration.getframerate() == 2
+          captions = pathlib.Path('test-results/studio-campaign-captions.vtt').read_text()
+          assert captions.startswith('WEBVTT') and '00:00:00.000 --> 00:00:02.000' in captions
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-production-evidence
+          path: test-results
+          if-no-files-found: ignore

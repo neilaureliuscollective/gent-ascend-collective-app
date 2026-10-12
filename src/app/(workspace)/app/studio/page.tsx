@@ -1,14 +1,24 @@
 import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
+import { z } from 'zod';
 import type { Metadata } from 'next';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
+import './studio-production.css';
 
 export const metadata: Metadata = {
   title: 'Aethelios Studio',
-  description: 'Develop creative projects, references and images with Aethelios.',
+  description:
+    'Aethelios creative production: images, campaigns, voice, footage and reviewed delivery.',
 };
 
-export default function StudioPage() {
+export default async function StudioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string; version?: string }>;
+}) {
+  const params = await searchParams;
+  const initialProject = z.uuid().safeParse(params.project);
+  const initialVersion = z.uuid().safeParse(params.version);
   return (
     <div className="studio-page">
       <div className="studio-world-heading io-hero">
@@ -18,13 +28,22 @@ export default function StudioPage() {
           <h1>
             Studio<span className="brand-star">✦</span>
           </h1>
-          <p>From an idea to a world you can see.</p>
+          <p>Your vision, developed with intention.</p>
         </div>
         <Link className="text-link" href="/app/aethelios">
           Aethelios Chat ↗
         </Link>
       </div>
-      <StudioWorkspace />
+      <div className="studio-workflow-line" aria-label="Studio creative workflow">
+        <span>01 / DIRECT</span>
+        <span>02 / CREATE</span>
+        <span>03 / REFINE</span>
+        <span>04 / DELIVER</span>
+      </div>
+      <StudioWorkspace
+        initialProject={initialProject.success ? initialProject.data : undefined}
+        initialVersion={initialVersion.success ? initialVersion.data : undefined}
+      />
     </div>
   );
 }

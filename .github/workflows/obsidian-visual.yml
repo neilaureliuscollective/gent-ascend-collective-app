@@ -27,6 +27,7 @@ jobs:
       - name: Verify product reflow, materials and preserved interactions
         run: >-
           npx playwright test
+          tests/browser/imperial-emerald.spec.ts
           tests/browser/obsidian-intelligence.spec.ts
           tests/browser/luminous-obsidian.spec.ts
           tests/browser/imperial-tools.spec.ts
@@ -52,6 +53,8 @@ jobs:
         with:
           name: obsidian-review-images
           path: |
+            test-results/emerald-*-390.png
+            test-results/emerald-*-1440.png
             test-results/obsidian--*-390.png
             test-results/obsidian--*-1440.png
             test-results/imperial-obsidian-studio-*.png

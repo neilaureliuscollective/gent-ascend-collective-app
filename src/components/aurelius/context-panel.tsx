@@ -85,8 +85,8 @@ export function ContextPanel({
           Start a new conversation for a fresh context.
         </p>
         <p>
-          Live web research, voice, file uploads and external actions are not connected in this
-          release.
+          Web research uses returned sources. Live voice is a gated pilot. Use Studio for images;
+          external services are not connected through this conversation.
         </p>
         {!preview && (
           <p>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { CollectionCard } from './collection-card';
 import { lifestyleBrands } from '@/domains/commerce/lifestyle';
@@ -14,32 +15,50 @@ export function LifestyleLanding({
   entries: CollectionEntry[];
   status: 'ready' | 'empty' | 'unconfigured' | 'error';
 }) {
+  const featured = status === 'ready' ? entries.find((entry) => entry.image) : undefined;
   return (
     <div className="reserve-commerce lifestyle-world">
       <header className="lifestyle-hero">
-        <div className="lifestyle-coordinate" aria-hidden="true">
-          A / L — 01
+        <div className="lifestyle-hero-copy">
+          <div className="lifestyle-coordinate" aria-hidden="true">
+            A / L — 01
+          </div>
+          <span className="world-kicker">AETHELIOS / THE HUMAN ASCENDANCE</span>
+          <h1>
+            The art of
+            <br />
+            <em>living well.</em>
+          </h1>
+          <p className="lifestyle-lead">Aethelios Lifestyle</p>
+          <p>
+            Considered products. Distinctive brands.
+            <br />A higher standard for the everyday.
+          </p>
+          <div className="collection-entry-actions">
+            <Link className="world-button" href={basePath}>
+              Explore the collection →
+            </Link>
+            <Link className="world-text-link" href={`${lifestylePath}/legacy-reserve`}>
+              Discover Legacy Reserve
+            </Link>
+          </div>
+          <span className="lifestyle-hero-foot">CARE · CHARACTER · DAILY RITUAL</span>
         </div>
-        <span className="world-kicker">AETHELIOS / THE HUMAN ASCENDANCE</span>
-        <h1>
-          The art of
-          <br />
-          <em>living well.</em>
-        </h1>
-        <p className="lifestyle-lead">Aethelios Lifestyle</p>
-        <p>
-          Considered products. Distinctive brands.
-          <br />A higher standard for the everyday.
-        </p>
-        <div className="collection-entry-actions">
-          <Link className="world-button" href={`${lifestylePath}/legacy-reserve`}>
-            Discover Legacy Reserve →
+        {featured?.image && (
+          <Link className="lifestyle-hero-product" href={`${basePath}/${featured.handle}`}>
+            <Image
+              src={featured.image.url}
+              alt={featured.image.altText ?? featured.title}
+              width={featured.image.width ?? 800}
+              height={featured.image.height ?? 1000}
+              sizes="(max-width: 700px) 86vw, 40vw"
+              preload
+            />
+            <span>
+              {featured.title} <small>{featured.price}</small>
+            </span>
           </Link>
-          <Link className="world-text-link" href={basePath}>
-            Explore the collection
-          </Link>
-        </div>
-        <span className="lifestyle-hero-foot">CARE · CHARACTER · DAILY RITUAL</span>
+        )}
       </header>
       <section className="lifestyle-brands" aria-labelledby="lifestyle-brands">
         <div className="lifestyle-section-heading">

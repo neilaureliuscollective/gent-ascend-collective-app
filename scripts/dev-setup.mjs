@@ -2,7 +2,11 @@ import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
-if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.APP_ENV === 'production')
+if (
+  process.env.VERCEL ||
+  process.env.VERCEL_ENV ||
+  ['production', 'preview'].includes(process.env.APP_ENV)
+)
   throw new Error('Local bootstrap only');
 for (const file of ['.env', '.env.local', '.env.development', '.env.development.local']) {
   if (existsSync(file)) {
@@ -30,6 +34,25 @@ for (const id of ['00000000-0000-4000-8000-000000000001', '00000000-0000-4000-80
   const { error } = await admin.auth.admin.updateUserById(id, { password, email_confirm: true });
   if (error) throw new Error('Local seed identity missing; run npm run db:reset. ' + error.message);
 }
+// Controlled local operational grant for the fixed synthetic founder only.
+// Normal app requests still use user sessions; hosted authority is never bootstrapped here.
+const founderPerson = await admin
+  .from('persons')
+  .select('id')
+  .eq('auth_user_id', '00000000-0000-4000-8000-000000000001')
+  .single();
+if (founderPerson.error || !founderPerson.data)
+  throw new Error('Local founder person missing; reset the synthetic database.');
+const founderGrant = await admin
+  .from('founder_access')
+  .upsert(
+    {
+      person_id: founderPerson.data.id,
+      grant_reason: 'Local synthetic founder development and acceptance only',
+    },
+    { onConflict: 'person_id' },
+  );
+if (founderGrant.error) throw new Error('Local founder authority could not be provisioned.');
 writeFileSync(
   '.env.development.local',
   `APP_ENV=local

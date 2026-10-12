@@ -1,3 +1,121 @@
+## Studio activation preparation — October 12, 2026
+
+Read-only hosted audit confirms existing image tables/RLS/private image bucket; narration/footage schema/buckets/RPCs and Vercel activation/Runway/signing variables are absent. Founder-only readiness page/API adds fixed configuration statuses and session-bound owner-filtered zero-row schema probes, explicitly never inferring live acceptance. Stale founder selectors/routes are updated with real persistence/denial assertions retained. No hosted migration, provider bill/configuration or production release. Exact evidence, founder staging requirements and remaining launch gates: [STUDIO_ACTIVATION.md](STUDIO_ACTIVATION.md).
+
+## Studio premium control room — October 12, 2026
+
+Review candidate preserves the complete production-house/Narration/Footage/Delivery stack. Adds a unified dimensional project stage, actual saved-image preview, numbered production-room controls and workflow hierarchy in the latest Obsidian brand, plus conditional code splitting for specialist rooms. Existing owner/consent/cost safeguards are unchanged. No provider activation, migration or production release. Research, acceptance limits and **three remaining v1 launch phases**: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md). Visual inspection, real provider/hosted security acceptance and measured hardware performance remain open.
+
+## Studio Delivery — October 12, 2026
+
+Review candidate stacked on unmerged Footage #96: Delivery room connects selected saved images, AI clips and narration into an actual campaign ZIP with copy, scene-timed captions, provenance labels and SHA-256 file hashes. Exact local review snapshot, bounded authenticated reads, cancellation and honest all-or-nothing failure; no paid generation, new migration or automatic publishing. Audio/video depend on the earlier provider activation gates. Research, scope and founder acceptance boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md). No production release.
+
+## Studio AI Footage — October 12, 2026
+
+Review candidate stacked on unmerged Narration #95/production house #94: Footage room with active Runway Gen-4.5 text-to-video adapter, signed reviewed estimates/task receipts, explicit one-render authorization, durable owner jobs/spending reservations, private validated MP4 preservation/playback/download and uncertainty recovery without paid retries. One additive unapplied migration; feature defaults off pending app-specific Runway setup and real acceptance. Text-only standalone clips; no timeline, automatic background copying or production release. Official current contracts, limitations and exact founder setup: [STUDIO_FOOTAGE.md](STUDIO_FOOTAGE.md). Fixture/SQL/browser gates are separate from actual paid provider and hosted Auth/Storage acceptance.
+
+## Studio Narration — October 12, 2026
+
+Review candidate stacked on unmerged PR #94: Narration room with explicit one-request approval, active GPT-Audio-1.5 adapter, private saved WAV clips, owner-bound recovery, narrated Campaign films and scene-timed VTT/SRT export. One additive unapplied migration; generation defaults off until staging/provider acceptance. Sora/Videos API is retired, so it is not implemented. Scope, current official research and exact activation checklist: [STUDIO_NARRATION.md](STUDIO_NARRATION.md). Provider fixture and SQL-emulation success are separate from live OpenAI/Auth/Storage acceptance; no production release.
+
+## Aethelios Studio production house — October 12, 2026
+
+Review candidate: saved project brand kits, original-logo Finish compositing, editable multi-format campaign exports, and a native motion-film pilot from owned saved images with optional own audio. Reuses existing image generation, Supabase project JSONB, storyboard and finish services; no migration, new provider or production release. Image acknowledgement recovery preserves potentially committed originals, and Talk-prepared briefs survive project creation. Native film is not AI-generated footage and remains local until downloaded. Scope, research, exact acceptance limits and founder setup: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md). Local lint, types, 442 unit/SQL tests and ledger pass; build/browser/preview receipts are tracked in the candidate PR. Live authenticated OpenAI/Storage and physical-device acceptance remain separate.
+
+## Lifestyle product atelier — October 12, 2026
+
+Founder requested research and execution of Phase Two, stacked on unmerged PR #100. Product inspection gains numbered navigation, enlarged sequencing, fit/2× zoom, focus return and failed-photo recovery. Approved hosted films require captions/transcript and explicit selection; real models remain optional. Approved details use progressive disclosure after purchase, and Cabinet continuity replaces competing membership promotion. Shopify authority, authentic media, shared Obsidian, ownership and existing launch gates are preserved. No merchant writes, migration, dependency or production promotion. Research, media contract and acceptance boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). Exact-source gates/preview receipts belong in the PR.
+
+## Lifestyle purchase confidence — October 12, 2026
+
+Founder-approved Phase One improves live-catalog discovery, purchase-first product hierarchy, authentic Lifestyle photography, structured-content fallbacks, real Shopify policy links, public product metadata and uncertain-cart recovery. Current-variant stock and complete bounded cart reads remain server-authoritative. Corrected Lifestyle fixture routing and the five-destination production assertion preserve the checks. No merchant product/policy changes, migrations, AI expansion or production promotion. Scope, current evidence and open merchant/device/revenue gates: [LIFESTYLE_PURCHASE_CONFIDENCE.md](LIFESTYLE_PURCHASE_CONFIDENCE.md). Final exact-source CI/preview receipts are recorded in the review PR.
+
+## Protected preview database binding — 2026-10-12
+
+Added explicit managed-project pinning for hosted Live admission and preview expiry, blocking canonical production, the separate founder database, missing/mismatched pins and decorated/unsafe URLs before provider or privileged DB work. Founder preflight shows only a configuration category, never a secret or acceptance verdict. Local lint/types and 550 tests pass. Canonical Gent still has no branches; requested temporary-branch cost proposal in its existing organization or an existing isolated preview reference. No hosted schema/key/flag/schedule/production change. First release phase remains inactive until a target is selected and validated. Scope and official sources: [AETHELIOS_LIVE_PREVIEW_ISOLATION.md](AETHELIOS_LIVE_PREVIEW_ISOLATION.md).
+
+## Founder regression and test-release phase — 2026-10-12
+
+Initial connected repair passed focused integration/build and 10/11 founder flows. The remaining test found Welcome had lost its working FirstSession component. Restored that existing authenticated priority/next-move workflow and routed saved-plan handoffs to `/app/daily`; kept owner/version/quota and unavailable-context safeguards. The final exact candidate must pass real first-session persistence and its added focused browser cases. Production/voice flags and hosted data remain unchanged.
+
+Repaired stale real founder test entry paths and controls for current Talk-first routing, Enter Aethelios, Memory in Tools & context, and the dedicated daily workspace. Keeps actual persistence, stale-write, goal-history, invalid-login and first-session assertions intact; no access/product change or skipped tests. Exact connected real Next/Supabase validation is required. Three planned phases remain for public Live: isolated founder test environment, measured provider/mobile/cleanup acceptance, and final public release gates. You can test real voice after the first environment phase. Target/schema/worker setup remains unconfigured; existing OpenAI Vercel credential is present. Full plan: [AETHELIOS_LIVE_TEST_RELEASE_PLAN.md](AETHELIOS_LIVE_TEST_RELEASE_PLAN.md).
+
+## Live hosted validation preparation — 2026-10-12
+
+Connected expiry build/browser job passed; real normal Auth worker denials passed, but the lease fixture failed because CLI prepared queries reject multiple statements. Repaired it as one rollback-safe DO statement and added exact-file prepared-query regression coverage. Founder preflight now reports redacted expiry credential/flag/connection booleans while keeping scheduling/cleanup acceptance unverified; no privileged RPC is invoked by inspection. Local lint/types and 535 tests pass. Gent project has no development branches; isolated hosted target requested before any migration/config write. Production/flags/schedules/credentials untouched. Evidence: [AETHELIOS_LIVE_HOSTED_VALIDATION.md](AETHELIOS_LIVE_HOSTED_VALIDATION.md).
+
+## Independent Live expiry worker candidate — 2026-10-12
+
+Built a default-off scheduler-authenticated cleanup route with infrastructure-only control RPCs, private database leases and verified owner/session/call HMAC before provider hangup. Overlapping invocations skip leased rows; lost workers can retry; invalid bindings/provider/database failures remain pending without false cleanup receipts. User-writable ended state cannot bypass private provider-confirmation checks. Added ordinary Auth denial assertions and a local rollback-only SQL acceptance fixture to integration CI. No new SDK/subscription, hosted migration, active schedule, environment or production change. The minute-schedule fragment is inactive until plan/hosting/credential/provider acceptance. Current Vercel OpenAI key exists; worker DB/cron credentials and actual scheduling remain unconfigured. Scope, source evidence and activation risks: [AETHELIOS_LIVE_EXPIRY.md](AETHELIOS_LIVE_EXPIRY.md).
+
+## Live expired-session recovery — 2026-10-12
+
+Added owner-triggered recovery before admission: expired unfinished calls are re-read through normal ownership, server bindings verified, provider hangup confirmed before recording cleanup, and uncertain cleanup/backlog blocks admission. Unexpired sessions in another tab remain protected. 520 unit/SQL tests and strict types pass. No schema, flag or production change. This does not supply independent expiry while the owner is absent; production remains blocked. Research and exact limitations: [AETHELIOS_LIVE_RECOVERY.md](AETHELIOS_LIVE_RECOVERY.md).
+
+## Live integration candidate — conditional release — 2026-10-12
+
+Connected candidate published as draft PR #90: real Vercel preview build READY and local Supabase Auth/PostgREST Live/action acceptance PASS. Initial focused browser suite 32/34; explicit creation-task select labeling fixes both failing phone/desktop edit checks without removing assertions. Integrated latest main Lifestyle c13bced using verified complete tree 20c8e602; combined local lint/types and 504 tests pass. Exact updated-head connected checks remain required. Broad founder browser failures and actual provider/mobile/expiry/hosted rollout gates still block production activation. No production release or flag/migration change. See integration report for exact receipts and limitations.
+
+Recovered current production source through authenticated GitHub reads and verified all 50 changed blobs plus exact full production tree b6942117efee5530a5196a6a7dd244522c28663e. Integrated the Live stack in an isolated worktree, preserving current Obsidian surfaces/build settings and resolving Studio navigation versus owned project/version handoff. Added pinned, credential-free focused build/browser CI and a local-only real Auth/PostgREST Live/action acceptance job. Existing checks remain enabled.
+
+Local integrated lint/types, **75 files / 491 unit/SQL tests** and 28-file historical ledger pass. Connected CI/preview and real provider/mobile/expiry/database rollout gates remain pending. Founder authorizes live release if ready; current evidence does not satisfy that condition. No production promotion, flag change or hosted migration write. Source provenance and validation/release contract: [AETHELIOS_LIVE_INTEGRATION.md](AETHELIOS_LIVE_INTEGRATION.md).
+
+## Live hosted preflight — Phase 5B first slice — 2026-10-12
+
+Actual connected-tool audit confirms the correct Vercel project's protected OPENAI_API_KEY is scoped to Preview and Production. Local absence is not a missing Vercel key. No Live activation/readiness variables or Live-branch deployments were found; current production is the Obsidian release on main. Hosted Gent Ascend App migration/catalog reads confirm the new Live tables/RPCs/review provenance are absent; exact Vercel database binding still requires confirmation. No environment, database or production changes were made.
+
+Built a founder-only preflight on the existing launch ledger: safe server configuration/source checks, owner-scoped zero-row schema reads and an explicit bounded read-only OpenAI model-metadata check using the existing server key. No key export, voice creation, paid model call, permissions bypass or inferred launch readiness. Validation: lint/types PASS; **75 files / 491 unit/SQL tests PASS**; targeted preflight/release 13 PASS; historical 28-file ledger verified. Browser cases remain unrun (EPERM); build remains MediaPipe DNS EAI_AGAIN. Hosted preflight code is not yet deployed; actual audio/provider/mobile/billing/expiry acceptance remains open. Findings, research and integration-preview next action: [AETHELIOS_LIVE_HOSTED_PREFLIGHT.md](AETHELIOS_LIVE_HOSTED_PREFLIGHT.md).
+
+## Live measurement foundation — Phase 5A — 2026-10-12
+
+Corrected the shared speech-timestamp diagnostic defect with bounded item/response correlation and separate typed timing. Added local content-free diagnostic download, numeric-only WebRTC health and offline model/voice-cohort p50/p95 reporting. No automatic upload, raw RTC/record identifiers, extra sampling loop, provider switch, migration or new service. Browser-event metrics cannot establish acoustic latency, billing or launch acceptance; the report always leaves those gates unverified.
+
+Validation: lint/types PASS; **74 files / 484 unit/SQL tests PASS**; historical 28-file ledger verified; offline CLI smoke PASS on explicitly synthetic input. Browser download test discovered but unrun (fresh loopback EPERM). Build remains blocked by MediaPipe DNS EAI_AGAIN; permitted curl cannot reach the proxy. Actual provider smoke fails explicitly with missing OPENAI_API_KEY and sends no request. Real Auth/provider/hosting/acoustic/device/billing acceptance remains open; no measured voice latency or parity claim. Next: Phase 5B actual protected-preview/device run. Research, reproducible scenarios, boundaries and remaining launch gates: [AETHELIOS_LIVE_ACCEPTANCE.md](AETHELIOS_LIVE_ACCEPTANCE.md).
+
+## Live reviewed daily action — Phase 4B first slice — 2026-10-12
+
+Completed scoped coworker reviews can now lead to one human-entered personal daily action. Reuses the shared Live/Talk controller and existing atomic daily writer, with explicit confirmation, exact title/current-day/timezone/source/version guards, deduplication and canonical saved-record receipt verification. AI suggestions are not auto-promoted. No model write tool, extra paid model call, future scheduling or company action is added. Uncertain saves stay locked and recover through read-only receipt checks.
+
+Validation: lint/types PASS; **73 files / 478 unit/SQL tests PASS**; final targeted action/security/controller suite 101 tests PASS; historical ledger 28 files verified. New migration CLI-created and unapplied to hosted Supabase. Browser cases written but unrun (fresh loopback EPERM); build fails at existing MediaPipe DNS EAI_AGAIN. Local Supabase advisors/migration listing fail ECONNREFUSED; actual Auth/provider/latency/cost/hosting/device acceptance remains open. No production release or parity claim. Next: Phase 5 provider/mobile acceptance before expanding the action catalog. Scope, research and launch gates: [AETHELIOS_LIVE_ACTIONS.md](AETHELIOS_LIVE_ACTIONS.md).
+
+## Live scoped coworker review — Phase 4A implementation — 2026-10-12
+
+Added one explicitly approved Council coworker review of a standalone task or owned selected visual part. Exact recipient/context snapshots are shown before cost consent, fenced against selection/scenario changes and retained independently of voice End. Existing Council roles/key/model, shared artifact worker/controller/history and reasoning quotas are reused; scoped reviews have zero web/write tools. Suggestions do not become facts, memory or executed actions. Returning to older selected sources now preserves owner-bound visibility.
+
+Validation: lint/types/CSS syntax PASS; **71 files / 468 unit/SQL tests PASS**; historical ledger 28 files verified. New migration unapplied to hosted Supabase. Browser cases written but unrun; fresh build remains MediaPipe DNS EAI_AGAIN and loopback EPERM. Actual provider/voice/latency/billing/device/hosting acceptance is pending. No production release or parity claim. Research, scope/privacy limits, acceptance and Phase 4B action plan: [AETHELIOS_LIVE_COWORKERS.md](AETHELIOS_LIVE_COWORKERS.md).
+
+## Live evidence and scenarios — Phase 3B implementation — 2026-10-12
+
+Added source-linked research comparisons/bar charts to the shared Live/Talk workflow, with provider-metadata source links, explicit units/periods, missing-aware signed plots, accessible tables and deterministic hypothetical percentage scenarios. Owned scenario selection continues into voice/text without changing original evidence. Existing research lane, model/key, paid approval and usage ledger are reused. Two-stage token totals retain known failure counts and flag partial metering. Source linkage is not independent fact verification.
+
+Validation: lint/typecheck PASS; **69 files / 461 unit/SQL tests PASS**. Historical ledger 28 files verified; additive migration unapplied to hosted Supabase. Browser cases written but unrun: fresh loopback EPERM; build remains blocked by pinned MediaPipe DNS download EAI_AGAIN. No configured credentials for actual provider/audio/latency/billing testing. No production release or parity claim. Research, acceptance, cost/recovery limits and next stage: [AETHELIOS_LIVE_EVIDENCE.md](AETHELIOS_LIVE_EVIDENCE.md).
+
+## Live visual intelligence — Phase 3A implementation — 2026-10-11
+
+Added reviewed conceptual diagrams/comparison boards to the shared Live/Talk artifact workspace, with owned component/option selection, detail, JSON export and voice-to-text follow-up context. Existing image/Studio flow and Realtime runtime remain. Visual work reserves existing reasoning usage independently of a pending Talk turn; provider counts/model/duration and uncertain paid-job recovery are retained. This is the first Phase 3 slice; quantitative source-backed charts and fuller presentation outputs remain future work.
+
+Validation: lint/typecheck PASS; **67 files / 449 unit/SQL tests PASS**. Historical ledger 28 files verified; additive migration unapplied to hosted Supabase. Fresh build fails at the existing MediaPipe DNS download (EAI_AGAIN), loopback remains EPERM, browser tests are written but unrun. No credentials for actual provider/billing/latency testing; hosted Auth/device/hosting acceptance remains open. No production merge/deploy or parity claim. Research, implementation and exact gates: [AETHELIOS_LIVE_VISUALS.md](AETHELIOS_LIVE_VISUALS.md).
+
+## Live creation workspace — Phase 2 implementation — 2026-10-11
+
+Implemented shared voice/Talk image proposals, explicit paid approval, private streaming previews, exact selected-version edits and Studio handoff. Owned artifact jobs reserve existing Studio usage once and continue independently of voice; bounded `after()` execution remains a production recovery limitation. GPT-Live protocol/REST evaluation adapter added; existing gated Realtime remains active pending real-provider comparison. No cinematic assets, subscriptions or production deployment changed.
+
+Validation: lint/typecheck PASS; **64 files / 438 unit/SQL tests PASS**; historical ledger 28 files verified. New migration unapplied to hosted Supabase. Browser scenarios written but unrun (loopback EPERM); production build blocked by existing MediaPipe download EAI_AGAIN. Actual audio/image streaming, hosted Auth/Storage, billing and device acceptance remain unverified. No measured latency or parity claim. Receipt and launch gates: [AETHELIOS_LIVE_CREATION.md](AETHELIOS_LIVE_CREATION.md).
+
+## Multimodal vision and next-phase research — 2026-10-11
+
+Prepared a six-phase product roadmap and a concrete Phase 2 build slice: GPT-Live client-delegation evaluation plus a shared artifact workspace connecting existing Studio generation/revision and research to continuing conversation. Fresh official website research verifies GPT-Live documentation and `gpt-live-1`, correcting the prior SDK-only research gap. No runtime model switch or parity claim. Next build must decouple long paid artifact work from the pilot's short voice lifetime and preserve owned versions, permissions, cost controls and recovery. Premium structured interactive outputs, broader reviewed coworker/actions, mobile continuity and production launch follow on the same infrastructure. Evidence and acceptance scenario: [AETHELIOS_MULTIMODAL_ROADMAP.md](AETHELIOS_MULTIMODAL_ROADMAP.md). Planning/docs only; prior launch blockers remain.
+
+## OpenAI-native Aethelios Live pilot — 2026-10-11
+
+Implemented on `feat/aethelios-live-openai`, default off, local/protected preview only. Shared root controller owns WebRTC native audio, natural semantic turn-taking, interruption, streaming transcript, typed turns and immersive/compact/workspace continuity. Cedar is the initial voice; Marin is selectable at session start. Existing OpenAI key remains server-only. Authenticated SDP admission, trusted sideband events, owner-isolated reservations, bounded usage, server hangup, consent, context opt-in, late-admission fencing and uncertain-cleanup restart lock are implemented. Existing research/Responses and one approved Council coworker can run as bounded read-only background work, with readable results saved in the same Talk history. Sensitive actions, image workflows and broader Entity adapters keep their existing interfaces and review boundaries. Cinematic assets, voiceovers and other repositories were not changed.
+
+Validation: lint and strict typecheck PASS. Full unit/SQL suite: **60 files / 427 tests PASS**, including lifecycle, delayed ASR/playback, interruption, feature gates, background scope and owner/RLS cases. Final changed migration/controller slice: 92 tests PASS. Historical migration ledger: 28 files verified; the new additive migration is unapplied to hosted Supabase. `git diff --check` PASS. PGlite is SQL emulation, not real Auth validation.
+
+Blocked/unrun: production build (existing MediaPipe asset download fails via unavailable proxy/DNS; direct Next TypeScript subprocess also returns empty output), browser interaction/visual checks (loopback bind EPERM, additional permissions requests cancelled), real Supabase/Auth/advisors (Docker unavailable), actual OpenAI voice/billing (no configured credentials), physical mobile/audio/battery tests. No successful build, browser run, measured voice latency or ChatGPT parity is claimed. No checks were disabled.
+
+Launch remains blocked: verify hosting sideband lifetime and actual hangup, provide independent crash-safe expiry for production, run real provider/device tests, reconcile detailed billed usage and complete action adapters. A two-minute `after()` monitor is best-effort under function failure; production admission is rejected. Hosted preview requires explicit control readiness. No production merge or deployment performed. Research, identified text-path waits, architecture, provisional benchmarks and exact gates: [AETHELIOS_LIVE_EXECUTION.md](AETHELIOS_LIVE_EXECUTION.md).
+
 ## Lifestyle published-catalog fix — October 12, 2026
 
 The first Lifestyle release incorrectly required an unconfigured `legacy-reserve` collection for all discovery, product and cart paths. The correction uses actual Headless-published products by default, separates brand curation and preserves optional explicit whole-catalog restriction through SHOPIFY_LIFESTYLE_COLLECTION. Missing explicit collections fail closed. Scope, official sources and acceptance limitations: [LIFESTYLE_CATALOG_FIX.md](LIFESTYLE_CATALOG_FIX.md). Exact checks and release receipts are tracked in the fix PR; no invented stock, merchant publication or payment action.
@@ -883,3 +1001,31 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
+
+## Studio integration and single-database correction — October 12, 2026
+
+PR #99 consolidates the complete production-house, Narration, Footage, Delivery and premium Studio stack against main. Founder readiness checks are session-bound and read-only. Founder explicitly directs using the existing Gent Ascend Supabase only; the extra hosted staging requirement is withdrawn. Hosted Narration/Footage schema, provider credentials/budgets and live acceptance remain incomplete. No hosted migration, paid generation or production deployment was performed.
+
+At integration commit 87079f0: 481 unit/SQL tests, lint/types/build, 12 Studio browser checks and all 12 real-local-Supabase founder tests passed. Visual CI passed on retry after browser screenshot-capture errors. Broader application E2E is not represented as green. Current documentation/setup-copy correction changes no generation or authorization behavior.
+
+### 2026-10-12 — Lifestyle Phase Three: discovery continuity
+
+Implemented on the open purchase-confidence/atelier stack: URL-backed public/member catalog search, supported chapter/brand/availability/sort, Back/reload reconstruction, removable applied filters. Unsupported filters and mixed-currency price sorting recover safely. Existing browser selection remains distinct from purchases; no private identifiers or new tracking. Production unchanged. Local and hosted validation receipts are recorded in the Phase Three PR; live merchant checkout, policies and approved attribute/copy gates remain outstanding. See `docs/LIFESTYLE_DISCOVERY_CONTINUITY.md`.
+
+## Live canonical database pilot correction — October 12, 2026
+
+Founder rejected a separate Supabase prerequisite. The existing canonical database can support the account-scoped voice pilot; added explicit server-only canonical opt-in, exact URL/key checks and trusted founder-only admission before reservations/provider work. Production activation remains disabled. Existing isolated-target configuration still works; the separate founder application stays blocked. No new paid infrastructure, hosted seed/reset, schema or environment mutation.
+
+Read-only canonical inspection returned absent Live session/event/artifact/expiry tables. Existing OpenAI credentials do not install application schema or verify provider cleanup. Remaining activation work is the reviewed additive migration sequence and independent cleanup configuration, then actual founder/device/latency testing. Also corrected the disconnected workspace boundary-text assertion to the current truthful copy; all signed-out no-write assertions remain.
+
+## Live schema installed on canonical Gent — October 12, 2026
+
+Applied all seven reviewed Live migrations to the existing database, verified hosted ledger, RLS/direct-write/worker permissions and missing-identity denial without seeding accounts. Branch-specific canonical-pilot configuration is prepared; voice/expiry/readiness remain off. Full local suite: 83 files / 556 tests. Source f6516d98 passes connected Live, visual and Lifestyle jobs; broad Quality is still separate. No provider voice/device measurements or public activation. Receipts and remaining worker/scheduler setup: [hosted schema](AETHELIOS_LIVE_HOSTED_SCHEMA.md).
+
+## Live worker setup and admission check — October 12, 2026
+
+Generated/stored a branch-specific Preview scheduler Secret; OpenAI credentials and Production settings remain unchanged. Hosted admission and preflight share explicit cleanup-configuration requirements, rejecting missing worker authority, weak scheduler secret or disabled expiry before voice work. Corrected preflight's obsolete separate-database wording. Worker service-role credential cannot be retrieved by the connected tools; requested its placement in the existing Vercel Preview branch scope without exposing it. Real scheduling/provider termination and voice enablement remain pending. See [worker setup](AETHELIOS_LIVE_WORKER_SETUP.md).
+
+## Imperial Emerald Obsidian — development elevation, 2026-10-12
+
+Founder-approved shared material elevation on feat/imperial-emerald-obsidian-20261012. Current main and exact Studio #99, Lifestyle #102 and Live #90 source snapshots are preserved and integrated; no hosted changes. Shared palette/semantic materials, connected Work/Ecosystem planes, restrained Talk, emerald Studio controls, rich Lifestyle and supporting dialogs/account/public surfaces implemented. Local typecheck/lint pass; final tests/build/browser receipts pending. Local server/browser sandbox failures and inherited Mirror DNS prebuild failure are explicitly open; no production release or physical-device acceptance claimed. See IMPERIAL_EMERALD_OBSIDIAN.md.

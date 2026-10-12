@@ -53,7 +53,12 @@ test('the verified production application serves Obsidian and preserves public e
         );
         await expect(
           page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
-        ).toHaveCount(4);
+        ).toHaveCount(5);
+        await expect(
+          page
+            .getByRole('navigation', { name: 'Main navigation' })
+            .getByRole('link', { name: 'Lifestyle', exact: true }),
+        ).toBeVisible();
       }
       await page.screenshot({
         path: `test-results/production-${route.replaceAll('/', '-') || 'home'}-${viewport.width}.png`,

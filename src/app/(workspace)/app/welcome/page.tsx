@@ -1,11 +1,11 @@
-import { FirstSession } from '@/components/first-session';
-import { readWorldPriority } from '@/domains/daily/world-priority';
 import Link from 'next/link';
 import Image from 'next/image';
 import { InstallGuide } from '@/components/install-guide';
 import { currentAccess } from '@/domains/access/current';
 import { readPilot } from '@/domains/pilot/service';
 import { brand } from '@/platform/brand';
+import { FirstSession } from '@/components/first-session';
+import { readWorldPriority } from '@/domains/daily/world-priority';
 import { claimPilotAction, setPilotPassword, submitFeedbackAction } from './actions';
 import './welcome-entry.css';
 
@@ -81,6 +81,10 @@ export default async function Welcome({
             canTalk={access.has('aurelius.context')}
           />
           <InstallGuide />
+          <FirstSession
+            initial={priority?.mode === 'personal' ? priority : null}
+            canTalk={access.has('aurelius.context')}
+          />
           <details className="panel pilot-section">
             <summary>Save a password for future sign-in</summary>
             <p>
