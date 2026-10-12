@@ -127,7 +127,7 @@ for (const width of [360, 768, 1440]) {
       background: getComputedStyle(el).backgroundImage,
       overflow: document.documentElement.scrollWidth > innerWidth,
     }));
-    expect(material.foreground).toBe('rgb(230, 231, 226)');
+    expect(material.foreground).toBe('rgb(173, 181, 175)');
     expect(material.background).toBe('none');
     expect(material.overflow).toBe(false);
     await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(8, 13, 13)');

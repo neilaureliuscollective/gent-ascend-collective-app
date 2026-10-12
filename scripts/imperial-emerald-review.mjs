@@ -7,8 +7,12 @@ const captures = [
   'obsidian--app-work-1440.png',
   'obsidian--app-studio-1440.png',
   'emerald--lifestyle-1440.png',
-  'founder-office-720.png',
+  'founder-office-768.png',
   'obsidian---390.png',
+  'obsidian--app-aethelios-720.png',
+  'obsidian--app-ecosystem-1440.png',
+  'imperial-obsidian-studio-1440.png',
+  'emerald--lifestyle-390.png',
 ];
 let emitted = 0;
 for (const name of captures) {

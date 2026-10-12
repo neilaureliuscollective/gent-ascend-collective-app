@@ -738,7 +738,7 @@
 .public-world .collection-copy {padding:25px 26px 30px;}
 .public-world .object-halo {border-color:#c4912f30;box-shadow:none;}
 .public-world .object-plinth {background:linear-gradient(110deg, var(--aether-petrol), var(--aether-obsidian));}
-.public-world .world-button {position:relative;isolation:isolate;overflow:hidden;background:var(--metal-gold);border:1px solid #e5c28290;border-radius:6px;color:var(--aether-silver);box-shadow:0 5px 18px #0006,0 1px 0 #664015,inset 0 1px 0 #fff0be,inset 0 -2px 0 #754c2b70;}
+.public-world .world-button {position:relative;isolation:isolate;overflow:hidden;background:var(--metal-gold);border:1px solid #e5c28290;border-radius:6px;color:var(--io-environment);box-shadow:0 5px 18px #0006,0 1px 0 #664015,inset 0 1px 0 #fff0be,inset 0 -2px 0 #754c2b70;}
 .public-world .world-button:hover {background:var(--metal-gold);transform:translateY(-1px);}
 .public-world .world-button:before {content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,#fff6 49%,transparent 65%);transform:translateX(-120%);pointer-events:none;}
 .public-world:not([data-world-still='true']) .world-button:hover:before {

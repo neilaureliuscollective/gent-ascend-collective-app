@@ -1445,6 +1445,9 @@ html[data-material='solid']
   /* Keep the native focus ring outside the connected workspace visible. */
   padding: 4px;
 }
+.app-shell.imperial-workspace .company-job-list:empty {
+  display: none;
+}
 .app-shell.imperial-workspace .company-job {
   background: transparent;
   border: 0;

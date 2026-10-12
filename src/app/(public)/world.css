@@ -253,7 +253,7 @@
   justify-content: space-between;
   gap: 40px;
   background: #c4912f;
-  color: var(--aether-silver) !important;
+  color: var(--io-environment);
   font-size: 0.71rem;
   font-weight: 600;
   min-height: 54px;

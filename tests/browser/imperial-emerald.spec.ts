@@ -29,6 +29,12 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         route,
       ).toBe(true);
+      if (route === '/lifestyle') {
+        await expect(page.locator('.lifestyle-hero .world-button')).toHaveCSS(
+          'color',
+          'rgb(8, 13, 13)',
+        );
+      }
       await page.screenshot({
         path: `test-results/emerald-${route.replaceAll('/', '-')}-${width}.png`,
         fullPage: true,
