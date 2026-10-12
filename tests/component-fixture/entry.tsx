@@ -123,8 +123,8 @@ createRoot(document.getElementById('root')!).render(
           failed={params.get('error') === '1'}
           brand={mode === 'lifestyle-brand' ? 'Legacy Reserve' : undefined}
         />
-      ) : mode === 'lifestyle-cart' ? (
-        <CartPanel fullPage basePath="/app/collection" />
+      ) : mode === 'lifestyle-cart' || mode === 'lifestyle-drawer' ? (
+        <CartPanel fullPage={mode === 'lifestyle-cart'} basePath="/app/collection" />
       ) : mode === 'lifestyle-film' ? (
         <ProductExperience
           basePath="/app/collection"
