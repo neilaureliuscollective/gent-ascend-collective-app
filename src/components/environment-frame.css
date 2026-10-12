@@ -91,6 +91,10 @@
 }
 .environment-menu .navigation {
   position: static;
+  inset: auto;
+  transform: none;
+  box-shadow: none;
+  background: transparent;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   width: auto;
@@ -105,6 +109,7 @@
 }
 .environment-menu .topbar {
   position: static;
+  margin: 0;
   height: auto;
   display: block;
   padding: 16px 0;
