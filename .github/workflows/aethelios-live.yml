@@ -1,0 +1,76 @@
+name: Aethelios Live integration
+on:
+  push:
+    branches: [integration/aethelios-live-20261012]
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/aethelios-live.yml'
+      - 'src/domains/live/**'
+      - 'src/domains/artifacts/**'
+      - 'src/components/live/**'
+      - 'src/app/api/aethelios/**'
+      - 'tests/**'
+      - 'supabase/migrations/**'
+permissions:
+  contents: read
+concurrency:
+  group: live-integration-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-interactions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified Oct 12
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4, verified Oct 12
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:ledger
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - name: Verify Live fixtures and preserved Obsidian surfaces
+        run: >-
+          npx playwright test
+          tests/browser/live-voice.spec.ts
+          tests/browser/live-artifacts.spec.ts
+          tests/browser/live-visuals.spec.ts
+          tests/browser/live-evidence.spec.ts
+          tests/browser/live-coworker.spec.ts
+          tests/browser/live-reviewed-action.spec.ts
+          tests/browser/release-readiness.spec.ts
+          tests/browser/obsidian-intelligence.spec.ts
+          tests/browser/talk-layout.spec.ts
+          --workers=2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4, verified Oct 12
+        if: always()
+        with:
+          name: live-integration-browser-evidence
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
+      # These are synthetic transport/tool fixtures, not paid provider, Auth or device acceptance.
+      # No deployment, provider secrets, production promotion or migration writes in this job.
+  local-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx supabase start
+      - run: npx supabase db reset --local
+      - run: node scripts/dev-setup.mjs --running
+      - run: npx supabase db query --local --file tests/fixtures/live-auth-grant.sql
+      - run: npm run test:live:auth
+      - if: always()
+        run: npx supabase stop --no-backup

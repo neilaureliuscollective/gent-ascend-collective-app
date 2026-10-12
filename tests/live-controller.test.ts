@@ -1,0 +1,207 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LiveController } from '@/domains/live/controller';
+let stop: ReturnType<typeof vi.fn>, fetchMock: ReturnType<typeof vi.fn>;
+class FakePC {
+  static instances: FakePC[] = [];
+  connectionState = 'new';
+  localDescription = { sdp: 'v=0\r\na=synthetic-offer' };
+  channel = {
+    readyState: 'open',
+    send: vi.fn(),
+    close: vi.fn(),
+    onmessage: null as null | ((event: { data: string }) => void),
+    onopen: null as null | (() => void),
+    onclose: null as null | (() => void),
+  };
+  ontrack = null;
+  onconnectionstatechange = null;
+  constructor() {
+    FakePC.instances.push(this);
+  }
+  addTrack() {}
+  async createOffer() {
+    return { type: 'offer', sdp: this.localDescription.sdp };
+  }
+  async setLocalDescription() {}
+  async setRemoteDescription() {
+    this.channel.onopen?.();
+  }
+  createDataChannel() {
+    return this.channel;
+  }
+  close = vi.fn();
+  async getStats() {
+    return new Map();
+  }
+  event(value: unknown) {
+    this.channel.onmessage?.({ data: JSON.stringify(value) });
+  }
+}
+beforeEach(() => {
+  FakePC.instances = [];
+  stop = vi.fn();
+  const tracks = [{ enabled: true, stop, addEventListener: vi.fn() }];
+  vi.stubGlobal('window', { isSecureContext: true });
+  vi.stubGlobal('navigator', {
+    mediaDevices: {
+      getUserMedia: vi
+        .fn()
+        .mockResolvedValue({ getTracks: () => tracks, getAudioTracks: () => tracks }),
+    },
+  });
+  vi.stubGlobal('document', {
+    createElement: () => ({
+      autoplay: false,
+      volume: 1,
+      setAttribute: vi.fn(),
+      pause: vi.fn(),
+      remove: vi.fn(),
+      srcObject: null,
+      play: vi.fn().mockResolvedValue(undefined),
+    }),
+  });
+  vi.stubGlobal('RTCPeerConnection', FakePC);
+  fetchMock = vi.fn().mockImplementation(async (_url, init) =>
+    Response.json(
+      init.method === 'DELETE'
+        ? { ended: true }
+        : {
+            answer: 'v=0\r\na=synthetic-answer',
+            expiresAt: new Date(Date.now() + 120000).toISOString(),
+          },
+    ),
+  );
+  vi.stubGlobal('fetch', fetchMock);
+});
+afterEach(() => vi.unstubAllGlobals());
+const conversation = 'ed000000-0000-4000-8000-000000000001';
+it('exports content-free diagnostics with trusted configuration and preserves them after End', async () => {
+  fetchMock.mockImplementation(async (_url, init) =>
+    Response.json(
+      init.method === 'DELETE'
+        ? { ended: true }
+        : {
+            answer: 'v=0\r\na=synthetic-answer',
+            expiresAt: new Date(Date.now() + 120000).toISOString(),
+            model: 'gpt-realtime',
+          },
+    ),
+  );
+  const controller = new LiveController();
+  await controller.start(conversation, false, 'marin');
+  FakePC.instances
+    .at(-1)!
+    .event({
+      type: 'conversation.item.input_audio_transcription.completed',
+      item_id: 'private-id',
+      transcript: 'PRIVATE TRANSCRIPT',
+    });
+  const first = await controller.exportDiagnostics();
+  expect(first.voice).toBe('marin');
+  expect(first.model).toBe('gpt-realtime');
+  expect(first.metrics.connection_event_ms?.count).toBe(1);
+  expect(JSON.stringify(first)).not.toMatch(/private-id|PRIVATE TRANSCRIPT|ed000000/);
+  await controller.end();
+  const ended = await controller.exportDiagnostics();
+  expect(ended.metrics.connection_event_ms?.count).toBe(1);
+  expect(ended.durationMs).toBe((await controller.exportDiagnostics()).durationMs);
+});
+describe('shared voice transport lifecycle', () => {
+  it('keeps one transport across presentation modes and releases tracks on end', async () => {
+    const controller = new LiveController();
+    await controller.start(conversation, false);
+    controller.mode('compact');
+    controller.mode('immersive');
+    expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
+    expect(controller.getSnapshot().phase).toBe('listening');
+    await controller.end();
+    expect(stop).toHaveBeenCalledOnce();
+    expect(FakePC.instances.at(-1)!.close).toHaveBeenCalledOnce();
+  });
+  it('clears buffered playback without cancelling a response whose generation has finished', async () => {
+    const controller = new LiveController();
+    await controller.start(conversation, false);
+    FakePC.instances.at(-1)!.event({ type: 'response.created', response: { id: 'r' } });
+    FakePC.instances
+      .at(-1)!
+      .event({ type: 'response.done', response: { id: 'r', status: 'completed' } });
+    FakePC.instances.at(-1)!.event({ type: 'output_audio_buffer.started', response_id: 'r' });
+    controller.interrupt();
+    const events = FakePC.instances
+      .at(-1)!
+      .channel.send.mock.calls.map((call) => JSON.parse(call[0]));
+    expect(events).toEqual([{ type: 'output_audio_buffer.clear' }]);
+    await controller.end();
+  });
+  it('does not let an old response completion change the current generation state', async () => {
+    const controller = new LiveController();
+    await controller.start(conversation, false);
+    FakePC.instances.at(-1)!.event({ type: 'response.created', response: { id: 'old' } });
+    FakePC.instances.at(-1)!.event({ type: 'response.created', response: { id: 'current' } });
+    FakePC.instances
+      .at(-1)!
+      .event({ type: 'response.done', response: { id: 'old', status: 'cancelled' } });
+    controller.interrupt();
+    expect(
+      FakePC.instances.at(-1)!.channel.send.mock.calls.map((call) => JSON.parse(call[0])),
+    ).toEqual([{ type: 'response.cancel' }]);
+    await controller.end();
+  });
+  it('fences a late SDP answer after cancellation and revokes the late admission', async () => {
+    let resolve!: (value: Response) => void;
+    fetchMock.mockImplementation(async (_url, init) =>
+      init.method === 'POST'
+        ? new Promise<Response>((r) => {
+            resolve = r;
+          })
+        : Response.json({ ended: true }),
+    );
+    const controller = new LiveController();
+    const starting = controller.start(conversation, false);
+    await vi.waitFor(() => expect(resolve).toBeTypeOf('function'));
+    await controller.end();
+    resolve(
+      Response.json({
+        answer: 'v=0\r\na=late',
+        expiresAt: new Date(Date.now() + 120000).toISOString(),
+      }),
+    );
+    await starting;
+    expect(controller.getSnapshot().phase).toBe('ended');
+    expect(stop).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls.filter((call) => call[1].method === 'DELETE')).toHaveLength(2);
+  });
+  it('blocks another admission while server cleanup is uncertain', async () => {
+    const controller = new LiveController();
+    await controller.start(conversation, false);
+    fetchMock.mockImplementation(async () =>
+      Response.json({ error: 'Unavailable' }, { status: 503 }),
+    );
+    await controller.end();
+    await controller.start(conversation, false);
+    expect(controller.getSnapshot().cleanupPending).toBe(true);
+    expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
+  });
+});
+
+it('preserves owned visual selection through minimize/end and clears it for a different conversation', async () => {
+  const controller = new LiveController();
+  controller.bindConversation(conversation);
+  const workspace = {
+    artifacts: [],
+    selectedId: 'owned-visual',
+    selectedPartId: 'tools',
+    scenarioPercent: 10,
+    projects: [],
+  };
+  fetchMock.mockResolvedValue(Response.json(workspace));
+  await controller.refreshArtifacts();
+  controller.mode('compact');
+  expect(controller.getSnapshot().artifactWorkspace).toEqual(workspace);
+  await controller.end();
+  expect(controller.getSnapshot().artifactWorkspace).toEqual(workspace);
+  controller.mode('immersive');
+  expect(controller.getSnapshot().artifactWorkspace.selectedPartId).toBe('tools');
+  controller.bindConversation('00000000-0000-4000-8000-000000000098');
+  expect(controller.getSnapshot().artifactWorkspace.selectedId).toBeNull();
+});

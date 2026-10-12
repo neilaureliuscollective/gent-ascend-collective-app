@@ -34,20 +34,26 @@ export async function studioWorkspace(projectId?:string){
  return {owner:person.id,projects:projects.data??[],projectId:current??null,versions:versions.data??[],references:references.data??[],scenes:scenes.data??[],finishes:finishes.data??[],configured:Boolean(process.env.OPENAI_API_KEY)};
 }
 import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';
-export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>){
- try{return await generateImage(imageDirection(prompt,brief??{purpose:'',audience:'',direction:'',palette:'',avoid:''}),model,size,reference);}catch(error){
+export async function renderImage(prompt:string,model:'gpt-image-2.5-flare'|'gpt-image-2.5-sunburst',size:string,reference?:{bytes:Uint8Array;type:string},brief?:z.infer<typeof projectBrief>,onPartial?:(bytes:Uint8Array,index:number)=>Promise<void>){
+ try{return await generateImage(imageDirection(prompt,brief??{purpose:'',audience:'',direction:'',palette:'',avoid:''}),model,size,reference,onPartial);}catch(error){
   if(error instanceof ImageGenerationError)throw new IntelligenceError(error.message,error.status);
   throw error;
  }
 }
-export async function generateStudio(input:z.infer<typeof studioInput>,companyId?:string){
+export async function generateStudio(input:z.infer<typeof studioInput>,companyId?:string,alreadyReserved=false,onPartial?:(bytes:Uint8Array,index:number)=>Promise<void>){
  await verifyStudioProject(input.projectId,companyId);
  const {client,person}=await studioSession();
  if(!(await currentAccess()).has('studio.create')) throw new IntelligenceError('Studio creation requires Signature, Reserve, or existing invitation access.',403);
  const model=input.mode==='fast'?'gpt-image-2.5-flare':'gpt-image-2.5-sunburst';
- const begun=await client.rpc('ai_studio_begin',{p_id:input.id,p_project:input.projectId,p_parent:input.parentId,p_reference:input.referenceId,p_prompt:input.prompt,p_model:model,p_size:input.size});
- if(begun.error) throw new IntelligenceError('Project, reference, or generation limit could not be verified.',begun.error.code==='P0001'?429:409);
- if(!begun.data) throw new IntelligenceError('This request was already submitted. Refresh the project.',409);
+ if(alreadyReserved){
+  const reserved=await client.from('ai_studio_versions').select('*').eq('id',input.id).eq('person_id',person.id).single();
+  const row=reserved.data;
+  if(reserved.error || !row || row.status!=='pending' || row.project_id!==input.projectId || row.parent_id!==input.parentId || row.reference_id!==input.referenceId || row.prompt!==input.prompt || row.model!==model || row.image_size!==input.size) throw new IntelligenceError('Reserved image operation does not match.',409);
+ }else{
+  const begun=await client.rpc('ai_studio_begin',{p_id:input.id,p_project:input.projectId,p_parent:input.parentId,p_reference:input.referenceId,p_prompt:input.prompt,p_model:model,p_size:input.size});
+  if(begun.error) throw new IntelligenceError('Project, reference, or generation limit could not be verified.',begun.error.code==='P0001'?429:409);
+  if(!begun.data) throw new IntelligenceError('This request was already submitted. Refresh the project.',409);
+ }
  let key:string|null=null;
  try{
   let reference: {bytes:Uint8Array;type:string}|undefined;
@@ -62,7 +68,7 @@ export async function generateStudio(input:z.infer<typeof studioInput>,companyId
   const project=await client.from('ai_studio_projects').select('brief').eq('person_id',person.id).eq('id',input.projectId).single();
   if(project.error||!project.data) throw new IntelligenceError('Project brief could not be loaded.',503);
   const brief=projectBrief.safeParse(project.data.brief);
-  const image=await renderImage(input.prompt,model,input.size,reference,brief.success?brief.data:undefined);
+  const image=await renderImage(input.prompt,model,input.size,reference,brief.success?brief.data:undefined,onPartial);
   key=`${(await client.auth.getUser()).data.user?.id}/${input.projectId}/${input.id}.png`;
   if(key.startsWith('undefined/')) throw new IntelligenceError('Session expired.',401);
   const upload=await client.storage.from(bucket).upload(key,image,{contentType:'image/png',upsert:false,cacheControl:'private, no-store'});
