@@ -22,6 +22,7 @@ export async function createGPTLive(
     body: JSON.stringify({ session: liveStartup(config), transport: { type: 'webrtc', sdp } }),
     signal: AbortSignal.timeout(20000),
     cache: 'no-store',
+    redirect: 'error',
   });
   if (!response.ok) throw new Error('GPT-Live admission unavailable');
   const body: unknown = await response.json();
@@ -48,6 +49,7 @@ export async function hangupGPTLive(key: string, sessionId: string, request: typ
       headers: { Authorization: 'Bearer ' + key },
       signal: AbortSignal.timeout(10000),
       cache: 'no-store',
+      redirect: 'error',
     },
   );
   if (!response.ok && response.status !== 404 && response.status !== 410)

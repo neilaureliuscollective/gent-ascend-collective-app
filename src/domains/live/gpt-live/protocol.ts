@@ -34,6 +34,7 @@ export class OpenAILiveProtocol {
   seconds = 0;
   started = false;
   finalized = false;
+  closing = false;
   private seen = new Set<string>();
   private delegated = new Set<string>();
   constructor(private readonly expectedSessionId?: string) {}
@@ -50,12 +51,19 @@ export class OpenAILiveProtocol {
     if (this.seen.has(event.event_id)) return null;
     if (this.seen.size >= 4096) throw new Error('Live event budget exceeded');
     this.seen.add(event.event_id);
+    if (this.finalized) return null;
     if (event.type === 'session.started') {
       if (this.expectedSessionId && event.session?.id !== this.expectedSessionId) return null;
       this.started = true;
       return null;
     }
     if (event.type === 'session.usage.updated' || event.type === 'session.closed') {
+      if (
+        event.session?.id !== undefined &&
+        this.expectedSessionId &&
+        event.session.id !== this.expectedSessionId
+      )
+        return null;
       const seconds = time.safeParse(event.usage?.seconds);
       if (seconds.success) this.seconds = Math.max(this.seconds, seconds.data);
       if (
@@ -79,6 +87,7 @@ export class OpenAILiveProtocol {
       this.fragments = this.fragments.slice(-256);
       return null;
     }
+    if (this.closing) return null;
     const request = delegation.safeParse(raw);
     if (!request.success || this.delegated.has(request.data.delegation.id)) return null;
     this.delegated.add(request.data.delegation.id);
@@ -90,10 +99,13 @@ export class OpenAILiveProtocol {
     };
   }
   closeCommand() {
+    if (this.closing || this.finalized) throw new Error('Live session is already closing');
+    this.closing = true;
     return { type: 'session.close', event_id: crypto.randomUUID() };
   }
   update(id: string | null, content: string, speak = false) {
-    if (!this.started || this.finalized) throw new Error('Live session is not ready');
+    if (!this.started || this.closing || this.finalized)
+      throw new Error('Live session is not ready');
     if (new TextEncoder().encode(content).length > 1200)
       throw new Error('Live context update exceeds conservative token budget');
     return {
