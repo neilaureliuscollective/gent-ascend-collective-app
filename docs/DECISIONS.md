@@ -1,3 +1,7 @@
+## 2026-10-12 — Lifestyle product atelier
+
+Use the existing gallery and approved Shopify media for user-controlled inspection. Add explicit sequencing and fit/2× detail zoom; load films only on selection and only with approved captions/transcript. Keep purchase primary and sensory education progressively disclosed. Reuse server projections and Obsidian tokens without new rendering dependencies. Research and activation boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). No measured conversion uplift or merchant activation is claimed.
+
 # Imperial Steel homepage — 2026-10-09
 
 Translate the founder's supplied material reference into HTML/CSS, retaining current product messaging and real destinations. Add brushed steel, carbon and stone tokens instead of replacing the approved workspace palette. Use static directional light, thin metallic seams, an aria-hidden CSS presence, one principal gold action, and generous cream reading space. Existing SVG icons avoid font-dependent arrows. No new renderer or library. See [IMPERIAL_STEEL.md](IMPERIAL_STEEL.md) for verified project/deployment identity, available official research sources, inaccessible external references, material roles and release boundaries. Founder authorized production release for this phase; preserve pending creation branches separately.

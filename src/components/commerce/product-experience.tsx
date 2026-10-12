@@ -2,7 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import { launchPurchaseAllowed, launchState, launchLabel } from '@/domains/commerce/launch-policy';
-import { readProductStory, shopifyMediaUrl } from '@/domains/commerce/product-story';
+import { readProductStory } from '@/domains/commerce/product-story';
+import { approvedProductMedia } from '@/domains/commerce/product-media';
 import { productBrand } from '@/domains/commerce/lifestyle';
 import { previewProduct } from '@/domains/catalog/preview';
 import { vitalisDevelopmentHighlights } from '@/domains/catalog/vitalis-development';
@@ -56,17 +57,7 @@ export function ProductExperience({
     : product?.featuredImage
       ? [product.featuredImage]
       : [];
-  const model = story?.mediaApproved
-    ? product?.media?.nodes
-        .flatMap((media) => media.sources ?? [])
-        .find(
-          (source) =>
-            source.format.toLowerCase() === 'glb' &&
-            source.filesize > 0 &&
-            source.filesize <= 10000000 &&
-            shopifyMediaUrl(source.url),
-        )?.url
-    : undefined;
+  const { model, film } = approvedProductMedia(product, story);
   const beard = /beard|vitalis/i.test(`${title} ${kind}`);
   const faq = story?.faq ?? [];
   const developmentBlend = !product && handle === 'vitalis';
@@ -77,7 +68,14 @@ export function ProductExperience({
       <ProductView handle={handle} />
       <section className="reserve-product-intro">
         <div id="atelier" className="reserve-product-visual">
-          <ProductGallery title={title} kind={kind} brand={brand} images={images} model={model} />
+          <ProductGallery
+            title={title}
+            kind={kind}
+            brand={brand}
+            images={images}
+            model={model}
+            film={film}
+          />
         </div>
         <div className="reserve-product-copy">
           <Link href={basePath} className="world-text-link">
@@ -113,6 +111,35 @@ export function ProductExperience({
             <>
               <ProductPurchase product={product} basePath={basePath} />
               <PurchaseTerms story={story} policies={policies} />
+              {(story?.texture || story?.scent.length || story?.highlights.length) && (
+                <details className="atelier-glance">
+                  <summary>Product at a glance</summary>
+                  {(story?.texture || story?.scent.length || story?.highlights.length) && (
+                    <dl className="atelier-decision-facts" aria-label="Approved product details">
+                      {story.texture && (
+                        <div>
+                          <dt>Texture & finish</dt>
+                          <dd>{story.texture}</dd>
+                        </div>
+                      )}
+                      {story.scent.length > 0 && (
+                        <div>
+                          <dt>Scent</dt>
+                          <dd>
+                            {story.scent.map((note) => `${note.label}: ${note.value}`).join(' · ')}
+                          </dd>
+                        </div>
+                      )}
+                      {story.highlights.slice(0, 3).map((item) => (
+                        <div key={item.name}>
+                          <dt>{item.name}</dt>
+                          <dd>{item.role}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </details>
+              )}
             </>
           ) : (
             <div className="reserve-preview-release">
@@ -341,29 +368,19 @@ export function ProductExperience({
       <section className="reserve-membership-bridge">
         <span className="world-kicker">AETHELIOS / Beyond the shelf</span>
         <h2>
-          The product.
+          Your collection.
           <br />
-          <em>The practice behind it.</em>
+          <em>Your daily practice.</em>
         </h2>
         <p>
-          Your personal workspace brings direction, daily actions, progress, and Aethelios together.
-          Member product offers are being prepared; no product discount is promised with this
-          purchase.
+          Keep saved interests in your Cabinet and connect products to a routine you choose. Saving
+          is separate from purchasing.
         </p>
-        <div className="world-actions">
-          <Link
-            href={basePath === '/shop' ? '/membership' : '/app/membership'}
-            className="world-button"
-          >
-            Explore membership ↗
-          </Link>
-          <Link href={basePath === '/shop' ? '/join' : '/app/you'} className="world-text-link">
-            Explore your account ↗
-          </Link>
-        </div>
+        <Link href="/app/collection/cabinet" className="world-text-link">
+          Open your Cabinet →
+        </Link>
         <small>
-          Creating an account does not subscribe you or charge you. Product purchases do not require
-          a paid membership.
+          Sign in to save across devices. Product purchases do not require a paid membership.
         </small>
       </section>
       <section className="reserve-editorial-section reserve-faq">

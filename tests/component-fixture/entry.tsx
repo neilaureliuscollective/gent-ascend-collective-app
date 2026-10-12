@@ -125,6 +125,42 @@ createRoot(document.getElementById('root')!).render(
         />
       ) : mode === 'lifestyle-cart' ? (
         <CartPanel fullPage basePath="/app/collection" />
+      ) : mode === 'lifestyle-film' ? (
+        <ProductExperience
+          basePath="/app/collection"
+          product={{
+            ...commerceFixture,
+            story: {
+              value: JSON.stringify({
+                version: 1,
+                status: 'approved',
+                mediaApproved: params.get('approved') !== 'false',
+                videoTranscript: 'Synthetic film transcript. No product claims.',
+                videoCaptions: {
+                  url: 'https://cdn.shopify.com/fixture/captions.vtt',
+                  language: 'en',
+                  label: 'English',
+                },
+              }),
+            },
+            media: {
+              nodes: [
+                {
+                  mediaContentType: 'VIDEO',
+                  videoSources: [
+                    {
+                      url: 'https://cdn.shopify.com/fixture/film.mp4',
+                      format: 'mp4',
+                      mimeType: 'video/mp4',
+                      width: 1280,
+                      height: 720,
+                    },
+                  ],
+                },
+              ],
+            },
+          }}
+        />
       ) : (
         <ProductExperience
           product={

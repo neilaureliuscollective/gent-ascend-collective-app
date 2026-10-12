@@ -9,6 +9,15 @@ export const productStorySchema = z
     version: z.literal(1),
     status: z.literal('approved'),
     mediaApproved: z.boolean().default(false),
+    videoTranscript: z.string().trim().min(1).max(6000).optional(),
+    videoCaptions: z
+      .object({
+        url: z.url().max(1000).refine(shopifyMediaUrl),
+        language: z.string().regex(/^[a-z]{2}(?:-[A-Za-z]{2,4})?$/),
+        label: short,
+      })
+      .strict()
+      .optional(),
     size: short.optional(),
     fit: copy.optional(),
     benefit: copy.optional(),
