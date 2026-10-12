@@ -32,6 +32,7 @@ describe('Public Aethelios readable materials', () => {
       palette['emerald-active'],
     ]) {
       expect(contrast(palette.text, background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(palette['featured-secondary'], background)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(palette['gold-light'], background)).toBeGreaterThanOrEqual(3);
     }
     for (const background of [palette['emerald-shadow'], palette['emerald-imperial']]) {

@@ -6,7 +6,7 @@ for (const width of [344, 720, 1440, 2560]) {
     await page.goto('/app/aethelios');
     await expect(page.locator('.imperial-workspace')).toHaveCSS(
       'background-color',
-      'rgb(8, 13, 13)',
+      'rgb(7, 11, 10)',
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -26,8 +26,8 @@ for (const width of [344, 720, 1440, 2560]) {
 }
 test('Imperial manifest and official installed icon variants resolve', async ({ request }) => {
   const manifest = await (await request.get('/manifest.webmanifest')).json();
-  expect(manifest.theme_color).toBe('#080D0D');
-  expect(manifest.background_color).toBe('#080D0D');
+  expect(manifest.theme_color).toBe('#070B0A');
+  expect(manifest.background_color).toBe('#070B0A');
   for (const icon of manifest.icons) {
     expect(icon.src).toContain('aethelios-imperial-obsidian-20261010');
     expect((await request.get(icon.src)).ok()).toBe(true);

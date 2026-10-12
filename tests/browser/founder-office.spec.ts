@@ -8,6 +8,9 @@ for (const width of [320, 344, 768, 900, 1440, 2560]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('http://127.0.0.1:3102/?mode=founder-office');
     await expect(page.getByRole('heading', { name: 'Synthetic Founder’s office.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What needs your attention?' })).toBeVisible();
+    await expect(page.locator('.founder-attention-group')).toHaveCount(4);
+    await expect(page.getByText('No pending company approval requests in this snapshot.')).toBeVisible();
     await page
       .getByLabel('What needs to happen?')
       .fill('Prepare a useful synthetic business proposal.');

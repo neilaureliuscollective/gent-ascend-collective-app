@@ -31,7 +31,7 @@ import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
-import { OrbPresentation } from '../visual/orb-presentation';
+import { IntelligenceOrb } from '../public/intelligence-orb';
 import { routeCapability } from '@/domains/intelligence/capabilities';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
@@ -553,7 +553,11 @@ export function AureliusWorkspace({
       </div>
     );
   return (
-    <div className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''}`}>
+    <div
+      className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''} ${
+        !data.turns.length && !busy ? 'is-new-conversation' : 'is-active-conversation'
+      }`}
+    >
       <div className={`aurelius-workspace ${compact ? 'compact' : ''}`}>
         <div className="talk-toolbar imperial-control-surface">
           <LiveVoiceEntry
@@ -852,17 +856,9 @@ export function AureliusWorkspace({
                       }
                     />
                   ) : (
-                    <OrbPresentation
-                      state={
-                        busy
-                          ? 'working'
-                          : needsReload
-                            ? 'stopped'
-                            : preview || !data.configured
-                              ? 'disconnected'
-                              : 'ready'
-                      }
-                    />
+                    <div className="talk-welcome-orb" aria-hidden="true">
+                      <IntelligenceOrb active={false} deepGreen />
+                    </div>
                   )}
 
                   <div>
@@ -880,8 +876,7 @@ export function AureliusWorkspace({
                   </div>
                 </div>
                 <p>
-                  Tell me what you’re working on and what a useful result looks like. Add a deadline
-                  or constraint if it matters. We’ll start there.
+                  Share an idea, a question or the work ahead. We’ll find the next useful step.
                 </p>
                 <div className="conversation-starters">
                   {[
