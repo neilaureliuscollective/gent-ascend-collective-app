@@ -1,0 +1,295 @@
+.identity-presence.im-presence {
+  width: min(320px, 70vw);
+}
+.voice-note {
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.6;
+  color: #b9c9c1;
+}
+.construction {
+  margin: 40px 0;
+  max-width: 760px;
+  line-height: 1.7;
+  color: #b9c9c1;
+}
+.pose-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+.pose-board article {
+  text-align: center;
+  border: 1px solid #174438;
+  border-radius: 16px;
+  padding: 12px;
+  font-size: 12px;
+}
+.pose-board .identity-presence {
+  width: 100%;
+  max-width: 140px;
+  margin: auto;
+}
+.identity-presence {
+  width: 144px;
+  flex-shrink: 0;
+  --cycle: 4s;
+  --gain: 0.65;
+  --angle: 0deg;
+  --spread: 1;
+  --focus: 0.7;
+}
+.identity-compact {
+  width: 48px;
+}
+.identity-presence svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.identity-flow {
+  transform-origin: 120px 120px;
+  opacity: var(--gain);
+  transform: rotate(var(--angle)) scale(var(--spread));
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+.identity-light {
+  opacity: var(--gain);
+  transform-origin: 120px 120px;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+.identity-focus {
+  transform-origin: 120px 120px;
+  opacity: var(--focus);
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+.identity-aperture {
+  opacity: 0.5;
+  transform-origin: 120px 120px;
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+.identity-envelope {
+  opacity: 0;
+  transform-origin: 120px 120px;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+.identity-boundary {
+  opacity: 0.25;
+}
+.identity-core .identity-body {
+  opacity: 0.6;
+}
+.identity-core .identity-aperture {
+  opacity: 0.2;
+}
+.identity-presence[data-phase='ready'] {
+  --gain: 0.32;
+  --focus: 0.4;
+}
+.identity-presence[data-phase='loading'] {
+  --gain: 0.45;
+  --cycle: 6s;
+  --angle: -8deg;
+}
+.identity-presence[data-phase='connecting'] {
+  --spread: 0.8;
+  --focus: 0.55;
+  --angle: 12deg;
+}
+.identity-presence[data-phase='waiting'] {
+  --gain: 0.5;
+  --spread: 0.92;
+  --cycle: 5s;
+}
+.identity-presence[data-phase='thinking'] {
+  --gain: 0.8;
+  --spread: 0.72;
+  --angle: 18deg;
+}
+.identity-presence[data-phase='searching'] {
+  --gain: 0.7;
+  --angle: -24deg;
+  --spread: 1.08;
+}
+.identity-presence[data-phase='researching'] {
+  --gain: 0.82;
+  --angle: 24deg;
+  --spread: 0.88;
+}
+.identity-presence[data-phase='generating'] {
+  --gain: 0.95;
+  --spread: 1.15;
+  --focus: 1;
+}
+.identity-presence[data-phase='processing'] {
+  --gain: 0.7;
+  --angle: 8deg;
+  --cycle: 3s;
+}
+.identity-presence[data-phase='saving'] {
+  --gain: 0.45;
+  --spread: 0.86;
+  --focus: 0.8;
+}
+.identity-presence[data-phase='complete'] {
+  --gain: 0.6;
+  --focus: 1;
+}
+.identity-presence[data-phase='failed'] {
+  --gain: 0.18;
+  --focus: 0.2;
+  --spread: 0.85;
+}
+.identity-presence[data-phase='cancelled'] {
+  --gain: 0.12;
+  --focus: 0.15;
+  --spread: 0.65;
+}
+.identity-presence[data-phase='listening'] .identity-envelope,
+.identity-presence[data-phase='speaking'] .identity-envelope {
+  opacity: calc(0.2 + var(--level) * 0.65);
+}
+.identity-presence[data-phase='listening'] .identity-envelope {
+  transform: scale(calc(1 - var(--level) * 0.12));
+}
+.identity-presence[data-phase='speaking'] .identity-envelope {
+  transform: scale(calc(1 + var(--level) * 0.12));
+}
+.identity-presence[data-phase='listening'] .identity-light,
+.identity-presence[data-phase='speaking'] .identity-light {
+  opacity: calc(0.35 + var(--level) * 0.55);
+}
+.identity-presence:not([data-still='true']):is(
+    [data-phase='loading'],
+    [data-phase='waiting'],
+    [data-phase='connecting'],
+    [data-phase='thinking'],
+    [data-phase='researching'],
+    [data-phase='processing'],
+    [data-phase='saving']
+  )
+  .identity-light {
+  animation: identity-gather var(--cycle) ease-in-out infinite;
+}
+.identity-presence:not([data-still='true'])[data-phase='searching'] .identity-flow {
+  animation: identity-inspect 4s ease-in-out infinite;
+}
+.identity-presence:not([data-still='true'])[data-phase='generating'] .identity-light {
+  animation: identity-direct 3s ease-in-out infinite;
+}
+.identity-presence:not([data-still='true'])[data-phase='complete'] .identity-focus {
+  animation: identity-resolve 440ms ease-out 1;
+}
+.identity-presence[data-phase='saving'] .identity-aperture {
+  opacity: 0.9;
+  transform: scale(0.94);
+}
+.identity-presence[data-phase='complete'] .identity-aperture {
+  opacity: 1;
+}
+.identity-presence:is([data-phase='failed'], [data-phase='cancelled']) .identity-aperture {
+  opacity: 0.12;
+}
+@keyframes identity-gather {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: calc(var(--gain) * 0.7);
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: var(--gain);
+  }
+}
+@keyframes identity-inspect {
+  0%,
+  100% {
+    transform: rotate(-24deg) scale(1.08);
+  }
+  50% {
+    transform: rotate(0deg) scale(0.95);
+  }
+}
+@keyframes identity-direct {
+  0%,
+  100% {
+    transform: translate(-3px, 3px) scale(0.94);
+  }
+  50% {
+    transform: translate(5px, -5px) scale(1.12);
+  }
+}
+@keyframes identity-resolve {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.5;
+  }
+  55% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.identity-presence[data-still='true'] * {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .identity-presence * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.identity-presence[data-paused='true'] * {
+  animation-play-state: paused !important;
+}
+.identity-presence.identity-compact {
+  width: 40px;
+}
+@media (forced-colors: active) {
+  .identity-presence svg * {
+    fill: transparent;
+    stroke: CanvasText;
+  }
+  .identity-presence .identity-focus path {
+    fill: Highlight;
+    stroke: Highlight;
+  }
+  .identity-light {
+    display: none;
+  }
+}
+
+.identity-presence.im-presence {
+  height: auto;
+  aspect-ratio: 1;
+}
+.live-orb > .identity-presence.im-presence {
+  width: 100%;
+  height: 100%;
+}
+/* Operational marks stay near the initiating controls during long edits. */
+.studio-main > .im-activity,
+.company-deliverable > .im-activity {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 12px;
+  background: var(--io-reading, #080d0d);
+  border-bottom: 1px solid var(--io-divider, #e6e7e21f);
+}

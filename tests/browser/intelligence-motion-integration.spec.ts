@@ -62,9 +62,9 @@ for (const width of [344, 768, 1440]) {
     await expect(response).toBeInViewport({ ratio: 0.9 });
     await expect(response).toHaveAttribute('data-phase', 'waiting');
     await expect(response.locator('.im-status')).toHaveText('Waiting for response');
-    const ribbon = response.locator('.im-ribbon-one');
+    const ribbon = response.locator('.identity-light');
     await expect(response.locator('.im-presence')).toHaveAttribute('data-animate', 'true');
-    await expect(ribbon).toHaveCSS('animation-name', 'im-weave');
+    await expect(ribbon).toHaveCSS('animation-name', 'identity-gather');
     const bounds = await response.locator('.im-presence').boundingBox();
     expect(bounds!.width).toBeGreaterThanOrEqual(100);
     expect(bounds!.height).toBeGreaterThanOrEqual(70);
@@ -99,8 +99,8 @@ test('response feedback stays visible and readable with reduced motion', async (
   const response = page.locator('.assistant-message .im-response');
   await expect(response).toBeInViewport();
   await expect(response.locator('.im-status')).toHaveText('Waiting for response');
-  await expect(response.locator('.im-ribbon-one')).toHaveCSS('animation-name', 'none');
-  await expect(response.locator('.im-ribbon-one')).toBeVisible();
+  await expect(response.locator('.identity-light')).toHaveCSS('animation-name', 'none');
+  await expect(response.locator('.identity-light')).toBeVisible();
 });
 
 test('feedback appears before response headers and never requires opening the orb', async ({

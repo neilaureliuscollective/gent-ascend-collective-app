@@ -1,3 +1,13 @@
+## Guiding-aperture integration candidate · 2026-10-12
+
+Implemented the recommended sphere/aperture as shared response/task/native Live presentation, with pending/uncertain persistence and voice modifier guards, finite completion, Still and offscreen suspension. Native voice and AI domain behavior remain intact. Main Studio/Work activity strips pin during long editing. Lint/types, 685 unit tests and synthetic actual-component bundling pass; rendered/device/performance and production acceptance remain open. No release performed. See [integration receipt](INTELLIGENCE_MOTION_GUIDING_INTEGRATION.md).
+
+## Intelligence motion identity studies · 2026-10-12
+
+Built three isolated, interactive vector concepts with fifteen phase poses, Talk/Live/Work/Studio layout studies, illustrative voice envelope, save receipts, Still/reduced motion and monochrome review. Standalone artifact builds without network access. Production routes and native voice remain unchanged. Browser verification is blocked locally by `listen EPERM`; visual approval and device/performance acceptance remain outstanding. See [identity study receipt](INTELLIGENCE_MOTION_IDENTITY_STUDIES.md).
+
+> Intelligence motion identity preparation (2026-10-12): founder confirms response visibility works but requests a more premium on-brand identity. Prepared creative and engineering briefs with primary research, 15-phase behavior, actual observation/placement map, renderer decision, proposed performance budgets and a three-phase build plan. Next safe build is isolated authored motion studies for review. Live app remains unchanged by this preparation. See INTELLIGENCE_MOTION_CREATIVE_BRIEF.md and INTELLIGENCE_MOTION_ENGINEERING_BRIEF.md.
+
 > Intelligence motion visibility correction (2026-10-12): founder reported the corner-only orb failed the intended experience. Added a primary interwoven emerald signature at the actual response, immediate pre-header feedback, shared Work/Studio signal, hidden-waiting fix and rendered visibility/actual-motion acceptance. Research: docs/INTELLIGENCE_MOTION_VISIBILITY.md. Connected verification pending; no new live claim yet.
 
 > Intelligence motion continuation (2026-10-12): reconciled released main 3619f67 (Live/Studio/Imperial Emerald). Shared motion now observes real Live phases and measured audio without changing its transport or activation. Fixed an account-claim auto-save lock race exposed by broad CI; full exact-head checks and production verification remain release gates.

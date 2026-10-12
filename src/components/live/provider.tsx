@@ -3,7 +3,6 @@ import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'r
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { LiveController } from '@/domains/live/controller';
-import { IntelligenceOrb } from '@/components/public/intelligence-orb';
 import './live.css';
 import {
   IntelligencePresence,
@@ -422,17 +421,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         }}
       >
         <div className="live-orb" ref={orb}>
-          <IntelligencePresence
-            operation={operation}
-            size="large"
-            artwork={
-              <IntelligenceOrb
-                active={moving && active && state.mode === 'immersive'}
-                engaged={operation.phase === 'speaking'}
-                deepGreen
-              />
-            }
-          />
+          <IntelligencePresence operation={operation} size="large" variant="signal" />
         </div>
         <div className="live-content">{content}</div>
       </dialog>
@@ -442,12 +431,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           className="live-compact"
           aria-label="Persistent Aethelios voice controls"
         >
-          <IntelligencePresence
-            operation={operation}
-            artwork={
-              <IntelligenceOrb active={false} engaged={operation.phase === 'speaking'} deepGreen />
-            }
-          />
+          <IntelligencePresence operation={operation} variant="signal" />
           {content}
         </section>
       )}
