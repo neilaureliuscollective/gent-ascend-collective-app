@@ -341,7 +341,7 @@ test('authenticated order workspace stays closed without merchant configuration'
   await expect(page.getByText('Synthetic external oil', { exact: true })).toBeVisible();
 });
 
-test('free member first session saves and resumes through real Next and Supabase', async ({
+test('free member welcome and daily work save and resume through real Next and Supabase', async ({
   page,
 }) => {
   await page.goto('/enter');
@@ -378,9 +378,8 @@ test('free member first session saves and resumes through real Next and Supabase
     page.getByRole('checkbox', { name: 'Synthetic first-session next move', exact: true }),
   ).not.toBeChecked();
   await page.goto('/app/welcome');
-  await expect(page.getByLabel('What matters today?')).toHaveValue(
-    'Synthetic first-session direction',
-  );
+  await expect(page.getByRole('heading', { name: 'Welcome to Aethelios.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start with Aethelios' })).toBeVisible();
   await page.goto('/app/progress');
   await expect(page.getByRole('heading', { name: 'Evidence. Then your next move.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Review with Aethelios' })).toBeVisible();

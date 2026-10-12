@@ -5,6 +5,10 @@ import type { IntelligenceOperation } from '@/platform/visual/intelligence-motio
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { defaultBrandKit, type BrandKit } from '@/domains/studio/brand';
+import { exportZip } from '@/domains/studio/export';
+import { downloadStudio } from './studio-download';
+import { readLayoutRecipe } from '@/domains/studio/recipe';
 
 export type StudioFinishRecord = {
   version_id: string;
@@ -75,13 +79,19 @@ function wrapped(
   }
   return { lines, fontSize };
 }
-function draw(canvas: HTMLCanvasElement, image: HTMLImageElement, draft: Draft) {
+function draw(
+  canvas: HTMLCanvasElement,
+  image: HTMLImageElement,
+  draft: Draft,
+  brandKit: BrandKit = defaultBrandKit,
+  logo?: HTMLImageElement | null,
+) {
   const [width, height] = sizes[draft.format];
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('This browser cannot render the composition.');
-  ctx.fillStyle = '#07130f';
+  ctx.fillStyle = brandKit.background;
   ctx.fillRect(0, 0, width, height);
   const aspect = width / height;
   const sourceWidth = Math.min(image.naturalWidth, image.naturalHeight * aspect);
@@ -91,13 +101,19 @@ function draw(canvas: HTMLCanvasElement, image: HTMLImageElement, draft: Draft) 
   ctx.drawImage(image, sx, sy, sourceWidth, sourceHeight, 0, 0, width, height);
   const quiet = draft.treatment === 'quiet';
   if (quiet) {
-    ctx.fillStyle = '#06120fe8';
+    ctx.fillStyle = `${brandKit.background}e8`;
     ctx.fillRect(0, 0, width * 0.57, height);
   } else {
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, '#04120da6');
-    gradient.addColorStop(0.36, draft.treatment === 'centered' ? '#04120d88' : '#04120d00');
-    gradient.addColorStop(1, draft.treatment === 'centered' ? '#04120dc0' : '#04120df4');
+    gradient.addColorStop(0, `${brandKit.background}a6`);
+    gradient.addColorStop(
+      0.36,
+      draft.treatment === 'centered' ? `${brandKit.background}88` : `${brandKit.background}00`,
+    );
+    gradient.addColorStop(
+      1,
+      draft.treatment === 'centered' ? `${brandKit.background}c0` : `${brandKit.background}f4`,
+    );
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
@@ -106,12 +122,20 @@ function draw(canvas: HTMLCanvasElement, image: HTMLImageElement, draft: Draft) 
   const x = draft.treatment === 'centered' ? width / 2 : inset;
   ctx.textAlign = draft.treatment === 'centered' ? 'center' : 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#e0bb6a';
+  ctx.fillStyle = brandKit.accent;
   ctx.font = '600 27px Arial, sans-serif';
   if (draft.brand) ctx.fillText(draft.brand.toUpperCase(), x, inset + 20, textWidth);
   const ruleY = inset + 50;
   ctx.fillRect(draft.treatment === 'centered' ? x - 38 : inset, ruleY, 76, 3);
-  const title = wrapped(ctx, draft.headline, textWidth, draft.format === 'landscape' ? 92 : 80, 4);
+  const family = brandKit.typography === 'modern' ? 'Arial, sans-serif' : 'Georgia, serif';
+  const title = wrapped(
+    ctx,
+    draft.headline,
+    textWidth,
+    draft.format === 'landscape' ? 92 : 80,
+    4,
+    family,
+  );
   const lineHeight = title.fontSize * 1.08;
   const total = title.lines.length * lineHeight;
   const support = wrapped(ctx, draft.supporting, textWidth, 32, 4, 'Arial, sans-serif', 17);
@@ -123,26 +147,38 @@ function draw(canvas: HTMLCanvasElement, image: HTMLImageElement, draft: Draft) 
       : quiet
         ? height * 0.34
         : height - inset - 65 - supportHeight - gap - total;
-  ctx.fillStyle = '#f9f1e2';
-  ctx.font = `${title.fontSize}px Georgia, serif`;
+  ctx.fillStyle = brandKit.foreground;
+  ctx.font = `${title.fontSize}px ${family}`;
   title.lines.forEach((line, i) =>
     ctx.fillText(line, x, titleTop + (i + 1) * lineHeight, textWidth),
   );
   if (draft.supporting) {
     const supportY = titleTop + total + gap;
     ctx.font = `${support.fontSize}px Arial, sans-serif`;
-    ctx.fillStyle = '#f0e6d5';
+    ctx.fillStyle = brandKit.foreground;
     support.lines.forEach((line, i) =>
       ctx.fillText(line, x, supportY + i * support.fontSize * 1.32, textWidth),
     );
   }
   if (draft.footer) {
-    ctx.fillStyle = '#e0bb6a';
+    ctx.fillStyle = brandKit.accent;
     ctx.font = '600 25px Arial, sans-serif';
     ctx.fillText(draft.footer.toUpperCase(), x, height - inset + 10, textWidth);
   }
+  if (logo) {
+    const maxWidth = Math.min(width * 0.18, 240),
+      maxHeight = height * 0.09;
+    const scale = Math.min(maxWidth / logo.naturalWidth, maxHeight / logo.naturalHeight);
+    ctx.drawImage(
+      logo,
+      width - inset - logo.naturalWidth * scale,
+      inset,
+      logo.naturalWidth * scale,
+      logo.naturalHeight * scale,
+    );
+  }
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#c4912f';
+  ctx.fillStyle = brandKit.accent;
   ctx.fillRect(inset, height - inset + 33, Math.min(260, textWidth), 3);
 }
 
@@ -152,7 +188,9 @@ export function StudioFinish({
   finishes,
   initialVersionId,
   onChanged,
+  brandKit = defaultBrandKit,
 }: {
+  brandKit?: BrandKit;
   projectId: string;
   versions: Version[];
   finishes: StudioFinishRecord[];
@@ -169,9 +207,12 @@ export function StudioFinish({
   );
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [error, setError] = useState('');
+  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
+  const [loadedLogoId, setLoadedLogoId] = useState<string | null>(null);
+  const activeLogo = loadedLogoId === brandKit.logoReferenceId ? logo : null;
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState<IntelligenceOperation>(
-    observedOperation('finish-idle', 'ready'),
+    observedOperation('studio-idle', 'ready'),
   );
   const [dirty, setDirty] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -200,15 +241,52 @@ export function StudioFinish({
     };
   }, [selected]);
   useEffect(() => {
+    let active = true;
+    let url = '';
+    if (!brandKit.logoReferenceId) {
+      queueMicrotask(() => {
+        if (active) setLogo(null);
+      });
+      return () => {
+        active = false;
+      };
+    }
+    fetch(`/api/studio/image?id=${brandKit.logoReferenceId}&kind=reference`, { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('The original logo could not be loaded.');
+        return response.blob();
+      })
+      .then(async (blob) => {
+        url = URL.createObjectURL(blob);
+        const next = new window.Image();
+        next.src = url;
+        await next.decode();
+        if (active) {
+          setLogo(next);
+          setLoadedLogoId(brandKit.logoReferenceId);
+        }
+      })
+      .catch((cause) => {
+        if (active) {
+          setLogo(null);
+          setError((cause as Error).message);
+        }
+      });
+    return () => {
+      active = false;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [brandKit.logoReferenceId]);
+  useEffect(() => {
     if (!image || !canvas.current) return;
     let active = true;
     void document.fonts.ready.then(() => {
-      if (active && canvas.current) draw(canvas.current, image, draft);
+      if (active && canvas.current) draw(canvas.current, image, draft, brandKit, activeLogo);
     });
     return () => {
       active = false;
     };
-  }, [image, draft]);
+  }, [image, draft, brandKit, activeLogo]);
   function change(next: Draft) {
     setDraft(next);
     setDirty(true);
@@ -219,7 +297,7 @@ export function StudioFinish({
     setSelected(id);
     setDraft(fromRecord(record));
     setUpdatedAt(record?.updated_at ?? null);
-    setImage(null);
+    if (id !== selected) setImage(null);
     setDirty(false);
     setError('');
   }
@@ -227,8 +305,8 @@ export function StudioFinish({
     setBusy(true);
     setError('');
     const motionId = crypto.randomUUID();
-    setOperation(observedOperation(motionId, 'saving', 'pending'));
     let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       const response = await fetch('/api/studio/finish', {
         method: 'POST',
@@ -272,10 +350,11 @@ export function StudioFinish({
     setBusy(true);
     setError('');
     const motionId = crypto.randomUUID();
-    setOperation(observedOperation(motionId, 'processing'));
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'processing', 'not-applicable'));
     try {
       await document.fonts.ready;
-      draw(canvas.current, image, draft);
+      draw(canvas.current, image, draft, brandKit, activeLogo);
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.current?.toBlob(resolve, 'image/png'),
       );
@@ -288,9 +367,80 @@ export function StudioFinish({
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      acknowledged = true;
       setOperation(observedOperation(motionId, 'complete'));
     } catch (cause) {
-      setOperation(observedOperation(motionId, 'failed'));
+      setOperation(
+        observedOperation(motionId, acknowledged ? 'complete' : 'failed', 'not-applicable'),
+      );
+      setError((cause as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function importRecipe(file: File) {
+    if (file.size > 32768) {
+      setError('This layout recipe is too large.');
+      return;
+    }
+    try {
+      const recipe = readLayoutRecipe(
+        await file.text(),
+        ready.map((version) => version.id),
+      );
+      selectVersion(recipe.sourceVersionId);
+      setDraft(recipe.layout);
+      setDirty(true);
+    } catch (cause) {
+      setError((cause as Error).message);
+    }
+  }
+  async function exportPack() {
+    if (!image) return;
+    setBusy(true);
+    setError('');
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'processing', 'not-applicable'));
+    try {
+      await document.fonts.ready;
+      const files: { name: string; bytes: Uint8Array }[] = [];
+      const output = document.createElement('canvas');
+      for (const format of ['square', 'portrait', 'landscape'] as const) {
+        draw(output, image, { ...draft, format }, brandKit, activeLogo);
+        const blob = await new Promise<Blob | null>((resolve) =>
+          output.toBlob(resolve, 'image/png'),
+        );
+        if (!blob) throw new Error('One of the campaign formats could not be exported.');
+        files.push({ name: `${format}.png`, bytes: new Uint8Array(await blob.arrayBuffer()) });
+      }
+      files.push({
+        name: 'layout.json',
+        bytes: new TextEncoder().encode(
+          JSON.stringify(
+            { version: 1, sourceVersionId: selected, layout: draft, brand: brandKit },
+            null,
+            2,
+          ),
+        ),
+      });
+      files.push({
+        name: 'readme.md',
+        bytes: new TextEncoder().encode(
+          '# Aethelios Studio export\n\nThree finished PNGs and an editable layout recipe. The source remains in your private Studio project. Review content before publishing. Brand colors use this export snapshot.\n',
+        ),
+      });
+      const bytes = exportZip(files);
+      downloadStudio(
+        new Blob([bytes.buffer as ArrayBuffer], { type: 'application/zip' }),
+        `studio-${selected}-campaign.zip`,
+      );
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete'));
+    } catch (cause) {
+      setOperation(
+        observedOperation(motionId, acknowledged ? 'complete' : 'failed', 'not-applicable'),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -389,6 +539,7 @@ export function StudioFinish({
               <label>
                 Headline
                 <textarea
+                  aria-label="Headline"
                   value={draft.headline}
                   maxLength={120}
                   onChange={(event) => change({ ...draft, headline: event.target.value })}
@@ -398,6 +549,7 @@ export function StudioFinish({
               <label>
                 Supporting line
                 <textarea
+                  aria-label="Supporting line"
                   value={draft.supporting}
                   maxLength={180}
                   onChange={(event) => change({ ...draft, supporting: event.target.value })}
@@ -435,6 +587,31 @@ export function StudioFinish({
                   />
                 </label>
               </div>
+              <label>
+                Import layout recipe
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  aria-label="Import layout recipe"
+                  disabled={busy}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void importRecipe(file);
+                    event.target.value = '';
+                  }}
+                />
+                <small>
+                  Restores editable copy and layout for an image in this project. The current
+                  project brand kit is used.
+                </small>
+              </label>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => change({ ...draft, brand: brandKit.name })}
+              >
+                Apply brand name
+              </button>
               <div className="studio-finish-actions">
                 <button
                   className="button"
@@ -444,8 +621,19 @@ export function StudioFinish({
                 >
                   {busy ? 'Working…' : dirty ? 'Save composition' : 'Saved'}
                 </button>
-                <button type="button" disabled={!image || busy} onClick={() => void exportPng()}>
+                <button
+                  type="button"
+                  disabled={!image || busy || Boolean(brandKit.logoReferenceId && !activeLogo)}
+                  onClick={() => void exportPng()}
+                >
                   Export PNG ↗
+                </button>
+                <button
+                  type="button"
+                  disabled={!image || busy || Boolean(brandKit.logoReferenceId && !activeLogo)}
+                  onClick={() => void exportPack()}
+                >
+                  Export campaign pack ↗
                 </button>
               </div>
               {dirty && (

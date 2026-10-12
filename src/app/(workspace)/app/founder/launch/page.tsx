@@ -43,6 +43,9 @@ export default async function ReleaseReadiness() {
         ))}
       </div>
       <div className="world-actions">
+        <Link className="text-link" href="/app/founder/studio">
+          Studio activation →
+        </Link>
         <Link className="text-link" href="/support">
           View member support →
         </Link>

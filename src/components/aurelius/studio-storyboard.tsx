@@ -82,7 +82,7 @@ export function StudioStoryboard({
   const [draft, setDraft] = useState<SceneDraft>(blank);
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState<IntelligenceOperation>(
-    observedOperation('storyboard-idle', 'ready'),
+    observedOperation('studio-idle', 'ready'),
   );
   const [error, setError] = useState('');
   const ready = versions.filter((version) => version.status === 'complete');
@@ -92,8 +92,8 @@ export function StudioStoryboard({
     setBusy(true);
     setError('');
     const motionId = crypto.randomUUID();
-    setOperation(observedOperation(motionId, 'saving', 'pending'));
     let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       await request({ projectId, ...draft }, 'POST');
       acknowledged = true;
@@ -118,8 +118,8 @@ export function StudioStoryboard({
     setBusy(true);
     setError('');
     const motionId = crypto.randomUUID();
-    setOperation(observedOperation(motionId, 'saving', 'pending'));
     let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       await request(
         { projectId, sceneId: scene.id, updatedAt: scene.updated_at, ...values, assetVersionId },
@@ -147,8 +147,8 @@ export function StudioStoryboard({
     setBusy(true);
     setError('');
     const motionId = crypto.randomUUID();
-    setOperation(observedOperation(motionId, 'saving', 'pending'));
     let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       await request({ projectId, sceneId: scene.id }, 'DELETE');
       acknowledged = true;
@@ -241,7 +241,8 @@ export function StudioStoryboard({
         <h3>Build the story before the assets.</h3>
         <p>
           Sequence the moments, develop a frame for each one, and keep the campaign coherent. Motion
-          notes are a plan for future video work; no video is generated here.
+          notes guide future footage. The Motion pilot below renders saved images into a campaign
+          film.
         </p>
       </div>
       <div className="studio-story-actions">

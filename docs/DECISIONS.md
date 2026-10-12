@@ -381,6 +381,37 @@ Provide a distinct founder-only approved-to-rejected withdrawal transition using
 
 The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.
 
+## 2026-10-12 — Studio production house before additional media vendors
+
+Founder approved execution of the researched Studio direction. Extend owned project brief JSONB with a bounded brand kit, reuse existing image/version/storyboard/finish services, and provide useful editable image packs and real browser-native motion video before introducing asynchronous generative footage. Preserve original logo artwork through owned reference compositing. Native motion/export requires no new provider key or migration; future AI footage requires durable jobs and live provider/cost acceptance. No pending creation-stack merge or production deployment. Evidence and staged vision: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md).
+
+## 2026-10-12 — Active narration before a separate footage vendor
+
+Official model/deprecation evidence supersedes the historical Sora video guide: Videos API shut down September 24. Dedicated legacy TTS also has a January 6 sunset. Use active GPT-Audio-1.5 Chat Completions for this bounded narration slice with transcript comparison, actual WAV validation, explicit generation consent and private owner/usage ledgers. Generation stays default-off until migration and actual provider acceptance. Runway footage is researched but needs application-specific commercial/auth acceptance and a durable audited job design. No speculative video table, new provider bill, hosted migration or production deployment. [STUDIO_NARRATION.md](STUDIO_NARRATION.md).
+
+## 2026-10-12 — Reviewed Runway footage with signed durable receipts
+
+Execute a useful default-off text-to-video pilot on the preserved Studio stack. Official Runway docs and generated SDK verify active Gen-4.5, stable 2024-11-06 API header, 12-credit/second dated estimates and expiring outputs requiring private copying. Session-bound owner RPCs require additional server HMAC attestation before provider task lookups: an owner must not substitute another tenant's task ID and use the application credential to fetch it. Atomic enduring allowance and one paid POST prevent uncertain-response retries. No provider DELETE, speculative queue platform, hosted migration, global budget claim or production release. Exact evidence/limits/activation: [STUDIO_FOOTAGE.md](STUDIO_FOOTAGE.md).
+
+## 2026-10-12 — Campaign delivery before further paid source animation
+
+Connect existing saved Studio media into a reviewed portable handoff using owner-scoped GET endpoints and the bounded local ZIP writer. Use sequential abortable reads, exact local approval snapshots and hashes; never expose vendor URLs or imply clip synchronization, automatic publishing or independently verified rights. No provider bill, service credentials, migration or production release. Owned-image animation remains a subsequent source-hash/consent/provider-acceptance slice. Current research and boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md).
+
+## 2026-10-12 — Studio control-room finish before v1 launch
+
+Founder requested premium futuristic design and an honest path to live. Preserve all previous Studio builds, current Obsidian/platinum/gold identity and provider cost/ownership safeguards. Improve room hierarchy and real saved-media presentation with static materials, bounded motion and conditional client code splitting. Launch plan is three phases: staged integration/provider acceptance, product/security/device acceptance, approved production promotion. Advanced timeline/source animation/music remain post-v1 unless explicitly made launch requirements. Sources and gates: [STUDIO_LAUNCH.md](STUDIO_LAUNCH.md).
+
+## 2026-10-12 — Founder Studio activation probes before hosted changes
+
+Actual read-only Vercel/catalog evidence shows image foundations but missing narration/footage deployment contracts. Require an explicitly designated staging destination rather than guessing production. Add founder-grant-protected fixed-value readiness and owner-scoped zero-row schema probes; never infer model, storage or billing acceptance from key/table presence. Repair stale founder acceptance routes/selectors while keeping real Auth/persistence assertions. No service role, credential decryption, mutation, provider call or production release. [STUDIO_ACTIVATION.md](STUDIO_ACTIVATION.md).
+
+## 2026-10-12 — One canonical Supabase for Studio
+
+Founder explicitly rejected a separate hosted staging database. This supersedes the earlier staging-destination requirement: use the existing Gent Ascend Supabase only. Protected preview and real local Supabase CI remain useful verification environments, not requirements for another hosted project. No hosted reset/seeding, automatic paid generation or production promotion follows from this correction. The complete integration candidate is PR #99 against main; reviewed additive Narration/Footage migrations and actual hosted provider/owner acceptance remain open.
+
+## Additive Studio media connection on one Supabase — October 12, 2026
+
+Applied the exact reviewed Narration and Footage migrations to the existing Gent Ascend database, reconciled source versions/hashes with hosted history and passed all 20 read-only catalog contract checks. Existing image bucket, member records and shared services were preserved. Added repeatable verification SQL and a regression for missing owner policy/anonymous RPC permission. No extra hosted database, reset, seed, paid generation, feature activation or production app release. Advisor warnings are reviewed and reported, not hidden. Remaining provider credentials/budgets and ordinary-account live acceptance: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).
 ## 2026-10-12 — Release acceptance route reconciliation
 
 Use current user-visible routes and identity contracts in preserved Command/appearance/day browser journeys. Keep /app entry redirects intact, target /app/ongoing for Command tests, and expose these checks independently before the unchanged broad suite. Official research and evidence: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or public product changes.

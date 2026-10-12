@@ -1,13 +1,67 @@
 'use client';
-
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { IntelligenceActivity } from '../intelligence-motion/presence';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
+
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { StudioRooms, type StudioRoom } from './studio-rooms';
 import Image from 'next/image';
-import { StudioStoryboard, type StudioScene } from './studio-storyboard';
-import { StudioFinish, type StudioFinishRecord } from './studio-finish';
+import type { StudioScene } from './studio-storyboard';
+const StudioDelivery = dynamic(
+  () => import('./studio-delivery').then((module) => module.StudioDelivery),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+const StudioFootage = dynamic(
+  () => import('./studio-footage').then((module) => module.StudioFootage),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+const StudioNarration = dynamic(
+  () => import('./studio-narration').then((module) => module.StudioNarration),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+const StudioCampaign = dynamic(
+  () => import('./studio-campaign').then((module) => module.StudioCampaign),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+import { StudioBrandKit } from './studio-brand-kit';
+import { readBrandKit, type BrandKit } from '@/domains/studio/brand';
+import type { StudioFinishRecord } from './studio-finish';
+const StudioFinish = dynamic(
+  () => import('./studio-finish').then((module) => module.StudioFinish),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
 import { useConversationDraft } from './draft-handoff';
 
 type CreativeType = 'open' | 'brand' | 'campaign' | 'product' | 'personal';
@@ -17,6 +71,7 @@ type Brief = {
   direction: string;
   palette: string;
   avoid: string;
+  brand?: BrandKit;
 };
 type Project = {
   id: string;
@@ -45,8 +100,9 @@ type Workspace = {
   scenes: StudioScene[];
   finishes: StudioFinishRecord[];
   configured: boolean;
+  canCreate?: boolean;
 };
-type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish';
+type View = StudioRoom;
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = {
   projects: [],
@@ -62,7 +118,7 @@ const paths: { type: CreativeType; title: string; description: string; starter: 
     type: 'open',
     title: 'Explore an idea',
     description: 'Discover the shape of a new direction.',
-    starter: 'Explore three visual directions for ',
+    starter: 'Explore a visual direction for ',
   },
   {
     type: 'brand',
@@ -111,6 +167,8 @@ export function StudioWorkspace() {
   const [error, setError] = useState('');
   const [busyLabel, setBusyLabel] = useState('Working…');
   const [newTitle, setNewTitle] = useState('');
+  const [narrationId, setNarrationId] = useState<string | null>(null);
+  const [preparedNew, setPreparedNew] = useState(false);
   const [newType, setNewType] = useState<CreativeType>('open');
   const [naming, setNaming] = useState(false);
   const [brief, setBrief] = useState<Brief>(blankBrief);
@@ -131,6 +189,7 @@ export function StudioWorkspace() {
       setBrief({ ...blankBrief, ...current?.brief });
       const carried = next.owner ? handoff?.take('studio', next.owner) : null;
       if (carried) {
+        setPreparedNew(true);
         const payload = carried.payload as
           | {
               studio?: {
@@ -193,28 +252,47 @@ export function StudioWorkspace() {
     event.preventDefault();
     if (!newTitle.trim()) return;
     setBusy(true);
+    const initialBrief = preparedNew ? brief : { ...blankBrief };
+    const initialPrompt = preparedNew ? draft : '';
     const motionId = crypto.randomUUID();
+    let acknowledged = false;
     setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       const result = await jsonResponse<{ id: string }>(
         await fetch('/api/studio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: newTitle.trim(), creativeType: newType }),
+          body: JSON.stringify({
+            title: newTitle.trim(),
+            creativeType: newType,
+            brief: {
+              ...initialBrief,
+              brand: { ...readBrandKit(initialBrief.brand), logoReferenceId: null },
+            },
+          }),
         }),
       );
+      acknowledged = true;
       setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       await load(result.id);
+      setNarrationId(null);
       setNewTitle('');
       setNaming(false);
-      setDraft('');
+      setDraft(initialPrompt);
+      setPreparedNew(false);
       setParent(null);
       setReference(null);
       setForScene(null);
       setFinishVersion(null);
       setView('direction');
     } catch (cause) {
-      setOperation(observedOperation(motionId, 'failed', 'uncertain'));
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -226,6 +304,7 @@ export function StudioWorkspace() {
     setBusy(true);
     setError('');
     const motionId = crypto.randomUUID();
+    let acknowledged = false;
     setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       await jsonResponse(
@@ -241,11 +320,18 @@ export function StudioWorkspace() {
           }),
         }),
       );
+      acknowledged = true;
       setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       await load(project.id);
       setView('create');
     } catch (cause) {
-      setOperation(observedOperation(motionId, 'failed', 'uncertain'));
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -265,6 +351,7 @@ export function StudioWorkspace() {
     setBusyLabel('Uploading reference…');
     setError('');
     const motionId = crypto.randomUUID();
+    let acknowledged = false;
     setOperation(observedOperation(motionId, 'processing', 'pending'));
     try {
       const prepared = await jsonResponse<{
@@ -309,13 +396,20 @@ export function StudioWorkspace() {
           }),
         }),
       );
+      acknowledged = true;
       setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       await load(selected);
       setReference(saved.id);
       setParent(null);
       setView('create');
     } catch (cause) {
-      setOperation(observedOperation(motionId, 'failed', 'uncertain'));
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -328,7 +422,9 @@ export function StudioWorkspace() {
     setBusyLabel('Waiting for image…');
     setError('');
     const requestId = crypto.randomUUID();
-    setOperation(observedOperation(requestId, 'waiting', 'pending'));
+    const motionId = requestId;
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'waiting', 'pending'));
     try {
       const result = await jsonResponse<{ id: string }>(
         await fetch('/api/studio', {
@@ -345,7 +441,8 @@ export function StudioWorkspace() {
           }),
         }),
       );
-      setOperation(observedOperation(requestId, 'complete', 'confirmed'));
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       setDraft('');
       setReference(null);
       setParent(null);
@@ -385,7 +482,13 @@ export function StudioWorkspace() {
       await load(selected);
       setView(forScene ? 'storyboard' : 'library');
     } catch (cause) {
-      setOperation(observedOperation(requestId, 'failed', 'uncertain'));
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       await load(selected);
       setError((cause as Error).message);
     } finally {
@@ -479,8 +582,8 @@ export function StudioWorkspace() {
                   setReference(null);
                   setForScene(null);
                   setFinishVersion(null);
+                  setNarrationId(null);
                   setLoading(true);
-                  setOperation(observedOperation(item.id, 'ready'));
                   setView('create');
                   void load(item.id);
                 }}
@@ -530,7 +633,7 @@ export function StudioWorkspace() {
           </div>
         ) : (
           <>
-            <div className="studio-project-heading">
+            <div className="studio-project-heading studio-project-stage">
               <div>
                 <p className="eyebrow">
                   {paths.find((path) => path.type === project?.creative_type)?.title ??
@@ -542,36 +645,55 @@ export function StudioWorkspace() {
                   {data.references.length} references
                 </span>
               </div>
-              <Link href="/app/aethelios">Talk it through with Aethelios ↗</Link>
+              <div className="studio-stage-side">
+                {data.versions.find((version) => version.status === 'complete') && (
+                  <Image
+                    className="studio-stage-preview"
+                    src={imageUrl(
+                      data.versions.find((version) => version.status === 'complete')!.id,
+                      'version',
+                    )}
+                    alt="Saved image from this project"
+                    width={180}
+                    height={120}
+                    unoptimized
+                  />
+                )}
+                <Link href="/app/aethelios">Talk it through with Aethelios ↗</Link>
+              </div>
             </div>
-            <div
-              className="studio-view-tabs imperial-control-surface"
-              role="group"
-              aria-label="Studio workspace views"
-            >
-              {(['create', 'storyboard', 'finish', 'library', 'direction'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  aria-pressed={view === tab}
-                  onClick={() => setView(tab)}
-                >
-                  {tab === 'create'
-                    ? 'Create'
-                    : tab === 'storyboard'
-                      ? 'Storyboard'
-                      : tab === 'finish'
-                        ? 'Finish'
-                        : tab === 'library'
-                          ? 'Library'
-                          : 'Direction'}
-                </button>
-              ))}
-            </div>
-            {view === 'storyboard' && (
-              <StudioStoryboard
+            <StudioRooms value={view} onChange={setView} />
+            {view === 'delivery' && selected && (
+              <StudioDelivery
                 key={selected}
                 projectId={selected}
+                title={project?.title ?? 'Campaign'}
+                scenes={data.scenes}
+                versions={data.versions}
+              />
+            )}
+            {view === 'footage' && selected && (
+              <StudioFootage key={selected} projectId={selected} />
+            )}
+            {view === 'narration' && selected && (
+              <StudioNarration
+                key={selected}
+                projectId={selected}
+                scenes={data.scenes}
+                onUse={(id) => {
+                  setNarrationId(id);
+                  setView('storyboard');
+                }}
+              />
+            )}
+            {view === 'storyboard' && (
+              <StudioCampaign
+                key={selected}
+                projectId={selected}
+                narrationId={narrationId}
+                onClearNarration={() => setNarrationId(null)}
+                title={project?.title ?? 'Campaign'}
+                brand={readBrandKit(project?.brief.brand)}
                 scenes={data.scenes}
                 versions={data.versions}
                 disabled={busy}
@@ -587,6 +709,7 @@ export function StudioWorkspace() {
                 versions={data.versions}
                 finishes={data.finishes}
                 initialVersionId={finishVersion}
+                brandKit={readBrandKit(project?.brief.brand)}
                 onChanged={() => load(selected)}
               />
             )}
@@ -650,6 +773,12 @@ export function StudioWorkspace() {
                     </label>
                   ))}
                 </div>
+                <StudioBrandKit
+                  value={readBrandKit(brief.brand)}
+                  references={data.references}
+                  disabled={busy}
+                  onChange={(value) => setBrief((current) => ({ ...current, brand: value }))}
+                />
                 <button className="button" type="submit" disabled={busy}>
                   {busy ? 'Saving…' : 'Save direction'}
                 </button>
@@ -741,6 +870,16 @@ export function StudioWorkspace() {
                     placeholder="The subject, setting, feeling, details and intended use…"
                     disabled={busy}
                   />
+                  <p className="studio-generation-note">
+                    One image per request, saved privately with its version history. Existing
+                    account limits apply. A failed or interrupted request is never retried
+                    automatically.
+                  </p>
+                  {data.canCreate === false && (
+                    <p className="studio-notice">
+                      Image creation requires an eligible membership, invitation or founder access.
+                    </p>
+                  )}
                   <div className="studio-controls">
                     <label>
                       Detail
@@ -781,7 +920,12 @@ export function StudioWorkspace() {
                     <button
                       className="button"
                       type="submit"
-                      disabled={busy || !data.configured || draft.trim().length < 3}
+                      disabled={
+                        busy ||
+                        !data.configured ||
+                        data.canCreate === false ||
+                        draft.trim().length < 3
+                      }
                     >
                       {busy ? busyLabel : 'Create image ↗'}
                     </button>

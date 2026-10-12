@@ -155,6 +155,7 @@ function Review() {
         <label>
           Surface
           <select
+            aria-label="Surface"
             value={surface}
             onChange={(event) => {
               if (stream) {
