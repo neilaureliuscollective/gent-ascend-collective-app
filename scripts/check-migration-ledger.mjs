@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 // Historical SQL hashes reconciled on 2026-10-02; seven Live files applied/verified on 2026-10-12. Five Reserve-owned migrations are also applied
 // in the same project but their source is maintained in a separate repository.
 // This local hash check does not compare the live database on each run.
+// Studio media additions reconciled with hosted versions and exact SQL hashes on 2026-10-12.
 const applied = new Map([
   ['20260924150752_202609200001_foundation.sql', 'dea15ce18e0d6bdaab921105a2a5e029'],
   ['20260924150810_202609200002_person_and_goals.sql', 'b8acf698ab71908359bbaa6f854e0be5'],
@@ -43,6 +44,8 @@ const applied = new Map([
   ['20261012000324_live_coworker_reviews.sql', 'edfd4e1719dd484dd635ff1333deafe9'],
   ['20261012002621_live_reviewed_daily_actions.sql', '7ab67843379fb9f1fb2c5dda39cb9114'],
   ['20261012041646_live_expiry_leases.sql', 'ca938f46c59c44379ff12ab7d7f40185'],
+  ['20261012095748_studio_narration.sql', '81ed19b631ac8e2bbbf6115f5ee21a95'],
+  ['20261012095801_studio_footage.sql', 'a627d4d420dd1fb946413d0d824d8201'],
 ]);
 const directory = new URL('../supabase/migrations/', import.meta.url);
 const filenames = (await readdir(directory)).filter((name) => name.endsWith('.sql'));

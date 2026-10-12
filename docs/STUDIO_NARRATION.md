@@ -28,7 +28,7 @@ A member can explicitly recover a pending narration after ten minutes, beyond th
 
 ## Migration and activation checklist
 
-The additive candidate is `supabase/migrations/20261012120000_studio_narration.sql`. It creates narration/usage tables, owner RLS, narrowly scoped reservation/completion functions and a separate private bucket. It does not change existing image quotas/buckets or pending creation-stack migrations. The functions use authenticated owner checks and empty search_path, revoke anonymous/PUBLIC execution, and expose table SELECT only to owners. Optional company scope is checked without requiring a pending company-column migration.
+The additive candidate is `supabase/migrations/20261012095748_studio_narration.sql`. It creates narration/usage tables, owner RLS, narrowly scoped reservation/completion functions and a separate private bucket. It does not change existing image quotas/buckets or pending creation-stack migrations. The functions use authenticated owner checks and empty search_path, revoke anonymous/PUBLIC execution, and expose table SELECT only to owners. Optional company scope is checked without requiring a pending company-column migration.
 
 The Supabase CLI migration-generation command was attempted; the sandbox denied creation of its home configuration directory. The same failure persisted with an XDG configuration override. The migration filename was therefore created locally and checked for unique ordering, rather than falsely described as CLI-generated or applied. Existing hosted migration hashes remain unchanged. SQL execution in PGlite is a test adapter, not live Supabase Auth/Storage. Supabase changelog retrieval was attempted but returned an upstream error; current RLS documentation was retrieved.
 
@@ -45,3 +45,7 @@ Founder setup, without sharing credentials in chat:
 Local lint, strict types, unit/SQL tests, migration ledger and optimized build receipts are tracked in the PR. The focused browser suite adds reviewed-consent reset, real WAV playback/download, selected saved narration in a real MediaRecorder film, VTT download and honest unactivated behavior. Its API/provider data are labeled synthetic; actual WAV/video/container export code runs in Chromium. Independent Python inspection validates WAV channels/sample width/duration and scene caption timing. Live provider generation and hosted Auth/Storage acceptance are not claimed.
 
 Next: founder narrative-quality evaluation; provider selection and an owner-bound, audited quote/job lifecycle for real AI footage; then word-level alignment, music/voice mixing and publishing integrations under explicit user approval. Keep the first-party image backend and pending creation work intact.
+
+## Subsequent hosted connection — October 12, 2026
+
+The reviewed media schema is now applied to the one existing Gent Ascend Supabase. Earlier staging and unapplied-status instructions above are historical; no separate hosted database is required. Exact hosted versions/hashes, read-only contract checks and remaining provider/owner acceptance are recorded in [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md). Generation remains unactivated and this application stack remains a review candidate.

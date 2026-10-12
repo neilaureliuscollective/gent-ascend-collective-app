@@ -467,6 +467,9 @@ Founder explicitly rejected a separate hosted staging database. This supersedes 
 
 Use URL-backed catalog state and individually removable filters before comparison or concierge work. Baymard Back/applied-filter research and installed Next 16.3.5 native History API support this slice. Browser saves remain local handles; URL state includes no private records. Search typing replaces history; discrete filters/sorts push history. No new integration, schema, tracking or merchant mutation. See [phase receipt](LIFESTYLE_DISCOVERY_CONTINUITY.md).
 
+## Additive Studio media connection on one Supabase — October 12, 2026
+
+Applied the exact reviewed Narration and Footage migrations to the existing Gent Ascend database, reconciled source versions/hashes with hosted history and passed all 20 read-only catalog contract checks. Existing image bucket, member records and shared services were preserved. Added repeatable verification SQL and a regression for missing owner policy/anonymous RPC permission. No extra hosted database, reset, seed, paid generation, feature activation or production app release. Advisor warnings are reviewed and reported, not hidden. Remaining provider credentials/budgets and ordinary-account live acceptance: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).
 ## 2026-10-12 — Release acceptance route reconciliation
 
 Use current user-visible routes and identity contracts in preserved Command/appearance/day browser journeys. Keep /app entry redirects intact, target /app/ongoing for Command tests, and expose these checks independently before the unchanged broad suite. Official research and evidence: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or public product changes.

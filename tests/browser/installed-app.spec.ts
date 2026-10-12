@@ -78,13 +78,19 @@ test('retired blue installation URLs resolve to the current phone artwork', asyn
 test('fallback upgrade removes old app cache without reloading the open workspace or unrelated caches', async ({
   page,
 }) => {
-  await page.goto('/enter');
+  // Seed the old cache before AppRuntime starts installing the current worker.
+  // Navigating during clients.claim() can leave the new document uncontrolled.
+  await page.goto('/offline.html');
   await page.evaluate(async () => {
     const old = await caches.open('gent-ascend-fallback-v4');
     await old.put('/brand/icon-v2-192.png', new Response('old-icon'));
     const unrelated = await caches.open('unrelated-test-cache');
     await unrelated.put('/keep', new Response('keep'));
   });
+  await page.goto('/enter');
+  await expect
+    .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
+    .toBe(true);
   await page.goto('/app/install');
   await page.evaluate(() => {
     (window as Window & { draftSentinel?: string }).draftSentinel = 'unsaved-draft';

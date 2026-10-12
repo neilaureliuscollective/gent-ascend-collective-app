@@ -107,6 +107,11 @@ test('bounded Command scene pauses offscreen and is removed by Still', async ({ 
   expect(size.width).toBeLessThanOrEqual(480);
   expect(size.height).toBeLessThanOrEqual(480);
   await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
+  // Opening the workspace need not move the orb entirely out of view at every size.
+  // Exercise actual offscreen behavior before asserting the renderer has paused.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(() => host.evaluate((element) => element.getBoundingClientRect().bottom))
+    .toBeLessThanOrEqual(0);
   await expect(host).toHaveAttribute('data-animating', 'false');
   await page.getByRole('button', { name: 'Update your check-in' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
