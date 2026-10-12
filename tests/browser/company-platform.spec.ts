@@ -10,6 +10,7 @@ for (const width of [360, 768, 1440]) {
       'Talk',
       'Work',
       'Studio',
+      'Health',
       'Lifestyle',
       'Ecosystem',
     ]);
@@ -65,3 +66,4 @@ test('public arrival and unconnected Lifestyle keep commerce state honest', asyn
   expect(await response.json()).toEqual({ error: 'Shopping is not open yet.' });
   expect(response.headers()['cache-control']).toBe('private, no-store');
 });
+
