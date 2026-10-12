@@ -348,7 +348,7 @@ test('free member first session saves and resumes through real Next and Supabase
   await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
   await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
   await page.getByRole('button', { name: 'Enter Aethelios' }).click();
-  await expect(page).toHaveURL(/\/app(?:\/welcome)?$/);
+  await expect(page).toHaveURL(/\/app(?:\/welcome|\/aethelios)?$/);
   await page.goto('/app/welcome');
   await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
   await expect(

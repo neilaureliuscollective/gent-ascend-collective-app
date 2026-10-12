@@ -60,6 +60,11 @@ test('real signed-in founder saves, reopens and resumes a company mission and de
   await expect(reopened.getByText('MARA · completed')).toBeVisible();
   await expect(reopened.getByText('publishing · rejected')).toBeVisible();
   await reopened.goto('/app/founder');
-  await expect(reopened.getByText('Publish the synthetic review')).toBeVisible();
+  await expect(
+    reopened
+      .locator('#founder-approvals .founder-card')
+      .filter({ hasText: company })
+      .getByRole('heading', { name: 'Publish the synthetic review', exact: true }),
+  ).toBeVisible();
   // This authenticates and persists real records, but makes no paid model call.
 });
