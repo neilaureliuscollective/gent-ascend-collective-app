@@ -250,3 +250,30 @@ export function consistencyNotes(content: ProjectContent, revision: number) {
       : '',
   ].filter(Boolean);
 }
+
+/** Exact scoped document changes; the model never rewrites an unseen document tail. */
+export const documentEditSchema = z
+  .object({ before: z.string().min(1).max(2000), after: z.string().max(4000) })
+  .strict();
+export const generationSchema = z
+  .object({ ...proposalSchema.shape, documentEdits: z.array(documentEditSchema).max(3) })
+  .strict();
+export type DocumentEdit = z.infer<typeof documentEditSchema>;
+export function applyDocumentEdits(content: string, edits: DocumentEdit[]) {
+  const positions = edits
+    .map((edit) => {
+      const start = content.indexOf(edit.before);
+      if (start < 0 || content.indexOf(edit.before, start + 1) >= 0)
+        throw new Error('Document edit must identify one exact passage.');
+      return { ...edit, start, end: start + edit.before.length };
+    })
+    .sort((a, b) => a.start - b.start);
+  for (let i = 1; i < positions.length; i++)
+    if (positions[i]!.start < positions[i - 1]!.end) throw new Error('Document edits overlap.');
+  let result = content;
+  for (const edit of positions.toReversed())
+    result = result.slice(0, edit.start) + edit.after + result.slice(edit.end);
+  if (!result.trim() || result.length > 24000)
+    throw new Error('Document edit exceeds content bounds.');
+  return result;
+}

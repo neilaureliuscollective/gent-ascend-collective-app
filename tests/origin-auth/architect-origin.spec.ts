@@ -63,9 +63,15 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({
+      path: `test-results/architect-origin-real-workspace-${width}.png`,
+      fullPage: false,
+    });
+    await page.getByLabel('Editable Markdown').scrollIntoViewIfNeeded();
     await page.screenshot({
       path: `test-results/architect-origin-real-document-${width}.png`,
-      fullPage: true,
+      fullPage: false,
     });
   }
   await page.getByRole('button', { name: 'History', exact: true }).click();

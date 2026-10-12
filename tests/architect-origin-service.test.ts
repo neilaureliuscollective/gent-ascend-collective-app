@@ -82,6 +82,7 @@ beforeEach(() => {
         { section: 'audience', content: 'Proposed audience', reason: 'Clarify beneficiaries' },
       ],
       document: null,
+      documentEdits: [],
     },
     sources: [],
     usage: { inputTokens: 100, outputTokens: 150 },
@@ -123,7 +124,7 @@ it('keeps research unapproved when the provider returns no sources', async () =>
 });
 it('records only safe provider metadata as research attribution', async () => {
   state.generate.mockResolvedValueOnce({
-    output: { reply: 'Research summary', changes: [], document: null },
+    output: { reply: 'Research summary', changes: [], document: null, documentEdits: [] },
     sources: [
       { sourceType: 'url', url: 'https://example.com/research', title: 'Evidence' },
       { sourceType: 'url', url: 'https://user:password@example.com', title: 'Invalid' },
@@ -178,4 +179,71 @@ it('saves only via the ownership and expected-revision RPC and reports unconfirm
       note: 'Confirmed update',
     }),
   ).rejects.toThrow(/not confirmed/);
+});
+it('revises selected documents with exact patches rather than replacing truncated model context', async () => {
+  const docId = crypto.randomUUID();
+  const original =
+    '# Plan\n\nOld requirement\n\n' + 'Unchanged context. '.repeat(800) + '\nUnseen final section';
+  const project = state.rows.get('architect_origin_projects') as {
+    content: ReturnType<typeof initialProject>;
+  };
+  project.content.documents = [
+    {
+      id: docId,
+      title: 'Approved plan',
+      kind: 'Business plan',
+      status: 'approved',
+      basis: 1,
+      content: original,
+    },
+  ];
+  state.generate.mockResolvedValueOnce({
+    output: {
+      reply: 'Focused revision for your review.',
+      changes: [],
+      document: null,
+      documentEdits: [{ before: 'Old requirement', after: 'Reviewed requirement' }],
+    },
+    sources: [],
+    usage: {},
+  });
+  const run = await generateOrigin(
+    { ...input, kind: 'document', documentId: docId },
+    new AbortController().signal,
+  );
+  expect(run.output?.document?.content).toBe(
+    original.replace('Old requirement', 'Reviewed requirement'),
+  );
+  expect(project.content.documents[0]!.content).toBe(original);
+  expect(state.rpc).not.toHaveBeenCalledWith('architect_origin_save', expect.anything());
+});
+it('rejects ambiguous document edits without altering approved text', async () => {
+  const docId = crypto.randomUUID();
+  const project = state.rows.get('architect_origin_projects') as {
+    content: ReturnType<typeof initialProject>;
+  };
+  project.content.documents = [
+    {
+      id: docId,
+      title: 'Plan',
+      kind: 'Business plan',
+      status: 'approved',
+      basis: 1,
+      content: 'Repeated sentence. Repeated sentence.',
+    },
+  ];
+  state.generate.mockResolvedValueOnce({
+    output: {
+      reply: 'Attempt',
+      changes: [],
+      document: null,
+      documentEdits: [{ before: 'Repeated sentence.', after: 'Replacement' }],
+    },
+    sources: [],
+    usage: {},
+  });
+  await expect(
+    generateOrigin({ ...input, kind: 'document', documentId: docId }, new AbortController().signal),
+  ).rejects.toThrow(/failed/);
+  expect(project.content.documents[0]!.content).toBe('Repeated sentence. Repeated sentence.');
 });

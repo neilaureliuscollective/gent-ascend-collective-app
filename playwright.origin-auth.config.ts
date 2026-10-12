@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test';
 import base from './playwright.founder.config';
 export default defineConfig({
   ...base,
+  testDir: 'tests/origin-auth',
   testMatch: 'architect-origin.spec.ts',
   webServer: {
     command:

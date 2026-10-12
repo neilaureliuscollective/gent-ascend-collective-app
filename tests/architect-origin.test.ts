@@ -128,3 +128,26 @@ it('creates a usable editable document for every supported kind without invented
     ).toBe(true);
   }
 });
+
+import { applyDocumentEdits } from '@/domains/architect-origin/schema';
+it('applies exact nonoverlapping document edits while preserving the entire unseen tail', () => {
+  const original =
+    'Heading\n\nOld requirement\n\n' + 'Unchanged detail. '.repeat(900) + '\nUnseen final section';
+  const result = applyDocumentEdits(original, [
+    { before: 'Old requirement', after: 'Reviewed requirement' },
+  ]);
+  expect(result).toBe(original.replace('Old requirement', 'Reviewed requirement'));
+  expect(result).toContain('Unseen final section');
+  expect(() =>
+    applyDocumentEdits('Same text. Same text.', [{ before: 'Same text.', after: 'New' }]),
+  ).toThrow(/one exact passage/);
+  expect(() =>
+    applyDocumentEdits(original, [{ before: 'Invented passage', after: 'New' }]),
+  ).toThrow(/one exact passage/);
+  expect(() =>
+    applyDocumentEdits('abcdef', [
+      { before: 'abc', after: 'a' },
+      { before: 'bc', after: 'b' },
+    ]),
+  ).toThrow(/overlap/);
+});

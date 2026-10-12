@@ -417,8 +417,8 @@ export function ArchitectOrigin({
         <aside className="origin-notice">
           <h2>Project persistence awaits activation.</h2>
           <p>
-            The reviewed Origin migration and account acceptance are required. Your existing
-            environments remain available. Live research and AI generation are unavailable here.
+            Projects are not available in this environment yet. Your existing environments remain
+            available. Live research and AI generation are unavailable here.
           </p>
         </aside>
       )}
@@ -591,70 +591,85 @@ export function ArchitectOrigin({
                   </p>
                   {!aiEnabled && (
                     <p className="origin-notice">
-                      AI generation and live research are unavailable until provider acceptance.
-                      Manual editing, blueprint-based documents and export remain available.
+                      AI generation and live research are unavailable here. Manual editing,
+                      blueprint-based documents and export remain available.
                     </p>
                   )}
-                  <label htmlFor="origin-request">
-                    {surface === 'Deliverables'
-                      ? 'Document request / targeted revision'
-                      : 'Your next request'}
-                  </label>
-                  <textarea
-                    id="origin-request"
-                    maxLength={3000}
-                    value={instruction}
-                    onChange={(e) => setInstruction(e.target.value)}
-                    disabled={locked}
-                    placeholder="Clarify the audience and suggest a focused next step…"
-                  />
-                  {surface === 'Deliverables' && (
-                    <label>
-                      Deliverable type
-                      <select
-                        value={kind}
-                        onChange={(e) => setKind(e.target.value as typeof kind)}
-                        disabled={locked}
-                      >
-                        {documentKinds.map((k) => (
-                          <option key={k}>{k}</option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  <p>
-                    Sending authorizes one bounded model request with this project’s approved
-                    context.{' '}
-                    {surface === 'Research' && 'Search queries must exclude private details.'}{' '}
-                    {dirty && 'Save the draft before asking Aethelios.'}
-                  </p>
-                  <button
-                    className="button"
-                    disabled={
-                      !aiEnabled ||
-                      locked ||
-                      dirty ||
-                      uncertainRun ||
-                      draft.status === 'archived' ||
-                      !instruction.trim()
-                    }
-                    onClick={() =>
-                      void generate(
-                        surface === 'Research'
-                          ? 'research'
+                  {aiEnabled && (
+                    <details
+                      className="origin-assistant-controls"
+                      key={surface}
+                      open={surface === 'Conversation'}
+                    >
+                      <summary>
+                        {surface === 'Research'
+                          ? 'Plan a research request'
                           : surface === 'Deliverables'
-                            ? 'document'
-                            : 'conversation',
-                      )
-                    }
-                  >
-                    Send & prepare proposal
-                  </button>
-                  {busy && <button onClick={() => abort.current?.abort()}>Stop request</button>}
-                  {uncertainRun && (
-                    <button disabled={busy} onClick={() => void refreshReceipts()}>
-                      Reload request receipts
-                    </button>
+                            ? 'Request creation or revision'
+                            : 'Develop the vision'}
+                      </summary>
+                      <label htmlFor="origin-request">
+                        {surface === 'Deliverables'
+                          ? 'Document request / targeted revision'
+                          : 'Your next request'}
+                      </label>
+                      <textarea
+                        id="origin-request"
+                        maxLength={3000}
+                        value={instruction}
+                        onChange={(e) => setInstruction(e.target.value)}
+                        disabled={locked}
+                        placeholder="Clarify the audience and suggest a focused next step…"
+                      />
+                      {surface === 'Deliverables' && (
+                        <label>
+                          Deliverable type
+                          <select
+                            value={kind}
+                            onChange={(e) => setKind(e.target.value as typeof kind)}
+                            disabled={locked}
+                          >
+                            {documentKinds.map((k) => (
+                              <option key={k}>{k}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      <p>
+                        Sending authorizes one bounded model request with this project’s approved
+                        context.{' '}
+                        {surface === 'Research' && 'Search queries must exclude private details.'}{' '}
+                        {dirty && 'Save the draft before asking Aethelios.'}
+                      </p>
+                      <button
+                        className="button"
+                        disabled={
+                          !aiEnabled ||
+                          locked ||
+                          dirty ||
+                          uncertainRun ||
+                          draft.status === 'archived' ||
+                          !instruction.trim()
+                        }
+                        onClick={() =>
+                          void generate(
+                            surface === 'Research'
+                              ? 'research'
+                              : surface === 'Deliverables'
+                                ? 'document'
+                                : 'conversation',
+                          )
+                        }
+                      >
+                        Send & prepare proposal
+                      </button>
+                      {busy && <button onClick={() => abort.current?.abort()}>Stop request</button>}
+                      {uncertainRun && (
+                        <button disabled={busy} onClick={() => void refreshReceipts()}>
+                          Reload request receipts
+                        </button>
+                      )}
+                    </details>
                   )}
                 </aside>
               )}

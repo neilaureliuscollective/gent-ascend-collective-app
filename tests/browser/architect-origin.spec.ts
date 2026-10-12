@@ -138,6 +138,7 @@ test('complete synthetic journey: vision, reviewed research, useful document, fo
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 2');
   await page.getByRole('button', { name: 'Research', exact: true }).click();
+  await page.getByText('Plan a research request', { exact: true }).click();
   await page
     .getByLabel('Your next request')
     .fill('Identify primary sources and feasibility uncertainties');
