@@ -93,7 +93,10 @@ window.fetch = async (input, init) => {
       person_id: 'synthetic-owner',
       conversation_id: body.conversationId,
       user_text: body.text,
-      assistant_text: 'Synthetic response for motion verification.',
+      assistant_text:
+        new URLSearchParams(location.search).get('longReply') === '1'
+          ? 'Synthetic long response with useful text.\n\n'.repeat(80)
+          : 'Synthetic response for motion verification.',
       status: 'complete',
       model: 'synthetic-fixture',
       context_included: false,
@@ -180,7 +183,13 @@ function Review() {
           </button>
           <button
             onClick={() =>
-              emit({ type: 'delta', text: 'Synthetic response for motion verification.' })
+              emit({
+                type: 'delta',
+                text:
+                  new URLSearchParams(location.search).get('longReply') === '1'
+                    ? 'Synthetic long response with useful text.\n\n'.repeat(80)
+                    : 'Synthetic response for motion verification.',
+              })
             }
           >
             Emit response text

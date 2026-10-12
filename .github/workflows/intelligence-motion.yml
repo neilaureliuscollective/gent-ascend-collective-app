@@ -43,6 +43,9 @@ jobs:
           tests/browser/live-voice.spec.ts
           tests/browser/account-claim.spec.ts
           --workers=2
+      - name: Compact synthetic rendered review for connector inspection
+        if: always()
+        run: node scripts/intelligence-motion-review.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

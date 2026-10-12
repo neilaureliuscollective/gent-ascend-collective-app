@@ -419,3 +419,17 @@ html[data-quiet='true'] .im-presence * {
 .talk-presence > .talk-tool .im-presence * {
   animation: none !important;
 }
+/* Keep the primary signature in sight as a long answer fills its scroll region. */
+.assistant-message
+  > .im-response:is(
+    [data-phase='waiting'],
+    [data-phase='thinking'],
+    [data-phase='searching'],
+    [data-phase='generating'],
+    [data-phase='saving']
+  ) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--io-reading, #080d0d);
+}

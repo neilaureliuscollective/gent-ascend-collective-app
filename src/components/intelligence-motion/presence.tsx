@@ -86,9 +86,20 @@ export function IntelligencePresence({
     </span>
   );
 }
-export function IntelligenceStatus({ operation }: { operation: IntelligenceOperation }) {
+export function IntelligenceStatus({
+  operation,
+  announce = true,
+}: {
+  operation: IntelligenceOperation;
+  announce?: boolean;
+}) {
   return (
-    <span className="im-status" role="status" aria-atomic="true">
+    <span
+      className="im-status"
+      role={announce ? 'status' : undefined}
+      aria-live={announce ? undefined : 'off'}
+      aria-atomic={announce ? true : undefined}
+    >
       {operation.basis === 'preview' ? 'Preview · ' : ''}
       {intelligenceStatus(operation)}
     </span>
@@ -115,7 +126,7 @@ export function IntelligenceResponse({
       <IntelligencePresence operation={operation} variant="signal" size="large" />
       <div className="im-response-copy">
         <span className="im-response-name">{name}</span>
-        <IntelligenceStatus operation={operation} />
+        <IntelligenceStatus operation={operation} announce={false} />
       </div>
     </div>
   );

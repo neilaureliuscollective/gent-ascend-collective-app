@@ -114,3 +114,14 @@ test('feedback appears before response headers and never requires opening the or
   await expect(page.getByRole('dialog', { name: 'Aethelios presence' })).toBeHidden();
   await expect(page.locator('.assistant-message .im-response')).toBeInViewport();
 });
+
+test('long replies keep the primary motion visible as the text grows', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('http://127.0.0.1:3102/motion-integration.html?longReply=1');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic long reply');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await expect(page.locator('.message-markdown')).toContainText('Synthetic long response');
+  await expect(page.locator('.assistant-message .im-response')).toBeInViewport({ ratio: 0.9 });
+  await page.screenshot({ path: 'test-results/visible-response-long-768.png', fullPage: true });
+});
