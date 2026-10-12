@@ -9,3 +9,9 @@ Corrected Command/daily/appearance route targets, the corresponding connection-f
 This phase changes acceptance tests and CI only; it does not restore obsolete homepage scenes or alter public product behavior to satisfy historical selectors. Remaining estate/commerce/home-fixture failures require their own source-contract inspection and reconciliation, not blind assertion replacement. Real production-founder/model/device testing and accepted compatible-reader rollback readiness remain separate gates.
 
 Local lint/strict-type receipts: /workspace/acceptance-{lint,types}.log. Browser execution occurs on the connected GitHub runner; it is not claimed from source inspection. No production merge/promotion, schema or hosted grant changes.
+
+## Focused interaction reconciliation
+
+The new focused run passed 40/55 checks; the full authenticated database job remained green. Inspected each remaining error against current source. Updated tools-drawer access before Context/Memory, current Work navigation, canonical manifest values, and named saved-context/deeper-system disclosures rather than ambiguous shared CSS summaries. Retained draft, session-loss, sample-isolation, focus, reduced-motion and source-boundary assertions. Added native noscript account/home guidance to the shared shell: this repairs an actual missing fallback rather than changing working navigation for an old test.
+
+Research: MDN noscript element reference and official Playwright locator guidance, reviewed 2026-10-12. The native fallback is hidden by the browser when scripting is enabled and offers ordinary existing sign-in/home links when disabled. It adds no auth capability or private data. Exact browser results remain the connected runner's acceptance gate.
