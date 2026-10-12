@@ -132,6 +132,8 @@ export async function admitLive(input: LiveAdmission) {
       headers: { Authorization: `Bearer ${config.key}`, Accept: 'application/sdp' },
       body,
       signal: AbortSignal.timeout(20000),
+      cache: 'no-store',
+      redirect: 'error',
     });
     if (!response.ok) throw new Error('Provider admission failed');
     const location = response.headers.get('location');
