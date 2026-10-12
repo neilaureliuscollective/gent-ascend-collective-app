@@ -1,9 +1,12 @@
 import { test, expect } from './fixtures';
 
+// Retained legacy composition, explicitly tested apart from the current public homepage.
+const estateFixture = 'http://127.0.0.1:3102/?mode=archived-estate';
+
 for (const width of [344, 768, 1440]) {
   test(`the first acts visibly transform with scroll at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 344 ? 740 : 900 });
-    await page.goto('/');
+    await page.goto(estateFixture);
     const threshold = page.locator('.ascend-threshold');
     await expect(page.locator('.estate-journey')).toHaveAttribute('data-choreographed', 'true');
     const sample = async (selector: string, progress: number) => {
@@ -95,9 +98,14 @@ for (const width of [344, 768, 1440]) {
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
     await expect(page.locator('.ascend-emergence')).toHaveAttribute('data-ambient-active', 'true');
     await expect(page.locator('.intelligence-network .intelligence-link')).toHaveCount(6);
-    await expect(page.locator('.intelligence-network .intelligence-link').first()).toHaveAttribute('d', /Q/);
+    await expect(page.locator('.intelligence-network .intelligence-link').first()).toHaveAttribute(
+      'd',
+      /Q/,
+    );
     await expect(page.locator('.ascend-connections [data-intelligence-signal]')).toHaveCount(6);
-    const earlyLink = await page.locator('.intelligence-link').last()
+    const earlyLink = await page
+      .locator('.intelligence-link')
+      .last()
       .evaluate((el) => parseFloat(getComputedStyle(el).strokeDashoffset));
     const earlyCamera = await page
       .locator('.ascend-intelligence-camera')
@@ -107,8 +115,13 @@ for (const width of [344, 768, 1440]) {
       'intelligence-signal',
     );
     await sample('.ascend-emergence', 0.65);
-    await expect.poll(() => page.locator('.intelligence-link').last()
-      .evaluate((el) => parseFloat(getComputedStyle(el).strokeDashoffset)))
+    await expect
+      .poll(() =>
+        page
+          .locator('.intelligence-link')
+          .last()
+          .evaluate((el) => parseFloat(getComputedStyle(el).strokeDashoffset)),
+      )
       .toBeLessThan(earlyLink - 5);
     await expect(page.locator('.ascend-emergence .estate-sculpture')).toHaveCSS('opacity', '1');
     await expect
@@ -133,7 +146,7 @@ for (const width of [344, 768, 1440]) {
 
   test(`LifeOS copy and exits keep separate space at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 344 ? 740 : 900 });
-    await page.goto('/#the-system');
+    await page.goto(estateFixture + '#the-system');
     const system = page.locator('#the-system');
     await expect(system).toHaveAttribute('data-directed', 'true');
     const boxes = await system.evaluate((element) => {
@@ -156,7 +169,7 @@ for (const width of [344, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('/');
+    await page.goto(estateFixture);
     await expect(page.locator('.estate-journey')).toHaveAttribute('data-choreographed', 'true');
     for (const selector of ['#the-man', '#the-intelligence', '#the-system', '#the-ritual']) {
       await page.locator(selector).scrollIntoViewIfNeeded();

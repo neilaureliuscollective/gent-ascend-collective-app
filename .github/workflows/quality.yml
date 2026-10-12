@@ -21,7 +21,10 @@ jobs:
         run: >-
           npx playwright test tests/browser/daily.spec.ts tests/browser/command.spec.ts
           tests/browser/command-living.spec.ts tests/browser/appearance.spec.ts
-          tests/browser/brand.spec.ts tests/browser/aethelios-identity.spec.ts --workers=2
+          tests/browser/brand.spec.ts tests/browser/aethelios-identity.spec.ts
+          tests/browser/company-platform.spec.ts tests/browser/public-world.spec.ts
+          tests/browser/installed-app.spec.ts tests/browser/estate-journey.spec.ts
+          tests/browser/estate-motion.spec.ts --workers=2
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()

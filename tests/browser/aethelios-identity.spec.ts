@@ -24,7 +24,7 @@ for (const width of [344, 768, 1440]) {
     await page.getByRole('link', { name: 'Talk with Aethelios' }).click();
     await expect(page).toHaveURL(/\/aethelios$/);
     await expect(page.getByLabel('Message Aethelios')).toBeVisible();
-    await expect(page.getByText('Gent Ascend Collective / Digital Co-Founder')).toBeVisible();
+    await expect(page.getByText('Aethelios · Your central intelligence')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
     await page.getByRole('button', { name: 'Explore the Orb' }).click();
     for (const label of ['Insight', 'Milestone']) {

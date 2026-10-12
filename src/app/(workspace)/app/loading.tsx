@@ -5,6 +5,12 @@ export default function Loading() {
     <div role="status" className="workspace-loading">
       <Brand />
       <p>Opening Aethelios…</p>
+      <noscript>
+        <p>
+          If this screen stays here, enable JavaScript to use the interactive workspace. Your
+          saved work stays with your account.
+        </p>
+      </noscript>
       <details className="workspace-loading-help">
         <summary>Having trouble opening your workspace?</summary>
         <p>

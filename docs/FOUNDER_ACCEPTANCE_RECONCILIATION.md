@@ -15,3 +15,14 @@ Local lint/strict-type receipts: /workspace/acceptance-{lint,types}.log. Browser
 The new focused run passed 40/55 checks; the full authenticated database job remained green. Inspected each remaining error against current source. Updated tools-drawer access before Context/Memory, current Work navigation, canonical manifest values, and named saved-context/deeper-system disclosures rather than ambiguous shared CSS summaries. Retained draft, session-loss, sample-isolation, focus, reduced-motion and source-boundary assertions. Added native noscript account/home guidance to the shared shell: this repairs an actual missing fallback rather than changing working navigation for an old test.
 
 Research: MDN noscript element reference and official Playwright locator guidance, reviewed 2026-10-12. The native fallback is hidden by the browser when scripting is enabled and offers ordinary existing sign-in/home links when disabled. It adds no auth capability or private data. Exact browser results remain the connected runner's acceptance gate.
+
+
+## Opening fallback and current public route reconciliation — 2026-10-12
+
+At activation head `50a1892`, real authenticated database/Founder Office checks passed again. The focused browser suite passed 50 checks and failed five: three outdated Talk eyebrow expectations, a motion assertion expecting a paused animation where elevation deliberately removes it, and a no-JavaScript opening screen missing an explanation. The opening loading boundary now includes the native explanation; navigation remains available in its existing disclosure. This fixes the streamed loading state rather than relying on a Shell that may require JavaScript to finish replacing the fallback.
+
+Public/company checks now verify the approved five workspace destinations, the current company-building homepage, real Lifestyle routes, unconnected catalog/product states, unavailable cart response (503/private no-store), and the current v7 offline cache. These are unconfigured local acceptance contracts, not evidence of live Shopify orders.
+
+Retained estate choreography checks now run in the existing browser-only component fixture with an explicit historical label. Its composition is copied from repository commit `30cc2cf`, with redirect/runtime deployment logic removed. There is no application route, identity adapter, database connection or commerce executor. Scroll, Fold widths, reduced motion, native chapter navigation and image/rendering assertions remain. The archived product exit is verified as an href; real product availability is checked separately against the current app. Historical component results must not be counted as current homepage or production acceptance.
+
+All broad browser gates remain enabled. Exact-head connected browser results are required before release; no hosted work-contract flag is enabled by these changes.
