@@ -3,7 +3,7 @@ import { test, expect } from './fixtures';
 test('motion and solid-surface choices persist; OS reduced motion always wins', async ({
   page,
 }) => {
-  await page.goto('/app');
+  await page.goto('/app/ongoing');
   await page.getByRole('button', { name: 'Pause ambient motion' }).click();
   await page.getByRole('button', { name: 'Use solid surfaces' }).click();
   await page.reload();
@@ -35,7 +35,9 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/app/aethelios');
-  await expect(page.getByRole('heading', { name: 'What would you like to move forward?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'What would you like to move forward?' }),
+  ).toBeVisible();
   // Exercise the deferred renderer failure in the conversation welcome.
   await page.waitForTimeout(1600);
   await expect(page.locator('.welcome-heading .intelligence-orb-static')).toBeVisible();
@@ -77,8 +79,8 @@ test('200 percent text remains navigable and permits reading and composing', asy
 test('connected light follows navigation and becomes still while reading a dialog', async ({
   page,
 }) => {
-  await page.goto('/app');
-  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app');
+  await page.goto('/app/ongoing');
+  await expect(page.locator('.connection-field')).toHaveAttribute('data-section', '/app/ongoing');
   await expect(page.locator('.connection-selected')).toHaveCount(1);
   await expect(page.locator('.connection-arrival')).toHaveCSS('animation-iteration-count', '1');
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });

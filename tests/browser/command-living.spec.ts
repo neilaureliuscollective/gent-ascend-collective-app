@@ -5,7 +5,7 @@ test('living connections stay attached through Fold resize and source inspection
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/app');
+  await page.goto('/app/ongoing');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   for (const [width, height] of [
     [390, 844],
@@ -111,7 +111,7 @@ test('Still and unknown context retain usable controls without active traces', a
   await expect(page.locator('.field-signal')).toHaveCount(0);
   await expect(page.locator('.connection-filament')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Open day workspace', exact: true })).toBeVisible();
-  await page.goto('/app');
+  await page.goto('/app/ongoing');
   await page.getByRole('button', { name: 'Explore a sample day' }).click();
   await expect(page.locator('.connection-filament')).toHaveCount(3);
   await expect(page.locator('.command-presence canvas')).toHaveCount(0);

@@ -380,3 +380,7 @@ Provide a distinct founder-only approved-to-rejected withdrawal transition using
 ## 2026-10-12 — Public Lifestyle commerce restoration
 
 The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.
+
+## 2026-10-12 — Release acceptance route reconciliation
+
+Use current user-visible routes and identity contracts in preserved Command/appearance/day browser journeys. Keep /app entry redirects intact, target /app/ongoing for Command tests, and expose these checks independently before the unchanged broad suite. Official research and evidence: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or public product changes.

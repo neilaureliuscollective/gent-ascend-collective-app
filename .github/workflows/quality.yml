@@ -17,6 +17,11 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Founder Office responsive and recovery checks
         run: npx playwright test tests/browser/founder-office.spec.ts --workers=2
+      - name: Current Command and identity route contracts
+        run: >-
+          npx playwright test tests/browser/daily.spec.ts tests/browser/command.spec.ts
+          tests/browser/command-living.spec.ts tests/browser/appearance.spec.ts
+          tests/browser/brand.spec.ts tests/browser/aethelios-identity.spec.ts --workers=2
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()

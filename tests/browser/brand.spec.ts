@@ -3,10 +3,10 @@ import { test, expect } from './fixtures';
 for (const width of [344, 768, 1440]) {
   test(`Gent Ascend identity and account layout at ${width}px`, async ({ page, request }) => {
     await page.setViewportSize({ width, height: 960 });
-    await page.goto('/app');
-    await expect(page).toHaveTitle('Gent Ascend Collective');
+    await page.goto('/app/ongoing');
+    await expect(page).toHaveTitle('Aethelios');
     await expect(
-      page.getByRole('link', { name: 'Gent Ascend Collective home' }).filter({ visible: true }),
+      page.getByRole('link', { name: 'Aethelios home' }).filter({ visible: true }),
     ).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
     if (width > 1100) {

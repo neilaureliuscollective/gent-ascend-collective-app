@@ -4,7 +4,7 @@ for (const width of [344, 768, 1440]) {
   test(`Aethelios introduction, portrait, and conversation at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.goto('/app/aethelios/meet');
-    await expect(page).toHaveTitle('Meet Aethelios · Gent Ascend');
+    await expect(page).toHaveTitle('Meet Aethelios · Aethelios');
     await expect(page.getByRole('heading', { name: /The mission.*Made present/ })).toBeVisible();
     await expect(page.locator('body')).toContainText('The founder remains the human source.');
     await expect(page.locator('body')).not.toContainText('Aurelius');
