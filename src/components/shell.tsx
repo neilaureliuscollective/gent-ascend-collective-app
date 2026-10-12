@@ -17,6 +17,17 @@ export function Shell({
 }) {
   return (
     <ConversationDraftProvider>
+      <noscript>
+        <section className="panel">
+          <p>
+            If this screen stays here, enable JavaScript to use the interactive workspace. Your
+            saved work stays with your account.
+          </p>
+          <nav aria-label="Workspace fallback">
+            <Link href="/enter">Your account</Link> · <Link href="/">Aethelios home</Link>
+          </nav>
+        </section>
+      </noscript>
       <div className="app-shell aethelios-aether imperial-workspace">
         <AppRuntime />
         <VisualEnvironment>

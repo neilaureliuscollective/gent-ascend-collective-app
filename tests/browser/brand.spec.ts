@@ -3,10 +3,10 @@ import { test, expect } from './fixtures';
 for (const width of [344, 768, 1440]) {
   test(`Gent Ascend identity and account layout at ${width}px`, async ({ page, request }) => {
     await page.setViewportSize({ width, height: 960 });
-    await page.goto('/app');
-    await expect(page).toHaveTitle('Gent Ascend Collective');
+    await page.goto('/app/ongoing');
+    await expect(page).toHaveTitle('Aethelios');
     await expect(
-      page.getByRole('link', { name: 'Gent Ascend Collective home' }).filter({ visible: true }),
+      page.getByRole('link', { name: 'Aethelios home' }).filter({ visible: true }),
     ).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
     if (width > 1100) {
@@ -44,9 +44,9 @@ for (const width of [344, 768, 1440]) {
       'Aethelios',
     );
     const manifest = await (await request.get('/manifest.webmanifest')).json();
-    expect(manifest.name).toBe('Gent Ascend Collective');
-    expect(manifest.short_name).toBe('Gent Ascend');
-    expect(manifest.theme_color).toBe('#050706');
+    expect(manifest.name).toBe('Aethelios');
+    expect(manifest.short_name).toBe('Aethelios');
+    expect(manifest.theme_color).toBe('#080A0B');
     for (const icon of manifest.icons) expect((await request.get(icon.src)).ok()).toBe(true);
   });
 }
