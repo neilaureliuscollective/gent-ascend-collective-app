@@ -236,7 +236,12 @@
   color: var(--io-secondary);
 }
 .app-shell.imperial-workspace
-  :is(.conversation-library, .studio-projects, .imperial-control-surface, .talk-drawer > header) {
+  :is(
+    .conversation-library,
+    .studio-projects,
+    .imperial-control-surface,
+    .talk-drawer > :where(header)
+  ) {
   background: var(--io-navigation);
   color: var(--io-text);
   border-color: var(--io-divider);
