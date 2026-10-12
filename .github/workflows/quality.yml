@@ -24,7 +24,9 @@ jobs:
           tests/browser/brand.spec.ts tests/browser/aethelios-identity.spec.ts
           tests/browser/company-platform.spec.ts tests/browser/public-world.spec.ts
           tests/browser/installed-app.spec.ts tests/browser/estate-journey.spec.ts
-          tests/browser/estate-motion.spec.ts --workers=2
+          tests/browser/estate-motion.spec.ts tests/browser/direct-home.spec.ts
+          tests/browser/orb.spec.ts tests/browser/pilot.spec.ts
+          tests/browser/lifestyle-phase-one.spec.ts --workers=2
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()

@@ -26,21 +26,18 @@ for (const width of [344, 768, 1440]) {
     await expect(page.getByLabel('Message Aethelios')).toBeVisible();
     await expect(page.getByText('Aethelios · Your central intelligence')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Aurelius');
-    await page.getByRole('button', { name: 'Explore the Orb' }).click();
-    for (const label of ['Insight', 'Milestone']) {
-      await page
-        .getByRole('group', { name: 'Orb motion preview' })
-        .getByRole('button', { name: label, exact: true })
-        .click();
-      await expect(page.locator('.orb-presentation .account-intelligence-orb')).toHaveAttribute(
-        'data-state',
-        `preview-${label.toLowerCase()}`,
-      );
-    }
+    await page.getByRole('button', { name: 'Aethelios presence', exact: true }).click();
+    const presence = page.getByRole('dialog', { name: 'Aethelios presence', exact: true });
+    await expect(presence.getByText('Connect to begin', { exact: true })).toBeVisible();
+    await expect(
+      presence.getByText('Your conversation stays in place. Microphone off.'),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(presence).not.toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await expect(page.locator('.orb-presentation .account-intelligence-orb')).toBeInViewport({
+    await expect(page.locator('.talk-presence')).toBeInViewport({
       ratio: 1,
     });
     await page.screenshot({ path: `test-results/aethelios-orb-${width}.png`, fullPage: true });
