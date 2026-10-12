@@ -7,7 +7,7 @@ on:
       - 'playwright.studio-production.config.ts'
       - '.github/workflows/studio-production.yml'
   push:
-    branches: [feat/studio-production-house-20261012, feat/studio-narration-20261012, feat/studio-footage-20261012, feat/studio-delivery-20261012]
+    branches: [feat/studio-production-house-20261012, feat/studio-narration-20261012, feat/studio-footage-20261012, feat/studio-delivery-20261012, feat/studio-premium-20261012]
 concurrency:
   group: studio-production-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true

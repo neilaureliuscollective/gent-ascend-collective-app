@@ -546,3 +546,43 @@ test('Delivery fails honestly when a selected saved asset is missing', async ({ 
   ).toContainText('Nothing was exported');
   expect(downloaded).toBe(false);
 });
+
+test('premium room controls preserve keyboard navigation and defer inactive room requests', async ({
+  page,
+}) => {
+  let specialistReads = 0;
+  page.on('request', (request) => {
+    if (/\/api\/studio\/(footage|narration)/.test(request.url())) specialistReads++;
+  });
+  await setup(page);
+  const controls = page.getByRole('group', { name: 'Studio workspace views' });
+  await expect(controls.getByRole('button')).toHaveCount(8);
+  await expect(controls.getByRole('button', { name: 'Create', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(specialistReads).toBe(0);
+  await page.evaluate(() => {
+    document.documentElement.dataset.material = 'solid';
+    document.documentElement.dataset.motion = 'still';
+  });
+  await controls.getByRole('button', { name: 'Create', exact: true }).hover();
+  expect(
+    await controls
+      .getByRole('button', { name: 'Create', exact: true })
+      .evaluate((element) => getComputedStyle(element).transform),
+  ).toBe('none');
+  await controls.getByRole('button', { name: 'Campaign', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(controls.getByRole('button', { name: 'Campaign', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: 'Render motion film', exact: true })).toBeVisible();
+  expect(specialistReads).toBe(0);
+  await controls.getByRole('button', { name: 'Create', exact: true }).click();
+  await expect(controls.getByRole('button', { name: 'Create', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+});

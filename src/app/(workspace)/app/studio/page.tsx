@@ -6,7 +6,8 @@ import './studio-production.css';
 
 export const metadata: Metadata = {
   title: 'Aethelios Studio',
-  description: 'Develop creative projects, references and images with Aethelios.',
+  description:
+    'Aethelios creative production: images, campaigns, voice, footage and reviewed delivery.',
 };
 
 export default function StudioPage() {
@@ -19,11 +20,17 @@ export default function StudioPage() {
           <h1>
             Studio<span className="brand-star">✦</span>
           </h1>
-          <p>From direction to images, campaigns and motion.</p>
+          <p>Your vision, developed with intention.</p>
         </div>
         <Link className="text-link" href="/app/aethelios">
           Aethelios Chat ↗
         </Link>
+      </div>
+      <div className="studio-workflow-line" aria-label="Studio creative workflow">
+        <span>01 / DIRECT</span>
+        <span>02 / CREATE</span>
+        <span>03 / REFINE</span>
+        <span>04 / DELIVER</span>
       </div>
       <StudioWorkspace />
     </div>

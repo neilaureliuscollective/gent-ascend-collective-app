@@ -2,15 +2,63 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { StudioRooms, type StudioRoom } from './studio-rooms';
 import Image from 'next/image';
 import type { StudioScene } from './studio-storyboard';
-import { StudioDelivery } from './studio-delivery';
-import { StudioFootage } from './studio-footage';
-import { StudioNarration } from './studio-narration';
-import { StudioCampaign } from './studio-campaign';
+const StudioDelivery = dynamic(
+  () => import('./studio-delivery').then((module) => module.StudioDelivery),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+const StudioFootage = dynamic(
+  () => import('./studio-footage').then((module) => module.StudioFootage),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+const StudioNarration = dynamic(
+  () => import('./studio-narration').then((module) => module.StudioNarration),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
+const StudioCampaign = dynamic(
+  () => import('./studio-campaign').then((module) => module.StudioCampaign),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
 import { StudioBrandKit } from './studio-brand-kit';
 import { readBrandKit, type BrandKit } from '@/domains/studio/brand';
-import { StudioFinish, type StudioFinishRecord } from './studio-finish';
+import type { StudioFinishRecord } from './studio-finish';
+const StudioFinish = dynamic(
+  () => import('./studio-finish').then((module) => module.StudioFinish),
+  {
+    loading: () => (
+      <p className="studio-room-loading" role="status">
+        Opening the room…
+      </p>
+    ),
+  },
+);
 import { useConversationDraft } from './draft-handoff';
 
 type CreativeType = 'open' | 'brand' | 'campaign' | 'product' | 'personal';
@@ -51,15 +99,7 @@ type Workspace = {
   configured: boolean;
   canCreate?: boolean;
 };
-type View =
-  | 'create'
-  | 'library'
-  | 'direction'
-  | 'storyboard'
-  | 'finish'
-  | 'narration'
-  | 'footage'
-  | 'delivery';
+type View = StudioRoom;
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = {
   projects: [],
@@ -533,7 +573,7 @@ export function StudioWorkspace() {
           </div>
         ) : (
           <>
-            <div className="studio-project-heading">
+            <div className="studio-project-heading studio-project-stage">
               <div>
                 <p className="eyebrow">
                   {paths.find((path) => path.type === project?.creative_type)?.title ??
@@ -545,49 +585,24 @@ export function StudioWorkspace() {
                   {data.references.length} references
                 </span>
               </div>
-              <Link href="/app/aethelios">Talk it through with Aethelios ↗</Link>
+              <div className="studio-stage-side">
+                {data.versions.find((version) => version.status === 'complete') && (
+                  <Image
+                    className="studio-stage-preview"
+                    src={imageUrl(
+                      data.versions.find((version) => version.status === 'complete')!.id,
+                      'version',
+                    )}
+                    alt="Saved image from this project"
+                    width={180}
+                    height={120}
+                    unoptimized
+                  />
+                )}
+                <Link href="/app/aethelios">Talk it through with Aethelios ↗</Link>
+              </div>
             </div>
-            <div
-              className="studio-view-tabs imperial-control-surface"
-              role="group"
-              aria-label="Studio workspace views"
-            >
-              {(
-                [
-                  'create',
-                  'storyboard',
-                  'footage',
-                  'narration',
-                  'finish',
-                  'delivery',
-                  'library',
-                  'direction',
-                ] as const
-              ).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  aria-pressed={view === tab}
-                  onClick={() => setView(tab)}
-                >
-                  {tab === 'create'
-                    ? 'Create'
-                    : tab === 'storyboard'
-                      ? 'Campaign'
-                      : tab === 'finish'
-                        ? 'Finish'
-                        : tab === 'footage'
-                          ? 'Footage'
-                          : tab === 'narration'
-                            ? 'Narration'
-                            : tab === 'delivery'
-                              ? 'Delivery'
-                              : tab === 'library'
-                                ? 'Library'
-                                : 'Direction'}
-                </button>
-              ))}
-            </div>
+            <StudioRooms value={view} onChange={setView} />
             {view === 'delivery' && selected && (
               <StudioDelivery
                 key={selected}
