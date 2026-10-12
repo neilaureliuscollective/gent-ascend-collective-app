@@ -541,6 +541,8 @@ test('Delivery fails honestly when a selected saved asset is missing', async ({ 
   await page
     .getByRole('button', { name: 'Download reviewed delivery package', exact: true })
     .click();
-  await expect(page.getByRole('alert')).toContainText('Nothing was exported');
+  await expect(
+    page.getByRole('region', { name: 'Campaign delivery' }).getByRole('alert'),
+  ).toContainText('Nothing was exported');
   expect(downloaded).toBe(false);
 });
