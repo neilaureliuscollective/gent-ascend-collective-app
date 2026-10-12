@@ -811,3 +811,11 @@
     align-self: start;
   }
 }
+@media print {
+  .origin-document-canvas .origin-document-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+  }
+}
