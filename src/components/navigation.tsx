@@ -7,6 +7,7 @@ const destinations: [string, string, IconName][] = [
   ['/app/aethelios', 'Talk', 'spark'],
   ['/app/work', 'Work', 'command'],
   ['/app/studio', 'Studio', 'collection'],
+  ['/app/health', 'Health', 'person'],
   ['/app/lifestyle', 'Lifestyle', 'collection'],
   ['/app/ecosystem', 'Ecosystem', 'world'],
 ];
@@ -42,6 +43,7 @@ export function Navigation() {
         <Link
           key={href}
           href={href === '/app/aethelios' && path.startsWith('/app/companies/') ? path : href}
+          prefetch={href === '/app/health' ? false : undefined}
           aria-current={
             path === href ||
             path.startsWith(href + '/') ||

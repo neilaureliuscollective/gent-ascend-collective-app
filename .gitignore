@@ -12,3 +12,6 @@ supabase/.branches/
 
 # Reproducible, pinned camera guidance assets prepared at build time
 /public/mirror/vision-1.0.1/
+
+# Reproducible synthetic Health browser bundle
+/validation/health/browser-bundle/

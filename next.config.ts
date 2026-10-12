@@ -3,6 +3,7 @@ import { parseEnvironment } from './src/platform/environment';
 parseEnvironment(process.env);
 const config: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingIncludes: { '/api/health': ['./scripts/health-pdf-worker.mjs', './node_modules/pdf-lib/**/*', './node_modules/@pdf-lib/**/*', './node_modules/pako/**/*', './node_modules/tslib/**/*'] },
   // TypeScript 6 exposes the compiler API; avoid detached CLI subprocesses in managed runners.
   experimental: { useTypeScriptCli: false },
   images: { remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }] },

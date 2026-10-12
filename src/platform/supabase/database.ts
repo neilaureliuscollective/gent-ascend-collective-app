@@ -749,6 +749,9 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      health_export_history: { Args: Record<string, never>; Returns: unknown };
+      health_read: { Args: Record<string, never>; Returns: unknown };
+      health_mutate: { Args: { p_kind: string; p_request: string; p_payload: unknown }; Returns: unknown };
       company_begin_revision: {Args:{p_company:string;p_conversation:string;p_source:string;p_request:string;p_text:string;p_kind:string;p_model:string;p_prompt_version:string};Returns:string};
       company_create_job: {Args:{p_id:string;p_company:string;p_conversation:string;p_scope:import("@/domains/company-work/schema").WorkScope};Returns:string};
       company_save_work: {Args:{p_id:string;p_company:string;p_job:string;p_expected:number;p_content:import("@/domains/company-work/schema").WorkContent;p_source_turn:string|null};Returns:string};

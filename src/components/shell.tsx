@@ -6,6 +6,7 @@ import { AureliusPanel } from './aurelius-panel';
 import { Brand } from './visual/brand';
 import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
+import { SensitiveBoundary } from './health/sensitive-boundary';
 import { AppRuntime } from './app-runtime';
 import { UniversalCapture } from './capture/universal-capture';
 export function Shell({
@@ -33,7 +34,7 @@ export function Shell({
           </Link>
           <p className="navigation-label">AETHELIOS</p>
           <Navigation />
-          <AureliusPanel />
+          <SensitiveBoundary><AureliusPanel /></SensitiveBoundary>
 
           <div className="sidebar-footer">
             <Link href="/app/work" prefetch={false} className="text-link">
@@ -59,7 +60,7 @@ export function Shell({
               AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
             </span>
             <div className="topbar-actions">
-              <UniversalCapture />
+              <SensitiveBoundary><UniversalCapture /></SensitiveBoundary>
               <AppearanceControls />
               <Link href="/app/work" className="text-link shell-ascend-link">
                 Company work
@@ -91,3 +92,4 @@ export function Shell({
     </ConversationDraftProvider>
   );
 }
+

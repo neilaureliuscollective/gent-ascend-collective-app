@@ -35,6 +35,8 @@ export function performancePayload(
   pathname: string,
   width: number,
 ) {
+  if (/^\/app\/health(?:\/|$)/.test(pathname) || /^\/api\/health(?:\/|$)/.test(pathname))
+    return null;
   const result = performanceEvent.safeParse({
     name: metric.name,
     value: Math.round(metric.value * 1000) / 1000,

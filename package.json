@@ -24,7 +24,9 @@
     "test:founder": "playwright test --config playwright.founder.config.ts",
     "test:ai:live": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local node_modules/vitest/vitest.mjs run --config vitest.ai.config.ts",
     "prebuild": "node scripts/prepare-mirror.mjs",
-    "pretest:e2e": "node scripts/prepare-mirror.mjs"
+    "pretest:e2e": "node scripts/prepare-mirror.mjs",
+    "test:health": "vitest run tests/health.test.ts tests/health-database.test.ts tests/health-pdf.test.ts tests/health-api.test.ts tests/health-export.test.ts tests/health-owner.test.ts",
+    "test:health:bundle": "node scripts/build-health-fixture.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "4.0.72",
@@ -63,3 +65,4 @@
     "vitest": "5.0.1"
   }
 }
+

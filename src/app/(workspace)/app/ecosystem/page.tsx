@@ -54,14 +54,15 @@ export default function EcosystemPage() {
           <h2>Aethelios Health</h2>
           <p className="io-division-promise">Know More. Live Better.</p>
           <p>
-            Biological intelligence begins with understanding. Explore your own check-ins and
-            available performance planning; future health technology remains in development.
+            Your private Health Command brings source-led wellness, records and reviewed labs into context.
+            Sensitive ingestion and personalized AI require privacy release acceptance.
           </p>
           <p className="io-division-boundary">
             Educational and personal planning experiences. No prescribing or clinical care is
             offered here.
           </p>
           <nav className="io-division-links" aria-label="Available health and performance tools">
+            <Link href="/app/health" prefetch={false}>Health Command ↗</Link>
             <Link href="/app/daily">Personal check-ins ↗</Link>
             <Link href="/app/performance">Performance ↗</Link>
           </nav>

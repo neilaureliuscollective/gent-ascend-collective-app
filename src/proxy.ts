@@ -37,6 +37,8 @@ export async function proxy(request: NextRequest) {
   }
   response.headers.set('Cache-Control', 'private, no-store');
   if (
+    request.nextUrl.pathname.startsWith('/app/health') ||
+    request.nextUrl.pathname.startsWith('/api/health') ||
     request.nextUrl.pathname === '/app/collection/orders' ||
     request.nextUrl.pathname.startsWith('/api/commerce/customer')
   )
