@@ -51,9 +51,10 @@ test('the verified production application serves Obsidian and preserves public e
           'background-color',
           'rgb(8, 10, 11)',
         );
-        await expect(
-          page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
-        ).toHaveCount(4);
+        const navigation = page.getByRole('navigation', { name: 'Main navigation' });
+        await expect(navigation.getByRole('link')).toHaveCount(5);
+        for (const label of ['Talk', 'Work', 'Studio', 'Lifestyle', 'Ecosystem'])
+          await expect(navigation.getByRole('link', { name: label, exact: true })).toBeVisible();
       }
       await page.screenshot({
         path: `test-results/production-${route.replaceAll('/', '-') || 'home'}-${viewport.width}.png`,

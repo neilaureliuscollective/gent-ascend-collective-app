@@ -5,7 +5,7 @@ import { aureliusInstructions, sharedCharacter } from './prompt';
 import { aiConfigSchema } from './validation';
 import { specialist, type CouncilSelection, type SpecialistId } from './council';
 import { generateReply } from './model';
-import type { ModelChunk } from './stream';
+import type { ModelChunk, ActivityReporter } from './stream';
 import { researchTools, researchPolicy, sourceFooter } from './research';
 
 export type Perspective = { id: SpecialistId; text: string; input: number; output: number };
@@ -20,6 +20,7 @@ export type CouncilRunner = {
     model: string,
     messages: ModelMessage[],
     signal: AbortSignal,
+    onActivity?: ActivityReporter,
   ) => AsyncIterable<ModelChunk>;
 };
 const runner: CouncilRunner = {
@@ -67,7 +68,8 @@ const runner: CouncilRunner = {
       throw new Error('Council perspective unavailable');
     }
   },
-  synthesize: (model, messages, signal) => generateReply(model, messages, signal, false),
+  synthesize: (model, messages, signal, onActivity) =>
+    generateReply(model, messages, signal, false, onActivity),
 };
 /** Independent bounded model calls; only the reviewed cast runs. No tool execution. */
 export async function* generateCouncilReply(
@@ -76,9 +78,11 @@ export async function* generateCouncilReply(
   selection: CouncilSelection,
   signal: AbortSignal,
   execute: CouncilRunner = runner,
+  onActivity?: ActivityReporter,
 ): AsyncGenerator<ModelChunk> {
   let input = 0,
     output = 0;
+  onActivity?.('waiting');
   if (selection.kind === 'specialist') {
     const result = await execute.perspective(selection.specialists[0]!, model, messages, signal);
     if (signal.aborted) throw new Error('Interrupted');
@@ -116,7 +120,7 @@ export async function* generateCouncilReply(
     },
   ];
   yield { type: 'text', text: '### Aethelios synthesis\n\n' };
-  for await (const chunk of execute.synthesize(model, synthesisMessages, signal)) {
+  for await (const chunk of execute.synthesize(model, synthesisMessages, signal, onActivity)) {
     if (chunk.type === 'finish')
       yield { ...chunk, input: input + (chunk.input ?? 0), output: output + (chunk.output ?? 0) };
     else yield chunk;

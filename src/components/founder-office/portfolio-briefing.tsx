@@ -66,7 +66,7 @@ export function PortfolioBriefing({
           const event = JSON.parse(line) as StreamEvent;
           if (event.type === 'delta') painted.append(event.text);
           else if (event.type === 'error') throw new Error(event.message);
-          else {
+          else if (event.type === 'saved') {
             painted.finish();
             setPartial(event.turn.assistant_text);
             acknowledged = true;

@@ -83,3 +83,75 @@ it('sends streamed requests directly to OpenAI with response storage disabled', 
   expect(chunks).toContainEqual({ type: 'text', text: 'Connected.' });
   expect(chunks).toContainEqual({ type: 'finish', reason: 'stop', input: 10, output: 2 });
 });
+
+it('reports search only for a real provider-executed web-search call and never exposes its input', async () => {
+  vi.stubEnv('OPENAI_API_KEY', 'synthetic-openai-test-key');
+  const events = [
+    {
+      type: 'response.created',
+      response: { id: 'resp_search', created_at: 1, model: 'gpt-6-astra' },
+    },
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: { type: 'web_search_call', id: 'search-1', status: 'in_progress' },
+    },
+    {
+      type: 'response.output_item.done',
+      output_index: 0,
+      item: {
+        type: 'web_search_call',
+        id: 'search-1',
+        status: 'completed',
+        action: { type: 'search', query: 'PRIVATE_QUERY_NOT_FOR_UI', sources: [] },
+      },
+    },
+    {
+      type: 'response.output_item.added',
+      output_index: 1,
+      item: { type: 'message', id: 'msg_search', role: 'assistant', content: [] },
+    },
+    {
+      type: 'response.output_text.delta',
+      item_id: 'msg_search',
+      output_index: 1,
+      content_index: 0,
+      delta: 'Verified result.',
+    },
+    {
+      type: 'response.completed',
+      response: {
+        id: 'resp_search',
+        status: 'completed',
+        incomplete_details: null,
+        usage: {
+          input_tokens: 10,
+          output_tokens: 2,
+          total_tokens: 12,
+          output_tokens_details: { reasoning_tokens: 0 },
+        },
+      },
+    },
+  ];
+  const fetch = vi.fn(
+    async () =>
+      new Response(events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''), {
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const { generateReply } = await import('../src/domains/intelligence/model');
+  const chunks = [];
+  const activities: string[] = [];
+  for await (const chunk of generateReply(
+    'gpt-6-astra',
+    [{ role: 'user', content: 'Synthetic research request' }],
+    new AbortController().signal,
+    false,
+    (phase) => activities.push(phase),
+  ))
+    chunks.push(chunk);
+  expect(activities).toEqual(['searching', 'waiting', 'generating']);
+  expect(JSON.stringify(chunks)).not.toContain('PRIVATE_QUERY_NOT_FOR_UI');
+  expect(chunks).toContainEqual({ type: 'text', text: 'Verified result.' });
+});

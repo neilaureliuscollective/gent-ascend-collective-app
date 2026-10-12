@@ -3,6 +3,9 @@ import Link from 'next/link';
 import Markdown from 'react-markdown';
 import { useEffect, useRef, useState } from 'react';
 import type { readCompanyTalk } from '@/domains/companies/service';
+import { observedOperation } from '@/platform/visual/operation-adapters';
+import { IntelligenceStatus } from '../intelligence-motion/presence';
+import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import type { StreamEvent } from '@/domains/intelligence/types';
 import { companyJobs } from '@/domains/company-work/starters';
 import {
@@ -93,6 +96,9 @@ export function CompanyRoom({
   });
   const [sent, setSent] = useState('');
   const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<IntelligenceOperation>(
+    observedOperation('work-idle', 'ready'),
+  );
   const [streaming, setStreaming] = useState(false);
   const [needsReload, setNeedsReload] = useState(false);
   const [error, setError] = useState('');
@@ -228,6 +234,8 @@ export function CompanyRoom({
             }
         : null;
     if (outputRequest) setGeneration(outputRequest);
+    const motionId = outputRequest?.requestId ?? crypto.randomUUID();
+    setOperation(observedOperation(motionId, 'waiting', 'pending'));
     let saved = false;
     const painted = frameText(setPartial);
     let accepted = false;
@@ -246,6 +254,7 @@ export function CompanyRoom({
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? 'Deliverable generation unavailable.');
         saved = true;
+        setOperation(observedOperation(motionId, 'complete', 'confirmed'));
         setWork(result);
         setShowWork(true);
         setData(await read(work.job.conversation_id));
@@ -259,12 +268,12 @@ export function CompanyRoom({
       }
       const response = await fetch('/api/company-talk/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Aethelios-Motion': '1' },
         signal: controller.signal,
         body: JSON.stringify({
           companyId: data.company.id,
           conversationId: id,
-          requestId: crypto.randomUUID(),
+          requestId: motionId,
           text,
           ...(work ? { jobId: work.job.id } : {}),
           ...(revision ?? {}),
@@ -296,11 +305,21 @@ export function CompanyRoom({
         buffer = lines.pop() ?? '';
         for (const line of lines.filter(Boolean)) {
           const event = JSON.parse(line) as StreamEvent;
-          if (event.type === 'delta') painted.append(event.text);
-          else if (event.type === 'error') throw new Error(event.message);
-          else {
+          if (event.type === 'activity') {
+            if (event.phase === 'saving') painted.finish(true);
+            setOperation(observedOperation(motionId, event.phase, 'pending'));
+          } else if (event.type === 'delta') {
+            setOperation((previous) =>
+              previous.id === motionId && ['searching', 'generating'].includes(previous.phase)
+                ? previous
+                : observedOperation(motionId, 'generating', 'pending'),
+            );
+            painted.append(event.text);
+          } else if (event.type === 'error') throw new Error(event.message);
+          else if (event.type === 'saved') {
             painted.finish();
             saved = true;
+            setOperation(observedOperation(motionId, 'complete', 'confirmed'));
             setData((previous) => ({ ...previous, turns: [...previous.turns, event.turn] }));
           }
         }
@@ -313,6 +332,13 @@ export function CompanyRoom({
       setSent('');
       setData(await read(id));
     } catch (error) {
+      setOperation(
+        observedOperation(
+          motionId,
+          saved ? 'complete' : controller.signal.aborted ? 'cancelled' : 'failed',
+          saved ? 'confirmed' : accepted || outputRequest ? 'uncertain' : 'not-applicable',
+        ),
+      );
       if ((accepted || outputRequest) && !saved) setNeedsReload(true);
       setError(
         saved
@@ -345,7 +371,10 @@ export function CompanyRoom({
       aria-labelledby="company-room-title"
     >
       <header className="talk-company-heading">
-        <TalkPresence state={busy ? 'working' : needsReload ? 'stopped' : 'ready'} />
+        <TalkPresence
+          operation={operation}
+          state={busy ? 'working' : needsReload ? 'stopped' : 'ready'}
+        />
         <Link href="/app/work" aria-label="Companies">
           ←
         </Link>
@@ -653,6 +682,7 @@ export function CompanyRoom({
                 <Markdown skipHtml>{partial || 'Preparing the response…'}</Markdown>
               </article>
             )}
+            {operation.phase !== 'ready' && <IntelligenceStatus operation={operation} />}
             {error && <p role="alert">{error}</p>}
           </div>
           {away && !showWork && (
