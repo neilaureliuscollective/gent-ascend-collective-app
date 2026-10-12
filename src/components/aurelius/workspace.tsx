@@ -156,7 +156,8 @@ export function AureliusWorkspace({
         }
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
-        if (homeDraft && (result as WorkspaceData).ownerId !== homeDraft.ownerId) setDraft('');
+        const knownOwner = draftSnapshot.current.ownerId || homeDraft?.ownerId;
+        if (knownOwner && (result as WorkspaceData).ownerId !== knownOwner) setDraft('');
         setData(result as WorkspaceData);
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
@@ -447,7 +448,8 @@ export function AureliusWorkspace({
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
       setRevision(null);
       setNotice('Reply saved.');
-      await reload(id);
+      // Refresh saved metadata without resetting completed motion or disabling the next draft.
+      await load(id);
     } catch (e) {
       if (accepted && !saved) setDraft((current) => current || messageText);
       if (!accepted)
