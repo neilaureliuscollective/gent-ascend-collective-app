@@ -111,7 +111,13 @@ test('feedback appears before response headers and never requires opening the or
   await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic delayed admission');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.locator('.conversation-scroll .im-response')).toBeInViewport({ timeout: 1000 });
-  await expect(page.locator('.conversation-turn')).toHaveCount(0);
+  // Local pending submission is visible before acceptance; neither text nor save is invented.
+  await expect(page.locator('.conversation-turn')).toHaveCount(1);
+  await expect(page.locator('.user-message')).toContainText('Synthetic delayed admission');
+  await expect(page.locator('.message-markdown')).toBeEmpty();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue(
+    'Synthetic delayed admission',
+  );
   await expect(page.getByRole('dialog', { name: 'Aethelios presence' })).toBeHidden();
   await expect(page.locator('.assistant-message .im-response')).toBeInViewport();
 });
