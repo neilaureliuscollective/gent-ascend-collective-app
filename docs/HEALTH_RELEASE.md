@@ -10,4 +10,6 @@ Latest local combined source: lint, strict types, 694 unit/SQL/worker/API tests 
 
 Protected-preview HTTP connector returned deployment_authentication_required even after its bypass retry; this is not a passing HTTP smoke. Production signed-out checks remain required after deployment. No real model, physical-device or medical-record test is inferred from synthetic fixtures.
 
+Production-smoke workflow reconciliation: PR runs check the deployed main baseline; candidate behavior remains covered by Quality/visual/domain/Auth workflows. Main release runs check the merged source, waiting for the Health route to become available before the public production assertions. This fixes the circular failure where the unreleased six-link/Health contract was tested against the older five-link live application. All exact production assertions remain, including all Health routes, private API denial, referrer/cache/robots headers and developer-route rejection.
+
 Rollback: redeploy the previous accepted main artifact. Preserve additive Health schema, jobs and tombstones; keep database/application sensitive switches off. Do not drop private records or restore deleted content.
