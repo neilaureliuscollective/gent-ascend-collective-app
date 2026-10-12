@@ -880,19 +880,19 @@ export function AureliusWorkspace({
                 </p>
                 <div className="conversation-starters">
                   {[
-                    'I have an idea to pressure-test. Help me turn it into a clear decision.',
-                    'I need to create something. Help me shape the brief and a useful first draft.',
-                    'I have a project to move forward. Help me identify the next concrete action.',
-                  ].map((text) => (
+                    { label: 'Pressure-test an idea', draft: 'I have an idea to pressure-test. Help me turn it into a clear decision.' },
+                    { label: 'Shape a creative brief', draft: 'I need to create something. Help me shape the brief and a useful first draft.' },
+                    { label: 'Move a project forward', draft: 'I have a project to move forward. Help me identify the next concrete action.' },
+                  ].map((suggestion) => (
                     <button
-                      key={text}
+                      key={suggestion.label}
                       onClick={() => {
-                        setDraft(text);
+                        setDraft(suggestion.draft);
                         composer.current?.focus();
                       }}
                       disabled={blocked}
                     >
-                      {text}
+                      {suggestion.label}
                       <span aria-hidden="true">↗</span>
                     </button>
                   ))}

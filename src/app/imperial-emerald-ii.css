@@ -30,6 +30,10 @@
 .app-shell.imperial-workspace :is(.button, .secondary-button):active:not(:disabled) {
   transform: translateY(1px);
 }
+.app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer) textarea.talk-input {
+  background: transparent;
+  border: 0;
+}
 .app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer):focus-within {
   border-color: var(--io-highlight);
   box-shadow: 0 0 0 1px var(--io-highlight), inset 0 1px var(--io-reflection);
