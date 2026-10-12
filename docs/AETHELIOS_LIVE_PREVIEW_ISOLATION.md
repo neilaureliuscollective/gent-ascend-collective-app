@@ -1,3 +1,5 @@
+> Superseded requirement, October 12: a separate database is optional, not mandatory. Founder directed reuse of the canonical Gent database. Explicit `AETHELIOS_LIVE_CANONICAL_PILOT=true` allows only its exact managed URL without a separate project pin, and admission additionally verifies the normal trusted founder grant before any reservation/provider work. The separate founder application database remains blocked. Historical isolation-only rationale below is retained for context; it no longer governs the canonical pilot. Read-only hosted inspection found Live/session/artifact/expiry tables absent; no hosted migration or flag was changed.
+
 # Protected voice environment — preview binding, October 12, 2026
 
 ## Inspected risk and implementation

@@ -59,3 +59,30 @@ it('cannot enable admission by declaring control readiness against production da
   expect(report.previewDatabaseBinding).toBe('blocked-project');
   expect(JSON.stringify(report)).not.toContain('https://');
 });
+
+it('permits explicitly enabled canonical account pilot without requiring a second project', () => {
+  const shared = {
+    APP_ENV: 'preview',
+    AETHELIOS_LIVE_CANONICAL_PILOT: 'true',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://volpzkfsnmtztrovexcw.supabase.co',
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'synthetic-publishable',
+    AETHELIOS_LIVE_ENABLED: 'true',
+    AETHELIOS_LIVE_CONTROL_READY: 'true',
+    OPENAI_API_KEY: 'synthetic',
+  };
+  expect(previewBinding(shared)).toBe('configuration-matched');
+  expect(preflightConfiguration(shared)).toMatchObject({
+    canonicalPilot: true,
+    admissionConfigured: true,
+    launchAcceptance: 'unverified',
+  });
+  expect(
+    previewBinding({
+      ...shared,
+      NEXT_PUBLIC_SUPABASE_URL: 'https://tybjocxecilkmozkvuns.supabase.co',
+    }),
+  ).toBe('url-mismatch');
+  expect(
+    previewBinding({ ...shared, AETHELIOS_LIVE_PREVIEW_PROJECT_REF: 'tybjocxecilkmozkvuns' }),
+  ).toBe('blocked-project');
+});

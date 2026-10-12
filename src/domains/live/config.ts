@@ -20,5 +20,9 @@ export function liveConfig() {
   const model = z
     .enum(['gpt-realtime', 'gpt-realtime-1.5', 'gpt-realtime-2.1', 'gpt-realtime-mini'])
     .parse(process.env.AETHELIOS_LIVE_MODEL ?? 'gpt-realtime');
-  return { key, model };
+  return {
+    key,
+    model,
+    canonicalPilot: env.mode === 'preview' && process.env.AETHELIOS_LIVE_CANONICAL_PILOT === 'true',
+  };
 }

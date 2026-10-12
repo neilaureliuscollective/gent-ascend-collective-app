@@ -19,6 +19,7 @@ beforeEach(() => {
   vi.stubEnv('AURELIUS_DEV_HARNESS', 'false');
   vi.stubEnv('AETHELIOS_LIVE_ENABLED', 'true');
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'false');
+  vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'false');
   vi.stubEnv('OPENAI_API_KEY', 'synthetic-test-key');
   vi.stubEnv('AETHELIOS_LIVE_MODEL', 'gpt-realtime');
 });
@@ -44,4 +45,16 @@ it('does not enable production even when pilot flags are enabled', () => {
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable-key');
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
   expect(() => liveConfig()).toThrow(/not enabled/);
+});
+
+it('recognizes founder-only canonical pilot without another database while retaining readiness', () => {
+  vi.stubEnv('APP_ENV', 'preview');
+  vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'true');
+  vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', '');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://volpzkfsnmtztrovexcw.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable');
+  expect(() => liveConfig()).toThrow(/hosting controls/);
+  vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', undefined);
+  vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
+  expect(liveConfig()).toMatchObject({ canonicalPilot: true, model: 'gpt-realtime' });
 });

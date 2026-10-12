@@ -26,6 +26,7 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
     enabled,
     controlsDeclared,
     previewDatabaseBinding: previewBinding(env),
+    canonicalPilot: environment === 'preview' && env.AETHELIOS_LIVE_CANONICAL_PILOT === 'true',
     admissionConfigured:
       environment !== 'invalid' &&
       environment !== 'production' &&

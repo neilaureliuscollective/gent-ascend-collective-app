@@ -14,6 +14,7 @@ import {
   buildMessages,
 } from '@/domains/intelligence/prompt';
 import { currentAccess } from '@/domains/access/current';
+import { requireCanonicalPilotAccess } from './pilot-access';
 import { liveConfig } from './config';
 import { readLiveEvent, type LiveAdmission } from './contract';
 import { VoiceLedger } from './ledger';
@@ -36,6 +37,7 @@ export async function admitLive(input: LiveAdmission) {
   const config = liveConfig();
   const session = await intelligenceSession();
   const { client, person } = session;
+  await requireCanonicalPilotAccess(config.canonicalPilot);
   if (!(await currentAccess()).has('voice.use'))
     throw new IntelligenceError('Voice pilot access is not enabled for this account.', 403);
   await recoverExpiredLive(session);
