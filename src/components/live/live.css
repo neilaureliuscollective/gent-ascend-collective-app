@@ -441,3 +441,25 @@
   cursor: pointer;
   color: var(--io-highlight);
 }
+
+/* The preserved Live orb uses the shared, state-driven operation signature. */
+.live-orb > .im-presence {
+  width: 100%;
+  height: 100%;
+}
+
+.live-compact > .im-presence .im-artwork {
+  transform: scale(calc(1 + var(--live-audio-level, 0) * 0.08));
+  transition: transform 120ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-compact > .im-presence .im-artwork {
+    transform: none;
+    transition: none;
+  }
+}
+html[data-motion='still'] .live-orb,
+html[data-motion='still'] .live-compact > .im-presence .im-artwork {
+  transform: none;
+  transition: none;
+}

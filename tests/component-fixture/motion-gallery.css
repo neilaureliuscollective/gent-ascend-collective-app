@@ -1,0 +1,129 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #080a0b;
+  font-family: system-ui, sans-serif;
+}
+main {
+  min-height: 100dvh;
+  padding: clamp(20px, 5vw, 64px);
+  max-width: 1600px;
+  margin: auto;
+}
+header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+header img {
+  object-fit: contain;
+}
+h1 {
+  font-size: clamp(24px, 4vw, 42px);
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+.gallery-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #e0bb6a;
+}
+.gallery-disclosure {
+  color: #adb5af;
+  line-height: 1.6;
+  border-bottom: 1px solid #e6e7e21f;
+  padding-bottom: 24px;
+}
+.gallery-stage {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 40px;
+  padding: 48px 0 64px;
+}
+.gallery-stage > .im-presence {
+  justify-self: center;
+}
+h2 {
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+.gallery-stage p {
+  color: #adb5af;
+  line-height: 1.7;
+  max-width: 38rem;
+}
+label {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+select,
+button {
+  font: inherit;
+  color: #e6e7e2;
+  background: #202728;
+  border: 1px solid #adb5af61;
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 44px;
+}
+button {
+  cursor: pointer;
+}
+input {
+  min-height: 44px;
+  width: 100%;
+  accent-color: #36896c;
+}
+:focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 4px;
+}
+.appearance-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.appearance-controls svg {
+  width: 18px;
+  height: 18px;
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.im-task h3 {
+  text-transform: capitalize;
+  font-size: 16px;
+}
+.im-task p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+@media (max-width: 600px) {
+  .gallery-stage {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 24px 0;
+  }
+  .appearance-controls {
+    margin-left: 0;
+  }
+}
+@media (forced-colors: active) {
+  main {
+    background: Canvas !important;
+    color: CanvasText !important;
+  }
+  p {
+    color: CanvasText !important;
+  }
+}

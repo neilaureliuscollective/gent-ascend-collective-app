@@ -1,4 +1,7 @@
 'use client';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
+import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -208,6 +211,9 @@ export function StudioFinish({
   const [loadedLogoId, setLoadedLogoId] = useState<string | null>(null);
   const activeLogo = loadedLogoId === brandKit.logoReferenceId ? logo : null;
   const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<IntelligenceOperation>(
+    observedOperation('studio-idle', 'ready'),
+  );
   const [dirty, setDirty] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -298,6 +304,9 @@ export function StudioFinish({
   async function save() {
     setBusy(true);
     setError('');
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       const response = await fetch('/api/studio/finish', {
         method: 'POST',
@@ -318,10 +327,19 @@ export function StudioFinish({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Composition could not be saved.');
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       setUpdatedAt(result.updated_at);
       setDirty(false);
       await onChanged();
     } catch (cause) {
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -331,6 +349,9 @@ export function StudioFinish({
     if (!image || !canvas.current) return;
     setBusy(true);
     setError('');
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'processing', 'not-applicable'));
     try {
       await document.fonts.ready;
       draw(canvas.current, image, draft, brandKit, activeLogo);
@@ -346,7 +367,12 @@ export function StudioFinish({
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete'));
     } catch (cause) {
+      setOperation(
+        observedOperation(motionId, acknowledged ? 'complete' : 'failed', 'not-applicable'),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -373,6 +399,9 @@ export function StudioFinish({
     if (!image) return;
     setBusy(true);
     setError('');
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'processing', 'not-applicable'));
     try {
       await document.fonts.ready;
       const files: { name: string; bytes: Uint8Array }[] = [];
@@ -406,7 +435,12 @@ export function StudioFinish({
         new Blob([bytes.buffer as ArrayBuffer], { type: 'application/zip' }),
         `studio-${selected}-campaign.zip`,
       );
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete'));
     } catch (cause) {
+      setOperation(
+        observedOperation(motionId, acknowledged ? 'complete' : 'failed', 'not-applicable'),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -414,6 +448,7 @@ export function StudioFinish({
   }
   return (
     <section className="studio-finish" aria-label="Finish a Studio image">
+      {operation.phase !== 'ready' && <IntelligenceActivity operation={operation} />}
       <div className="studio-intro">
         <p className="eyebrow">THE FINISH ROOM</p>
         <h3>Make it ready to be seen.</h3>

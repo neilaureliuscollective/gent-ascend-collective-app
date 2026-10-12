@@ -1,4 +1,6 @@
 'use client';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
 import { useEffect, useRef, useState } from 'react';
 import { sceneSubtitles } from '@/domains/studio/narration';
 import type { BrandKit } from '@/domains/studio/brand';
@@ -124,6 +126,9 @@ export function StudioCampaign({
   return (
     <section className="studio-campaign" aria-label="Campaign production">
       <div className="studio-production-intro">
+        {running && (
+          <IntelligenceActivity operation={observedOperation('studio-campaign', 'processing')} />
+        )}
         <p className="eyebrow">THE CAMPAIGN ROOM</p>
         <h3>One direction. A complete story.</h3>
         <p>

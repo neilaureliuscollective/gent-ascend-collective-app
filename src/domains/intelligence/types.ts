@@ -78,7 +78,9 @@ export type WorkspaceData = {
   nextConversationCursor?: string | null;
   currentConversation?: Conversation | null;
 };
+export type OperationActivity = 'waiting' | 'thinking' | 'searching' | 'researching' | 'generating' | 'saving';
 export type StreamEvent =
+  | { type: 'activity'; phase: OperationActivity }
   | { type: 'delta'; text: string }
   | { type: 'saved'; turn: Turn }
   | { type: 'error'; message: string };

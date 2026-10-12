@@ -27,12 +27,28 @@ export async function POST(request: Request) {
       });
     return new Response(
       replyStream(
-        (signal) =>
+        (signal, onActivity) =>
           prepared.council
-            ? generateCouncilReply(prepared.model, prepared.messages, prepared.council, signal)
-            : generateReply(prepared.model, prepared.messages, signal, false),
+            ? generateCouncilReply(
+                prepared.model,
+                prepared.messages,
+                prepared.council,
+                signal,
+                undefined,
+                undefined,
+                onActivity,
+              )
+            : generateReply(
+                prepared.model,
+                prepared.messages,
+                signal,
+                false,
+                undefined,
+                onActivity,
+              ),
         prepared.finish,
         request.signal,
+        { activity: request.headers.get('X-Aethelios-Motion') === '1' },
       ),
       {
         headers: {

@@ -1,6 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
+import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import type { readWork } from '@/domains/company-work/service';
 import { emptyWork, type WorkContent } from '@/domains/company-work/schema';
 import type { SlideLayout } from '@/domains/company-work/presentation';
@@ -23,6 +26,9 @@ export function WorkPanel({
   );
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [operation, setOperation] = useState<IntelligenceOperation>(
+    observedOperation('deliverable-idle', 'ready'),
+  );
   const [error, setError] = useState('');
   const [slides, setSlides] = useState<SlideLayout[]>([]);
   const [previewError, setPreviewError] = useState('');
@@ -61,6 +67,9 @@ export function WorkPanel({
   }, [version, work.job.company_id, work.job.id]);
   async function mutate(method: string, body: unknown, path = '/api/company-work') {
     setSaving(true);
+    const motionId = crypto.randomUUID();
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
+    let acknowledged = false;
     setError('');
     setWrite({ method, body, path });
     try {
@@ -71,12 +80,21 @@ export function WorkPanel({
       });
       const next = await response.json();
       if (!response.ok) throw new Error(next.error ?? 'Save not confirmed.');
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       onChanged(next);
       setSelected(next.versions[0]?.id ?? '');
       setEditing(false);
       setWrite(null);
       setApproved(false);
     } catch (e) {
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError(e instanceof Error ? e.message : 'Save not confirmed.');
     } finally {
       setSaving(false);
@@ -111,6 +129,7 @@ export function WorkPanel({
     }));
   return (
     <section className="company-deliverable" aria-labelledby="deliverable-title">
+      {operation.phase !== 'ready' && <IntelligenceActivity operation={operation} />}
       <header>
         <span className="eyebrow">SAVED COMPANY JOB · BRIEF v{work.job.brief_version}</span>
         <h2 id="deliverable-title">{version?.content.title ?? work.job.scope.request}</h2>

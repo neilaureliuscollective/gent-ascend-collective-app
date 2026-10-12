@@ -5,7 +5,7 @@ import { aureliusInstructions, sharedCharacter } from './prompt';
 import { aiConfigSchema } from './validation';
 import { specialist, type CouncilSelection, type SpecialistId } from './council';
 import { generateReply } from './model';
-import type { ModelChunk } from './stream';
+import type { ModelChunk, ActivityReporter } from './stream';
 import { researchTools, researchPolicy, sourceFooter } from './research';
 
 export class CouncilPerspectiveError extends Error {
@@ -33,6 +33,7 @@ export type CouncilRunner = {
     model: string,
     messages: ModelMessage[],
     signal: AbortSignal,
+    onActivity?: ActivityReporter,
   ) => AsyncIterable<ModelChunk>;
 };
 function createRunner(allowResearch: boolean): CouncilRunner {
@@ -92,7 +93,8 @@ function createRunner(allowResearch: boolean): CouncilRunner {
         throw new CouncilPerspectiveError(null, null);
       }
     },
-    synthesize: (model, messages, signal) => generateReply(model, messages, signal, false),
+    synthesize: (model, messages, signal, onActivity) =>
+      generateReply(model, messages, signal, false, undefined, onActivity),
   };
 }
 
@@ -104,10 +106,12 @@ export async function* generateCouncilReply(
   signal: AbortSignal,
   execute?: CouncilRunner,
   options: { allowResearch: boolean } = { allowResearch: true },
+  onActivity?: ActivityReporter,
 ): AsyncGenerator<ModelChunk> {
   const active = execute ?? createRunner(options.allowResearch);
   if (!options.allowResearch && selection.kind !== 'specialist')
     throw new Error('Scoped review supports one coworker');
+  onActivity?.('waiting');
   let metered = true;
   let input = 0,
     output = 0;
@@ -159,7 +163,7 @@ export async function* generateCouncilReply(
     },
   ];
   yield { type: 'text', text: '### Aethelios synthesis\n\n' };
-  for await (const chunk of active.synthesize(model, synthesisMessages, signal)) {
+  for await (const chunk of active.synthesize(model, synthesisMessages, signal, onActivity)) {
     if (chunk.type === 'finish')
       yield {
         ...chunk,

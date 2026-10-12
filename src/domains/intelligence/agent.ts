@@ -6,7 +6,7 @@ import {
   type LanguageModelMiddleware,
 } from 'ai';
 import { aureliusInstructions, sharedCharacter, founderConduct } from './prompt';
-import type { ModelChunk } from './stream';
+import type { ModelChunk, ActivityReporter } from './stream';
 import { researchTools, researchPolicy, sourceFooter, type ResearchSource } from './research';
 // SDK default error logging must never receive raw provider request bodies.
 export const redactProviderErrors: LanguageModelMiddleware = {
@@ -49,6 +49,7 @@ export async function* streamAurelius(
   signal: AbortSignal,
   founder = false,
   onSource?: (source: ResearchSource) => void,
+  onActivity?: ActivityReporter,
 ): AsyncGenerator<ModelChunk> {
   const agent = new ToolLoopAgent({
     id: 'aurelius',
@@ -73,9 +74,26 @@ export async function* streamAurelius(
     timeout: { totalMs: 90000, chunkMs: 30000 },
   });
   const sources: ResearchSource[] = [];
+  const searches = new Set<string>();
+  let activity = '';
+  const changeActivity: ActivityReporter = (phase) => {
+    if (activity === phase) return;
+    activity = phase;
+    onActivity?.(phase);
+  };
   for await (const part of result.fullStream) {
-    if (part.type === 'text-delta') yield { type: 'text', text: part.text };
-    else if (part.type === 'source' && part.sourceType === 'url') {
+    if (part.type === 'tool-call' && part.toolName === 'web_search' && part.providerExecuted) {
+      searches.add(part.toolCallId);
+      changeActivity('searching');
+    } else if (part.type === 'tool-result' && part.toolName === 'web_search') {
+      searches.delete(part.toolCallId);
+      changeActivity(searches.size ? 'searching' : 'waiting');
+    } else if (part.type === 'reasoning-start') {
+      changeActivity(searches.size ? 'searching' : 'thinking');
+    } else if (part.type === 'text-delta') {
+      changeActivity(searches.size ? 'searching' : 'generating');
+      yield { type: 'text', text: part.text };
+    } else if (part.type === 'source' && part.sourceType === 'url') {
       const source = { url: part.url, title: part.title };
       sources.push(source);
       onSource?.(source);

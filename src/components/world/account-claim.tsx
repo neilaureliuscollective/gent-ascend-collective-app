@@ -216,7 +216,17 @@ export function AccountClaim() {
   }
   const completed = useRef(false);
   useEffect(() => {
-    if (!open || !config?.authenticated || saved || completed.current || receipt || problem) return;
+    if (
+      !open ||
+      !config?.authenticated ||
+      busy ||
+      lock.current ||
+      saved ||
+      completed.current ||
+      receipt ||
+      problem
+    )
+      return;
     completed.current = true;
     let method: 'google' | 'email' | 'existing' = 'existing';
     try {

@@ -1,0 +1,50 @@
+.review-controls {
+  padding: 20px;
+  border-bottom: 1px solid var(--io-divider);
+  position: relative;
+  z-index: 1;
+}
+.review-controls h1 {
+  font-size: 24px;
+}
+.review-controls p {
+  max-width: 70rem;
+  color: var(--io-secondary);
+}
+.review-controls button,
+.review-controls select {
+  min-height: 44px;
+  margin: 4px;
+  padding: 8px 12px;
+}
+.review-controls label {
+  display: inline-block;
+  margin-right: 20px;
+}
+.review-controls .appearance-controls {
+  display: inline-flex;
+}
+.review-workspace {
+  padding: 16px;
+  min-width: 0;
+}
+.review-workspace .aurelius-layout {
+  min-height: 600px;
+}
+.review-workspace .conversation-scroll {
+  min-height: 300px;
+}
+.review-workspace .aurelius-workspace {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .review-controls {
+    padding: 12px;
+  }
+  .review-controls h1 {
+    font-size: 19px;
+  }
+  .review-workspace {
+    padding: 8px;
+  }
+}

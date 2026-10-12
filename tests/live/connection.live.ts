@@ -21,7 +21,7 @@ test('configured direct OpenAI model can complete a synthetic Aethelios request'
     new AbortController().signal,
   )) {
     if (chunk.type === 'text') text += chunk.text;
-    else complete = chunk.reason === 'stop';
+    else if (chunk.type === 'finish') complete = chunk.reason === 'stop';
   }
   expect(complete).toBe(true);
   expect(text).toContain('Aethelios connection verified.');

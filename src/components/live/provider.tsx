@@ -5,6 +5,14 @@ import ReactMarkdown from 'react-markdown';
 import { LiveController } from '@/domains/live/controller';
 import { IntelligenceOrb } from '@/components/public/intelligence-orb';
 import './live.css';
+import {
+  IntelligencePresence,
+  IntelligenceStatus,
+  IntelligenceActivity,
+} from '@/components/intelligence-motion/presence';
+import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/operation-adapters';
+import { measuredAudioLevel } from '@/platform/visual/intelligence-motion';
+import { useAppearance } from '@/components/visual/appearance';
 import { ArtifactSurface } from './artifacts';
 import { LiveContext } from './context';
 import { LiveDiagnostics } from './diagnostics';
@@ -180,7 +188,9 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     controller.getSnapshot,
   );
   const dialog = useRef<HTMLDialogElement>(null);
+  const { moving } = useAppearance();
   const orb = useRef<HTMLDivElement>(null);
+  const operation = liveMotionOperation(state);
   const compact = useRef<HTMLElement>(null);
   const [transcript, setTranscript] = useState(true);
   const [draft, setDraft] = useState('');
@@ -198,7 +208,9 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     return () => cancelAnimationFrame(frame);
   }, [visible, state.mode]);
   useEffect(() => {
-    if (!active) return;
+    orb.current?.style.setProperty('--live-audio-level', '0');
+    compact.current?.style.setProperty('--live-audio-level', '0');
+    if (!active || !moving) return;
     let cancelled = false,
       sampling = false;
     const interval = setInterval(() => {
@@ -207,11 +219,13 @@ function LiveSurface({ controller }: { controller: LiveController }) {
       void controller
         .audioLevels()
         .then((levels) => {
-          if (!cancelled)
-            orb.current?.style.setProperty(
-              '--live-audio-level',
-              String(Math.max(levels.input, levels.output)),
+          if (!cancelled) {
+            const value = String(
+              measuredAudioLevel(liveMotionOperation(controller.getSnapshot(), levels)),
             );
+            orb.current?.style.setProperty('--live-audio-level', value);
+            compact.current?.style.setProperty('--live-audio-level', value);
+          }
         })
         .catch(() => {})
         .finally(() => {
@@ -222,7 +236,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [active, controller]);
+  }, [active, moving, controller, state.phase, state.muted, state.playbackBlocked, state.mode]);
   useEffect(() => {
     if (!visible || !state.sessionId) return;
     void controller.refreshJobs();
@@ -280,19 +294,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const content = (
     <>
       <p className="live-brand">AETHELIOS LIVE</p>
-      <p role="status">
-        {state.muted && active
-          ? 'Microphone muted'
-          : state.phase === 'listening'
-            ? 'Listening'
-            : state.phase === 'speaking'
-              ? 'Speaking'
-              : state.phase === 'connecting'
-                ? 'Connecting'
-                : state.phase === 'error'
-                  ? 'Connection unavailable'
-                  : 'Session ended'}
-      </p>
+      <IntelligenceStatus operation={operation} />
       {state.error && <p role="alert">{state.error}</p>}
       {state.playbackBlocked && (
         <button
@@ -327,6 +329,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           <h3>
             {job.coworker ? `Council · ${job.coworker}` : 'Research'} · {job.status}
           </h3>
+          <IntelligenceActivity operation={liveJobMotionOperation(job)} />
           <p>{job.task}</p>
           {job.status === 'approval' && active && (
             <>
@@ -419,7 +422,17 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         }}
       >
         <div className="live-orb" ref={orb}>
-          <IntelligenceOrb active={active} engaged={state.phase === 'speaking'} deepGreen />
+          <IntelligencePresence
+            operation={operation}
+            size="large"
+            artwork={
+              <IntelligenceOrb
+                active={moving && active && state.mode === 'immersive'}
+                engaged={operation.phase === 'speaking'}
+                deepGreen
+              />
+            }
+          />
         </div>
         <div className="live-content">{content}</div>
       </dialog>
@@ -429,6 +442,12 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           className="live-compact"
           aria-label="Persistent Aethelios voice controls"
         >
+          <IntelligencePresence
+            operation={operation}
+            artwork={
+              <IntelligenceOrb active={false} engaged={operation.phase === 'speaking'} deepGreen />
+            }
+          />
           {content}
         </section>
       )}

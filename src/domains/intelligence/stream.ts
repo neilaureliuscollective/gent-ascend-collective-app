@@ -1,4 +1,5 @@
-import type { StreamEvent, Turn } from './types';
+import type { StreamEvent, Turn, OperationActivity } from './types';
+export type ActivityReporter = (phase: Exclude<OperationActivity, 'saving'>) => void;
 export type ModelChunk =
   | { type: 'text'; text: string }
   | { type: 'finish'; reason: string; input?: number; output?: number };
@@ -10,9 +11,10 @@ export type FinishReply = (
 ) => Promise<Turn>;
 // A saved event is emitted only after persistence succeeds. Provider errors stay private.
 export function replyStream(
-  generate: (signal: AbortSignal) => AsyncIterable<ModelChunk>,
+  generate: (signal: AbortSignal, activity: ActivityReporter) => AsyncIterable<ModelChunk>,
   finish: FinishReply,
   requestSignal: AbortSignal,
+  options: { activity?: boolean } = {},
 ) {
   const abort = new AbortController();
   const signal = AbortSignal.any([requestSignal, abort.signal, AbortSignal.timeout(95000)]);
@@ -20,6 +22,8 @@ export function replyStream(
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       const emit = (event: StreamEvent) => {
+        // Cached pre-motion clients retain the original delta/saved/error protocol.
+        if (event.type === 'activity' && !options.activity) return;
         if (!disconnected) {
           try {
             controller.enqueue(new TextEncoder().encode(JSON.stringify(event) + '\n'));
@@ -34,7 +38,7 @@ export function replyStream(
       let output: number | undefined;
       let complete = false;
       try {
-        for await (const chunk of generate(signal)) {
+        for await (const chunk of generate(signal, (phase) => emit({ type: 'activity', phase }))) {
           if (signal.aborted) throw new Error('Interrupted');
           if (chunk.type === 'text') {
             text += chunk.text;
@@ -47,6 +51,7 @@ export function replyStream(
           }
         }
         if (!complete || !text.trim() || signal.aborted) throw new Error('Incomplete reply');
+        emit({ type: 'activity', phase: 'saving' });
         const turn = await finish(text, 'complete', input, output);
         emit({ type: 'saved', turn });
       } catch {

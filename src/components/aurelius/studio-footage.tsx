@@ -1,4 +1,6 @@
 'use client';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
 import { useEffect, useState } from 'react';
 import type { FootageItem } from '@/domains/studio/footage';
 import { downloadStudio } from './studio-download';
@@ -95,6 +97,7 @@ export function StudioFootage({ projectId }: { projectId: string }) {
       aria-label="AI footage production"
       aria-busy={busy}
     >
+      {busy && <IntelligenceActivity operation={observedOperation('studio-footage', 'waiting')} />}
       <div className="studio-production-intro">
         <div>
           <span className="eyebrow">THE FOOTAGE ROOM</span>

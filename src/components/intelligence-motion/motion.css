@@ -1,0 +1,243 @@
+.im-presence {
+  --im-fast: 180ms;
+  --im-settle: 240ms;
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  isolation: isolate;
+}
+.im-large {
+  width: clamp(140px, 26vw, 260px);
+  height: auto;
+  aspect-ratio: 1;
+}
+.im-presence > span {
+  position: absolute;
+  pointer-events: none;
+}
+.im-core {
+  inset: 17%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, var(--im-emerald), var(--im-core) 68%);
+  border: 1px solid var(--im-emerald);
+  box-shadow: inset -8px -8px 20px #0008;
+  transform: scale(calc(1 + var(--im-level) * 0.08));
+  transition: transform var(--im-fast) ease-out;
+}
+.im-flow {
+  position: absolute;
+  inset: -35%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 20deg,
+    transparent 15%,
+    var(--im-emerald) 32%,
+    transparent 48%,
+    var(--im-light) 65%,
+    transparent 78%
+  );
+  opacity: 0.22;
+}
+.im-contour {
+  position: absolute;
+  inset: 14% -20%;
+  border: 1px solid var(--im-light);
+  border-radius: 50%;
+  transform: rotate(-28deg);
+  opacity: 0.4;
+}
+.im-halo {
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--im-emerald), transparent 68%);
+  opacity: 0.12;
+}
+.im-orbit {
+  inset: 6%;
+  border: 1px solid transparent;
+  border-top-color: var(--im-gold);
+  border-right-color: var(--im-emerald);
+  border-radius: 50%;
+  transform: rotate(-32deg);
+  opacity: 0.65;
+}
+.im-orbit > span {
+  position: absolute;
+  top: 12%;
+  right: 12%;
+  width: 4px;
+  height: 4px;
+  background: var(--im-gold);
+  border-radius: 50%;
+}
+.im-resolution {
+  inset: 10%;
+  border: 1px solid var(--im-gold);
+  border-radius: 50%;
+  opacity: 0;
+}
+.im-presence[data-phase='ready'] .im-orbit {
+  opacity: 0.25;
+}
+.im-presence:is([data-phase='failed'], [data-phase='cancelled']) .im-flow {
+  opacity: 0.08;
+}
+.im-presence[data-phase='failed'] .im-orbit {
+  border-top-style: dashed;
+  opacity: 0.35;
+}
+.im-presence[data-phase='cancelled'] .im-orbit {
+  opacity: 0.18;
+}
+.im-presence[data-phase='complete'] .im-resolution {
+  opacity: 0.65;
+}
+.im-presence[data-phase='complete'] .im-flow {
+  opacity: 0.1;
+}
+.im-presence[data-phase='saving'] .im-orbit {
+  border-top-color: var(--im-gold);
+  border-right-color: transparent;
+}
+.im-presence[data-animate='true'][data-motion='ambient']:is(
+    [data-phase='thinking'],
+    [data-phase='generating'],
+    [data-phase='processing']
+  )
+  .im-flow {
+  animation: im-turn 5s linear infinite;
+  opacity: 0.4;
+}
+.im-presence[data-animate='true'][data-motion='ambient']:is(
+    [data-phase='loading'],
+    [data-phase='connecting'],
+    [data-phase='searching'],
+    [data-phase='researching'],
+    [data-phase='saving']
+  )
+  .im-orbit {
+  animation: im-turn 2.8s linear infinite;
+}
+.im-presence[data-animate='true'][data-motion='ambient'][data-phase='waiting'] .im-halo {
+  animation: im-breathe 3.2s ease-in-out infinite;
+}
+.im-presence[data-animate='true'][data-motion='ambient'][data-phase='complete'] .im-resolution {
+  animation: im-resolve 420ms ease-out 1;
+}
+@keyframes im-turn {
+  to {
+    transform: rotate(328deg);
+  }
+}
+@keyframes im-breathe {
+  50% {
+    opacity: 0.24;
+    transform: scale(1.04);
+  }
+}
+@keyframes im-resolve {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+}
+.im-activity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.im-status {
+  color: var(--io-text, var(--aether-text, #e6e7e2));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.im-task {
+  padding: 20px;
+  border: 1px solid var(--io-divider, #e6e7e21f);
+  border-radius: 16px;
+  background: var(--io-raised, #202728);
+}
+.im-task h3 {
+  margin: 0 0 12px;
+}
+.im-task p {
+  color: var(--io-secondary, #adb5af);
+}
+html[data-motion='still'] .im-presence *,
+.im-presence[data-motion='still'] * {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .im-presence * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .im-presence {
+    display: none;
+  }
+  .im-task {
+    border: 1px solid CanvasText;
+  }
+  .im-status {
+    color: CanvasText;
+  }
+}
+
+/* Unconfirmed persistence never receives a completion flourish. */
+.im-presence[data-persistence='uncertain'] .im-resolution {
+  opacity: 0;
+  animation: none !important;
+}
+.im-presence[data-persistence='uncertain'] .im-orbit {
+  opacity: 0.25;
+  animation: none !important;
+}
+.im-presence[data-persistence='uncertain'] .im-flow {
+  opacity: 0.1;
+  animation: none !important;
+}
+html[data-quiet='true'] .im-presence * {
+  animation-play-state: paused !important;
+}
+/* Retain the official flowing orb artwork while sharing the operation signature. */
+.im-artwork {
+  inset: 0;
+}
+.im-presence[data-artwork='true'] > :is(.im-core, .im-halo) {
+  display: none;
+}
+.talk-orb > .im-presence {
+  width: 100%;
+  height: 100%;
+}
+.talk-presence .im-status {
+  display: block;
+}
+.im-presence[data-artwork='true'][data-animate='true'][data-motion='ambient']:is(
+    [data-phase='thinking'],
+    [data-phase='generating'],
+    [data-phase='processing']
+  )
+  .im-orbit {
+  animation: im-turn 5s linear infinite;
+}
+.im-orbit > span {
+  width: 4%;
+  height: 4%;
+  min-width: 2px;
+  min-height: 2px;
+  max-width: 4px;
+  max-height: 4px;
+}

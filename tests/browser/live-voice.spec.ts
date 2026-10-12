@@ -82,6 +82,8 @@ for (const width of [390, 1440])
     const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('status')).toHaveText('Listening');
+    await expect(dialog.locator('.im-presence')).toHaveAttribute('data-phase', 'listening');
+    await expect(dialog.locator('.im-presence')).toHaveAttribute('data-motion', 'still');
     await page.evaluate(() => {
       (
         window as unknown as { voiceChannel: { onmessage: (e: { data: string }) => void } }
@@ -103,6 +105,19 @@ for (const width of [390, 1440])
     expect(ends).toBe(0);
     await compact.getByRole('button', { name: 'Mute microphone', exact: true }).click();
     await expect(compact.getByRole('status')).toHaveText('Microphone muted');
+    await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'ready');
+    await page.evaluate(() =>
+      (
+        window as unknown as { voiceChannel: { onmessage: (e: { data: string }) => void } }
+      ).voiceChannel.onmessage({
+        data: JSON.stringify({
+          type: 'output_audio_buffer.started',
+          response_id: 'synthetic-response',
+        }),
+      }),
+    );
+    await expect(compact.getByRole('status')).toHaveText('Speaking');
+    await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'speaking');
     await compact.getByRole('button', { name: 'Fullscreen', exact: true }).click();
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
@@ -110,6 +125,7 @@ for (const width of [390, 1440])
     expect(starts).toBe(1);
     await compact.getByRole('button', { name: 'End', exact: true }).click();
     await expect(compact.getByRole('status')).toHaveText('Session ended');
+    await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'cancelled');
     expect(
       await page.evaluate(() => (window as unknown as { micStopped: boolean }).micStopped),
     ).toBe(true);

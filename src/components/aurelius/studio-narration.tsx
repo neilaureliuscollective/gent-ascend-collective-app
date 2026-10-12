@@ -1,4 +1,6 @@
 'use client';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
 import { useEffect, useRef, useState } from 'react';
 import type { NarrationRecord } from '@/domains/studio/narration';
 import { downloadStudio } from './studio-download';
@@ -139,6 +141,9 @@ export function StudioNarration({
   }
   return (
     <section className="studio-narration-room studio-motion-room" aria-label="Narration production">
+      {busy && (
+        <IntelligenceActivity operation={observedOperation('studio-narration', 'waiting')} />
+      )}
       <p className="eyebrow">THE NARRATION ROOM</p>
       <h3>A voice for the story.</h3>
       <p>

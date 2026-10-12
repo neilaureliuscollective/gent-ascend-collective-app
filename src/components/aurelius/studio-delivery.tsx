@@ -1,4 +1,6 @@
 'use client';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import type { DeliveryAsset } from '@/domains/studio/delivery';
@@ -137,6 +139,9 @@ export function StudioDelivery({
   }
   return (
     <section className="studio-motion-room" aria-label="Campaign delivery" aria-busy={busy}>
+      {busy && (
+        <IntelligenceActivity operation={observedOperation('studio-delivery', 'processing')} />
+      )}
       <span className="eyebrow">THE DELIVERY ROOM</span>
       <h3>From creation to a considered handoff.</h3>
       <p>

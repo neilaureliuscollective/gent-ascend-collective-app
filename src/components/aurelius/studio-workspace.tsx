@@ -1,4 +1,7 @@
 'use client';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
+import { observedOperation } from '@/platform/visual/operation-adapters';
+import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -161,6 +164,9 @@ export function StudioWorkspace({
   const [view, setView] = useState<View>('create');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<IntelligenceOperation>(
+    observedOperation('studio-idle', 'ready'),
+  );
   const [error, setError] = useState('');
   const [busyLabel, setBusyLabel] = useState('Working…');
   const [newTitle, setNewTitle] = useState('');
@@ -265,6 +271,9 @@ export function StudioWorkspace({
     setBusy(true);
     const initialBrief = preparedNew ? brief : { ...blankBrief };
     const initialPrompt = preparedNew ? draft : '';
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       const result = await jsonResponse<{ id: string }>(
         await fetch('/api/studio', {
@@ -280,6 +289,8 @@ export function StudioWorkspace({
           }),
         }),
       );
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       await load(result.id);
       setNarrationId(null);
       setNewTitle('');
@@ -292,6 +303,13 @@ export function StudioWorkspace({
       setFinishVersion(null);
       setView('direction');
     } catch (cause) {
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -302,6 +320,9 @@ export function StudioWorkspace({
     if (!project || busy) return;
     setBusy(true);
     setError('');
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'saving', 'pending'));
     try {
       await jsonResponse(
         await fetch('/api/studio', {
@@ -316,9 +337,18 @@ export function StudioWorkspace({
           }),
         }),
       );
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       await load(project.id);
       setView('create');
     } catch (cause) {
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -337,6 +367,9 @@ export function StudioWorkspace({
     setBusy(true);
     setBusyLabel('Uploading reference…');
     setError('');
+    const motionId = crypto.randomUUID();
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'processing', 'pending'));
     try {
       const prepared = await jsonResponse<{
         id: string;
@@ -367,6 +400,7 @@ export function StudioWorkspace({
           upsert: false,
         });
       if (transferred.error) throw new Error('Reference upload failed. Try selecting it again.');
+      setOperation(observedOperation(motionId, 'saving', 'pending'));
       const saved = await jsonResponse<{ id: string }>(
         await fetch('/api/studio/reference', {
           method: 'POST',
@@ -379,11 +413,20 @@ export function StudioWorkspace({
           }),
         }),
       );
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       await load(selected);
       setReference(saved.id);
       setParent(null);
       setView('create');
     } catch (cause) {
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError((cause as Error).message);
     } finally {
       setBusy(false);
@@ -393,9 +436,12 @@ export function StudioWorkspace({
     event.preventDefault();
     if (!selected || busy) return;
     setBusy(true);
-    setBusyLabel('Creating image…');
+    setBusyLabel('Waiting for image…');
     setError('');
     const requestId = crypto.randomUUID();
+    const motionId = requestId;
+    let acknowledged = false;
+    setOperation(observedOperation(motionId, 'waiting', 'pending'));
     try {
       const result = await jsonResponse<{ id: string }>(
         await fetch('/api/studio', {
@@ -412,6 +458,8 @@ export function StudioWorkspace({
           }),
         }),
       );
+      acknowledged = true;
+      setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       setDraft('');
       setReference(null);
       setParent(null);
@@ -451,6 +499,13 @@ export function StudioWorkspace({
       await load(selected);
       setView(forScene ? 'storyboard' : 'library');
     } catch (cause) {
+      setOperation(
+        observedOperation(
+          motionId,
+          acknowledged ? 'complete' : 'failed',
+          acknowledged ? 'confirmed' : 'uncertain',
+        ),
+      );
       await load(selected);
       setError((cause as Error).message);
     } finally {
@@ -565,6 +620,11 @@ export function StudioWorkspace({
       </aside>
 
       <div className="studio-main">
+        {(loading || operation.phase !== 'ready') && (
+          <IntelligenceActivity
+            operation={loading ? observedOperation('studio-load', 'loading') : operation}
+          />
+        )}
         {error && (
           <p role="alert" className="studio-error">
             {error}
@@ -948,7 +1008,9 @@ export function StudioWorkspace({
                           </a>
                         ) : (
                           <div className="studio-placeholder">
-                            {version.status === 'pending' ? 'Creating…' : 'Generation failed'}
+                            {version.status === 'pending'
+                              ? 'Generation pending · Refresh to check'
+                              : 'Generation failed'}
                           </div>
                         )}
                         <div className="studio-card-copy">

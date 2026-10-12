@@ -19,6 +19,12 @@ import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
 import { TalkDrawer, TalkInput } from './talk-controls';
+import { observedOperation } from '@/platform/visual/operation-adapters';
+import {
+  intelligenceStatus,
+  type IntelligenceOperation,
+} from '@/platform/visual/intelligence-motion';
+import { IntelligenceActivity } from '../intelligence-motion/presence';
 import { TalkPresence } from './talk-presence';
 import { AppearanceControls } from '../visual/appearance';
 import { ConversationLibrary } from './conversation-library';
@@ -70,6 +76,9 @@ export function AureliusWorkspace({
   }, [homeDraft, handoff]);
   const [councilSelection, setCouncilSelection] = useState<CouncilSelection | null>(null);
   const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<IntelligenceOperation>(
+    observedOperation('talk-idle', 'ready'),
+  );
   const liveBusy = useLiveBusy();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -293,16 +302,16 @@ export function AureliusWorkspace({
     const controller = new AbortController();
     generation.current = controller;
     setBusy(true);
+    setOperation(observedOperation(requestId, 'waiting', 'pending'));
     setError('');
     setNotice(
       requestedCouncil?.kind === 'table'
-        ? 'The selected Entities are examining your question…'
-        : `${councilLabel(requestedCouncil)} is thinking…`,
+        ? 'Waiting for the selected Entities…'
+        : `Waiting for ${councilLabel(requestedCouncil)}…`,
     );
     follow.current = true;
     let saved = false;
     const painted = frameText((reply) => {
-      setNotice('Aethelios is responding…');
       setData((previous) =>
         previous
           ? {
@@ -319,7 +328,7 @@ export function AureliusWorkspace({
     try {
       const response = await fetch('/api/aurelius/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Aethelios-Motion': '1' },
         body: JSON.stringify({
           conversationId: id,
           requestId,
@@ -362,11 +371,22 @@ export function AureliusWorkspace({
       const consume = (line: string) => {
         if (!line.trim()) return;
         const item = JSON.parse(line) as StreamEvent;
-        if (item.type === 'delta') {
+        if (item.type === 'activity') {
+          if (item.phase === 'saving') painted.finish(true);
+          setOperation(observedOperation(requestId, item.phase, 'pending'));
+          setNotice(`${intelligenceStatus(observedOperation(requestId, item.phase))}…`);
+        } else if (item.type === 'delta') {
+          setNotice('Aethelios is responding…');
+          setOperation((previous) =>
+            previous.id === requestId && ['searching', 'generating'].includes(previous.phase)
+              ? previous
+              : observedOperation(requestId, 'generating', 'pending'),
+          );
           painted.append(item.text);
         } else if (item.type === 'saved') {
           painted.finish();
           saved = true;
+          setOperation(observedOperation(requestId, 'complete', 'confirmed'));
           setData((previous) =>
             previous
               ? {
@@ -393,12 +413,21 @@ export function AureliusWorkspace({
       setNotice('Reply saved.');
       await reload(id);
     } catch (e) {
+      setOperation(
+        observedOperation(
+          requestId,
+          saved ? 'complete' : controller.signal.aborted ? 'cancelled' : 'failed',
+          saved ? 'confirmed' : 'uncertain',
+        ),
+      );
       setError(
-        controller.signal.aborted
-          ? 'Reply stopped. Reload to check what was saved.'
-          : e instanceof Error
-            ? e.message
-            : 'The reply could not be confirmed.',
+        saved
+          ? 'Reply saved. Reload to refresh the conversation.'
+          : controller.signal.aborted
+            ? 'Reply stopped. Reload to check what was saved.'
+            : e instanceof Error
+              ? e.message
+              : 'The reply could not be confirmed.',
       );
       setNeedsReload(true);
       setNotice('');
@@ -441,6 +470,7 @@ export function AureliusWorkspace({
     }
   }
   function newConversation() {
+    setOperation(observedOperation('talk-idle', 'ready'));
     setSelected(null);
     setCouncilSelection(null);
     rememberConversation(null);
@@ -472,6 +502,7 @@ export function AureliusWorkspace({
     const text = draft.trim() || data.turns.at(-1)?.user_text || '';
     if (!text) return;
     setOrchestrating(true);
+    setOperation(observedOperation('talk-prepare', 'processing'));
     setError('');
     setNotice(`Preparing ${capability.label}…`);
     try {
@@ -486,9 +517,11 @@ export function AureliusWorkspace({
         throw new Error(result.error ?? `${capability.label} could not be prepared.`);
       if (result.ownerId !== data.ownerId)
         throw new Error('Account changed. Reopen Aethelios before continuing.');
+      setOperation(observedOperation('talk-prepare', 'complete'));
       handoff?.stage({ text, ownerId: data.ownerId, target: capability.id, payload: result });
       router.push(capability.href);
     } catch (cause) {
+      setOperation(observedOperation('talk-prepare', 'failed'));
       setError(
         cause instanceof Error ? cause.message : `${capability.label} could not be prepared.`,
       );
@@ -502,7 +535,11 @@ export function AureliusWorkspace({
       <div className="aurelius-unavailable">
         <span className="orb large" aria-hidden="true" />
         <h3>A clearer perspective.</h3>
-        <p role={error ? 'alert' : 'status'}>{error || 'Opening your personal workspace…'}</p>
+        {error ? (
+          <p role="alert">{error}</p>
+        ) : (
+          <IntelligenceActivity operation={observedOperation('talk-load', 'loading')} />
+        )}
         {!loading && (
           <>
             <Link href="/app/you" className="button">
@@ -524,8 +561,9 @@ export function AureliusWorkspace({
             includeContext={includeContext}
             disabled={busy || preview || !data.canChat}
           />
-          <ConversationArtifacts conversationId={selected}/>
+          <ConversationArtifacts conversationId={selected} />
           <TalkPresence
+            operation={loading ? observedOperation('talk-load', 'loading') : operation}
             state={
               busy
                 ? 'working'
