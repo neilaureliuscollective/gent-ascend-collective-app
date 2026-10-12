@@ -6,7 +6,7 @@ import { CompanyRooms } from '@/components/companies/company-rooms';
 import { currentFounderAccess } from '@/domains/access/founder';
 export const metadata = { title: 'Work · Mission Command' };
 export default async function WorkPage() {
-  const founder = await currentFounderAccess().catch(()=>false);
+  const founder = await currentFounderAccess().catch(() => false);
   return (
     <section className="company-work" aria-labelledby="company-work-title">
       <header className="io-hero io-hero-work">
@@ -21,7 +21,11 @@ export default async function WorkPage() {
           Continue in Talk ↗
         </Link>
         <nav className="io-work-links" aria-label="Work environments">
-          {founder && <Link className="secondary-button" href="/app/founder">Founder Office ↗</Link>}
+          {founder && (
+            <Link className="secondary-button" href="/app/founder">
+              Founder Office ↗
+            </Link>
+          )}
           <Link className="secondary-button" href="/app/missions">
             Missions ↗
           </Link>
@@ -53,14 +57,14 @@ export default async function WorkPage() {
         <p className="eyebrow">AETHELIOS ARCHITECT</p>
         <h2 id="architect-title">Shape what comes next.</h2>
         <p>
-          Develop an idea, clarify requirements and plan your next build in Talk. A dedicated coding
-          workflow remains in development.
+          Develop a vision, review a Living Blueprint and create useful deliverables in one
+          persistent creation environment.
         </p>
         <div className="io-work-links">
-          <Link className="secondary-button" href="/app/aethelios">
-            Plan a build in Talk ↗
+          <Link className="secondary-button" href="/app/architect">
+            Open Architect ↗
           </Link>
-          <span className="io-preview-label">Coding workflow · in development</span>
+          <span className="io-preview-label">Origin · project intelligence</span>
         </div>
       </aside>
       <aside className="company-work-note">

@@ -1,3 +1,5 @@
+import { ArchitectOrigin } from '@/components/architect-origin/workspace';
+import '@/app/(workspace)/app/architect/origin.css';
 import { previewProduct } from '@/domains/catalog/preview';
 import { OrbPresentation } from '@/components/visual/orb-presentation';
 import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
@@ -179,6 +181,11 @@ createRoot(document.getElementById('root')!).render(
     <LiveArtifactsFixture />
   ) : mode === 'live-voice' ? (
     <LiveVoiceFixture />
+  ) : mode === 'architect-origin' ? (
+    <div className="app-shell imperial-workspace">
+      <p>Synthetic Origin fixture · no real account or model.</p>
+      <ArchitectOrigin enabled aiEnabled />
+    </div>
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
