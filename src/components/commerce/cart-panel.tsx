@@ -21,6 +21,9 @@ export function CartPanel({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [receipt, setReceipt] = useState('');
+  const dialog = useRef<HTMLDialogElement>(null);
+  const readController = useRef<AbortController | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const loadVersion = useRef(0);
@@ -33,9 +36,16 @@ export function CartPanel({
     ) ?? false;
   const load = useCallback(async () => {
     if (mutationPending.current) return;
+    readController.current?.abort();
+    const controller = new AbortController();
+    readController.current = controller;
     const version = ++loadVersion.current;
+    setLoading(true);
     try {
-      const response = await fetch('/api/commerce/cart', { cache: 'no-store' });
+      const response = await fetch('/api/commerce/cart', {
+        cache: 'no-store',
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Cart unavailable.');
       if (version !== loadVersion.current) return;
@@ -45,49 +55,67 @@ export function CartPanel({
       if (version !== loadVersion.current) return;
       setError('Cart is temporarily unavailable.');
     } finally {
-      if (version === loadVersion.current) setLoading(false);
+      if (version === loadVersion.current) {
+        readController.current = null;
+        setLoading(false);
+      }
     }
   }, []);
+  const cancelRead = useCallback(() => {
+    ++loadVersion.current;
+    readController.current?.abort();
+    readController.current = null;
+  }, []);
   useEffect(() => {
-    queueMicrotask(() => void load());
+    let active = true;
+    queueMicrotask(() => {
+      if (active) void load();
+    });
     const updated = () => {
       setOpen(true);
       void load();
     };
     window.addEventListener('gent-ascend-cart-updated', updated);
-    return () => window.removeEventListener('gent-ascend-cart-updated', updated);
-  }, [load]);
+    return () => {
+      window.removeEventListener('gent-ascend-cart-updated', updated);
+      active = false;
+      cancelRead();
+    };
+  }, [load, cancelRead]);
   useEffect(() => {
     if (!open || fullPage) return;
+    const element = dialog.current;
+    element?.showModal();
     closeButton.current?.focus();
-    const keydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        trigger.current?.focus();
-      }
-      if (event.key === 'Tab') {
-        const focusable = document.querySelectorAll<HTMLElement>(
-          '#commerce-drawer button:not(:disabled), #commerce-drawer a, #commerce-drawer select',
-        );
-        const first = focusable[0],
-          last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      element?.close();
+      document.body.style.overflow = overflow;
     };
-    document.addEventListener('keydown', keydown);
-    return () => document.removeEventListener('keydown', keydown);
   }, [open, fullPage]);
+  useEffect(() => {
+    if (!open) return;
+    const refresh = () => {
+      if (document.visibilityState === 'visible') void load();
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [open, load]);
+  function close() {
+    setOpen(false);
+    trigger.current?.focus();
+  }
   async function change(action: 'update' | 'remove', lineId: string, quantity?: number) {
-    if (mutationPending.current) return;
+    if (mutationPending.current || readController.current || error) return;
     mutationPending.current = true;
     ++loadVersion.current;
     setBusy(true);
+    setReceipt('');
     setError('');
     try {
       const response = await fetch('/api/commerce/cart', {
@@ -99,6 +127,7 @@ export function CartPanel({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? 'Unable to update cart.');
       setCart(result.cart);
+      setReceipt('Cart updated. Review the current quantities and subtotal.');
     } catch (reason) {
       setError(
         `${reason instanceof Error ? reason.message : 'Unable to update cart.'} Refresh the cart to confirm its current contents before making another change.`,
@@ -139,12 +168,15 @@ export function CartPanel({
       {error && (
         <p className="cart-error" role="alert">
           {error}{' '}
-          <button type="button" onClick={() => void load()}>
+          <button type="button" disabled={loading || busy} onClick={() => void load()}>
             Retry
           </button>
         </p>
       )}
-      {loading ? (
+      {loading && cart && <p role="status">Checking your current cart…</p>}
+      {busy && <p role="status">Updating your cart…</p>}
+      {receipt && <p role="status">{receipt}</p>}
+      {loading && !cart ? (
         <p role="status">Loading your selection…</p>
       ) : error && !cart ? null : !cart?.lines.nodes.length ? (
         <div className="cart-empty">
@@ -194,28 +226,54 @@ export function CartPanel({
                   )}
                   <strong>{formatMoney(line.cost.totalAmount)}</strong>
                   <div className="cart-line-actions">
+                    <button
+                      type="button"
+                      className="cart-quantity-step"
+                      aria-label={`Decrease quantity of ${line.merchandise.product.title}`}
+                      disabled={
+                        busy ||
+                        loading ||
+                        held ||
+                        Boolean(error) ||
+                        line.quantity <= 1 ||
+                        line.quantity > 26
+                      }
+                      onClick={() => void change('update', line.id, line.quantity - 1)}
+                    >
+                      −
+                    </button>
                     <label>
                       Quantity{' '}
                       <select
                         value={line.quantity}
-                        disabled={busy || held || Boolean(error)}
+                        disabled={busy || loading || held || Boolean(error)}
                         onChange={(event) =>
                           void change('update', line.id, Number(event.target.value))
                         }
                       >
-                        {Array.from({ length: Math.max(10, line.quantity) }, (_, i) => i + 1).map(
-                          (n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ),
+                        {Array.from({ length: 25 }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                        {line.quantity > 25 && (
+                          <option value={line.quantity}>{line.quantity}</option>
                         )}
                       </select>
                     </label>
                     <button
                       type="button"
+                      className="cart-quantity-step"
+                      aria-label={`Increase quantity of ${line.merchandise.product.title}`}
+                      disabled={busy || loading || held || Boolean(error) || line.quantity >= 25}
+                      onClick={() => void change('update', line.id, line.quantity + 1)}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
                       aria-label={`Remove ${line.merchandise.product.title} from cart`}
-                      disabled={busy || Boolean(error)}
+                      disabled={busy || loading || Boolean(error)}
                       onClick={() => void change('remove', line.id)}
                     >
                       Remove
@@ -246,11 +304,14 @@ export function CartPanel({
             ) : (
               <a
                 className="world-button"
-                href="/checkout"
+                href={busy || loading || error ? undefined : '/checkout'}
+                role="link"
+                tabIndex={busy || loading || error ? -1 : 0}
                 rel="nofollow"
-                aria-disabled={busy || Boolean(error)}
+                aria-disabled={busy || loading || Boolean(error)}
                 onClick={(event) => {
-                  if (busy || error) event.preventDefault();
+                  if (busy || loading || error || mutationPending.current || readController.current)
+                    event.preventDefault();
                   else commerceEvent('checkout_start');
                 }}
               >
@@ -289,27 +350,22 @@ export function CartPanel({
       >
         Cart <span>{cart?.totalQuantity ?? 0}</span>
       </button>
-      {open && (
-        <div
-          className="cart-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setOpen(false);
-              trigger.current?.focus();
-            }
-          }}
-        >
-          <aside
-            id="commerce-drawer"
-            className="cart-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Your cart"
-          >
-            {contents}
-          </aside>
-        </div>
-      )}
+      <dialog
+        ref={dialog}
+        id="commerce-drawer"
+        className="cart-overlay cart-modal"
+        aria-label="Your cart"
+        onCancel={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          trigger.current?.focus();
+        }}
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) close();
+        }}
+      >
+        <div className="cart-drawer">{contents}</div>
+      </dialog>
     </>
   );
 }

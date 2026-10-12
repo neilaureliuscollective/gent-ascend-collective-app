@@ -371,3 +371,7 @@ The founder brief supersedes commerce retirement. Reconcile draft #86 with actua
 ## 2026-10-12 — Lifestyle discovery continuity
 
 Use URL-backed catalog state and individually removable filters before comparison or concierge work. Baymard Back/applied-filter research and installed Next 16.3.5 native History API support this slice. Browser saves remain local handles; URL state includes no private records. Search typing replaces history; discrete filters/sorts push history. No new integration, schema, tracking or merchant mutation. See [phase receipt](LIFESTYLE_DISCOVERY_CONTINUITY.md).
+
+## 2026-10-12 — Lifestyle cart resilience
+
+Use a native modal for the existing drawer and bounded, abortable cart reads before adding payment/recommendation integrations. Reuse Shopify's secure cart/checkout authority; show server-adjusted quantities and warnings. Quick quantity controls use existing 1–25 API limits, while larger existing quantities remain readable/removable. No automatic retry of writes. W3C, Baymard and current Shopify sources/acceptance are recorded in [Phase Four](LIFESTYLE_CART_RESILIENCE.md).

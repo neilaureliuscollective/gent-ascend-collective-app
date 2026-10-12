@@ -433,3 +433,42 @@
   overflow-wrap: anywhere;
   text-align: left;
 }
+
+/* Native modality makes the page outside the cart inert. */
+dialog.cart-modal {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--aether-text);
+  background: transparent;
+}
+dialog.cart-modal:not([open]) {
+  display: none;
+}
+dialog.cart-modal::backdrop {
+  background: #000b;
+}
+.cart-quantity-step {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--aether-border) !important;
+  border-radius: 3px;
+}
+.cart-line-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.cart-line-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cart-lines li > div {
+  min-width: 0;
+}
+.cart-lines li a {
+  overflow-wrap: anywhere;
+}

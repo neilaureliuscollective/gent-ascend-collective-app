@@ -5,6 +5,7 @@ export default defineConfig({
     'lifestyle-phase-one.spec.ts',
     'lifestyle-atelier.spec.ts',
     'lifestyle-discovery.spec.ts',
+    'lifestyle-cart-resilience.spec.ts',
   ],
   workers: 1,
   timeout: 45000,

@@ -895,3 +895,7 @@ Implemented reusable emerald/aether illumination, layered obsidian materials, ce
 ### 2026-10-12 — Lifestyle Phase Three: discovery continuity
 
 Implemented on the open purchase-confidence/atelier stack: URL-backed public/member catalog search, supported chapter/brand/availability/sort, Back/reload reconstruction, removable applied filters. Unsupported filters and mixed-currency price sorting recover safely. Existing browser selection remains distinct from purchases; no private identifiers or new tracking. Production unchanged. Local and hosted validation receipts are recorded in the Phase Three PR; live merchant checkout, policies and approved attribute/copy gates remain outstanding. See `docs/LIFESTYLE_DISCOVERY_CONTINUITY.md`.
+
+### 2026-10-12 — Lifestyle Phase Four: cart resilience
+
+Implemented on the open commerce stack: native inert modal drawer, focus/scroll restoration, bounded abortable reads, open-cart return revalidation, refresh/update/error locks on cart edits and checkout, quick quantities and bounded larger-quantity display. Shopify returned contents/warnings remain authoritative; secure server handoff unchanged. Source and synthetic/hosted acceptance receipts are in the Phase Four PR. No real merchant payment, order, production merge or deployment. Merchant copy/policy/checkout validation remains next. See `docs/LIFESTYLE_CART_RESILIENCE.md`.
