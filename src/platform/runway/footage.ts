@@ -1,4 +1,5 @@
 import 'server-only';
+import { isIP } from 'node:net';
 import { z } from 'zod';
 import type { FootageJob } from '@/domains/studio/footage';
 import { footageModel } from '@/domains/studio/footage';
@@ -90,6 +91,8 @@ export function footageOutputUrl(value: string) {
     url.port ||
     url.username ||
     url.password ||
+    isIP(url.hostname.replace(/^\[|\]$/g, '')) ||
+    !url.hostname.includes('.') ||
     !hosts.includes(url.hostname) ||
     url.hash
   )

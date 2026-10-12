@@ -145,4 +145,14 @@ describe('Footage approval, integrity and provider boundary', () => {
     for (const header of ['bytes=-', 'bytes=-0', 'bytes=200-', 'bytes=20-10', 'bytes=1-2,3-4'])
       expect(() => footageRange(header, 100)).toThrow();
   });
+  it('rejects configured IP/local outputs and oversized provider bodies without exposing their content', async () => {
+    vi.stubEnv('STUDIO_FOOTAGE_OUTPUT_HOSTS', '127.0.0.1,[::1],localhost');
+    for (const url of ['https://127.0.0.1/a', 'https://[::1]/a', 'https://localhost/a'])
+      expect(() => footageOutputUrl(url)).toThrow('host');
+    vi.stubEnv('RUNWAYML_API_SECRET', 'fixture-key');
+    const fetch = vi.fn().mockResolvedValue(new Response('private-provider-detail'.repeat(4000)));
+    vi.stubGlobal('fetch', fetch);
+    await expect(submitFootage(job)).rejects.toThrow('receipt could not be verified');
+    expect(fetch).toHaveBeenCalledOnce();
+  });
 });
