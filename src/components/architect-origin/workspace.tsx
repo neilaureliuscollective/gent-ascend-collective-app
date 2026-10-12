@@ -156,9 +156,19 @@ export function ArchitectOrigin({
       if (dirty || pending || busy) event.preventDefault();
     };
     const guard = (event: MouseEvent) => {
-      const link = event.target instanceof Element ? event.target.closest('a') : null;
-      if (!link || link.target === '_blank' || link.download || !(dirty || pending || busy)) return;
-      const destination = new URL(link.href, location.href);
+      const target = event.target instanceof Element ? event.target : null;
+      const link = target?.closest('a');
+      // The shared phone shortcut routes imperatively; protect it like a navigation link.
+      const shortcutExit =
+        !!target?.closest('button.aurelius-trigger') && matchMedia('(max-width: 1100px)').matches;
+      if (
+        !(dirty || pending || busy) ||
+        (!link && !shortcutExit) ||
+        link?.target === '_blank' ||
+        link?.download
+      )
+        return;
+      const destination = new URL(link?.href ?? '/app/aethelios', location.href);
       if (
         destination.origin === location.origin &&
         destination.pathname !== location.pathname &&

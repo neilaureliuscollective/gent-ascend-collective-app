@@ -104,6 +104,24 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     });
     await page.keyboard.press('Escape');
   }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page
+    .getByLabel('Editable Markdown')
+    .fill('# Unsaved local draft\n\nKeep this when navigation is declined.');
+  const draftUrl = page.url();
+  await page.getByRole('button', { name: 'Aethelios menu' }).click();
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
+  await expect(page).toHaveURL(draftUrl);
+  await expect(page.getByRole('dialog', { name: 'Your Aethelios environments' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByLabel('Editable Markdown')).toContainText(
+    'Keep this when navigation is declined.',
+  );
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Discard draft', exact: true }).click();
+  await expect(page.getByLabel('Editable Markdown')).toContainText('conservative launch budget');
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await expect(page.getByRole('button', { name: /Revision 1 —/ })).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-origin-real-auth.png', fullPage: true });
