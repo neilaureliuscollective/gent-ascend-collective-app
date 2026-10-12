@@ -53,6 +53,9 @@ export function EnvironmentFrame({
               </button>
             </div>
             {navigation}
+            <Link href="/app/entities" prefetch={false} className="environment-council">
+              Council ↗
+            </Link>
             {controls}
           </dialog>
           <main id="main" tabIndex={-1} className="environment-main">

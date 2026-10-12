@@ -172,3 +172,32 @@
     font-size: 0.7rem;
   }
 }
+
+/* Shared compact shortcuts must remain inside the native modal's flow. */
+.environment-menu {
+  margin: auto;
+}
+.app-shell.environment-immersive .environment-menu .aurelius-trigger {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  border-radius: 6px;
+}
+.app-shell.environment-immersive .environment-menu .aurelius-trigger > span:last-child {
+  display: inline;
+}
+.app-shell.environment-immersive .environment-menu .navigation a {
+  font-size: 0.9rem;
+}
+.environment-council {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.9rem;
+}

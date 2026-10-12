@@ -499,19 +499,11 @@ export function ArchitectOrigin({
           <summary>Projects / switch creation</summary>
           {libraryNavigation}
         </details>
-      ) : (
+      ) : library.projects.length > 0 ? (
         libraryNavigation
-      )}
+      ) : null}
       {!selected ? (
         <div className="origin-entry">
-          <div className="origin-entry-copy">
-            <p className="eyebrow">YOUR NEXT CREATION</p>
-            <h2>What do you envision?</h2>
-            <p>
-              Begin with an idea. Give it a direction, develop its evidence, and turn it into work
-              you can use.
-            </p>
-          </div>
           <div className="origin-starters">
             {starters.map((s) => (
               <button
@@ -541,6 +533,9 @@ export function ArchitectOrigin({
               });
             }}
           >
+            <p className="origin-starter-context">
+              {starters.find((starter) => starter.discipline === discipline)?.detail}
+            </p>
             <label htmlFor="origin-idea">Tell Aethelios what you want to create</label>
             <textarea
               id="origin-idea"

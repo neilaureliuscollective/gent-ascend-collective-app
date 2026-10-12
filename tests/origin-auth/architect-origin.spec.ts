@@ -96,6 +96,8 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
         .getByRole('navigation', { name: 'Main navigation' })
         .getByRole('link', { name: 'Health', exact: true }),
     ).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Aethelios', exact: true })).toBeInViewport();
+    await expect(page.getByRole('link', { name: 'Council ↗', exact: true })).toBeInViewport();
     await page.screenshot({
       path: `test-results/architect-immersive-real-menu-${width}.png`,
       fullPage: false,

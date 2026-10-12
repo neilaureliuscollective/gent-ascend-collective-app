@@ -819,3 +819,42 @@
     max-width: none;
   }
 }
+
+/* Bring the first useful action into the entry viewport rather than another introduction. */
+.origin:not(.origin-active) .origin-hero .origin-links {
+  display: none;
+}
+.origin-starter-context {
+  margin-top: 0;
+}
+@media (max-width: 600px) {
+  .origin:not(.origin-active) .origin-hero {
+    padding-bottom: 8px;
+  }
+  .origin:not(.origin-active) .origin-starters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-block: 12px 24px;
+    border-radius: 6px;
+  }
+  .origin:not(.origin-active) .origin-starters button {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--origin-edge) !important;
+  }
+  .origin:not(.origin-active) .origin-starters button:nth-child(odd) {
+    border-right: 1px solid var(--origin-edge);
+  }
+  .origin:not(.origin-active) .origin-starters button:nth-child(n + 3) {
+    border-bottom: 0 !important;
+  }
+  .origin:not(.origin-active) .origin-starters strong {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+  .origin:not(.origin-active) .origin-starters span {
+    display: none;
+  }
+  .origin:not(.origin-active) .origin-intake {
+    padding-top: 16px;
+  }
+}

@@ -104,6 +104,8 @@ for (const width of [320, 344, 390, 720, 768, 1440, 1920])
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    if (width <= 600)
+      await expect(page.getByLabel('Tell Aethelios what you want to create')).toBeInViewport();
     await page.screenshot({
       path: `test-results/architect-immersive-entry-${width}.png`,
       fullPage: true,
