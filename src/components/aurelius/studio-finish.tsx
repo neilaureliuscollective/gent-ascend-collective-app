@@ -555,6 +555,7 @@ export function StudioFinish({
                 <input
                   type="file"
                   accept="application/json,.json"
+                  aria-label="Import layout recipe"
                   disabled={busy}
                   onChange={(event) => {
                     const file = event.target.files?.[0];

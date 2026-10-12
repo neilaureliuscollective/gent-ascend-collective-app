@@ -8,6 +8,9 @@ on:
       - '.github/workflows/studio-production.yml'
   push:
     branches: [feat/studio-production-house-20261012]
+concurrency:
+  group: studio-production-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

@@ -42,6 +42,7 @@ export function StudioBrandKit({
         <label>
           Brand voice
           <textarea
+            aria-label="Brand voice"
             value={value.voice}
             maxLength={300}
             onChange={(e) => onChange({ ...value, voice: e.target.value })}

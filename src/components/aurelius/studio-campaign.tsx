@@ -169,6 +169,7 @@ export function StudioCampaign({
             <input
               type="file"
               accept="audio/*"
+              aria-label="Optional soundtrack"
               disabled={running}
               onChange={(e) => {
                 setAudio(e.target.files?.[0] ?? null);

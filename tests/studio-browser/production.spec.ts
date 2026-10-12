@@ -236,6 +236,8 @@ test('cancelled rendering never presents a finished film', async ({ page }) => {
     .click();
   await page.getByRole('button', { name: 'Render motion film', exact: true }).click();
   await page.getByRole('button', { name: 'Cancel rendering', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('cancelled');
+  await expect(
+    page.getByRole('region', { name: 'Campaign production', exact: true }).getByRole('alert'),
+  ).toContainText('cancelled');
   await expect(page.getByRole('button', { name: 'Download film', exact: false })).toHaveCount(0);
 });
