@@ -2,7 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { launchPurchaseAllowed, type LaunchMetadata } from './launch-policy';
 import { collectCatalog, type CatalogPage } from './catalog-pagination';
-import { brandProducts, lifestyleCollectionHandle } from './lifestyle';
+import { catalogProductAllowed, lifestyleAssortmentHandle } from './lifestyle';
 
 const VERSION = '2026-10';
 export class ShopifyCommerceError extends Error {
@@ -13,6 +13,12 @@ export class ShopifyCommerceError extends Error {
   ) {
     super('Shopify commerce is temporarily unavailable');
     this.name = 'ShopifyCommerceError';
+  }
+}
+export class CollectionUnavailableError extends ShopifyCommerceError {
+  constructor() {
+    super('configuration');
+    this.name = 'CollectionUnavailableError';
   }
 }
 function storeDomain() {
@@ -216,9 +222,8 @@ export const listCollectionProducts = cache(async (handle: string) => {
       { handle, cursor },
       { cache: 'force-cache', revalidate: 300 },
     );
-    return (
-      data.collection?.products ?? { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } }
-    );
+    if (!data.collection) throw new CollectionUnavailableError();
+    return data.collection.products;
   }).then((products) => products.filter((product) => !product.requiresSellingPlan));
 });
 
@@ -326,10 +331,10 @@ async function assertVariantPurchasable(id: string, buyerIp?: string) {
     !data.node?.availableForSale ||
     !data.node.product ||
     !launchPurchaseAllowed(data.node.product) ||
-    !brandProducts(
-      [data.node.product],
-      lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
-    ).length
+    !catalogProductAllowed(
+      data.node.product,
+      lifestyleAssortmentHandle(process.env.SHOPIFY_LIFESTYLE_COLLECTION),
+    )
   )
     throw new LaunchPurchaseError();
 }
@@ -339,10 +344,10 @@ export function cartLaunchPurchasable(cart: Cart) {
     (line) =>
       Boolean(line.merchandise?.product) &&
       launchPurchaseAllowed(line.merchandise.product) &&
-      brandProducts(
-        [line.merchandise.product],
-        lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
-      ).length > 0,
+      catalogProductAllowed(
+        line.merchandise.product,
+        lifestyleAssortmentHandle(process.env.SHOPIFY_LIFESTYLE_COLLECTION),
+      ),
   );
 }
 
