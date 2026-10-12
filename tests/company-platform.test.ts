@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { GET as cartGet, POST as cartPost } from '@/app/api/commerce/cart/route';
 import { GET as bridgeStart } from '@/app/api/aethelios-link/start/route';
 import { GET as bridgeCallback } from '@/app/api/aethelios-link/callback/route';
 import { legacyReserveDestination } from '@/platform/ecosystem';
 import { companyJob } from '@/domains/company-work/starters';
 describe('company platform boundaries', () => {
-  it('retires checkout and private founder linking without provider calls', async () => {
-    for (const handle of [cartGet, cartPost, bridgeStart, bridgeCallback]) {
+  it('keeps private founder linking retired without provider calls', async () => {
+    for (const handle of [bridgeStart, bridgeCallback]) {
       const response = await handle();
       expect(response.status).toBe(410);
       expect(response.headers.get('cache-control')).toBe('private, no-store');

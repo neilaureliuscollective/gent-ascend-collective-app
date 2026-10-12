@@ -1,4 +1,9 @@
 import { MissionHandoffFixture } from './mission-handoff';
+import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
+import { CollectionWorld } from '@/components/commerce/collection-world';
+import { CartPanel } from '@/components/commerce/cart-panel';
+import '@/app/(workspace)/app/collection/collection-world.css';
+import '@/app/(workspace)/app/lifestyle/lifestyle.css';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
 import '@/app/(workspace)/app/work/work.css';
@@ -105,7 +110,26 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'mission' ? (
+  mode.startsWith('lifestyle') ? (
+    <div className="member-collection public-world imperial-obsidian">
+      <p className="preview-notice">
+        Synthetic commerce fixture · no live merchandise, orders or payments.
+      </p>
+      {mode === 'lifestyle-home' ? (
+        <LifestyleLanding entries={relatedFixture} status="ready" />
+      ) : mode === 'lifestyle-brand' || mode === 'lifestyle-list' ? (
+        <CollectionWorld
+          entries={params.get('empty') ? [] : relatedFixture}
+          failed={params.get('error') === '1'}
+          brand={mode === 'lifestyle-brand' ? 'Legacy Reserve' : undefined}
+        />
+      ) : mode === 'lifestyle-cart' ? (
+        <CartPanel fullPage basePath="/app/collection" />
+      ) : (
+        <ProductExperience product={commerceFixture} basePath="/app/collection" />
+      )}
+    </div>
+  ) : mode === 'mission' ? (
     <MissionHandoffFixture />
   ) : mode === 'company-room' || mode === 'company-job' ? (
     <>
