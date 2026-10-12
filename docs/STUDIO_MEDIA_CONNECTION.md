@@ -38,3 +38,9 @@ Rechecked official [Supabase Storage access control](https://supabase.com/docs/g
 ## Current main reconciliation
 
 Main advanced to `f3b4302` (Founder Office compatible reader and rollback work) during this phase. The Studio candidate preserves all 47 changed/new main files and resolves the two founder-test overlaps with current navigation and the restored FirstSession flow. Existing Studio memory/daily persistence assertions remain; no unrelated PR was merged. The remote integration commit retains current main as an additional parent.
+
+## Connection-phase verification
+
+At `58cb1b7`: local lint/types, all 489 unit/SQL tests, ledger and optimized build passed. CI Studio (12 browser checks), Obsidian visual, Lifestyle and real local Supabase database/Auth/founder (12 checks) passed. Broad application E2E passed 409/410; the remaining installation test navigated during initial service-worker claim and observed a correctly upgraded cache on an uncontrolled document. The follow-up seeds old caches on the static offline page before AppRuntime starts, then waits for genuine control before navigating to the workspace. All original cache, control, waiting-worker, unrelated-cache and draft-preservation assertions remain. It changes test sequencing only, not production worker behavior.
+
+Automatic Vercel preview initially failed before compilation with `git_info_fail`. Retried the exact commit through the existing Git connection on a non-production target; no production promotion. Final CI and preview receipts are tracked in PR #99.
