@@ -4,5 +4,5 @@ import nextTs from 'eslint-config-next/typescript';
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores(['.next/**', 'public/mirror/vision-1.0.1/**', 'next-env.d.ts', 'playwright-report/**', 'test-results/**']),
+  globalIgnores(['validation/health/browser-bundle/**', '.next/**', 'public/mirror/vision-1.0.1/**', 'next-env.d.ts', 'playwright-report/**', 'test-results/**']),
 ]);

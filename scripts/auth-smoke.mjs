@@ -1115,3 +1115,17 @@ assert.ok((await founder.rpc('company_review_work',reviewArgs)).error);
 assert.ok((await member.from('company_work_versions').update({content:{title:'Forbidden mutation'}}).eq('id',workVersion)).error);
 assert.ok((await anon.from('company_jobs').select('id')).error);
 console.log('PASS: connected company job replay, immutable versions, stale/cross-company/cross-user denial and exact review receipt');
+
+// Health: real local Auth/PostgREST boundary checks. No sensitive records or hosted activation.
+const healthConsentRequest=crypto.randomUUID();
+const healthGranted=await founder.rpc('health_mutate',{p_kind:'consent',p_request:healthConsentRequest,p_payload:{purpose:'wellness',granted:true,adult:true}});
+assert.equal(healthGranted.error,null);
+const healthOwner=await founder.rpc('health_read',{}),healthOther=await member.rpc('health_read',{});
+assert.equal(healthOwner.error,null); assert.equal(healthOther.error,null);
+assert.ok(healthOwner.data.consents.some(c=>c.purpose==='wellness' && c.granted));
+assert.ok(!healthOther.data.consents.some(c=>c.purpose==='wellness' && c.granted));
+assert.ok((await anon.rpc('health_read',{})).error);
+assert.ok((await founder.schema('health_private').from('records').select('id')).error);
+assert.ok((await founder.rpc('health_mutate',{p_kind:'reserve',p_request:crypto.randomUUID(),p_payload:{id:crypto.randomUUID(),title:'Synthetic rejected import',mime:'text/csv',size:100}})).error);
+assert.equal((await founder.rpc('health_mutate',{p_kind:'consent',p_request:crypto.randomUUID(),p_payload:{purpose:'wellness',granted:false,adult:true}})).error,null);
+console.log('PASS: Health real Auth owner scope, anonymous denial, unexposed schema and inactive ingestion');

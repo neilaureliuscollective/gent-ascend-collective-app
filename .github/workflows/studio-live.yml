@@ -22,12 +22,29 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          # PR smoke checks the deployed baseline, not future navigation/routes.
+          # Candidate behavior is covered by the build/browser/Auth workflows.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Wait for the released Health route before checking new source
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          node --input-type=module <<'JS'
+          for (let attempt = 0; attempt < 60; attempt++) {
+            const response = await fetch('https://www.gentascend.com/app/health', {
+              cache: 'no-store', signal: AbortSignal.timeout(15000),
+            }).catch(() => null);
+            if (response?.ok && (await response.text()).includes('A clearer understanding of you.')) process.exit(0);
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          throw new Error('Released Health route did not become available within the deployment window.');
+          JS
       - name: Verify the real public application and Studio access boundaries
         run: npx playwright test --config playwright.production.config.ts --workers=1
       - uses: actions/upload-artifact@v4

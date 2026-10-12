@@ -8,6 +8,7 @@ let initialPath: string | null = null;
 const emitted = new Set<string>();
 const report: Parameters<typeof useReportWebVitals>[0] = (metric) => {
   if (
+    /^\/app\/health(?:\/|$)/.test(window.location.pathname) ||
     navigator.doNotTrack === '1' ||
     (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl
   )

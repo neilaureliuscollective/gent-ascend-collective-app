@@ -52,9 +52,10 @@ test('the verified production application serves Obsidian and preserves public e
           'rgb(8, 13, 13)',
         );
         const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-        await expect(navigation.getByRole('link')).toHaveCount(5);
+        await expect(navigation.getByRole('link')).toHaveCount(6);
         for (const [name, href] of [
           ['Talk', '/app/aethelios'],
+          ['Health', '/app/health'],
           ['Work', '/app/work'],
           ['Studio', '/app/studio'],
           ['Lifestyle', '/app/lifestyle'],

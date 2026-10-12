@@ -1,4 +1,4 @@
-import { LiveConversationProvider } from './live/provider';
+import { SensitiveBoundary, SensitiveLiveProvider } from './health/sensitive-boundary';
 import { ConversationDraftProvider } from './aurelius/draft-handoff';
 import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ export function Shell({
   founderOffice?: boolean;
 }) {
   return (
-    <LiveConversationProvider
+    <SensitiveLiveProvider
       enabled={
         process.env.AETHELIOS_LIVE_ENABLED === 'true' &&
         process.env.APP_ENV !== 'production' &&
@@ -41,7 +41,9 @@ export function Shell({
             </Link>
             <p className="navigation-label">AETHELIOS</p>
             <Navigation />
-            <AureliusPanel />
+            <SensitiveBoundary>
+              <AureliusPanel />
+            </SensitiveBoundary>
 
             <div className="sidebar-footer">
               <Link href="/app/work" prefetch={false} className="text-link">
@@ -67,7 +69,9 @@ export function Shell({
                 AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
               </span>
               <div className="topbar-actions">
-                <UniversalCapture />
+                <SensitiveBoundary>
+                  <UniversalCapture />
+                </SensitiveBoundary>
                 <AppearanceControls />
                 <Link href="/app/work" className="text-link shell-ascend-link">
                   Company work
@@ -97,6 +101,6 @@ export function Shell({
           </div>
         </div>
       </ConversationDraftProvider>
-    </LiveConversationProvider>
+    </SensitiveLiveProvider>
   );
 }
