@@ -1,0 +1,155 @@
+/* Lifestyle consumes the active shared Obsidian Intelligence palette. */
+.imperial-obsidian {
+  --world-gold: var(--aether-gold-light);
+  --world-ink: var(--aether-text);
+  color: var(--aether-text);
+  background: var(--aether-obsidian);
+}
+.imperial-obsidian .reserve-commerce {
+  color: var(--aether-text);
+  background:
+    radial-gradient(ellipse at 85% 12%, var(--aether-elevated) 0%, transparent 55%),
+    var(--aether-obsidian);
+}
+.imperial-obsidian .world-button {
+  background: #c4912f;
+  color: var(--aether-obsidian);
+  border-color: #c4912f;
+}
+.imperial-obsidian .world-kicker,
+.imperial-obsidian .world-text-link {
+  color: var(--aether-gold-light);
+}
+.imperial-obsidian :is(a, button, input, select):focus-visible {
+  outline: 2px solid var(--aether-gold-light);
+  outline-offset: 5px;
+}
+.imperial-obsidian .collection-chapters button[aria-pressed='true'] {
+  color: var(--aether-obsidian);
+}
+.imperial-obsidian .collection-chamber {
+  background: linear-gradient(
+    110deg,
+    var(--aether-obsidian) 15%,
+    var(--aether-surface) 65%,
+    var(--aether-elevated)
+  );
+}
+.lifestyle-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(36px, 6vw, 86px) 7% 88px;
+  min-height: 650px;
+  background:
+    radial-gradient(ellipse at 85% 40%, rgba(54, 137, 108, 0.12), transparent 48%),
+    linear-gradient(
+      125deg,
+      var(--aether-obsidian),
+      var(--aether-surface) 60%,
+      var(--aether-elevated)
+    );
+  border-bottom: 1px solid #c4912f55;
+}
+.lifestyle-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 430px;
+  height: 630px;
+  right: -130px;
+  top: 40px;
+  border: 1px solid #c4912f55;
+  border-radius: 48% 48% 0 0;
+  transform: rotate(20deg);
+  box-shadow:
+    0 0 90px rgba(54, 137, 108, 0.1),
+    inset 0 0 80px rgba(54, 137, 108, 0.06);
+}
+.lifestyle-coordinate {
+  color: var(--aether-silver);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  margin-bottom: 55px;
+}
+.lifestyle-hero h1 {
+  font-size: clamp(3.5rem, 7vw, 7.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  margin: 26px 0;
+  max-width: 820px;
+}
+.lifestyle-hero h1 em,
+.lifestyle-brands em {
+  color: var(--aether-gold-light);
+}
+.lifestyle-hero p {
+  max-width: 550px;
+  line-height: 1.8;
+  color: var(--aether-silver);
+}
+.lifestyle-hero .lifestyle-lead {
+  color: var(--aether-text);
+  font-size: 1.35rem;
+  letter-spacing: 0.06em;
+}
+.lifestyle-hero-foot {
+  position: absolute;
+  bottom: 28px;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--aether-silver);
+}
+.lifestyle-brands {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  padding: 65px 7%;
+  border-bottom: 1px solid #c4912f40;
+}
+.lifestyle-section-heading h2 {
+  font-size: clamp(2rem, 3.2vw, 3.5rem);
+  line-height: 1.15;
+  margin: 20px 0;
+}
+.lifestyle-brand {
+  padding: 32px;
+  border: 1px solid #c4912f66;
+  background: linear-gradient(135deg, var(--aether-elevated), var(--aether-surface));
+}
+.lifestyle-brand h3 {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  line-height: 1.1;
+  margin: 22px 0;
+}
+.lifestyle-brand p {
+  color: var(--aether-silver);
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+@media (max-width: 700px) {
+  .lifestyle-hero {
+    min-height: 570px;
+    padding: 32px 7% 75px;
+  }
+  .lifestyle-coordinate {
+    margin-bottom: 36px;
+  }
+  .lifestyle-hero::after {
+    opacity: 0.35;
+    right: -300px;
+  }
+  .lifestyle-brands {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 38px 7%;
+  }
+}
+@media (forced-colors: active) {
+  .lifestyle-brand {
+    border: 1px solid CanvasText;
+  }
+  .lifestyle-hero::after {
+    display: none;
+  }
+}

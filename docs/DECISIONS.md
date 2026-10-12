@@ -376,3 +376,7 @@ Reuse the existing owner-scoped immutable work-version CAS for task editing, ass
 ## 2026-10-12 — Approval withdrawal and inspectable decision receipts
 
 Provide a distinct founder-only approved-to-rejected withdrawal transition using existing immutable work-version CAS/replay. Keep approved content fixed, retain prior decisions and derive bounded timelines without inventing execution receipts or complete history. Official research and validation: FOUNDER_APPROVAL_WITHDRAWAL.md. No schema expansion or external execution capability.
+
+## 2026-10-12 — Public Lifestyle commerce restoration
+
+The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.

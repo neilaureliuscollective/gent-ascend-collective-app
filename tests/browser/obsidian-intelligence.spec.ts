@@ -44,7 +44,10 @@ for (const viewport of [
       ).toBe(true);
       if (route.startsWith('/app/')) {
         const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-        await expect(navigation.getByRole('link')).toHaveCount(4);
+        await expect(navigation.getByRole('link')).toHaveCount(5);
+        await expect(
+          navigation.getByRole('link', { name: 'Lifestyle', exact: true }),
+        ).toHaveAttribute('href', '/app/lifestyle');
         // A semantic-token cycle previously made inherited backgrounds transparent.
         const surface = await page.locator('.imperial-workspace').evaluate((el) => ({
           background: getComputedStyle(el).backgroundColor,

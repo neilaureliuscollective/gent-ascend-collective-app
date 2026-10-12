@@ -1,7 +1,13 @@
 import { MissionHandoffFixture } from './mission-handoff';
-import {FounderOffice} from '@/components/founder-office/office';
-import {founderOfficeFixture} from './founder-office-data';
+import { FounderOffice } from '@/components/founder-office/office';
+import { founderOfficeFixture } from './founder-office-data';
 import '@/app/imperial-workspace.css';
+
+import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
+import { CollectionWorld } from '@/components/commerce/collection-world';
+import { CartPanel } from '@/components/commerce/cart-panel';
+import '@/app/(workspace)/app/collection/collection-world.css';
+import '@/app/(workspace)/app/lifestyle/lifestyle.css';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
 import '@/app/(workspace)/app/work/work.css';
@@ -108,14 +114,40 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'founder-office' ? <div className="aethelios-aether imperial-workspace"><p>Synthetic Founder Office fixture · no account, live model or external action.</p><FounderOffice initial={founderOfficeFixture}/></div> : mode === 'mission' ? (
+  mode === 'founder-office' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
+      <FounderOffice initial={founderOfficeFixture} />
+    </div>
+  ) : mode.startsWith('lifestyle') ? (
+    <div className="member-collection public-world imperial-obsidian">
+      <p className="preview-notice">
+        Synthetic commerce fixture · no live merchandise, orders or payments.
+      </p>
+      {mode === 'lifestyle-home' ? (
+        <LifestyleLanding entries={relatedFixture} status="ready" />
+      ) : mode === 'lifestyle-brand' || mode === 'lifestyle-list' ? (
+        <CollectionWorld
+          entries={params.get('empty') ? [] : relatedFixture}
+          failed={params.get('error') === '1'}
+          brand={mode === 'lifestyle-brand' ? 'Legacy Reserve' : undefined}
+        />
+      ) : mode === 'lifestyle-cart' ? (
+        <CartPanel fullPage basePath="/app/collection" />
+      ) : (
+        <ProductExperience product={commerceFixture} basePath="/app/collection" />
+      )}
+    </div>
+  ) : mode === 'mission' ? (
     <MissionHandoffFixture />
   ) : mode === 'company-room' || mode === 'company-job' || mode === 'founder-job' ? (
     <>
       <p>Synthetic company-room fixture · no account or live model.</p>
       <CompanyRoom
         initialWork={mode !== 'company-room' ? syntheticWork : undefined}
-        initialConversation={mode !== 'company-room' ? syntheticWork.job.conversation_id : undefined}
+        initialConversation={
+          mode !== 'company-room' ? syntheticWork.job.conversation_id : undefined
+        }
         initial={{
           company: {
             id: 'c8000000-0000-4000-8000-000000000001',
@@ -131,7 +163,7 @@ createRoot(document.getElementById('root')!).render(
           hasOlderTurns: false,
           nextCursor: null,
           canChat: true,
-          founderAccess: mode==='founder-job',
+          founderAccess: mode === 'founder-job',
         }}
       />
     </>
