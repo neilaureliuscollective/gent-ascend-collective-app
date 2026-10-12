@@ -5,13 +5,17 @@ for (const width of [344, 720, 768, 1440]) {
     await page.goto('http://127.0.0.1:3102/?mode=lifestyle-list');
     await page.getByRole('searchbox').fill('no matching product');
     await expect(page).toHaveURL(/q=no\+matching\+product/);
-    await page.getByLabel('Available to order', { exact: true }).check();
+    await page.getByRole('checkbox', { name: 'Available to order', exact: true }).check();
     await page.getByLabel('Sort products').selectOption('name');
     await page.goBack();
     await expect(page.getByLabel('Sort products')).toHaveValue('featured');
-    await expect(page.getByLabel('Available to order', { exact: true })).toBeChecked();
+    await expect(
+      page.getByRole('checkbox', { name: 'Available to order', exact: true }),
+    ).toBeChecked();
     await page.goBack();
-    await expect(page.getByLabel('Available to order', { exact: true })).not.toBeChecked();
+    await expect(
+      page.getByRole('checkbox', { name: 'Available to order', exact: true }),
+    ).not.toBeChecked();
     await expect(page.getByRole('searchbox')).toHaveValue('no matching product');
     await page.reload();
     await expect(page.getByRole('searchbox')).toHaveValue('no matching product');
