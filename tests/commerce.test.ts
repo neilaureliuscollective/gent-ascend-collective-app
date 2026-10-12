@@ -20,6 +20,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   if (original.domain === undefined) delete process.env.SHOPIFY_STORE_DOMAIN;
   else process.env.SHOPIFY_STORE_DOMAIN = original.domain;
   if (original.token === undefined) delete process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN;
@@ -35,7 +36,9 @@ describe('Shopify commerce contract', () => {
       return new Response(JSON.stringify({ data: { collection: null } }));
     });
     vi.stubGlobal('fetch', fetch);
-    expect(await listCollectionProducts('legacy-reserve')).toEqual([]);
+    await expect(listCollectionProducts('legacy-reserve')).rejects.toMatchObject({
+      name: 'CollectionUnavailableError',
+    });
   });
   it('loads additional product variants and reads current detail without shared price caching', async () => {
     const fetch = vi.fn(async (_url: string, options: RequestInit) => {
@@ -77,7 +80,8 @@ describe('Shopify commerce contract', () => {
       'second',
     ]);
   });
-  it('rejects direct purchase requests for products outside the approved merchant collection', async () => {
+  it('rejects direct purchase requests for products outside an explicitly configured merchant collection', async () => {
+    vi.stubEnv('SHOPIFY_LIFESTYLE_COLLECTION', 'legacy-reserve');
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -268,6 +272,19 @@ describe('server launch validation', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).query).not.toContain('mutation');
   });
+  it('accepts a published non-brand product by default but enforces explicit assortment at cart review', () => {
+    const cart = {
+      lines: {
+        nodes: [
+          { merchandise: { product: { requiresSellingPlan: false, collections: { nodes: [] } } } },
+        ],
+      },
+    } as unknown as Parameters<typeof cartLaunchPurchasable>[0];
+    expect(cartLaunchPurchasable(cart)).toBe(true);
+    vi.stubEnv('SHOPIFY_LIFESTYLE_COLLECTION', 'approved');
+    expect(cartLaunchPurchasable(cart)).toBe(false);
+  });
+
   it('rejects a cart whose previously purchasable product has become a preview', () => {
     const cart = {
       lines: { nodes: [{ merchandise: { product: { launchState: { value: 'preview' } } } }] },
