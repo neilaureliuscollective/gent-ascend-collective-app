@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StudioScene } from './studio-storyboard';
+import { StudioDelivery } from './studio-delivery';
 import { StudioFootage } from './studio-footage';
 import { StudioNarration } from './studio-narration';
 import { StudioCampaign } from './studio-campaign';
@@ -50,7 +51,15 @@ type Workspace = {
   configured: boolean;
   canCreate?: boolean;
 };
-type View = 'create' | 'library' | 'direction' | 'storyboard' | 'finish' | 'narration' | 'footage';
+type View =
+  | 'create'
+  | 'library'
+  | 'direction'
+  | 'storyboard'
+  | 'finish'
+  | 'narration'
+  | 'footage'
+  | 'delivery';
 const blankBrief: Brief = { purpose: '', audience: '', direction: '', palette: '', avoid: '' };
 const empty: Workspace = {
   projects: [],
@@ -550,6 +559,7 @@ export function StudioWorkspace() {
                   'footage',
                   'narration',
                   'finish',
+                  'delivery',
                   'library',
                   'direction',
                 ] as const
@@ -570,12 +580,23 @@ export function StudioWorkspace() {
                           ? 'Footage'
                           : tab === 'narration'
                             ? 'Narration'
-                            : tab === 'library'
-                              ? 'Library'
-                              : 'Direction'}
+                            : tab === 'delivery'
+                              ? 'Delivery'
+                              : tab === 'library'
+                                ? 'Library'
+                                : 'Direction'}
                 </button>
               ))}
             </div>
+            {view === 'delivery' && selected && (
+              <StudioDelivery
+                key={selected}
+                projectId={selected}
+                title={project?.title ?? 'Campaign'}
+                scenes={data.scenes}
+                versions={data.versions}
+              />
+            )}
             {view === 'footage' && selected && (
               <StudioFootage key={selected} projectId={selected} />
             )}

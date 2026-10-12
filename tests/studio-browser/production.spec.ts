@@ -460,3 +460,87 @@ test('inactive footage can export a brief but cannot submit generation', async (
   await (await event).saveAs('test-results/studio-film-brief.json');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('Delivery exports selected actual media with reviewed copy and captions at phone width', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 344, height: 960 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+  const { readFile } = await import('node:fs/promises');
+  const mp4 = Buffer.from(
+    await readFile('tests/fixtures/studio-footage.mp4.base64', 'utf8'),
+    'base64',
+  );
+  await page.route('**/api/studio/footage**', (route) =>
+    route.request().url().includes('/video')
+      ? route.fulfill({ contentType: 'video/mp4', body: mp4 })
+      : route.fulfill({
+          json: {
+            items: [
+              {
+                id: version,
+                title: 'Selected clip',
+                status: 'complete',
+                duration: 5,
+                ratio: '1280:720',
+              },
+            ],
+          },
+        }),
+  );
+  await page.route('**/api/studio/narration**', (route) => route.fulfill({ json: { items: [] } }));
+  await page
+    .getByRole('group', { name: 'Studio workspace views' })
+    .getByRole('button', { name: 'Delivery', exact: true })
+    .click();
+  await page.getByRole('checkbox', { name: 'Saved image 1 · Saved image' }).check();
+  await page.getByRole('checkbox', { name: 'Selected clip · AI footage · 5s' }).check();
+  const button = page.getByRole('button', {
+    name: 'Download reviewed delivery package',
+    exact: true,
+  });
+  await expect(button).toBeDisabled();
+  const approval = page.getByRole('checkbox', {
+    name: 'I reviewed selected media, factual claims, usage rights and AI disclosures for this handoff.',
+  });
+  await approval.check();
+  await page.getByLabel('Delivery scene timing', { exact: true }).selectOption('2');
+  await expect(approval).not.toBeChecked();
+  await approval.check();
+  const event = page.waitForEvent('download');
+  await button.click();
+  await (await event).saveAs('test-results/studio-delivery.zip');
+  await expect(page.getByRole('region', { name: 'Campaign delivery' })).toContainText(
+    'Nothing was published or generated',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/studio-delivery-phone.png', fullPage: true });
+});
+test('Delivery fails honestly when a selected saved asset is missing', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/studio/footage**', (route) => route.fulfill({ json: { items: [] } }));
+  await page.route('**/api/studio/narration**', (route) => route.fulfill({ json: { items: [] } }));
+  await page.route('**/api/studio/image**', (route) =>
+    route.fulfill({ status: 404, json: { error: 'Unavailable' } }),
+  );
+  await page
+    .getByRole('group', { name: 'Studio workspace views' })
+    .getByRole('button', { name: 'Delivery', exact: true })
+    .click();
+  await page.getByRole('checkbox', { name: 'Saved image 1 · Saved image' }).check();
+  await page
+    .getByRole('checkbox', {
+      name: 'I reviewed selected media, factual claims, usage rights and AI disclosures for this handoff.',
+    })
+    .check();
+  let downloaded = false;
+  page.on('download', () => {
+    downloaded = true;
+  });
+  await page
+    .getByRole('button', { name: 'Download reviewed delivery package', exact: true })
+    .click();
+  await expect(page.getByRole('alert')).toContainText('Nothing was exported');
+  expect(downloaded).toBe(false);
+});

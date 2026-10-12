@@ -1,3 +1,7 @@
+## Studio Delivery — October 12, 2026
+
+Review candidate stacked on unmerged Footage #96: Delivery room connects selected saved images, AI clips and narration into an actual campaign ZIP with copy, scene-timed captions, provenance labels and SHA-256 file hashes. Exact local review snapshot, bounded authenticated reads, cancellation and honest all-or-nothing failure; no paid generation, new migration or automatic publishing. Audio/video depend on the earlier provider activation gates. Research, scope and founder acceptance boundaries: [STUDIO_DELIVERY.md](STUDIO_DELIVERY.md). No production release.
+
 ## Studio AI Footage — October 12, 2026
 
 Review candidate stacked on unmerged Narration #95/production house #94: Footage room with active Runway Gen-4.5 text-to-video adapter, signed reviewed estimates/task receipts, explicit one-render authorization, durable owner jobs/spending reservations, private validated MP4 preservation/playback/download and uncertainty recovery without paid retries. One additive unapplied migration; feature defaults off pending app-specific Runway setup and real acceptance. Text-only standalone clips; no timeline, automatic background copying or production release. Official current contracts, limitations and exact founder setup: [STUDIO_FOOTAGE.md](STUDIO_FOOTAGE.md). Fixture/SQL/browser gates are separate from actual paid provider and hosted Auth/Storage acceptance.
