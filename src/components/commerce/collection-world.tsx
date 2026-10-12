@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useCatalogNavigation } from './catalog-navigation';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { filterCatalog } from '@/domains/commerce/catalog-filter';
 import { CollectionCard } from './collection-card';
@@ -30,17 +31,25 @@ export function CollectionWorld({
   brand?: string;
   catalogStatus?: 'ready' | 'empty' | 'unconfigured' | 'error';
 }) {
-  const [chapter, setChapter] = useState(savedOnly ? 'saved' : 'all');
-  const [query, setQuery] = useState('');
-  const [readyOnly, setReadyOnly] = useState(false);
   const [notice, setNotice] = useState('');
-  const [sort, setSort] = useState('featured');
-  const [brandFilter, setBrandFilter] = useState('all');
   const brands = [...new Set(entries.map((entry) => entry.brand))].sort();
   const priceSortSupported =
     new Set(
       entries.filter((entry) => entry.priceAmount !== undefined).map((entry) => entry.currency),
     ).size === 1;
+  const availableChapters = chapters.filter(
+    ([id]) =>
+      id === 'all' || id === 'saved' || entries.some((entry) => entry.categories.includes(id)),
+  );
+  const {
+    view: { chapter, query, readyOnly, sort, brandFilter },
+    update,
+  } = useCatalogNavigation(
+    availableChapters.map(([id]) => id),
+    brands,
+    priceSortSupported,
+    savedOnly,
+  );
   const saved = useSavedCollection();
   const candidates = entries.filter(
     (entry) =>
@@ -61,11 +70,7 @@ export function CollectionWorld({
       ? saved.filter((handle) => !entries.some((entry) => entry.handle === handle))
       : [];
   function reset() {
-    setQuery('');
-    setReadyOnly(false);
-    setChapter('all');
-    setBrandFilter('all');
-    setSort('featured');
+    update({ query: '', readyOnly: false, chapter: 'all', brandFilter: 'all', sort: 'featured' });
   }
   return (
     <div className="reserve-commerce collection-world">
@@ -142,20 +147,20 @@ export function CollectionWorld({
               placeholder="Search products or rituals"
               value={query}
               maxLength={120}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => update({ query: event.target.value }, true)}
             />
           </label>
           <label className="collection-availability">
             <input
               type="checkbox"
               checked={readyOnly}
-              onChange={(event) => setReadyOnly(event.target.checked)}
+              onChange={(event) => update({ readyOnly: event.target.checked })}
             />
             Available to order
           </label>
           <label>
             Sort products
-            <select value={sort} onChange={(event) => setSort(event.target.value)}>
+            <select value={sort} onChange={(event) => update({ sort: event.target.value })}>
               <option value="featured">Catalog order</option>
               <option value="name">Name: A–Z</option>
               {priceSortSupported && <option value="price-asc">Price: low to high</option>}
@@ -165,7 +170,10 @@ export function CollectionWorld({
           {brands.length > 1 && (
             <label>
               Brand
-              <select value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}>
+              <select
+                value={brandFilter}
+                onChange={(event) => update({ brandFilter: event.target.value })}
+              >
                 <option value="all">All brands</option>
                 {brands.map((value) => (
                   <option key={value} value={value}>
@@ -177,20 +185,35 @@ export function CollectionWorld({
           )}
         </div>
         <div className="collection-chapters" role="group" aria-label="Collection chapters">
-          {chapters
-            .filter(
-              ([id]) =>
-                id === 'all' ||
-                id === 'saved' ||
-                entries.some((entry) => entry.categories.includes(id)),
-            )
-            .map(([id, label]) => (
-              <button key={id} aria-pressed={chapter === id} onClick={() => setChapter(id)}>
-                {label}
-                {id === 'saved' && saved.length ? ` (${saved.length})` : ''}
-              </button>
-            ))}
+          {availableChapters.map(([id, label]) => (
+            <button key={id} aria-pressed={chapter === id} onClick={() => update({ chapter: id })}>
+              {label}
+              {id === 'saved' && saved.length ? ` (${saved.length})` : ''}
+            </button>
+          ))}
         </div>
+        {(query || readyOnly || chapter !== 'all' || brandFilter !== 'all') && (
+          <div className="collection-chapters" role="group" aria-label="Applied filters">
+            {query && (
+              <button onClick={() => update({ query: '' })}>Remove search: {query} ×</button>
+            )}
+            {readyOnly && (
+              <button onClick={() => update({ readyOnly: false })}>
+                Remove available to order ×
+              </button>
+            )}
+            {chapter !== 'all' && (
+              <button onClick={() => update({ chapter: 'all' })}>
+                Remove {availableChapters.find(([id]) => id === chapter)?.[1]} ×
+              </button>
+            )}
+            {brandFilter !== 'all' && (
+              <button onClick={() => update({ brandFilter: 'all' })}>
+                Remove brand: {brandFilter} ×
+              </button>
+            )}
+          </div>
+        )}
         <div className="collection-results">
           <p role="status">
             {visible.length} {visible.length === 1 ? 'essential' : 'essentials'}

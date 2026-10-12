@@ -367,3 +367,7 @@ Founder approved the researched home recovery after reporting a visual regressio
 ## 2026-10-12 — Public Lifestyle commerce restoration
 
 The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.
+
+## 2026-10-12 — Lifestyle discovery continuity
+
+Use URL-backed catalog state and individually removable filters before comparison or concierge work. Baymard Back/applied-filter research and installed Next 16.3.5 native History API support this slice. Browser saves remain local handles; URL state includes no private records. Search typing replaces history; discrete filters/sorts push history. No new integration, schema, tracking or merchant mutation. See [phase receipt](LIFESTYLE_DISCOVERY_CONTINUITY.md).
