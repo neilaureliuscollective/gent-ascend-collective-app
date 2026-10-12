@@ -875,6 +875,29 @@ export interface Database {
         Args: { p_kind: string; p_request: string; p_expected: number; p_payload: unknown };
         Returns: number;
       };
+      ai_studio_footage_quote: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_title: string;
+          p_prompt: string;
+          p_duration: number;
+          p_ratio: string;
+          p_expires: string;
+          p_signature: string;
+        };
+        Returns: boolean;
+      };
+      ai_studio_footage_begin: { Args: { p_id: string }; Returns: boolean };
+      ai_studio_footage_receipt: {
+        Args: { p_id: string; p_provider?: string | null; p_signature?: string | null };
+        Returns: boolean;
+      };
+      ai_studio_footage_check: { Args: { p_id: string }; Returns: boolean };
+      ai_studio_footage_finish: {
+        Args: { p_id: string; p_status: string; p_key?: string | null; p_credits?: number | null };
+        Returns: boolean;
+      };
       ai_studio_narration_begin: {
         Args: {
           p_id: string;

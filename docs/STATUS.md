@@ -1,3 +1,7 @@
+## Studio AI Footage — October 12, 2026
+
+Review candidate stacked on unmerged Narration #95/production house #94: Footage room with active Runway Gen-4.5 text-to-video adapter, signed reviewed estimates/task receipts, explicit one-render authorization, durable owner jobs/spending reservations, private validated MP4 preservation/playback/download and uncertainty recovery without paid retries. One additive unapplied migration; feature defaults off pending app-specific Runway setup and real acceptance. Text-only standalone clips; no timeline, automatic background copying or production release. Official current contracts, limitations and exact founder setup: [STUDIO_FOOTAGE.md](STUDIO_FOOTAGE.md). Fixture/SQL/browser gates are separate from actual paid provider and hosted Auth/Storage acceptance.
+
 ## Studio Narration — October 12, 2026
 
 Review candidate stacked on unmerged PR #94: Narration room with explicit one-request approval, active GPT-Audio-1.5 adapter, private saved WAV clips, owner-bound recovery, narrated Campaign films and scene-timed VTT/SRT export. One additive unapplied migration; generation defaults off until staging/provider acceptance. Sora/Videos API is retired, so it is not implemented. Scope, current official research and exact activation checklist: [STUDIO_NARRATION.md](STUDIO_NARRATION.md). Provider fixture and SQL-emulation success are separate from live OpenAI/Auth/Storage acceptance; no production release.

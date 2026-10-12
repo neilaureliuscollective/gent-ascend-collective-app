@@ -234,3 +234,16 @@
   min-height: 44px;
   padding: 10px 0;
 }
+
+.studio-footage-room video {
+  display: block;
+  width: 100%;
+  max-height: 480px;
+  margin: 1rem 0;
+  border-radius: 12px;
+  background: var(--io-environment);
+}
+.studio-footage-room details p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

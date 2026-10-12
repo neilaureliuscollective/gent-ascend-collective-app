@@ -352,3 +352,111 @@ test('narration remains honest and script exportable before backend activation',
   ).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Export script', exact: false })).toBeEnabled();
 });
+
+// Real playable MP4 fixture; intercepted APIs are not live Runway or Auth acceptance.
+test('footage requires reviewed approval, survives refresh and plays/downloads a real MP4', async ({
+  page,
+}) => {
+  const { readFile } = await import('node:fs/promises');
+  const bytes = Buffer.from(
+    await readFile('tests/fixtures/studio-footage.mp4.base64', 'utf8'),
+    'base64',
+  );
+  await setup(page);
+  let items: Record<string, unknown>[] = [];
+  let starts = 0;
+  await page.route('**/api/studio/footage**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/video'))
+      return route.fulfill({ contentType: 'video/mp4', body: bytes });
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { available: true, enabled: true, canCreate: true, items } });
+    const input = route.request().postDataJSON();
+    if (input.action === 'quote') {
+      const item = {
+        id: version,
+        title: input.title,
+        prompt: input.prompt,
+        duration: input.duration,
+        ratio: input.ratio,
+        estimate: input.duration * 12,
+        expires_at: new Date(Date.now() + 600000).toISOString(),
+        status: 'quoted',
+        created_at: new Date().toISOString(),
+        provider_credits: null,
+      };
+      items = [item];
+      return route.fulfill({ json: item });
+    }
+    if (input.action === 'start') {
+      expect(input.approved).toBe(true);
+      expect(input.estimate).toBe(60);
+      starts++;
+      items[0]!.status = 'queued';
+    }
+    if (input.action === 'check') items[0]!.status = 'complete';
+    return route.fulfill({ json: items[0] });
+  });
+  await page
+    .getByRole('group', { name: 'Studio workspace views' })
+    .getByRole('button', { name: 'Footage', exact: true })
+    .click();
+  await page.getByLabel('Film direction', { exact: true }).fill('A quiet landscape in warm light.');
+  await page.getByRole('button', { name: 'Review render estimate', exact: true }).click();
+  const generate = page.getByRole('button', { name: 'Generate approved footage', exact: true });
+  await expect(generate).toBeDisabled();
+  await page
+    .getByRole('checkbox', { name: 'I authorize one render of this brief and its provider usage.' })
+    .check();
+  await page.getByLabel('Film direction', { exact: true }).fill('Revised landscape in warm light.');
+  await expect(generate).toHaveCount(0);
+  await page.getByRole('button', { name: 'Review render estimate', exact: true }).click();
+  await page
+    .getByRole('checkbox', { name: 'I authorize one render of this brief and its provider usage.' })
+    .check();
+  await generate.click();
+  await expect(
+    page.getByRole('button', { name: 'Check render status', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh saved requests', exact: true }).click();
+  expect(starts).toBe(1);
+  await page.getByRole('button', { name: 'Check render status', exact: true }).click();
+  const video = page.locator('.studio-footage-room video');
+  await expect(video).toBeVisible();
+  await video.evaluate(async (node) => {
+    const clip = node as HTMLVideoElement;
+    await clip.play();
+  });
+  await expect
+    .poll(() => video.evaluate((node) => (node as HTMLVideoElement).currentTime))
+    .toBeGreaterThan(0);
+  expect(await video.evaluate((node) => (node as HTMLVideoElement).videoWidth)).toBe(1280);
+  await video.evaluate((node) => (node as HTMLVideoElement).pause());
+  const event = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download MP4', exact: true }).click();
+  await (await event).saveAs('test-results/studio-ai-footage.mp4');
+  await page.screenshot({ path: 'test-results/studio-footage-room.png', fullPage: true });
+});
+test('inactive footage can export a brief but cannot submit generation', async ({ page }) => {
+  await page.setViewportSize({ width: 344, height: 960 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+  await page.route('**/api/studio/footage**', (route) =>
+    route.fulfill({ json: { available: false, enabled: false, canCreate: false, items: [] } }),
+  );
+  await page
+    .getByRole('group', { name: 'Studio workspace views' })
+    .getByRole('button', { name: 'Footage', exact: true })
+    .click();
+  await expect(page.getByRole('region', { name: 'AI footage production' })).toContainText(
+    'awaits verified activation',
+  );
+  await page.getByLabel('Film direction', { exact: true }).fill('A thoughtful film brief.');
+  await expect(
+    page.getByRole('button', { name: 'Review render estimate', exact: true }),
+  ).toBeDisabled();
+  const event = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export film brief', exact: true }).click();
+  await (await event).saveAs('test-results/studio-film-brief.json');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
