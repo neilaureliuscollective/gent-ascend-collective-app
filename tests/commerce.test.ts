@@ -6,6 +6,8 @@ import {
   getCart,
   listProducts,
   cartLaunchPurchasable,
+  getProduct,
+  listCollectionProducts,
 } from '../src/domains/commerce/shopify';
 
 const original = {
@@ -25,6 +27,79 @@ afterEach(() => {
 });
 
 describe('Shopify commerce contract', () => {
+  it('queries the selected Shopify collection and never fabricates missing merchandise', async () => {
+    const fetch = vi.fn(async (_url: string, options: RequestInit) => {
+      const request = JSON.parse(String(options.body));
+      expect(request.variables.handle).toBe('legacy-reserve');
+      expect(request.query).toContain('collection(handle: $handle)');
+      return new Response(JSON.stringify({ data: { collection: null } }));
+    });
+    vi.stubGlobal('fetch', fetch);
+    expect(await listCollectionProducts('legacy-reserve')).toEqual([]);
+  });
+  it('loads additional product variants and reads current detail without shared price caching', async () => {
+    const fetch = vi.fn(async (_url: string, options: RequestInit) => {
+      const request = JSON.parse(String(options.body));
+      expect(options.cache).toBe('no-store');
+      expect(request.variables.handle).toBe('published-product');
+      if (request.query.includes('ProductVariants')) {
+        expect(request.variables.cursor).toBe('next-variants');
+        return new Response(
+          JSON.stringify({
+            data: {
+              product: {
+                variants: {
+                  nodes: [{ id: 'second' }],
+                  pageInfo: { hasNextPage: false, endCursor: 'last' },
+                },
+              },
+            },
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          data: {
+            product: {
+              requiresSellingPlan: false,
+              variants: {
+                nodes: [{ id: 'first' }],
+                pageInfo: { hasNextPage: true, endCursor: 'next-variants' },
+              },
+            },
+          },
+        }),
+      );
+    });
+    vi.stubGlobal('fetch', fetch);
+    expect((await getProduct('published-product'))?.variants.nodes.map((v) => v.id)).toEqual([
+      'first',
+      'second',
+    ]);
+  });
+  it('rejects direct purchase requests for products outside the approved merchant collection', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              data: {
+                node: {
+                  availableForSale: true,
+                  product: {
+                    collections: { nodes: [{ handle: 'unrelated', title: 'Other products' }] },
+                  },
+                },
+              },
+            }),
+          ),
+      ),
+    );
+    await expect(createCart('gid://shopify/ProductVariant/1', 1)).rejects.toThrow(
+      'not open for ordering',
+    );
+  });
   it('passes the Shopify end cursor to subsequent catalog reads and retains older products', async () => {
     const cursors: unknown[] = [];
     vi.stubGlobal(
@@ -82,7 +157,7 @@ describe('Shopify commerce contract', () => {
     vi.stubGlobal('fetch', fetch);
     expect((await listProducts()).map((entry) => entry.id)).toEqual(['one']);
     const [url, options] = fetch.mock.calls[0]!;
-    expect(url).toBe('https://gent-ascend.myshopify.com/api/2026-07/graphql.json');
+    expect(url).toBe('https://gent-ascend.myshopify.com/api/2026-10/graphql.json');
     expect((options.headers as Record<string, string>)['Shopify-Storefront-Private-Token']).toBe(
       'test-private-token',
     );
@@ -100,7 +175,15 @@ describe('Shopify commerce contract', () => {
       return new Response(
         JSON.stringify({
           data: query.includes('PurchaseReadiness')
-            ? { node: { availableForSale: true, product: { requiresSellingPlan: false } } }
+            ? {
+                node: {
+                  availableForSale: true,
+                  product: {
+                    requiresSellingPlan: false,
+                    collections: { nodes: [{ handle: 'legacy-reserve', title: 'Legacy Reserve' }] },
+                  },
+                },
+              }
             : query.includes('cartCreate')
               ? { cartCreate: { cart, userErrors: [] } }
               : { cartLinesAdd: { cart, userErrors: [] } },
@@ -133,7 +216,12 @@ describe('Shopify commerce contract', () => {
           new Response(
             JSON.stringify({
               data: {
-                node: { availableForSale: true, product: {} },
+                node: {
+                  availableForSale: true,
+                  product: {
+                    collections: { nodes: [{ handle: 'legacy-reserve', title: 'Legacy Reserve' }] },
+                  },
+                },
                 cartCreate: { cart: null, userErrors: [{ message: 'Unavailable' }] },
               },
             }),

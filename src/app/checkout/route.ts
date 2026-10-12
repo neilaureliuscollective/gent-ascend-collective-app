@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cartId, clearCartId } from '@/domains/commerce/cart-session';
 import { cartLaunchPurchasable, commerceConfigured, getCart } from '@/domains/commerce/shopify';
 
+import { verifiedCheckoutUrl } from '@/domains/commerce/cart-public';
+
 export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
-  if (!commerceConfigured()) return NextResponse.redirect(new URL('/shop', request.url));
+  if (!commerceConfigured()) return NextResponse.redirect(new URL('/lifestyle', request.url));
   const id = await cartId();
   if (!id) return NextResponse.redirect(new URL('/shop/cart', request.url));
   try {
@@ -17,13 +19,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/shop/cart', request.url));
     if (!cartLaunchPurchasable(cart))
       return NextResponse.redirect(new URL('/shop/cart?launch=held', request.url));
-    const url = new URL(cart.checkoutUrl);
     const store = process.env.SHOPIFY_STORE_DOMAIN!;
     const permitted = [store, 'checkout.shopify.com', process.env.SHOPIFY_CHECKOUT_HOST].filter(
-      Boolean,
+      (host): host is string => Boolean(host),
     );
-    if (url.protocol !== 'https:' || !permitted.includes(url.hostname))
-      throw new Error('Unexpected checkout domain');
+    const url = verifiedCheckoutUrl(cart.checkoutUrl, permitted);
     return NextResponse.redirect(url, {
       headers: { 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer' },
     });

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import { launchPurchaseAllowed, launchState, launchLabel } from '@/domains/commerce/launch-policy';
 import { readProductStory, shopifyMediaUrl } from '@/domains/commerce/product-story';
+import { productBrand } from '@/domains/commerce/lifestyle';
 import { previewProduct } from '@/domains/catalog/preview';
 import { vitalisDevelopmentHighlights } from '@/domains/catalog/vitalis-development';
 import { CommerceMotion } from './commerce-motion';
@@ -40,7 +41,7 @@ export function ProductExperience({
   const open = product ? launchPurchaseAllowed(product) : false;
   const brand =
     preview?.line ??
-    (product?.collections.nodes.find((c) => /legacy/i.test(c.title))?.title || 'Gent Ascend');
+    (product ? productBrand(product) : 'Aethelios Lifestyle');
   const intro =
     story?.benefit ||
     product?.purpose?.value ||
@@ -321,7 +322,7 @@ export function ProductExperience({
       </section>
       <ProductRelations items={related} basePath={basePath} />
       <section className="reserve-membership-bridge">
-        <span className="world-kicker">Gent Ascend Collective / Beyond the shelf</span>
+        <span className="world-kicker">AETHELIOS / Beyond the shelf</span>
         <h2>
           The product.
           <br />
@@ -372,8 +373,7 @@ export function ProductExperience({
               Do I need a membership to purchase?<span aria-hidden="true">+</span>
             </summary>
             <p>
-              No. Products that are open for ordering can be purchased independently of a paid Gent
-              Ascend membership.
+              No. Products that are open for ordering can be purchased independently of a paid Aethelios membership.
             </p>
           </details>
           {!open && (

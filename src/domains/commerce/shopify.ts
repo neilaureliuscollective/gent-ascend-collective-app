@@ -2,8 +2,9 @@ import 'server-only';
 import { cache } from 'react';
 import { launchPurchaseAllowed, type LaunchMetadata } from './launch-policy';
 import { collectCatalog, type CatalogPage } from './catalog-pagination';
+import { brandProducts, lifestyleCollectionHandle } from './lifestyle';
 
-const VERSION = '2026-07';
+const VERSION = '2026-10';
 
 export function commerceConfigured() {
   return Boolean(process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN);
@@ -16,6 +17,7 @@ export type Product = LaunchMetadata & {
   title: string;
   description: string;
   productType: string;
+  vendor?: string;
   featuredImage: {
     url: string;
     altText: string | null;
@@ -26,11 +28,14 @@ export type Product = LaunchMetadata & {
     nodes: { url: string; altText: string | null; width: number | null; height: number | null }[];
   };
   variants: {
+    pageInfo?: { hasNextPage: boolean; endCursor: string | null };
     nodes: {
       id: string;
       title: string;
       availableForSale: boolean;
       price: Money;
+      compareAtPrice?: Money | null;
+      currentlyNotInStock?: boolean;
       selectedOptions: { name: string; value: string }[];
     }[];
   };
@@ -55,6 +60,7 @@ export type ProductSummary = Pick<
   | 'handle'
   | 'title'
   | 'productType'
+  | 'vendor'
   | 'featuredImage'
   | 'collections'
   | 'availableForSale'
@@ -82,6 +88,7 @@ export type Cart = {
         product: LaunchMetadata & {
           handle: string;
           title: string;
+          collections: Product['collections'];
           featuredImage: Product['featuredImage'];
         };
       };
@@ -93,11 +100,11 @@ export type Cart = {
 const LAUNCH = `tags requiresSellingPlan
   launchState: metafield(namespace: "gent_ascend", key: "launch_state") { value }
   launchWindow: metafield(namespace: "gent_ascend", key: "launch_window") { value }`;
-const PRODUCT = `id handle title description productType availableForSale ${LAUNCH}
+const PRODUCT = `id handle title description productType vendor availableForSale ${LAUNCH}
   featuredImage { url altText width height }
   images(first: 6) { nodes { url altText width height } }
-  variants(first: 50) { nodes { id title availableForSale price { amount currencyCode } selectedOptions { name value } } }
-  collections(first: 8) { nodes { handle title } }
+  variants(first: 50) { pageInfo { hasNextPage endCursor } nodes { id title availableForSale currentlyNotInStock price { amount currencyCode } compareAtPrice { amount currencyCode } selectedOptions { name value } } }
+  collections(first: 100) { nodes { handle title } }
   purpose: metafield(namespace: "gent_ascend", key: "purpose") { value }
   ingredients: metafield(namespace: "gent_ascend", key: "ingredients") { value }
   directions: metafield(namespace: "gent_ascend", key: "directions") { value }
@@ -106,7 +113,7 @@ const PRODUCT = `id handle title description productType availableForSale ${LAUN
   media(first: 8) { nodes { mediaContentType ... on Model3d { sources { url format filesize } } } }`;
 const CART = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
   lines(first: 100) { nodes { id quantity cost { totalAmount { amount currencyCode } }
-    merchandise { ... on ProductVariant { id title product { handle title ${LAUNCH} featuredImage { url altText width height } } } } } }
+    merchandise { ... on ProductVariant { id title product { handle title ${LAUNCH} collections(first: 100) { nodes { handle title } } featuredImage { url altText width height } } } } } }
   `;
 
 function config() {
@@ -125,6 +132,8 @@ export async function storefront<T>(
   const { domain, token } = config();
   const response = await fetch(`https://${domain}/api/${VERSION}/graphql.json`, {
     method: 'POST',
+    redirect: 'error',
+    signal: AbortSignal.timeout(15000),
     headers: {
       'Content-Type': 'application/json',
       'Shopify-Storefront-Private-Token': token,
@@ -147,7 +156,7 @@ export const listProducts = cache(async () => {
       `query Catalog($cursor: String) { products(first: 60, after: $cursor, sortKey: CREATED_AT, reverse: true) {
       pageInfo { hasNextPage endCursor }
       nodes {
-      id handle title productType availableForSale ${LAUNCH}
+      id handle title productType vendor availableForSale ${LAUNCH}
       story: metafield(namespace: "gent_ascend", key: "product_story") { value }
       featuredImage { url altText width height }
       collections(first: 8) { nodes { handle title } }
@@ -161,12 +170,54 @@ export const listProducts = cache(async () => {
   return products.filter((product) => !product.requiresSellingPlan);
 });
 
+export const listCollectionProducts = cache(async (handle: string) => {
+  return collectCatalog<ProductSummary>(async (cursor) => {
+    const data = await storefront<{ collection: { products: CatalogPage<ProductSummary> } | null }>(
+      `query LifestyleCollection($handle: String!, $cursor: String) {
+        collection(handle: $handle) { products(first: 60, after: $cursor) {
+          pageInfo { hasNextPage endCursor }
+          nodes { id handle title productType vendor availableForSale ${LAUNCH}
+            story: metafield(namespace: "gent_ascend", key: "product_story") { value }
+            featuredImage { url altText width height }
+            collections(first: 100) { nodes { handle title } }
+            priceRange { minVariantPrice { amount currencyCode } }
+          }
+        } }
+      }`,
+      { handle, cursor },
+      { cache: 'force-cache', revalidate: 300 },
+    );
+    return (
+      data.collection?.products ?? { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } }
+    );
+  }).then((products) => products.filter((product) => !product.requiresSellingPlan));
+});
+
 export const getProduct = cache(async (handle: string) => {
   const data = await storefront<{ product: Product | null }>(
     `query Product($handle: String!) { product(handle: $handle) { ${PRODUCT} } }`,
     { handle },
-    { cache: 'force-cache', revalidate: 300 },
+    { cache: 'no-store' },
   );
+  if (data.product?.variants.pageInfo?.hasNextPage) {
+    const first = data.product.variants;
+    const variants = await collectCatalog<Product['variants']['nodes'][number]>(async (cursor) => {
+      if (!cursor) return { nodes: first.nodes, pageInfo: first.pageInfo! };
+      const next = await storefront<{
+        product: { variants: CatalogPage<Product['variants']['nodes'][number]> } | null;
+      }>(
+        `query ProductVariants($handle: String!, $cursor: String!) { product(handle: $handle) { variants(first: 50, after: $cursor) {
+          pageInfo { hasNextPage endCursor }
+          nodes { id title availableForSale currentlyNotInStock price { amount currencyCode } compareAtPrice { amount currencyCode } selectedOptions { name value } }
+        } } }`,
+        { handle, cursor },
+        { cache: 'no-store' },
+      );
+      if (!next.product) throw new Error('Product became unavailable');
+      return next.product.variants;
+    });
+    data.product.variants.nodes = variants;
+  }
   return data.product?.requiresSellingPlan ? null : data.product;
 });
 
@@ -231,10 +282,13 @@ export class LaunchPurchaseError extends Error {
 
 async function assertVariantPurchasable(id: string, buyerIp?: string) {
   const data = await storefront<{
-    node: { availableForSale: boolean; product: LaunchMetadata } | null;
+    node: {
+      availableForSale: boolean;
+      product: LaunchMetadata & Pick<Product, 'collections'>;
+    } | null;
   }>(
     `query PurchaseReadiness($id: ID!) { node(id: $id) { ... on ProductVariant {
-      availableForSale product { ${LAUNCH} }
+      availableForSale product { ${LAUNCH} collections(first: 100) { nodes { handle title } } }
     } } }`,
     { id },
     { buyerIp },
@@ -242,14 +296,24 @@ async function assertVariantPurchasable(id: string, buyerIp?: string) {
   if (
     !data.node?.availableForSale ||
     !data.node.product ||
-    !launchPurchaseAllowed(data.node.product)
+    !launchPurchaseAllowed(data.node.product) ||
+    !brandProducts(
+      [data.node.product],
+      lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
+    ).length
   )
     throw new LaunchPurchaseError();
 }
 
 export function cartLaunchPurchasable(cart: Cart) {
   return cart.lines.nodes.every(
-    (line) => Boolean(line.merchandise?.product) && launchPurchaseAllowed(line.merchandise.product),
+    (line) =>
+      Boolean(line.merchandise?.product) &&
+      launchPurchaseAllowed(line.merchandise.product) &&
+      brandProducts(
+        [line.merchandise.product],
+        lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
+      ).length > 0,
   );
 }
 
