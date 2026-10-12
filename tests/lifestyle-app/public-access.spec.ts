@@ -27,12 +27,14 @@ for (const width of [344, 720, 1440]) {
       page.getByRole('heading', { name: 'Product availability could not be verified.' }),
     ).toBeVisible();
     await page.goto('/shop/cart');
-    await expect(page.getByText('Cart is temporarily unavailable.')).toBeVisible();
+    await expect(page.getByText('Shopping is not open yet.')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Continue to secure checkout/ })).toHaveCount(0);
   });
 }
 test('closed cart and checkout cannot invent an order', async ({ request }) => {
   const response = await request.get('/api/commerce/cart');
   expect(response.status()).toBe(503);
+  expect(await response.json()).toEqual({ error: 'Shopping is not open yet.' });
   const checkout = await request.get('/checkout', { maxRedirects: 0 });
   expect(checkout.status()).toBe(307);
   expect(checkout.headers().location).toContain('/lifestyle');
