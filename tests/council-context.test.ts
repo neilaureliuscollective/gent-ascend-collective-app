@@ -4,8 +4,12 @@ const state = vi.hoisted(() => ({
   companyId: null as string | null,
   filters: [] as Array<{ table: string; column: string; value: unknown }>,
   bridge: vi.fn(async () => 'PRIVATE_FOUNDER_NOTEBOOK'),
+  founder: false,
 }));
 vi.mock('server-only', () => ({}));
+vi.mock('../src/domains/access/founder', () => ({
+  currentFounderAccess: async () => state.founder,
+}));
 vi.mock('../src/domains/intelligence/founder-bridge', () => ({
   founderBridgeContext: state.bridge,
 }));
@@ -36,29 +40,41 @@ vi.mock('../src/domains/identity/current', () => ({
           const data =
             table === 'ai_conversations'
               ? single
-                ? { id: 'conversation', company_id: state.companyId, context_summary: '', summary_through: null }
+                ? {
+                    id: 'conversation',
+                    company_id: state.companyId,
+                    context_summary: '',
+                    summary_through: null,
+                  }
                 : []
               : table === 'companies' || table === 'company_turn_context'
-                ? {id: state.companyId, company_id: state.companyId, name: 'Synthetic selected company', brief: 'SELECTED_COMPANY_ONLY', version: 2, confirmed_at: '2026-10-06T00:00:00Z'}
-              : table === 'ai_memories'
-                ? [
-                    {
-                      id: 'memory',
-                      content: owner + ' owner context',
-                      kind: 'fact',
-                      confirmed_at: '2026-10-04',
-                    },
-                  ]
-                : table === 'goals'
-                  ? single
-                    ? {
-                        title: owner + ' goal',
-                        next_step: 'Plan',
-                        reason: 'Focus',
-                        updated_at: '2026-10-04',
-                      }
-                    : []
-                  : [];
+                ? {
+                    id: state.companyId,
+                    company_id: state.companyId,
+                    name: 'Synthetic selected company',
+                    brief: 'SELECTED_COMPANY_ONLY',
+                    version: 2,
+                    confirmed_at: '2026-10-06T00:00:00Z',
+                  }
+                : table === 'ai_memories'
+                  ? [
+                      {
+                        id: 'memory',
+                        content: owner + ' owner context',
+                        kind: 'fact',
+                        confirmed_at: '2026-10-04',
+                      },
+                    ]
+                  : table === 'goals'
+                    ? single
+                      ? {
+                          title: owner + ' goal',
+                          next_step: 'Plan',
+                          reason: 'Focus',
+                          updated_at: '2026-10-04',
+                        }
+                      : []
+                    : [];
           return { data, error: null, count: 0 };
         };
         const builder = {
@@ -94,9 +110,48 @@ beforeEach(() => {
   state.owner = 'member-a';
   state.companyId = null;
   state.filters = [];
+  state.founder = false;
   state.bridge.mockClear();
 });
 describe('Council member context boundary', () => {
+  it('understands an explicitly named founder Coworker using the same private turn ledger', async () => {
+    state.founder = true;
+    const reply = await prepareReply({
+      ...input,
+      council: undefined,
+      text: 'Have MARA review the supplied financial picture',
+      includeContext: false,
+    });
+    expect(reply.council).toEqual({ kind: 'specialist', specialists: ['mara'] });
+    state.founder = false;
+    expect(
+      (
+        await prepareReply({
+          ...input,
+          council: undefined,
+          text: 'Have MARA review this',
+          includeContext: false,
+        })
+      ).council,
+    ).toBeUndefined();
+  });
+  it('rejects founder cast injection before reading context or reserving a turn', async () => {
+    await expect(
+      prepareReply({ ...input, council: { kind: 'specialist', specialists: ['mara'] } }),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(state.filters).toHaveLength(0);
+  });
+  it('uses verified founder authority without private app context or automatic personal consent', async () => {
+    state.founder = true;
+    const reply = await prepareReply({
+      ...input,
+      includeContext: false,
+      council: { kind: 'specialist', specialists: ['mara'] },
+    });
+    expect(reply.founder).toBe(true);
+    expect(state.bridge).not.toHaveBeenCalled();
+    expect(JSON.stringify(reply.messages)).not.toContain('member-a owner context');
+  });
   it('loads only the session owner context and never requests founder bridge', async () => {
     const a = await prepareReply(input);
     state.owner = 'member-b';
@@ -141,31 +196,58 @@ describe('Council member context boundary', () => {
   });
 });
 
-
 describe('company Talk retrieval boundary', () => {
   it('uses its confirmed snapshot without querying personal context or the founder bridge', async () => {
     state.companyId = 'company-a';
-    const result = await prepareReply({...input, companyId: 'company-a', includeContext: false, council: undefined});
+    const result = await prepareReply({
+      ...input,
+      companyId: 'company-a',
+      includeContext: false,
+      council: undefined,
+    });
     expect(JSON.stringify(result.messages)).toContain('SELECTED_COMPANY_ONLY');
-    expect(state.filters.some(filter => ['ai_memories','goals','daily_entries','daily_reviews','ascend_profile_facts','grooming_profiles'].includes(filter.table))).toBe(false);
-    expect(state.filters).toContainEqual({table: 'companies', column: 'person_id', value: state.owner});
-    expect(state.filters).toContainEqual({table: 'company_turn_context', column: 'company_id', value: 'company-a'});
+    expect(
+      state.filters.some((filter) =>
+        [
+          'ai_memories',
+          'goals',
+          'daily_entries',
+          'daily_reviews',
+          'ascend_profile_facts',
+          'grooming_profiles',
+        ].includes(filter.table),
+      ),
+    ).toBe(false);
+    expect(state.filters).toContainEqual({
+      table: 'companies',
+      column: 'person_id',
+      value: state.owner,
+    });
+    expect(state.filters).toContainEqual({
+      table: 'company_turn_context',
+      column: 'company_id',
+      value: 'company-a',
+    });
     expect(state.bridge).not.toHaveBeenCalled();
   });
   it('denies company threads through the legacy personal-context path', async () => {
     state.companyId = 'company-a';
-    await expect(prepareReply({...input,council: undefined})).rejects.toThrow('Open this conversation in its company room');
-    expect(state.filters.some(filter => filter.table === 'ai_memories')).toBe(false);
+    await expect(prepareReply({ ...input, council: undefined })).rejects.toThrow(
+      'Open this conversation in its company room',
+    );
+    expect(state.filters.some((filter) => filter.table === 'ai_memories')).toBe(false);
   });
   it('does not allow personal context in company mode', async () => {
-    await expect(prepareReply({...input, companyId: 'company-a'})).rejects.toThrow('Unsupported company context');
+    await expect(prepareReply({ ...input, companyId: 'company-a' })).rejects.toThrow(
+      'Unsupported company context',
+    );
   });
 });
 
- it('gives an explicitly summoned specialist the same company snapshot and no personal retrieval', async () => {
-   state.companyId = 'company-a';
-   const result = await prepareReply({...input, companyId: 'company-a', includeContext: false});
-   expect(result.council).toEqual(input.council);
-   expect(JSON.stringify(result.messages)).toContain('SELECTED_COMPANY_ONLY');
-   expect(state.filters.some(filter => filter.table === 'ai_memories')).toBe(false);
- });
+it('gives an explicitly summoned specialist the same company snapshot and no personal retrieval', async () => {
+  state.companyId = 'company-a';
+  const result = await prepareReply({ ...input, companyId: 'company-a', includeContext: false });
+  expect(result.council).toEqual(input.council);
+  expect(JSON.stringify(result.messages)).toContain('SELECTED_COMPANY_ONLY');
+  expect(state.filters.some((filter) => filter.table === 'ai_memories')).toBe(false);
+});

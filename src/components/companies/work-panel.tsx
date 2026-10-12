@@ -46,6 +46,8 @@ export function WorkPanel({
       .then(async (response) => {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? 'Preview unavailable.');
+        if (!Array.isArray(result.slides))
+          throw new Error('Presentation preview was not confirmed.');
         setSlides(result.slides);
         setPreviewError('');
       })

@@ -167,6 +167,20 @@ beforeEach(() => {
   process.env.OPENAI_API_KEY = 'test-only';
 });
 describe('company deliverable generation recovery', () => {
+  it('blocks hosted expanded generation before reservations or provider calls until the reader release is accepted', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    vi.stubEnv('FOUNDER_WORK_CONTRACT_READY', '0');
+    try {
+      await expect(generateWork(input, new AbortController().signal)).rejects.toMatchObject({
+        status: 503,
+      });
+      expect(prepare).not.toHaveBeenCalled();
+      expect(model).not.toHaveBeenCalled();
+      expect(state.versions).toEqual([]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it('denies founder Coworkers to an ordinary account before reservation or generation', async () => {
     await expect(
       generateWork({ ...input, specialistId: 'mara' }, new AbortController().signal),

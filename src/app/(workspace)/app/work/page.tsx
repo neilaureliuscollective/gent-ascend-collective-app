@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { companyJobs } from '@/domains/company-work/starters';
 import './work.css';
 import { CompanyRooms } from '@/components/companies/company-rooms';
+import { currentFounderAccess } from '@/domains/access/founder';
 export const metadata = { title: 'Work · Mission Command' };
-export default function WorkPage() {
+export default async function WorkPage() {
+  const founder = await currentFounderAccess().catch(()=>false);
   return (
     <section className="company-work" aria-labelledby="company-work-title">
       <header className="io-hero io-hero-work">
@@ -19,6 +21,7 @@ export default function WorkPage() {
           Continue in Talk ↗
         </Link>
         <nav className="io-work-links" aria-label="Work environments">
+          {founder && <Link className="secondary-button" href="/app/founder">Founder Office ↗</Link>}
           <Link className="secondary-button" href="/app/missions">
             Missions ↗
           </Link>

@@ -5,6 +5,10 @@ import { ArchivedEstate } from './archived-estate';
 import { CinematicWorld } from '@/components/public/cinematic-world';
 import { WorldHeader } from '@/components/public/world-header';
 import { MissionHandoffFixture } from './mission-handoff';
+import { FounderOffice } from '@/components/founder-office/office';
+import { founderOfficeFixture } from './founder-office-data';
+import '@/app/imperial-workspace.css';
+
 import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
 import { CollectionWorld } from '@/components/commerce/collection-world';
 import { CartPanel } from '@/components/commerce/cart-panel';
@@ -148,6 +152,11 @@ createRoot(document.getElementById('root')!).render(
         <ArchivedEstate />
       </CinematicWorld>
     </>
+  ) : mode === 'founder-office' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
+      <FounderOffice initial={founderOfficeFixture} />
+    </div>
   ) : mode.startsWith('lifestyle') ? (
     <div className="member-collection public-world imperial-obsidian">
       <p className="preview-notice">
@@ -169,12 +178,14 @@ createRoot(document.getElementById('root')!).render(
     </div>
   ) : mode === 'mission' ? (
     <MissionHandoffFixture />
-  ) : mode === 'company-room' || mode === 'company-job' ? (
+  ) : mode === 'company-room' || mode === 'company-job' || mode === 'founder-job' ? (
     <>
       <p>Synthetic company-room fixture · no account or live model.</p>
       <CompanyRoom
-        initialWork={mode === 'company-job' ? syntheticWork : undefined}
-        initialConversation={mode === 'company-job' ? syntheticWork.job.conversation_id : undefined}
+        initialWork={mode !== 'company-room' ? syntheticWork : undefined}
+        initialConversation={
+          mode !== 'company-room' ? syntheticWork.job.conversation_id : undefined
+        }
         initial={{
           company: {
             id: 'c8000000-0000-4000-8000-000000000001',
@@ -190,6 +201,7 @@ createRoot(document.getElementById('root')!).render(
           hasOlderTurns: false,
           nextCursor: null,
           canChat: true,
+          founderAccess: mode === 'founder-job',
         }}
       />
     </>

@@ -19,6 +19,18 @@ jobs:
       - run: npm run db:ledger
       - run: npm run check
       - run: npx playwright install --with-deps chromium
+      - name: Founder Office responsive and recovery checks
+        run: npx playwright test tests/browser/founder-office.spec.ts --workers=2
+      - name: Current Command and identity route contracts
+        run: >-
+          npx playwright test tests/browser/daily.spec.ts tests/browser/command.spec.ts
+          tests/browser/command-living.spec.ts tests/browser/appearance.spec.ts
+          tests/browser/brand.spec.ts tests/browser/aethelios-identity.spec.ts
+          tests/browser/company-platform.spec.ts tests/browser/public-world.spec.ts
+          tests/browser/installed-app.spec.ts tests/browser/estate-journey.spec.ts
+          tests/browser/estate-motion.spec.ts tests/browser/direct-home.spec.ts
+          tests/browser/orb.spec.ts tests/browser/pilot.spec.ts
+          tests/browser/lifestyle-phase-one.spec.ts --workers=2
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()
@@ -49,6 +61,8 @@ jobs:
       - run: npx supabase db advisors --local --type security --level warn --fail-on none
       - run: npm run test:integration
       - run: npx playwright install --with-deps chromium
+      - name: Real authenticated Founder Office persistence journey
+        run: npx playwright test --config playwright.founder.config.ts tests/founder/founder-office.spec.ts
       - run: npm run test:founder
       - if: always()
         run: npx supabase stop --no-backup

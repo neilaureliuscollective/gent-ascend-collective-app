@@ -15,7 +15,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:integration": "node scripts/auth-smoke.mjs",
+    "test:integration": "node scripts/auth-smoke.mjs && node scripts/founder-office-auth-smoke.mjs",
     "db:reset": "supabase db reset --local && node scripts/dev-setup.mjs --running",
     "db:types": "supabase gen types typescript --local > src/platform/supabase/database.generated.ts",
     "db:ledger": "node scripts/check-migration-ledger.mjs",
