@@ -1,0 +1,158 @@
+/* A route-owned frame, using the same chrome, identity and controls as Shell. */
+.app-shell.environment-immersive {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  --interaction-nav-space: 0px;
+}
+.environment-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 68px;
+  padding: 8px max(18px, env(safe-area-inset-right)) 8px max(18px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--io-divider);
+  background: var(--io-chamber);
+}
+.environment-bar .brand-seal {
+  width: 42px;
+  height: 42px;
+}
+.environment-bar .brand-type {
+  display: none;
+}
+.environment-name {
+  flex: 1;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+.environment-name span {
+  color: var(--text-muted);
+  font-size: 0.65rem;
+}
+.environment-menu-button,
+.environment-menu-heading button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--io-divider);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.environment-immersive > .environment-main {
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.environment-menu {
+  width: min(740px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: clamp(18px, 3vw, 32px);
+  color: var(--text);
+  background: var(--io-chamber);
+  border: 1px solid var(--io-divider);
+  border-radius: 12px;
+}
+.environment-menu::backdrop {
+  background: #000b;
+}
+.environment-menu-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+.environment-menu-heading h2 {
+  font-size: 1.2rem;
+}
+.environment-menu .sidebar {
+  position: static;
+  width: auto;
+  height: auto;
+  display: block;
+  padding: 16px 0;
+  border: 0;
+}
+.environment-menu .sidebar > .wordmark,
+.environment-menu .sidebar-footer {
+  display: none;
+}
+.environment-menu .navigation {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: auto;
+  border: 0;
+  padding: 0;
+}
+.environment-menu .navigation a {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 48px;
+}
+.environment-menu .topbar {
+  position: static;
+  height: auto;
+  display: block;
+  padding: 16px 0;
+  border-top: 1px solid var(--io-divider);
+}
+.environment-menu .topbar-context,
+.environment-menu .mobile-brand {
+  display: none;
+}
+.environment-menu .topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.environment-menu .aurelius-trigger {
+  display: flex;
+}
+.environment-menu .shell-ascend-link,
+.environment-menu .shell-founder-link {
+  display: inline-flex;
+}
+.environment-bar :focus-visible,
+.environment-menu :focus-visible {
+  outline: 2px solid var(--io-focus, var(--gold));
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .environment-name span {
+    display: none;
+  }
+  .environment-bar {
+    gap: 12px;
+  }
+  .environment-name {
+    letter-spacing: 0.1em;
+  }
+}
+@media (max-height: 550px) {
+  .app-shell.environment-immersive {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+}
+@media (forced-colors: active) {
+  .environment-bar,
+  .environment-menu,
+  .environment-menu-button {
+    border: 1px solid CanvasText;
+  }
+}

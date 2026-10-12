@@ -20,6 +20,10 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
   await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/founder$/);
   await page.goto('/app/architect');
+  await expect(page.locator('.environment-immersive')).toBeVisible();
+  await page.getByRole('button', { name: 'Aethelios menu' }).click();
+  await expect(page.getByRole('link', { name: 'Founder Office' })).toBeVisible();
+  await page.keyboard.press('Escape');
   const name = `Synthetic Origin ${Date.now()}`;
   await page
     .getByLabel('Tell Aethelios what you want to create')
@@ -50,7 +54,13 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
   await page.getByRole('button', { name: 'Mark reviewed & approved in draft' }).click();
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 4');
-  await page.goto('/app/work');
+  await page.getByRole('button', { name: 'Aethelios menu' }).click();
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Work', exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/app\/work$/);
+  await expect(page.locator('.environment-immersive')).toHaveCount(0);
   await page.goto(projectUrl);
   await expect(page.getByRole('status')).toContainText('Resumed revision 4');
   await page.getByRole('button', { name: 'Deliverables', exact: true }).click();

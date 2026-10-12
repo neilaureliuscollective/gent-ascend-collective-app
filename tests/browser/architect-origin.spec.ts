@@ -227,3 +227,98 @@ test('source URLs and raw model HTML cannot inject active content', async ({ pag
   await expect(page.locator('.origin-document-preview script')).toHaveCount(0);
   await expect(page.getByText('[External image omitted]', { exact: true })).toBeVisible();
 });
+
+test('immersive frame keeps its menu accessible and restores keyboard focus', async ({ page }) => {
+  await fixture(page);
+  await page.goto(base);
+  const trigger = page.getByRole('button', { name: 'Aethelios menu', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Your Aethelios environments' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+  await expect(page.locator('.environment-immersive')).toHaveCSS(
+    'height',
+    `${await page.evaluate(() => innerHeight)}px`,
+  );
+});
+
+test('Blueprint selection and document view resume without changing approved content', async ({
+  page,
+}) => {
+  const state = await fixture(page);
+  await page.goto(base);
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Synthetic immersive application');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await page.getByLabel('Blueprint section').selectOption('architecture');
+  await page.reload();
+  await expect(page.getByLabel('Blueprint section')).toHaveValue('architecture');
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+  await page
+    .getByLabel('Editable Markdown')
+    .fill('# Synthetic document\n\nPreserve this saved content.');
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  await page.getByRole('button', { name: 'Focus canvas', exact: true }).click();
+  await expect(page.locator('.origin-conversation')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(page.getByLabel('Editable Markdown')).not.toBeVisible();
+  await expect(page.getByRole('article', { name: 'Document preview' })).toContainText(
+    'Preserve this saved content',
+  );
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Preview', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('article', { name: 'Document preview' })).toContainText(
+    'Preserve this saved content',
+  );
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expect(page.getByLabel('Editable Markdown')).toHaveValue(
+    '# Synthetic document\n\nPreserve this saved content.',
+  );
+  expect(state.saves).toHaveLength(2);
+});
+
+test('short keyboard-height workspace retains reachable save controls and drafts during focus changes', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 344, height: 430 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const state = await fixture(page);
+  await page.goto(base);
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Synthetic short-window concept');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await page.getByLabel('Blueprint section').selectOption('risks');
+  await page
+    .getByLabel('Risks & open questions', { exact: true })
+    .fill('A user draft retained across surfaces.');
+  await page.getByRole('button', { name: 'Research', exact: true }).click();
+  await page.getByRole('button', { name: 'Focus canvas', exact: true }).click();
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await expect(page.getByLabel('Risks & open questions', { exact: true })).toHaveValue(
+    'A user draft retained across surfaces.',
+  );
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  expect(state.getProject()!.content.blueprint.risks).toBe(
+    'A user draft retained across surfaces.',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({
+    path: 'test-results/architect-immersive-short-window.png',
+    fullPage: true,
+  });
+});

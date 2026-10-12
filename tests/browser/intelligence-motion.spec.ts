@@ -29,7 +29,7 @@ test('OS motion changes and forced colors keep truthful status text', async ({ p
   await page.goto('http://127.0.0.1:3102/motion.html');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('.gallery-stage .im-presence')).toHaveAttribute('data-motion', 'still');
-  await expect(page.locator('.gallery-stage .im-flow')).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('.gallery-stage .identity-light')).toHaveCSS('animation-name', 'none');
   await expect(page.getByText('Preview · Save unconfirmed')).toBeVisible();
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.gallery-stage .im-presence')).toBeHidden();

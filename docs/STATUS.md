@@ -1,3 +1,13 @@
+## Guiding-aperture integration candidate · 2026-10-12
+
+Implemented the recommended sphere/aperture as shared response/task/native Live presentation, with pending/uncertain persistence and voice modifier guards, finite completion, Still and offscreen suspension. Native voice and AI domain behavior remain intact. Main Studio/Work activity strips pin during long editing. Lint/types, 685 unit tests and synthetic actual-component bundling pass; rendered/device/performance and production acceptance remain open. No release performed. See [integration receipt](INTELLIGENCE_MOTION_GUIDING_INTEGRATION.md).
+
+## Intelligence motion identity studies · 2026-10-12
+
+Built three isolated, interactive vector concepts with fifteen phase poses, Talk/Live/Work/Studio layout studies, illustrative voice envelope, save receipts, Still/reduced motion and monochrome review. Standalone artifact builds without network access. Production routes and native voice remain unchanged. Browser verification is blocked locally by `listen EPERM`; visual approval and device/performance acceptance remain outstanding. See [identity study receipt](INTELLIGENCE_MOTION_IDENTITY_STUDIES.md).
+
+> Intelligence motion identity preparation (2026-10-12): founder confirms response visibility works but requests a more premium on-brand identity. Prepared creative and engineering briefs with primary research, 15-phase behavior, actual observation/placement map, renderer decision, proposed performance budgets and a three-phase build plan. Next safe build is isolated authored motion studies for review. Live app remains unchanged by this preparation. See INTELLIGENCE_MOTION_CREATIVE_BRIEF.md and INTELLIGENCE_MOTION_ENGINEERING_BRIEF.md.
+
 > Intelligence motion visibility correction (2026-10-12): founder reported the corner-only orb failed the intended experience. Added a primary interwoven emerald signature at the actual response, immediate pre-header feedback, shared Work/Studio signal, hidden-waiting fix and rendered visibility/actual-motion acceptance. Research: docs/INTELLIGENCE_MOTION_VISIBILITY.md. Connected verification pending; no new live claim yet.
 
 > Intelligence motion continuation (2026-10-12): reconciled released main 3619f67 (Live/Studio/Imperial Emerald). Shared motion now observes real Live phases and measured audio without changing its transport or activation. Fixed an account-claim auto-save lock race exposed by broad CI; full exact-head checks and production verification remain release gates.
@@ -29,6 +39,7 @@ Review candidate stacked on unmerged PR #94: Narration room with explicit one-re
 ## Aethelios Studio production house — October 12, 2026
 
 Review candidate: saved project brand kits, original-logo Finish compositing, editable multi-format campaign exports, and a native motion-film pilot from owned saved images with optional own audio. Reuses existing image generation, Supabase project JSONB, storyboard and finish services; no migration, new provider or production release. Image acknowledgement recovery preserves potentially committed originals, and Talk-prepared briefs survive project creation. Native film is not AI-generated footage and remains local until downloaded. Scope, research, exact acceptance limits and founder setup: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md). Local lint, types, 442 unit/SQL tests and ledger pass; build/browser/preview receipts are tracked in the candidate PR. Live authenticated OpenAI/Storage and physical-device acceptance remain separate.
+
 ## Aethelios Intelligence Motion Phase 2 — October 12, 2026
 
 Founder-requested researched integration implemented on `feat/intelligence-motion-integration`. Talk/Council and Work use observed provider search/reasoning/text events plus explicit persistence acknowledgment; Studio request/write/export flows share motion/status with truthful Waiting for synchronous image generation. Original Talk orb artwork, controls, coalescing, consent, ownership, cancellation and recovery remain. New clients opt in to activity events; cached clients keep the original stream format. Optional activity callbacks preserve the Live background text/finish contract. Live adapters are prepared/tested against PR #90 `43d6f307`, but remain unmounted in that separate unmerged candidate. No database/provider/configuration change, main merge or deployment. Synthetic standalone integration artifact bundles; lint, strict types, 437 unit tests and historical migration ledger pass. Production build remains blocked by existing MediaPipe DNS; rendered/physical-device acceptance is unrun due sandbox restrictions. Scope and remaining gates: [INTELLIGENCE_MOTION_PHASE_2.md](INTELLIGENCE_MOTION_PHASE_2.md).
@@ -1016,7 +1027,6 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
-
 ## Studio integration and single-database correction — October 12, 2026
 
 PR #99 consolidates the complete production-house, Narration, Footage, Delivery and premium Studio stack against main. Founder readiness checks are session-bound and read-only. Founder explicitly directs using the existing Gent Ascend Supabase only; the extra hosted staging requirement is withdrawn. Hosted Narration/Footage schema, provider credentials/budgets and live acceptance remain incomplete. No hosted migration, paid generation or production deployment was performed.
@@ -1048,6 +1058,7 @@ Founder-approved shared material elevation on feat/imperial-emerald-obsidian-202
 ## Studio hosted media connection — October 12, 2026
 
 Applied the exact reviewed Narration and Footage migrations to the existing Gent Ascend database, reconciled source versions/hashes with hosted history and passed all 20 read-only catalog contract checks. Existing image bucket, member records and shared services were preserved. Added repeatable verification SQL and a regression for missing owner policy/anonymous RPC permission. No extra hosted database, reset, seed, paid generation, feature activation or production app release. Advisor warnings are reviewed and reported, not hidden. Remaining provider credentials/budgets and ordinary-account live acceptance: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).
+
 ## Founder Office activation candidate — 2026-10-11
 
 Inside the canonical public application, implemented account-bound Founder Office entry, independent founder access when membership provisioning is absent, owner-keyed UI continuity, private company/source/figure context, MARA/CASSIAN/CASSIUS on the shared specialist system, public Entities naming, saved company deliverables, dependent task plans, human approval/rejection history, bounded portfolio briefings with personal Mission continuity, and fixed public canonical-platform inspection. Existing memory, Talk, Company Rooms, Studio, immutable work versions and owner RLS are reused. No new application, database, signup system, dependency or migration. Retired private-app bridge network residue is removed.
@@ -1057,7 +1068,6 @@ Audit and capability statuses: [FOUNDER_OFFICE_AUDIT.md](FOUNDER_OFFICE_AUDIT.md
 Compatible rollback reader `555b08e` (including the work-contract expansion in `1e90c36`) is a separate local baseline, independently typechecked with 416 passing tests in a detached checkout of this same repository. Original production reader `32d1c4c` cannot safely read additive control fields; retain an accepted compatibility artifact before activating new records. No Git push, PR, hosted grant, merge or deployment. Vercel production remains READY at `32d1c4c`; its broad CI run remains failed. This phase is an implementation candidate, not live founder activation or voice parity.
 
 Final candidate verification, completed 2026-10-12: lint, strict TypeScript and 445 tests across 62 files passed; the recorded 28-file migration hash ledger passed. Optimized webpack/TypeScript compiler-API build completed with original configuration restored; this skips the missing Mirror prebuild asset and does not close the standard build/asset gate. Browser server startup is denied by EPERM. Real local Auth is blocked by absent local configuration/Docker access; live model connection is blocked by missing OPENAI_API_KEY. Supplied authenticated and responsive acceptance tests remain unrun. Reader baseline 555b08e independently passed lint, strict types and 416 tests across 58 files. No hosted changes or deployment.
-
 
 ## Founder Office phase two — 2026-10-12
 
@@ -1077,13 +1087,11 @@ Implemented explicit founder-only withdrawal for approved proposals at the exist
 
 458 tests across 64 files, lint, strict TypeScript and optimized webpack compilation passed. Optimized build receipt: /workspace/approval-build.log; test/type/lint receipts: /workspace/approval-{tests,types,lint}.log. Unchanged 28-file migration ledger passed. Normal asset-complete build and real Auth/provider/browser/voice/device gates remain blocked as previously recorded. No schema expansion, dependency, push, PR, migration or deployment. This remains candidate source in the canonical public application.
 
-
 ## Founder Office release validation — 2026-10-12
 
 Founder authorized execution of release validation and the gated release process. Production advanced independently to Obsidian release 9d973fe94526cbd5c98f5ea1495c999ddd3f803e. Retrieved all 50 changed text files through GitHub, reconstructed the exact deployed source tree b6942117efee5530a5196a6a7dd244522c28663e, and merged that verified source into the candidate. Preserve current production design; the only conflict was an equivalent Next compiler-mode comment. The local import commit is a source reconstruction, not the original remote release commit. Remote publication will parent the actual canonical production commit and must match the integrated tree.
 
 Added explicit responsive/recovery and real synthetic-Auth founder-persistence checks before the inherited broad suites in Quality gates. No checks are removed or suppressed. Publishing this review branch allows the connected GitHub runner to perform asset-complete builds, real local Supabase/Auth and browser checks unavailable in this sandbox. Live customer/founder production identity, model evaluation, voice and physical-device gates remain separate. Production promotion remains gated on accepted results and compatible rollback readiness.
-
 
 ## Founder Office connected release execution receipt — 2026-10-12
 
@@ -1097,11 +1105,9 @@ Published source 67036c6 completed both database jobs successfully, including al
 
 Full authenticated database checks remain green. Focused Command/identity checks reached 40/55; repaired stale tools-drawer/nav/manifest expectations and ambiguous saved-context/deeper-system locators. Added native no-JavaScript workspace guidance with account/home links, preserving authorization and private-context handling. Source research and checks: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or production promotion; connected browser results still govern acceptance.
 
-
 ### Founder release acceptance continuation — 2026-10-12
 
 Added a native no-JavaScript explanation to the streamed workspace opening boundary and reconciled current Talk/motion/public/Lifestyle/cache browser contracts. Retained estate components have explicit test-only historical coverage rather than asserting that the old design is the live homepage. See `FOUNDER_ACCEPTANCE_RECONCILIATION.md`. Activation head `50a1892` passed real Auth/RLS and authenticated founder persistence checks, but browser release gates remain unresolved. No production merge, deployment, migration or activation flag change performed.
-
 
 ### Current acceptance evidence — 2026-10-12
 
@@ -1116,10 +1122,10 @@ Shared palette and material elevation covers public entry, Talk/Live, Work/compa
 Local lint/types, 673 unit/SQL tests, ledger and optimized compilation pass. Hosted normal check/build plus Studio, Lifestyle, Live and real disposable-Supabase Auth/founder persistence pass on the integrated candidates. Final exact source-tree receipts, responsive screenshots and broader browser results are in draft PR #104: https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/104 . All earlier failed material assertions remain recorded and corrected, never disabled. Local standard prebuild Mirror DNS and local browser/server sandbox restrictions are documented separately.
 
 Next: founder visual review and physical Fold/DeX/Safari, real authenticated long-conversation/microphone/generation/checkout and measured field-performance acceptance. Browser viewport checks and intercepted fixtures do not close those gates. Pending upstream migrations remain unapplied; no production merge, promotion, billing, merchant publication or live configuration change.
+
 ## Studio approved production release — October 12, 2026
 
 Founder explicitly authorized push to the live application. PR #99 merged as 268f3ef; its tree exactly matches the all-green candidate. Existing Git pipeline produced READY production deployment dpl_F1Dan8ao9S35HvkU2rcqdNKvGvBw on www.gentascend.com. Studio workflows and premium rooms are deployed; narration/footage stay default-off pending real provider acceptance. No extra Supabase, new hosted migration, paid generation or secret decryption in this phase. Live routes/access guards passed HTTP checks and initial deployment-scoped runtime error aggregation returned no groups. Preserved compatible de7bcea deployment for rollback. A stale four-link production assertion is corrected to five exact named destinations, with read-only Studio API checks and public production CI. Full receipt and limitations: [STUDIO_RELEASE.md](STUDIO_RELEASE.md).
-
 
 ## Aethelios Health foundation — October 12, 2026
 
@@ -1134,3 +1140,9 @@ Implementation/limits: [HEALTH_FOUNDATION.md](HEALTH_FOUNDATION.md). Verificatio
 Native `/app/architect` now establishes a shared person-owned project environment for business, application, product and custom creation. Origin retains an editable Living Blueprint, source provenance, separately reviewed AI proposals, usable editable/exportable text deliverables, immutable snapshot history, exact-request save recovery and archive/resume. Work links to the new environment; the existing owned Talk conversation supplies a controlled handoff. Preserved current Health, Studio, Lifestyle, Council, Work, Live and founder controls through canonical source reconciliation to 0af812f.
 
 Storage/AI flags default disabled; additive Origin migration is unapplied. Local lint/types, 721 unit/SQL-compatible tests and ledger pass; direct optimized compilation passed. Normal npm build fails on inherited asset DNS; local browser/Docker acceptance is EPERM-blocked. Focused browser, six-width screenshots and real disposable Auth/PostgREST acceptance are provided in CI and must be checked at the published head. Live model/research, hosted activation and physical devices remain acceptance gates. This is reviewable Origin implementation, not production release or a tested app/formulation generator. Full audit, model/data bounds, limits and founder acceptance checklist: [ARCHITECT_ORIGIN.md](ARCHITECT_ORIGIN.md).
+
+## Architect immersive workspace — 2026-10-12 review build
+
+Next founder-authorized phase extends Origin into a full-window native creation environment. Canonical main's released guiding-aperture motion at 16ad503 is reconciled; unmerged #112/#98/legacy creation work remains separate. Reuses Shell identity, appearance, capture, navigation and founder permissions through a contextual native menu. Provides continuous project frame, Blueprint outline, document Edit/Preview/Split, focus canvas and URL-bound saved view continuity; project draft/approval/SQL contracts are unchanged. Design research and acceptance scope: ARCHITECT_IMMERSIVE_WORKSPACE.md.
+
+Local lint/types and 727 unit/SQL checks pass; optimized webpack production build and isolated CI acceptance are being completed. Browser listener remains blocked locally by EPERM, requiring CI rendered and real Auth evidence. No live model credentials, hosted schema writes, production deployment or main merge. Origin storage/AI flags remain off by default. Physical devices and founder aesthetic approval remain required.

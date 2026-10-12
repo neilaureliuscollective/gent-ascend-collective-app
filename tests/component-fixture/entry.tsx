@@ -1,3 +1,4 @@
+import { EnvironmentFrame } from '@/components/environment-frame';
 import { ArchitectOrigin } from '@/components/architect-origin/workspace';
 import '@/app/(workspace)/app/architect/origin.css';
 import { previewProduct } from '@/domains/catalog/preview';
@@ -182,10 +183,17 @@ createRoot(document.getElementById('root')!).render(
   ) : mode === 'live-voice' ? (
     <LiveVoiceFixture />
   ) : mode === 'architect-origin' ? (
-    <div className="app-shell imperial-workspace">
-      <p>Synthetic Origin fixture · no real account or model.</p>
+    <EnvironmentFrame
+      immersive
+      navigation={
+        <nav aria-label="Synthetic environments">
+          <a href="/app/work">Work</a>
+        </nav>
+      }
+      controls={<p>Synthetic Origin fixture · no real account or model.</p>}
+    >
       <ArchitectOrigin enabled aiEnabled />
-    </div>
+    </EnvironmentFrame>
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>

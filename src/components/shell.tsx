@@ -1,3 +1,4 @@
+import { ShellWorkspace } from './environment-frame';
 import { SensitiveBoundary, SensitiveLiveProvider } from './health/sensitive-boundary';
 import { ConversationDraftProvider } from './aurelius/draft-handoff';
 import { ConnectionField } from './visual/connection-field';
@@ -27,40 +28,43 @@ export function Shell({
       }
     >
       <ConversationDraftProvider>
-        <div className="app-shell aethelios-aether imperial-workspace">
-          <AppRuntime />
-          <VisualEnvironment>
-            <ConnectionField />
-          </VisualEnvironment>
-          <a className="skip" href="#main">
-            Skip to content
-          </a>
-          <aside className="sidebar">
-            <Link className="wordmark" href="/app" aria-label="Aethelios home">
-              <Brand />
-            </Link>
-            <p className="navigation-label">AETHELIOS</p>
-            <Navigation />
-            <SensitiveBoundary>
-              <AureliusPanel />
-            </SensitiveBoundary>
-
-            <div className="sidebar-footer">
-              <Link href="/app/work" prefetch={false} className="text-link">
-                Company work ↗
+        <ShellWorkspace
+          ambience={
+            <>
+              <AppRuntime />
+              <VisualEnvironment>
+                <ConnectionField />
+              </VisualEnvironment>
+            </>
+          }
+          navigation={
+            <aside className="sidebar">
+              <Link className="wordmark" href="/app" aria-label="Aethelios home">
+                <Brand />
               </Link>
-              <span className="brand-star" aria-hidden="true">
-                ✦
-              </span>
-              <p>
-                Think. Build.
-                <br />
-                Operate.
-              </p>
-              <span className="quiet-label">A clearer way to build.</span>
-            </div>
-          </aside>
-          <div className="workspace">
+              <p className="navigation-label">AETHELIOS</p>
+              <Navigation />
+              <SensitiveBoundary>
+                <AureliusPanel />
+              </SensitiveBoundary>
+
+              <div className="sidebar-footer">
+                <Link href="/app/work" prefetch={false} className="text-link">
+                  Company work ↗
+                </Link>
+                <span className="brand-star" aria-hidden="true">
+                  ✦
+                </span>
+                <p>
+                  Think. Build.
+                  <br />
+                  Operate.
+                </p>
+                <span className="quiet-label">A clearer way to build.</span>
+              </div>
+            </aside>
+          }
+          controls={
             <header className="topbar">
               <Link href="/app" className="mobile-brand" aria-label="Aethelios home">
                 <Brand compact />
@@ -95,11 +99,10 @@ export function Shell({
                 </Link>
               </div>
             </header>
-            <main id="main" tabIndex={-1}>
-              {children}
-            </main>
-          </div>
-        </div>
+          }
+        >
+          {children}
+        </ShellWorkspace>
       </ConversationDraftProvider>
     </SensitiveLiveProvider>
   );

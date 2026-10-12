@@ -21,7 +21,9 @@ import {
 import type { z } from 'zod';
 const markdownComponents = { img: () => <span>[External image omitted]</span> };
 type Library = { projects: OriginProject[]; versions: OriginVersion[]; runs: OriginRun[] };
-type Surface = 'Conversation' | 'Blueprint' | 'Research' | 'Deliverables' | 'History';
+const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'History'] as const;
+type Surface = (typeof surfaces)[number];
+type DocumentView = 'Edit' | 'Preview' | 'Split';
 const starters = [
   {
     discipline: 'business',
@@ -65,6 +67,7 @@ function projectLocation(id: string | null) {
   const url = new URL(location.href);
   if (id) url.searchParams.set('project', id);
   else url.searchParams.delete('project');
+  for (const key of ['surface', 'section', 'document', 'view']) url.searchParams.delete(key);
   window.history.replaceState(null, '', url.pathname + url.search + url.hash);
 }
 function download(name: string, content: string) {
@@ -86,6 +89,8 @@ export function ArchitectOrigin({
   const [selected, setSelected] = useState<OriginProject | null>(null);
   const [draft, setDraft] = useState<ProjectContent | null>(null);
   const [surface, setSurface] = useState<Surface>('Conversation');
+  const [documentView, setDocumentView] = useState<DocumentView>('Split');
+  const [focusCanvas, setFocusCanvas] = useState(false);
   const [discipline, setDiscipline] = useState<ProjectContent['discipline']>('business');
   const [idea, setIdea] = useState('');
   const [name, setName] = useState('');
@@ -120,6 +125,16 @@ export function ArchitectOrigin({
         setLibrary(data);
         const project = data.projects.find((p) => p.id === projectId);
         if (project) {
+          const params = new URLSearchParams(location.search);
+          const savedSurface = params.get('surface');
+          if (surfaces.some((s) => s === savedSurface)) setSurface(savedSurface as Surface);
+          const section = params.get('section');
+          if (section && Object.hasOwn(sections, section)) setKey(section as keyof typeof sections);
+          const savedDocument = params.get('document');
+          if (project.content.documents.some((d) => d.id === savedDocument))
+            setDocumentId(savedDocument);
+          const view = params.get('view');
+          if (view === 'Edit' || view === 'Preview' || view === 'Split') setDocumentView(view);
           setSelected(project);
           setDraft(structuredClone(project.content));
           setMessage(
@@ -163,6 +178,16 @@ export function ArchitectOrigin({
     };
   }, [dirty, pending, busy]);
   useEffect(() => () => abort.current?.abort(), []);
+  useEffect(() => {
+    if (!loaded || !selected) return;
+    const url = new URL(location.href);
+    url.searchParams.set('surface', surface);
+    url.searchParams.set('section', key);
+    if (documentId) url.searchParams.set('document', documentId);
+    else url.searchParams.delete('document');
+    url.searchParams.set('view', documentView);
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }, [loaded, selected, surface, key, documentId, documentView]);
   function change(content: ProjectContent) {
     setDraft(content);
     setMessage('Unsaved draft. Approved project is unchanged.');
@@ -400,8 +425,43 @@ export function ArchitectOrigin({
       setSurface('Deliverables');
     }
   }
+  const libraryNavigation = (
+    <nav className="origin-library" aria-label="Project library">
+      <button
+        disabled={locked}
+        aria-current={!selected ? 'page' : undefined}
+        onClick={() => {
+          if (dirty && !window.confirm('Discard unsaved changes?')) return;
+          setSelected(null);
+          setDraft(null);
+          setError('');
+          setMessage('');
+          projectLocation(null);
+        }}
+      >
+        New vision +
+      </button>
+      {library.projects.map((p) => (
+        <button
+          key={p.id}
+          disabled={locked}
+          aria-current={p.id === selected?.id ? 'page' : undefined}
+          onClick={() => void open(p)}
+        >
+          {p.content.name}
+          <span>
+            {p.content.status} · v{p.revision}
+          </span>
+        </button>
+      ))}
+    </nav>
+  );
   return (
-    <section className="origin" aria-labelledby="origin-title" aria-busy={busy}>
+    <section
+      className={`origin${selected ? ' origin-active' : ''}`}
+      aria-labelledby="origin-title"
+      aria-busy={busy}
+    >
       <header className={`origin-hero${selected ? ' origin-hero-active' : ''}`}>
         <p className="eyebrow">AETHELIOS ARCHITECT / ORIGIN</p>
         <h1 id="origin-title">Where vision becomes creation.</h1>
@@ -434,35 +494,14 @@ export function ArchitectOrigin({
           </button>
         </div>
       )}
-      <nav className="origin-library" aria-label="Project library">
-        <button
-          disabled={locked}
-          aria-current={!selected ? 'page' : undefined}
-          onClick={() => {
-            if (dirty && !window.confirm('Discard unsaved changes?')) return;
-            setSelected(null);
-            setDraft(null);
-            setError('');
-            setMessage('');
-            projectLocation(null);
-          }}
-        >
-          New vision +
-        </button>
-        {library.projects.map((p) => (
-          <button
-            key={p.id}
-            disabled={locked}
-            aria-current={p.id === selected?.id ? 'page' : undefined}
-            onClick={() => void open(p)}
-          >
-            {p.content.name}
-            <span>
-              {p.content.status} · v{p.revision}
-            </span>
-          </button>
-        ))}
-      </nav>
+      {selected ? (
+        <details className="origin-project-switcher">
+          <summary>Projects / switch creation</summary>
+          {libraryNavigation}
+        </details>
+      ) : (
+        libraryNavigation
+      )}
       {!selected ? (
         <div className="origin-entry">
           <div className="origin-entry-copy">
@@ -561,26 +600,36 @@ export function ArchitectOrigin({
               </div>
             </header>
             <nav className="origin-surfaces" aria-label="Project surfaces">
-              {(['Conversation', 'Blueprint', 'Research', 'Deliverables', 'History'] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    aria-current={surface === tab ? 'page' : undefined}
-                    onClick={() => {
-                      setSurface(tab);
-                      setHistory(null);
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ),
-              )}
+              {surfaces.map((tab) => (
+                <button
+                  key={tab}
+                  aria-current={surface === tab ? 'page' : undefined}
+                  onClick={() => {
+                    setSurface(tab);
+                    setHistory(null);
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
             </nav>
-            <div className={`origin-workspace origin-${surface.toLowerCase()}`}>
+            {surface !== 'Conversation' && surface !== 'Blueprint' && surface !== 'History' && (
+              <div className="origin-canvas-tools">
+                <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
+                  {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
+                </button>
+              </div>
+            )}
+            <div
+              className={`origin-workspace origin-${surface.toLowerCase()}${focusCanvas && surface !== 'Conversation' ? ' origin-canvas-focused' : ''}`}
+            >
               {(surface === 'Conversation' ||
                 surface === 'Research' ||
                 surface === 'Deliverables') && (
-                <aside className="origin-conversation">
+                <aside
+                  className="origin-conversation"
+                  hidden={focusCanvas && surface !== 'Conversation'}
+                >
                   <h3>Aethelios</h3>
                   <p>
                     {surface === 'Research'
@@ -742,32 +791,48 @@ export function ArchitectOrigin({
                         </select>
                       </label>
                     </details>
-                    <label htmlFor="origin-section">Blueprint section</label>
-                    <select
-                      id="origin-section"
-                      value={key}
-                      onChange={(e) => setKey(e.target.value as typeof key)}
-                    >
-                      {Object.entries(sections).map(([k, label]) => (
-                        <option key={k} value={k}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                    <label htmlFor="origin-section-text">{sections[key]}</label>
-                    <textarea
-                      id="origin-section-text"
-                      className="origin-long-editor"
-                      value={draft.blueprint[key]}
-                      maxLength={3000}
-                      disabled={locked}
-                      onChange={(e) =>
-                        change({
-                          ...draft,
-                          blueprint: { ...draft.blueprint, [key]: e.target.value },
-                        })
-                      }
-                    />
+                    <div className="origin-blueprint-canvas">
+                      <nav className="origin-outline" aria-label="Blueprint outline">
+                        {Object.entries(sections).map(([section, label], index) => (
+                          <button
+                            key={section}
+                            aria-current={key === section ? 'true' : undefined}
+                            onClick={() => setKey(section as keyof typeof sections)}
+                          >
+                            <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                            {label}
+                          </button>
+                        ))}
+                      </nav>
+                      <div className="origin-blueprint-writing">
+                        <label htmlFor="origin-section">Blueprint section</label>
+                        <select
+                          id="origin-section"
+                          value={key}
+                          onChange={(e) => setKey(e.target.value as typeof key)}
+                        >
+                          {Object.entries(sections).map(([k, label]) => (
+                            <option key={k} value={k}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <label htmlFor="origin-section-text">{sections[key]}</label>
+                        <textarea
+                          id="origin-section-text"
+                          className="origin-long-editor"
+                          value={draft.blueprint[key]}
+                          maxLength={3000}
+                          disabled={locked}
+                          onChange={(e) =>
+                            change({
+                              ...draft,
+                              blueprint: { ...draft.blueprint, [key]: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
                     <details>
                       <summary>Read the complete Blueprint</summary>
                       <ReactMarkdown skipHtml components={markdownComponents}>
@@ -940,65 +1005,93 @@ export function ArchitectOrigin({
                           </button>
                           <button onClick={() => window.print()}>Print / PDF</button>
                         </div>
-                        <label>
-                          Document title
-                          <input
-                            value={activeDoc.title}
-                            maxLength={120}
-                            disabled={locked}
-                            onChange={(e) =>
-                              change({
-                                ...draft,
-                                documents: draft.documents.map((d) =>
-                                  d.id === activeDoc.id
-                                    ? { ...d, title: e.target.value, status: 'draft' }
-                                    : d,
-                                ),
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          Editable Markdown
-                          <textarea
-                            className="origin-long-editor"
-                            value={activeDoc.content}
-                            maxLength={24000}
-                            disabled={locked}
-                            onChange={(e) =>
-                              change({
-                                ...draft,
-                                documents: draft.documents.map((d) =>
-                                  d.id === activeDoc.id
-                                    ? { ...d, content: e.target.value, status: 'draft' }
-                                    : d,
-                                ),
-                              })
-                            }
-                          />
-                        </label>
-                        <button
-                          disabled={locked || activeDoc.status === 'approved'}
-                          onClick={() =>
-                            change({
-                              ...draft,
-                              documents: draft.documents.map((d) =>
-                                d.id === activeDoc.id ? { ...d, status: 'approved' } : d,
-                              ),
-                            })
-                          }
+                        <div
+                          className="origin-view-controls"
+                          role="group"
+                          aria-label="Document view"
                         >
-                          Mark reviewed & approved in draft
-                        </button>
-                        <p>
-                          Approval records your assessment of this content; save to preserve it.
-                          Later edits return it to draft.
-                        </p>
-                        <article className="origin-document-preview">
-                          <ReactMarkdown skipHtml components={markdownComponents}>
-                            {activeDoc.content}
-                          </ReactMarkdown>
-                        </article>
+                          {(['Edit', 'Preview', 'Split'] as const).map((view) => (
+                            <button
+                              key={view}
+                              aria-pressed={documentView === view}
+                              onClick={() => setDocumentView(view)}
+                            >
+                              {view}
+                            </button>
+                          ))}
+                        </div>
+                        <div
+                          className={`origin-document-canvas origin-view-${documentView.toLowerCase()}`}
+                        >
+                          <div
+                            className="origin-document-writing"
+                            hidden={documentView === 'Preview'}
+                          >
+                            <label>
+                              Document title
+                              <input
+                                value={activeDoc.title}
+                                maxLength={120}
+                                disabled={locked}
+                                onChange={(e) =>
+                                  change({
+                                    ...draft,
+                                    documents: draft.documents.map((d) =>
+                                      d.id === activeDoc.id
+                                        ? { ...d, title: e.target.value, status: 'draft' }
+                                        : d,
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                            <label>
+                              Editable Markdown
+                              <textarea
+                                className="origin-long-editor"
+                                value={activeDoc.content}
+                                maxLength={24000}
+                                disabled={locked}
+                                onChange={(e) =>
+                                  change({
+                                    ...draft,
+                                    documents: draft.documents.map((d) =>
+                                      d.id === activeDoc.id
+                                        ? { ...d, content: e.target.value, status: 'draft' }
+                                        : d,
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                            <button
+                              disabled={locked || activeDoc.status === 'approved'}
+                              onClick={() =>
+                                change({
+                                  ...draft,
+                                  documents: draft.documents.map((d) =>
+                                    d.id === activeDoc.id ? { ...d, status: 'approved' } : d,
+                                  ),
+                                })
+                              }
+                            >
+                              Mark reviewed & approved in draft
+                            </button>
+                            <p>
+                              Approval records your assessment of this content; save to preserve it.
+                              Later edits return it to draft.
+                            </p>
+                          </div>
+                          <article
+                            className="origin-document-preview"
+                            hidden={documentView === 'Edit'}
+                            aria-label="Document preview"
+                          >
+                            <ReactMarkdown skipHtml components={markdownComponents}>
+                              {activeDoc.content}
+                            </ReactMarkdown>
+                          </article>
+                        </div>
                       </>
                     )}
                   </>
