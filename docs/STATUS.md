@@ -1,3 +1,7 @@
+## Independent Live expiry worker candidate — 2026-10-12
+
+Built a default-off scheduler-authenticated cleanup route with infrastructure-only control RPCs, private database leases and verified owner/session/call HMAC before provider hangup. Overlapping invocations skip leased rows; lost workers can retry; invalid bindings/provider/database failures remain pending without false cleanup receipts. User-writable ended state cannot bypass private provider-confirmation checks. Added ordinary Auth denial assertions and a local rollback-only SQL acceptance fixture to integration CI. No new SDK/subscription, hosted migration, active schedule, environment or production change. The minute-schedule fragment is inactive until plan/hosting/credential/provider acceptance. Current Vercel OpenAI key exists; worker DB/cron credentials and actual scheduling remain unconfigured. Scope, source evidence and activation risks: [AETHELIOS_LIVE_EXPIRY.md](AETHELIOS_LIVE_EXPIRY.md).
+
 ## Live expired-session recovery — 2026-10-12
 
 Added owner-triggered recovery before admission: expired unfinished calls are re-read through normal ownership, server bindings verified, provider hangup confirmed before recording cleanup, and uncertain cleanup/backlog blocks admission. Unexpired sessions in another tab remain protected. 520 unit/SQL tests and strict types pass. No schema, flag or production change. This does not supply independent expiry while the owner is absent; production remains blocked. Research and exact limitations: [AETHELIOS_LIVE_RECOVERY.md](AETHELIOS_LIVE_RECOVERY.md).

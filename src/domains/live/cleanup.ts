@@ -8,7 +8,13 @@ export function tag(key: string, owner: string, session: string, call: string) {
     .update(JSON.stringify([owner, session, call]))
     .digest('hex');
 }
-function validTag(key: string, owner: string, session: string, call: string, signature: string) {
+export function validTag(
+  key: string,
+  owner: string,
+  session: string,
+  call: string,
+  signature: string,
+) {
   const expected = Buffer.from(tag(key, owner, session, call));
   const received = Buffer.from(signature);
   return received.length === expected.length && timingSafeEqual(expected, received);

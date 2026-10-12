@@ -72,5 +72,7 @@ jobs:
       - run: node scripts/dev-setup.mjs --running
       - run: npx supabase db query --local --file tests/fixtures/live-auth-grant.sql
       - run: npm run test:live:auth
+      - name: Verify local expiry control leases
+        run: npx supabase db query --local --file tests/fixtures/live-expiry-acceptance.sql
       - if: always()
         run: npx supabase stop --no-backup

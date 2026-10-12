@@ -1,3 +1,7 @@
+# Independent Live expiry control — 2026-10-12
+
+Reuse scheduled Vercel Functions with private Supabase cleanup leases, rather than adding a durable SDK/service for one pilot operation. Normal clients cannot execute worker RPCs; infrastructure alone validates call bindings and confirms cleanup after provider success. User-writable ended flags are not provider termination evidence. Keep the schedule fragment inactive, expiry default off and production voice rejected until minute scheduling, backend authority and real crash/hangup/billing acceptance pass. Official research, measured checks and hard-budget limitations: [AETHELIOS_LIVE_EXPIRY.md](AETHELIOS_LIVE_EXPIRY.md).
+
 # Hosted Live preflight — 2026-10-12
 
 The existing OpenAI key is verified in Vercel Preview/Production metadata; do not confuse its absence in this workspace with missing deployment credentials or ask for a replacement. Live code/flags and the matching Gent database's Live schema are not rolled out. Add founder-only server configuration and explicitly requested model-metadata checks to the existing launch ledger, using normal session ownership and the current key. Never copy secrets, automatically create voice calls, change flags or promote these checks to audio/launch acceptance. Preserve the current Obsidian production source; prepare a validated non-production integration preview next. Actual audit and implementation evidence: [AETHELIOS_LIVE_HOSTED_PREFLIGHT.md](AETHELIOS_LIVE_HOSTED_PREFLIGHT.md).

@@ -32,6 +32,19 @@ for (const [session, email] of [
   );
 const owner = await founder.from('persons').select('id,timezone').single();
 assert.equal(owner.error, null);
+// Normal Auth sessions never acquire the independent expiry control plane.
+for (const account of [founder, member, anon]) {
+  assert.notEqual((await account.rpc('ai_live_claim_expired', {})).error, null);
+  assert.notEqual(
+    (
+      await account.rpc('ai_live_confirm_expired', {
+        p_id: 'f1000000-0000-4000-8000-000000000001',
+        p_token: 'f3000000-0000-4000-8000-000000000001',
+      })
+    ).error,
+    null,
+  );
+}
 assert.equal(
   (await founder.from('founder_access').select('person_id').eq('person_id', owner.data.id)).data
     .length,

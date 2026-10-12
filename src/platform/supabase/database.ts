@@ -1002,6 +1002,11 @@ export interface Database {
         Returns: string;
       };
       ai_live_attach: { Args: { p_id: string; p_call: string; p_tag: string }; Returns: boolean };
+      ai_live_claim_expired: {
+        Args: Record<string, never>;
+        Returns: { id: string; person_id: string; call_id: string; call_tag: string | null; expires_at: string; lease_token: string }[];
+      };
+      ai_live_confirm_expired: { Args: { p_id: string; p_token: string }; Returns: boolean };
       ai_live_end: {
         Args: { p_id: string; p_reason: string; p_input?: number; p_output?: number };
         Returns: boolean;
