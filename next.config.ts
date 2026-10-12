@@ -84,6 +84,12 @@ const config: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
         ],
       },
+      {
+        source: '/app/:path*',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
+        ],
+      },
     ];
   },
 };

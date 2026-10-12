@@ -7,7 +7,7 @@ export function observedOperation(
 ): IntelligenceOperation {
   return { id, phase, basis: 'observed', persistence };
 }
-/** Structural adapter for PR #90. It imports no controller and never creates a transport. */
+/** Structural adapter for the released OpenAI-native Live controller. It imports no controller and never creates a transport. */
 export function liveMotionOperation(
   state: {
     sessionId: string | null;

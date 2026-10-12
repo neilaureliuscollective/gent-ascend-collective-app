@@ -100,7 +100,8 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       page.evaluate(async () => {
         const registration = await navigator.serviceWorker.ready;
         return {
-          cache: await caches.keys(),
+          // Worker activation and the test can create caches in either order.
+          cache: (await caches.keys()).sort(),
           controlled: Boolean(navigator.serviceWorker.controller),
           waiting: Boolean(registration.waiting),
           updateViaCache: registration.updateViaCache,
@@ -108,7 +109,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['unrelated-test-cache', 'gent-ascend-fallback-v7'],
+      cache: ['gent-ascend-fallback-v7', 'unrelated-test-cache'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',

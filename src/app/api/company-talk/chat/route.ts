@@ -35,9 +35,17 @@ export async function POST(request: Request) {
                 prepared.council,
                 signal,
                 undefined,
+                undefined,
                 onActivity,
               )
-            : generateReply(prepared.model, prepared.messages, signal, false, onActivity),
+            : generateReply(
+                prepared.model,
+                prepared.messages,
+                signal,
+                false,
+                undefined,
+                onActivity,
+              ),
         prepared.finish,
         request.signal,
         { activity: request.headers.get('X-Aethelios-Motion') === '1' },

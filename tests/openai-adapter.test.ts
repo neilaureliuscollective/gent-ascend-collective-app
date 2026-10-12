@@ -148,6 +148,7 @@ it('reports search only for a real provider-executed web-search call and never e
     [{ role: 'user', content: 'Synthetic research request' }],
     new AbortController().signal,
     false,
+    undefined,
     (phase) => activities.push(phase),
   ))
     chunks.push(chunk);

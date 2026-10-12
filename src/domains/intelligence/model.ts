@@ -11,6 +11,7 @@ export function generateReply(
   messages: ModelMessage[],
   signal: AbortSignal,
   founder = false,
+  onSource?: (source: import('./research').ResearchSource) => void,
   onActivity?: ActivityReporter,
 ) {
   const config = aiConfigSchema.parse(process.env);
@@ -19,7 +20,7 @@ export function generateReply(
     apiKey: config.OPENAI_API_KEY,
     baseURL: 'https://api.openai.com/v1',
   });
-  return streamAurelius(openai.responses(model), messages, signal, founder, onActivity);
+  return streamAurelius(openai.responses(model), messages, signal, founder, onSource, onActivity);
 }
 type AuxiliaryResult = { text: string; input: number | null; output: number | null };
 export async function generateConversationTitle(

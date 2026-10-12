@@ -8,6 +8,7 @@ on:
       - 'src/platform/visual/**'
       - 'src/components/aurelius/**'
       - 'src/components/companies/**'
+      - 'src/components/live/**'
       - 'src/domains/intelligence/**'
       - 'tests/browser/intelligence-motion*'
       - '.github/workflows/intelligence-motion.yml'
@@ -39,6 +40,8 @@ jobs:
           tests/browser/company-room.spec.ts
           tests/browser/company-work.spec.ts
           tests/browser/founder-office.spec.ts
+          tests/browser/live-voice.spec.ts
+          tests/browser/account-claim.spec.ts
           --workers=2
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

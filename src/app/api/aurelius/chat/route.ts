@@ -21,6 +21,7 @@ export async function POST(request: Request) {
                 prepared.council,
                 signal,
                 undefined,
+                undefined,
                 onActivity,
               )
             : generateReply(
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
                 prepared.messages,
                 signal,
                 prepared.founder,
+                undefined,
                 onActivity,
               ),
         prepared.finish,

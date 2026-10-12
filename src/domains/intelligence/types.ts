@@ -45,6 +45,10 @@ export type Memory = {
   version: number;
 };
 export type ActionProposal = {
+  source_review_id?: string | null;
+  review_day?: string | null;
+  review_version?: number | null;
+  review_timezone?: string | null;
   id:string;person_id:string;source_turn_id:string|null;tool_name:'create_daily_action';title:string;
   status:'pending'|'executed'|'rejected';proposed_at:string;decided_at:string|null;executed_day:string|null;
 };

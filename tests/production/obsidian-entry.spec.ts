@@ -13,7 +13,7 @@ test('the verified production application serves Obsidian and preserves public e
       },
       { timeout: 120000, intervals: [2000, 5000] },
     )
-    .toBe('#080A0B');
+    .toBe('#080D0D');
 
   for (const viewport of [
     { width: 390, height: 844 },
@@ -49,12 +49,22 @@ test('the verified production application serves Obsidian and preserves public e
       if (route.startsWith('/app/')) {
         await expect(page.locator('.imperial-workspace')).toHaveCSS(
           'background-color',
-          'rgb(8, 10, 11)',
+          'rgb(8, 13, 13)',
         );
         const navigation = page.getByRole('navigation', { name: 'Main navigation' });
         await expect(navigation.getByRole('link')).toHaveCount(5);
-        for (const label of ['Talk', 'Work', 'Studio', 'Lifestyle', 'Ecosystem'])
-          await expect(navigation.getByRole('link', { name: label, exact: true })).toBeVisible();
+        for (const [name, href] of [
+          ['Talk', '/app/aethelios'],
+          ['Work', '/app/work'],
+          ['Studio', '/app/studio'],
+          ['Lifestyle', '/app/lifestyle'],
+          ['Ecosystem', '/app/ecosystem'],
+        ] as const) {
+          await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute(
+            'href',
+            href,
+          );
+        }
       }
       await page.screenshot({
         path: `test-results/production-${route.replaceAll('/', '-') || 'home'}-${viewport.width}.png`,

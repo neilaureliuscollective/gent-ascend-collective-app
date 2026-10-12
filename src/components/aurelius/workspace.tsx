@@ -1,4 +1,6 @@
 'use client';
+import { ConversationArtifacts } from '@/components/live/artifacts';
+import { LiveVoiceEntry, useLiveBusy } from '@/components/live/provider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -77,6 +79,7 @@ export function AureliusWorkspace({
   const [operation, setOperation] = useState<IntelligenceOperation>(
     observedOperation('talk-idle', 'ready'),
   );
+  const liveBusy = useLiveBusy();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -283,6 +286,7 @@ export function AureliusWorkspace({
     requestedCouncil: CouncilSelection | null = councilSelection,
   ) {
     if (
+      liveBusy ||
       generation.current ||
       preview ||
       !data?.configured ||
@@ -484,7 +488,7 @@ export function AureliusWorkspace({
     follow.current = true;
     composer.current?.focus();
   }
-  const blocked = busy || loading || deleting || orchestrating;
+  const blocked = liveBusy || busy || loading || deleting || orchestrating;
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
 
   async function prepareCapability() {
@@ -552,6 +556,12 @@ export function AureliusWorkspace({
     <div className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''}`}>
       <div className={`aurelius-workspace ${compact ? 'compact' : ''}`}>
         <div className="talk-toolbar imperial-control-surface">
+          <LiveVoiceEntry
+            conversationId={selected}
+            includeContext={includeContext}
+            disabled={busy || preview || !data.canChat}
+          />
+          <ConversationArtifacts conversationId={selected} />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
             state={

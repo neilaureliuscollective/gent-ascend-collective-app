@@ -361,7 +361,7 @@ for (const width of [360, 768, 1440]) {
     await page.screenshot({ path: `test-results/aurelius-context-${width}.png`, fullPage: true });
     await page.getByText('Understand the boundaries').click();
     await expect(
-      page.getByText('document uploads and external action execution are not connected', {
+      page.getByText('Web research uses returned sources. Live voice is a gated pilot.', {
         exact: false,
       }),
     ).toBeVisible();

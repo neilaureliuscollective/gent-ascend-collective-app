@@ -5,7 +5,7 @@
   padding: clamp(18px, 3vw, 32px);
   border: 1px solid var(--aether-border);
   border-radius: 18px;
-  background: linear-gradient(145deg, var(--aether-surface), var(--aether-obsidian));
+  background: var(--io-material);
   min-width: 0;
 }
 .studio-brand-kit legend {
@@ -279,8 +279,7 @@
   margin-bottom: 24px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 95% 0%, var(--aether-gold-glow), transparent 65%),
-    linear-gradient(145deg, var(--aether-elevated), var(--aether-obsidian));
+    radial-gradient(ellipse at 95% 0%, var(--aether-gold-glow), transparent 65%), var(--io-glass);
   box-shadow:
     inset 0 1px var(--aether-border),
     0 16px 48px var(--aether-gold-glow);
@@ -326,7 +325,7 @@
   padding: 18px 12px;
   border: 1px solid var(--aether-border);
   border-radius: 10px;
-  background: linear-gradient(145deg, var(--aether-surface), var(--aether-obsidian));
+  background: var(--io-material);
   color: var(--aether-text);
   transition:
     transform 160ms ease,
@@ -337,7 +336,7 @@
   border-color: var(--aether-border-active);
 }
 .app-shell.imperial-workspace .studio-room-console button[aria-pressed='true'] {
-  background: linear-gradient(145deg, var(--aether-elevated), var(--aether-surface));
+  background: var(--io-selected);
   border-color: var(--aether-gold);
   box-shadow: inset 0 -2px var(--aether-gold);
   color: var(--aether-text);

@@ -149,13 +149,15 @@ test('real self-hosted MediaPipe worker processes an image on-device', async ({ 
   expect(reading.faces).toBe(1);
   expect(reading.outline).toHaveLength(4);
 });
-test('production document permits same-origin camera and retains microphone and location denial', async ({
+test('production document permits same-origin camera, confines Live microphone to workspace and denies location', async ({
   request,
 }) => {
-  for (const path of ['/', '/app', '/app/grooming/scan']) {
+  for (const path of ['/', '/lifestyle', '/app', '/app/aethelios', '/app/grooming/scan']) {
     const response = await request.get(path);
     expect(response.headers()['permissions-policy']).toBe(
-      'camera=(self), microphone=(), geolocation=()',
+      path.startsWith('/app')
+        ? 'camera=(self), microphone=(self), geolocation=()'
+        : 'camera=(self), microphone=(), geolocation=()',
     );
   }
   expect((await request.get('/dev')).status()).toBe(404);

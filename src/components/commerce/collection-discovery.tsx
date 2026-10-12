@@ -29,6 +29,10 @@ export function CollectionDiscovery({
   const [searched, setSearched] = useState(false);
   const results = useRef<HTMLHeadingElement>(null);
   const matches = discoverCollection(entries, focus, availability);
+  const supportedFocus = discoveryFocus.filter(
+    (option) =>
+      option.id === 'all' || entries.some((entry) => entry.discovery?.includes(option.id)),
+  );
   function submit() {
     setSearched(true);
     commerceEvent('discovery_complete');
@@ -57,7 +61,7 @@ export function CollectionDiscovery({
         <fieldset>
           <legend>01 / What would you like to explore?</legend>
           <div className="reserve-intention-options">
-            {discoveryFocus.map((option) => (
+            {supportedFocus.map((option) => (
               <label key={option.id} data-selected={focus === option.id}>
                 <input
                   type="radio"
@@ -88,7 +92,7 @@ export function CollectionDiscovery({
                   setSearched(false);
                 }}
               />
-              Ready products & previews
+              All current products
             </label>
             <label>
               <input
@@ -145,7 +149,7 @@ export function CollectionDiscovery({
                 Explore previews or change your direction. We will not substitute an unrelated
                 product.
               </p>
-              {availability === 'ready' && (
+              {availability === 'ready' && entries.some((entry) => !entry.orderable) && (
                 <button
                   className="world-button"
                   type="button"
@@ -154,7 +158,7 @@ export function CollectionDiscovery({
                     commerceEvent('discovery_complete');
                   }}
                 >
-                  Include previews
+                  Include unavailable products
                 </button>
               )}
             </div>
