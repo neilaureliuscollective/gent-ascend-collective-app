@@ -1,3 +1,5 @@
+import { OrbPresentation } from '@/components/visual/orb-presentation';
+import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
 import { ArchivedEstate } from './archived-estate';
 import { CinematicWorld } from '@/components/public/cinematic-world';
 import { WorldHeader } from '@/components/public/world-header';
@@ -113,7 +115,13 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'archived-estate' ? (
+  mode === 'orb-preview' ? (
+    <VisualEnvironment>
+      <p role="note">Synthetic motion preview · no model, microphone or account.</p>
+      <AppearanceControls />
+      <OrbPresentation state="disconnected" />
+    </VisualEnvironment>
+  ) : mode === 'archived-estate' ? (
     <>
       <p role="note">Historical estate component fixture · no account or live commerce.</p>
       <CinematicWorld>
