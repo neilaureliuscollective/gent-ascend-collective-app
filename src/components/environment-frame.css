@@ -161,3 +161,14 @@
     border: 1px solid CanvasText;
   }
 }
+
+@media (max-width: 380px) {
+  .environment-menu-button {
+    font-size: 0.75rem;
+    padding-inline: 10px;
+  }
+  .environment-name {
+    min-width: 0;
+    font-size: 0.7rem;
+  }
+}

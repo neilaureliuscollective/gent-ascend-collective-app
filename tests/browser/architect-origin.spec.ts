@@ -93,7 +93,7 @@ async function fixture(page: Page, failFirst = false) {
   });
   return { saves, versions, runs, getProject: () => project };
 }
-for (const width of [344, 390, 720, 768, 1440, 1920])
+for (const width of [320, 344, 390, 720, 768, 1440, 1920])
   test(`Origin entry and focused workspace fit ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await fixture(page);
@@ -101,6 +101,13 @@ for (const width of [344, 390, 720, 768, 1440, 1920])
     await expect(
       page.getByRole('heading', { name: 'Where vision becomes creation.' }),
     ).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: `test-results/architect-immersive-entry-${width}.png`,
+      fullPage: true,
+    });
     await page.getByLabel('Tell Aethelios what you want to create').fill('Synthetic business idea');
     await page.getByLabel('Project name (optional)').fill('Synthetic Origin');
     await page.getByRole('button', { name: 'Create & save project' }).click();
