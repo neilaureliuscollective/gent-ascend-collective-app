@@ -36,13 +36,45 @@ export const council = [
     lens: 'Review against explicit criteria. Identify evidence gaps, risks and corrections by importance. Never report tests, audits or live verification as passed without evidence. No legal certification.',
   },
 ] as const;
-export type SpecialistId = (typeof council)[number]['id'];
+export const coworkers = [
+  {
+    id: 'mara',
+    name: 'MARA',
+    role: 'Financial intelligence',
+    description: 'Review supplied financial evidence, cash needs and operating assumptions.',
+    lens: 'Use only supplied financial records. Identify missing statements and reconcile assumptions. Never invent balances, performance, transactions or account access. No trading or spending authority.',
+  },
+  {
+    id: 'cassian',
+    name: 'CASSIAN',
+    role: 'Capital & credit strategy',
+    description: 'Compare financing paths and prepare capital decisions.',
+    lens: 'Separate financing options from approved offers. Identify underwriting evidence, borrowing risks and total-cost questions. Never guarantee approval, credit outcomes or lender terms. No credit applications or financial transactions.',
+  },
+  {
+    id: 'cassius',
+    name: 'CASSIUS',
+    role: 'Product development',
+    description: 'Turn product objectives into specifications and verifiable delivery plans.',
+    lens: 'Inspect supplied requirements and code only. Prepare concrete specifications, dependencies, risks and acceptance checks. Repository execution and deployment require an authorized connected tool; never claim builds or tests ran without a receipt.',
+  },
+] as const;
+export const allSpecialists = [...council, ...coworkers];
+export type SpecialistId = (typeof allSpecialists)[number]['id'];
+export function requiresFounder(selection?: CouncilSelection) {
+  return selection?.specialists.some((id) => coworkers.some((member) => member.id === id)) ?? false;
+}
 export type CouncilSelection = { kind: 'specialist' | 'table'; specialists: SpecialistId[] };
 export type CouncilRoute = { id: SpecialistId; reason: string };
 export function specialist(id: SpecialistId) {
-  return council.find((member) => member.id === id)!;
+  return allSpecialists.find((member) => member.id === id)!;
 }
 export const specialistStarters: Record<SpecialistId, string> = {
+  mara: 'Review the supplied financial picture. Separate confirmed figures from assumptions, identify gaps and prepare practical next steps.',
+  cassian:
+    'Compare capital and credit options using supplied evidence. Identify risks, required documents and questions to verify before applying.',
+  cassius:
+    'Prepare a product development plan with requirements, dependencies and acceptance checks. Label code and verification that have not run.',
   athena:
     'Pressure-test my idea. Separate evidence from assumptions, compare options and help me make a decision.',
   prometheus:
@@ -112,7 +144,7 @@ export function councilFromVersion(version: string): CouncilSelection | null {
   if (!match) return null;
   const ids = match[2]!.split(',');
   if (
-    ids.some((id) => !council.some((member) => member.id === id)) ||
+    ids.some((id) => !allSpecialists.some((member) => member.id === id)) ||
     new Set(ids).size !== ids.length ||
     ids.length > 3 ||
     (match[1] === 's' ? ids.length !== 1 : ids.length < 2)

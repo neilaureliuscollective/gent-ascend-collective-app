@@ -14,6 +14,9 @@ export async function currentAccess() {
     identity.client.from('membership_accounts').select('*').eq('person_id', person.id).single(),
     currentFounderAccess(),
   ]);
+  const env = parseEnvironment(process.env);
+  if (founder && !env.harnessEnabled)
+    return calculateCapabilities({ tier: 'free', billing: 'none', beta: false, founder: true });
   if (error || !data) throw new Error('Membership context could not be loaded.');
   let state: AccessState = {
     tier: data.tier,
@@ -23,7 +26,6 @@ export async function currentAccess() {
     trialEndsAt: data.trial_ends_at,
     accessUntil: data.access_until,
   };
-  const env = parseEnvironment(process.env);
   if (env.harnessEnabled && identity.authUserId === founderAuthId && env.AURELIUS_DEV_TOKEN) {
     const { requireLocalHarness } = await import('@/domains/development/guard');
     await requireLocalHarness();
