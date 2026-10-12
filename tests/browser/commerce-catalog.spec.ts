@@ -5,7 +5,8 @@ for (const width of [344, 768, 1440]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/shop');
+    // Preserve the old preview filter/storage contract in an explicit component fixture.
+    await page.goto('http://127.0.0.1:3102/?mode=archived-commerce-shop');
     const shelf = page.locator('#collection');
     await shelf.getByRole('searchbox', { name: 'Search this collection' }).fill('VITALIS');
     await expect(shelf.locator('.reserve-collection-card')).toHaveCount(1);
