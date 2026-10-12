@@ -35,3 +35,17 @@ export function memberCommerceBenefit() {
   // No checkout-enforced member offer has been approved or activated.
   return { active: false, priceSource: 'shopify', discount: null } as const;
 }
+
+/** A whole-store restriction is opt-in, separate from the Legacy Reserve brand. */
+export function lifestyleAssortmentHandle(value?: string): string | null {
+  if (!value?.trim()) return null;
+  return lifestyleCollectionHandle(value);
+}
+
+export function catalogProductAllowed(
+  product: Pick<ProductSummary, 'collections'>,
+  collectionHandle: string | null,
+) {
+  // Callers must first resolve a real product/variant through this Headless token.
+  return collectionHandle === null || brandProducts([product], collectionHandle).length > 0;
+}
