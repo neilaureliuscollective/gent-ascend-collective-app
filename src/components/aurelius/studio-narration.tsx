@@ -228,8 +228,8 @@ export function StudioNarration({
         </label>
         <p className="muted">
           {script.length} / 600 characters · one clip per request · up to one minute · three
-          generation attempts per rolling day. Provider generation uses account credits; failed
-          attempts also count. No automatic retries.
+          generation attempts per rolling day. Each attempt uses your Studio allowance, including
+          failed attempts. No automatic retries.
         </p>
         <button
           type="button"
