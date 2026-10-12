@@ -738,7 +738,7 @@
 .public-world .collection-copy {padding:25px 26px 30px;}
 .public-world .object-halo {border-color:#c4912f30;box-shadow:none;}
 .public-world .object-plinth {background:linear-gradient(110deg, var(--aether-petrol), var(--aether-obsidian));}
-.public-world .world-button {position:relative;isolation:isolate;overflow:hidden;background:var(--metal-gold);border:1px solid #e5c28290;border-radius:6px;color:var(--aether-silver);box-shadow:0 5px 18px #0006,0 1px 0 #664015,inset 0 1px 0 #fff0be,inset 0 -2px 0 #754c2b70;}
+.public-world .world-button {position:relative;isolation:isolate;overflow:hidden;background:var(--metal-gold);border:1px solid #e5c28290;border-radius:6px;color:var(--io-environment);box-shadow:0 5px 18px #0006,0 1px 0 #664015,inset 0 1px 0 #fff0be,inset 0 -2px 0 #754c2b70;}
 .public-world .world-button:hover {background:var(--metal-gold);transform:translateY(-1px);}
 .public-world .world-button:before {content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,#fff6 49%,transparent 65%);transform:translateX(-120%);pointer-events:none;}
 .public-world:not([data-world-still='true']) .world-button:hover:before {
@@ -787,3 +787,9 @@
 @media(max-width: 850px){.public-world .world-doorways>a{min-height:230px}.public-world .world-chapter-nav{margin-inline:14px;top:8px}.public-world .atelier-story{padding:28px}.public-world .intelligence-story{padding:28px}.public-world .world-invitation{margin-inline:6%;padding:40px 28px;}.public-world .atelier-select{flex-wrap:wrap}.public-world .atelier-select button{min-width:75px;}}
 @media(max-width: 500px){.public-world .world-doorways>a{padding:28px;min-height:220px}.public-world .world-chapter-nav{gap:12px;padding-inline:12px}.public-world .world-chapter-nav a{font-size:0.43rem}.public-world .atelier-story h2{font-size:2.55rem;}.public-world .intelligence-story h2{font-size:2.5rem;}}
 @media(prefers-reduced-motion: reduce){.public-world .world-doorways>a,.public-world .collection-card,.public-world .atelier-story,.public-world .world-feature-list>article{transform:none!important;}}
+
+/* Commerce keeps Cart on the right; Still remains independently reachable. */
+.public-world:has(.reserve-commerce) > .world-motion-control {
+  left: max(18px, env(safe-area-inset-left));
+  right: auto;
+}

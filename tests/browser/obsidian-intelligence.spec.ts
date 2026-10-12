@@ -53,7 +53,7 @@ for (const viewport of [
           background: getComputedStyle(el).backgroundColor,
           text: getComputedStyle(el).color,
         }));
-        expect(surface.background).toBe('rgb(8, 10, 11)');
+        expect(surface.background).toBe('rgb(8, 13, 13)');
         expect(surface.text).toBe('rgb(230, 231, 226)');
         for (const link of await navigation.getByRole('link').all()) {
           const box = await link.boundingBox();

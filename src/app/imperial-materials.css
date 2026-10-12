@@ -1,30 +1,16 @@
-/* Public architectural materials share the Obsidian Intelligence palette. */
+/* Compatibility roles share the Imperial Emerald Obsidian material contract. */
 :root {
-  --imperial-steel: #202728;
-  --imperial-steel-highlight: #7f8984;
-  --imperial-carbon: #101415;
-  --imperial-obsidian: #080a0b;
+  --imperial-steel: var(--aether-elevated);
+  --imperial-steel-highlight: var(--aether-silver);
+  --imperial-carbon: var(--aether-surface);
+  --imperial-obsidian: var(--aether-obsidian);
   --imperial-stone: var(--aether-text);
-  --imperial-metal-edge: #d5d9cf40;
-  --imperial-brush: repeating-linear-gradient(104deg, #ffffff06 0 1px, transparent 1px 4px);
-  --imperial-steel-surface: linear-gradient(
-    125deg,
-    #171c1d,
-    var(--imperial-steel) 44%,
-    #202728 64%,
-    #101415
-  );
+  --imperial-metal-edge: var(--aether-border);
+  --imperial-brush: none;
+  --imperial-steel-surface: var(--io-glass);
   --imperial-signature:
-    radial-gradient(ellipse at 78% 5%, #c4912f18, transparent 44%),
-    linear-gradient(
-      125deg,
-      #171c1d,
-      #101415 42%,
-      var(--imperial-carbon) 72%,
-      var(--imperial-obsidian)
-    );
-  --imperial-elevation: 0 24px 60px #080a0b20, inset 0 1px #ffffff20;
-  --imperial-environment-canvas:
-    radial-gradient(ellipse at 72% 12%, #7f898420, transparent 55%),
-    linear-gradient(118deg, #171c1d, #202728 44%, #202728 75%, #101415);
+    radial-gradient(ellipse at 80% 30%, var(--aether-emerald-imperial), transparent 65%),
+    var(--aether-obsidian);
+  --imperial-elevation: var(--io-elevation);
+  --imperial-environment-canvas: var(--io-chamber);
 }

@@ -1,4 +1,4 @@
-/* Obsidian Intelligence: authoritative member materials. Historical selector names are stable contracts. */
+/* Imperial Emerald Obsidian: authoritative materials. Historical selectors remain contracts. */
 :root {
   --io-environment: var(--aether-obsidian);
   --io-navigation: var(--aether-surface);
@@ -25,18 +25,44 @@
   --io-space: clamp(16px, 2.5vw, 32px);
   --io-duration: 180ms;
   --io-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --io-emerald-shadow: var(--aether-emerald-shadow);
+  --io-emerald-imperial: var(--aether-emerald-imperial);
+  --io-emerald-active: var(--aether-emerald-active);
+  --io-emerald-edge: color-mix(in srgb, var(--io-emerald) 55%, var(--io-divider));
+  --io-reflection: color-mix(in srgb, var(--io-text) 10%, transparent);
+  --io-chamber: linear-gradient(
+    125deg,
+    var(--io-emerald-imperial),
+    var(--io-emerald-shadow) 60%,
+    var(--io-navigation)
+  );
+  --io-glass: linear-gradient(
+    155deg,
+    var(--io-emerald-imperial),
+    var(--io-emerald-shadow) 38%,
+    var(--io-navigation)
+  );
+  --io-selected: linear-gradient(125deg, var(--io-emerald-imperial), var(--io-emerald-shadow));
   --io-glow-quiet: 0 0 24px #36896c0a;
   --io-glow-active: 0 0 24px #36896c18;
   --io-glow-hero: 0 0 64px #36896c0c;
   --io-glow-gold: 0 0 20px #c4912f12;
-  --io-material: linear-gradient(145deg, #20272880, #101415 65%);
-  --io-composer: linear-gradient(165deg, #202728, #101415 80%);
-  --io-metal: linear-gradient(145deg, #202728, #171c1d);
+  --io-material: linear-gradient(145deg, var(--io-raised), var(--io-navigation) 65%);
+  --io-composer: linear-gradient(165deg, var(--io-emerald-shadow), var(--io-navigation) 80%);
+  --io-metal: linear-gradient(145deg, var(--io-raised), var(--io-navigation));
   --io-elevation: 0 18px 48px #0004, inset 0 1px #e6e7e20a;
-  --io-illumination: radial-gradient(ellipse at 88% 0, #214c3c12, transparent 46%);
+  --io-illumination: radial-gradient(
+    ellipse at 88% 0,
+    color-mix(in srgb, var(--io-emerald-imperial) 45%, transparent),
+    transparent 46%
+  );
   --io-hero-material:
-    radial-gradient(ellipse at 95% 25%, #214c3c28, transparent 45%),
-    linear-gradient(125deg, #171c1d, #101415 55%, #080a0b);
+    radial-gradient(
+      ellipse at 95% 25%,
+      color-mix(in srgb, var(--io-emerald-active) 24%, transparent),
+      transparent 45%
+    ),
+    var(--io-chamber);
 }
 .app-shell.imperial-workspace {
   color-scheme: dark;
@@ -114,7 +140,7 @@
     .company-room,
     .company-job,
     .council-dialog,
-    .talk-drawer.talk-drawer,
+    .talk-drawer,
     .talk-expanded-editor,
     .aurelius-dialog,
     .context-sheet-surface,
@@ -210,7 +236,12 @@
   color: var(--io-secondary);
 }
 .app-shell.imperial-workspace
-  :is(.conversation-library, .studio-projects, .imperial-control-surface, .talk-drawer > header) {
+  :is(
+    .conversation-library,
+    .studio-projects,
+    .imperial-control-surface,
+    .talk-drawer > :where(header)
+  ) {
   background: var(--io-navigation);
   color: var(--io-text);
   border-color: var(--io-divider);
@@ -240,7 +271,7 @@
 }
 .app-shell.imperial-workspace
   :is(
-    .aurelius-notice:not(:empty),
+    .aurelius-notice:where(:not(:empty)),
     .studio-notice,
     .company-work-note,
     .company-room-scopes,
@@ -1039,7 +1070,7 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
     justify-content: space-between;
   }
 }
-/* Final component roles share the same graphite material hierarchy. */
+/* Component roles share the same material hierarchy. */
 .app-shell.imperial-workspace .navigation a[aria-current='page'] {
   color: var(--io-text);
   border-color: var(--io-divider);
@@ -1229,7 +1260,7 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
   margin-top: 24px;
 }
 .app-shell.imperial-workspace .studio-projects nav button.selected {
-  background: var(--io-raised);
+  background: var(--io-selected);
   border-color: var(--io-divider);
   box-shadow: inset 2px 0 var(--io-emerald);
 }
@@ -1247,7 +1278,7 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
   border-color: var(--io-divider);
 }
 .app-shell.imperial-workspace .studio-view-tabs button[aria-pressed='true'] {
-  background: var(--io-raised);
+  background: var(--io-selected);
   border-color: var(--io-divider);
   box-shadow: inset 0 -2px var(--io-emerald);
 }
@@ -1349,5 +1380,276 @@ html[data-material='solid']
   .app-shell.imperial-workspace :is(.button, .button-primary, .aurelius-send):hover:not(:disabled) {
     background: ButtonFace;
     color: ButtonText;
+  }
+}
+
+/* Imperial Emerald: connected chambers and polished focus planes.
+   Reading/media remain carbon; these surfaces express location and selection. */
+.app-shell.imperial-workspace .sidebar {
+  background: linear-gradient(180deg, var(--io-emerald-shadow), var(--io-environment) 68%);
+  border-right: 1px solid var(--io-divider);
+}
+.app-shell.imperial-workspace .topbar {
+  background: var(--io-navigation);
+}
+.app-shell.imperial-workspace .navigation a[aria-current='page'],
+.app-shell.imperial-workspace .aethelios-space-navigation a[aria-current='page'] {
+  background: var(--io-selected);
+  color: var(--io-text);
+  box-shadow:
+    inset 2px 0 var(--io-gold),
+    inset 0 1px var(--io-reflection);
+}
+.app-shell.imperial-workspace
+  :is(
+    .talk-drawer.talk-drawer,
+    .talk-expanded-editor,
+    .context-sheet-surface,
+    .council-dialog,
+    .capture-dialog
+  ) {
+  background: var(--io-glass);
+  border-color: var(--io-emerald-edge);
+  box-shadow:
+    inset 0 1px var(--io-reflection),
+    0 32px 100px #0009;
+}
+.app-shell.imperial-workspace .talk-page::before {
+  background: radial-gradient(
+    ellipse at 50% 12%,
+    color-mix(in srgb, var(--io-emerald-imperial) 32%, transparent),
+    transparent 55%
+  );
+}
+.app-shell.imperial-workspace .talk-page .user-message {
+  background: var(--io-emerald-shadow);
+}
+.app-shell.imperial-workspace .aurelius-send {
+  background: var(--io-selected);
+}
+.app-shell.imperial-workspace .aurelius-send:hover:not(:disabled) {
+  background: var(--io-emerald-imperial);
+}
+.app-shell.imperial-workspace :is(.company-work > header, .io-ecosystem-hero) {
+  background: var(--io-hero-material);
+  border-color: var(--io-emerald-edge);
+  box-shadow:
+    inset 0 1px var(--io-reflection),
+    var(--io-elevation);
+}
+.app-shell.imperial-workspace .company-rooms {
+  background: var(--io-glass);
+  margin-block: 28px;
+  border-color: var(--io-emerald-edge);
+}
+.app-shell.imperial-workspace .company-job-list {
+  gap: 0;
+  background: var(--io-navigation);
+  border: 1px solid var(--io-divider);
+  border-radius: var(--io-radius);
+  /* Keep the native focus ring outside the connected workspace visible. */
+  padding: 4px;
+}
+.app-shell.imperial-workspace .company-job-list:empty {
+  display: none;
+}
+.app-shell.imperial-workspace .company-job {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--io-divider);
+  border-radius: 10px;
+  box-shadow: none;
+  min-width: 0;
+  padding: clamp(18px, 2.5vw, 28px);
+}
+.app-shell.imperial-workspace .company-job:hover {
+  background: var(--io-selected);
+  transform: none;
+  box-shadow: inset 2px 0 var(--io-emerald);
+}
+.app-shell.imperial-workspace .company-job h2 {
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+}
+.app-shell.imperial-workspace .company-work-note {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--io-divider);
+  border-radius: 0;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace .studio-world-heading {
+  background: var(--io-material);
+}
+.app-shell.imperial-workspace .studio-direction {
+  background: var(--io-glass);
+}
+.app-shell.imperial-workspace .studio-main {
+  background: var(--io-environment);
+}
+.app-shell.imperial-workspace .studio-projects {
+  border-color: var(--io-divider);
+  background: linear-gradient(180deg, var(--io-emerald-shadow), var(--io-navigation) 60%);
+}
+.app-shell.imperial-workspace .io-division-grid {
+  gap: 1px;
+  padding: 1px;
+  background: var(--io-divider);
+  border-radius: var(--io-radius);
+}
+.app-shell.imperial-workspace .io-division {
+  background: var(--io-glass);
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+.app-shell.imperial-workspace .io-division:first-child {
+  border-radius: var(--io-radius) 0 0 var(--io-radius);
+}
+.app-shell.imperial-workspace .io-division:last-child {
+  border-radius: 0 var(--io-radius) var(--io-radius) 0;
+}
+.app-shell.imperial-workspace
+  :is(.account-section, .profile-form, .goal-editor, .company-room-layout aside) {
+  background: var(--io-glass);
+}
+/* Live dialog can sit outside the member shell: consume the same opaque materials. */
+.live-immersive {
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    var(--io-emerald-imperial),
+    var(--io-environment) 65%
+  );
+}
+:is(.live-compact, .live-consent, .live-artifacts) {
+  background: var(--io-glass);
+  border-color: var(--io-emerald-edge);
+}
+@media (max-width: 1100px) {
+  .app-shell.imperial-workspace .navigation {
+    background: var(--io-navigation);
+  }
+  .app-shell.imperial-workspace .navigation a[aria-current='page'] {
+    box-shadow: inset 0 2px var(--io-gold);
+  }
+}
+@media (max-width: 1000px) {
+  .app-shell.imperial-workspace .io-division:first-child {
+    border-radius: var(--io-radius) var(--io-radius) 0 0;
+  }
+  .app-shell.imperial-workspace .io-division:last-child {
+    border-radius: 0 0 var(--io-radius) var(--io-radius);
+  }
+}
+/* Accessibility preferences override all material choices, including portal surfaces. */
+html[data-material='solid'] {
+  --io-chamber: var(--io-emerald-shadow);
+  --io-glass: var(--io-emerald-shadow);
+  --io-selected: var(--io-emerald-imperial);
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace
+  :is(
+    .sidebar,
+    .studio-projects,
+    .company-rooms,
+    .company-work > header,
+    .io-ecosystem-hero,
+    .io-division,
+    .talk-drawer.talk-drawer,
+    .talk-expanded-editor,
+    .account-section,
+    .profile-form,
+    .goal-editor
+  ) {
+  background: var(--io-navigation);
+  box-shadow: none;
+}
+@media (prefers-contrast: more) {
+  :root {
+    --io-divider: var(--io-secondary);
+    --io-selected-edge: var(--io-text);
+    --io-emerald-edge: var(--io-secondary);
+  }
+}
+@media (forced-colors: active) {
+  :root {
+    --io-chamber: Canvas;
+    --io-glass: Canvas;
+    --io-selected: Highlight;
+    --io-emerald-shadow: Canvas;
+    --io-emerald-imperial: Canvas;
+    --io-emerald-edge: CanvasText;
+    --io-reflection: transparent;
+  }
+  .app-shell.imperial-workspace
+    :is(
+      .sidebar,
+      .topbar,
+      .studio-projects,
+      .company-job-list,
+      .company-work > header,
+      .io-ecosystem-hero,
+      .io-division,
+      .talk-drawer.talk-drawer,
+      .talk-expanded-editor,
+      .context-sheet-surface,
+      .council-dialog,
+      .capture-dialog,
+      .account-section,
+      .profile-form,
+      .goal-editor
+    ),
+  :is(.live-immersive, .live-compact, .live-consent, .live-artifacts) {
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    border-color: CanvasText;
+  }
+  .app-shell.imperial-workspace
+    :is(
+      .navigation a[aria-current='page'],
+      .aethelios-space-navigation a[aria-current='page'],
+      .company-job:hover
+    ) {
+    background: Highlight;
+    color: HighlightText;
+    box-shadow: none;
+  }
+}
+/* Account entrance uses the same focused plane without altering form contracts. */
+.entrance-world .entrance-panel {
+  background: var(--io-glass);
+  border-color: var(--io-emerald-edge);
+}
+html[data-material='solid'] .entrance-world .entrance-panel {
+  background: var(--io-navigation);
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  .entrance-world .entrance-panel {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+}
+/* Founder Office stays in the same operational world after current-main integration. */
+.imperial-workspace .founder-office .founder-command {
+  background: var(--io-glass);
+  border-color: var(--io-emerald-edge);
+}
+.imperial-workspace .founder-office .founder-receipt {
+  background: var(--io-emerald-shadow);
+  box-shadow: inset 2px 0 var(--io-gold);
+}
+html[data-material='solid'] .imperial-workspace .founder-office .founder-command {
+  background: var(--io-navigation);
+}
+@media (forced-colors: active) {
+  .imperial-workspace .founder-office :is(.founder-command, .founder-receipt) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
   }
 }

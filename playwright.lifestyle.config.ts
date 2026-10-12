@@ -1,7 +1,11 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/browser',
-  testMatch: 'lifestyle-phase-one.spec.ts',
+  testMatch: [
+    'lifestyle-phase-one.spec.ts',
+    'lifestyle-atelier.spec.ts',
+    'lifestyle-discovery.spec.ts',
+  ],
   workers: 1,
   timeout: 45000,
   use: {

@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 // Read-only snapshot of Gent Ascend-owned files in the shared hosted ledger,
-// SQL hashes reconciled with the hosted ledger on 2026-10-02. Five Reserve-owned migrations are also applied
+// Historical SQL hashes reconciled on 2026-10-02; seven Live files applied/verified on 2026-10-12. Five Reserve-owned migrations are also applied
 // in the same project but their source is maintained in a separate repository.
 // This local hash check does not compare the live database on each run.
 // Studio media additions reconciled with hosted versions and exact SQL hashes on 2026-10-12.
@@ -36,17 +36,28 @@ const applied = new Map([
   ['20260929083302_ascend_performance_movement.sql', 'e7d95655c9c64262a5f0d75bf2459362'],
   ['20261002105745_founding_membership_billing.sql', '859a4afef0855c95251b0919c8de83f9'],
   ['20261002123344_restrict_chat_trigger_execution.sql', 'cdc2ec0d899586651d4db01d8134b734'],
+  // Live migrations installed through the connected canonical project, 2026-10-12.
+  ['20261011205952_aethelios_live_pilot.sql', '2e564d74841211f8144b0d2aa99d50f1'],
+  ['20261011230333_live_creation_artifacts.sql', '658dc858799c528bac4595772b3935e1'],
+  ['20261011232952_live_visual_artifacts.sql', '8adcaaac6ff1f9781b7cd34339781a43'],
+  ['20261011234637_live_evidence_charts.sql', '01ee91c91165f92d8022e7dd9e059d25'],
+  ['20261012000324_live_coworker_reviews.sql', 'edfd4e1719dd484dd635ff1333deafe9'],
+  ['20261012002621_live_reviewed_daily_actions.sql', '7ab67843379fb9f1fb2c5dda39cb9114'],
+  ['20261012041646_live_expiry_leases.sql', 'ca938f46c59c44379ff12ab7d7f40185'],
   ['20261012095748_studio_narration.sql', '81ed19b631ac8e2bbbf6115f5ee21a95'],
   ['20261012095801_studio_footage.sql', 'a627d4d420dd1fb946413d0d824d8201'],
 ]);
 const directory = new URL('../supabase/migrations/', import.meta.url);
-const filenames = (await readdir(directory)).filter(name => name.endsWith('.sql'));
+const filenames = (await readdir(directory)).filter((name) => name.endsWith('.sql'));
 for (const [name, expected] of applied) {
   if (!filenames.includes(name)) throw new Error(`Applied migration absent from source: ${name}`);
   const content = await readFile(new URL(name, directory));
   const actual = createHash('md5').update(content).digest('hex');
   if (actual !== expected) throw new Error(`Applied migration changed after deployment: ${name}`);
 }
-const versions = filenames.map(name => name.split('_')[0]);
-if (new Set(versions).size !== versions.length) throw new Error('Duplicate migration version in source');
-console.log(`Verified ${applied.size} Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.`);
+const versions = filenames.map((name) => name.split('_')[0]);
+if (new Set(versions).size !== versions.length)
+  throw new Error('Duplicate migration version in source');
+console.log(
+  `Verified ${applied.size} Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.`,
+);

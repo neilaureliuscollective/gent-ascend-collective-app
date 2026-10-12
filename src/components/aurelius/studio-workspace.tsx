@@ -151,7 +151,10 @@ function imageUrl(id: string, kind: 'version' | 'reference') {
   return `/api/studio/image?id=${id}&kind=${kind}`;
 }
 
-export function StudioWorkspace() {
+export function StudioWorkspace({
+  initialProject,
+  initialVersion,
+}: { initialProject?: string; initialVersion?: string } = {}) {
   const handoff = useConversationDraft();
   const [data, setData] = useState<Workspace>(empty);
   const [selected, setSelected] = useState<string | null>(null);
@@ -226,10 +229,24 @@ export function StudioWorkspace() {
   );
   useEffect(() => {
     let active = true;
-    fetch('/api/studio', { cache: 'no-store' })
+    fetch(
+      '/api/studio' + (initialProject ? '?project=' + encodeURIComponent(initialProject) : ''),
+      { cache: 'no-store' },
+    )
       .then((response) => jsonResponse<Workspace>(response))
       .then((next) => {
-        if (active) accept(next);
+        if (active) {
+          accept(next);
+          if (
+            initialVersion &&
+            next.versions.some(
+              (version) => version.id === initialVersion && version.status === 'complete',
+            )
+          ) {
+            setParent(initialVersion);
+            setView('create');
+          }
+        }
       })
       .catch((cause) => {
         if (active) {
@@ -240,7 +257,7 @@ export function StudioWorkspace() {
     return () => {
       active = false;
     };
-  }, [accept]);
+  }, [accept, initialProject, initialVersion]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();

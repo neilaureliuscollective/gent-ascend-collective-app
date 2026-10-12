@@ -15,10 +15,11 @@ if (
   process.exit(1);
 }
 const fields = `pageInfo { hasNextPage endCursor }
- nodes { id handle title description availableForSale requiresSellingPlan
+ nodes { id handle title description productType vendor availableForSale requiresSellingPlan
  featuredImage { url }
  ingredients: metafield(namespace: "gent_ascend", key: "ingredients") { value }
  directions: metafield(namespace: "gent_ascend", key: "directions") { value }
+ story: metafield(namespace: "gent_ascend", key: "product_story") { value }
  variants(first: 1) { nodes { id availableForSale price { amount currencyCode } } }
  }`;
 const query = collection
@@ -62,6 +63,12 @@ try {
     apiVersion: '2026-10',
     collection,
     publishedProducts: products.length,
+    duplicateTitles: [...new Set(products.map((p) => p.title))]
+      .filter((title) => products.filter((p) => p.title === title).length > 1)
+      .map((title) => ({
+        title,
+        handles: products.filter((p) => p.title === title).map((p) => p.handle),
+      })),
     targets: targets.map((name) => ({
       name,
       matches: products
@@ -75,6 +82,9 @@ try {
       subscriptionOnly: p.requiresSellingPlan,
       incomplete: [
         ...(!p.description.trim() ? ['description'] : []),
+        ...(!p.productType?.trim() ? ['productType'] : []),
+        ...(!p.vendor?.trim() ? ['brand/supplier attribution review'] : []),
+        ...(!p.story?.value ? ['approved product story'] : []),
         ...(!p.featuredImage ? ['photography'] : []),
         ...(!p.ingredients?.value ? ['ingredients'] : []),
         ...(!p.directions?.value ? ['directions'] : []),

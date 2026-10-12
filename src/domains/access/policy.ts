@@ -16,6 +16,7 @@ export const capabilities = [
   'health.navigation',
   'clinical.care',
   'studio.create',
+  'voice.use',
 ] as const;
 export type Capability = (typeof capabilities)[number];
 export interface AccessState {
@@ -57,6 +58,7 @@ export function calculateCapabilities(
     (paid && ['aurelius', 'health', 'signature', 'reserve'].includes(state.tier))
   )
     granted.add('studio.create');
+  if (state.founder || state.beta) granted.add('voice.use');
   // Clinical care is never derived from a membership or developer scenario.
   return granted;
 }

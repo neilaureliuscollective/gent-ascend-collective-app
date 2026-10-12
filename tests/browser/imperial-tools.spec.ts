@@ -76,7 +76,7 @@ test('Material conversation retains readable saved replies and dark writing spac
   await expect(page.locator('.assistant-message')).toHaveCSS('color', 'rgb(230, 231, 226)');
   await expect(page.locator('.aurelius-composer')).toHaveCSS(
     'background-image',
-    /rgb\(32, 39, 40\)/,
+    /rgb\(16, 43, 38\)/,
   );
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
 });
@@ -130,13 +130,13 @@ for (const width of [360, 768, 1440]) {
     expect(material.foreground).toBe('rgb(173, 181, 175)');
     expect(material.background).toBe('none');
     expect(material.overflow).toBe(false);
-    await expect(page.locator('.studio-main')).toHaveCSS('background-image', /rgb\(16, 20, 21\)/);
-    await expect(page.locator('.studio-projects')).toHaveCSS('background-color', 'rgb(16, 20, 21)');
+    await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(8, 13, 13)');
+    await expect(page.locator('.studio-projects')).toHaveCSS('background-image', /rgb\(16, 43, 38\)/);
     await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(173, 181, 175)');
     await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(173, 181, 175)');
     await expect(page.locator('.studio-direction')).toHaveCSS(
       'background-image',
-      /rgb\(16, 20, 21\)/,
+      /rgb\(23, 68, 56\)/,
     );
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.screenshot({

@@ -48,6 +48,7 @@ export async function* streamAurelius(
   messages: ModelMessage[],
   signal: AbortSignal,
   founder = false,
+  onSource?: (source: ResearchSource) => void,
 ): AsyncGenerator<ModelChunk> {
   const agent = new ToolLoopAgent({
     id: 'aurelius',
@@ -74,9 +75,11 @@ export async function* streamAurelius(
   const sources: ResearchSource[] = [];
   for await (const part of result.fullStream) {
     if (part.type === 'text-delta') yield { type: 'text', text: part.text };
-    else if (part.type === 'source' && part.sourceType === 'url')
-      sources.push({ url: part.url, title: part.title });
-    else if (part.type === 'error' || part.type === 'abort')
+    else if (part.type === 'source' && part.sourceType === 'url') {
+      const source = { url: part.url, title: part.title };
+      sources.push(source);
+      onSource?.(source);
+    } else if (part.type === 'error' || part.type === 'abort')
       throw new Error('Generation interrupted');
     else if (part.type === 'finish') {
       const footer = sourceFooter(sources);

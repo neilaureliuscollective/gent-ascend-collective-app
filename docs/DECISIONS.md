@@ -1,3 +1,57 @@
+## 2026-10-12 — Lifestyle product atelier
+
+Use the existing gallery and approved Shopify media for user-controlled inspection. Add explicit sequencing and fit/2× detail zoom; load films only on selection and only with approved captions/transcript. Keep purchase primary and sensory education progressively disclosed. Reuse server projections and Obsidian tokens without new rendering dependencies. Research and activation boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). No measured conversion uplift or merchant activation is claimed.
+
+# Hosted Live preview isolation — 2026-10-12
+
+Require an explicit preview project pin that matches the managed Supabase URL, and reject both known protected production/founder projects before admission or privileged expiry work. Preview mode/readiness flags alone cannot establish database isolation. Keep local pilot/manual owner cleanup behavior and production voice denial. No automatic infrastructure purchase or hosted migration; target/cost decision precedes configuration. Evidence and acceptance boundaries: [AETHELIOS_LIVE_PREVIEW_ISOLATION.md](AETHELIOS_LIVE_PREVIEW_ISOLATION.md).
+
+# Independent Live expiry control — 2026-10-12
+
+Reuse scheduled Vercel Functions with private Supabase cleanup leases, rather than adding a durable SDK/service for one pilot operation. Normal clients cannot execute worker RPCs; infrastructure alone validates call bindings and confirms cleanup after provider success. User-writable ended flags are not provider termination evidence. Keep the schedule fragment inactive, expiry default off and production voice rejected until minute scheduling, backend authority and real crash/hangup/billing acceptance pass. Official research, measured checks and hard-budget limitations: [AETHELIOS_LIVE_EXPIRY.md](AETHELIOS_LIVE_EXPIRY.md).
+
+# Hosted Live preflight — 2026-10-12
+
+The existing OpenAI key is verified in Vercel Preview/Production metadata; do not confuse its absence in this workspace with missing deployment credentials or ask for a replacement. Live code/flags and the matching Gent database's Live schema are not rolled out. Add founder-only server configuration and explicitly requested model-metadata checks to the existing launch ledger, using normal session ownership and the current key. Never copy secrets, automatically create voice calls, change flags or promote these checks to audio/launch acceptance. Preserve the current Obsidian production source; prepare a validated non-production integration preview next. Actual audit and implementation evidence: [AETHELIOS_LIVE_HOSTED_PREFLIGHT.md](AETHELIOS_LIVE_HOSTED_PREFLIGHT.md).
+
+# Live measurement foundation — 2026-10-12
+
+Prioritize trustworthy acceptance evidence over another product feature: replace shared-timestamp browser timing with bounded item/response correlation, separate typed turns and export only local content-free metrics/allowlisted RTC numbers. Offline reports recompute model/voice cohorts and never grant launch or acoustic/billing acceptance. Keep existing Realtime admission and GPT-Live evaluation boundary; no telemetry service or automatic upload. Actual provider/mobile testing remains blocked by the execution environment and absent credentials. Research, procedure and outcomes: [AETHELIOS_LIVE_ACCEPTANCE.md](AETHELIOS_LIVE_ACCEPTANCE.md).
+
+# Reviewed Live daily action — 2026-10-12
+
+Implement the first Phase 4B slice through the existing daily writer: an owned completed review, blank human-entered title, exact current local day/timezone/version and explicit confirmation. Add provenance to existing proposals; create proposal and action atomically, verify the canonical saved record and keep uncertain confirmations locked with read-only recovery. One action per review; no model tool can execute the write. No new provider call/service or future scheduling. GPT-Live remains evaluation-only pending actual provider/mobile/hosting evidence. Research and acceptance: [AETHELIOS_LIVE_ACTIONS.md](AETHELIOS_LIVE_ACTIONS.md).
+
+# Scoped Live coworker review — 2026-10-12
+
+Reuse the existing Council runner for one reviewed contribution, with an explicit standalone-task or server-captured selected-part snapshot and zero research/write tools. Store the approved recipient/scope with the shared owned artifact, fence changed selection before reservation and validate the saved identity/source binding. No profile/memory/unrelated history retrieval, new Entity permissions, multi-coworker escalation or automatic action/memory promotion. Preserve existing ordinary Council behavior and mark absent usage unknown.
+
+Phase 4A establishes scoped handoff; one idempotent reviewed domain action follows in Phase 4B after real-provider/hosting acceptance. Receipt and official research: [AETHELIOS_LIVE_COWORKERS.md](AETHELIOS_LIVE_COWORKERS.md).
+
+# Source-linked visual evidence and scenarios — 2026-10-12
+
+Reuse the existing public research lane, capture provider source metadata, then format strict chart/comparison data without additional tools. Attach source URLs server-side; validate excerpts, numeric presence, units, periods and missing values. Treat results as source-linked AI extraction requiring review, not independently verified facts. Keep scenarios as a bounded fixed percentage formula on owned selection state; never overwrite source values or execute generated formulas.
+
+One approved operation shares the existing reservation/worker/controller. Aggregate provider-reported stage tokens and flag partial totals rather than fabricate complete costs. No model promotion, Gateway, extra subscription or production deployment. Receipt and official sources: [AETHELIOS_LIVE_EVIDENCE.md](AETHELIOS_LIVE_EVIDENCE.md).
+
+# Live visual intelligence — 2026-10-11
+
+Extend the existing owned artifact workflow with a small trusted renderer catalog: conceptual diagrams and comparisons. Use direct Responses strict JSON schemas plus semantic graph/row validation, rather than generated HTML/code or another agent framework. Keep explicit paid approval, existing reasoning quotas and one persistent controller; reserve visual work without creating a pending Talk turn. Save selected visual references for bounded voice and subsequent personal Talk context. Existing company/personal boundaries and image operations remain guarded.
+
+Structured output does not prove facts; the first slice is explicitly conceptual. Source-backed quantitative outputs follow real-provider acceptance and provenance work. GPT-Live remains an evaluation adapter. Receipt and official research: [AETHELIOS_LIVE_VISUALS.md](AETHELIOS_LIVE_VISUALS.md).
+
+# Live multimodal creation and GPT-Live evaluation — 2026-10-11
+
+Reuse owned Studio projects/versions, existing paid reservations and one Live controller. Add approval-only image proposals and exact selected-version edits; execute images independently of the bounded voice lifetime. Final Studio results are canonical; streamed previews are provisional. Keep uncertain operations reserved rather than automatically retrying paid work.
+
+Fresh official documentation verifies GPT-Live `gpt-live-1`, correcting the earlier SDK-only discovery gap recorded below. Native client delegation differs from Realtime tools/cancellation; implement an isolated evaluation adapter, retain gated Realtime until account, sideband, billing and latency acceptance pass. No production promotion. Details: [AETHELIOS_LIVE_CREATION.md](AETHELIOS_LIVE_CREATION.md).
+
+# OpenAI-native Aethelios Live — 2026-10-11
+
+Founder selected and approved OpenAI-native live voice. Use direct Realtime WebRTC plus server SDP admission/sideband control and one persistent workspace controller. Cedar/Marin are session-start choices. Reuse existing Responses research/Council reasoning for separately approved bounded background tasks; preserve normal permissions, conversation ownership and cinematic assets. No ElevenLabs requirement, new agent framework or independently operated LiveKit service. Stable `gpt-realtime` is the unbenchmarked pilot baseline; operator-only allowlisted alternatives require account and cost verification. No verified separate `GPT-Live` endpoint was found in retrieved official SDK sources.
+
+Evidence, inspected source URLs, latency contributors, remaining build/device/hosting/cost gates and rollback: [AETHELIOS_LIVE_EXECUTION.md](AETHELIOS_LIVE_EXECUTION.md). Feature default off, preview control-readiness gate, production rejected. A bounded Next `after()` monitor is not crash-proof expiry; production remains blocked until independent enforcement is proven.
+
 # Imperial Steel homepage — 2026-10-09
 
 Translate the founder's supplied material reference into HTML/CSS, retaining current product messaging and real destinations. Add brushed steel, carbon and stone tokens instead of replacing the approved workspace palette. Use static directional light, thin metallic seams, an aria-hidden CSS presence, one principal gold action, and generous cream reading space. Existing SVG icons avoid font-dependent arrows. No new renderer or library. See [IMPERIAL_STEEL.md](IMPERIAL_STEEL.md) for verified project/deployment identity, available official research sources, inaccessible external references, material roles and release boundaries. Founder authorized production release for this phase; preserve pending creation branches separately.
@@ -408,6 +462,10 @@ Actual read-only Vercel/catalog evidence shows image foundations but missing nar
 ## 2026-10-12 — One canonical Supabase for Studio
 
 Founder explicitly rejected a separate hosted staging database. This supersedes the earlier staging-destination requirement: use the existing Gent Ascend Supabase only. Protected preview and real local Supabase CI remain useful verification environments, not requirements for another hosted project. No hosted reset/seeding, automatic paid generation or production promotion follows from this correction. The complete integration candidate is PR #99 against main; reviewed additive Narration/Footage migrations and actual hosted provider/owner acceptance remain open.
+
+## 2026-10-12 — Lifestyle discovery continuity
+
+Use URL-backed catalog state and individually removable filters before comparison or concierge work. Baymard Back/applied-filter research and installed Next 16.3.5 native History API support this slice. Browser saves remain local handles; URL state includes no private records. Search typing replaces history; discrete filters/sorts push history. No new integration, schema, tracking or merchant mutation. See [phase receipt](LIFESTYLE_DISCOVERY_CONTINUITY.md).
 
 ## Additive Studio media connection on one Supabase — October 12, 2026
 

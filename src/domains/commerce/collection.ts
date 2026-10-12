@@ -4,13 +4,17 @@ import { collectionPreviews } from '@/domains/catalog/preview';
 import { readProductStory, shopifyMediaUrl } from './product-story';
 import { launchLabel, launchPurchaseAllowed } from './launch-policy';
 import { formatMoney } from '@/components/commerce/money';
+import { productExcerpt } from './product-copy';
 export type CollectionEntry = {
   handle: string;
   title: string;
   kind: string;
   brand: string;
   summary: string;
+  searchText?: string;
   price: string;
+  priceAmount?: number;
+  currency?: string;
   status: string;
   size?: string;
   image?: { url: string; altText: string | null; width?: number | null; height?: number | null };
@@ -33,10 +37,15 @@ export function collectionEntries(
       title: product.title,
       kind: product.productType || 'The collection',
       brand: productBrand(product),
-      summary: story?.benefit || '',
+      summary: productExcerpt(story?.benefit || product.description),
+      searchText: product.description?.slice(0, 12000),
       price: launchPurchaseAllowed(product)
         ? `From ${formatMoney(product.priceRange.minVariantPrice)}`
         : 'Pricing at release',
+      priceAmount: launchPurchaseAllowed(product)
+        ? Number(product.priceRange.minVariantPrice.amount)
+        : undefined,
+      currency: product.priceRange.minVariantPrice.currencyCode,
       status: launchPurchaseAllowed(product)
         ? product.availableForSale
           ? 'Available'

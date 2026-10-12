@@ -7,12 +7,14 @@ export function FormulaExplorer({
   label,
   cautions,
   handle,
+  descriptionAvailable = false,
 }: {
   ingredients?: string;
   highlights: ProductStory['highlights'];
   label: string;
   cautions?: string;
   handle: string;
+  descriptionAvailable?: boolean;
 }) {
   return (
     <div className="reserve-formula">
@@ -49,7 +51,9 @@ export function FormulaExplorer({
         </details>
       ) : (
         <p className="reserve-pending">
-          The full {label.toLowerCase()} will be published with the finished product.
+          {descriptionAvailable
+            ? `A separate ${label.toLowerCase()} list is not available here. Review the merchant's product description and packaging before choosing.`
+            : `The full ${label.toLowerCase()} has not been published here.`}
         </p>
       )}
       {cautions && <p className="reserve-caution">{cautions}</p>}

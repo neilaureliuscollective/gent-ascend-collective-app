@@ -552,6 +552,32 @@ export interface Database {
         never,
         never
       >;
+      ai_conversation_artifacts: Table<import('@/domains/artifacts/contract').Artifact & {person_id:string;preview_key:string|null},never,never>;
+      ai_artifact_selection: Table<{person_id:string;conversation_id:string;artifact_id:string;part_id:string|null;scenario_percent:number},never,never>;
+      ai_live_jobs: Table<{
+        id: string; person_id: string; session_id: string; conversation_id: string; call_id: string;
+        task: string; coworker: string|null; status: string; result: string;
+        input_tokens: number; output_tokens: number; duration_ms: number|null; created_at: string;
+      }, never, never>;
+      ai_live_sessions: Table<
+        {
+          id: string;
+          person_id: string;
+          conversation_id: string | null;
+          created_at: string;
+          expires_at: string;
+          ended_at: string | null;
+          call_id: string | null;
+          call_tag: string | null;
+          model: string;
+          reserved_seconds: number;
+          input_tokens: number;
+          output_tokens: number;
+          reason: string | null;
+        },
+        never,
+        never
+      >;
       ai_conversations: Table<Conversation, never, never>;
       ai_studio_projects: Table<
         {
@@ -1036,6 +1062,18 @@ export interface Database {
         Args: { p_id: string; p_approve: boolean; p_title: string | null };
         Returns: string | null;
       };
+      ai_confirm_reviewed_daily_action: {
+        Args: {
+          p_id: string;
+          p_conversation: string;
+          p_review: string;
+          p_title: string;
+          p_day: string;
+          p_version: number;
+          p_timezone: string;
+        };
+        Returns: string;
+      };
       ai_reserve_proposal: { Args: { p_request: string }; Returns: boolean };
       ascend_profile_confirm: {
         Args: {
@@ -1074,6 +1112,35 @@ export interface Database {
           p_prompt_version: string;
         };
         Returns: string;
+      };
+      ai_propose_coworker_review:{Args:{p_id:string;p_conversation:string;p_prompt:string;p_coworker:string;p_scope:string};Returns:boolean};
+      ai_propose_visual_artifact:{Args:{p_id:string;p_conversation:string;p_operation:string;p_prompt:string};Returns:boolean};
+      ai_claim_visual_artifact:{Args:{p_id:string;p_approve:boolean;p_model:string};Returns:boolean};
+      ai_set_chart_scenario:{Args:{p_conversation:string;p_artifact:string;p_percent:number};Returns:boolean};
+      ai_finish_metered_visual_artifact:{Args:{p_id:string;p_visual:import('@/domains/artifacts/visual').VisualBoard|null;p_text:string;p_input:number|null;p_output:number|null;p_duration:number;p_stages:number;p_usage_complete:boolean};Returns:boolean};
+      ai_finish_visual_artifact:{Args:{p_id:string;p_visual:import('@/domains/artifacts/visual').VisualBoard|null;p_text:string;p_input:number|null;p_output:number|null;p_duration:number};Returns:boolean};
+      ai_select_visual_part:{Args:{p_conversation:string;p_artifact:string;p_part:string|null};Returns:boolean};
+      ai_live_request_job: {Args:{p_id:string;p_session:string;p_call:string;p_task:string;p_coworker:string|null};Returns:boolean};
+      ai_live_review_job: {Args:{p_id:string;p_approve:boolean};Returns:boolean};
+      ai_live_finish_job: {Args:{p_id:string;p_result:string;p_input:number;p_output:number;p_duration:number;p_success:boolean;p_model:string};Returns:boolean};
+      ai_artifact_preview: {Args:{p_id:string;p_index:number;p_key:string};Returns:boolean};
+      ai_propose_image_artifact: {Args:{p_id:string;p_conversation:string;p_operation:string;p_prompt:string;p_project:string|null};Returns:boolean};
+      ai_select_artifact: {Args:{p_conversation:string;p_artifact:string};Returns:boolean};
+      ai_claim_image_artifact: {Args:{p_id:string;p_approve:boolean};Returns:boolean};
+      ai_reconcile_artifact: {Args:{p_id:string};Returns:boolean};
+      ai_live_reserve: {
+        Args: { p_id: string; p_conversation: string; p_model: string };
+        Returns: string;
+      };
+      ai_live_attach: { Args: { p_id: string; p_call: string; p_tag: string }; Returns: boolean };
+      ai_live_claim_expired: {
+        Args: Record<string, never>;
+        Returns: { id: string; person_id: string; call_id: string; call_tag: string | null; expires_at: string; lease_token: string }[];
+      };
+      ai_live_confirm_expired: { Args: { p_id: string; p_token: string }; Returns: boolean };
+      ai_live_end: {
+        Args: { p_id: string; p_reason: string; p_input?: number; p_output?: number };
+        Returns: boolean;
       };
       ai_begin_turn: {
         Args: {

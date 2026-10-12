@@ -49,7 +49,7 @@ test('the verified production application serves Obsidian and preserves public e
       if (route.startsWith('/app/')) {
         await expect(page.locator('.imperial-workspace')).toHaveCSS(
           'background-color',
-          'rgb(8, 10, 11)',
+          'rgb(8, 13, 13)',
         );
         const navigation = page.getByRole('navigation', { name: 'Main navigation' });
         await expect(navigation.getByRole('link')).toHaveCount(5);

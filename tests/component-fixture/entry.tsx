@@ -4,6 +4,8 @@ import { AppearanceControls, VisualEnvironment } from '@/components/visual/appea
 import { ArchivedEstate } from './archived-estate';
 import { CinematicWorld } from '@/components/public/cinematic-world';
 import { WorldHeader } from '@/components/public/world-header';
+import { LiveArtifactsFixture } from './live-artifacts';
+import { LiveVoiceFixture } from './live-voice';
 import { MissionHandoffFixture } from './mission-handoff';
 import { FounderOffice } from '@/components/founder-office/office';
 import { founderOfficeFixture } from './founder-office-data';
@@ -152,6 +154,10 @@ createRoot(document.getElementById('root')!).render(
         <ArchivedEstate />
       </CinematicWorld>
     </>
+  ) : mode === 'live-artifacts' ? (
+    <LiveArtifactsFixture />
+  ) : mode === 'live-voice' ? (
+    <LiveVoiceFixture />
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
@@ -172,8 +178,58 @@ createRoot(document.getElementById('root')!).render(
         />
       ) : mode === 'lifestyle-cart' ? (
         <CartPanel fullPage basePath="/app/collection" />
+      ) : mode === 'lifestyle-film' ? (
+        <ProductExperience
+          basePath="/app/collection"
+          product={{
+            ...commerceFixture,
+            story: {
+              value: JSON.stringify({
+                version: 1,
+                status: 'approved',
+                mediaApproved: params.get('approved') !== 'false',
+                videoTranscript: 'Synthetic film transcript. No product claims.',
+                videoCaptions: {
+                  url: 'https://cdn.shopify.com/fixture/captions.vtt',
+                  language: 'en',
+                  label: 'English',
+                },
+              }),
+            },
+            media: {
+              nodes: [
+                {
+                  mediaContentType: 'VIDEO',
+                  videoSources: [
+                    {
+                      url: 'https://cdn.shopify.com/fixture/film.mp4',
+                      format: 'mp4',
+                      mimeType: 'video/mp4',
+                      width: 1280,
+                      height: 720,
+                    },
+                  ],
+                },
+              ],
+            },
+          }}
+        />
       ) : (
-        <ProductExperience product={commerceFixture} basePath="/app/collection" />
+        <ProductExperience
+          product={
+            params.get('story') === 'missing'
+              ? {
+                  ...commerceFixture,
+                  story: null,
+                  ingredients: null,
+                  directions: null,
+                  description:
+                    'Published synthetic description. Ingredients and directions are supplied in this text, not separate fields.',
+                }
+              : commerceFixture
+          }
+          basePath="/app/collection"
+        />
       )}
     </div>
   ) : mode === 'mission' ? (

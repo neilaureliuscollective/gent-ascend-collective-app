@@ -25,6 +25,20 @@ describe('Public Aethelios readable materials', () => {
       }
     }
   });
+  it('keeps emerald chambers and active controls readable with visible focus', () => {
+    for (const background of [
+      palette['emerald-shadow'],
+      palette['emerald-imperial'],
+      palette['emerald-active'],
+    ]) {
+      expect(contrast(palette.text, background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(palette['gold-light'], background)).toBeGreaterThanOrEqual(3);
+    }
+    for (const background of [palette['emerald-shadow'], palette['emerald-imperial']]) {
+      expect(contrast(palette.silver, background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(palette['gold-light'], background)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
   it('keeps active labels, quiet text and premium accents readable in their intended roles', () => {
     expect(contrast(palette.text, palette.petrol)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(palette.muted, palette.obsidian)).toBeGreaterThanOrEqual(4.5);

@@ -348,20 +348,23 @@ test('free member welcome and daily work save and resume through real Next and S
   await page.getByLabel('Email', { exact: true }).fill('member@aurelius.test');
   await page.getByLabel('Password', { exact: true }).fill(env.AURELIUS_FOUNDER_PASSWORD!);
   await page.getByRole('button', { name: 'Enter Aethelios' }).click();
-  await expect(page).toHaveURL(/\/app(?:\/welcome|\/aethelios)?$/);
+  await expect(page).toHaveURL(/\/app(?:\/(?:welcome|aethelios))?$/);
   await page.goto('/app/welcome');
-  await expect(page.getByRole('heading', { name: 'Start with what matters.' })).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Review membership access to Aethelios' }),
-  ).toBeVisible();
-  await page.getByLabel('Get organized', { exact: true }).check();
-  await page.getByLabel('What matters today?').fill('Synthetic first-session direction');
-  await page.getByLabel('My next move', { exact: true }).fill('Synthetic first-session next move');
-  await page.getByRole('button', { name: 'Save priority and next move' }).click();
-  await expect(
-    page.getByRole('status').filter({ hasText: 'priority and next move' }),
-  ).toContainText('saved to Command');
-  await page.goto('/app/ongoing');
+  await expect(page.getByRole('heading', { name: 'Welcome to Aethelios.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start with Aethelios' })).toBeVisible();
+  await page.goto('/app/daily');
+  await page.getByRole('button', { name: /^Day workspace/ }).click();
+  await page
+    .getByRole('button', { name: /^(Take a moment to check in|Update your check-in)$/ })
+    .click();
+  await page.getByLabel('What matters most today?').fill('Synthetic first-session direction');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
+  await page.getByRole('button', { name: 'Add a deliberate action' }).click();
+  await page.getByLabel('One action you can take').fill('Synthetic first-session next move');
+  await page.getByRole('button', { name: 'Save your day', exact: true }).click();
+  await expect(page.locator('.daily-notice')).toHaveText('Your day is saved.');
+  await page.goto('/app/daily');
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await expect(
     page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),
