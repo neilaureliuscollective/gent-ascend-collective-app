@@ -9,9 +9,10 @@ import {
 } from '@/platform/visual/intelligence-motion';
 import palette from '@/platform/visual/aether-palette.json';
 import './motion.css';
+import { GuidingPresence } from './guiding-presence';
 
 /** Lightweight signature. No provider, timer, microphone, progress estimation or WebGL. */
-export function IntelligencePresence({
+function LegacyPresence({
   operation,
   size = 'compact',
   artwork,
@@ -84,6 +85,20 @@ export function IntelligencePresence({
         </>
       )}
     </span>
+  );
+}
+/** Preserve existing artwork surfaces; response/task signals use the authored identity. */
+export function IntelligencePresence(props: {
+  operation: IntelligenceOperation;
+  size?: 'compact' | 'large';
+  artwork?: ReactNode;
+  variant?: 'orb' | 'signal';
+}) {
+  const { moving } = useAppearance();
+  return props.variant === 'signal' && !props.artwork ? (
+    <GuidingPresence operation={props.operation} still={!moving} compact={props.size !== 'large'} />
+  ) : (
+    <LegacyPresence {...props} />
   );
 }
 export function IntelligenceStatus({

@@ -3,6 +3,7 @@ import { build } from 'vite';
 import { resolve } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 const integration = process.argv.includes('--integration');
+const identity = process.argv.includes('--identity');
 const result = await build({
   configFile: false,
   publicDir: false,
@@ -18,9 +19,11 @@ const result = await build({
     write: false,
     lib: {
       entry: resolve(
-        integration
-          ? 'tests/component-fixture/motion-integration.tsx'
-          : 'tests/component-fixture/motion-gallery.tsx',
+        identity
+          ? 'tests/component-fixture/identity-studies.tsx'
+          : integration
+            ? 'tests/component-fixture/motion-integration.tsx'
+            : 'tests/component-fixture/motion-gallery.tsx',
       ),
       name: 'AetheliosMotionReview',
       formats: ['iife'],
@@ -50,6 +53,6 @@ const destination =
     : '/tmp/aethelios-motion-review.html');
 await writeFile(
   destination,
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aethelios Intelligence Motion · ${integration ? 'Phase 2 synthetic integration' : 'Phase 1 review'}</title><style>${css}</style></head><body><div id="root"></div><script>${embedded.replaceAll('</script', '<\\/script')}</script></body></html>`,
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aethelios Intelligence Motion · ${identity ? 'Identity studies · Synthetic preview' : integration ? 'Phase 2 synthetic integration' : 'Phase 1 review'}</title><style>${css}</style></head><body><div id="root"></div><script>${embedded.replaceAll('</script', '<\\/script')}</script></body></html>`,
 );
 console.log(`Standalone visual review: ${destination}`);
