@@ -1,7 +1,4 @@
 'use server';
-import { currentAccess } from '@/domains/access/current';
-import { readPilot } from '@/domains/pilot/service';
-import { currentPerson } from '@/domains/person/current';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -50,11 +47,8 @@ export async function signIn(form: FormData) {
   if (failure) redirect(failed(failure));
   if (form.get('claim') === '1') redirect('/experience/world?claim=1');
   if (form.get('entry') === 'membership') redirect('/app/membership');
-  const [pilot, person] = await Promise.all([readPilot(), currentPerson()]);
-  if (pilot?.beta || pilot?.founder || person?.onboarding_completed || person?.priority)
-    redirect('/app');
-  if ((await currentAccess()).has('aurelius.context')) redirect('/app');
-  redirect('/app/welcome');
+  // Read authorization in a fresh request after the session cookie mutation.
+  redirect('/auth/continue');
 }
 export async function signOut() {
   (await cookies()).set('performance-reset', '1', {

@@ -33,8 +33,15 @@ export function CartPanel({
     try {
       const response = await fetch('/api/commerce/cart', { cache: 'no-store' });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Cart unavailable.');
       if (version !== loadVersion.current) return;
+      if (!response.ok) {
+        setError(
+          response.status === 503
+            ? 'Shopping is not open yet.'
+            : 'Cart is temporarily unavailable.',
+        );
+        return;
+      }
       setCart(data.cart);
       setError('');
     } catch {
