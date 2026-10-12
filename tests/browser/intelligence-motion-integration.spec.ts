@@ -59,7 +59,7 @@ for (const width of [344, 768, 1440]) {
     await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic visible response');
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     const response = page.locator('.assistant-message .im-response');
-    await expect(response).toBeInViewport();
+    await expect(response).toBeInViewport({ ratio: 0.9 });
     await expect(response).toHaveAttribute('data-phase', 'waiting');
     await expect(response.locator('.im-status')).toHaveText('Waiting for response');
     const ribbon = response.locator('.im-ribbon-one');
@@ -122,6 +122,14 @@ test('long replies keep the primary motion visible as the text grows', async ({ 
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await page.getByRole('button', { name: 'Emit response text' }).click();
   await expect(page.locator('.message-markdown')).toContainText('Synthetic long response');
+  const scroll = page.locator('.conversation-scroll');
+  await expect
+    .poll(() => scroll.evaluate((node) => node.scrollHeight - node.clientHeight))
+    .toBeGreaterThan(500);
+  await scroll.evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+  });
+  await expect.poll(() => scroll.evaluate((node) => node.scrollTop)).toBeGreaterThan(500);
   await expect(page.locator('.assistant-message .im-response')).toBeInViewport({ ratio: 0.9 });
   await page.screenshot({ path: 'test-results/visible-response-long-768.png', fullPage: true });
 });
