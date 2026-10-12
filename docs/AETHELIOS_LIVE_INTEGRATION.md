@@ -28,4 +28,14 @@ Integrated lint, typecheck, **75 files / 491 unit/SQL tests** and historical 28-
 
 ## Release decision
 
+## Connected candidate evidence — October 12
+
+Published draft [PR #90](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/90). Initial GitHub commit `0feae2a22ce1afcd81c370454148d866896fdffd` has exactly the locally validated tree `46578c399f573791be1f340db0eefd3f0265b527`. Its Vercel preview `dpl_GvWpFo2ag9ymYCTMBSQHJAawYyKP` reached READY, and connected CI passed the production build, lint/types/unit checks and **real local password Auth/PostgREST Live/action job**. Focused browser checks passed 32/34; both failures were the creation-task select's implicit label including option text. Added a unique explicit label association; the same approval/edit assertions remain required on phone and desktop.
+
+Main advanced to Lifestyle commit `c13bced429ef4a8aeb22b9d7205dba19618b67d7`. Recovered its 54 changed files with blob checks and verified the complete source tree `20c8e60287c631d70d7bcc3b572ebe00e6101e01`, then merged it into the candidate. Both Lifestyle and Live fixture modes, navigation and status receipts are preserved. Combined local lint, strict types and **77 files / 504 unit/SQL tests** pass; ledger still verifies 28 historical files. Connected revalidation of this combined tree is required.
+
+Existing broad Quality gates are not green: the initial candidate's real founder browser suite passed 7/11, with failures in legacy Memory, entrance-button and Command selectors. These checks remain enabled and their failure blocks readiness; the new local Auth job does not substitute for them. No actual provider audio, acoustic latency, billing, hosted migration rollout or physical-device acceptance has been measured. OpenAI credentials already exist in the correct Vercel scopes; credentials alone do not satisfy these gates. Live remains default off and production admission rejected.
+
+## Conditional activation decision
+
 Not yet ready to enable or promote Live. Prepare a draft integration PR and protected preview, run exact-head connected CI, triage genuine regressions, then finish the documented non-production migration/provider/hosting/device gates. If any required gate remains failed or unrun, keep the candidate in review and production unchanged. The founder's conditional release authorization persists; no repeated permission question is required once those gates actually pass.

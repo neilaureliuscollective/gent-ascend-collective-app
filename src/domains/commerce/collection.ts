@@ -1,4 +1,5 @@
 import type { ProductSummary } from './shopify';
+import { productBrand } from './lifestyle';
 import { collectionPreviews } from '@/domains/catalog/preview';
 import { readProductStory, shopifyMediaUrl } from './product-story';
 import { launchLabel, launchPurchaseAllowed } from './launch-policy';
@@ -31,9 +32,7 @@ export function collectionEntries(
       handle: product.handle,
       title: product.title,
       kind: product.productType || 'The collection',
-      brand: /legacy/i.test(product.collections.nodes.map((c) => c.title).join(' '))
-        ? 'Legacy Reserve'
-        : 'Gent Ascend',
+      brand: productBrand(product),
       summary: story?.benefit || '',
       price: launchPurchaseAllowed(product)
         ? `From ${formatMoney(product.priceRange.minVariantPrice)}`

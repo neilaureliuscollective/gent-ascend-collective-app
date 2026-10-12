@@ -401,3 +401,7 @@ Fix the confirmed live camera=() document policy to camera=(self), including cli
 ## 2026-10-04 — Recover Command home while preserving direct member entry
 
 Founder approved the researched home recovery after reporting a visual regression. One named-area hero grid replaces the stacked direct-home override; today's move and the current EnergyOrb share the opening composition. Talk expands on demand; operational sources move into disclosure. No new intro, model call or policy change. Official Oura Today, Samsung foldable and web.dev motion references, scope, validation and limitations are recorded in COMMAND_HOME_RECOVERY.md. The lazy day workspace now owns its post-mount focus callback, fixing a browser-observed loading-placeholder scroll race.
+
+## 2026-10-12 — Public Lifestyle commerce restoration
+
+The founder brief supersedes commerce retirement. Reconcile draft #86 with actual current main, preserve legacy public and member URLs, and expose `/lifestyle` publicly without paid membership. Reuse Shopify/Supabase boundaries and current Obsidian Intelligence palette; no separate app, migration, discount or production release. Storefront pins official stable 2026-10. Evidence, official sources and configuration/acceptance are in LIFESTYLE_RECONCILIATION.md.

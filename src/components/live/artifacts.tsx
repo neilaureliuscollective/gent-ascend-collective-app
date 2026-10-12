@@ -1,5 +1,5 @@
 'use client';
-import { useContext, useEffect, useState, useSyncExternalStore } from 'react';
+import { useContext, useEffect, useId, useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LiveContext } from './context';
@@ -25,6 +25,7 @@ export function ConversationArtifacts({ conversationId }: { conversationId: stri
   );
 }
 export function ArtifactSurface({ controller }: { controller: LiveController }) {
+  const creationTaskId = useId();
   const state = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
@@ -199,9 +200,10 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
           setPrompt('');
         }}
       >
-        <label>
-          Creation task
+        <div>
+          <label htmlFor={creationTaskId}>Creation task</label>
           <select
+            id={creationTaskId}
             value={operation}
             onChange={(event) => setOperation(event.target.value as typeof operation)}
           >
@@ -215,7 +217,7 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
             <option value="visual.review">Request a scoped coworker review</option>
             <option value="visual.research-comparison">Research a source-linked comparison</option>
           </select>
-        </label>
+        </div>
         {operation === 'visual.review' && (
           <>
             <label>

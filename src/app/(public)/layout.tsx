@@ -50,6 +50,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/app/studio">Studio</Link>
           <Link href="/app/work">Company work</Link>
           <Link href="/reserve">The Reserve</Link>
+          <Link href="/lifestyle">Lifestyle</Link>
           <Link href="/enter">Open Aethelios</Link>
         </nav>
         <div className="footer-note">
