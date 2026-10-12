@@ -162,12 +162,13 @@
   border-radius: 22px;
   background: linear-gradient(140deg, var(--aether-deep), var(--aether-midnight));
 }
+.aurelius-composer textarea.talk-input,
 .talk-page .aurelius-composer textarea.talk-input,
 .company-room textarea.talk-input {
   display: block;
   width: 100%;
   min-height: 44px;
-  max-height: max(44px, min(200px, 24dvh));
+  max-height: max(44px, min(200px, calc(var(--conversation-height, 100dvh) * 0.24)));
   margin: 0;
   padding: 10px 44px 8px 8px;
   border: 0;
@@ -430,4 +431,11 @@
   .intelligence-work-access {
     padding-inline: 0.5rem;
   }
+}
+
+/* Bottom navigation stays available normally, but never competes with an active keyboard. */
+.app-shell:has(.talk-page[data-keyboard='open']) .navigation,
+.app-shell:has(.company-room-focused[data-keyboard='open']) .navigation {
+  visibility: hidden;
+  pointer-events: none;
 }

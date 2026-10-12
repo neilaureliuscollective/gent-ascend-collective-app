@@ -205,6 +205,8 @@ test('simulated VisualViewport transitions preserve focus and usable bounds, and
   });
   await expect(viewport).toHaveCSS('height', '420px');
   await expect(viewport).toHaveCSS('top', '20px');
+  await expect(viewport).toHaveAttribute('data-keyboard', 'open');
+  await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
   await expect(input(page)).toBeFocused();
   expect(
     (await page.locator('.aurelius-composer').boundingBox())!.y +
@@ -214,12 +216,26 @@ test('simulated VisualViewport transitions preserve focus and usable bounds, and
     Object.assign(window.visualViewport!, { height: 420, offsetTop: 20, scale: 2 });
     window.visualViewport!.dispatchEvent(new Event('resize'));
   });
-  await expect(viewport).toHaveCSS('height', '844px');
+  await expect
+    .poll(() =>
+      viewport.evaluate((el) =>
+        (el as HTMLElement).style.getPropertyValue('--conversation-height'),
+      ),
+    )
+    .toBe('844px');
+  await expect(viewport).toHaveAttribute('data-keyboard', 'closed');
   await expect(viewport).toHaveCSS('top', '0px');
+  const zoomBounds = await viewport.evaluate((el) => ({
+    height: el.getBoundingClientRect().height,
+    navigation: parseFloat(getComputedStyle(el).getPropertyValue('--interaction-nav-space')),
+  }));
+  expect(zoomBounds.height + zoomBounds.navigation).toBeCloseTo(844, 0);
   await page.evaluate(() => {
     Object.assign(window.visualViewport!, { height: 844, offsetTop: 0, scale: 1 });
     window.visualViewport!.dispatchEvent(new Event('resize'));
   });
+  await expect(viewport).toHaveAttribute('data-keyboard', 'closed');
+  await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
   await expect(input(page)).toHaveValue('Keep this draft through simulated keyboard transitions');
   await expect(input(page)).toBeFocused();
 });

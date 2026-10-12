@@ -2,19 +2,30 @@
 import { useEffect, useRef, type RefObject } from 'react';
 export function useTalkViewport(root: RefObject<HTMLElement | null>) {
   useEffect(() => {
+    const node = root.current;
+    if (!node) return;
     const viewport = window.visualViewport;
     const resize = () => {
-      if (!root.current) return;
       // Do not interfere with accessibility zoom. Keyboard height is progressive enhancement.
       const useVisual = viewport && viewport.scale === 1;
-      root.current.style.setProperty(
+      const active = document.activeElement;
+      // Progressive heuristic, not a VirtualKeyboard API dependency. Browser chrome alone
+      // must not hide navigation; require a focused editor and a substantial visual shrink.
+      const editing =
+        active instanceof HTMLElement &&
+        node.contains(active) &&
+        active.matches(
+          'textarea, input:not([type="checkbox"]):not([type="radio"]), [contenteditable="true"]',
+        );
+      const keyboardOpen = !!(useVisual && editing && window.innerHeight - viewport.height > 80);
+      node.setAttribute('data-keyboard', keyboardOpen ? 'open' : 'closed');
+      if (keyboardOpen) node.style.setProperty('--interaction-nav-space', '0px');
+      else node.style.removeProperty('--interaction-nav-space');
+      node.style.setProperty(
         '--conversation-height',
         `${useVisual ? viewport.height : window.innerHeight}px`,
       );
-      root.current.style.setProperty(
-        '--conversation-top',
-        `${useVisual ? viewport.offsetTop : 0}px`,
-      );
+      node.style.setProperty('--conversation-top', `${useVisual ? viewport.offsetTop : 0}px`);
     };
     let frame: number | null = null;
     const schedule = () => {
@@ -28,11 +39,15 @@ export function useTalkViewport(root: RefObject<HTMLElement | null>) {
     viewport?.addEventListener('resize', schedule);
     viewport?.addEventListener('scroll', schedule);
     window.addEventListener('resize', schedule);
+    node.addEventListener('focusin', schedule);
+    node.addEventListener('focusout', schedule);
     return () => {
       if (frame !== null) cancelAnimationFrame(frame);
       viewport?.removeEventListener('resize', schedule);
       viewport?.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      node.removeEventListener('focusin', schedule);
+      node.removeEventListener('focusout', schedule);
     };
   }, [root]);
 }
