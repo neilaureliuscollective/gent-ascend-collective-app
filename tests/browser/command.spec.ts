@@ -416,19 +416,16 @@ test('Command without JavaScript explains the workspace requirement and keeps a 
   try {
     const page = await context.newPage();
     await page.goto('http://127.0.0.1:3100/app/ongoing');
-    await expect(
-      page.getByText('If this screen stays here, enable JavaScript', { exact: false }),
-    ).toBeVisible();
-    const fallback = page
-      .locator('noscript')
-      .getByRole('navigation', { name: 'Workspace fallback' });
-    await expect(fallback.getByRole('link', { name: 'Your account' })).toHaveAttribute(
-      'href',
-      '/enter',
-    );
-    await expect(
-      fallback.getByRole('link', { name: 'Aethelios home', exact: true }),
-    ).toHaveAttribute('href', '/');
+    // Playwright text/ARIA engines skip NOSCRIPT even with JavaScript disabled.
+    // Verify the native DOM, actual visibility and semantic attributes directly.
+    const fallback = page.locator('noscript > section');
+    await expect(fallback).toBeVisible();
+    await expect(fallback).toContainText('If this screen stays here, enable JavaScript');
+    await expect(fallback.locator('nav')).toHaveAttribute('aria-label', 'Workspace fallback');
+    await expect(fallback.locator('a[href="/enter"]')).toHaveText('Your account');
+    await expect(fallback.locator('a[href="/enter"]')).toBeVisible();
+    await expect(fallback.locator('a[href="/"]')).toHaveText('Aethelios home');
+    await expect(fallback.locator('a[href="/"]')).toBeVisible();
   } finally {
     await context.close();
   }

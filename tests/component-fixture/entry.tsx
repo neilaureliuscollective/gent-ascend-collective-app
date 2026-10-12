@@ -130,7 +130,7 @@ createRoot(document.getElementById('root')!).render(
             <ProductExperience preview={previewProduct(params.get('handle') ?? 'vitalis')!} />
           ) : (
             <CollectionShowroom
-              entries={collectionEntries([])}
+              entries={collectionEntries([], true)}
               savedOnly={params.get('saved') === '1'}
             />
           )}
