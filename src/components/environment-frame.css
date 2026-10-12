@@ -201,3 +201,14 @@
   min-height: 44px;
   font-size: 0.9rem;
 }
+.app-shell.environment-immersive .environment-menu .aurelius-trigger {
+  font-size: 0.9rem;
+  padding: 8px 12px;
+}
+.app-shell.environment-immersive .environment-menu .aurelius-trigger > span:last-child {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
