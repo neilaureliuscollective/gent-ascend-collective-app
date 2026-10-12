@@ -11,11 +11,16 @@ test('live Health routes disclose no private data to a signed-out visitor', asyn
     expect(response.headers()['referrer-policy']).toBe('no-referrer');
     expect(await response.text()).toContain('noindex');
   }
-  for (const path of ['/api/health', '/api/health/records/00000000-0000-4000-8000-000000000000']) {
+  for (const [path, status] of [
+    ['/api/health', 401],
+    ['/api/health/records/00000000-0000-4000-8000-000000000000', 404],
+  ] as const) {
     const response = await request.get(path, { maxRedirects: 0 });
-    expect(response.status(), path).toBe(401);
+    expect(response.status(), path).toBe(status);
     expect(response.headers()['cache-control']).toContain('no-store');
-    expect(Object.keys(await response.json())).toEqual(['error']);
+    const body = await response.json();
+    expect(Object.keys(body)).toEqual(['error']);
+    if (status === 404) expect(body).toEqual({ error: 'Private record not found.' });
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/app/health');
