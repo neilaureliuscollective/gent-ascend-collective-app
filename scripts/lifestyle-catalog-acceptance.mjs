@@ -2,29 +2,29 @@
 // Never prints tokens, cart keys, provider errors or private customer data.
 const domain = process.env.SHOPIFY_STORE_DOMAIN?.trim().toLowerCase();
 const token = process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN;
-const collection = process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION || 'legacy-reserve';
+const collection = process.env.SHOPIFY_LIFESTYLE_COLLECTION?.trim() || null;
 if (
   !domain ||
   !token ||
   !/^[a-z0-9][a-z0-9.-]*\.myshopify\.com$/.test(domain) ||
-  !/^[a-z0-9][a-z0-9-]{0,99}$/.test(collection)
+  (collection !== null && !/^[a-z0-9][a-z0-9-]{0,99}$/.test(collection))
 ) {
   console.error(
     'Missing or invalid server-only Shopify domain, Storefront token or collection handle.',
   );
   process.exit(1);
 }
-const query = `query Acceptance($handle: String!, $cursor: String) {
- collection(handle: $handle) { title products(first: 60, after: $cursor) {
-  pageInfo { hasNextPage endCursor }
-  nodes { id handle title description availableForSale requiresSellingPlan
-   featuredImage { url }
-   ingredients: metafield(namespace: "gent_ascend", key: "ingredients") { value }
-   directions: metafield(namespace: "gent_ascend", key: "directions") { value }
-   variants(first: 1) { nodes { id availableForSale price { amount currencyCode } } }
-  }
- } }
-}`;
+const fields = `pageInfo { hasNextPage endCursor }
+ nodes { id handle title description availableForSale requiresSellingPlan
+ featuredImage { url }
+ ingredients: metafield(namespace: "gent_ascend", key: "ingredients") { value }
+ directions: metafield(namespace: "gent_ascend", key: "directions") { value }
+ variants(first: 1) { nodes { id availableForSale price { amount currencyCode } } }
+ }`;
+const query = collection
+  ? `query Acceptance($handle:String!, $cursor:String) { collection(handle:$handle) { products(first:60, after:$cursor) { ${fields} } } }`
+  : `query Acceptance($cursor:String) { products(first:60, after:$cursor) { ${fields} } }`;
+
 try {
   const products = [];
   const cursors = new Set();
@@ -36,12 +36,16 @@ try {
       redirect: 'error',
       signal: AbortSignal.timeout(15000),
       headers: { 'Content-Type': 'application/json', 'Shopify-Storefront-Private-Token': token },
-      body: JSON.stringify({ query, variables: { handle: collection, cursor } }),
+      body: JSON.stringify({
+        query,
+        variables: collection ? { handle: collection, cursor } : { cursor },
+      }),
     });
     if (!response.ok) throw new Error('request');
     const result = await response.json();
-    if (result.errors?.length || !result.data?.collection) throw new Error('collection');
-    const connection = result.data.collection.products;
+    if (result.errors?.length || !result.data) throw new Error('response');
+    const connection = collection ? result.data.collection?.products : result.data.products;
+    if (!connection) throw new Error('collection');
     products.push(...connection.nodes);
     if (!connection.pageInfo.hasNextPage) {
       complete = true;

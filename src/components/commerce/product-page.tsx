@@ -3,7 +3,7 @@ import { currentPerson } from '@/domains/person/current';
 import { CabinetSave } from './cabinet-controls';
 import { saveProductAction } from '@/app/(workspace)/app/collection/actions';
 import { notFound } from 'next/navigation';
-import { brandProducts, lifestyleCollectionHandle } from '@/domains/commerce/lifestyle';
+import { catalogProductAllowed, lifestyleAssortmentHandle } from '@/domains/commerce/lifestyle';
 import { previewProduct } from '@/domains/catalog/preview';
 import { commerceConfigured, getProduct, listProducts } from '@/domains/commerce/shopify';
 import { readProductStory } from '@/domains/commerce/product-story';
@@ -47,10 +47,10 @@ export async function ProductPage({
   if (
     liveOnly &&
     product &&
-    !brandProducts(
-      [product],
-      lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
-    ).length
+    !catalogProductAllowed(
+      product,
+      lifestyleAssortmentHandle(process.env.SHOPIFY_LIFESTYLE_COLLECTION),
+    )
   )
     notFound();
   if (!product && !preview) notFound();
@@ -63,9 +63,11 @@ export async function ProductPage({
     handle,
     collectionEntries(
       liveOnly
-        ? brandProducts(
-            relatedProducts,
-            lifestyleCollectionHandle(process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION),
+        ? relatedProducts.filter((entry) =>
+            catalogProductAllowed(
+              entry,
+              lifestyleAssortmentHandle(process.env.SHOPIFY_LIFESTYLE_COLLECTION),
+            ),
           )
         : relatedProducts,
     ),

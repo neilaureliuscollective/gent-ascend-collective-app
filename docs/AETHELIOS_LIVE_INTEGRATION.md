@@ -26,8 +26,6 @@ The current Vercel OpenAI Secret is already scoped to Preview/Production. No rep
 
 Integrated lint, typecheck, **75 files / 491 unit/SQL tests** and historical 28-file ledger pass. New integration script parses with Node. Local production build/browser execution still cannot complete because the pinned MediaPipe download and loopback serving are restricted; no check or asset is bypassed. Real local Supabase Auth acceptance requires the connected CI Docker runtime. Remote CI/deployment receipts must be recorded separately after publication.
 
-## Release decision
-
 ## Connected candidate evidence — October 12
 
 Published draft [PR #90](https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/90). Initial GitHub commit `0feae2a22ce1afcd81c370454148d866896fdffd` has exactly the locally validated tree `46578c399f573791be1f340db0eefd3f0265b527`. Its Vercel preview `dpl_GvWpFo2ag9ymYCTMBSQHJAawYyKP` reached READY, and connected CI passed the production build, lint/types/unit checks and **real local password Auth/PostgREST Live/action job**. Focused browser checks passed 32/34; both failures were the creation-task select's implicit label including option text. Added a unique explicit label association; the same approval/edit assertions remain required on phone and desktop.
@@ -37,5 +35,7 @@ Main advanced to Lifestyle commit `c13bced429ef4a8aeb22b9d7205dba19618b67d7`. Re
 Existing broad Quality gates are not green: the initial candidate's real founder browser suite passed 7/11, with failures in legacy Memory, entrance-button and Command selectors. These checks remain enabled and their failure blocks readiness; the new local Auth job does not substitute for them. No actual provider audio, acoustic latency, billing, hosted migration rollout or physical-device acceptance has been measured. OpenAI credentials already exist in the correct Vercel scopes; credentials alone do not satisfy these gates. Live remains default off and production admission rejected.
 
 ## Conditional activation decision
+
+Updated candidate `ff575f6f2e28d3fdb3e0d1071da125ebbc3a54de` passed both integration CI jobs: real local Auth and production build/interaction validation, including **34/34 focused browser checks** in 45.5 seconds. Vercel preview `dpl_1tfM91Sx6xuvdhpPyeta1ekUwmCZ` is READY for that exact commit. These are integration/fixture timings, not conversational latency. Main then advanced again to catalog fix `c0a7f35f9de0b314703814667bce82a79133adea`; recovered 12 more verified blobs and complete tree `38705ab1fd610271d38ba8e3948554a3bbec4760`, preserving its changes. Latest combined local lint/types and **78 files / 510 tests** pass. The newest candidate needs its own connected validation before any release decision.
 
 Not yet ready to enable or promote Live. Prepare a draft integration PR and protected preview, run exact-head connected CI, triage genuine regressions, then finish the documented non-production migration/provider/hosting/device gates. If any required gate remains failed or unrun, keep the candidate in review and production unchanged. The founder's conditional release authorization persists; no repeated permission question is required once those gates actually pass.
