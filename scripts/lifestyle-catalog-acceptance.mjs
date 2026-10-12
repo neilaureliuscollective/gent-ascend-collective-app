@@ -1,6 +1,6 @@
 // Read-only merchant acceptance. Run with securely supplied server environment.
 // Never prints tokens, cart keys, provider errors or private customer data.
-const domain = process.env.SHOPIFY_STORE_DOMAIN;
+const domain = process.env.SHOPIFY_STORE_DOMAIN?.trim().toLowerCase();
 const token = process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN;
 const collection = process.env.SHOPIFY_LEGACY_RESERVE_COLLECTION || 'legacy-reserve';
 if (

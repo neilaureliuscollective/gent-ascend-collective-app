@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/shop/cart', request.url));
     if (!cartLaunchPurchasable(cart))
       return NextResponse.redirect(new URL('/shop/cart?launch=held', request.url));
-    const store = process.env.SHOPIFY_STORE_DOMAIN!;
+    const store = process.env.SHOPIFY_STORE_DOMAIN!.trim().toLowerCase();
     const permitted = [store, 'checkout.shopify.com', process.env.SHOPIFY_CHECKOUT_HOST].filter(
       (host): host is string => Boolean(host),
     );

@@ -203,6 +203,21 @@ describe('Shopify commerce contract', () => {
     ).toBe('192.0.2.1');
   });
 
+  it('normalizes the configured Shopify hostname and classifies denied access without provider payloads', async () => {
+    vi.stubEnv('SHOPIFY_STORE_DOMAIN', ' Gent-Ascend.MyShopify.com ');
+    const fetch = vi.fn<(url: string, options: RequestInit) => Promise<Response>>(
+      async () => new Response('private provider response', { status: 401 }),
+    );
+    vi.stubGlobal('fetch', fetch);
+    await expect(getCart('gid://shopify/Cart/abc?key=private')).rejects.toMatchObject({
+      kind: 'authentication',
+      status: 401,
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe(
+      'https://gent-ascend.myshopify.com/api/2026-10/graphql.json',
+    );
+  });
+
   it('does not fabricate a cart on Shopify failure', async () => {
     vi.stubGlobal(
       'fetch',

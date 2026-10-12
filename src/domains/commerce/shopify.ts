@@ -5,6 +5,19 @@ import { collectCatalog, type CatalogPage } from './catalog-pagination';
 import { brandProducts, lifestyleCollectionHandle } from './lifestyle';
 
 const VERSION = '2026-10';
+export class ShopifyCommerceError extends Error {
+  constructor(
+    public readonly kind:
+      'configuration' | 'network' | 'authentication' | 'permission' | 'schema' | 'provider',
+    public readonly status?: number,
+  ) {
+    super('Shopify commerce is temporarily unavailable');
+    this.name = 'ShopifyCommerceError';
+  }
+}
+function storeDomain() {
+  return process.env.SHOPIFY_STORE_DOMAIN?.trim().toLowerCase();
+}
 
 export function commerceConfigured() {
   return Boolean(process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN);
@@ -117,10 +130,10 @@ const CART = `id checkoutUrl totalQuantity cost { subtotalAmount { amount curren
   `;
 
 function config() {
-  const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN;
+  const domain = storeDomain();
+  const token = process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN?.trim();
   if (!domain || !token || !/^[a-z0-9][a-z0-9.-]*\.myshopify\.com$/.test(domain))
-    throw new Error('Shopify commerce is not configured');
+    throw new ShopifyCommerceError('configuration');
   return { domain, token };
 }
 
@@ -143,10 +156,26 @@ export async function storefront<T>(
     cache: options.cache ?? 'no-store',
     ...(options.revalidate ? { next: { revalidate: options.revalidate } } : {}),
   });
-  if (!response.ok) throw new Error(`Shopify request failed (${response.status})`);
+  if (!response.ok)
+    throw new ShopifyCommerceError(
+      response.status === 401
+        ? 'authentication'
+        : response.status === 403
+          ? 'permission'
+          : 'provider',
+      response.status,
+    );
   const result = (await response.json()) as { data?: T; errors?: { message: string }[] };
-  if (result.errors?.length || !result.data)
-    throw new Error('Shopify returned an invalid commerce response');
+  if (result.errors?.length || !result.data) {
+    const messages = (result.errors ?? []).map((error) => error.message).join(' ');
+    throw new ShopifyCommerceError(
+      /access denied|unauthorized/i.test(messages)
+        ? 'permission'
+        : /doesn't exist|undefinedField|unknown argument/i.test(messages)
+          ? 'schema'
+          : 'provider',
+    );
+  }
   return result.data;
 }
 
