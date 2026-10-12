@@ -1,0 +1,24 @@
+{
+  "project": "volpzkfsnmtztrovexcw",
+  "deployment": "dpl_9anaf1EqHysrh1NNbxx57vsqjyqh",
+  "applicationSource": "43d6f3073dc358094c80c7e1c7b60a211813f742",
+  "migrations": [
+    {
+      "file": "ops/migrations/20261012105128_live_preview_scheduler.sql",
+      "hostedVersion": "20261012105924",
+      "sha256": "9a5d7c8b44d640e314dbebdf2965a964eb40b617036c51bff9d5e05fd392b422"
+    },
+    {
+      "file": "ops/migrations/20261012110203_live_preview_bounded_http.sql",
+      "hostedVersion": "20261012115829",
+      "sha256": "520d8550ad0df0276043ad8e34982ec5f1bc7d5d7d60576b5e3da2d29cf070be"
+    },
+    {
+      "file": "ops/preview-expiry-function.sql",
+      "hostedVersion": "20261012120112",
+      "sha256": "e7a954f2d27eafc2732fd3a089da7889e8c8e80499d748fd317e69f0631b7cf9"
+    }
+  ],
+  "job": "aethelios-live-preview-expiry",
+  "voiceEnabled": false
+}
