@@ -95,9 +95,9 @@ export function StudioFootage({ projectId }: { projectId: string }) {
       aria-label="AI footage production"
       aria-busy={busy}
     >
-      <div className="studio-section-heading">
+      <div className="studio-production-intro">
         <div>
-          <span className="studio-kicker">THE FOOTAGE ROOM</span>
+          <span className="eyebrow">THE FOOTAGE ROOM</span>
           <h3>Give your vision movement.</h3>
         </div>
         <p>
@@ -116,7 +116,7 @@ export function StudioFootage({ projectId }: { projectId: string }) {
       {data && !data.canCreate && (
         <p className="studio-notice">Generation requires eligible Studio access.</p>
       )}
-      <div className="studio-motion-settings">
+      <div className="studio-motion-controls">
         <label>
           Clip title
           <input
@@ -204,7 +204,7 @@ export function StudioFootage({ projectId }: { projectId: string }) {
           </label>
         </div>
       )}
-      <div className="studio-motion-actions">
+      <div className="studio-finish-actions">
         <button
           type="button"
           disabled={busy || !enabled || prompt.trim().length < 3 || !title.trim()}
@@ -269,7 +269,7 @@ export function StudioFootage({ projectId }: { projectId: string }) {
         </p>
       )}
       {error && (
-        <p role="alert" className="studio-notice">
+        <p role="alert" className="studio-error">
           {error}
         </p>
       )}
