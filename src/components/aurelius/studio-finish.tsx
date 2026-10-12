@@ -291,7 +291,7 @@ export function StudioFinish({
     setSelected(id);
     setDraft(fromRecord(record));
     setUpdatedAt(record?.updated_at ?? null);
-    setImage(null);
+    if (id !== selected) setImage(null);
     setDirty(false);
     setError('');
   }

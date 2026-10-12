@@ -127,41 +127,63 @@ test('exports a real multi-format ZIP and a playable captured video, then releas
   const pack = await packEvent;
   expect(pack.suggestedFilename()).toMatch(/campaign\.zip$/);
   await pack.saveAs('test-results/studio-campaign-pack.zip');
-  await page
-    .getByLabel('Import layout recipe', { exact: true })
-    .setInputFiles({
-      name: 'layout.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(
-        JSON.stringify({
-          version: 1,
-          sourceVersionId: version,
-          brand: {
-            name: 'Fixture Brand',
-            voice: 'Clear',
-            background: '#080A0B',
-            foreground: '#E6E7E2',
-            accent: '#C4912F',
-            typography: 'editorial',
-            logoReferenceId: null,
-          },
-          layout: {
-            format: 'square',
-            treatment: 'editorial',
-            brand: 'Imported copy',
-            headline: 'An editable return',
-            supporting: '',
-            footer: '',
-            focal_x: 50,
-            focal_y: 50,
-          },
-        }),
-      ),
-    });
+  await page.getByLabel('Import layout recipe', { exact: true }).setInputFiles({
+    name: 'layout.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        version: 1,
+        sourceVersionId: version,
+        brand: {
+          name: 'Fixture Brand',
+          voice: 'Clear',
+          background: '#080A0B',
+          foreground: '#E6E7E2',
+          accent: '#C4912F',
+          typography: 'editorial',
+          logoReferenceId: null,
+        },
+        layout: {
+          format: 'square',
+          treatment: 'editorial',
+          brand: 'Imported copy',
+          headline: 'An editable return',
+          supporting: '',
+          footer: '',
+          focal_x: 50,
+          focal_y: 50,
+        },
+      }),
+    ),
+  });
   await expect(page.getByLabel('Headline', { exact: true })).toHaveValue('An editable return');
+  await expect(
+    page.getByRole('button', { name: 'Export campaign pack', exact: false }),
+  ).toBeEnabled();
 
   await tabs.getByRole('button', { name: 'Campaign', exact: true }).click();
   await page.getByLabel('Seconds per scene').selectOption('2');
+  // Real short WAV soundtrack exercises AudioContext and the recorded audio track.
+  const samples = 16000,
+    wav = Buffer.alloc(44 + samples * 2);
+  wav.write('RIFF', 0);
+  wav.writeUInt32LE(wav.length - 8, 4);
+  wav.write('WAVEfmt ', 8);
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(8000, 24);
+  wav.writeUInt32LE(16000, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write('data', 36);
+  wav.writeUInt32LE(samples * 2, 40);
+  for (let i = 0; i < samples; i++)
+    wav.writeInt16LE(Math.round(Math.sin((i * 2 * Math.PI * 220) / 8000) * 1000), 44 + i * 2);
+  await page
+    .getByLabel('Optional soundtrack', { exact: false })
+    .setInputFiles({ name: 'fixture-tone.wav', mimeType: 'audio/wav', buffer: wav });
+
   await page.evaluate(() => {
     const Original = window.MediaRecorder;
     class ObservedRecorder extends Original {
@@ -177,6 +199,13 @@ test('exports a real multi-format ZIP and a playable captured video, then releas
   await expect(page.getByRole('button', { name: 'Download film', exact: false })).toBeVisible({
     timeout: 20000,
   });
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as { studioTracks: MediaStreamTrack[] }).studioTracks
+        .map((t) => t.kind)
+        .sort(),
+    ),
+  ).toEqual(['audio', 'video']);
   const video = page.getByLabel('Completed campaign motion film');
   await expect(video).toBeVisible();
   await video.evaluate(async (node) => {
