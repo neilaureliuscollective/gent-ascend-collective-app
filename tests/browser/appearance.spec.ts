@@ -91,7 +91,7 @@ test('connected light follows navigation and becomes still while reading a dialo
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'true');
   await expect(page.locator('.ambient-light')).toHaveCSS('animation-play-state', 'paused');
-  await expect(page.locator('.connection-arrival')).toHaveCSS('animation-play-state', 'paused');
+  await expect(page.locator('.connection-arrival')).toHaveCSS('animation-name', 'none');
   await page.keyboard.press('Escape');
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'false');
   await page.getByRole('button', { name: 'Pause ambient motion' }).click();
