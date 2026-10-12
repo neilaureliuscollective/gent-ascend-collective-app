@@ -1,5 +1,7 @@
 import 'server-only';
-import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
+import { tag, hangup, recoverExpiredLive } from './cleanup';
+export { endLive } from './cleanup';
 import {
   intelligenceSession,
   IntelligenceError,
@@ -28,53 +30,15 @@ import {
 } from '@/domains/artifacts/service';
 import { z } from 'zod';
 import { visualContext } from '@/domains/artifacts/visual';
-type Session = Awaited<ReturnType<typeof intelligenceSession>>;
 const base = 'https://api.openai.com/v1/realtime/calls';
 const promptVersion = 'aethelios-live-pilot.1';
-function tag(key: string, owner: string, session: string, call: string) {
-  return createHmac('sha256', key)
-    .update(JSON.stringify([owner, session, call]))
-    .digest('hex');
-}
-function validTag(key: string, owner: string, session: string, call: string, signature: string) {
-  const expected = Buffer.from(tag(key, owner, session, call));
-  const received = Buffer.from(signature);
-  return received.length === expected.length && timingSafeEqual(expected, received);
-}
-async function hangup(key: string, call: string) {
-  const response = await fetch(`${base}/${encodeURIComponent(call)}/hangup`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}` },
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok && response.status !== 404 && response.status !== 410)
-    throw new Error('Voice cleanup unavailable');
-}
-export async function endLive(sessionId: string, session?: Session) {
-  const { client, person } = session ?? (await intelligenceSession());
-  const { data, error } = await client
-    .from('ai_live_sessions')
-    .select('*')
-    .eq('id', sessionId)
-    .eq('person_id', person.id)
-    .maybeSingle();
-  if (error) throw new IntelligenceError('Voice cleanup could not be confirmed.', 503);
-  if (!data) return;
-  if (data.call_id) {
-    const key = process.env.OPENAI_API_KEY;
-    if (!key || !data.call_tag || !validTag(key, person.id, sessionId, data.call_id, data.call_tag))
-      throw new IntelligenceError('Voice cleanup could not be verified.', 503);
-    await hangup(key, data.call_id);
-  }
-  const finished = await client.rpc('ai_live_end', { p_id: sessionId, p_reason: 'ended' });
-  if (finished.error) throw new IntelligenceError('Voice cleanup could not be recorded.', 503);
-}
 export async function admitLive(input: LiveAdmission) {
   const config = liveConfig();
   const session = await intelligenceSession();
   const { client, person } = session;
   if (!(await currentAccess()).has('voice.use'))
     throw new IntelligenceError('Voice pilot access is not enabled for this account.', 403);
+  await recoverExpiredLive(session);
   const reserved = await client.rpc('ai_live_reserve', {
     p_id: input.sessionId,
     p_conversation: input.conversationId,

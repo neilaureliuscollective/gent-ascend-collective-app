@@ -1,3 +1,7 @@
+## Live expired-session recovery — 2026-10-12
+
+Added owner-triggered recovery before admission: expired unfinished calls are re-read through normal ownership, server bindings verified, provider hangup confirmed before recording cleanup, and uncertain cleanup/backlog blocks admission. Unexpired sessions in another tab remain protected. 520 unit/SQL tests and strict types pass. No schema, flag or production change. This does not supply independent expiry while the owner is absent; production remains blocked. Research and exact limitations: [AETHELIOS_LIVE_RECOVERY.md](AETHELIOS_LIVE_RECOVERY.md).
+
 ## Live integration candidate — conditional release — 2026-10-12
 
 Connected candidate published as draft PR #90: real Vercel preview build READY and local Supabase Auth/PostgREST Live/action acceptance PASS. Initial focused browser suite 32/34; explicit creation-task select labeling fixes both failing phone/desktop edit checks without removing assertions. Integrated latest main Lifestyle c13bced using verified complete tree 20c8e602; combined local lint/types and 504 tests pass. Exact updated-head connected checks remain required. Broad founder browser failures and actual provider/mobile/expiry/hosted rollout gates still block production activation. No production release or flag/migration change. See integration report for exact receipts and limitations.
