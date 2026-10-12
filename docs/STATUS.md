@@ -1,5 +1,7 @@
 ## Founder regression and test-release phase — 2026-10-12
 
+Initial connected repair passed focused integration/build and 10/11 founder flows. The remaining test found Welcome had lost its working FirstSession component. Restored that existing authenticated priority/next-move workflow and routed saved-plan handoffs to `/app/daily`; kept owner/version/quota and unavailable-context safeguards. The final exact candidate must pass real first-session persistence and its added focused browser cases. Production/voice flags and hosted data remain unchanged.
+
 Repaired stale real founder test entry paths and controls for current Talk-first routing, Enter Aethelios, Memory in Tools & context, and the dedicated daily workspace. Keeps actual persistence, stale-write, goal-history, invalid-login and first-session assertions intact; no access/product change or skipped tests. Exact connected real Next/Supabase validation is required. Three planned phases remain for public Live: isolated founder test environment, measured provider/mobile/cleanup acceptance, and final public release gates. You can test real voice after the first environment phase. Target/schema/worker setup remains unconfigured; existing OpenAI Vercel credential is present. Full plan: [AETHELIOS_LIVE_TEST_RELEASE_PLAN.md](AETHELIOS_LIVE_TEST_RELEASE_PLAN.md).
 
 ## Live hosted validation preparation — 2026-10-12

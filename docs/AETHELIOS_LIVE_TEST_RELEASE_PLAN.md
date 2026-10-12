@@ -10,6 +10,8 @@ Reviewed current official [Playwright locator guidance](https://playwright.dev/d
 
 ## Three remaining release phases
 
+First connected repair candidate `3f7b47a64c425fc9e0440785017056a6fb916e91` passed both focused Live integration jobs and its Vercel preview build. The actual founder suite improved to **10/11 passing**, exposing a real regression: Welcome no longer mounted the existing first-session planning component. Reconnect that component through its original authenticated daily service, retain safe unavailable-context recovery, and route saved-plan links to `/app/daily` instead of the Talk-first `/app` entrance. Add its existing browser cases to focused integration CI. The next exact candidate must prove the free-member save/reload/readback flow in real Next/Supabase; no successful founder gate is inferred from the first 10 passing cases.
+
 These are three bounded launch workstreams, not a promise that no defect will require another fix. Core conversation/images/visuals/coworker/action infrastructure is implemented; additional feature expansion is not a launch prerequisite.
 
 1. **Protected founder test environment.** Confirm an isolated non-production Supabase target, install/review the existing additive migrations, provision normal founder Auth/permission and server-only worker configuration, verify actual model access and bounded call cleanup on the hosted server, then enable the controlled preview. Gent project's branch list is empty; no alternate founder database or production migration may substitute. An existing preview reference or an explicit branch cost proposal is still needed. The OpenAI credential already exists in Vercel. You can begin real voice testing at the end of this phase, before public activation.

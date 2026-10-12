@@ -4,6 +4,8 @@ import { InstallGuide } from '@/components/install-guide';
 import { currentAccess } from '@/domains/access/current';
 import { readPilot } from '@/domains/pilot/service';
 import { brand } from '@/platform/brand';
+import { FirstSession } from '@/components/first-session';
+import { readWorldPriority } from '@/domains/daily/world-priority';
 import { claimPilotAction, setPilotPassword, submitFeedbackAction } from './actions';
 import './welcome-entry.css';
 
@@ -26,6 +28,7 @@ export default async function Welcome({
 }) {
   const [pilot, params] = await Promise.all([readPilot(), searchParams]);
   const access = pilot ? await currentAccess() : new Set<string>();
+  const priority = pilot ? await readWorldPriority().catch(() => null) : null;
   return (
     <>
       <div className="page-heading compact-heading">
@@ -74,6 +77,10 @@ export default async function Welcome({
             )}
           </section>
           <InstallGuide />
+          <FirstSession
+            initial={priority?.mode === 'personal' ? priority : null}
+            canTalk={access.has('aurelius.context')}
+          />
           <details className="panel pilot-section">
             <summary>Save a password for future sign-in</summary>
             <p>

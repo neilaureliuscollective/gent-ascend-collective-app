@@ -45,6 +45,7 @@ jobs:
           tests/browser/release-readiness.spec.ts
           tests/browser/obsidian-intelligence.spec.ts
           tests/browser/talk-layout.spec.ts
+          tests/browser/first-session.spec.ts
           --workers=2
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4, verified Oct 12
         if: always()
