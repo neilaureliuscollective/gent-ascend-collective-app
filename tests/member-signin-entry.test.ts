@@ -40,7 +40,7 @@ it('returning beta membership enters the product without a mandatory priority fi
 });
 it('founder enters the product without repeating setup', async () => {
   auth.pilot.mockResolvedValue({ beta: false, founder: true, person: { priority: '' } });
-  await expect(signIn(form())).rejects.toThrow('redirect:/app');
+  await expect(signIn(form())).rejects.toThrow('redirect:/app/founder');
 });
 it('paid membership enters Command through the existing capability check', async () => {
   auth.pilot.mockResolvedValue({ beta: false, founder: false, person: { priority: '' } });

@@ -10,13 +10,18 @@ const state = vi.hoisted(() => ({
     status: string;
     user_text: string;
     assistant_text: string;
+    prompt_version?: string;
   }>,
   failSave: false,
   modelFails: false,
+  founder: false,
 }));
 const model = vi.hoisted(() => vi.fn());
 const prepare = vi.hoisted(() => vi.fn());
 vi.mock('server-only', () => ({}));
+vi.mock('../src/domains/access/founder', () => ({
+  currentFounderAccess: async () => state.founder,
+}));
 vi.mock('ai', () => ({ generateText: model, Output: { object: () => ({}) } }));
 vi.mock('@ai-sdk/openai', () => ({ createOpenAI: () => ({ responses: () => ({}) }) }));
 vi.mock('../src/domains/companies/service', () => ({ readCompany: async () => state.job }));
@@ -108,6 +113,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.failSave = false;
   state.modelFails = false;
+  state.founder = false;
   state.versions = [];
   state.turns = [];
   state.job = {
@@ -138,6 +144,7 @@ beforeEach(() => {
       status: 'pending',
       user_text: args.text,
       assistant_text: '',
+      prompt_version: args.council ? `council.1.s.${args.council.specialists[0]}` : 'default',
     };
     state.turns.push(turn);
     return {
@@ -160,6 +167,37 @@ beforeEach(() => {
   process.env.OPENAI_API_KEY = 'test-only';
 });
 describe('company deliverable generation recovery', () => {
+  it('denies founder Coworkers to an ordinary account before reservation or generation', async () => {
+    await expect(
+      generateWork({ ...input, specialistId: 'mara' }, new AbortController().signal),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(prepare).not.toHaveBeenCalled();
+    expect(model).not.toHaveBeenCalled();
+  });
+  it('persists the selected founder contribution and rejects changed-assignment recovery without another call', async () => {
+    state.founder = true;
+    state.failSave = true;
+    const assigned = { ...input, specialistId: 'mara' as const };
+    await expect(generateWork(assigned, new AbortController().signal)).rejects.toThrow(
+      /Model reply saved/,
+    );
+    expect(state.turns[0]!.prompt_version).toBe('council.1.s.mara');
+    expect(JSON.stringify(model.mock.calls[0])).toContain('Financial intelligence');
+    state.failSave = false;
+    await expect(
+      generateWork({ ...assigned, specialistId: 'cassian' }, new AbortController().signal),
+    ).rejects.toThrow(/assignment changed/);
+    await expect(generateWork(input, new AbortController().signal)).rejects.toThrow(
+      /assignment changed/,
+    );
+    const recovered = await generateWork(assigned, new AbortController().signal);
+    expect(recovered.versions).toHaveLength(1);
+    expect(model).toHaveBeenCalledTimes(1);
+    state.founder = false;
+    await expect(generateWork(assigned, new AbortController().signal)).rejects.toMatchObject({
+      status: 403,
+    });
+  });
   it('saves a validated model version using only the scoped job and retained brief', async () => {
     const work = await generateWork(input, new AbortController().signal);
     expect(work.versions).toHaveLength(1);

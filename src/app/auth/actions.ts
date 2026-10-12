@@ -51,7 +51,8 @@ export async function signIn(form: FormData) {
   if (form.get('claim') === '1') redirect('/experience/world?claim=1');
   if (form.get('entry') === 'membership') redirect('/app/membership');
   const [pilot, person] = await Promise.all([readPilot(), currentPerson()]);
-  if (pilot?.beta || pilot?.founder || person?.onboarding_completed || person?.priority)
+  if(pilot?.founder)redirect('/app/founder');
+  if (pilot?.beta || person?.onboarding_completed || person?.priority)
     redirect('/app');
   if ((await currentAccess()).has('aurelius.context')) redirect('/app');
   redirect('/app/welcome');

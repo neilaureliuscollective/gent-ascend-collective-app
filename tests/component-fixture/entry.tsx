@@ -1,4 +1,7 @@
 import { MissionHandoffFixture } from './mission-handoff';
+import {FounderOffice} from '@/components/founder-office/office';
+import {founderOfficeFixture} from './founder-office-data';
+import '@/app/imperial-workspace.css';
 import { syntheticWork } from './company-work-data';
 import { CompanyRoom } from '@/components/companies/company-room';
 import '@/app/(workspace)/app/work/work.css';
@@ -105,14 +108,14 @@ const lifecycle: FormAction = async (_previous, form) => ({
       : 'Goal archived. It remains in your history.',
 });
 createRoot(document.getElementById('root')!).render(
-  mode === 'mission' ? (
+  mode === 'founder-office' ? <div className="aethelios-aether imperial-workspace"><p>Synthetic Founder Office fixture · no account, live model or external action.</p><FounderOffice initial={founderOfficeFixture}/></div> : mode === 'mission' ? (
     <MissionHandoffFixture />
-  ) : mode === 'company-room' || mode === 'company-job' ? (
+  ) : mode === 'company-room' || mode === 'company-job' || mode === 'founder-job' ? (
     <>
       <p>Synthetic company-room fixture · no account or live model.</p>
       <CompanyRoom
-        initialWork={mode === 'company-job' ? syntheticWork : undefined}
-        initialConversation={mode === 'company-job' ? syntheticWork.job.conversation_id : undefined}
+        initialWork={mode !== 'company-room' ? syntheticWork : undefined}
+        initialConversation={mode !== 'company-room' ? syntheticWork.job.conversation_id : undefined}
         initial={{
           company: {
             id: 'c8000000-0000-4000-8000-000000000001',
@@ -128,6 +131,7 @@ createRoot(document.getElementById('root')!).render(
           hasOlderTurns: false,
           nextCursor: null,
           canChat: true,
+          founderAccess: mode==='founder-job',
         }}
       />
     </>

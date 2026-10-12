@@ -30,10 +30,12 @@ test('founder can save a profile and goal without paid membership, then retain c
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
   for (const entry of ['/', '/experience', '/enter']) {
     await page.goto(entry);
-    await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+    await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('office.');
+    await page.goto('/app/ongoing');
     await expect(page.locator('.command-presence')).toBeVisible();
     await page.locator('.home-compose summary').click();
     await expect(page.getByRole('textbox', { name: 'What are we working on?' })).toBeVisible();
@@ -121,7 +123,8 @@ test('Fuel & Body persists references and daily records through the real app and
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/ongoing');
   await page.goto('/app/performance');
   await page.getByRole('button', { name: 'Fuel & Body', exact: true }).click();
   await page.getByRole('button', { name: /(?:Set|Edit) my references/ }).click();
@@ -151,7 +154,8 @@ test('Restore saves a practice and recovery check-in through the real authentica
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/ongoing');
   await page.goto('/app/performance');
   await page.getByRole('button', { name: 'Restore', exact: true }).click();
   await page.getByRole('button', { name: /^(Choose|Edit) today’s practice$/ }).click();
@@ -192,7 +196,8 @@ test('Movement persists activity and removal through the real authenticated app'
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/ongoing');
   await page.goto('/app/performance');
   await page.getByRole('button', { name: 'Movement', exact: true }).click();
   await page.getByRole('button', { name: 'Record activity', exact: true }).click();
@@ -229,7 +234,8 @@ test('Daily Command saves arrival and feedback through real Auth, then reloads t
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/ongoing');
   await page.goto('/app/arrival');
   const commandResponse = await page.request.get('/api/daily-command');
   const commandData = await commandResponse.json();
@@ -262,7 +268,8 @@ test('Cabinet product persists and appears beside its owner-linked grooming ritu
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/ongoing');
   await page.goto('/app/grooming');
   await page.getByText('Direction, routines & private history', {exact:true}).click();
   await page.getByRole('button', { name: 'Edit ritual structure' }).click();
@@ -311,7 +318,8 @@ test('authenticated order workspace stays closed without merchant configuration'
   await page.goto('/dev');
   await page.getByLabel('Local entry token').fill(env.AURELIUS_DEV_TOKEN!);
   await page.getByRole('button', { name: 'Enter as founder' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3103/app');
+  await expect(page).toHaveURL('http://127.0.0.1:3103/app/founder');
+  await page.goto('/app/ongoing');
   await page.goto('/app/collection/orders');
   await expect(page.getByText(/Shopify account connection is not open yet/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Connect Shopify account' })).toHaveCount(0);
@@ -348,7 +356,7 @@ test('free member first session saves and resumes through real Next and Supabase
   await expect(
     page.getByRole('status').filter({ hasText: 'priority and next move' }),
   ).toContainText('saved to Command');
-  await page.goto('/app');
+  await page.goto('/app/ongoing');
   await page.getByRole('button', { name: /^Day workspace/ }).click();
   await expect(
     page.getByRole('heading', { name: 'Synthetic first-session direction', exact: true }),

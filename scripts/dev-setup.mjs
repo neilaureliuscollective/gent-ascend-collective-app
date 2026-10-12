@@ -30,6 +30,22 @@ for (const id of ['00000000-0000-4000-8000-000000000001', '00000000-0000-4000-80
   const { error } = await admin.auth.admin.updateUserById(id, { password, email_confirm: true });
   if (error) throw new Error('Local seed identity missing; run npm run db:reset. ' + error.message);
 }
+// The local harness still uses a real trusted founder grant, never client metadata.
+// This administrative client is already restricted above to loopback Supabase.
+const localFounder = await admin
+  .from('persons')
+  .select('id')
+  .eq('auth_user_id', '00000000-0000-4000-8000-000000000001')
+  .single();
+if (localFounder.error || !localFounder.data)
+  throw new Error('Local founder person missing. Reset the local synthetic seed.');
+const grant = await admin
+  .from('founder_access')
+  .upsert({
+    person_id: localFounder.data.id,
+    grant_reason: 'Synthetic local Founder Office acceptance only',
+  });
+if (grant.error) throw new Error('Local founder grant could not be provisioned.');
 writeFileSync(
   '.env.development.local',
   `APP_ENV=local

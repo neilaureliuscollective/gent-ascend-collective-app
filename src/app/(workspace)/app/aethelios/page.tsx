@@ -18,7 +18,6 @@ export default async function AetheliosPage({
   searchParams: Promise<{ starter?: string; conversation?: string; link?: string }>;
 }) {
   const params = await searchParams;
-  const linked = false;
   const starters: Record<string, string> = {
     'weekly-review':
       'Review my last seven days using my saved personal context if I enable it. Distinguish missing records from zero activity. Help me identify what worked, what got in the way, and one realistic adjustment for next week. Ask only what is needed. Propose changes for my review; do not claim to save them.',
@@ -72,7 +71,6 @@ export default async function AetheliosPage({
       </header>
       <section className="aurelius-surface">
         <AureliusWorkspace
-          founderLinked={linked}
           key={initialConversation ?? (initialDraft || 'new')}
           initialDraft={initialDraft}
           initialConversation={initialConversation}

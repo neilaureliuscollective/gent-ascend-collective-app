@@ -1,0 +1,128 @@
+.founder-office {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 1440px;
+  margin: auto;
+  color: var(--io-text);
+}
+.founder-office .panel {
+  min-width: 0;
+  background: var(--io-navigation);
+  border: 1px solid var(--io-divider);
+  border-radius: 1.25rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  scroll-margin-top: 5rem;
+}
+.founder-authority {
+  color: var(--io-highlight);
+}
+.founder-office :is(input, select, textarea) {
+  width: 100%;
+  max-width: 100%;
+  color: var(--io-text);
+  background: var(--io-environment);
+  border: 1px solid var(--io-selected-edge);
+  border-radius: 0.6rem;
+  padding: 0.8rem;
+  font: inherit;
+}
+.founder-office fieldset {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 0;
+  padding: 1rem 0;
+}
+.founder-office fieldset:disabled {
+  opacity: 0.7;
+}
+.founder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.founder-card,
+.founder-receipt {
+  padding: 1.25rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--io-divider);
+  border-radius: 0.8rem;
+  background: var(--io-raised);
+  overflow-wrap: anywhere;
+}
+.founder-card h3 {
+  margin: 0.35rem 0;
+  font-size: 1.2rem;
+}
+.founder-office :is(p, li, dt) {
+  color: var(--io-secondary);
+  line-height: 1.6;
+}
+.founder-office :is(a, summary) {
+  color: var(--io-highlight);
+}
+.founder-office details {
+  margin: 1rem 0;
+}
+.founder-office summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.5rem 0;
+}
+.founder-office code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.founder-prewrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.founder-receipt {
+  display: grid;
+  gap: 0.75rem;
+}
+.founder-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.founder-metrics dd {
+  font-size: 1.7rem;
+  color: var(--io-text);
+  margin: 0.25rem 0;
+}
+.founder-office .memory-space {
+  max-width: 100%;
+}
+.founder-office button {
+  min-height: 44px;
+}
+.mission-task-plan input[type='checkbox'] {width:1.2rem;min-height:1.2rem;margin-right:.6rem;}
+.mission-task-plan,.mission-approval-plan {margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--io-divider);}
+.mission-task-plan :is(input,select,textarea),.mission-approval-plan :is(input,select,textarea) {max-width:100%;}
+@media (max-width: 700px) {
+  .founder-office .io-work-links {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .founder-office .io-hero h1 {
+    font-size: clamp(2rem, 9vw, 3.5rem);
+  }
+  .founder-card {
+    padding: 1rem;
+  }
+  .founder-office .io-work-links > * {
+    max-width: 100%;
+  }
+}
+@media (forced-colors: active) {
+  .founder-office :is(.panel, .founder-card, .founder-receipt) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .founder-office :is(p, li, dt, dd) {
+    color: CanvasText;
+  }
+}

@@ -161,7 +161,7 @@ for (const width of [360, 720, 1024, 1920])
     await page.getByLabel('Message Aethelios').fill('Plan a strategy');
     await page.getByRole('button', { name: 'Meet the Intelligence Team' }).click();
     const dialog = page.locator('.council-dialog:not(.mission-editor)');
-    await expect(dialog.getByRole('heading', { name: 'Your Intelligence Team' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Your Entities' })).toBeVisible();
     expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

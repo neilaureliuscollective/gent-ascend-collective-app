@@ -1,7 +1,8 @@
 'use client';
-import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useImperativeHandle, useRef, useState, useId, type Ref } from 'react';
 import {
   council,
+  allSpecialists,
   councilLabel,
   relevantCouncil,
   specialist,
@@ -20,9 +21,13 @@ export function CouncilPanel({
   onFocused,
   reviewRef,
   hideAccess = false,
+  founder = false,
+  companyMode = false,
 }: {
   reviewRef?: Ref<{ open: (asTable?: boolean) => void }>;
   hideAccess?: boolean;
+  founder?: boolean;
+  companyMode?: boolean;
   question: string;
   selection: CouncilSelection | null;
   disabled: boolean;
@@ -32,6 +37,8 @@ export function CouncilPanel({
   onFocused: (id: SpecialistId) => void;
 }) {
   const room = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const roster = founder ? allSpecialists : council;
   const [objective, setObjective] = useState('');
   const [cast, setCast] = useState<SpecialistId[]>([]);
   const [review, setReview] = useState(false);
@@ -49,7 +56,11 @@ export function CouncilPanel({
     room.current?.close();
   }
   return (
-    <div className="member-council" data-inline-access={!hideAccess} aria-label="Your Council">
+    <div
+      className="member-council"
+      data-inline-access={!hideAccess}
+      aria-label={founder ? 'Your Coworker Council' : 'Your Entities'}
+    >
       {!hideAccess && (
         <div className="council-access">
           <button type="button" className="text-button" onClick={() => open()}>
@@ -86,11 +97,13 @@ export function CouncilPanel({
           </button>
         </div>
       )}
-      <dialog ref={room} className="council-dialog" aria-labelledby="council-title">
+      <dialog ref={room} className="council-dialog" aria-labelledby={titleId}>
         <header>
           <div>
-            <p className="eyebrow">Aethelios · Your intelligence team</p>
-            <h2 id="council-title">{review ? 'The Table' : 'Your Intelligence Team'}</h2>
+            <p className="eyebrow">Aethelios · {founder ? 'Coworkers' : 'Entities'}</p>
+            <h2 id={titleId}>
+              {review ? 'The Table' : founder ? 'Your Coworkers' : 'Your Entities'}
+            </h2>
           </div>
           <button
             type="button"
@@ -115,7 +128,7 @@ export function CouncilPanel({
             </label>
             <fieldset>
               <legend>Invite two or three specialists</legend>
-              {council.map((member) => {
+              {roster.map((member) => {
                 const reason = tableRoutes(objective).find(
                   (route) => route.id === member.id,
                 )?.reason;
@@ -145,7 +158,10 @@ export function CouncilPanel({
               })}
             </fieldset>
             <p className="council-scope">
-              Scope: this conversation
+              Scope:{' '}
+              {companyMode
+                ? 'the selected company, its confirmed brief and this conversation'
+                : 'this conversation'}
               {includeContext
                 ? ', your relevant profile, goal, saved day and confirmed memories'
                 : ''}
@@ -166,7 +182,7 @@ export function CouncilPanel({
                 Confirm and assemble
               </button>
               <button type="button" className="text-button" onClick={() => setReview(false)}>
-                View the Council
+                View {founder ? 'Coworkers' : 'Entities'}
               </button>
             </div>
           </>
@@ -174,7 +190,7 @@ export function CouncilPanel({
           <>
             <p>Aethelios is your front door. Bring in a focused lens when it helps.</p>
             <div className="council-roster">
-              {council.map((member) => (
+              {roster.map((member) => (
                 <article key={member.id}>
                   <div>
                     <h3>{member.name}</h3>
@@ -208,9 +224,10 @@ export function CouncilPanel({
               ))}
             </div>
             <p className="council-scope">
-              Each specialist uses this account’s authorized context and the conversation you
-              choose. No founder repositories, private founder notebook or external integrations are
-              connected to the member Council.
+              Each specialist uses only this account’s authorized{' '}
+              {companyMode ? 'company context' : 'context'} and the conversation you choose. These
+              contributions are analysis and drafts, with saved turn receipts. External actions
+              require a connected executor and appropriate approval.
             </p>
             <button type="button" className="button" onClick={() => setReview(true)}>
               Set The Table
