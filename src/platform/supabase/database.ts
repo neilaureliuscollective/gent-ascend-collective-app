@@ -1294,6 +1294,18 @@ export interface Database {
         Args: { p_conversation: string; p_creation: string };
         Returns: boolean;
       };
+      talk_studio_entitled: { Args: { p_person: string }; Returns: boolean };
+      ai_talk_propose_image: {
+        Args: {
+          p_id: string;
+          p_conversation: string;
+          p_operation: string;
+          p_prompt: string;
+          p_project: string | null;
+        };
+        Returns: boolean;
+      };
+      ai_talk_claim_image: { Args: { p_id: string; p_approve: boolean }; Returns: boolean };
       ai_propose_image_artifact: {
         Args: {
           p_id: string;

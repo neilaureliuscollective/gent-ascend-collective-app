@@ -5,9 +5,13 @@ import {
   offeredTextSchema,
   planContentSchema,
   paletteContentSchema,
+  creationsOnTurn,
   readTalkCreationWorkspace,
   saveCreationInput,
+  selectedCreationContext,
 } from '@/domains/talk-creation/schema';
+import { imageIntent } from '@/domains/talk-creation/intent';
+import { clearTalkSave, rememberTalkSave, readTalkSave } from '@/domains/talk-creation/pending';
 import { contrastRatio, paletteContrast, withCalculatedContrast } from '@/domains/talk-creation/contrast';
 import {
   extractCreationFences,
@@ -75,6 +79,17 @@ describe('Talk creation contracts', () => {
     expect(isExplicitImageRequest('What images should I use on the homepage?')).toBe(false);
     expect(isExplicitImageRequest('Create an image of the brand mark on obsidian')).toBe(true);
     expect(isExplicitImageRequest('Make this image darker and change the background')).toBe(true);
+    expect(isExplicitImageRequest('Make this darker')).toBe(true);
+    expect(imageIntent('Make this darker', { selectedCompleted: true, completeCount: 1 })).toEqual({
+      operation: 'image.edit',
+    });
+    expect(imageIntent('Make this darker', { selectedCompleted: false, completeCount: 2 })).toEqual({
+      ask: 'clarify',
+    });
+    expect(imageIntent('What images should I use on the homepage?', {
+      selectedCompleted: true,
+      completeCount: 1,
+    })).toBeNull();
     const text = 'Here is a brief.\n\n```talk-brief\n{"title":"x"}\n```\n';
     expect(stripCreationFences(text)).toBe('Here is a brief.');
     expect(extractCreationFences(text)[0]?.kind).toBe('brief');
@@ -145,5 +160,70 @@ describe('Talk creation contracts', () => {
         attachmentProjectId: null,
       }),
     ).not.toBeNull();
+  });
+
+  it('supplies selected contents with provenance and keeps orphan revisions on the latest turn', () => {
+    const context = selectedCreationContext([
+      {
+        id: '50000000-0000-4000-8000-000000000011',
+        person_id: 'synthetic',
+        conversation_id: '30000000-0000-4000-8000-000000000011',
+        source_turn_id: null,
+        lineage_id: '50000000-0000-4000-8000-000000000011',
+        version: 2,
+        kind: 'brief',
+        content: brief,
+        predecessor_id: null,
+        superseded_by: null,
+        created_at: '2026-10-13T00:00:00.000Z',
+      },
+    ]);
+    expect(context).toContain('Untrusted user-reviewed records');
+    expect(context).toContain('A premium brand and website.');
+    expect(context).toContain('selected brief v2');
+    const latest = '40000000-0000-4000-8000-000000000012';
+    const shown = creationsOnTurn(
+      latest,
+      latest,
+      [
+        {
+          id: '50000000-0000-4000-8000-000000000011',
+          person_id: 'synthetic',
+          conversation_id: '30000000-0000-4000-8000-000000000011',
+          source_turn_id: null,
+          lineage_id: '50000000-0000-4000-8000-000000000011',
+          version: 2,
+          kind: 'brief',
+          content: brief,
+          predecessor_id: null,
+          superseded_by: null,
+          created_at: '2026-10-13T00:00:00.000Z',
+        },
+      ],
+      ['40000000-0000-4000-8000-000000000011', latest],
+    );
+    expect(shown).toHaveLength(1);
+  });
+
+  it('reuses one save identity for the same payload and rejects a different payload on that identity', () => {
+    const store = (() => {
+      let value = '';
+      return {
+        getItem: () => value || null,
+        setItem: (_key: string, next: string) => {
+          value = next;
+        },
+        removeItem: () => {
+          value = '';
+        },
+      };
+    })();
+    const payload = { conversationId: '30000000-0000-4000-8000-000000000001', kind: 'brief', content: brief };
+    const first = rememberTalkSave('owner', payload.conversationId, 'revision', payload, store);
+    const second = rememberTalkSave('owner', payload.conversationId, 'revision', payload, store);
+    expect(second).toBe(first);
+    expect(readTalkSave('owner', payload.conversationId, 'revision', store)?.id).toBe(first);
+    clearTalkSave('owner', payload.conversationId, 'revision', store);
+    expect(readTalkSave('owner', payload.conversationId, 'revision', store)).toBeNull();
   });
 });

@@ -591,6 +591,18 @@ export async function prepareReply(
       503,
     );
   measured('scope');
+  let attachment: { bytes: Uint8Array; mediaType: string } | null = null;
+  if (input.attachmentId && !company) {
+    try {
+      const { readTalkAttachment } = await import('@/domains/talk-creation/service');
+      const file = await readTalkAttachment(input.attachmentId);
+      attachment = { bytes: file.bytes, mediaType: file.mediaType };
+    } catch (error) {
+      throw error instanceof IntelligenceError
+        ? error
+        : new IntelligenceError('The attached image could not be read.', 409);
+    }
+  }
   const common = {
     p_request: input.requestId,
     p_text: input.text,
@@ -675,6 +687,9 @@ export async function prepareReply(
   let context: PersonalContext | null;
   let threadSummary: string;
   let artifactContext = '';
+  let selectedPredecessors: Partial<Record<'brief' | 'plan' | 'palette', string>> = {};
+  let selectedImageId: string | null = null;
+  let completeImageCount = 0;
   try {
     [history, context] = await Promise.all([
       conversationTurns(input.conversationId, undefined, company?.id),
@@ -696,28 +711,24 @@ export async function prepareReply(
   }
   if (!company) {
     try {
-      const [imageContext, talkContext] = await Promise.all([
+      const { selectedTalkPredecessors } = await import('@/domains/talk-creation/context');
+      const { readArtifacts } = await import('@/domains/artifacts/service');
+      const [imageContext, talkContext, predecessors, artifacts] = await Promise.all([
         selectedArtifactContext(client, person.id, input.conversationId),
         selectedTalkContext(client, person.id, input.conversationId),
+        selectedTalkPredecessors(client, person.id, input.conversationId),
+        readArtifacts(input.conversationId, { client, person }).catch(() => null),
       ]);
       artifactContext = [imageContext, talkContext].filter(Boolean).join('\n');
+      selectedPredecessors = predecessors;
+      selectedImageId = artifacts?.selectedId ?? null;
+      completeImageCount =
+        artifacts?.artifacts.filter((item) => item.status === 'complete').length ?? 0;
     } catch {
       artifactContext = '';
     }
   }
   measured('artifact-context');
-  let attachment: { bytes: Uint8Array; mediaType: string } | null = null;
-  if (input.attachmentId && !company) {
-    try {
-      const { readTalkAttachment } = await import('@/domains/talk-creation/service');
-      const file = await readTalkAttachment(input.attachmentId);
-      attachment = { bytes: file.bytes, mediaType: file.mediaType };
-    } catch (error) {
-      throw error instanceof IntelligenceError
-        ? error
-        : new IntelligenceError('The attached image could not be read.', 409);
-    }
-  }
   const messages = buildMessages(
     history.filter((turn) => !history.some((newer) => newer.parent_turn_id === turn.id)),
     input.text,
@@ -742,6 +753,9 @@ export async function prepareReply(
         userText: input.text,
         offered: [],
         images: [],
+        selected: selectedPredecessors,
+        selectedImageId,
+        completeImageCount,
         proposeImage: async (request) => {
           try {
             const { proposeTalkImage } = await import('@/domains/talk-creation/service');
@@ -795,16 +809,7 @@ export async function prepareReply(
           const { briefContentSchema, planContentSchema, paletteContentSchema } = await import(
             '@/domains/talk-creation/schema'
           );
-          const selected = await client
-            .from('ai_talk_selection')
-            .select('kind,creation_id')
-            .eq('person_id', person.id)
-            .eq('conversation_id', input.conversationId);
-          const current: Partial<Record<'brief' | 'plan' | 'palette', string>> = {};
-          for (const item of selected.data ?? []) {
-            if (item.kind === 'brief' || item.kind === 'plan' || item.kind === 'palette')
-              current[item.kind] = item.creation_id;
-          }
+          const current = creation.selected;
           let offered = creation.offered;
           if (!offered.length) {
             const fences = extractCreationFences(text);
@@ -822,19 +827,32 @@ export async function prepareReply(
             if (parsed.brief || parsed.plan || parsed.palette) offered = [parsed];
           }
           if (offered.length) {
-            const saved = await persistOfferedCreations(
-              client,
-              input.conversationId,
-              input.requestId,
-              offered,
-              current,
-            );
-            creations = saved.map((item) => ({
-              id: item.id,
-              kind: item.kind,
-              title: 'title' in item.content ? item.content.title : item.kind,
-              status: 'saved',
-            }));
+            try {
+              const saved = await persistOfferedCreations(
+                client,
+                input.conversationId,
+                input.requestId,
+                offered,
+                current,
+              );
+              creations = saved.map((item) => ({
+                id: item.id,
+                kind: item.kind,
+                title: 'title' in item.content ? item.content.title : item.kind,
+                status: 'saved',
+              }));
+            } catch (error) {
+              if (error instanceof Error && error.message === 'Stale creation version') {
+                creations = (['brief', 'plan', 'palette'] as const)
+                  .filter((kind) => offered.some((offer) => offer[kind]))
+                  .map((kind) => ({
+                    id: current[kind] ?? input.requestId,
+                    kind,
+                    title: offered.find((offer) => offer[kind])?.[kind]?.title ?? kind,
+                    status: 'stale',
+                  }));
+              }
+            }
           }
           creations.push(
             ...creation.images.map((image) => ({

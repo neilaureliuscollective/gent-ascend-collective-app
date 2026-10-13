@@ -151,6 +151,21 @@
   background: transparent;
   color: #e8cc96;
 }
+.talk-creation-history {
+  margin: 12px 0 0;
+  color: #e8cc96;
+}
+.talk-creation-history ol {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.talk-creation-detail .talk-swatch-meta input,
+.talk-creation-detail .talk-swatch-meta select {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 4px;
+}
 .talk-contrast {
   margin: 10px 0 0;
   padding: 0;

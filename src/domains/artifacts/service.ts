@@ -28,13 +28,22 @@ export async function proposeImage(
   } else if (!scope && (!access.has('voice.use') || !access.has('studio.create')))
     throw new IntelligenceError('Live Studio creation is not enabled for this account.', 403);
   const job = parsed.data;
-  const result = await client.rpc('ai_propose_image_artifact', {
-    p_id: job.id,
-    p_conversation: job.conversationId,
-    p_operation: job.operation,
-    p_prompt: job.prompt,
-    p_project: job.projectId,
-  });
+  const result =
+    admission === 'talk'
+      ? await client.rpc('ai_talk_propose_image', {
+          p_id: job.id,
+          p_conversation: job.conversationId,
+          p_operation: job.operation,
+          p_prompt: job.prompt,
+          p_project: job.projectId,
+        })
+      : await client.rpc('ai_propose_image_artifact', {
+          p_id: job.id,
+          p_conversation: job.conversationId,
+          p_operation: job.operation,
+          p_prompt: job.prompt,
+          p_project: job.projectId,
+        });
   if (result.error || !result.data)
     throw new IntelligenceError(
       'Proposal not saved. Select a completed image for an edit, or refresh the conversation.',
@@ -167,7 +176,9 @@ export async function reviewArtifact(
   const model = isVisual ? aiConfigSchema.parse(process.env).AURELIUS_AI_MODEL : '';
   const result = isVisual
     ? await client.rpc('ai_claim_visual_artifact', { p_id: id, p_approve: approve, p_model: model })
-    : await client.rpc('ai_claim_image_artifact', { p_id: id, p_approve: approve });
+    : admission === 'talk'
+      ? await client.rpc('ai_talk_claim_image', { p_id: id, p_approve: approve })
+      : await client.rpc('ai_claim_image_artifact', { p_id: id, p_approve: approve });
   if (result.error || !result.data)
     throw new IntelligenceError(
       'Approval was not confirmed. The selection may have changed or this operation is already reserved. Refresh before retrying.',

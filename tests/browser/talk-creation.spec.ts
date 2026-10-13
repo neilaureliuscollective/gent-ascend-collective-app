@@ -133,19 +133,55 @@ async function mockTalk(page: Page, turns: Turn[] = [turn]) {
     const url = new URL(route.request().url());
     if (!['127.0.0.1', 'localhost'].includes(url.hostname)) return route.abort();
     if (url.pathname === '/api/aurelius/creations') {
-      if (route.request().method() === 'GET') return route.fulfill({ json: state });
+      if (route.request().method() === 'GET') {
+        const lineage = url.searchParams.get('lineage');
+        if (lineage)
+          return route.fulfill({
+            json: { versions: state.creations.filter((item) => item.lineage_id === lineage) },
+          });
+        return route.fulfill({ json: state });
+      }
       const body = route.request().postDataJSON() as {
         id?: string;
         idea?: string;
         kind?: 'brief' | 'plan' | 'palette' | 'handoff';
         predecessorId?: string | null;
+        sourceTurnId?: string | null;
         content?: TalkCreationWorkspace['creations'][number]['content'];
       };
       if (body.idea) {
-        savedHandoff = { imported: false, content: { imported: false, idea: body.idea } };
+        const existing = state.creations.find((item) => item.id === body.id);
+        savedHandoff = { id: body.id, imported: false, content: { imported: false, idea: body.idea } };
+        if (!existing && body.id && state.creations[0])
+          state.creations.push({
+            person_id: state.creations[0].person_id,
+            conversation_id: state.creations[0].conversation_id,
+            lineage_id: body.id,
+            created_at: state.creations[0].created_at,
+            id: body.id,
+            kind: 'handoff',
+            source_turn_id: state.creations[0].source_turn_id,
+            version: 1,
+            predecessor_id: null,
+            superseded_by: null,
+            content: {
+              schema: 'talk-architect-handoff/v1',
+              conversationId: conversation,
+              preparedAt: new Date().toISOString(),
+              discipline: 'business',
+              idea: body.idea,
+              description: '',
+              decisions: '',
+              selections: [],
+              images: [],
+              imported: false,
+            },
+          });
         return route.fulfill({ json: savedHandoff });
       }
       if (body.kind && body.content && body.id) {
+        const existing = state.creations.find((item) => item.id === body.id);
+        if (existing) return route.fulfill({ json: { id: existing.id, recovered: true } });
         const predecessor = state.creations.find((item) => item.id === body.predecessorId);
         const base = predecessor ?? state.creations[0];
         if (!base) return route.fulfill({ status: 400, json: { error: 'No creation to refine.' } });
@@ -153,7 +189,7 @@ async function mockTalk(page: Page, turns: Turn[] = [turn]) {
         state.creations.push({
           person_id: base.person_id,
           conversation_id: base.conversation_id,
-          source_turn_id: base.source_turn_id,
+          source_turn_id: predecessor ? predecessor.source_turn_id : (body.sourceTurnId ?? null),
           lineage_id: predecessor?.lineage_id ?? body.id,
           created_at: base.created_at,
           id: body.id,
@@ -201,7 +237,7 @@ test('Talk creation journey keeps brief, palette and image review in the convers
   });
   await page.getByRole('button', { name: 'Open', exact: true }).first().click();
   await expect(page.getByRole('dialog', { name: 'Reviewed work' })).toBeVisible();
-  await expect(page.getByText('Use in Architect')).toBeVisible();
+  await expect(page.getByText('Prepare for Architect')).toBeVisible();
   await page.keyboard.press('Escape');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Open', exact: true }).first().click();
@@ -236,6 +272,6 @@ test('Use in Architect saves a package without claiming import', async ({ page }
   const panel = page.getByRole('complementary', { name: 'Reviewed work' });
   await expect(panel).toBeVisible();
   await panel.getByLabel('Architect idea').fill('A premium brand and website.');
-  await panel.getByRole('button', { name: 'Use in Architect', exact: true }).click();
+  await panel.getByRole('button', { name: 'Prepare for Architect', exact: true }).click();
   await expect.poll(() => mock.handoff()).toMatchObject({ imported: false });
 });

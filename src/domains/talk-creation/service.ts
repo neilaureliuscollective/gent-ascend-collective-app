@@ -141,8 +141,14 @@ export async function saveTalkCreation(input: unknown) {
     throw new IntelligenceError(
       error instanceof Error && error.message === 'Stale creation version'
         ? 'This version changed. Reload the saved work before editing again.'
-        : 'This work could not be saved.',
-      error instanceof Error && error.message === 'Stale creation version' ? 409 : 503,
+        : error instanceof Error && /reused with different inputs/i.test(error.message)
+          ? 'This save request was already used with different content. Start a new edit.'
+          : 'This work could not be saved.',
+      error instanceof Error &&
+        (error.message === 'Stale creation version' ||
+          /reused with different inputs/i.test(error.message))
+        ? 409
+        : 503,
     );
   }
 }
@@ -210,7 +216,7 @@ export async function prepareArchitectHandoff(input: unknown) {
   const content: HandoffContent = handoffContentSchema.parse({
     schema: 'talk-architect-handoff/v1',
     conversationId: parsed.data.conversationId,
-    preparedAt: new Date().toISOString(),
+    preparedAt: parsed.data.preparedAt ?? new Date().toISOString(),
     discipline: parsed.data.discipline,
     idea: parsed.data.idea,
     description: parsed.data.description,

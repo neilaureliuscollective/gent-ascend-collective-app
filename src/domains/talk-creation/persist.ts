@@ -34,13 +34,23 @@ export async function persistKind(
     p_content: content,
   });
   if (result.error || !result.data) {
-    const stale = result.error?.code === 'P0001' && /stale/i.test(result.error.message ?? '');
-    throw new Error(stale ? 'Stale creation version' : 'Creation could not be saved.');
+    const message = result.error?.message ?? '';
+    if (result.error?.code === 'P0001' && /stale/i.test(message))
+      throw new Error('Stale creation version');
+    if (/reused with different inputs/i.test(message))
+      throw new Error('Creation request reused with different inputs');
+    throw new Error('Creation could not be saved.');
   }
-  const receipt = result.data as { lineageId?: string; version?: number };
+  const receipt = result.data as { lineageId?: string; version?: number; recovered?: boolean };
   if (!receipt.lineageId || !receipt.version)
     throw new Error('Creation could not be saved.');
-  return { id, lineageId: receipt.lineageId, version: receipt.version, content };
+  return {
+    id,
+    lineageId: receipt.lineageId,
+    version: receipt.version,
+    content,
+    recovered: Boolean(receipt.recovered),
+  };
 }
 
 export async function persistOfferedCreations(

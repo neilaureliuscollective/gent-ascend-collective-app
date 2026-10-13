@@ -42,7 +42,7 @@ export function CreationCard({
         <p className="talk-creation-status">
           {creation.content.imported
             ? 'Architect accepted this package.'
-            : 'Saved for Architect. Import is pending the destination contract.'}
+            : 'Prepared for Architect. Import is pending the destination contract.'}
         </p>
       )}
       <div className="talk-creation-actions">

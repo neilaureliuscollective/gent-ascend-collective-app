@@ -43,9 +43,11 @@ import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
 import { routeCapability } from '@/domains/intelligence/capabilities';
 import {
+  creationsOnTurn,
   readTalkCreationWorkspace,
   type TalkCreationWorkspace,
 } from '@/domains/talk-creation/schema';
+import { clearTalkSave, readTalkSave, rememberTalkSave } from '@/domains/talk-creation/pending';
 import { CreationDetail } from './creation-detail';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
@@ -158,6 +160,15 @@ export function AureliusWorkspace({
   const [creationError, setCreationError] = useState('');
   const [creationNotice, setCreationNotice] = useState('');
   const [creationBusy, setCreationBusy] = useState(false);
+  const [historyCreations, setHistoryCreations] = useState<
+    import('@/domains/talk-creation/schema').TalkCreation[]
+  >([]);
+  const rememberHistory = useCallback(
+    (versions: import('@/domains/talk-creation/schema').TalkCreation[]) => {
+      setHistoryCreations(versions);
+    },
+    [],
+  );
   const [widePanel, setWidePanel] = useState(false);
   const [attachment, setAttachment] = useState<{
     id: string;
@@ -166,24 +177,121 @@ export function AureliusWorkspace({
   } | null>(null);
   const detailDialog = useRef<HTMLDialogElement>(null);
   const attachInput = useRef<HTMLInputElement>(null);
-  const loadCreations = useCallback(async (conversationId: string | null) => {
-    if (!conversationId) {
-      setCreationWorkspace(null);
-      return;
+  const creationRead = useRef<AbortController | null>(null);
+  const creationGeneration = useRef(0);
+  const imageWatch = useRef(0);
+  const imageTimer = useRef<number | null>(null);
+  const creationScope = useRef({ owner: '', conversation: null as string | null });
+  const stopImageWatch = useCallback(() => {
+    imageWatch.current += 1;
+    if (imageTimer.current) {
+      window.clearTimeout(imageTimer.current);
+      imageTimer.current = null;
     }
-    try {
-      const response = await fetch(`/api/aurelius/creations?conversationId=${conversationId}`, {
-        cache: 'no-store',
-      });
-      if (!response.ok) {
+  }, []);
+  const applyCreationWorkspace = useCallback(
+    (conversationId: string, owner: string, workspace: TalkCreationWorkspace | null) => {
+      if (creationScope.current.conversation !== conversationId) return;
+      if (creationScope.current.owner && creationScope.current.owner !== owner) return;
+      setCreationWorkspace(workspace);
+    },
+    [],
+  );
+  const watchImages = useCallback(
+    (conversationId: string, owner: string) => {
+      stopImageWatch();
+      const generation = imageWatch.current;
+      let delay = 1500;
+      const tick = async () => {
+        if (imageWatch.current !== generation) return;
+        if (creationScope.current.conversation !== conversationId) return;
+        if (creationScope.current.owner && creationScope.current.owner !== owner) return;
+        try {
+          const response = await fetch(
+            `/api/aurelius/creations?conversationId=${conversationId}`,
+            { cache: 'no-store' },
+          );
+          if (imageWatch.current !== generation) return;
+          if (!response.ok) return;
+          const workspace = readTalkCreationWorkspace(await response.json());
+          applyCreationWorkspace(conversationId, owner, workspace);
+          const unfinished = (workspace?.images ?? []).filter((item) =>
+            ['approval', 'running', 'uncertain'].includes(item.status),
+          );
+          if (!unfinished.length) return;
+        } catch {
+          /* A missed poll is not a failed job. Resume while this conversation is open. */
+        }
+        if (imageWatch.current !== generation) return;
+        delay = Math.min(delay * 1.4, 8000);
+        imageTimer.current = window.setTimeout(() => void tick(), delay);
+      };
+      void tick();
+    },
+    [applyCreationWorkspace, stopImageWatch],
+  );
+  const loadCreations = useCallback(
+    async (conversationId: string | null) => {
+      const generation = ++creationGeneration.current;
+      const owner = verifiedDraftOwner.current;
+      creationScope.current = { owner, conversation: conversationId };
+      creationRead.current?.abort();
+      const controller = new AbortController();
+      creationRead.current = controller;
+      if (!conversationId) {
+        stopImageWatch();
         setCreationWorkspace(null);
         return;
       }
-      setCreationWorkspace(readTalkCreationWorkspace(await response.json()));
-    } catch {
-      setCreationWorkspace(null);
-    }
-  }, []);
+      try {
+        const response = await fetch(`/api/aurelius/creations?conversationId=${conversationId}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted || generation !== creationGeneration.current) return;
+        if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+        if (!response.ok) {
+          applyCreationWorkspace(conversationId, owner, null);
+          return;
+        }
+        const workspace = readTalkCreationWorkspace(await response.json());
+        applyCreationWorkspace(conversationId, owner, workspace);
+        if (
+          workspace?.images.some((item) => ['approval', 'running', 'uncertain'].includes(item.status))
+        )
+          watchImages(conversationId, owner);
+        else stopImageWatch();
+      } catch {
+        if (!controller.signal.aborted && generation === creationGeneration.current)
+          applyCreationWorkspace(conversationId, owner, null);
+      }
+    },
+    [applyCreationWorkspace, stopImageWatch, watchImages],
+  );
+  const recoverPendingSaves = useCallback(
+    async (conversationId: string, owner: string) => {
+      for (const intent of ['revision', 'handoff'] as const) {
+        const pending = readTalkSave(owner, conversationId, intent);
+        if (!pending) continue;
+        try {
+          await jsonRequest('/api/aurelius/creations', 'POST', {
+            ...pending.payload,
+            id: pending.id,
+          });
+          clearTalkSave(owner, conversationId, intent);
+          setCreationNotice(
+            intent === 'handoff'
+              ? 'Prepared for Architect. Import is pending the destination contract.'
+              : 'Recovered the previous save.',
+          );
+          await loadCreations(conversationId);
+        } catch {
+          setCreationNotice('A previous save did not confirm. Open the work and save again.');
+        }
+      }
+    },
+    [loadCreations],
+  );
   function rememberConversation(id: string | null) {
     if (compact || !window.location.pathname.endsWith('/aethelios')) return;
     const url = new URL(window.location.href);
@@ -215,6 +323,8 @@ export function AureliusWorkspace({
           setSelected(null);
           setDraft('');
           setNeedsReload(false);
+          stopImageWatch();
+          setCreationWorkspace(null);
           return;
         }
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
@@ -236,7 +346,9 @@ export function AureliusWorkspace({
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
         setSelected(id);
-        void loadCreations(id);
+        void loadCreations(id).then(() => {
+          if (id && owner) void recoverPendingSaves(id, owner);
+        });
         if (!compact && window.location.pathname.endsWith('/aethelios')) {
           const url = new URL(window.location.href);
           if (id) url.searchParams.set('conversation', id);
@@ -261,7 +373,7 @@ export function AureliusWorkspace({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact, homeDraft, loadCreations],
+    [compact, homeDraft, loadCreations, recoverPendingSaves, stopImageWatch],
   );
   useEffect(() => {
     const media = window.matchMedia('(min-width: 900px)');
@@ -277,6 +389,7 @@ export function AureliusWorkspace({
     }
     if (!detailDialog.current?.open) detailDialog.current?.showModal();
   }, [openWorkId, widePanel]);
+  useEffect(() => () => stopImageWatch(), [stopImageWatch]);
   async function refreshMetadata(id: string) {
     reading.current?.abort();
     const controller = new AbortController();
@@ -589,6 +702,10 @@ export function AureliusWorkspace({
                 }
               : previous,
           );
+          if (item.creations?.some((creation) => creation.status === 'stale'))
+            setCreationNotice(
+              'A newer version was saved while this reply was generating. The proposal was not applied.',
+            );
           break; // A durable receipt is terminal; do not wait for transport EOF.
         } else if (item.type === 'error') throw new Error(item.message);
       }
@@ -699,18 +816,28 @@ export function AureliusWorkspace({
     setCreationNotice('');
   }
   async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'handoff', content: unknown) {
-    if (!selected || !openWorkId) return;
-    const current = creationWorkspace?.creations.find((item) => item.id === openWorkId);
+    if (!selected || !openWorkId || !data?.ownerId) return;
+    const current =
+      creationWorkspace?.creations.find((item) => item.id === openWorkId) ??
+      creationWorkspace?.creations.find(
+        (item) => item.lineage_id === openCreation?.lineage_id && !item.superseded_by,
+      );
+    const payload = {
+      conversationId: selected,
+      kind,
+      predecessorId: current?.id ?? null,
+      sourceTurnId: current?.source_turn_id ?? null,
+      content,
+    };
+    const id = rememberTalkSave(data.ownerId, selected, 'revision', payload);
     setCreationBusy(true);
     setCreationError('');
     try {
       const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
-        id: crypto.randomUUID(),
-        conversationId: selected,
-        kind,
-        predecessorId: current?.id ?? null,
-        content,
+        ...payload,
+        id,
       })) as { id: string };
+      clearTalkSave(data.ownerId, selected, 'revision');
       setOpenWorkId(saved.id);
       setCreationNotice('New version saved.');
       await loadCreations(selected);
@@ -760,10 +887,7 @@ export function AureliusWorkspace({
           : 'Image request declined.',
       );
       await loadCreations(selected);
-      if (approve && selected) {
-        window.setTimeout(() => void loadCreations(selected), 4000);
-        window.setTimeout(() => void loadCreations(selected), 12000);
-      }
+      if (approve && selected && data?.ownerId) watchImages(selected, data.ownerId);
     } catch (error) {
       setCreationError(error instanceof Error ? error.message : 'Image review could not be saved.');
     } finally {
@@ -781,23 +905,30 @@ export function AureliusWorkspace({
       setCreationError('Select a brief, plan or palette before preparing Architect.');
       return;
     }
+    const payload = {
+      conversationId: selected,
+      discipline: input.discipline,
+      idea: input.idea,
+      decisions: input.decisions,
+      creationIds: selectedIds,
+      imageIds: creationWorkspace?.selectedImageId ? [creationWorkspace.selectedImageId] : [],
+      preparedAt: new Date().toISOString(),
+    };
+    const id = rememberTalkSave(data.ownerId, selected, 'handoff', payload);
     setCreationBusy(true);
     setCreationError('');
     try {
       const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
-        id: crypto.randomUUID(),
-        conversationId: selected,
-        discipline: input.discipline,
-        idea: input.idea,
-        decisions: input.decisions,
-        creationIds: selectedIds,
-        imageIds: creationWorkspace?.selectedImageId ? [creationWorkspace.selectedImageId] : [],
-      })) as { content?: { imported?: boolean } };
+        ...payload,
+        id,
+      })) as { id?: string; content?: { imported?: boolean } };
+      clearTalkSave(data.ownerId, selected, 'handoff');
       setCreationNotice(
         saved.content?.imported
           ? 'Architect accepted the package.'
-          : 'Handoff package saved. Architect has not imported it yet.',
+          : 'Prepared for Architect. Import is pending the destination contract.',
       );
+      if (saved.id) setOpenWorkId(saved.id);
       handoff?.stage({
         text: input.idea,
         ownerId: data.ownerId,
@@ -806,7 +937,6 @@ export function AureliusWorkspace({
         payload: saved,
       });
       await loadCreations(selected);
-      router.push('/app/architect');
     } catch (error) {
       setCreationError(error instanceof Error ? error.message : 'The Architect package could not be saved.');
     } finally {
@@ -859,7 +989,10 @@ export function AureliusWorkspace({
     }
   }
   const blocked = liveBusy || busy || loading || deleting || orchestrating || creationBusy;
-  const openCreation = creationWorkspace?.creations.find((item) => item.id === openWorkId) ?? null;
+  const openCreation =
+    creationWorkspace?.creations.find((item) => item.id === openWorkId) ??
+    historyCreations.find((item) => item.id === openWorkId) ??
+    null;
   const openImage = creationWorkspace?.images.find((item) => item.id === openWorkId) ?? null;
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
 
@@ -1442,8 +1575,13 @@ export function AureliusWorkspace({
                           }
                         : undefined
                     }
-                    creations={creationWorkspace?.creations?.filter(
-                      (item) => item.source_turn_id === turn.id && !item.superseded_by,
+                    creations={creationsOnTurn(
+                      turn.id,
+                      data.turns
+                        .filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id))
+                        .at(-1)?.id,
+                      creationWorkspace?.creations,
+                      data.turns.map((item) => item.id),
                     )}
                     images={
                       turn.id ===
@@ -1484,6 +1622,8 @@ export function AureliusWorkspace({
                 onCopy={(text) => void navigator.clipboard.writeText(text)}
                 onSelect={() => void selectOpenCreation()}
                 onHandoff={(input) => void prepareArchitectPackage(input)}
+                onOpenVersion={(id) => setOpenWorkId(id)}
+                onHistory={rememberHistory}
               />
             </aside>
           )}
@@ -1664,6 +1804,8 @@ export function AureliusWorkspace({
               onCopy={(text) => void navigator.clipboard.writeText(text)}
               onSelect={() => void selectOpenCreation()}
               onHandoff={(input) => void prepareArchitectPackage(input)}
+              onOpenVersion={(id) => setOpenWorkId(id)}
+              onHistory={rememberHistory}
             />
           )}
         </dialog>
