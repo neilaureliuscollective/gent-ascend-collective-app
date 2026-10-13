@@ -209,6 +209,8 @@ describe('Construct isolated runner', () => {
     expect(invocation.args.join(' ')).not.toContain('docker.sock');
     expect(invocation.args.join(' ')).not.toContain('--privileged');
     expect(invocation.args.join(' ')).not.toContain('OPENAI');
+    expect(invocation.args.join(' ')).toContain('/tmp/construct-out:/out:rw');
+    expect(invocation.args.filter((arg) => arg.startsWith('/out:')).length).toBe(0);
   });
 
   it('records a failing isolated check without claiming process-fixture success', async () => {

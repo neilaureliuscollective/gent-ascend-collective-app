@@ -51,8 +51,6 @@ export function dockerInvocation(
     tmpfsWork,
     '--tmpfs',
     tmpfsTmp,
-    '--tmpfs',
-    tmpfsOut,
     '--user',
     constructNobody,
     '--cap-drop',
@@ -78,6 +76,7 @@ export function dockerInvocation(
   ];
   if (mounts.jobFile) args.push('-v', `${mounts.jobFile}:/opt/construct-job.json:ro`);
   if (mounts.outDir) args.push('-v', `${mounts.outDir}:/out:rw`);
+  else args.push('--tmpfs', tmpfsOut);
   if (mounts.name) args.push('--name', mounts.name);
   args.push('-w', '/work', image, 'node', '/opt/construct-runner.mjs');
   return { command: 'docker', args };

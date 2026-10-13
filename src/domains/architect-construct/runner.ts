@@ -1,4 +1,4 @@
-import { access, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
+import { access, chmod, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -376,7 +376,8 @@ export async function executeInContainer(
       return result;
     }
     await mkdir(snapshot, { recursive: true });
-    await mkdir(outDir, { recursive: true });
+    await mkdir(outDir, { recursive: true, mode: 0o777 });
+    await chmod(outDir, 0o777);
     await materializeSource(snapshot, job.source, job.scope);
     for (const file of job.scope.patch) assertWritable(file.path, job.scope);
     await writeFile(runnerFile, trustedContainerRunner);
