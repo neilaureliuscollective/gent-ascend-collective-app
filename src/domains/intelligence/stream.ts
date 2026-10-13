@@ -1,4 +1,4 @@
-import type { StreamEvent, Turn, OperationActivity } from './types';
+import type { StreamEvent, Turn, OperationActivity, StreamTimingStage } from './types';
 export type ActivityReporter = (phase: Exclude<OperationActivity, 'saving'>) => void;
 export type ModelChunk =
   | { type: 'text'; text: string }
@@ -14,7 +14,7 @@ export function replyStream(
   generate: (signal: AbortSignal, activity: ActivityReporter) => AsyncIterable<ModelChunk>,
   finish: FinishReply,
   requestSignal: AbortSignal,
-  options: { activity?: boolean } = {},
+  options: { activity?: boolean; diagnostics?: boolean } = {},
 ) {
   const abort = new AbortController();
   const signal = AbortSignal.any([requestSignal, abort.signal, AbortSignal.timeout(95000)]);
@@ -33,14 +33,42 @@ export function replyStream(
           }
         }
       };
+      const started = performance.now();
+      let firstEvent = false,
+        firstText = false,
+        usingTool = false;
+      const timed = (stage: StreamTimingStage) => {
+        if (options.diagnostics)
+          emit({ type: 'timing', stage, elapsedMs: performance.now() - started });
+      };
+      const providerEvent = () => {
+        if (!firstEvent) {
+          firstEvent = true;
+          timed('provider-first-event');
+        }
+      };
       let text = '';
       let input: number | undefined;
       let output: number | undefined;
       let complete = false;
       try {
-        for await (const chunk of generate(signal, (phase) => emit({ type: 'activity', phase }))) {
+        // Flush an observed acceptance event before waiting for the provider's first chunk.
+        // Legacy clients retain their unchanged delta/saved/error wire protocol.
+        emit({ type: 'activity', phase: 'waiting' });
+        for await (const chunk of generate(signal, (phase) => {
+          providerEvent();
+          const tool = phase === 'searching' || phase === 'researching';
+          if (tool !== usingTool) timed(tool ? 'tool-start' : 'tool-end');
+          usingTool = tool;
+          emit({ type: 'activity', phase });
+        })) {
+          providerEvent();
           if (signal.aborted) throw new Error('Interrupted');
           if (chunk.type === 'text') {
+            if (!firstText) {
+              firstText = true;
+              timed('provider-first-text');
+            }
             text += chunk.text;
             if (text.length > 64000) throw new Error('Reply too long');
             emit({ type: 'delta', text: chunk.text });
@@ -52,7 +80,9 @@ export function replyStream(
         }
         if (!complete || !text.trim() || signal.aborted) throw new Error('Incomplete reply');
         emit({ type: 'activity', phase: 'saving' });
+        timed('persistence-start');
         const turn = await finish(text, 'complete', input, output);
+        timed('persistence-end');
         emit({ type: 'saved', turn });
       } catch {
         const status = requestSignal.aborted || abort.signal.aborted ? 'cancelled' : 'failed';
@@ -69,6 +99,7 @@ export function replyStream(
               : 'The reply did not finish or could not be saved. Reload before trying again.',
         });
       } finally {
+        timed('stream-end');
         if (!disconnected) {
           try {
             controller.close();

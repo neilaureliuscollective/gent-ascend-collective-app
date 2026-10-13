@@ -8,6 +8,15 @@ import { generateReply } from '@/domains/intelligence/model';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 export async function POST(request: Request) {
+  const started = performance.now();
+  let previous = started;
+  const timings: string[] = [];
+  const measured = (stage: string) => {
+    const now = performance.now();
+    if (process.env.NODE_ENV === 'development')
+      timings.push(`${stage};dur=${(now - previous).toFixed(1)}`);
+    previous = now;
+  };
   try {
     const input = companyChatInput.safeParse(await mutationBody(request));
     if (!input.success)
@@ -17,7 +26,7 @@ export async function POST(request: Request) {
       : await workForConversation(input.data.companyId, input.data.conversationId);
     if (work && work.job.conversation_id !== input.data.conversationId)
       throw new IntelligenceError('Job conversation mismatch.', 400);
-    const prepared = await prepareReply({ ...input.data, includeContext: false });
+    const prepared = await prepareReply({ ...input.data, includeContext: false }, measured);
     if (work)
       prepared.messages.push({
         role: 'user',
@@ -48,13 +57,26 @@ export async function POST(request: Request) {
               ),
         prepared.finish,
         request.signal,
-        { activity: request.headers.get('X-Aethelios-Motion') === '1' },
+        {
+          activity: request.headers.get('X-Aethelios-Motion') === '1',
+          diagnostics:
+            process.env.NODE_ENV === 'development' &&
+            request.headers.get('X-Aethelios-Diagnostics') === '1',
+        },
       ),
       {
         headers: {
           'Content-Type': 'application/x-ndjson; charset=utf-8',
           'Cache-Control': 'private, no-store',
           'X-Content-Type-Options': 'nosniff',
+          ...(process.env.NODE_ENV === 'development'
+            ? {
+                'Server-Timing': [
+                  ...timings,
+                  `prepare;dur=${(performance.now() - started).toFixed(1)}`,
+                ].join(', '),
+              }
+            : {}),
         },
       },
     );

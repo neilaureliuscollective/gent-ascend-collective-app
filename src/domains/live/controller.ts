@@ -20,6 +20,9 @@ export type LiveState = {
   transcript: { id: string; role: 'user' | 'assistant'; text: string }[];
   playbackBlocked: boolean;
   cleanupPending: boolean;
+  recovering: boolean;
+  speechDetected: boolean;
+  responsePending: boolean;
 };
 /** One transport per workspace. Presentation changes never create a transport. */
 export class LiveController {
@@ -38,6 +41,9 @@ export class LiveController {
     transcript: [],
     playbackBlocked: false,
     cleanupPending: false,
+    recovering: false,
+    speechDetected: false,
+    responsePending: false,
   };
   private listeners = new Set<() => void>();
   private pc: RTCPeerConnection | null = null;
@@ -48,6 +54,7 @@ export class LiveController {
   private epoch = 0;
   private starting = false;
   private expiry: ReturnType<typeof setTimeout> | undefined;
+  private recovery: ReturnType<typeof setTimeout> | undefined;
   private audioFence = false;
   private diagnostics = new VoiceDiagnostics();
   private health = rtcHealth();
@@ -111,6 +118,8 @@ export class LiveController {
   }
   private release() {
     clearTimeout(this.expiry);
+    clearTimeout(this.recovery);
+    this.recovery = undefined;
     this.channel?.close();
     this.channel = null;
     this.pc?.close();
@@ -146,6 +155,9 @@ export class LiveController {
     this.starting = true;
     this.update({
       phase: 'connecting',
+      recovering: false,
+      speechDetected: false,
+      responsePending: false,
       mode: 'immersive',
       muted: false,
       error: '',
@@ -206,7 +218,24 @@ export class LiveController {
       };
       pc.onconnectionstatechange = () => {
         if (epoch !== this.epoch) return;
-        if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+        if (pc.connectionState === 'disconnected') {
+          if (this.recovery) return;
+          audio.volume = 0;
+          this.update({ recovering: true });
+          this.recovery = setTimeout(() => {
+            if (epoch === this.epoch) {
+              this.diagnostics.disconnected();
+              void this.end(
+                'The voice connection stopped. Start again to resume this conversation.',
+              );
+            }
+          }, 5000);
+        } else if (pc.connectionState === 'connected') {
+          clearTimeout(this.recovery);
+          this.recovery = undefined;
+          if (!this.audioFence) audio.volume = 1;
+          this.update({ recovering: false });
+        } else if (['failed', 'closed'].includes(pc.connectionState)) {
           this.diagnostics.disconnected();
           void this.end('The voice connection stopped. Start again to resume this conversation.');
         }
@@ -303,6 +332,9 @@ export class LiveController {
     this.release();
     this.update({
       phase: 'ended',
+      recovering: false,
+      speechDetected: false,
+      responsePending: false,
       muted: false,
       expiresAt: null,
       error: message,
@@ -333,7 +365,7 @@ export class LiveController {
       this.generating = false;
     }
     if (playing) this.send({ type: 'output_audio_buffer.clear' });
-    this.update({ phase: 'listening' });
+    this.update({ phase: 'listening', responsePending: false });
     if (cuttingOff) this.diagnostics.cutoff(performance.now() - started, this.currentResponse);
   }
   text(text: string) {
@@ -369,12 +401,18 @@ export class LiveController {
       void this.end('The voice provider stopped responding. Resume when ready.');
       return;
     }
-    if (event.type === 'input_audio_buffer.speech_started') this.interrupt();
+    if (event.type === 'input_audio_buffer.speech_started') {
+      this.interrupt();
+      this.update({ speechDetected: true });
+    }
+    if (event.type === 'input_audio_buffer.speech_stopped')
+      this.update({ speechDetected: false, responsePending: true });
     if (
       event.type === 'response.done' &&
       (!event.response?.id || event.response.id === this.currentResponse)
     ) {
       this.generating = false;
+      this.update({ responsePending: false });
       if (this.pendingCreate) {
         this.pendingCreate = false;
         this.send({ type: 'response.create' });
@@ -382,15 +420,16 @@ export class LiveController {
     }
     if (event.type === 'response.created') {
       this.generating = true;
+      this.update({ responsePending: true });
       this.currentResponse = event.response?.id ?? '';
     }
     if (event.type === 'output_audio_buffer.started') {
       if (event.response_id === this.interruptedResponse) return;
       if (this.audioFence && this.audio) {
-        this.audio.volume = 1;
+        this.audio.volume = this.state.recovering ? 0 : 1;
         this.audioFence = false;
       }
-      this.update({ phase: 'speaking' });
+      this.update({ phase: 'speaking', responsePending: false });
     }
     if (event.type === 'conversation.item.truncated' && event.item_id) {
       this.interruptedItems.add(event.item_id);
@@ -408,7 +447,10 @@ export class LiveController {
       this.interruptedItems.has(event.item_id)
     )
       return;
-    if (['output_audio_buffer.stopped', 'output_audio_buffer.cleared'].includes(event.type))
+    if (
+      ['output_audio_buffer.stopped', 'output_audio_buffer.cleared'].includes(event.type) &&
+      (!event.response_id || event.response_id === this.currentResponse)
+    )
       this.update({ phase: 'listening' });
     if (
       event.type === 'conversation.item.input_audio_transcription.completed' &&

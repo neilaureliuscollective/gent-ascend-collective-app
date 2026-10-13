@@ -21,6 +21,8 @@ export type IntelligenceOperation = {
   /** Live snapshots require an observed controller/request event. */
   basis: 'observed' | 'preview';
   label?:
+    | 'Reconnecting'
+    | 'Speech detected'
     | 'Microphone muted'
     | 'Voice playback blocked'
     | 'Session ended'

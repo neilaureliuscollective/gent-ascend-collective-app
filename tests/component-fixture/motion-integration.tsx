@@ -11,6 +11,7 @@ import type { WorkspaceData, StreamEvent, Turn } from '@/domains/intelligence/ty
 import '@/app/globals.css';
 import '@/app/sovereign.css';
 import '@/app/imperial-workspace.css';
+import '@/app/imperial-emerald-ii.css';
 import '@/app/(workspace)/app/work/work.css';
 import './motion-integration.css';
 const base: WorkspaceData = {
@@ -87,6 +88,11 @@ window.fetch = async (input, init) => {
   if (url.startsWith('/api/aurelius/chat') || url.startsWith('/api/company-talk/chat')) {
     if (new URLSearchParams(location.search).get('holdHeaders') === '1')
       await new Promise((resolve) => setTimeout(resolve, 1800));
+    if (new URLSearchParams(location.search).get('rejectHeaders') === '1')
+      return new Response(JSON.stringify({ error: 'Synthetic rejection' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' },
+      });
     const body = JSON.parse(String(init?.body));
     turn = {
       id: body.requestId,
@@ -112,6 +118,7 @@ window.fetch = async (input, init) => {
           init?.signal?.addEventListener(
             'abort',
             () => {
+              window.dispatchEvent(new Event('fixture:stream-aborted'));
               if (stream) {
                 stream.close();
                 stream = null;
@@ -125,7 +132,33 @@ window.fetch = async (input, init) => {
   }
   if (url.startsWith('/api/company-talk')) return json(room);
   if (url.startsWith('/api/company-work')) return json({ jobs: [] });
-  if (url.startsWith('/api/aurelius')) return json(base);
+  if (url.startsWith('/api/aurelius')) {
+    if (
+      url.includes('conversationId=') &&
+      base.turns.length &&
+      new URLSearchParams(location.search).get('holdReload') === '1'
+    )
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (new URLSearchParams(location.search).get('history') === '1')
+      return json({
+        ...base,
+        turns: Array.from({ length: 40 }, (_, index) => ({
+          id: `fixture-history-${index}`,
+          person_id: 'synthetic-owner',
+          conversation_id: 'fixture-conversation',
+          user_text: `Synthetic saved question ${index}`,
+          assistant_text: 'Synthetic saved answer for long-history rendering.\n\n'.repeat(8),
+          status: 'complete',
+          model: 'synthetic-fixture',
+          context_included: false,
+          prompt_version: 'fixture',
+          feedback: null,
+          created_at: '2026-10-12',
+          finished_at: '2026-10-12',
+        })),
+      });
+    return json(base);
+  }
   if (url === '/api/studio' && init?.method === 'POST')
     return new Promise<Response>((resolve) => {
       imageReply = resolve;
