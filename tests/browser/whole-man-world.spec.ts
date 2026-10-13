@@ -96,7 +96,12 @@ test('reduced motion, direct entry, Aethelios and history preserve orientation',
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.getByRole('link', { name: 'Open your conversation' }).click();
   await expect(page).toHaveURL(/\/experience\/aethelios$/);
-  await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
+  // The public room and its loaded Talk toolbar each have an Aethelios heading.
+  // Check the route heading explicitly, then wait for the actual conversation.
+  await expect(
+    page.locator('.aethelios-room-heading').getByRole('heading', { name: 'Aethelios', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/experience\/world$/, { timeout: 25000 });
   await expect(page.getByRole('dialog')).not.toBeVisible();
