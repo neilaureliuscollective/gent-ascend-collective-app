@@ -2,6 +2,18 @@
 
 Replace the blanket `APP_ENV`/`VERCEL_ENV` production ban with one server-authoritative founder-pilot policy. Production stays default-off: `AETHELIOS_LIVE_ENABLED`, `AETHELIOS_LIVE_FOUNDER_PILOT`, verified hosting controls, canonical Gent database binding, independent expiry configuration, supported Realtime model and the existing server OpenAI key are all required. UI enablement uses the session-bound `founder_access` row, not the local harness flag. Ordinary beta accounts remain excluded. Talk still shows Live when admission is unavailable, with an understandable reason, instead of returning null. Consent, ephemeral credentials, owner RPCs, HMAC hangup bindings and abandoned-session cleanup are unchanged. Configuration is not launch or audio acceptance. Construct, Connections and Architect stay on their own branches.
 
+## 2026-10-13 — Connections broker role from official auth.role()
+
+Current PostgREST supplies `request.jwt.claims` JSON and does not set the legacy `request.jwt.claim.role` scalar. `service_connection_require_broker` therefore uses official `auth.role()` and fails closed when the JWT role is missing or not `service_role`. `current_user` inside SECURITY DEFINER is not caller identity. PGlite tests that only set the legacy scalar masked the disposable Auth/PostgREST mismatch. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No provider registration or hosted migration.
+
+## 2026-10-13 — Connections trusted writes and GitHub user revocation
+
+Authenticated founders must not be able to call `service_connection_upsert` (or secret/claim RPCs) with a connected status, installation id or `last_verified_at`. Those writes belong to the service-role broker used by Connections API routes after a founder session check. Owner-facing `service_connection_set_selection` stores intent only. Official GitHub `github_app_authorization` payloads identify the revoked user through `sender` and do not include `installation`; installation tokens can still work until the app is uninstalled, so readiness cannot return to verified without a new user authorization. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No provider registration or hosted migration.
+
+## 2026-10-13 — Aethelios Connections (GitHub App + Vercel integration)
+
+Official GitHub App setup URL is not the user-authorization callback; `installation_id` on setup must be associated via a user access token and `GET /user/installations`. Installation tokens are minted server-side, repository-scoped and short-lived. Native Vercel integrations exchange a one-time code at `/v2/oauth/access_token` for a long-lived token (not GitHub’s expiry model). PKCE is used for GitHub user association; Vercel Sign in with Vercel PKCE is a different product and is not this connector. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No production registration or hosted migration.
+
 # 2026-10-12 — Lifestyle product atelier
 
 Use the existing gallery and approved Shopify media for user-controlled inspection. Add explicit sequencing and fit/2× detail zoom; load films only on selection and only with approved captions/transcript. Keep purchase primary and sensory education progressively disclosed. Reuse server projections and Obsidian tokens without new rendering dependencies. Research and activation boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). No measured conversion uplift or merchant activation is claimed.

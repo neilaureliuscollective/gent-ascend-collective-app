@@ -1,9 +1,12 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { currentFounderAccess } from '@/domains/access/founder';
-import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
+import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import { createWork, readWork } from '@/domains/company-work/service';
 import { inspectPlatform, platformEvidence } from './platform';
+import { describeConnections } from '@/domains/connections/service';
+import { sessionStore } from '@/domains/connections/store';
+import type { ConnectionView } from '@/domains/connections/schema';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { founderRequest, founderScope } from './schema';
 import { workContractReady } from '@/domains/company-work/activation';
@@ -230,6 +233,50 @@ export async function readFounderOffice() {
         process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN,
       ),
     },
+    connections: await describeConnections(person.id, sessionStore(client)).catch(
+      (): { github: ConnectionView; vercel: ConnectionView } => ({
+        github: {
+          provider: 'github',
+          label: 'GitHub',
+          purpose: 'Read-only selected repository access.',
+          status: 'verification_failed',
+          setupRequired: false,
+          configured: false,
+          accountLogin: null,
+          accountId: null,
+          selectedName: null,
+          selectedId: null,
+          capabilities: [],
+          lastVerifiedAt: null,
+          lastError: 'Connection state could not be loaded.',
+          installationRemainsHint: '',
+          accessMode: 'none',
+          resources: [],
+          deployment: null,
+          summary: 'GitHub connection state could not be loaded.',
+        },
+        vercel: {
+          provider: 'vercel',
+          label: 'Vercel',
+          purpose: 'Read-only selected project access.',
+          status: 'verification_failed',
+          setupRequired: false,
+          configured: false,
+          accountLogin: null,
+          accountId: null,
+          selectedName: null,
+          selectedId: null,
+          capabilities: [],
+          lastVerifiedAt: null,
+          lastError: 'Connection state could not be loaded.',
+          installationRemainsHint: '',
+          accessMode: 'none',
+          resources: [],
+          deployment: null,
+          summary: 'Vercel connection state could not be loaded.',
+        },
+      }),
+    ),
   };
 }
 export type FounderOfficeData = Awaited<ReturnType<typeof readFounderOffice>>;
