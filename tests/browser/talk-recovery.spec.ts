@@ -110,6 +110,10 @@ for (const width of [344, 390, 720, 768, 1440])
     expect(
       await page.locator('.talk-title').evaluate((e) => e.getBoundingClientRect().width),
     ).toBeGreaterThan(50);
+    await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toHaveCSS(
+      'font-size',
+      '18px',
+    );
     await field(page).fill('Growing composer\n'.repeat(50));
     await field(page).focus();
     await page.setViewportSize({ width, height: 420 });

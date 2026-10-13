@@ -483,7 +483,7 @@ body .app-shell .aethelios-page.talk-page {
   clip-path: none;
   font-size: 11px;
 }
-.talk-page .talk-title h1 {
+.app-shell.imperial-workspace .talk-page .talk-title h1 {
   margin: 0;
   color: var(--aether-text);
   font-size: 18px;
@@ -528,7 +528,7 @@ body .app-shell .aethelios-page.talk-page {
 }
 
 .app-shell.imperial-workspace
-  .talk-page[data-bplus='talk']
+  .talk-page [data-bplus='talk']
   .aurelius-composer
   > textarea:focus-visible {
   outline-color: var(--aether-gold, #c4912f);
