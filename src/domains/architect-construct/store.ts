@@ -40,9 +40,15 @@ export type ConstructStore = {
   listRuns(personId: string, projectId: string): Promise<ConstructRun[]>;
   listEvents(personId: string, runId: string): Promise<ConstructEvent[]>;
   cancelRun(personId: string, runId: string): Promise<ConstructRun>;
-  claimRun(workerId: string, now: Date): Promise<ConstructRun | null>;
-  markRunning(workerId: string, runId: string, now: Date): Promise<boolean>;
-  heartbeat(workerId: string, runId: string, now: Date, leaseMs: number): Promise<boolean>;
+  claimRun(workerId: string, now: Date, leaseMs?: number): Promise<ConstructRun | null>;
+  markRunning(workerId: string, runId: string, leaseToken: string, now: Date): Promise<boolean>;
+  heartbeat(
+    workerId: string,
+    runId: string,
+    leaseToken: string,
+    now: Date,
+    leaseMs: number,
+  ): Promise<boolean>;
   appendEvent(
     run: ConstructRun,
     kind: (typeof eventKinds)[number],
@@ -52,6 +58,7 @@ export type ConstructStore = {
   finishRun(
     workerId: string,
     runId: string,
+    leaseToken: string,
     status: (typeof terminalStatuses)[number],
     result: RunResult,
     now: Date,
@@ -148,6 +155,7 @@ export class MemoryConstructStore implements ConstructStore {
       status: 'queued',
       cancel_requested: false,
       worker_id: null,
+      lease_token: null,
       lease_until: null,
       result: null,
       created_at: at(),
@@ -190,7 +198,7 @@ export class MemoryConstructStore implements ConstructStore {
     return run;
   }
 
-  async claimRun(workerId: string, now: Date) {
+  async claimRun(workerId: string, now: Date, leaseMs = 45000) {
     const current = now.toISOString();
     const queued = [...this.runs.values()]
       .filter(
@@ -206,7 +214,8 @@ export class MemoryConstructStore implements ConstructStore {
     const recovered = queued.status !== 'queued';
     queued.status = 'claimed';
     queued.worker_id = workerId;
-    queued.lease_until = new Date(now.getTime() + 45000).toISOString();
+    queued.lease_token = randomUUID();
+    queued.lease_until = new Date(now.getTime() + leaseMs).toISOString();
     queued.updated_at = current;
     await this.appendEvent(
       queued,
@@ -217,25 +226,34 @@ export class MemoryConstructStore implements ConstructStore {
     return queued;
   }
 
-  async markRunning(workerId: string, runId: string, now: Date) {
+  owns(run: ConstructRun | undefined, workerId: string, leaseToken: string) {
+    return Boolean(run && run.worker_id === workerId && run.lease_token === leaseToken);
+  }
+
+  async markRunning(workerId: string, runId: string, leaseToken: string, now: Date) {
     const run = this.runs.get(runId);
-    if (!run || run.worker_id !== workerId) return false;
+    if (!this.owns(run, workerId, leaseToken) || !run) return false;
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return true;
     run.status = 'running';
     run.updated_at = now.toISOString();
     return true;
   }
 
-  async heartbeat(workerId: string, runId: string, now: Date, leaseMs: number) {
+  async heartbeat(workerId: string, runId: string, leaseToken: string, now: Date, leaseMs: number) {
     const run = this.runs.get(runId);
-    if (!run || run.worker_id !== workerId || (run.status !== 'claimed' && run.status !== 'running'))
-      return false;
+    if (!this.owns(run, workerId, leaseToken) || !run) return false;
+    if (run.status !== 'claimed' && run.status !== 'running') return false;
     run.lease_until = new Date(now.getTime() + leaseMs).toISOString();
     run.updated_at = now.toISOString();
     return true;
   }
 
   async appendEvent(run: ConstructRun, kind: (typeof eventKinds)[number], detail: string, when?: Date) {
+    if (run.worker_id && run.lease_token) {
+      const current = this.runs.get(run.id);
+      if (!this.owns(current, run.worker_id, run.lease_token))
+        throw new ConstructStoreError('Run is not claimed by this worker lease.');
+    }
     const seq = this.events.filter((event) => event.run_id === run.id).length + 1;
     const event: ConstructEvent = {
       id: randomUUID(),
@@ -253,12 +271,14 @@ export class MemoryConstructStore implements ConstructStore {
   async finishRun(
     workerId: string,
     runId: string,
+    leaseToken: string,
     status: (typeof terminalStatuses)[number],
     result: RunResult,
     now: Date,
   ) {
     const run = this.runs.get(runId);
-    if (!run || run.worker_id !== workerId) throw new ConstructStoreError('Run is not claimed by this worker.');
+    if (!this.owns(run, workerId, leaseToken) || !run)
+      throw new ConstructStoreError('Run is not claimed by this worker lease.');
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return run;
     run.status = status;
     run.result = result;
@@ -275,14 +295,15 @@ export class MemoryConstructStore implements ConstructStore {
       if (
         (run.status === 'claimed' || run.status === 'running') &&
         run.lease_until &&
-        run.lease_until < current
+        run.lease_until < current &&
+        run.cancel_requested
       ) {
-        run.status = 'timed_out';
+        run.status = 'cancelled';
         run.result = run.result ?? {
           isolation: 'unavailable',
           runtime_available: false,
           sandbox: false,
-          blocker: 'Worker lease expired before a durable result was recorded.',
+          blocker: 'Owner cancelled the run and the worker lease expired.',
           source_hash: run.source_tree_hash,
           result_hash: null,
           changed_files: [],
@@ -291,13 +312,13 @@ export class MemoryConstructStore implements ConstructStore {
           preview: {
             path: null,
             body: '',
-            unavailable_reason: 'Timed out before preview collection.',
+            unavailable_reason: 'Cancelled before preview collection.',
           },
           artifacts: [],
         };
         run.lease_until = null;
         run.updated_at = current;
-        await this.appendEvent(run, 'timed_out', 'Lease expired. The uncertain run was not replayed.');
+        await this.appendEvent(run, 'cancelled', 'Cancelled after the worker lease expired.');
         recovered.push(run);
       }
     }

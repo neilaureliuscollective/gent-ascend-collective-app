@@ -74,6 +74,7 @@ function asRun(row: unknown): ConstructRun {
     result,
     created_at: asIso(record.created_at),
     updated_at: asIso(record.updated_at),
+    lease_token: record.lease_token ?? null,
     lease_until: record.lease_until ? asIso(record.lease_until) : null,
   });
 }
@@ -231,12 +232,12 @@ export class DatabaseConstructStore implements ConstructStore {
     return reloaded;
   }
 
-  async claimRun(workerId: string, now: Date) {
+  async claimRun(workerId: string, now: Date, leaseMs = 45000) {
     void now;
     this.assertWorker();
     const claimed = await this.client.rpc('architect_construct_claim', {
       p_worker: workerId,
-      p_lease: 45000,
+      p_lease: leaseMs,
     });
     if (claimed.error) fail(claimed.error, 'Claim unavailable.');
     const id = claimed.data as string | null;
@@ -250,23 +251,25 @@ export class DatabaseConstructStore implements ConstructStore {
     return asRun(data);
   }
 
-  async markRunning(workerId: string, runId: string, now: Date) {
+  async markRunning(workerId: string, runId: string, leaseToken: string, now: Date) {
     void now;
     this.assertWorker();
     const saved = await this.client.rpc('architect_construct_mark_running', {
       p_worker: workerId,
       p_run: runId,
+      p_token: leaseToken,
     });
     if (saved.error) fail(saved.error, 'Running state unavailable.');
     return Boolean(saved.data);
   }
 
-  async heartbeat(workerId: string, runId: string, now: Date, leaseMs: number) {
+  async heartbeat(workerId: string, runId: string, leaseToken: string, now: Date, leaseMs: number) {
     void now;
     this.assertWorker();
     const saved = await this.client.rpc('architect_construct_heartbeat', {
       p_worker: workerId,
       p_run: runId,
+      p_token: leaseToken,
       p_lease: leaseMs,
     });
     if (saved.error) fail(saved.error, 'Heartbeat unavailable.');
@@ -284,10 +287,12 @@ export class DatabaseConstructStore implements ConstructStore {
     const saved = await this.client.rpc('architect_construct_append_event', {
       p_worker: run.worker_id,
       p_run: run.id,
+      p_token: run.lease_token,
       p_kind: kind,
       p_detail: detail.slice(0, 2000),
     });
     if (saved.error) fail(saved.error, 'Event could not be appended.');
+    if (!saved.data) throw new ConstructStoreError('Run is not claimed by this worker lease.');
     const events = await this.listEvents(run.person_id, run.id);
     const last = events.at(-1);
     if (!last) throw new ConstructStoreError('Event could not be reloaded.');
@@ -297,6 +302,7 @@ export class DatabaseConstructStore implements ConstructStore {
   async finishRun(
     workerId: string,
     runId: string,
+    leaseToken: string,
     status: (typeof terminalStatuses)[number],
     result: RunResult,
     now: Date,
@@ -307,10 +313,12 @@ export class DatabaseConstructStore implements ConstructStore {
     const saved = await this.client.rpc('architect_construct_finish', {
       p_worker: workerId,
       p_run: runId,
+      p_token: leaseToken,
       p_status: status,
       p_result: parsed,
     });
     if (saved.error) fail(saved.error, 'Result could not be finished.');
+    if (!saved.data) throw new ConstructStoreError('Run is not claimed by this worker lease.');
     const { data, error } = await this.client
       .from('architect_construct_runs')
       .select('*')

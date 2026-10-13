@@ -15,13 +15,13 @@
       "claimed",
       "started",
       "source_prepared",
-      "patch_applied",
       "check_started",
       "check_finished",
       "check_started",
       "check_finished",
       "preview_collected",
-      "finished"
+      "blocked",
+      "blocked"
     ],
     "changed_files": [
       "preview.html"
@@ -41,6 +41,7 @@
     "preview_contains_after": true,
     "isolation": "process-fixture",
     "runtime_available": false,
-    "sandbox": false
+    "sandbox": false,
+    "worker_isolation": "unavailable"
   }
 }

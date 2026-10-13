@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { localSupabaseControlPlane } from './local-supabase-control-plane.mjs';
 
 const env = Object.fromEntries(
   readFileSync('.env.development.local', 'utf8')
@@ -15,7 +16,9 @@ const env = Object.fromEntries(
     }),
 );
 assert.equal(new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname, '127.0.0.1', 'Disposable loopback Supabase only');
-assert.ok(env.SUPABASE_SERVICE_ROLE_KEY, 'Worker control plane requires the local service role.');
+assert.equal(env.SUPABASE_SERVICE_ROLE_KEY, undefined, 'dev-setup must not copy the service role into the env file.');
+const plane = localSupabaseControlPlane();
+assert.equal(new URL(plane.url).hostname, '127.0.0.1');
 const client = () =>
   createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -31,12 +34,18 @@ for (const [c, email] of [
 const sha256 = (value) => createHash('sha256').update(value, 'utf8').digest('hex');
 const files = [
   {
+    path: 'README.md',
+    content:
+      '# Architect construct fixture\n\nDeterministic labelled source for execution mechanics. This is not a model-generated Aethelios change.\n',
+  },
+  {
     path: 'preview.html',
     content: '<!doctype html><html lang="en"><title>Durable construct</title><h1>Before</h1></html>\n',
   },
   {
     path: 'check.mjs',
-    content: "import { readFileSync } from 'node:fs';\nif (!readFileSync('preview.html','utf8').includes('<h1>After</h1>')) process.exit(1);\n",
+    content:
+      "import { readFileSync } from 'node:fs';\nif (!readFileSync('preview.html','utf8').includes('<h1>After</h1>')) process.exit(1);\n",
   },
 ];
 const tree = sha256(
@@ -73,7 +82,7 @@ const content = {
   sources: [],
   documents: [],
 };
-const after = files[0].content.replace('Before', 'After');
+const after = files[1].content.replace('Before', 'After');
 const scope = {
   project_id: project,
   project_revision: 1,
@@ -81,9 +90,9 @@ const scope = {
   repository: 'neilaureliuscollective/gent-ascend-collective-app',
   source_commit: null,
   source_tree_hash: tree,
-  allowed_paths: ['preview.html', 'check.mjs'],
+  allowed_paths: ['preview.html', 'check.mjs', 'README.md'],
   protected_paths: ['.env'],
-  intended_change: 'Durable worker smoke — labelled fixture files, not a model-generated feature.',
+  intended_change: 'Durable worker smoke — labelled imported files, not a model-generated feature.',
   acceptance_checks: [
     { name: 'syntax', command: 'node', args: ['--check', 'check.mjs'] },
     { name: 'heading', command: 'node', args: ['check.mjs'] },
@@ -96,29 +105,27 @@ const scope = {
     max_output_bytes: 16384,
     max_diff_bytes: 32768,
   },
-  patch: [{ path: 'preview.html', before: files[0].content, after }],
+  patch: [{ path: 'preview.html', before: files[1].content, after }],
 };
 
 function runWorker(workerId) {
   return new Promise((resolve, reject) => {
-    const child = spawn(
-      process.execPath,
-      ['--experimental-strip-types', 'scripts/architect-construct-worker.mts'],
-      {
-        env: {
-          ...process.env,
-          ...env,
-          ARCHITECT_ORIGIN_ENABLED: 'true',
-          ARCHITECT_CONSTRUCT_ENABLED: 'true',
-          ARCHITECT_CONSTRUCT_STORE: 'database',
-          ARCHITECT_CONSTRUCT_WORKER_TOKEN: 'x'.repeat(32),
-          ARCHITECT_CONSTRUCT_WORKER_ID: workerId,
-          APP_ENV: 'local',
-          NODE_ENV: 'development',
-        },
-        stdio: ['ignore', 'pipe', 'pipe'],
+    const child = spawn('npm', ['run', 'architect:worker'], {
+      env: {
+        ...process.env,
+        ...env,
+        SUPABASE_SERVICE_ROLE_KEY: plane.serviceRoleKey,
+        NEXT_PUBLIC_SUPABASE_URL: plane.url,
+        ARCHITECT_ORIGIN_ENABLED: 'true',
+        ARCHITECT_CONSTRUCT_ENABLED: 'true',
+        ARCHITECT_CONSTRUCT_STORE: 'database',
+        ARCHITECT_CONSTRUCT_WORKER_TOKEN: 'x'.repeat(32),
+        ARCHITECT_CONSTRUCT_WORKER_ID: workerId,
+        APP_ENV: 'local',
+        NODE_ENV: 'development',
       },
-    );
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (chunk) => {
@@ -132,7 +139,31 @@ function runWorker(workerId) {
   });
 }
 
+function parseTick(stdout) {
+  const line = stdout
+    .trim()
+    .split('\n')
+    .filter((entry) => entry.startsWith('{'))
+    .at(-1);
+  assert.ok(line, `Worker produced no JSON receipt: ${stdout}`);
+  return JSON.parse(line);
+}
+
 try {
+  assert.ok(
+    (
+      await owner.rpc('architect_construct_import_source', {
+        p_id: crypto.randomUUID(),
+        p_kind: 'fixture',
+        p_repository: scope.repository,
+        p_commit: null,
+        p_label: 'Owner-chosen fixture must not be a durable import.',
+        p_tree: tree,
+        p_files: files,
+      })
+    ).error,
+    'Owner-supplied kind=fixture must be rejected by the import RPC.',
+  );
   assert.equal(
     (
       await owner.rpc('architect_origin_save', {
@@ -149,10 +180,10 @@ try {
     (
       await owner.rpc('architect_construct_import_source', {
         p_id: request,
-        p_kind: 'fixture',
+        p_kind: 'imported',
         p_repository: scope.repository,
         p_commit: null,
-        p_label: 'Deterministic fixture source — labelled test tree, not an imported application snapshot.',
+        p_label: 'Imported source snapshot of neilaureliuscollective/gent-ascend-collective-app — exact attached files, not live repository knowledge.',
         p_tree: tree,
         p_files: files,
       })
@@ -186,22 +217,31 @@ try {
   assert.equal((await foreign.from('architect_construct_runs').select('id').eq('id', request)).data.length, 0);
   const first = await runWorker('durable-worker-a');
   assert.equal(first.code, 0, first.stderr || first.stdout);
-  const tick = JSON.parse(first.stdout);
+  assert.match(first.stderr, /construct-worker: starting/);
+  assert.match(first.stderr, /construct-worker: shutdown/);
+  const tick = parseTick(first.stdout);
   assert.equal(tick.run, request);
   assert.equal(tick.status, 'succeeded');
+  assert.equal(tick.isolation, 'docker');
+  assert.equal(tick.sandbox, true);
   const reloaded = await owner.from('architect_construct_runs').select('*').eq('id', request).single();
   assert.equal(reloaded.error, null);
   assert.equal(reloaded.data.status, 'succeeded');
-  assert.equal(reloaded.data.result.sandbox, false);
-  assert.equal(reloaded.data.result.isolation, 'process-fixture');
+  assert.equal(reloaded.data.result.sandbox, true);
+  assert.equal(reloaded.data.result.isolation, 'docker');
+  assert.ok(reloaded.data.result.diff.includes('<h1>After</h1>'));
   assert.ok(String(reloaded.data.result.preview.body).includes('<h1>After</h1>'));
+  assert.deepEqual(
+    reloaded.data.result.checks.map((check) => check.exit_code),
+    [0, 0],
+  );
   const events = await owner.from('architect_construct_events').select('kind').eq('run_id', request).order('seq');
   assert.ok(events.data.map((event) => event.kind).includes('finished'));
   const second = await runWorker('durable-worker-b');
   assert.equal(second.code, 0, second.stderr || second.stdout);
-  assert.equal(JSON.parse(second.stdout).run, null);
+  assert.equal(parseTick(second.stdout).run, null);
   console.log(
-    'PASS: Construct durable owner enqueue, standalone worker claim/execute, reload, second-worker idle, foreign denial. Labelled fixture, not a model-generated Aethelios feature.',
+    'PASS: Construct durable owner enqueue, compiled standalone worker claim/execute/shutdown, isolated docker receipt, reload, second-worker idle, foreign denial. Labelled imported fixture files, not a model-generated Aethelios feature.',
   );
 } finally {
   await owner.auth.signOut();

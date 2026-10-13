@@ -1,7 +1,7 @@
 import 'server-only';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import { approvalHash } from './hash';
-import { fixtureScope, fixtureSource } from './fixture';
+import { fixtureScope, importedFixtureSource } from './fixture';
 import { constructReady } from './readiness';
 import {
   type ConstructBrief,
@@ -155,7 +155,7 @@ export async function startFixtureConstruct(input: ReturnType<typeof startFixtur
   try {
     const { person, project, client } = await requireOwnedProject(input.projectId, input.expected);
     const store = constructStore({ client, plane: 'owner' });
-    const source = fixtureSource(person.id, input.requestId);
+    const source = importedFixtureSource(person.id, input.requestId);
     await store.importSource(source);
     const existing = await store.readRun(person.id, input.requestId);
     if (existing) return existing;

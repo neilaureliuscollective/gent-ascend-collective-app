@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { defaultProtectedPaths } from '@/domains/architect-construct/schema';
 import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
-import { executeConstruct, executeInProcess } from '@/domains/architect-construct/runner';
+import { executeConstruct, executeInProcess, TRUSTED_IN_PROCESS } from '@/domains/architect-construct/runner';
 import { assertSafeDockerArgs, dockerInvocation, resultFenceStart, resultFenceEnd } from '@/domains/architect-construct/docker';
 import { labeledSource, treeHash } from '@/domains/architect-construct/hash';
 
@@ -91,15 +91,45 @@ describe('Construct isolated runner', () => {
     expect(result.blocker).toMatch(/not a sandbox|did not return a verified result/i);
   });
 
-  it('records sandbox true only after a container launcher returns a verified result', async () => {
+  it('does not treat owner-labelled fixture kind as host execution', async () => {
+    const result = await executeConstruct(
+      { source, scope, previewPath: 'preview.html' },
+      {
+        probe: async () => ({
+          available: false,
+          backend: 'unavailable',
+          code: 'not-installed',
+          reason: 'Docker is not installed in this runtime. Isolated container execution is blocked.',
+        }),
+      },
+    );
+    expect(result.isolation).toBe('unavailable');
+    expect(result.sandbox).toBe(false);
+    expect(result.blocker).toMatch(/not installed|blocked/i);
+  });
+
+  it('keeps the labelled in-process fixture behind an explicit trusted source', async () => {
+    const result = await executeConstruct(
+      { source, scope, previewPath: 'preview.html' },
+      { trustedInProcess: TRUSTED_IN_PROCESS },
+    );
+    expect(result.isolation).toBe('process-fixture');
+    expect(result.sandbox).toBe(false);
+    expect(result.diff).toContain('<h1>After</h1>');
+  });
+
+  it('records sandbox true only after a container launcher returns observed output bytes', async () => {
     const imported = { ...source, kind: 'imported' as const };
+    const after = scope.patch[0]!.after;
     const payload = {
       checks: [
         { name: 'syntax', command: 'node --check check.mjs', exit_code: 0, status: 'passed', log: '' },
         { name: 'heading', command: 'node check.mjs', exit_code: 0, status: 'passed', log: '' },
       ],
-      changed_files: ['preview.html'],
-      preview: { path: 'preview.html', body: '<h1>After</h1>', unavailable_reason: null },
+      files: source.files.map((file) =>
+        file.path === 'preview.html' ? { ...file, content: after } : file,
+      ),
+      preview: { path: 'preview.html', body: after, unavailable_reason: null },
     };
     const result = await executeConstruct(
       { source: imported, scope, previewPath: 'preview.html' },
@@ -126,6 +156,43 @@ describe('Construct isolated runner', () => {
     expect(result.sandbox).toBe(true);
     expect(result.diff).toContain('<h1>After</h1>');
     expect(result.preview.body).toContain('<h1>After</h1>');
+    expect(result.result_hash).toBeTruthy();
+    expect(result.changed_files).toEqual(['preview.html']);
+  });
+
+  it('does not present requested edits as successful when isolated output stayed unchanged', async () => {
+    const imported = { ...source, kind: 'imported' as const };
+    const payload = {
+      checks: [{ name: 'heading', command: 'node check.mjs', exit_code: 1, status: 'failed', log: '' }],
+      files: source.files,
+      preview: { path: 'preview.html', body: scope.patch[0]!.after, unavailable_reason: null },
+    };
+    const result = await executeConstruct(
+      { source: imported, scope, previewPath: 'preview.html' },
+      {
+        requireIsolation: true,
+        probe: async () => ({
+          available: true,
+          backend: 'docker',
+          version: '27.0.0',
+          image: 'node:24-alpine',
+          code: 'available',
+          reason: null,
+        }),
+        ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+        launchContainer: async () => ({
+          exit_code: 0,
+          stdout: `${resultFenceStart}\n${JSON.stringify(payload)}\n${resultFenceEnd}\n`,
+          stderr: '',
+        }),
+      },
+    );
+    expect(result.sandbox).toBe(true);
+    expect(result.checks[0]?.status).toBe('failed');
+    expect(result.changed_files).toEqual([]);
+    expect(result.diff).not.toContain('<h1>After</h1>');
+    expect(result.preview.body).toContain('<h1>Before</h1>');
+    expect(result.preview.body).not.toContain('<h1>After</h1>');
   });
 
   it('builds a disposable container invocation without host secrets or docker.sock', () => {
@@ -146,10 +213,13 @@ describe('Construct isolated runner', () => {
 
   it('records a failing isolated check without claiming process-fixture success', async () => {
     const imported = { ...source, kind: 'imported' as const };
+    const after = scope.patch[0]!.after;
     const payload = {
       checks: [{ name: 'fail', command: 'false', exit_code: 1, status: 'failed', log: '' }],
-      changed_files: ['preview.html'],
-      preview: { path: 'preview.html', body: '<h1>After</h1>', unavailable_reason: null },
+      files: source.files.map((file) =>
+        file.path === 'preview.html' ? { ...file, content: after } : file,
+      ),
+      preview: { path: 'preview.html', body: after, unavailable_reason: null },
     };
     const result = await executeConstruct(
       { source: imported, scope, previewPath: 'preview.html' },

@@ -942,10 +942,32 @@ export interface Database {
       };
       architect_construct_claim: { Args: { p_worker: string; p_lease: number }; Returns: string | null };
       architect_construct_finish: {
-        Args: { p_worker: string; p_run: string; p_status: string; p_result: unknown };
+        Args: {
+          p_worker: string;
+          p_run: string;
+          p_token: string;
+          p_status: string;
+          p_result: unknown;
+        };
         Returns: boolean;
       };
       architect_construct_timeout: { Args: Record<string, never>; Returns: number };
+      architect_construct_heartbeat: {
+        Args: { p_worker: string; p_run: string; p_token: string; p_lease: number };
+        Returns: boolean;
+      };
+      architect_construct_mark_running: {
+        Args: { p_worker: string; p_run: string; p_token: string };
+        Returns: boolean;
+      };
+      architect_construct_append_event: {
+        Args: { p_worker: string; p_run: string; p_token: string; p_kind: string; p_detail: string };
+        Returns: boolean;
+      };
+      architect_construct_invalidate_briefs: {
+        Args: { p_project: string; p_reason: string };
+        Returns: number;
+      };
       health_export_history: { Args: Record<string, never>; Returns: unknown };
       health_read: { Args: Record<string, never>; Returns: unknown };
       health_mutate: {

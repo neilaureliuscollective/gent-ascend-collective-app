@@ -44,6 +44,29 @@ export function fixtureSource(personId: string, id: string, createdAt = new Date
   };
 }
 
+export function importedFixtureSource(
+  personId: string,
+  id: string,
+  createdAt = new Date().toISOString(),
+): SourceSnapshot {
+  const source = fixtureSource(personId, id, createdAt);
+  return {
+    ...source,
+    kind: 'imported',
+    label: labeledSource('imported', fixtureRepository, null),
+  };
+}
+
+export function matchesCanonicalFixture(source: Pick<SourceSnapshot, 'files'>) {
+  const expected = fixtureFiles();
+  if (source.files.length !== expected.length) return false;
+  const byPath = new Map(expected.map((file) => [file.path, file.content]));
+  return (
+    source.files.every((file) => byPath.get(file.path) === file.content) &&
+    expected.every((file) => source.files.some((row) => row.path === file.path && row.content === file.content))
+  );
+}
+
 export function fixtureScope(input: {
   projectId: string;
   projectRevision: number;

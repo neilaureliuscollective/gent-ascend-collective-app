@@ -247,6 +247,7 @@ export const constructRunSchema = z
     status: z.enum(runStatuses),
     cancel_requested: z.boolean(),
     worker_id: z.string().max(80).nullable(),
+    lease_token: z.uuid().nullable(),
     lease_until: z.string().nullable(),
     result: runResultSchema.nullable(),
     created_at: z.string(),

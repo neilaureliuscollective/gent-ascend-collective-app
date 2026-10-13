@@ -1,68 +1,102 @@
-import { executeConstruct } from './runner';
+import { executeConstruct, type ExecuteOptions } from './runner';
 import { sanitizeLog } from './sanitize';
-import { type ConstructRun, type RunResult, terminalStatuses } from './schema';
-import type { ConstructStore } from './store';
+import { defaultLimits, type ConstructRun, type RunResult, terminalStatuses } from './schema';
+import { ConstructStoreError, type ConstructStore } from './store';
 
-export async function processConstructOnce(store: ConstructStore, workerId: string, now = new Date()) {
+export class LeaseLostError extends Error {
+  constructor(message = 'Worker lost the lease before a durable result was recorded.') {
+    super(message);
+  }
+}
+
+export function constructWorkerIdentity(env: NodeJS.ProcessEnv = process.env) {
+  const named = env.ARCHITECT_CONSTRUCT_WORKER_ID?.trim() || 'construct-worker';
+  return `${named}-${process.pid}`;
+}
+
+export async function processConstructOnce(
+  store: ConstructStore,
+  workerId: string,
+  now = new Date(),
+  options: ExecuteOptions = {},
+) {
   await store.recoverTimeouts(now);
   const claimed = await store.claimRun(workerId, now);
   if (!claimed) return null;
+  const token = claimed.lease_token;
+  if (!token) throw new ConstructStoreError('Claim did not issue a lease token.');
+  const finish = (
+    status: (typeof terminalStatuses)[number],
+    result: RunResult,
+    when = new Date(),
+  ) => store.finishRun(workerId, claimed.id, token, status, result, when);
   if (claimed.cancel_requested) {
-    return store.finishRun(
-      workerId,
-      claimed.id,
-      'cancelled',
-      emptyResult(claimed, 'Owner cancelled the run before execution started.'),
-      now,
-    );
+    return finish('cancelled', emptyResult(claimed, 'Owner cancelled the run before execution started.'), now);
   }
-  await store.markRunning(workerId, claimed.id, now);
+  if (!(await store.markRunning(workerId, claimed.id, token, now)))
+    throw new LeaseLostError('Worker lost the lease before the run could start.');
   await store.appendEvent(claimed, 'started', 'Worker started isolated execution.');
-  await store.heartbeat(workerId, claimed.id, now, 45000);
-  const brief = await store.readBrief(claimed.person_id, claimed.brief_id);
-  const source = await store.readSource(claimed.person_id, claimed.source_id);
-  if (!brief || brief.status !== 'approved' || !source) {
-    const result = emptyResult(
-      claimed,
-      'Approved brief or source snapshot is missing. Execution was blocked without inventing files.',
-    );
-    await store.appendEvent(claimed, 'blocked', result.blocker ?? 'Blocked.');
-    return store.finishRun(workerId, claimed.id, 'blocked', result, now);
-  }
-  if (
-    brief.approval_hash !== claimed.approval_hash ||
-    source.tree_hash !== claimed.source_tree_hash ||
-    brief.scope.project_revision !== claimed.project_revision
-  ) {
-    const result = emptyResult(claimed, 'Source pin or brief scope changed after approval.');
-    await store.appendEvent(claimed, 'blocked', result.blocker ?? 'Blocked.');
-    return store.finishRun(workerId, claimed.id, 'blocked', result, now);
-  }
-  if (claimed.cancel_requested)
-    return store.finishRun(
-      workerId,
-      claimed.id,
-      'cancelled',
-      emptyResult(claimed, 'Owner cancelled the run after claim.'),
-      now,
-    );
+  let leaseMs = defaultLimits.lease_ms;
+  let lost = false;
+  const renew = async () => {
+    const ok = await store.heartbeat(workerId, claimed.id, token, new Date(), leaseMs);
+    if (!ok) lost = true;
+    return ok;
+  };
+  if (!(await renew())) throw new LeaseLostError();
+  const interval = setInterval(() => {
+    void renew();
+  }, Math.max(1000, Math.floor(leaseMs / 3)));
   try {
-    await store.appendEvent(claimed, 'source_prepared', sanitizeLog(source.label));
-    const executed = await executeConstruct({
-      source,
-      scope: brief.scope,
-      previewPath: brief.scope.allowed_paths.find((path) => path.endsWith('.html')),
-    });
+    const brief = await store.readBrief(claimed.person_id, claimed.brief_id);
+    const source = await store.readSource(claimed.person_id, claimed.source_id);
+    if (!brief || brief.status !== 'approved' || !source) {
+      const result = emptyResult(
+        claimed,
+        'Approved brief or source snapshot is missing. Execution was blocked without inventing files.',
+      );
+      await store.appendEvent(claimed, 'blocked', result.blocker ?? 'Blocked.');
+      return finish('blocked', result, now);
+    }
+    leaseMs = brief.scope.resource_limits.lease_ms;
+    if (!(await renew())) throw new LeaseLostError();
+    if (
+      brief.approval_hash !== claimed.approval_hash ||
+      source.tree_hash !== claimed.source_tree_hash ||
+      brief.scope.project_revision !== claimed.project_revision
+    ) {
+      const result = emptyResult(claimed, 'Source pin or brief scope changed after approval.');
+      await store.appendEvent(claimed, 'blocked', result.blocker ?? 'Blocked.');
+      return finish('blocked', result, now);
+    }
     const latest = await store.readRun(claimed.person_id, claimed.id);
     if (latest?.cancel_requested)
-      return store.finishRun(
-        workerId,
-        claimed.id,
+      return finish('cancelled', emptyResult(claimed, 'Owner cancelled the run after claim.'), now);
+    await store.appendEvent(claimed, 'source_prepared', sanitizeLog(source.label));
+    const executed = await executeConstruct(
+      {
+        source,
+        scope: brief.scope,
+        previewPath: brief.scope.allowed_paths.find((path) => path.endsWith('.html')),
+      },
+      {
+        ...options,
+        requireIsolation: true,
+        trustedInProcess: undefined,
+        shouldAbort: () => lost || Boolean(options.shouldAbort?.()),
+      },
+    );
+    if (lost) throw new LeaseLostError();
+    if (!(await renew())) throw new LeaseLostError();
+    const after = await store.readRun(claimed.person_id, claimed.id);
+    if (after?.cancel_requested)
+      return finish(
         'cancelled',
         { ...executed, blocker: executed.blocker ?? 'Cancelled after execution work started.' },
-        now,
+        new Date(),
       );
-    if (executed.changed_files.length) await store.appendEvent(claimed, 'patch_applied', executed.changed_files.join(','));
+    if (executed.changed_files.length)
+      await store.appendEvent(claimed, 'patch_applied', executed.changed_files.join(','));
     for (const check of executed.checks) {
       await store.appendEvent(claimed, 'check_started', check.name);
       await store.appendEvent(claimed, 'check_finished', `${check.name}:${check.status}:${check.exit_code}`);
@@ -80,13 +114,21 @@ export async function processConstructOnce(store: ConstructStore, workerId: stri
           ? 'blocked'
           : 'succeeded';
     if (status === 'blocked') await store.appendEvent(claimed, 'blocked', executed.blocker ?? 'Checks did not complete.');
-    return store.finishRun(workerId, claimed.id, status, executed, now);
+    return finish(status, executed, new Date());
   } catch (error) {
+    if (error instanceof LeaseLostError || (error instanceof ConstructStoreError && /lease/i.test(error.message)))
+      return null;
     const result = emptyResult(
       claimed,
       sanitizeLog(error instanceof Error ? error.message : 'Execution crashed before a durable result.'),
     );
-    return store.finishRun(workerId, claimed.id, 'failed', result, now);
+    try {
+      return await finish('failed', result, new Date());
+    } catch {
+      return null;
+    }
+  } finally {
+    clearInterval(interval);
   }
 }
 

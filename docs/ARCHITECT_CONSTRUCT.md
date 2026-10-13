@@ -17,7 +17,7 @@ One narrow pipeline inside existing `/app/architect`:
 
 1. **Source and brief.** Every run binds the authenticated owner, existing Origin project, immutable project revision, repository name, exact source commit when provided, allowed paths, protected paths, intended change, acceptance checks, and resource limits. Source kinds are labelled `fixture`, `imported`, or `git`. A git pin without files is a blocker. Changing the project revision or source tree invalidates prior approval.
 2. **Durable runs.** Owner-scoped start/read/cancel, append-only events, request-id idempotency, atomic worker claim, lease recovery, timeout, and cancellation. Duplicate clicks reuse the same request. Uncertain runs are not replayed. Clients cannot write results, expand allowlists, or mark a release complete.
-3. **Execution adapter.** Trusted patch/check/diff/preview engine plus a disposable Docker invocation (`--network none`, no docker.sock, no host secrets, no privileged flags). Long-running work is outside user Next handlers (`scripts/architect-construct-worker.mts` and `/api/internal/architect-construct`).
+3. **Execution adapter.** Trusted patch/check/diff/preview engine plus a disposable Docker invocation (`--network none`, no docker.sock, no host secrets, no privileged flags). Long-running work is outside user Next handlers (`npm run architect:worker` compiles `worker-entry.ts` and `/api/internal/architect-construct` stays closed). An authenticated `kind=fixture` label cannot select host execution. In-process fixture playback is a test-only trusted source that database/API callers cannot choose.
 4. **OpenAI adapter.** Server-only Responses/`generateText` proposal path, default-off. It can propose a bounded patch only. It cannot execute, start a run, or retry paid calls. A funded OpenAI account does not supply a sandbox, worker, or repository connection.
 5. **Existing Architect UI.** New Construct surface with Plan / Changes / Checks / Preview. Drafts, history, Talk, Studio, and Origin save behavior are unchanged.
 
@@ -34,8 +34,9 @@ One narrow pipeline inside existing `/app/architect`:
 | `ARCHITECT_CONSTRUCT_WORKER_ID` | Worker lease identity. |
 | `ARCHITECT_CONSTRUCT_IMAGE` | Disposable image name. Default `node:24-alpine`. |
 | Additive migration `20261013160000_architect_construct.sql` | Durable SQL contracts. Unapplied on hosted projects. |
+| Additive migration `20261013193000_architect_construct_isolation.sql` | Rejects owner-chosen fixture imports and adds per-claim lease tokens. Unapplied on hosted projects. |
 
-`sandbox: true` is recorded only after a disposable container starts and returns a verified result. A successful Docker version probe, or an image being present, is `runtime_available` only. The labelled process fixture stays `isolation: process-fixture`, `runtime_available: false`, `sandbox: false`.
+`sandbox: true` is recorded only after a disposable container starts and returns a verified result whose displayed diff and hashes come from observed output bytes. A successful Docker version probe, or an image being present, is `runtime_available` only. The labelled process fixture stays `isolation: process-fixture`, `runtime_available: false`, `sandbox: false`, and is not available on the durable worker path. Worker claims use a unique process identity and per-claim lease token, renewed for the whole job. Stale workers cannot finish or write artifacts.
 
 Writable `/work`, `/tmp` and `/out` are tmpfs mounts owned by nobody (`uid=65534,gid=65534`). The container does not run as root. CI on `94343b2` reached this path and failed with `EACCES` copying `/src/README.md` → `/work/README.md` because the tmpfs had no explicit nobody ownership.
 

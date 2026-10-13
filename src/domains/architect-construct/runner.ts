@@ -8,11 +8,13 @@ import {
   type SourceSnapshot,
   type checkResultSchema,
   defaultLimits,
+  relPath,
 } from './schema';
 import type { z } from 'zod';
 import { PathGuardError, assertNoSymlink, assertWritable, resolveInside } from './paths';
 import { assertNoHostSecrets, sanitizeLog, strippedEnv } from './sanitize';
 import { sha256Text, treeHash } from './hash';
+import { matchesCanonicalFixture } from './fixture';
 import {
   type IsolationProbe,
   assertSafeDockerArgs,
@@ -37,11 +39,15 @@ export type ContainerLauncher = (
 ) => Promise<ContainerLaunchResult>;
 export type IsolationProbeFn = () => Promise<IsolationProbe>;
 
+export const TRUSTED_IN_PROCESS = Symbol.for('architect-construct.trusted-in-process');
+
 export type ExecuteOptions = {
   probe?: IsolationProbeFn;
   launchContainer?: ContainerLauncher;
   ensureImage?: typeof import('./docker').ensureConstructImage;
   requireIsolation?: boolean;
+  trustedInProcess?: symbol;
+  shouldAbort?: () => boolean;
 };
 
 function unifiedDiff(path: string, before: string, after: string) {
@@ -53,8 +59,57 @@ function unifiedDiff(path: string, before: string, after: string) {
   );
 }
 
-function trustedDiff(scope: BriefScope) {
-  return scope.patch.map((file) => unifiedDiff(file.path, file.before, file.after)).join('');
+export function observedChange(
+  sourceFiles: { path: string; content: string }[],
+  observedFiles: { path: string; content: string }[],
+) {
+  const before = new Map(sourceFiles.map((file) => [file.path, file.content]));
+  const changed: string[] = [];
+  let diff = '';
+  for (const file of observedFiles) {
+    const previous = before.get(file.path) ?? '';
+    if (previous !== file.content) {
+      changed.push(file.path);
+      diff += unifiedDiff(file.path, previous, file.content);
+    }
+  }
+  return { changed, diff };
+}
+
+export async function collectObservedFiles(root: string, allowed: string[], maxFileBytes: number) {
+  const files: { path: string; content: string }[] = [];
+  for (const path of allowed) {
+    try {
+      const target = assertNoSymlink(root, path);
+      const content = await readFile(target, 'utf8');
+      if (Buffer.byteLength(content, 'utf8') > maxFileBytes)
+        throw new PathGuardError('Observed file exceeds the approved size limit.');
+      files.push({ path, content });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw error;
+    }
+  }
+  return files;
+}
+
+function validateObservedPayload(
+  files: unknown,
+  scope: BriefScope,
+): { path: string; content: string }[] | null {
+  if (!Array.isArray(files)) return null;
+  const observed: { path: string; content: string }[] = [];
+  for (const file of files) {
+    if (!file || typeof file !== 'object') return null;
+    const path = (file as { path?: unknown }).path;
+    const content = (file as { content?: unknown }).content;
+    if (typeof path !== 'string' || typeof content !== 'string') return null;
+    if (!relPath.safeParse(path).success) return null;
+    if (!scope.allowed_paths.includes(path)) return null;
+    if (Buffer.byteLength(content, 'utf8') > scope.resource_limits.max_file_bytes) return null;
+    observed.push({ path, content });
+  }
+  return observed;
 }
 
 async function runCommand(command: string, args: string[], cwd: string, timeoutMs: number) {
@@ -180,7 +235,7 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
   const checks: z.infer<typeof checkResultSchema>[] = [];
   try {
     await materializeSource(work, job.source, job.scope);
-    const { changed, diff } = await applyTrustedPatch(work, job.scope);
+    await applyTrustedPatch(work, job.scope);
     for (const check of job.scope.acceptance_checks) {
       const executed = await runCommand(
         check.command,
@@ -196,30 +251,34 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
         log: executed.log.slice(0, job.scope.resource_limits.max_output_bytes),
       });
     }
-    const preview = await collectPreview(
+    const observed = await collectObservedFiles(
       work,
-      job.previewPath ?? job.scope.allowed_paths.find((path) => path.endsWith('.html')),
-      job.scope.resource_limits.max_output_bytes,
+      job.scope.allowed_paths,
+      job.scope.resource_limits.max_file_bytes,
     );
-    const resultFiles = await Promise.all(
-      changed.map(async (path) => ({
-        path,
-        content: await readFile(resolveInside(work, path), 'utf8'),
-      })),
-    );
+    const observedResult = observedChange(job.source.files, observed);
+    const previewPath = job.previewPath ?? job.scope.allowed_paths.find((path) => path.endsWith('.html'));
+    const previewFile = observed.find((file) => file.path === previewPath);
+    const preview = previewFile
+      ? {
+          path: previewFile.path,
+          body: sanitizeLog(previewFile.content, [], job.scope.resource_limits.max_output_bytes),
+          unavailable_reason: null,
+        }
+      : await collectPreview(work, previewPath, job.scope.resource_limits.max_output_bytes);
     return {
       isolation: 'process-fixture',
       runtime_available: false,
       sandbox: false,
       blocker: null,
       source_hash: job.source.tree_hash,
-      result_hash: treeHash(resultFiles),
-      changed_files: changed,
-      diff,
+      result_hash: treeHash(observed),
+      changed_files: observedResult.changed,
+      diff: observedResult.diff,
       checks,
       preview,
       artifacts: [
-        { kind: 'diff', ref: 'result.diff', hash: sha256Text(diff) },
+        { kind: 'diff', ref: 'result.diff', hash: sha256Text(observedResult.diff) },
         { kind: 'preview', ref: preview.path ?? 'preview', hash: sha256Text(preview.body) },
       ],
     };
@@ -282,15 +341,32 @@ export async function executeInContainer(
   probe: Extract<IsolationProbe, { available: true }>,
   launch: ContainerLauncher = spawnDocker,
   ensureImage: typeof ensureConstructImage = ensureConstructImage,
+  shouldAbort?: () => boolean,
 ): Promise<RunResult> {
   const root = await mkdtemp(join(tmpdir(), 'architect-construct-docker-'));
   const snapshot = join(root, 'src');
+  const outDir = join(root, 'out');
   const runnerFile = join(root, 'construct-runner.mjs');
   const jobFile = join(root, 'construct-job.json');
   const name = `construct-${job.source.id.replace(/-/g, '').slice(0, 12)}`;
   let result: RunResult | undefined;
+  const aborted = () => Boolean(shouldAbort?.());
   try {
+    if (aborted()) {
+      result = blockedResult(job, 'Worker lost the lease before isolated execution finished.', {
+        runtime_available: true,
+        sandbox: false,
+      });
+      return result;
+    }
     const image = await ensureImage(probe.image);
+    if (aborted()) {
+      result = blockedResult(job, 'Worker lost the lease before isolated execution finished.', {
+        runtime_available: true,
+        sandbox: false,
+      });
+      return result;
+    }
     if (!image.ready) {
       result = blockedResult(job, image.reason ?? 'Construct image is unavailable.', {
         runtime_available: true,
@@ -299,6 +375,7 @@ export async function executeInContainer(
       return result;
     }
     await mkdir(snapshot, { recursive: true });
+    await mkdir(outDir, { recursive: true });
     await materializeSource(snapshot, job.source, job.scope);
     for (const file of job.scope.patch) assertWritable(file.path, job.scope);
     await writeFile(runnerFile, trustedContainerRunner);
@@ -308,13 +385,21 @@ export async function executeInContainer(
         files: job.source.files.map((file) => ({ path: file.path })),
         patch: job.scope.patch,
         checks: job.scope.acceptance_checks,
+        allowed_paths: job.scope.allowed_paths,
         previewPath: job.previewPath ?? job.scope.allowed_paths.find((path) => path.endsWith('.html')) ?? null,
         timeout_ms: Math.min(8000, job.scope.resource_limits.timeout_ms),
       }),
     );
-    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, name });
+    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, outDir, name });
     assertSafeDockerArgs(invocation.args);
     const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms);
+    if (aborted()) {
+      result = blockedResult(job, 'Worker lost the lease before isolated execution finished.', {
+        runtime_available: true,
+        sandbox: false,
+      });
+      return result;
+    }
     const parsed = parseContainerResult(launched.stdout);
     const workspace = parseWorkspaceDiagnostics(launched.stderr);
     if (launched.exit_code !== 0 || !parsed) {
@@ -327,11 +412,40 @@ export async function executeInContainer(
       );
       return result;
     }
-    const diff = trustedDiff(job.scope);
+    const fromDisk = await collectObservedFiles(
+      join(outDir, 'files'),
+      job.scope.allowed_paths,
+      job.scope.resource_limits.max_file_bytes,
+    ).catch(() => []);
+    const observed =
+      fromDisk.length > 0 ? fromDisk : validateObservedPayload(parsed.files, job.scope);
+    if (!observed) {
+      result = blockedResult(
+        job,
+        'Isolated execution did not return observed output bytes. Requested edits are not treated as the result.',
+        { runtime_available: true, sandbox: false },
+      );
+      return result;
+    }
+    const observedResult = observedChange(job.source.files, observed);
+    if (observedResult.diff.length > job.scope.resource_limits.max_diff_bytes) {
+      result = blockedResult(job, 'Collected diff exceeds the approved bound.', {
+        runtime_available: true,
+        sandbox: false,
+      });
+      return result;
+    }
+    const previewPath =
+      job.previewPath ?? job.scope.allowed_paths.find((path) => path.endsWith('.html')) ?? null;
+    const previewFile = observed.find((file) => file.path === previewPath);
     const preview = {
-      path: parsed.preview?.path ?? null,
-      body: sanitizeLog(String(parsed.preview?.body ?? ''), [], job.scope.resource_limits.max_output_bytes),
-      unavailable_reason: parsed.preview?.unavailable_reason ?? null,
+      path: previewPath,
+      body: sanitizeLog(
+        previewFile?.content ?? '',
+        [],
+        job.scope.resource_limits.max_output_bytes,
+      ),
+      unavailable_reason: previewFile ? null : 'Observed preview file was not present in isolated output.',
     };
     const checks = Array.isArray(parsed.checks) ? parsed.checks : [];
     result = {
@@ -340,15 +454,20 @@ export async function executeInContainer(
       sandbox: true,
       blocker: null,
       source_hash: job.source.tree_hash,
-      result_hash: sha256Text(JSON.stringify({ files: parsed.changed_files, preview: preview.body })),
-      changed_files: job.scope.patch.map((file) => file.path),
-      diff,
+      result_hash: treeHash(observed),
+      changed_files: observedResult.changed,
+      diff: observedResult.diff,
       checks,
       preview,
       artifacts: [
-        { kind: 'diff', ref: 'result.diff', hash: sha256Text(diff) },
+        { kind: 'diff', ref: 'result.diff', hash: sha256Text(observedResult.diff) },
         { kind: 'preview', ref: preview.path ?? 'preview', hash: sha256Text(preview.body) },
         { kind: 'log', ref: 'container.stdout', hash: sha256Text(launched.stdout) },
+        {
+          kind: 'receipt',
+          ref: 'observed-output',
+          hash: treeHash(observed),
+        },
         {
           kind: 'receipt',
           ref: 'workspace-permissions',
@@ -379,9 +498,20 @@ export async function executeConstruct(job: ExecutionJob, options: ExecuteOption
       job,
       'Source snapshot has no files. Missing source is a blocker; Architect will not invent repository contents.',
     );
-  if (job.source.kind === 'fixture' && !options.requireIsolation) return executeInProcess(job);
+  if (
+    !options.requireIsolation &&
+    options.trustedInProcess === TRUSTED_IN_PROCESS &&
+    matchesCanonicalFixture(job.source)
+  )
+    return executeInProcess(job);
   const probe = await (options.probe ?? (() => probeDockerIsolation()))();
   if (!probe.available)
     return blockedResult(job, probe.reason, { runtime_available: false, sandbox: false });
-  return executeInContainer(job, probe, options.launchContainer, options.ensureImage);
+  return executeInContainer(
+    job,
+    probe,
+    options.launchContainer,
+    options.ensureImage,
+    options.shouldAbort,
+  );
 }

@@ -4,9 +4,41 @@ import { MemoryConstructStore } from '@/domains/architect-construct/store';
 import { processConstructOnce } from '@/domains/architect-construct/worker';
 import { defaultLimits } from '@/domains/architect-construct/schema';
 import { labeledSource, treeHash } from '@/domains/architect-construct/hash';
+import { resultFenceEnd, resultFenceStart } from '@/domains/architect-construct/docker';
 
 const owner = '00000000-0000-4000-8000-000000000001';
 const project = '00000000-0000-4000-8000-000000000003';
+
+function isolatedSuccess(source: ReturnType<typeof fixtureSource>, scope: ReturnType<typeof fixtureScope>) {
+  const after = scope.patch[0]!.after;
+  const files = source.files.map((file) =>
+    file.path === 'preview.html' ? { ...file, content: after } : file,
+  );
+  return {
+    probe: async () =>
+      ({
+        available: true as const,
+        backend: 'docker' as const,
+        version: '27.0.0',
+        image: 'node:24-alpine',
+        code: 'available' as const,
+        reason: null,
+      }),
+    ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+    launchContainer: async () => ({
+      exit_code: 0,
+      stdout: `${resultFenceStart}\n${JSON.stringify({
+        checks: [
+          { name: 'syntax', command: 'node --check check.mjs', exit_code: 0, status: 'passed', log: '' },
+          { name: 'heading', command: 'node check.mjs', exit_code: 0, status: 'passed', log: '' },
+        ],
+        files,
+        preview: { path: 'preview.html', body: after, unavailable_reason: null },
+      })}\n${resultFenceEnd}\n`,
+      stderr: '',
+    }),
+  };
+}
 
 async function queuedFixture(store: MemoryConstructStore, requestId: string) {
   const source = fixtureSource(owner, requestId);
@@ -34,23 +66,40 @@ async function queuedFixture(store: MemoryConstructStore, requestId: string) {
   });
 }
 
-it('executes one claimed fixture and recovers the same result on reload', async () => {
+it('executes one claimed fixture through isolation and recovers the same result on reload', async () => {
   const store = new MemoryConstructStore();
   const requestId = '00000000-0000-4000-8000-000000000031';
+  const source = fixtureSource(owner, requestId);
   await queuedFixture(store, requestId);
-  const first = await processConstructOnce(store, 'worker-a');
+  const first = await processConstructOnce(
+    store,
+    'worker-a',
+    new Date(),
+    isolatedSuccess(
+      source,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: source.id,
+        sourceTreeHash: source.tree_hash,
+      }),
+    ),
+  );
   expect(first?.status).toBe('succeeded');
+  expect(first?.result?.isolation).toBe('docker');
+  expect(first?.result?.sandbox).toBe(true);
   expect(first?.result?.checks.every((check) => check.status === 'passed')).toBe(true);
   expect(first?.result?.preview.body).toContain('<h1>After</h1>');
   expect(await processConstructOnce(store, 'worker-a')).toBeNull();
   const reloaded = await store.readRun(owner, requestId);
   expect(reloaded?.result?.diff).toBe(first?.result?.diff);
-  expect(reloaded?.result?.sandbox).toBe(false);
+  expect(reloaded?.result?.sandbox).toBe(true);
 });
 
 it('does not let a client-supplied successful result survive claim', async () => {
   const store = new MemoryConstructStore();
   const requestId = '00000000-0000-4000-8000-000000000032';
+  const source = fixtureSource(owner, requestId);
   const run = await queuedFixture(store, requestId);
   run.result = {
     isolation: 'docker',
@@ -65,13 +114,25 @@ it('does not let a client-supplied successful result survive claim', async () =>
     preview: { path: 'preview.html', body: 'forged', unavailable_reason: null },
     artifacts: [],
   };
-  const executed = await processConstructOnce(store, 'worker-a');
+  const executed = await processConstructOnce(
+    store,
+    'worker-a',
+    new Date(),
+    isolatedSuccess(
+      source,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: source.id,
+        sourceTreeHash: source.tree_hash,
+      }),
+    ),
+  );
   expect(executed?.result?.diff).not.toBe('forged');
-  expect(executed?.result?.sandbox).toBe(false);
   expect(executed?.result?.preview.body).toContain('<h1>After</h1>');
 });
 
-it('cancels a queued run and times out an expired lease without replay', async () => {
+it('cancels a queued run and does not replay a cancelled expired lease', async () => {
   const store = new MemoryConstructStore();
   const requestId = '00000000-0000-4000-8000-000000000033';
   await queuedFixture(store, requestId);
@@ -82,10 +143,12 @@ it('cancels a queued run and times out an expired lease without replay', async (
   const stale = await queuedFixture(store, staleId);
   stale.status = 'running';
   stale.worker_id = 'dead-worker';
+  stale.lease_token = '00000000-0000-4000-8000-000000000099';
+  stale.cancel_requested = true;
   stale.lease_until = new Date(Date.now() - 1000).toISOString();
-  const timed = await store.recoverTimeouts(new Date());
-  expect(timed[0]?.id).toBe(staleId);
-  expect(timed[0]?.status).toBe('timed_out');
+  const recovered = await store.recoverTimeouts(new Date());
+  expect(recovered[0]?.id).toBe(staleId);
+  expect(recovered[0]?.status).toBe('cancelled');
   expect(await processConstructOnce(store, 'worker-b')).toBeNull();
 });
 

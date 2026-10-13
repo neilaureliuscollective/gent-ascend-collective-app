@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import { initialProject } from '@/domains/architect-origin/schema';
-import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
+import { fixtureScope, importedFixtureSource } from '@/domains/architect-construct/fixture';
 import { approvalHash } from '@/domains/architect-construct/hash';
 
 const db = new PGlite();
@@ -12,7 +12,7 @@ const project = '00000000-0000-4000-8000-000000000003';
 const request = '00000000-0000-4000-8000-000000000004';
 const content = initialProject('Synthetic construct project', 'application');
 const literal = (value: unknown) => "'" + JSON.stringify(value).replace(/'/g, "''") + "'::jsonb";
-const source = fixtureSource(owner, request);
+const source = importedFixtureSource(owner, request);
 const scope = fixtureScope({
   projectId: project,
   projectRevision: 1,
@@ -46,6 +46,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013160000_architect_construct.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013180000_architect_construct_worker_plane.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261013193000_architect_construct_isolation.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`,
@@ -59,7 +60,7 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
       (
         await asUser(
           owner,
-          `select public.architect_construct_import_source('${source.id}','fixture','${source.repository}',null,'${source.label.replace(/'/g, "''")}','${source.tree_hash}',${literal(source.files)}) as ok`,
+          `select public.architect_construct_import_source('${source.id}','imported','${source.repository}',null,'${source.label.replace(/'/g, "''")}','${source.tree_hash}',${literal(source.files)}) as ok`,
         )
       ).rows,
     ).toEqual([{ ok: true }]);
@@ -108,10 +109,20 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
     ).rejects.toThrow(/permission denied/);
     const claimed = await asWorker(`select public.architect_construct_claim('worker-a',45000) as id`);
     expect(claimed.rows[0]).toEqual({ id: request });
+    const token = (
+      await asWorker(`select lease_token::text as token from public.architect_construct_runs where id='${request}'`)
+    ).rows[0] as { token: string };
+    expect(token.token).toMatch(/^[0-9a-f-]{36}$/i);
+    await expect(
+      asUser(
+        owner,
+        `select public.architect_construct_import_source('${crypto.randomUUID()}','fixture','${source.repository}',null,'Owner fixture','${source.tree_hash}',${literal(source.files)})`,
+      ),
+    ).rejects.toThrow(/Invalid source/i);
     expect(
       (
         await asWorker(
-          `select public.architect_construct_finish('worker-a','${request}','blocked',${literal({
+          `select public.architect_construct_finish('worker-a','${request}','${token.token}','blocked',${literal({
             isolation: 'unavailable',
             runtime_available: false,
             sandbox: false,
@@ -127,6 +138,25 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
         )
       ).rows,
     ).toEqual([{ ok: true }]);
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_finish('stale-worker','${request}','${token.token}','succeeded',${literal({
+            isolation: 'unavailable',
+            runtime_available: false,
+            sandbox: false,
+            blocker: 'stale',
+            source_hash: source.tree_hash,
+            result_hash: null,
+            changed_files: [],
+            diff: '',
+            checks: [],
+            preview: { path: null, body: '', unavailable_reason: 'stale' },
+            artifacts: [],
+          })}) as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: false }]);
   });
 
   it('rejects a stale project revision after a newer Origin save', async () => {

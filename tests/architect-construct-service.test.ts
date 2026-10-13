@@ -86,6 +86,8 @@ it('starts a fixture once and returns the same run on duplicate click', async ()
   expect(first.id).toBe(requestId);
   expect(second.id).toBe(first.id);
   expect(second.status).toBe('queued');
+  expect(first.source_kind).toBe('imported');
+  expect((await constructStore().readSource(state.owner, first.source_id))?.kind).toBe('imported');
   expect([...constructStore()['runs' as never] as Map<string, unknown>].length).toBe(1);
 });
 

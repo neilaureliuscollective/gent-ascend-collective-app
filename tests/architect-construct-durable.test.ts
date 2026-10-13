@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import { initialProject } from '@/domains/architect-origin/schema';
-import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
+import { fixtureScope, importedFixtureSource } from '@/domains/architect-construct/fixture';
 import { DatabaseConstructStore, type ConstructPersistenceClient } from '@/domains/architect-construct/database-store';
 import { processConstructOnce } from '@/domains/architect-construct/worker';
 import { memoryConstructStoreAllowed } from '@/domains/architect-construct/database-store';
@@ -32,15 +32,15 @@ function rpcSql(name: string, args: Record<string, unknown>) {
     case 'architect_construct_claim':
       return `select public.architect_construct_claim(${quote(String(args.p_worker))},${Number(args.p_lease)}) as value`;
     case 'architect_construct_finish':
-      return `select public.architect_construct_finish(${quote(String(args.p_worker))},${quote(String(args.p_run))},${quote(String(args.p_status))},${literal(args.p_result)}) as value`;
+      return `select public.architect_construct_finish(${quote(String(args.p_worker))},${quote(String(args.p_run))},${quote(String(args.p_token))},${quote(String(args.p_status))},${literal(args.p_result)}) as value`;
     case 'architect_construct_timeout':
       return `select public.architect_construct_timeout() as value`;
     case 'architect_construct_heartbeat':
-      return `select public.architect_construct_heartbeat(${quote(String(args.p_worker))},${quote(String(args.p_run))},${Number(args.p_lease)}) as value`;
+      return `select public.architect_construct_heartbeat(${quote(String(args.p_worker))},${quote(String(args.p_run))},${quote(String(args.p_token))},${Number(args.p_lease)}) as value`;
     case 'architect_construct_mark_running':
-      return `select public.architect_construct_mark_running(${quote(String(args.p_worker))},${quote(String(args.p_run))}) as value`;
+      return `select public.architect_construct_mark_running(${quote(String(args.p_worker))},${quote(String(args.p_run))},${quote(String(args.p_token))}) as value`;
     case 'architect_construct_append_event':
-      return `select public.architect_construct_append_event(${quote(String(args.p_worker))},${quote(String(args.p_run))},${quote(String(args.p_kind))},${quote(String(args.p_detail))}) as value`;
+      return `select public.architect_construct_append_event(${quote(String(args.p_worker))},${quote(String(args.p_run))},${quote(String(args.p_token))},${quote(String(args.p_kind))},${quote(String(args.p_detail))}) as value`;
     default:
       throw new Error(`Unknown RPC ${name}`);
   }
@@ -137,6 +137,7 @@ grant select on public.persons to authenticated; create table public.ai_conversa
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013160000_architect_construct.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013180000_architect_construct_worker_plane.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261013193000_architect_construct_isolation.sql', 'utf8'));
   await db.exec(
     `set role authenticated; select set_config('request.jwt.claim.sub','${owner}',false); select public.architect_origin_save('${project}','${request}',0,${literal({ ...content, name: 'Synthetic durable construct' })},'Synthetic durable'); reset role;`,
   );
@@ -162,7 +163,10 @@ describe('Durable Construct store and separate worker plane (PGlite; not hosted 
     const ownerStore = new DatabaseConstructStore(pgliteClient('owner'), 'owner');
     const workerA = new DatabaseConstructStore(pgliteClient('worker'), 'worker');
     const workerB = new DatabaseConstructStore(pgliteClient('worker'), 'worker');
-    const source = fixtureSource(owner, request);
+    const source = importedFixtureSource(owner, request);
+    await expect(
+      ownerStore.importSource({ ...source, id: '00000000-0000-4000-8000-000000000055', kind: 'fixture' }),
+    ).rejects.toThrow(/Invalid source/i);
     await ownerStore.importSource(source);
     const brief = await ownerStore.approveBrief(
       owner,
@@ -186,19 +190,26 @@ describe('Durable Construct store and separate worker plane (PGlite; not hosted 
       sourceId: source.id,
     });
     expect(queued.status).toBe('queued');
-    const executed = await processConstructOnce(workerA, 'worker-a');
-    expect(executed?.status).toBe('succeeded');
+    const executed = await processConstructOnce(workerA, 'worker-a', new Date(), {
+      probe: async () => ({
+        available: false,
+        backend: 'unavailable',
+        code: 'not-installed',
+        reason: 'PGlite unit test does not start Docker. Isolated execution is blocked.',
+      }),
+    });
+    expect(executed?.status).toBe('blocked');
     expect(executed?.result?.sandbox).toBe(false);
-    expect(executed?.result?.isolation).toBe('process-fixture');
-    expect(executed?.result?.preview.body).toContain('<h1>After</h1>');
+    expect(executed?.result?.isolation).toBe('unavailable');
+    expect(executed?.result?.blocker).toMatch(/does not start Docker|blocked/i);
     expect(await processConstructOnce(workerB, 'worker-b')).toBeNull();
     const reloaded = new DatabaseConstructStore(pgliteClient('owner'), 'owner');
     const recovered = await reloaded.readRun(owner, request);
     expect(recovered?.result?.diff).toBe(executed?.result?.diff);
-    expect(recovered?.status).toBe('succeeded');
+    expect(recovered?.status).toBe('blocked');
     const events = await reloaded.listEvents(owner, request);
     expect(events.map((event) => event.kind)).toEqual(
-      expect.arrayContaining(['queued', 'claimed', 'started', 'patch_applied', 'finished']),
+      expect.arrayContaining(['queued', 'claimed', 'started', 'blocked']),
     );
     const foreignStore = new DatabaseConstructStore(pgliteClient('owner', foreign), 'owner');
     expect(await foreignStore.readRun(foreign, request)).toBeNull();

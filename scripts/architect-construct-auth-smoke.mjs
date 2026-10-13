@@ -104,14 +104,28 @@ try {
     ).data,
     1,
   );
+  assert.ok(
+    (
+      await owner.rpc('architect_construct_import_source', {
+        p_id: crypto.randomUUID(),
+        p_kind: 'fixture',
+        p_repository: scope.repository,
+        p_commit: null,
+        p_label: 'Owner-chosen fixture must not be a durable import.',
+        p_tree: tree,
+        p_files: files,
+      })
+    ).error,
+    'Owner-supplied kind=fixture must be rejected.',
+  );
   assert.equal(
     (
       await owner.rpc('architect_construct_import_source', {
         p_id: request,
-        p_kind: 'fixture',
+        p_kind: 'imported',
         p_repository: scope.repository,
         p_commit: null,
-        p_label: 'Deterministic fixture source — labelled test tree, not an imported application snapshot.',
+        p_label: 'Imported source snapshot of neilaureliuscollective/gent-ascend-collective-app — exact attached files, not live repository knowledge.',
         p_tree: tree,
         p_files: files,
       })

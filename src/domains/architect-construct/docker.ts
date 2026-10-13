@@ -203,7 +203,7 @@ export async function probeDockerIsolation(
   }
 }
 
-export const trustedContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+export const trustedContainerRunner = `import { accessSync, constants, existsSync, lstatSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 function can(path, mode) { try { accessSync(path, mode); return true; } catch { return false; } }
@@ -215,10 +215,12 @@ function describe(path) {
     return { path, error: error.code || String(error.message || error) };
   }
 }
+const job = JSON.parse(readFileSync('/opt/construct-job.json', 'utf8'));
+const firstSource = job.files && job.files[0] && job.files[0].path ? join('/src', job.files[0].path) : '/src';
 const workspace = {
   identity: { uid: process.getuid ? process.getuid() : null, gid: process.getgid ? process.getgid() : null },
   src: describe('/src'),
-  source_file: describe('/src/README.md'),
+  source_file: describe(firstSource),
   work: describe('/work'),
   tmp: describe('/tmp'),
   out: describe('/out'),
@@ -232,7 +234,6 @@ if (workspace.source_file.writable)
   throw new Error('Pinned source must stay immutable.');
 if (!workspace.work.writable || workspace.work.uid !== 65534)
   throw new Error('Writable /work tmpfs is not owned by nobody.');
-const job = JSON.parse(readFileSync('/opt/construct-job.json', 'utf8'));
 const work = '/work';
 for (const file of job.files) {
   const to = join(work, file.path);
@@ -241,7 +242,7 @@ for (const file of job.files) {
 }
 for (const patch of job.patch) {
   const target = join(work, patch.path);
-  if (readFileSync(target, 'utf8') !== patch.before) throw new Error('Patch basis mismatch');
+  if (!existsSync(target) || readFileSync(target, 'utf8') !== patch.before) throw new Error('Patch basis mismatch');
   writeFileSync(target, patch.after);
 }
 const checks = [];
@@ -260,10 +261,33 @@ for (const check of job.checks) {
     log: ((ran.stdout || '') + (ran.stderr || '')).slice(0, 16384),
   });
 }
+const allowed = Array.isArray(job.allowed_paths) ? job.allowed_paths : [];
+const files = [];
+for (const rel of allowed) {
+  const target = join(work, rel);
+  if (!existsSync(target)) continue;
+  const st = lstatSync(target);
+  if (st.isSymbolicLink()) throw new Error('Observed output contained a symbolic link.');
+  const content = readFileSync(target, 'utf8');
+  files.push({ path: rel, content });
+  try {
+    const outFile = join('/out/files', rel);
+    mkdirSync(dirname(outFile), { recursive: true });
+    writeFileSync(outFile, content);
+  } catch { /* /out is optional */ }
+}
 const previewPath = job.previewPath || null;
-const preview = { path: previewPath, body: '', unavailable_reason: previewPath ? null : 'No preview path was included in this brief.' };
-if (previewPath && existsSync(join(work, previewPath))) preview.body = readFileSync(join(work, previewPath), 'utf8');
-const payload = { checks, changed_files: job.patch.map((file) => file.path), preview };
+const previewFile = files.find((file) => file.path === previewPath);
+const preview = {
+  path: previewPath,
+  body: previewFile ? previewFile.content : '',
+  unavailable_reason: previewPath ? (previewFile ? null : 'Observed preview file was not present.') : 'No preview path was included in this brief.',
+};
+const changed_files = files.filter((file) => {
+  const original = existsSync(join('/src', file.path)) ? readFileSync(join('/src', file.path), 'utf8') : '';
+  return original !== file.content;
+}).map((file) => file.path);
+const payload = { checks, files, changed_files, preview };
 try { writeFileSync('/out/result.json', JSON.stringify(payload)); } catch { /* /out is optional */ }
 process.stdout.write('CONSTRUCT_RESULT_BEGIN\\n' + JSON.stringify(payload) + '\\nCONSTRUCT_RESULT_END\\n');
 `;
