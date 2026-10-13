@@ -35,3 +35,7 @@ The new verification also records unresolved behavior outside the material chang
 Stop at the isolated local candidate for visual review before adopting this material elsewhere. The conversation-personality prompt, corporate homepage, public Architect intake/branding, Legacy Reserve and later domain adoption are excluded. Keep the SensitiveLiveProvider → ConversationDraftProvider → OriginDraftProvider chain above the keyed EnvironmentFrame.
 
 Rollback is a reviewed revert of the single B+ presentation commit (or return to the preserved `40d2fd8` artifact in an independently authorized release). No data migration, stored preference deletion or provider configuration is necessary. Never reset shared branches or overwrite newer work. The final bundle must preserve this base and prior repair/integration refs. Living Sanctuary `28e1a04` remains separately unverified and untouched; this is not its backup.
+
+## Subsequent bounded adoption
+
+On October 13 at 06:13:04 UTC Neil approved the actual Talk screenshots and continuation into Work / Architect. That separate local visual commit is documented in [Work / Architect adoption](HYBRID_EMERALD_BPLUS_WORK_ARCHITECT.md). The approved interaction repairs remain a separate commit; this historical Talk pilot and its original failed evidence are preserved.

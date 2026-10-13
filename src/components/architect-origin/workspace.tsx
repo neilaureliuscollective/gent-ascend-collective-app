@@ -1,4 +1,6 @@
 'use client';
+import { BplusMaterial } from '@/components/visual/bplus-material';
+import '@/components/visual/bplus-operator.css';
 import { compileDocument } from '@/domains/architect-origin/documents';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -526,8 +528,10 @@ export function ArchitectOrigin({
           key={p.id}
           disabled={locked}
           aria-current={p.id === selected?.id ? 'page' : undefined}
+          data-bplus-surface={p.id === selected?.id ? 'selection' : undefined}
           onClick={() => void open(p)}
         >
+          {p.id === selected?.id && <BplusMaterial radius={8} />}
           {p.content.name}
           <span>
             {p.content.status} · v{p.revision}
@@ -539,6 +543,7 @@ export function ArchitectOrigin({
   return (
     <section
       className={`origin${selected ? ' origin-active' : ''}`}
+      data-bplus="architect"
       aria-labelledby="origin-title"
       aria-busy={busy}
     >
@@ -589,9 +594,11 @@ export function ArchitectOrigin({
               <button
                 key={s.discipline}
                 aria-pressed={discipline === s.discipline}
+                data-bplus-surface={discipline === s.discipline ? 'selection' : undefined}
                 onClick={() => setDiscipline(s.discipline)}
                 disabled={locked}
               >
+                {discipline === s.discipline && <BplusMaterial radius={8} />}
                 <strong>{s.title}</strong>
                 <span>{s.detail}</span>
               </button>
@@ -639,7 +646,12 @@ export function ArchitectOrigin({
               Your idea becomes the initial project vision. Aethelios’s later assumptions remain
               proposals until you accept them.
             </p>
-            <button className="button" disabled={!enabled || locked || idea.trim().length < 3}>
+            <button
+              className="button"
+              data-bplus-surface="action"
+              disabled={!enabled || locked || idea.trim().length < 3}
+            >
+              <BplusMaterial radius={8} />
               Create & save project
             </button>
           </form>
@@ -679,11 +691,13 @@ export function ArchitectOrigin({
                 <button
                   key={tab}
                   aria-current={surface === tab ? 'page' : undefined}
+                  data-bplus-surface={surface === tab ? 'selection' : undefined}
                   onClick={() => {
                     setSurface(tab);
                     setHistory(null);
                   }}
                 >
+                  {surface === tab && <BplusMaterial radius={8} />}
                   {tab}
                 </button>
               ))}
@@ -1089,8 +1103,10 @@ export function ArchitectOrigin({
                             <button
                               key={view}
                               aria-pressed={documentView === view}
+                              data-bplus-surface={documentView === view ? 'selection' : undefined}
                               onClick={() => setDocumentView(view)}
                             >
+                              {documentView === view && <BplusMaterial radius={8} />}
                               {view}
                             </button>
                           ))}
@@ -1342,9 +1358,11 @@ export function ArchitectOrigin({
               </p>
               <button
                 className="button"
+                data-bplus-surface="action"
                 disabled={busy || (!dirty && !pending)}
                 onClick={() => void save()}
               >
+                <BplusMaterial radius={8} />
                 {pending ? 'Retry same save' : 'Save & confirm revision'}
               </button>
               {dirty && !pending && (

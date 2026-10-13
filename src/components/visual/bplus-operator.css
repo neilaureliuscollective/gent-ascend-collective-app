@@ -1,0 +1,135 @@
+/* Work / Architect adoption of the existing B+ optics. No global token changes.
+   Optical emerald marks deliberate controls; sustained reading stays opaque. */
+.app-shell.imperial-workspace
+  :is(.company-work[data-bplus='work'], .origin[data-bplus='architect'])
+  [data-bplus-surface] {
+  border-radius: 8px;
+  color: var(--aether-ivory);
+  min-height: 44px;
+}
+.app-shell.imperial-workspace
+  .company-work[data-bplus='work']
+  > :is(header, .company-rooms, .io-architect) {
+  background: var(--io-navigation);
+  border-color: var(--io-divider);
+  box-shadow: inset 0 1px var(--io-reflection);
+}
+.app-shell.imperial-workspace .company-work[data-bplus='work'] .io-architect {
+  border-left-color: var(--io-gold);
+}
+.app-shell.imperial-workspace .company-work[data-bplus='work'] .company-job-list {
+  background: var(--io-environment);
+}
+.app-shell.imperial-workspace .company-work[data-bplus='work'] .company-job-number {
+  color: var(--io-gold);
+}
+.app-shell.imperial-workspace .origin[data-bplus='architect'] {
+  background: var(--io-environment);
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  :is(
+    .origin-project-heading,
+    .origin-savebar,
+    .origin-conversation,
+    .origin-starters > button:not([data-bplus-surface])
+  ) {
+  background: var(--io-navigation);
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  :is(.origin-plane, .origin-document-preview, input, textarea, select) {
+  background: var(--io-environment);
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  :is(.origin-surfaces, .origin-view-controls, .origin-project-switcher) {
+  background: var(--io-environment);
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  :is(.origin-surfaces, .origin-view-controls)
+  > button[data-bplus-surface] {
+  border-bottom-color: var(--io-gold);
+  box-shadow: inset 0 -2px var(--io-gold);
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  .origin-library
+  button[data-bplus-surface] {
+  border-left-color: var(--io-gold);
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  :is(.origin-project-heading .eyebrow, .origin-editor-heading > span) {
+  color: var(--io-gold);
+}
+.app-shell.imperial-workspace .origin[data-bplus='architect'] button[data-bplus-surface]:disabled {
+  background: var(--io-environment);
+  border-color: var(--io-divider);
+  color: var(--io-muted);
+  opacity: 1;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace
+  .origin[data-bplus='architect']
+  button[data-bplus-surface]:disabled
+  > .bplus-optics {
+  display: none;
+}
+.app-shell.imperial-workspace
+  :is(.company-work[data-bplus='work'], .origin[data-bplus='architect'])
+  [data-bplus-surface]:focus-visible {
+  outline: 2px solid var(--aether-ivory);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace
+    :is(.company-work[data-bplus='work'], .origin[data-bplus='architect'])
+    :is(
+      [data-bplus-surface],
+      .origin-project-heading,
+      .origin-savebar,
+      .origin-conversation,
+      .origin-plane,
+      .origin-document-preview,
+      .origin-starters > button,
+      input,
+      textarea,
+      select,
+      .origin-surfaces,
+      .origin-view-controls,
+      .origin-project-switcher
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    border-color: CanvasText;
+  }
+  .app-shell.imperial-workspace
+    .origin[data-bplus='architect']
+    :is(.origin-surfaces, .origin-view-controls)
+    > button[data-bplus-surface] {
+    border-bottom: 2px solid Highlight;
+  }
+  .app-shell.imperial-workspace
+    .origin[data-bplus='architect']
+    button[data-bplus-surface]:disabled {
+    color: GrayText;
+  }
+  .app-shell.imperial-workspace
+    :is(.company-work[data-bplus='work'], .origin[data-bplus='architect'])
+    [data-bplus-surface]:focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+@media print {
+  .origin[data-bplus='architect'] .bplus-optics {
+    display: none;
+  }
+  .app-shell.imperial-workspace .origin[data-bplus='architect'] .origin-document-preview {
+    background: white;
+    color: black;
+  }
+}

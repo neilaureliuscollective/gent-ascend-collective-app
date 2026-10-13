@@ -43,7 +43,11 @@ export function Navigation() {
       {destinations.map(([href, label, icon]) => (
         <Link
           key={href}
-          data-bplus-surface={href === '/app/aethelios' && path === href ? 'navigation' : undefined}
+          data-bplus-surface={
+            (href === '/app/aethelios' || href === '/app/work') && path === href
+              ? 'navigation'
+              : undefined
+          }
           href={href === '/app/aethelios' && path.startsWith('/app/companies/') ? path : href}
           prefetch={href === '/app/health' ? false : undefined}
           aria-current={
@@ -55,7 +59,9 @@ export function Navigation() {
               : undefined
           }
         >
-          {href === '/app/aethelios' && path === href && <BplusMaterial radius={10} />}
+          {(href === '/app/aethelios' || href === '/app/work') && path === href && (
+            <BplusMaterial radius={10} />
+          )}
           <Icon name={icon} />
           <span>{label}</span>
         </Link>

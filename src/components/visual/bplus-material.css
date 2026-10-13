@@ -1,8 +1,11 @@
-/* B+ Talk pilot. Explicit adoption only; existing io material aliases remain authoritative
+/* B+ scoped material. Explicit adoption only; existing io material aliases remain authoritative
    everywhere else. Specificity resolves the existing Emerald composer/nav rules without
    depending on component chunk order. SVG has no viewBox: one edge unit stays one CSS px. */
 .app-shell.imperial-workspace
-  :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+  :is(
+    :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
+    .navigation a[data-bplus-surface='navigation']
+  ) {
   --io-optical-substrate: var(--aether-optical-substrate);
   --io-optical-contact: 0 7px 10px -2px
     color-mix(in srgb, var(--aether-optical-shadow) 73%, transparent);
@@ -69,7 +72,10 @@ html[data-motion='still']
   pointer-events: none;
 }
 .app-shell.imperial-workspace
-  :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation'])
+  :is(
+    :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
+    .navigation a[data-bplus-surface='navigation']
+  )
   > svg.bplus-optics {
   visibility: visible;
   position: absolute;
@@ -180,7 +186,10 @@ html[data-motion='still'] .bplus-optics .bplus-emphasis {
 }
 html[data-material='solid']
   .app-shell.imperial-workspace
-  :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+  :is(
+    :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
+    .navigation a[data-bplus-surface='navigation']
+  ) {
   background: var(--io-navigation);
   outline: 1px solid var(--io-secondary);
   outline-offset: -1px;
@@ -191,7 +200,10 @@ html[data-material='solid'] [data-bplus-surface] > .bplus-optics {
 }
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
   .app-shell.imperial-workspace
-    :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+    :is(
+      :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
+      .navigation a[data-bplus-surface='navigation']
+    ) {
     background: var(--io-navigation);
     outline: 1px solid var(--io-secondary);
     outline-offset: -1px;
@@ -203,7 +215,10 @@ html[data-material='solid'] [data-bplus-surface] > .bplus-optics {
 }
 @media (forced-colors: active) {
   .app-shell.imperial-workspace
-    :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+    :is(
+      :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
+      .navigation a[data-bplus-surface='navigation']
+    ) {
     background: Canvas;
     color: CanvasText;
     outline: 1px solid ButtonText;

@@ -1,3 +1,5 @@
+> B+ Work / Architect local continuation (2026-10-13): approved Talk optics now mark selected Work entry actions/navigation and Architect project/tab/view/save controls. Opaque obsidian reading, existing layout, drafts, domain behavior and gates remain intact; no Lifestyle changes. Functional repairs are separate commit b5def5b. See [scope and verification](HYBRID_EMERALD_BPLUS_WORK_ARCHITECT.md); exact final checks/screenshots/bundle are local review artifacts, not production approval.
+
 > Local interaction repairs (2026-10-13): Neil authorized composer-relative Latest message placement, drawer close focus ownership and Architect route-owned URL writes. Seven controlled browser regressions fail on c593 and pass on the isolated repair. See [scope and historical evidence](LOCAL_INTERACTION_REPAIRS.md). Work/Architect materials are a separate next commit; no production operation.
 
 ## Hybrid Emerald B+ Talk pilot — October 13, 2026

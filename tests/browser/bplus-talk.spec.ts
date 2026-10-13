@@ -132,10 +132,13 @@ test('solid, forced colors and keyboard focus stay complete at runtime', async (
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   await expect(field(page)).toHaveValue('Keep this draft across material preferences');
 });
-test('pilot leaves Work and its navigation materials unadopted', async ({ page }) => {
+test('Talk and Work retain distinct explicit material adoption', async ({ page }) => {
   await page.goto('/app/work');
   await expect(page.locator('.company-work')).toBeVisible();
-  await expect(page.locator('[data-bplus-surface]')).toHaveCount(0);
+  await expect(page.locator('[data-bplus="talk"]')).toHaveCount(0);
+  await expect(page.locator('.company-work[data-bplus="work"]')).toBeVisible();
+  await expect(page.locator('.company-work [data-bplus-surface]')).toHaveCount(2);
+  await expect(page.locator('.company-job-list .bplus-optics')).toHaveCount(0);
   await expect(
     page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
   ).toHaveCount(6);
