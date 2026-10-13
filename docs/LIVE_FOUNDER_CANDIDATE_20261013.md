@@ -12,9 +12,25 @@ The existing WebRTC/Realtime engine, owner RPCs, explicit transcript/context con
 
 Lifecycle repairs: a late remote-description result cannot install an expiry timer after End; simultaneous End requests share a receipt, but a late POST admission always causes a fresh cleanup after an earlier End; HTTP success without `{ended:true}` leaves cleanup pending and blocks another start; delayed playback promises cannot mutate a later session. Transcript positions are reserved before late ASR. Context seed items are not rendered as user utterances. Server persistence keeps response order, latches interruption before completion, waits for final usage, and does not double-count duplicate completions. Sideband cleanup now checks the database End acknowledgement. Provider admission rejects redirects.
 
+## Single expiry path (authoritative)
+
+Do **not** activate `ops/live-expiry.vercel.json`. It remains an unused template. `vercel.json` has no `crons` on current main, this branch, or the inspected preview worker. Adding Vercel Cron would duplicate cleanup.
+
+| Role                        | Authoritative choice                                                                                                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scheduler                   | Existing Gent `pg_cron` job `aethelios-live-preview-expiry` (every minute). Conditional HTTP when expired unconfirmed calls exist.                                                       |
+| Endpoint                    | `GET /api/internal/live-expiry` on the job’s current target host.                                                                                                                        |
+| Last inspected target       | `https://gent-ascend-collective-app-git-integration-7ec769-stutes-legacy.vercel.app` · deployment `dpl_7X5B5rQqrtpsqjVRrx2PwLBDm2Ad` · source `bfff19edb65875dc961c7a8fadc2661e830bc933` |
+| Worker source compatibility | Git blobs for `src/domains/live/cleanup.ts`, `expiry.ts`, `expiry-readiness.ts` and `src/app/api/internal/live-expiry/route.ts` are identical on `bfff19e` and this PR head.             |
+| Not this path               | Next `after()` monitor (best-effort while the admitting function lives). Owner `recoverExpiredLive` (runs only when the owner admits again).                                             |
+
+Reverified 2026-10-13 from this workspace: unauthenticated GET of the preview target returned Vercel Authentication (302 / login HTML), so this environment cannot prove the cron request reaches the handler. Unauthenticated GET of `https://www.gentascend.com/api/internal/live-expiry` returned `404 {"error":"Not found."}` — the production route is present and fail-closed because `AETHELIOS_LIVE_EXPIRY_ENABLED` is not true. Idle cron success is not HTTP-handler proof and not provider hangup proof.
+
+`expiryReadiness` / production admission still inspect the **admitting deployment’s** `AETHELIOS_LIVE_EXPIRY_ENABLED`, `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`. Those names are required on Production before founder-pilot admission can open, even while the HTTP worker remains the preview target. That is configuration presence, not delivery. The worker’s `OPENAI_API_KEY` must be the same secret used at admission or HMAC hangup verification fails. Do not retarget the cron job or weaken Vercel protection without a specific approved change.
+
 ## Current resources, read-only evidence
 
-Canonical Gent project `volpzkfsnmtztrovexcw` has all seven core Live migrations, plus three later preview scheduler/delivery migrations. `pg_cron`, `http`, `pg_net` and Vault are installed. Cron job 1 `aethelios-live-preview-expiry` is active every minute; its function uses existing Vault credentials, bounded HTTP and response validation. Its target is the existing `integration/aethelios-live-20261012` preview's `/api/internal/live-expiry`. Sixty successful cron runs in the observed hour establish HTTP/function success, not demonstrated hangup of a real expired provider call.
+Canonical Gent project `volpzkfsnmtztrovexcw` has all seven core Live migrations, plus three later preview scheduler/delivery migrations. `pg_cron`, `http`, `pg_net` and Vault are installed. No new hosted migration was applied in this work.
 
 Vercel environment metadata (no secret values read) puts Supabase URL/publishable key, APP_ENV, harness setting and OpenAI key in shared production/preview records. Existing expiry/service-role/cron-secret/canonical-pilot settings are restricted to the integration preview branch. There is no proven isolated Gent backend: its branch list is empty. Separate `esna-command` and `RAS App` projects are other products, not authorized test targets. An ordinary preview is therefore not proof of database isolation. Docker responds locally, but no Supabase containers were running; no new local stack or credentials were provisioned.
 

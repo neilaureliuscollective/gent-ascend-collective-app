@@ -81,10 +81,19 @@
 .talk-toolbar .live-entry .talk-tool {
   white-space: nowrap;
 }
-@media (max-width: 360px) {
+.talk-toolbar .live-entry-short {
+  display: none;
+}
+@media (max-width: 380px) {
   .talk-toolbar .live-entry .talk-tool {
     padding-inline: 8px;
     font-size: 12px;
+  }
+  .talk-toolbar .live-entry-full {
+    display: none;
+  }
+  .talk-toolbar .live-entry-short {
+    display: inline;
   }
 }
 .talk-toolbar .live-consent {

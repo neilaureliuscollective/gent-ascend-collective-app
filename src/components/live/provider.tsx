@@ -69,6 +69,16 @@ export function useLiveBusy() {
   );
   return state.cleanupPending || ['connecting', 'listening', 'speaking'].includes(state.phase);
 }
+function LiveEntryLabel() {
+  return (
+    <>
+      <span className="live-entry-full">Aethelios Live</span>
+      <span className="live-entry-short" aria-hidden="true">
+        Live
+      </span>
+    </>
+  );
+}
 export function LiveVoiceEntry({
   conversationId,
   includeContext,
@@ -92,11 +102,12 @@ export function LiveVoiceEntry({
         <button
           type="button"
           className="talk-tool"
+          aria-label="Aethelios Live"
           aria-expanded={info}
           aria-controls="live-unavailable"
           onClick={() => setInfo((value) => !value)}
         >
-          Aethelios Live
+          <LiveEntryLabel />
         </button>
         {info && (
           <div className="live-consent" id="live-unavailable" role="status">
@@ -114,6 +125,7 @@ export function LiveVoiceEntry({
       <button
         type="button"
         className="talk-tool"
+        aria-label="Aethelios Live"
         disabled={disabled}
         onClick={() => {
           const state = controller.getSnapshot();
@@ -122,7 +134,7 @@ export function LiveVoiceEntry({
           } else setConsent(true);
         }}
       >
-        Aethelios Live
+        <LiveEntryLabel />
       </button>
       {consent && (
         <div className="live-consent" role="group" aria-label="Voice pilot consent">
