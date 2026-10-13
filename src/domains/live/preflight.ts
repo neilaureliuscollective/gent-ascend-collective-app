@@ -20,6 +20,7 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
   const source = /^[a-f0-9]{40}$/i.test(env.VERCEL_GIT_COMMIT_SHA ?? '')
     ? env.VERCEL_GIT_COMMIT_SHA!
     : null;
+  const policy = liveAdmissionPolicy(env);
   return {
     environment,
     source,
@@ -28,9 +29,8 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
     enabled,
     controlsDeclared,
     previewDatabaseBinding: previewBinding(env),
-    canonicalPilot: environment !== 'invalid' && liveAdmissionPolicy(env).founderOnly,
-    admissionConfigured:
-      environment !== 'invalid' && keyConfigured && !!model && !liveAdmissionPolicy(env).error,
+    canonicalPilot: environment !== 'invalid' && policy.founderOnly,
+    admissionConfigured: environment !== 'invalid' && keyConfigured && !!model && !policy.error,
     launchAcceptance: 'unverified' as const,
     expiry: {
       ...expiryReadiness(env),

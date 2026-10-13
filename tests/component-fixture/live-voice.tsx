@@ -18,3 +18,16 @@ export function LiveVoiceFixture() {
     </LiveConversationProvider>
   );
 }
+export function LiveVoiceUnavailableFixture() {
+  return (
+    <LiveConversationProvider
+      enabled={false}
+      unavailableReason="Aethelios Live is not enabled on this deployment."
+    >
+      <h1>Synthetic voice fixture · no real account or provider</h1>
+      <div className="talk-toolbar imperial-control-surface">
+        <LiveVoiceEntry conversationId={null} includeContext={false} />
+      </div>
+    </LiveConversationProvider>
+  );
+}

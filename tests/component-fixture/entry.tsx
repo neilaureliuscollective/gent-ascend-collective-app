@@ -8,7 +8,7 @@ import { ArchivedEstate } from './archived-estate';
 import { CinematicWorld } from '@/components/public/cinematic-world';
 import { WorldHeader } from '@/components/public/world-header';
 import { LiveArtifactsFixture } from './live-artifacts';
-import { LiveVoiceFixture } from './live-voice';
+import { LiveVoiceFixture, LiveVoiceUnavailableFixture } from './live-voice';
 import { HealthWorkspace, type HealthView } from '@/components/health/workspace';
 import { healthFixture } from './health';
 import { MissionHandoffFixture } from './mission-handoff';
@@ -184,6 +184,8 @@ createRoot(document.getElementById('root')!).render(
     <LiveArtifactsFixture />
   ) : mode === 'live-voice' ? (
     <LiveVoiceFixture />
+  ) : mode === 'live-voice-unavailable' ? (
+    <LiveVoiceUnavailableFixture />
   ) : mode === 'architect-origin' ? (
     <EnvironmentFrame
       immersive

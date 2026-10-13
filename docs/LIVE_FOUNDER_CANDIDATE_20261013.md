@@ -1,10 +1,12 @@
 # Founder Live activation candidate — October 13, 2026
 
-Local preparation based on accepted Talk release `0c45b2f65703e13fabc0725ad4a21f49a11093ff`. No deployment, environment mutation, hosted database write, migration, real microphone capture or paid provider call belongs to this phase. Architect first-site `928f74a6e327a21fdeb1df9b0182060d8eb579f8` remains separate and off.
+Integrated onto current main `810966302c2074df98eedf06edae6a6d8a030020` from recovery `398037e9587f0c1a5d84e712b97a1605005621b8`. That recovery was built on Talk `0c45b2f`; newer privacy/material commits are preserved. No hosted environment mutation, migration, credential, real microphone capture or paid provider call belongs to the code change. Construct PR116, Connections PR117 and Architect first-site remain separate.
+
+Shared-shell overlap: `src/components/shell.tsx` now computes Live availability from `liveShellAvailability` and the session `founder_access` result already loaded as `founderOffice`. The local harness `founder` prop still only gates `/dev`. `.env.example`, `docs/STATUS.md` and `docs/DECISIONS.md` received Live-only notes; Construct/Connections keys were not edited.
 
 ## Implemented
 
-The server configuration and shell now use one admission policy. Existing local and protected-preview behavior is retained. Production stays off by default: the additional server-only `AETHELIOS_LIVE_FOUNDER_PILOT=true` is necessary, together with Live enabled, control readiness, canonical database binding, independent cleanup configuration, supported model and existing OpenAI key. Ordinary beta accounts cannot pass founder-only admission. Authority comes from the session-bound `founder_access` row before reservation/provider admission and is rechecked during the existing five-second monitor even when beta membership remains. Preflight reports configuration only, never acceptance.
+The original production guards (`liveConfig` `env.mode === 'production'` and Shell `APP_ENV`/`VERCEL_ENV` production exclusions) existed to prevent accidental paid Realtime admission, public/beta rollout, and voice without proven independent expiry. They are replaced only by equivalent intentional checks: default-off `AETHELIOS_LIVE_ENABLED`, production-only `AETHELIOS_LIVE_FOUNDER_PILOT`, `AETHELIOS_LIVE_CONTROL_READY`, canonical Gent binding, independent expiry configuration, supported model and existing OpenAI key. Ordinary beta accounts cannot pass founder-only admission. Authority comes from the session-bound `founder_access` row before reservation/provider admission and is rechecked during the existing five-second monitor even when beta membership remains. Talk always exposes the Live control; when admission is closed it explains why instead of returning null. Preflight reports configuration only, never acceptance.
 
 The existing WebRTC/Realtime engine, owner RPCs, explicit transcript/context consent, 120-second reservation, sideband context acknowledgement and expiry leases remain. No GPT-Live adapter swap, additional scheduler, migration, background execution default, Health flag or external action was added.
 
@@ -30,3 +32,12 @@ Exact final commands, SHA, logs and browser results are in the separate evidence
 4. Production promotion is separate and held until evidence closes the gate or Neil explicitly accepts the named exception. Production configuration would need the new founder gate plus existing controls and safely scoped existing worker credentials; no secrets in chat/artifacts. Keep broader beta admission off. Roll back by disabling admission first and redeploying the accepted Talk SHA; keep independent expiry and its credentials alive until all admitted sessions have confirmed cleanup. Never roll back data by deleting migrations or resetting the shared database.
 
 Neil accepted the already-deployed Talk release for his hands-on testing. That acceptance is preserved and is not a new authorization for this paid hosted Live window. No additional approval of existing Talk is requested.
+
+## Rollback that drains sessions
+
+1. Disable admission first: set `AETHELIOS_LIVE_ENABLED=false` and `AETHELIOS_LIVE_FOUNDER_PILOT=false` on the affected environment, then redeploy. Keep `AETHELIOS_LIVE_EXPIRY_ENABLED`, worker database authority and `CRON_SECRET` in place until every admitted session has a confirmed hangup/end receipt.
+2. Do not rotate `OPENAI_API_KEY` or HMAC-relevant secrets until cleanup has finished; old call tags would fail verification.
+3. Redeploy the previous accepted production SHA if the Live code path itself must be removed. Independent expiry should remain reachable until drain completes.
+4. Never roll back data by deleting Live migrations or resetting the shared Gent database. Saved Talk transcripts and usage/cleanup receipts stay.
+
+A disabled Live button with an unavailable explanation is the expected post-rollback Talk state. An inactive preview is not production voice.

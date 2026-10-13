@@ -292,3 +292,15 @@ test('late ASR stays ordered and uncertain cleanup prevents another voice sessio
   await expect(dialog).not.toContainText('Server cleanup is pending');
   expect(starts).toBe(1);
 });
+
+test('unavailable Live remains visible in Talk with an understandable reason', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice-unavailable');
+  const live = page.getByRole('button', { name: 'Aethelios Live', exact: true });
+  await expect(live).toBeVisible();
+  await live.click();
+  await expect(page.getByRole('status')).toContainText(
+    'Aethelios Live is not enabled on this deployment.',
+  );
+  await expect(page.getByRole('button', { name: 'Start voice' })).toHaveCount(0);
+});
