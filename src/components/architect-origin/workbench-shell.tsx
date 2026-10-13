@@ -125,15 +125,28 @@ export function RevisionStrip({
   compareId: string | null;
   onSelect: (version: OriginVersion | null) => void;
 }) {
-  const latest = versions[0];
   const selected = versions.find((version) => version.id === compareId) ?? null;
+  const oldest = versions[versions.length - 1] ?? null;
+  const previous =
+    versions.find((version) => version.revision === currentRevision - 1) ??
+    versions.find((version) => version.revision !== currentRevision) ??
+    null;
   return (
     <div className="origin-revisions" aria-label="Revisions">
-      <p>Example revisions</p>
+      <p>{versions.length ? 'Saved revisions' : 'No saved revisions yet'}</p>
       <div className="origin-revision-pills">
         <button type="button" aria-pressed={!selected} onClick={() => onSelect(null)}>
-          Original
+          Current
         </button>
+        {oldest && oldest.revision !== currentRevision && (
+          <button
+            type="button"
+            aria-pressed={compareId === oldest.id}
+            onClick={() => onSelect(oldest)}
+          >
+            Original
+          </button>
+        )}
         {versions.slice(0, 4).map((version) => (
           <button
             key={version.id}
@@ -145,13 +158,13 @@ export function RevisionStrip({
             {version.revision === currentRevision ? ' · current' : ''}
           </button>
         ))}
-        {latest && versions.length > 1 && (
+        {previous && versions.length > 1 && (
           <button
             type="button"
-            aria-pressed={!!selected}
-            onClick={() => onSelect(selected ?? versions[1] ?? null)}
+            aria-pressed={!!selected && compareId === previous.id}
+            onClick={() => onSelect(selected?.id === previous.id ? null : previous)}
           >
-            Compare
+            Compare previous
           </button>
         )}
       </div>
@@ -160,6 +173,9 @@ export function RevisionStrip({
           Comparing saved revision {selected.revision} with current revision {currentRevision}.
           Accepting a restoration still requires an explicit save.
         </p>
+      )}
+      {!versions.length && (
+        <p className="origin-revision-note">History appears after the first confirmed save.</p>
       )}
     </div>
   );

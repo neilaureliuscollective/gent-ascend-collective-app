@@ -20,6 +20,8 @@ import {
 import { readConstructPreview } from './construct-preview-adapter';
 import {
   bindPreviewIdentity,
+  retainHeldPreview,
+  samePreviewOwnerProject,
   type PreviewDecision,
 } from '@/domains/architect-origin/preview-contract';
 import {
@@ -135,6 +137,7 @@ export function ArchitectOrigin({
   const [addingReference, setAddingReference] = useState(false);
   const [constructDecision, setConstructDecision] = useState<PreviewDecision | null>(null);
   const [heldPreview, setHeldPreview] = useState<PreviewDecision | null>(null);
+  const constructRequest = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const projectTitle = useRef<HTMLHeadingElement | null>(null);
   const planeRef = useRef<HTMLElement | null>(null);
@@ -287,23 +290,37 @@ export function ArchitectOrigin({
     window.history.replaceState(null, '', url.pathname + url.search + url.hash);
   }, [loaded, selected, surface, key, documentId, documentView, workbenchView]);
   useEffect(() => {
-    if (!selected || !constructEnabled) return;
-    const controller = new AbortController();
+    // Selection-only GET. No start/poll/cancel; building remains false until PR #116 lifecycle is wired.
+    if (!selected || !constructEnabled) {
+      constructRequest.current = null;
+      return;
+    }
     const projectId = selected.id;
     const ownerId = selected.person_id;
     const revision = selected.revision;
+    const requestKey = `${projectId}:${ownerId}:${revision}`;
+    constructRequest.current = requestKey;
+    const controller = new AbortController();
     void readConstructPreview({
       projectId,
       ownerId,
       revision,
       signal: controller.signal,
     }).then((status) => {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || constructRequest.current !== requestKey) return;
       if (status.state === 'ready' && status.decision.kind !== 'unavailable') {
+        if (!samePreviewOwnerProject(status.decision, projectId, ownerId)) return;
         setConstructDecision(status.decision);
         setHeldPreview(status.decision);
       } else if (status.state === 'ready') {
-        setConstructDecision(status.decision);
+        setConstructDecision({
+          kind: 'unavailable',
+          reason:
+            status.decision.kind === 'unavailable'
+              ? status.decision.reason
+              : 'Construct preview unavailable.',
+          identity: bindPreviewIdentity({ projectId, ownerId, revision, persisted: true }),
+        });
       } else if (status.state === 'unavailable') {
         setConstructDecision({
           kind: 'unavailable',
@@ -312,11 +329,15 @@ export function ArchitectOrigin({
             projectId,
             ownerId,
             revision,
+            persisted: true,
           }),
         });
       }
     });
-    return () => controller.abort();
+    return () => {
+      if (constructRequest.current === requestKey) constructRequest.current = null;
+      controller.abort();
+    };
   }, [selected, constructEnabled]);
   useEffect(() => {
     const node = planeRef.current;
@@ -343,18 +364,22 @@ export function ArchitectOrigin({
   }
   function originArtifactDecision(): PreviewDecision | null {
     if (!selected || !draft) return null;
-    const identity = bindPreviewIdentity({
-      projectId: selected.id,
-      ownerId: selected.person_id,
-      revision: selected.revision,
-    }) ?? {
-      projectId: selected.id,
-      ownerId: selected.person_id,
-      revision: selected.revision,
-      sourceHash: null,
-      resultHash: null,
-    };
+    const scopedConstruct = samePreviewOwnerProject(
+      constructDecision,
+      selected.id,
+      selected.person_id,
+    )
+      ? constructDecision
+      : null;
+    const scopedHeld = retainHeldPreview(heldPreview, selected.id, selected.person_id);
     if (labelledDemonstration()) {
+      const identity = bindPreviewIdentity({
+        projectId: selected.id,
+        ownerId: selected.person_id,
+        revision: selected.revision,
+        persisted: false,
+      });
+      if (!identity) return { kind: 'unavailable', reason: 'Preview identity is incomplete.', identity: null };
       return {
         kind: 'static-html',
         identity,
@@ -362,12 +387,38 @@ export function ArchitectOrigin({
         markdown: null,
         path: null,
         labelledDemonstration: true,
+        provenance: 'demonstration',
       };
     }
-    if (constructDecision && constructDecision.kind !== 'unavailable') return constructDecision;
-    if (heldPreview && constructDecision?.kind === 'unavailable') return heldPreview;
+    if (scopedConstruct && scopedConstruct.kind !== 'unavailable') return scopedConstruct;
+    if (scopedHeld) return scopedHeld;
     const doc = draft.documents.find((item) => item.id === documentId) ?? draft.documents[0];
-    if (doc && documentPreviewMode(doc.content) === 'html') {
+    if (!doc) {
+      const identity = bindPreviewIdentity({
+        projectId: selected.id,
+        ownerId: selected.person_id,
+        revision: selected.revision,
+        persisted: true,
+      });
+      return {
+        kind: 'unavailable',
+        reason:
+          'No generated website artifact is attached to this revision. The brief and Origin documents remain the current work.',
+        identity,
+      };
+    }
+    const saved = selected.content.documents.find((item) => item.id === doc.id);
+    const persisted = !!saved && saved.content === doc.content;
+    const identity = bindPreviewIdentity({
+      projectId: selected.id,
+      ownerId: selected.person_id,
+      revision: selected.revision,
+      artifactId: doc.id,
+      persisted,
+    });
+    if (!identity) return { kind: 'unavailable', reason: 'Preview identity is incomplete.', identity: null };
+    const provenance = persisted ? 'saved-document' : 'unsaved-draft';
+    if (documentPreviewMode(doc.content) === 'html') {
       return {
         kind: 'static-html',
         identity,
@@ -375,23 +426,17 @@ export function ArchitectOrigin({
         markdown: null,
         path: null,
         labelledDemonstration: false,
-      };
-    }
-    if (doc) {
-      return {
-        kind: 'markdown-document',
-        identity,
-        srcDoc: null,
-        markdown: doc.content,
-        path: null,
-        labelledDemonstration: false,
+        provenance,
       };
     }
     return {
-      kind: 'unavailable',
-      reason:
-        'No generated website artifact is attached to this revision. The brief and Origin documents remain the current work.',
+      kind: 'markdown-document',
       identity,
+      srcDoc: null,
+      markdown: doc.content,
+      path: null,
+      labelledDemonstration: false,
+      provenance,
     };
   }
   function openWorkbenchView(next: WorkbenchView) {
@@ -419,7 +464,11 @@ export function ArchitectOrigin({
       setDraft(structuredClone(fresh.content));
       setDocumentId(null);
       setHistory(null);
+      setCompareId(null);
+      setConstructDecision(null);
+      setHeldPreview(retainHeldPreview(heldPreview, fresh.id, fresh.person_id));
       setSurface('Conversation');
+      setWorkbenchView('preview');
       setUncertainRun(false);
       requestAnimationFrame(() => projectTitle.current?.focus());
       projectLocation(project.id);
@@ -658,6 +707,8 @@ export function ArchitectOrigin({
           if (dirty && !window.confirm('Discard unsaved changes?')) return;
           setSelected(null);
           setDraft(null);
+          setConstructDecision(null);
+          setHeldPreview(null);
           setError('');
           setMessage('');
           projectLocation(null);
@@ -703,6 +754,8 @@ export function ArchitectOrigin({
                 if (selected) {
                   setSelected(null);
                   setDraft(null);
+                  setConstructDecision(null);
+                  setHeldPreview(null);
                   projectLocation(null);
                 }
               }}
@@ -1020,14 +1073,15 @@ export function ArchitectOrigin({
                 {workbenchView === 'preview' && (
                   <ArtifactCanvas
                     decision={originArtifactDecision()}
-                    stale={
-                      !!(
-                        heldPreview &&
-                        constructDecision &&
-                        constructDecision.kind === 'unavailable'
-                      )
-                    }
-                    building={false}
+                    stale={(() => {
+                      const decision = originArtifactDecision();
+                      return !!(
+                        decision &&
+                        decision.kind !== 'unavailable' &&
+                        decision.provenance === 'construct' &&
+                        decision.identity.revision !== selected.revision
+                      );
+                    })()}
                     title={draft.name}
                   />
                 )}

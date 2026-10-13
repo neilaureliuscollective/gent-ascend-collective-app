@@ -451,3 +451,179 @@ test('Fold dock reveals one panel at 720px without fabricating checks', async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/architect-studio-fold-720.png', fullPage: true });
 });
+
+const htmlSite = `<!DOCTYPE html><html><body><h1>Owned artifact</h1></body></html>`;
+
+for (const width of [320, 390]) {
+  test(`phone workbench keeps Artifact preview reachable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 720 });
+    const state = await fixture(page);
+    await page.goto(base);
+    await page.getByLabel('Tell Aethelios what you want to create').fill('Phone preview concept');
+    await page.getByRole('button', { name: 'Create & save project' }).click();
+    await expect(page.getByRole('status')).toContainText('Saved revision 1');
+    await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+    await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+    await page.getByLabel('Editable Markdown').fill(htmlSite);
+    await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+    await expect(page.getByRole('status')).toContainText('Saved revision 2');
+    await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+    await page.getByLabel('Blueprint section').selectOption('audience');
+    await page
+      .getByLabel('Intended audience', { exact: true })
+      .fill('A phone draft that must survive preview navigation.');
+    const preview = page.getByRole('navigation', { name: 'Workbench views' }).getByRole('button', {
+      name: 'Artifact preview',
+    });
+    await expect(preview).toBeVisible();
+    await preview.focus();
+    await expect(preview).toBeFocused();
+    await page.keyboard.press('Enter');
+    const frame = page.frameLocator('iframe[title="Isolated artifact preview"]');
+    await expect(frame.getByRole('heading', { name: 'Owned artifact' })).toBeVisible();
+    await expect(page.getByText('Actual saved document', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+    await expect(page.getByLabel('Editable Markdown')).toContainText('Owned artifact');
+    await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+    await expect(page.getByLabel('Intended audience', { exact: true })).toHaveValue(
+      'A phone draft that must survive preview navigation.',
+    );
+    expect(state.getProject()!.content.blueprint.audience).toBe('');
+    await page.screenshot({
+      path: `test-results/architect-phone-preview-${width}.png`,
+      fullPage: true,
+    });
+  });
+}
+
+test('unsaved document preview is not labelled as a saved revision', async ({ page }) => {
+  await fixture(page);
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Draft provenance concept');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+  await page.getByLabel('Editable Markdown').fill('# Saved document\n\nConfirmed copy.');
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  await page.getByLabel('Editable Markdown').fill('# Unsaved rewrite\n\nStill a draft.');
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  await expect(page.getByText('Unsaved draft preview', { exact: false })).toBeVisible();
+  await expect(page.getByText('Actual saved document', { exact: false })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await expect(page.getByLabel('Editable Markdown')).toHaveValue(
+    '# Unsaved rewrite\n\nStill a draft.',
+  );
+});
+
+test('delayed failed construct fetch cannot leak another project preview', async ({ page }) => {
+  const projects: OriginProject[] = [];
+  const versions: OriginVersion[] = [];
+  let releaseB: () => void = () => undefined;
+  const holdB = new Promise<void>((resolve) => {
+    releaseB = resolve;
+  });
+  const hash = 'c'.repeat(64);
+  await page.route('**/api/architect-origin*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { projects, versions, runs: [] } });
+    const body = route.request().postDataJSON();
+    if (body.action !== 'save') return route.fulfill({ json: { error: 'unused' }, status: 400 });
+    const now = new Date().toISOString();
+    const project: OriginProject = {
+      id: body.projectId,
+      person_id: 'owner',
+      revision: (projects.find((item) => item.id === body.projectId)?.revision ?? 0) + 1,
+      content: body.content,
+      created_at: now,
+      updated_at: now,
+    };
+    const existing = projects.findIndex((item) => item.id === project.id);
+    if (existing >= 0) projects[existing] = project;
+    else projects.unshift(project);
+    versions.unshift({
+      id: body.requestId,
+      project_id: body.projectId,
+      person_id: 'owner',
+      revision: project.revision,
+      content: body.content,
+      note: body.note,
+      created_at: now,
+    });
+    return route.fulfill({
+      json: { revision: project.revision, requestId: body.requestId, personId: 'owner' },
+    });
+  });
+  await page.route('**/api/architect-construct*', async (route) => {
+    const projectId = new URL(route.request().url()).searchParams.get('project');
+    const current = projects.find((item) => item.id === projectId);
+    if (!current) return route.fulfill({ status: 404, json: { error: 'Unknown project' } });
+    if (projects.length > 1 && projectId === projects[0]!.id) {
+      await holdB;
+      return route.fulfill({ status: 503, json: { error: 'Synthetic construct failure' } });
+    }
+    return route.fulfill({
+      json: {
+        project: { id: current.id, revision: current.revision, name: current.content.name },
+        runs: [
+          {
+            id: '77777777-7777-4777-8777-777777777777',
+            person_id: 'owner',
+            project_id: current.id,
+            project_revision: current.revision,
+            source_tree_hash: hash,
+            status: 'succeeded',
+            result: {
+              isolation: 'process-fixture',
+              runtime_available: true,
+              sandbox: false,
+              blocker: null,
+              source_hash: hash,
+              result_hash: hash,
+              changed_files: ['index.html'],
+              diff: '',
+              checks: [],
+              preview: {
+                path: 'index.html',
+                body: '<html><body><h1>Project A site</h1></body></html>',
+                unavailable_reason: null,
+              },
+            },
+          },
+        ],
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('First project with a site');
+  await page.getByLabel('Project name (optional)').fill('Project Alpha');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(
+    page.frameLocator('iframe[title="Isolated artifact preview"]').getByRole('heading', {
+      name: 'Project A site',
+    }),
+  ).toBeVisible();
+  await page.locator('summary', { hasText: 'Projects / switch creation' }).click();
+  await page
+    .getByRole('navigation', { name: 'Project library' })
+    .getByRole('button', { name: 'New vision +' })
+    .click();
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Second project without a site');
+  await page.getByLabel('Project name (optional)').fill('Project Beta');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Project Beta');
+  await expect(page.locator('iframe[title="Isolated artifact preview"]')).toHaveCount(0);
+  await expect(page.getByText('Project A site')).toHaveCount(0);
+  releaseB();
+  await page
+    .getByRole('navigation', { name: 'Workbench views' })
+    .getByRole('button', { name: 'Checks', exact: true })
+    .click();
+  await expect(page.getByText('Synthetic construct failure')).toBeVisible();
+  await expect(page.getByText('Project A site')).toHaveCount(0);
+});

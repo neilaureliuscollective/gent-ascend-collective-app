@@ -9,14 +9,36 @@ export const PREVIEW_BODY_MAX = 32768;
 export const PREVIEW_HASH = /^[0-9a-f]{64}$/;
 export const PREVIEW_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const CONSTRUCT_RUN_STATUSES = [
+  'queued',
+  'claimed',
+  'running',
+  'succeeded',
+  'failed',
+  'cancelled',
+  'blocked',
+  'timed_out',
+] as const;
+export type ConstructRunStatus = (typeof CONSTRUCT_RUN_STATUSES)[number];
+
+export const CONSTRUCT_ISOLATION = ['docker', 'process-fixture', 'unavailable'] as const;
+export type ConstructIsolation = (typeof CONSTRUCT_ISOLATION)[number];
+
 export type PreviewKind = 'static-html' | 'markdown-document' | 'construct-html' | 'unavailable';
+export type PreviewProvenance =
+  | 'saved-document'
+  | 'unsaved-draft'
+  | 'construct'
+  | 'demonstration';
 
 export type PreviewIdentity = {
   projectId: string;
   ownerId: string | null;
   revision: number;
+  artifactId: string | null;
   sourceHash: string | null;
   resultHash: string | null;
+  persisted: boolean;
 };
 
 export type TrustedPreview = {
@@ -26,6 +48,7 @@ export type TrustedPreview = {
   markdown: string | null;
   path: string | null;
   labelledDemonstration: boolean;
+  provenance: PreviewProvenance;
 };
 
 export type PreviewRejection = {
@@ -49,6 +72,10 @@ export const PREVIEW_SANDBOX = '';
 
 export function isPreviewHash(value: string | null | undefined): value is string {
   return !!value && PREVIEW_HASH.test(value);
+}
+
+export function isPreviewUuid(value: string | null | undefined): value is string {
+  return !!value && (PREVIEW_UUID.test(value) || value === 'owner');
 }
 
 export function looksLikeHtml(content: string): boolean {
@@ -78,21 +105,71 @@ export function bindPreviewIdentity(input: {
   projectId: string;
   ownerId?: string | null;
   revision: number;
+  artifactId?: string | null;
   sourceHash?: string | null;
   resultHash?: string | null;
+  persisted?: boolean;
 }): PreviewIdentity | null {
   if (!PREVIEW_UUID.test(input.projectId)) return null;
-  if (input.ownerId && !PREVIEW_UUID.test(input.ownerId) && input.ownerId !== 'owner') return null;
+  if (input.ownerId && !isPreviewUuid(input.ownerId)) return null;
   if (!Number.isInteger(input.revision) || input.revision < 1 || input.revision > 500) return null;
+  if (input.artifactId && !isPreviewUuid(input.artifactId) && !PREVIEW_UUID.test(input.artifactId))
+    return null;
   if (input.sourceHash && !isPreviewHash(input.sourceHash)) return null;
   if (input.resultHash && !isPreviewHash(input.resultHash)) return null;
   return {
     projectId: input.projectId,
     ownerId: input.ownerId ?? null,
     revision: input.revision,
+    artifactId: input.artifactId ?? null,
     sourceHash: input.sourceHash ?? null,
     resultHash: input.resultHash ?? null,
+    persisted: input.persisted !== false,
   };
+}
+
+export function samePreviewOwnerProject(
+  decision: PreviewDecision | null | undefined,
+  projectId: string | null | undefined,
+  ownerId: string | null | undefined,
+): boolean {
+  if (!decision || decision.kind === 'unavailable' || !projectId) return false;
+  if (decision.identity.projectId !== projectId) return false;
+  return decision.identity.ownerId === (ownerId ?? null);
+}
+
+/** Last successful Construct output is kept only for the same owner and project. */
+export function retainHeldPreview(
+  held: PreviewDecision | null | undefined,
+  projectId: string | null | undefined,
+  ownerId: string | null | undefined,
+): PreviewDecision | null {
+  if (!samePreviewOwnerProject(held, projectId, ownerId)) return null;
+  return held ?? null;
+}
+
+export function previewCaption(
+  decision: PreviewDecision,
+  options: { stale?: boolean } = {},
+): string {
+  if (decision.kind === 'unavailable') return decision.reason;
+  const parts: string[] = [];
+  if (decision.provenance === 'demonstration' || decision.labelledDemonstration) {
+    parts.push('Labelled demonstration — not a live generated preview.');
+  } else if (decision.provenance === 'unsaved-draft') {
+    parts.push('Unsaved draft preview. This is not a saved revision and not a running website.');
+    parts.push(`Based on saved revision ${decision.identity.revision}`);
+  } else if (decision.provenance === 'saved-document' || decision.kind === 'markdown-document') {
+    parts.push('Actual saved document. This is not a running website.');
+    parts.push(`Revision ${decision.identity.revision}`);
+  } else {
+    parts.push('Isolated static preview of the current artifact.');
+    parts.push(`Revision ${decision.identity.revision}`);
+  }
+  if (decision.identity.resultHash)
+    parts.push(`result ${decision.identity.resultHash.slice(0, 8)}`);
+  if (options.stale) parts.push('last working revision shown');
+  return parts.join(' · ');
 }
 
 export function decideConstructPreview(input: {
@@ -151,5 +228,6 @@ export function decideConstructPreview(input: {
     markdown: null,
     path: input.preview.path,
     labelledDemonstration: !!input.labelledDemonstration,
+    provenance: 'construct',
   };
 }

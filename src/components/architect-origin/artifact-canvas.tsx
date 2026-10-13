@@ -1,4 +1,5 @@
 import {
+  previewCaption,
   type PreviewDecision,
   type TrustedPreview,
 } from '@/domains/architect-origin/preview-contract';
@@ -11,12 +12,10 @@ const markdownComponents = { img: () => <span>[External image omitted]</span> };
 export function ArtifactCanvas({
   decision,
   stale,
-  building,
   title,
 }: {
   decision: PreviewDecision | null;
   stale?: boolean;
-  building?: boolean;
   title?: string;
 }) {
   if (!decision || decision.kind === 'unavailable') {
@@ -33,19 +32,7 @@ export function ArtifactCanvas({
   }
   return (
     <div className="origin-artifact" aria-label="Artifact canvas">
-      <p className="origin-artifact-caption">
-        {decision.labelledDemonstration
-          ? 'Labelled demonstration — not a live generated preview.'
-          : decision.kind === 'markdown-document'
-            ? 'Actual saved document. This is not a running website.'
-            : 'Isolated static preview of the current artifact.'}{' '}
-        Revision {decision.identity.revision}
-        {decision.identity.resultHash
-          ? ` · result ${decision.identity.resultHash.slice(0, 8)}`
-          : ''}
-        {stale ? ' · last working revision shown' : ''}
-        {building ? ' · a newer render is in progress' : ''}
-      </p>
+      <p className="origin-artifact-caption">{previewCaption(decision, { stale })}</p>
       {decision.srcDoc ? (
         <IsolatedFrame preview={decision} />
       ) : (

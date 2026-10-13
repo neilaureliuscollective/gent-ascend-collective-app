@@ -1,6 +1,6 @@
 ## 2026-10-13 — Architect immersive studio is a UI adapter, not a second Construct
 
-Keep Origin persistence, quotas and documents. Add presentation components plus a read-only Construct preview adapter that treats a missing `/api/architect-construct` as unavailable. Static HTML uses `sandbox=""` srcDoc; no generated server runs inside Next. Labelled `?demo=architect-preview` fixtures stay named demonstrations. Do not merge PR #116/#117 into this branch. Evidence: [ARCHITECT_IMMERSIVE_STUDIO.md](ARCHITECT_IMMERSIVE_STUDIO.md).
+Keep Origin persistence, quotas and documents. Add presentation components plus a read-only Construct preview adapter that treats a missing `/api/architect-construct` as unavailable. Validate receipts against required identity, status, isolation and hashes; never treat missing IDs as a match or default to `runs[0]`. Hold last success only for the same owner/project. Static HTML uses `sandbox=""` srcDoc; no generated server runs inside Next. Labelled `?demo=architect-preview` fixtures stay named demonstrations. Do not merge PR #116/#117 into this branch. Evidence: [ARCHITECT_IMMERSIVE_STUDIO.md](ARCHITECT_IMMERSIVE_STUDIO.md).
 
 ## 2026-10-12 — Lifestyle product atelier
 

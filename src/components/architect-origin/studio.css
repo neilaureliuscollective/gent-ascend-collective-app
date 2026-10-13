@@ -609,9 +609,32 @@
   }
   .origin-studio .origin-workbench .origin-refine,
   .origin-studio .origin-rail,
-  .origin-studio .origin-revisions,
-  .origin-studio .origin-workbench-bar {
+  .origin-studio .origin-revisions {
     display: none !important;
+  }
+  .origin-studio .origin-workbench-bar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 4px 8px 0;
+  }
+  .origin-studio .origin-workbench-thumb,
+  .origin-studio .origin-workbench-meta {
+    display: none;
+  }
+  .origin-studio .origin-workbench-identity h2 {
+    font-size: 0.92rem;
+  }
+  .origin-studio .origin-workbench-views {
+    display: flex;
+    width: 100%;
+    justify-content: stretch;
+    overflow: auto;
+  }
+  .origin-studio .origin-workbench-views button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 4px;
   }
   .origin-studio[data-fold-panel='outline'] .origin-rail,
   .origin-studio[data-fold-panel='refine'] .origin-refine,
