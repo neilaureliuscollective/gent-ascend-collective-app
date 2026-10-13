@@ -16,7 +16,11 @@ vi.mock('@/domains/intelligence/service', () => ({
     }
   },
 }));
-import { constructProviderStatus, proposeConstructChange } from '@/domains/architect-construct/provider';
+import {
+  constructProviderStatus,
+  mockedConstructProposal,
+  proposeConstructChange,
+} from '@/domains/architect-construct/provider';
 import { defaultProtectedPaths } from '@/domains/architect-construct/schema';
 
 it('keeps the OpenAI construct adapter disabled without authorized configuration', () => {
@@ -29,10 +33,46 @@ it('keeps the OpenAI construct adapter disabled without authorized configuration
   expect(status.reason).toMatch(/sandbox|worker|repository/i);
 });
 
+it('uses a labelled mock without calling OpenAI', async () => {
+  vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'false');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'true');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const status = constructProviderStatus();
+  expect(status.enabled).toBe(true);
+  expect(status.mode).toBe('mock');
+  const proposal = await proposeConstructChange(
+    'replace the heading',
+    {
+      allowed_paths: ['preview.html'],
+      protected_paths: defaultProtectedPaths(),
+      intended_change: 'Stay inside the fixture.',
+    },
+    [{ path: 'preview.html', content: '<h1>Before</h1>' }],
+    new AbortController().signal,
+  );
+  expect(proposal.notes).toMatch(/MOCKED PROVIDER/);
+  expect(proposal.patch[0]?.after).toContain('After');
+  expect(generate).not.toHaveBeenCalled();
+  expect(
+    mockedConstructProposal(
+      {
+        allowed_paths: ['preview.html'],
+        protected_paths: defaultProtectedPaths(),
+        intended_change: 'Stay inside the fixture.',
+      },
+      [{ path: 'preview.html', content: '<h1>Before</h1>' }],
+    ).summary,
+  ).toMatch(/mocked provider/i);
+});
+
 it('rejects malformed provider output and never treats it as an executed run', async () => {
   vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
   vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
   vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'false');
   vi.stubEnv('OPENAI_API_KEY', 'sk-test');
   vi.stubEnv('APP_ENV', 'local');
   vi.stubEnv('NODE_ENV', 'development');

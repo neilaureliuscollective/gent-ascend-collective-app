@@ -39,14 +39,26 @@ export async function processConstructOnce(
   let leaseMs = defaultLimits.lease_ms;
   let lost = false;
   const renew = async () => {
-    const ok = await store.heartbeat(workerId, claimed.id, token, new Date(), leaseMs);
-    if (!ok) lost = true;
-    return ok;
+    try {
+      const ok = await store.heartbeat(workerId, claimed.id, token, new Date(), leaseMs);
+      if (!ok) lost = true;
+      return ok;
+    } catch {
+      lost = true;
+      return false;
+    }
   };
   if (!(await renew())) throw new LeaseLostError();
-  const interval = setInterval(() => {
+  let interval = setInterval(() => {
     void renew();
   }, Math.max(1000, Math.floor(leaseMs / 3)));
+  const setLeaseWindow = (ms: number) => {
+    leaseMs = ms;
+    clearInterval(interval);
+    interval = setInterval(() => {
+      void renew();
+    }, Math.max(1000, Math.floor(leaseMs / 3)));
+  };
   try {
     const brief = await store.readBrief(claimed.person_id, claimed.brief_id);
     const source = await store.readSource(claimed.person_id, claimed.source_id);
@@ -58,7 +70,7 @@ export async function processConstructOnce(
       await store.appendEvent(claimed, 'blocked', result.blocker ?? 'Blocked.');
       return finish('blocked', result, now);
     }
-    leaseMs = brief.scope.resource_limits.lease_ms;
+    setLeaseWindow(brief.scope.resource_limits.lease_ms);
     if (!(await renew())) throw new LeaseLostError();
     if (
       brief.approval_hash !== claimed.approval_hash ||

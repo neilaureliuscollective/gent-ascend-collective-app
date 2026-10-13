@@ -8,9 +8,11 @@ import {
   type ConstructEvent,
   type SourceSnapshot,
   cancelCommand,
+  proposeCommand,
   startCommand,
   startFixtureCommand,
 } from './schema';
+import { constructProviderStatus, proposeConstructChange } from './provider';
 import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
 
@@ -94,6 +96,7 @@ export async function readConstruct(projectId: string) {
     events,
     briefs,
     sources,
+    proposal: constructProviderStatus(),
   };
 }
 
@@ -195,6 +198,28 @@ export async function cancelConstruct(input: ReturnType<typeof cancelCommand.par
   try {
     const { person, client } = await requireOwnedProject(input.projectId);
     return await constructStore({ client, plane: 'owner' }).cancelRun(person.id, input.runId);
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
+export async function proposeConstruct(input: ReturnType<typeof proposeCommand.parse>, signal: AbortSignal) {
+  requireReady();
+  try {
+    await requireOwnedProject(input.projectId);
+    return {
+      mocked: constructProviderStatus().mode === 'mock',
+      proposal: await proposeConstructChange(
+        input.instruction,
+        {
+          allowed_paths: input.allowedPaths,
+          protected_paths: input.protectedPaths,
+          intended_change: input.intendedChange,
+        },
+        input.excerpts,
+        signal,
+      ),
+    };
   } catch (error) {
     asIntelligence(error);
   }

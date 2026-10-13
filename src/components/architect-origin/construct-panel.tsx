@@ -7,6 +7,12 @@ import type {
   ConstructRun,
   SourceSnapshot,
 } from '@/domains/architect-construct/schema';
+import {
+  cancelConstructRun,
+  readConstructLibrary,
+  startConstructFixture,
+} from './construct-lifecycle';
+import { lifecycleLabel, lifecyclePhase } from '@/domains/architect-construct/lifecycle';
 
 const views = ['Plan', 'Changes', 'Checks', 'Preview'] as const;
 type View = (typeof views)[number];
@@ -17,20 +23,8 @@ type Library = {
   events: Record<string, ConstructEvent[]>;
   briefs: ConstructBrief[];
   sources: SourceSnapshot[];
+  proposal?: { mode?: string; reason?: string | null };
 };
-
-async function request<T>(url: string, body?: unknown): Promise<T> {
-  const response = await fetch(url, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(body ? 20000 : 15000),
-    ...(body
-      ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-      : {}),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Construct request unavailable.');
-  return data;
-}
 
 function statusLabel(status: ConstructRun['status']) {
   return status.replace('_', ' ');
@@ -60,8 +54,9 @@ export function ArchitectConstructPanel({
 
   async function refresh() {
     if (!enabled) return;
-    const data = await request<Library>(`/api/architect-construct?project=${projectId}`);
-    setLibrary(data);
+    const data = await readConstructLibrary(projectId);
+    if (!data.ok) throw new Error(data.error);
+    setLibrary(data.data as Library);
   }
 
   useEffect(() => {
@@ -108,12 +103,12 @@ export function ArchitectConstructPanel({
     const id = requestId || crypto.randomUUID();
     setRequestId(id);
     try {
-      await request('/api/architect-construct', {
-        action: 'start-fixture',
+      const started = await startConstructFixture({
         projectId,
         requestId: id,
         expected: revision,
       });
+      if (!started.ok) throw new Error(started.error);
       setMessage(
         'Fixture run queued. The browser cannot mark checks passed. A local worker must claim the run.',
       );
@@ -129,7 +124,8 @@ export function ArchitectConstructPanel({
     if (!run || locked || busy) return;
     setBusy(true);
     try {
-      await request('/api/architect-construct', { action: 'cancel', projectId, runId: run.id });
+      const canceled = await cancelConstructRun({ projectId, runId: run.id });
+      if (!canceled.ok) throw new Error(canceled.error);
       setMessage('Cancellation requested. An uncertain paid operation will not be replayed.');
       await refresh();
     } catch (e) {
@@ -223,9 +219,15 @@ export function ArchitectConstructPanel({
           )}
           {run && (
             <p>
-              Latest run {statusLabel(run.status)}
+              Latest run {statusLabel(run.status)} · {lifecycleLabel(lifecyclePhase(run.status))}
               {run.result?.blocker ? ` — ${run.result.blocker}` : ''}.
             </p>
+          )}
+          {library?.proposal?.mode === 'mock' && (
+            <p>Labelled mocked provider is available. This is not a paid OpenAI call.</p>
+          )}
+          {run?.result?.isolation === 'process-fixture' && (
+            <p>Labelled fixture test output — not an isolated AI build.</p>
           )}
           {events.length > 0 && (
             <ol>

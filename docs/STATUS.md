@@ -10,6 +10,8 @@
 
 > Architect immersive studio (2026-10-13): UI-only creation entry and canvas-led workbench on a separate branch from Construct PR #116 and Connections PR #117. Phone Preview navigation, keyed preview recovery and saved-vs-draft labels follow on the same PR. Isolated static HTML preview is real; running-server preview and publishing stay unavailable. See [ARCHITECT_IMMERSIVE_STUDIO.md](ARCHITECT_IMMERSIVE_STUDIO.md). No production merge.
 
+> Architect creation journey (2026-10-13): one integration branch `cursor/architect-creation-journey-165a` incorporates Construct `ef3741e`, Connections `c558123`, Architect UI `7e0cf2c` onto main `9dda525`. Workbench adapters poll enqueue/read/cancel and Connections read-only source. Supervised external worker and expired-lease fencing are added. Fixture output is labelled test output. Model proposals stay mocked or default-off. No production merge, hosted migration, or paid call. See [ARCHITECT_CREATION_JOURNEY.md](ARCHITECT_CREATION_JOURNEY.md).
+
 > Release authorization update (2026-10-13): the founder explicitly approved clearing the entire legacy v1 unsent browser-draft cache, including ordinary Talk drafts, after that consequence was explained. This resolves the earlier retention hold. Saved server conversations remain untouched. Functional release checks and existing feature gates still apply.
 
 ## 2026-10-13 approved material release preparation
@@ -1188,6 +1190,10 @@ Storage/AI flags default disabled; additive Origin migration is unapplied. Local
 Implemented a narrow, honest execution lane inside existing `/app/architect` on `cursor/architect-construct-pipeline-165a`. Origin planning, Talk, Studio, privacy repair and released Founder Office are unchanged. Construct adds source-pinned briefs, owner-scoped start/read/cancel, persisted events, a worker claim/lease/timeout path, a disposable-container adapter, a labelled process fixture (`sandbox: false`), a default-off OpenAI proposal adapter, and Plan/Changes/Checks/Preview review.
 
 Runtime-availability unit tests now use an injectable Docker probe. `sandbox: true` is recorded only after a disposable container returns a verified result whose diff and hashes come from observed isolated output. Writable `/work` tmpfs is owned by nobody. Owner-supplied `kind=fixture` is rejected by the import RPC; durable submissions use the isolation boundary. The standalone worker is a compiled command (`npm run architect:worker`) with unique process identity and per-claim fencing. Live Construct persistence is database-backed; the memory store is labelled test/development only. Hosted Construct migrations are unapplied. Model proposals stay disabled. Architect cannot yet build Aethelios. Details: [ARCHITECT_CONSTRUCT.md](ARCHITECT_CONSTRUCT.md).
+
+## Architect creation journey — 2026-10-13
+
+One integration branch incorporates Construct, Connections and the approved Architect workbench onto current main. The workbench now polls real Construct receipts, can enqueue/cancel, and reads Connections selected-repository state without inventing publish access. A supervised external worker and expired-lease fencing sit on top of the existing durable queue. Process-fixture output is labelled test output. Running-server preview is not offered. Model proposals remain mocked or default-off. Details: [ARCHITECT_CREATION_JOURNEY.md](ARCHITECT_CREATION_JOURNEY.md).
 
 ## Architect immersive workspace — 2026-10-12 review build
 

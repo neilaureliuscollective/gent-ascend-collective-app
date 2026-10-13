@@ -20,6 +20,14 @@ import {
 } from './workbench-shell';
 import { readConstructPreview } from './construct-preview-adapter';
 import {
+  readConstructLibrary,
+  readConstructSource,
+  viewConstructLifecycle,
+  type ConstructLifecycleLibrary,
+  type ConstructLifecycleView,
+  type ConstructSourceReadiness,
+} from './construct-lifecycle';
+import {
   bindPreviewIdentity,
   retainHeldPreview,
   samePreviewOwnerProject,
@@ -137,7 +145,11 @@ export function ArchitectOrigin({
   const [addingReference, setAddingReference] = useState(false);
   const [constructDecision, setConstructDecision] = useState<PreviewDecision | null>(null);
   const [heldPreview, setHeldPreview] = useState<PreviewDecision | null>(null);
+  const [constructView, setConstructView] = useState<ConstructLifecycleView | null>(null);
+  const [constructSource, setConstructSource] = useState<ConstructSourceReadiness | null>(null);
   const constructRequest = useRef<string | null>(null);
+  const constructGeneration = useRef(0);
+  const heldPreviewRef = useRef<PreviewDecision | null>(null);
   const abort = useRef<AbortController | null>(null);
   const projectTitle = useRef<HTMLHeadingElement | null>(null);
   const planeRef = useRef<HTMLElement | null>(null);
@@ -290,9 +302,13 @@ export function ArchitectOrigin({
     window.history.replaceState(null, '', url.pathname + url.search + url.hash);
   }, [loaded, selected, surface, key, documentId, documentView, workbenchView]);
   useEffect(() => {
-    // Selection-only GET. No start/poll/cancel; building remains false until PR #116 lifecycle is wired.
     if (!selected || !constructEnabled) {
       constructRequest.current = null;
+      heldPreviewRef.current = retainHeldPreview(
+        heldPreviewRef.current,
+        selected?.id,
+        selected?.person_id,
+      );
       return;
     }
     const projectId = selected.id;
@@ -301,42 +317,79 @@ export function ArchitectOrigin({
     const requestKey = `${projectId}:${ownerId}:${revision}`;
     constructRequest.current = requestKey;
     const controller = new AbortController();
-    void readConstructPreview({
-      projectId,
-      ownerId,
-      revision,
-      signal: controller.signal,
-    }).then((status) => {
+    let generation = 0;
+    const applyLibrary = (library: ConstructLifecycleLibrary) => {
+      generation += 1;
+      constructGeneration.current = generation;
+      const view = viewConstructLifecycle({
+        library,
+        projectId,
+        ownerId,
+        revision,
+        generation,
+        held: retainHeldPreview(heldPreviewRef.current, projectId, ownerId),
+      });
       if (controller.signal.aborted || constructRequest.current !== requestKey) return;
-      if (status.state === 'ready' && status.decision.kind !== 'unavailable') {
-        if (!samePreviewOwnerProject(status.decision, projectId, ownerId)) return;
-        setConstructDecision(status.decision);
-        setHeldPreview(status.decision);
-      } else if (status.state === 'ready') {
-        setConstructDecision({
-          kind: 'unavailable',
-          reason:
-            status.decision.kind === 'unavailable'
-              ? status.decision.reason
-              : 'Construct preview unavailable.',
-          identity: bindPreviewIdentity({ projectId, ownerId, revision, persisted: true }),
-        });
-      } else if (status.state === 'unavailable') {
-        setConstructDecision({
-          kind: 'unavailable',
-          reason: status.reason,
-          identity: bindPreviewIdentity({
-            projectId,
-            ownerId,
-            revision,
-            persisted: true,
-          }),
-        });
+      setConstructView(view);
+      if (view.decision && view.decision.kind !== 'unavailable') {
+        if (!samePreviewOwnerProject(view.decision, projectId, ownerId)) return;
+        setConstructDecision(view.decision);
+        heldPreviewRef.current = view.decision;
+        setHeldPreview(view.decision);
+      } else if (view.decision) {
+        setConstructDecision(view.decision);
       }
-    });
+    };
+    const poll = async () => {
+      const [library, source] = await Promise.all([
+        readConstructLibrary(projectId, controller.signal),
+        readConstructSource(controller.signal),
+      ]);
+      if (controller.signal.aborted || constructRequest.current !== requestKey) return;
+      if (source.ok) setConstructSource(source.data);
+      if (!library.ok) {
+        void readConstructPreview({
+          projectId,
+          ownerId,
+          revision,
+          signal: controller.signal,
+        }).then((status) => {
+          if (controller.signal.aborted || constructRequest.current !== requestKey) return;
+          if (status.state === 'ready' && status.decision.kind !== 'unavailable') {
+            if (!samePreviewOwnerProject(status.decision, projectId, ownerId)) return;
+            setConstructDecision(status.decision);
+            heldPreviewRef.current = status.decision;
+            setHeldPreview(status.decision);
+          } else if (status.state === 'ready' || status.state === 'unavailable') {
+            setConstructDecision({
+              kind: 'unavailable',
+              reason:
+                status.state === 'ready' && status.decision.kind === 'unavailable'
+                  ? status.decision.reason
+                  : status.state === 'unavailable'
+                    ? status.reason
+                    : 'Construct preview unavailable.',
+              identity: bindPreviewIdentity({ projectId, ownerId, revision, persisted: true }),
+            });
+          }
+        });
+        return;
+      }
+      applyLibrary(library.data);
+    };
+    void poll();
+    const timer = window.setInterval(() => {
+      if (constructRequest.current !== requestKey) return;
+      void readConstructLibrary(projectId, controller.signal).then((library) => {
+        if (!library.ok || controller.signal.aborted || constructRequest.current !== requestKey)
+          return;
+        applyLibrary(library.data);
+      });
+    }, 2500);
     return () => {
       if (constructRequest.current === requestKey) constructRequest.current = null;
       controller.abort();
+      window.clearInterval(timer);
     };
   }, [selected, constructEnabled]);
   useEffect(() => {
@@ -361,6 +414,15 @@ export function ArchitectOrigin({
   }
   function labelledDemonstration() {
     return new URLSearchParams(location.search).get('demo') === 'architect-preview';
+  }
+  function connectionChip() {
+    if (!constructEnabled) return 'Build connection pending';
+    if (constructView?.building) return constructView.label;
+    if (constructSource?.github.repository)
+      return `Read-only ${constructSource.github.repository.fullName}`;
+    if (constructView?.lastSuccess)
+      return `Last success revision ${constructView.lastSuccess.project_revision}`;
+    return constructView?.label || 'Construct receipts available';
   }
   function originArtifactDecision(): PreviewDecision | null {
     if (!selected || !draft) return null;
@@ -771,7 +833,7 @@ export function ArchitectOrigin({
             </button>
           </nav>
           <p className="origin-connection-chip">
-            {constructEnabled ? 'Construct receipts available' : 'Build connection pending'}
+            {connectionChip()}
           </p>
         </div>
         <h1 id="origin-title">What will you create?</h1>
@@ -922,7 +984,7 @@ export function ArchitectOrigin({
               draft={draft}
               view={workbenchView}
               connectionLabel={
-                constructEnabled ? 'Construct receipts available' : 'Build connection pending'
+                connectionChip()
               }
               onView={openWorkbenchView}
             />
@@ -1096,11 +1158,22 @@ export function ArchitectOrigin({
                         ? 'Checks appear only from recorded Construct exit codes. The browser cannot mark them passed.'
                         : 'Construct checks are not in this checkout. Consistency prompts below are field-completeness hints, not validation.'}
                     </p>
-                    <ul>
-                      {consistencyNotes(draft, selected.revision).map((note) => (
-                        <li key={note}>{note}</li>
-                      ))}
-                    </ul>
+                    {constructView?.current?.result?.checks?.length ? (
+                      <ul>
+                        {constructView.current.result.checks.map((check) => (
+                          <li key={check.name}>
+                            {check.name}: {check.status} · exit {check.exit_code} · {check.command}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <ul>
+                        {consistencyNotes(draft, selected.revision).map((note) => (
+                          <li key={note}>{note}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {constructEnabled && constructView && <p>{constructView.label}</p>}
                     {constructDecision?.kind === 'unavailable' && <p>{constructDecision.reason}</p>}
                   </aside>
                 )}

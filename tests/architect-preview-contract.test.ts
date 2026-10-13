@@ -272,7 +272,7 @@ describe('construct receipt selection', () => {
       identity,
     );
     expect(decided.kind).toBe('unavailable');
-    expect(decided.kind === 'unavailable' && decided.reason).toMatch(/does not refresh execution/);
+    expect(decided.kind === 'unavailable' && decided.reason).toMatch(/recorded as running|durable events/);
   });
 });
 

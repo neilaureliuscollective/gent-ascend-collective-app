@@ -1,4 +1,5 @@
-// Compiles the server-only worker graph and runs one durable tick.
+// Compiles the server-only worker graph and runs one durable tick, or a
+// supervised loop when ARCHITECT_CONSTRUCT_WORKER_MODE=supervised or --supervised.
 // Native --experimental-strip-types cannot rewrite @/ aliases or parameter properties.
 import { mkdtemp, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -26,7 +27,7 @@ try {
       sourcemap: false,
     },
   });
-  const child = spawn(process.execPath, [outfile], {
+  const child = spawn(process.execPath, [outfile, ...process.argv.slice(2)], {
     stdio: 'inherit',
     env: process.env,
   });

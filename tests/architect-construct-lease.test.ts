@@ -136,3 +136,68 @@ it('rejects stale completion after crash takeover', async () => {
   expect(reloaded?.status).toBe('succeeded');
   expect(reloaded?.worker_id).toContain('worker-b');
 });
+
+it('does not let an expired claim heartbeat or finish when no replacement has claimed it', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000084';
+  await queued(store, requestId);
+  const claimed = await store.claimRun('lonely-worker', new Date());
+  const token = claimed!.lease_token!;
+  claimed!.lease_until = new Date(Date.now() - 5).toISOString();
+  expect(await store.heartbeat('lonely-worker', requestId, token, new Date(), 45000)).toBe(false);
+  await expect(
+    store.finishRun(
+      'lonely-worker',
+      requestId,
+      token,
+      'succeeded',
+      {
+        isolation: 'unavailable',
+        runtime_available: false,
+        sandbox: false,
+        blocker: 'expired',
+        source_hash: claimed!.source_tree_hash,
+        result_hash: null,
+        changed_files: [],
+        diff: '',
+        checks: [],
+        preview: { path: null, body: '', unavailable_reason: 'expired' },
+        artifacts: [],
+      },
+      new Date(),
+    ),
+  ).rejects.toThrow(/lease/i);
+  const reloaded = await store.readRun(owner, requestId);
+  expect(reloaded?.status).toBe('claimed');
+  expect(reloaded?.worker_id).toBe('lonely-worker');
+});
+
+it('treats a lost renewal as a fencing failure and refuses stale completion', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000085';
+  const { source, scope } = await queued(store, requestId, 5000);
+  const executed = await processConstructOnce(store, 'lost-renewal', new Date(), {
+    probe: async () => ({
+      available: true,
+      backend: 'docker',
+      version: '27.0.0',
+      image: 'node:24-alpine',
+      code: 'available',
+      reason: null,
+    }),
+    ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+    launchContainer: async () => {
+      const run = store.runs.get(requestId)!;
+      run.lease_until = new Date(Date.now() - 1).toISOString();
+      return {
+        exit_code: 0,
+        stdout: `${resultFenceStart}\n${JSON.stringify(payloadFor(source, scope.patch[0]!.after))}\n${resultFenceEnd}\n`,
+        stderr: '',
+      };
+    },
+  });
+  expect(executed).toBeNull();
+  const reloaded = await store.readRun(owner, requestId);
+  expect(reloaded?.status === 'claimed' || reloaded?.status === 'running').toBe(true);
+  expect(reloaded?.result).toBeNull();
+});

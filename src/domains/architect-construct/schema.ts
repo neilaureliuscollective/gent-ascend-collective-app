@@ -308,10 +308,22 @@ export const cancelCommand = z
     runId: z.uuid(),
   })
   .strict();
+export const proposeCommand = z
+  .object({
+    action: z.literal('propose'),
+    projectId: z.uuid(),
+    instruction: z.string().trim().min(1).max(2000),
+    intendedChange: z.string().trim().min(1).max(2000),
+    allowedPaths: z.array(relPath).min(1).max(8),
+    protectedPaths: z.array(relPath).max(8),
+    excerpts: z.array(sourceFileSchema).min(1).max(8),
+  })
+  .strict();
 export const constructCommand = z.discriminatedUnion('action', [
   startCommand,
   startFixtureCommand,
   cancelCommand,
+  proposeCommand,
 ]);
 
 export const sourceKindLabels: Record<(typeof sourceKinds)[number], string> = {

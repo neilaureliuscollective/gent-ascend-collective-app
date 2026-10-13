@@ -230,9 +230,16 @@ export class MemoryConstructStore implements ConstructStore {
     return Boolean(run && run.worker_id === workerId && run.lease_token === leaseToken);
   }
 
+  /** Token fencing plus unexpired lease. An expired claim cannot act merely because no replacement arrived. */
+  ownsFresh(run: ConstructRun | undefined, workerId: string, leaseToken: string, now: Date) {
+    if (!this.owns(run, workerId, leaseToken) || !run) return false;
+    if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return true;
+    return Boolean(run.lease_until && run.lease_until > now.toISOString());
+  }
+
   async markRunning(workerId: string, runId: string, leaseToken: string, now: Date) {
     const run = this.runs.get(runId);
-    if (!this.owns(run, workerId, leaseToken) || !run) return false;
+    if (!this.ownsFresh(run, workerId, leaseToken, now) || !run) return false;
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return true;
     run.status = 'running';
     run.updated_at = now.toISOString();
@@ -241,7 +248,7 @@ export class MemoryConstructStore implements ConstructStore {
 
   async heartbeat(workerId: string, runId: string, leaseToken: string, now: Date, leaseMs: number) {
     const run = this.runs.get(runId);
-    if (!this.owns(run, workerId, leaseToken) || !run) return false;
+    if (!this.ownsFresh(run, workerId, leaseToken, now) || !run) return false;
     if (run.status !== 'claimed' && run.status !== 'running') return false;
     run.lease_until = new Date(now.getTime() + leaseMs).toISOString();
     run.updated_at = now.toISOString();
@@ -251,7 +258,7 @@ export class MemoryConstructStore implements ConstructStore {
   async appendEvent(run: ConstructRun, kind: (typeof eventKinds)[number], detail: string, when?: Date) {
     if (run.worker_id && run.lease_token) {
       const current = this.runs.get(run.id);
-      if (!this.owns(current, run.worker_id, run.lease_token))
+      if (!this.ownsFresh(current, run.worker_id, run.lease_token, when ?? new Date()))
         throw new ConstructStoreError('Run is not claimed by this worker lease.');
     }
     const seq = this.events.filter((event) => event.run_id === run.id).length + 1;
@@ -277,7 +284,7 @@ export class MemoryConstructStore implements ConstructStore {
     now: Date,
   ) {
     const run = this.runs.get(runId);
-    if (!this.owns(run, workerId, leaseToken) || !run)
+    if (!this.ownsFresh(run, workerId, leaseToken, now) || !run)
       throw new ConstructStoreError('Run is not claimed by this worker lease.');
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return run;
     run.status = status;

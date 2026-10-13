@@ -449,7 +449,7 @@ test('Construct plan, changes, checks and preview stay honest without forged suc
     return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
   });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(base);
+  await page.goto(`${base}&construct=adapter`);
   await page.getByLabel('Tell Aethelios what you want to create').fill('Synthetic construct project');
   await page.getByLabel('Project name (optional)').fill('Construct Origin');
   await page.getByRole('button', { name: 'Create & save project' }).click();
@@ -461,20 +461,148 @@ test('Construct plan, changes, checks and preview stay honest without forged suc
   await expect(page.getByText(/Deterministic fixture source/)).toBeVisible();
   await expect(page.getByText(/Latest run queued/)).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-construct-plan.png', fullPage: true });
-  await page.getByRole('button', { name: 'Changes', exact: true }).click();
+  const review = page.getByRole('navigation', { name: 'Construct review' });
+  await review.getByRole('button', { name: 'Changes', exact: true }).click();
   await expect(page.getByText(/Queued runs do not display a simulated diff/)).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-construct-changes.png', fullPage: true });
-  await page.getByRole('button', { name: 'Checks', exact: true }).click();
+  await review.getByRole('button', { name: 'Checks', exact: true }).click();
   await expect(page.getByText(/The browser cannot forge them/)).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-construct-checks.png', fullPage: true });
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await review.getByRole('button', { name: 'Preview', exact: true }).click();
   await expect(page.getByText(/Preview is unavailable until isolated output is collected/)).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-construct-preview.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Plan', exact: true }).click();
+  await review.getByRole('button', { name: 'Plan', exact: true }).click();
   await expect(page.getByText(/Deterministic fixture source/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/architect-construct-plan-390.png', fullPage: true });
+});
+
+test('integrated workbench polls construct states, cancels, and keeps project-bound output', async ({
+  page,
+}) => {
+  await fixture(page);
+  let receipt: {
+    project: { id: string; revision: number; name: string };
+    runs: Array<Record<string, unknown>>;
+    events: Record<string, Array<Record<string, unknown>>>;
+    briefs: Array<Record<string, unknown>>;
+    sources: Array<Record<string, unknown>>;
+  } | null = null;
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: {
+          ready: false,
+          repository: null,
+          reason: 'Connections is not configured in this fixture.',
+        },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json:
+          receipt ?? {
+            project: { id: 'none', revision: 1, name: 'none' },
+            runs: [],
+            events: {},
+            briefs: [],
+            sources: [],
+          },
+      });
+    const body = route.request().postDataJSON();
+    if (body.action === 'start-fixture') {
+      const now = new Date().toISOString();
+      receipt = {
+        project: { id: body.projectId, revision: body.expected, name: 'Journey Origin' },
+        sources: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            kind: 'imported',
+            repository: null,
+            commit: null,
+            label: 'Deterministic fixture source — labelled test tree, not an imported application snapshot.',
+            tree_hash: 'a'.repeat(64),
+            files: [],
+            created_at: now,
+          },
+        ],
+        briefs: [],
+        runs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            project_id: body.projectId,
+            brief_id: body.requestId,
+            approval_hash: 'b'.repeat(64),
+            source_id: body.requestId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: body.expected,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          [body.requestId]: [
+            {
+              id: crypto.randomUUID(),
+              run_id: body.requestId,
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued.',
+              created_at: now,
+            },
+          ],
+        },
+      };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    if (body.action === 'cancel' && receipt) {
+      receipt.runs[0] = { ...receipt.runs[0], status: 'cancelled', cancel_requested: true };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Journey construct');
+  await page.getByLabel('Project name (optional)').fill('Journey Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await page.getByRole('button', { name: 'Queue labelled fixture run' }).click();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel run' }).click();
+  await expect(page.getByText(/cancelled|Canceled/i)).toBeVisible();
+  for (const [width, height] of [
+    [320, 720],
+    [390, 844],
+    [720, 900],
+    [1440, 900],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.screenshot({ path: 'test-results/architect-creation-journey-1440.png', fullPage: true });
+  await page.setViewportSize({ width: 344, height: 430 });
+  await expect(page.getByRole('button', { name: 'Queue labelled fixture run' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/architect-creation-journey-keyboard.png', fullPage: true });
 });
 
 test('labelled demonstration is explicit and isolated from host', async ({ page }) => {

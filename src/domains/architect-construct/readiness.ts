@@ -17,6 +17,17 @@ export function constructAiReady(env: NodeJS.ProcessEnv = process.env) {
   return Boolean(env.OPENAI_API_KEY);
 }
 
+/** Labelled development mock. Never paid. Closed in production. */
+export function constructAiMockReady(env: NodeJS.ProcessEnv = process.env) {
+  if (!constructReady(env) || env.ARCHITECT_CONSTRUCT_AI_MOCK !== 'true') return false;
+  try {
+    if (parseEnvironment(env).mode === 'production') return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
 export function constructWorkerAuthorized(env: NodeJS.ProcessEnv = process.env) {
   const token = env.ARCHITECT_CONSTRUCT_WORKER_TOKEN;
   if (!token || token.trim().length < 32) return false;

@@ -29,6 +29,9 @@ export type PreviewProvenance =
   | 'saved-document'
   | 'unsaved-draft'
   | 'construct'
+  | 'construct-fixture'
+  | 'current-run'
+  | 'last-successful-revision'
   | 'demonstration';
 
 export type PreviewIdentity = {
@@ -159,11 +162,20 @@ export function previewCaption(
   } else if (decision.provenance === 'unsaved-draft') {
     parts.push('Unsaved draft preview. This is not a saved revision and not a running website.');
     parts.push(`Based on saved revision ${decision.identity.revision}`);
+  } else if (decision.provenance === 'construct-fixture') {
+    parts.push('Labelled fixture test output — not an isolated AI build and not a running website.');
+    parts.push(`Revision ${decision.identity.revision}`);
+  } else if (decision.provenance === 'current-run') {
+    parts.push('Current Construct run output for this project. Isolated static preview only.');
+    parts.push(`Revision ${decision.identity.revision}`);
+  } else if (decision.provenance === 'last-successful-revision') {
+    parts.push('Last successful Construct revision for this same project.');
+    parts.push(`Revision ${decision.identity.revision}`);
   } else if (decision.provenance === 'saved-document' || decision.kind === 'markdown-document') {
     parts.push('Actual saved document. This is not a running website.');
     parts.push(`Revision ${decision.identity.revision}`);
   } else {
-    parts.push('Isolated static preview of the current artifact.');
+    parts.push('Isolated static preview of the current artifact. This is not a running website.');
     parts.push(`Revision ${decision.identity.revision}`);
   }
   if (decision.identity.resultHash)
@@ -178,6 +190,8 @@ export function decideConstructPreview(input: {
   ownerMatches: boolean;
   projectMatches: boolean;
   labelledDemonstration?: boolean;
+  isolation?: ConstructIsolation | null;
+  staleSuccess?: boolean;
 }): PreviewDecision {
   if (!input.ownerMatches) {
     return {
@@ -221,6 +235,7 @@ export function decideConstructPreview(input: {
       identity: input.identity,
     };
   }
+  const fixture = input.isolation === 'process-fixture';
   return {
     kind: 'construct-html',
     identity: input.identity,
@@ -228,6 +243,10 @@ export function decideConstructPreview(input: {
     markdown: null,
     path: input.preview.path,
     labelledDemonstration: !!input.labelledDemonstration,
-    provenance: 'construct',
+    provenance: fixture
+      ? 'construct-fixture'
+      : input.staleSuccess
+        ? 'last-successful-revision'
+        : 'construct',
   };
 }

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { sharedCharacter } from '@/domains/intelligence/prompt';
-import { constructAiReady } from './readiness';
+import { constructAiMockReady, constructAiReady } from './readiness';
 import { briefScopeSchema, type BriefScope } from './schema';
 
 export const constructProposalSchema = z
@@ -16,14 +16,52 @@ export const constructProposalSchema = z
   })
   .strict();
 
+export function constructProposalMode(
+  env: NodeJS.ProcessEnv = process.env,
+): 'disabled' | 'mock' | 'openai' {
+  if (constructAiMockReady(env)) return 'mock';
+  if (constructAiReady(env)) return 'openai';
+  return 'disabled';
+}
+
 export function constructProviderStatus(env: NodeJS.ProcessEnv = process.env) {
-  if (!constructAiReady(env))
+  const mode = constructProposalMode(env);
+  if (mode === 'disabled')
     return {
       enabled: false as const,
+      mode,
       reason:
         'Construct model proposals stay disabled until ARCHITECT_CONSTRUCT_ENABLED, ARCHITECT_CONSTRUCT_AI_ENABLED, a server-only OPENAI_API_KEY, and funded non-production testing are authorized. A funded OpenAI account does not supply a sandbox, durable worker, or repository connection.',
     };
-  return { enabled: true as const, reason: null };
+  if (mode === 'mock')
+    return {
+      enabled: true as const,
+      mode,
+      reason:
+        'Labelled mocked provider. This is not a paid OpenAI call and not a model-generated self-build.',
+    };
+  return { enabled: true as const, mode, reason: null };
+}
+
+export function mockedConstructProposal(
+  scope: Pick<BriefScope, 'allowed_paths' | 'protected_paths' | 'intended_change'>,
+  excerpts: { path: string; content: string }[],
+) {
+  const file = excerpts.find((item) => scope.allowed_paths.includes(item.path));
+  if (!file)
+    throw new IntelligenceError('Mocked provider has no approved excerpt to patch.', 409);
+  if (scope.protected_paths.some((path) => file.path === path || file.path.startsWith(`${path}/`)))
+    throw new IntelligenceError('Mocked provider cannot touch a protected path.', 409);
+  if (!file.content.includes('Before'))
+    throw new IntelligenceError(
+      'Mocked provider only applies the labelled Before→After fixture change.',
+      409,
+    );
+  return constructProposalSchema.parse({
+    summary: 'Labelled mocked provider proposal. Not a paid OpenAI call.',
+    patch: [{ path: file.path, before: file.content, after: file.content.replace(/Before/g, 'After') }],
+    notes: 'MOCKED PROVIDER — development only. No isolated AI build was performed.',
+  });
 }
 
 export async function proposeConstructChange(
@@ -34,6 +72,7 @@ export async function proposeConstructChange(
 ) {
   const status = constructProviderStatus();
   if (!status.enabled) throw new IntelligenceError(status.reason, 503);
+  if (status.mode === 'mock') return mockedConstructProposal(scope, excerpts);
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY) throw new IntelligenceError('Model connection unavailable.', 503);
   const openai = createOpenAI({

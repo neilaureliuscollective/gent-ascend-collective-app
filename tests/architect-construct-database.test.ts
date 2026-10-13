@@ -47,6 +47,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261013160000_architect_construct.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013180000_architect_construct_worker_plane.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013193000_architect_construct_isolation.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261013220000_architect_construct_lease_freshness.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`,
@@ -157,6 +158,62 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
         )
       ).rows,
     ).toEqual([{ ok: false }]);
+  });
+
+  it('refuses heartbeat and finish after lease expiry without a replacement claim', async () => {
+    const expired = '00000000-0000-4000-8000-000000000007';
+    const expiredSource = importedFixtureSource(owner, expired);
+    const expiredScope = fixtureScope({
+      projectId: project,
+      projectRevision: 1,
+      sourceId: expiredSource.id,
+      sourceTreeHash: expiredSource.tree_hash,
+    });
+    await asUser(
+      owner,
+      `select public.architect_construct_import_source('${expiredSource.id}','imported','${expiredSource.repository}',null,'${expiredSource.label.replace(/'/g, "''")}','${expiredSource.tree_hash}',${literal(expiredSource.files)}) as ok`,
+    );
+    await asUser(
+      owner,
+      `select public.architect_construct_approve_brief('${expired}','${project}',1,'${expiredSource.id}','${approvalHash(expiredScope)}',${literal(expiredScope)}) as ok`,
+    );
+    await asUser(owner, `select public.architect_construct_start('${project}','${expired}','${expired}',1)`);
+    const claimed = await asWorker(`select public.architect_construct_claim('expired-worker',45000) as id`);
+    expect(claimed.rows[0]).toEqual({ id: expired });
+    const token = (
+      await asWorker(
+        `select lease_token::text as token from public.architect_construct_runs where id='${expired}'`,
+      )
+    ).rows[0] as { token: string };
+    await db.exec(
+      `update public.architect_construct_runs set lease_until=now()-interval '1 second' where id='${expired}'`,
+    );
+    expect(
+      (await asWorker(`select public.architect_construct_heartbeat('expired-worker','${expired}','${token.token}',45000) as ok`))
+        .rows,
+    ).toEqual([{ ok: false }]);
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_finish('expired-worker','${expired}','${token.token}','succeeded',${literal({
+            isolation: 'unavailable',
+            runtime_available: false,
+            sandbox: false,
+            blocker: 'stale expiry',
+            source_hash: expiredSource.tree_hash,
+            result_hash: null,
+            changed_files: [],
+            diff: '',
+            checks: [],
+            preview: { path: null, body: '', unavailable_reason: 'stale' },
+            artifacts: [],
+          })}) as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: false }]);
+    expect(
+      (await asWorker(`select status from public.architect_construct_runs where id='${expired}'`)).rows,
+    ).toEqual([{ status: 'claimed' }]);
   });
 
   it('rejects a stale project revision after a newer Origin save', async () => {

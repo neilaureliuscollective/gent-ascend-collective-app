@@ -13,11 +13,9 @@ import {
 } from '@/domains/architect-origin/preview-contract';
 
 /**
- * Narrow client adapter for PR #116 Construct receipts.
+ * Narrow client adapter for Construct receipts.
  * Missing route, 404 or malformed payload → unavailable. No second backend.
- *
- * Selection-only GET. This UI does not start, poll, cancel or refresh runs.
- * `building` stays false until a lifecycle contract is wired by that workstream.
+ * Start / poll / cancel live in `construct-lifecycle.ts`.
  */
 export type ConstructLibraryEnvelope = {
   project?: { id?: string; revision?: number; name?: string };
@@ -27,6 +25,7 @@ export type ConstructLibraryEnvelope = {
     project_id?: string;
     project_revision?: number;
     source_tree_hash?: string;
+    source_kind?: string;
     status?: string;
     result?: {
       source_hash?: string;
@@ -144,6 +143,8 @@ function trustedPreviewFromRun(
     preview: run.result.preview,
     ownerMatches: true,
     projectMatches: true,
+    isolation: run.result.isolation,
+    staleSuccess: run.project_revision !== identity.revision,
   });
   return decided.kind === 'unavailable' ? null : decided;
 }
@@ -202,7 +203,7 @@ export function selectTrustedConstructReceipt(
   if (inFlight) {
     return {
       status: 'pending',
-      reason: `Construct run is recorded as ${inFlight.status}. This workbench does not refresh execution; reopen the project when a receipt exists.`,
+      reason: `Construct run is recorded as ${inFlight.status}. Progress comes from durable events; the browser cannot mark checks passed.`,
     };
   }
   return { status: 'rejected', reason: 'No trusted Construct preview matches this revision.' };

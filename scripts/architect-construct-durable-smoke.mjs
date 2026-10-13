@@ -272,8 +272,77 @@ try {
   const second = await runWorker('durable-worker-b');
   assert.equal(second.code, 0, second.stderr || second.stdout);
   assert.equal(parseTick(second.stdout).run, null);
+
+  const cancelId = crypto.randomUUID();
+  const cancelScope = { ...scope, source_id: cancelId, project_id: project };
+  assert.equal(
+    (
+      await owner.rpc('architect_construct_import_source', {
+        p_id: cancelId,
+        p_kind: 'imported',
+        p_repository: scope.repository,
+        p_commit: null,
+        p_label: 'Imported source snapshot used for cancel-before-claim.',
+        p_tree: tree,
+        p_files: files,
+      })
+    ).data,
+    true,
+  );
+  assert.equal(
+    (
+      await owner.rpc('architect_construct_approve_brief', {
+        p_id: cancelId,
+        p_project: project,
+        p_expected: 1,
+        p_source: cancelId,
+        p_hash: sha256(JSON.stringify(cancelScope)),
+        p_scope: cancelScope,
+      })
+    ).data,
+    true,
+  );
+  assert.equal(
+    (
+      await owner.rpc('architect_construct_start', {
+        p_project: project,
+        p_request: cancelId,
+        p_brief: cancelId,
+        p_expected: 1,
+      })
+    ).data,
+    true,
+  );
+  assert.equal(
+    (await owner.rpc('architect_construct_cancel', { p_project: project, p_run: cancelId })).data,
+    true,
+  );
+  const canceled = await owner.from('architect_construct_runs').select('status').eq('id', cancelId).single();
+  assert.equal(canceled.data.status, 'cancelled');
+
+  const otherProject = crypto.randomUUID();
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_save', {
+        p_project: otherProject,
+        p_request: crypto.randomUUID(),
+        p_expected: 0,
+        p_content: { ...content, name: 'Other project isolation' },
+        p_note: 'Cross-project isolation',
+      })
+    ).data,
+    1,
+  );
+  const otherRuns = await owner.from('architect_construct_runs').select('id,project_id').eq('project_id', otherProject);
+  assert.equal(otherRuns.data.length, 0);
+  const resumed = await owner.from('architect_construct_runs').select('id,project_id,status,result').eq('id', request).single();
+  assert.equal(resumed.data.project_id, project);
+  assert.equal(resumed.data.status, 'succeeded');
+  assert.equal(resumed.data.result.sandbox, true);
+  assert.notEqual(resumed.data.project_id, otherProject);
+
   console.log(
-    'PASS: Construct durable owner enqueue, compiled standalone worker claim/execute/shutdown, isolated docker receipt, reload, second-worker idle, foreign denial. Labelled imported fixture files, not a model-generated Aethelios feature.',
+    'PASS: Construct durable owner enqueue, compiled standalone worker claim/execute/shutdown, isolated docker receipt, cancel-before-claim, reload/resume, cross-project isolation, second-worker idle, foreign denial. Labelled imported fixture files, not a model-generated Aethelios feature.',
   );
 } finally {
   await owner.auth.signOut();
