@@ -13,6 +13,8 @@ type Reply = {
   input: number;
   output: number;
   played: boolean;
+  done: boolean;
+  interrupted: boolean;
   outputItems: string[];
 };
 /** Provider-only ledger. ASR can arrive after response.done; playback can finish later still. */
@@ -22,6 +24,7 @@ export class VoiceLedger {
   private latest = '';
   private active = '';
   private seen = new Set<string>();
+  private completed = new Set<string>();
   inputTokens = 0;
   outputTokens = 0;
   async accept(event: LiveEvent, save: (turn: RecordedVoiceTurn) => Promise<void>) {
@@ -55,7 +58,13 @@ export class VoiceLedger {
       typeof event.transcript === 'string'
     )
       this.users.set(event.item_id, event.transcript.slice(0, 8000));
-    if (event.type === 'response.created' && event.response?.id && this.latest) {
+    if (
+      event.type === 'response.created' &&
+      event.response?.id &&
+      this.latest &&
+      !this.replies.has(event.response.id) &&
+      !this.completed.has(event.response.id)
+    ) {
       this.active = event.response.id;
       this.replies.set(this.active, {
         item: this.latest,
@@ -63,6 +72,8 @@ export class VoiceLedger {
         input: 0,
         output: 0,
         played: false,
+        done: false,
+        interrupted: false,
         outputItems: [],
       });
     }
@@ -71,12 +82,16 @@ export class VoiceLedger {
     }
     if (event.type === 'response.done' && event.response?.id) {
       const response = event.response;
+      if (this.completed.has(response.id!)) return;
+      this.completed.add(response.id!);
+      if (this.completed.size > 256) throw new Error('Voice response limit');
       const reply = this.replies.get(response.id!);
       const input = safeTokens(response.usage?.input_tokens),
         output = safeTokens(response.usage?.output_tokens);
       this.inputTokens += input;
       this.outputTokens += output;
       if (reply) {
+        reply.done = true;
         reply.outputItems =
           response.output?.map((item) => item.id).filter((id): id is string => !!id) ??
           reply.outputItems;
@@ -88,8 +103,9 @@ export class VoiceLedger {
             .map((part) => part.transcript ?? part.text ?? '')
             .join('')
             .slice(0, 20000) ?? '';
-        reply.status =
-          response.status === 'completed'
+        reply.status = reply.interrupted
+          ? 'cancelled'
+          : response.status === 'completed'
             ? 'complete'
             : response.status === 'cancelled'
               ? 'cancelled'
@@ -105,6 +121,7 @@ export class VoiceLedger {
       if (reply) {
         reply.played = true;
         if (event.type.endsWith('cleared')) {
+          reply.interrupted = true;
           reply.status = 'cancelled';
           reply.text = '';
         }
@@ -116,6 +133,7 @@ export class VoiceLedger {
         (reply) => event.item_id && reply.outputItems.includes(event.item_id),
       );
       if (reply) {
+        reply.interrupted = true;
         reply.status = 'cancelled';
         reply.text = '';
         reply.played = true;
@@ -123,7 +141,8 @@ export class VoiceLedger {
     }
     for (const [id, reply] of this.replies) {
       const user = this.users.get(reply.item);
-      if (reply.status && reply.played && user) {
+      // ASR completion may arrive out of order. Do not persist a later turn first.
+      if (reply.done && reply.status && reply.played && user) {
         await save({
           user,
           assistant: reply.text,
@@ -133,7 +152,7 @@ export class VoiceLedger {
         });
         this.replies.delete(id);
         this.users.delete(reply.item);
-      }
+      } else break;
     }
   }
 }

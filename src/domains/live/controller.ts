@@ -54,6 +54,7 @@ export class LiveController {
   private id: string | null = null;
   private epoch = 0;
   private starting = false;
+  private revocations = new Map<string, Promise<void>>();
   private expiry: ReturnType<typeof setTimeout> | undefined;
   private recovery: ReturnType<typeof setTimeout> | undefined;
   private audioFence = false;
@@ -282,6 +283,9 @@ export class LiveController {
         error?: string;
       };
       if (epoch !== this.epoch) {
+        // An earlier End may have read no reservation before this POST completed.
+        // Its receipt cannot confirm cleanup of a subsequently admitted call.
+        await this.revocations.get(id);
         await this.revoke(id);
         return;
       }
@@ -293,6 +297,7 @@ export class LiveController {
       this.update({ expiresAt: result.expiresAt });
       this.diagnostics.setModel(result.model);
       await pc.setRemoteDescription({ type: 'answer', sdp: result.answer });
+      if (epoch !== this.epoch) return;
       this.expiry = setTimeout(() => {
         void this.end('The two-minute pilot session ended. You can resume this conversation.');
       }, remaining);
@@ -308,7 +313,14 @@ export class LiveController {
       this.starting = false;
     }
   }
-  private async revoke(id: string) {
+  private revoke(id: string) {
+    const pending = this.revocations.get(id);
+    if (pending) return pending;
+    const request = this.confirmRevoke(id).finally(() => this.revocations.delete(id));
+    this.revocations.set(id, request);
+    return request;
+  }
+  private async confirmRevoke(id: string) {
     this.update({ cleanupPending: true });
     try {
       const response = await fetch('/api/aethelios/live', {
@@ -318,6 +330,8 @@ export class LiveController {
         keepalive: true,
       });
       if (!response.ok) throw new Error('Cleanup unconfirmed');
+      const result = (await response.json()) as { ended?: boolean };
+      if (result.ended !== true) throw new Error('Cleanup unconfirmed');
       if (this.id === id) this.id = null;
       this.update({ cleanupPending: false });
     } catch {
@@ -397,17 +411,32 @@ export class LiveController {
     if (this.channel?.readyState === 'open') this.channel.send(JSON.stringify(value));
   }
   async enablePlayback() {
+    const epoch = this.epoch;
+    const audio = this.audio;
+    if (!audio) return;
     try {
-      await this.audio?.play();
-      this.update({ playbackBlocked: false });
+      await audio.play();
+      if (epoch === this.epoch) this.update({ playbackBlocked: false });
     } catch {
-      this.update({ playbackBlocked: true });
+      if (epoch === this.epoch) this.update({ playbackBlocked: true });
     }
   }
   private event(raw: unknown) {
     const event = readLiveEvent(raw);
     if (!event) return;
     this.diagnostics.observe(event, performance.now());
+    if (
+      event.type === 'input_audio_buffer.committed' &&
+      event.item_id &&
+      !this.state.transcript.some((line) => line.id === event.item_id)
+    )
+      this.line(event.item_id, 'user', '', false);
+    if (
+      event.type === 'response.output_item.added' &&
+      event.item?.id &&
+      event.item.role === 'assistant'
+    )
+      this.line(event.item.id, 'assistant', '', false);
     if (event.type === 'error') {
       if (recoverableLiveError(event)) {
         const correlated =
@@ -500,8 +529,10 @@ export class LiveController {
       ['conversation.item.added', 'conversation.item.created'].includes(event.type) &&
       event.item?.role === 'user'
     ) {
+      if (event.item.id?.startsWith('ctx_')) return;
       const text = event.item.content?.map((part) => part.text ?? '').join('');
-      if (text) this.line(event.item.id ?? 'typed', 'user', text, false);
+      if (!this.state.transcript.some((line) => line.id === event.item?.id) || text)
+        this.line(event.item.id ?? 'typed', 'user', text || '', false);
     }
   }
   private line(id: string, role: 'user' | 'assistant', text: string, append: boolean) {
