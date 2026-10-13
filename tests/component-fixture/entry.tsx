@@ -14,6 +14,10 @@ import { healthFixture } from './health';
 import { MissionHandoffFixture } from './mission-handoff';
 import { FounderOffice } from '@/components/founder-office/office';
 import { founderOfficeFixture } from './founder-office-data';
+import { ConnectionsWorkspace } from '@/components/connections/workspace';
+import '@/app/(workspace)/app/work/work.css';
+import '@/app/(workspace)/app/founder/office.css';
+import '@/app/(workspace)/app/founder/connections/connections.css';
 import '@/app/imperial-workspace.css';
 import '@/app/imperial-emerald-ii.css';
 import '@/app/obsidian-smoked-glass.css';
@@ -200,6 +204,69 @@ createRoot(document.getElementById('root')!).render(
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
       <FounderOffice initial={founderOfficeFixture} />
+    </div>
+  ) : mode === 'connections-ready' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Connections fixture · provider apps registered, not connected.</p>
+      <ConnectionsWorkspace
+        initial={{
+          github: {
+            ...founderOfficeFixture.connections.github,
+            status: 'disconnected',
+            setupRequired: false,
+            configured: true,
+            summary: 'Not connected. Aethelios has no usable credential for this service.',
+          },
+          vercel: {
+            ...founderOfficeFixture.connections.vercel,
+            status: 'disconnected',
+            setupRequired: false,
+            configured: true,
+            summary: 'Not connected. Aethelios has no usable credential for this service.',
+          },
+        }}
+      />
+    </div>
+  ) : mode === 'connections' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Connections fixture · no live GitHub or Vercel authorization.</p>
+      <ConnectionsWorkspace initial={founderOfficeFixture.connections} />
+    </div>
+  ) : mode === 'connections-connected' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Connections fixture · labelled verified state, not a live provider.</p>
+      <ConnectionsWorkspace
+        initial={{
+          github: {
+            ...founderOfficeFixture.connections.github,
+            status: 'connected',
+            setupRequired: false,
+            configured: true,
+            accountLogin: 'synthetic-founder',
+            selectedName: 'neilaureliuscollective/gent-ascend-collective-app',
+            selectedId: '1',
+            accessMode: 'read-only',
+            lastVerifiedAt: '2026-10-13T17:00:00Z',
+            capabilities: [
+              'Read repository contents and metadata for the selected repository only.',
+              'No administration, secrets, workflows, branch-protection bypass or repository write access.',
+            ],
+            summary: 'Connected and verified for neilaureliuscollective/gent-ascend-collective-app.',
+          },
+          vercel: {
+            ...founderOfficeFixture.connections.vercel,
+            status: 'connected',
+            setupRequired: false,
+            configured: true,
+            accountLogin: 'synthetic-team',
+            selectedName: 'gent-ascend-collective-app',
+            selectedId: 'prj_synthetic',
+            accessMode: 'read-only',
+            lastVerifiedAt: '2026-10-13T17:00:00Z',
+            summary: 'Connected and verified for gent-ascend-collective-app.',
+          },
+        }}
+      />
     </div>
   ) : mode.startsWith('lifestyle') ? (
     <div className="member-collection public-world imperial-obsidian">

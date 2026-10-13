@@ -822,6 +822,60 @@ export interface Database {
         never,
         never
       >;
+      service_connections: Table<
+        {
+          id: string;
+          person_id: string;
+          provider: 'github' | 'vercel';
+          status:
+            | 'setup_required'
+            | 'disconnected'
+            | 'connecting'
+            | 'connected'
+            | 'degraded'
+            | 'expired'
+            | 'revoked'
+            | 'verification_failed';
+          account_login: string | null;
+          account_id: string | null;
+          installation_id: string | null;
+          selected_id: string | null;
+          selected_name: string | null;
+          capabilities: Record<string, unknown>;
+          last_verified_at: string | null;
+          last_error: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        never,
+        never
+      >;
+      service_connection_secrets: Table<
+        { connection_id: string; ciphertext: string; updated_at: string },
+        never,
+        never
+      >;
+      service_connection_flows: Table<
+        {
+          id: string;
+          person_id: string;
+          provider: 'github' | 'vercel';
+          state: string;
+          nonce: string;
+          verifier: string;
+          claimed_installation_id: string | null;
+          expires_at: string;
+          consumed_at: string | null;
+          created_at: string;
+        },
+        never,
+        never
+      >;
+      service_connection_events: Table<
+        { provider: 'github' | 'vercel'; delivery_id: string; received_at: string },
+        never,
+        never
+      >;
       pilot_invitations: Table<
         {
           id: string;
@@ -863,6 +917,58 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      service_connection_begin_flow: {
+        Args: {
+          p_id: string;
+          p_provider: string;
+          p_state: string;
+          p_nonce: string;
+          p_verifier: string;
+          p_expires: string;
+        };
+        Returns: boolean;
+      };
+      service_connection_read_flow: { Args: { p_state: string }; Returns: unknown };
+      service_connection_claim_install: {
+        Args: { p_state: string; p_installation: string };
+        Returns: boolean;
+      };
+      service_connection_consume_flow: {
+        Args: { p_state: string; p_consumed: string };
+        Returns: boolean;
+      };
+      service_connection_read: { Args: { p_provider: string }; Returns: unknown };
+      service_connection_list: { Args: Record<string, never>; Returns: unknown };
+      service_connection_upsert: {
+        Args: {
+          p_id: string;
+          p_provider: string;
+          p_status: string;
+          p_account_login: string | null;
+          p_account_id: string | null;
+          p_installation: string | null;
+          p_selected_id: string | null;
+          p_selected_name: string | null;
+          p_capabilities: unknown;
+          p_verified: string | null;
+          p_error: string | null;
+        };
+        Returns: boolean;
+      };
+      service_connection_put_secret: {
+        Args: { p_id: string; p_ciphertext: string };
+        Returns: boolean;
+      };
+      service_connection_take_secret: { Args: { p_id: string }; Returns: string | null };
+      service_connection_clear: { Args: { p_provider: string }; Returns: boolean };
+      service_connection_record_event: {
+        Args: { p_provider: string; p_delivery: string };
+        Returns: boolean;
+      };
+      service_connection_apply_status: {
+        Args: { p_provider: string; p_installation: string; p_status: string; p_error: string | null };
+        Returns: boolean;
+      };
       architect_origin_save: {
         Args: {
           p_project: string;

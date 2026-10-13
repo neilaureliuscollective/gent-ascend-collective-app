@@ -190,6 +190,9 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
           <a className="secondary-button" href="#founder-operations">
             Operations
           </a>
+          <Link className="secondary-button" href="/app/founder/connections">
+            Connections
+          </Link>
           <Link className="secondary-button" href="/app/aethelios">
             Personal Talk ↗
           </Link>
@@ -720,9 +723,14 @@ export function FounderOffice({ initial }: { initial: FounderOfficeData }) {
             ],
             [
               'GitHub',
-              'Public canonical repository inspection is available on request. No authorized repository writes or private access.',
+              data.connections?.github.summary ??
+                'GitHub connection state has not been loaded.',
             ],
-            ['Vercel', 'Not connected to in-app deployment monitoring or execution.'],
+            [
+              'Vercel',
+              data.connections?.vercel.summary ??
+                'Vercel connection state has not been loaded.',
+            ],
             [
               'Commerce',
               data.operations.commerceConfigured

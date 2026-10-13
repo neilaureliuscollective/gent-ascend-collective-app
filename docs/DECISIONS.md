@@ -1,3 +1,7 @@
+## 2026-10-13 — Aethelios Connections (GitHub App + Vercel integration)
+
+Official GitHub App setup URL is not the user-authorization callback; `installation_id` on setup must be associated via a user access token and `GET /user/installations`. Installation tokens are minted server-side, repository-scoped and short-lived. Native Vercel integrations exchange a one-time code at `/v2/oauth/access_token` for a long-lived token (not GitHub’s expiry model). PKCE is used for GitHub user association; Vercel Sign in with Vercel PKCE is a different product and is not this connector. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No production registration or hosted migration.
+
 ## 2026-10-12 — Lifestyle product atelier
 
 Use the existing gallery and approved Shopify media for user-controlled inspection. Add explicit sequencing and fit/2× detail zoom; load films only on selection and only with approved captions/transcript. Keep purchase primary and sensory education progressively disclosed. Reuse server projections and Obsidian tokens without new rendering dependencies. Research and activation boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). No measured conversion uplift or merchant activation is claimed.

@@ -1,3 +1,5 @@
+> Connections (2026-10-13): founder-gated GitHub App + Vercel native integration on `cursor/aethelios-connections-8d20`. Replaces Founder Office’s fixed GitHub/Vercel strings with verified connection state. Public unauthenticated canonical-repo inspection is unchanged. Construct (PR #116) is not modified; it should import `src/domains/connections/architect.ts`. No production merge, hosted migration, provider registration or paid model call. Setup and remaining live tests: [CONNECTIONS.md](CONNECTIONS.md).
+
 > Release authorization update (2026-10-13): the founder explicitly approved clearing the entire legacy v1 unsent browser-draft cache, including ordinary Talk drafts, after that consequence was explained. This resolves the earlier retention hold. Saved server conversations remain untouched. Functional release checks and existing feature gates still apply.
 
 ## 2026-10-13 approved material release preparation
