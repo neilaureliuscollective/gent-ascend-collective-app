@@ -13,14 +13,16 @@ import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/o
 import { measuredAudioLevel } from '@/platform/visual/intelligence-motion';
 import { useAppearance } from '@/components/visual/appearance';
 import { ArtifactSurface } from './artifacts';
-import { LiveContext } from './context';
+import { LiveAvailabilityContext, LiveContext } from './context';
 import { LiveDiagnostics } from './diagnostics';
 export function LiveConversationProvider({
   children,
   enabled = false,
+  unavailableReason = 'Aethelios Live is unavailable on this deployment.',
 }: {
   children: React.ReactNode;
   enabled?: boolean;
+  unavailableReason?: string | null;
 }) {
   const [controller] = useState(() => new LiveController());
   useEffect(() => {
@@ -47,10 +49,12 @@ export function LiveConversationProvider({
     if (!enabled) void controller.end();
   }, [controller, enabled]);
   return (
-    <LiveContext.Provider value={enabled ? controller : null}>
-      {children}
-      {enabled && <LiveSurface controller={controller} />}
-    </LiveContext.Provider>
+    <LiveAvailabilityContext.Provider value={enabled ? null : unavailableReason}>
+      <LiveContext.Provider value={enabled ? controller : null}>
+        {children}
+        {enabled && <LiveSurface controller={controller} />}
+      </LiveContext.Provider>
+    </LiveAvailabilityContext.Provider>
   );
 }
 const idleSnapshot = { phase: 'idle', cleanupPending: false };
@@ -65,6 +69,16 @@ export function useLiveBusy() {
   );
   return state.cleanupPending || ['connecting', 'listening', 'speaking'].includes(state.phase);
 }
+function LiveEntryLabel() {
+  return (
+    <>
+      <span className="live-entry-full">Aethelios Live</span>
+      <span className="live-entry-short" aria-hidden="true">
+        Live
+      </span>
+    </>
+  );
+}
 export function LiveVoiceEntry({
   conversationId,
   includeContext,
@@ -75,16 +89,43 @@ export function LiveVoiceEntry({
   disabled?: boolean;
 }) {
   const controller = useContext(LiveContext);
+  const unavailable = useContext(LiveAvailabilityContext);
   const [consent, setConsent] = useState(false);
+  const [info, setInfo] = useState(false);
   const [approved, setApproved] = useState(false);
   const [contextApproved, setContextApproved] = useState(false);
   const [backgroundWork, setBackgroundWork] = useState(false);
   const [voice, setVoice] = useState<'cedar' | 'marin'>('cedar');
-  if (!controller) return null;
+  if (!controller)
+    return (
+      <div className="live-entry">
+        <button
+          type="button"
+          className="talk-tool"
+          aria-label="Aethelios Live"
+          aria-expanded={info}
+          aria-controls="live-unavailable"
+          onClick={() => setInfo((value) => !value)}
+        >
+          <LiveEntryLabel />
+        </button>
+        {info && (
+          <div className="live-consent" id="live-unavailable" role="status">
+            <p>Natural voice · founder pilot</p>
+            <p>{unavailable ?? 'Aethelios Live is unavailable on this deployment.'}</p>
+            <button type="button" onClick={() => setInfo(false)}>
+              Close
+            </button>
+          </div>
+        )}
+      </div>
+    );
   return (
-    <>
+    <div className="live-entry">
       <button
         type="button"
+        className="talk-tool"
+        aria-label="Aethelios Live"
         disabled={disabled}
         onClick={() => {
           const state = controller.getSnapshot();
@@ -93,7 +134,7 @@ export function LiveVoiceEntry({
           } else setConsent(true);
         }}
       >
-        Aethelios Live
+        <LiveEntryLabel />
       </button>
       {consent && (
         <div className="live-consent" role="group" aria-label="Voice pilot consent">
@@ -177,7 +218,7 @@ export function LiveVoiceEntry({
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }
 function LiveSurface({ controller }: { controller: LiveController }) {

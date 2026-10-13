@@ -11,6 +11,7 @@ import { AppearanceControls, VisualEnvironment } from './visual/appearance';
 import { Icon } from './visual/icon';
 import { AppRuntime } from './app-runtime';
 import { UniversalCapture } from './capture/universal-capture';
+import { liveShellAvailability } from '@/domains/live/admission-policy';
 export function Shell({
   children,
   founder = false,
@@ -20,14 +21,9 @@ export function Shell({
   founder?: boolean;
   founderOffice?: boolean;
 }) {
+  const live = liveShellAvailability(process.env, founderOffice);
   return (
-    <SensitiveLiveProvider
-      enabled={
-        process.env.AETHELIOS_LIVE_ENABLED === 'true' &&
-        process.env.APP_ENV !== 'production' &&
-        process.env.VERCEL_ENV !== 'production'
-      }
-    >
+    <SensitiveLiveProvider enabled={live.enabled} unavailableReason={live.reason}>
       <ConversationDraftProvider>
         <OriginDraftProvider>
           <ShellWorkspace

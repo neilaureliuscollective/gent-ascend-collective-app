@@ -132,6 +132,7 @@ export async function admitLive(input: LiveAdmission) {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.key}`, Accept: 'application/sdp' },
       body,
+      redirect: 'error',
       signal: AbortSignal.timeout(20000),
     });
     if (!response.ok) throw new Error('Provider admission failed');
@@ -646,6 +647,7 @@ export async function admitLive(input: LiveAdmission) {
             !auth.data.user ||
             member.error ||
             founder.error ||
+            (config.canonicalPilot && !founder.data) ||
             (!member.data?.beta_access && !founder.data)
           )
             stop();
@@ -770,12 +772,14 @@ export async function admitLive(input: LiveAdmission) {
         socket?.close();
         await chain;
         await Promise.allSettled([...jobTasks]);
-        await client.rpc('ai_live_end', {
+        const ended = await client.rpc('ai_live_end', {
           p_id: input.sessionId,
           p_reason: Date.now() >= deadline ? 'expired' : 'ended',
           p_input: ledger.inputTokens,
           p_output: ledger.outputTokens,
         });
+        if (ended.error || ended.data !== true)
+          throw new Error('Voice cleanup could not be recorded');
       } finally {
         workAbort.abort();
         clearInterval(workCheck);

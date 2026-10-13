@@ -3,6 +3,7 @@ import { parseEnvironment } from '@/platform/environment';
 import { liveModels } from './diagnostics';
 import { previewBinding } from './preview-binding';
 import { expiryReadiness } from './expiry-readiness';
+import { liveAdmissionPolicy } from './admission-policy';
 export const preflightProbe = z.object({ checkProvider: z.literal(true) }).strict();
 export function preflightConfiguration(env: Record<string, string | undefined>) {
   let environment: 'local' | 'preview' | 'production' | 'invalid' = 'invalid';
@@ -19,6 +20,7 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
   const source = /^[a-f0-9]{40}$/i.test(env.VERCEL_GIT_COMMIT_SHA ?? '')
     ? env.VERCEL_GIT_COMMIT_SHA!
     : null;
+  const policy = liveAdmissionPolicy(env);
   return {
     environment,
     source,
@@ -27,17 +29,8 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
     enabled,
     controlsDeclared,
     previewDatabaseBinding: previewBinding(env),
-    canonicalPilot: environment === 'preview' && env.AETHELIOS_LIVE_CANONICAL_PILOT === 'true',
-    admissionConfigured:
-      environment !== 'invalid' &&
-      environment !== 'production' &&
-      enabled &&
-      keyConfigured &&
-      !!model &&
-      (environment === 'local' ||
-        (controlsDeclared &&
-          previewBinding(env) === 'configuration-matched' &&
-          expiryReadiness(env).configured)),
+    canonicalPilot: environment !== 'invalid' && policy.founderOnly,
+    admissionConfigured: environment !== 'invalid' && keyConfigured && !!model && !policy.error,
     launchAcceptance: 'unverified' as const,
     expiry: {
       ...expiryReadiness(env),

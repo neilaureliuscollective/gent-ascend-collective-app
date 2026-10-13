@@ -20,6 +20,7 @@ beforeEach(() => {
   vi.stubEnv('AETHELIOS_LIVE_ENABLED', 'true');
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'false');
   vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'false');
+  vi.stubEnv('AETHELIOS_LIVE_FOUNDER_PILOT', undefined);
   vi.stubEnv('AETHELIOS_LIVE_EXPIRY_ENABLED', 'true');
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'synthetic-worker');
   vi.stubEnv('CRON_SECRET', 'synthetic-scheduler-secret-at-least-32-characters');
@@ -42,12 +43,40 @@ it('requires the separate control readiness gate for hosted previews', () => {
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable');
   expect(liveConfig().model).toBe('gpt-realtime');
 });
-it('does not enable production even when pilot flags are enabled', () => {
+it('keeps production closed without the new explicit founder pilot policy', () => {
   vi.stubEnv('APP_ENV', 'production');
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://synthetic.supabase.co');
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable-key');
   vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
   expect(() => liveConfig()).toThrow(/not enabled/);
+});
+
+it('requires every production founder prerequisite; old flags cannot activate it', () => {
+  vi.stubEnv('APP_ENV', 'production');
+  vi.stubEnv('VERCEL_ENV', 'production');
+  vi.stubEnv('AETHELIOS_LIVE_CONTROL_READY', 'true');
+  vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'true');
+  vi.stubEnv('AETHELIOS_LIVE_PREVIEW_PROJECT_REF', undefined);
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://volpzkfsnmtztrovexcw.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'synthetic-publishable');
+  expect(() => liveConfig()).toThrow(/not enabled/);
+  vi.stubEnv('AETHELIOS_LIVE_FOUNDER_PILOT', 'true');
+  expect(liveConfig().canonicalPilot).toBe(true);
+  for (const [name, value] of [
+    ['AETHELIOS_LIVE_ENABLED', 'false'],
+    ['AETHELIOS_LIVE_CONTROL_READY', 'false'],
+    ['AETHELIOS_LIVE_CANONICAL_PILOT', 'false'],
+    ['AETHELIOS_LIVE_EXPIRY_ENABLED', 'false'],
+    ['SUPABASE_SERVICE_ROLE_KEY', ''],
+    ['CRON_SECRET', 'short'],
+    ['OPENAI_API_KEY', ' '],
+    ['NEXT_PUBLIC_SUPABASE_URL', 'https://abcdefghijklmnopqrst.supabase.co'],
+  ]) {
+    const previous = process.env[name!];
+    vi.stubEnv(name!, value!);
+    expect(() => liveConfig(), name).toThrow();
+    vi.stubEnv(name!, previous);
+  }
 });
 
 it('recognizes founder-only canonical pilot without another database while retaining readiness', () => {

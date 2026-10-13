@@ -1,4 +1,8 @@
-## 2026-10-12 — Lifestyle product atelier
+# Founder Live production admission — 2026-10-13
+
+Replace the blanket `APP_ENV`/`VERCEL_ENV` production ban with one server-authoritative founder-pilot policy. Production stays default-off: `AETHELIOS_LIVE_ENABLED`, `AETHELIOS_LIVE_FOUNDER_PILOT`, verified hosting controls, canonical Gent database binding, independent expiry configuration, supported Realtime model and the existing server OpenAI key are all required. UI enablement uses the session-bound `founder_access` row, not the local harness flag. Ordinary beta accounts remain excluded. Talk still shows Live when admission is unavailable, with an understandable reason, instead of returning null. Consent, ephemeral credentials, owner RPCs, HMAC hangup bindings and abandoned-session cleanup are unchanged. Configuration is not launch or audio acceptance. Construct, Connections and Architect stay on their own branches.
+
+# 2026-10-12 — Lifestyle product atelier
 
 Use the existing gallery and approved Shopify media for user-controlled inspection. Add explicit sequencing and fit/2× detail zoom; load films only on selection and only with approved captions/transcript. Keep purchase primary and sensory education progressively disclosed. Reuse server projections and Obsidian tokens without new rendering dependencies. Research and activation boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). No measured conversion uplift or merchant activation is claimed.
 

@@ -329,3 +329,145 @@ it('unknown provider errors still close media and require server cleanup', async
   expect(stop).toHaveBeenCalled();
   expect(fetchMock.mock.calls.some((call) => call[1].method === 'DELETE')).toBe(true);
 });
+
+it('keeps delayed speech transcription before its answer and the following typed turn', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  pc.event({ type: 'input_audio_buffer.committed', item_id: 'voice' });
+  pc.event({
+    type: 'response.output_audio_transcript.delta',
+    item_id: 'answer',
+    delta: 'First answer',
+  });
+  pc.event({
+    type: 'conversation.item.added',
+    item: { id: 'typed', role: 'user', content: [{ text: 'Follow up' }] },
+  });
+  pc.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'voice',
+    transcript: 'First question',
+  });
+  pc.event({
+    type: 'conversation.item.added',
+    item: { id: 'ctx_private', role: 'user', content: [{ text: 'Private context seed' }] },
+  });
+  expect(controller.getSnapshot().transcript.map((line) => line.text)).toEqual([
+    'First question',
+    'First answer',
+    'Follow up',
+  ]);
+  await controller.end();
+});
+it('keeps cleanup pending on a successful HTTP response without an End receipt', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  fetchMock.mockResolvedValue(Response.json({ ended: false }));
+  await controller.end();
+  await controller.start(conversation, false);
+  expect(controller.getSnapshot().cleanupPending).toBe(true);
+  expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
+  fetchMock.mockResolvedValue(Response.json({ ended: true }));
+  await controller.end();
+  expect(controller.getSnapshot().cleanupPending).toBe(false);
+});
+it('coalesces overlapping End attempts so stale failures cannot replace confirmed cleanup', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  let resolve!: (r: Response) => void;
+  fetchMock.mockImplementation(
+    () =>
+      new Promise<Response>((r) => {
+        resolve = r;
+      }),
+  );
+  const first = controller.end();
+  const second = controller.end();
+  expect(fetchMock.mock.calls.filter((call) => call[1].method === 'DELETE')).toHaveLength(1);
+  resolve(Response.json({ ended: true }));
+  await Promise.all([first, second]);
+  expect(controller.getSnapshot().cleanupPending).toBe(false);
+});
+it('does not schedule a stale expiry when End occurs during remote description setup', async () => {
+  vi.useFakeTimers();
+  let resolve!: () => void;
+  const remote = vi.spyOn(FakePC.prototype, 'setRemoteDescription').mockImplementation(
+    () =>
+      new Promise<void>((r) => {
+        resolve = r;
+      }),
+  );
+  try {
+    const controller = new LiveController();
+    const starting = controller.start(conversation, false);
+    await vi.waitFor(() => expect(resolve).toBeTypeOf('function'));
+    await controller.end();
+    resolve();
+    await starting;
+    expect(vi.getTimerCount()).toBe(0);
+    expect(controller.getSnapshot().phase).toBe('ended');
+  } finally {
+    remote.mockRestore();
+    vi.useRealTimers();
+  }
+});
+it('offers retry on autoplay rejection but fences late playback promises after End', async () => {
+  const play = vi.fn().mockRejectedValue(new Error('Autoplay blocked'));
+  vi.stubGlobal('document', {
+    createElement: () => ({ play, pause: vi.fn(), remove: vi.fn(), setAttribute: vi.fn() }),
+  });
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  await controller.enablePlayback();
+  expect(controller.getSnapshot().playbackBlocked).toBe(true);
+  play.mockResolvedValue(undefined);
+  await controller.enablePlayback();
+  expect(controller.getSnapshot().playbackBlocked).toBe(false);
+  let reject!: (e: Error) => void;
+  play.mockImplementation(
+    () =>
+      new Promise((_resolve, r) => {
+        reject = r;
+      }),
+  );
+  const pending = controller.enablePlayback();
+  await controller.end();
+  reject(new Error('Late rejection'));
+  await pending;
+  expect(controller.getSnapshot()).toMatchObject({ phase: 'ended', playbackBlocked: false });
+});
+
+it('repeats cleanup after a late admission even while the earlier End is still pending', async () => {
+  let admit!: (r: Response) => void;
+  let finishEarlyEnd!: (r: Response) => void;
+  let ends = 0;
+  fetchMock.mockImplementation((_url, init) => {
+    if (init.method === 'POST')
+      return new Promise<Response>((r) => {
+        admit = r;
+      });
+    ends++;
+    if (ends === 1)
+      return new Promise<Response>((r) => {
+        finishEarlyEnd = r;
+      });
+    return Promise.resolve(Response.json({ ended: true }));
+  });
+  const controller = new LiveController();
+  const starting = controller.start(conversation, false);
+  await vi.waitFor(() => expect(admit).toBeTypeOf('function'));
+  const ending = controller.end();
+  admit(
+    Response.json({
+      answer: 'v=0\r\na=late',
+      expiresAt: new Date(Date.now() + 120000).toISOString(),
+    }),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(ends).toBe(1);
+  finishEarlyEnd(Response.json({ ended: true }));
+  await Promise.all([starting, ending]);
+  expect(ends).toBe(2);
+  expect(controller.getSnapshot()).toMatchObject({ phase: 'ended', cleanupPending: false });
+});

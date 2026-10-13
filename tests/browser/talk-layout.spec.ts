@@ -32,6 +32,7 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
     await page.route('**/api/aurelius**', (route) => route.fulfill({ json: state }));
     await page.goto('/app/aethelios');
     await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Aethelios Live', exact: true })).toBeVisible();
     const presence = page.getByRole('button', { name: 'Aethelios presence', exact: true });
     await expect(presence).toBeVisible();
     await expect(page.locator('.talk-presence .identity-presence').first()).toHaveCSS(

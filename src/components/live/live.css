@@ -74,6 +74,35 @@
   font-size: 0.8rem;
   opacity: 0.8;
 }
+.live-entry {
+  position: relative;
+  flex: none;
+}
+.talk-toolbar .live-entry .talk-tool {
+  white-space: nowrap;
+}
+.talk-toolbar .live-entry-short {
+  display: none;
+}
+@media (max-width: 380px) {
+  .talk-toolbar .live-entry .talk-tool {
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+  .talk-toolbar .live-entry-full {
+    display: none;
+  }
+  .talk-toolbar .live-entry-short {
+    display: inline;
+  }
+}
+.talk-toolbar .live-consent {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(22rem, calc(100vw - 2rem));
+}
 .live-consent {
   max-width: 34rem;
   padding: 1rem;

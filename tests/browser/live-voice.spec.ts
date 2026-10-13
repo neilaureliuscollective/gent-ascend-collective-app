@@ -232,3 +232,75 @@ test('cancelling during slow SDP admission revokes the late call without restori
     true,
   );
 });
+
+test('late ASR stays ordered and uncertain cleanup prevents another voice session', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await fakeTransport(page);
+  let starts = 0;
+  let cleanupWorks = false;
+  await page.route('**/api/aethelios/live', async (route) => {
+    const method = route.request().method();
+    if (method === 'GET') return route.fulfill({ json: { jobs: [] } });
+    if (method === 'DELETE') return route.fulfill({ json: { ended: cleanupWorks } });
+    starts++;
+    return route.fulfill({
+      json: {
+        answer: 'v=0\r\na=synthetic-answer',
+        expiresAt: new Date(Date.now() + 120000).toISOString(),
+      },
+    });
+  });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+  await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
+  await expect(dialog.getByRole('status')).toHaveText('Listening');
+  await page.evaluate(() => {
+    const channel = (
+      window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }
+    ).voiceChannel;
+    for (const event of [
+      { type: 'input_audio_buffer.committed', item_id: 'voice-first' },
+      {
+        type: 'response.output_audio_transcript.delta',
+        item_id: 'answer',
+        delta: 'Synthetic first answer',
+      },
+      {
+        type: 'conversation.item.added',
+        item: { id: 'typed-next', role: 'user', content: [{ text: 'Synthetic typed followup' }] },
+      },
+      {
+        type: 'conversation.item.input_audio_transcription.completed',
+        item_id: 'voice-first',
+        transcript: 'Synthetic first question',
+      },
+    ])
+      channel.onmessage({ data: JSON.stringify(event) });
+  });
+  await expect(dialog.getByRole('log')).toContainText(
+    /Synthetic first question[\s\S]*Synthetic first answer[\s\S]*Synthetic typed followup/,
+  );
+  await dialog.getByRole('button', { name: 'End', exact: true }).click();
+  await expect(dialog).toContainText('Server cleanup is pending');
+  expect(starts).toBe(1);
+  cleanupWorks = true;
+  await dialog.getByRole('button', { name: 'End / retry cleanup', exact: true }).click();
+  await expect(dialog).not.toContainText('Server cleanup is pending');
+  expect(starts).toBe(1);
+});
+
+test('unavailable Live remains visible in Talk with an understandable reason', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice-unavailable');
+  const live = page.getByRole('button', { name: 'Aethelios Live', exact: true });
+  await expect(live).toBeVisible();
+  await live.click();
+  await expect(page.getByRole('status')).toContainText(
+    'Aethelios Live is not enabled on this deployment.',
+  );
+  await expect(page.getByRole('button', { name: 'Start voice' })).toHaveCount(0);
+});
