@@ -79,7 +79,11 @@ export type WorkspaceData = {
   currentConversation?: Conversation | null;
 };
 export type OperationActivity = 'waiting' | 'thinking' | 'searching' | 'researching' | 'generating' | 'saving';
+export type StreamTimingStage =
+  | 'provider-first-event' | 'provider-first-text' | 'tool-start' | 'tool-end'
+  | 'persistence-start' | 'persistence-end' | 'stream-end';
 export type StreamEvent =
+  | { type: 'timing'; stage: StreamTimingStage; elapsedMs: number }
   | { type: 'activity'; phase: OperationActivity }
   | { type: 'delta'; text: string }
   | { type: 'saved'; turn: Turn }

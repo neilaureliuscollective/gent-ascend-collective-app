@@ -39,6 +39,7 @@ jobs:
           tests/browser/intelligence-motion.spec.ts
           tests/browser/intelligence-motion-integration.spec.ts
           tests/browser/intelligence-motion-release.spec.ts
+          tests/browser/fluid-conversation.spec.ts
           tests/browser/talk-layout.spec.ts
           tests/browser/company-room.spec.ts
           tests/browser/company-work.spec.ts
