@@ -45,7 +45,17 @@ jobs:
           }
           throw new Error('Released Health route did not become available within the deployment window.');
           JS
-      - name: Verify the real public application and Studio access boundaries
+      - name: Verify deployed baseline privacy before release
+        if: github.event_name == 'pull_request'
+        # The PR's candidate materials cannot exist on the production alias yet.
+        # Keep signed-out Health/Studio/privacy checks on the deployed baseline;
+        # full candidate rendering runs locally/CI and the complete public suite
+        # runs after publication below and in Obsidian production-entry.
+        run: >-
+          npx playwright test --config playwright.production.config.ts
+          tests/production/health-release.spec.ts tests/production/studio-release.spec.ts --workers=1
+      - name: Verify the released public application, materials and bundle
+        if: github.event_name != 'pull_request'
         run: npx playwright test --config playwright.production.config.ts --workers=1
       - uses: actions/upload-artifact@v4
         if: always()
