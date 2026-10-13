@@ -1,4 +1,4 @@
-import { access, chmod, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -346,7 +346,6 @@ export async function executeInContainer(
 ): Promise<RunResult> {
   const root = await mkdtemp(join(tmpdir(), 'architect-construct-docker-'));
   const snapshot = join(root, 'src');
-  const outDir = join(root, 'out');
   const runnerFile = join(root, 'construct-runner.mjs');
   const jobFile = join(root, 'construct-job.json');
   const name = `construct-${randomUUID().replace(/-/g, '').slice(0, 20)}`;
@@ -376,8 +375,6 @@ export async function executeInContainer(
       return result;
     }
     await mkdir(snapshot, { recursive: true });
-    await mkdir(outDir, { recursive: true, mode: 0o777 });
-    await chmod(outDir, 0o777);
     await materializeSource(snapshot, job.source, job.scope);
     for (const file of job.scope.patch) assertWritable(file.path, job.scope);
     await writeFile(runnerFile, trustedContainerRunner);
@@ -392,7 +389,7 @@ export async function executeInContainer(
         timeout_ms: Math.min(8000, job.scope.resource_limits.timeout_ms),
       }),
     );
-    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, outDir, name });
+    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, name });
     assertSafeDockerArgs(invocation.args);
     const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms);
     if (aborted()) {
@@ -414,13 +411,7 @@ export async function executeInContainer(
       );
       return result;
     }
-    const fromDisk = await collectObservedFiles(
-      join(outDir, 'files'),
-      job.scope.allowed_paths,
-      job.scope.resource_limits.max_file_bytes,
-    ).catch(() => []);
-    const observed =
-      fromDisk.length > 0 ? fromDisk : validateObservedPayload(parsed.files, job.scope);
+    const observed = validateObservedPayload(parsed.files, job.scope);
     if (!observed) {
       result = blockedResult(
         job,
@@ -479,7 +470,11 @@ export async function executeInContainer(
     };
     return result;
   } finally {
-    await rm(root, { recursive: true, force: true });
+    try {
+      await rm(root, { recursive: true, force: true });
+    } catch {
+      /* Host cleanup must not discard a verified isolated result. */
+    }
     const removed = await access(root).then(() => false).catch(() => true);
     if (result) {
       result.artifacts = [
