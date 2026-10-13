@@ -18,8 +18,10 @@ import type { Turn, WorkspaceData } from '@/domains/intelligence/types';
 import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
+import { useReadingAnchor } from './reading-anchor';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { conversationTiming } from '@/platform/conversation/timing';
+import { readTalkDraft, writeTalkDraft, clearTalkDrafts } from '@/platform/conversation/drafts';
 import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
 import { BplusMaterial, BplusTalkTools } from '../visual/bplus-material';
 import { observedOperation } from '@/platform/visual/operation-adapters';
@@ -27,14 +29,17 @@ import {
   intelligenceStatus,
   type IntelligenceOperation,
 } from '@/platform/visual/intelligence-motion';
-import { IntelligenceActivity, IntelligenceResponse } from '../intelligence-motion/presence';
+import {
+  IntelligenceActivity,
+  IntelligenceResponse,
+  IntelligencePresence,
+} from '../intelligence-motion/presence';
 import { TalkPresence } from './talk-presence';
 import { AppearanceControls } from '../visual/appearance';
 import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
-import { IntelligenceOrb } from '../public/intelligence-orb';
 import { routeCapability } from '@/domains/intelligence/capabilities';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
@@ -74,13 +79,16 @@ export function AureliusWorkspace({
       : null,
   );
   const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
+  const verifiedDraftOwner = useRef('');
   useEffect(() => {
     if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
   const draftSnapshot = useRef({ text: draft, ownerId: '', conversationId: initialConversation });
   useEffect(() => {
     draftSnapshot.current = { text: draft, ownerId: data?.ownerId ?? '', conversationId: selected };
-  }, [draft, data?.ownerId, selected]);
+    if (!compact && data?.ownerId && verifiedDraftOwner.current === data.ownerId)
+      writeTalkDraft(data.ownerId, selected, draft);
+  }, [draft, data?.ownerId, selected, compact]);
   useEffect(
     () => () => {
       const snapshot = draftSnapshot.current;
@@ -124,6 +132,7 @@ export function AureliusWorkspace({
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
+  const rememberReadingPosition = useReadingAnchor(scroll, follow, data !== null);
   const [awayFromLatest, setAwayFromLatest] = useState(false);
   function rememberConversation(id: string | null) {
     if (compact || !window.location.pathname.endsWith('/aethelios')) return;
@@ -147,6 +156,8 @@ export function AureliusWorkspace({
         if (controller.signal.aborted) return;
         setError('');
         if (response.status === 401) {
+          clearTalkDrafts();
+          verifiedDraftOwner.current = '';
           setPreview(true);
           setCouncilSelection(null);
           setData(disconnectedWorkspace);
@@ -158,7 +169,14 @@ export function AureliusWorkspace({
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
         const knownOwner = draftSnapshot.current.ownerId || homeDraft?.ownerId;
-        if (knownOwner && (result as WorkspaceData).ownerId !== knownOwner) setDraft('');
+        const owner = (result as WorkspaceData).ownerId ?? '';
+        if (knownOwner && owner !== knownOwner) {
+          clearTalkDrafts();
+          setDraft('');
+        }
+        verifiedDraftOwner.current = owner;
+        if (!compact && id !== draftSnapshot.current.conversationId)
+          setDraft(readTalkDraft(owner, id));
         setData(result as WorkspaceData);
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
@@ -170,7 +188,14 @@ export function AureliusWorkspace({
           else url.searchParams.delete('conversation');
           window.history.replaceState(window.history.state, '', url);
         }
-        setNeedsReload(false);
+        const unresolved = (result as WorkspaceData).turns.some(
+          (turn) => turn.status === 'pending',
+        );
+        setNeedsReload(unresolved);
+        if (unresolved)
+          setError(
+            'An earlier reply is still unresolved. Reload saved state before sending again.',
+          );
         setConfirmDelete(false);
       } catch (e) {
         if (!controller.signal.aborted) {
@@ -183,6 +208,32 @@ export function AureliusWorkspace({
     },
     [compact, homeDraft],
   );
+  async function refreshMetadata(id: string) {
+    reading.current?.abort();
+    const controller = new AbortController();
+    reading.current = controller;
+    try {
+      const response = await fetch(`/api/aurelius?conversationId=${id}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!response.ok) return; // The turn is saved; metadata failure never makes it uncertain.
+      const result = (await response.json()) as WorkspaceData;
+      if (controller.signal.aborted) return;
+      setData((previous) =>
+        previous && previous.ownerId === result.ownerId
+          ? {
+              ...previous,
+              conversations: result.conversations,
+              currentConversation: result.currentConversation,
+              nextConversationCursor: result.nextConversationCursor,
+            }
+          : previous,
+      );
+    } catch {
+      /* A later explicit read refreshes metadata. Never replay a saved turn. */
+    }
+  }
   function reload(id: string | null = null) {
     setLoading(true);
     setError('');
@@ -286,7 +337,22 @@ export function AureliusWorkspace({
       })
       .then((result) => {
         if (controller.signal.aborted) return;
-        if (homeDraft && (!result || result.ownerId !== homeDraft.ownerId)) setDraft('');
+        if (!result?.ownerId) {
+          clearTalkDrafts();
+          verifiedDraftOwner.current = '';
+          if (homeDraft) setDraft('');
+        } else {
+          verifiedDraftOwner.current = result.ownerId;
+          const stored = !compact ? readTalkDraft(result.ownerId, initialConversation) : '';
+          if (homeDraft && result.ownerId !== homeDraft.ownerId) setDraft(stored);
+          else if (!initialDraft && !homeDraft) setDraft((current) => current || stored);
+          if (result.turns.some((turn) => turn.status === 'pending')) {
+            setNeedsReload(true);
+            setError(
+              'An earlier reply is still unresolved. Reload saved state before sending again.',
+            );
+          }
+        }
         setPreview(result === null);
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
@@ -303,7 +369,7 @@ export function AureliusWorkspace({
       reading.current?.abort();
       generation.current?.abort();
     };
-  }, [initialConversation, homeDraft]);
+  }, [initialConversation, homeDraft, initialDraft, compact]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
@@ -324,6 +390,7 @@ export function AureliusWorkspace({
       data.currentConversation?.archived_at
     )
       return;
+    reading.current?.abort();
     const id = selected ?? crypto.randomUUID();
     const requestId = crypto.randomUUID();
     const text = messageText.trim();
@@ -405,6 +472,7 @@ export function AureliusWorkspace({
         throw new Error(result.error ?? 'The message could not be sent.');
       }
       accepted = true;
+      if (!compact && data.ownerId) writeTalkDraft(data.ownerId, selected, '');
       timing.mark('accepted');
       setDraft((current) => (current === messageText ? '' : current));
       setSelected(id);
@@ -444,13 +512,14 @@ export function AureliusWorkspace({
                 }
               : previous,
           );
+          break; // A durable receipt is terminal; do not wait for transport EOF.
         } else if (item.type === 'error') throw new Error(item.message);
       }
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
       setRevision(null);
       setNotice('Reply saved.');
-      // Refresh saved metadata without resetting completed motion or disabling the next draft.
-      await load(id);
+      // The saved receipt owns completion. Metadata refresh cannot hold the next request.
+      void refreshMetadata(id);
     } catch (e) {
       if (accepted && !saved) setDraft((current) => current || messageText);
       if (!accepted)
@@ -480,9 +549,11 @@ export function AureliusWorkspace({
     } finally {
       timing.mark('ended');
       painted.finish(!saved);
-      generation.current = null;
-      cancelReply.current = null;
-      setBusy(false);
+      if (generation.current === controller) {
+        generation.current = null;
+        cancelReply.current = null;
+        setBusy(false);
+      }
     }
   }
   async function feedback(id: string, value: 'helpful' | 'needs_work') {
@@ -506,6 +577,7 @@ export function AureliusWorkspace({
     setDeleting(true);
     try {
       await jsonRequest('/api/aurelius', 'DELETE', { id: selected });
+      if (data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
       await reload();
       setDraft('');
       setNotice(
@@ -518,6 +590,7 @@ export function AureliusWorkspace({
     }
   }
   function newConversation() {
+    if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
     setSelected(null);
     setCouncilSelection(null);
@@ -614,7 +687,6 @@ export function AureliusWorkspace({
             includeContext={includeContext}
             disabled={busy || preview || !data.canChat}
           />
-          <ConversationArtifacts conversationId={selected} />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
             state={
@@ -628,7 +700,7 @@ export function AureliusWorkspace({
             }
           />
           {!compact && (
-            <TalkDrawer label="Conversations">
+            <TalkDrawer label="Conversations" triggerContent={<span aria-hidden="true">☰</span>}>
               {(close) => (
                 <>
                   <ConversationLibrary
@@ -644,6 +716,7 @@ export function AureliusWorkspace({
                       )
                         return;
                       close();
+                      if (data.ownerId) writeTalkDraft(data.ownerId, selected, '');
                       setDraft('');
                       follow.current = true;
                       void reload(id).catch(() => {});
@@ -666,9 +739,12 @@ export function AureliusWorkspace({
               )}
             </TalkDrawer>
           )}
-          <span className="talk-title">
-            {selected ? data.currentConversation?.title || 'Conversation' : 'New conversation'}
-          </span>
+          <div className="talk-title">
+            {!compact && <h1>Aethelios</h1>}
+            <span>
+              {selected ? data.currentConversation?.title || 'Conversation' : 'New conversation'}
+            </span>
+          </div>
           <BplusTalkTools enabled={!compact}>
             <button
               type="button"
@@ -684,8 +760,73 @@ export function AureliusWorkspace({
             >
               New
             </button>
-            <TalkDrawer label="Tools & context">
+            <TalkDrawer
+              label="Tools & context"
+              triggerContent={<span aria-hidden="true">•••</span>}
+            >
+              <nav className="talk-destinations" aria-label="Aethelios destinations">
+                {[
+                  ['/app', 'Home'],
+                  ['/app/work', 'Work'],
+                  ['/app/architect', 'Architect'],
+                  ['/app/studio', 'Studio'],
+                  ['/app/missions', 'Missions'],
+                  ['/app/entities', 'Council'],
+                  ['/app/health', 'Health'],
+                  ['/app/lifestyle', 'Lifestyle'],
+                  ['/app/ecosystem', 'Ecosystem'],
+                  ['/app/you', 'Your account'],
+                  ['/app/aethelios/meet', 'Meet Aethelios'],
+                ].map(([href, label]) => (
+                  <Link key={href} href={href!} prefetch={false}>
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+              <ConversationArtifacts conversationId={selected} />
               <AppearanceControls />
+              {!preview && (
+                <div className="intelligence-work-access">
+                  <MissionCapture
+                    conversationId={selected}
+                    objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
+                    disabled={
+                      blocked || needsReload || Boolean(data.currentConversation?.archived_at)
+                    }
+                  />
+                </div>
+              )}
+              {!preview && (
+                <div className="talk-council-access">
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={blocked}
+                    onClick={() => tableReview.current?.open(false)}
+                  >
+                    Meet the Intelligence Team
+                  </button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={blocked || !draft.trim()}
+                    onClick={() => tableReview.current?.open(true)}
+                  >
+                    Assemble Around This
+                  </button>
+                  {councilSelection && (
+                    <button
+                      type="button"
+                      className="text-button"
+                      disabled={blocked}
+                      onClick={() => setCouncilSelection(null)}
+                    >
+                      Return to Aethelios
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
                 <button
                   aria-pressed={tab === 'conversation'}
@@ -801,6 +942,14 @@ export function AureliusWorkspace({
                 />
                 Use personal context
               </label>
+              {!compact && !preview && (
+                <p className="quiet-label">
+                  Unsent drafts stay in this browser tab for up to 24 hours. They are restored only
+                  for the same signed-in account and conversation, and never sent automatically.
+                  Another account clears the previous account’s drafts. Browser storage may be
+                  unavailable.
+                </p>
+              )}
               <details className="composer-privacy">
                 <summary>What Aethelios receives</summary>
                 <p className="composer-disclosure">
@@ -824,16 +973,8 @@ export function AureliusWorkspace({
           </BplusTalkTools>
         </div>
         {!preview && (
-          <div className="intelligence-work-access">
-            <MissionCapture
-              conversationId={selected}
-              objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
-              disabled={blocked || needsReload || Boolean(data.currentConversation?.archived_at)}
-            />
-          </div>
-        )}
-        {!preview && (
           <CouncilPanel
+            hideAccess
             founder={Boolean(data.founderAccess)}
             reviewRef={tableReview}
             question={draft.trim() || data.turns.at(-1)?.user_text || ''}
@@ -886,6 +1027,7 @@ export function AureliusWorkspace({
               if (el) {
                 follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
                 setAwayFromLatest(!follow.current);
+                rememberReadingPosition();
               }
             }}
             aria-label="Conversation messages"
@@ -912,11 +1054,15 @@ export function AureliusWorkspace({
                     />
                   ) : (
                     <div
-                      className="talk-welcome-orb"
+                      className="talk-welcome-presence"
                       data-state={preview || !data.configured ? 'disconnected' : 'ready'}
                       aria-hidden="true"
                     >
-                      <IntelligenceOrb active={false} deepGreen />
+                      <IntelligencePresence
+                        variant="signal"
+                        size="large"
+                        operation={observedOperation('talk-welcome', 'ready')}
+                      />
                     </div>
                   )}
 

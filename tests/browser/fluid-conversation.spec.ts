@@ -235,7 +235,8 @@ test('simulated VisualViewport transitions preserve focus and usable bounds, and
     window.visualViewport!.dispatchEvent(new Event('resize'));
   });
   await expect(viewport).toHaveAttribute('data-keyboard', 'closed');
-  await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+  await expect(page.locator('.navigation')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Tools & context', exact: true })).toBeVisible();
   await expect(input(page)).toHaveValue('Keep this draft through simulated keyboard transitions');
   await expect(input(page)).toBeFocused();
 });
@@ -275,7 +276,7 @@ test('a confirmed answer cannot become interrupted while its saved list refreshe
   await page.getByRole('button', { name: 'Emit response text' }).click();
   await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
   await expect(page.locator('.talk-presence')).toHaveAttribute('data-phase', 'complete');
-  await expect(page.getByRole('button', { name: 'Stop reply' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Stop reply' })).toHaveCount(0);
   await input(page).fill('Next draft during saved-list refresh');
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   await expect(page.locator('.talk-presence')).toHaveAttribute('data-phase', 'complete');

@@ -113,31 +113,17 @@ export function TalkInput({
   const resize = useCallback(() => {
     const field = inputRef.current;
     if (!field) return;
-    const vp = window.visualViewport;
-    const height = vp?.scale === 1 ? vp.height : window.innerHeight;
-    const limit = Math.max(44, Math.min(200, height * 0.24));
+    // The viewport owner sets the CSS cap; do not independently subtract keyboard geometry.
+    const limit = Math.max(44, parseFloat(getComputedStyle(field).maxHeight) || 200);
     field.style.height = '0px';
     field.style.height = `${Math.max(44, Math.min(field.scrollHeight, limit))}px`;
   }, [inputRef]);
   useLayoutEffect(resize, [value, resize]);
   useEffect(() => {
-    const viewport = window.visualViewport;
-    let frame: number | null = null;
-    const schedule = () => {
-      if (frame === null)
-        frame = requestAnimationFrame(() => {
-          frame = null;
-          resize();
-        });
-    };
-    viewport?.addEventListener('resize', schedule);
-    window.addEventListener('resize', schedule);
-    return () => {
-      viewport?.removeEventListener('resize', schedule);
-      window.removeEventListener('resize', schedule);
-      if (frame !== null) cancelAnimationFrame(frame);
-    };
-  }, [resize]);
+    const root = inputRef.current?.closest('.talk-page, .company-room-focused');
+    root?.addEventListener('talk-viewport', resize);
+    return () => root?.removeEventListener('talk-viewport', resize);
+  }, [resize, inputRef]);
   return (
     <>
       <label className="sr-only" htmlFor={id}>

@@ -42,7 +42,7 @@ export function GuidingPresence({
       data-paused={!visible || hidden}
       data-animate={visible && !hidden && !still}
       data-motion={still ? 'still' : 'ambient'}
-      className={`im-presence identity-presence identity-aperture ${compact ? 'identity-compact' : ''}`}
+      className={`im-presence identity-presence identity-guiding ${compact ? 'identity-compact' : ''}`}
       data-phase={phase}
       data-still={still}
       data-operation={operation.id}

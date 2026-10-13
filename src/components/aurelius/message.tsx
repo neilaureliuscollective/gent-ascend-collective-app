@@ -52,7 +52,7 @@ export const ConversationTurn = memo(function ConversationTurn({
   const ritual =
     !companyWork && turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
   return (
-    <article className="conversation-turn">
+    <article className="conversation-turn" data-turn-id={turn.id}>
       <div className="user-message">
         <span className="message-author">You</span>
         <p>{turn.user_text}</p>

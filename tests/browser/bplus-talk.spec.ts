@@ -56,9 +56,7 @@ for (const width of [320, 344, 390, 412, 720, 768, 960, 1100, 1101, 1440, 2560])
     await field(page).evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(12, 25));
     await expect(page.locator('[data-bplus-surface]')).toHaveCount(3);
     await expect(page.locator('.conversation-scroll .bplus-optics')).toHaveCount(0);
-    await expect(
-      page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
-    ).toHaveCount(6);
+    await expect(page.locator('.navigation a')).toHaveCount(6);
     const geometry = await page.evaluate(() => ({
       overflow: document.documentElement.scrollWidth > innerWidth,
       controls: [
@@ -121,12 +119,13 @@ test('solid, forced colors and keyboard focus stay complete at runtime', async (
     await expect(surface.locator(':scope > .bplus-optics')).toBeHidden();
     await expect(surface).toHaveCSS('background-image', 'none');
   }
-  const talk = page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Talk', exact: true });
+  const talk = field(page);
   await talk.focus();
   await expect(talk).toHaveCSS('outline-width', '2px');
-  await expect(talk).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.navigation a[aria-current=page]')).toHaveAttribute(
+    'href',
+    '/app/aethelios',
+  );
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(talk).toHaveCSS('outline-width', '2px');
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
@@ -139,7 +138,5 @@ test('Talk and Work retain distinct explicit material adoption', async ({ page }
   await expect(page.locator('.company-work[data-bplus="work"]')).toBeVisible();
   await expect(page.locator('.company-work [data-bplus-surface]')).toHaveCount(2);
   await expect(page.locator('.company-job-list .bplus-optics')).toHaveCount(0);
-  await expect(
-    page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link'),
-  ).toHaveCount(6);
+  await expect(page.locator('.navigation a')).toHaveCount(6);
 });

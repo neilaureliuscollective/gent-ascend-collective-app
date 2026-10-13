@@ -88,7 +88,7 @@ test('queued drawer close respects a newer keyboard focus target in forced color
   // Native close queues its event. A newer focus choice must survive that event.
   await page.evaluate(async () => {
     const dialog = document.querySelector<HTMLDialogElement>('dialog[open]')!;
-    const talk = document.querySelector<HTMLAnchorElement>('.navigation a[href="/app/aethelios"]')!;
+    const talk = document.querySelector<HTMLTextAreaElement>('.talk-input')!;
     const closed = new Promise<void>((resolve) =>
       dialog.addEventListener('close', () => setTimeout(resolve, 0), { once: true }),
     );
@@ -96,9 +96,7 @@ test('queued drawer close respects a newer keyboard focus target in forced color
     talk.focus();
     await closed;
   });
-  const talk = page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Talk', exact: true });
+  const talk = field;
   await expect(talk).toBeFocused();
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(talk).toBeFocused();

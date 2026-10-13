@@ -4,6 +4,7 @@ import type {
   ReviewedActionPreparation,
 } from '@/domains/artifacts/daily-action';
 import { readLiveEvent, type LiveJob } from './contract';
+import { recoverableLiveError } from './provider-errors';
 import { VoiceDiagnostics, rtcHealth } from './diagnostics';
 export type LiveState = {
   phase: 'idle' | 'connecting' | 'listening' | 'speaking' | 'ended' | 'error';
@@ -59,6 +60,7 @@ export class LiveController {
   private diagnostics = new VoiceDiagnostics();
   private health = rtcHealth();
   private healthAt: number | null = null;
+  private cancellationIds = new Set<string>();
   private interruptedResponse = '';
   private currentResponse = '';
   private generating = false;
@@ -145,6 +147,7 @@ export class LiveController {
     this.health = rtcHealth();
     this.healthAt = null;
     this.interruptedItems.clear();
+    this.cancellationIds.clear();
     this.audioFence = false;
     this.interruptedResponse = '';
     this.currentResponse = '';
@@ -349,7 +352,7 @@ export class LiveController {
     });
     this.update({ muted });
   }
-  interrupt() {
+  interrupt(source: 'explicit' | 'vad' = 'explicit') {
     const started = performance.now();
     const playing = this.state.phase === 'speaking';
     const cuttingOff = playing || this.generating;
@@ -360,11 +363,20 @@ export class LiveController {
         this.audioFence = true;
       }
     }
-    if (this.generating) {
-      this.send({ type: 'response.cancel' });
-      this.generating = false;
+    if (this.generating && source === 'explicit') {
+      const event_id = crypto.randomUUID();
+      this.cancellationIds.add(event_id);
+      if (this.cancellationIds.size > 16)
+        this.cancellationIds.delete(this.cancellationIds.values().next().value!);
+      this.send({
+        type: 'response.cancel',
+        event_id,
+        ...(this.currentResponse ? { response_id: this.currentResponse } : {}),
+      });
     }
-    if (playing) this.send({ type: 'output_audio_buffer.clear' });
+    this.generating = false;
+    // WebRTC semantic VAD already cancels generation and truncates unplayed audio.
+    if (playing && source === 'explicit') this.send({ type: 'output_audio_buffer.clear' });
     this.update({ phase: 'listening', responsePending: false });
     if (cuttingOff) this.diagnostics.cutoff(performance.now() - started, this.currentResponse);
   }
@@ -397,12 +409,21 @@ export class LiveController {
     if (!event) return;
     this.diagnostics.observe(event, performance.now());
     if (event.type === 'error') {
+      if (recoverableLiveError(event)) {
+        const correlated =
+          event.error?.event_id && this.cancellationIds.delete(event.error.event_id);
+        if (correlated && this.pendingCreate) {
+          this.pendingCreate = false;
+          this.send({ type: 'response.create' });
+        }
+        return;
+      }
       this.diagnostics.failure();
       void this.end('The voice provider stopped responding. Resume when ready.');
       return;
     }
     if (event.type === 'input_audio_buffer.speech_started') {
-      this.interrupt();
+      this.interrupt('vad');
       this.update({ speechDetected: true });
     }
     if (event.type === 'input_audio_buffer.speech_stopped')

@@ -18,6 +18,7 @@ import { requireCanonicalPilotAccess } from './pilot-access';
 import { liveConfig } from './config';
 import { readLiveEvent, type LiveAdmission } from './contract';
 import { VoiceLedger } from './ledger';
+import { recoverableLiveError } from './provider-errors';
 import { backgroundTool, runBackgroundTask } from './background';
 import { backgroundTask, type BackgroundTask } from './contract';
 import {
@@ -564,7 +565,7 @@ export async function admitLive(input: LiveAdmission) {
         void proposeCoworkerTask(value.call_id, value.arguments).catch(() => stop());
       notifyWhenIdle();
       if (
-        value.type === 'error' ||
+        (value.type === 'error' && !recoverableLiveError(value)) ||
         value.type === 'conversation.item.input_audio_transcription.failed'
       ) {
         stop();

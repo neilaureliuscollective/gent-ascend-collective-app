@@ -1,7 +1,5 @@
 'use client';
 import { TalkDrawer } from './talk-controls';
-import { IntelligenceOrb } from '../public/intelligence-orb';
-import { useAppearance } from '../visual/appearance';
 import { IntelligencePresence, IntelligenceStatus } from '../intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import { observedOperation } from '@/platform/visual/operation-adapters';
@@ -15,7 +13,6 @@ export function TalkPresence({
   state: PresenceState;
   operation?: IntelligenceOperation;
 }) {
-  const { moving } = useAppearance();
   const snapshot =
     operation ??
     observedOperation(
@@ -29,27 +26,19 @@ export function TalkPresence({
             : 'ready',
       state === 'saved' ? 'confirmed' : 'not-applicable',
     );
-  const engaged = !['ready', 'complete', 'failed', 'cancelled'].includes(snapshot.phase);
   return (
     <span className="talk-presence" data-state={state} data-phase={snapshot.phase}>
       <TalkDrawer
         label="Aethelios presence"
         triggerContent={
           <span className="talk-orb">
-            <IntelligencePresence
-              operation={snapshot}
-              artwork={<IntelligenceOrb active={false} engaged={engaged} deepGreen />}
-            />
+            <IntelligencePresence operation={snapshot} variant="signal" />
           </span>
         }
       >
         <div className="talk-presence-room">
           <span className="talk-orb">
-            <IntelligencePresence
-              operation={snapshot}
-              size="large"
-              artwork={<IntelligenceOrb active={moving && engaged} engaged={engaged} deepGreen />}
-            />
+            <IntelligencePresence operation={snapshot} size="large" variant="signal" />
           </span>
           <h3>Aethelios</h3>
           {snapshot.phase === 'ready' ? (
