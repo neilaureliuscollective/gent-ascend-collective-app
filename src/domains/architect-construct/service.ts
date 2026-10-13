@@ -11,12 +11,25 @@ import {
   startCommand,
   startFixtureCommand,
 } from './schema';
+import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
 
-const memory = new MemoryConstructStore();
+let memory: MemoryConstructStore | null = null;
 
-export function constructStore(): ConstructStore {
-  return memory;
+export function constructStore(options?: {
+  client?: ConstructPersistenceClient;
+  plane?: 'owner' | 'worker';
+}): ConstructStore {
+  if (memoryConstructStoreAllowed()) {
+    memory ??= new MemoryConstructStore();
+    return memory;
+  }
+  if (!options?.client)
+    throw new ConstructStoreError(
+      'Database-backed Construct store is required. The labelled memory store is test/development only.',
+      'unavailable',
+    );
+  return new DatabaseConstructStore(options.client, options.plane ?? 'owner');
 }
 
 function requireReady() {
@@ -57,13 +70,13 @@ async function requireOwnedProject(projectId: string, expected?: number) {
       'Project revision changed. The previous execution approval is invalid. Reload and pin a new brief.',
       409,
     );
-  return { person, project: owned.data };
+  return { person, project: owned.data, client: client as unknown as ConstructPersistenceClient };
 }
 
 export async function readConstruct(projectId: string) {
   requireReady();
-  const { person, project } = await requireOwnedProject(projectId);
-  const store = constructStore();
+  const { person, project, client } = await requireOwnedProject(projectId);
+  const store = constructStore({ client, plane: 'owner' });
   const runs = await store.listRuns(person.id, projectId);
   const events: Record<string, ConstructEvent[]> = {};
   const briefs: ConstructBrief[] = [];
@@ -87,8 +100,8 @@ export async function readConstruct(projectId: string) {
 export async function startConstruct(input: ReturnType<typeof startCommand.parse>) {
   requireReady();
   try {
-    const { person, project } = await requireOwnedProject(input.projectId, input.expected);
-    const store = constructStore();
+    const { person, project, client } = await requireOwnedProject(input.projectId, input.expected);
+    const store = constructStore({ client, plane: 'owner' });
     const brief = await store.readBrief(person.id, input.briefId);
     if (!brief) throw new IntelligenceError('Approved brief unavailable.', 404);
     if (brief.status !== 'approved')
@@ -140,8 +153,8 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
 export async function startFixtureConstruct(input: ReturnType<typeof startFixtureCommand.parse>) {
   requireReady();
   try {
-    const { person, project } = await requireOwnedProject(input.projectId, input.expected);
-    const store = constructStore();
+    const { person, project, client } = await requireOwnedProject(input.projectId, input.expected);
+    const store = constructStore({ client, plane: 'owner' });
     const source = fixtureSource(person.id, input.requestId);
     await store.importSource(source);
     const existing = await store.readRun(person.id, input.requestId);
@@ -180,8 +193,8 @@ export async function startFixtureConstruct(input: ReturnType<typeof startFixtur
 export async function cancelConstruct(input: ReturnType<typeof cancelCommand.parse>) {
   requireReady();
   try {
-    const { person } = await requireOwnedProject(input.projectId);
-    return await constructStore().cancelRun(person.id, input.runId);
+    const { person, client } = await requireOwnedProject(input.projectId);
+    return await constructStore({ client, plane: 'owner' }).cancelRun(person.id, input.runId);
   } catch (error) {
     asIntelligence(error);
   }

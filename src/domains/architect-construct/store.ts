@@ -41,6 +41,7 @@ export type ConstructStore = {
   listEvents(personId: string, runId: string): Promise<ConstructEvent[]>;
   cancelRun(personId: string, runId: string): Promise<ConstructRun>;
   claimRun(workerId: string, now: Date): Promise<ConstructRun | null>;
+  markRunning(workerId: string, runId: string, now: Date): Promise<boolean>;
   heartbeat(workerId: string, runId: string, now: Date, leaseMs: number): Promise<boolean>;
   appendEvent(
     run: ConstructRun,
@@ -214,6 +215,15 @@ export class MemoryConstructStore implements ConstructStore {
       now,
     );
     return queued;
+  }
+
+  async markRunning(workerId: string, runId: string, now: Date) {
+    const run = this.runs.get(runId);
+    if (!run || run.worker_id !== workerId) return false;
+    if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return true;
+    run.status = 'running';
+    run.updated_at = now.toISOString();
+    return true;
   }
 
   async heartbeat(workerId: string, runId: string, now: Date, leaseMs: number) {

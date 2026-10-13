@@ -16,9 +16,9 @@ export async function processConstructOnce(store: ConstructStore, workerId: stri
       now,
     );
   }
-  claimed.status = 'running';
+  await store.markRunning(workerId, claimed.id, now);
   await store.appendEvent(claimed, 'started', 'Worker started isolated execution.');
-  await store.heartbeat(workerId, claimed.id, now, claimed.result ? 1 : 45000);
+  await store.heartbeat(workerId, claimed.id, now, 45000);
   const brief = await store.readBrief(claimed.person_id, claimed.brief_id);
   const source = await store.readSource(claimed.person_id, claimed.source_id);
   if (!brief || brief.status !== 'approved' || !source) {

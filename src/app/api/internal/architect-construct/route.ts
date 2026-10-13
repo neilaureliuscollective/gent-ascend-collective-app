@@ -1,5 +1,3 @@
-import { processConstructOnce } from '@/domains/architect-construct/worker';
-import { constructStore } from '@/domains/architect-construct/service';
 import { constructWorkerAuthorized, workerTokenMatches } from '@/domains/architect-construct/readiness';
 
 export const runtime = 'nodejs';
@@ -11,15 +9,13 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Not found.' }, { status: 404, headers });
   if (!workerTokenMatches(request))
     return Response.json({ error: 'Unauthorized.' }, { status: 401, headers });
-  try {
-    const run = await processConstructOnce(
-      constructStore(),
-      process.env.ARCHITECT_CONSTRUCT_WORKER_ID || 'construct-worker',
-    );
-    return Response.json({ run }, { status: 200, headers });
-  } catch {
-    return Response.json({ error: 'Construct worker unavailable.' }, { status: 503, headers });
-  }
+  return Response.json(
+    {
+      error:
+        'Construct execution is not available on the Next request path. Use the standalone worker process against the durable queue.',
+    },
+    { status: 409, headers },
+  );
 }
 
 export async function GET() {

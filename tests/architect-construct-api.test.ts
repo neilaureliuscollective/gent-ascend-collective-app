@@ -101,4 +101,14 @@ it('hides the worker route in production-like configuration and without a token'
       )
     ).status,
   ).toBe(401);
+  expect(
+    (
+      await workerPost(
+        new Request('https://example.com/api/internal/architect-construct', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${'x'.repeat(32)}` },
+        }),
+      )
+    ).status,
+  ).toBe(409);
 });

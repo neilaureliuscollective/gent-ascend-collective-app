@@ -53,6 +53,7 @@ import { defaultLimits, defaultProtectedPaths } from '@/domains/architect-constr
 beforeEach(() => {
   vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
   vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_STORE', 'memory');
   state.owner = '00000000-0000-4000-8000-000000000001';
   state.revision = 1;
   state.error = null;

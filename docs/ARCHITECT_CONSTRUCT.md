@@ -52,7 +52,19 @@ Unit tests inject the probe and container launcher. They do not read the host PA
 3. Add `ARCHITECT_CONSTRUCT_WORKER_TOKEN` (≥32) and run `npm run architect:worker` against the local app.
 4. Queue the labelled fixture from Construct and reload Plan/Changes/Checks/Preview.
 5. Install Docker only if isolated non-fixture execution is required; do not mount the host docker socket or application secrets.
-6. Do not enable `ARCHITECT_CONSTRUCT_AI_ENABLED` or call OpenAI until funded testing is explicitly authorized.
+6. Run `npm run architect:worker` as a process separate from Next. User routes enqueue/read/cancel only. The worker claims the durable queue with the server-only service role; that credential never enters the sandbox.
+7. Do not enable `ARCHITECT_CONSTRUCT_AI_ENABLED` or call OpenAI until funded testing is explicitly authorized.
+
+## Source connection interface (Connections chat)
+
+This PR does not add GitHub/Vercel OAuth, connection UI, or repository publishing. A later Connections-owned slice should supply:
+
+- repository identity (`owner/name`)
+- exact commit SHA
+- imported file tree matching that pin
+- owner-scoped credential storage that never reaches generated code or the disposable container
+
+Until that exists, Construct only runs labelled fixture/imported snapshots already attached to the brief.
 
 Architect cannot build Aethelios until a real model-generated change completes isolated execution, verification, and preview.
 
@@ -74,7 +86,7 @@ Results:
 
 - Lint: pass, zero warnings.
 - Typecheck: pass.
-- Unit/SQL: 789/789 across 134 files. Probe-seam and host-isolation tests are included. PGlite SQL is not real Supabase Auth.
+- Unit/SQL: 794+ across 135 files, including durable owner/worker-plane persistence. PGlite SQL is not real Supabase Auth.
 - Migration ledger: pass. New `20261013160000_architect_construct.sql` is source-only and **not** in the hosted applied snapshot.
 - Normal `npm run build` and `next build --webpack`: pass.
 - Origin + Construct browser fixture: 3 passed. Not physical Fold/Safari, not disposable local Auth.

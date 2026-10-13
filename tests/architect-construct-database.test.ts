@@ -38,12 +38,14 @@ async function asWorker(sql: string) {
 }
 
 beforeAll(async () => {
-  await db.exec(`create role authenticated; create role anon; create schema auth; create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
- grant usage on schema public,auth to authenticated,anon; grant execute on function auth.uid() to authenticated;
+  await db.exec(`create role authenticated; create role anon; create role service_role; create schema auth; create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function auth.role() returns text language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claim.role',true),''), current_user)$$;
+ grant usage on schema public,auth to authenticated,anon; grant execute on function auth.uid(),auth.role() to authenticated;
  create table public.persons(id uuid primary key,auth_user_id uuid); insert into public.persons values('${owner}','${owner}'),('${foreign}','${foreign}');
  grant select on public.persons to authenticated; create table public.ai_conversations(id uuid primary key,person_id uuid,title text);`);
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013160000_architect_construct.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261013180000_architect_construct_worker_plane.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`,

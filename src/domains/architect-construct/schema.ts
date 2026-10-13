@@ -272,7 +272,7 @@ export const eventKinds = [
 ] as const;
 export const constructEventSchema = z
   .object({
-    id: z.uuid(),
+    id: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
     run_id: z.uuid(),
     person_id: z.uuid(),
     seq: z.number().int().positive(),
