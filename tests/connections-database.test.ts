@@ -8,36 +8,64 @@ const foreign = '00000000-0000-4000-8000-000000000002';
 const connection = '00000000-0000-4000-8000-000000000003';
 const flow = '00000000-0000-4000-8000-000000000004';
 
-async function asUser(id: string | null, sql: string) {
-  if (id) {
+async function resetClaims() {
+  await db.exec(`select set_config('request.jwt.claim.role', null, false);
+    select set_config('request.jwt.claim.sub', null, false);
+    select set_config('request.jwt.claims', null, false)`);
+}
+
+async function asClaims(
+  role: 'authenticated' | 'anon' | 'service_role' | null,
+  sql: string,
+  claims: { legacy?: string; json?: Record<string, string>; sub?: string } = {},
+) {
+  await resetClaims();
+  if (claims.legacy !== undefined)
+    await db.exec(`select set_config('request.jwt.claim.role', '${claims.legacy}', false)`);
+  if (claims.sub)
+    await db.exec(`select set_config('request.jwt.claim.sub', '${claims.sub}', false)`);
+  if (claims.json)
     await db.exec(
-      `set role authenticated; select set_config('request.jwt.claim.sub','${id}',false); select set_config('request.jwt.claim.role','authenticated',false)`,
+      `select set_config('request.jwt.claims', '${JSON.stringify(claims.json).replace(/'/g, "''")}', false)`,
     );
-  } else {
-    await db.exec('set role anon');
-  }
+  if (role) await db.exec(`set role ${role}`);
   try {
     return await db.query(sql);
   } finally {
     await db.exec('reset role');
+    await resetClaims();
   }
 }
 
+async function asUser(id: string | null, sql: string) {
+  if (!id) return asClaims('anon', sql);
+  return asClaims('authenticated', sql, {
+    sub: id,
+    json: { role: 'authenticated', sub: id },
+  });
+}
+
 async function asBroker(sql: string) {
-  await db.exec(`select set_config('request.jwt.claim.role','service_role',false)`);
-  try {
-    await db.exec('set role service_role');
-    return await db.query(sql);
-  } finally {
-    await db.exec('reset role');
-    await db.exec(`select set_config('request.jwt.claim.role','',false)`);
-  }
+  return asClaims('service_role', sql, { json: { role: 'service_role' } });
 }
 
 beforeAll(async () => {
   await db.exec(`create role authenticated; create role anon; create role service_role bypassrls; create schema auth;
-    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-    grant usage on schema public,auth to authenticated,anon,service_role; grant execute on function auth.uid() to authenticated,anon,service_role;
+    create function auth.uid() returns uuid language sql stable as $$
+      select coalesce(
+        nullif(current_setting('request.jwt.claim.sub', true), ''),
+        (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+      )::uuid
+    $$;
+    create function auth.role() returns text language sql stable as $$
+      select coalesce(
+        nullif(current_setting('request.jwt.claim.role', true), ''),
+        (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+      )::text
+    $$;
+    grant usage on schema public,auth to authenticated,anon,service_role;
+    grant execute on function auth.uid() to authenticated,anon,service_role;
+    grant execute on function auth.role() to authenticated,anon,service_role;
     create table public.persons(id uuid primary key, auth_user_id uuid);
     insert into public.persons values('${owner}','${owner}'),('${foreign}','${foreign}');
     grant select on public.persons to authenticated;
@@ -49,6 +77,9 @@ beforeAll(async () => {
   );
   await db.exec(
     await readFile('supabase/migrations/20261013194500_connection_trusted_writes.sql', 'utf8'),
+  );
+  await db.exec(
+    await readFile('supabase/migrations/20261013203000_connection_broker_role.sql', 'utf8'),
   );
 });
 afterAll(() => db.close());
@@ -219,5 +250,58 @@ describe('Connections SQL owner policy (PGlite; not Supabase Auth)', () => {
     expect((await asUser(owner, `select status from public.service_connections`)).rows).toEqual([
       { status: 'revoked' },
     ]);
+  });
+});
+
+describe('Connections broker JWT role (JSON claims; PGlite; not Supabase Auth)', () => {
+  const jwtConnection = '00000000-0000-4000-8000-000000000006';
+  const upsert = (id: string) =>
+    `select public.service_connection_upsert('${owner}','${id}','github','connecting','neil','7','42',null,null,'{}'::jsonb, null, null, 'active') as ok`;
+
+  it('accepts JSON-only service_role when the legacy scalar is absent', async () => {
+    expect(
+      (
+        await asClaims('service_role', upsert(jwtConnection), {
+          json: { role: 'service_role' },
+        })
+      ).rows,
+    ).toEqual([{ ok: true }]);
+  });
+
+  it('accepts JSON-only service_role when the legacy scalar is empty', async () => {
+    expect(
+      (
+        await asClaims('service_role', upsert('00000000-0000-4000-8000-000000000007'), {
+          legacy: '',
+          json: { role: 'service_role' },
+        })
+      ).rows,
+    ).toEqual([{ ok: true }]);
+  });
+
+  it('denies JSON authenticated and anonymous claims when the legacy scalar is absent', async () => {
+    await expect(
+      asClaims('authenticated', upsert(jwtConnection), {
+        sub: owner,
+        json: { role: 'authenticated', sub: owner },
+      }),
+    ).rejects.toThrow(/permission denied|Trusted connection broker required/);
+    await expect(
+      asClaims('anon', upsert(jwtConnection), { json: { role: 'anon' } }),
+    ).rejects.toThrow(/permission denied|Trusted connection broker required/);
+  });
+
+  it('fails closed when SET ROLE is service_role but JWT claims are absent or empty', async () => {
+    await expect(asClaims('service_role', upsert(jwtConnection))).rejects.toThrow(
+      /Trusted connection broker required/,
+    );
+    await expect(
+      asClaims('service_role', upsert(jwtConnection), { legacy: '', json: {} }),
+    ).rejects.toThrow(/Trusted connection broker required/);
+    await expect(
+      asClaims('service_role', upsert(jwtConnection), {
+        json: { role: 'authenticated', sub: owner },
+      }),
+    ).rejects.toThrow(/Trusted connection broker required/);
   });
 });

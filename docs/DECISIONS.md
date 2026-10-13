@@ -1,3 +1,7 @@
+## 2026-10-13 — Connections broker role from official auth.role()
+
+Current PostgREST supplies `request.jwt.claims` JSON and does not set the legacy `request.jwt.claim.role` scalar. `service_connection_require_broker` therefore uses official `auth.role()` and fails closed when the JWT role is missing or not `service_role`. `current_user` inside SECURITY DEFINER is not caller identity. PGlite tests that only set the legacy scalar masked the disposable Auth/PostgREST mismatch. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No provider registration or hosted migration.
+
 ## 2026-10-13 — Connections trusted writes and GitHub user revocation
 
 Authenticated founders must not be able to call `service_connection_upsert` (or secret/claim RPCs) with a connected status, installation id or `last_verified_at`. Those writes belong to the service-role broker used by Connections API routes after a founder session check. Owner-facing `service_connection_set_selection` stores intent only. Official GitHub `github_app_authorization` payloads identify the revoked user through `sender` and do not include `installation`; installation tokens can still work until the app is uninstalled, so readiness cannot return to verified without a new user authorization. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No provider registration or hosted migration.
