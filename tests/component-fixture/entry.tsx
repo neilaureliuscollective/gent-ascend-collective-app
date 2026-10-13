@@ -205,6 +205,93 @@ createRoot(document.getElementById('root')!).render(
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>
       <FounderOffice initial={founderOfficeFixture} />
     </div>
+  ) : mode === 'connections-expired' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Connections fixture · user authorization revoked, labelled not live.</p>
+      <ConnectionsWorkspace
+        initial={{
+          github: {
+            ...founderOfficeFixture.connections.github,
+            status: 'expired',
+            setupRequired: false,
+            configured: true,
+            accountLogin: 'synthetic-founder',
+            selectedName: 'neilaureliuscollective/gent-ascend-collective-app',
+            lastError:
+              'GitHub user authorization was revoked. The installation may remain until it is uninstalled on GitHub. Connect again to restore the association.',
+            installationRemainsHint:
+              'Disconnecting removes Aethelios credentials. The GitHub App installation remains until you uninstall it on GitHub.',
+            summary:
+              'GitHub user authorization was revoked. The installation may remain until it is uninstalled on GitHub. Connect again to restore the association.',
+          },
+          vercel: {
+            ...founderOfficeFixture.connections.vercel,
+            status: 'revoked',
+            setupRequired: false,
+            configured: true,
+            summary: 'The provider grant was revoked. Aethelios no longer has usable credentials.',
+          },
+        }}
+      />
+    </div>
+  ) : mode === 'connections-select' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Connections fixture · authorization succeeded, repository not yet verified.</p>
+      <ConnectionsWorkspace
+        notice="Authorization succeeded. Select the exact repository or project to verify access."
+        initial={{
+          github: {
+            ...founderOfficeFixture.connections.github,
+            status: 'connecting',
+            setupRequired: false,
+            configured: true,
+            accountLogin: 'synthetic-founder',
+            summary: 'Authorization is in progress. Complete the provider prompt, then return here.',
+            resources: [
+              {
+                id: '1',
+                name: 'neilaureliuscollective/gent-ascend-collective-app',
+                detail: 'Private repository · read-only',
+              },
+            ],
+          },
+          vercel: {
+            ...founderOfficeFixture.connections.vercel,
+            status: 'connecting',
+            setupRequired: false,
+            configured: true,
+            accountLogin: 'synthetic-team',
+            summary: 'Authorization is in progress. Complete the provider prompt, then return here.',
+            resources: [
+              { id: 'prj_synthetic', name: 'gent-ascend-collective-app', detail: 'Selected project' },
+            ],
+          },
+        }}
+      />
+    </div>
+  ) : mode === 'connections-failed' ? (
+    <div className="aethelios-aether imperial-workspace">
+      <p>Synthetic Connections fixture · callback failure, nothing marked connected.</p>
+      <ConnectionsWorkspace
+        notice="Authorization did not complete. Nothing was marked connected."
+        initial={{
+          github: {
+            ...founderOfficeFixture.connections.github,
+            status: 'disconnected',
+            setupRequired: false,
+            configured: true,
+            summary: 'Not connected. Aethelios has no usable credential for this service.',
+          },
+          vercel: {
+            ...founderOfficeFixture.connections.vercel,
+            status: 'disconnected',
+            setupRequired: false,
+            configured: true,
+            summary: 'Not connected. Aethelios has no usable credential for this service.',
+          },
+        }}
+      />
+    </div>
   ) : mode === 'connections-ready' ? (
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Connections fixture · provider apps registered, not connected.</p>

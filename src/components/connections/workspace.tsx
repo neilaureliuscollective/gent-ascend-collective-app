@@ -209,7 +209,11 @@ export function ConnectionsWorkspace({ initial, notice }: { initial: Board; noti
                       disabled={Boolean(busy) || view.setupRequired}
                       onClick={() => setConfirm(provider)}
                     >
-                      {view.setupRequired ? 'Setup required' : 'Connect'}
+                      {view.setupRequired
+                        ? 'Setup required'
+                        : view.status === 'expired' || view.status === 'revoked'
+                          ? 'Connect again'
+                          : 'Connect'}
                     </button>
                   )}
                 {view.status === 'connecting' && view.resources.length > 0 && (
@@ -255,9 +259,7 @@ export function ConnectionsWorkspace({ initial, notice }: { initial: Board; noti
                     Verify again
                   </button>
                 )}
-                {view.status !== 'disconnected' &&
-                  view.status !== 'setup_required' &&
-                  view.status !== 'connecting' && (
+                {view.status !== 'disconnected' && view.status !== 'setup_required' && (
                     <button
                       className="secondary-button"
                       disabled={Boolean(busy)}

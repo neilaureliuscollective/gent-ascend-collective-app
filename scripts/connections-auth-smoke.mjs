@@ -1,6 +1,7 @@
 // Disposable local Supabase only. Direct RPC negatives for Connections.
 // This is not a live GitHub/Vercel provider test.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
@@ -19,6 +20,39 @@ assert.equal(
   'Disposable loopback Supabase only',
 );
 
+function localServiceRole(expectedUrl) {
+  const expected = new URL(expectedUrl);
+  assert.ok(
+    ['127.0.0.1', 'localhost'].includes(expected.hostname),
+    'Disposable loopback Supabase only',
+  );
+  let status;
+  try {
+    status = JSON.parse(
+      execFileSync('npx', ['--no-install', 'supabase', 'status', '-o', 'json'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }),
+    );
+  } catch {
+    throw new assert.AssertionError({
+      message:
+        'Local supabase status is required for the broker check. Start disposable loopback Supabase first.',
+    });
+  }
+  const api = new URL(String(status.API_URL ?? ''));
+  assert.ok(['127.0.0.1', 'localhost'].includes(api.hostname), 'Disposable loopback Supabase only');
+  assert.equal(
+    api.origin,
+    expected.origin,
+    'Service role must belong to the same local instance as NEXT_PUBLIC_SUPABASE_URL',
+  );
+  const key = status.SERVICE_ROLE_KEY;
+  assert.equal(typeof key, 'string');
+  assert.ok(key.length > 20, 'Local supabase status did not provide a service role');
+  return key;
+}
+
 const publishable = () =>
   createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -26,8 +60,7 @@ const publishable = () =>
 const founder = publishable();
 const member = publishable();
 const anon = publishable();
-assert.ok(env.SUPABASE_SERVICE_ROLE_KEY, 'Local service role is required for the broker check');
-const broker = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+const broker = createClient(env.NEXT_PUBLIC_SUPABASE_URL, localServiceRole(env.NEXT_PUBLIC_SUPABASE_URL), {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
@@ -149,6 +182,15 @@ const afterRevoke = await founder.rpc('service_connection_read', { p_provider: '
 assert.equal(afterRevoke.data.status, 'expired');
 assert.equal(afterRevoke.data.user_authorization, 'revoked');
 assert.equal(afterRevoke.data.installation_id, '42');
+assert.ok(
+  (
+    await founder.rpc('service_connection_set_selection', {
+      p_provider: 'github',
+      p_selected_id: '99',
+      p_selected_name: 'owner/repo',
+    })
+  ).data === false,
+);
 
 const distinct = await broker.rpc('service_connection_apply_account', {
   p_provider: 'github',
@@ -158,7 +200,50 @@ const distinct = await broker.rpc('service_connection_apply_account', {
 });
 assert.ok(distinct.error, 'User revocation cannot mark the installation deleted');
 
+assert.ok(
+  (
+    await founder.rpc('service_connection_upsert', {
+      p_person: personId,
+      p_id: connectionId,
+      p_provider: 'github',
+      p_status: 'connected',
+      p_account_login: 'neil',
+      p_account_id: '7',
+      p_installation: '42',
+      p_selected_id: '99',
+      p_selected_name: 'owner/repo',
+      p_capabilities: {},
+      p_verified: new Date().toISOString(),
+      p_error: null,
+      p_user_authorization: 'active',
+    })
+  ).error,
+  'Reconnect still cannot be forged by an authenticated founder',
+);
+
+const reauthorized = await broker.rpc('service_connection_upsert', {
+  p_person: personId,
+  p_id: connectionId,
+  p_provider: 'github',
+  p_status: 'connected',
+  p_account_login: 'neil',
+  p_account_id: '7',
+  p_installation: '42',
+  p_selected_id: '99',
+  p_selected_name: 'owner/repo',
+  p_capabilities: {},
+  p_verified: new Date().toISOString(),
+  p_error: null,
+  p_user_authorization: 'active',
+});
+assert.equal(reauthorized.error, null, reauthorized.error?.message);
+const afterReconnect = await founder.rpc('service_connection_read', { p_provider: 'github' });
+assert.equal(afterReconnect.data.status, 'connected');
+assert.equal(afterReconnect.data.user_authorization, 'active');
+
 assert.equal((await founder.rpc('service_connection_clear', { p_provider: 'github' })).error, null);
+const afterClear = await founder.rpc('service_connection_read', { p_provider: 'github' });
+assert.equal(afterClear.data, null);
 console.log(
-  'PASS: real local Auth denied authenticated founder forge/swap/credential writes; owner selection stays intent; broker user-revocation is distinct from installation deletion. No live GitHub or Vercel authorization.',
+  'PASS: real local Auth denied authenticated founder forge/swap/credential writes; owner selection stays intent; broker user-revocation is distinct from installation deletion; reconnect requires broker verification; local disconnect removes Aethelios credentials only. No live GitHub or Vercel authorization.',
 );

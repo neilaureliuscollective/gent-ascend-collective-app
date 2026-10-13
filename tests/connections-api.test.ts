@@ -69,6 +69,20 @@ describe('Connections HTTP boundaries', () => {
     ).toBe(403);
   });
 
+  it('redirects a failed GitHub callback without marking the service connected', async () => {
+    state.founder = true;
+    const { NextRequest } = await import('next/server');
+    const { GET: callback } = await import('../src/app/api/connections/github/callback/route');
+    const response = await callback(
+      new NextRequest(
+        'https://app.test/api/connections/github/callback?state=forged-state&code=x',
+      ),
+    );
+    expect(response.status).toBe(303);
+    expect(response.headers.get('location')).toContain('github=failed');
+    expect(response.headers.get('location')).not.toContain('github=connected');
+  });
+
   it('reports setup required rather than connected when secrets are absent', async () => {
     state.founder = true;
     const response = await GET();

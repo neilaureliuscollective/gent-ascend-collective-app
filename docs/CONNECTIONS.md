@@ -83,12 +83,37 @@ VERCEL_INTEGRATION_WEBHOOK_SECRET
 
 If any of these are absent, Connections shows **Setup required**. That is not a successful connection.
 
+## Production activation audit (2026-10-13, names only)
+
+Inspected against implementation and official GitHub/Vercel docs. Presence of secret *values* was not printed. A READY Vercel preview is not a connected GitHub/Vercel account.
+
+| Prerequisite | Production (`https://www.gentascend.com`) | Notes |
+|---|---|---|
+| `20261013183000_service_connections.sql` | missing | Not in the hosted ledger snapshot. Apply only with founder authorization, before the trusted-writes migration. |
+| `20261013194500_connection_trusted_writes.sql` | missing | Apply after the first Connections migration. Tightens RPC grants. |
+| `NEXT_PUBLIC_APP_URL` | not accessible here | Must be exactly `https://www.gentascend.com` (no path/query). Callbacks are derived from it. |
+| `CONNECTIONS_CREDENTIAL_KEY` | not accessible here | Independent 64-hex AES key. Do not reuse another secret. |
+| GitHub App registration | missing | Not created in this task. |
+| GitHub App installation on the selected repository | missing | Read-only Contents, Metadata, Pull requests, Checks, Commit statuses. |
+| Vercel native integration | missing | Not created in this task. Read project, deployment, user, integration-configuration. |
+| Server-only GitHub/Vercel env names | not accessible here | This workspace has no production secret inventory. Preview must not be assumed to have production configuration. |
+| Hosted webhook delivery | missing | Requires registration plus the URLs below. |
+
+Production callback and webhook URLs derived from the code when `NEXT_PUBLIC_APP_URL=https://www.gentascend.com`:
+
+- `https://www.gentascend.com/api/connections/github/callback`
+- `https://www.gentascend.com/api/connections/github/setup`
+- `https://www.gentascend.com/api/connections/webhooks/github`
+- `https://www.gentascend.com/api/connections/vercel/callback`
+- `https://www.gentascend.com/api/connections/webhooks/vercel`
+
 ## Live tests still blocked on founder authorization
 
 - Registering the GitHub App and Vercel integration.
 - Installing them on the canonical repository/project.
 - Setting server secrets in local or protected preview (never production in this task).
-- Hosted migration of `20261013183000_service_connections.sql`.
+- Hosted migration of `20261013183000_service_connections.sql` then `20261013194500_connection_trusted_writes.sql`.
 - Real webhook delivery and provider revocation.
-- Real local disposable Auth acceptance of the new RPCs (`scripts/connections-auth-smoke.mjs`, included in `npm run test:integration`). Run it on a Docker-capable machine with local Supabase; a passing generic Origin Auth job does not cover these RPCs.
-- Live GitHub App / Vercel install, webhook delivery and provider revocation.
+- Live GitHub/Vercel login after registration.
+
+`scripts/connections-auth-smoke.mjs` is included in `npm run test:integration`. It reads the disposable service-role key from `npx supabase status -o json` for the same loopback instance as `.env.development.local`. It does not read that key from the env file. A generic Origin Auth job does not cover these RPCs.
