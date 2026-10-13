@@ -21,6 +21,7 @@ try {
       status: run?.status ?? 'idle',
       isolation: run?.result?.isolation ?? null,
       sandbox: run?.result?.sandbox ?? false,
+      blocker: run?.result?.blocker ?? null,
       worker: workerId,
     }),
   );

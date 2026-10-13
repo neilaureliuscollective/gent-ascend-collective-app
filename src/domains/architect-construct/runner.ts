@@ -1,4 +1,5 @@
 import { access, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -348,7 +349,7 @@ export async function executeInContainer(
   const outDir = join(root, 'out');
   const runnerFile = join(root, 'construct-runner.mjs');
   const jobFile = join(root, 'construct-job.json');
-  const name = `construct-${job.source.id.replace(/-/g, '').slice(0, 12)}`;
+  const name = `construct-${randomUUID().replace(/-/g, '').slice(0, 20)}`;
   let result: RunResult | undefined;
   const aborted = () => Boolean(shouldAbort?.());
   try {

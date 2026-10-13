@@ -108,12 +108,39 @@ const scope = {
   patch: [{ path: 'preview.html', before: files[1].content, after }],
 };
 
+function ensureLocalImage() {
+  const inspect = spawn('docker', ['image', 'inspect', 'node:24-alpine'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  return new Promise((resolve, reject) => {
+    inspect.on('error', () =>
+      reject(new Error('Docker is not available for isolated Construct execution. Host execution is not a fallback.')),
+    );
+    inspect.on('close', (code) => {
+      if (code === 0) return resolve();
+      const pull = spawn('docker', ['pull', 'node:24-alpine'], { stdio: ['ignore', 'pipe', 'pipe'] });
+      let stderr = '';
+      pull.stderr.on('data', (chunk) => {
+        stderr += chunk.toString('utf8');
+      });
+      pull.on('error', () =>
+        reject(new Error('Docker is not available for isolated Construct execution. Host execution is not a fallback.')),
+      );
+      pull.on('close', (pullCode) => {
+        if (pullCode === 0) return resolve();
+        reject(new Error(`Construct image node:24-alpine is unavailable. Host execution is not a fallback. ${stderr}`));
+      });
+    });
+  });
+}
+
 function runWorker(workerId) {
   return new Promise((resolve, reject) => {
     const child = spawn('npm', ['run', 'architect:worker'], {
       env: {
         ...process.env,
         ...env,
+        PATH: process.env.PATH,
         SUPABASE_SERVICE_ROLE_KEY: plane.serviceRoleKey,
         NEXT_PUBLIC_SUPABASE_URL: plane.url,
         ARCHITECT_ORIGIN_ENABLED: 'true',
@@ -215,15 +242,20 @@ try {
     true,
   );
   assert.equal((await foreign.from('architect_construct_runs').select('id').eq('id', request)).data.length, 0);
+  await ensureLocalImage();
   const first = await runWorker('durable-worker-a');
   assert.equal(first.code, 0, first.stderr || first.stdout);
   assert.match(first.stderr, /construct-worker: starting/);
   assert.match(first.stderr, /construct-worker: shutdown/);
   const tick = parseTick(first.stdout);
-  assert.equal(tick.run, request);
-  assert.equal(tick.status, 'succeeded');
-  assert.equal(tick.isolation, 'docker');
-  assert.equal(tick.sandbox, true);
+  assert.equal(tick.run, request, JSON.stringify({ tick, stderr: first.stderr }));
+  assert.equal(
+    tick.status,
+    'succeeded',
+    JSON.stringify({ tick, stderr: first.stderr, stdout: first.stdout }),
+  );
+  assert.equal(tick.isolation, 'docker', JSON.stringify(tick));
+  assert.equal(tick.sandbox, true, JSON.stringify(tick));
   const reloaded = await owner.from('architect_construct_runs').select('*').eq('id', request).single();
   assert.equal(reloaded.error, null);
   assert.equal(reloaded.data.status, 'succeeded');
