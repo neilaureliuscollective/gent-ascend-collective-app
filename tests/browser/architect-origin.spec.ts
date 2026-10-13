@@ -5,7 +5,8 @@ import {
   type OriginVersion,
   type OriginRun,
 } from '../../src/domains/architect-origin/schema';
-const base = 'http://127.0.0.1:3102/?mode=architect-origin';
+// Route-owned effects require the real route even in this isolated fixture.
+const base = 'http://127.0.0.1:3102/app/architect?mode=architect-origin';
 async function fixture(page: Page, failFirst = false) {
   let project: OriginProject | null = null;
   const versions: OriginVersion[] = [],
