@@ -16,6 +16,7 @@ import { FounderOffice } from '@/components/founder-office/office';
 import { founderOfficeFixture } from './founder-office-data';
 import '@/app/imperial-workspace.css';
 import '@/app/imperial-emerald-ii.css';
+import '@/app/obsidian-smoked-glass.css';
 
 import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
 import { CollectionWorld } from '@/components/commerce/collection-world';

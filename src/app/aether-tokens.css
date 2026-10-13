@@ -64,4 +64,12 @@
   --aether-optical-return-75: #6D9D7D;
   --aether-optical-return-100: #88AE92;
   --aether-optical-insert: #142C1E;
+  --aether-smoke-canvas: #111111;
+  --aether-smoke-panel: #1A1A1A;
+  --aether-smoke-raised: #242424;
+  --aether-smoke-text: #F2F2EE;
+  --aether-smoke-secondary: #B9BEBB;
+  --aether-smoke-edge: #565856;
+  --aether-smoke-undercut: #0A0A0A;
+  --aether-smoke-light: #E6E7E2;
 }
