@@ -86,6 +86,30 @@ export interface Database {
         never,
         never
       >;
+      architect_construct_sources: Table<
+        import('@/domains/architect-construct/schema').SourceSnapshot,
+        never,
+        never
+      >;
+      architect_construct_briefs: Table<
+        import('@/domains/architect-construct/schema').ConstructBrief & {
+          project_id: string;
+          project_revision: number;
+          source_id: string;
+        },
+        never,
+        never
+      >;
+      architect_construct_runs: Table<
+        import('@/domains/architect-construct/schema').ConstructRun,
+        never,
+        never
+      >;
+      architect_construct_events: Table<
+        import('@/domains/architect-construct/schema').ConstructEvent,
+        never,
+        never
+      >;
       intelligence_missions: Table<
         import('@/domains/missions/schema').Mission,
         Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>,
@@ -885,6 +909,43 @@ export interface Database {
         Returns: boolean;
       };
       architect_origin_finish: { Args: { p_request: string; p_output: unknown }; Returns: boolean };
+      architect_construct_import_source: {
+        Args: {
+          p_id: string;
+          p_kind: string;
+          p_repository: string | null;
+          p_commit: string | null;
+          p_label: string;
+          p_tree: string;
+          p_files: unknown;
+        };
+        Returns: boolean;
+      };
+      architect_construct_approve_brief: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_expected: number;
+          p_source: string;
+          p_hash: string;
+          p_scope: unknown;
+        };
+        Returns: boolean;
+      };
+      architect_construct_start: {
+        Args: { p_project: string; p_request: string; p_brief: string; p_expected: number };
+        Returns: boolean;
+      };
+      architect_construct_cancel: {
+        Args: { p_project: string; p_run: string };
+        Returns: boolean;
+      };
+      architect_construct_claim: { Args: { p_worker: string; p_lease: number }; Returns: string | null };
+      architect_construct_finish: {
+        Args: { p_worker: string; p_run: string; p_status: string; p_result: unknown };
+        Returns: boolean;
+      };
+      architect_construct_timeout: { Args: Record<string, never>; Returns: number };
       health_export_history: { Args: Record<string, never>; Returns: unknown };
       health_read: { Args: Record<string, never>; Returns: unknown };
       health_mutate: {

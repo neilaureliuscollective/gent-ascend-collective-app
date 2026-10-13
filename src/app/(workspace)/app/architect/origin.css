@@ -211,7 +211,8 @@
   align-items: start;
 }
 .origin-blueprint,
-.origin-history {
+.origin-history,
+.origin-construct {
   grid-template-columns: minmax(0, 1fr);
 }
 .origin-conversation {
@@ -588,7 +589,8 @@
   scrollbar-gutter: stable;
 }
 .origin-active .origin-blueprint,
-.origin-active .origin-history {
+.origin-active .origin-history,
+.origin-active .origin-construct {
   grid-template-columns: minmax(0, 1fr);
 }
 .origin-active .origin-conversation {
@@ -856,5 +858,40 @@
   }
   .origin:not(.origin-active) .origin-intake {
     padding-top: 16px;
+  }
+}
+.origin-construct-actions,
+.origin-construct-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.origin-construct-views button {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+.origin-construct-pane pre {
+  overflow: auto;
+  max-height: 360px;
+  padding: 12px;
+  background: var(--io-reading, var(--surface));
+  border: 1px solid var(--origin-edge);
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+.origin-construct-preview {
+  width: 100%;
+  min-height: 240px;
+  border: 1px solid var(--origin-edge);
+  border-radius: 8px;
+  background: #fff;
+}
+@media (max-width: 480px) {
+  .origin-construct-views button,
+  .origin-construct-actions button {
+    padding: 10px 12px;
   }
 }

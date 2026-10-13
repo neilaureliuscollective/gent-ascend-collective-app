@@ -28,7 +28,8 @@
     "prebuild": "node scripts/prepare-mirror.mjs",
     "pretest:e2e": "node scripts/prepare-mirror.mjs",
     "test:health": "vitest run tests/health.test.ts tests/health-database.test.ts tests/health-pdf.test.ts tests/health-api.test.ts tests/health-export.test.ts tests/health-owner.test.ts",
-    "test:health:bundle": "node scripts/build-health-fixture.mjs"
+    "test:health:bundle": "node scripts/build-health-fixture.mjs",
+    "architect:worker": "node --experimental-strip-types scripts/architect-construct-worker.mts"
   },
   "dependencies": {
     "@ai-sdk/openai": "4.0.72",

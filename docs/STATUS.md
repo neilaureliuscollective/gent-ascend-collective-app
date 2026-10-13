@@ -1171,6 +1171,12 @@ Native `/app/architect` now establishes a shared person-owned project environmen
 
 Storage/AI flags default disabled; additive Origin migration is unapplied. Local lint/types, 721 unit/SQL-compatible tests and ledger pass; direct optimized compilation passed. Normal npm build fails on inherited asset DNS; local browser/Docker acceptance is EPERM-blocked. Focused browser, six-width screenshots and real disposable Auth/PostgREST acceptance are provided in CI and must be checked at the published head. Live model/research, hosted activation and physical devices remain acceptance gates. This is reviewable Origin implementation, not production release or a tested app/formulation generator. Full audit, model/data bounds, limits and founder acceptance checklist: [ARCHITECT_ORIGIN.md](ARCHITECT_ORIGIN.md).
 
+## Architect Construct execution foundation — 2026-10-13
+
+Implemented a narrow, honest execution lane inside existing `/app/architect` on `cursor/architect-construct-pipeline-165a`. Origin planning, Talk, Studio, privacy repair and released Founder Office are unchanged. Construct adds source-pinned briefs, owner-scoped start/read/cancel, persisted events, a worker claim/lease/timeout path, a disposable-container adapter, a labelled process fixture (`sandbox: false`), a default-off OpenAI proposal adapter, and Plan/Changes/Checks/Preview review.
+
+Recovery SHAs `928f74a6…` and `aa7ff09` were not present. Docker is not installed here; non-fixture isolation is a durable blocked receipt, not a pretended sandbox pass. Hosted Construct migration is unapplied. Model proposals stay disabled. Architect cannot yet build Aethelios. Details: [ARCHITECT_CONSTRUCT.md](ARCHITECT_CONSTRUCT.md). Fixture receipt: `docs/evidence/architect-construct/fixture-receipt.json`.
+
 ## Architect immersive workspace — 2026-10-12 review build
 
 Next founder-authorized phase extends Origin into a full-window native creation environment. Canonical main's released guiding-aperture motion at 16ad503 is reconciled; unmerged #112/#98/legacy creation work remains separate. Reuses Shell identity, appearance, capture, navigation and founder permissions through a contextual native menu. Provides continuous project frame, Blueprint outline, document Edit/Preview/Split, focus canvas and URL-bound saved view continuity; project draft/approval/SQL contracts are unchanged. Design research and acceptance scope: ARCHITECT_IMMERSIVE_WORKSPACE.md.
