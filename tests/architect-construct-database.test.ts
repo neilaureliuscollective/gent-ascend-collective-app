@@ -48,6 +48,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261013180000_architect_construct_worker_plane.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013193000_architect_construct_isolation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013220000_architect_construct_lease_freshness.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261013230000_architect_construct_finish_event.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`,
@@ -155,6 +156,75 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
             preview: { path: null, body: '', unavailable_reason: 'stale' },
             artifacts: [],
           })}) as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: false }]);
+    expect(
+      (await asWorker(`select kind from public.architect_construct_events where run_id='${request}' order by seq`))
+        .rows,
+    ).toEqual(expect.arrayContaining([{ kind: 'blocked' }]));
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_append_event('worker-a','${request}','${token.token}','finished','late append after lease clear') as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: false }]);
+  });
+
+  it('persists a finished event atomically and keeps lease freshness', async () => {
+    const finished = '00000000-0000-4000-8000-000000000008';
+    const finishedSource = importedFixtureSource(owner, finished);
+    const finishedScope = fixtureScope({
+      projectId: project,
+      projectRevision: 1,
+      sourceId: finishedSource.id,
+      sourceTreeHash: finishedSource.tree_hash,
+    });
+    await asUser(
+      owner,
+      `select public.architect_construct_import_source('${finishedSource.id}','imported','${finishedSource.repository}',null,'${finishedSource.label.replace(/'/g, "''")}','${finishedSource.tree_hash}',${literal(finishedSource.files)}) as ok`,
+    );
+    await asUser(
+      owner,
+      `select public.architect_construct_approve_brief('${finished}','${project}',1,'${finishedSource.id}','${approvalHash(finishedScope)}',${literal(finishedScope)}) as ok`,
+    );
+    await asUser(owner, `select public.architect_construct_start('${project}','${finished}','${finished}',1)`);
+    const claimed = await asWorker(`select public.architect_construct_claim('finish-worker',45000) as id`);
+    expect(claimed.rows[0]).toEqual({ id: finished });
+    const token = (
+      await asWorker(`select lease_token::text as token from public.architect_construct_runs where id='${finished}'`)
+    ).rows[0] as { token: string };
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_finish('finish-worker','${finished}','${token.token}','succeeded',${literal({
+            isolation: 'unavailable',
+            runtime_available: false,
+            sandbox: false,
+            blocker: null,
+            source_hash: finishedSource.tree_hash,
+            result_hash: null,
+            changed_files: [],
+            diff: '',
+            checks: [],
+            preview: { path: null, body: '', unavailable_reason: 'synthetic' },
+            artifacts: [],
+          })}) as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: true }]);
+    expect(
+      (await asWorker(`select kind from public.architect_construct_events where run_id='${finished}' order by seq`))
+        .rows.map((row) => (row as { kind: string }).kind),
+    ).toContain('finished');
+    expect(
+      (await asWorker(`select lease_until from public.architect_construct_runs where id='${finished}'`)).rows,
+    ).toEqual([{ lease_until: null }]);
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_append_event('finish-worker','${finished}','${token.token}','finished','after clear') as ok`,
         )
       ).rows,
     ).toEqual([{ ok: false }]);

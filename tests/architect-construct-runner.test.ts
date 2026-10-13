@@ -249,6 +249,43 @@ describe('Construct isolated runner', () => {
     expect(result.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:'))).toBe(true);
   });
 
+  it('stops the isolated launch when abort is observed instead of waiting for timeout', async () => {
+    const imported = { ...source, kind: 'imported' as const };
+    let aborted = false;
+    const started = Date.now();
+    setTimeout(() => {
+      aborted = true;
+    }, 30);
+    const result = await executeConstruct(
+      { source: imported, scope },
+      {
+        requireIsolation: true,
+        probe: async () => ({
+          available: true,
+          backend: 'docker',
+          version: '27.0.0',
+          image: 'node:24-alpine',
+          code: 'available',
+          reason: null,
+        }),
+        ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+        shouldAbort: () => aborted,
+        launchContainer: async (_args, timeoutMs, shouldAbort) => {
+          const begin = Date.now();
+          while (!shouldAbort?.() && Date.now() - begin < timeoutMs) {
+            await new Promise((resolve) => setTimeout(resolve, 10));
+          }
+          expect(shouldAbort?.()).toBe(true);
+          expect(Date.now() - begin).toBeLessThan(timeoutMs);
+          return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+        },
+      },
+    );
+    expect(Date.now() - started).toBeLessThan(5000);
+    expect(result.sandbox).toBe(false);
+    expect(result.blocker).toMatch(/cancelled/i);
+  });
+
   it('times out a container launcher without treating it as a sandbox', async () => {
     const imported = { ...source, kind: 'imported' as const };
     const result = await executeConstruct(

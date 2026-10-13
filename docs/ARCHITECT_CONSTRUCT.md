@@ -35,6 +35,8 @@ One narrow pipeline inside existing `/app/architect`:
 | `ARCHITECT_CONSTRUCT_IMAGE` | Disposable image name. Default `node:24-alpine`. |
 | Additive migration `20261013160000_architect_construct.sql` | Durable SQL contracts. Unapplied on hosted projects. |
 | Additive migration `20261013193000_architect_construct_isolation.sql` | Rejects owner-chosen fixture imports and adds per-claim lease tokens. Unapplied on hosted projects. |
+| Additive migration `20261013220000_architect_construct_lease_freshness.sql` | Expired claims cannot heartbeat or finish. Unapplied on hosted projects. |
+| Additive migration `20261013230000_architect_construct_finish_event.sql` | Writes the terminal event in the same fenced finish transaction before clearing the lease. Unapplied on hosted projects. |
 
 `sandbox: true` is recorded only after a disposable container starts and returns a verified result whose displayed diff and hashes come from observed output bytes. A successful Docker version probe, or an image being present, is `runtime_available` only. The labelled process fixture stays `isolation: process-fixture`, `runtime_available: false`, `sandbox: false`, and is not available on the durable worker path. Worker claims use a unique process identity and per-claim lease token, renewed for the whole job. Stale workers cannot finish or write artifacts.
 

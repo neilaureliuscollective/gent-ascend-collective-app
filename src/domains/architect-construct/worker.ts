@@ -85,26 +85,43 @@ export async function processConstructOnce(
     if (latest?.cancel_requested)
       return finish('cancelled', emptyResult(claimed, 'Owner cancelled the run after claim.'), now);
     await store.appendEvent(claimed, 'source_prepared', sanitizeLog(source.label));
-    const executed = await executeConstruct(
-      {
-        source,
-        scope: brief.scope,
-        previewPath: brief.scope.allowed_paths.find((path) => path.endsWith('.html')),
-      },
-      {
-        ...options,
-        requireIsolation: true,
-        trustedInProcess: undefined,
-        shouldAbort: () => lost || Boolean(options.shouldAbort?.()),
-      },
-    );
+    let cancelSeen = false;
+    const watchCancel = setInterval(() => {
+      void store.readRun(claimed.person_id, claimed.id).then((latest) => {
+        if (latest?.cancel_requested) cancelSeen = true;
+      });
+    }, 400);
+    let executed;
+    try {
+      executed = await executeConstruct(
+        {
+          source,
+          scope: brief.scope,
+          previewPath: brief.scope.allowed_paths.find((path) => path.endsWith('.html')),
+        },
+        {
+          ...options,
+          requireIsolation: true,
+          trustedInProcess: undefined,
+          shouldAbort: () => lost || cancelSeen || Boolean(options.shouldAbort?.()),
+        },
+      );
+    } finally {
+      clearInterval(watchCancel);
+    }
     if (lost) throw new LeaseLostError();
     if (!(await renew())) throw new LeaseLostError();
     const after = await store.readRun(claimed.person_id, claimed.id);
-    if (after?.cancel_requested)
+    if (after?.cancel_requested || cancelSeen || options.shouldAbort?.())
       return finish(
         'cancelled',
-        { ...executed, blocker: executed.blocker ?? 'Cancelled after execution work started.' },
+        {
+          ...executed,
+          sandbox: false,
+          blocker: after?.cancel_requested || cancelSeen
+            ? 'Owner cancelled the run while isolated execution was in progress.'
+            : 'Worker shutdown cancelled isolated execution.',
+        },
         new Date(),
       );
     if (executed.changed_files.length)

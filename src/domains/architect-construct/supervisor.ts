@@ -54,12 +54,10 @@ export async function superviseConstructWorker(options: SupervisorOptions) {
   try {
     while (!options.signal.aborted) {
       try {
-        const run = await processConstructOnce(
-          options.store,
-          workerId,
-          now(),
-          options.execute ?? {},
-        );
+        const run = await processConstructOnce(options.store, workerId, now(), {
+          ...(options.execute ?? {}),
+          shouldAbort: () => options.signal.aborted || Boolean(options.execute?.shouldAbort?.()),
+        });
         options.onTick?.(run, workerId);
         ticks += 1;
         failures = 0;

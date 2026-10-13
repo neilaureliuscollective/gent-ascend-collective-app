@@ -1,13 +1,17 @@
 import 'server-only';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
-import { approvalHash } from './hash';
+import { approvalHash, labeledSource, treeHash } from './hash';
 import { fixtureScope, importedFixtureSource } from './fixture';
 import { constructReady } from './readiness';
 import {
   type ConstructBrief,
   type ConstructEvent,
   type SourceSnapshot,
+  approveChangeCommand,
+  briefScopeSchema,
   cancelCommand,
+  defaultLimits,
+  defaultProtectedPaths,
   proposeCommand,
   startCommand,
   startFixtureCommand,
@@ -198,6 +202,50 @@ export async function cancelConstruct(input: ReturnType<typeof cancelCommand.par
   try {
     const { person, client } = await requireOwnedProject(input.projectId);
     return await constructStore({ client, plane: 'owner' }).cancelRun(person.id, input.runId);
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
+export async function approveConstructChange(input: ReturnType<typeof approveChangeCommand.parse>) {
+  requireReady();
+  try {
+    const { person, project, client } = await requireOwnedProject(input.projectId, input.expected);
+    if (input.sourceKind === 'git' && (!input.repository || !input.commit))
+      throw new IntelligenceError('Git pins require the selected repository and an exact commit.', 409);
+    const store = constructStore({ client, plane: 'owner' });
+    const source = await store.importSource({
+      id: input.sourceId,
+      person_id: person.id,
+      kind: input.sourceKind,
+      repository: input.repository,
+      commit: input.commit,
+      label: labeledSource(input.sourceKind, input.repository, input.commit),
+      tree_hash: treeHash(input.files),
+      files: input.files,
+      created_at: new Date().toISOString(),
+    });
+    const scope = briefScopeSchema.parse({
+      project_id: project.id,
+      project_revision: project.revision,
+      source_id: source.id,
+      repository: input.repository,
+      source_commit: input.commit,
+      source_tree_hash: source.tree_hash,
+      allowed_paths: input.allowedPaths,
+      protected_paths: input.protectedPaths ?? defaultProtectedPaths(),
+      intended_change: input.intendedChange,
+      acceptance_checks: input.acceptanceChecks,
+      resource_limits: defaultLimits,
+      patch: input.patch,
+    });
+    await store.invalidateProjectBriefs(
+      person.id,
+      project.id,
+      'A new approved change replaced earlier execution approval for this project revision.',
+    );
+    const brief = await store.approveBrief(person.id, input.briefId, scope);
+    return { source, brief };
   } catch (error) {
     asIntelligence(error);
   }

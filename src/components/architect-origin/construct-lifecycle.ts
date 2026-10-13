@@ -110,6 +110,96 @@ export async function startConstructFixture(
   );
 }
 
+export async function proposeConstructChange(
+  input: {
+    projectId: string;
+    instruction: string;
+    intendedChange: string;
+    allowedPaths: string[];
+    protectedPaths: string[];
+    excerpts: { path: string; content: string }[];
+  },
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    mocked: boolean;
+    proposal: { summary: string; patch: { path: string; before: string; after: string }[]; notes: string };
+  }>(
+    '/api/architect-construct',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        action: 'propose',
+        projectId: input.projectId,
+        instruction: input.instruction,
+        intendedChange: input.intendedChange,
+        allowedPaths: input.allowedPaths,
+        protectedPaths: input.protectedPaths,
+        excerpts: input.excerpts,
+      }),
+    },
+    fetchImpl,
+  );
+}
+
+export async function approveConstructChange(
+  input: {
+    projectId: string;
+    briefId: string;
+    sourceId: string;
+    expected: number;
+    sourceKind: 'imported' | 'git';
+    repository: string | null;
+    commit: string | null;
+    files: { path: string; content: string }[];
+    intendedChange: string;
+    allowedPaths: string[];
+    protectedPaths?: string[];
+    acceptanceChecks: Array<{ name: string; command: 'node' | 'true' | 'false'; args: string[] }>;
+    patch: { path: string; before: string; after: string }[];
+  },
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    source: NonNullable<ConstructLifecycleLibrary['sources']>[number];
+    brief: NonNullable<ConstructLifecycleLibrary['briefs']>[number];
+  }>(
+    '/api/architect-construct',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        action: 'approve-change',
+        ...input,
+      }),
+    },
+    fetchImpl,
+  );
+}
+
+export async function readPinnedConstructFile(
+  path: string,
+  sha: string,
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    access: 'read-only';
+    publishing: false;
+    deployment: false;
+    file: { path: string; sha: string; content: string };
+  }>(
+    `/api/architect-construct/source?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(sha)}`,
+    { signal: signal ?? AbortSignal.timeout(15000) },
+    fetchImpl,
+  );
+}
+
 export async function startConstructRun(
   input: { projectId: string; briefId: string; requestId: string; expected: number },
   signal?: AbortSignal,
@@ -232,4 +322,15 @@ export function viewConstructLifecycle(input: {
 
 export function newerGeneration(previous: number, incoming: number) {
   return incoming >= previous;
+}
+
+export function sameConstructContext(
+  current: { ownerId: string; projectId: string; generation: number },
+  incoming: { ownerId: string; projectId: string; generation: number },
+) {
+  return (
+    current.ownerId === incoming.ownerId &&
+    current.projectId === incoming.projectId &&
+    incoming.generation >= current.generation
+  );
 }

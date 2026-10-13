@@ -6,6 +6,7 @@ const service = vi.hoisted(() => ({
   fixture: vi.fn(),
   cancel: vi.fn(),
   propose: vi.fn(),
+  approve: vi.fn(),
 }));
 vi.mock('@/domains/architect-construct/service', () => ({
   readConstruct: service.read,
@@ -13,6 +14,7 @@ vi.mock('@/domains/architect-construct/service', () => ({
   startFixtureConstruct: service.fixture,
   cancelConstruct: service.cancel,
   proposeConstruct: service.propose,
+  approveConstructChange: service.approve,
   constructStore: () => ({ claimRun: vi.fn() }),
 }));
 vi.mock('@/domains/intelligence/service', () => ({

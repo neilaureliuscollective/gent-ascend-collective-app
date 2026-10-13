@@ -90,6 +90,8 @@ it('executes one claimed fixture through isolation and recovers the same result 
   expect(first?.result?.sandbox).toBe(true);
   expect(first?.result?.checks.every((check) => check.status === 'passed')).toBe(true);
   expect(first?.result?.preview.body).toContain('<h1>After</h1>');
+  expect(first?.lease_until).toBeNull();
+  expect((await store.listEvents(owner, requestId)).map((event) => event.kind)).toContain('finished');
   expect(await processConstructOnce(store, 'worker-a')).toBeNull();
   const reloaded = await store.readRun(owner, requestId);
   expect(reloaded?.result?.diff).toBe(first?.result?.diff);
@@ -150,6 +152,124 @@ it('cancels a queued run and does not replay a cancelled expired lease', async (
   expect(recovered[0]?.id).toBe(staleId);
   expect(recovered[0]?.status).toBe('cancelled');
   expect(await processConstructOnce(store, 'worker-b')).toBeNull();
+});
+
+it('cancels an isolated job after work starts and persists cancelled', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000036';
+  const source = fixtureSource(owner, requestId);
+  await queuedFixture(store, requestId);
+  let launched = false;
+  const executed = await processConstructOnce(store, 'cancel-active', new Date(), isolatedSuccess(source, fixtureScope({
+    projectId: project,
+    projectRevision: 1,
+    sourceId: source.id,
+    sourceTreeHash: source.tree_hash,
+  })));
+  expect(executed?.status).toBe('succeeded');
+  const activeId = '00000000-0000-4000-8000-000000000037';
+  const activeSource = fixtureSource(owner, activeId);
+  await queuedFixture(store, activeId);
+  const cancelled = await processConstructOnce(store, 'cancel-docker', new Date(), {
+    ...isolatedSuccess(
+      activeSource,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: activeSource.id,
+        sourceTreeHash: activeSource.tree_hash,
+      }),
+    ),
+    launchContainer: async (_args, _timeout, shouldAbort) => {
+      launched = true;
+      await store.cancelRun(owner, activeId);
+      const started = Date.now();
+      while (!shouldAbort?.()) {
+        if (Date.now() - started > 2000) break;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      expect(shouldAbort?.()).toBe(true);
+      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+    },
+  });
+  expect(launched).toBe(true);
+  expect(cancelled?.status).toBe('cancelled');
+  expect(cancelled?.result?.sandbox).toBe(false);
+  expect(cancelled?.result?.blocker).toMatch(/cancelled/i);
+  const events = await store.listEvents(owner, activeId);
+  expect(events.map((event) => event.kind)).toContain('cancelled');
+});
+
+it('treats supervisor shutdown as cancellation of the isolated job', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000038';
+  await queuedFixture(store, requestId);
+  const shutdown = { aborted: false };
+  const executed = await processConstructOnce(store, 'shutdown-docker', new Date(), {
+    probe: async () => ({
+      available: true,
+      backend: 'docker',
+      version: '27.0.0',
+      image: 'node:24-alpine',
+      code: 'available',
+      reason: null,
+    }),
+    ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+    shouldAbort: () => shutdown.aborted,
+    launchContainer: async (_args, _timeout, shouldAbort) => {
+      shutdown.aborted = true;
+      const started = Date.now();
+      while (!shouldAbort?.()) {
+        if (Date.now() - started > 2000) break;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+    },
+  });
+  expect(executed?.status).toBe('cancelled');
+  expect(executed?.result?.blocker).toMatch(/shutdown|cancelled/i);
+});
+
+it('does not persist a result when the lease is lost during isolated execution', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000039';
+  const source = fixtureSource(owner, requestId);
+  const scope = fixtureScope({
+    projectId: project,
+    projectRevision: 1,
+    sourceId: source.id,
+    sourceTreeHash: source.tree_hash,
+  });
+  await queuedFixture(store, requestId);
+  const brief = store.briefs.get(requestId);
+  if (brief)
+    brief.scope.resource_limits = { ...brief.scope.resource_limits, lease_ms: 5000 };
+  let beats = 0;
+  const heartbeat = store.heartbeat.bind(store);
+  store.heartbeat = async (...args) => {
+    beats += 1;
+    if (beats > 2) return false;
+    return heartbeat(...args);
+  };
+  const executed = await processConstructOnce(store, 'lost-docker', new Date(), {
+    ...isolatedSuccess(source, scope),
+    launchContainer: async (_args, _timeout, shouldAbort) => {
+      const started = Date.now();
+      while (!shouldAbort?.() && Date.now() - started < 4000) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      expect(shouldAbort?.()).toBe(true);
+      return {
+        exit_code: 137,
+        stdout: '',
+        stderr: 'Isolated job cancelled.',
+      };
+    },
+  });
+  expect(executed).toBeNull();
+  const reloaded = await store.readRun(owner, requestId);
+  expect(reloaded?.result).toBeNull();
+  expect(['claimed', 'running']).toContain(reloaded?.status);
 });
 
 it('blocks imported source without a sandbox and does not claim success', async () => {

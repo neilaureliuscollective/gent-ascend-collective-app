@@ -873,6 +873,18 @@
   padding: 10px 16px;
   border-radius: 8px;
 }
+.origin-construct-pane label,
+.origin-construct-pane fieldset {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.origin-construct-pane input,
+.origin-construct-pane textarea,
+.origin-construct-pane select {
+  width: 100%;
+  min-width: 0;
+}
 .origin-construct-pane pre {
   overflow: auto;
   max-height: 360px;

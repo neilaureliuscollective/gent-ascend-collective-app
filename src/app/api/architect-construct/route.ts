@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { constructCommand } from '@/domains/architect-construct/schema';
 import {
+  approveConstructChange,
   cancelConstruct,
   proposeConstruct,
   readConstruct,
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
       return privateJson({ run: await startFixtureConstruct(input.data) });
     if (input.data.action === 'propose')
       return privateJson(await proposeConstruct(input.data, request.signal));
+    if (input.data.action === 'approve-change')
+      return privateJson(await approveConstructChange(input.data));
     return privateJson({ run: await cancelConstruct(input.data) });
   } catch (error) {
     return apiError(error);

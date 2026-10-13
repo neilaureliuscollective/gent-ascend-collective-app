@@ -893,3 +893,342 @@ test('delayed failed construct fetch cannot leak another project preview', async
   await expect(page.getByText('Synthetic construct failure')).toBeVisible();
   await expect(page.getByText('Project A site')).toHaveCount(0);
 });
+
+test('approve, enqueue, progress and revision-bound preview stay on the selected project', async ({
+  page,
+}) => {
+  await fixture(page);
+  let receipt: {
+    project: { id: string; revision: number; name: string };
+    runs: Array<Record<string, unknown>>;
+    events: Record<string, Array<Record<string, unknown>>>;
+    briefs: Array<Record<string, unknown>>;
+    sources: Array<Record<string, unknown>>;
+  } | null = null;
+  let polls = 0;
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: {
+          ready: false,
+          repository: null,
+          reason: 'Connections is not configured. Imported files can still be approved.',
+        },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() === 'GET') {
+      polls += 1;
+      if (receipt?.runs[0] && receipt.runs[0].status === 'queued' && polls > 1) {
+        receipt.runs[0] = {
+          ...receipt.runs[0],
+          status: 'succeeded',
+          result: {
+            isolation: 'docker',
+            runtime_available: true,
+            sandbox: true,
+            blocker: null,
+            source_hash: 'a'.repeat(64),
+            result_hash: 'b'.repeat(64),
+            changed_files: ['preview.html'],
+            diff: '+<h1>After</h1>',
+            checks: [
+              { name: 'present', command: 'true', exit_code: 0, status: 'passed', log: '' },
+            ],
+            preview: {
+              path: 'preview.html',
+              body: '<html><body><h1>After</h1></body></html>',
+              unavailable_reason: null,
+            },
+          },
+        };
+      }
+      return route.fulfill({
+        json:
+          receipt ?? {
+            project: { id: 'none', revision: 1, name: 'none' },
+            runs: [],
+            events: {},
+            briefs: [],
+            sources: [],
+          },
+      });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === 'propose') {
+      return route.fulfill({
+        json: {
+          mocked: true,
+          proposal: {
+            summary: 'Labelled mocked provider proposal. Not a paid OpenAI call.',
+            notes: 'MOCKED PROVIDER — development only.',
+            patch: [
+              {
+                path: 'preview.html',
+                before: 'Before',
+                after: 'After',
+              },
+            ],
+          },
+        },
+      });
+    }
+    if (body.action === 'approve-change') {
+      expect(body.sourceKind).toBe('imported');
+      expect(body.files.length).toBeGreaterThan(0);
+      return route.fulfill({
+        json: {
+          source: { id: body.sourceId, kind: body.sourceKind, label: 'Imported source snapshot' },
+          brief: { id: body.briefId, status: 'approved' },
+        },
+      });
+    }
+    if (body.action === 'start') {
+      const now = new Date().toISOString();
+      receipt = {
+        project: { id: body.projectId, revision: body.expected, name: 'Approved Origin' },
+        sources: [
+          {
+            id: body.briefId,
+            person_id: 'owner',
+            kind: 'imported',
+            repository: null,
+            commit: null,
+            label: 'Imported source snapshot — exact attached files, not live repository knowledge.',
+            tree_hash: 'a'.repeat(64),
+            files: [],
+            created_at: now,
+          },
+        ],
+        briefs: [
+          {
+            id: body.briefId,
+            person_id: 'owner',
+            approval_hash: 'b'.repeat(64),
+            status: 'approved',
+            invalidation_reason: null,
+            scope: {
+              project_id: body.projectId,
+              project_revision: body.expected,
+              source_id: body.briefId,
+              intended_change: 'Replace the imported heading.',
+              allowed_paths: ['preview.html'],
+              protected_paths: ['.env'],
+              repository: null,
+              source_commit: null,
+              source_tree_hash: 'a'.repeat(64),
+              acceptance_checks: [{ name: 'present', command: 'true', args: [] }],
+              resource_limits: {
+                timeout_ms: 30000,
+                lease_ms: 45000,
+                max_files: 32,
+                max_file_bytes: 65536,
+                max_output_bytes: 16384,
+                max_diff_bytes: 32768,
+              },
+              patch: [{ path: 'preview.html', before: 'Before', after: 'After' }],
+            },
+            created_at: now,
+          },
+        ],
+        runs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            project_id: body.projectId,
+            brief_id: body.briefId,
+            approval_hash: 'b'.repeat(64),
+            source_id: body.briefId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: body.expected,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          [body.requestId]: [
+            {
+              id: crypto.randomUUID(),
+              run_id: body.requestId,
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued.',
+              created_at: now,
+            },
+          ],
+        },
+      };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Approved construct path');
+  await page.getByLabel('Project name (optional)').fill('Approved Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Authorized source and project brief' })).toBeVisible();
+  await page.getByRole('button', { name: 'Propose change' }).click();
+  await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
+  await expect(
+    page.getByText('Labelled mocked provider. This is not a paid OpenAI call.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Approve proposed change' }).click();
+  await expect(page.getByText(/Change approved against the pinned source/)).toBeVisible();
+  await page.getByRole('button', { name: 'Enqueue approved change' }).click();
+  await expect(page.getByText(/Latest run queued|Latest run succeeded/)).toBeVisible();
+  await expect
+    .poll(async () => page.getByText(/Latest run succeeded/).count())
+    .toBeGreaterThan(0);
+  const review = page.getByRole('navigation', { name: 'Construct review' });
+  await review.getByRole('button', { name: 'Changes', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Actual files and diffs' })).toBeVisible();
+  await expect(page.getByText('preview.html', { exact: true })).toBeVisible();
+  await review.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByText('present: passed')).toBeVisible();
+  await review.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(page.frameLocator('iframe[title="Construct preview"]').getByText('After')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 720, height: 900 });
+  await expect(page.getByRole('button', { name: 'Enqueue approved change' })).toBeVisible();
+});
+
+test('construct panel drops a late poll after the project switches', async ({ page }) => {
+  const projects: OriginProject[] = [];
+  const versions: OriginVersion[] = [];
+  let releaseB: () => void = () => undefined;
+  const holdB = new Promise<void>((resolve) => {
+    releaseB = resolve;
+  });
+  await page.route('**/api/architect-origin*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { projects, versions, runs: [] } });
+    const body = route.request().postDataJSON();
+    if (body.action !== 'save') return route.fulfill({ json: { error: 'unused' }, status: 400 });
+    const now = new Date().toISOString();
+    const project: OriginProject = {
+      id: body.projectId,
+      person_id: 'owner',
+      revision: (projects.find((item) => item.id === body.projectId)?.revision ?? 0) + 1,
+      content: body.content,
+      created_at: now,
+      updated_at: now,
+    };
+    const existing = projects.findIndex((item) => item.id === project.id);
+    if (existing >= 0) projects[existing] = project;
+    else projects.unshift(project);
+    versions.unshift({
+      id: body.requestId,
+      project_id: body.projectId,
+      person_id: 'owner',
+      revision: project.revision,
+      content: body.content,
+      note: body.note,
+      created_at: now,
+    });
+    return route.fulfill({
+      json: { revision: project.revision, requestId: body.requestId, personId: 'owner' },
+    });
+  });
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: { ready: false, repository: null, reason: 'Connections is not configured.' },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    const projectId = new URL(route.request().url()).searchParams.get('project');
+    const current = projects.find((item) => item.id === projectId);
+    if (route.request().method() === 'GET') {
+      if (!current) return route.fulfill({ status: 404, json: { error: 'Unknown project' } });
+      if (projects.length > 1 && projectId === projects[0]!.id) await holdB;
+      return route.fulfill({
+        json: {
+          project: { id: current.id, revision: current.revision, name: current.content.name },
+          runs:
+            current.content.name === 'Panel Alpha'
+              ? [
+                  {
+                    id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                    person_id: 'owner',
+                    project_id: current.id,
+                    brief_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                    approval_hash: 'b'.repeat(64),
+                    source_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                    source_kind: 'imported',
+                    source_tree_hash: 'a'.repeat(64),
+                    project_revision: current.revision,
+                    status: 'succeeded',
+                    result: {
+                      isolation: 'docker',
+                      runtime_available: true,
+                      sandbox: true,
+                      blocker: null,
+                      source_hash: 'a'.repeat(64),
+                      result_hash: 'b'.repeat(64),
+                      changed_files: ['alpha.html'],
+                      diff: '',
+                      checks: [],
+                      preview: {
+                        path: 'alpha.html',
+                        body: '<html><body>Alpha receipt</body></html>',
+                        unavailable_reason: null,
+                      },
+                    },
+                  },
+                ]
+              : [],
+          events: {},
+          briefs: [],
+          sources: [],
+        },
+      });
+    }
+    return route.fulfill({ status: 400, json: { error: 'unused' } });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Panel project A');
+  await page.getByLabel('Project name (optional)').fill('Panel Alpha');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByText('Saved revision 1. Confirmed by the server.')).toBeVisible();
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByText(/Latest run succeeded/)).toBeVisible();
+  await page.locator('summary', { hasText: 'Projects / switch creation' }).click();
+  await page
+    .getByRole('navigation', { name: 'Project library' })
+    .getByRole('button', { name: 'New vision +' })
+    .click();
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Panel project B');
+  await page.getByLabel('Project name (optional)').fill('Panel Beta');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByText('Saved revision 1. Confirmed by the server.')).toBeVisible();
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Panel Beta');
+  await expect(page.getByText('Alpha receipt')).toHaveCount(0);
+  await expect(page.getByText(/Latest run succeeded/)).toHaveCount(0);
+  releaseB();
+  await expect(page.getByText(/No approved brief for this project yet/)).toBeVisible();
+  await expect(page.getByText('Alpha receipt')).toHaveCount(0);
+});

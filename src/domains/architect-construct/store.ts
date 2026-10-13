@@ -230,10 +230,9 @@ export class MemoryConstructStore implements ConstructStore {
     return Boolean(run && run.worker_id === workerId && run.lease_token === leaseToken);
   }
 
-  /** Token fencing plus unexpired lease. An expired claim cannot act merely because no replacement arrived. */
+  /** Token fencing plus unexpired lease. An expired or cleared claim cannot act merely because no replacement arrived. */
   ownsFresh(run: ConstructRun | undefined, workerId: string, leaseToken: string, now: Date) {
     if (!this.owns(run, workerId, leaseToken) || !run) return false;
-    if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return true;
     return Boolean(run.lease_until && run.lease_until > now.toISOString());
   }
 
@@ -287,11 +286,19 @@ export class MemoryConstructStore implements ConstructStore {
     if (!this.ownsFresh(run, workerId, leaseToken, now) || !run)
       throw new ConstructStoreError('Run is not claimed by this worker lease.');
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return run;
+    const kind =
+      status === 'timed_out'
+        ? 'timed_out'
+        : status === 'blocked'
+          ? 'blocked'
+          : status === 'cancelled'
+            ? 'cancelled'
+            : 'finished';
+    await this.appendEvent(run, kind, status, now);
     run.status = status;
     run.result = result;
     run.lease_until = null;
     run.updated_at = now.toISOString();
-    await this.appendEvent(run, status === 'timed_out' ? 'timed_out' : status === 'blocked' ? 'blocked' : 'finished', status, now);
     return run;
   }
 
@@ -323,9 +330,18 @@ export class MemoryConstructStore implements ConstructStore {
           },
           artifacts: [],
         };
-        run.lease_until = null;
         run.updated_at = current;
-        await this.appendEvent(run, 'cancelled', 'Cancelled after the worker lease expired.');
+        const seq = this.events.filter((event) => event.run_id === run.id).length + 1;
+        this.events.push({
+          id: randomUUID(),
+          run_id: run.id,
+          person_id: run.person_id,
+          seq,
+          kind: 'cancelled',
+          detail: 'Cancelled after the worker lease expired.',
+          created_at: current,
+        });
+        run.lease_until = null;
         recovered.push(run);
       }
     }

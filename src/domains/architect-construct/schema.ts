@@ -319,11 +319,33 @@ export const proposeCommand = z
     excerpts: z.array(sourceFileSchema).min(1).max(8),
   })
   .strict();
+export const approveChangeCommand = z
+  .object({
+    action: z.literal('approve-change'),
+    projectId: z.uuid(),
+    briefId: z.uuid(),
+    sourceId: z.uuid(),
+    expected: z.number().int().positive().max(500),
+    sourceKind: z.enum(['imported', 'git']),
+    repository: repositoryName.nullable(),
+    commit: gitCommit.nullable(),
+    files: z.array(sourceFileSchema).min(1).max(32),
+    intendedChange: z.string().trim().min(1).max(2000),
+    allowedPaths: z.array(relPath).min(1).max(32),
+    protectedPaths: z.array(relPath).max(32).optional(),
+    acceptanceChecks: z.array(acceptanceCheckSchema).min(1).max(8),
+    patch: z.array(patchFileSchema).min(1).max(16),
+  })
+  .strict()
+  .refine((value) => value.sourceKind !== 'git' || (value.repository && value.commit), {
+    message: 'Git pins require the selected repository and an exact commit.',
+  });
 export const constructCommand = z.discriminatedUnion('action', [
   startCommand,
   startFixtureCommand,
   cancelCommand,
   proposeCommand,
+  approveChangeCommand,
 ]);
 
 export const sourceKindLabels: Record<(typeof sourceKinds)[number], string> = {

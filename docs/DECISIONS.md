@@ -16,7 +16,7 @@ Official GitHub App setup URL is not the user-authorization callback; `installat
 
 ## 2026-10-13 — Architect creation journey is one integration, not a fourth backend
 
-Incorporate Construct `ef3741e`, Connections `c558123` and Architect UI `7e0cf2c` onto current main without rewriting those source branches. Connect the approved workbench through narrow typed adapters. Keep Connections read-only. Add a supervised external worker and require unexpired leases in addition to claim tokens. Label process-fixture output as test output. Keep production AI bans; development may use a labelled mock. Evidence: [ARCHITECT_CREATION_JOURNEY.md](ARCHITECT_CREATION_JOURNEY.md). No hosted migration or paid provider call.
+Incorporate Construct `ef3741e`, Connections `c558123` and Architect UI `7e0cf2c` onto current main without rewriting those source branches. Connect the approved workbench through narrow typed adapters. Keep Connections read-only. Add a supervised external worker and require unexpired leases in addition to claim tokens. Persist the terminal Construct event inside the fenced finish transaction. Wire imported or pinned source and the project brief through propose → explicit approve → `startConstructRun`. Key the Construct panel by owner/project and abort late polls. Cancel the named isolated Docker job on owner cancel or supervisor shutdown. Label process-fixture output as test output. Keep production AI bans; development may use a labelled mock. Evidence: [ARCHITECT_CREATION_JOURNEY.md](ARCHITECT_CREATION_JOURNEY.md). No hosted migration or paid provider call.
 
 ## 2026-10-13 — Architect immersive studio is a UI adapter, not a second Construct
 

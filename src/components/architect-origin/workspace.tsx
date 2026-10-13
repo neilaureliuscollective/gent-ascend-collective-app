@@ -1554,8 +1554,11 @@ export function ArchitectOrigin({
                 )}
                 {surface === 'Construct' && selected && (
                   <ArchitectConstructPanel
+                    key={`${selected.person_id}:${selected.id}`}
+                    ownerId={selected.person_id}
                     projectId={selected.id}
                     revision={selected.revision}
+                    briefText={selected.content.blueprint.vision || selected.content.description}
                     enabled={constructEnabled}
                     locked={locked}
                   />

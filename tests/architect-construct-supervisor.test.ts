@@ -116,3 +116,41 @@ it('recovers a queued run then stops when cancelled during work', async () => {
   const saved = await store.readRun(owner, requestId);
   expect(saved?.status).toBe('cancelled');
 });
+
+it('passes supervisor shutdown into an in-flight isolated job', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000092';
+  await queue(store, requestId);
+  const shutdown = new AbortController();
+  const running = superviseConstructWorker({
+    store,
+    workerId: 'supervisor-shutdown-docker',
+    signal: shutdown.signal,
+    idleMs: 10,
+    execute: {
+      probe: async () => ({
+        available: true,
+        backend: 'docker',
+        version: '27.0.0',
+        image: 'node:24-alpine',
+        code: 'available',
+        reason: null,
+      }),
+      ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+      launchContainer: async (_args, _timeout, shouldAbort) => {
+        shutdown.abort();
+        const started = Date.now();
+        while (!shouldAbort?.() && Date.now() - started < 2000) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        expect(shouldAbort?.()).toBe(true);
+        return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+      },
+    },
+  });
+  const result = await running;
+  expect(result.ticks).toBeGreaterThanOrEqual(1);
+  const saved = await store.readRun(owner, requestId);
+  expect(saved?.status).toBe('cancelled');
+  expect(saved?.result?.sandbox).toBe(false);
+});

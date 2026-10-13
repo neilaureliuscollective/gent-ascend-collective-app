@@ -8,6 +8,7 @@ import {
 } from '@/domains/architect-construct/lifecycle';
 import {
   newerGeneration,
+  sameConstructContext,
   selectCurrentRun,
   selectLastSuccessfulRun,
   viewConstructLifecycle,
@@ -89,6 +90,24 @@ describe('construct lifecycle selection', () => {
     expect(isInFlightStatus('queued')).toBe(true);
     expect(lifecyclePhase('cancelled')).toBe('canceled');
     expect(newerGeneration(2, 1)).toBe(false);
+    expect(
+      sameConstructContext(
+        { ownerId: ownerA, projectId: projectA, generation: 2 },
+        { ownerId: ownerA, projectId: projectA, generation: 2 },
+      ),
+    ).toBe(true);
+    expect(
+      sameConstructContext(
+        { ownerId: ownerA, projectId: projectA, generation: 2 },
+        { ownerId: ownerA, projectId: projectB, generation: 3 },
+      ),
+    ).toBe(false);
+    expect(
+      sameConstructContext(
+        { ownerId: ownerA, projectId: projectA, generation: 3 },
+        { ownerId: ownerA, projectId: projectA, generation: 2 },
+      ),
+    ).toBe(false);
     expect(previewCaption({
       kind: 'construct-html',
       identity: {

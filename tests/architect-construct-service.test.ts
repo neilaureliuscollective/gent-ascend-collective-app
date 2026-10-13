@@ -41,6 +41,7 @@ vi.mock('@/domains/intelligence/service', () => ({
   }),
 }));
 import {
+  approveConstructChange,
   cancelConstruct,
   constructStore,
   startConstruct,
@@ -126,6 +127,56 @@ it('rejects a stale project revision and a forged expanded scope', async () => {
   });
   expect(brief.approval_hash).toBe(approvalHash(brief.scope));
   expect(brief.scope.allowed_paths).not.toContain('secrets/key');
+});
+
+it('approves an imported change then starts that brief once', async () => {
+  const briefId = '00000000-0000-4000-8000-000000000027';
+  const sourceId = '00000000-0000-4000-8000-000000000028';
+  const requestId = '00000000-0000-4000-8000-000000000029';
+  const files = fixtureSource(state.owner, sourceId).files;
+  const approved = await approveConstructChange({
+    action: 'approve-change',
+    projectId: state.projectId,
+    briefId,
+    sourceId,
+    expected: 1,
+    sourceKind: 'imported',
+    repository: null,
+    commit: null,
+    files,
+    intendedChange: 'Replace the fixture heading Before with After.',
+    allowedPaths: files.map((file) => file.path),
+    protectedPaths: defaultProtectedPaths(),
+    acceptanceChecks: [
+      { name: 'syntax', command: 'node', args: ['--check', 'check.mjs'] },
+      { name: 'heading', command: 'node', args: ['check.mjs'] },
+    ],
+    patch: fixtureScope({
+      projectId: state.projectId,
+      projectRevision: 1,
+      sourceId,
+      sourceTreeHash: 'a'.repeat(64),
+    }).patch,
+  });
+  expect(approved.brief.status).toBe('approved');
+  expect(approved.source.kind).toBe('imported');
+  const first = await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId,
+    requestId,
+    expected: 1,
+  });
+  const second = await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId,
+    requestId,
+    expected: 1,
+  });
+  expect(first.id).toBe(requestId);
+  expect(second.id).toBe(first.id);
+  expect(first.source_kind).toBe('imported');
 });
 
 it('keeps cancel owner-scoped and does not replay a finished request', async () => {

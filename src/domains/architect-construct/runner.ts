@@ -37,6 +37,7 @@ export type ContainerLaunchResult = { exit_code: number; stdout: string; stderr:
 export type ContainerLauncher = (
   args: string[],
   timeoutMs: number,
+  shouldAbort?: () => boolean,
 ) => Promise<ContainerLaunchResult>;
 export type IsolationProbeFn = () => Promise<IsolationProbe>;
 
@@ -301,7 +302,11 @@ function removeNamedContainer(name: string | undefined) {
   });
 }
 
-function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunchResult> {
+export function spawnDocker(
+  args: string[],
+  timeoutMs: number,
+  shouldAbort?: () => boolean,
+): Promise<ContainerLaunchResult> {
   return new Promise((resolve) => {
     const child = spawn('docker', args, {
       env: { PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
@@ -310,10 +315,18 @@ function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunch
     let stdout = '';
     let stderr = '';
     let settled = false;
+    const name = containerNameFromArgs(args);
     const finish = (result: ContainerLaunchResult) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
+      clearInterval(poll);
       resolve(result);
+    };
+    const stopNamedJob = (reason: string, code: number) => {
+      removeNamedContainer(name);
+      child.kill('SIGKILL');
+      finish({ exit_code: code, stdout, stderr: stderr + `\n${reason}` });
     };
     child.stdout.on('data', (chunk) => {
       stdout += chunk.toString('utf8');
@@ -322,16 +335,16 @@ function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunch
       stderr += chunk.toString('utf8');
     });
     const timer = setTimeout(() => {
-      removeNamedContainer(containerNameFromArgs(args));
-      child.kill('SIGKILL');
-      finish({ exit_code: 124, stdout, stderr: stderr + '\nContainer timed out.' });
+      stopNamedJob('Container timed out.', 124);
     }, timeoutMs);
+    const poll = setInterval(() => {
+      if (shouldAbort?.()) stopNamedJob('Isolated job cancelled.', 137);
+    }, 100);
+    if (shouldAbort?.()) stopNamedJob('Isolated job cancelled.', 137);
     child.on('error', (error) => {
-      clearTimeout(timer);
       finish({ exit_code: 127, stdout, stderr: error.message });
     });
     child.on('close', (code) => {
-      clearTimeout(timer);
       finish({ exit_code: code ?? 1, stdout, stderr });
     });
   });
@@ -353,7 +366,7 @@ export async function executeInContainer(
   const aborted = () => Boolean(shouldAbort?.());
   try {
     if (aborted()) {
-      result = blockedResult(job, 'Worker lost the lease before isolated execution finished.', {
+      result = blockedResult(job, 'Isolated execution was cancelled before the disposable job finished.', {
         runtime_available: true,
         sandbox: false,
       });
@@ -361,7 +374,7 @@ export async function executeInContainer(
     }
     const image = await ensureImage(probe.image);
     if (aborted()) {
-      result = blockedResult(job, 'Worker lost the lease before isolated execution finished.', {
+      result = blockedResult(job, 'Isolated execution was cancelled before the disposable job finished.', {
         runtime_available: true,
         sandbox: false,
       });
@@ -391,9 +404,9 @@ export async function executeInContainer(
     );
     const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, name });
     assertSafeDockerArgs(invocation.args);
-    const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms);
+    const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms, aborted);
     if (aborted()) {
-      result = blockedResult(job, 'Worker lost the lease before isolated execution finished.', {
+      result = blockedResult(job, 'Isolated execution was cancelled before the disposable job finished.', {
         runtime_available: true,
         sandbox: false,
       });
