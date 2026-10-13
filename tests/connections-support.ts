@@ -30,6 +30,30 @@ export const vercelEnv = {
 
 export const connectedEnv = { ...githubEnv, ...vercelEnv };
 
+export function sampleConnection(
+  overrides: Partial<import('../src/domains/connections/schema').ConnectionRecord> = {},
+): import('../src/domains/connections/schema').ConnectionRecord {
+  const now = new Date().toISOString();
+  return {
+    id: '11111111-1111-4111-8111-111111111111',
+    personId: owner,
+    provider: 'github',
+    status: 'connected',
+    accountLogin: 'neil',
+    accountId: '7',
+    installationId: '42',
+    selectedId: '99',
+    selectedName: 'neilaureliuscollective/gent-ascend-collective-app',
+    capabilities: {},
+    lastVerifiedAt: now,
+    lastError: null,
+    userAuthorization: 'active',
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
 export function githubFetch(handlers: Record<string, unknown>) {
   return async (url: string) => {
     const keyName = Object.keys(handlers).find((item) => url.includes(item) || url === item);

@@ -22,6 +22,12 @@ export type ConnectionStore = {
     status: ConnectionRecord['status'],
     error: string | null,
   ): Promise<void>;
+  applyAccountStatus(
+    provider: ConnectionProvider,
+    accountId: string,
+    status: ConnectionRecord['status'],
+    error: string | null,
+  ): Promise<void>;
 };
 
 function row(value: Record<string, unknown>): ConnectionRecord {
@@ -41,6 +47,10 @@ function row(value: Record<string, unknown>): ConnectionRecord {
         : {},
     lastVerifiedAt: typeof value.last_verified_at === 'string' ? value.last_verified_at : null,
     lastError: typeof value.last_error === 'string' ? value.last_error : null,
+    userAuthorization:
+      value.user_authorization === 'active' || value.user_authorization === 'revoked'
+        ? value.user_authorization
+        : null,
     createdAt: String(value.created_at),
     updatedAt: String(value.updated_at),
   };
@@ -117,9 +127,24 @@ export function memoryStore(seed: ConnectionRecord[] = []): ConnectionStore {
     async applyProviderStatus(provider, installationId, status, error) {
       for (const [key, item] of connections) {
         if (item.provider === provider && item.installationId === installationId) {
+          if (status === 'revoked' || status === 'expired') secrets.delete(item.id);
           connections.set(key, {
             ...item,
             status,
+            lastError: error,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    },
+    async applyAccountStatus(provider, accountId, status, error) {
+      for (const [key, item] of connections) {
+        if (item.provider === provider && item.accountId === accountId) {
+          secrets.delete(item.id);
+          connections.set(key, {
+            ...item,
+            status,
+            userAuthorization: 'revoked',
             lastError: error,
             updatedAt: new Date().toISOString(),
           });
@@ -178,12 +203,6 @@ export function sessionStore(client: RpcClient): ConnectionStore {
         p_consumed: consumedAt,
       });
     },
-    async claimInstallation(state, installationId) {
-      return rpc<boolean>(client, 'service_connection_claim_install', {
-        p_state: state,
-        p_installation: installationId,
-      });
-    },
     async readConnection(personId, provider) {
       const data = await rpc<Record<string, unknown> | null>(
         client,
@@ -204,8 +223,79 @@ export function sessionStore(client: RpcClient): ConnectionStore {
       );
       return (data ?? []).map(row).filter((item) => item.personId === personId);
     },
+    async upsertConnection() {
+      throw new ConnectionError(
+        'Verified connection writes require the trusted server broker.',
+        403,
+        'denied',
+      );
+    },
+    async putSecret() {
+      throw new ConnectionError(
+        'Connection credentials are not writable from a user session.',
+        403,
+        'denied',
+      );
+    },
+    async takeSecret() {
+      throw new ConnectionError(
+        'Connection credentials are not readable from a user session.',
+        403,
+        'denied',
+      );
+    },
+    async claimInstallation() {
+      throw new ConnectionError(
+        'Installation association requires the trusted server broker.',
+        403,
+        'denied',
+      );
+    },
+    async clearConnection(personId, provider) {
+      return rpc<boolean>(client, 'service_connection_clear', { p_provider: provider });
+    },
+    async recordEvent() {
+      return false;
+    },
+    async applyProviderStatus() {
+      /* Session clients cannot apply unsigned webhook state. */
+    },
+    async applyAccountStatus() {
+      /* Session clients cannot apply unsigned webhook state. */
+    },
+  };
+}
+
+function brokerClient(): RpcClient {
+  const connection = supabaseConnection(process.env);
+  if (!connection || !process.env.SUPABASE_SERVICE_ROLE_KEY)
+    throw new ConnectionError(
+      'Trusted connection persistence is not configured.',
+      503,
+      'setup_required',
+    );
+  return createClient<Database>(connection.url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+export function founderConnectionStore(personId: string, sessionClient: RpcClient): ConnectionStore {
+  const owner = sessionStore(sessionClient);
+  const broker = () => brokerClient();
+  return {
+    ...owner,
+    async claimInstallation(state, installationId) {
+      return rpc<boolean>(broker(), 'service_connection_claim_install', {
+        p_person: personId,
+        p_state: state,
+        p_installation: installationId,
+      });
+    },
     async upsertConnection(record) {
-      await rpc(client, 'service_connection_upsert', {
+      if (record.personId !== personId)
+        throw new ConnectionError('Connection records are owner-bound.', 403, 'denied');
+      await rpc(broker(), 'service_connection_upsert', {
+        p_person: personId,
         p_id: record.id,
         p_provider: record.provider,
         p_status: record.status,
@@ -217,36 +307,27 @@ export function sessionStore(client: RpcClient): ConnectionStore {
         p_capabilities: record.capabilities,
         p_verified: record.lastVerifiedAt,
         p_error: record.lastError,
+        p_user_authorization: record.userAuthorization,
       });
     },
     async putSecret(connectionId, ciphertext) {
-      await rpc(client, 'service_connection_put_secret', {
+      await rpc(broker(), 'service_connection_put_secret', {
+        p_person: personId,
         p_id: connectionId,
         p_ciphertext: ciphertext,
       });
     },
     async takeSecret(connectionId) {
-      return rpc<string | null>(client, 'service_connection_take_secret', { p_id: connectionId });
-    },
-    async clearConnection(personId, provider) {
-      return rpc<boolean>(client, 'service_connection_clear', { p_provider: provider });
-    },
-    async recordEvent() {
-      return false;
-    },
-    async applyProviderStatus() {
-      /* Session clients cannot apply unsigned webhook state. */
+      return rpc<string | null>(broker(), 'service_connection_take_secret', {
+        p_person: personId,
+        p_id: connectionId,
+      });
     },
   };
 }
 
 export function webhookStore(): ConnectionStore {
-  const connection = supabaseConnection(process.env);
-  if (!connection || !process.env.SUPABASE_SERVICE_ROLE_KEY)
-    throw new ConnectionError('Webhook persistence is not configured.', 503, 'setup_required');
-  const client = createClient<Database>(connection.url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const client = brokerClient();
   return {
     ...sessionStore(client),
     async beginFlow() {
@@ -262,6 +343,14 @@ export function webhookStore(): ConnectionStore {
       await rpc(client, 'service_connection_apply_status', {
         p_provider: provider,
         p_installation: installationId,
+        p_status: status,
+        p_error: error,
+      });
+    },
+    async applyAccountStatus(provider, accountId, status, error) {
+      await rpc(client, 'service_connection_apply_account', {
+        p_provider: provider,
+        p_account: accountId,
         p_status: status,
         p_error: error,
       });

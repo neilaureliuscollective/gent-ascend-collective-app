@@ -1,3 +1,7 @@
+## 2026-10-13 — Connections trusted writes and GitHub user revocation
+
+Authenticated founders must not be able to call `service_connection_upsert` (or secret/claim RPCs) with a connected status, installation id or `last_verified_at`. Those writes belong to the service-role broker used by Connections API routes after a founder session check. Owner-facing `service_connection_set_selection` stores intent only. Official GitHub `github_app_authorization` payloads identify the revoked user through `sender` and do not include `installation`; installation tokens can still work until the app is uninstalled, so readiness cannot return to verified without a new user authorization. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No provider registration or hosted migration.
+
 ## 2026-10-13 — Aethelios Connections (GitHub App + Vercel integration)
 
 Official GitHub App setup URL is not the user-authorization callback; `installation_id` on setup must be associated via a user access token and `GET /user/installations`. Installation tokens are minted server-side, repository-scoped and short-lived. Native Vercel integrations exchange a one-time code at `/v2/oauth/access_token` for a long-lived token (not GitHub’s expiry model). PKCE is used for GitHub user association; Vercel Sign in with Vercel PKCE is a different product and is not this connector. Evidence: [CONNECTIONS.md](CONNECTIONS.md). No production registration or hosted migration.

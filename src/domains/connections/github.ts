@@ -295,6 +295,7 @@ export async function completeGithubCallback(input: {
       : resources.length
         ? null
         : 'The installation has no selected repository.',
+    userAuthorization: 'active',
     createdAt: existing?.createdAt ?? now.toISOString(),
     updatedAt: now.toISOString(),
   };
@@ -329,6 +330,12 @@ export async function selectGithubRepository(input: {
   const current = await input.store.readConnection(input.personId, 'github');
   if (!current?.installationId)
     throw new ConnectionError('Connect GitHub before selecting a repository.', 409, 'invalid');
+  if (current.userAuthorization === 'revoked')
+    throw new ConnectionError(
+      'GitHub user authorization was revoked. Connect again to restore the association.',
+      409,
+      'expired',
+    );
   const minted = await mintInstallationToken(
     config,
     current.installationId,
@@ -360,6 +367,7 @@ export async function selectGithubRepository(input: {
     capabilities: githubCapabilitiesView(),
     lastVerifiedAt: now.toISOString(),
     lastError: null,
+    userAuthorization: 'active',
     updatedAt: now.toISOString(),
   };
   await input.store.upsertConnection(next);
@@ -378,6 +386,21 @@ export async function verifyGithubConnection(input: {
   const current = await input.store.readConnection(input.personId, 'github');
   if (!current?.installationId)
     throw new ConnectionError('GitHub is not connected.', 409, 'invalid');
+  if (current.userAuthorization === 'revoked') {
+    const next: ConnectionRecord = {
+      ...current,
+      status: 'expired',
+      lastError:
+        'GitHub user authorization was revoked. Connect again to restore the association.',
+      updatedAt: now.toISOString(),
+    };
+    await input.store.upsertConnection(next);
+    throw new ConnectionError(
+      'GitHub user authorization was revoked. Connect again to restore the association.',
+      409,
+      'expired',
+    );
+  }
   try {
     const appInstall = await appInstallation(
       config,
@@ -419,6 +442,7 @@ export async function verifyGithubConnection(input: {
         selectedName: repo.fullName,
         lastVerifiedAt: now.toISOString(),
         lastError: null,
+        userAuthorization: 'active',
         updatedAt: now.toISOString(),
       };
       await input.store.upsertConnection(next);
@@ -448,6 +472,23 @@ export async function verifyGithubConnection(input: {
   }
 }
 
+export function githubAssociationVerified(
+  current: ConnectionRecord | null,
+): current is ConnectionRecord & {
+  installationId: string;
+  selectedId: string;
+  lastVerifiedAt: string;
+} {
+  return Boolean(
+    current &&
+      current.status === 'connected' &&
+      current.installationId &&
+      current.selectedId &&
+      current.lastVerifiedAt &&
+      current.userAuthorization !== 'revoked',
+  );
+}
+
 export async function githubInstallationTokenFor(
   store: ConnectionStore,
   personId: string,
@@ -457,7 +498,7 @@ export async function githubInstallationTokenFor(
 ) {
   const config = requireGithubConfig(env);
   const current = await store.readConnection(personId, 'github');
-  if (!current?.installationId || current.status !== 'connected' || !current.selectedId)
+  if (!githubAssociationVerified(current))
     throw new ConnectionError('GitHub is not ready for source reads.', 409, 'invalid');
   return mintInstallationToken(
     config,

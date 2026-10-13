@@ -41,13 +41,13 @@ import {
   type ConnectionView,
   type SelectableResource,
 } from './schema';
-import { sessionStore, type ConnectionStore } from './store';
+import { founderConnectionStore, type ConnectionStore } from './store';
 
 export async function connectionsSession() {
   const session = await intelligenceSession();
   if (!(await currentFounderAccess()))
     throw new ConnectionError('Founder access required.', 403, 'denied');
-  return { ...session, store: sessionStore(session.client) };
+  return { ...session, store: founderConnectionStore(session.person.id, session.client) };
 }
 
 function emptyView(
@@ -93,6 +93,18 @@ function fromRecord(
 ): ConnectionView {
   if (!configured) return emptyView(provider, 'setup_required');
   if (!record) return emptyView(provider, 'disconnected', { configured: true });
+  if (record.userAuthorization === 'revoked')
+    return emptyView(provider, 'expired', {
+      configured: true,
+      accountLogin: record.accountLogin,
+      accountId: record.accountId,
+      selectedName: record.selectedName,
+      selectedId: record.selectedId,
+      lastVerifiedAt: record.lastVerifiedAt,
+      lastError:
+        record.lastError ??
+        'GitHub user authorization was revoked. Connect again to restore the association.',
+    });
   return emptyView(provider, record.status, {
     configured: true,
     accountLogin: record.accountLogin,
@@ -119,7 +131,12 @@ export async function describeConnections(
   let githubResources: SelectableResource[] = [];
   let vercelResources: SelectableResource[] = [];
   const githubConfig = githubAppConfig(env);
-  if (github?.installationId && github.status === 'connecting' && githubConfig) {
+  if (
+    github?.installationId &&
+    github.status === 'connecting' &&
+    github.userAuthorization !== 'revoked' &&
+    githubConfig
+  ) {
     try {
       const minted = await mintInstallationToken(githubConfig, github.installationId);
       githubResources = await listInstallationRepositories(minted.token);
@@ -312,7 +329,7 @@ export async function listGithubResources() {
   const { person, store } = await connectionsSession();
   const config = requireGithubConfig();
   const current = await store.readConnection(person.id, 'github');
-  if (!current?.installationId)
+  if (!current?.installationId || current.userAuthorization === 'revoked')
     throw new ConnectionError('Connect GitHub before listing repositories.', 409, 'invalid');
   const minted = await mintInstallationToken(config, current.installationId);
   return listInstallationRepositories(minted.token);

@@ -844,6 +844,7 @@ export interface Database {
           capabilities: Record<string, unknown>;
           last_verified_at: string | null;
           last_error: string | null;
+          user_authorization: 'active' | 'revoked' | null;
           created_at: string;
           updated_at: string;
         },
@@ -930,7 +931,7 @@ export interface Database {
       };
       service_connection_read_flow: { Args: { p_state: string }; Returns: unknown };
       service_connection_claim_install: {
-        Args: { p_state: string; p_installation: string };
+        Args: { p_person: string; p_state: string; p_installation: string };
         Returns: boolean;
       };
       service_connection_consume_flow: {
@@ -941,6 +942,7 @@ export interface Database {
       service_connection_list: { Args: Record<string, never>; Returns: unknown };
       service_connection_upsert: {
         Args: {
+          p_person: string;
           p_id: string;
           p_provider: string;
           p_status: string;
@@ -952,21 +954,33 @@ export interface Database {
           p_capabilities: unknown;
           p_verified: string | null;
           p_error: string | null;
+          p_user_authorization: string | null;
         };
         Returns: boolean;
       };
       service_connection_put_secret: {
-        Args: { p_id: string; p_ciphertext: string };
+        Args: { p_person: string; p_id: string; p_ciphertext: string };
         Returns: boolean;
       };
-      service_connection_take_secret: { Args: { p_id: string }; Returns: string | null };
+      service_connection_take_secret: {
+        Args: { p_person: string; p_id: string };
+        Returns: string | null;
+      };
       service_connection_clear: { Args: { p_provider: string }; Returns: boolean };
+      service_connection_set_selection: {
+        Args: { p_provider: string; p_selected_id: string; p_selected_name: string };
+        Returns: boolean;
+      };
       service_connection_record_event: {
         Args: { p_provider: string; p_delivery: string };
         Returns: boolean;
       };
       service_connection_apply_status: {
         Args: { p_provider: string; p_installation: string; p_status: string; p_error: string | null };
+        Returns: boolean;
+      };
+      service_connection_apply_account: {
+        Args: { p_provider: string; p_account: string; p_status: string; p_error: string | null };
         Returns: boolean;
       };
       architect_origin_save: {

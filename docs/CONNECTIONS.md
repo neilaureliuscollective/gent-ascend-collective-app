@@ -35,6 +35,8 @@ Vercel:
 - Flows: nonce/state/PKCE verifier, 10-minute expiry, single consume.
 - GitHub App private key and Vercel client secret stay in server env. They are never sent to the browser, URLs, logs, model context, generated code, or preview sandboxes.
 - Architect Construct (PR #116) must import `src/domains/connections/architect.ts` only. The trusted credential/publishing component remains outside any code-execution sandbox and outside generated preview deployments. See [CONNECTIONS_ARCHITECT.md](CONNECTIONS_ARCHITECT.md).
+- Verification-authoritative writes (`service_connection_upsert`, secrets, installation claim, webhook status) execute only as the service-role broker after a founder session check. Authenticated founders may read, start/consume flows, disconnect, and store selection intent. Selection intent clears `last_verified_at` and cannot mark a connection connected.
+- `github_app_authorization.revoked` identifies the user through `sender` and does not include `installation`. That event expires the association and deletes user credentials; it does not claim the GitHub App installation was removed. Installation deletion remains a separate `installation.deleted` event. Re-verify cannot restore Connected without a new user authorization.
 
 ## Minimal founder setup (not performed in this task)
 
@@ -88,4 +90,5 @@ If any of these are absent, Connections shows **Setup required**. That is not a 
 - Setting server secrets in local or protected preview (never production in this task).
 - Hosted migration of `20261013183000_service_connections.sql`.
 - Real webhook delivery and provider revocation.
-- Real local disposable Auth acceptance of the new RPCs (scripted pattern exists; this executor may not have local Supabase).
+- Real local disposable Auth acceptance of the new RPCs (`scripts/connections-auth-smoke.mjs`, included in `npm run test:integration`). Run it on a Docker-capable machine with local Supabase; a passing generic Origin Auth job does not cover these RPCs.
+- Live GitHub App / Vercel install, webhook delivery and provider revocation.

@@ -6,7 +6,7 @@ import {
   architectConnectionReadiness,
 } from '../src/domains/connections/architect';
 import { describeConnections } from '../src/domains/connections/service';
-import { connectedEnv, owner } from './connections-support';
+import { connectedEnv, owner, sampleConnection } from './connections-support';
 
 describe('Architect connection contract', () => {
   it('never reports ready from configuration alone and does not start work', async () => {
@@ -18,6 +18,20 @@ describe('Architect connection contract', () => {
     const ready = await architectConnectionReadiness(owner, store, connectedEnv);
     expect(ready.github.ready).toBe(false);
     expect(ready.vercel.ready).toBe(false);
+    expect(ready.github.repository).toBeNull();
+  });
+
+  it('does not report GitHub ready after user authorization revocation', async () => {
+    const store = memoryStore();
+    await store.upsertConnection(
+      sampleConnection({
+        status: 'connected',
+        userAuthorization: 'revoked',
+        lastVerifiedAt: new Date().toISOString(),
+      }),
+    );
+    const ready = await architectConnectionReadiness(owner, store, connectedEnv);
+    expect(ready.github.ready).toBe(false);
     expect(ready.github.repository).toBeNull();
   });
 

@@ -29,6 +29,7 @@ vi.mock('../src/domains/connections/store', async () => {
   return {
     ...actual,
     sessionStore: () => state.store ?? actual.memoryStore(),
+    founderConnectionStore: () => state.store ?? actual.memoryStore(),
   };
 });
 

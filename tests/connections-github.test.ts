@@ -4,10 +4,11 @@ import { memoryStore } from '../src/domains/connections/store';
 import {
   completeGithubCallback,
   githubFlow,
+  githubInstallationTokenFor,
   selectGithubRepository,
   verifyGithubConnection,
 } from '../src/domains/connections/github';
-import { githubEnv, owner, foreign } from './connections-support';
+import { githubEnv, owner, foreign, sampleConnection } from './connections-support';
 
 const repo = {
   id: 99,
@@ -140,22 +141,7 @@ describe('GitHub App installation association', () => {
 
   it('marks revoked installations from token errors instead of remaining connected', async () => {
     const store = memoryStore();
-    await store.upsertConnection({
-      id: '11111111-1111-4111-8111-111111111111',
-      personId: owner,
-      provider: 'github',
-      status: 'connected',
-      accountLogin: 'neil',
-      accountId: '7',
-      installationId: '42',
-      selectedId: '99',
-      selectedName: repo.full_name,
-      capabilities: {},
-      lastVerifiedAt: new Date().toISOString(),
-      lastError: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    await store.upsertConnection(sampleConnection({ selectedName: repo.full_name }));
     await expect(
       verifyGithubConnection({
         store,
@@ -167,5 +153,54 @@ describe('GitHub App installation association', () => {
       }),
     ).rejects.toMatchObject({ code: 'revoked' });
     expect((await store.readConnection(owner, 'github'))?.status).toBe('revoked');
+  });
+
+  it('does not mint tokens for unverified, forged or user-revoked associations', async () => {
+    const store = memoryStore();
+    await store.upsertConnection(
+      sampleConnection({ status: 'connecting', lastVerifiedAt: null, selectedId: '99' }),
+    );
+    await expect(githubInstallationTokenFor(store, owner, githubEnv)).rejects.toMatchObject({
+      code: 'invalid',
+    });
+    await store.upsertConnection(sampleConnection({ lastVerifiedAt: null }));
+    await expect(githubInstallationTokenFor(store, owner, githubEnv)).rejects.toMatchObject({
+      code: 'invalid',
+    });
+    await store.upsertConnection(sampleConnection({ userAuthorization: 'revoked' }));
+    await expect(githubInstallationTokenFor(store, owner, githubEnv)).rejects.toMatchObject({
+      code: 'invalid',
+    });
+  });
+
+  it('does not restore verified status after user authorization revocation', async () => {
+    const store = memoryStore();
+    await store.upsertConnection(
+      sampleConnection({
+        status: 'expired',
+        userAuthorization: 'revoked',
+        lastError: 'GitHub user authorization was revoked.',
+      }),
+    );
+    await expect(
+      verifyGithubConnection({
+        store,
+        env: githubEnv,
+        personId: owner,
+        fetchJson: fetchJson({
+          '/app/installations/42': { app_id: 123456, id: 42 },
+          '/app/installations/42/access_tokens': {
+            token: 'ghs_install_access_token',
+            expires_at: '2099-01-01T00:00:00Z',
+          },
+          '/installation/repositories': { repositories: [repo] },
+          '/repos/neilaureliuscollective/gent-ascend-collective-app': repo,
+        }),
+      }),
+    ).rejects.toMatchObject({ code: 'expired' });
+    const current = await store.readConnection(owner, 'github');
+    expect(current?.status).toBe('expired');
+    expect(current?.userAuthorization).toBe('revoked');
+    expect(current?.lastVerifiedAt).toBeTruthy();
   });
 });

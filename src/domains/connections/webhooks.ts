@@ -32,6 +32,23 @@ export async function applyGithubWebhook(
 ) {
   if (!(await store.recordEvent('github', delivery))) return { duplicate: true };
   const body = record(payload);
+  if (event === 'github_app_authorization' && body.action === 'revoked') {
+    const sender = record(body.sender);
+    const accountId =
+      typeof sender.id === 'number'
+        ? String(sender.id)
+        : typeof sender.id === 'string'
+          ? sender.id
+          : null;
+    if (!accountId) return { duplicate: false, ignored: true };
+    await store.applyAccountStatus(
+      'github',
+      accountId,
+      'expired',
+      'GitHub user authorization was revoked. The installation may remain until it is uninstalled on GitHub. Connect again to restore the association.',
+    );
+    return { duplicate: false, status: 'expired' as const, kind: 'user_authorization_revoked' };
+  }
   const installation = record(body.installation);
   const installationId =
     typeof installation.id === 'number'
@@ -45,9 +62,6 @@ export async function applyGithubWebhook(
   if (event === 'installation' && body.action === 'deleted') {
     status = 'revoked';
     error = 'The GitHub App installation was removed.';
-  } else if (event === 'github_app_authorization' && body.action === 'revoked') {
-    status = 'revoked';
-    error = 'GitHub user authorization was revoked.';
   } else if (event === 'installation_repositories' && body.action === 'removed') {
     status = 'degraded';
     error = 'Repository access was removed from the GitHub installation.';

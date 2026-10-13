@@ -266,15 +266,17 @@ from public, anon;
 grant execute on function
   public.service_connection_begin_flow(uuid,text,text,text,text,timestamptz),
   public.service_connection_read_flow(text),
-  public.service_connection_claim_install(text,text),
   public.service_connection_consume_flow(text,timestamptz),
   public.service_connection_read(text),
   public.service_connection_list(),
-  public.service_connection_upsert(uuid,text,text,text,text,text,text,text,jsonb,timestamptz,text),
-  public.service_connection_put_secret(uuid,text),
-  public.service_connection_take_secret(uuid),
   public.service_connection_clear(text)
 to authenticated;
+revoke all on function
+  public.service_connection_claim_install(text,text),
+  public.service_connection_upsert(uuid,text,text,text,text,text,text,text,jsonb,timestamptz,text),
+  public.service_connection_put_secret(uuid,text),
+  public.service_connection_take_secret(uuid)
+from public, anon, authenticated;
 revoke all on function
   public.service_connection_record_event(text,text),
   public.service_connection_apply_status(text,text,text,text)

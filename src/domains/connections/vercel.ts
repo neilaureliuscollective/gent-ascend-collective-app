@@ -295,6 +295,7 @@ export async function completeVercelCallback(input: {
       : resources.length
         ? null
         : 'The installation has no selected project.',
+    userAuthorization: 'active',
     createdAt: existing?.createdAt ?? now.toISOString(),
     updatedAt: now.toISOString(),
   };
@@ -395,6 +396,7 @@ export async function selectVercelProject(input: {
     },
     lastVerifiedAt: now.toISOString(),
     lastError: null,
+    userAuthorization: 'active',
     updatedAt: now.toISOString(),
   };
   await input.store.upsertConnection(next);
@@ -437,6 +439,7 @@ export async function verifyVercelConnection(input: {
         },
         lastVerifiedAt: now.toISOString(),
         lastError: null,
+        userAuthorization: 'active',
         updatedAt: now.toISOString(),
       };
       await input.store.upsertConnection(next);
@@ -471,7 +474,12 @@ export async function vercelAccess(
 ) {
   const config = requireVercelConfig(env);
   const opened = await vercelSecret(store, personId, config.key);
-  if (!opened || opened.current.status !== 'connected' || !opened.current.selectedId)
+  if (
+    !opened ||
+    opened.current.status !== 'connected' ||
+    !opened.current.selectedId ||
+    !opened.current.lastVerifiedAt
+  )
     throw new ConnectionError('Vercel is not ready for deployment reads.', 409, 'invalid');
   return {
     token: opened.credential.accessToken,

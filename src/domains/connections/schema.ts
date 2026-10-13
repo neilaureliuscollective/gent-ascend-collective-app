@@ -99,6 +99,7 @@ export const connectionRecord = z.object({
   capabilities: z.record(z.string(), z.unknown()),
   lastVerifiedAt: z.string().nullable(),
   lastError: z.string().max(400).nullable(),
+  userAuthorization: z.enum(['active', 'revoked']).nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -165,9 +166,15 @@ export function statusSummary(view: Pick<ConnectionView, 'status' | 'selectedNam
     case 'degraded':
       return view.lastError ?? 'Connected, but a required resource is missing or reduced.';
     case 'expired':
-      return 'The provider grant expired. Connect again to restore verified access.';
+      return (
+        view.lastError ??
+        'The provider grant expired. Connect again to restore verified access.'
+      );
     case 'revoked':
-      return 'The provider grant was revoked. Aethelios no longer has usable credentials.';
+      return (
+        view.lastError ??
+        'The provider grant was revoked. Aethelios no longer has usable credentials.'
+      );
     case 'verification_failed':
       return (
         view.lastError ?? 'Verification failed. The last successful check could not be repeated.'

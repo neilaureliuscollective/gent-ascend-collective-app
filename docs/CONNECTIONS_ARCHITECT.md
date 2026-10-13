@@ -25,7 +25,7 @@ architectCommitDeployment(personId, store, sha)
 
 ## Guarantees
 
-- Ready is true only after server-side verification of the selected resource. Environment variables and OAuth callbacks are not enough.
+- Ready is true only after server-side verification of the selected resource. Environment variables, OAuth callbacks and authenticated RPC writes are not enough. User-authorization revocation (`github_app_authorization.revoked`) blocks readiness until the founder reauthorizes, even if the GitHub App installation still exists.
 - GitHub reads use short-lived, repository-scoped installation tokens minted at request time.
 - Vercel deployment status is bound to the selected project id **and** the exact 40-character commit. Stale or forged project/commit pairs are rejected.
 - These functions never queue coding jobs, activate a runner, publish branches, merge, or deploy.

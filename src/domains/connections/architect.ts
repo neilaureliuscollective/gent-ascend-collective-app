@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer';
 import { record, providerJson } from './http';
 import { ConnectionError } from './errors';
 import { githubAppConfig, vercelIntegrationConfig } from './config';
-import { githubInstallationTokenFor } from './github';
+import { githubAssociationVerified, githubInstallationTokenFor } from './github';
 import { readExactCommitDeployment, vercelAccess } from './vercel';
 import type { ConnectionStore } from './store';
 import { describeConnections } from './service';
@@ -35,7 +35,9 @@ export async function architectConnectionReadiness(
   env: Record<string, string | undefined> = process.env,
 ): Promise<ArchitectConnectionReadiness> {
   const board = await describeConnections(personId, store, env);
-  const githubReady = board.github.status === 'connected' && Boolean(board.github.selectedName);
+  const githubRecord = await store.readConnection(personId, 'github');
+  const githubReady =
+    githubAssociationVerified(githubRecord) && Boolean(board.github.selectedName);
   const vercelReady = board.vercel.status === 'connected' && Boolean(board.vercel.selectedId);
   return {
     github: {
