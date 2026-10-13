@@ -124,3 +124,94 @@ describe('voice admission boundaries', () => {
     ).toBe(true);
   });
 });
+
+it('preserves spoken then typed turn order when the first ASR completes last', async () => {
+  const ledger = new VoiceLedger();
+  const turns: RecordedVoiceTurn[] = [];
+  const save = async (turn: RecordedVoiceTurn) => {
+    turns.push(turn);
+  };
+  await ledger.accept({ type: 'input_audio_buffer.committed', item_id: 'spoken' }, save);
+  await ledger.accept({ type: 'response.created', response: { id: 'first' } }, save);
+  await ledger.accept(
+    {
+      type: 'response.done',
+      response: {
+        id: 'first',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'First answer' }] }],
+      },
+    },
+    save,
+  );
+  await ledger.accept({ type: 'output_audio_buffer.stopped', response_id: 'first' }, save);
+  await ledger.accept(
+    {
+      type: 'conversation.item.added',
+      item: { id: 'typed', role: 'user', content: [{ text: 'Second question' }] },
+    },
+    save,
+  );
+  await ledger.accept({ type: 'response.created', response: { id: 'second' } }, save);
+  await ledger.accept(
+    {
+      type: 'response.done',
+      response: {
+        id: 'second',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Second answer' }] }],
+      },
+    },
+    save,
+  );
+  await ledger.accept({ type: 'output_audio_buffer.stopped', response_id: 'second' }, save);
+  expect(turns).toEqual([]);
+  await ledger.accept(
+    {
+      type: 'conversation.item.input_audio_transcription.completed',
+      item_id: 'spoken',
+      transcript: 'First question',
+    },
+    save,
+  );
+  expect(turns.map(({ user, assistant }) => [user, assistant])).toEqual([
+    ['First question', 'First answer'],
+    ['Second question', 'Second answer'],
+  ]);
+});
+it('latches interruption before response.done, waits for usage, and ignores duplicate completion', async () => {
+  const ledger = new VoiceLedger();
+  const turns: RecordedVoiceTurn[] = [];
+  const save = async (turn: RecordedVoiceTurn) => {
+    turns.push(turn);
+  };
+  await ledger.accept(
+    {
+      type: 'conversation.item.added',
+      item: { id: 'user', role: 'user', content: [{ text: 'Question' }] },
+    },
+    save,
+  );
+  await ledger.accept({ type: 'response.created', response: { id: 'reply' } }, save);
+  await ledger.accept(
+    { type: 'response.output_item.added', response_id: 'reply', item: { id: 'answer' } },
+    save,
+  );
+  await ledger.accept({ type: 'conversation.item.truncated', item_id: 'answer' }, save);
+  expect(turns).toEqual([]);
+  const done = {
+    type: 'response.done',
+    response: {
+      id: 'reply',
+      status: 'completed',
+      output: [{ content: [{ transcript: 'Unheard suffix' }] }],
+      usage: { input_tokens: 7, output_tokens: 3 },
+    },
+  };
+  await ledger.accept(done, save);
+  await ledger.accept({ ...done, event_id: 'different-duplicate-event' }, save);
+  expect(turns).toEqual([
+    { user: 'Question', assistant: '', status: 'cancelled', input: 7, output: 3 },
+  ]);
+  expect(ledger.inputTokens).toBe(7);
+});
