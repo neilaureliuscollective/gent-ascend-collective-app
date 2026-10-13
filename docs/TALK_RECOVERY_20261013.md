@@ -1,3 +1,5 @@
+> Release hold: v1 invalidation clears all legacy tab-recovery entries, including ordinary unsent Talk drafts, not only Home-origin text. It triggers on workspace mount/pathname changes and recovery access/clearing. A memory-only capture cannot guarantee retention across reload. The release must resolve this consequence before publication; server messages remain untouched.
+
 # Talk recovery — 2026-10-13
 
 Based on deployed 35837f7a3745eda8521b3b6086d4caf6bea1c7fb, retaining integrated Architect PR113 and Fluid Intelligence PR114 plus the reviewed draft/navigation/B+ repairs. This change removes hidden legacy WebGL from Talk, gives Talk one compact header and viewport owner, keeps both keyboard resize modes usable, and preserves the reading message/offset through reflow. Destinations, appearance, artifacts, mission capture and Council remain accessible through Tools.

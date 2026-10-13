@@ -71,10 +71,10 @@ test('Material conversation retains readable saved replies and dark writing spac
     }),
   );
   await page.goto('/app/aethelios');
-  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(242, 242, 238)');
-  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(242, 242, 238)');
+  await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(232, 233, 226)');
+  await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(232, 233, 226)');
   await expect(page.locator('.assistant-message')).toHaveCSS('color', 'rgb(242, 242, 238)');
-  // Retain B+ geometry with the approved smoked face and readable neutral text.
+  // Preserve explicit reading text; the container and optical face use scoped smoke tokens.
   await expect(page.locator('.aurelius-composer')).toHaveCSS('background-color', 'rgb(26, 26, 26)');
   await expect(page.locator('.aurelius-composer > .bplus-optics')).toBeVisible();
   await expect(page.locator('.aurelius-composer [id$="-face"] stop').first()).toHaveCSS(

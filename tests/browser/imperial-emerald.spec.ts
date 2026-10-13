@@ -6,8 +6,9 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/app/work');
     const chamber = page.locator('.company-work > header');
-    // Work keeps its previously approved Emerald B+ optical face.
-    await expect(chamber.locator('> .bplus-optics')).toBeVisible();
+    await expect(chamber).toHaveCSS('background-image', 'none');
+    // Work keeps its opaque reading chamber and previously approved Emerald B+ action.
+    await expect(chamber.locator('[data-bplus-surface="action"] > .bplus-optics')).toBeVisible();
     await expect(chamber.locator('[id$="-face"] stop').first()).toHaveCSS(
       'stop-color',
       'rgb(22, 55, 39)',
