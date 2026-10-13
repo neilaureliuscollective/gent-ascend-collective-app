@@ -43,8 +43,13 @@ for (const viewport of [
         route,
       ).toBe(true);
       if (route.startsWith('/app/')) {
-        const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-        await expect(navigation.getByRole('link')).toHaveCount(6);
+        const compactTalk = route === '/app/aethelios';
+        if (compactTalk)
+          await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+        const navigation = page.getByRole('navigation', {
+          name: compactTalk ? 'Aethelios destinations' : 'Main navigation',
+        });
+        await expect(navigation.getByRole('link')).toHaveCount(compactTalk ? 11 : 6);
         await expect(navigation.getByRole('link', { name: 'Health', exact: true })).toHaveAttribute(
           'href',
           '/app/health',
@@ -57,12 +62,14 @@ for (const viewport of [
           background: getComputedStyle(el).backgroundColor,
           text: getComputedStyle(el).color,
         }));
-        expect(surface.background).toBe('rgb(7, 11, 10)');
-        expect(surface.text).toBe('rgb(232, 233, 226)');
+        const smoked = ['/app/aethelios', '/app/studio'].includes(route);
+        expect(surface.background).toBe(smoked ? 'rgb(17, 17, 17)' : 'rgb(7, 11, 10)');
+        expect(surface.text).toBe(smoked ? 'rgb(242, 242, 238)' : 'rgb(232, 233, 226)');
         for (const link of await navigation.getByRole('link').all()) {
           const box = await link.boundingBox();
           expect(box!.height).toBeGreaterThanOrEqual(44);
         }
+        if (compactTalk) await page.keyboard.press('Escape');
       }
       await page.screenshot({
         path: `test-results/obsidian-${route.replaceAll('/', '-') || 'home'}-${viewport.width}.png`,
@@ -101,7 +108,11 @@ test('public to workspace navigation keeps one shell and isolated public card st
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await navigation.getByRole('link', { name: 'Talk', exact: true }).click();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeInViewport();
-  await navigation.getByRole('link', { name: 'Studio', exact: true }).click();
+  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Aethelios destinations' })
+    .getByRole('link', { name: 'Studio', exact: true })
+    .click();
   await expect(page.getByRole('heading', { name: 'Make the vision visible.' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

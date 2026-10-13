@@ -58,7 +58,7 @@ for (const width of [320, 360, 412, 768, 1024, 1440, 2560]) {
     await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
     await expect(page.locator('.imperial-workspace')).toHaveCSS(
       'background-color',
-      'rgb(7, 11, 10)',
+      'rgb(17, 17, 17)',
     );
   });
 }

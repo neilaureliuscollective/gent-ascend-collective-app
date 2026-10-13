@@ -1,12 +1,14 @@
 import { test, expect } from './fixtures';
 for (const width of [344, 720, 1440, 2560]) {
-  test(`Imperial material, readable navigation and static orb at ${width}px`, async ({ page }) => {
+  test(`Imperial material, readable navigation and still presence at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/app/aethelios');
     await expect(page.locator('.imperial-workspace')).toHaveCSS(
       'background-color',
-      'rgb(7, 11, 10)',
+      'rgb(17, 17, 17)',
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -14,7 +16,9 @@ for (const width of [344, 720, 1440, 2560]) {
     await page.getByRole('button', { name: 'Aethelios presence', exact: true }).click();
     const dialog = page.locator('dialog[open]');
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('.intelligence-orb-static')).toHaveCSS('opacity', '1');
+    await expect(dialog.locator('.identity-presence')).toHaveCSS('opacity', '1');
+    await expect(dialog.locator('.identity-presence')).toHaveAttribute('data-motion', 'still');
+    await expect(dialog.locator('canvas')).toHaveCount(0);
     expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: `test-results/aether-presence-${width}.png` });
     await page.keyboard.press('Escape');
