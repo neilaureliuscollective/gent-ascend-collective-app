@@ -1,3 +1,7 @@
+## Architect history-navigation repair — October 13, 2026
+
+Founder-approved local repair on combined PR113/PR114 base `6781bc6`: owner-checked, memory-only recovery preserves saved-project drafts across browser Back/Forward without changing browser history. Explicit discard/leave, refresh decisions, stale revisions and uncertain save receipts remain deliberate. No backend/schema/feature-gate/B+ changes or external release action. Verification and limitations: [Architect history recovery](ARCHITECT_HISTORY_RECOVERY.md); exact final evidence is preserved in the separate review archive. Real Supabase and MediaPipe asset gates remain open.
+
 ## Imperial Emerald II — October 12, 2026
 
 Implemented on `codex/imperial-emerald-ii` from released `fd49ba4`: exact foundational palette, Satin Forest/Living Emerald/Gilded Obsidian shared materials, focused Talk welcome/composer/readability, saved-data Founder Office attention index and coordinated Studio/Lifestyle/Ecosystem presentation. Five destinations, Auth/permissions, providers, persistence, approval guards and commerce logic are preserved. No dependencies, backend changes, migrations or production release. Lint, ledger, isolated strict attention typing and targeted rendering/contrast checks passed. Full types/unit/build/browser/Auth gates remain open: incomplete dependency installation and sandbox Chromium failures. No screenshots or authenticated acceptance claimed. [Implementation and exact limitations](IMPERIAL_EMERALD_II.md).

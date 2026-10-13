@@ -3,6 +3,7 @@ import { compileDocument } from '@/domains/architect-origin/documents';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import { useOriginDraft, type OriginDraft } from './draft-handoff';
 import {
   sections,
   documentKinds,
@@ -46,6 +47,14 @@ const starters = [
     detail: 'Bring a creative, operational or research ambition.',
   },
 ] as const;
+class OriginRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 async function request<T>(url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const deadline = AbortSignal.timeout(body ? 60000 : 15000);
   const response = await fetch(url, {
@@ -60,7 +69,8 @@ async function request<T>(url: string, body?: unknown, signal?: AbortSignal): Pr
       : {}),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Request unavailable.');
+  if (!response.ok)
+    throw new OriginRequestError(data.error || 'Request unavailable.', response.status);
   return data;
 }
 function projectLocation(id: string | null) {
@@ -107,11 +117,34 @@ export function ArchitectOrigin({
   const [uncertainRun, setUncertainRun] = useState(false);
   const [history, setHistory] = useState<OriginVersion | null>(null);
   const [loaded, setLoaded] = useState(!enabled);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const abort = useRef<AbortController | null>(null);
   const projectTitle = useRef<HTMLHeadingElement | null>(null);
   const dirty = !!draft && !!selected && JSON.stringify(draft) !== JSON.stringify(selected.content);
   const locked = busy || !!pending;
   const activeDoc = draft?.documents.find((d) => d.id === documentId);
+  const handoff = useOriginDraft();
+  const recovery = useRef<OriginDraft | null>(null);
+  const readCompleted = useRef(false);
+  useEffect(() => {
+    const owner =
+      selected?.person_id || library.projects.find((p) => p.id === selected?.id)?.person_id;
+    recovery.current =
+      selected && draft && owner && (dirty || pending || busy || uncertainRun)
+        ? {
+            base: { ...selected, person_id: owner },
+            content: draft,
+            pending,
+            uncertainRun: uncertainRun || (busy && !pending),
+          }
+        : null;
+  }, [selected, draft, library.projects, dirty, pending, busy, uncertainRun]);
+  useEffect(
+    () => () => {
+      if (readCompleted.current) handoff?.stage(recovery.current);
+    },
+    [handoff],
+  );
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -122,35 +155,50 @@ export function ArchitectOrigin({
       controller.signal,
     )
       .then((data) => {
+        if (controller.signal.aborted) return;
+        readCompleted.current = true;
         setLibrary(data);
         const project = data.projects.find((p) => p.id === projectId);
+        const retained = handoff?.take(project);
+        const restored =
+          retained?.pending && data.versions.some((v) => v.id === retained.pending?.requestId)
+            ? null
+            : retained;
         if (project) {
+          const content = restored?.content ?? project.content;
           const params = new URLSearchParams(location.search);
           const savedSurface = params.get('surface');
           if (surfaces.some((s) => s === savedSurface)) setSurface(savedSurface as Surface);
           const section = params.get('section');
           if (section && Object.hasOwn(sections, section)) setKey(section as keyof typeof sections);
           const savedDocument = params.get('document');
-          if (project.content.documents.some((d) => d.id === savedDocument))
-            setDocumentId(savedDocument);
+          if (content.documents.some((d) => d.id === savedDocument)) setDocumentId(savedDocument);
           const view = params.get('view');
           if (view === 'Edit' || view === 'Preview' || view === 'Split') setDocumentView(view);
-          setSelected(project);
-          setDraft(structuredClone(project.content));
+          setSelected(restored?.base ?? project);
+          setDraft(structuredClone(content));
+          setPending(restored?.pending ?? null);
+          setUncertainRun(restored?.uncertainRun ?? false);
           setMessage(
-            `Resumed revision ${project.revision}. Exploration is separate from approved direction.`,
+            restored
+              ? `Unsaved work restored from this workspace. Based on revision ${restored.base.revision}; current saved revision ${project.revision}. Review before saving${restored.pending || restored.uncertainRun ? ' and inspect receipts for unconfirmed requests' : ''}.`
+              : `Resumed revision ${project.revision}. Exploration is separate from approved direction.`,
           );
         }
         setLoaded(true);
       })
       .catch((e) => {
         if (!controller.signal.aborted) {
+          if (e instanceof OriginRequestError && [401, 403, 404].includes(e.status)) {
+            handoff?.take(undefined);
+            readCompleted.current = true;
+          }
           setError(e.message);
           setLoaded(true);
         }
       });
     return () => controller.abort();
-  }, [enabled]);
+  }, [enabled, handoff, loadAttempt]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (dirty || pending || busy) event.preventDefault();
@@ -163,21 +211,30 @@ export function ArchitectOrigin({
         !!target?.closest('button.aurelius-trigger') && matchMedia('(max-width: 1100px)').matches;
       if (
         !(dirty || pending || busy) ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
         (!link && !shortcutExit) ||
         link?.target === '_blank' ||
         link?.download
       )
         return;
       const destination = new URL(link?.href ?? '/app/aethelios', location.href);
-      if (
-        destination.origin === location.origin &&
-        destination.pathname !== location.pathname &&
-        !window.confirm(
-          'Leave Architect with unsaved or unconfirmed work? Export the draft first if you need to keep it.',
-        )
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (destination.origin === location.origin && destination.pathname !== location.pathname) {
+        if (
+          !window.confirm(
+            'Leave Architect with unsaved or unconfirmed work? Export the draft first if you need to keep it.',
+          )
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+        } else {
+          // Explicit leave discards; unprompted history navigation retains the draft.
+          recovery.current = null;
+          handoff?.stage(null);
+        }
       }
     };
     document.addEventListener('click', guard, true);
@@ -186,7 +243,7 @@ export function ArchitectOrigin({
       window.removeEventListener('beforeunload', warn);
       document.removeEventListener('click', guard, true);
     };
-  }, [dirty, pending, busy]);
+  }, [dirty, pending, busy, handoff]);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     if (!loaded || !selected) return;
@@ -229,6 +286,12 @@ export function ArchitectOrigin({
     }
   }
   async function refreshReceipts() {
+    if (!selected && handoff?.hasDraft()) {
+      setError('');
+      setLoaded(false);
+      setLoadAttempt((attempt) => attempt + 1);
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -1282,7 +1345,10 @@ export function ArchitectOrigin({
                   disabled={busy}
                   onClick={() => {
                     if (window.confirm('Discard this unsaved draft?')) {
-                      setDraft(structuredClone(selected.content));
+                      const current =
+                        library.projects.find((p) => p.id === selected.id) ?? selected;
+                      setSelected(current);
+                      setDraft(structuredClone(current.content));
                       setMessage('Draft discarded. Approved content retained.');
                     }
                   }}
