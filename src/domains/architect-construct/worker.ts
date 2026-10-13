@@ -93,6 +93,7 @@ export async function processConstructOnce(store: ConstructStore, workerId: stri
 function emptyResult(run: ConstructRun, blocker: string): RunResult {
   return {
     isolation: 'unavailable',
+    runtime_available: false,
     sandbox: false,
     blocker,
     source_hash: run.source_tree_hash,

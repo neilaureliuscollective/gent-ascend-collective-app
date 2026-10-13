@@ -270,6 +270,7 @@ export class MemoryConstructStore implements ConstructStore {
         run.status = 'timed_out';
         run.result = run.result ?? {
           isolation: 'unavailable',
+          runtime_available: false,
           sandbox: false,
           blocker: 'Worker lease expired before a durable result was recorded.',
           source_hash: run.source_tree_hash,

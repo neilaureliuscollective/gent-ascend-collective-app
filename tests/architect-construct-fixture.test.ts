@@ -4,7 +4,6 @@ import { fixturePreviewPath, fixtureSource } from '@/domains/architect-construct
 import { MemoryConstructStore } from '@/domains/architect-construct/store';
 import { processConstructOnce } from '@/domains/architect-construct/worker';
 import { fixtureScope } from '@/domains/architect-construct/fixture';
-import { probeDockerIsolation } from '@/domains/architect-construct/docker';
 
 const owner = '00000000-0000-4000-8000-000000000001';
 const project = '00000000-0000-4000-8000-000000000003';
@@ -37,15 +36,9 @@ it('records a durable labelled fixture receipt through prepare-patch-check-previ
   });
   const executed = await processConstructOnce(store, 'fixture-worker');
   const reloaded = await store.readRun(owner, requestId);
-  const isolation = await probeDockerIsolation({ ...process.env, PATH: '/usr/bin:/bin' });
   const receipt = {
     label: 'Deterministic Architect construct fixture — execution mechanics, not a model-generated Aethelios feature.',
     candidate: 'Find and resume Architect projects remains a future model-generated candidate and was not prewritten.',
-    recovery: {
-      first_site_candidate: '928f74a6e327a21fdeb1df9b0182060d8eb579f8',
-      build_brief: 'aa7ff09',
-      present_in_this_checkout: false,
-    },
     source: {
       kind: source.kind,
       label: source.label,
@@ -64,9 +57,9 @@ it('records a durable labelled fixture receipt through prepare-patch-check-previ
       })),
       preview_contains_after: reloaded?.result?.preview.body.includes('<h1>After</h1>'),
       isolation: reloaded?.result?.isolation,
+      runtime_available: reloaded?.result?.runtime_available,
       sandbox: reloaded?.result?.sandbox,
     },
-    docker: isolation,
   };
   await mkdir('docs/evidence/architect-construct', { recursive: true });
   await writeFile(
@@ -75,6 +68,7 @@ it('records a durable labelled fixture receipt through prepare-patch-check-previ
   );
   expect(executed?.status).toBe('succeeded');
   expect(reloaded?.result?.preview.body).toContain('<h1>After</h1>');
+  expect(reloaded?.result?.isolation).toBe('process-fixture');
+  expect(reloaded?.result?.runtime_available).toBe(false);
   expect(reloaded?.result?.sandbox).toBe(false);
-  expect(isolation.available).toBe(false);
 });

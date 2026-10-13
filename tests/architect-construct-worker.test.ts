@@ -54,6 +54,7 @@ it('does not let a client-supplied successful result survive claim', async () =>
   const run = await queuedFixture(store, requestId);
   run.result = {
     isolation: 'docker',
+    runtime_available: true,
     sandbox: true,
     blocker: null,
     source_hash: run.source_tree_hash,
@@ -127,5 +128,6 @@ it('blocks imported source without a sandbox and does not claim success', async 
   const executed = await processConstructOnce(store, 'worker-a');
   expect(executed?.status).toBe('blocked');
   expect(executed?.result?.sandbox).toBe(false);
-  expect(executed?.result?.blocker).toMatch(/Docker is not installed|no files|Missing source/i);
+  expect(executed?.result?.runtime_available).toBe(false);
+  expect(executed?.result?.blocker).toMatch(/no files|Missing source/i);
 });

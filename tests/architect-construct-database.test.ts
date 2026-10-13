@@ -111,6 +111,7 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
         await asWorker(
           `select public.architect_construct_finish('worker-a','${request}','blocked',${literal({
             isolation: 'unavailable',
+            runtime_available: false,
             sandbox: false,
             blocker: 'Synthetic blocked receipt',
             source_hash: source.tree_hash,

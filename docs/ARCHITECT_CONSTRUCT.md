@@ -35,7 +35,9 @@ One narrow pipeline inside existing `/app/architect`:
 | `ARCHITECT_CONSTRUCT_IMAGE` | Disposable image name. Default `node:24-alpine`. |
 | Additive migration `20261013160000_architect_construct.sql` | Durable SQL contracts. Unapplied on hosted projects. |
 
-This environment: **Docker is not installed**. Isolated container execution is blocked. The labelled fixture uses an explicit `process-fixture` backend with `sandbox: false`. That is not a security sandbox and is not claimed as one.
+`sandbox: true` is recorded only after a disposable container starts and returns a verified result. A successful Docker version probe, or an image being present, is `runtime_available` only. The labelled process fixture stays `isolation: process-fixture`, `runtime_available: false`, `sandbox: false`.
+
+Unit tests inject the probe and container launcher. They do not read the host PATH or installed Docker. The host integration check in `tests/architect-construct-host.test.ts` inspects the real machine and records `passed`, `failed`, or `unavailable`.
 
 ## First model-generated candidate
 
@@ -70,15 +72,15 @@ Results:
 
 - Lint: pass, zero warnings.
 - Typecheck: pass.
-- Unit/SQL: 781/781 across 132 files, including new Construct owner/stale-source/forgery/duplicate/cancel/timeout/crash/failing-command/malformed-provider/path/symlink/secret tests. PGlite SQL is not real Supabase Auth.
+- Unit/SQL: 789/789 across 134 files. Probe-seam and host-isolation tests are included. PGlite SQL is not real Supabase Auth.
 - Migration ledger: pass. New `20261013160000_architect_construct.sql` is source-only and **not** in the hosted applied snapshot.
 - Normal `npm run build` and `next build --webpack`: pass.
 - Origin + Construct browser fixture: 3 passed. Not physical Fold/Safari, not disposable local Auth.
 
-Unrun / blocked:
+Unrun / blocked after the CI correction:
 
-- Real disposable local Supabase Auth/PostgREST Construct acceptance.
-- Docker isolation. Exact blocker: `Docker is not installed in this runtime. Isolated container execution is blocked.`
+- Real disposable local Supabase Auth/PostgREST Construct acceptance in this executor (script `scripts/architect-construct-auth-smoke.mjs` is wired into the Origin local-auth job).
+- Host Docker in this executor. Isolated container execution remains `unavailable` here until an engine and `node:24-alpine` are present.
 - Paid OpenAI/runtime calls. Adapter remains disabled.
 - Hosted migration, production enablement, physical device review.
 

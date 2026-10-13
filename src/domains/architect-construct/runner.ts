@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -13,12 +13,34 @@ import type { z } from 'zod';
 import { PathGuardError, assertNoSymlink, assertWritable, resolveInside } from './paths';
 import { assertNoHostSecrets, sanitizeLog, strippedEnv } from './sanitize';
 import { sha256Text, treeHash } from './hash';
-import { assertSafeDockerArgs, dockerInvocation, probeDockerIsolation } from './docker';
+import {
+  type IsolationProbe,
+  assertSafeDockerArgs,
+  dockerInvocation,
+  ensureConstructImage,
+  parseContainerResult,
+  probeDockerIsolation,
+  trustedContainerRunner,
+} from './docker';
 
 export type ExecutionJob = {
   source: SourceSnapshot;
   scope: BriefScope;
   previewPath?: string;
+};
+
+export type ContainerLaunchResult = { exit_code: number; stdout: string; stderr: string };
+export type ContainerLauncher = (
+  args: string[],
+  timeoutMs: number,
+) => Promise<ContainerLaunchResult>;
+export type IsolationProbeFn = () => Promise<IsolationProbe>;
+
+export type ExecuteOptions = {
+  probe?: IsolationProbeFn;
+  launchContainer?: ContainerLauncher;
+  ensureImage?: typeof import('./docker').ensureConstructImage;
+  requireIsolation?: boolean;
 };
 
 function unifiedDiff(path: string, before: string, after: string) {
@@ -28,6 +50,10 @@ function unifiedDiff(path: string, before: string, after: string) {
   return [`--- a/${path}`, `+++ b/${path}`, '@@', ...a.map((line) => `-${line}`), ...b.map((line) => `+${line}`), ''].join(
     '\n',
   );
+}
+
+function trustedDiff(scope: BriefScope) {
+  return scope.patch.map((file) => unifiedDiff(file.path, file.before, file.after)).join('');
 }
 
 async function runCommand(command: string, args: string[], cwd: string, timeoutMs: number) {
@@ -121,6 +147,33 @@ async function collectPreview(root: string, path: string | undefined, limit: num
   }
 }
 
+export function blockedResult(
+  job: ExecutionJob,
+  blocker: string,
+  extras: Partial<Pick<RunResult, 'isolation' | 'runtime_available' | 'sandbox'>> = {},
+): RunResult {
+  const checks = job.scope.acceptance_checks.map((check) => ({
+    name: check.name,
+    command: [check.command, ...check.args].join(' '),
+    exit_code: -1,
+    status: 'blocked' as const,
+    log: blocker,
+  }));
+  return {
+    isolation: extras.isolation ?? 'unavailable',
+    runtime_available: extras.runtime_available ?? false,
+    sandbox: extras.sandbox ?? false,
+    blocker,
+    source_hash: job.source.tree_hash,
+    result_hash: null,
+    changed_files: [],
+    diff: '',
+    checks,
+    preview: { path: null, body: '', unavailable_reason: blocker },
+    artifacts: [{ kind: 'receipt', ref: 'blocked-isolation', hash: sha256Text(blocker) }],
+  };
+}
+
 export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
   const work = await mkdtemp(join(tmpdir(), 'architect-construct-'));
   const checks: z.infer<typeof checkResultSchema>[] = [];
@@ -155,6 +208,7 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
     );
     return {
       isolation: 'process-fixture',
+      runtime_available: false,
       sandbox: false,
       blocker: null,
       source_hash: job.source.tree_hash,
@@ -173,60 +227,119 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
   }
 }
 
-export async function executeConstruct(job: ExecutionJob): Promise<RunResult> {
-  if (job.source.kind !== 'fixture') {
-    const isolation = await probeDockerIsolation();
-    if (!isolation.available) {
-      const notRun = job.scope.acceptance_checks.map((check) => ({
-        name: check.name,
-        command: [check.command, ...check.args].join(' '),
-        exit_code: -1,
-        status: 'blocked' as const,
-        log: isolation.reason,
-      }));
-      const invocation = dockerInvocation('/var/empty/construct-src', '/var/empty/construct-runner.mjs');
-      assertSafeDockerArgs(invocation.args);
-      return {
-        isolation: 'unavailable',
+function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunchResult> {
+  return new Promise((resolve) => {
+    const child = spawn('docker', args, {
+      env: { PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString('utf8');
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString('utf8');
+    });
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      resolve({ exit_code: 124, stdout, stderr: stderr + '\nContainer timed out.' });
+    }, timeoutMs);
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      resolve({ exit_code: 127, stdout, stderr: error.message });
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ exit_code: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
+export async function executeInContainer(
+  job: ExecutionJob,
+  probe: Extract<IsolationProbe, { available: true }>,
+  launch: ContainerLauncher = spawnDocker,
+  ensureImage: typeof ensureConstructImage = ensureConstructImage,
+): Promise<RunResult> {
+  const root = await mkdtemp(join(tmpdir(), 'architect-construct-docker-'));
+  const snapshot = join(root, 'src');
+  const outDir = join(root, 'out');
+  const runnerFile = join(root, 'construct-runner.mjs');
+  const jobFile = join(root, 'construct-job.json');
+  try {
+    const image = await ensureImage(probe.image);
+    if (!image.ready)
+      return blockedResult(job, image.reason ?? 'Construct image is unavailable.', {
+        runtime_available: true,
         sandbox: false,
-        blocker: isolation.reason,
-        source_hash: job.source.tree_hash,
-        result_hash: null,
-        changed_files: [],
-        diff: '',
-        checks: notRun,
-        preview: {
-          path: null,
-          body: '',
-          unavailable_reason: isolation.reason,
-        },
-        artifacts: [{ kind: 'receipt', ref: 'blocked-isolation', hash: sha256Text(isolation.reason) }],
-      };
-    }
-    const invocation = dockerInvocation('/var/empty/construct-src', '/var/empty/construct-runner.mjs', isolation.image);
+      });
+    await mkdir(snapshot, { recursive: true });
+    await mkdir(outDir, { recursive: true });
+    await chmod(outDir, 0o777);
+    await materializeSource(snapshot, job.source, job.scope);
+    for (const file of job.scope.patch) assertWritable(file.path, job.scope);
+    await writeFile(runnerFile, trustedContainerRunner);
+    await writeFile(
+      jobFile,
+      JSON.stringify({
+        files: job.source.files.map((file) => ({ path: file.path })),
+        patch: job.scope.patch,
+        checks: job.scope.acceptance_checks,
+        previewPath: job.previewPath ?? job.scope.allowed_paths.find((path) => path.endsWith('.html')) ?? null,
+        timeout_ms: Math.min(8000, job.scope.resource_limits.timeout_ms),
+      }),
+    );
+    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, outDir });
     assertSafeDockerArgs(invocation.args);
+    const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms);
+    const parsed = parseContainerResult(launched.stdout);
+    if (launched.exit_code !== 0 || !parsed)
+      return blockedResult(
+        job,
+        sanitizeLog(
+          `${launched.stderr || 'no container stderr'} Disposable container did not return a verified result (exit ${launched.exit_code}). A reachable Docker engine is not a sandbox.`,
+        ),
+        { runtime_available: true, sandbox: false },
+      );
+    const diff = trustedDiff(job.scope);
+    const preview = {
+      path: parsed.preview?.path ?? null,
+      body: sanitizeLog(String(parsed.preview?.body ?? ''), [], job.scope.resource_limits.max_output_bytes),
+      unavailable_reason: parsed.preview?.unavailable_reason ?? null,
+    };
+    const checks = Array.isArray(parsed.checks) ? parsed.checks : [];
     return {
       isolation: 'docker',
+      runtime_available: true,
       sandbox: true,
-      blocker: 'Docker is available, but this environment has not been authorized to pull or start the execution image.',
+      blocker: null,
       source_hash: job.source.tree_hash,
-      result_hash: null,
-      changed_files: [],
-      diff: '',
-      checks: job.scope.acceptance_checks.map((check) => ({
-        name: check.name,
-        command: [check.command, ...check.args].join(' '),
-        exit_code: -1,
-        status: 'blocked' as const,
-        log: 'Container start is disabled until founder-authorized local image use.',
-      })),
-      preview: {
-        path: null,
-        body: '',
-        unavailable_reason: 'Isolated preview requires an authorized disposable container start.',
-      },
-      artifacts: [],
+      result_hash: sha256Text(JSON.stringify({ files: parsed.changed_files, preview: preview.body })),
+      changed_files: job.scope.patch.map((file) => file.path),
+      diff,
+      checks,
+      preview,
+      artifacts: [
+        { kind: 'diff', ref: 'result.diff', hash: sha256Text(diff) },
+        { kind: 'preview', ref: preview.path ?? 'preview', hash: sha256Text(preview.body) },
+        { kind: 'log', ref: 'container.stdout', hash: sha256Text(launched.stdout) },
+      ],
     };
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
-  return executeInProcess(job);
+}
+
+export async function executeConstruct(job: ExecutionJob, options: ExecuteOptions = {}): Promise<RunResult> {
+  if (!job.source.files.length)
+    return blockedResult(
+      job,
+      'Source snapshot has no files. Missing source is a blocker; Architect will not invent repository contents.',
+    );
+  if (job.source.kind === 'fixture' && !options.requireIsolation) return executeInProcess(job);
+  const probe = await (options.probe ?? (() => probeDockerIsolation()))();
+  if (!probe.available)
+    return blockedResult(job, probe.reason, { runtime_available: false, sandbox: false });
+  return executeInContainer(job, probe, options.launchContainer, options.ensureImage);
 }

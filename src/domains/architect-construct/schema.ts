@@ -178,6 +178,7 @@ export const isolationKinds = ['docker', 'process-fixture', 'unavailable'] as co
 export const runResultSchema = z
   .object({
     isolation: z.enum(isolationKinds),
+    runtime_available: z.boolean(),
     sandbox: z.boolean(),
     blocker: z.string().max(400).nullable(),
     source_hash: sha256,
@@ -204,7 +205,13 @@ export const runResultSchema = z
       )
       .max(8),
   })
-  .strict();
+  .strict()
+  .refine((value) => value.isolation !== 'process-fixture' || !value.sandbox, {
+    message: 'The process fixture is not a sandbox.',
+  })
+  .refine((value) => !value.sandbox || (value.isolation === 'docker' && value.runtime_available), {
+    message: 'sandbox:true requires verified disposable-container execution.',
+  });
 export type RunResult = z.infer<typeof runResultSchema>;
 
 export const runStatuses = [

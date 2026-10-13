@@ -295,7 +295,9 @@ export function ArchitectConstructPanel({
           )}
           {run?.result && (
             <p>
-              Isolation {run.result.isolation}. Sandbox {run.result.sandbox ? 'yes' : 'no'}.
+              Isolation {run.result.isolation}. Runtime available{' '}
+              {run.result.runtime_available ? 'yes' : 'no'}. Sandbox executed{' '}
+              {run.result.sandbox ? 'yes' : 'no'}. A Docker probe is not a sandbox.
             </p>
           )}
         </article>

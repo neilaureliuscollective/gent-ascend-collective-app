@@ -1175,7 +1175,7 @@ Storage/AI flags default disabled; additive Origin migration is unapplied. Local
 
 Implemented a narrow, honest execution lane inside existing `/app/architect` on `cursor/architect-construct-pipeline-165a`. Origin planning, Talk, Studio, privacy repair and released Founder Office are unchanged. Construct adds source-pinned briefs, owner-scoped start/read/cancel, persisted events, a worker claim/lease/timeout path, a disposable-container adapter, a labelled process fixture (`sandbox: false`), a default-off OpenAI proposal adapter, and Plan/Changes/Checks/Preview review.
 
-Recovery SHAs `928f74a6…` and `aa7ff09` were not present. Docker is not installed here; non-fixture isolation is a durable blocked receipt, not a pretended sandbox pass. Hosted Construct migration is unapplied. Model proposals stay disabled. Architect cannot yet build Aethelios. Details: [ARCHITECT_CONSTRUCT.md](ARCHITECT_CONSTRUCT.md). Fixture receipt: `docs/evidence/architect-construct/fixture-receipt.json`.
+Runtime-availability unit tests now use an injectable Docker probe; they no longer assume the host PATH. `sandbox: true` is recorded only after a disposable container returns a verified result. `runtime_available` is a separate fact. Docker is not installed in this executor; the host integration receipt is `unavailable`. Hosted Construct migration is unapplied. Model proposals stay disabled. Architect cannot yet build Aethelios. Details: [ARCHITECT_CONSTRUCT.md](ARCHITECT_CONSTRUCT.md). Fixture receipt: `docs/evidence/architect-construct/fixture-receipt.json`. Host isolation receipt: `docs/evidence/architect-construct/host-isolation-receipt.json`.
 
 ## Architect immersive workspace — 2026-10-12 review build
 

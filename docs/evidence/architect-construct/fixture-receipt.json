@@ -1,11 +1,6 @@
 {
   "label": "Deterministic Architect construct fixture — execution mechanics, not a model-generated Aethelios feature.",
   "candidate": "Find and resume Architect projects remains a future model-generated candidate and was not prewritten.",
-  "recovery": {
-    "first_site_candidate": "928f74a6e327a21fdeb1df9b0182060d8eb579f8",
-    "build_brief": "aa7ff09",
-    "present_in_this_checkout": false
-  },
   "source": {
     "kind": "fixture",
     "label": "Deterministic fixture source — labelled test tree, not an imported application snapshot.",
@@ -45,11 +40,7 @@
     ],
     "preview_contains_after": true,
     "isolation": "process-fixture",
+    "runtime_available": false,
     "sandbox": false
-  },
-  "docker": {
-    "available": false,
-    "backend": "unavailable",
-    "reason": "Docker is not installed in this runtime. Isolated container execution is blocked."
   }
 }
