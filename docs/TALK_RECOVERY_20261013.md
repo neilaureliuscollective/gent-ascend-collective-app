@@ -1,4 +1,4 @@
-> Release hold: v1 invalidation clears all legacy tab-recovery entries, including ordinary unsent Talk drafts, not only Home-origin text. It triggers on workspace mount/pathname changes and recovery access/clearing. A memory-only capture cannot guarantee retention across reload. The release must resolve this consequence before publication; server messages remain untouched.
+> Release authorization update (2026-10-13): the founder explicitly approved clearing the entire legacy v1 unsent browser-draft cache, including ordinary Talk drafts, after that consequence was explained. This resolves the earlier retention hold. Saved server conversations remain untouched. Functional release checks and existing feature gates still apply.
 
 # Talk recovery — 2026-10-13
 

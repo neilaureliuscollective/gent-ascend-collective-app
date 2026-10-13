@@ -1,4 +1,4 @@
-> Release hold (2026-10-13): the draft privacy migration currently invalidates the entire legacy v1 tab-recovery cache, including ordinary unsent Talk drafts. Legacy entries lack Home/Talk provenance. Approval of that loss scope or a reviewed preservation design is required before production publication. Saved server messages are untouched. Capturing drafts in memory protects only the current page lifetime and does not by itself preserve ordinary legacy drafts across reload.
+> Release authorization update (2026-10-13): the founder explicitly approved clearing the entire legacy v1 unsent browser-draft cache, including ordinary Talk drafts, after that consequence was explained. This resolves the earlier retention hold. Saved server conversations remain untouched. Functional release checks and existing feature gates still apply.
 
 ## 2026-10-13 approved material release preparation
 
