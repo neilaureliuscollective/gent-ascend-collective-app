@@ -136,8 +136,73 @@ describe('Construct isolated runner', () => {
     assertSafeDockerArgs(invocation.args);
     expect(invocation.args).toContain('--network');
     expect(invocation.args).toContain('none');
+    expect(invocation.args).toContain('65534:65534');
+    expect(invocation.args.join(' ')).toContain('uid=65534');
+    expect(invocation.args.join(' ')).toContain('gid=65534');
     expect(invocation.args.join(' ')).not.toContain('docker.sock');
+    expect(invocation.args.join(' ')).not.toContain('--privileged');
     expect(invocation.args.join(' ')).not.toContain('OPENAI');
+  });
+
+  it('records a failing isolated check without claiming process-fixture success', async () => {
+    const imported = { ...source, kind: 'imported' as const };
+    const payload = {
+      checks: [{ name: 'fail', command: 'false', exit_code: 1, status: 'failed', log: '' }],
+      changed_files: ['preview.html'],
+      preview: { path: 'preview.html', body: '<h1>After</h1>', unavailable_reason: null },
+    };
+    const result = await executeConstruct(
+      { source: imported, scope, previewPath: 'preview.html' },
+      {
+        requireIsolation: true,
+        probe: async () => ({
+          available: true,
+          backend: 'docker',
+          version: '27.0.0',
+          image: 'node:24-alpine',
+          code: 'available',
+          reason: null,
+        }),
+        ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+        launchContainer: async () => ({
+          exit_code: 0,
+          stdout: `${resultFenceStart}\n${JSON.stringify(payload)}\n${resultFenceEnd}\n`,
+          stderr: 'CONSTRUCT_WORKSPACE {"identity":{"uid":65534,"gid":65534},"work":{"writable":true}}\n',
+        }),
+      },
+    );
+    expect(result.isolation).toBe('docker');
+    expect(result.sandbox).toBe(true);
+    expect(result.checks[0]?.status).toBe('failed');
+    expect(result.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:'))).toBe(true);
+  });
+
+  it('times out a container launcher without treating it as a sandbox', async () => {
+    const imported = { ...source, kind: 'imported' as const };
+    const result = await executeConstruct(
+      { source: imported, scope },
+      {
+        requireIsolation: true,
+        probe: async () => ({
+          available: true,
+          backend: 'docker',
+          version: '27.0.0',
+          image: 'node:24-alpine',
+          code: 'available',
+          reason: null,
+        }),
+        ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+        launchContainer: async () => ({
+          exit_code: 124,
+          stdout: '',
+          stderr: 'Container timed out.',
+        }),
+      },
+    );
+    expect(result.sandbox).toBe(false);
+    expect(result.runtime_available).toBe(true);
+    expect(result.blocker).toMatch(/timed out|not a sandbox/i);
+    expect(result.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:'))).toBe(true);
   });
 
   it('rejects protected or out-of-scope patches before writing', async () => {

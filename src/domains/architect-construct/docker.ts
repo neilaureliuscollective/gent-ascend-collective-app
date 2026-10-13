@@ -25,15 +25,22 @@ export type DockerExec = (
   options: { timeout: number; env?: NodeJS.ProcessEnv },
 ) => Promise<{ stdout: string; stderr?: string }>;
 
+export const constructNobody = '65534:65534';
+export const tmpfsWork = '/work:rw,exec,nosuid,size=64m,uid=65534,gid=65534,mode=0755';
+export const tmpfsTmp = '/tmp:rw,noexec,nosuid,size=16m,uid=65534,gid=65534,mode=1777';
+export const tmpfsOut = '/out:rw,noexec,nosuid,size=8m,uid=65534,gid=65534,mode=0755';
+
 export function dockerInvocation(
   snapshotDir: string,
   runnerFile: string,
   image = defaultConstructImage,
-  mounts: { jobFile?: string; outDir?: string } = {},
+  mounts: { jobFile?: string; outDir?: string; name?: string } = {},
 ) {
   const paths = [snapshotDir, runnerFile, mounts.jobFile, mounts.outDir].filter(Boolean) as string[];
   if (paths.some((path) => path.includes('docker.sock')))
     throw new Error('Docker socket paths are not permitted.');
+  if (mounts.name && !/^construct-[A-Za-z0-9_-]+$/.test(mounts.name))
+    throw new Error('Disposable container names must stay inside the construct- prefix.');
   const args = [
     'run',
     '--rm',
@@ -41,11 +48,13 @@ export function dockerInvocation(
     'none',
     '--read-only',
     '--tmpfs',
-    '/work:rw,exec,nosuid,size=64m',
+    tmpfsWork,
     '--tmpfs',
-    '/tmp:rw,noexec,nosuid,size=16m',
+    tmpfsTmp,
+    '--tmpfs',
+    tmpfsOut,
     '--user',
-    '65534:65534',
+    constructNobody,
     '--cap-drop',
     'ALL',
     '--security-opt',
@@ -69,6 +78,7 @@ export function dockerInvocation(
   ];
   if (mounts.jobFile) args.push('-v', `${mounts.jobFile}:/opt/construct-job.json:ro`);
   if (mounts.outDir) args.push('-v', `${mounts.outDir}:/out:rw`);
+  if (mounts.name) args.push('--name', mounts.name);
   args.push('-w', '/work', image, 'node', '/opt/construct-runner.mjs');
   return { command: 'docker', args };
 }
@@ -86,6 +96,11 @@ export function assertSafeDockerArgs(args: string[]) {
     throw new Error('Docker invocation would expose host authority or secrets.');
   if (!args.includes('--network') || args[args.indexOf('--network') + 1] !== 'none')
     throw new Error('Docker isolation requires --network none.');
+  if (args[args.indexOf('--user') + 1] !== constructNobody)
+    throw new Error('Docker isolation must run as the nobody identity 65534:65534.');
+  const work = args[args.indexOf('--tmpfs') + 1] ?? '';
+  if (!work.startsWith('/work:') || !work.includes('uid=65534') || !work.includes('gid=65534'))
+    throw new Error('Writable /work tmpfs must be owned by nobody.');
 }
 
 export function classifyDockerProbeError(error: unknown): IsolationProbe {
@@ -188,15 +203,41 @@ export async function probeDockerIsolation(
   }
 }
 
-export const trustedContainerRunner = `import { readFileSync, writeFileSync, mkdirSync, cpSync, existsSync } from 'node:fs';
+export const trustedContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+function can(path, mode) { try { accessSync(path, mode); return true; } catch { return false; } }
+function describe(path) {
+  try {
+    const st = statSync(path);
+    return { path, uid: st.uid, gid: st.gid, mode: (st.mode & 0o777).toString(8), readable: can(path, constants.R_OK), writable: can(path, constants.W_OK) };
+  } catch (error) {
+    return { path, error: error.code || String(error.message || error) };
+  }
+}
+const workspace = {
+  identity: { uid: process.getuid ? process.getuid() : null, gid: process.getgid ? process.getgid() : null },
+  src: describe('/src'),
+  source_file: describe('/src/README.md'),
+  work: describe('/work'),
+  tmp: describe('/tmp'),
+  out: describe('/out'),
+};
+process.stderr.write('CONSTRUCT_WORKSPACE ' + JSON.stringify(workspace) + '\\n');
+if (workspace.identity.uid !== 65534 || workspace.identity.gid !== 65534)
+  throw new Error('Container is not running as nobody 65534:65534.');
+if (!workspace.source_file.readable)
+  throw new Error('Pinned source is not readable by the nobody identity.');
+if (workspace.source_file.writable)
+  throw new Error('Pinned source must stay immutable.');
+if (!workspace.work.writable || workspace.work.uid !== 65534)
+  throw new Error('Writable /work tmpfs is not owned by nobody.');
 const job = JSON.parse(readFileSync('/opt/construct-job.json', 'utf8'));
 const work = '/work';
 for (const file of job.files) {
   const to = join(work, file.path);
   mkdirSync(dirname(to), { recursive: true });
-  cpSync(join('/src', file.path), to);
+  writeFileSync(to, readFileSync(join('/src', file.path)));
 }
 for (const patch of job.patch) {
   const target = join(work, patch.path);
@@ -226,6 +267,16 @@ const payload = { checks, changed_files: job.patch.map((file) => file.path), pre
 try { writeFileSync('/out/result.json', JSON.stringify(payload)); } catch { /* /out is optional */ }
 process.stdout.write('CONSTRUCT_RESULT_BEGIN\\n' + JSON.stringify(payload) + '\\nCONSTRUCT_RESULT_END\\n');
 `;
+
+export function parseWorkspaceDiagnostics(stderr: string) {
+  const line = stderr.split('\n').find((entry) => entry.startsWith('CONSTRUCT_WORKSPACE '));
+  if (!line) return null;
+  try {
+    return JSON.parse(line.slice('CONSTRUCT_WORKSPACE '.length));
+  } catch {
+    return null;
+  }
+}
 
 export function parseContainerResult(stdout: string) {
   const start = stdout.indexOf(resultFenceStart);

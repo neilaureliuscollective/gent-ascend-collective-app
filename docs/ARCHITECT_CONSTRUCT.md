@@ -37,6 +37,8 @@ One narrow pipeline inside existing `/app/architect`:
 
 `sandbox: true` is recorded only after a disposable container starts and returns a verified result. A successful Docker version probe, or an image being present, is `runtime_available` only. The labelled process fixture stays `isolation: process-fixture`, `runtime_available: false`, `sandbox: false`.
 
+Writable `/work`, `/tmp` and `/out` are tmpfs mounts owned by nobody (`uid=65534,gid=65534`). The container does not run as root. CI on `94343b2` reached this path and failed with `EACCES` copying `/src/README.md` → `/work/README.md` because the tmpfs had no explicit nobody ownership.
+
 Unit tests inject the probe and container launcher. They do not read the host PATH or installed Docker. The host integration check in `tests/architect-construct-host.test.ts` inspects the real machine and records `passed`, `failed`, or `unavailable`.
 
 ## First model-generated candidate

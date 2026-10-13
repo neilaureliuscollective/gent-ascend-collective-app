@@ -75,6 +75,17 @@ describe('Construct Docker probe seam', () => {
     });
   });
 
+  it('parses workspace permission diagnostics from container stderr', async () => {
+    const { parseWorkspaceDiagnostics, tmpfsWork } = await import('@/domains/architect-construct/docker');
+    expect(tmpfsWork).toContain('uid=65534');
+    expect(tmpfsWork).toContain('gid=65534');
+    expect(
+      parseWorkspaceDiagnostics(
+        'CONSTRUCT_WORKSPACE {"identity":{"uid":65534,"gid":65534},"work":{"writable":true,"uid":65534}}\n',
+      ),
+    ).toMatchObject({ identity: { uid: 65534 }, work: { writable: true } });
+  });
+
   it('records probe errors without using the host PATH', async () => {
     const exec: DockerExec = async () => {
       throw new Error('permission denied while trying to connect');

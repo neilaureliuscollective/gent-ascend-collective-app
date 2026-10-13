@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -19,6 +19,7 @@ import {
   dockerInvocation,
   ensureConstructImage,
   parseContainerResult,
+  parseWorkspaceDiagnostics,
   probeDockerIsolation,
   trustedContainerRunner,
 } from './docker';
@@ -227,6 +228,19 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
   }
 }
 
+function containerNameFromArgs(args: string[]) {
+  const index = args.indexOf('--name');
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function removeNamedContainer(name: string | undefined) {
+  if (!name) return;
+  spawn('docker', ['rm', '-f', name], {
+    env: { PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
+    stdio: 'ignore',
+  });
+}
+
 function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunchResult> {
   return new Promise((resolve) => {
     const child = spawn('docker', args, {
@@ -235,6 +249,12 @@ function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunch
     });
     let stdout = '';
     let stderr = '';
+    let settled = false;
+    const finish = (result: ContainerLaunchResult) => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
     child.stdout.on('data', (chunk) => {
       stdout += chunk.toString('utf8');
     });
@@ -242,16 +262,17 @@ function spawnDocker(args: string[], timeoutMs: number): Promise<ContainerLaunch
       stderr += chunk.toString('utf8');
     });
     const timer = setTimeout(() => {
+      removeNamedContainer(containerNameFromArgs(args));
       child.kill('SIGKILL');
-      resolve({ exit_code: 124, stdout, stderr: stderr + '\nContainer timed out.' });
+      finish({ exit_code: 124, stdout, stderr: stderr + '\nContainer timed out.' });
     }, timeoutMs);
     child.on('error', (error) => {
       clearTimeout(timer);
-      resolve({ exit_code: 127, stdout, stderr: error.message });
+      finish({ exit_code: 127, stdout, stderr: error.message });
     });
     child.on('close', (code) => {
       clearTimeout(timer);
-      resolve({ exit_code: code ?? 1, stdout, stderr });
+      finish({ exit_code: code ?? 1, stdout, stderr });
     });
   });
 }
@@ -264,19 +285,20 @@ export async function executeInContainer(
 ): Promise<RunResult> {
   const root = await mkdtemp(join(tmpdir(), 'architect-construct-docker-'));
   const snapshot = join(root, 'src');
-  const outDir = join(root, 'out');
   const runnerFile = join(root, 'construct-runner.mjs');
   const jobFile = join(root, 'construct-job.json');
+  const name = `construct-${job.source.id.replace(/-/g, '').slice(0, 12)}`;
+  let result: RunResult | undefined;
   try {
     const image = await ensureImage(probe.image);
-    if (!image.ready)
-      return blockedResult(job, image.reason ?? 'Construct image is unavailable.', {
+    if (!image.ready) {
+      result = blockedResult(job, image.reason ?? 'Construct image is unavailable.', {
         runtime_available: true,
         sandbox: false,
       });
+      return result;
+    }
     await mkdir(snapshot, { recursive: true });
-    await mkdir(outDir, { recursive: true });
-    await chmod(outDir, 0o777);
     await materializeSource(snapshot, job.source, job.scope);
     for (const file of job.scope.patch) assertWritable(file.path, job.scope);
     await writeFile(runnerFile, trustedContainerRunner);
@@ -290,18 +312,21 @@ export async function executeInContainer(
         timeout_ms: Math.min(8000, job.scope.resource_limits.timeout_ms),
       }),
     );
-    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, outDir });
+    const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, name });
     assertSafeDockerArgs(invocation.args);
     const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms);
     const parsed = parseContainerResult(launched.stdout);
-    if (launched.exit_code !== 0 || !parsed)
-      return blockedResult(
+    const workspace = parseWorkspaceDiagnostics(launched.stderr);
+    if (launched.exit_code !== 0 || !parsed) {
+      result = blockedResult(
         job,
         sanitizeLog(
           `${launched.stderr || 'no container stderr'} Disposable container did not return a verified result (exit ${launched.exit_code}). A reachable Docker engine is not a sandbox.`,
         ),
         { runtime_available: true, sandbox: false },
       );
+      return result;
+    }
     const diff = trustedDiff(job.scope);
     const preview = {
       path: parsed.preview?.path ?? null,
@@ -309,7 +334,7 @@ export async function executeInContainer(
       unavailable_reason: parsed.preview?.unavailable_reason ?? null,
     };
     const checks = Array.isArray(parsed.checks) ? parsed.checks : [];
-    return {
+    result = {
       isolation: 'docker',
       runtime_available: true,
       sandbox: true,
@@ -324,10 +349,27 @@ export async function executeInContainer(
         { kind: 'diff', ref: 'result.diff', hash: sha256Text(diff) },
         { kind: 'preview', ref: preview.path ?? 'preview', hash: sha256Text(preview.body) },
         { kind: 'log', ref: 'container.stdout', hash: sha256Text(launched.stdout) },
+        {
+          kind: 'receipt',
+          ref: 'workspace-permissions',
+          hash: sha256Text(JSON.stringify(workspace ?? { missing: true })),
+        },
       ],
     };
+    return result;
   } finally {
     await rm(root, { recursive: true, force: true });
+    const removed = await access(root).then(() => false).catch(() => true);
+    if (result) {
+      result.artifacts = [
+        ...result.artifacts,
+        {
+          kind: 'receipt',
+          ref: removed ? `cleanup-removed:${name}` : `cleanup-failed:${name}`,
+          hash: sha256Text(`${root}:${removed ? 'removed' : 'present'}`),
+        },
+      ];
+    }
   }
 }
 

@@ -46,6 +46,7 @@ it('inspects the host isolation runtime and reports pass, fail, or unavailable h
         exit_code: check.exit_code,
       })),
       artifact_hashes: execution.artifacts,
+      cleanup: execution.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:')),
       preview_contains_after: execution.preview.body.includes('<h1>After</h1>'),
     },
   };
@@ -62,6 +63,7 @@ it('inspects the host isolation runtime and reports pass, fail, or unavailable h
     expect(execution?.sandbox).toBe(true);
     expect(execution?.isolation).toBe('docker');
     expect(execution?.preview.body).toContain('<h1>After</h1>');
+    expect(execution?.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:'))).toBe(true);
   }
   if (outcome === 'failed') {
     expect(execution?.sandbox, execution?.blocker ?? 'isolated container failed').toBe(true);
