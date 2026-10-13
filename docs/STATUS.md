@@ -1,3 +1,5 @@
+> Architect immersive studio (2026-10-13): UI-only creation entry and canvas-led workbench on a separate branch from Construct PR #116 and Connections PR #117. Isolated static HTML preview is real; running-server preview and publishing stay unavailable. See [ARCHITECT_IMMERSIVE_STUDIO.md](ARCHITECT_IMMERSIVE_STUDIO.md). No production merge.
+
 > Release authorization update (2026-10-13): the founder explicitly approved clearing the entire legacy v1 unsent browser-draft cache, including ordinary Talk drafts, after that consequence was explained. This resolves the earlier retention hold. Saved server conversations remain untouched. Functional release checks and existing feature gates still apply.
 
 ## 2026-10-13 approved material release preparation

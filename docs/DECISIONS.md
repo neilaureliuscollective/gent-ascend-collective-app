@@ -1,3 +1,7 @@
+## 2026-10-13 — Architect immersive studio is a UI adapter, not a second Construct
+
+Keep Origin persistence, quotas and documents. Add presentation components plus a read-only Construct preview adapter that treats a missing `/api/architect-construct` as unavailable. Static HTML uses `sandbox=""` srcDoc; no generated server runs inside Next. Labelled `?demo=architect-preview` fixtures stay named demonstrations. Do not merge PR #116/#117 into this branch. Evidence: [ARCHITECT_IMMERSIVE_STUDIO.md](ARCHITECT_IMMERSIVE_STUDIO.md).
+
 ## 2026-10-12 — Lifestyle product atelier
 
 Use the existing gallery and approved Shopify media for user-controlled inspection. Add explicit sequencing and fit/2× detail zoom; load films only on selection and only with approved captions/transcript. Keep purchase primary and sensory education progressively disclosed. Reuse server projections and Obsidian tokens without new rendering dependencies. Research and activation boundaries: [LIFESTYLE_PRODUCT_ATELIER.md](LIFESTYLE_PRODUCT_ATELIER.md). No measured conversion uplift or merchant activation is claimed.

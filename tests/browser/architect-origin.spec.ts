@@ -103,9 +103,11 @@ for (const width of [320, 344, 390, 720, 768, 1440, 1920])
     await page.setViewportSize({ width, height: 900 });
     await fixture(page);
     await page.goto(base);
-    await expect(
-      page.getByRole('heading', { name: 'Where vision becomes creation.' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What will you create?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create a Business' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Design an Application' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Develop a Product' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start without limits' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -335,4 +337,117 @@ test('short keyboard-height workspace retains reachable save controls and drafts
     path: 'test-results/architect-immersive-short-window.png',
     fullPage: true,
   });
+});
+
+test('labelled demonstration is explicit and isolated from host', async ({ page }) => {
+  await fixture(page);
+  await page.goto(`${base}&demo=architect-preview`);
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Labelled demonstration idea');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(
+    page.getByText(/Labelled demonstration — not a live generated preview/),
+  ).toBeVisible();
+  const frame = page.frameLocator('iframe[title="Labelled demonstration preview"]');
+  await expect(frame.getByText('Labelled demonstration', { exact: false })).toBeVisible();
+  await expect(page.evaluate(() => 'injected' in window || 'pwned' in window)).resolves.toBe(false);
+});
+
+test('HTML document preview is sandboxed and keeps the prior artifact when Construct fails', async ({
+  page,
+}) => {
+  const html = `<!DOCTYPE html><html><body>
+    <script>window.top.injected=true</script>
+    <a href="javascript:alert(1)">Bad link</a>
+    <h1>Owned artifact</h1>
+  </body></html>`;
+  const state = await fixture(page);
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (!state.getProject())
+      return route.fulfill({
+        status: 404,
+        json: { error: 'Construct execution is not in this checkout.' },
+      });
+    return route.fulfill({
+      status: 503,
+      json: { error: 'Synthetic construct failure' },
+    });
+  });
+  await page.goto(base);
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Application with a static site');
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+  await page.getByLabel('Editable Markdown').fill(html);
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  const frame = page.frameLocator('iframe[title="Isolated artifact preview"]');
+  await expect(frame.getByRole('heading', { name: 'Owned artifact' })).toBeVisible();
+  await expect(page.locator('iframe[title="Isolated artifact preview"]')).toHaveAttribute(
+    'sandbox',
+    '',
+  );
+  await expect(page.evaluate(() => 'injected' in window)).resolves.toBe(false);
+  await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled();
+  await expect(page.locator('.origin-workbench-meta .origin-connection-chip')).toHaveText(
+    'Build connection pending',
+  );
+});
+
+test('emerging brief uses typed fields only and preserves drafts across Audience details', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto(base);
+  await page.getByRole('button', { name: 'Develop a Product' }).click();
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('A travel kettle for Fold desks.');
+  await page.getByRole('button', { name: '02 Audience' }).click();
+  await page.getByLabel('Audience (optional)').fill('Independent designers.');
+  await page.getByLabel('Constraints (optional)').fill('No lithium claims.');
+  await expect(page.getByRole('complementary', { name: 'Emerging brief' })).toContainText(
+    'Independent designers.',
+  );
+  await expect(page.getByRole('complementary', { name: 'Emerging brief' })).not.toContainText(
+    'proposed',
+  );
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await page.getByLabel('Blueprint section').selectOption('audience');
+  await expect(page.getByLabel('Intended audience', { exact: true })).toHaveValue(
+    'Independent designers.',
+  );
+});
+
+test('Fold dock reveals one panel at 720px without fabricating checks', async ({ page }) => {
+  await page.setViewportSize({ width: 720, height: 900 });
+  await fixture(page);
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Fold layout concept');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(page.getByRole('navigation', { name: 'Workbench panels' })).toBeVisible();
+  const dock = page.getByRole('navigation', { name: 'Workbench panels' });
+  await dock.getByRole('button', { name: 'Outline', exact: true }).click();
+  await expect(page.getByRole('complementary', { name: 'Outline and context' })).toBeVisible();
+  await dock.getByRole('button', { name: 'Canvas', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Workbench views' })
+    .getByRole('button', { name: 'Checks', exact: true })
+    .click();
+  await expect(page.locator('.origin-checks-pane')).toBeVisible();
+  await expect(page.locator('.origin-checks-pane')).toContainText(
+    'Construct checks are not in this checkout',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/architect-studio-fold-720.png', fullPage: true });
 });
