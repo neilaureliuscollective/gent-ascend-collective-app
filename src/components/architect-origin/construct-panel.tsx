@@ -14,6 +14,7 @@ import {
   readConstructLibrary,
   readConstructSource,
   readPinnedConstructFile,
+  constructInputSnapshot,
   sameConstructContext,
   selectCurrentRun,
   startConstructFixture,
@@ -40,6 +41,23 @@ type ProposedChange = {
   summary: string;
   notes: string;
   patch: { path: string; before: string; after: string }[];
+  snapshot: string;
+};
+
+type BoundApproval = {
+  briefId: string;
+  sourceId: string;
+  approvalHash: string;
+  requestId: string;
+  snapshot: string;
+  revision: number;
+};
+
+type RequestContext = {
+  ownerId: string;
+  projectId: string;
+  revision: number;
+  generation: number;
 };
 
 function statusLabel(status: ConstructRun['status']) {
@@ -48,6 +66,14 @@ function statusLabel(status: ConstructRun['status']) {
 
 function newId() {
   return crypto.randomUUID();
+}
+
+function fileFingerprint(files: SourceFile[]) {
+  return JSON.stringify(
+    [...files]
+      .map((file) => ({ path: file.path, content: file.content }))
+      .sort((a, b) => a.path.localeCompare(b.path)),
+  );
 }
 
 export function ArchitectConstructPanel({
@@ -83,20 +109,34 @@ export function ArchitectConstructPanel({
   ]);
   const [intendedChange, setIntendedChange] = useState(briefText.slice(0, 2000));
   const [proposal, setProposal] = useState<ProposedChange | null>(null);
-  const [approvedBriefId, setApprovedBriefId] = useState<string | null>(null);
+  const [approval, setApproval] = useState<BoundApproval | null>(null);
+  const [gitPin, setGitPin] = useState<{
+    repository: string;
+    commit: string;
+    files: string;
+  } | null>(null);
+  const fixtureKeyRef = useRef<{ key: string; id: string } | null>(null);
   const generationRef = useRef(0);
+  const snapshot = constructInputSnapshot({
+    sourceKind,
+    repository: sourceKind === 'git' ? sourceReady?.github.repository?.fullName ?? null : null,
+    commit,
+    files,
+    intendedChange,
+    revision,
+  });
+  const liveProposal = proposal?.snapshot === snapshot ? proposal : null;
+  const liveApproval =
+    approval && approval.snapshot === snapshot && approval.revision === revision ? approval : null;
   const run = selectCurrentRun(library, projectId, ownerId) as ConstructRun | null;
   const brief = run ? library?.briefs.find((row) => row.id === run.brief_id) : library?.briefs[0];
   const source = run ? library?.sources.find((row) => row.id === run.source_id) : library?.sources[0];
   const events = run ? (library?.events[run.id] ?? []) : [];
 
-  function applyLibrary(
-    next: Library,
-    incoming: { ownerId: string; projectId: string; generation: number },
-  ) {
+  function applyLibrary(next: Library, incoming: RequestContext) {
     if (
       !sameConstructContext(
-        { ownerId, projectId, generation: generationRef.current },
+        { ownerId, projectId, revision, generation: generationRef.current },
         incoming,
       )
     )
@@ -105,9 +145,13 @@ export function ArchitectConstructPanel({
     setLibrary(next);
   }
 
+  function currentContext(): RequestContext {
+    return { ownerId, projectId, revision, generation: generationRef.current };
+  }
+
   async function refresh(signal?: AbortSignal) {
     if (!enabled) return;
-    const incoming = { ownerId, projectId, generation: generationRef.current };
+    const incoming = currentContext();
     const data = await readConstructLibrary(projectId, signal);
     if (!data.ok) throw new Error(data.error);
     applyLibrary(data.data as Library, incoming);
@@ -116,7 +160,7 @@ export function ArchitectConstructPanel({
   useEffect(() => {
     generationRef.current += 1;
     const generation = generationRef.current;
-    const incoming = { ownerId, projectId, generation };
+    const incoming = { ownerId, projectId, revision, generation };
     if (!enabled) return;
     const controller = new AbortController();
     fetch(`/api/architect-construct?project=${projectId}`, {
@@ -148,7 +192,7 @@ export function ArchitectConstructPanel({
 
   useEffect(() => {
     if (!enabled || !run || !['queued', 'claimed', 'running'].includes(run.status)) return;
-    const incoming = { ownerId, projectId, generation: generationRef.current };
+    const incoming = currentContext();
     const controller = new AbortController();
     const timer = window.setInterval(() => {
       void fetch(`/api/architect-construct?project=${projectId}`, {
@@ -167,12 +211,14 @@ export function ArchitectConstructPanel({
       window.clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, ownerId, projectId, run?.id, run?.status]);
+  }, [enabled, ownerId, projectId, revision, run?.id, run?.status]);
 
   async function proposeChange() {
     if (locked || busy) return;
     setBusy(true);
     setError('');
+    const incoming = currentContext();
+    const boundSnapshot = snapshot;
     try {
       const paths = files.map((file) => file.path);
       const proposed = await proposeConstructChange({
@@ -184,13 +230,16 @@ export function ArchitectConstructPanel({
         excerpts: files,
       });
       if (!proposed.ok) throw new Error(proposed.error);
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
       setProposal({
         mocked: proposed.data.mocked,
         summary: proposed.data.proposal.summary,
         notes: proposed.data.proposal.notes,
         patch: proposed.data.proposal.patch,
+        snapshot: boundSnapshot,
       });
-      setApprovedBriefId(null);
+      setApproval(null);
       setMessage(
         proposed.data.mocked
           ? 'Labelled mocked proposal ready for explicit approval. This is not a paid OpenAI call.'
@@ -207,6 +256,7 @@ export function ArchitectConstructPanel({
     if (locked || busy || sourceKind !== 'git') return;
     setBusy(true);
     setError('');
+    const incoming = currentContext();
     try {
       const sha = commit.trim();
       if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error('Pinned source reads require an exact commit.');
@@ -221,7 +271,16 @@ export function ArchitectConstructPanel({
         next.push({ path: pinned.data.file.path, content: pinned.data.file.content });
       }
       if (!next.length) throw new Error('Source snapshot has no files. Missing source is a blocker.');
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
       setFiles(next);
+      setGitPin({
+        repository: sourceReady?.github.repository?.fullName ?? '',
+        commit: sha,
+        files: fileFingerprint(next),
+      });
+      setProposal(null);
+      setApproval(null);
       setMessage('Pinned files were imported read-only. Construct cannot commit or deploy.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Pinned source unavailable.');
@@ -231,21 +290,42 @@ export function ArchitectConstructPanel({
   }
 
   async function approveChange() {
-    if (locked || busy || !proposal) return;
+    if (locked || busy || !liveProposal) return;
+    if (liveApproval) {
+      setMessage(
+        'Change is already approved against these exact inputs. Enqueue retries reuse the same request.',
+      );
+      return;
+    }
     setBusy(true);
     setError('');
+    const incoming = currentContext();
+    const boundSnapshot = snapshot;
     try {
       const briefId = newId();
       const sourceId = newId();
-      const repository = sourceReady?.github.repository?.fullName ?? null;
+      const requestId = newId();
+      const repository = sourceReady?.github.repository?.fullName ?? gitPin?.repository ?? null;
+      const pinIntact = Boolean(
+        sourceKind === 'git' &&
+          gitPin &&
+          gitPin.repository === repository &&
+          gitPin.commit === commit.trim() &&
+          gitPin.files === fileFingerprint(files),
+      );
+      const editedGitImport = Boolean(gitPin && !pinIntact);
+      const approvedKind = sourceKind === 'git' && !editedGitImport ? 'git' : 'imported';
       const approved = await approveConstructChange({
         projectId,
         briefId,
         sourceId,
         expected: revision,
-        sourceKind,
-        repository: sourceKind === 'git' ? repository : null,
-        commit: sourceKind === 'git' ? commit.trim() : null,
+        sourceKind: approvedKind,
+        repository: approvedKind === 'git' || editedGitImport ? repository : null,
+        commit:
+          approvedKind === 'git' || editedGitImport
+            ? commit.trim() || gitPin?.commit || null
+            : null,
         files,
         intendedChange,
         allowedPaths: files.map((file) => file.path),
@@ -253,11 +333,28 @@ export function ArchitectConstructPanel({
         acceptanceChecks: files.some((file) => file.path.endsWith('.mjs') || file.path.endsWith('.js'))
           ? [{ name: 'syntax', command: 'node', args: ['--check', files.find((file) => file.path.endsWith('.mjs') || file.path.endsWith('.js'))!.path] }]
           : [{ name: 'present', command: 'true', args: [] }],
-        patch: proposal.patch,
+        patch: liveProposal.patch,
       });
       if (!approved.ok) throw new Error(approved.error);
-      setApprovedBriefId(briefId);
-      setMessage('Change approved against the pinned source. Enqueue it to start an isolated run.');
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
+      const digest =
+        typeof approved.data.brief?.approval_hash === 'string'
+          ? approved.data.brief.approval_hash
+          : '';
+      if (!/^[0-9a-f]{64}$/.test(digest))
+        throw new Error('Approved brief did not return a server digest.');
+      setApproval({
+        briefId,
+        sourceId,
+        approvalHash: digest,
+        requestId,
+        snapshot: boundSnapshot,
+        revision,
+      });
+      setMessage(
+        'Change approved against the pinned source. Enqueue retries reuse the same request until inputs change.',
+      );
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not approve the change.');
@@ -267,18 +364,24 @@ export function ArchitectConstructPanel({
   }
 
   async function enqueueApproved() {
-    if (locked || busy || !approvedBriefId) return;
+    if (locked || busy || !liveApproval) return;
     setBusy(true);
     setError('');
+    const incoming = currentContext();
     try {
       const started = await startConstructRun({
         projectId,
-        briefId: approvedBriefId,
-        requestId: newId(),
+        briefId: liveApproval.briefId,
+        requestId: liveApproval.requestId,
         expected: revision,
+        approvalHash: liveApproval.approvalHash,
       });
       if (!started.ok) throw new Error(started.error);
-      setMessage('Approved change queued. The browser cannot mark checks passed.');
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
+      setMessage(
+        'Approved change queued. Retries reuse this request. The browser cannot mark checks passed.',
+      );
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not enqueue the approved change.');
@@ -292,9 +395,12 @@ export function ArchitectConstructPanel({
     setBusy(true);
     setError('');
     try {
+      const key = `${ownerId}:${projectId}:${revision}:fixture`;
+      if (!fixtureKeyRef.current || fixtureKeyRef.current.key !== key)
+        fixtureKeyRef.current = { key, id: newId() };
       const started = await startConstructFixture({
         projectId,
-        requestId: newId(),
+        requestId: fixtureKeyRef.current.id,
         expected: revision,
       });
       if (!started.ok) throw new Error(started.error);
@@ -359,7 +465,11 @@ export function ArchitectConstructPanel({
           <select
             value={sourceKind}
             disabled={!enabled || locked || busy}
-            onChange={(e) => setSourceKind(e.target.value === 'git' ? 'git' : 'imported')}
+            onChange={(e) => {
+              const next = e.target.value === 'git' ? 'git' : 'imported';
+              setSourceKind(next);
+              if (next !== 'git') setGitPin(null);
+            }}
           >
             <option value="imported">Imported snapshot</option>
             <option value="git">Git commit pin</option>
@@ -372,7 +482,10 @@ export function ArchitectConstructPanel({
               <input
                 value={commit}
                 disabled={!enabled || locked || busy}
-                onChange={(e) => setCommit(e.target.value)}
+                onChange={(e) => {
+                  setCommit(e.target.value);
+                  if (gitPin && e.target.value.trim() !== gitPin.commit) setGitPin(null);
+                }}
                 spellCheck={false}
                 placeholder="40-character commit"
               />
@@ -444,11 +557,11 @@ export function ArchitectConstructPanel({
           <BplusMaterial radius={8} />
           Propose change
         </button>
-        <button disabled={!enabled || locked || busy || !proposal} onClick={() => void approveChange()}>
+        <button disabled={!enabled || locked || busy || !liveProposal} onClick={() => void approveChange()}>
           Approve proposed change
         </button>
         <button
-          disabled={!enabled || locked || busy || !approvedBriefId}
+          disabled={!enabled || locked || busy || !liveApproval}
           onClick={() => void enqueueApproved()}
         >
           Enqueue approved change
@@ -469,13 +582,31 @@ export function ArchitectConstructPanel({
           Cancel run
         </button>
       </div>
-      {proposal && (
+      {proposal && !liveProposal && (
+        <p>
+          The proposed change no longer matches the current source, intended change, or project
+          revision. Propose again before approval.
+        </p>
+      )}
+      {approval && !liveApproval && (
+        <p>
+          The previous approval is invalid. Changing the source kind, repository, commit, files,
+          intended change, or project revision requires a new proposal and approval.
+        </p>
+      )}
+      {liveApproval && (
+        <p>
+          Approved inputs are bound to server digest {liveApproval.approvalHash.slice(0, 12)}. Enqueue
+          retries reuse the same request until a new approval is created.
+        </p>
+      )}
+      {liveProposal && (
         <article className="origin-construct-pane">
           <h4>Proposed change awaiting approval</h4>
-          <p>{proposal.summary}</p>
-          {proposal.mocked && <p>Labelled mocked provider. This is not a paid OpenAI call.</p>}
-          <p>{proposal.notes}</p>
-          {proposal.patch.map((file) => (
+          <p>{liveProposal.summary}</p>
+          {liveProposal.mocked && <p>Labelled mocked provider. This is not a paid OpenAI call.</p>}
+          <p>{liveProposal.notes}</p>
+          {liveProposal.patch.map((file) => (
             <pre key={file.path}>
               {file.path}
               {'\n'}

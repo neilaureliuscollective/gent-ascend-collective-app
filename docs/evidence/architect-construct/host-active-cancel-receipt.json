@@ -1,0 +1,9 @@
+{
+  "label": "Host active-cancel — not a model-generated Aethelios feature.",
+  "available": false,
+  "exit_code": null,
+  "aborted": false,
+  "stopped": false,
+  "container_gone": false,
+  "reason": "Docker is not installed in this runtime. Isolated container execution is blocked."
+}

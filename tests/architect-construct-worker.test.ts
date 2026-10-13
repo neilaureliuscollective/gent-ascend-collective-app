@@ -189,7 +189,7 @@ it('cancels an isolated job after work starts and persists cancelled', async () 
         await new Promise((resolve) => setTimeout(resolve, 20));
       }
       expect(shouldAbort?.()).toBe(true);
-      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.', stopped: true };
     },
   });
   expect(launched).toBe(true);
@@ -223,7 +223,7 @@ it('treats supervisor shutdown as cancellation of the isolated job', async () =>
         if (Date.now() - started > 2000) break;
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
-      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.', stopped: true };
     },
   });
   expect(executed?.status).toBe('cancelled');
@@ -313,4 +313,82 @@ it('blocks imported source without a sandbox and does not claim success', async 
   expect(executed?.result?.sandbox).toBe(false);
   expect(executed?.result?.runtime_available).toBe(false);
   expect(executed?.result?.blocker).toMatch(/no files|Missing source/i);
+});
+
+it('treats a transient cancellation poll rejection as fail-closed and does not overlap reads', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000043';
+  const source = fixtureSource(owner, requestId);
+  await queuedFixture(store, requestId);
+  let watch = false;
+  let inflight = 0;
+  let maxInflight = 0;
+  const original = store.readRun.bind(store);
+  store.readRun = async (...args) => {
+    if (!watch) return original(...args);
+    inflight += 1;
+    maxInflight = Math.max(maxInflight, inflight);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      throw new Error('transient poll rejection');
+    } finally {
+      inflight -= 1;
+    }
+  };
+  const executed = await processConstructOnce(store, 'poll-reject', new Date(), {
+    ...isolatedSuccess(
+      source,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: source.id,
+        sourceTreeHash: source.tree_hash,
+      }),
+    ),
+    launchContainer: async (_args, _timeout, shouldAbort) => {
+      watch = true;
+      const started = Date.now();
+      while (!shouldAbort?.() && Date.now() - started < 2000) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      expect(shouldAbort?.()).toBe(true);
+      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.', stopped: true };
+    },
+  });
+  expect(maxInflight).toBe(1);
+  expect(executed?.status).toBe('failed');
+  expect(executed?.result?.sandbox).toBe(false);
+  expect(executed?.result?.blocker).toMatch(/uncertain|fail-closed/i);
+  expect(executed?.status).not.toBe('cancelled');
+});
+
+it('does not report cancelled when isolated teardown is unconfirmed', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000044';
+  const source = fixtureSource(owner, requestId);
+  await queuedFixture(store, requestId);
+  const executed = await processConstructOnce(store, 'teardown-unconfirmed', new Date(), {
+    ...isolatedSuccess(
+      source,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: source.id,
+        sourceTreeHash: source.tree_hash,
+      }),
+    ),
+    launchContainer: async (_args, _timeout, shouldAbort) => {
+      await store.cancelRun(owner, requestId);
+      const started = Date.now();
+      while (!shouldAbort?.() && Date.now() - started < 2000) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.', stopped: false };
+    },
+  });
+  expect(executed?.status).toBe('failed');
+  expect(executed?.result?.blocker).toMatch(/teardown was not confirmed/i);
+  const reloaded = await store.readRun(owner, requestId);
+  expect(reloaded?.status).toBe('failed');
+  expect(reloaded?.status).not.toBe('cancelled');
 });

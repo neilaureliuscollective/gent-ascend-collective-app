@@ -33,7 +33,35 @@ export type ExecutionJob = {
   previewPath?: string;
 };
 
-export type ContainerLaunchResult = { exit_code: number; stdout: string; stderr: string };
+export type ContainerLaunchResult = {
+  exit_code: number;
+  stdout: string;
+  stderr: string;
+  stopped?: boolean;
+  aborted?: boolean;
+};
+export const TEARDOWN_CONFIRMED = 'teardown-confirmed';
+export const TEARDOWN_UNCONFIRMED = 'teardown-unconfirmed';
+
+export function teardownConfirmed(result: RunResult) {
+  return result.artifacts.some((item) => item.ref === TEARDOWN_CONFIRMED);
+}
+
+function withTeardownReceipt(result: RunResult, confirmed: boolean): RunResult {
+  return {
+    ...result,
+    artifacts: [
+      ...result.artifacts.filter(
+        (item) => item.ref !== TEARDOWN_CONFIRMED && item.ref !== TEARDOWN_UNCONFIRMED,
+      ),
+      {
+        kind: 'receipt',
+        ref: confirmed ? TEARDOWN_CONFIRMED : TEARDOWN_UNCONFIRMED,
+        hash: sha256Text(confirmed ? TEARDOWN_CONFIRMED : TEARDOWN_UNCONFIRMED),
+      },
+    ],
+  };
+}
 export type ContainerLauncher = (
   args: string[],
   timeoutMs: number,
@@ -294,11 +322,24 @@ function containerNameFromArgs(args: string[]) {
   return index >= 0 ? args[index + 1] : undefined;
 }
 
-function removeNamedContainer(name: string | undefined) {
-  if (!name) return;
-  spawn('docker', ['rm', '-f', name], {
-    env: { PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
-    stdio: 'ignore',
+const dockerEnv = () =>
+  ({ PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' }) as unknown as NodeJS.ProcessEnv;
+
+export async function removeNamedContainer(name: string | undefined): Promise<boolean> {
+  if (!name) return true;
+  await new Promise<void>((resolve) => {
+    const rm = spawn('docker', ['rm', '-f', name], { env: dockerEnv(), stdio: 'ignore' });
+    const finish = () => resolve();
+    rm.on('close', finish);
+    rm.on('error', finish);
+  });
+  return await new Promise<boolean>((resolve) => {
+    const inspect = spawn('docker', ['inspect', name], {
+      env: dockerEnv(),
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    inspect.on('error', () => resolve(true));
+    inspect.on('close', (code) => resolve(code !== 0));
   });
 }
 
@@ -309,12 +350,13 @@ export function spawnDocker(
 ): Promise<ContainerLaunchResult> {
   return new Promise((resolve) => {
     const child = spawn('docker', args, {
-      env: { PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
+      env: dockerEnv(),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
     let stderr = '';
     let settled = false;
+    let stopping = false;
     const name = containerNameFromArgs(args);
     const finish = (result: ContainerLaunchResult) => {
       if (settled) return;
@@ -323,10 +365,19 @@ export function spawnDocker(
       clearInterval(poll);
       resolve(result);
     };
-    const stopNamedJob = (reason: string, code: number) => {
-      removeNamedContainer(name);
-      child.kill('SIGKILL');
-      finish({ exit_code: code, stdout, stderr: stderr + `\n${reason}` });
+    const requestStop = (reason: string, code: number) => {
+      if (settled || stopping) return;
+      stopping = true;
+      void removeNamedContainer(name).then((stopped) => {
+        child.kill('SIGKILL');
+        finish({
+          exit_code: code,
+          stdout,
+          stderr: stderr + `\n${reason}`,
+          stopped,
+          aborted: true,
+        });
+      });
     };
     child.stdout.on('data', (chunk) => {
       stdout += chunk.toString('utf8');
@@ -335,17 +386,19 @@ export function spawnDocker(
       stderr += chunk.toString('utf8');
     });
     const timer = setTimeout(() => {
-      stopNamedJob('Container timed out.', 124);
+      requestStop('Container timed out.', 124);
     }, timeoutMs);
     const poll = setInterval(() => {
-      if (shouldAbort?.()) stopNamedJob('Isolated job cancelled.', 137);
+      if (shouldAbort?.()) requestStop('Isolated job cancelled.', 137);
     }, 100);
-    if (shouldAbort?.()) stopNamedJob('Isolated job cancelled.', 137);
+    if (shouldAbort?.()) requestStop('Isolated job cancelled.', 137);
     child.on('error', (error) => {
-      finish({ exit_code: 127, stdout, stderr: error.message });
+      if (stopping) return;
+      finish({ exit_code: 127, stdout, stderr: error.message, stopped: true, aborted: false });
     });
     child.on('close', (code) => {
-      finish({ exit_code: code ?? 1, stdout, stderr });
+      if (stopping) return;
+      finish({ exit_code: code ?? 1, stdout, stderr, stopped: true, aborted: false });
     });
   });
 }
@@ -363,6 +416,7 @@ export async function executeInContainer(
   const jobFile = join(root, 'construct-job.json');
   const name = `construct-${randomUUID().replace(/-/g, '').slice(0, 20)}`;
   let result: RunResult | undefined;
+  let launched: ContainerLaunchResult | undefined;
   const aborted = () => Boolean(shouldAbort?.());
   try {
     if (aborted()) {
@@ -404,7 +458,7 @@ export async function executeInContainer(
     );
     const invocation = dockerInvocation(snapshot, runnerFile, probe.image, { jobFile, name });
     assertSafeDockerArgs(invocation.args);
-    const launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms, aborted);
+    launched = await launch(invocation.args, job.scope.resource_limits.timeout_ms, aborted);
     if (aborted()) {
       result = blockedResult(job, 'Isolated execution was cancelled before the disposable job finished.', {
         runtime_available: true,
@@ -490,33 +544,51 @@ export async function executeInContainer(
     }
     const removed = await access(root).then(() => false).catch(() => true);
     if (result) {
-      result.artifacts = [
-        ...result.artifacts,
+      const confirmed = !launched || launched.stopped !== false;
+      result.artifacts = withTeardownReceipt(
         {
-          kind: 'receipt',
-          ref: removed ? `cleanup-removed:${name}` : `cleanup-failed:${name}`,
-          hash: sha256Text(`${root}:${removed ? 'removed' : 'present'}`),
+          ...result,
+          artifacts: [
+            ...result.artifacts,
+            {
+              kind: 'receipt',
+              ref: removed ? `cleanup-removed:${name}` : `cleanup-failed:${name}`,
+              hash: sha256Text(`${root}:${removed ? 'removed' : 'present'}`),
+            },
+            {
+              kind: 'receipt',
+              ref: confirmed ? `container-stopped:${name}` : `container-stop-unconfirmed:${name}`,
+              hash: sha256Text(`${name}:${confirmed ? 'stopped' : 'unconfirmed'}`),
+            },
+          ],
         },
-      ];
+        confirmed,
+      ).artifacts;
     }
   }
 }
 
 export async function executeConstruct(job: ExecutionJob, options: ExecuteOptions = {}): Promise<RunResult> {
   if (!job.source.files.length)
-    return blockedResult(
-      job,
-      'Source snapshot has no files. Missing source is a blocker; Architect will not invent repository contents.',
+    return withTeardownReceipt(
+      blockedResult(
+        job,
+        'Source snapshot has no files. Missing source is a blocker; Architect will not invent repository contents.',
+      ),
+      true,
     );
   if (
     !options.requireIsolation &&
     options.trustedInProcess === TRUSTED_IN_PROCESS &&
     matchesCanonicalFixture(job.source)
   )
-    return executeInProcess(job);
+    return withTeardownReceipt(await executeInProcess(job), true);
   const probe = await (options.probe ?? (() => probeDockerIsolation()))();
   if (!probe.available)
-    return blockedResult(job, probe.reason, { runtime_available: false, sandbox: false });
+    return withTeardownReceipt(
+      blockedResult(job, probe.reason, { runtime_available: false, sandbox: false }),
+      true,
+    );
   return executeInContainer(
     job,
     probe,

@@ -1,7 +1,11 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, it } from 'vitest';
 import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
-import { executeConstruct } from '@/domains/architect-construct/runner';
+import {
+  executeConstruct,
+  removeNamedContainer,
+  spawnDocker,
+} from '@/domains/architect-construct/runner';
 import { ensureConstructImage, probeDockerIsolation } from '@/domains/architect-construct/docker';
 
 it('inspects the host isolation runtime and reports pass, fail, or unavailable honestly', async () => {
@@ -68,4 +72,44 @@ it('inspects the host isolation runtime and reports pass, fail, or unavailable h
   if (outcome === 'failed') {
     expect(execution?.sandbox, execution?.blocker ?? 'isolated container failed').toBe(true);
   }
+});
+
+it('stops an active named container when abort is observed, or records Docker as unavailable', async () => {
+  const probe = await probeDockerIsolation();
+  const name = `construct-abort-${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+  let launched: Awaited<ReturnType<typeof spawnDocker>> | null = null;
+  let gone = false;
+  if (probe.available) {
+    let aborted = false;
+    setTimeout(() => {
+      aborted = true;
+    }, 150);
+    launched = await spawnDocker(
+      ['run', '--rm', '--name', name, '--network', 'none', 'node:24-alpine', 'sleep', '30'],
+      8000,
+      () => aborted,
+    );
+    gone = await removeNamedContainer(name);
+  }
+  const receipt = {
+    label: 'Host active-cancel — not a model-generated Aethelios feature.',
+    available: probe.available,
+    exit_code: launched?.exit_code ?? null,
+    aborted: launched?.aborted ?? false,
+    stopped: launched?.stopped ?? false,
+    container_gone: gone,
+    reason: probe.available ? null : probe.reason,
+  };
+  await mkdir('docs/evidence/architect-construct', { recursive: true });
+  await writeFile(
+    'docs/evidence/architect-construct/host-active-cancel-receipt.json',
+    JSON.stringify(receipt, null, 2) + '\n',
+  );
+  if (!probe.available) {
+    expect(probe.available).toBe(false);
+    return;
+  }
+  expect(launched?.aborted).toBe(true);
+  expect(launched?.stopped).toBe(true);
+  expect(gone).toBe(true);
 });

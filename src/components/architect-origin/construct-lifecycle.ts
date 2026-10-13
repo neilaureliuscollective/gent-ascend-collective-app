@@ -18,7 +18,12 @@ import {
 
 export type ConstructLifecycleLibrary = ConstructLibraryEnvelope & {
   events?: Record<string, Array<{ id?: string; kind?: string; detail?: string }>>;
-  briefs?: Array<{ id?: string; scope?: { intended_change?: string; project_revision?: number } }>;
+  briefs?: Array<{
+    id?: string;
+    approval_hash?: string;
+    status?: string;
+    scope?: { intended_change?: string; project_revision?: number };
+  }>;
   sources?: Array<{ id?: string; kind?: string; label?: string; repository?: string | null }>;
 };
 
@@ -201,7 +206,7 @@ export async function readPinnedConstructFile(
 }
 
 export async function startConstructRun(
-  input: { projectId: string; briefId: string; requestId: string; expected: number },
+  input: { projectId: string; briefId: string; requestId: string; expected: number; approvalHash: string },
   signal?: AbortSignal,
   fetchImpl: FetchLike = fetch,
 ) {
@@ -217,6 +222,7 @@ export async function startConstructRun(
         briefId: input.briefId,
         requestId: input.requestId,
         expected: input.expected,
+        approvalHash: input.approvalHash,
       }),
     },
     fetchImpl,
@@ -325,12 +331,35 @@ export function newerGeneration(previous: number, incoming: number) {
 }
 
 export function sameConstructContext(
-  current: { ownerId: string; projectId: string; generation: number },
-  incoming: { ownerId: string; projectId: string; generation: number },
+  current: { ownerId: string; projectId: string; revision: number; generation: number },
+  incoming: { ownerId: string; projectId: string; revision: number; generation: number },
 ) {
   return (
     current.ownerId === incoming.ownerId &&
     current.projectId === incoming.projectId &&
+    current.revision === incoming.revision &&
     incoming.generation >= current.generation
   );
+}
+
+export function constructInputSnapshot(input: {
+  sourceKind: 'imported' | 'git';
+  repository: string | null;
+  commit: string;
+  files: { path: string; content: string }[];
+  intendedChange: string;
+  revision: number;
+  patch?: { path: string; before: string; after: string }[];
+}) {
+  return JSON.stringify({
+    sourceKind: input.sourceKind,
+    repository: input.repository,
+    commit: input.commit,
+    files: [...input.files]
+      .map((file) => ({ path: file.path, content: file.content }))
+      .sort((a, b) => a.path.localeCompare(b.path)),
+    intendedChange: input.intendedChange,
+    revision: input.revision,
+    patch: input.patch ?? null,
+  });
 }

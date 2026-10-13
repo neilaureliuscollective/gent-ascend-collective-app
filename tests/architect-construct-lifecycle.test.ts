@@ -7,6 +7,7 @@ import {
   runningServerPreviewReason,
 } from '@/domains/architect-construct/lifecycle';
 import {
+  constructInputSnapshot,
   newerGeneration,
   sameConstructContext,
   selectCurrentRun,
@@ -92,22 +93,56 @@ describe('construct lifecycle selection', () => {
     expect(newerGeneration(2, 1)).toBe(false);
     expect(
       sameConstructContext(
-        { ownerId: ownerA, projectId: projectA, generation: 2 },
-        { ownerId: ownerA, projectId: projectA, generation: 2 },
+        { ownerId: ownerA, projectId: projectA, revision: 1, generation: 2 },
+        { ownerId: ownerA, projectId: projectA, revision: 1, generation: 2 },
       ),
     ).toBe(true);
     expect(
       sameConstructContext(
-        { ownerId: ownerA, projectId: projectA, generation: 2 },
-        { ownerId: ownerA, projectId: projectB, generation: 3 },
+        { ownerId: ownerA, projectId: projectA, revision: 1, generation: 2 },
+        { ownerId: ownerA, projectId: projectB, revision: 1, generation: 3 },
       ),
     ).toBe(false);
     expect(
       sameConstructContext(
-        { ownerId: ownerA, projectId: projectA, generation: 3 },
-        { ownerId: ownerA, projectId: projectA, generation: 2 },
+        { ownerId: ownerA, projectId: projectA, revision: 1, generation: 3 },
+        { ownerId: ownerA, projectId: projectA, revision: 1, generation: 2 },
       ),
     ).toBe(false);
+    expect(
+      sameConstructContext(
+        { ownerId: ownerA, projectId: projectA, revision: 1, generation: 2 },
+        { ownerId: ownerA, projectId: projectA, revision: 2, generation: 3 },
+      ),
+    ).toBe(false);
+    const snapshot = constructInputSnapshot({
+      sourceKind: 'imported',
+      repository: null,
+      commit: '',
+      files: [{ path: 'preview.html', content: 'Before' }],
+      intendedChange: 'Replace the heading.',
+      revision: 1,
+    });
+    expect(
+      constructInputSnapshot({
+        sourceKind: 'imported',
+        repository: null,
+        commit: '',
+        files: [{ path: 'preview.html', content: 'Edited' }],
+        intendedChange: 'Replace the heading.',
+        revision: 1,
+      }),
+    ).not.toBe(snapshot);
+    expect(
+      constructInputSnapshot({
+        sourceKind: 'imported',
+        repository: null,
+        commit: '',
+        files: [{ path: 'preview.html', content: 'Before' }],
+        intendedChange: 'Replace the heading.',
+        revision: 2,
+      }),
+    ).not.toBe(snapshot);
     expect(previewCaption({
       kind: 'construct-html',
       identity: {

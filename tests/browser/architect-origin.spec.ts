@@ -905,7 +905,6 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
     briefs: Array<Record<string, unknown>>;
     sources: Array<Record<string, unknown>>;
   } | null = null;
-  let polls = 0;
   await page.route('**/api/architect-construct/source*', async (route) =>
     route.fulfill({
       json: {
@@ -924,31 +923,6 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   await page.route('**/api/architect-construct*', async (route) => {
     if (route.request().url().includes('/source')) return;
     if (route.request().method() === 'GET') {
-      polls += 1;
-      if (receipt?.runs[0] && receipt.runs[0].status === 'queued' && polls > 1) {
-        receipt.runs[0] = {
-          ...receipt.runs[0],
-          status: 'succeeded',
-          result: {
-            isolation: 'docker',
-            runtime_available: true,
-            sandbox: true,
-            blocker: null,
-            source_hash: 'a'.repeat(64),
-            result_hash: 'b'.repeat(64),
-            changed_files: ['preview.html'],
-            diff: '+<h1>After</h1>',
-            checks: [
-              { name: 'present', command: 'true', exit_code: 0, status: 'passed', log: '' },
-            ],
-            preview: {
-              path: 'preview.html',
-              body: '<html><body><h1>After</h1></body></html>',
-              unavailable_reason: null,
-            },
-          },
-        };
-      }
       return route.fulfill({
         json:
           receipt ?? {
@@ -985,11 +959,19 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
       return route.fulfill({
         json: {
           source: { id: body.sourceId, kind: body.sourceKind, label: 'Imported source snapshot' },
-          brief: { id: body.briefId, status: 'approved' },
+          brief: { id: body.briefId, status: 'approved', approval_hash: 'b'.repeat(64) },
         },
       });
     }
     if (body.action === 'start') {
+      expect(body.approvalHash).toBe('b'.repeat(64));
+      expect(body.requestId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+      if (receipt?.runs[0]) {
+        expect(body.requestId).toBe(receipt.runs[0].id);
+        return route.fulfill({ json: { run: receipt.runs[0] } });
+      }
       const now = new Date().toISOString();
       receipt = {
         project: { id: body.projectId, revision: body.expected, name: 'Approved Origin' },
@@ -1090,23 +1072,22 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   ).toBeVisible();
   await page.getByRole('button', { name: 'Approve proposed change' }).click();
   await expect(page.getByText(/Change approved against the pinned source/)).toBeVisible();
+  await expect(page.getByText(/Approved inputs are bound to server digest/)).toBeVisible();
   await page.getByRole('button', { name: 'Enqueue approved change' }).click();
-  await expect(page.getByText(/Latest run queued|Latest run succeeded/)).toBeVisible();
-  await expect
-    .poll(async () => page.getByText(/Latest run succeeded/).count())
-    .toBeGreaterThan(0);
-  const review = page.getByRole('navigation', { name: 'Construct review' });
-  await review.getByRole('button', { name: 'Changes', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Actual files and diffs' })).toBeVisible();
-  await expect(page.getByText('preview.html', { exact: true })).toBeVisible();
-  await review.getByRole('button', { name: 'Checks', exact: true }).click();
-  await expect(page.getByText('present: passed')).toBeVisible();
-  await review.getByRole('button', { name: 'Preview', exact: true }).click();
-  await expect(page.frameLocator('iframe[title="Construct preview"]').getByText('After')).toBeVisible();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await page.getByRole('button', { name: 'Enqueue approved change' }).click();
+  await expect(page.getByText(/Retries reuse this request/)).toBeVisible();
+  await expect(page.getByText(/Latest run succeeded/)).toHaveCount(0);
+  await page.getByLabel('Intended change').fill('Edited after approval — previous digest is invalid.');
+  await expect(
+    page.getByText(/The previous approval is invalid/),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Enqueue approved change' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Approve proposed change' })).toBeDisabled();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
   await page.setViewportSize({ width: 720, height: 900 });
-  await expect(page.getByRole('button', { name: 'Enqueue approved change' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Propose change' })).toBeVisible();
 });
 
 test('construct panel drops a late poll after the project switches', async ({ page }) => {

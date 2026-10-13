@@ -19,6 +19,7 @@ import {
 import { constructProviderStatus, proposeConstructChange } from './provider';
 import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
+import { verifyConstructGitPin } from './connections-source';
 
 let memory: MemoryConstructStore | null = null;
 
@@ -116,6 +117,8 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
         brief.invalidation_reason || 'This brief was invalidated. Approve a new source-pinned brief.',
         409,
       );
+    if (brief.approval_hash !== input.approvalHash)
+      throw new IntelligenceError('Approval digest does not match the reviewed brief.', 409);
     if (
       brief.scope.project_id !== project.id ||
       brief.scope.project_revision !== project.revision ||
@@ -214,23 +217,45 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
     if (input.sourceKind === 'git' && (!input.repository || !input.commit))
       throw new IntelligenceError('Git pins require the selected repository and an exact commit.', 409);
     const store = constructStore({ client, plane: 'owner' });
+    const kind = input.sourceKind;
+    let repository = input.repository;
+    let commit = input.commit;
+    let files = input.files;
+    let modified = false;
+    if (kind === 'git') {
+      const verified = await verifyConstructGitPin({
+        repository,
+        commit: commit!,
+        files,
+      });
+      repository = verified.repository;
+      commit = verified.commit;
+      files = verified.files;
+    } else if (repository && commit) {
+      try {
+        const verified = await verifyConstructGitPin({ repository, commit, files });
+        if (treeHash(files) !== treeHash(verified.files)) modified = true;
+      } catch {
+        /* Imported files stay owner-supplied when a pin cannot be verified. */
+      }
+    }
     const source = await store.importSource({
       id: input.sourceId,
       person_id: person.id,
-      kind: input.sourceKind,
-      repository: input.repository,
-      commit: input.commit,
-      label: labeledSource(input.sourceKind, input.repository, input.commit),
-      tree_hash: treeHash(input.files),
-      files: input.files,
+      kind,
+      repository,
+      commit,
+      label: labeledSource(kind, repository, commit, { modified }),
+      tree_hash: treeHash(files),
+      files,
       created_at: new Date().toISOString(),
     });
     const scope = briefScopeSchema.parse({
       project_id: project.id,
       project_revision: project.revision,
       source_id: source.id,
-      repository: input.repository,
-      source_commit: input.commit,
+      repository,
+      source_commit: commit,
       source_tree_hash: source.tree_hash,
       allowed_paths: input.allowedPaths,
       protected_paths: input.protectedPaths ?? defaultProtectedPaths(),

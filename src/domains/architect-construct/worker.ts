@@ -1,4 +1,4 @@
-import { executeConstruct, type ExecuteOptions } from './runner';
+import { executeConstruct, teardownConfirmed, type ExecuteOptions } from './runner';
 import { sanitizeLog } from './sanitize';
 import { defaultLimits, type ConstructRun, type RunResult, terminalStatuses } from './schema';
 import { ConstructStoreError, type ConstructStore } from './store';
@@ -86,10 +86,23 @@ export async function processConstructOnce(
       return finish('cancelled', emptyResult(claimed, 'Owner cancelled the run after claim.'), now);
     await store.appendEvent(claimed, 'source_prepared', sanitizeLog(source.label));
     let cancelSeen = false;
+    let cancelUncertain = false;
+    let polling = false;
+    let pollGate: Promise<void> = Promise.resolve();
     const watchCancel = setInterval(() => {
-      void store.readRun(claimed.person_id, claimed.id).then((latest) => {
-        if (latest?.cancel_requested) cancelSeen = true;
-      });
+      if (polling) return;
+      polling = true;
+      pollGate = store
+        .readRun(claimed.person_id, claimed.id)
+        .then((current) => {
+          if (current?.cancel_requested) cancelSeen = true;
+        })
+        .catch(() => {
+          cancelUncertain = true;
+        })
+        .finally(() => {
+          polling = false;
+        });
     }, 400);
     let executed;
     try {
@@ -103,27 +116,61 @@ export async function processConstructOnce(
           ...options,
           requireIsolation: true,
           trustedInProcess: undefined,
-          shouldAbort: () => lost || cancelSeen || Boolean(options.shouldAbort?.()),
+          shouldAbort: () =>
+            lost || cancelSeen || cancelUncertain || Boolean(options.shouldAbort?.()),
         },
       );
     } finally {
       clearInterval(watchCancel);
+      await pollGate;
     }
     if (lost) throw new LeaseLostError();
     if (!(await renew())) throw new LeaseLostError();
-    const after = await store.readRun(claimed.person_id, claimed.id);
-    if (after?.cancel_requested || cancelSeen || options.shouldAbort?.())
+    let after;
+    try {
+      after = await store.readRun(claimed.person_id, claimed.id);
+    } catch {
+      cancelUncertain = true;
+    }
+    const wantsStop = Boolean(after?.cancel_requested || cancelSeen || options.shouldAbort?.());
+    if (wantsStop || cancelUncertain) {
+      if (!teardownConfirmed(executed)) {
+        if (lost) throw new LeaseLostError();
+        return finish(
+          'failed',
+          {
+            ...executed,
+            sandbox: false,
+            blocker:
+              'Isolated teardown was not confirmed. The run is not reported cancelled or successfully stopped.',
+          },
+          new Date(),
+        );
+      }
+      if (cancelUncertain && !wantsStop)
+        return finish(
+          'failed',
+          {
+            ...executed,
+            sandbox: false,
+            blocker:
+              'Cancellation poll was uncertain. Isolated execution was stopped fail-closed.',
+          },
+          new Date(),
+        );
       return finish(
         'cancelled',
         {
           ...executed,
           sandbox: false,
-          blocker: after?.cancel_requested || cancelSeen
-            ? 'Owner cancelled the run while isolated execution was in progress.'
-            : 'Worker shutdown cancelled isolated execution.',
+          blocker:
+            after?.cancel_requested || cancelSeen
+              ? 'Owner cancelled the run while isolated execution was in progress.'
+              : 'Worker shutdown cancelled isolated execution.',
         },
         new Date(),
       );
+    }
     if (executed.changed_files.length)
       await store.appendEvent(claimed, 'patch_applied', executed.changed_files.join(','));
     for (const check of executed.checks) {

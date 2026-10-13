@@ -241,6 +241,32 @@ try {
     ).data,
     true,
   );
+  assert.equal(
+    (
+      await owner.rpc('architect_construct_start', {
+        p_project: project,
+        p_request: request,
+        p_brief: request,
+        p_expected: 1,
+      })
+    ).data,
+    true,
+    'Lost-response retry must reuse the reserved request instead of creating a second run.',
+  );
+  const startedRuns = await owner.from('architect_construct_runs').select('id').eq('project_id', project);
+  assert.equal(startedRuns.data.length, 1, JSON.stringify(startedRuns.data));
+  assert.ok(
+    (
+      await owner.rpc('architect_construct_start', {
+        p_project: project,
+        p_request: request,
+        p_brief: crypto.randomUUID(),
+        p_expected: 1,
+      })
+    ).error,
+    'Reusing a reserved request with a different brief must be rejected.',
+  );
+  assert.equal((await owner.from('architect_construct_runs').select('id').eq('project_id', project)).data.length, 1);
   assert.equal((await foreign.from('architect_construct_runs').select('id').eq('id', request)).data.length, 0);
   await ensureLocalImage();
   const first = await runWorker('durable-worker-a');
@@ -342,7 +368,7 @@ try {
   assert.notEqual(resumed.data.project_id, otherProject);
 
   console.log(
-    'PASS: Construct durable owner enqueue, compiled standalone worker claim/execute/shutdown, isolated docker receipt, cancel-before-claim, reload/resume, cross-project isolation, second-worker idle, foreign denial. Labelled imported fixture files, not a model-generated Aethelios feature.',
+    'PASS: Construct durable owner enqueue, lost-response start retry (one run), reserved-request mismatch denial, compiled standalone worker claim/execute/shutdown, isolated docker receipt, cancel-before-claim, reload/resume, cross-project isolation, second-worker idle, foreign denial. Labelled imported fixture files, not a model-generated Aethelios feature.',
   );
 } finally {
   await owner.auth.signOut();

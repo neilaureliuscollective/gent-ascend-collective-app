@@ -291,6 +291,7 @@ export const startCommand = z
     briefId: z.uuid(),
     requestId: z.uuid(),
     expected: z.number().int().positive().max(500),
+    approvalHash: sha256,
   })
   .strict();
 export const startFixtureCommand = z

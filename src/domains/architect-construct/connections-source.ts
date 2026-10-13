@@ -74,6 +74,50 @@ export async function readConstructConnectionSource(): Promise<ConstructSourceRe
   }
 }
 
+export async function verifyConstructGitPin(input: {
+  repository: string | null;
+  commit: string;
+  files: { path: string; content: string }[];
+}) {
+  try {
+    const { person, client } = await intelligenceSession();
+    const store = founderConnectionStore(person.id, client);
+    const ready = await architectConnectionReadiness(person.id, store);
+    if (!ready.github.ready || !ready.github.repository)
+      throw new IntelligenceError(
+        ready.github.reason || 'A selected owner-authorized repository is required to claim a Git pin.',
+        409,
+      );
+    if (!input.repository || input.repository !== ready.github.repository.fullName)
+      throw new IntelligenceError(
+        'Git pin repository does not match the selected owner-authorized repository.',
+        409,
+      );
+    if (!/^[a-f0-9]{40}$/.test(input.commit))
+      throw new IntelligenceError('Pinned source reads require an exact commit.', 400);
+    if (!input.files.length)
+      throw new IntelligenceError('Source snapshot has no files. Missing source is a blocker.', 409);
+    const files: { path: string; content: string }[] = [];
+    for (const file of input.files) {
+      const pinned = await architectPinnedSource(person.id, store, file.path, input.commit);
+      if (pinned.content !== file.content)
+        throw new IntelligenceError(
+          'Claimed Git file content does not match the selected repository pin.',
+          409,
+        );
+      files.push({ path: pinned.path, content: pinned.content });
+    }
+    return {
+      repository: ready.github.repository.fullName,
+      commit: input.commit,
+      files,
+      verified: true as const,
+    };
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
 export async function readConstructPinnedSource(path: string, sha: string) {
   try {
     const { person, client } = await intelligenceSession();

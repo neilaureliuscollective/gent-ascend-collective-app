@@ -277,13 +277,48 @@ describe('Construct isolated runner', () => {
           }
           expect(shouldAbort?.()).toBe(true);
           expect(Date.now() - begin).toBeLessThan(timeoutMs);
-          return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.' };
+          return { exit_code: 137, stdout: '', stderr: 'Isolated job cancelled.', stopped: true };
         },
       },
     );
     expect(Date.now() - started).toBeLessThan(5000);
     expect(result.sandbox).toBe(false);
     expect(result.blocker).toMatch(/cancelled/i);
+    expect(result.artifacts.some((item) => item.ref === 'teardown-confirmed')).toBe(true);
+  });
+
+  it('records unconfirmed teardown when the launcher cannot prove the container stopped', async () => {
+    const imported = { ...source, kind: 'imported' as const };
+    let launched = false;
+    const result = await executeConstruct(
+      { source: imported, scope },
+      {
+        requireIsolation: true,
+        probe: async () => ({
+          available: true,
+          backend: 'docker',
+          version: '27.0.0',
+          image: 'node:24-alpine',
+          code: 'available',
+          reason: null,
+        }),
+        ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+        shouldAbort: () => launched,
+        launchContainer: async () => {
+          launched = true;
+          return {
+            exit_code: 137,
+            stdout: '',
+            stderr: 'Isolated job cancelled.',
+            stopped: false,
+            aborted: true,
+          };
+        },
+      },
+    );
+    expect(result.sandbox).toBe(false);
+    expect(result.artifacts.some((item) => item.ref === 'teardown-unconfirmed')).toBe(true);
+    expect(result.artifacts.some((item) => item.ref === 'teardown-confirmed')).toBe(false);
   });
 
   it('times out a container launcher without treating it as a sandbox', async () => {
