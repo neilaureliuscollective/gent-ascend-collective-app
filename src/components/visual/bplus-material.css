@@ -1,0 +1,260 @@
+/* B+ Talk pilot. Explicit adoption only; existing io material aliases remain authoritative
+   everywhere else. Specificity resolves the existing Emerald composer/nav rules without
+   depending on component chunk order. SVG has no viewBox: one edge unit stays one CSS px. */
+.app-shell.imperial-workspace
+  :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+  --io-optical-substrate: var(--aether-optical-substrate);
+  --io-optical-contact: 0 7px 10px -2px
+    color-mix(in srgb, var(--aether-optical-shadow) 73%, transparent);
+  position: relative;
+  isolation: isolate;
+  background: var(--io-optical-substrate);
+  border-color: transparent;
+  box-shadow: var(--io-optical-contact);
+  color: var(--io-text);
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer[data-bplus-surface] {
+  border-radius: 19px;
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .bplus-tools {
+  display: flex;
+  align-items: center;
+  flex: none;
+  border-radius: 8px;
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .bplus-tools > .talk-tool {
+  min-width: 44px;
+  color: var(--io-text);
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .bplus-tools > .talk-tool:hover {
+  background: transparent;
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .bplus-tools > .talk-tool:active:not(:disabled) {
+  background: var(--aether-optical-insert);
+}
+html[data-motion='still']
+  .app-shell.imperial-workspace
+  [data-bplus='talk']
+  .composer-controls
+  > button:active {
+  transform: none;
+}
+@media (max-width: 360px) {
+  .app-shell.imperial-workspace [data-bplus='talk'] .bplus-tools > .talk-tool {
+    padding-inline: 4px;
+  }
+}
+.app-shell.imperial-workspace .navigation a[data-bplus-surface='navigation'] {
+  border-radius: 10px;
+}
+.app-shell.imperial-workspace .navigation a[data-bplus-surface='navigation'] > .ui-icon {
+  color: var(--io-text);
+}
+.app-shell.imperial-workspace .navigation a[data-bplus-surface='navigation']::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 30%;
+  height: 40%;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--io-gold);
+  box-shadow: 0 0 0 2px var(--io-optical-substrate);
+}
+.bplus-optics {
+  position: absolute;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.app-shell.imperial-workspace
+  :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation'])
+  > svg.bplus-optics {
+  visibility: visible;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.bplus-optics .bplus-body {
+  width: calc(100% - 0.75px);
+  height: calc(100% - 0.75px);
+}
+.bplus-optics .bplus-substrate {
+  width: calc(100% - 3.4px);
+  height: calc(100% - 3.8px);
+}
+.bplus-optics .bplus-face {
+  width: calc(100% - 9.4px);
+  height: calc(100% - 12.5px);
+}
+.bplus-optics .bplus-light {
+  width: calc(100% - 10.8px);
+  height: calc(100% - 14px);
+}
+.app-shell.imperial-workspace [data-bplus-surface] .bplus-optics > svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.app-shell.imperial-workspace [data-bplus-surface] .bplus-optics > .bplus-undercut {
+  width: calc(100% - 26px);
+}
+.bplus-optics .bplus-emphasis {
+  opacity: 0;
+  transition: opacity 160ms var(--io-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-bplus-surface]:hover > .bplus-optics .bplus-emphasis {
+    opacity: 0.1;
+  }
+}
+[data-bplus-surface]:focus-within > .bplus-optics .bplus-emphasis {
+  opacity: 0.12;
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer:focus-within {
+  border-color: transparent;
+  box-shadow: var(--io-optical-contact);
+}
+.app-shell.imperial-workspace
+  [data-bplus='talk']
+  .composer-controls
+  :is(.button, .secondary-button) {
+  background: var(--aether-optical-insert);
+  color: var(--aether-ivory);
+  border-color: var(--io-secondary);
+  box-shadow: none;
+  min-width: 44px;
+}
+.app-shell.imperial-workspace
+  [data-bplus='talk']
+  :is(.composer-controls button, .bplus-tools > button):disabled {
+  background: var(--io-navigation);
+  color: var(--io-muted);
+  opacity: 1;
+  box-shadow: none;
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer:has(> textarea:disabled) {
+  background: var(--io-navigation);
+  border-color: var(--io-secondary);
+  box-shadow: none;
+}
+.app-shell.imperial-workspace
+  [data-bplus='talk']
+  .aurelius-composer:has(> textarea:disabled)
+  > .bplus-optics {
+  display: none;
+}
+.app-shell.imperial-workspace
+  :is(
+    [data-bplus='talk']
+      :is(
+        .composer-controls > button,
+        .aurelius-composer > textarea,
+        .aurelius-composer > .talk-expand,
+        .bplus-tools > button
+      ),
+    .navigation a[data-bplus-surface='navigation']
+  ):focus-visible {
+  outline: 2px solid var(--aether-ivory);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--aether-obsidian);
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer > textarea:focus-visible {
+  /* Keep the editor's ring inside its own perimeter, clear of the Expand control. */
+  outline-offset: -2px;
+}
+html[data-motion='still'] .bplus-optics .bplus-emphasis {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bplus-optics .bplus-emphasis {
+    transition: none;
+  }
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace
+  :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+  background: var(--io-navigation);
+  outline: 1px solid var(--io-secondary);
+  outline-offset: -1px;
+  box-shadow: none;
+}
+html[data-material='solid'] [data-bplus-surface] > .bplus-optics {
+  display: none;
+}
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  .app-shell.imperial-workspace
+    :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+    background: var(--io-navigation);
+    outline: 1px solid var(--io-secondary);
+    outline-offset: -1px;
+    box-shadow: none;
+  }
+  [data-bplus-surface] > .bplus-optics {
+    display: none;
+  }
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace
+    :is([data-bplus='talk'] [data-bplus-surface], .navigation a[data-bplus-surface='navigation']) {
+    background: Canvas;
+    color: CanvasText;
+    outline: 1px solid ButtonText;
+    box-shadow: none;
+  }
+  [data-bplus-surface] > .bplus-optics {
+    display: none;
+  }
+  .app-shell.imperial-workspace .navigation a[data-bplus-surface='navigation']::after {
+    background: Highlight;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace
+    [data-bplus='talk']
+    .composer-controls
+    :is(.button, .secondary-button) {
+    background: ButtonFace;
+    color: ButtonText;
+    border-color: ButtonText;
+  }
+  .app-shell.imperial-workspace
+    :is(
+      [data-bplus='talk']
+        :is(
+          .composer-controls > button,
+          .aurelius-composer > textarea,
+          .aurelius-composer > .talk-expand,
+          .bplus-tools > button
+        ),
+      .navigation a[data-bplus-surface='navigation']
+    ):focus-visible {
+    outline: 2px solid Highlight;
+    box-shadow: none;
+  }
+}
+
+/* Focus stays stronger than solid/high-contrast surface outlines. */
+html[data-material]
+  .app-shell.imperial-workspace
+  .navigation
+  a[data-bplus-surface='navigation']:focus-visible {
+  outline: 2px solid var(--aether-ivory);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--aether-obsidian);
+}
+@media (forced-colors: active) {
+  html[data-material]
+    .app-shell.imperial-workspace
+    .navigation
+    a[data-bplus-surface='navigation']:focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+}

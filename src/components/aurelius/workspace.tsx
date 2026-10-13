@@ -21,6 +21,7 @@ import { frameText } from './frame-text';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { conversationTiming } from '@/platform/conversation/timing';
 import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
+import { BplusMaterial, BplusTalkTools } from '../visual/bplus-material';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import {
   intelligenceStatus,
@@ -601,6 +602,7 @@ export function AureliusWorkspace({
     );
   return (
     <div
+      data-bplus={compact ? undefined : 'talk'}
       className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''} ${
         !data.turns.length && !busy ? 'is-new-conversation' : 'is-active-conversation'
       }`}
@@ -667,153 +669,159 @@ export function AureliusWorkspace({
           <span className="talk-title">
             {selected ? data.currentConversation?.title || 'Conversation' : 'New conversation'}
           </span>
-          <button
-            type="button"
-            className="talk-tool"
-            disabled={blocked}
-            onClick={() => {
-              if (
-                !draft.trim() ||
-                confirm('Discard the unsent draft and start a new conversation?')
-              )
-                newConversation();
-            }}
-          >
-            New
-          </button>
-          <TalkDrawer label="Tools & context">
-            <AppearanceControls />
-            <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
-              <button aria-pressed={tab === 'conversation'} onClick={() => setTab('conversation')}>
-                Conversation
-              </button>
-              <button aria-pressed={tab === 'memory'} onClick={() => setTab('memory')}>
-                Memory
-              </button>
-              <button aria-pressed={tab === 'context'} onClick={() => setTab('context')}>
-                Context
-              </button>
-            </div>
-            {tab === 'memory' ? (
-              <MemoryEditor
-                memories={data.memories}
-                onChanged={() => reload(selected)}
-                disabled={blocked || preview}
-                preview={preview}
-              />
-            ) : tab === 'context' ? (
-              <ContextPanel data={data} preview={preview} included={includeContext} />
-            ) : (
-              <>
-                <div
-                  className={`conversation-controls ${compact ? '' : 'full-conversation-controls'}`}
+          <BplusTalkTools enabled={!compact}>
+            <button
+              type="button"
+              className="talk-tool"
+              disabled={blocked}
+              onClick={() => {
+                if (
+                  !draft.trim() ||
+                  confirm('Discard the unsent draft and start a new conversation?')
+                )
+                  newConversation();
+              }}
+            >
+              New
+            </button>
+            <TalkDrawer label="Tools & context">
+              <AppearanceControls />
+              <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
+                <button
+                  aria-pressed={tab === 'conversation'}
+                  onClick={() => setTab('conversation')}
                 >
-                  {compact ? (
-                    <>
-                      <label className="sr-only" htmlFor="conversation-choice">
-                        Saved conversations
-                      </label>
-                      <select
-                        id="conversation-choice"
-                        value={selected ?? ''}
+                  Conversation
+                </button>
+                <button aria-pressed={tab === 'memory'} onClick={() => setTab('memory')}>
+                  Memory
+                </button>
+                <button aria-pressed={tab === 'context'} onClick={() => setTab('context')}>
+                  Context
+                </button>
+              </div>
+              {tab === 'memory' ? (
+                <MemoryEditor
+                  memories={data.memories}
+                  onChanged={() => reload(selected)}
+                  disabled={blocked || preview}
+                  preview={preview}
+                />
+              ) : tab === 'context' ? (
+                <ContextPanel data={data} preview={preview} included={includeContext} />
+              ) : (
+                <>
+                  <div
+                    className={`conversation-controls ${compact ? '' : 'full-conversation-controls'}`}
+                  >
+                    {compact ? (
+                      <>
+                        <label className="sr-only" htmlFor="conversation-choice">
+                          Saved conversations
+                        </label>
+                        <select
+                          id="conversation-choice"
+                          value={selected ?? ''}
+                          disabled={blocked}
+                          onChange={(e) => {
+                            follow.current = true;
+                            void reload(e.target.value || null).catch(() => {});
+                          }}
+                        >
+                          <option value="">New conversation</option>
+                          {selected && !data.conversations.some((c) => c.id === selected) && (
+                            <option value={selected}>Current conversation</option>
+                          )}
+                          {data.conversations.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.title}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="secondary-button"
+                          disabled={blocked}
+                          onClick={newConversation}
+                        >
+                          New
+                        </button>
+                      </>
+                    ) : (
+                      <span className="conversation-title">
+                        {selected
+                          ? data.currentConversation?.title ||
+                            data.conversations.find((c) => c.id === selected)?.title ||
+                            'Current conversation'
+                          : 'A space to think clearly.'}
+                      </span>
+                    )}
+                    {selected && (
+                      <button
+                        className="text-button"
                         disabled={blocked}
-                        onChange={(e) => {
-                          follow.current = true;
-                          void reload(e.target.value || null).catch(() => {});
-                        }}
+                        onClick={() => setConfirmDelete(true)}
                       >
-                        <option value="">New conversation</option>
-                        {selected && !data.conversations.some((c) => c.id === selected) && (
-                          <option value={selected}>Current conversation</option>
-                        )}
-                        {data.conversations.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.title}
-                          </option>
-                        ))}
-                      </select>
+                        Delete conversation
+                      </button>
+                    )}
+                  </div>
+                  {confirmDelete && (
+                    <div className="confirm-row">
+                      <p>
+                        Delete this conversation and its messages? Confirmed memories and daily
+                        actions remain separate.
+                      </p>
                       <button
                         className="secondary-button"
                         disabled={blocked}
-                        onClick={newConversation}
+                        onClick={() => void deleteConversation()}
                       >
-                        New
+                        Confirm delete
                       </button>
-                    </>
+                      <button className="text-button" onClick={() => setConfirmDelete(false)}>
+                        Keep conversation
+                      </button>
+                    </div>
+                  )}
+                  {!preview && (
+                    <TodayActions
+                      brief={data.context.dailyBrief}
+                      disabled={blocked}
+                      onChanged={() => reload(selected)}
+                    />
+                  )}
+                </>
+              )}
+              <label className="context-toggle">
+                <input
+                  type="checkbox"
+                  checked={includeContext}
+                  disabled={blocked}
+                  onChange={(e) => setIncludeContext(e.target.checked)}
+                />
+                Use personal context
+              </label>
+              <details className="composer-privacy">
+                <summary>What Aethelios receives</summary>
+                <p className="composer-disclosure">
+                  {preview ? (
+                    'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
                   ) : (
-                    <span className="conversation-title">
-                      {selected
-                        ? data.currentConversation?.title ||
-                          data.conversations.find((c) => c.id === selected)?.title ||
-                          'Current conversation'
-                        : 'A space to think clearly.'}
-                    </span>
+                    <>
+                      Sending shares this conversation’s recent messages
+                      {councilSelection ? ' with the selected specialists' : ''}
+                      {includeContext
+                        ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records`
+                        : ''}{' '}
+                      with our AI service. Read-only web research may consult public sources;
+                      returned sources are linked in saved replies. Nothing is automatically added
+                      to memory.
+                    </>
                   )}
-                  {selected && (
-                    <button
-                      className="text-button"
-                      disabled={blocked}
-                      onClick={() => setConfirmDelete(true)}
-                    >
-                      Delete conversation
-                    </button>
-                  )}
-                </div>
-                {confirmDelete && (
-                  <div className="confirm-row">
-                    <p>
-                      Delete this conversation and its messages? Confirmed memories and daily
-                      actions remain separate.
-                    </p>
-                    <button
-                      className="secondary-button"
-                      disabled={blocked}
-                      onClick={() => void deleteConversation()}
-                    >
-                      Confirm delete
-                    </button>
-                    <button className="text-button" onClick={() => setConfirmDelete(false)}>
-                      Keep conversation
-                    </button>
-                  </div>
-                )}
-                {!preview && (
-                  <TodayActions
-                    brief={data.context.dailyBrief}
-                    disabled={blocked}
-                    onChanged={() => reload(selected)}
-                  />
-                )}
-              </>
-            )}
-            <label className="context-toggle">
-              <input
-                type="checkbox"
-                checked={includeContext}
-                disabled={blocked}
-                onChange={(e) => setIncludeContext(e.target.checked)}
-              />
-              Use personal context
-            </label>
-            <details className="composer-privacy">
-              <summary>What Aethelios receives</summary>
-              <p className="composer-disclosure">
-                {preview ? (
-                  'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
-                ) : (
-                  <>
-                    Sending shares this conversation’s recent messages
-                    {councilSelection ? ' with the selected specialists' : ''}
-                    {includeContext
-                      ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records`
-                      : ''}{' '}
-                    with our AI service. Read-only web research may consult public sources; returned
-                    sources are linked in saved replies. Nothing is automatically added to memory.
-                  </>
-                )}
-              </p>
-            </details>
-          </TalkDrawer>
+                </p>
+              </details>
+            </TalkDrawer>
+          </BplusTalkTools>
         </div>
         {!preview && (
           <div className="intelligence-work-access">
@@ -1030,6 +1038,7 @@ export function AureliusWorkspace({
           )}
           <form
             className="aurelius-composer"
+            data-bplus-surface={compact ? undefined : 'composer'}
             onSubmit={(event) => {
               event.preventDefault();
               if (councilSelection?.kind === 'table') {
@@ -1039,6 +1048,7 @@ export function AureliusWorkspace({
               void sendMessage(draft, revision);
             }}
           >
+            {!compact && <BplusMaterial radius={19} />}
             {capability && !councilSelection && (
               <div className="revision-notice" aria-live="polite">
                 <span>

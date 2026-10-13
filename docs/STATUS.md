@@ -1,3 +1,7 @@
+## Hybrid Emerald B+ Talk pilot — October 13, 2026
+
+Neil-approved local material implementation on preserved integrated/repaired base `40d2fd8`: opaque emerald optical composer, current Talk navigation and existing New / Tools grouping only. Static SVG and generated palette tokens preserve functional state and existing appearance preferences; no global material alias, controller, domain or provider change. The approved image transfer returned Forbidden, so the explicitly authorized written recipe was used; exact image fidelity remains unverified. See [B+ scope and verification](HYBRID_EMERALD_BPLUS.md). The isolated review artifacts record the final SHA, actual screenshots and fresh checks. No publication or production action; remaining Auth/MediaPipe/device gates stay open.
+
 ## Architect history-navigation repair — October 13, 2026
 
 Follow-up review reproduced loss of edits to a newly saved project when its immediate history refresh failed. Save acknowledgements now carry the server-verified person ID; missing ownership pauses editing for receipt recovery, which restores the project URL. Added creation/failure/isolation regressions and explicit API owner-forgery rejection checks. This remains local-only; exact follow-up results and candidate are in the preserved review artifacts.
