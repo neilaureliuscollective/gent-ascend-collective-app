@@ -46,7 +46,7 @@ export async function renderResearchVisual(
       if (chunk.type === 'text') {
         text += chunk.text;
         if (text.length > 24000) throw new Error('Research too large');
-      } else {
+      } else if (chunk.type === 'finish') {
         input = chunk.input ?? null;
         output = chunk.output ?? null;
         finished = chunk.reason === 'stop';

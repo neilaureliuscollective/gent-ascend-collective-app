@@ -15,6 +15,8 @@ import { readContinuity } from '@/domains/continuity/service';
 import { resolveNextMove } from '@/domains/command/next-move';
 import { capabilityContext } from './capabilities';
 import { selectedArtifactContext } from '@/domains/artifacts/context-service';
+import { selectedTalkContext } from '@/domains/talk-creation/context';
+import type { TalkAgentSession } from '@/domains/talk-creation/tools';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -518,6 +520,7 @@ export async function prepareReply(
     sourceTurnId?: string;
     revisionKind?: 'retry' | 'regenerate' | 'edit';
     council?: CouncilSelection;
+    attachmentId?: string;
   },
   measured: (
     stage:
@@ -680,9 +683,6 @@ export async function prepareReply(
     measured('history-context');
     threadSummary = await prepareThreadSummary(client, person.id, input.conversationId, history);
     measured('summary');
-    if (!company && process.env.AETHELIOS_LIVE_ENABLED === 'true')
-      artifactContext = await selectedArtifactContext(client, person.id, input.conversationId);
-    measured('artifact-context');
   } catch {
     await client.rpc('ai_finish_turn', {
       p_request: input.requestId,
@@ -694,6 +694,30 @@ export async function prepareReply(
       503,
     );
   }
+  if (!company) {
+    try {
+      const [imageContext, talkContext] = await Promise.all([
+        selectedArtifactContext(client, person.id, input.conversationId),
+        selectedTalkContext(client, person.id, input.conversationId),
+      ]);
+      artifactContext = [imageContext, talkContext].filter(Boolean).join('\n');
+    } catch {
+      artifactContext = '';
+    }
+  }
+  measured('artifact-context');
+  let attachment: { bytes: Uint8Array; mediaType: string } | null = null;
+  if (input.attachmentId && !company) {
+    try {
+      const { readTalkAttachment } = await import('@/domains/talk-creation/service');
+      const file = await readTalkAttachment(input.attachmentId);
+      attachment = { bytes: file.bytes, mediaType: file.mediaType };
+    } catch (error) {
+      throw error instanceof IntelligenceError
+        ? error
+        : new IntelligenceError('The attached image could not be read.', 409);
+    }
+  }
   const messages = buildMessages(
     history.filter((turn) => !history.some((newer) => newer.parent_turn_id === turn.id)),
     input.text,
@@ -703,24 +727,50 @@ export async function prepareReply(
     threadSummary,
     company ? null : capabilityContext(input.text),
     company,
+    attachment,
   );
   if (artifactContext)
     messages.splice(Math.max(0, messages.length - 1), 0, {
       role: 'user',
       content: artifactContext,
     });
+  const creation: TalkAgentSession | null = company
+    ? null
+    : {
+        conversationId: input.conversationId,
+        requestId: input.requestId,
+        userText: input.text,
+        offered: [],
+        images: [],
+        proposeImage: async (request) => {
+          try {
+            const { proposeTalkImage } = await import('@/domains/talk-creation/service');
+            await proposeTalkImage({ ...request, projectId: null });
+            return { ok: true };
+          } catch (error) {
+            return {
+              ok: false,
+              reason:
+                error instanceof Error
+                  ? error.message
+                  : 'Image proposal could not be saved. Continue in text.',
+            };
+          }
+        },
+      };
   // Public company work never retrieves the separate private founder notebook.
   return {
     model: config.AURELIUS_AI_MODEL,
     messages,
     founder,
     council: selection,
+    creation,
     finish: async (
       text: string,
       status: 'complete' | 'failed' | 'cancelled',
       inputTokens?: number,
       outputTokens?: number,
-    ): Promise<Turn> => {
+    ): Promise<Turn & { creations?: import('./types').StreamCreation[] }> => {
       const result = await client.rpc('ai_finish_turn', {
         p_request: input.requestId,
         p_text: text,
@@ -737,6 +787,67 @@ export async function prepareReply(
         .eq('person_id', person.id)
         .single();
       if (row.error || !row.data) throw new IntelligenceError('Reply could not be loaded.', 503);
+      let creations: import('./types').StreamCreation[] = [];
+      if (status === 'complete' && creation) {
+        try {
+          const { persistOfferedCreations } = await import('@/domains/talk-creation/persist');
+          const { extractCreationFences } = await import('@/domains/talk-creation/intent');
+          const { briefContentSchema, planContentSchema, paletteContentSchema } = await import(
+            '@/domains/talk-creation/schema'
+          );
+          const selected = await client
+            .from('ai_talk_selection')
+            .select('kind,creation_id')
+            .eq('person_id', person.id)
+            .eq('conversation_id', input.conversationId);
+          const current: Partial<Record<'brief' | 'plan' | 'palette', string>> = {};
+          for (const item of selected.data ?? []) {
+            if (item.kind === 'brief' || item.kind === 'plan' || item.kind === 'palette')
+              current[item.kind] = item.creation_id;
+          }
+          let offered = creation.offered;
+          if (!offered.length) {
+            const fences = extractCreationFences(text);
+            const parsed: import('@/domains/talk-creation/schema').OfferedText = {};
+            for (const fence of fences) {
+              try {
+                const raw = JSON.parse(fence.raw);
+                if (fence.kind === 'brief') parsed.brief = briefContentSchema.parse(raw);
+                if (fence.kind === 'plan') parsed.plan = planContentSchema.parse(raw);
+                if (fence.kind === 'palette') parsed.palette = paletteContentSchema.parse(raw);
+              } catch {
+                /* Invalid fences stay in the transcript and are never labeled saved. */
+              }
+            }
+            if (parsed.brief || parsed.plan || parsed.palette) offered = [parsed];
+          }
+          if (offered.length) {
+            const saved = await persistOfferedCreations(
+              client,
+              input.conversationId,
+              input.requestId,
+              offered,
+              current,
+            );
+            creations = saved.map((item) => ({
+              id: item.id,
+              kind: item.kind,
+              title: 'title' in item.content ? item.content.title : item.kind,
+              status: 'saved',
+            }));
+          }
+          creations.push(
+            ...creation.images.map((image) => ({
+              id: image.id,
+              kind: 'image' as const,
+              title: image.prompt.slice(0, 80),
+              status: 'approval',
+            })),
+          );
+        } catch {
+          /* A saved reply must not become uncertain because optional creation persist failed. */
+        }
+      }
       if (
         status === 'complete' &&
         history.filter((turn) => turn.status === 'complete').length === 0
@@ -756,7 +867,7 @@ export async function prepareReply(
           }
         });
       }
-      return row.data;
+      return { ...row.data, creations };
     },
   };
 }

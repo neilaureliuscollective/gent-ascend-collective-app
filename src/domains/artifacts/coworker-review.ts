@@ -41,7 +41,7 @@ export async function renderCoworkerReview(
       if (chunk.type === 'text') {
         text += chunk.text;
         if (text.length > 16000) throw new Error('Review too long');
-      } else {
+      } else if (chunk.type === 'finish') {
         input = chunk.input ?? null;
         output = chunk.output ?? null;
         complete = chunk.reason === 'stop';

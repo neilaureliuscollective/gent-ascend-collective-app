@@ -567,6 +567,21 @@ export interface Database {
         never,
         never
       >;
+      ai_talk_creations: Table<
+        import('@/domains/talk-creation/schema').TalkCreation,
+        never,
+        never
+      >;
+      ai_talk_selection: Table<
+        {
+          person_id: string;
+          conversation_id: string;
+          kind: 'brief' | 'plan' | 'palette';
+          creation_id: string;
+        },
+        never,
+        never
+      >;
       ai_conversation_artifacts: Table<
         import('@/domains/artifacts/contract').Artifact & {
           person_id: string;
@@ -1262,6 +1277,21 @@ export interface Database {
       };
       ai_artifact_preview: {
         Args: { p_id: string; p_index: number; p_key: string };
+        Returns: boolean;
+      };
+      ai_talk_save_creation: {
+        Args: {
+          p_id: string;
+          p_conversation: string;
+          p_turn: string | null;
+          p_kind: string;
+          p_predecessor: string | null;
+          p_content: unknown;
+        };
+        Returns: { id: string; lineageId: string; version: number };
+      };
+      ai_talk_select_creation: {
+        Args: { p_conversation: string; p_creation: string };
         Returns: boolean;
       };
       ai_propose_image_artifact: {

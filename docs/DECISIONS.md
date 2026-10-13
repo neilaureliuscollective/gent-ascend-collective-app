@@ -1,3 +1,7 @@
+# Talk conversational creation — 2026-10-13
+
+Reuse Studio image RPCs and the `aethelios-studio` reference store instead of a second asset service. Text artifacts are a new owner-scoped table so they can work when Live is unavailable, without changing Live `voice.use` gates. Architect receives a versioned handoff package; its workspace is not rewritten while #119/#120 are in flight. Image tools run only after an explicit-request guard. Research: existing Studio/Live artifact contracts and OpenAI image/file-input guides already recorded in AETHELIOS_CHAT_FOUNDATION.md.
+
 # Founder Live production admission — 2026-10-13
 
 Replace the blanket `APP_ENV`/`VERCEL_ENV` production ban with one server-authoritative founder-pilot policy. Production stays default-off: `AETHELIOS_LIVE_ENABLED`, `AETHELIOS_LIVE_FOUNDER_PILOT`, verified hosting controls, canonical Gent database binding, independent expiry configuration, supported Realtime model and the existing server OpenAI key are all required. UI enablement uses the session-bound `founder_access` row, not the local harness flag. Ordinary beta accounts remain excluded. Talk still shows Live when admission is unavailable, with an understandable reason, instead of returning null. Consent, ephemeral credentials, owner RPCs, HMAC hangup bindings and abandoned-session cleanup are unchanged. Configuration is not launch or audio acceptance. Construct, Connections and Architect stay on their own branches.

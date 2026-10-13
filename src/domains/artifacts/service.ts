@@ -11,14 +11,21 @@ import { visualSchema } from './visual';
 import { renderVisual, VisualProviderError } from '@/platform/openai/visual';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 type ArtifactSession = Awaited<ReturnType<typeof intelligenceSession>>;
-export async function proposeImage(input: unknown, scope?: ArtifactSession) {
-  liveConfig();
+export type ArtifactAdmission = 'live' | 'talk';
+export async function proposeImage(
+  input: unknown,
+  scope?: ArtifactSession,
+  admission: ArtifactAdmission = 'live',
+) {
+  if (admission === 'live') liveConfig();
   const parsed = imageProposal.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the image proposal.');
   const { client } = scope ?? (await intelligenceSession());
-  const access = scope ? null : await currentAccess();
-  // Captured voice sessions still pass the fresh person-bound pilot check in the RPC.
-  if (access && (!access.has('voice.use') || !access.has('studio.create')))
+  const access = await currentAccess();
+  if (admission === 'talk') {
+    if (!access.has('studio.create'))
+      throw new IntelligenceError('Studio image creation is not enabled for this account.', 403);
+  } else if (!scope && (!access.has('voice.use') || !access.has('studio.create')))
     throw new IntelligenceError('Live Studio creation is not enabled for this account.', 403);
   const job = parsed.data;
   const result = await client.rpc('ai_propose_image_artifact', {
@@ -135,8 +142,12 @@ export async function selectArtifact(
   if (result.error || !result.data)
     throw new IntelligenceError('This creation could not be selected.', 409);
 }
-export async function reviewArtifact(id: string, approve: boolean) {
-  liveConfig();
+export async function reviewArtifact(
+  id: string,
+  approve: boolean,
+  admission: ArtifactAdmission = 'live',
+) {
+  if (admission === 'live') liveConfig();
   const { client, person } = await intelligenceSession();
   const access = await currentAccess();
   const found = await client
@@ -147,7 +158,11 @@ export async function reviewArtifact(id: string, approve: boolean) {
     .single();
   if (found.error || !found.data) throw new IntelligenceError('Creation request unavailable.', 404);
   const isVisual = found.data.operation.startsWith('visual.');
-  if (!access.has('voice.use') || (approve && !isVisual && !access.has('studio.create')))
+  if (admission === 'talk') {
+    if (isVisual) throw new IntelligenceError('Talk does not approve Live visual work.', 403);
+    if (approve && !access.has('studio.create'))
+      throw new IntelligenceError('Studio image creation is not enabled for this account.', 403);
+  } else if (!access.has('voice.use') || (approve && !isVisual && !access.has('studio.create')))
     throw new IntelligenceError('Creation access unavailable.', 403);
   const model = isVisual ? aiConfigSchema.parse(process.env).AURELIUS_AI_MODEL : '';
   const result = isVisual
