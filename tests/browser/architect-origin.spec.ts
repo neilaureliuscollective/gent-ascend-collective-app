@@ -43,7 +43,11 @@ async function fixture(page: Page, failFirst = false) {
         });
       }
       return route.fulfill({
-        json: { revision: old?.revision ?? project!.revision, requestId: body.requestId },
+        json: {
+          revision: old?.revision ?? project!.revision,
+          requestId: body.requestId,
+          personId: 'owner',
+        },
       });
     }
     const run = {

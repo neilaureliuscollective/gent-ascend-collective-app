@@ -44,3 +44,32 @@ it('rejects invalid project/history selectors and disables shared caching', asyn
   const response = await GET(new Request('https://example.com/api/architect-origin'));
   expect(response.headers.get('cache-control')).toBe('private, no-store');
 });
+
+it.each(['personId', 'person_id'])(
+  'rejects forged %s in a save body before calling the service',
+  async (field) => {
+    service.save.mockClear();
+    const { initialProject } = await import('@/domains/architect-origin/schema');
+    const response = await POST(
+      new Request('https://example.com/api/architect-origin', {
+        method: 'POST',
+        headers: {
+          host: 'example.com',
+          origin: 'https://example.com',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'save',
+          projectId: crypto.randomUUID(),
+          requestId: crypto.randomUUID(),
+          expected: 0,
+          content: initialProject('Synthetic project', 'business'),
+          note: 'Create',
+          [field]: 'forged-person',
+        }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(service.save).not.toHaveBeenCalled();
+  },
+);

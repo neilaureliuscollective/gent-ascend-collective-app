@@ -302,6 +302,7 @@ export function ArchitectOrigin({
         const receipt = data.versions.find((v) => v.id === pending.requestId);
         if (receipt) {
           const project = data.projects.find((p) => p.id === pending.projectId)!;
+          projectLocation(project.id);
           setSelected(project);
           setDraft(structuredClone(project.content));
           setPending(null);
@@ -370,13 +371,16 @@ export function ArchitectOrigin({
     setError('');
     setMessage('Saving exact draft…');
     try {
-      const result = await request<{ revision: number; requestId: string }>(
+      const result = await request<{ revision: number; requestId: string; personId: string }>(
         '/api/architect-origin',
         input,
       );
+      if (typeof result.personId !== 'string' || !result.personId.trim()) {
+        throw new Error('Save ownership was not confirmed. Reload receipts before editing.');
+      }
       const project: OriginProject = {
         id: input.projectId,
-        person_id: selected?.person_id ?? '',
+        person_id: result.personId,
         revision: result.revision,
         content: structuredClone(input.content),
         created_at: selected?.created_at ?? new Date().toISOString(),

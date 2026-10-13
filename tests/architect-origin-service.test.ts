@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   rpc: vi.fn(),
   rows: new Map<string, unknown>(),
   access: true,
+  owner: 'owner',
 }));
 vi.mock('@/domains/intelligence/service', () => ({
   IntelligenceError: class extends Error {
@@ -16,7 +17,7 @@ vi.mock('@/domains/intelligence/service', () => ({
     }
   },
   intelligenceSession: async () => ({
-    person: { id: 'owner' },
+    person: { id: state.owner },
     client: {
       rpc: state.rpc,
       from: (table: string) => {
@@ -67,6 +68,7 @@ beforeEach(() => {
   vi.stubEnv('OPENAI_API_KEY', 'synthetic');
   vi.stubEnv('AETHELIOS_LIVE_ENABLED', 'false');
   state.access = true;
+  state.owner = 'owner';
   state.rows.clear();
   state.rows.set('architect_origin_projects', {
     id,
@@ -167,7 +169,7 @@ it('saves only via the ownership and expected-revision RPC and reports unconfirm
       content: initialProject('Synthetic idea', 'business'),
       note: 'Confirmed update',
     }),
-  ).resolves.toEqual({ revision: 2, requestId: input.requestId });
+  ).resolves.toEqual({ revision: 2, requestId: input.requestId, personId: 'owner' });
   state.rpc.mockResolvedValueOnce({ data: null, error: { code: 'conflict' } });
   await expect(
     saveOrigin({
@@ -246,4 +248,31 @@ it('rejects ambiguous document edits without altering approved text', async () =
     generateOrigin({ ...input, kind: 'document', documentId: docId }, new AbortController().signal),
   ).rejects.toThrow(/failed/);
   expect(project.content.documents[0]!.content).toBe('Repeated sentence. Repeated sentence.');
+});
+
+it('returns the verified request owner in a successful save receipt without taking ownership from input', async () => {
+  state.owner = 'verified-request-person';
+  state.rpc.mockResolvedValueOnce({ data: 1, error: null });
+  const command = {
+    action: 'save' as const,
+    projectId: id,
+    requestId: input.requestId,
+    expected: 0,
+    content: initialProject('Synthetic new project', 'business'),
+    note: 'Create',
+    personId: 'forged-client-person',
+    person_id: 'forged-client-person',
+  };
+  await expect(saveOrigin(command)).resolves.toEqual({
+    revision: 1,
+    requestId: command.requestId,
+    personId: state.owner,
+  });
+  expect(state.rpc).toHaveBeenCalledExactlyOnceWith('architect_origin_save', {
+    p_project: id,
+    p_request: command.requestId,
+    p_expected: 0,
+    p_content: command.content,
+    p_note: 'Create',
+  });
 });

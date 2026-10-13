@@ -85,7 +85,7 @@ export async function readOrigin(projectId?: string, before = 501) {
   return { projects: library, versions: versions.data ?? [], runs: runs.data ?? [] };
 }
 export async function saveOrigin(input: z.infer<typeof saveCommand>) {
-  const { client } = await intelligenceSession();
+  const { client, person } = await intelligenceSession();
   requireReady();
   const saved = await client.rpc('architect_origin_save', {
     p_project: input.projectId,
@@ -99,7 +99,9 @@ export async function saveOrigin(input: z.infer<typeof saveCommand>) {
       'Save was not confirmed or the project changed. Reload to inspect the receipt; keep your draft.',
       409,
     );
-  return { revision: saved.data, requestId: input.requestId };
+  // The confirmed write and its owner share the same verified request session.
+  // Do not make safe client draft recovery depend on a second history read.
+  return { revision: saved.data, requestId: input.requestId, personId: person.id };
 }
 export async function generateOrigin(input: z.infer<typeof generateCommand>, signal: AbortSignal) {
   const { client, person } = await intelligenceSession();

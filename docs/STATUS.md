@@ -1,6 +1,8 @@
 ## Architect history-navigation repair — October 13, 2026
 
-Founder-approved local repair on combined PR113/PR114 base `6781bc6`: owner-checked, memory-only recovery preserves saved-project drafts across browser Back/Forward without changing browser history. Explicit discard/leave, refresh decisions, stale revisions and uncertain save receipts remain deliberate. No backend/schema/feature-gate/B+ changes or external release action. Verification and limitations: [Architect history recovery](ARCHITECT_HISTORY_RECOVERY.md); exact final evidence is preserved in the separate review archive. Real Supabase and MediaPipe asset gates remain open.
+Follow-up review reproduced loss of edits to a newly saved project when its immediate history refresh failed. Save acknowledgements now carry the server-verified person ID; missing ownership pauses editing for receipt recovery, which restores the project URL. Added creation/failure/isolation regressions and explicit API owner-forgery rejection checks. This remains local-only; exact follow-up results and candidate are in the preserved review artifacts.
+
+Founder-approved local repair on combined PR113/PR114 base `6781bc6`: owner-checked, memory-only recovery preserves saved-project drafts across browser Back/Forward without changing browser history. Explicit discard/leave, refresh decisions, stale revisions and uncertain save receipts remain deliberate. No schema/feature-gate/B+ changes or external release action. Verification and limitations: [Architect history recovery](ARCHITECT_HISTORY_RECOVERY.md); exact final evidence is preserved in the separate review archive. Real Supabase and MediaPipe asset gates remain open.
 
 ## Imperial Emerald II — October 12, 2026
 

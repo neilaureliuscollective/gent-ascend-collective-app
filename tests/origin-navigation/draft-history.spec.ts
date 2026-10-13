@@ -67,7 +67,9 @@ async function fixture(page: Page) {
     });
     if (state.failAfterCommit)
       return route.fulfill({ status: 503, json: { error: 'Synthetic lost acknowledgement' } });
-    return route.fulfill({ json: { revision: project.revision, requestId: body.requestId } });
+    return route.fulfill({
+      json: { revision: project.revision, requestId: body.requestId, personId: project.person_id },
+    });
   });
   await page.goto('/app/work');
   await page.getByRole('link', { name: 'Open Architect ↗', exact: true }).click();
