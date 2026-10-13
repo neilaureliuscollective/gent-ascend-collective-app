@@ -352,3 +352,35 @@ test('fresh save receipt resolves a recovered uncertain save without replaying i
   await expect(page.getByRole('button', { name: 'Save & confirm revision' })).toBeDisabled();
   expect(state.saves).toHaveLength(1);
 });
+
+for (const width of [390, 720, 1440]) {
+  test(`early native Back during restored editor mount cannot write Architect state onto Work at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const state = await fixture(page);
+    await editor(page).fill('Synthetic saved early-back document');
+    await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+    await expect(page.getByRole('status')).toContainText('Saved revision 2');
+    // Reproduce navigation between the restored DOM commit and passive URL effect.
+    // Only native history.back() is used: no patched URL, history state or app code.
+    await page.addInitScript(() => {
+      const observer = new MutationObserver(() => {
+        const restored = [...document.querySelectorAll<HTMLTextAreaElement>('textarea')].some(
+          (el) => el.value === 'Synthetic saved early-back document',
+        );
+        if (!restored) return;
+        observer.disconnect();
+        history.back();
+      });
+      observer.observe(document, { childList: true, subtree: true });
+    });
+    await page.reload();
+    await expect(page).toHaveURL(/\/app\/work$/);
+    await expect(page.locator('.company-work')).toBeVisible();
+    await page.goForward();
+    await expect(editor(page)).toHaveValue('Synthetic saved early-back document');
+    await expect(page.getByRole('status')).toContainText('Resumed revision 2');
+    expect(state.saves).toHaveLength(1);
+  });
+}

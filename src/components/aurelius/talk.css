@@ -210,9 +210,19 @@
   max-height: 44px;
   overflow: auto;
 }
+.aurelius-compose-region {
+  display: contents;
+}
+.talk-page .aurelius-compose-region {
+  display: block;
+  position: relative;
+  flex: none;
+  width: min(100%, 840px);
+  align-self: center;
+}
 .talk-page .latest-message {
   position: absolute;
-  bottom: 125px;
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;

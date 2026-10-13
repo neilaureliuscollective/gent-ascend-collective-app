@@ -1021,129 +1021,131 @@ export function AureliusWorkspace({
                 : 'Conversation access is not enabled for this account. If you were invited, confirm your access in the founding member guide.'}
             </p>
           )}
-          {awayFromLatest && (
-            <button
-              className="latest-message"
-              onClick={() => {
-                follow.current = true;
-                setAwayFromLatest(false);
-                scroll.current?.scrollTo({
-                  top: scroll.current.scrollHeight,
-                  behavior: 'instant',
-                });
+          <div className="aurelius-compose-region">
+            {awayFromLatest && (
+              <button
+                className="latest-message"
+                onClick={() => {
+                  follow.current = true;
+                  setAwayFromLatest(false);
+                  scroll.current?.scrollTo({
+                    top: scroll.current.scrollHeight,
+                    behavior: 'instant',
+                  });
+                }}
+              >
+                Latest message ↓
+              </button>
+            )}
+            <form
+              className="aurelius-composer"
+              data-bplus-surface={compact ? undefined : 'composer'}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (councilSelection?.kind === 'table') {
+                  tableReview.current?.open();
+                  return;
+                }
+                void sendMessage(draft, revision);
               }}
             >
-              Latest message ↓
-            </button>
-          )}
-          <form
-            className="aurelius-composer"
-            data-bplus-surface={compact ? undefined : 'composer'}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (councilSelection?.kind === 'table') {
-                tableReview.current?.open();
-                return;
-              }
-              void sendMessage(draft, revision);
-            }}
-          >
-            {!compact && <BplusMaterial radius={19} />}
-            {capability && !councilSelection && (
-              <div className="revision-notice" aria-live="polite">
-                <span>
-                  Aethelios is routing this through <strong>{capability.label}</strong>{' '}
-                  intelligence.
-                </span>{' '}
-                {['performance', 'studio', 'presence'].includes(capability.id) ? (
+              {!compact && <BplusMaterial radius={19} />}
+              {capability && !councilSelection && (
+                <div className="revision-notice" aria-live="polite">
+                  <span>
+                    Aethelios is routing this through <strong>{capability.label}</strong>{' '}
+                    intelligence.
+                  </span>{' '}
+                  {['performance', 'studio', 'presence'].includes(capability.id) ? (
+                    <button
+                      type="button"
+                      className="text-button"
+                      disabled={orchestrating}
+                      onClick={() => void prepareCapability()}
+                    >
+                      {orchestrating
+                        ? `Preparing ${capability.label}…`
+                        : `Prepare in ${capability.label} ↗`}
+                    </button>
+                  ) : (
+                    <Link
+                      href={capability.href}
+                      onClick={() => {
+                        if (data.ownerId)
+                          handoff?.stage({
+                            text: draft.trim() || data.turns.at(-1)?.user_text || '',
+                            ownerId: data.ownerId,
+                            target: capability.id,
+                          });
+                      }}
+                    >
+                      Open {capability.label} only if you want depth ↗
+                    </Link>
+                  )}
+                </div>
+              )}
+              {revision && (
+                <div className="revision-notice">
+                  Editing your last message{' '}
                   <button
                     type="button"
-                    className="text-button"
-                    disabled={orchestrating}
-                    onClick={() => void prepareCapability()}
-                  >
-                    {orchestrating
-                      ? `Preparing ${capability.label}…`
-                      : `Prepare in ${capability.label} ↗`}
-                  </button>
-                ) : (
-                  <Link
-                    href={capability.href}
                     onClick={() => {
-                      if (data.ownerId)
-                        handoff?.stage({
-                          text: draft.trim() || data.turns.at(-1)?.user_text || '',
-                          ownerId: data.ownerId,
-                          target: capability.id,
-                        });
+                      setRevision(null);
+                      setDraft('');
                     }}
                   >
-                    Open {capability.label} only if you want depth ↗
-                  </Link>
+                    Cancel
+                  </button>
+                </div>
+              )}
+              <TalkInput
+                id="aurelius-message"
+                label="Message Aethelios"
+                inputRef={composer}
+                value={draft}
+                onChange={setDraft}
+                disabled={liveBusy || loading || deleting || orchestrating}
+                placeholder={
+                  councilSelection?.kind === 'specialist'
+                    ? `Message ${councilLabel(councilSelection)}…`
+                    : 'Message Aethelios…'
+                }
+              />
+              <div className="composer-controls">
+                <span className="quiet-label">
+                  {includeContext ? 'Personal context on' : 'Private conversation'}
+                </span>
+                {busy ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={operation.persistence === 'confirmed'}
+                    onPointerDown={(event) => retainComposerFocus(event, composer.current)}
+                    onClick={() => cancelReply.current?.()}
+                  >
+                    Stop reply
+                  </button>
+                ) : (
+                  <button
+                    className="button"
+                    disabled={
+                      blocked ||
+                      !data.configured ||
+                      !data.canChat ||
+                      !draft.trim() ||
+                      needsReload ||
+                      Boolean(data.currentConversation?.archived_at)
+                    }
+                    type="submit"
+                    onPointerDown={(event) => retainComposerFocus(event, composer.current)}
+                  >
+                    {councilSelection?.kind === 'table' ? 'Review The Table' : 'Send'}{' '}
+                    <span aria-hidden="true">↑</span>
+                  </button>
                 )}
               </div>
-            )}
-            {revision && (
-              <div className="revision-notice">
-                Editing your last message{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRevision(null);
-                    setDraft('');
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-            <TalkInput
-              id="aurelius-message"
-              label="Message Aethelios"
-              inputRef={composer}
-              value={draft}
-              onChange={setDraft}
-              disabled={liveBusy || loading || deleting || orchestrating}
-              placeholder={
-                councilSelection?.kind === 'specialist'
-                  ? `Message ${councilLabel(councilSelection)}…`
-                  : 'Message Aethelios…'
-              }
-            />
-            <div className="composer-controls">
-              <span className="quiet-label">
-                {includeContext ? 'Personal context on' : 'Private conversation'}
-              </span>
-              {busy ? (
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={operation.persistence === 'confirmed'}
-                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
-                  onClick={() => cancelReply.current?.()}
-                >
-                  Stop reply
-                </button>
-              ) : (
-                <button
-                  className="button"
-                  disabled={
-                    blocked ||
-                    !data.configured ||
-                    !data.canChat ||
-                    !draft.trim() ||
-                    needsReload ||
-                    Boolean(data.currentConversation?.archived_at)
-                  }
-                  type="submit"
-                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
-                >
-                  {councilSelection?.kind === 'table' ? 'Review The Table' : 'Send'}{' '}
-                  <span aria-hidden="true">↑</span>
-                </button>
-              )}
-            </div>
-          </form>
+            </form>
+          </div>
         </>
         <p className="aurelius-notice" role="status">
           {notice}

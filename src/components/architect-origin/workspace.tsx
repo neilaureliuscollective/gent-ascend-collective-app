@@ -246,8 +246,11 @@ export function ArchitectOrigin({
   }, [dirty, pending, busy, handoff]);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
-    if (!loaded || !selected) return;
+    if (!loaded || !selected || location.pathname !== '/app/architect') return;
     const url = new URL(location.href);
+    // A native Back can change location before this passive effect is flushed.
+    // Only the currently selected Architect entry owns these view parameters.
+    if (url.searchParams.get('project') !== selected.id) return;
     url.searchParams.set('surface', surface);
     url.searchParams.set('section', key);
     if (documentId) url.searchParams.set('document', documentId);

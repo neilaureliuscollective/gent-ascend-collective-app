@@ -56,7 +56,10 @@ export function TalkDrawer({
         aria-labelledby={`${id}-title`}
         onClose={() => {
           setOpen(false);
-          trigger.current?.focus();
+          // Native close normally restores the invoker before this queued event.
+          // Do not overwrite a newer focus choice made outside the closed drawer.
+          const active = document.activeElement;
+          if (active === document.body || dialog?.contains(active)) trigger.current?.focus();
         }}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
