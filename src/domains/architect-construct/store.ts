@@ -238,8 +238,9 @@ export class MemoryConstructStore implements ConstructStore {
 
   async markRunning(workerId: string, runId: string, leaseToken: string, now: Date) {
     const run = this.runs.get(runId);
-    if (!this.ownsFresh(run, workerId, leaseToken, now) || !run) return false;
+    if (!this.owns(run, workerId, leaseToken) || !run) return false;
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return true;
+    if (!this.ownsFresh(run, workerId, leaseToken, now)) return false;
     run.status = 'running';
     run.updated_at = now.toISOString();
     return true;
@@ -283,9 +284,11 @@ export class MemoryConstructStore implements ConstructStore {
     now: Date,
   ) {
     const run = this.runs.get(runId);
-    if (!this.ownsFresh(run, workerId, leaseToken, now) || !run)
+    if (!this.owns(run, workerId, leaseToken) || !run)
       throw new ConstructStoreError('Run is not claimed by this worker lease.');
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return run;
+    if (!this.ownsFresh(run, workerId, leaseToken, now))
+      throw new ConstructStoreError('Run is not claimed by this worker lease.');
     const kind =
       status === 'timed_out'
         ? 'timed_out'

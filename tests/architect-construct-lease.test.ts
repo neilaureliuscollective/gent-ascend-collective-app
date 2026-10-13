@@ -201,3 +201,41 @@ it('treats a lost renewal as a fencing failure and refuses stale completion', as
   expect(reloaded?.status === 'claimed' || reloaded?.status === 'running').toBe(true);
   expect(reloaded?.result).toBeNull();
 });
+
+it('treats a second finish after the lease is cleared as idempotent', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000086';
+  const { source, scope } = await queued(store, requestId);
+  const finished = await processConstructOnce(store, 'finish-worker', new Date(), {
+    probe: async () => ({
+      available: true,
+      backend: 'docker',
+      version: '27.0.0',
+      image: 'node:24-alpine',
+      code: 'available',
+      reason: null,
+    }),
+    ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+    launchContainer: async () => ({
+      exit_code: 0,
+      stdout: `${resultFenceStart}\n${JSON.stringify(payloadFor(source, scope.patch[0]!.after))}\n${resultFenceEnd}\n`,
+      stderr: '',
+    }),
+  });
+  expect(finished?.status).toBe('succeeded');
+  const token = finished!.lease_token!;
+  expect(finished!.lease_until).toBeNull();
+  const again = await store.finishRun(
+    'finish-worker',
+    requestId,
+    token,
+    'failed',
+    finished!.result!,
+    new Date(),
+  );
+  expect(again.status).toBe('succeeded');
+  expect(again.result?.result_hash).toBe(finished!.result!.result_hash);
+  expect(await store.markRunning('finish-worker', requestId, token, new Date())).toBe(true);
+  const events = await store.listEvents(owner, requestId);
+  expect(events.filter((event) => event.kind === 'finished')).toHaveLength(1);
+});

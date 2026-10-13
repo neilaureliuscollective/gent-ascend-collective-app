@@ -228,6 +228,35 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
         )
       ).rows,
     ).toEqual([{ ok: false }]);
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_finish('finish-worker','${finished}','${token.token}','failed',${literal({
+            isolation: 'unavailable',
+            runtime_available: false,
+            sandbox: false,
+            blocker: 'stale retry',
+            source_hash: finishedSource.tree_hash,
+            result_hash: null,
+            changed_files: [],
+            diff: '',
+            checks: [],
+            preview: { path: null, body: '', unavailable_reason: 'stale retry' },
+            artifacts: [],
+          })}) as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: true }]);
+    expect(
+      (await asWorker(`select status from public.architect_construct_runs where id='${finished}'`)).rows,
+    ).toEqual([{ status: 'succeeded' }]);
+    expect(
+      (
+        await asWorker(
+          `select count(*)::int as n from public.architect_construct_events where run_id='${finished}' and kind='finished'`,
+        )
+      ).rows,
+    ).toEqual([{ n: 1 }]);
   });
 
   it('refuses heartbeat and finish after lease expiry without a replacement claim', async () => {
