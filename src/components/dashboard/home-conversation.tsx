@@ -62,7 +62,7 @@ export function HomeConversation({ data }: { data: DailyData }) {
             onSubmit={(event) => {
               event.preventDefault();
               if (!text.trim() || !handoff || !data.ownerId) return;
-              handoff.stage({ text: text.trim(), ownerId: data.ownerId });
+              handoff.stage({ text: text.trim(), ownerId: data.ownerId, recovery: 'memory' });
               router.push('/app/aethelios');
             }}
           >

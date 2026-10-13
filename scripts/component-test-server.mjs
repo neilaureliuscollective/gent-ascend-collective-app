@@ -18,6 +18,11 @@ const server = await createServer({
     },
   },
   css: { postcss: resolve('.') },
-  server: { host: '127.0.0.1', port: 3102, strictPort: true, fs: { allow: [resolve('.')] } },
+  server: {
+    host: '127.0.0.1',
+    port: Number(process.env.PLAYWRIGHT_FIXTURE_PORT || 3102),
+    strictPort: true,
+    fs: { allow: [resolve('.')] },
+  },
 });
 await server.listen();

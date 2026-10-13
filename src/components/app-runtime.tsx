@@ -1,11 +1,14 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
+import { clearLegacyTalkDrafts, clearTalkDrafts } from '@/platform/conversation/drafts';
 /** Only static fallback assets are cached. Personal responses always use the network. */
 export function AppRuntime() {
   const path = usePathname();
   useEffect(() => {
+    clearLegacyTalkDrafts();
     if (document.cookie.split('; ').includes('performance-reset=1')) {
+      clearTalkDrafts();
       void import('../../public/performance-store.js')
         .then(async ({ clearDrafts }) => {
           await clearDrafts();

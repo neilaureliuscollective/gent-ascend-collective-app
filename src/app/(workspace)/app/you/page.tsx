@@ -4,6 +4,7 @@ import { brand } from '@/platform/brand';
 import { currentPerson } from '@/domains/person/current';
 import { currentFounderAccess } from '@/domains/access/founder';
 import { parseEnvironment } from '@/platform/environment';
+import { TalkSignOutForm } from '@/components/aurelius/sign-out-form';
 import { signIn, signOut } from '@/app/auth/actions';
 import { ProfileEditor } from '@/components/profile-editor';
 import { saveProfileAction } from './actions';
@@ -86,9 +87,9 @@ export default async function You({
             <Link className="text-link" href="/">
               Explore the public world ↗
             </Link>
-            <form action={signOut}>
+            <TalkSignOutForm action={signOut}>
               <button className="secondary-button">Sign out</button>
-            </form>
+            </TalkSignOutForm>
           </aside>
         </div>
       ) : (

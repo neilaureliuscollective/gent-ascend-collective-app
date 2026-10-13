@@ -13,6 +13,20 @@ function memory() {
   };
 }
 describe('tab-local unsent Talk recovery', () => {
+  it('invalidates only the affected legacy cache without touching other records', () => {
+    const store = memory();
+    store.setItem(
+      'aethelios-talk-drafts-v1',
+      JSON.stringify({
+        owner: 'a',
+        entries: [{ conversation: null, text: 'private Home draft', at: 1000 }],
+      }),
+    );
+    store.setItem('unrelated', 'keep');
+    expect(readTalkDraft('a', null, store, 1001)).toBe('');
+    expect(store.getItem('aethelios-talk-drafts-v1')).toBeNull();
+    expect(store.getItem('unrelated')).toBe('keep');
+  });
   it('keeps conversations separate and clears cross-account text before restoration', () => {
     const store = memory();
     writeTalkDraft('a', null, 'new draft', store, 1000);
@@ -27,6 +41,7 @@ describe('tab-local unsent Talk recovery', () => {
     writeTalkDraft('a', 'thread', 'x'.repeat(7000), store, 0);
     expect(readTalkDraft('a', 'thread', store, 1)).toHaveLength(6000);
     expect(readTalkDraft('a', 'thread', store, 86400000)).toBe('');
+    expect(store.getItem('aethelios-talk-drafts-v2')).toBeNull();
     writeTalkDraft('a', null, 'thought', store, 100);
     writeTalkDraft('a', null, '', store, 101);
     expect(readTalkDraft('a', null, store, 102)).toBe('');

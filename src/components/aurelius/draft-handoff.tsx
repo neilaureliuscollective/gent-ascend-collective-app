@@ -4,6 +4,7 @@ import type { CapabilityId } from '@/domains/intelligence/capabilities';
 
 export type Handoff = {
   text: string;
+  recovery?: 'memory' | 'tab';
   ownerId: string;
   target?: CapabilityId;
   conversationId?: string;

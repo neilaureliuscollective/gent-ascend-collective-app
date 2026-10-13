@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DailyDashboard } from '@/components/dashboard/daily-dashboard';
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
+import { TalkSignOutForm } from '@/components/aurelius/sign-out-form';
 import { Shell } from '@/components/shell';
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import { sampleData } from '@/domains/daily/model';
@@ -14,6 +15,17 @@ export function HomeHandoffFixture() {
   }, []);
   return (
     <Shell>
+      <div style={{ position: 'fixed', top: 0, right: 0, zIndex: 100, fontSize: 10 }}>
+        <button onClick={() => setTalk(false)}>Fixture leave Talk</button>
+        <button onClick={() => setTalk(true)}>Fixture return to Talk</button>
+        <TalkSignOutForm
+          action={async () => {
+            setTalk(false);
+          }}
+        >
+          <button>Fixture sign out</button>
+        </TalkSignOutForm>
+      </div>
       {talk ? (
         <ConversationViewport>
           <AureliusWorkspace />

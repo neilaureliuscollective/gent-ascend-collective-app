@@ -31,7 +31,9 @@ for (const [width, height] of [
   test(`direct home utility and world access at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+    await page.goto(
+      `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+    );
     await expect(
       page.getByRole('heading', { name: 'Good morning, Synthetic tester.' }),
     ).toBeVisible();
@@ -71,7 +73,9 @@ test('home draft opens existing Talk with no automatic send or browser persisten
     if (route.request().method() !== 'GET') posts.push(route.request().url());
     await route.fulfill({ json: syntheticWorkspace });
   });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(
+    `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+  );
   await page.locator('.home-compose summary').click();
   await page
     .getByRole('textbox', { name: 'What are we working on?' })
@@ -80,6 +84,16 @@ test('home draft opens existing Talk with no automatic send or browser persisten
   await expect(page.getByRole('textbox', { name: 'Message Aethelios', exact: true })).toHaveValue(
     'Help me plan my grooming ritual and next training session.',
   );
+  // Owner read completes before checking all browser storage. Edits and a route
+  // unmount/remount must retain the same memory-only policy.
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Edited grooming ritual');
+  await page.getByRole('button', { name: 'Fixture leave Talk' }).click();
+  await page.getByRole('button', { name: 'Fixture return to Talk' }).click();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue(
+    'Edited grooming ritual',
+  );
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   expect(posts).toEqual([]);
   expect(page.url()).not.toContain('Help');
   expect(
@@ -87,6 +101,22 @@ test('home draft opens existing Talk with no automatic send or browser persisten
       [...Object.values(localStorage), ...Object.values(sessionStorage)].some((value) =>
         String(value).includes('grooming ritual'),
       ),
+    ),
+  ).toBe(false);
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue(
+    'Edited grooming ritual',
+  );
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('A new ordinary Talk draft');
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('aethelios-talk-drafts-v2')))
+    .toContain('A new ordinary Talk draft');
+  expect(
+    await page.evaluate(() =>
+      Object.values(sessionStorage).some((value) => value.includes('grooming ritual')),
     ),
   ).toBe(false);
 });
@@ -101,7 +131,9 @@ for (const changed of [true, false])
           : { status: 401, json: { error: 'Sign in' } },
       ),
     );
-    await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+    await page.goto(
+      `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+    );
     await page.locator('.home-compose summary').click();
     await page
       .getByRole('textbox', { name: 'What are we working on?' })
@@ -116,7 +148,9 @@ test('phone composer stays reachable when the viewport shortens for a keyboard',
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(
+    `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+  );
   await page.locator('.home-compose summary').click();
   await page
     .getByRole('textbox', { name: 'What are we working on?' })
@@ -137,7 +171,9 @@ test('phone composer stays reachable when the viewport shortens for a keyboard',
 });
 test('member home retains world access and draft controls at enlarged text', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 640 });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(
+    `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+  );
   await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
   await page.locator('.home-compose summary').click();
   const field = page.getByRole('textbox', { name: 'What are we working on?' });
@@ -154,7 +190,9 @@ test('member home retains world access and draft controls at enlarged text', asy
 
 test('Fold continuity keeps the open home draft and selected source', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('http://127.0.0.1:3102/?mode=home-handoff');
+  await page.goto(
+    `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+  );
   await page.getByRole('button', { name: /Energy/ }).click();
   await page.locator('.home-compose summary').click();
   await page
@@ -170,4 +208,30 @@ test('Fold continuity keeps the open home draft and selected source', async ({ p
     'true',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('sign-out removes local recovery and in-memory handoff without deleting server messages', async ({
+  page,
+}) => {
+  const writes: string[] = [];
+  await page.route('**/api/aurelius**', async (route) => {
+    if (route.request().method() !== 'GET') writes.push(route.request().method());
+    await route.fulfill({ json: syntheticWorkspace });
+  });
+  await page.goto(
+    `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=home-handoff`,
+  );
+  await page.getByRole('button', { name: 'Fixture return to Talk' }).click();
+  const field = page.getByLabel('Message Aethelios', { exact: true });
+  await field.fill('ordinary recoverable synthetic draft');
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('aethelios-talk-drafts-v2')))
+    .toContain('ordinary recoverable');
+  await page.getByRole('button', { name: 'Fixture leave Talk' }).click();
+  await page.getByRole('button', { name: 'Fixture sign out' }).click();
+  expect(await page.evaluate(() => sessionStorage.getItem('aethelios-talk-drafts-v2'))).toBeNull();
+  await page.getByRole('button', { name: 'Fixture return to Talk' }).click();
+  await expect(field).toHaveValue('');
+  expect(writes).toEqual([]);
 });

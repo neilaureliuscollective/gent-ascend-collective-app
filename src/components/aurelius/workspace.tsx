@@ -80,15 +80,27 @@ export function AureliusWorkspace({
       : null,
   );
   const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
+  // Incoming handoffs are private in-memory drafts unless explicitly staged by Talk.
+  const memoryOnlyDraft = useRef(!!homeDraft && homeDraft.recovery !== 'tab');
   const verifiedDraftOwner = useRef('');
   useEffect(() => {
     if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
-  const draftSnapshot = useRef({ text: draft, ownerId: '', conversationId: initialConversation });
+  const draftSnapshot = useRef({
+    text: draft,
+    ownerId: '',
+    conversationId: initialConversation,
+    memoryOnly: !!homeDraft && homeDraft.recovery !== 'tab',
+  });
   useEffect(() => {
-    draftSnapshot.current = { text: draft, ownerId: data?.ownerId ?? '', conversationId: selected };
+    draftSnapshot.current = {
+      text: draft,
+      ownerId: data?.ownerId ?? '',
+      conversationId: selected,
+      memoryOnly: memoryOnlyDraft.current,
+    };
     if (!compact && data?.ownerId && verifiedDraftOwner.current === data.ownerId)
-      writeTalkDraft(data.ownerId, selected, draft);
+      writeTalkDraft(data.ownerId, selected, memoryOnlyDraft.current ? '' : draft);
   }, [draft, data?.ownerId, selected, compact]);
   useEffect(
     () => () => {
@@ -96,6 +108,7 @@ export function AureliusWorkspace({
       if (!compact && snapshot.text && snapshot.ownerId && !handoff?.peek()?.target)
         handoff?.stage({
           text: snapshot.text,
+          recovery: snapshot.memoryOnly ? 'memory' : 'tab',
           ownerId: snapshot.ownerId,
           conversationId: snapshot.conversationId ?? undefined,
         });
@@ -159,6 +172,7 @@ export function AureliusWorkspace({
         if (response.status === 401) {
           clearTalkDrafts();
           verifiedDraftOwner.current = '';
+          memoryOnlyDraft.current = false;
           setPreview(true);
           setCouncilSelection(null);
           setData(disconnectedWorkspace);
@@ -173,11 +187,14 @@ export function AureliusWorkspace({
         const owner = (result as WorkspaceData).ownerId ?? '';
         if (knownOwner && owner !== knownOwner) {
           clearTalkDrafts();
+          memoryOnlyDraft.current = false;
           setDraft('');
         }
         verifiedDraftOwner.current = owner;
-        if (!compact && id !== draftSnapshot.current.conversationId)
+        if (!compact && id !== draftSnapshot.current.conversationId) {
+          memoryOnlyDraft.current = false;
           setDraft(readTalkDraft(owner, id));
+        }
         setData(result as WorkspaceData);
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
@@ -341,12 +358,15 @@ export function AureliusWorkspace({
         if (!result?.ownerId) {
           clearTalkDrafts();
           verifiedDraftOwner.current = '';
+          memoryOnlyDraft.current = false;
           if (homeDraft) setDraft('');
         } else {
           verifiedDraftOwner.current = result.ownerId;
           const stored = !compact ? readTalkDraft(result.ownerId, initialConversation) : '';
-          if (homeDraft && result.ownerId !== homeDraft.ownerId) setDraft(stored);
-          else if (!initialDraft && !homeDraft) setDraft((current) => current || stored);
+          if (homeDraft && result.ownerId !== homeDraft.ownerId) {
+            memoryOnlyDraft.current = false;
+            setDraft(stored);
+          } else if (!initialDraft && !homeDraft) setDraft((current) => current || stored);
           if (result.turns.some((turn) => turn.status === 'pending')) {
             setNeedsReload(true);
             setError(
@@ -473,6 +493,7 @@ export function AureliusWorkspace({
         throw new Error(result.error ?? 'The message could not be sent.');
       }
       accepted = true;
+      if (draftSnapshot.current.text === messageText) memoryOnlyDraft.current = false;
       if (!compact && data.ownerId) writeTalkDraft(data.ownerId, selected, '');
       timing.mark('accepted');
       setDraft((current) => (current === messageText ? '' : current));
@@ -580,6 +601,7 @@ export function AureliusWorkspace({
       await jsonRequest('/api/aurelius', 'DELETE', { id: selected });
       if (data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
       await reload();
+      memoryOnlyDraft.current = false;
       setDraft('');
       setNotice(
         'Conversation deleted. Confirmed memories and daily actions remain in their own records.',
@@ -591,6 +613,7 @@ export function AureliusWorkspace({
     }
   }
   function newConversation() {
+    memoryOnlyDraft.current = false;
     if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
     setSelected(null);
@@ -717,6 +740,7 @@ export function AureliusWorkspace({
                       )
                         return;
                       close();
+                      memoryOnlyDraft.current = false;
                       if (data.ownerId) writeTalkDraft(data.ownerId, selected, '');
                       setDraft('');
                       follow.current = true;
@@ -945,10 +969,10 @@ export function AureliusWorkspace({
               </label>
               {!compact && !preview && (
                 <p className="quiet-label">
-                  Unsent drafts stay in this browser tab for up to 24 hours. They are restored only
-                  for the same signed-in account and conversation, and never sent automatically.
-                  Another account clears the previous account’s drafts. Browser storage may be
-                  unavailable.
+                  Drafts started in Talk can recover in this tab for up to 24 hours, only for the
+                  same signed-in account and conversation. Home drafts and their edits stay in
+                  memory and disappear on reload. Nothing is sent automatically. Signing out or
+                  changing account clears local recovery drafts. Browser storage may be unavailable.
                 </p>
               )}
               <details className="composer-privacy">
