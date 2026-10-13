@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/visual/icon';
 import {
   useEffect,
   useLayoutEffect,
@@ -166,7 +167,7 @@ export function TalkInput({
           expanded.current?.setSelectionRange(caret.current.start, caret.current.end);
         }}
       >
-        ↗
+        <Icon name="expand" className="action-icon" />
       </button>
       <dialog
         ref={editor}

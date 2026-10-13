@@ -1,3 +1,4 @@
+import { Icon } from '@/components/visual/icon';
 import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
 import { z } from 'zod';
@@ -31,7 +32,7 @@ export default async function StudioPage({
           <p>Your vision, developed with intention.</p>
         </div>
         <Link className="text-link" href="/app/aethelios">
-          Aethelios Chat ↗
+          Aethelios Chat <Icon name="arrow-up-right" className="action-icon" />
         </Link>
       </div>
       <div className="studio-workflow-line" aria-label="Studio creative workflow">

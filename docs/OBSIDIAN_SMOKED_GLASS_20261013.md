@@ -1,5 +1,13 @@
 # Obsidian / Smoked Glass / Emerald — review candidate
 
+## Focused glass refinement after f3a5100
+
+Parent review found broad surfaces too matte despite the corrected neutral coverage. The successor keeps the #111111 canvas and subdued Tools material, and adds a restrained upper-left rim, a 3px inset bevel, internal highlight falloff and dark contact shadow to raised prompt/Studio cards and containers. The composer reuses its existing B+ geometry with stronger edge/face separation and a fine inner bevel. No new broad glow, blur, animation, green wash or brightness increase across all surfaces. Solid/contrast/forced-color modes remove the decorative bevels and use opaque paint.
+
+The narrow boxes were unsupported U+2197 north-east arrow glyphs. `fc-query` on the actual bundled Inter/Sora WOFF2 files confirmed both lack that codepoint; Inter supports U+2191/U+2193, which explains why other arrows could still render. Existing `Icon` now supplies `arrow-up-right` and `expand` paths. Markup in Talk, composer expansion, Missions and Studio uses those decorative `aria-hidden` SVGs; button/link labels, destinations, expand accessible name and handlers remain. No font file or fallback bypass was introduced. The verified private draft/storage implementation remains untouched.
+
+The material screenshot tests now wait for `document.fonts.ready`, assert loaded Inter and Sora faces, and capture full-resolution device-scale images at DPR 2 for 344/720/1440 CSS-pixel layouts. Assertions check the SVG controls and absence of the unsupported decorative character in reviewed surfaces. Font coverage, loaded-font evidence, screenshots and exact verification results accompany the successor checkpoint. These are browser-emulated device-scale renders, not physical-device acceptance or a new design mockup.
+
 Founder-authorized material implementation, October 13, 2026. Local review only; no push, merge, deployment, environment changes or hosted data writes. The source mockup resolved as Library `libfile_19ed0e75ec8c8191ac73a9ca93130a4b`, version 0. Supported transfer failed on its initial attempt and one bounded retry. Pixels were not inspected. The explicit written fallback is the implementation authority and supersedes earlier broad emerald-surface direction for Talk and Studio.
 
 ## Base and independent candidates

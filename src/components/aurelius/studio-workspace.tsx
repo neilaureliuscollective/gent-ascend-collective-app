@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/visual/icon';
 import { IntelligenceActivity } from '../intelligence-motion/presence';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
@@ -645,7 +646,7 @@ export function StudioWorkspace({
               onClick={() => setNaming(true)}
               disabled={busy}
             >
-              Start a project ↗
+              Start a project <Icon name="arrow-up-right" className="action-icon" />
             </button>
           </div>
         ) : (
@@ -676,7 +677,10 @@ export function StudioWorkspace({
                     unoptimized
                   />
                 )}
-                <Link href="/app/aethelios">Talk it through with Aethelios ↗</Link>
+                <Link href="/app/aethelios">
+                  Talk it through with Aethelios{' '}
+                  <Icon name="arrow-up-right" className="action-icon" />
+                </Link>
               </div>
             </div>
             <StudioRooms value={view} onChange={setView} />
@@ -824,7 +828,9 @@ export function StudioWorkspace({
                       <span>0{paths.indexOf(path) + 1}</span>
                       <strong>{path.title}</strong>
                       <small>{path.description}</small>
-                      <b aria-hidden="true">↗</b>
+                      <b aria-hidden="true">
+                        <Icon name="arrow-up-right" className="action-icon" />
+                      </b>
                     </button>
                   ))}
                 </div>
@@ -944,7 +950,13 @@ export function StudioWorkspace({
                         draft.trim().length < 3
                       }
                     >
-                      {busy ? busyLabel : 'Create image ↗'}
+                      {busy ? (
+                        busyLabel
+                      ) : (
+                        <>
+                          Create image <Icon name="arrow-up-right" className="action-icon" />
+                        </>
+                      )}
                     </button>
                   </div>
                   <p className="muted">
@@ -1027,17 +1039,18 @@ export function StudioWorkspace({
                             {version.status === 'complete' ? (
                               <>
                                 <button type="button" onClick={() => finishImage(version.id)}>
-                                  Finish for sharing ↗
+                                  Finish for sharing{' '}
+                                  <Icon name="arrow-up-right" className="action-icon" />
                                 </button>
                                 <button type="button" onClick={() => refine(version)}>
-                                  Refine this ↗
+                                  Refine this <Icon name="arrow-up-right" className="action-icon" />
                                 </button>
                                 <a
                                   href={imageUrl(version.id, 'version')}
                                   target="_blank"
                                   rel="noreferrer"
                                 >
-                                  Open image ↗
+                                  Open image <Icon name="arrow-up-right" className="action-icon" />
                                 </a>
                               </>
                             ) : version.status === 'failed' ? (
@@ -1093,7 +1106,9 @@ export function StudioWorkspace({
                           src={imageUrl(item.id, 'reference')}
                           alt="Saved reference"
                         />
-                        <span>Use reference ↗</span>
+                        <span>
+                          Use reference <Icon name="arrow-up-right" className="action-icon" />
+                        </span>
                       </button>
                     ))}
                   </div>

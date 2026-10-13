@@ -1,6 +1,8 @@
 import { test, expect, type Page } from './fixtures';
 import { disconnectedWorkspace } from '../../src/components/aurelius/preview';
 
+test.use({ deviceScaleFactor: 2 });
+
 const project = '10000000-0000-4000-8000-000000000001';
 const field = (page: Page) => page.getByLabel('Message Aethelios', { exact: true });
 async function fixtures(page: Page) {
@@ -85,7 +87,18 @@ async function noOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 async function shot(page: Page, name: string) {
-  await page.screenshot({ path: `test-results/obsidian-${name}.png`, fullPage: true });
+  await page.evaluate(() => document.fonts.ready);
+  const fonts = await page.evaluate(() =>
+    [...document.fonts].filter((font) => font.status === 'loaded').map((font) => font.family),
+  );
+  expect(fonts.some((family) => /inter/i.test(family))).toBe(true);
+  expect(fonts.some((family) => /sora/i.test(family))).toBe(true);
+  console.log(`LOADED_FONTS ${name} DPR=2 ${fonts.join(', ')}`);
+  await page.screenshot({
+    path: `test-results/obsidian-${name}.png`,
+    fullPage: true,
+    scale: 'device',
+  });
 }
 // Sample the actual composited raster behind text, including SVG/gradient layers.
 // Hide only glyphs/caret for the sample; geometry and all background paint remain.
@@ -155,6 +168,11 @@ for (const width of [344, 720, 1440]) {
     await page.goto('/app/aethelios');
     await expect(field(page)).toBeEnabled();
     await expect(page.locator('.talk-welcome-presence')).toBeVisible();
+    await expect(page.locator('.talk-expand svg[aria-hidden="true"]')).toBeVisible();
+    await expect(page.locator('.conversation-starters button svg[aria-hidden="true"]')).toHaveCount(
+      3,
+    );
+    await expect(page.locator('.conversation-starters')).not.toContainText('↗');
     await noOverflow(page);
     await shot(page, `talk-empty-${width}`);
     await contrast(page, '.conversation-starters button');
@@ -176,6 +194,9 @@ for (const width of [344, 720, 1440]) {
     await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
     const drawer = page.getByRole('dialog', { name: 'Tools & context', exact: true });
     await expect(drawer).toBeVisible();
+    await expect(
+      drawer.locator('a.text-link', { hasText: 'Missions' }).locator('svg'),
+    ).toBeVisible();
     const meet = drawer.getByRole('button', { name: 'Meet the Intelligence Team' });
     const assemble = drawer.getByRole('button', { name: 'Assemble Around This' });
     const a = await meet.boundingBox(),
@@ -200,6 +221,9 @@ for (const width of [344, 720, 1440]) {
       page.getByRole('heading', { name: 'Synthetic campaign', exact: true }),
     ).toBeVisible();
     await noOverflow(page);
+    await expect(page.locator('.studio-world-heading a svg[aria-hidden="true"]')).toBeVisible();
+    await expect(page.locator('.studio-paths button svg[aria-hidden="true"]')).toHaveCount(5);
+    await expect(page.locator('.studio-page')).not.toContainText('↗');
     await shot(page, `studio-${width}`);
     await contrast(
       page,

@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/visual/icon';
 import { ConversationArtifacts } from '@/components/live/artifacts';
 import { LiveVoiceEntry, useLiveBusy } from '@/components/live/provider';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -1108,7 +1109,9 @@ export function AureliusWorkspace({
                       disabled={blocked}
                     >
                       {suggestion.label}
-                      <span aria-hidden="true">↗</span>
+                      <span aria-hidden="true">
+                        <Icon name="arrow-up-right" className="action-icon" />
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1209,9 +1212,14 @@ export function AureliusWorkspace({
                       disabled={orchestrating}
                       onClick={() => void prepareCapability()}
                     >
-                      {orchestrating
-                        ? `Preparing ${capability.label}…`
-                        : `Prepare in ${capability.label} ↗`}
+                      {orchestrating ? (
+                        `Preparing ${capability.label}…`
+                      ) : (
+                        <>
+                          Prepare in {capability.label}{' '}
+                          <Icon name="arrow-up-right" className="action-icon" />
+                        </>
+                      )}
                     </button>
                   ) : (
                     <Link
@@ -1225,7 +1233,8 @@ export function AureliusWorkspace({
                           });
                       }}
                     >
-                      Open {capability.label} only if you want depth ↗
+                      Open {capability.label} only if you want depth{' '}
+                      <Icon name="arrow-up-right" className="action-icon" />
                     </Link>
                   )}
                 </div>
