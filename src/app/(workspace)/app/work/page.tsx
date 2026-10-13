@@ -1,3 +1,5 @@
+import { BplusMaterial } from '@/components/visual/bplus-material';
+import '@/components/visual/bplus-operator.css';
 import { AmbientHorizon } from '@/components/visual/ambient-horizon';
 import Link from 'next/link';
 import { companyJobs } from '@/domains/company-work/starters';
@@ -6,9 +8,9 @@ import { CompanyRooms } from '@/components/companies/company-rooms';
 import { currentFounderAccess } from '@/domains/access/founder';
 export const metadata = { title: 'Work · Mission Command' };
 export default async function WorkPage() {
-  const founder = await currentFounderAccess().catch(()=>false);
+  const founder = await currentFounderAccess().catch(() => false);
   return (
-    <section className="company-work" aria-labelledby="company-work-title">
+    <section data-bplus="work" className="company-work" aria-labelledby="company-work-title">
       <header className="io-hero io-hero-work">
         <AmbientHorizon />
         <span className="eyebrow">AETHELIOS / MISSION COMMAND</span>
@@ -17,11 +19,16 @@ export default async function WorkPage() {
           Start with the company and the outcome. Aethelios helps shape the work; you keep the
           decision.
         </p>
-        <Link className="button" href="/app/aethelios">
+        <Link className="button" data-bplus-surface="action" href="/app/aethelios">
+          <BplusMaterial radius={8} />
           Continue in Talk ↗
         </Link>
         <nav className="io-work-links" aria-label="Work environments">
-          {founder && <Link className="secondary-button" href="/app/founder">Founder Office ↗</Link>}
+          {founder && (
+            <Link className="secondary-button" href="/app/founder">
+              Founder Office ↗
+            </Link>
+          )}
           <Link className="secondary-button" href="/app/missions">
             Missions ↗
           </Link>
@@ -53,14 +60,15 @@ export default async function WorkPage() {
         <p className="eyebrow">AETHELIOS ARCHITECT</p>
         <h2 id="architect-title">Shape what comes next.</h2>
         <p>
-          Develop an idea, clarify requirements and plan your next build in Talk. A dedicated coding
-          workflow remains in development.
+          Develop a vision, review a Living Blueprint and create useful deliverables in one
+          persistent creation environment.
         </p>
         <div className="io-work-links">
-          <Link className="secondary-button" href="/app/aethelios">
-            Plan a build in Talk ↗
+          <Link className="secondary-button" data-bplus-surface="action" href="/app/architect">
+            <BplusMaterial radius={8} />
+            Open Architect ↗
           </Link>
-          <span className="io-preview-label">Coding workflow · in development</span>
+          <span className="io-preview-label">Origin · project intelligence</span>
         </div>
       </aside>
       <aside className="company-work-note">

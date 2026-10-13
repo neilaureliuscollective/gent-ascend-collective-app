@@ -4,8 +4,21 @@ import {
   councilPromptVersion,
   type CouncilSelection,
 } from '../../src/domains/intelligence/council';
+// Council is a secondary workspace action in the approved compact Talk shell.
+async function openTools(page: Page) {
+  const tools = page.getByRole('dialog', { name: 'Tools & context', exact: true });
+  if (!(await tools.isVisible()))
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await expect(tools).toBeVisible();
+}
+async function closeTools(page: Page) {
+  const tools = page.getByRole('dialog', { name: 'Tools & context', exact: true });
+  if (await tools.isVisible()) await page.keyboard.press('Escape');
+  await expect(tools).not.toBeVisible();
+}
 async function setup(page: Page, configured = true) {
   const state: WorkspaceData = {
+    ownerId: 'synthetic-member',
     conversations: [],
     turns: [],
     memories: [],
@@ -93,20 +106,26 @@ test('team is visible, explains routing, involves a specialist and restores save
 }) => {
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Pressure-test this business idea');
+  await openTools(page);
   await expect(page.getByRole('button', { name: 'Meet the Intelligence Team' })).toBeVisible();
+  await openTools(page);
   await page.getByRole('button', { name: 'Meet the Intelligence Team' }).click();
   const dialog = page.locator('.council-dialog:not(.mission-editor)');
   await expect(dialog.getByText(/Relevant here/)).toContainText('pressure-test');
   await dialog.getByRole('button', { name: 'Involve Athena', exact: true }).click();
   expect(sent).toHaveLength(0);
+  await closeTools(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[0]?.council).toEqual({ kind: 'specialist', specialists: ['athena'] });
   expect(sent[0]?.includeContext).toBe(false);
   await page.reload();
+  await openTools(page);
   await expect(page.getByRole('button', { name: 'Return to Aethelios' })).toBeVisible();
   await page.getByRole('button', { name: 'Return to Aethelios' }).click();
+  await closeTools(page);
   await page.getByLabel('Message Aethelios').fill('Keep it simple');
+  await closeTools(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[1]?.council).toBeUndefined();
@@ -116,12 +135,14 @@ test('Table reviews objective and cast, synthesizes with context off, and persis
 }) => {
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Compare two opportunities');
+  await openTools(page);
   await page.getByRole('button', { name: 'Assemble Around This' }).click();
   const dialog = page.locator('.council-dialog:not(.mission-editor)');
   await expect(dialog.getByText(/Personal context is off/)).toBeVisible();
   expect(sent).toHaveLength(0);
   await dialog.getByLabel('What are we examining?').fill('Compare two career opportunities');
   await dialog.getByRole('button', { name: 'Confirm and assemble' }).click();
+  await closeTools(page);
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[0]).toMatchObject({
     includeContext: false,
@@ -129,15 +150,21 @@ test('Table reviews objective and cast, synthesizes with context off, and persis
   });
   await expect(page.getByText('A considered next step.')).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Leave The Table' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review The Table' })).toBeVisible();
+  await openTools(page);
+  await page.getByRole('button', { name: 'Return to Aethelios' }).click();
+  await closeTools(page);
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeVisible();
 });
 test('focused conversation prepares a useful starter without sending or inheriting another thread', async ({
   page,
 }) => {
   const { sent } = await setup(page);
   await page.getByLabel('Message Aethelios').fill('Research a decision');
+  await closeTools(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await openTools(page);
   await page.getByRole('button', { name: 'Meet the Intelligence Team' }).click();
   await page
     .locator('.council-roster article')
@@ -146,6 +173,7 @@ test('focused conversation prepares a useful starter without sending or inheriti
     .click();
   await expect(page.getByLabel('Message Aethelios')).toHaveValue(/creative direction/);
   expect(sent).toHaveLength(1);
+  await closeTools(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
   expect(sent[1]?.conversationId).not.toEqual(sent[0]?.conversationId);
@@ -159,6 +187,7 @@ for (const width of [360, 720, 1024, 1920])
     page.on('pageerror', (error) => errors.push(error.message));
     await setup(page);
     await page.getByLabel('Message Aethelios').fill('Plan a strategy');
+    await openTools(page);
     await page.getByRole('button', { name: 'Meet the Intelligence Team' }).click();
     const dialog = page.locator('.council-dialog:not(.mission-editor)');
     await expect(dialog.getByRole('heading', { name: 'Your Entities' })).toBeVisible();
@@ -170,16 +199,18 @@ for (const width of [360, 720, 1024, 1920])
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Meet the Intelligence Team' })).toBeFocused();
+    await openTools(page);
     await page.getByRole('button', { name: 'Assemble Around This' }).click();
     await expect(dialog.getByRole('heading', { name: 'The Table', exact: true })).toBeVisible();
     expect(errors).toEqual([]);
   });
 test('model outage still permits team discovery but blocks provider work', async ({ page }) => {
   const { sent } = await setup(page, false);
+  await openTools(page);
   await page.getByRole('button', { name: 'Meet the Intelligence Team' }).click();
   await expect(page.getByRole('button', { name: 'Involve Athena' })).toBeDisabled();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await openTools(page);
   await page.getByRole('button', { name: 'Memory', exact: true }).click();
   await expect(page.getByLabel('What should Aethelios remember?')).toBeVisible();
   expect(sent).toHaveLength(0);
@@ -194,8 +225,10 @@ test('first useful outcome becomes a reviewed private Mission without a second A
     return route.fulfill({ json: { mission: saved } });
   });
   await page.getByLabel('Message Aethelios').fill('Launch my landscaping website');
+  await closeTools(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
+  await openTools(page);
   await page.getByRole('button', { name: 'Save as Mission' }).click();
   await page.getByLabel('Mission name').fill('Landscaping website');
   await page.getByLabel('Next action (optional)').fill('Review homepage brief');

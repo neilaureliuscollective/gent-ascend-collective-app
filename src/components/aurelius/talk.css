@@ -210,9 +210,19 @@
   max-height: 44px;
   overflow: auto;
 }
+.aurelius-compose-region {
+  display: contents;
+}
+.talk-page .aurelius-compose-region {
+  display: block;
+  position: relative;
+  flex: none;
+  width: min(100%, 840px);
+  align-self: center;
+}
 .talk-page .latest-message {
   position: absolute;
-  bottom: 125px;
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
@@ -438,4 +448,94 @@
 .app-shell:has(.company-room-focused[data-keyboard='open']) .navigation {
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Talk owns one viewport and one compact header. Other environments retain their shell. */
+body .app-shell .aethelios-page.talk-page {
+  left: 0;
+  height: var(--conversation-height, 100dvh);
+  --interaction-nav-space: 0px;
+}
+.app-shell:has(.talk-page) > .sidebar {
+  visibility: hidden;
+  pointer-events: none;
+}
+.app-shell:has(.talk-page) .navigation {
+  display: none;
+}
+.talk-page .talk-toolbar {
+  min-height: 56px;
+  padding: 2px 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.talk-page .talk-toolbar .talk-tool {
+  min-width: 44px;
+  padding-inline: 8px;
+}
+.app-shell.imperial-workspace .talk-page .talk-toolbar .talk-title {
+  display: block;
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  clip-path: none;
+  font-size: 11px;
+}
+.app-shell.imperial-workspace .talk-page .talk-title h1 {
+  margin: 0;
+  color: var(--aether-text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+.talk-page .talk-presence .talk-tool {
+  padding: 0;
+}
+.talk-page .talk-orb .identity-presence {
+  display: block;
+}
+.talk-page .talk-welcome-presence {
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+.talk-destinations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.talk-destinations a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--aether-text);
+}
+.talk-page .aurelius-notice {
+  min-height: 0;
+  max-height: 24px;
+}
+.talk-page .aurelius-notice:empty {
+  margin: 0;
+}
+@media (max-height: 570px) {
+  .talk-page .talk-welcome-presence {
+    display: none;
+  }
+  .talk-page .conversation-scroll {
+    padding-block: 8px;
+  }
+}
+
+.app-shell.imperial-workspace
+  .talk-page [data-bplus='talk']
+  .aurelius-composer
+  > textarea:focus-visible {
+  outline-color: var(--aether-gold, #c4912f);
+  border-radius: 10px;
+}
+@media (max-height: 570px) {
+  .app-shell.imperial-workspace .talk-page .conversation-starters {
+    display: none;
+  }
 }

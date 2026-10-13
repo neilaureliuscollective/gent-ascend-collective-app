@@ -142,7 +142,13 @@ describe('shared voice transport lifecycle', () => {
     controller.interrupt();
     expect(
       FakePC.instances.at(-1)!.channel.send.mock.calls.map((call) => JSON.parse(call[0])),
-    ).toEqual([{ type: 'response.cancel' }]);
+    ).toEqual([
+      expect.objectContaining({
+        type: 'response.cancel',
+        response_id: 'current',
+        event_id: expect.any(String),
+      }),
+    ]);
     await controller.end();
   });
   it('fences a late SDP answer after cancellation and revokes the late admission', async () => {
@@ -269,4 +275,57 @@ it('ignores stale playback-stop events from an interrupted response', async () =
   pc.event({ type: 'output_audio_buffer.cleared', response_id: 'old' });
   expect(controller.getSnapshot().phase).toBe('speaking');
   await controller.end();
+});
+
+it('VAD interruption does not send a redundant cancel or tear down on its recoverable error', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  pc.event({ type: 'response.created', response: { id: 'r-vad' } });
+  pc.event({ type: 'output_audio_buffer.started', response_id: 'r-vad' });
+  pc.event({ type: 'input_audio_buffer.speech_started' });
+  expect(pc.channel.send).not.toHaveBeenCalled();
+  pc.event({ type: 'response.done', response: { id: 'r-vad', status: 'cancelled' } });
+  pc.event({
+    type: 'error',
+    error: { code: 'response_cancel_not_active', type: 'invalid_request_error' },
+  });
+  expect(controller.getSnapshot().phase).toBe('listening');
+  expect(stop).not.toHaveBeenCalled();
+  pc.event({ type: 'response.created', response: { id: 'next' } });
+  pc.event({ type: 'output_audio_buffer.started', response_id: 'next' });
+  expect(controller.getSnapshot().phase).toBe('speaking');
+  await controller.end();
+  expect(stop).toHaveBeenCalled();
+});
+it('a correlated explicit cancel race releases one queued typed response without a duplicate', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  pc.event({ type: 'response.created', response: { id: 'old' } });
+  controller.text('New typed thought');
+  const cancel = pc.channel.send.mock.calls
+    .map((c) => JSON.parse(c[0]))
+    .find((e) => e.type === 'response.cancel');
+  pc.event({
+    type: 'error',
+    error: { code: 'response_cancel_not_active', event_id: cancel.event_id },
+  });
+  pc.event({ type: 'response.done', response: { id: 'old', status: 'cancelled' } });
+  expect(
+    pc.channel.send.mock.calls
+      .map((c) => JSON.parse(c[0]))
+      .filter((e) => e.type === 'response.create'),
+  ).toHaveLength(1);
+  expect(controller.getSnapshot().phase).toBe('listening');
+  await controller.end();
+});
+it('unknown provider errors still close media and require server cleanup', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({ type: 'error', error: { code: 'unknown' } });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(controller.getSnapshot().phase).toBe('ended');
+  expect(stop).toHaveBeenCalled();
+  expect(fetchMock.mock.calls.some((call) => call[1].method === 'DELETE')).toBe(true);
 });

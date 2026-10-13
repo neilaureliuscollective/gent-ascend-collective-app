@@ -5,6 +5,8 @@ export function useTalkViewport(root: RefObject<HTMLElement | null>) {
     const node = root.current;
     if (!node) return;
     const viewport = window.visualViewport;
+    let restingHeight = window.innerHeight;
+    let restingWidth = window.innerWidth;
     const resize = () => {
       // Do not interfere with accessibility zoom. Keyboard height is progressive enhancement.
       const useVisual = viewport && viewport.scale === 1;
@@ -17,7 +19,15 @@ export function useTalkViewport(root: RefObject<HTMLElement | null>) {
         active.matches(
           'textarea, input:not([type="checkbox"]):not([type="radio"]), [contenteditable="true"]',
         );
-      const keyboardOpen = !!(useVisual && editing && window.innerHeight - viewport.height > 80);
+      if (!editing || Math.abs(window.innerWidth - restingWidth) > 80) {
+        restingHeight = window.innerHeight;
+        restingWidth = window.innerWidth;
+      }
+      const keyboardOpen = !!(
+        editing &&
+        ((useVisual && window.innerHeight - viewport.height > 80) ||
+          restingHeight - window.innerHeight > 80)
+      );
       node.setAttribute('data-keyboard', keyboardOpen ? 'open' : 'closed');
       if (keyboardOpen) node.style.setProperty('--interaction-nav-space', '0px');
       else node.style.removeProperty('--interaction-nav-space');
@@ -26,6 +36,7 @@ export function useTalkViewport(root: RefObject<HTMLElement | null>) {
         `${useVisual ? viewport.height : window.innerHeight}px`,
       );
       node.style.setProperty('--conversation-top', `${useVisual ? viewport.offsetTop : 0}px`);
+      node.dispatchEvent(new Event('talk-viewport'));
     };
     let frame: number | null = null;
     const schedule = () => {

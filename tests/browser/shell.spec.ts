@@ -7,16 +7,19 @@ for (const width of [360, 768, 1440]) {
     await page.goto('/app');
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
-    const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-    await expect(navigation.getByRole('link')).toHaveCount(6);
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+    let navigation = page.getByRole('navigation', { name: 'Aethelios destinations' });
+    await expect(navigation.getByRole('link')).toHaveCount(11);
     await expect(navigation.getByRole('link', { name: 'Lifestyle', exact: true })).toHaveAttribute(
       'href',
       '/app/lifestyle',
     );
-    await expect(navigation.getByRole('link', { name: 'Talk', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page',
+    await expect(navigation.getByRole('link', { name: 'Architect', exact: true })).toHaveAttribute(
+      'href',
+      '/app/architect',
     );
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -27,8 +30,10 @@ for (const width of [360, 768, 1440]) {
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(trigger).toBeFocused();
+    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
     await navigation.getByRole('link', { name: 'Work', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+    navigation = page.getByRole('navigation', { name: 'Main navigation' });
     await expect(navigation.getByRole('link', { name: 'Work', exact: true })).toHaveAttribute(
       'aria-current',
       'page',

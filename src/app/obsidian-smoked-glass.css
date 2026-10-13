@@ -1,0 +1,392 @@
+/* Founder-approved smoked glass, 2026-10-13. Reuse the io material and B+ optics
+   contracts. Route adoption is deliberate: public worlds, Work and Architect
+   retain their existing material identity. No geometry or motion ownership here. */
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+  --io-environment: var(--aether-smoke-canvas);
+  --io-navigation: var(--aether-smoke-panel);
+  --io-raised: var(--aether-smoke-raised);
+  --io-floating: var(--aether-smoke-raised);
+  --io-text: var(--aether-smoke-text);
+  --io-secondary: var(--aether-smoke-secondary);
+  --io-muted: var(--aether-smoke-secondary);
+  --io-divider: color-mix(in srgb, var(--aether-smoke-light) 17%, transparent);
+  --io-reflection: color-mix(in srgb, var(--aether-smoke-light) 13%, transparent);
+  --io-illumination: linear-gradient(transparent, transparent);
+  --io-satin:
+    linear-gradient(145deg, #ffffff09, transparent 34%),
+    linear-gradient(165deg, #242424ed, #1a1a1af5 72%);
+  --io-glass: var(--io-satin);
+  --io-material: var(--io-satin);
+  --io-composer: var(--io-satin);
+  --io-chamber: var(--io-satin);
+  --io-living:
+    radial-gradient(ellipse 220px 130px at 80% 15%, #245b4829, transparent 85%), var(--io-satin);
+  --io-hero-material: var(--io-living);
+  --io-elevation:
+    inset 0 1px 0 var(--io-reflection), inset 1px 0 0 #ffffff05, inset 0 -2px 0 #0008,
+    0 8px 20px -8px #0009;
+  --io-selected: linear-gradient(145deg, #245b483d, #242424 76%);
+  --io-selected-edge: var(--aether-emerald);
+  --io-raised-paint:
+    radial-gradient(ellipse 85% 42% at 8% 0%, #ffffff12, transparent 72%),
+    linear-gradient(165deg, #292929f5, #1a1a1af5 68%, #202020f5);
+  --io-raised-rim: linear-gradient(135deg, #a4aaa78a, #ffffff1c 24%, #000b 65%, #5b655f70);
+  --io-raised-contact: inset 0 1px #ffffff12, inset 0 -2px #0009, 0 8px 14px -6px #000b;
+}
+
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(.sidebar, .topbar, .navigation, .aethelios-space-navigation, .talk-toolbar) {
+  background: var(--io-glass);
+  border-color: var(--io-divider);
+  box-shadow: var(--io-elevation);
+}
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(.navigation a, .aethelios-space-navigation a):not([aria-current='page']) {
+  color: var(--io-secondary);
+  background: transparent;
+}
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(.navigation a, .aethelios-space-navigation a):hover {
+  color: var(--io-text);
+  background: var(--io-raised);
+}
+.app-shell.imperial-workspace .talk-page::before {
+  background: radial-gradient(ellipse 190px 130px at 50% 12%, #245b4826, transparent 85%);
+}
+.app-shell.imperial-workspace .talk-page .user-message {
+  background: var(--io-raised);
+  border-color: var(--io-divider);
+}
+.app-shell.imperial-workspace .talk-page .conversation-starters button {
+  background: var(--io-glass);
+  border: 1px solid var(--io-divider);
+  border-top-color: var(--io-reflection);
+  box-shadow:
+    var(--io-elevation),
+    inset 2px 0 var(--io-gold);
+  color: var(--io-text);
+}
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(.talk-drawer.talk-drawer, .talk-expanded-editor, .context-sheet-surface, .council-dialog) {
+  background: var(--io-glass);
+  border-color: var(--aether-smoke-edge);
+  box-shadow:
+    var(--io-elevation),
+    0 24px 64px #0008;
+  color: var(--io-text);
+}
+/* These are separate actions even when no council is selected. Preserve wrapping. */
+.app-shell.imperial-workspace .talk-page .talk-council-access {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+.app-shell.imperial-workspace .talk-page .talk-council-access > .text-button {
+  min-height: 44px;
+  white-space: normal;
+  text-align: left;
+}
+
+/* Recolor existing optical geometry rather than adding another renderer. Emerald
+   remains in the inner rim / right return; the broad face and slab become neutral. */
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is([data-bplus='talk'], .navigation) {
+  --aether-optical-substrate: var(--aether-smoke-panel);
+  --aether-optical-outer-stroke: var(--aether-smoke-edge);
+  --aether-optical-inner-stroke: var(--aether-emerald-active);
+  --aether-optical-face-stroke: #3b4840;
+  --aether-optical-undercut: var(--aether-smoke-undercut);
+  --aether-optical-edge-0: #929892;
+  --aether-optical-edge-035: #565b56;
+  --aether-optical-edge-16: #292b29;
+  --aether-optical-edge-42: #191a19;
+  --aether-optical-edge-70: #101110;
+  --aether-optical-edge-91: #222824;
+  --aether-optical-edge-100: #3b5042;
+  --aether-optical-face-0: #383b38;
+  --aether-optical-face-17: #292c29;
+  --aether-optical-face-55: #1b1c1b;
+  --aether-optical-face-83: #1a1b1a;
+  --aether-optical-face-100: #242925;
+  --aether-optical-slab-0: #7d827d;
+  --aether-optical-slab-25: #555a55;
+  --aether-optical-slab-100: #343934;
+  --aether-optical-insert: var(--aether-smoke-raised);
+}
+
+.app-shell.imperial-workspace:has(.studio-page)
+  :is(
+    .studio-world-heading,
+    .studio-projects,
+    .studio-direction,
+    .studio-project-heading,
+    .studio-section-head,
+    .studio-view-tabs,
+    .studio-projects nav button
+  ) {
+  background: var(--io-glass);
+  border-color: var(--io-divider);
+  box-shadow: var(--io-elevation);
+}
+.app-shell.imperial-workspace:has(.studio-page) .studio-world-heading {
+  background: var(--io-living);
+}
+.app-shell.imperial-workspace:has(.studio-page) .studio-direction {
+  --io-secondary: var(--aether-smoke-secondary);
+}
+.app-shell.imperial-workspace:has(.studio-page)
+  :is(.studio-projects nav button.selected, .studio-view-tabs button[aria-pressed='true']) {
+  background: var(--io-selected);
+  color: var(--io-text);
+  border-color: var(--io-selected-edge);
+  box-shadow:
+    var(--io-elevation),
+    inset 0 -2px var(--io-gold);
+}
+.app-shell.imperial-workspace:has(.studio-page)
+  :is(.studio-projects nav button, .studio-view-tabs button, .studio-stage-side > span) {
+  color: var(--io-secondary);
+}
+.app-shell.imperial-workspace:has(.studio-page) .studio-projects nav button small {
+  color: var(--io-secondary);
+}
+/* Reserve Gold remains exactly the brand color. Filled actions need dark ink. */
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(.button, .aurelius-send):not(:disabled) {
+  background: var(--io-gold);
+  color: var(--aether-smoke-canvas);
+  border-color: var(--io-gold);
+  box-shadow:
+    inset 0 1px #ffffff38,
+    inset 0 -1px #0005,
+    0 3px 8px #0004;
+}
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--io-text);
+  outline-offset: 2px;
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer > textarea:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Existing B+ control specificity owns the composer; preserve that scope. */
+.app-shell.imperial-workspace [data-bplus='talk'] .composer-controls .button:not(:disabled) {
+  background: var(--io-gold);
+  color: var(--aether-smoke-canvas);
+  border-color: var(--io-gold);
+  box-shadow:
+    inset 0 1px #ffffff38,
+    inset 0 -1px #0005,
+    0 3px 8px #0004;
+}
+.app-shell.imperial-workspace:has(.studio-page) .studio-page :is(input, textarea, select) {
+  background: var(--io-environment);
+  color: var(--io-text);
+  border-color: var(--aether-smoke-edge);
+}
+.app-shell.imperial-workspace:has(.studio-page) .studio-room-copy :is(strong, small) {
+  color: var(--io-secondary);
+}
+.app-shell.imperial-workspace:has(.studio-page) [aria-pressed='true'] .studio-room-copy strong {
+  color: var(--io-text);
+}
+
+/* A narrow reflective perimeter and inset bevel give raised objects thickness.
+   The body remains neutral; no broad glow or moving highlight is introduced. */
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(
+    .conversation-starters button,
+    .studio-project-heading,
+    .studio-projects,
+    .studio-view-tabs,
+    .studio-direction,
+    .studio-composer,
+    .studio-paths button
+  ) {
+  position: relative;
+  border: 1px solid transparent;
+  background:
+    var(--io-raised-paint) padding-box,
+    var(--io-raised-rim) border-box;
+  box-shadow: var(--io-raised-contact);
+}
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(
+    .conversation-starters button,
+    .studio-project-heading,
+    .studio-projects,
+    .studio-view-tabs,
+    .studio-direction,
+    .studio-composer,
+    .studio-paths button
+  )::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  border-top-color: #ffffff12;
+  border-left-color: #ffffff06;
+  border-bottom-color: #0007;
+  pointer-events: none;
+}
+.app-shell.imperial-workspace .talk-page .conversation-starters button {
+  box-shadow:
+    var(--io-raised-contact),
+    inset 2px 0 var(--io-gold);
+}
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  border-top-color: #ffffff21;
+  border-left-color: #ffffff08;
+  border-bottom-color: #0009;
+  pointer-events: none;
+}
+.app-shell.imperial-workspace .action-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.12em;
+  flex-shrink: 0;
+}
+.app-shell.imperial-workspace .talk-expand .action-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Existing Still/reduced-motion behavior is retained. No animation or blur is added.
+   Solid and contrast preferences replace translucent paint, including native dialogs. */
+html[data-material='solid'] .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+  --io-satin: var(--io-navigation);
+  --io-living: var(--io-navigation);
+  --io-selected: var(--io-raised);
+  --io-elevation: none;
+  --io-raised-paint: linear-gradient(var(--io-navigation), var(--io-navigation));
+  --io-raised-rim: linear-gradient(var(--io-secondary), var(--io-secondary));
+  --io-raised-contact: none;
+}
+html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
+  background: none;
+}
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+    --io-satin: var(--io-navigation);
+    --io-living: var(--io-navigation);
+    --io-selected: var(--io-raised);
+    --io-elevation: none;
+    --io-raised-paint: linear-gradient(var(--io-navigation), var(--io-navigation));
+    --io-raised-rim: linear-gradient(var(--io-secondary), var(--io-secondary));
+    --io-raised-contact: none;
+    --io-divider: var(--io-secondary);
+  }
+  .app-shell.imperial-workspace .talk-page::before {
+    background: none;
+  }
+}
+@media (forced-colors: active) {
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+    --io-environment: Canvas;
+    --io-navigation: Canvas;
+    --io-raised: Canvas;
+    --io-text: CanvasText;
+    --io-secondary: CanvasText;
+    --io-muted: GrayText;
+    --io-satin: Canvas;
+    --io-living: Canvas;
+    --io-selected: Canvas;
+    --io-divider: CanvasText;
+    --io-selected-edge: Highlight;
+    --io-elevation: none;
+    --io-raised-paint: linear-gradient(var(--io-navigation), var(--io-navigation));
+    --io-raised-rim: linear-gradient(var(--io-secondary), var(--io-secondary));
+    --io-raised-contact: none;
+  }
+  .app-shell.imperial-workspace .talk-page::before {
+    background: none;
+  }
+  .app-shell.imperial-workspace [data-bplus='talk'] .composer-controls .button:not(:disabled) {
+    background: ButtonFace;
+    color: ButtonText;
+    border-color: ButtonText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace:has(.studio-page) .studio-page :is(input, textarea, select) {
+    border-color: ButtonText;
+  }
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+    :is(.button, .aurelius-send):not(:disabled) {
+    background: ButtonFace;
+    color: ButtonText;
+    border-color: ButtonText;
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+    :is(button, a, input, textarea, select):focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+html[data-material='solid']
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  :is(
+    .conversation-starters button,
+    .studio-project-heading,
+    .studio-projects,
+    .studio-view-tabs,
+    .studio-direction,
+    .studio-composer,
+    .studio-paths button
+  ) {
+  background: var(--io-navigation);
+  border-color: var(--io-secondary);
+  box-shadow: none;
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace
+  :is(
+    .aurelius-composer,
+    .conversation-starters button,
+    .studio-project-heading,
+    .studio-projects,
+    .studio-view-tabs,
+    .studio-direction,
+    .studio-composer,
+    .studio-paths button
+  )::after {
+  display: none;
+}
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+    :is(
+      .conversation-starters button,
+      .studio-project-heading,
+      .studio-projects,
+      .studio-view-tabs,
+      .studio-direction,
+      .studio-composer,
+      .studio-paths button
+    ) {
+    background: var(--io-navigation);
+    border-color: var(--io-secondary);
+    box-shadow: none;
+  }
+  .app-shell.imperial-workspace
+    :is(
+      .aurelius-composer,
+      .conversation-starters button,
+      .studio-project-heading,
+      .studio-projects,
+      .studio-view-tabs,
+      .studio-direction,
+      .studio-composer,
+      .studio-paths button
+    )::after {
+    display: none;
+  }
+}

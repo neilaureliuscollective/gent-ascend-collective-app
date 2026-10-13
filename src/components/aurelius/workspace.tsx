@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/visual/icon';
 import { ConversationArtifacts } from '@/components/live/artifacts';
 import { LiveVoiceEntry, useLiveBusy } from '@/components/live/provider';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -18,22 +19,28 @@ import type { Turn, WorkspaceData } from '@/domains/intelligence/types';
 import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
+import { useReadingAnchor } from './reading-anchor';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { conversationTiming } from '@/platform/conversation/timing';
+import { readTalkDraft, writeTalkDraft, clearTalkDrafts } from '@/platform/conversation/drafts';
 import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
+import { BplusMaterial, BplusTalkTools } from '../visual/bplus-material';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import {
   intelligenceStatus,
   type IntelligenceOperation,
 } from '@/platform/visual/intelligence-motion';
-import { IntelligenceActivity, IntelligenceResponse } from '../intelligence-motion/presence';
+import {
+  IntelligenceActivity,
+  IntelligenceResponse,
+  IntelligencePresence,
+} from '../intelligence-motion/presence';
 import { TalkPresence } from './talk-presence';
 import { AppearanceControls } from '../visual/appearance';
 import { ConversationLibrary } from './conversation-library';
 import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
-import { IntelligenceOrb } from '../public/intelligence-orb';
 import { routeCapability } from '@/domains/intelligence/capabilities';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
@@ -73,19 +80,35 @@ export function AureliusWorkspace({
       : null,
   );
   const [draft, setDraft] = useState(initialDraft || homeDraft?.text || '');
+  // Incoming handoffs are private in-memory drafts unless explicitly staged by Talk.
+  const memoryOnlyDraft = useRef(!!homeDraft && homeDraft.recovery !== 'tab');
+  const verifiedDraftOwner = useRef('');
   useEffect(() => {
     if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
-  const draftSnapshot = useRef({ text: draft, ownerId: '', conversationId: initialConversation });
+  const draftSnapshot = useRef({
+    text: draft,
+    ownerId: '',
+    conversationId: initialConversation,
+    memoryOnly: !!homeDraft && homeDraft.recovery !== 'tab',
+  });
   useEffect(() => {
-    draftSnapshot.current = { text: draft, ownerId: data?.ownerId ?? '', conversationId: selected };
-  }, [draft, data?.ownerId, selected]);
+    draftSnapshot.current = {
+      text: draft,
+      ownerId: data?.ownerId ?? '',
+      conversationId: selected,
+      memoryOnly: memoryOnlyDraft.current,
+    };
+    if (!compact && data?.ownerId && verifiedDraftOwner.current === data.ownerId)
+      writeTalkDraft(data.ownerId, selected, memoryOnlyDraft.current ? '' : draft);
+  }, [draft, data?.ownerId, selected, compact]);
   useEffect(
     () => () => {
       const snapshot = draftSnapshot.current;
       if (!compact && snapshot.text && snapshot.ownerId && !handoff?.peek()?.target)
         handoff?.stage({
           text: snapshot.text,
+          recovery: snapshot.memoryOnly ? 'memory' : 'tab',
           ownerId: snapshot.ownerId,
           conversationId: snapshot.conversationId ?? undefined,
         });
@@ -123,6 +146,7 @@ export function AureliusWorkspace({
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
+  const rememberReadingPosition = useReadingAnchor(scroll, follow, data !== null);
   const [awayFromLatest, setAwayFromLatest] = useState(false);
   function rememberConversation(id: string | null) {
     if (compact || !window.location.pathname.endsWith('/aethelios')) return;
@@ -146,6 +170,9 @@ export function AureliusWorkspace({
         if (controller.signal.aborted) return;
         setError('');
         if (response.status === 401) {
+          clearTalkDrafts();
+          verifiedDraftOwner.current = '';
+          memoryOnlyDraft.current = false;
           setPreview(true);
           setCouncilSelection(null);
           setData(disconnectedWorkspace);
@@ -157,7 +184,17 @@ export function AureliusWorkspace({
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
         const knownOwner = draftSnapshot.current.ownerId || homeDraft?.ownerId;
-        if (knownOwner && (result as WorkspaceData).ownerId !== knownOwner) setDraft('');
+        const owner = (result as WorkspaceData).ownerId ?? '';
+        if (knownOwner && owner !== knownOwner) {
+          clearTalkDrafts();
+          memoryOnlyDraft.current = false;
+          setDraft('');
+        }
+        verifiedDraftOwner.current = owner;
+        if (!compact && id !== draftSnapshot.current.conversationId) {
+          memoryOnlyDraft.current = false;
+          setDraft(readTalkDraft(owner, id));
+        }
         setData(result as WorkspaceData);
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
@@ -169,7 +206,14 @@ export function AureliusWorkspace({
           else url.searchParams.delete('conversation');
           window.history.replaceState(window.history.state, '', url);
         }
-        setNeedsReload(false);
+        const unresolved = (result as WorkspaceData).turns.some(
+          (turn) => turn.status === 'pending',
+        );
+        setNeedsReload(unresolved);
+        if (unresolved)
+          setError(
+            'An earlier reply is still unresolved. Reload saved state before sending again.',
+          );
         setConfirmDelete(false);
       } catch (e) {
         if (!controller.signal.aborted) {
@@ -182,6 +226,32 @@ export function AureliusWorkspace({
     },
     [compact, homeDraft],
   );
+  async function refreshMetadata(id: string) {
+    reading.current?.abort();
+    const controller = new AbortController();
+    reading.current = controller;
+    try {
+      const response = await fetch(`/api/aurelius?conversationId=${id}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!response.ok) return; // The turn is saved; metadata failure never makes it uncertain.
+      const result = (await response.json()) as WorkspaceData;
+      if (controller.signal.aborted) return;
+      setData((previous) =>
+        previous && previous.ownerId === result.ownerId
+          ? {
+              ...previous,
+              conversations: result.conversations,
+              currentConversation: result.currentConversation,
+              nextConversationCursor: result.nextConversationCursor,
+            }
+          : previous,
+      );
+    } catch {
+      /* A later explicit read refreshes metadata. Never replay a saved turn. */
+    }
+  }
   function reload(id: string | null = null) {
     setLoading(true);
     setError('');
@@ -285,7 +355,25 @@ export function AureliusWorkspace({
       })
       .then((result) => {
         if (controller.signal.aborted) return;
-        if (homeDraft && (!result || result.ownerId !== homeDraft.ownerId)) setDraft('');
+        if (!result?.ownerId) {
+          clearTalkDrafts();
+          verifiedDraftOwner.current = '';
+          memoryOnlyDraft.current = false;
+          if (homeDraft) setDraft('');
+        } else {
+          verifiedDraftOwner.current = result.ownerId;
+          const stored = !compact ? readTalkDraft(result.ownerId, initialConversation) : '';
+          if (homeDraft && result.ownerId !== homeDraft.ownerId) {
+            memoryOnlyDraft.current = false;
+            setDraft(stored);
+          } else if (!initialDraft && !homeDraft) setDraft((current) => current || stored);
+          if (result.turns.some((turn) => turn.status === 'pending')) {
+            setNeedsReload(true);
+            setError(
+              'An earlier reply is still unresolved. Reload saved state before sending again.',
+            );
+          }
+        }
         setPreview(result === null);
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
@@ -302,7 +390,7 @@ export function AureliusWorkspace({
       reading.current?.abort();
       generation.current?.abort();
     };
-  }, [initialConversation, homeDraft]);
+  }, [initialConversation, homeDraft, initialDraft, compact]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
@@ -323,6 +411,7 @@ export function AureliusWorkspace({
       data.currentConversation?.archived_at
     )
       return;
+    reading.current?.abort();
     const id = selected ?? crypto.randomUUID();
     const requestId = crypto.randomUUID();
     const text = messageText.trim();
@@ -404,6 +493,8 @@ export function AureliusWorkspace({
         throw new Error(result.error ?? 'The message could not be sent.');
       }
       accepted = true;
+      if (draftSnapshot.current.text === messageText) memoryOnlyDraft.current = false;
+      if (!compact && data.ownerId) writeTalkDraft(data.ownerId, selected, '');
       timing.mark('accepted');
       setDraft((current) => (current === messageText ? '' : current));
       setSelected(id);
@@ -443,13 +534,14 @@ export function AureliusWorkspace({
                 }
               : previous,
           );
+          break; // A durable receipt is terminal; do not wait for transport EOF.
         } else if (item.type === 'error') throw new Error(item.message);
       }
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
       setRevision(null);
       setNotice('Reply saved.');
-      // Refresh saved metadata without resetting completed motion or disabling the next draft.
-      await load(id);
+      // The saved receipt owns completion. Metadata refresh cannot hold the next request.
+      void refreshMetadata(id);
     } catch (e) {
       if (accepted && !saved) setDraft((current) => current || messageText);
       if (!accepted)
@@ -479,9 +571,11 @@ export function AureliusWorkspace({
     } finally {
       timing.mark('ended');
       painted.finish(!saved);
-      generation.current = null;
-      cancelReply.current = null;
-      setBusy(false);
+      if (generation.current === controller) {
+        generation.current = null;
+        cancelReply.current = null;
+        setBusy(false);
+      }
     }
   }
   async function feedback(id: string, value: 'helpful' | 'needs_work') {
@@ -505,7 +599,9 @@ export function AureliusWorkspace({
     setDeleting(true);
     try {
       await jsonRequest('/api/aurelius', 'DELETE', { id: selected });
+      if (data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
       await reload();
+      memoryOnlyDraft.current = false;
       setDraft('');
       setNotice(
         'Conversation deleted. Confirmed memories and daily actions remain in their own records.',
@@ -517,6 +613,8 @@ export function AureliusWorkspace({
     }
   }
   function newConversation() {
+    memoryOnlyDraft.current = false;
+    if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
     setSelected(null);
     setCouncilSelection(null);
@@ -601,6 +699,7 @@ export function AureliusWorkspace({
     );
   return (
     <div
+      data-bplus={compact ? undefined : 'talk'}
       className={`aurelius-layout talk-layout ${compact ? 'compact-layout' : ''} ${
         !data.turns.length && !busy ? 'is-new-conversation' : 'is-active-conversation'
       }`}
@@ -612,7 +711,6 @@ export function AureliusWorkspace({
             includeContext={includeContext}
             disabled={busy || preview || !data.canChat}
           />
-          <ConversationArtifacts conversationId={selected} />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
             state={
@@ -626,7 +724,7 @@ export function AureliusWorkspace({
             }
           />
           {!compact && (
-            <TalkDrawer label="Conversations">
+            <TalkDrawer label="Conversations" triggerContent={<span aria-hidden="true">☰</span>}>
               {(close) => (
                 <>
                   <ConversationLibrary
@@ -642,6 +740,8 @@ export function AureliusWorkspace({
                       )
                         return;
                       close();
+                      memoryOnlyDraft.current = false;
+                      if (data.ownerId) writeTalkDraft(data.ownerId, selected, '');
                       setDraft('');
                       follow.current = true;
                       void reload(id).catch(() => {});
@@ -664,168 +764,242 @@ export function AureliusWorkspace({
               )}
             </TalkDrawer>
           )}
-          <span className="talk-title">
-            {selected ? data.currentConversation?.title || 'Conversation' : 'New conversation'}
-          </span>
-          <button
-            type="button"
-            className="talk-tool"
-            disabled={blocked}
-            onClick={() => {
-              if (
-                !draft.trim() ||
-                confirm('Discard the unsent draft and start a new conversation?')
-              )
-                newConversation();
-            }}
-          >
-            New
-          </button>
-          <TalkDrawer label="Tools & context">
-            <AppearanceControls />
-            <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
-              <button aria-pressed={tab === 'conversation'} onClick={() => setTab('conversation')}>
-                Conversation
-              </button>
-              <button aria-pressed={tab === 'memory'} onClick={() => setTab('memory')}>
-                Memory
-              </button>
-              <button aria-pressed={tab === 'context'} onClick={() => setTab('context')}>
-                Context
-              </button>
-            </div>
-            {tab === 'memory' ? (
-              <MemoryEditor
-                memories={data.memories}
-                onChanged={() => reload(selected)}
-                disabled={blocked || preview}
-                preview={preview}
-              />
-            ) : tab === 'context' ? (
-              <ContextPanel data={data} preview={preview} included={includeContext} />
-            ) : (
-              <>
-                <div
-                  className={`conversation-controls ${compact ? '' : 'full-conversation-controls'}`}
-                >
-                  {compact ? (
-                    <>
-                      <label className="sr-only" htmlFor="conversation-choice">
-                        Saved conversations
-                      </label>
-                      <select
-                        id="conversation-choice"
-                        value={selected ?? ''}
-                        disabled={blocked}
-                        onChange={(e) => {
-                          follow.current = true;
-                          void reload(e.target.value || null).catch(() => {});
-                        }}
-                      >
-                        <option value="">New conversation</option>
-                        {selected && !data.conversations.some((c) => c.id === selected) && (
-                          <option value={selected}>Current conversation</option>
-                        )}
-                        {data.conversations.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.title}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="secondary-button"
-                        disabled={blocked}
-                        onClick={newConversation}
-                      >
-                        New
-                      </button>
-                    </>
-                  ) : (
-                    <span className="conversation-title">
-                      {selected
-                        ? data.currentConversation?.title ||
-                          data.conversations.find((c) => c.id === selected)?.title ||
-                          'Current conversation'
-                        : 'A space to think clearly.'}
-                    </span>
-                  )}
-                  {selected && (
+          <div className="talk-title">
+            {!compact && <h1>Aethelios</h1>}
+            <span>
+              {selected ? data.currentConversation?.title || 'Conversation' : 'New conversation'}
+            </span>
+          </div>
+          <BplusTalkTools enabled={!compact}>
+            <button
+              type="button"
+              className="talk-tool"
+              disabled={blocked}
+              onClick={() => {
+                if (
+                  !draft.trim() ||
+                  confirm('Discard the unsent draft and start a new conversation?')
+                )
+                  newConversation();
+              }}
+            >
+              New
+            </button>
+            <TalkDrawer
+              label="Tools & context"
+              triggerContent={<span aria-hidden="true">•••</span>}
+            >
+              <nav className="talk-destinations" aria-label="Aethelios destinations">
+                {[
+                  ['/app', 'Home'],
+                  ['/app/work', 'Work'],
+                  ['/app/architect', 'Architect'],
+                  ['/app/studio', 'Studio'],
+                  ['/app/missions', 'Missions'],
+                  ['/app/entities', 'Council'],
+                  ['/app/health', 'Health'],
+                  ['/app/lifestyle', 'Lifestyle'],
+                  ['/app/ecosystem', 'Ecosystem'],
+                  ['/app/you', 'Your account'],
+                  ['/app/aethelios/meet', 'Meet Aethelios'],
+                ].map(([href, label]) => (
+                  <Link key={href} href={href!} prefetch={false}>
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+              <ConversationArtifacts conversationId={selected} />
+              <AppearanceControls />
+              {!preview && (
+                <div className="intelligence-work-access">
+                  <MissionCapture
+                    conversationId={selected}
+                    objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
+                    disabled={
+                      blocked || needsReload || Boolean(data.currentConversation?.archived_at)
+                    }
+                  />
+                </div>
+              )}
+              {!preview && (
+                <div className="talk-council-access">
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={blocked}
+                    onClick={() => tableReview.current?.open(false)}
+                  >
+                    Meet the Intelligence Team
+                  </button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={blocked || !draft.trim()}
+                    onClick={() => tableReview.current?.open(true)}
+                  >
+                    Assemble Around This
+                  </button>
+                  {councilSelection && (
                     <button
+                      type="button"
                       className="text-button"
                       disabled={blocked}
-                      onClick={() => setConfirmDelete(true)}
+                      onClick={() => setCouncilSelection(null)}
                     >
-                      Delete conversation
+                      Return to Aethelios
                     </button>
                   )}
                 </div>
-                {confirmDelete && (
-                  <div className="confirm-row">
-                    <p>
-                      Delete this conversation and its messages? Confirmed memories and daily
-                      actions remain separate.
-                    </p>
-                    <button
-                      className="secondary-button"
-                      disabled={blocked}
-                      onClick={() => void deleteConversation()}
-                    >
-                      Confirm delete
-                    </button>
-                    <button className="text-button" onClick={() => setConfirmDelete(false)}>
-                      Keep conversation
-                    </button>
+              )}
+
+              <div className="aurelius-tabs" role="group" aria-label="Aethelios workspace">
+                <button
+                  aria-pressed={tab === 'conversation'}
+                  onClick={() => setTab('conversation')}
+                >
+                  Conversation
+                </button>
+                <button aria-pressed={tab === 'memory'} onClick={() => setTab('memory')}>
+                  Memory
+                </button>
+                <button aria-pressed={tab === 'context'} onClick={() => setTab('context')}>
+                  Context
+                </button>
+              </div>
+              {tab === 'memory' ? (
+                <MemoryEditor
+                  memories={data.memories}
+                  onChanged={() => reload(selected)}
+                  disabled={blocked || preview}
+                  preview={preview}
+                />
+              ) : tab === 'context' ? (
+                <ContextPanel data={data} preview={preview} included={includeContext} />
+              ) : (
+                <>
+                  <div
+                    className={`conversation-controls ${compact ? '' : 'full-conversation-controls'}`}
+                  >
+                    {compact ? (
+                      <>
+                        <label className="sr-only" htmlFor="conversation-choice">
+                          Saved conversations
+                        </label>
+                        <select
+                          id="conversation-choice"
+                          value={selected ?? ''}
+                          disabled={blocked}
+                          onChange={(e) => {
+                            follow.current = true;
+                            void reload(e.target.value || null).catch(() => {});
+                          }}
+                        >
+                          <option value="">New conversation</option>
+                          {selected && !data.conversations.some((c) => c.id === selected) && (
+                            <option value={selected}>Current conversation</option>
+                          )}
+                          {data.conversations.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.title}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="secondary-button"
+                          disabled={blocked}
+                          onClick={newConversation}
+                        >
+                          New
+                        </button>
+                      </>
+                    ) : (
+                      <span className="conversation-title">
+                        {selected
+                          ? data.currentConversation?.title ||
+                            data.conversations.find((c) => c.id === selected)?.title ||
+                            'Current conversation'
+                          : 'A space to think clearly.'}
+                      </span>
+                    )}
+                    {selected && (
+                      <button
+                        className="text-button"
+                        disabled={blocked}
+                        onClick={() => setConfirmDelete(true)}
+                      >
+                        Delete conversation
+                      </button>
+                    )}
                   </div>
-                )}
-                {!preview && (
-                  <TodayActions
-                    brief={data.context.dailyBrief}
-                    disabled={blocked}
-                    onChanged={() => reload(selected)}
-                  />
-                )}
-              </>
-            )}
-            <label className="context-toggle">
-              <input
-                type="checkbox"
-                checked={includeContext}
-                disabled={blocked}
-                onChange={(e) => setIncludeContext(e.target.checked)}
-              />
-              Use personal context
-            </label>
-            <details className="composer-privacy">
-              <summary>What Aethelios receives</summary>
-              <p className="composer-disclosure">
-                {preview ? (
-                  'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
-                ) : (
-                  <>
-                    Sending shares this conversation’s recent messages
-                    {councilSelection ? ' with the selected specialists' : ''}
-                    {includeContext
-                      ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records`
-                      : ''}{' '}
-                    with our AI service. Read-only web research may consult public sources; returned
-                    sources are linked in saved replies. Nothing is automatically added to memory.
-                  </>
-                )}
-              </p>
-            </details>
-          </TalkDrawer>
+                  {confirmDelete && (
+                    <div className="confirm-row">
+                      <p>
+                        Delete this conversation and its messages? Confirmed memories and daily
+                        actions remain separate.
+                      </p>
+                      <button
+                        className="secondary-button"
+                        disabled={blocked}
+                        onClick={() => void deleteConversation()}
+                      >
+                        Confirm delete
+                      </button>
+                      <button className="text-button" onClick={() => setConfirmDelete(false)}>
+                        Keep conversation
+                      </button>
+                    </div>
+                  )}
+                  {!preview && (
+                    <TodayActions
+                      brief={data.context.dailyBrief}
+                      disabled={blocked}
+                      onChanged={() => reload(selected)}
+                    />
+                  )}
+                </>
+              )}
+              <label className="context-toggle">
+                <input
+                  type="checkbox"
+                  checked={includeContext}
+                  disabled={blocked}
+                  onChange={(e) => setIncludeContext(e.target.checked)}
+                />
+                Use personal context
+              </label>
+              {!compact && !preview && (
+                <p className="quiet-label">
+                  Drafts started in Talk can recover in this tab for up to 24 hours, only for the
+                  same signed-in account and conversation. Home drafts and their edits stay in
+                  memory and disappear on reload. Nothing is sent automatically. Signing out or
+                  changing account clears local recovery drafts. Browser storage may be unavailable.
+                </p>
+              )}
+              <details className="composer-privacy">
+                <summary>What Aethelios receives</summary>
+                <p className="composer-disclosure">
+                  {preview ? (
+                    'Explore the workspace. Drafts stay in this open view; sending and saving require sign-in and a model connection.'
+                  ) : (
+                    <>
+                      Sending shares this conversation’s recent messages
+                      {councilSelection ? ' with the selected specialists' : ''}
+                      {includeContext
+                        ? `, profile, active goal, confirmed memories, daily records and relevant training summaries and Presence records`
+                        : ''}{' '}
+                      with our AI service. Read-only web research may consult public sources;
+                      returned sources are linked in saved replies. Nothing is automatically added
+                      to memory.
+                    </>
+                  )}
+                </p>
+              </details>
+            </TalkDrawer>
+          </BplusTalkTools>
         </div>
         {!preview && (
-          <div className="intelligence-work-access">
-            <MissionCapture
-              conversationId={selected}
-              objective={data.turns.find((t) => t.status === 'complete')?.user_text ?? ''}
-              disabled={blocked || needsReload || Boolean(data.currentConversation?.archived_at)}
-            />
-          </div>
-        )}
-        {!preview && (
           <CouncilPanel
+            hideAccess
             founder={Boolean(data.founderAccess)}
             reviewRef={tableReview}
             question={draft.trim() || data.turns.at(-1)?.user_text || ''}
@@ -878,6 +1052,7 @@ export function AureliusWorkspace({
               if (el) {
                 follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
                 setAwayFromLatest(!follow.current);
+                rememberReadingPosition();
               }
             }}
             aria-label="Conversation messages"
@@ -904,11 +1079,15 @@ export function AureliusWorkspace({
                     />
                   ) : (
                     <div
-                      className="talk-welcome-orb"
+                      className="talk-welcome-presence"
                       data-state={preview || !data.configured ? 'disconnected' : 'ready'}
                       aria-hidden="true"
                     >
-                      <IntelligenceOrb active={false} deepGreen />
+                      <IntelligencePresence
+                        variant="signal"
+                        size="large"
+                        operation={observedOperation('talk-welcome', 'ready')}
+                      />
                     </div>
                   )}
 
@@ -954,7 +1133,9 @@ export function AureliusWorkspace({
                       disabled={blocked}
                     >
                       {suggestion.label}
-                      <span aria-hidden="true">↗</span>
+                      <span aria-hidden="true">
+                        <Icon name="arrow-up-right" className="action-icon" />
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1013,127 +1194,137 @@ export function AureliusWorkspace({
                 : 'Conversation access is not enabled for this account. If you were invited, confirm your access in the founding member guide.'}
             </p>
           )}
-          {awayFromLatest && (
-            <button
-              className="latest-message"
-              onClick={() => {
-                follow.current = true;
-                setAwayFromLatest(false);
-                scroll.current?.scrollTo({
-                  top: scroll.current.scrollHeight,
-                  behavior: 'instant',
-                });
+          <div className="aurelius-compose-region">
+            {awayFromLatest && (
+              <button
+                className="latest-message"
+                onClick={() => {
+                  follow.current = true;
+                  setAwayFromLatest(false);
+                  scroll.current?.scrollTo({
+                    top: scroll.current.scrollHeight,
+                    behavior: 'instant',
+                  });
+                }}
+              >
+                Latest message ↓
+              </button>
+            )}
+            <form
+              className="aurelius-composer"
+              data-bplus-surface={compact ? undefined : 'composer'}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (councilSelection?.kind === 'table') {
+                  tableReview.current?.open();
+                  return;
+                }
+                void sendMessage(draft, revision);
               }}
             >
-              Latest message ↓
-            </button>
-          )}
-          <form
-            className="aurelius-composer"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (councilSelection?.kind === 'table') {
-                tableReview.current?.open();
-                return;
-              }
-              void sendMessage(draft, revision);
-            }}
-          >
-            {capability && !councilSelection && (
-              <div className="revision-notice" aria-live="polite">
-                <span>
-                  Aethelios is routing this through <strong>{capability.label}</strong>{' '}
-                  intelligence.
-                </span>{' '}
-                {['performance', 'studio', 'presence'].includes(capability.id) ? (
+              {!compact && <BplusMaterial radius={19} />}
+              {capability && !councilSelection && (
+                <div className="revision-notice" aria-live="polite">
+                  <span>
+                    Aethelios is routing this through <strong>{capability.label}</strong>{' '}
+                    intelligence.
+                  </span>{' '}
+                  {['performance', 'studio', 'presence'].includes(capability.id) ? (
+                    <button
+                      type="button"
+                      className="text-button"
+                      disabled={orchestrating}
+                      onClick={() => void prepareCapability()}
+                    >
+                      {orchestrating ? (
+                        `Preparing ${capability.label}…`
+                      ) : (
+                        <>
+                          Prepare in {capability.label}{' '}
+                          <Icon name="arrow-up-right" className="action-icon" />
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      href={capability.href}
+                      onClick={() => {
+                        if (data.ownerId)
+                          handoff?.stage({
+                            text: draft.trim() || data.turns.at(-1)?.user_text || '',
+                            ownerId: data.ownerId,
+                            target: capability.id,
+                          });
+                      }}
+                    >
+                      Open {capability.label} only if you want depth{' '}
+                      <Icon name="arrow-up-right" className="action-icon" />
+                    </Link>
+                  )}
+                </div>
+              )}
+              {revision && (
+                <div className="revision-notice">
+                  Editing your last message{' '}
                   <button
                     type="button"
-                    className="text-button"
-                    disabled={orchestrating}
-                    onClick={() => void prepareCapability()}
-                  >
-                    {orchestrating
-                      ? `Preparing ${capability.label}…`
-                      : `Prepare in ${capability.label} ↗`}
-                  </button>
-                ) : (
-                  <Link
-                    href={capability.href}
                     onClick={() => {
-                      if (data.ownerId)
-                        handoff?.stage({
-                          text: draft.trim() || data.turns.at(-1)?.user_text || '',
-                          ownerId: data.ownerId,
-                          target: capability.id,
-                        });
+                      setRevision(null);
+                      setDraft('');
                     }}
                   >
-                    Open {capability.label} only if you want depth ↗
-                  </Link>
+                    Cancel
+                  </button>
+                </div>
+              )}
+              <TalkInput
+                id="aurelius-message"
+                label="Message Aethelios"
+                inputRef={composer}
+                value={draft}
+                onChange={setDraft}
+                disabled={liveBusy || loading || deleting || orchestrating}
+                placeholder={
+                  councilSelection?.kind === 'specialist'
+                    ? `Message ${councilLabel(councilSelection)}…`
+                    : 'Message Aethelios…'
+                }
+              />
+              <div className="composer-controls">
+                <span className="quiet-label">
+                  {includeContext ? 'Personal context on' : 'Private conversation'}
+                </span>
+                {busy ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={operation.persistence === 'confirmed'}
+                    onPointerDown={(event) => retainComposerFocus(event, composer.current)}
+                    onClick={() => cancelReply.current?.()}
+                  >
+                    Stop reply
+                  </button>
+                ) : (
+                  <button
+                    className="button"
+                    disabled={
+                      blocked ||
+                      !data.configured ||
+                      !data.canChat ||
+                      !draft.trim() ||
+                      needsReload ||
+                      Boolean(data.currentConversation?.archived_at)
+                    }
+                    type="submit"
+                    onPointerDown={(event) => retainComposerFocus(event, composer.current)}
+                  >
+                    {councilSelection?.kind === 'table' ? 'Review The Table' : 'Send'}{' '}
+                    <span aria-hidden="true">↑</span>
+                  </button>
                 )}
               </div>
-            )}
-            {revision && (
-              <div className="revision-notice">
-                Editing your last message{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRevision(null);
-                    setDraft('');
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-            <TalkInput
-              id="aurelius-message"
-              label="Message Aethelios"
-              inputRef={composer}
-              value={draft}
-              onChange={setDraft}
-              disabled={liveBusy || loading || deleting || orchestrating}
-              placeholder={
-                councilSelection?.kind === 'specialist'
-                  ? `Message ${councilLabel(councilSelection)}…`
-                  : 'Message Aethelios…'
-              }
-            />
-            <div className="composer-controls">
-              <span className="quiet-label">
-                {includeContext ? 'Personal context on' : 'Private conversation'}
-              </span>
-              {busy ? (
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={operation.persistence === 'confirmed'}
-                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
-                  onClick={() => cancelReply.current?.()}
-                >
-                  Stop reply
-                </button>
-              ) : (
-                <button
-                  className="button"
-                  disabled={
-                    blocked ||
-                    !data.configured ||
-                    !data.canChat ||
-                    !draft.trim() ||
-                    needsReload ||
-                    Boolean(data.currentConversation?.archived_at)
-                  }
-                  type="submit"
-                  onPointerDown={(event) => retainComposerFocus(event, composer.current)}
-                >
-                  {councilSelection?.kind === 'table' ? 'Review The Table' : 'Send'}{' '}
-                  <span aria-hidden="true">↑</span>
-                </button>
-              )}
-            </div>
-          </form>
+            </form>
+          </div>
         </>
         <p className="aurelius-notice" role="status">
           {notice}

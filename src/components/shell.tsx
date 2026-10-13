@@ -1,5 +1,7 @@
+import { ShellWorkspace } from './environment-frame';
 import { SensitiveBoundary, SensitiveLiveProvider } from './health/sensitive-boundary';
 import { ConversationDraftProvider } from './aurelius/draft-handoff';
+import { OriginDraftProvider } from './architect-origin/draft-handoff';
 import { ConnectionField } from './visual/connection-field';
 import Link from 'next/link';
 import { Navigation } from './navigation';
@@ -27,79 +29,83 @@ export function Shell({
       }
     >
       <ConversationDraftProvider>
-        <div className="app-shell aethelios-aether imperial-workspace">
-          <AppRuntime />
-          <VisualEnvironment>
-            <ConnectionField />
-          </VisualEnvironment>
-          <a className="skip" href="#main">
-            Skip to content
-          </a>
-          <aside className="sidebar">
-            <Link className="wordmark" href="/app" aria-label="Aethelios home">
-              <Brand />
-            </Link>
-            <p className="navigation-label">AETHELIOS</p>
-            <Navigation />
-            <SensitiveBoundary>
-              <AureliusPanel />
-            </SensitiveBoundary>
-
-            <div className="sidebar-footer">
-              <Link href="/app/work" prefetch={false} className="text-link">
-                Company work ↗
-              </Link>
-              <span className="brand-star" aria-hidden="true">
-                ✦
-              </span>
-              <p>
-                Think. Build.
-                <br />
-                Operate.
-              </p>
-              <span className="quiet-label">A clearer way to build.</span>
-            </div>
-          </aside>
-          <div className="workspace">
-            <header className="topbar">
-              <Link href="/app" className="mobile-brand" aria-label="Aethelios home">
-                <Brand compact />
-              </Link>
-              <span className="topbar-context">
-                AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
-              </span>
-              <div className="topbar-actions">
+        <OriginDraftProvider>
+          <ShellWorkspace
+            ambience={
+              <>
+                <AppRuntime />
+                <VisualEnvironment>
+                  <ConnectionField />
+                </VisualEnvironment>
+              </>
+            }
+            navigation={
+              <aside className="sidebar">
+                <Link className="wordmark" href="/app" aria-label="Aethelios home">
+                  <Brand />
+                </Link>
+                <p className="navigation-label">AETHELIOS</p>
+                <Navigation />
                 <SensitiveBoundary>
-                  <UniversalCapture />
+                  <AureliusPanel />
                 </SensitiveBoundary>
-                <AppearanceControls />
-                <Link href="/app/work" className="text-link shell-ascend-link">
-                  Company work
-                </Link>
-                {founder && <Link href="/dev">Developer console</Link>}
-                {founderOffice && (
-                  <Link
-                    href="/app/founder"
-                    prefetch={false}
-                    className="text-link shell-founder-link"
-                    aria-label="Founder Office"
-                  >
-                    <span className="founder-link-long">Founder Office</span>
-                    <span className="founder-link-short" aria-hidden="true">
-                      Office
-                    </span>
+
+                <div className="sidebar-footer">
+                  <Link href="/app/work" prefetch={false} className="text-link">
+                    Company work ↗
                   </Link>
-                )}
-                <Link href="/app/you" className="avatar" aria-label="Your account">
-                  <Icon name="person" />
+                  <span className="brand-star" aria-hidden="true">
+                    ✦
+                  </span>
+                  <p>
+                    Think. Build.
+                    <br />
+                    Operate.
+                  </p>
+                  <span className="quiet-label">A clearer way to build.</span>
+                </div>
+              </aside>
+            }
+            controls={
+              <header className="topbar">
+                <Link href="/app" className="mobile-brand" aria-label="Aethelios home">
+                  <Brand compact />
                 </Link>
-              </div>
-            </header>
-            <main id="main" tabIndex={-1}>
-              {children}
-            </main>
-          </div>
-        </div>
+                <span className="topbar-context">
+                  AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
+                </span>
+                <div className="topbar-actions">
+                  <SensitiveBoundary>
+                    <UniversalCapture />
+                  </SensitiveBoundary>
+                  <AppearanceControls />
+                  <Link href="/app/work" className="text-link shell-ascend-link">
+                    Company work
+                  </Link>
+                  {founder && <Link href="/dev">Developer console</Link>}
+                  {founderOffice && (
+                    <Link
+                      href="/app/founder"
+                      prefetch={false}
+                      className="text-link shell-founder-link"
+                      aria-label="Founder Office"
+                    >
+                      <span className="founder-link-long">Founder Office</span>
+                      <span className="founder-link-short" aria-hidden="true">
+                        Office
+                      </span>
+                    </Link>
+                  )}
+                  <Link href="/app/you" className="avatar" aria-label="Your account">
+                    <Icon name="person" />
+                  </Link>
+                </div>
+              </header>
+            }
+          >
+            {children}
+          </ShellWorkspace>
+        </OriginDraftProvider>
       </ConversationDraftProvider>
     </SensitiveLiveProvider>
   );

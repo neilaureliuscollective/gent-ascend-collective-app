@@ -71,6 +71,21 @@ export type GoalRow = {
 export interface Database {
   public: {
     Tables: {
+      architect_origin_projects: Table<
+        import('@/domains/architect-origin/schema').OriginProject,
+        never,
+        never
+      >;
+      architect_origin_versions: Table<
+        import('@/domains/architect-origin/schema').OriginVersion,
+        never,
+        never
+      >;
+      architect_origin_runs: Table<
+        import('@/domains/architect-origin/schema').OriginRun & { payload: unknown },
+        never,
+        never
+      >;
       intelligence_missions: Table<
         import('@/domains/missions/schema').Mission,
         Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>,
@@ -848,6 +863,28 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      architect_origin_save: {
+        Args: {
+          p_project: string;
+          p_request: string;
+          p_expected: number;
+          p_content: import('@/domains/architect-origin/schema').ProjectContent;
+          p_note: string;
+        };
+        Returns: number;
+      };
+      architect_origin_begin: {
+        Args: {
+          p_project: string;
+          p_request: string;
+          p_expected: number;
+          p_kind: string;
+          p_instruction: string;
+          p_payload: unknown;
+        };
+        Returns: boolean;
+      };
+      architect_origin_finish: { Args: { p_request: string; p_output: unknown }; Returns: boolean };
       health_export_history: { Args: Record<string, never>; Returns: unknown };
       health_read: { Args: Record<string, never>; Returns: unknown };
       health_mutate: {

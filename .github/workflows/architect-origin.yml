@@ -1,0 +1,44 @@
+name: Architect Origin acceptance
+on:
+  push:
+    branches: ['feat/architect-origin-*', 'feat/architect-immersive-*']
+  pull_request:
+    paths: ['src/domains/architect-origin/**', 'src/components/architect-origin/**', 'src/app/**/architect/**', 'src/app/api/architect-origin/**', 'tests/*architect-origin*', 'tests/**/architect-origin*', 'supabase/migrations/*architect_origin.sql', '.github/workflows/architect-origin.yml']
+concurrency:
+  group: origin-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 24, cache: npm}
+      - run: npm ci
+      - run: npm run db:ledger
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.origin.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: architect-origin-browser-evidence, path: test-results, if-no-files-found: ignore}
+  local-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 24, cache: npm}
+      - run: npm ci
+      - run: npx supabase start
+      - run: npx supabase db reset --local
+      - run: node scripts/dev-setup.mjs --running
+      - run: node scripts/architect-origin-auth-smoke.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.origin-auth.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: architect-origin-auth-evidence, path: test-results, if-no-files-found: ignore}
+      - if: always()
+        run: npx supabase stop --no-backup

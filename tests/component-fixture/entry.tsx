@@ -1,3 +1,6 @@
+import { EnvironmentFrame } from '@/components/environment-frame';
+import { ArchitectOrigin } from '@/components/architect-origin/workspace';
+import '@/app/(workspace)/app/architect/origin.css';
 import { previewProduct } from '@/domains/catalog/preview';
 import { OrbPresentation } from '@/components/visual/orb-presentation';
 import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
@@ -13,6 +16,7 @@ import { FounderOffice } from '@/components/founder-office/office';
 import { founderOfficeFixture } from './founder-office-data';
 import '@/app/imperial-workspace.css';
 import '@/app/imperial-emerald-ii.css';
+import '@/app/obsidian-smoked-glass.css';
 
 import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
 import { CollectionWorld } from '@/components/commerce/collection-world';
@@ -180,6 +184,18 @@ createRoot(document.getElementById('root')!).render(
     <LiveArtifactsFixture />
   ) : mode === 'live-voice' ? (
     <LiveVoiceFixture />
+  ) : mode === 'architect-origin' ? (
+    <EnvironmentFrame
+      immersive
+      navigation={
+        <nav aria-label="Synthetic environments">
+          <a href="/app/work">Work</a>
+        </nav>
+      }
+      controls={<p>Synthetic Origin fixture · no real account or model.</p>}
+    >
+      <ArchitectOrigin enabled aiEnabled />
+    </EnvironmentFrame>
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
       <p>Synthetic Founder Office fixture · no account, live model or external action.</p>

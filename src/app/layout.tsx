@@ -9,6 +9,7 @@ import './aether-materials.css';
 import './imperial-materials.css';
 import './imperial-workspace.css';
 import './imperial-emerald-ii.css';
+import './obsidian-smoked-glass.css';
 const sora = localFont({
   src: '../assets/fonts/sora.woff2',
   variable: '--font-display',

@@ -26,7 +26,10 @@ test('Talk keeps its draft and compact composer through appearance changes', asy
   await input.fill('A founder review draft');
   await input.focus();
   await expect(input).toBeFocused();
-  await expect(composer).toHaveCSS('border-color', 'rgb(214, 183, 106)');
+  // The smoked composer retains optical focus emphasis and a visible editor outline.
+  await expect(composer.locator('> .bplus-optics .bplus-emphasis')).toHaveCSS('opacity', '0.12');
+  await expect(input).toHaveCSS('outline-style', 'solid');
+  await expect(input).toHaveCSS('outline-width', '2px');
   // Talk hides the global topbar; exercise the shared preference event directly.
   await page.evaluate(() => {
     localStorage.setItem('aurelius-material', 'solid');
@@ -54,8 +57,13 @@ test('Compact welcome suggestions stage the existing draft without sending', asy
   await page.goto('/app/aethelios');
   const input = page.getByLabel('Message Aethelios', { exact: true });
   await page.getByRole('button', { name: 'Pressure-test an idea', exact: true }).click();
-  await expect(input).toHaveValue('I have an idea to pressure-test. Help me turn it into a clear decision.');
+  await expect(input).toHaveValue(
+    'I have an idea to pressure-test. Help me turn it into a clear decision.',
+  );
   await expect(input).toBeFocused();
   await expect(page.locator('.conversation-turn')).toHaveCount(0);
-  await expect(page.locator('textarea.talk-input')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(page.locator('textarea.talk-input')).toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0)',
+  );
 });

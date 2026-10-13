@@ -1,6 +1,33 @@
+> Release authorization update (2026-10-13): the founder explicitly approved clearing the entire legacy v1 unsent browser-draft cache, including ordinary Talk drafts, after that consequence was explained. This resolves the earlier retention hold. Saved server conversations remain untouched. Functional release checks and existing feature gates still apply.
+
+## 2026-10-13 approved material release preparation
+
+Refined smoked-glass candidate da22d15 retained. Home handoffs now carry a memory-only recovery policy through edits and route remounts. Ordinary Talk recovery remains owner/conversation scoped; explicit sign-out clears this tab, expired records are pruned on access, and the indistinguishable legacy v1 cache is invalidated without touching server messages. Cross-tab immediate erasure is not claimed. Browser coverage retains no-persistence assertions and updates retired orb/sidebar selectors to the approved lightweight presence and Tools destinations. Live398037e, Architect928f74a and their activation/migration work remain excluded. Exact-source release evidence is recorded separately; physical and hosted authenticated/provider acceptance must not be inferred from synthetic fixtures.
+
+> Smoked-glass refinement after founder visual review (2026-10-13): raised Talk/Studio surfaces have controlled reflective rims, inner bevels and highlight falloff; canvas and Tools remain subdued. Unsupported U+2197 arrows in Talk, composer expansion, Missions and Studio now use the existing accessible SVG icon system. Screenshots require loaded Inter/Sora and device-scale DPR 2. No privacy, Live, persistence or Architect behavior change; no deployment. See [refinement scope](OBSIDIAN_SMOKED_GLASS_20261013.md).
+
+> Obsidian / Smoked Glass material review (2026-10-13): isolated from accepted Talk production `0c45b2f`. Talk and Studio adopt neutral smoked graphite through shared material tokens, existing optical geometry, exact Reserve Gold and localized emerald. Drawer Council actions have explicit spacing. No conversation, Live, ownership, persistence or Architect implementation changes. Separate from the existing red Quality/privacy diagnosis; no deployment authorization. See [scope, dependency map and verification](OBSIDIAN_SMOKED_GLASS_20261013.md).
+
+> Talk recovery (2026-10-13): one compact header/viewport, no hidden Talk WebGL, saved-receipt completion independent of metadata, bounded account/conversation draft recovery, reading anchors, and narrowly recoverable Live cancellation. Existing production gates remain unchanged. See [scope and limitations](TALK_RECOVERY_20261013.md); exact candidate/checks/release receipts are preserved separately. Architect first-site remains a separate candidate.
+
+> B+ Work / Architect local continuation (2026-10-13): approved Talk optics now mark selected Work entry actions/navigation and Architect project/tab/view/save controls. Opaque obsidian reading, existing layout, drafts, domain behavior and gates remain intact; no Lifestyle changes. Functional repairs are separate commit b5def5b. See [scope and verification](HYBRID_EMERALD_BPLUS_WORK_ARCHITECT.md); exact final checks/screenshots/bundle are local review artifacts, not production approval.
+
+> Local interaction repairs (2026-10-13): Neil authorized composer-relative Latest message placement, drawer close focus ownership and Architect route-owned URL writes. Seven controlled browser regressions fail on c593 and pass on the isolated repair. See [scope and historical evidence](LOCAL_INTERACTION_REPAIRS.md). Work/Architect materials are a separate next commit; no production operation.
+
+## Hybrid Emerald B+ Talk pilot — October 13, 2026
+
+Neil-approved local material implementation on preserved integrated/repaired base `40d2fd8`: opaque emerald optical composer, current Talk navigation and existing New / Tools grouping only. Static SVG and generated palette tokens preserve functional state and existing appearance preferences; no global material alias, controller, domain or provider change. The approved image transfer returned Forbidden, so the explicitly authorized written recipe was used; exact image fidelity remains unverified. See [B+ scope and verification](HYBRID_EMERALD_BPLUS.md). The isolated review artifacts record the final SHA, actual screenshots and fresh checks. No publication or production action; remaining Auth/MediaPipe/device gates stay open.
+
+## Architect history-navigation repair — October 13, 2026
+
+Follow-up review reproduced loss of edits to a newly saved project when its immediate history refresh failed. Save acknowledgements now carry the server-verified person ID; missing ownership pauses editing for receipt recovery, which restores the project URL. Added creation/failure/isolation regressions and explicit API owner-forgery rejection checks. This remains local-only; exact follow-up results and candidate are in the preserved review artifacts.
+
+Founder-approved local repair on combined PR113/PR114 base `6781bc6`: owner-checked, memory-only recovery preserves saved-project drafts across browser Back/Forward without changing browser history. Explicit discard/leave, refresh decisions, stale revisions and uncertain save receipts remain deliberate. No schema/feature-gate/B+ changes or external release action. Verification and limitations: [Architect history recovery](ARCHITECT_HISTORY_RECOVERY.md); exact final evidence is preserved in the separate review archive. Real Supabase and MediaPipe asset gates remain open.
+
 ## Imperial Emerald II — October 12, 2026
 
 Implemented on `codex/imperial-emerald-ii` from released `fd49ba4`: exact foundational palette, Satin Forest/Living Emerald/Gilded Obsidian shared materials, focused Talk welcome/composer/readability, saved-data Founder Office attention index and coordinated Studio/Lifestyle/Ecosystem presentation. Five destinations, Auth/permissions, providers, persistence, approval guards and commerce logic are preserved. No dependencies, backend changes, migrations or production release. Lint, ledger, isolated strict attention typing and targeted rendering/contrast checks passed. Full types/unit/build/browser/Auth gates remain open: incomplete dependency installation and sandbox Chromium failures. No screenshots or authenticated acceptance claimed. [Implementation and exact limitations](IMPERIAL_EMERALD_II.md).
+
 ## Guiding-aperture integration candidate · 2026-10-12
 
 Implemented the recommended sphere/aperture as shared response/task/native Live presentation, with pending/uncertain persistence and voice modifier guards, finite completion, Still and offscreen suspension. Native voice and AI domain behavior remain intact. Main Studio/Work activity strips pin during long editing. Lint/types, 685 unit tests and synthetic actual-component bundling pass; rendered/device/performance and production acceptance remain open. No release performed. See [integration receipt](INTELLIGENCE_MOTION_GUIDING_INTEGRATION.md).
@@ -42,6 +69,7 @@ Review candidate stacked on unmerged PR #94: Narration room with explicit one-re
 ## Aethelios Studio production house — October 12, 2026
 
 Review candidate: saved project brand kits, original-logo Finish compositing, editable multi-format campaign exports, and a native motion-film pilot from owned saved images with optional own audio. Reuses existing image generation, Supabase project JSONB, storyboard and finish services; no migration, new provider or production release. Image acknowledgement recovery preserves potentially committed originals, and Talk-prepared briefs survive project creation. Native film is not AI-generated footage and remains local until downloaded. Scope, research, exact acceptance limits and founder setup: [STUDIO_PRODUCTION_HOUSE.md](STUDIO_PRODUCTION_HOUSE.md). Local lint, types, 442 unit/SQL tests and ledger pass; build/browser/preview receipts are tracked in the candidate PR. Live authenticated OpenAI/Storage and physical-device acceptance remain separate.
+
 ## Aethelios Intelligence Motion Phase 2 — October 12, 2026
 
 Founder-requested researched integration implemented on `feat/intelligence-motion-integration`. Talk/Council and Work use observed provider search/reasoning/text events plus explicit persistence acknowledgment; Studio request/write/export flows share motion/status with truthful Waiting for synchronous image generation. Original Talk orb artwork, controls, coalescing, consent, ownership, cancellation and recovery remain. New clients opt in to activity events; cached clients keep the original stream format. Optional activity callbacks preserve the Live background text/finish contract. Live adapters are prepared/tested against PR #90 `43d6f307`, but remain unmounted in that separate unmerged candidate. No database/provider/configuration change, main merge or deployment. Synthetic standalone integration artifact bundles; lint, strict types, 437 unit tests and historical migration ledger pass. Production build remains blocked by existing MediaPipe DNS; rendered/physical-device acceptance is unrun due sandbox restrictions. Scope and remaining gates: [INTELLIGENCE_MOTION_PHASE_2.md](INTELLIGENCE_MOTION_PHASE_2.md).
@@ -1029,7 +1057,6 @@ Founder supplied the new official green-and-gold ascending-A logo and authorized
 
 Implemented reusable emerald/aether illumination, layered obsidian materials, ceremonial metal controls, cinematic Work/Studio/Ecosystem hero light architecture, Talk composer/empty-state depth, active navigation optics and upgraded existing orb shading/fallback. See LUMINOUS_OBSIDIAN.md for material roles, research, motion budgets and review boundaries. Real data/provider/authentication/billing contracts and installed crest remain unchanged. Founder authorized completion and production release on 2026-10-10. Lint/typecheck, 410 unit tests, 19 targeted browser tests and optimized build passed. Actual desktop/phone screenshots accompany founder review. Physical-device and authenticated-provider checks remain open; Git-integrated release verification is recorded with the delivery receipt.
 
-
 ## Studio integration and single-database correction — October 12, 2026
 
 PR #99 consolidates the complete production-house, Narration, Footage, Delivery and premium Studio stack against main. Founder readiness checks are session-bound and read-only. Founder explicitly directs using the existing Gent Ascend Supabase only; the extra hosted staging requirement is withdrawn. Hosted Narration/Footage schema, provider credentials/budgets and live acceptance remain incomplete. No hosted migration, paid generation or production deployment was performed.
@@ -1061,6 +1088,7 @@ Founder-approved shared material elevation on feat/imperial-emerald-obsidian-202
 ## Studio hosted media connection — October 12, 2026
 
 Applied the exact reviewed Narration and Footage migrations to the existing Gent Ascend database, reconciled source versions/hashes with hosted history and passed all 20 read-only catalog contract checks. Existing image bucket, member records and shared services were preserved. Added repeatable verification SQL and a regression for missing owner policy/anonymous RPC permission. No extra hosted database, reset, seed, paid generation, feature activation or production app release. Advisor warnings are reviewed and reported, not hidden. Remaining provider credentials/budgets and ordinary-account live acceptance: [STUDIO_MEDIA_CONNECTION.md](STUDIO_MEDIA_CONNECTION.md).
+
 ## Founder Office activation candidate — 2026-10-11
 
 Inside the canonical public application, implemented account-bound Founder Office entry, independent founder access when membership provisioning is absent, owner-keyed UI continuity, private company/source/figure context, MARA/CASSIAN/CASSIUS on the shared specialist system, public Entities naming, saved company deliverables, dependent task plans, human approval/rejection history, bounded portfolio briefings with personal Mission continuity, and fixed public canonical-platform inspection. Existing memory, Talk, Company Rooms, Studio, immutable work versions and owner RLS are reused. No new application, database, signup system, dependency or migration. Retired private-app bridge network residue is removed.
@@ -1070,7 +1098,6 @@ Audit and capability statuses: [FOUNDER_OFFICE_AUDIT.md](FOUNDER_OFFICE_AUDIT.md
 Compatible rollback reader `555b08e` (including the work-contract expansion in `1e90c36`) is a separate local baseline, independently typechecked with 416 passing tests in a detached checkout of this same repository. Original production reader `32d1c4c` cannot safely read additive control fields; retain an accepted compatibility artifact before activating new records. No Git push, PR, hosted grant, merge or deployment. Vercel production remains READY at `32d1c4c`; its broad CI run remains failed. This phase is an implementation candidate, not live founder activation or voice parity.
 
 Final candidate verification, completed 2026-10-12: lint, strict TypeScript and 445 tests across 62 files passed; the recorded 28-file migration hash ledger passed. Optimized webpack/TypeScript compiler-API build completed with original configuration restored; this skips the missing Mirror prebuild asset and does not close the standard build/asset gate. Browser server startup is denied by EPERM. Real local Auth is blocked by absent local configuration/Docker access; live model connection is blocked by missing OPENAI_API_KEY. Supplied authenticated and responsive acceptance tests remain unrun. Reader baseline 555b08e independently passed lint, strict types and 416 tests across 58 files. No hosted changes or deployment.
-
 
 ## Founder Office phase two — 2026-10-12
 
@@ -1090,13 +1117,11 @@ Implemented explicit founder-only withdrawal for approved proposals at the exist
 
 458 tests across 64 files, lint, strict TypeScript and optimized webpack compilation passed. Optimized build receipt: /workspace/approval-build.log; test/type/lint receipts: /workspace/approval-{tests,types,lint}.log. Unchanged 28-file migration ledger passed. Normal asset-complete build and real Auth/provider/browser/voice/device gates remain blocked as previously recorded. No schema expansion, dependency, push, PR, migration or deployment. This remains candidate source in the canonical public application.
 
-
 ## Founder Office release validation — 2026-10-12
 
 Founder authorized execution of release validation and the gated release process. Production advanced independently to Obsidian release 9d973fe94526cbd5c98f5ea1495c999ddd3f803e. Retrieved all 50 changed text files through GitHub, reconstructed the exact deployed source tree b6942117efee5530a5196a6a7dd244522c28663e, and merged that verified source into the candidate. Preserve current production design; the only conflict was an equivalent Next compiler-mode comment. The local import commit is a source reconstruction, not the original remote release commit. Remote publication will parent the actual canonical production commit and must match the integrated tree.
 
 Added explicit responsive/recovery and real synthetic-Auth founder-persistence checks before the inherited broad suites in Quality gates. No checks are removed or suppressed. Publishing this review branch allows the connected GitHub runner to perform asset-complete builds, real local Supabase/Auth and browser checks unavailable in this sandbox. Live customer/founder production identity, model evaluation, voice and physical-device gates remain separate. Production promotion remains gated on accepted results and compatible rollback readiness.
-
 
 ## Founder Office connected release execution receipt — 2026-10-12
 
@@ -1110,11 +1135,9 @@ Published source 67036c6 completed both database jobs successfully, including al
 
 Full authenticated database checks remain green. Focused Command/identity checks reached 40/55; repaired stale tools-drawer/nav/manifest expectations and ambiguous saved-context/deeper-system locators. Added native no-JavaScript workspace guidance with account/home links, preserving authorization and private-context handling. Source research and checks: FOUNDER_ACCEPTANCE_RECONCILIATION.md. No test suppression or production promotion; connected browser results still govern acceptance.
 
-
 ### Founder release acceptance continuation — 2026-10-12
 
 Added a native no-JavaScript explanation to the streamed workspace opening boundary and reconciled current Talk/motion/public/Lifestyle/cache browser contracts. Retained estate components have explicit test-only historical coverage rather than asserting that the old design is the live homepage. See `FOUNDER_ACCEPTANCE_RECONCILIATION.md`. Activation head `50a1892` passed real Auth/RLS and authenticated founder persistence checks, but browser release gates remain unresolved. No production merge, deployment, migration or activation flag change performed.
-
 
 ### Current acceptance evidence — 2026-10-12
 
@@ -1129,10 +1152,10 @@ Shared palette and material elevation covers public entry, Talk/Live, Work/compa
 Local lint/types, 673 unit/SQL tests, ledger and optimized compilation pass. Hosted normal check/build plus Studio, Lifestyle, Live and real disposable-Supabase Auth/founder persistence pass on the integrated candidates. Final exact source-tree receipts, responsive screenshots and broader browser results are in draft PR #104: https://github.com/neilaureliuscollective/gent-ascend-collective-app/pull/104 . All earlier failed material assertions remain recorded and corrected, never disabled. Local standard prebuild Mirror DNS and local browser/server sandbox restrictions are documented separately.
 
 Next: founder visual review and physical Fold/DeX/Safari, real authenticated long-conversation/microphone/generation/checkout and measured field-performance acceptance. Browser viewport checks and intercepted fixtures do not close those gates. Pending upstream migrations remain unapplied; no production merge, promotion, billing, merchant publication or live configuration change.
+
 ## Studio approved production release — October 12, 2026
 
 Founder explicitly authorized push to the live application. PR #99 merged as 268f3ef; its tree exactly matches the all-green candidate. Existing Git pipeline produced READY production deployment dpl_F1Dan8ao9S35HvkU2rcqdNKvGvBw on www.gentascend.com. Studio workflows and premium rooms are deployed; narration/footage stay default-off pending real provider acceptance. No extra Supabase, new hosted migration, paid generation or secret decryption in this phase. Live routes/access guards passed HTTP checks and initial deployment-scoped runtime error aggregation returned no groups. Preserved compatible de7bcea deployment for rollback. A stale four-link production assertion is corrected to five exact named destinations, with read-only Studio API checks and public production CI. Full receipt and limitations: [STUDIO_RELEASE.md](STUDIO_RELEASE.md).
-
 
 ## Aethelios Health foundation — October 12, 2026
 
@@ -1141,6 +1164,20 @@ Release update: founder authorized pushing live. PR #107 integrates current rele
 Founder approved the researched records-first scope. Implemented inside the canonical unified app on `feat/health-intelligence-foundation`: first-class Health Command/history/vault/labs/connections/privacy; consented existing Performance projections; owner-bound private schema and originals bucket; reviewed CSV/JSON and narrow exchange-PDF imports; conservative source-linked comparisons/corrections; gated Health-only conversation; private export and resumable deletion. No new dependency, wearable/native/FHIR/clinical integration, production activation or deployment. Sensitive ingestion and AI default off in both database/operator and application controls.
 
 Implementation/limits: [HEALTH_FOUNDATION.md](HEALTH_FOUNDATION.md). Verification: [HEALTH_VALIDATION.md](HEALTH_VALIDATION.md). Actual migration discrepancies and release gate: [HEALTH_MIGRATION_RECONCILIATION.md](HEALTH_MIGRATION_RECONCILIATION.md). Local lint/types and 449 unit/SQL/worker/API tests passed in latest completed checks; optimized webpack build passed. Browser launch/local server/Docker/network prerequisites are blocked in this sandbox; no rendered/physical-device, real hosted isolation or provider acceptance claimed. New migration remains unapplied. Shared-project privileged isolation, processor/retention/backup review and protected staging acceptance precede sensitive production beta.
+
+## Architect Origin — review implementation, 2026-10-12
+
+Native `/app/architect` now establishes a shared person-owned project environment for business, application, product and custom creation. Origin retains an editable Living Blueprint, source provenance, separately reviewed AI proposals, usable editable/exportable text deliverables, immutable snapshot history, exact-request save recovery and archive/resume. Work links to the new environment; the existing owned Talk conversation supplies a controlled handoff. Preserved current Health, Studio, Lifestyle, Council, Work, Live and founder controls through canonical source reconciliation to 0af812f.
+
+Storage/AI flags default disabled; additive Origin migration is unapplied. Local lint/types, 721 unit/SQL-compatible tests and ledger pass; direct optimized compilation passed. Normal npm build fails on inherited asset DNS; local browser/Docker acceptance is EPERM-blocked. Focused browser, six-width screenshots and real disposable Auth/PostgREST acceptance are provided in CI and must be checked at the published head. Live model/research, hosted activation and physical devices remain acceptance gates. This is reviewable Origin implementation, not production release or a tested app/formulation generator. Full audit, model/data bounds, limits and founder acceptance checklist: [ARCHITECT_ORIGIN.md](ARCHITECT_ORIGIN.md).
+
+## Architect immersive workspace — 2026-10-12 review build
+
+Next founder-authorized phase extends Origin into a full-window native creation environment. Canonical main's released guiding-aperture motion at 16ad503 is reconciled; unmerged #112/#98/legacy creation work remains separate. Reuses Shell identity, appearance, capture, navigation and founder permissions through a contextual native menu. Provides continuous project frame, Blueprint outline, document Edit/Preview/Split, focus canvas and URL-bound saved view continuity; project draft/approval/SQL contracts are unchanged. Design research and acceptance scope: ARCHITECT_IMMERSIVE_WORKSPACE.md.
+
+Local lint/types and 727 unit/SQL checks pass; optimized webpack production build and isolated CI acceptance are being completed. Browser listener remains blocked locally by EPERM, requiring CI rendered and real Auth evidence. No live model credentials, hosted schema writes, production deployment or main merge. Origin storage/AI flags remain off by default. Physical devices and founder aesthetic approval remain required.
+
+Architect workspace refinement: #112 was released to canonical main 26bf465 during this phase; its 24 changes are reconciled, with original blob hashes verified. Initial PR #113 run 38314279696 passed application (730 unit/SQL and 12 Architect browser checks), actual local Auth/PostgREST ownership/replay smoke and one persisted Next/browser journey. Screenshots were inspected: introduced explicit approved-carbon reading canvas, kept Split preview visible while comparing edits, and corrected floating compact-nav geometry inside the native menu. Final reconciled-head CI, visual evidence and broad regressions are recorded in PR #113. No production promotion performed.
 
 ## Fluid Intelligence — review candidate (2026-10-12)
 

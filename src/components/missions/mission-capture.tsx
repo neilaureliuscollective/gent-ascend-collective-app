@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/visual/icon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
@@ -66,7 +67,7 @@ export function MissionCapture({
         Save as Mission
       </button>
       <Link href="/app/missions" className="text-link">
-        Missions ↗
+        Missions <Icon name="arrow-up-right" className="action-icon" />
       </Link>
       <dialog
         ref={dialog}
@@ -123,7 +124,11 @@ export function MissionCapture({
         </p>
         {error && (
           <p role="alert">
-            {error} <Link href="/app/missions">Check saved Missions before retrying ↗</Link>
+            {error}{' '}
+            <Link href="/app/missions">
+              Check saved Missions before retrying{' '}
+              <Icon name="arrow-up-right" className="action-icon" />
+            </Link>
           </p>
         )}
         <button

@@ -5,6 +5,8 @@ export type IconName =
   | 'person'
   | 'spark'
   | 'arrow'
+  | 'arrow-up-right'
+  | 'expand'
   | 'sun'
   | 'moon'
   | 'shield'
@@ -17,6 +19,8 @@ const paths: Record<IconName, string> = {
   person: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',
   spark: 'm12 2 2.3 7.7L22 12l-7.7 2.3L12 22l-2.3-7.7L2 12l7.7-2.3L12 2Z',
   arrow: 'M5 12h14m-6-6 6 6-6 6',
+  'arrow-up-right': 'M6 18 18 6M6 6h12v12',
+  expand: 'M14 4h6v6M20 4l-7 7M10 20H4v-6m0 6 7-7',
   sun: 'M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5',
   moon: 'M20 15A9 9 0 0 1 9 4 9 9 0 1 0 20 15Z',
   shield: 'M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Zm-4 9 3 3 5-6',

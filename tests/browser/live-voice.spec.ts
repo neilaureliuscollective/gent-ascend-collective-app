@@ -154,6 +154,16 @@ test('voice diagnostic download excludes transcript and record IDs', async ({ pa
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
   await expect(dialog).toBeVisible();
+  // Dialog visibility precedes async admission and fake channel creation.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          typeof (window as unknown as { voiceChannel?: { onmessage?: unknown } }).voiceChannel
+            ?.onmessage,
+      ),
+    )
+    .toBe('function');
   await page.evaluate(() => {
     (
       window as unknown as { voiceChannel: { onmessage: (e: { data: string }) => void } }

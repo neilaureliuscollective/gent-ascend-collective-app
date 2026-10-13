@@ -29,12 +29,9 @@ for (const width of [344, 768, 1440]) {
     await page.route('**/api/aurelius**', (route) => route.fulfill({ json: workspace }));
     await page.goto('/app/aethelios');
     await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
-    // Compact state rendering uses the existing matching artwork without another GPU loop.
-    await expect(page.locator('.talk-presence .intelligence-orb-static').first()).toBeVisible();
-    await expect(page.locator('.talk-presence canvas').first()).not.toHaveAttribute(
-      'data-rendered',
-      'true',
-    );
+    // The shared authored signal is visible without a hidden legacy GPU renderer.
+    await expect(page.locator('.talk-presence .identity-presence').first()).toBeVisible();
+    await expect(page.locator('.talk-presence canvas')).toHaveCount(0);
     await page.getByRole('button', { name: 'Aethelios presence', exact: true }).click();
     const drawer = page.getByRole('dialog', { name: 'Aethelios presence', exact: true });
     await expect(drawer.getByText('Ready when you are', { exact: true })).toBeVisible();

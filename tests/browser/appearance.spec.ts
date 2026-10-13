@@ -38,9 +38,9 @@ test('unsupported WebGL preserves the static presence and usable navigation', as
   await expect(
     page.getByRole('heading', { name: 'What would you like to move forward?' }),
   ).toBeVisible();
-  // Exercise the deferred renderer failure in the conversation welcome.
-  await page.waitForTimeout(1600);
-  await expect(page.locator('.welcome-heading .intelligence-orb-static')).toBeVisible();
+  // Compact Talk deliberately uses the lightweight presence without WebGL.
+  await expect(page.locator('.talk-welcome-presence .identity-presence')).toBeVisible();
+  await expect(page.locator('.talk-welcome-presence canvas')).toHaveCount(0);
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
   await page.getByLabel('Message Aethelios').fill('Still usable without graphics');
   expect(errors).toEqual([]);

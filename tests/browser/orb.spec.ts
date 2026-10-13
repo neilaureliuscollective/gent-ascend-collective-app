@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 
-test('the public living orb serves the member conversation without requesting audio', async ({
+test('the lightweight presence serves the member conversation without requesting audio', async ({
   page,
 }) => {
   const writes: string[] = [];
@@ -13,8 +13,8 @@ test('the public living orb serves the member conversation without requesting au
     if (request.method() !== 'GET' && request.url().includes('/api/')) writes.push(request.url());
   });
   await page.goto('/app/aethelios');
-  const orb = page.locator('.talk-welcome-orb');
-  await expect(orb.locator('.intelligence-orb')).toBeVisible();
+  const orb = page.locator('.talk-welcome-presence');
+  await expect(orb.locator('.identity-presence')).toBeVisible();
   await expect(orb).toHaveAttribute('data-state', 'disconnected');
   await page.getByRole('button', { name: 'Aethelios presence', exact: true }).click();
   const presence = page.getByRole('dialog', { name: 'Aethelios presence', exact: true });
@@ -30,18 +30,21 @@ test('the public living orb serves the member conversation without requesting au
     .getByRole('button', { name: 'Pause ambient motion' })
     .click();
   await page.keyboard.press('Escape');
-  await expect(orb.locator('.intelligence-orb-static')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'still');
+  await expect(orb.locator('.identity-presence')).toBeVisible();
+  await expect(orb.locator('canvas')).toHaveCount(0);
+  await expect(orb.locator('.identity-presence')).toHaveAttribute('data-motion', 'still');
   await page.getByLabel('Message Aethelios').fill('My unsent thought');
   expect(writes).toEqual([]);
 });
 
 for (const width of [390, 768, 1440]) {
-  test(`Aethelios room keeps the orb, conversation and writing space usable at ${width}px`, async ({
+  test(`Aethelios room keeps the presence, conversation and writing space usable at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 960 });
     await page.goto('/app/aethelios');
-    await expect(page.locator('.talk-welcome-orb')).toBeInViewport();
+    await expect(page.locator('.talk-welcome-presence')).toBeInViewport();
     await page.getByRole('button', { name: 'Expand writing space' }).click();
     const composer = page.getByLabel('Message Aethelios');
     await composer.fill('A detailed thought\n'.repeat(18));
@@ -55,7 +58,7 @@ for (const width of [390, 768, 1440]) {
   });
 }
 
-test('unsupported WebGL preserves the static public orb and the composer', async ({ page }) => {
+test('unsupported WebGL preserves the lightweight presence and the composer', async ({ page }) => {
   await page.addInitScript(() => {
     const getContext = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (
@@ -67,7 +70,7 @@ test('unsupported WebGL preserves the static public orb and the composer', async
     } as typeof getContext;
   });
   await page.goto('/app/aethelios');
-  await expect(page.locator('.talk-welcome-orb .intelligence-orb-static')).toBeVisible();
+  await expect(page.locator('.talk-welcome-presence .identity-presence')).toBeVisible();
   await page.getByLabel('Message Aethelios').fill('Still usable without graphics');
   await expect(page.getByLabel('Message Aethelios')).toHaveValue('Still usable without graphics');
 });
@@ -84,7 +87,9 @@ test('retained visual preview changes states without requesting audio or work', 
   page.on('request', (request) => {
     if (request.method() !== 'GET' && request.url().includes('/api/')) writes.push(request.url());
   });
-  await page.goto('http://127.0.0.1:3102/?mode=orb-preview');
+  await page.goto(
+    `http://127.0.0.1:${process.env.PLAYWRIGHT_FIXTURE_PORT || '3102'}/?mode=orb-preview`,
+  );
   await page.getByRole('button', { name: 'Explore the Orb' }).click();
   await expect(page.getByText('Motion preview · microphone off · no audio')).toBeVisible();
   const orb = page.locator('.orb-presentation .account-intelligence-orb');

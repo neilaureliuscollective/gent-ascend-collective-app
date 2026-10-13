@@ -3,7 +3,6 @@ import { readCommand } from '@/domains/daily-command/service';
 import { readWorldPriority } from '@/domains/daily/world-priority';
 import { commandDraft } from '@/domains/daily-command/model';
 import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import { aethelios } from '@/platform/intelligence-identity';
 export const metadata: Metadata = {
@@ -55,20 +54,6 @@ export default async function AetheliosPage({
       : null;
   return (
     <ConversationViewport>
-      <header className="aethelios-room-heading">
-        <Link href="/app/work" aria-label="Company work">
-          ←
-        </Link>
-        <div>
-          <span className="eyebrow">YOUR INTELLIGENCE ENVIRONMENT</span>
-          <h1>Aethelios</h1>
-        </div>
-        <nav aria-label="Aethelios destinations">
-          <Link href="/app/missions">Missions ↗</Link>
-          <Link href="/app/studio">Studio ↗</Link>
-          <Link href="/app/aethelios/meet">Meet ↗</Link>
-        </nav>
-      </header>
       <section className="aurelius-surface">
         <AureliusWorkspace
           key={initialConversation ?? (initialDraft || 'new')}
