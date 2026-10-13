@@ -5,6 +5,7 @@ import { compileDocument } from '@/domains/architect-origin/documents';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import { ArchitectConstructPanel } from './construct-panel';
 import { useOriginDraft, type OriginDraft } from './draft-handoff';
 import {
   sections,
@@ -24,7 +25,7 @@ import {
 import type { z } from 'zod';
 const markdownComponents = { img: () => <span>[External image omitted]</span> };
 type Library = { projects: OriginProject[]; versions: OriginVersion[]; runs: OriginRun[] };
-const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'History'] as const;
+const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Construct', 'History'] as const;
 type Surface = (typeof surfaces)[number];
 type DocumentView = 'Edit' | 'Preview' | 'Split';
 const starters = [
@@ -93,9 +94,11 @@ function download(name: string, content: string) {
 export function ArchitectOrigin({
   enabled = false,
   aiEnabled = false,
+  constructEnabled = false,
 }: {
   enabled?: boolean;
   aiEnabled?: boolean;
+  constructEnabled?: boolean;
 }) {
   const [library, setLibrary] = useState<Library>({ projects: [], versions: [], runs: [] });
   const [selected, setSelected] = useState<OriginProject | null>(null);
@@ -702,7 +705,10 @@ export function ArchitectOrigin({
                 </button>
               ))}
             </nav>
-            {surface !== 'Conversation' && surface !== 'Blueprint' && surface !== 'History' && (
+            {surface !== 'Conversation' &&
+              surface !== 'Blueprint' &&
+              surface !== 'History' &&
+              surface !== 'Construct' && (
               <div className="origin-canvas-tools">
                 <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
                   {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
@@ -710,7 +716,7 @@ export function ArchitectOrigin({
               </div>
             )}
             <div
-              className={`origin-workspace origin-${surface.toLowerCase()}${focusCanvas && surface !== 'Conversation' ? ' origin-canvas-focused' : ''}`}
+              className={`origin-workspace origin-${surface.toLowerCase()}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' ? ' origin-canvas-focused' : ''}`}
             >
               {(surface === 'Conversation' ||
                 surface === 'Research' ||
@@ -1186,6 +1192,14 @@ export function ArchitectOrigin({
                       </>
                     )}
                   </>
+                )}
+                {surface === 'Construct' && selected && (
+                  <ArchitectConstructPanel
+                    projectId={selected.id}
+                    revision={selected.revision}
+                    enabled={constructEnabled}
+                    locked={locked}
+                  />
                 )}
                 {surface === 'History' && (
                   <>

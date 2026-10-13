@@ -336,3 +336,141 @@ test('short keyboard-height workspace retains reachable save controls and drafts
     fullPage: true,
   });
 });
+test('Construct plan, changes, checks and preview stay honest without forged success', async ({
+  page,
+}) => {
+  await fixture(page);
+  let receipt: {
+    project: { id: string; revision: number; name: string };
+    runs: Array<Record<string, unknown>>;
+    events: Record<string, Array<Record<string, unknown>>>;
+    briefs: Array<Record<string, unknown>>;
+    sources: Array<Record<string, unknown>>;
+  } | null = null;
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json:
+          receipt ?? {
+            project: { id: 'none', revision: 1, name: 'none' },
+            runs: [],
+            events: {},
+            briefs: [],
+            sources: [],
+          },
+      });
+    const body = route.request().postDataJSON();
+    if (body.action === 'start-fixture') {
+      const now = new Date().toISOString();
+      receipt = {
+        project: { id: body.projectId, revision: body.expected, name: 'Synthetic Origin' },
+        sources: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            kind: 'fixture',
+            repository: 'neilaureliuscollective/gent-ascend-collective-app',
+            commit: null,
+            label: 'Deterministic fixture source — labelled test tree, not an imported application snapshot.',
+            tree_hash: 'a'.repeat(64),
+            files: [],
+            created_at: now,
+          },
+        ],
+        briefs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            approval_hash: 'b'.repeat(64),
+            status: 'approved',
+            invalidation_reason: null,
+            scope: {
+              project_id: body.projectId,
+              project_revision: body.expected,
+              source_id: body.requestId,
+              repository: 'neilaureliuscollective/gent-ascend-collective-app',
+              source_commit: null,
+              source_tree_hash: 'a'.repeat(64),
+              allowed_paths: ['preview.html'],
+              protected_paths: ['.env'],
+              intended_change: 'Replace the fixture heading Before with After.',
+              acceptance_checks: [{ name: 'heading', command: 'node', args: ['check.mjs'] }],
+              resource_limits: {
+                timeout_ms: 30000,
+                lease_ms: 45000,
+                max_files: 32,
+                max_file_bytes: 65536,
+                max_output_bytes: 16384,
+                max_diff_bytes: 32768,
+              },
+              patch: [{ path: 'preview.html', before: 'Before', after: 'After' }],
+            },
+            created_at: now,
+          },
+        ],
+        runs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            project_id: body.projectId,
+            brief_id: body.requestId,
+            approval_hash: 'b'.repeat(64),
+            source_id: body.requestId,
+            source_kind: 'fixture',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: body.expected,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          [body.requestId]: [
+            {
+              id: crypto.randomUUID(),
+              run_id: body.requestId,
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued. The request handler does not execute software changes.',
+              created_at: now,
+            },
+          ],
+        },
+      };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Synthetic construct project');
+  await page.getByLabel('Project name (optional)').fill('Construct Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+  await expect(page.getByText('No approved brief for this project yet')).toBeVisible();
+  await page.getByRole('button', { name: 'Queue labelled fixture run' }).click();
+  await expect(page.getByText(/Deterministic fixture source/)).toBeVisible();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-plan.png', fullPage: true });
+  await page.getByRole('button', { name: 'Changes', exact: true }).click();
+  await expect(page.getByText(/Queued runs do not display a simulated diff/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-changes.png', fullPage: true });
+  await page.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByText(/The browser cannot forge them/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-checks.png', fullPage: true });
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(page.getByText(/Preview is unavailable until isolated output is collected/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-preview.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Plan', exact: true }).click();
+  await expect(page.getByText(/Deterministic fixture source/)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/architect-construct-plan-390.png', fullPage: true });
+});
