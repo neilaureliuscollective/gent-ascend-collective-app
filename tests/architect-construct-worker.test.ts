@@ -315,6 +315,40 @@ it('blocks imported source without a sandbox and does not claim success', async 
   expect(executed?.result?.blocker).toMatch(/no files|Missing source/i);
 });
 
+it('does not record success when isolated teardown stays unconfirmed', async () => {
+  const store = new MemoryConstructStore();
+  const requestId = '00000000-0000-4000-8000-000000000048';
+  const source = fixtureSource(owner, requestId);
+  await queuedFixture(store, requestId);
+  const executed = await processConstructOnce(store, 'success-unconfirmed', new Date(), {
+    ...isolatedSuccess(
+      source,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: source.id,
+        sourceTreeHash: source.tree_hash,
+      }),
+    ),
+    launchContainer: async () => ({
+      exit_code: 0,
+      stdout: `${resultFenceStart}\n${JSON.stringify({
+        checks: [
+          { name: 'syntax', command: 'node --check check.mjs', exit_code: 0, status: 'passed', log: '' },
+          { name: 'heading', command: 'node check.mjs', exit_code: 0, status: 'passed', log: '' },
+        ],
+        files: source.files,
+        preview: { path: 'preview.html', body: '<h1>After</h1>', unavailable_reason: null },
+      })}\n${resultFenceEnd}\n`,
+      stderr: '',
+      stopped: false,
+    }),
+  });
+  expect(executed?.status).toBe('failed');
+  expect(executed?.result?.sandbox).toBe(false);
+  expect(executed?.result?.blocker).toMatch(/teardown was not confirmed/i);
+});
+
 it('treats a transient cancellation poll rejection as fail-closed and does not overlap reads', async () => {
   const store = new MemoryConstructStore();
   const requestId = '00000000-0000-4000-8000-000000000043';

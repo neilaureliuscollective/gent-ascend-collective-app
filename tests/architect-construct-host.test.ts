@@ -2,17 +2,25 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, it } from 'vitest';
 import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
 import {
+  containerNameFromArgs,
   executeConstruct,
+  inspectNamedContainer,
   removeNamedContainer,
   spawnDocker,
+  type ContainerLaunchResult,
+  type ContainerPresence,
 } from '@/domains/architect-construct/runner';
 import { ensureConstructImage, probeDockerIsolation } from '@/domains/architect-construct/docker';
+import { MemoryConstructStore } from '@/domains/architect-construct/store';
+import { processConstructOnce } from '@/domains/architect-construct/worker';
+
+const owner = '00000000-0000-4000-8000-000000000001';
+const project = '00000000-0000-4000-8000-000000000003';
 
 it('inspects the host isolation runtime and reports pass, fail, or unavailable honestly', async () => {
-  const owner = '00000000-0000-4000-8000-000000000001';
   const source = fixtureSource(owner, '00000000-0000-4000-8000-000000000051');
   const scope = fixtureScope({
-    projectId: '00000000-0000-4000-8000-000000000003',
+    projectId: project,
     projectRevision: 1,
     sourceId: source.id,
     sourceTreeHash: source.tree_hash,
@@ -74,42 +82,112 @@ it('inspects the host isolation runtime and reports pass, fail, or unavailable h
   }
 });
 
-it('stops an active named container when abort is observed, or records Docker as unavailable', async () => {
+it('cancels only after the named container is observed running, then confirms removal', async () => {
   const probe = await probeDockerIsolation();
-  const name = `construct-abort-${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
-  let launched: Awaited<ReturnType<typeof spawnDocker>> | null = null;
-  let gone = false;
-  if (probe.available) {
-    let aborted = false;
-    setTimeout(() => {
-      aborted = true;
-    }, 150);
-    launched = await spawnDocker(
-      ['run', '--rm', '--name', name, '--network', 'none', 'node:24-alpine', 'sleep', '30'],
-      8000,
-      () => aborted,
+  const requestId = '00000000-0000-4000-8000-000000000052';
+  const nameHint = `construct-live-${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+  const observed: {
+    running: boolean;
+    name: string | null;
+    launched: ContainerLaunchResult | null;
+    after: ContainerPresence | null;
+    durable: Awaited<ReturnType<typeof processConstructOnce>> | null;
+  } = { running: false, name: null, launched: null, after: null, durable: null };
+  const image = probe.available
+    ? await ensureConstructImage(probe.image)
+    : { ready: false, reason: probe.reason, pulled: false };
+  if (probe.available && image.ready) {
+    const store = new MemoryConstructStore();
+    const source = fixtureSource(owner, requestId);
+    await store.importSource(source);
+    const brief = await store.approveBrief(
+      owner,
+      requestId,
+      fixtureScope({
+        projectId: project,
+        projectRevision: 1,
+        sourceId: source.id,
+        sourceTreeHash: source.tree_hash,
+      }),
     );
-    gone = await removeNamedContainer(name);
+    await store.startRun({
+      personId: owner,
+      projectId: project,
+      briefId: brief.id,
+      requestId,
+      expected: 1,
+      sourceKind: source.kind,
+      sourceTreeHash: source.tree_hash,
+      approvalHash: brief.approval_hash,
+      sourceId: source.id,
+    });
+    observed.durable = await processConstructOnce(store, 'host-running-cancel', new Date(), {
+      probe: async () => probe,
+      requireIsolation: true,
+      ensureImage: async () => ({ ready: true, reason: null, pulled: false }),
+      launchContainer: async (args, timeoutMs, shouldAbort) => {
+        const name = containerNameFromArgs(args) ?? nameHint;
+        observed.name = name;
+        let stop = false;
+        const running = spawnDocker(
+          ['run', '--rm', '--name', name, '--network', 'none', 'node:24-alpine', 'sleep', '30'],
+          timeoutMs,
+          () => stop || Boolean(shouldAbort?.()),
+        );
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline && !observed.running) {
+          const presence = await inspectNamedContainer(name);
+          if (presence.status === 'present' && presence.running) {
+            observed.running = true;
+            await store.cancelRun(owner, requestId);
+            stop = true;
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        observed.launched = await running;
+        observed.after = await inspectNamedContainer(name);
+        return observed.launched;
+      },
+    });
   }
+  const gone =
+    observed.after?.status === 'absent' ||
+    (observed.name ? await removeNamedContainer(observed.name) : false);
   const receipt = {
-    label: 'Host active-cancel — not a model-generated Aethelios feature.',
+    label: 'Host running-container cancel — not a model-generated Aethelios feature.',
     available: probe.available,
-    exit_code: launched?.exit_code ?? null,
-    aborted: launched?.aborted ?? false,
-    stopped: launched?.stopped ?? false,
+    observed_running: observed.running,
+    container: observed.name,
+    after_inspect: observed.after,
+    exit_code: observed.launched?.exit_code ?? null,
+    aborted: observed.launched?.aborted ?? false,
+    stopped: observed.launched?.stopped ?? false,
     container_gone: gone,
-    reason: probe.available ? null : probe.reason,
+    durable_status: observed.durable?.status ?? null,
+    durable_blocker: observed.durable?.result?.blocker ?? null,
+    teardown_confirmed:
+      observed.durable?.result?.artifacts.some((item) => item.ref === 'teardown-confirmed') ?? false,
+    reason: probe.available && image.ready ? null : image.reason ?? probe.reason,
   };
   await mkdir('docs/evidence/architect-construct', { recursive: true });
   await writeFile(
     'docs/evidence/architect-construct/host-active-cancel-receipt.json',
     JSON.stringify(receipt, null, 2) + '\n',
   );
-  if (!probe.available) {
-    expect(probe.available).toBe(false);
+  if (!probe.available || !image.ready) {
+    expect(probe.available && image.ready).toBe(false);
+    expect(observed.running).toBe(false);
     return;
   }
-  expect(launched?.aborted).toBe(true);
-  expect(launched?.stopped).toBe(true);
+  expect(observed.running).toBe(true);
+  expect(observed.launched?.aborted).toBe(true);
+  expect(observed.launched?.stopped).toBe(true);
+  expect(observed.after?.status).toBe('absent');
   expect(gone).toBe(true);
+  expect(observed.durable?.status).toBe('cancelled');
+  expect(observed.durable?.result?.sandbox).toBe(false);
+  expect(observed.durable?.result?.artifacts.some((item) => item.ref === 'teardown-confirmed')).toBe(
+    true,
+  );
 });

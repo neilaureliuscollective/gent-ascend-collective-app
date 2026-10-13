@@ -1,7 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import { defaultProtectedPaths } from '@/domains/architect-construct/schema';
 import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
-import { executeConstruct, executeInProcess, TRUSTED_IN_PROCESS } from '@/domains/architect-construct/runner';
+import {
+  classifyDockerInspect,
+  executeConstruct,
+  executeInProcess,
+  inspectNamedContainer,
+  removeNamedContainer,
+  runBoundedProcess,
+  TRUSTED_IN_PROCESS,
+  type DockerCommandFn,
+} from '@/domains/architect-construct/runner';
 import { assertSafeDockerArgs, dockerInvocation, resultFenceStart, resultFenceEnd } from '@/domains/architect-construct/docker';
 import { labeledSource, treeHash } from '@/domains/architect-construct/hash';
 
@@ -347,6 +356,100 @@ describe('Construct isolated runner', () => {
     expect(result.runtime_available).toBe(true);
     expect(result.blocker).toMatch(/timed out|not a sandbox/i);
     expect(result.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:'))).toBe(true);
+  });
+
+  it('does not treat Docker daemon, permission or timeout failures as confirmed absence', () => {
+    expect(
+      classifyDockerInspect({
+        code: 1,
+        stdout: '',
+        stderr: 'Error: No such object: construct-job',
+        timedOut: false,
+        spawnError: null,
+      }).status,
+    ).toBe('absent');
+    expect(
+      classifyDockerInspect({
+        code: 1,
+        stdout: '',
+        stderr: 'Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?',
+        timedOut: false,
+        spawnError: null,
+      }),
+    ).toMatchObject({ status: 'unknown' });
+    expect(
+      classifyDockerInspect({
+        code: 1,
+        stdout: '',
+        stderr: 'permission denied while trying to connect to the Docker daemon socket',
+        timedOut: false,
+        spawnError: null,
+      }),
+    ).toMatchObject({ status: 'unknown' });
+    expect(
+      classifyDockerInspect({
+        code: null,
+        stdout: '',
+        stderr: '',
+        timedOut: false,
+        spawnError: 'spawn docker EACCES',
+      }),
+    ).toMatchObject({ status: 'unknown' });
+    expect(
+      classifyDockerInspect({
+        code: null,
+        stdout: '',
+        stderr: '',
+        timedOut: true,
+        spawnError: null,
+      }),
+    ).toMatchObject({ status: 'unknown' });
+  });
+
+  it('keeps teardown unconfirmed when inspect is unavailable, rejected, forbidden or hung', async () => {
+    const unavailable: DockerCommandFn = async () => ({
+      code: null,
+      stdout: '',
+      stderr: '',
+      timedOut: false,
+      spawnError: 'spawn docker ENOENT',
+    });
+    const rejected: DockerCommandFn = async () => ({
+      code: 1,
+      stdout: '',
+      stderr: 'Cannot connect to the Docker daemon at unix:///var/run/docker.sock',
+      timedOut: false,
+      spawnError: null,
+    });
+    const forbidden: DockerCommandFn = async () => ({
+      code: 1,
+      stdout: '',
+      stderr: 'permission denied while trying to connect to the Docker daemon socket',
+      timedOut: false,
+      spawnError: null,
+    });
+    const hung: DockerCommandFn = async () => ({
+      code: null,
+      stdout: '',
+      stderr: '',
+      timedOut: true,
+      spawnError: null,
+    });
+    expect((await inspectNamedContainer('construct-job', unavailable)).status).toBe('unknown');
+    expect(await removeNamedContainer('construct-job', unavailable)).toBe(false);
+    expect((await inspectNamedContainer('construct-job', rejected)).status).toBe('unknown');
+    expect(await removeNamedContainer('construct-job', rejected)).toBe(false);
+    expect((await inspectNamedContainer('construct-job', forbidden)).status).toBe('unknown');
+    expect(await removeNamedContainer('construct-job', forbidden)).toBe(false);
+    expect((await inspectNamedContainer('construct-job', hung)).status).toBe('unknown');
+    expect(await removeNamedContainer('construct-job', hung)).toBe(false);
+  });
+
+  it('bounds a hung cleanup command instead of waiting indefinitely', async () => {
+    const started = Date.now();
+    const result = await runBoundedProcess('sleep', ['30'], 200);
+    expect(result.timedOut).toBe(true);
+    expect(Date.now() - started).toBeLessThan(2000);
   });
 
   it('rejects protected or out-of-scope patches before writing', async () => {

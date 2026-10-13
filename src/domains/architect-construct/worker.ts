@@ -133,20 +133,20 @@ export async function processConstructOnce(
       cancelUncertain = true;
     }
     const wantsStop = Boolean(after?.cancel_requested || cancelSeen || options.shouldAbort?.());
+    if (!teardownConfirmed(executed)) {
+      if (lost) throw new LeaseLostError();
+      return finish(
+        'failed',
+        {
+          ...executed,
+          sandbox: false,
+          blocker:
+            'Isolated teardown was not confirmed. The run is not reported cancelled or successfully stopped.',
+        },
+        new Date(),
+      );
+    }
     if (wantsStop || cancelUncertain) {
-      if (!teardownConfirmed(executed)) {
-        if (lost) throw new LeaseLostError();
-        return finish(
-          'failed',
-          {
-            ...executed,
-            sandbox: false,
-            blocker:
-              'Isolated teardown was not confirmed. The run is not reported cancelled or successfully stopped.',
-          },
-          new Date(),
-        );
-      }
       if (cancelUncertain && !wantsStop)
         return finish(
           'failed',

@@ -317,7 +317,7 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
   }
 }
 
-function containerNameFromArgs(args: string[]) {
+export function containerNameFromArgs(args: string[]) {
   const index = args.indexOf('--name');
   return index >= 0 ? args[index + 1] : undefined;
 }
@@ -325,28 +325,143 @@ function containerNameFromArgs(args: string[]) {
 const dockerEnv = () =>
   ({ PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' }) as unknown as NodeJS.ProcessEnv;
 
-export async function removeNamedContainer(name: string | undefined): Promise<boolean> {
-  if (!name) return true;
-  await new Promise<void>((resolve) => {
-    const rm = spawn('docker', ['rm', '-f', name], { env: dockerEnv(), stdio: 'ignore' });
-    const finish = () => resolve();
-    rm.on('close', finish);
-    rm.on('error', finish);
-  });
-  return await new Promise<boolean>((resolve) => {
-    const inspect = spawn('docker', ['inspect', name], {
+export const DOCKER_COMMAND_DEADLINE_MS = 4000;
+
+export type DockerCommandResult = {
+  code: number | null;
+  stdout: string;
+  stderr: string;
+  timedOut: boolean;
+  spawnError: string | null;
+};
+
+export type DockerCommandFn = (
+  args: string[],
+  deadlineMs?: number,
+) => Promise<DockerCommandResult>;
+
+export type ContainerPresence =
+  | { status: 'absent'; evidence: string }
+  | { status: 'present'; running: boolean; evidence: string }
+  | { status: 'unknown'; reason: string };
+
+function sanitizeDockerText(value: string) {
+  return sanitizeLog(value).replace(/\s+/g, ' ').trim().slice(0, 240);
+}
+
+function dockerOutput(result: DockerCommandResult) {
+  return `${result.stdout}\n${result.stderr}\n${result.spawnError ?? ''}`;
+}
+
+export function isConfirmedNoSuchContainer(text: string) {
+  return /no such (?:object|container)/i.test(text) && !isDockerControlPlaneFailure(text);
+}
+
+export function isDockerControlPlaneFailure(text: string) {
+  return /cannot connect|permission denied|eacces|enoent|no such file|daemon is not running|connection refused|got permission denied while trying to connect|operation not permitted/i.test(
+    text,
+  );
+}
+
+export function classifyDockerInspect(result: DockerCommandResult): ContainerPresence {
+  if (result.spawnError)
+    return { status: 'unknown', reason: sanitizeDockerText(result.spawnError) };
+  if (result.timedOut)
+    return { status: 'unknown', reason: 'Docker inspect exceeded the teardown deadline.' };
+  const output = dockerOutput(result);
+  if (isConfirmedNoSuchContainer(output))
+    return { status: 'absent', evidence: 'inspect:no-such-container' };
+  if (isDockerControlPlaneFailure(output))
+    return {
+      status: 'unknown',
+      reason: sanitizeDockerText(output || 'Docker inspect could not reach the daemon.'),
+    };
+  if (result.code === 0) {
+    const running = /^\s*true\s*$/i.test(result.stdout) || /"Running"\s*:\s*true/.test(result.stdout);
+    return { status: 'present', running, evidence: 'inspect:object' };
+  }
+  return {
+    status: 'unknown',
+    reason: sanitizeDockerText(output || `Docker inspect exited ${result.code ?? 'null'}.`),
+  };
+}
+
+export async function runBoundedProcess(
+  command: string,
+  args: string[],
+  deadlineMs = DOCKER_COMMAND_DEADLINE_MS,
+): Promise<DockerCommandResult> {
+  return await new Promise((resolve) => {
+    let settled = false;
+    const child = spawn(command, args, {
       env: dockerEnv(),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    inspect.on('error', () => resolve(true));
-    inspect.on('close', (code) => resolve(code !== 0));
+    let stdout = '';
+    let stderr = '';
+    const finish = (result: DockerCommandResult) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    };
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      finish({ code: null, stdout, stderr, timedOut: true, spawnError: null });
+    }, deadlineMs);
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString('utf8');
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString('utf8');
+    });
+    child.on('error', (error) => {
+      finish({
+        code: null,
+        stdout,
+        stderr,
+        timedOut: false,
+        spawnError: error.message,
+      });
+    });
+    child.on('close', (code) => {
+      finish({ code: code ?? 1, stdout, stderr, timedOut: false, spawnError: null });
+    });
   });
+}
+
+export async function runDockerCommand(
+  args: string[],
+  deadlineMs = DOCKER_COMMAND_DEADLINE_MS,
+) {
+  return runBoundedProcess('docker', args, deadlineMs);
+}
+
+export async function inspectNamedContainer(
+  name: string,
+  command: DockerCommandFn = runDockerCommand,
+  deadlineMs = DOCKER_COMMAND_DEADLINE_MS,
+): Promise<ContainerPresence> {
+  if (!name) return { status: 'unknown', reason: 'Container name was missing.' };
+  return classifyDockerInspect(await command(['inspect', '-f', '{{.State.Running}}', name], deadlineMs));
+}
+
+export async function removeNamedContainer(
+  name: string | undefined,
+  command: DockerCommandFn = runDockerCommand,
+  deadlineMs = DOCKER_COMMAND_DEADLINE_MS,
+): Promise<boolean> {
+  if (!name) return true;
+  await command(['rm', '-f', name], deadlineMs);
+  const presence = await inspectNamedContainer(name, command, deadlineMs);
+  return presence.status === 'absent';
 }
 
 export function spawnDocker(
   args: string[],
   timeoutMs: number,
   shouldAbort?: () => boolean,
+  command: DockerCommandFn = runDockerCommand,
 ): Promise<ContainerLaunchResult> {
   return new Promise((resolve) => {
     const child = spawn('docker', args, {
@@ -365,10 +480,12 @@ export function spawnDocker(
       clearInterval(poll);
       resolve(result);
     };
+    const confirmAbsence = async (): Promise<boolean> =>
+      name ? removeNamedContainer(name, command) : true;
     const requestStop = (reason: string, code: number) => {
       if (settled || stopping) return;
       stopping = true;
-      void removeNamedContainer(name).then((stopped) => {
+      void confirmAbsence().then((stopped) => {
         child.kill('SIGKILL');
         finish({
           exit_code: code,
@@ -394,11 +511,29 @@ export function spawnDocker(
     if (shouldAbort?.()) requestStop('Isolated job cancelled.', 137);
     child.on('error', (error) => {
       if (stopping) return;
-      finish({ exit_code: 127, stdout, stderr: error.message, stopped: true, aborted: false });
+      void (name ? inspectNamedContainer(name, command) : Promise.resolve({ status: 'absent' as const })).then(
+        (presence) => {
+          finish({
+            exit_code: 127,
+            stdout,
+            stderr: error.message,
+            stopped: presence.status === 'absent',
+            aborted: false,
+          });
+        },
+      );
     });
     child.on('close', (code) => {
       if (stopping) return;
-      finish({ exit_code: code ?? 1, stdout, stderr, stopped: true, aborted: false });
+      void confirmAbsence().then((stopped) => {
+        finish({
+          exit_code: code ?? 1,
+          stdout,
+          stderr,
+          stopped,
+          aborted: false,
+        });
+      });
     });
   });
 }
