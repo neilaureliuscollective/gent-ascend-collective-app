@@ -10,7 +10,7 @@ Date: 2026-10-13. Branch `cursor/architect-creation-journey-165a`. Base: current
 | Connections | #117 | `cursor/aethelios-connections-8d20` | `c5581234b6badf2d8dcf0b9ed21fb91256897b5f` |
 | Architect immersive UI | #119 | `cursor/architect-immersive-studio-5865` | `7e0cf2c4534a3f8d88e337b22af8f127c0301a5b` |
 | main at refresh | #118 | `main` | `9dda52549dac548b59b3e3175f2ee832cb4ed471` |
-| Integration follow-up on this PR | #120 | `cursor/architect-creation-journey-165a` | `456eaadadc3a6cc323c8c27b868ae1f35ee438db` (atomic finish event, propose→approve→start, keyed panel, named Docker cancel). Source branches above were not rewritten. |
+| Integration follow-up on this PR | #120 | `cursor/architect-creation-journey-165a` | Commissioning on top of `c1eaab9267314875abca432a0d5b333a0f839f29`. Source branches above were not rewritten. Talk #121 stays separate. |
 
 Those source branches were not rewritten. Shared overlap (docs, `.env.example`, `package.json`, `database.ts`, `tests/component-fixture/entry.tsx`, Architect workspace/spec) was combined, not blindly overwritten.
 
@@ -73,7 +73,10 @@ Do not do these in this phase. One checklist after independent work:
 
 ## Evidence
 
-- Isolated durable journey: `scripts/architect-construct-durable-smoke.mjs` (enqueue, lost-response start retry, reserved-request mismatch denial, compiled worker, Docker, cancel, reload, cross-project isolation).
-- Layouts: existing Origin/UI suites plus integrated Construct workbench coverage at 320/390/720/1440 and keyboard-height 344×430.
+- Isolated durable journey: `scripts/architect-construct-durable-smoke.mjs` (enqueue, lost-response start retry, reserved-request mismatch denial, compiled worker, Docker, cancel, reload, cross-project isolation). That is the durable database receipt. It is not the host MemoryConstructStore cancel test.
+- Host cancel: `docs/evidence/architect-construct/host-active-cancel-receipt.json`. `proof: confirmed` only after the named container is observed RUNNING, cancel is requested, teardown is confirmed, and terminal status is recorded. `proof: unavailable` is unrun. CI uploads this file as `architect-construct-host-receipts`.
+- Layouts: existing Origin/UI suites plus integrated Construct workbench coverage at 320/390/720/1440 and keyboard-height 344×430. Unavailable worker/connections/provider keep drafts and last successful preview and do not invent success.
 - Workbench screenshots: `docs/evidence/architect-construct/architect-creation-journey-1440.png`, `architect-creation-journey-keyboard.png`, and the Construct Plan/Changes/Checks/Preview receipts.
 - Provider-mocked evidence stays in unit tests (`ARCHITECT_CONSTRUCT_AI_MOCK`). Isolated Docker evidence stays in host/durable smoke. They are not interchangeable.
+
+Commissioning inventory, restrictions, and founder setup: [ARCHITECT_COMMISSIONING.md](ARCHITECT_COMMISSIONING.md).

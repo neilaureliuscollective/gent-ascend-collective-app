@@ -1213,3 +1213,158 @@ test('construct panel drops a late poll after the project switches', async ({ pa
   await expect(page.getByText(/No approved brief for this project yet/)).toBeVisible();
   await expect(page.getByText('Alpha receipt')).toHaveCount(0);
 });
+
+test('construct stays off without persistence and does not invent a live run', async ({ page }) => {
+  await fixture(page);
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Unavailable worker draft');
+  await page.getByLabel('Project name (optional)').fill('Blocked Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByText(/Execution persistence is off in this environment/)).toBeVisible();
+  await expect(page.getByText(/No simulated success is shown as a live run/)).toBeVisible();
+  await expect(page.getByText(/Latest run succeeded/)).toHaveCount(0);
+  await expect(page.getByText(/Latest run queued/)).toHaveCount(0);
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Blocked Origin');
+  await expect(page.getByRole('textbox', { name: 'Intended change' })).toHaveValue(
+    'Unavailable worker draft',
+  );
+});
+
+test('keeps last success and drafts when worker, connections and provider are unavailable', async ({
+  page,
+}) => {
+  await fixture(page);
+  const now = new Date().toISOString();
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: {
+          ready: false,
+          repository: null,
+          reason: 'GitHub App setup is required.',
+        },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() !== 'GET')
+      return route.fulfill({
+        status: 503,
+        json: { error: 'Isolated worker is not running. The queued request was not executed.' },
+      });
+    const projectId = new URL(route.request().url()).searchParams.get('project') ?? 'project';
+    return route.fulfill({
+      json: {
+        project: { id: projectId, revision: 1, name: 'Blocked Origin' },
+        proposal: {
+          mode: 'disabled',
+          reason:
+            'Construct model proposals stay disabled until ARCHITECT_CONSTRUCT_ENABLED, ARCHITECT_CONSTRUCT_AI_ENABLED, a server-only OPENAI_API_KEY, and funded non-production testing are authorized. A funded OpenAI account does not supply a sandbox, durable worker, or repository connection.',
+        },
+        sources: [],
+        briefs: [],
+        runs: [
+          {
+            id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+            approval_hash: 'c'.repeat(64),
+            source_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+          {
+            id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            approval_hash: 'b'.repeat(64),
+            source_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'succeeded',
+            result: {
+              isolation: 'docker',
+              runtime_available: true,
+              sandbox: true,
+              blocker: null,
+              source_hash: 'a'.repeat(64),
+              result_hash: 'b'.repeat(64),
+              changed_files: ['kept.html'],
+              diff: '',
+              checks: [
+                {
+                  name: 'heading',
+                  status: 'passed',
+                  command: 'node check.mjs',
+                  exit_code: 0,
+                  log: '',
+                },
+              ],
+              preview: {
+                path: 'kept.html',
+                body: '<html><body><h1>Kept success</h1></body></html>',
+                unavailable_reason: null,
+              },
+            },
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb': [
+            {
+              id: crypto.randomUUID(),
+              run_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued. Isolated worker is not running.',
+              created_at: now,
+            },
+          ],
+        },
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Unavailable capabilities');
+  await page.getByLabel('Project name (optional)').fill('Blocked Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByText(/GitHub App setup is required/)).toBeVisible();
+  await expect(page.getByText(/Publishing and deployment stay unavailable/)).toBeVisible();
+  await expect(page.getByText(/A funded OpenAI account does not supply/)).toBeVisible();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await expect(page.getByText(/Isolated worker is not running/)).toBeVisible();
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  await expect(page.frameLocator('iframe[title="Isolated artifact preview"]').getByText('Kept success')).toBeVisible();
+  await expect(page.locator('.origin-artifact-caption')).toContainText(/Isolated static preview|Last successful Construct/);
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  const review = page.getByRole('navigation', { name: 'Construct review' });
+  await review.getByRole('button', { name: 'Changes', exact: true }).click();
+  await expect(page.getByText(/Queued runs do not display a simulated diff|No execution result yet/)).toBeVisible();
+  await review.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByText(/The browser cannot forge them/)).toBeVisible();
+  await page.getByRole('button', { name: 'Propose change' }).click();
+  await expect(page.getByRole('alert')).toContainText(/Isolated worker is not running|stay disabled|not executed/);
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Blocked Origin');
+});

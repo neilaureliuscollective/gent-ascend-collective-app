@@ -154,8 +154,14 @@ it('cancels only after the named container is observed running, then confirms re
   const gone =
     observed.after?.status === 'absent' ||
     (observed.name ? await removeNamedContainer(observed.name) : false);
+  const confirmed =
+    Boolean(probe.available && image.ready && observed.running && gone && observed.durable?.status === 'cancelled');
   const receipt = {
     label: 'Host running-container cancel — not a model-generated Aethelios feature.',
+    proof: confirmed ? ('confirmed' as const) : ('unavailable' as const),
+    store: 'memory-construct-store',
+    not_durable_database: true,
+    durable_smoke: 'scripts/architect-construct-durable-smoke.mjs',
     available: probe.available,
     observed_running: observed.running,
     container: observed.name,
@@ -176,10 +182,12 @@ it('cancels only after the named container is observed running, then confirms re
     JSON.stringify(receipt, null, 2) + '\n',
   );
   if (!probe.available || !image.ready) {
-    expect(probe.available && image.ready).toBe(false);
+    expect(receipt.proof).toBe('unavailable');
     expect(observed.running).toBe(false);
+    expect(observed.durable).toBeNull();
     return;
   }
+  expect(receipt.proof).toBe('confirmed');
   expect(observed.running).toBe(true);
   expect(observed.launched?.aborted).toBe(true);
   expect(observed.launched?.stopped).toBe(true);

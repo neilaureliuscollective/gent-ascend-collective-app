@@ -664,6 +664,9 @@ export function ArchitectConstructPanel({
           {library?.proposal?.mode === 'mock' && (
             <p>Labelled mocked provider is available. This is not a paid OpenAI call.</p>
           )}
+          {library?.proposal?.mode === 'disabled' && library.proposal.reason && (
+            <p>{library.proposal.reason}</p>
+          )}
           {run?.result?.isolation === 'process-fixture' && (
             <p>Labelled fixture test output — not an isolated AI build.</p>
           )}
