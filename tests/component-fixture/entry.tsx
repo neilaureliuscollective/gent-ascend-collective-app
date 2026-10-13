@@ -200,7 +200,11 @@ createRoot(document.getElementById('root')!).render(
       }
       controls={<p>Synthetic Origin fixture · no real account or model.</p>}
     >
-      <ArchitectOrigin enabled aiEnabled constructEnabled />
+      <ArchitectOrigin
+        enabled
+        aiEnabled
+        constructEnabled={params.get('construct') === 'adapter'}
+      />
     </EnvironmentFrame>
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
