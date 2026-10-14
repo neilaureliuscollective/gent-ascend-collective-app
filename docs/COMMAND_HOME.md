@@ -1,6 +1,6 @@
 # Aethelios Command — immersive home and work continuity
 
-Implemented 2026-10-14 on `cursor/aethelios-command-home-6146` from released main `f583d57`. Draft only. No production merge, hosted migration, credentials, Connections setup, voice, health or commerce work.
+Implemented 2026-10-14 on `cursor/aethelios-command-home-6146` from released main `f583d57`, then reconciled onto main `273ee6d` (Live binding #125). Founder authorized production promotion of this Command home on 2026-10-14. No hosted migration, credentials, Connections setup, health or commerce work. Voice remains the existing founder-pilot policy from #125.
 
 ## Routing change
 

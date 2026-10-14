@@ -65,18 +65,20 @@ it('requires every production founder prerequisite; old flags cannot activate it
   for (const [name, value] of [
     ['AETHELIOS_LIVE_ENABLED', 'false'],
     ['AETHELIOS_LIVE_CONTROL_READY', 'false'],
-    ['AETHELIOS_LIVE_CANONICAL_PILOT', 'false'],
     ['AETHELIOS_LIVE_EXPIRY_ENABLED', 'false'],
     ['SUPABASE_SERVICE_ROLE_KEY', ''],
     ['CRON_SECRET', 'short'],
     ['OPENAI_API_KEY', ' '],
-    ['NEXT_PUBLIC_SUPABASE_URL', 'https://abcdefghijklmnopqrst.supabase.co'],
+    ['AETHELIOS_LIVE_PREVIEW_PROJECT_REF', 'abcdefghijklmnopqrst'],
   ]) {
     const previous = process.env[name!];
     vi.stubEnv(name!, value!);
     expect(() => liveConfig(), name).toThrow();
     vi.stubEnv(name!, previous);
   }
+  vi.stubEnv('AETHELIOS_LIVE_CANONICAL_PILOT', 'false');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://abcdefghijklmnopqrst.supabase.co');
+  expect(liveConfig().canonicalPilot).toBe(true);
 });
 
 it('recognizes founder-only canonical pilot without another database while retaining readiness', () => {

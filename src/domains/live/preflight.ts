@@ -29,7 +29,8 @@ export function preflightConfiguration(env: Record<string, string | undefined>) 
     enabled,
     controlsDeclared,
     previewDatabaseBinding: previewBinding(env),
-    canonicalPilot: environment !== 'invalid' && policy.founderOnly,
+    canonicalPilot: env.AETHELIOS_LIVE_CANONICAL_PILOT === 'true',
+    founderOnly: environment !== 'invalid' && policy.founderOnly,
     admissionConfigured: environment !== 'invalid' && keyConfigured && !!model && !policy.error,
     launchAcceptance: 'unverified' as const,
     expiry: {
