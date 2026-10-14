@@ -2123,3 +2123,117 @@ test('confirmed tool save with a failed library refresh offers reload, not anoth
   await page.getByRole('button', { name: 'Reload tool receipts' }).first().click();
   await expect(page.locator('.origin-tool [role="status"]')).toContainText('The confirmed revision was not saved again');
 });
+
+test('app workbench reviews files, recovers approved start after reload, and keeps last working preview', async ({
+  page,
+}) => {
+  await fixture(page);
+  const revisionId = '00000000-0000-4000-8000-000000000902';
+  let approved = false;
+  let starts = 0;
+  let lostStart = true;
+  const library = () => ({
+    app: approved ? { id: 'app', current_revision: 1, last_working_revision: 1, name: 'Tracker' } : null,
+    revisions: approved
+      ? [
+          {
+            id: revisionId,
+            revision: 1,
+            status: starts ? 'ready' : 'approved',
+            working: starts > 0,
+            approval_hash: 'a'.repeat(64),
+            generation: { mode: 'fixture', notes: 'Deterministic fixture application' },
+            files: [
+              { path: 'src/App.tsx', content: 'export function App() { return null; }' },
+              { path: 'src/pages/Board.tsx', content: 'export function Board() { return null; }' },
+            ],
+            collections: [{ name: 'items' }],
+          },
+        ]
+      : [],
+    jobs: starts
+      ? [{ id: revisionId, revision_id: revisionId, status: 'succeeded', cancel_requested: false, result: { ok: true, isolation: 'host-trusted', blocker: null, typecheck: { ok: true }, bundle: { ok: true } } }]
+      : [],
+    events: [],
+    current: approved
+      ? { id: revisionId, revision: 1, status: starts ? 'ready' : 'approved', working: starts > 0, approval_hash: 'a'.repeat(64) }
+      : null,
+    working: starts ? { id: revisionId, revision: 1 } : null,
+    preview: starts
+      ? {
+          srcDoc: '<!doctype html><title>Tracker</title><p>Working tracker</p>',
+          sandbox: 'allow-scripts',
+          label: 'Private compiled preview',
+        }
+      : null,
+    previewSession: starts ? 'session' : null,
+    pendingStart:
+      approved && !starts
+        ? { revisionId, requestId: revisionId, approvalHash: 'a'.repeat(64), revision: 1 }
+        : null,
+    records: {},
+    provider: { enabled: true, mode: 'fixture', reason: 'Deterministic fixture application — labelled development evidence, not a live model generation.' },
+    profile: { id: 'react-ts-vite', version: '2026-10-14.1', toolchain: 'vite-8.3.0+react-19.3.0+typescript-6.0.3' },
+    capabilities: { navigation: true, forms: true, validation: true, filtering: true, calculations: true, persistence: true },
+  });
+  await page.route('**/api/architect-apps**', async (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: library() });
+    const body = route.request().postDataJSON();
+    if (body.action === 'propose')
+      return route.fulfill({
+        json: {
+          proposal: {
+            summary: 'Tracker',
+            files: [{ path: 'src/App.tsx', content: 'export function App() { return null; }' }],
+            collections: [{ name: 'items', fields: [{ name: 'title', type: 'string', required: true }] }],
+            behaviors: { navigation: true, forms: true, validation: true, filtering: true, calculations: true, persistence: true },
+            notes: 'Deterministic fixture',
+          },
+          approvalHash: 'a'.repeat(64),
+          treeHash: 'b'.repeat(64),
+          changes: [{ path: 'src/App.tsx', kind: 'create' }],
+          generation: { mode: 'fixture', notes: 'Deterministic fixture application' },
+          baseRevision: null,
+        },
+      });
+    if (body.action === 'approve') {
+      approved = true;
+      return route.fulfill({ json: { revision: { id: revisionId, revision: 1, approval_hash: 'a'.repeat(64) } } });
+    }
+    if (body.action === 'start') {
+      expect(body.requestId).toBe(revisionId);
+      if (lostStart) {
+        lostStart = false;
+        return route.fulfill({ status: 503, json: { error: 'Synthetic lost start response' } });
+      }
+      starts += 1;
+      return route.fulfill({ json: { job: { id: revisionId, status: 'queued' } } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported app action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${base}&apps=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Create a usable project tracker.');
+  await page.getByLabel('Project name (optional)').fill('App tracker');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /No application yet|Revision/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Review proposed files' }).click();
+  await expect(page.getByText('src/App.tsx')).toBeVisible();
+  await page.getByRole('button', { name: 'Accept revision' }).click();
+  await expect(page.getByText(/Start remains explicit/)).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await expect(page.getByText(/Approved revision 1 recovered/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start approved build' }).click();
+  await expect(page.getByText(/Build was not queued|Synthetic lost start/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start approved build' }).click();
+  await expect(page.getByTitle('Private generated application preview')).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-apps-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('button', { name: 'Phone' })).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-apps-phone.png', fullPage: true });
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.screenshot({ path: 'test-results/architect-apps-fold.png', fullPage: true });
+});

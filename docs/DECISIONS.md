@@ -1,3 +1,7 @@
+# Architect generated applications — 2026-10-14
+
+Own source snapshots, revisions, sealed toolchain, generation adapter, trusted typecheck/bundle, private preview and host-managed collections in `architect-apps` rather than expanding Construct receipts or Origin documents. Reuse Construct worker supervision, Origin project ownership, approval-hash / request-id idempotency and Talk text-handoff compatibility through narrow adapters. Do not imply arbitrary servers, independent auth, payments or production publishing. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
 # Architect stack integration onto current main — 2026-10-14
 
 Incorporate source-review #122, create-tool #124 and propose-repair #128 onto main `529d5f1` once. Preserve newer released Talk/Live and Command home. Do not merge the individual source PRs to production or pull unrelated open Talk/Connections branches. The only concrete conflicts were changelog prepends in `docs/STATUS.md` and `docs/DECISIONS.md`. Evidence: [ARCHITECT_STACK_INTEGRATION.md](ARCHITECT_STACK_INTEGRATION.md).
