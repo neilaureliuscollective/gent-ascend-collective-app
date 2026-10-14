@@ -146,10 +146,10 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   await page.getByLabel('Project name (optional)').fill(draftName);
   await page.getByRole('button', { name: 'Create & save project' }).click();
   await expect(page.getByRole('status')).toContainText(/Saved revision 1|Saved/);
-  const draftUrl = page.url();
   await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
   await page.getByLabel('Project vision').fill(unsentVision);
   await expect(page.getByLabel('Project vision')).toHaveValue(unsentVision);
+  const draftUrl = page.url();
 
   page.once('dialog', (dialog) => dialog.dismiss());
   await openArchitectMenu(page);
