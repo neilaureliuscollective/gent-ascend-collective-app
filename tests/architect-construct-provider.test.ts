@@ -94,3 +94,57 @@ it('rejects malformed provider output and never treats it as an executed run', a
   if (generate.mock.calls.length)
     expect(generate.mock.calls[0]?.[0].maxRetries).toBe(0);
 });
+
+it('uses complete content for a file larger than 4KB and never a truncated original', async () => {
+  vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'false');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'true');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const content = `<h1>Before</h1>\n${'p'.repeat(4500)}`;
+  const proposal = await proposeConstructChange(
+    'replace the heading',
+    {
+      allowed_paths: ['preview.html'],
+      protected_paths: defaultProtectedPaths(),
+      intended_change: 'Stay inside the fixture.',
+    },
+    [{ path: 'preview.html', content }],
+    new AbortController().signal,
+  );
+  expect(proposal.patch[0]?.before).toBe(content);
+  expect(proposal.patch[0]?.before.length).toBeGreaterThan(4000);
+  expect(proposal.context.editable[0]?.content).toBe(content);
+});
+
+it('rejects a truncated before-text from the provider', async () => {
+  vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'false');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const content = `<h1>Before</h1>\n${'p'.repeat(4500)}`;
+  generate.mockResolvedValue({
+    output: {
+      summary: 'ok',
+      patch: [{ path: 'preview.html', before: content.slice(0, 4000), after: content.replace('Before', 'After') }],
+      notes: '',
+    },
+  });
+  await expect(
+    proposeConstructChange(
+      'change the heading',
+      {
+        allowed_paths: ['preview.html'],
+        protected_paths: defaultProtectedPaths(),
+        intended_change: 'Stay inside the fixture.',
+      },
+      [{ path: 'preview.html', content }],
+      new AbortController().signal,
+    ),
+  ).rejects.toThrow(/truncated|excerpt|failed/i);
+});
+

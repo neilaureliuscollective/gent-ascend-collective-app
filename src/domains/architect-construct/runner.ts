@@ -7,10 +7,16 @@ import {
   type BriefScope,
   type RunResult,
   type SourceSnapshot,
-  type checkResultSchema,
+  checkResultSchema,
   defaultLimits,
   relPath,
 } from './schema';
+import {
+  classifyCheckDelta,
+  persistableCheckPlan,
+  planCheckCoverage,
+  type CheckOutcome,
+} from './check-coverage';
 import type { z } from 'zod';
 import { PathGuardError, assertNoSymlink, assertWritable, resolveInside } from './paths';
 import { assertNoHostSecrets, sanitizeLog, strippedEnv } from './sanitize';
@@ -180,7 +186,11 @@ export async function applyTrustedPatch(root: string, scope: BriefScope) {
     try {
       current = await readFile(target, 'utf8');
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+        throw new PathGuardError(
+          `Creating ${path} is not supported in this pass. Empty before-text is not a new file.`,
+        );
+      throw error;
     }
     if (current !== file.before)
       throw new PathGuardError(`Patch basis mismatch for ${path}. The approved before-text is absent.`);
@@ -245,6 +255,7 @@ export function blockedResult(
     status: 'blocked' as const,
     log: blocker,
   }));
+  const plan = job.scope.check_plan ?? persistableCheckPlan(planCheckCoverage(job.source.files));
   return {
     isolation: extras.isolation ?? 'unavailable',
     runtime_available: extras.runtime_available ?? false,
@@ -255,8 +266,40 @@ export function blockedResult(
     changed_files: [],
     diff: '',
     checks,
+    baseline_checks: checks,
+    coverage: {
+      no_applicable: plan.no_applicable,
+      preexisting_failures: [],
+      introduced_failures: [],
+      untested: plan.untested,
+      unsupported: plan.unsupported,
+      revision_note: `blocked ${job.source.tree_hash.slice(0, 12)}`,
+    },
     preview: { path: null, body: '', unavailable_reason: blocker },
     artifacts: [{ kind: 'receipt', ref: 'blocked-isolation', hash: sha256Text(blocker) }],
+  };
+}
+
+function parseCheckResults(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const parsed = checkResultSchema.safeParse(item);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+function coverageFromResults(
+  job: ExecutionJob,
+  baseline: CheckOutcome[],
+  post: CheckOutcome[],
+): NonNullable<RunResult['coverage']> {
+  const plan = job.scope.check_plan ?? persistableCheckPlan(planCheckCoverage(job.source.files));
+  return {
+    no_applicable: plan.no_applicable,
+    ...classifyCheckDelta(baseline, post),
+    untested: plan.untested,
+    unsupported: plan.unsupported,
+    revision_note: `${job.source.kind} ${job.source.tree_hash.slice(0, 12)}`,
   };
 }
 
@@ -265,6 +308,22 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
   const checks: z.infer<typeof checkResultSchema>[] = [];
   try {
     await materializeSource(work, job.source, job.scope);
+    const baseline: z.infer<typeof checkResultSchema>[] = [];
+    for (const check of job.scope.acceptance_checks) {
+      const executed = await runCommand(
+        check.command,
+        check.args,
+        work,
+        Math.min(8000, job.scope.resource_limits.timeout_ms),
+      );
+      baseline.push({
+        name: check.name,
+        command: [check.command, ...check.args].join(' '),
+        exit_code: executed.exit_code,
+        status: executed.exit_code === 0 ? 'passed' : 'failed',
+        log: executed.log.slice(0, job.scope.resource_limits.max_output_bytes),
+      });
+    }
     await applyTrustedPatch(work, job.scope);
     for (const check of job.scope.acceptance_checks) {
       const executed = await runCommand(
@@ -306,6 +365,8 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
       changed_files: observedResult.changed,
       diff: observedResult.diff,
       checks,
+      baseline_checks: baseline,
+      coverage: coverageFromResults(job, baseline, checks),
       preview,
       artifacts: [
         { kind: 'diff', ref: 'result.diff', hash: sha256Text(observedResult.diff) },
@@ -642,7 +703,8 @@ export async function executeInContainer(
       ),
       unavailable_reason: previewFile ? null : 'Observed preview file was not present in isolated output.',
     };
-    const checks = Array.isArray(parsed.checks) ? parsed.checks : [];
+    const checks = parseCheckResults(parsed.checks);
+    const baseline = parseCheckResults(parsed.baseline_checks);
     result = {
       isolation: 'docker',
       runtime_available: true,
@@ -653,6 +715,8 @@ export async function executeInContainer(
       changed_files: observedResult.changed,
       diff: observedResult.diff,
       checks,
+      baseline_checks: baseline,
+      coverage: coverageFromResults(job, baseline, checks),
       preview,
       artifacts: [
         { kind: 'diff', ref: 'result.diff', hash: sha256Text(observedResult.diff) },

@@ -284,6 +284,47 @@ it('labels imported Git files as modified after the pin is edited', async () => 
   expect(approved.source.label).toMatch(/not verified unchanged Git content/);
 });
 
+it('refuses unsupported creation and does not treat emptying as deletion', async () => {
+  const files = fixtureSource(state.owner, '00000000-0000-4000-8000-000000000048').files;
+  await expect(
+    approveConstructChange({
+      action: 'approve-change',
+      projectId: state.projectId,
+      briefId: '00000000-0000-4000-8000-000000000049',
+      sourceId: '00000000-0000-4000-8000-000000000050',
+      expected: 1,
+      sourceKind: 'imported',
+      repository: null,
+      commit: null,
+      files,
+      intendedChange: 'Create a new file.',
+      allowedPaths: [...files.map((file) => file.path), 'brand-new.js'],
+      protectedPaths: defaultProtectedPaths(),
+      acceptanceChecks: [],
+      patch: [{ path: 'brand-new.js', before: '', after: 'export const created = true;\n' }],
+    }),
+  ).rejects.toThrow(/creating|not supported/i);
+  const emptied = await approveConstructChange({
+    action: 'approve-change',
+    projectId: state.projectId,
+    briefId: '00000000-0000-4000-8000-000000000066',
+    sourceId: '00000000-0000-4000-8000-000000000067',
+    expected: 1,
+    sourceKind: 'imported',
+    repository: null,
+    commit: null,
+    files,
+    intendedChange: 'Empty the readme without deleting it.',
+    allowedPaths: files.map((file) => file.path),
+    protectedPaths: defaultProtectedPaths(),
+    acceptanceChecks: [],
+    patch: [{ path: 'README.md', before: files[0]!.content, after: '' }],
+  });
+  expect(emptied.brief.scope.patch[0]?.after).toBe('');
+  expect(emptied.brief.scope.patch[0]?.path).toBe('README.md');
+  expect(emptied.source.files.some((file) => file.path === 'README.md')).toBe(true);
+});
+
 it('keeps cancel owner-scoped and does not replay a finished request', async () => {
   const requestId = '00000000-0000-4000-8000-000000000026';
   await startFixtureConstruct({

@@ -112,6 +112,31 @@ export const patchFileSchema = z
   })
   .strict();
 
+export const checkKinds = ['syntax', 'typecheck', 'build', 'functional'] as const;
+export const checkPlanItemSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    kind: z.enum(checkKinds),
+    reason: z.string().min(1).max(400),
+    target: relPath.optional(),
+  })
+  .strict();
+export const unsupportedCheckSchema = z
+  .object({
+    kind: z.enum(checkKinds),
+    reason: z.string().min(1).max(400),
+  })
+  .strict();
+export const checkPlanSchema = z
+  .object({
+    no_applicable: z.boolean(),
+    applicable: z.array(checkPlanItemSchema).max(8),
+    unsupported: z.array(unsupportedCheckSchema).max(8),
+    untested: z.array(z.string().min(1).max(160)).max(16),
+  })
+  .strict();
+export type CheckPlan = z.infer<typeof checkPlanSchema>;
+
 export const briefScopeSchema = z
   .object({
     project_id: z.uuid(),
@@ -123,7 +148,8 @@ export const briefScopeSchema = z
     allowed_paths: z.array(relPath).min(1).max(32),
     protected_paths: z.array(relPath).max(32),
     intended_change: z.string().trim().min(1).max(2000),
-    acceptance_checks: z.array(acceptanceCheckSchema).min(1).max(8),
+    acceptance_checks: z.array(acceptanceCheckSchema).max(8),
+    check_plan: checkPlanSchema.optional(),
     resource_limits: resourceLimitsSchema,
     patch: z.array(patchFileSchema).min(1).max(16),
   })
@@ -173,6 +199,16 @@ export const checkResultSchema = z
     log: z.string().max(16384),
   })
   .strict();
+export const checkCoverageSchema = z
+  .object({
+    no_applicable: z.boolean(),
+    preexisting_failures: z.array(z.string().min(1).max(80)).max(8),
+    introduced_failures: z.array(z.string().min(1).max(80)).max(8),
+    untested: z.array(z.string().min(1).max(160)).max(16),
+    unsupported: z.array(unsupportedCheckSchema).max(8),
+    revision_note: z.string().min(1).max(200),
+  })
+  .strict();
 
 export const isolationKinds = ['docker', 'process-fixture', 'unavailable'] as const;
 export const runResultSchema = z
@@ -186,6 +222,8 @@ export const runResultSchema = z
     changed_files: z.array(relPath).max(32),
     diff: z.string().max(65536),
     checks: z.array(checkResultSchema).max(8),
+    baseline_checks: z.array(checkResultSchema).max(8).optional(),
+    coverage: checkCoverageSchema.optional(),
     preview: z
       .object({
         path: relPath.nullable(),
@@ -315,9 +353,9 @@ export const proposeCommand = z
     projectId: z.uuid(),
     instruction: z.string().trim().min(1).max(2000),
     intendedChange: z.string().trim().min(1).max(2000),
-    allowedPaths: z.array(relPath).min(1).max(8),
-    protectedPaths: z.array(relPath).max(8),
-    excerpts: z.array(sourceFileSchema).min(1).max(8),
+    allowedPaths: z.array(relPath).min(1).max(32),
+    protectedPaths: z.array(relPath).max(32),
+    excerpts: z.array(sourceFileSchema).min(1).max(32),
   })
   .strict();
 export const approveChangeCommand = z
@@ -334,7 +372,8 @@ export const approveChangeCommand = z
     intendedChange: z.string().trim().min(1).max(2000),
     allowedPaths: z.array(relPath).min(1).max(32),
     protectedPaths: z.array(relPath).max(32).optional(),
-    acceptanceChecks: z.array(acceptanceCheckSchema).min(1).max(8),
+    acceptanceChecks: z.array(acceptanceCheckSchema).max(8),
+    checkPlan: checkPlanSchema.optional(),
     patch: z.array(patchFileSchema).min(1).max(16),
   })
   .strict()

@@ -130,6 +130,8 @@ export async function proposeConstructChange(
   return constructJson<{
     mocked: boolean;
     proposal: { summary: string; patch: { path: string; before: string; after: string }[]; notes: string };
+    context?: import('@/domains/architect-construct/source-context').SourceContextManifest;
+    coverage?: import('@/domains/architect-construct/schema').CheckPlan;
   }>(
     '/api/architect-construct',
     {
@@ -164,6 +166,7 @@ export async function approveConstructChange(
     allowedPaths: string[];
     protectedPaths?: string[];
     acceptanceChecks: Array<{ name: string; command: 'node' | 'true' | 'false'; args: string[] }>;
+    checkPlan?: import('@/domains/architect-construct/schema').CheckPlan;
     patch: { path: string; before: string; after: string }[];
   },
   signal?: AbortSignal,

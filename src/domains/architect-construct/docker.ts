@@ -239,27 +239,33 @@ for (const file of job.files) {
   mkdirSync(dirname(to), { recursive: true });
   writeFileSync(to, readFileSync(join('/src', file.path)));
 }
+function runJobChecks() {
+  const results = [];
+  for (const check of job.checks || []) {
+    const ran = spawnSync(check.command, check.args, {
+      cwd: work,
+      encoding: 'utf8',
+      env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: work, NODE_ENV: 'test', NODE_OPTIONS: '' },
+      timeout: Math.min(8000, job.timeout_ms || 8000),
+    });
+    results.push({
+      name: check.name,
+      command: [check.command, ...check.args].join(' '),
+      exit_code: ran.status ?? 1,
+      status: ran.status === 0 ? 'passed' : 'failed',
+      log: ((ran.stdout || '') + (ran.stderr || '')).slice(0, 16384),
+    });
+  }
+  return results;
+}
+const baseline_checks = runJobChecks();
 for (const patch of job.patch) {
   const target = join(work, patch.path);
-  if (!existsSync(target) || readFileSync(target, 'utf8') !== patch.before) throw new Error('Patch basis mismatch');
+  if (!existsSync(target)) throw new Error('Creating files is not supported in this pass.');
+  if (readFileSync(target, 'utf8') !== patch.before) throw new Error('Patch basis mismatch');
   writeFileSync(target, patch.after);
 }
-const checks = [];
-for (const check of job.checks) {
-  const ran = spawnSync(check.command, check.args, {
-    cwd: work,
-    encoding: 'utf8',
-    env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: work, NODE_ENV: 'test', NODE_OPTIONS: '' },
-    timeout: Math.min(8000, job.timeout_ms || 8000),
-  });
-  checks.push({
-    name: check.name,
-    command: [check.command, ...check.args].join(' '),
-    exit_code: ran.status ?? 1,
-    status: ran.status === 0 ? 'passed' : 'failed',
-    log: ((ran.stdout || '') + (ran.stderr || '')).slice(0, 16384),
-  });
-}
+const checks = runJobChecks();
 const allowed = Array.isArray(job.allowed_paths) ? job.allowed_paths : [];
 const files = [];
 for (const rel of allowed) {
@@ -286,7 +292,7 @@ const changed_files = files.filter((file) => {
   const original = existsSync(join('/src', file.path)) ? readFileSync(join('/src', file.path), 'utf8') : '';
   return original !== file.content;
 }).map((file) => file.path);
-const payload = { checks, files, changed_files, preview };
+const payload = { checks, baseline_checks, files, changed_files, preview };
 try { writeFileSync('/out/result.json', JSON.stringify(payload)); } catch { /* /out is optional */ }
 process.stdout.write('CONSTRUCT_RESULT_BEGIN\\n' + JSON.stringify(payload) + '\\nCONSTRUCT_RESULT_END\\n');
 `;

@@ -936,6 +936,7 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
     }
     const body = route.request().postDataJSON();
     if (body.action === 'propose') {
+      const file = body.excerpts?.[0] ?? { path: 'preview.html', content: 'Before' };
       return route.fulfill({
         json: {
           mocked: true,
@@ -944,9 +945,9 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
             notes: 'MOCKED PROVIDER — development only.',
             patch: [
               {
-                path: 'preview.html',
-                before: 'Before',
-                after: 'After',
+                path: file.path,
+                before: file.content,
+                after: String(file.content).replace(/Before/g, 'After'),
               },
             ],
           },
@@ -1065,11 +1066,44 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   await expect(page.getByRole('status')).toContainText('Saved revision 1');
   await page.getByRole('button', { name: 'Construct', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Authorized source and project brief' })).toBeVisible();
+  const intended = page.getByLabel('Intended change');
+  await intended.fill('Replace the imported heading and keep this draft.');
   await page.getByRole('button', { name: 'Propose change' }).click();
   await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
   await expect(
     page.getByText('Labelled mocked provider. This is not a paid OpenAI call.'),
   ).toBeVisible();
+  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Source' }).click();
+  await expect(page.getByRole('heading', { name: 'What Architect understands' })).toBeVisible();
+  await page.getByRole('button', { name: /preview\.html/ }).first().click();
+  await expect(page.getByLabel('Inspect preview.html')).toContainText('Complete content is available');
+  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Change' }).click();
+  await expect(page.locator('.origin-diff [data-diff="remove"]').first()).toContainText('Before');
+  await expect(page.locator('.origin-diff [data-diff="add"]').first()).toContainText('After');
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-source-review-1440.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 720, height: 900 });
+  await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-source-review-720.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Source' }).click();
+  await expect(page.getByRole('heading', { name: 'What Architect understands' })).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-source-review-390.png',
+    fullPage: true,
+  });
+  const closeSheet = page.getByRole('button', { name: 'Close review' });
+  if (await closeSheet.isVisible()) await closeSheet.click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Evidence' }).click();
+  await expect(page.getByRole('heading', { name: 'Check coverage' })).toBeVisible();
+  await expect(page.getByText('No applicable checks available. That is not a pass.')).toBeVisible();
+  await expect(intended).toHaveValue('Replace the imported heading and keep this draft.');
   await page.getByRole('button', { name: 'Approve proposed change' }).click();
   await expect(page.getByText(/Change approved against the pinned source/)).toBeVisible();
   await expect(page.getByText(/Approved inputs are bound to server digest/)).toBeVisible();
@@ -1086,8 +1120,10 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   await expect(page.getByRole('button', { name: 'Approve proposed change' })).toBeDisabled();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Propose change' })).toBeVisible();
   await page.setViewportSize({ width: 720, height: 900 });
   await expect(page.getByRole('button', { name: 'Propose change' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Isolated preview' })).toBeVisible();
 });
 
 test('construct panel drops a late poll after the project switches', async ({ page }) => {

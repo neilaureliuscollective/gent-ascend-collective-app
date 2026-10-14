@@ -1,7 +1,8 @@
 'use client';
 import { BplusMaterial } from '@/components/visual/bplus-material';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
+  CheckPlan,
   ConstructBrief,
   ConstructEvent,
   ConstructRun,
@@ -22,6 +23,15 @@ import {
   type ConstructSourceReadiness,
 } from './construct-lifecycle';
 import { lifecycleLabel, lifecyclePhase } from '@/domains/architect-construct/lifecycle';
+import {
+  acceptanceChecksFromPlan,
+  persistableCheckPlan,
+  planCheckCoverage,
+} from '@/domains/architect-construct/check-coverage';
+import { prepareSourceContext, type SourceContextManifest } from '@/domains/architect-construct/source-context';
+import { SourceUnderstanding } from './source-understanding';
+import { ChangeDiff } from './change-diff';
+import { CheckEvidence } from './check-evidence';
 
 const views = ['Plan', 'Changes', 'Checks', 'Preview'] as const;
 type View = (typeof views)[number];
@@ -42,6 +52,8 @@ type ProposedChange = {
   notes: string;
   patch: { path: string; before: string; after: string }[];
   snapshot: string;
+  context: SourceContextManifest;
+  coverage: CheckPlan;
 };
 
 type BoundApproval = {
@@ -110,6 +122,14 @@ export function ArchitectConstructPanel({
   const [intendedChange, setIntendedChange] = useState(briefText.slice(0, 2000));
   const [proposal, setProposal] = useState<ProposedChange | null>(null);
   const [approval, setApproval] = useState<BoundApproval | null>(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedChange, setSelectedChange] = useState<string | null>(null);
+  const [selectedCheck, setSelectedCheck] = useState<string | null>(null);
+  const [contextPanel, setContextPanel] = useState<'understand' | 'change' | 'evidence'>('understand');
+  const [sheet, setSheet] = useState<'understand' | 'change' | 'evidence' | null>(null);
+  const panelScrollRef = useRef<HTMLElement>(null);
+  const lastFocusRef = useRef<HTMLElement | null>(null);
+  const panelScrollByView = useRef<Record<string, number>>({});
   const [gitPin, setGitPin] = useState<{
     repository: string;
     commit: string;
@@ -125,7 +145,20 @@ export function ArchitectConstructPanel({
     intendedChange,
     revision,
   });
+  const localContext = useMemo(
+    () =>
+      prepareSourceContext({
+        files,
+        allowedPaths: files.map((file) => file.path),
+        protectedPaths: ['.env'],
+        intendedChange,
+      }),
+    [files, intendedChange],
+  );
+  const localCoverage = useMemo(() => persistableCheckPlan(planCheckCoverage(files)), [files]);
   const liveProposal = proposal?.snapshot === snapshot ? proposal : null;
+  const reviewContext = liveProposal?.context ?? localContext;
+  const reviewCoverage = liveProposal?.coverage ?? localCoverage;
   const liveApproval =
     approval && approval.snapshot === snapshot && approval.revision === revision ? approval : null;
   const run = selectCurrentRun(library, projectId, ownerId) as ConstructRun | null;
@@ -238,7 +271,11 @@ export function ArchitectConstructPanel({
         notes: proposed.data.proposal.notes,
         patch: proposed.data.proposal.patch,
         snapshot: boundSnapshot,
+        context: proposed.data.context ?? localContext,
+        coverage: proposed.data.coverage ?? localCoverage,
       });
+      setSelectedChange(proposed.data.proposal.patch[0]?.path ?? null);
+      setContextPanel('change');
       setApproval(null);
       setMessage(
         proposed.data.mocked
@@ -330,9 +367,8 @@ export function ArchitectConstructPanel({
         intendedChange,
         allowedPaths: files.map((file) => file.path),
         protectedPaths: ['.env'],
-        acceptanceChecks: files.some((file) => file.path.endsWith('.mjs') || file.path.endsWith('.js'))
-          ? [{ name: 'syntax', command: 'node', args: ['--check', files.find((file) => file.path.endsWith('.mjs') || file.path.endsWith('.js'))!.path] }]
-          : [{ name: 'present', command: 'true', args: [] }],
+        acceptanceChecks: acceptanceChecksFromPlan(planCheckCoverage(files)),
+        checkPlan: reviewCoverage,
         patch: liveProposal.patch,
       });
       if (!approved.ok) throw new Error(approved.error);
@@ -535,8 +571,29 @@ export function ArchitectConstructPanel({
                 }
               />
             </label>
+            {files.length > 1 && (
+              <button
+                type="button"
+                disabled={!enabled || locked || busy}
+                onClick={() => setFiles((current) => current.filter((_, rowIndex) => rowIndex !== index))}
+              >
+                Remove {file.path || 'file'}
+              </button>
+            )}
           </fieldset>
         ))}
+        <button
+          type="button"
+          disabled={!enabled || locked || busy || files.length >= 32}
+          onClick={() =>
+            setFiles((current) => [
+              ...current,
+              { path: `note-${current.length + 1}.md`, content: '# Additional authorized source\n' },
+            ])
+          }
+        >
+          Add authorized source file
+        </button>
         <label>
           Intended change
           <textarea
@@ -600,20 +657,176 @@ export function ArchitectConstructPanel({
           retries reuse the same request until a new approval is created.
         </p>
       )}
-      {liveProposal && (
-        <article className="origin-construct-pane">
-          <h4>Proposed change awaiting approval</h4>
-          <p>{liveProposal.summary}</p>
-          {liveProposal.mocked && <p>Labelled mocked provider. This is not a paid OpenAI call.</p>}
-          <p>{liveProposal.notes}</p>
-          {liveProposal.patch.map((file) => (
-            <pre key={file.path}>
-              {file.path}
-              {'\n'}
-              {file.after}
-            </pre>
-          ))}
-        </article>
+      <div className="origin-construct-review">
+        <section className="origin-construct-canvas" aria-label="Last valid preview">
+          <h4>Isolated preview</h4>
+          {run?.result?.preview.body ? (
+            <iframe
+              title="Construct preview"
+              sandbox=""
+              srcDoc={run.result.preview.body}
+              className="origin-construct-preview"
+            />
+          ) : (
+            <p>
+              {run?.result?.preview.unavailable_reason ||
+                run?.result?.blocker ||
+                'Last valid isolated preview is held here once a worker records output. Static HTML is not a running application.'}
+            </p>
+          )}
+          {run?.result && (
+            <p>
+              Isolation {run.result.isolation}. Runtime available{' '}
+              {run.result.runtime_available ? 'yes' : 'no'}. Sandbox executed{' '}
+              {run.result.sandbox ? 'yes' : 'no'}. A Docker probe is not a sandbox.
+            </p>
+          )}
+        </section>
+        <aside className="origin-construct-context" ref={panelScrollRef} aria-label="Review context">
+          <nav className="origin-construct-views" aria-label="Review context">
+            {(
+              [
+                ['understand', 'Source'],
+                ['change', 'Change'],
+                ['evidence', 'Evidence'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                aria-current={contextPanel === id ? 'page' : undefined}
+                data-bplus-surface={contextPanel === id ? 'selection' : undefined}
+                onClick={() => {
+                  if (panelScrollRef.current)
+                    panelScrollByView.current[contextPanel] = panelScrollRef.current.scrollTop;
+                  setContextPanel(id);
+                  requestAnimationFrame(() => {
+                    if (panelScrollRef.current)
+                      panelScrollRef.current.scrollTop = panelScrollByView.current[id] ?? 0;
+                  });
+                  if (window.matchMedia('(max-width: 719px)').matches) {
+                    lastFocusRef.current = document.activeElement as HTMLElement;
+                    setSheet(id);
+                  }
+                }}
+              >
+                {contextPanel === id && <BplusMaterial radius={8} />}
+                {label}
+              </button>
+            ))}
+          </nav>
+          <div className="origin-construct-context-body" hidden={Boolean(sheet)}>
+            {contextPanel === 'understand' && (
+              <SourceUnderstanding
+                context={reviewContext}
+                selectedPath={selectedSource}
+                onSelect={(path) => {
+                  setSelectedSource(path);
+                  const match = files.find((file) => file.path === path);
+                  if (match)
+                    document
+                      .querySelector(`input[value="${CSS.escape(match.path)}"]`)
+                      ?.scrollIntoView({ block: 'nearest' });
+                }}
+              />
+            )}
+            {contextPanel === 'change' && liveProposal && (
+              <ChangeDiff
+                summary={liveProposal.summary}
+                notes={liveProposal.notes}
+                mocked={liveProposal.mocked}
+                patches={liveProposal.patch.map((file) => ({
+                  ...file,
+                  intent: liveProposal.summary,
+                  warning:
+                    file.after === '' && file.before !== ''
+                      ? 'Empty replacement content is not deletion; the file remains.'
+                      : undefined,
+                }))}
+                selectedPath={selectedChange}
+                onSelect={setSelectedChange}
+              />
+            )}
+            {contextPanel === 'change' && !liveProposal && (
+              <article className="origin-construct-pane">
+                <h4>Proposed change awaiting approval</h4>
+                <p>Propose a change against complete authorized files to inspect a before/after diff.</p>
+              </article>
+            )}
+            {contextPanel === 'evidence' && (
+              <CheckEvidence
+                plan={reviewCoverage}
+                coverage={run?.result?.coverage}
+                checks={run?.result?.checks ?? []}
+                baseline={run?.result?.baseline_checks}
+                selectedName={selectedCheck}
+                onSelect={setSelectedCheck}
+              />
+            )}
+          </div>
+        </aside>
+      </div>
+      {sheet && (
+        <div
+          className="origin-construct-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="construct-sheet-title"
+        >
+          <div className="origin-construct-sheet-card">
+            <button
+              type="button"
+              onClick={() => {
+                setSheet(null);
+                lastFocusRef.current?.focus();
+              }}
+            >
+              Close review
+            </button>
+            <div id="construct-sheet-title">
+              {sheet === 'understand' && (
+                <SourceUnderstanding
+                  context={reviewContext}
+                  selectedPath={selectedSource}
+                  onSelect={setSelectedSource}
+                />
+              )}
+              {sheet === 'change' && liveProposal && (
+                <ChangeDiff
+                  summary={liveProposal.summary}
+                  notes={liveProposal.notes}
+                  mocked={liveProposal.mocked}
+                  patches={liveProposal.patch}
+                  selectedPath={selectedChange}
+                  onSelect={setSelectedChange}
+                />
+              )}
+              {sheet === 'evidence' && (
+                <CheckEvidence
+                  plan={reviewCoverage}
+                  coverage={run?.result?.coverage}
+                  checks={run?.result?.checks ?? []}
+                  baseline={run?.result?.baseline_checks}
+                  selectedName={selectedCheck}
+                  onSelect={setSelectedCheck}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {liveProposal && contextPanel !== 'change' && (
+        <ChangeDiff
+          summary={liveProposal.summary}
+          notes={liveProposal.notes}
+          mocked={liveProposal.mocked}
+          patches={liveProposal.patch}
+          selectedPath={selectedChange}
+          onSelect={(path) => {
+            setSelectedChange(path);
+            setContextPanel('change');
+          }}
+        />
       )}
       <nav className="origin-construct-views" aria-label="Construct review">
         {views.map((tab) => (
@@ -700,23 +913,14 @@ export function ArchitectConstructPanel({
       {view === 'Checks' && (
         <article className="origin-construct-pane">
           <h4>Actual commands</h4>
-          {run?.result?.checks.length ? (
-            <ul>
-              {run.result.checks.map((check) => (
-                <li key={check.name}>
-                  <strong>
-                    {check.name}: {check.status}
-                  </strong>
-                  <p>
-                    {check.command} · exit {check.exit_code}
-                  </p>
-                  {check.log ? <pre>{check.log}</pre> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Checks are not-run until a worker records real exit codes. The browser cannot forge them.</p>
-          )}
+          <CheckEvidence
+            plan={brief?.scope.check_plan ?? reviewCoverage}
+            coverage={run?.result?.coverage}
+            checks={run?.result?.checks ?? []}
+            baseline={run?.result?.baseline_checks}
+            selectedName={selectedCheck}
+            onSelect={setSelectedCheck}
+          />
         </article>
       )}
       {view === 'Preview' && (

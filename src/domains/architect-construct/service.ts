@@ -3,6 +3,8 @@ import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/s
 import { approvalHash, labeledSource, treeHash } from './hash';
 import { fixtureScope, importedFixtureSource } from './fixture';
 import { constructReady } from './readiness';
+import { acceptanceChecksFromPlan, persistableCheckPlan, planCheckCoverage } from './check-coverage';
+import { validateExistingFilePatches } from './patch-contract';
 import {
   type ConstructBrief,
   type ConstructEvent,
@@ -239,6 +241,16 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
         /* Imported files stay owner-supplied when a pin cannot be verified. */
       }
     }
+    const protectedPaths = input.protectedPaths ?? defaultProtectedPaths();
+    const validated = validateExistingFilePatches({
+      files,
+      patch: input.patch,
+      allowedPaths: input.allowedPaths,
+      protectedPaths,
+      editablePaths: files.map((file) => file.path),
+    });
+    if (!validated.ok) throw new IntelligenceError(`${validated.message} ${validated.actionable}`, 409);
+    const coverage = planCheckCoverage(files);
     const source = await store.importSource({
       id: input.sourceId,
       person_id: person.id,
@@ -258,11 +270,12 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
       source_commit: commit,
       source_tree_hash: source.tree_hash,
       allowed_paths: input.allowedPaths,
-      protected_paths: input.protectedPaths ?? defaultProtectedPaths(),
+      protected_paths: protectedPaths,
       intended_change: input.intendedChange,
-      acceptance_checks: input.acceptanceChecks,
+      acceptance_checks: acceptanceChecksFromPlan(coverage),
+      check_plan: persistableCheckPlan(coverage),
       resource_limits: defaultLimits,
-      patch: input.patch,
+      patch: validated.patch,
     });
     await store.invalidateProjectBriefs(
       person.id,
@@ -280,18 +293,25 @@ export async function proposeConstruct(input: ReturnType<typeof proposeCommand.p
   requireReady();
   try {
     await requireOwnedProject(input.projectId);
+    const proposal = await proposeConstructChange(
+      input.instruction,
+      {
+        allowed_paths: input.allowedPaths,
+        protected_paths: input.protectedPaths,
+        intended_change: input.intendedChange,
+      },
+      input.excerpts,
+      signal,
+    );
     return {
       mocked: constructProviderStatus().mode === 'mock',
-      proposal: await proposeConstructChange(
-        input.instruction,
-        {
-          allowed_paths: input.allowedPaths,
-          protected_paths: input.protectedPaths,
-          intended_change: input.intendedChange,
-        },
-        input.excerpts,
-        signal,
-      ),
+      proposal: {
+        summary: proposal.summary,
+        patch: proposal.patch,
+        notes: proposal.notes,
+      },
+      context: proposal.context,
+      coverage: persistableCheckPlan(planCheckCoverage(input.excerpts)),
     };
   } catch (error) {
     asIntelligence(error);
