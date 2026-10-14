@@ -1756,10 +1756,18 @@ test('approved repair recovers after reload and retries one enqueue after a lost
   );
   await page.route('**/api/architect-construct*', async (route) => {
     if (route.request().url().includes('/source')) return;
-    const projectId = new URL(route.request().url()).searchParams.get('project') ?? 'project';
+    const body = route.request().method() === 'POST'
+      ? (route.request().postDataJSON() as {
+          action?: string;
+          projectId?: string;
+          briefId?: string;
+          requestId?: string;
+        })
+      : null;
+    const projectId =
+      body?.projectId || new URL(route.request().url()).searchParams.get('project') || 'project';
     if (route.request().method() === 'POST') {
-      const body = route.request().postDataJSON() as { action?: string; briefId?: string; requestId?: string };
-      if (body.action === 'start') {
+      if (body?.action === 'start') {
         starts.push({ briefId: body.briefId, requestId: body.requestId });
         queued = {
           id: repairBriefId,
