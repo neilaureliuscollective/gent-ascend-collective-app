@@ -49,6 +49,8 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261013193000_architect_construct_isolation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013220000_architect_construct_lease_freshness.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013230000_architect_construct_finish_event.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014220000_architect_construct_repair.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014224500_architect_construct_one_repair.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`,
@@ -324,5 +326,151 @@ describe('Construct SQL owner policy and worker authority (PGlite; not Supabase 
     await expect(
       asUser(owner, `select public.architect_construct_start('${project}','${next}','${request}',1)`),
     ).rejects.toThrow(/changed|invalidated/i);
+  });
+
+  it('enforces one repair per original journey and refuses stale parent evidence', async () => {
+    const repairProject = '00000000-0000-4000-8000-000000000013';
+    const parentId = '00000000-0000-4000-8000-000000000014';
+    const childId = '00000000-0000-4000-8000-000000000015';
+    const grandchildId = '00000000-0000-4000-8000-000000000016';
+    const siblingId = '00000000-0000-4000-8000-000000000017';
+    const parentSource = importedFixtureSource(owner, parentId);
+    const parentScope = fixtureScope({
+      projectId: repairProject,
+      projectRevision: 1,
+      sourceId: parentSource.id,
+      sourceTreeHash: parentSource.tree_hash,
+    });
+    await asUser(
+      owner,
+      `select public.architect_origin_save('${repairProject}','${parentId}',0,${literal({ ...content, name: 'Repair journey' })},'Repair project')`,
+    );
+    await asUser(
+      owner,
+      `select public.architect_construct_import_source('${parentSource.id}','imported','${parentSource.repository}',null,'${parentSource.label.replace(/'/g, "''")}','${parentSource.tree_hash}',${literal(parentSource.files)}) as ok`,
+    );
+    await asUser(
+      owner,
+      `select public.architect_construct_approve_brief('${parentId}','${repairProject}',1,'${parentSource.id}','${approvalHash(parentScope)}',${literal(parentScope)}) as ok`,
+    );
+    await asUser(owner, `select public.architect_construct_start('${repairProject}','${parentId}','${parentId}',1)`);
+    let parentToken: string | null = null;
+    for (let attempt = 0; attempt < 8 && !parentToken; attempt += 1) {
+      const claimed = await asWorker(`select public.architect_construct_claim('repair-worker',45000) as id`);
+      const claimedId = (claimed.rows[0] as { id: string | null } | undefined)?.id;
+      if (!claimedId) break;
+      const token = (
+        await asWorker(`select lease_token::text as token from public.architect_construct_runs where id='${claimedId}'`)
+      ).rows[0] as { token: string };
+      if (claimedId === parentId) {
+        parentToken = token.token;
+        break;
+      }
+      await asWorker(
+        `select public.architect_construct_finish('repair-worker','${claimedId}','${token.token}','cancelled',${literal({
+          isolation: 'unavailable',
+          runtime_available: false,
+          sandbox: false,
+          blocker: 'cleared leftover',
+          source_hash: parentSource.tree_hash,
+          result_hash: null,
+          changed_files: [],
+          diff: '',
+          checks: [],
+          preview: { path: null, body: '', unavailable_reason: 'cleared' },
+          artifacts: [],
+        })}) as ok`,
+      );
+    }
+    expect(parentToken).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(
+      (
+        await asWorker(
+          `select public.architect_construct_finish('repair-worker','${parentId}','${parentToken}','failed',${literal({
+            isolation: 'unavailable',
+            runtime_available: false,
+            sandbox: false,
+            blocker: 'introduced syntax',
+            source_hash: parentSource.tree_hash,
+            result_hash: null,
+            changed_files: [],
+            diff: '',
+            checks: [],
+            preview: { path: null, body: '', unavailable_reason: 'failed' },
+            artifacts: [],
+          })}) as ok`,
+        )
+      ).rows,
+    ).toEqual([{ ok: true }]);
+    const repairScope = {
+      ...parentScope,
+      intended_change: `Repair of run ${parentId}: syntax`,
+      repair: {
+        kind: 'check-driven' as const,
+        parent_run_id: parentId,
+        parent_approval_hash: approvalHash(parentScope),
+        targets: ['syntax:ok.mjs'],
+      },
+    };
+    await asUser(
+      owner,
+      `select public.architect_construct_approve_brief('${childId}','${repairProject}',1,'${parentSource.id}','${approvalHash(repairScope)}',${literal(repairScope)}) as ok`,
+    );
+    expect(
+      (await asUser(owner, `select public.architect_construct_start('${repairProject}','${childId}','${childId}',1) as ok`))
+        .rows,
+    ).toEqual([{ ok: true }]);
+    expect(
+      (await asUser(owner, `select public.architect_construct_start('${repairProject}','${childId}','${childId}',1) as ok`))
+        .rows,
+    ).toEqual([{ ok: true }]);
+    await expect(
+      asUser(owner, `select public.architect_construct_start('${repairProject}','${siblingId}','${childId}',1)`),
+    ).rejects.toThrow(/already has one repair/i);
+    const childClaimed = await asWorker(`select public.architect_construct_claim('repair-worker',45000) as id`);
+    expect(childClaimed.rows[0]).toEqual({ id: childId });
+    const childToken = (
+      await asWorker(`select lease_token::text as token from public.architect_construct_runs where id='${childId}'`)
+    ).rows[0] as { token: string };
+    await asWorker(
+      `select public.architect_construct_finish('repair-worker','${childId}','${childToken.token}','failed',${literal({
+        isolation: 'unavailable',
+        runtime_available: false,
+        sandbox: false,
+        blocker: 'still failed',
+        source_hash: parentSource.tree_hash,
+        result_hash: null,
+        changed_files: [],
+        diff: '',
+        checks: [],
+        preview: { path: null, body: '', unavailable_reason: 'failed' },
+        artifacts: [],
+      })}) as ok`,
+    );
+    const grandchildScope = {
+      ...repairScope,
+      intended_change: `Repair of run ${childId}: syntax`,
+      repair: {
+        kind: 'check-driven' as const,
+        parent_run_id: childId,
+        parent_approval_hash: approvalHash(repairScope),
+        targets: ['syntax:ok.mjs'],
+      },
+    };
+    await asUser(
+      owner,
+      `select public.architect_construct_approve_brief('${grandchildId}','${repairProject}',1,'${parentSource.id}','${approvalHash(grandchildScope)}',${literal(grandchildScope)}) as ok`,
+    );
+    await expect(
+      asUser(owner, `select public.architect_construct_start('${repairProject}','${grandchildId}','${grandchildId}',1)`),
+    ).rejects.toThrow(/repair of a repair/i);
+    const newer = '00000000-0000-4000-8000-000000000018';
+    await asUser(
+      owner,
+      `select public.architect_origin_save('${repairProject}','${newer}',1,${literal({ ...content, name: 'Newer' })},'Newer project')`,
+    );
+    await expect(
+      asUser(owner, `select public.architect_construct_start('${repairProject}','${newer}','${childId}',2)`),
+    ).rejects.toThrow(/older project revision|Brief invalidated|Project changed/i);
   });
 });

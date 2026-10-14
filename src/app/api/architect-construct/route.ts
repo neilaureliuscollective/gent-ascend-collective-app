@@ -2,8 +2,10 @@ import { z } from 'zod';
 import { constructCommand } from '@/domains/architect-construct/schema';
 import {
   approveConstructChange,
+  approveRepairConstruct,
   cancelConstruct,
   proposeConstruct,
+  proposeRepairConstruct,
   readConstruct,
   startConstruct,
   startFixtureConstruct,
@@ -35,6 +37,10 @@ export async function POST(request: Request) {
       return privateJson(await proposeConstruct(input.data, request.signal));
     if (input.data.action === 'approve-change')
       return privateJson(await approveConstructChange(input.data));
+    if (input.data.action === 'propose-repair')
+      return privateJson(await proposeRepairConstruct(input.data, request.signal));
+    if (input.data.action === 'approve-repair')
+      return privateJson(await approveRepairConstruct(input.data));
     return privateJson({ run: await cancelConstruct(input.data) });
   } catch (error) {
     return apiError(error);

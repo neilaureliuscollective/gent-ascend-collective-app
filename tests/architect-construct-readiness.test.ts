@@ -3,6 +3,7 @@ import {
   constructWorkerAuthorized,
   constructWorkerControlPlaneReady,
   constructWorkerMissingNames,
+  founderModelGeneratedRunBlockers,
 } from '@/domains/architect-construct/readiness';
 
 const local = {
@@ -50,5 +51,14 @@ describe('construct worker readiness names', () => {
         VERCEL: '1',
       }),
     ).toEqual(expect.arrayContaining(['APP_ENV', 'VERCEL']));
+  });
+
+  it('lists the remaining founder model-generated run blockers without claiming readiness', () => {
+    const report = founderModelGeneratedRunBlockers({
+      ...local,
+      ARCHITECT_CONSTRUCT_AI_ENABLED: 'true',
+    });
+    expect(report.ready).toBe(false);
+    expect(report.blockers.join(' ')).toMatch(/Docker|migrations|OPENAI_API_KEY|fixture/);
   });
 });

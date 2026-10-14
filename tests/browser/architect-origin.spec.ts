@@ -587,7 +587,10 @@ test('integrated workbench polls construct states, cancels, and keeps project-bo
   await page.getByRole('button', { name: 'Queue labelled fixture run' }).click();
   await expect(page.getByText(/Latest run queued/)).toBeVisible();
   await page.getByRole('button', { name: 'Cancel run' }).click();
-  await expect(page.getByText(/cancelled|Canceled/i)).toBeVisible();
+  await expect(page.getByText(/Latest run cancelled/)).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Repair journey' })).toContainText(
+    'Original attempt · cancelled',
+  );
   for (const [width, height] of [
     [320, 720],
     [390, 844],
@@ -936,6 +939,7 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
     }
     const body = route.request().postDataJSON();
     if (body.action === 'propose') {
+      const file = body.excerpts?.[0] ?? { path: 'preview.html', content: 'Before' };
       return route.fulfill({
         json: {
           mocked: true,
@@ -944,9 +948,9 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
             notes: 'MOCKED PROVIDER — development only.',
             patch: [
               {
-                path: 'preview.html',
-                before: 'Before',
-                after: 'After',
+                path: file.path,
+                before: file.content,
+                after: String(file.content).replace(/Before/g, 'After'),
               },
             ],
           },
@@ -1065,11 +1069,144 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   await expect(page.getByRole('status')).toContainText('Saved revision 1');
   await page.getByRole('button', { name: 'Construct', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Authorized source and project brief' })).toBeVisible();
+  const intended = page.getByLabel('Intended change');
+  await intended.fill('Replace the imported heading and keep this draft.');
   await page.getByRole('button', { name: 'Propose change' }).click();
   await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
   await expect(
     page.getByText('Labelled mocked provider. This is not a paid OpenAI call.'),
   ).toBeVisible();
+  async function openReview(task: 'Source' | 'Change' | 'Evidence') {
+    const close = page.getByRole('button', { name: 'Close review' });
+    if (await close.isVisible()) await close.click();
+    await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: task }).click();
+  }
+  async function captureReview(
+    width: number,
+    height: number,
+    task: 'source' | 'change' | 'evidence',
+    extraName?: string,
+  ) {
+    await page.setViewportSize({ width, height });
+    await openReview(task === 'source' ? 'Source' : task === 'change' ? 'Change' : 'Evidence');
+    const sheet = page.locator('.origin-construct-sheet-card');
+    const review = page.locator('.origin-construct-review');
+    const target = (await sheet.isVisible()) ? sheet : review;
+    await expect(target).toBeVisible();
+    if (task === 'change') {
+      const diff = target.locator('.origin-diff').first();
+      if (await diff.count()) await diff.scrollIntoViewIfNeeded();
+    }
+    const path = extraName
+      ? `docs/evidence/architect-construct/${extraName}.png`
+      : `docs/evidence/architect-construct/architect-source-review-${task}-${width}.png`;
+    await target.screenshot({ path });
+    return target;
+  }
+
+  await openReview('Source');
+  await expect(page.getByRole('heading', { name: 'What Architect understands' })).toBeVisible();
+  await page.getByRole('button', { name: /preview\.html/ }).first().click();
+  await expect(page.getByLabel('Inspect preview.html')).toContainText('Complete content is available');
+  await captureReview(1440, 900, 'source');
+  await openReview('Change');
+  await expect(page.locator('.origin-diff [data-diff="remove"]').first()).toContainText('Before');
+  await expect(page.locator('.origin-diff [data-diff="add"]').first()).toContainText('After');
+  const desktopChange = await captureReview(1440, 900, 'change');
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-source-review-1440.png',
+    fullPage: true,
+  });
+  const desktopDiff = desktopChange.locator('.origin-diff');
+  await expect(desktopDiff).toBeVisible();
+  const desktopDiffBox = await desktopDiff.boundingBox();
+  expect(desktopDiffBox && desktopDiffBox.width).toBeGreaterThan(360);
+
+  await page.setViewportSize({ width: 720, height: 900 });
+  await openReview('Change');
+  await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
+  const foldReview = page.locator('.origin-construct-review');
+  const foldContext = page.locator('.origin-construct-context');
+  const foldCanvas = page.locator('.origin-construct-canvas');
+  const foldBox = await foldReview.boundingBox();
+  const foldContextBox = await foldContext.boundingBox();
+  const foldCanvasBox = await foldCanvas.boundingBox();
+  expect(foldBox).toBeTruthy();
+  expect(foldContextBox).toBeTruthy();
+  expect(foldCanvasBox).toBeTruthy();
+  if (!foldBox || !foldContextBox || !foldCanvasBox) throw new Error('Fold review layout missing');
+  expect(foldContextBox.width).toBeGreaterThan(foldBox.width * 0.72);
+  expect(foldCanvasBox.y).toBeGreaterThan(foldContextBox.y);
+  await expect(page.locator('.origin-diff [data-diff="remove"]').first()).toBeVisible();
+  await captureReview(720, 900, 'change');
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-source-review-720.png',
+    fullPage: true,
+  });
+  await captureReview(720, 900, 'source');
+  await captureReview(720, 900, 'evidence');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openReview('Source');
+  await expect(page.getByRole('heading', { name: 'What Architect understands' })).toBeVisible();
+  const sourceButton = page
+    .locator('.origin-construct-sheet-card .origin-understand-list button')
+    .first();
+  await expect(sourceButton).toBeVisible();
+  const fileBox = await sourceButton.locator('.origin-understand-file').boundingBox();
+  const inclusionBox = await sourceButton.locator('.origin-understand-inclusion').boundingBox();
+  expect(fileBox).toBeTruthy();
+  expect(inclusionBox).toBeTruthy();
+  if (!fileBox || !inclusionBox) throw new Error('Source filename and inclusion label missing');
+  expect(inclusionBox.y).toBeGreaterThan(fileBox.y + fileBox.height - 2);
+  await captureReview(390, 844, 'source');
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-source-review-390.png',
+    fullPage: true,
+  });
+  const closeReview = page.getByRole('button', { name: 'Close review' });
+  if (await closeReview.isVisible()) await closeReview.click();
+  const sourceOpener = page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Source' });
+  await sourceOpener.focus();
+  await sourceOpener.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('h2')).toBeFocused();
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true);
+  await page.keyboard.press('Shift+Tab');
+  expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(sourceOpener).toBeFocused();
+  await openReview('Source');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Close review' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await openReview('Source');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureReview(390, 844, 'change');
+  await captureReview(390, 844, 'evidence');
+  const closeSheet = page.getByRole('button', { name: 'Close review' });
+  if (await closeSheet.isVisible()) await closeSheet.click();
+
+  await page.setViewportSize({ width: 390, height: 480 });
+  await openReview('Change');
+  await expect(page.locator('.origin-diff [data-diff="add"]').first()).toContainText('After');
+  await expect(page.getByRole('button', { name: 'Approve proposed change' })).toBeVisible();
+  await captureReview(390, 480, 'change', 'architect-source-review-keyboard-390');
+  if (await page.getByRole('button', { name: 'Close review' }).isVisible())
+    await page.getByRole('button', { name: 'Close review' }).click();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openReview('Evidence');
+  await expect(page.getByRole('heading', { name: 'Check coverage' })).toBeVisible();
+  await expect(page.getByText('No applicable checks available. That is not a pass.')).toBeVisible();
+  await captureReview(1440, 900, 'evidence');
+  await expect(intended).toHaveValue('Replace the imported heading and keep this draft.');
   await page.getByRole('button', { name: 'Approve proposed change' }).click();
   await expect(page.getByText(/Change approved against the pinned source/)).toBeVisible();
   await expect(page.getByText(/Approved inputs are bound to server digest/)).toBeVisible();
@@ -1086,8 +1223,10 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   await expect(page.getByRole('button', { name: 'Approve proposed change' })).toBeDisabled();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Propose change' })).toBeVisible();
   await page.setViewportSize({ width: 720, height: 900 });
   await expect(page.getByRole('button', { name: 'Propose change' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Isolated preview' })).toBeVisible();
 });
 
 test('construct panel drops a late poll after the project switches', async ({ page }) => {
@@ -1350,6 +1489,8 @@ test('keeps last success and drafts when worker, connections and provider are un
   await page.getByRole('button', { name: 'Create & save project' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 1');
   await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'Repair journey' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Propose repair' })).toBeDisabled();
   await expect(page.getByText(/GitHub App setup is required/)).toBeVisible();
   await expect(page.getByText(/Publishing and deployment stay unavailable/)).toBeVisible();
   await expect(page.getByText(/A funded OpenAI account does not supply/)).toBeVisible();
@@ -1367,4 +1508,610 @@ test('keeps last success and drafts when worker, connections and provider are un
   await page.getByRole('button', { name: 'Propose change' }).click();
   await expect(page.getByRole('alert')).toContainText(/Isolated worker is not running|stay disabled|not executed/);
   await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Blocked Origin');
+});
+
+test('repair journey keeps the original attempt after enqueue and restores durable stages', async ({
+  page,
+}) => {
+  await fixture(page);
+  const now = new Date().toISOString();
+  const originalId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01';
+  const repairId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb01';
+  const successId = 'cccccccc-cccc-4ccc-8ccc-cccccccccc01';
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: { ready: false, repository: null, reason: 'GitHub App setup is required.' },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() !== 'GET')
+      return route.fulfill({ status: 409, json: { error: 'This original run already has one repair.' } });
+    const projectId = new URL(route.request().url()).searchParams.get('project') ?? 'project';
+    return route.fulfill({
+      json: {
+        project: { id: projectId, revision: 1, name: 'Repair Origin' },
+        proposal: { mode: 'disabled', reason: 'Labelled mocked provider is unavailable in this fixture.' },
+        sources: [],
+        briefs: [
+          {
+            id: repairId,
+            status: 'approved',
+            approval_hash: 'd'.repeat(64),
+            scope: {
+              intended_change: `Repair of run ${originalId}: syntax`,
+              project_revision: 1,
+              allowed_paths: ['ok.mjs'],
+              protected_paths: ['.env'],
+              resource_limits: { timeout_ms: 30000, max_files: 8 },
+              patch: [{ path: 'ok.mjs', before: 'Before', after: 'After' }],
+              repair: {
+                kind: 'check-driven',
+                parent_run_id: originalId,
+                parent_approval_hash: 'e'.repeat(64),
+                targets: ['syntax:ok.mjs'],
+              },
+            },
+          },
+        ],
+        runs: [
+          {
+            id: repairId,
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: repairId,
+            approval_hash: 'd'.repeat(64),
+            source_id: successId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'queued',
+            parent_run_id: originalId,
+            cancel_requested: false,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+          {
+            id: originalId,
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: originalId,
+            approval_hash: 'e'.repeat(64),
+            source_id: successId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'failed',
+            parent_run_id: null,
+            result: {
+              isolation: 'process-fixture',
+              runtime_available: false,
+              sandbox: false,
+              blocker: 'Introduced syntax failure.',
+              source_hash: 'a'.repeat(64),
+              result_hash: null,
+              changed_files: ['ok.mjs'],
+              diff: '',
+              checks: [],
+              coverage: {
+                no_applicable: false,
+                preexisting_failures: [],
+                introduced_failures: ['syntax:ok.mjs'],
+                untested: [],
+                unsupported: [],
+                revision_note: '1',
+              },
+              preview: { path: null, body: '', unavailable_reason: 'failed' },
+            },
+            created_at: now,
+            updated_at: now,
+          },
+          {
+            id: successId,
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: successId,
+            approval_hash: 'f'.repeat(64),
+            source_id: successId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'succeeded',
+            parent_run_id: null,
+            result: {
+              isolation: 'docker',
+              runtime_available: true,
+              sandbox: true,
+              blocker: null,
+              source_hash: 'a'.repeat(64),
+              result_hash: 'b'.repeat(64),
+              changed_files: ['kept.html'],
+              diff: '',
+              checks: [],
+              preview: {
+                path: 'kept.html',
+                body: '<html><body><h1>Kept success</h1></body></html>',
+                unavailable_reason: null,
+              },
+            },
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {},
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Repair journey');
+  await page.getByLabel('Project name (optional)').fill('Repair Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  const journey = page.getByRole('list', { name: 'Repair journey' });
+  await expect(journey).toContainText('Original attempt · failed');
+  await expect(journey).not.toContainText('Original attempt · queued');
+  await expect(journey).toContainText('Observed result · queued');
+  await expect(page.getByRole('button', { name: 'Propose repair' })).toBeDisabled();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await expect(page.getByText(/Repair result queued/)).toBeVisible();
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  await expect(page.frameLocator('iframe[title="Isolated artifact preview"]').getByText('Kept success')).toBeVisible();
+});
+
+test('approved repair recovers after reload and retries one enqueue after a lost response', async ({
+  page,
+}) => {
+  await fixture(page);
+  const now = new Date().toISOString();
+  const originalId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa21';
+  const repairBriefId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb21';
+  const successId = 'cccccccc-cccc-4ccc-8ccc-cccccccccc21';
+  const digest = 'd'.repeat(64);
+  const starts: Array<{ briefId?: string; requestId?: string }> = [];
+  let queued: Record<string, unknown> | null = null;
+  const original = (projectId: string) => ({
+    id: originalId,
+    person_id: 'owner',
+    project_id: projectId,
+    brief_id: originalId,
+    approval_hash: 'e'.repeat(64),
+    source_id: successId,
+    source_kind: 'imported',
+    source_tree_hash: 'a'.repeat(64),
+    project_revision: 1,
+    status: 'failed',
+    parent_run_id: null,
+    result: {
+      isolation: 'process-fixture',
+      runtime_available: false,
+      sandbox: false,
+      blocker: 'Introduced syntax failure.',
+      source_hash: 'a'.repeat(64),
+      result_hash: null,
+      changed_files: ['ok.mjs'],
+      diff: '',
+      checks: [],
+      coverage: {
+        no_applicable: false,
+        preexisting_failures: [],
+        introduced_failures: ['syntax:ok.mjs'],
+        untested: [],
+        unsupported: [],
+        revision_note: '1',
+      },
+      preview: { path: null, body: '', unavailable_reason: 'failed' },
+    },
+    created_at: now,
+    updated_at: now,
+  });
+  const success = (projectId: string) => ({
+    id: successId,
+    person_id: 'owner',
+    project_id: projectId,
+    brief_id: successId,
+    approval_hash: 'f'.repeat(64),
+    source_id: successId,
+    source_kind: 'imported',
+    source_tree_hash: 'a'.repeat(64),
+    project_revision: 1,
+    status: 'succeeded',
+    parent_run_id: null,
+    result: {
+      isolation: 'docker',
+      runtime_available: true,
+      sandbox: true,
+      blocker: null,
+      source_hash: 'a'.repeat(64),
+      result_hash: 'b'.repeat(64),
+      changed_files: ['kept.html'],
+      diff: '',
+      checks: [],
+      preview: {
+        path: 'kept.html',
+        body: '<html><body><h1>Kept success</h1></body></html>',
+        unavailable_reason: null,
+      },
+    },
+    created_at: now,
+    updated_at: now,
+  });
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: { ready: false, repository: null, reason: 'GitHub App setup is required.' },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    const projectId = new URL(route.request().url()).searchParams.get('project') ?? 'project';
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as { action?: string; briefId?: string; requestId?: string };
+      if (body.action === 'start') {
+        starts.push({ briefId: body.briefId, requestId: body.requestId });
+        queued = {
+          id: repairBriefId,
+          person_id: 'owner',
+          project_id: projectId,
+          brief_id: repairBriefId,
+          approval_hash: digest,
+          source_id: successId,
+          source_kind: 'imported',
+          source_tree_hash: 'a'.repeat(64),
+          project_revision: 1,
+          status: 'queued',
+          parent_run_id: originalId,
+          cancel_requested: false,
+          result: null,
+          created_at: now,
+          updated_at: now,
+        };
+        if (starts.length === 1) return route.abort('connectionreset');
+        return route.fulfill({ json: { run: queued } });
+      }
+      return route.fulfill({ status: 409, json: { error: 'This original run already has one repair.' } });
+    }
+    return route.fulfill({
+      json: {
+        project: { id: projectId, revision: 1, name: 'Recovered Origin' },
+        proposal: { mode: 'mock', reason: null },
+        pendingRepair: queued
+          ? null
+          : {
+              briefId: repairBriefId,
+              requestId: repairBriefId,
+              parentRunId: originalId,
+              approvalHash: digest,
+              status: 'approved',
+              invalidationReason: null,
+              projectRevision: 1,
+              generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+              patch: [{ path: 'ok.mjs', before: 'const introduced = ;\n', after: 'export const heading = "After";\n' }],
+              intendedChange: `Repair of run ${originalId}: syntax`,
+            },
+        sources: [],
+        briefs: [
+          {
+            id: repairBriefId,
+            status: 'approved',
+            approval_hash: digest,
+            scope: {
+              intended_change: `Repair of run ${originalId}: syntax`,
+              project_revision: 1,
+              allowed_paths: ['ok.mjs'],
+              protected_paths: ['.env'],
+              resource_limits: { timeout_ms: 30000, max_files: 8 },
+              patch: [{ path: 'ok.mjs', before: 'const introduced = ;\n', after: 'export const heading = "After";\n' }],
+              repair: {
+                kind: 'check-driven',
+                parent_run_id: originalId,
+                parent_approval_hash: 'e'.repeat(64),
+                targets: ['syntax:ok.mjs'],
+                generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+              },
+            },
+          },
+        ],
+        runs: queued ? [queued, original(projectId), success(projectId)] : [original(projectId), success(projectId)],
+        events: {},
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Recovered repair');
+  await page.getByLabel('Project name (optional)').fill('Recovered Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Recovered approved repair' })).toBeVisible();
+  await expect(page.getByText('Labelled demonstration. Not a paid OpenAI call.').first()).toBeVisible();
+  await expect(page.getByText(/Recovered approved repair is waiting for Start/)).toBeVisible();
+  const enqueue = page.getByRole('button', { name: 'Enqueue approved repair' });
+  await expect(enqueue).toBeEnabled();
+  await enqueue.click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await enqueue.click();
+  await expect(page.getByRole('list', { name: 'Repair journey' })).toContainText('Observed result · queued');
+  await expect(page.getByText(/Repair result queued/)).toBeVisible();
+  expect(starts).toEqual([
+    { briefId: repairBriefId, requestId: repairBriefId },
+    { briefId: repairBriefId, requestId: repairBriefId },
+  ]);
+});
+
+test('quantity-and-cost estimator can be created, saved, reopened and invoked', async ({ page }) => {
+  const tools: Array<Record<string, unknown>> = [];
+  const versions: Array<Record<string, unknown>> = [];
+  const invocations: Array<Record<string, unknown>> = [];
+  await fixture(page);
+  await page.route('**/api/architect-tools*', async (route) => {
+    if (route.request().method() === 'GET') {
+      const requested = new URL(route.request().url()).searchParams.get('tool');
+      if (requested && !tools.some((item) => item.id === requested))
+        return route.fulfill({ status: 404, json: { error: 'Tool unavailable.' } });
+      return route.fulfill({ json: { tools, versions, invocations } });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === 'save') {
+      if (tools[0] && body.expected !== tools[0].revision)
+        return route.fulfill({ status: 409, json: { error: 'This tool changed after you opened it.' } });
+      const now = new Date().toISOString();
+      const revision = body.expected + 1;
+      const tool = {
+        id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        kind: 'quantity-cost-estimator',
+        name: body.name,
+        revision,
+        created_at: now,
+        updated_at: now,
+      };
+      tools.splice(0, tools.length, tool);
+      versions.unshift({
+        id: body.requestId,
+        tool_id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        revision,
+        name: body.name,
+        configuration: body.configuration,
+        note: body.note,
+        created_at: now,
+      });
+      return route.fulfill({
+        json: { revision, requestId: body.requestId, personId: 'owner', toolId: body.toolId },
+      });
+    }
+    if (body.action === 'invoke') {
+      if (body.projectId === '00000000-0000-4000-8000-000000000099')
+        return route.fulfill({ status: 404, json: { error: 'Saved tool revision unavailable.' } });
+      const version = versions.find((item) => item.revision === body.revision);
+      if (!version) return route.fulfill({ status: 404, json: { error: 'Saved tool revision unavailable.' } });
+      const receipt = {
+        toolId: body.toolId,
+        projectId: body.projectId,
+        revision: body.revision,
+        name: version.name,
+        configuration: version.configuration,
+        inputs: { quantities: body.quantities ?? {} },
+        assumptions: ['Markup is not margin.'],
+        result: {
+          currency: 'USD',
+          rounding: 'half-up-minor',
+          lines: [],
+          subtotal: '310.00',
+          waste_total: '31.00',
+          markup_amount: '51.15',
+          total: '392.15',
+          implied_margin_percent: '13.04',
+          assumptions: ['Markup is not margin.'],
+        },
+        provenance: {
+          source: body.source,
+          requestId: body.requestId,
+          personId: 'owner',
+          recorded: true,
+        },
+      };
+      invocations.unshift(receipt);
+      return route.fulfill({ json: receipt });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported tool action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Estimate sheet goods for a workshop.');
+  await page.getByLabel('Project name (optional)').fill('Workshop estimator');
+  await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
+  await expect(page.locator('.origin-status')).toContainText('Saved revision 1');
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await expect(page.locator('.origin-savebar')).toContainText('No tool revision saved yet');
+  await expect(page.locator('.origin-savebar')).not.toContainText('Unsaved tool draft');
+  await page.getByRole('button', { name: 'Load labelled sample' }).click();
+  await expect(page.locator('.origin-tool-result').getByText(/Sample demonstration/)).toBeVisible();
+  await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
+  await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
+  await expect(page.getByRole('button', { name: 'Agent fixture invoke' })).toHaveCount(0);
+  await expect(page.locator('.origin-savebar')).toContainText('Unsaved tool draft');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('link', { name: 'Open project Talk ↗' }).click();
+  await expect(page).toHaveURL(/\/app\/architect/);
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.getByRole('button', { name: 'Save tool revision' }).click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText('Saved tool revision 1');
+  const intended = page.getByLabel('Assumptions');
+  await intended.fill('Edited after save — still a draft until the next revision.');
+  await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
+  await expect(page.locator('.origin-savebar')).toContainText('Unsaved tool draft');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await expect(page.locator('.origin-savebar')).toContainText('Unsaved tool draft kept');
+  await expect(page.locator('.origin-savebar')).not.toContainText('All project changes saved');
+  await page.getByRole('button', { name: 'Tool', exact: true }).click();
+  await expect(page.getByLabel('Assumptions')).toHaveValue(
+    'Edited after save — still a draft until the next revision.',
+  );
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-1440.png',
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Invoke saved revision' }).click();
+  await expect(page.getByText(/invoked Sample plywood estimator revision 1/)).toBeVisible();
+  await expect(page.getByText(/This is the saved revision, not the unsaved draft/)).toBeVisible();
+  await page.setViewportSize({ width: 720, height: 900 });
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-720.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save tool revision' })).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-390.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 480 });
+  await expect(page.locator('.origin-tool-result h4')).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-keyboard-390.png',
+    fullPage: true,
+  });
+});
+
+test('estimator save retries the exact snapshot after a dropped response', async ({ page }) => {
+  const tools: Array<Record<string, unknown>> = [];
+  const versions: Array<Record<string, unknown>> = [];
+  const gate = { release: () => {} };
+  await fixture(page);
+  await page.route('**/api/architect-tools*', async (route) => {
+    if (route.request().method() === 'GET') {
+      const requested = new URL(route.request().url()).searchParams.get('tool');
+      if (requested && !tools.some((item) => item.id === requested))
+        return route.fulfill({ status: 404, json: { error: 'Tool unavailable.' } });
+      return route.fulfill({ json: { tools, versions, invocations: [] } });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === 'save') {
+      if (!tools.length) {
+        await new Promise<void>((resolve) => {
+          gate.release = resolve;
+        });
+      }
+      if (tools[0] && body.requestId === versions[0]?.id)
+        return route.fulfill({
+          json: { revision: 1, requestId: body.requestId, personId: 'owner', toolId: body.toolId },
+        });
+      const now = new Date().toISOString();
+      tools.splice(0, tools.length, {
+        id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        kind: 'quantity-cost-estimator',
+        name: body.name,
+        revision: 1,
+        created_at: now,
+        updated_at: now,
+      });
+      versions.unshift({
+        id: body.requestId,
+        tool_id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        revision: 1,
+        name: body.name,
+        configuration: body.configuration,
+        note: body.note,
+        created_at: now,
+      });
+      return route.fulfill({
+        json: { revision: 1, requestId: body.requestId, personId: 'owner', toolId: body.toolId },
+      });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported tool action' } });
+  });
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Hold the first tool save.');
+  await page.getByLabel('Project name (optional)').fill('Retry estimator');
+  await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.getByRole('button', { name: 'Load labelled sample' }).click();
+  await page.getByRole('button', { name: 'Save tool revision' }).click();
+  await expect(page.locator('.origin-savebar')).toContainText('Tool save unconfirmed');
+  await page.getByLabel('Assumptions').fill('Later edit after submit.');
+  gate.release();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText('Later edits remain an unsaved draft');
+  await expect(page.getByLabel('Assumptions')).toHaveValue('Later edit after submit.');
+  await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
+});
+
+test('confirmed tool save with a failed library refresh offers reload, not another save', async ({ page }) => {
+  const tools: Array<Record<string, unknown>> = [];
+  const versions: Array<Record<string, unknown>> = [];
+  const gate = { failRefresh: true };
+  await fixture(page);
+  await page.route('**/api/architect-tools*', async (route) => {
+    if (route.request().method() === 'GET') {
+      if (tools.length && gate.failRefresh)
+        return route.fulfill({ status: 503, json: { error: 'Tool library unavailable. Reload before editing.' } });
+      return route.fulfill({ json: { tools, versions, invocations: [] } });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === 'save') {
+      const now = new Date().toISOString();
+      tools.splice(0, tools.length, {
+        id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        kind: 'quantity-cost-estimator',
+        name: body.name,
+        revision: 1,
+        created_at: now,
+        updated_at: now,
+      });
+      versions.unshift({
+        id: body.requestId,
+        tool_id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        revision: 1,
+        name: body.name,
+        configuration: body.configuration,
+        note: body.note,
+        created_at: now,
+      });
+      return route.fulfill({
+        json: { revision: 1, requestId: body.requestId, personId: 'owner', toolId: body.toolId },
+      });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported tool action' } });
+  });
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Keep the confirmed tool identity.');
+  await page.getByLabel('Project name (optional)').fill('Refresh estimator');
+  await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.getByRole('button', { name: 'Load labelled sample' }).click();
+  await page.getByRole('button', { name: 'Save tool revision' }).click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText(
+    /Library refresh failed — reload receipts. Do not save this revision again/,
+  );
+  await expect(page.getByRole('button', { name: 'Reload tool receipts' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save tool revision' })).toBeDisabled();
+  await expect(page.locator('.origin-savebar')).not.toContainText('Tool save unconfirmed');
+  gate.failRefresh = false;
+  await page.getByRole('button', { name: 'Reload tool receipts' }).first().click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText('The confirmed revision was not saved again');
 });

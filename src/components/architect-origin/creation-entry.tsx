@@ -27,6 +27,7 @@ export function CreationEntry({
   onAddReference,
   onOpenProject,
   onSubmit,
+  onCreateTool,
 }: {
   discipline: ProjectContent['discipline'];
   idea: string;
@@ -50,6 +51,7 @@ export function CreationEntry({
   onAddReference: () => void;
   onOpenProject: (project: OriginProject) => void;
   onSubmit: () => void;
+  onCreateTool: () => void;
 }) {
   const starter = creationChoices.find((choice) => choice.discipline === discipline);
   return (
@@ -88,7 +90,21 @@ export function CreationEntry({
           onChange={(event) => onIdea(event.target.value)}
           disabled={locked}
         />
+        <p className="origin-tool-entry">
+          After this project exists you can save a quantity-and-cost estimator and invoke that exact
+          revision. This is a creator-owned tool, not a construction or engineering product.
+        </p>
         <div className="origin-composer-tools">
+          <button
+            type="button"
+            className="button"
+            data-bplus-surface="action"
+            disabled={!enabled || locked || idea.trim().length < 3}
+            onClick={onCreateTool}
+          >
+            <BplusMaterial radius={8} />
+            Create a quantity & cost estimator
+          </button>
           <button type="button" disabled={locked} onClick={onAddReference}>
             Add reference{pendingReferences ? ` (${pendingReferences})` : ''}
           </button>

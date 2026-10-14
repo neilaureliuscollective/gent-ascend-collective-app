@@ -134,3 +134,44 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
   await expect(page.getByRole('button', { name: /Revision 1 —/ })).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-origin-real-auth.png', fullPage: true });
 });
+
+test('real Auth estimator: persist, switch surface, reopen and invoke the saved revision', async ({
+  page,
+}) => {
+  await page.goto('/enter');
+  await page.getByLabel('Email').fill('founder@aurelius.test');
+  await page.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
+  await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/founder$/);
+  await page.goto('/app/architect');
+  const name = `Synthetic estimator ${Date.now()}`;
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Estimate labelled sample sheet goods with no supplier prices.');
+  await page.getByLabel('Project name (optional)').fill(name);
+  await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
+  await expect(page.locator('.origin-status')).toContainText('Saved revision 1');
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.getByRole('button', { name: 'Load labelled sample' }).click();
+  await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
+  await page.getByRole('button', { name: 'Save tool revision' }).click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText('Saved tool revision 1');
+  await page.getByLabel('Assumptions').fill('Unsaved after the real save.');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await expect(page.locator('.origin-savebar')).toContainText('Unsaved tool draft kept');
+  await page.getByRole('button', { name: 'Tool', exact: true }).click();
+  await expect(page.getByLabel('Assumptions')).toHaveValue('Unsaved after the real save.');
+  const projectUrl = page.url();
+  await page.getByRole('button', { name: 'Invoke saved revision' }).click();
+  await expect(page.getByText(/invoked Sample plywood estimator revision 1/)).toBeVisible();
+  await expect(page.locator('.origin-tool-provenance')).toContainText('392.15');
+  await page.goto('/app/work');
+  await page.goto(projectUrl);
+  await page.getByRole('button', { name: 'Tool', exact: true }).click();
+  await expect(page.locator('.origin-tool .origin-connection-chip')).toContainText(/Revision 1|Unsaved preview/);
+  await page
+    .getByRole('navigation', { name: 'Saved tool versions' })
+    .getByRole('button', { name: 'Revision 1', exact: true })
+    .click();
+  await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
+});

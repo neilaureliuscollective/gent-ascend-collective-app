@@ -1,3 +1,35 @@
+# Architect stack integration onto current main — 2026-10-14
+
+Incorporate source-review #122, create-tool #124 and propose-repair #128 onto main `529d5f1` once. Preserve newer released Talk/Live and Command home. Do not merge the individual source PRs to production or pull unrelated open Talk/Connections branches. The only concrete conflicts were changelog prepends in `docs/STATUS.md` and `docs/DECISIONS.md`. Evidence: [ARCHITECT_STACK_INTEGRATION.md](ARCHITECT_STACK_INTEGRATION.md).
+
+# Architect approved-repair recovery and generation provenance — 2026-10-14
+
+Read unused owner/project repair briefs through the existing read contract so an approved repair without a child run survives reload. Bind repair enqueue identity to the brief id; lost HTTP retries return that same run. Persist sanitized generation provenance (`mock` / `openai` / `unknown`) and never imply a live model result when history is missing. Start stays an explicit owner action and revalidates owner, revision, pin, digest, ancestry and the one-repair limit. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect repair snapshot, one-journey limit, journey restore and stale revision — 2026-10-14
+
+Generate a live repair against the failed post-original-patch files, not the pinned original source, then combine the validated correction back onto that original. Refuse a parent that is itself a repair so uniqueness cannot become a repair-of-repair chain. Keep the workbench original and repair identities separate and restore proposal/approval/result from saved evidence. Compare the parent project revision before proposal, approval and execution; never copy a newer revision onto older evidence. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect cancel status locator after repair journey — 2026-10-14
+
+The Repair journey names the original attempt status in the same view as `Latest run cancelled`. Scope the cancel check to that latest-run sentence and keep the journey step assertion, rather than matching every “cancelled” string. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect one reviewed check-driven repair — 2026-10-14
+
+Propose a repair only for a terminal failed Construct run with reliably identified introduced check failures. Keep the same owner, project, source revision, allowlist, protected paths, check plan and limits. Show the combined diff against the original pinned source, then require a fresh approval digest. Persist at most one repair child per original run, replay-safe. If the repair still fails, keep the receipt and stop. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect estimator JSONB equality, full-precision money and confirmed-refresh — 2026-10-14
+
+Compare trusted-engine and database estimator receipts with validated structural equality, not `JSON.stringify`. JSONB key order is not a different calculation; array order and types stay strict. Money multiplies quantity × (1 + waste) × unit cost at full precision, then half-up to currency minor units; displayed quantity is rounded separately. Reject JSON-null identity fields and null/type-invalid/over-max overrides in SQL. Treat a confirmed save whose library refresh failed as a refresh offer, not an uncertain write. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
+# Architect estimator authority, exact save and draft continuity — 2026-10-14
+
+Record estimator invocations only through a session-authenticated function that loads the exact saved revision and computes the result. Do not accept a caller-supplied total. Retry saves from an immutable snapshot; reconcile a committed request before minting new identities. Keep tool drafts in owner/project scope across Architect surfaces and tell the truth about project vs tool save state. Apply quantity waste before monetary rounding. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
+# Architect quantity-and-cost estimator — 2026-10-14
+
+Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
 # Aethelios Live sideband and Talk unification — 2026-10-14
 
 Official OpenAI server-side Realtime controls authenticate the call-id WebSocket with `Authorization: Bearer`. The previous browser insecure-protocol handshake is not the documented server path and is the evidenced admission failure after consent. Node/undici WebSocket accepts that header object and this runtime sent `Authorization` on a local upgrade handshake; Vercel inbound WebSocket serving is a different feature and was not the required host change. Keep `POST /v1/realtime/calls` plus an outbound sideband continued by `after()` and route `maxDuration` 300. Admission failures keep hangup/end reconciliation and now return a content-free stage receipt. Voice is a mode of the existing Talk conversation: one owner-scoped identity, inline by default, shared composer/timeline, compact failure recovery.
@@ -5,6 +37,18 @@ Official OpenAI server-side Realtime controls authenticate the call-id WebSocket
 # Aethelios Live production database binding — 2026-10-14
 
 The founder-visible error “The voice database binding is missing or unsafe.” was an admission-policy mismatch, not a missing project. `previewBinding` and `productionHostUnsafe` read raw `NEXT_PUBLIC_SUPABASE_*` and treated unset `AETHELIOS_LIVE_CANONICAL_PILOT` as unsafe on Production. Auth already pins `https://volpzkfsnmtztrovexcw.supabase.co` in `supabaseConnection` because Production Vercel may still carry stale public URL/key names. Live now uses that same effective connection on Production. The explicit canonical-pilot flag remains the preview opt-in for reusing Gent; an explicit `AETHELIOS_LIVE_PREVIEW_PROJECT_REF` must still agree with the intended project. Preflight reports the actual flag separately from founder-only admission. No binding-guard bypass, no founder-protection removal, no credential rotation.
+
+# Architect excerpt budget, check identity, phone modal and receipt bound — 2026-10-14
+
+Count every content-bearing excerpt, including too-large manifest entries, against the existing eight-excerpt / 32 KiB excerpt budget. Compare checks by canonical identity (kind, command, full validated target), never by truncated display names; ambiguous historical evidence is comparison-unavailable, not pre-existing. Phone review reuses `ContextSheet` native modality. Bound the complete serialized UTF-8 receipt to the existing 120,000-byte SQL limit before persist, marking truncated logs and never converting missing evidence into a pass. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).
+
+# Architect source-context and review continuity — 2026-10-14
+
+Use one browser-safe path-protection predicate for both model context and edit protection; do not send protected contents because a later patch check would reject them. Keep the last successful owner/project-scoped preview while a newer run is in flight or unsuccessful, and label the displayed revision. Make Source / Change / Evidence the main review surface instead of competing Fold columns. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).
+
+# Architect source-aware review — 2026-10-14
+
+Keep the existing whole-file before/after patch contract. Do not send truncated excerpts as originals. Bound complete editable context to eight files / 48 KiB so output stays valid. Creating and deleting files stay unsupported; emptying a file is not deletion. Replace the no-op `present` check with explicit coverage: `node --check` when JavaScript is present, otherwise “no applicable checks available.” Record the check plan in the approval snapshot and run the same checks before and after the patch. Presentation is a focused Source / Change / Evidence surface beside the last valid preview. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md). No Construct activation, hosted migration, or paid model call.
 
 # Founder Live production admission — 2026-10-13
 
