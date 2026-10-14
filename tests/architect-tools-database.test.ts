@@ -30,6 +30,7 @@ beforeAll(async () => {
  grant select on public.persons to authenticated; create table public.ai_conversations(id uuid primary key,person_id uuid,title text);`);
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014080000_architect_origin_tools.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014190000_architect_origin_tool_authority.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','00000000-0000-4000-8000-000000000004',0,${literal(content)},'Host project')`,
@@ -82,30 +83,69 @@ describe('Architect tool SQL ownership and versioning (PGlite; not Supabase Auth
     await db.exec('reset role');
   });
 
-  it('records an invocation against the exact saved revision', async () => {
-    const result = { total: '392.15', currency: 'USD' };
-    expect(
-      (
-        await asUser(
-          owner,
-          `select public.architect_origin_tool_record_invocation('${invokeId}','${tool}',1,${literal({ quantities: {} })},${literal(result)},'architect') as ok`,
-        )
-      ).rows,
-    ).toEqual([{ ok: true }]);
-    expect(
-      (
-        await asUser(
-          owner,
-          `select public.architect_origin_tool_record_invocation('${invokeId}','${tool}',1,${literal({ quantities: {} })},${literal(result)},'architect') as ok`,
-        )
-      ).rows,
-    ).toEqual([{ ok: true }]);
+  it('rejects forged results and records only the authoritative calculation', async () => {
     await expect(
       asUser(
         owner,
-        `select public.architect_origin_tool_record_invocation('00000000-0000-4000-8000-000000000036','${tool}',9,${literal({ quantities: {} })},${literal(result)},'architect')`,
+        `select public.architect_origin_tool_record_invocation('${invokeId}','${tool}',1,${literal({ quantities: {} })},${literal({ total: '1.00' })},'architect')`,
+      ),
+    ).rejects.toThrow(/server-authoritative|permission denied|denied/);
+    const first = await asUser(
+      owner,
+      `select public.architect_origin_tool_invoke('${invokeId}','${project}','${tool}',1,${literal({ quantities: {} })},'architect') as result`,
+    );
+    expect((first.rows[0] as { result: { total: string } }).result.total).toBe('392.15');
+    const replay = await asUser(
+      owner,
+      `select public.architect_origin_tool_invoke('${invokeId}','${project}','${tool}',1,${literal({ quantities: {} })},'architect') as result`,
+    );
+    expect((replay.rows[0] as { result: { total: string } }).result.total).toBe('392.15');
+    await expect(
+      asUser(
+        owner,
+        `select public.architect_origin_tool_invoke('00000000-0000-4000-8000-000000000036','${project}','${tool}',9,${literal({ quantities: {} })},'architect')`,
       ),
     ).rejects.toThrow(/Revision unavailable/);
+    const computed = await db.query(
+      `select public.architect_origin_tool_calculate(${literal(sampleEstimatorConfig())},'{}'::jsonb) as result`,
+    );
+    expect((computed.rows[0] as { result: { total: string; lines: Array<{ line_total: string }> } }).result.total).toBe(
+      '392.15',
+    );
+    const halfCent = {
+      ...sampleEstimatorConfig(),
+      waste_percent: '100',
+      markup_percent: null,
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Washer',
+          quantity: '0.5',
+          unit: 'each',
+          unit_cost: '0.01',
+        },
+      ],
+    };
+    const line = await db.query(
+      `select public.architect_origin_tool_calculate(${literal(halfCent)},'{}'::jsonb) as result`,
+    );
+    expect((line.rows[0] as { result: { total: string; lines: Array<{ line_total: string; effective_quantity: string }> } }).result).toMatchObject({
+      total: '0.01',
+      lines: [expect.objectContaining({ effective_quantity: '1.0000', line_total: '0.01', waste: '0.00' })],
+    });
+  });
+
+  it('rejects invalid configuration at the persistence boundary', async () => {
+    const invalid = {
+      ...sampleEstimatorConfig(),
+      items: [{ ...sampleEstimatorConfig().items[0]!, quantity: '0' }],
+    };
+    await expect(
+      asUser(
+        owner,
+        `select public.architect_origin_tool_save('00000000-0000-4000-8000-000000000038','${project}','00000000-0000-4000-8000-000000000039',0,'Zero quantity',${literal(invalid)},'Invalid save')`,
+      ),
+    ).rejects.toThrow(/Invalid tool/);
   });
 
   it('keeps existing Origin project validation unchanged', async () => {

@@ -3,11 +3,12 @@ import { BplusMaterial } from '@/components/visual/bplus-material';
 import '@/components/visual/bplus-operator.css';
 import './studio.css';
 import { compileDocument } from '@/domains/architect-origin/documents';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { ArchitectConstructPanel } from './construct-panel';
 import { ArchitectToolPanel } from './tool-panel';
+import type { ToolWorkspaceState } from './tool-session';
 import { ArtifactCanvas } from './artifact-canvas';
 import { CreationEntry, type BriefStage } from './creation-entry';
 import { ReadinessNotice } from './readiness-notice';
@@ -150,6 +151,10 @@ export function ArchitectOrigin({
   const [constructSource, setConstructSource] = useState<ConstructSourceReadiness | null>(null);
   const constructRequest = useRef<string | null>(null);
   const openToolAfterSave = useRef(false);
+  const [toolState, setToolState] = useState<ToolWorkspaceState | null>(null);
+  const reportToolState = useCallback((state: ToolWorkspaceState | null) => {
+    setToolState(state);
+  }, []);
   const constructGeneration = useRef(0);
   const heldPreviewRef = useRef<PreviewDecision | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -1570,12 +1575,16 @@ export function ArchitectOrigin({
                     )}
                   </>
                 )}
-                {surface === 'Tool' && selected && (
-                  <ArchitectToolPanel
-                    key={`${selected.person_id}:${selected.id}:tool`}
-                    projectId={selected.id}
-                    locked={locked}
-                  />
+                {selected && (
+                  <div hidden={surface !== 'Tool'}>
+                    <ArchitectToolPanel
+                      key={`${selected.person_id}:${selected.id}:tool`}
+                      ownerId={selected.person_id}
+                      projectId={selected.id}
+                      locked={locked}
+                      onState={reportToolState}
+                    />
+                  </div>
                 )}
                 {surface === 'Construct' && selected && (
                   <ArchitectConstructPanel
@@ -1770,20 +1779,42 @@ export function ArchitectOrigin({
             <FoldDock panel={foldPanel} onPanel={setFoldPanel} />
             <footer className="origin-savebar">
               <p>
-                {pending
-                  ? 'Save outcome unconfirmed. Exact draft retained.'
-                  : dirty
-                    ? 'Unsaved draft — approved content is unchanged.'
-                    : `All changes saved · revision ${selected.revision}`}
+                {surface === 'Tool'
+                  ? toolState?.pending
+                    ? 'Tool save unconfirmed. Retry uses the submitted snapshot.'
+                    : toolState?.dirty
+                      ? 'Unsaved tool draft — this is not a saved tool revision.'
+                      : toolState?.expected
+                        ? `Tool revision ${toolState.expected} saved. Project revision ${selected.revision} is separate.`
+                        : `No tool revision saved yet. Project revision ${selected.revision} is separate.`
+                  : pending
+                    ? 'Save outcome unconfirmed. Exact draft retained.'
+                    : dirty
+                      ? toolState?.dirty
+                        ? 'Unsaved project draft. An unsaved tool draft is also kept in Tool.'
+                        : 'Unsaved draft — approved content is unchanged.'
+                      : toolState?.dirty || toolState?.pending
+                        ? 'Project revision saved. Unsaved tool draft kept — open Tool to save it.'
+                        : `All project changes saved · revision ${selected.revision}`}
               </p>
               <button
                 className="button"
                 data-bplus-surface="action"
-                disabled={busy || (!dirty && !pending)}
-                onClick={() => void save()}
+                disabled={
+                  surface === 'Tool'
+                    ? busy || locked || (!toolState?.dirty && !toolState?.pending)
+                    : busy || (!dirty && !pending)
+                }
+                onClick={() => (surface === 'Tool' ? void toolState?.persist() : void save())}
               >
                 <BplusMaterial radius={8} />
-                {pending ? 'Retry same save' : 'Save & confirm revision'}
+                {surface === 'Tool'
+                  ? toolState?.pending
+                    ? 'Retry exact save'
+                    : 'Save tool revision'
+                  : pending
+                    ? 'Retry same save'
+                    : 'Save & confirm revision'}
               </button>
               {dirty && !pending && (
                 <button

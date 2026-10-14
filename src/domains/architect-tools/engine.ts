@@ -174,10 +174,12 @@ export function calculateEstimator(
     requireNonNegative(unitCost, `${item.name} unit cost`);
     const maxCost = parseDecimal(String(ESTIMATOR_LIMITS.maxUnitCost), moneyScale, `${item.name} unit cost`);
     if (unitCost > maxCost) throw new EstimatorError(`${item.name} unit cost exceeds the supported range.`);
-    const extension = mulDivHalfUp(quantity, unitCost, 10n ** BigInt(qtyScale));
-    const waste = wasteBps === null ? 0n : mulDivHalfUp(extension, wasteBps, percentBase * 100n);
-    const effective = wasteBps === null ? quantity : quantity + mulDivHalfUp(quantity, wasteBps, percentBase * 100n);
-    const lineTotal = extension + waste;
+    const moneyBase = 10n ** BigInt(qtyScale);
+    const extension = mulDivHalfUp(quantity, unitCost, moneyBase);
+    const wasteQty = wasteBps === null ? 0n : mulDivHalfUp(quantity, wasteBps, percentBase * 100n);
+    const effective = quantity + wasteQty;
+    const lineTotal = mulDivHalfUp(effective, unitCost, moneyBase);
+    const waste = lineTotal - extension;
     subtotal += extension;
     wasteTotal += waste;
     lines.push({
@@ -205,7 +207,7 @@ export function calculateEstimator(
     `${config.currency} amounts use half-up rounding to ${moneyScale} minor unit${moneyScale === 1 ? '' : 's'}.`,
     wasteBps === null
       ? 'No waste factor is applied.'
-      : `Waste adds ${config.waste_percent}% to each item quantity. Unit cost is unchanged. Waste is not a price increase.`,
+      : `Waste adds ${config.waste_percent}% to each item quantity before monetary rounding. Line totals use effective quantity × unit cost, then half-up to currency minor units. Waste is not a price increase.`,
     markupBps === null
       ? 'No markup is applied. Markup is not margin.'
       : `Markup adds ${config.markup_percent}% to the wasted-cost subtotal. Markup is not margin. Implied margin is ${impliedMargin}% of the selling total.`,

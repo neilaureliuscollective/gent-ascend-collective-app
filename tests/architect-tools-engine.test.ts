@@ -78,6 +78,51 @@ describe('quantity-and-cost estimator', () => {
     );
   });
 
+  it('computes quantity waste before monetary rounding so half-cent lines stay consistent', () => {
+    const result = calculateEstimator({
+      ...sampleEstimatorConfig(),
+      waste_percent: '100',
+      markup_percent: null,
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Washer',
+          quantity: '0.5',
+          unit: 'each',
+          unit_cost: '0.01',
+        },
+      ],
+    });
+    expect(result.lines[0]?.effective_quantity).toBe('1.0000');
+    expect(result.lines[0]?.extension).toBe('0.01');
+    expect(result.lines[0]?.waste).toBe('0.00');
+    expect(result.lines[0]?.line_total).toBe('0.01');
+    expect(result.total).toBe('0.01');
+    expect(result.assumptions.join(' ')).toMatch(/before monetary rounding/);
+  });
+
+  it('rejects invalid quantities and currency precision at the shared save contract', () => {
+    const config = sampleEstimatorConfig();
+    expect(estimatorConfigSchema.safeParse({ ...config, items: [{ ...config.items[0]!, quantity: '0' }] }).success).toBe(
+      false,
+    );
+    expect(
+      estimatorConfigSchema.safeParse({
+        ...config,
+        currency: 'USD',
+        items: [{ ...config.items[0]!, unit_cost: '0.001' }],
+      }).success,
+    ).toBe(false);
+    expect(
+      estimatorConfigSchema.safeParse({
+        ...config,
+        currency: 'JPY',
+        items: [{ ...config.items[0]!, unit_cost: '12.5' }],
+      }).success,
+    ).toBe(false);
+    expect(estimatorConfigSchema.safeParse({ ...config, waste_percent: '101' }).success).toBe(false);
+  });
+
   it('labels unauthorized agent-fixture scope as a refusal', () => {
     expect(fixtureAgentInvoke({ authorized: false, projectId: 'p', toolId: 't', revision: 1 }).ok).toBe(
       false,

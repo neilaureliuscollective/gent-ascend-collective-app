@@ -1,6 +1,14 @@
+# Architect estimator authority, exact save and draft continuity — 2026-10-14
+
+Record estimator invocations only through a session-authenticated function that loads the exact saved revision and computes the result. Do not accept a caller-supplied total. Retry saves from an immutable snapshot; reconcile a committed request before minting new identities. Keep tool drafts in owner/project scope across Architect surfaces and tell the truth about project vs tool save state. Apply quantity waste before monetary rounding. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
 # Architect quantity-and-cost estimator — 2026-10-14
 
 Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
+# Aethelios Live production database binding — 2026-10-14
+
+The founder-visible error “The voice database binding is missing or unsafe.” was an admission-policy mismatch, not a missing project. `previewBinding` and `productionHostUnsafe` read raw `NEXT_PUBLIC_SUPABASE_*` and treated unset `AETHELIOS_LIVE_CANONICAL_PILOT` as unsafe on Production. Auth already pins `https://volpzkfsnmtztrovexcw.supabase.co` in `supabaseConnection` because Production Vercel may still carry stale public URL/key names. Live now uses that same effective connection on Production. The explicit canonical-pilot flag remains the preview opt-in for reusing Gent; an explicit `AETHELIOS_LIVE_PREVIEW_PROJECT_REF` must still agree with the intended project. Preflight reports the actual flag separately from founder-only admission. No binding-guard bypass, no founder-protection removal, no credential rotation.
 
 # Architect excerpt budget, check identity, phone modal and receipt bound — 2026-10-14
 

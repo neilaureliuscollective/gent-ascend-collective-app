@@ -217,21 +217,69 @@ try {
       })
     ).error,
   );
-  assert.equal(
+  assert.ok(
     (
       await owner.rpc('architect_origin_tool_record_invocation', {
         p_id: crypto.randomUUID(),
         p_tool: tool,
         p_revision: 1,
         p_inputs: { quantities: {} },
-        p_result: { total: '323.40', currency: 'USD' },
+        p_result: { total: '1.00', currency: 'USD' },
         p_source: 'architect',
       })
-    ).data,
-    true,
+    ).error,
+    'owner must not persist a forged invocation result',
+  );
+  const invokeId = crypto.randomUUID();
+  const invoked = await owner.rpc('architect_origin_tool_invoke', {
+    p_id: invokeId,
+    p_project: project,
+    p_tool: tool,
+    p_revision: 1,
+    p_inputs: { quantities: {} },
+    p_source: 'architect',
+  });
+  assert.equal(invoked.data.total, '371.91');
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_tool_invoke', {
+        p_id: invokeId,
+        p_project: project,
+        p_tool: tool,
+        p_revision: 1,
+        p_inputs: { quantities: {} },
+        p_source: 'architect',
+      })
+    ).data.total,
+    '371.91',
+  );
+  assert.ok(
+    (
+      await owner.rpc('architect_origin_tool_save', {
+        p_tool: crypto.randomUUID(),
+        p_project: project,
+        p_request: crypto.randomUUID(),
+        p_expected: 0,
+        p_name: 'Invalid zero quantity',
+        p_config: { ...toolConfig, items: [{ ...toolConfig.items[0], quantity: '0' }] },
+        p_note: 'Invalid save',
+      })
+    ).error,
+  );
+  assert.ok(
+    (
+      await foreign.rpc('architect_origin_tool_invoke', {
+        p_id: crypto.randomUUID(),
+        p_project: project,
+        p_tool: tool,
+        p_revision: 1,
+        p_inputs: { quantities: {} },
+        p_source: 'architect',
+      })
+    ).error,
   );
   console.log(
-    'PASS: Origin actual local Auth/PostgREST create, exact replay, immutable history, stale writes, foreign/anonymous/direct-write denial, document persistence, archive retention, and owner-scoped estimator save/invoke denial. No provider evaluation.',
+    'PASS: Origin actual local Auth/PostgREST create, exact replay, immutable history, stale writes, foreign/anonymous/direct-write denial, document persistence, archive retention, and authoritative estimator invoke with forged-result denial. No provider evaluation.',
   );
 } finally {
   // Disposable local database retains only synthetic rows until CI stops without backup.

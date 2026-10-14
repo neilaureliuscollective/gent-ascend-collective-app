@@ -115,16 +115,19 @@ export async function invokeArchitectTool(input: InvokeToolCommand) {
   if (version.error) throw new IntelligenceError('Saved tool revision unavailable.', 503);
   if (!version.data) throw new IntelligenceError('Saved tool revision unavailable.', 404);
   const configuration = estimatorConfigSchema.parse(version.data.configuration);
-  const result = calculateEstimator(configuration, input.quantities);
-  const recorded = await client.rpc('architect_origin_tool_record_invocation', {
+  const preview = calculateEstimator(configuration, input.quantities);
+  const recorded = await client.rpc('architect_origin_tool_invoke', {
     p_id: input.requestId,
+    p_project: input.projectId,
     p_tool: input.toolId,
     p_revision: input.revision,
-    p_inputs: { quantities: input.quantities, source: input.source },
-    p_result: result,
+    p_inputs: { quantities: input.quantities },
     p_source: input.source,
   });
-  if (recorded.error || !recorded.data) failSave(recorded.error);
+  if (recorded.error || recorded.data == null) failSave(recorded.error);
+  const result = recorded.data as typeof preview;
+  if (JSON.stringify(result) !== JSON.stringify(preview))
+    throw new IntelligenceError('Saved-tool calculation did not match the trusted engine.', 500);
   return {
     toolId: input.toolId,
     projectId: input.projectId,

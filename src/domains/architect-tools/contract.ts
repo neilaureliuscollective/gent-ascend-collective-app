@@ -34,6 +34,8 @@ export const architectToolInvokeContract = {
     'Unsupported action or tool kind',
   ],
   talk: 'Talk must not claim it can operate this tool until a reviewed adapter posts this exact contract and the same Auth/PostgREST tests pass from the Talk surface. Architect uses the contract directly.',
+  fixture:
+    'source=agent-fixture is a deterministic typed-contract fixture, not a model tool-call loop and not Talk integration. It must not appear as a normal user control.',
 } as const;
 
 export function fixtureAgentInvoke(input: {

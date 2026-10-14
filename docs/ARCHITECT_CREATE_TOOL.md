@@ -1,6 +1,14 @@
 # Architect quantity-and-cost estimator
 
-Date: 2026-10-14. Branch `cursor/architect-create-tool-501f` stacked on Architect source-review PR #122 (`7bffe6b`). Talk #121 and Command #123 stay separate. No production merge, hosted migration, credential change, paid model call, or Construct expansion.
+Date: 2026-10-14. Branch `cursor/architect-create-tool-501f` stacked on Architect source-review PR #122 (`7bffe6b`). Correction pass on PR #124. Talk #121 and Command #123 stay separate. No production merge, hosted migration, credential change, paid model call, or Construct expansion.
+
+## Correction pass
+
+1. Invocation receipts are computed by `architect_origin_tool_invoke`. Direct `architect_origin_tool_record_invocation` calls are refused; a browser-supplied result cannot be stored.
+2. Tool save retries an immutable pending snapshot (owner, project, tool, expected revision, request, payload). A lost HTTP response reconciles the committed revision. Later edits stay separate.
+3. The Tool panel stays mounted while switching surfaces. Tab-local draft recovery is honest: unsaved edits survive Tool/Blueprint and Back/Forward in this tab, not a hard browser restart unless sessionStorage still has them. The footer never says the project is fully saved while a tool draft is unsaved.
+4. Quantity waste is applied before monetary rounding. Schema and SQL reject zero/invalid quantities and currency-precision mismatches. Markup remains distinct from margin.
+5. Agent-fixture invoke is a typed contract and test helper, not a normal user control.
 
 ## What is implemented
 
@@ -41,10 +49,10 @@ Ran locally on this branch:
 
 - `npm run lint` — pass, zero warnings
 - `npm run typecheck` — pass
-- `npm test` — 949 unit/SQL tests
-- `npm run db:ledger` — pass; new tool migration is additive and unhosted
+- `npm test` — 955 unit/SQL tests
+- `npm run db:ledger` — pass; authority migration is additive and unhosted
 - `npm run build` — production build pass, including `/api/architect-tools`
-- Origin browser: 28/28, including the create → calculate → save → invoke journey at 390/720/1440 and 390×480
+- Origin browser: 29/29, including create → calculate → save → switch Blueprint → return → invoke, plus dropped-response retry
 
 Screenshots: `docs/evidence/architect-construct/architect-tool-{390,720,1440}.png` and `architect-tool-keyboard-390.png`. Simulated viewports, not physical-device testing.
 

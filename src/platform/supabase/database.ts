@@ -1067,6 +1067,17 @@ export interface Database {
         };
         Returns: boolean;
       };
+      architect_origin_tool_invoke: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_tool: string;
+          p_revision: number;
+          p_inputs: unknown;
+          p_source: string;
+        };
+        Returns: import('@/domains/architect-tools/engine').EstimatorResult;
+      };
       architect_construct_import_source: {
         Args: {
           p_id: string;
