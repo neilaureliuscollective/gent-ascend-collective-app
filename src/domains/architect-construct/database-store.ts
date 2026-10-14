@@ -77,6 +77,7 @@ function asRun(row: unknown): ConstructRun {
     updated_at: asIso(record.updated_at),
     lease_token: record.lease_token ?? null,
     lease_until: record.lease_until ? asIso(record.lease_until) : null,
+    parent_run_id: record.parent_run_id ?? null,
   });
 }
 
@@ -157,6 +158,20 @@ export class DatabaseConstructStore implements ConstructStore {
     if (!data) return null;
     const brief = asBrief(data);
     return brief.person_id === personId || this.plane === 'worker' ? brief : null;
+  }
+
+  async listProjectBriefs(personId: string, projectId: string) {
+    const { data, error } = await this.client
+      .from('architect_construct_briefs')
+      .select('*')
+      .eq('person_id', personId)
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if (error) fail(error, 'Briefs unavailable.');
+    return (Array.isArray(data) ? data : [])
+      .map(asBrief)
+      .filter((brief) => brief.person_id === personId || this.plane === 'worker');
   }
 
   async invalidateProjectBriefs(personId: string, projectId: string, reason: string) {

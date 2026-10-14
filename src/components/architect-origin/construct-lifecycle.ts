@@ -22,8 +22,32 @@ export type ConstructLifecycleLibrary = ConstructLibraryEnvelope & {
     id?: string;
     approval_hash?: string;
     status?: string;
-    scope?: { intended_change?: string; project_revision?: number };
+    invalidation_reason?: string | null;
+    scope?: {
+      intended_change?: string;
+      project_revision?: number;
+      source_id?: string;
+      patch?: Array<{ path: string; before: string; after: string }>;
+      repair?: {
+        kind?: string;
+        parent_run_id?: string;
+        targets?: string[];
+        generation?: { mode?: string; notes?: string };
+      };
+    };
   }>;
+  pendingRepair?: {
+    briefId: string;
+    requestId: string;
+    parentRunId: string;
+    approvalHash: string;
+    status: string;
+    invalidationReason: string | null;
+    projectRevision: number;
+    generation: { mode: 'mock' | 'openai' | 'unknown'; notes?: string };
+    patch: Array<{ path: string; before: string; after: string }>;
+    intendedChange: string;
+  } | null;
   sources?: Array<{ id?: string; kind?: string; label?: string; repository?: string | null }>;
 };
 
@@ -152,6 +176,69 @@ export async function proposeConstructChange(
   );
 }
 
+export async function proposeConstructRepair(
+  input: { projectId: string; parentRunId: string; instruction?: string },
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    mocked: boolean;
+    parentRunId: string;
+    targets: string[];
+    coverageNote: 'syntax-only' | 'mixed';
+    proposal: { summary: string; patch: { path: string; before: string; after: string }[]; notes: string };
+    combined: { path: string; before: string; after: string }[];
+    context?: import('@/domains/architect-construct/source-context').SourceContextManifest;
+    coverage?: import('@/domains/architect-construct/schema').CheckPlan;
+  }>(
+    '/api/architect-construct',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        action: 'propose-repair',
+        projectId: input.projectId,
+        parentRunId: input.parentRunId,
+        instruction: input.instruction,
+      }),
+    },
+    fetchImpl,
+  );
+}
+
+export async function approveConstructRepair(
+  input: {
+    projectId: string;
+    briefId: string;
+    parentRunId: string;
+    expected: number;
+    patch: { path: string; before: string; after: string }[];
+    generation?: { mode: 'mock' | 'openai' | 'unknown'; notes?: string };
+  },
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    source: NonNullable<ConstructLifecycleLibrary['sources']>[number];
+    brief: NonNullable<ConstructLifecycleLibrary['briefs']>[number];
+    combined: { path: string; before: string; after: string }[];
+    parentRunId: string;
+  }>(
+    '/api/architect-construct',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        action: 'approve-repair',
+        ...input,
+      }),
+    },
+    fetchImpl,
+  );
+}
+
 export async function approveConstructChange(
   input: {
     projectId: string;
@@ -274,6 +361,82 @@ export function selectCurrentRun(
   );
   const inFlight = runs.find((run) => isInFlightStatus(run.status));
   return inFlight ?? runs[0] ?? null;
+}
+
+export type RepairJourneyView = {
+  original: NonNullable<ConstructLifecycleLibrary['runs']>[number] | null;
+  repair: NonNullable<ConstructLifecycleLibrary['runs']>[number] | null;
+  durableBrief: NonNullable<ConstructLifecycleLibrary['briefs']>[number] | null;
+  steps: {
+    original: boolean;
+    observedFailure: boolean;
+    proposed: boolean;
+    approved: boolean;
+    observedResult: boolean;
+  };
+};
+
+export function selectRepairJourney(input: {
+  library: ConstructLifecycleLibrary | null;
+  ownerId: string | null;
+  projectId: string;
+  localProposal?: { parentRunId: string } | null;
+  localApproval?: { parentRunId?: string } | null;
+}): RepairJourneyView {
+  const runs = (input.library?.runs ?? []).filter(
+    (run) => run.project_id === input.projectId && (!input.ownerId || run.person_id === input.ownerId),
+  );
+  const current = selectCurrentRun(input.library, input.projectId, input.ownerId);
+  const original = current?.parent_run_id
+    ? (runs.find((run) => run.id === current.parent_run_id) ?? null)
+    : current && !current.parent_run_id
+      ? current
+      : (runs.find((run) => !run.parent_run_id) ?? null);
+  const repair = original
+    ? (runs.find((run) => run.parent_run_id === original.id) ?? null)
+    : null;
+  const durableBrief =
+    (original &&
+      ((input.library?.briefs ?? []).find(
+        (brief) => brief.scope?.repair?.parent_run_id === original.id,
+      ) ??
+        null)) ||
+    (input.library?.pendingRepair
+      ? ((input.library?.briefs ?? []).find((brief) => brief.id === input.library?.pendingRepair?.briefId) ??
+        {
+          id: input.library.pendingRepair.briefId,
+          approval_hash: input.library.pendingRepair.approvalHash,
+          status: input.library.pendingRepair.status,
+          invalidation_reason: input.library.pendingRepair.invalidationReason,
+          scope: {
+            intended_change: input.library.pendingRepair.intendedChange,
+            project_revision: input.library.pendingRepair.projectRevision,
+            patch: input.library.pendingRepair.patch,
+            repair: {
+              kind: 'check-driven',
+              parent_run_id: input.library.pendingRepair.parentRunId,
+              generation: input.library.pendingRepair.generation,
+            },
+          },
+        })
+      : null);
+  const localProposal = original && input.localProposal?.parentRunId === original.id;
+  const localApproval =
+    original &&
+    input.localApproval &&
+    (!input.localApproval.parentRunId || input.localApproval.parentRunId === original.id);
+  return {
+    original,
+    repair,
+    durableBrief,
+    steps: {
+      original: Boolean(original),
+      observedFailure: original?.status === 'failed' && Boolean(original.result),
+      proposed: Boolean(durableBrief) || Boolean(localProposal),
+      approved: durableBrief?.status === 'approved' || Boolean(localApproval),
+      observedResult: Boolean(repair?.result),
+    },
+  };
 }
 
 function hasTrustedArtifact(

@@ -25,6 +25,7 @@ export type ConstructStore = {
   readSource(personId: string, sourceId: string): Promise<SourceSnapshot | null>;
   approveBrief(personId: string, briefId: string, scope: ConstructBrief['scope']): Promise<ConstructBrief>;
   readBrief(personId: string, briefId: string): Promise<ConstructBrief | null>;
+  listProjectBriefs(personId: string, projectId: string): Promise<ConstructBrief[]>;
   invalidateProjectBriefs(personId: string, projectId: string, reason: string): Promise<number>;
   startRun(input: {
     personId: string;
@@ -36,6 +37,7 @@ export type ConstructStore = {
     sourceTreeHash: string;
     approvalHash: string;
     sourceId: string;
+    parentRunId?: string | null;
   }): Promise<ConstructRun>;
   readRun(personId: string, runId: string): Promise<ConstructRun | null>;
   listRuns(personId: string, projectId: string): Promise<ConstructRun[]>;
@@ -119,6 +121,13 @@ export class MemoryConstructStore implements ConstructStore {
     return brief?.person_id === personId ? brief : null;
   }
 
+  async listProjectBriefs(personId: string, projectId: string) {
+    return [...this.briefs.values()]
+      .filter((brief) => brief.person_id === personId && brief.scope.project_id === projectId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 30);
+  }
+
   async invalidateProjectBriefs(personId: string, projectId: string, reason: string) {
     let count = 0;
     for (const brief of this.briefs.values()) {
@@ -143,6 +152,18 @@ export class MemoryConstructStore implements ConstructStore {
         throw new ConstructStoreError('Request already reserved with a different brief or source pin.');
       return existing;
     }
+    if (input.parentRunId) {
+      const parent = this.runs.get(input.parentRunId);
+      if (!parent || parent.person_id !== input.personId || parent.project_id !== input.projectId)
+        throw new ConstructStoreError('Repair parent unavailable.');
+      if (parent.parent_run_id) throw new ConstructStoreError('Repair of a repair is not allowed.');
+      if (parent.project_revision !== input.expected)
+        throw new ConstructStoreError('Repair evidence is bound to an older project revision.');
+      const sibling = [...this.runs.values()].find(
+        (run) => run.person_id === input.personId && run.parent_run_id === input.parentRunId,
+      );
+      if (sibling) throw new ConstructStoreError('This original run already has one repair.');
+    }
     const run: ConstructRun = {
       id: input.requestId,
       person_id: input.personId,
@@ -159,6 +180,7 @@ export class MemoryConstructStore implements ConstructStore {
       lease_token: null,
       lease_until: null,
       result: null,
+      parent_run_id: input.parentRunId ?? null,
       created_at: at(),
       updated_at: at(),
     };

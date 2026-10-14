@@ -20,6 +20,7 @@ import {
   constructProviderStatus,
   mockedConstructProposal,
   proposeConstructChange,
+  proposeConstructRepair,
 } from '@/domains/architect-construct/provider';
 import { defaultProtectedPaths } from '@/domains/architect-construct/schema';
 
@@ -153,6 +154,100 @@ it('never sends protected sentinels in the assembled OpenAI prompt', async () =>
   expect(prompt).not.toContain(sentinel);
   expect(prompt).toContain('<h1>Before</h1>');
   expect(prompt).not.toContain('.env.local');
+});
+
+it('live repair adapter patches the failed snapshot and receives original change plus evidence', async () => {
+  vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'false');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const original = 'export const heading = "Before";\n';
+  const failed = 'export const heading = "After"\nconst introduced = ;\n';
+  const secret = 'sk-live-secret-token';
+  generate.mockImplementation(async (args: { prompt: string }) => {
+    const prompt = String(args.prompt);
+    expect(prompt).toContain('const introduced = ;');
+    expect(prompt).toContain('original_change');
+    expect(prompt).toContain('failure_evidence');
+    expect(prompt).toContain('syntax:ok.mjs');
+    expect(prompt).not.toContain(secret);
+    expect(prompt).toContain('After');
+    return {
+      output: {
+        summary: 'Fix the introduced syntax failure.',
+        patch: [{ path: 'ok.mjs', before: failed, after: 'export const heading = "After";\n' }],
+        notes: 'bounded syntax-only',
+      },
+    };
+  });
+  const proposal = await proposeConstructRepair(
+    'Repair only the introduced syntax failure.',
+    {
+      sourceFiles: [{ path: 'ok.mjs', content: original }],
+      originalPatch: [{ path: 'ok.mjs', before: original, after: failed }],
+      scope: {
+        allowed_paths: ['ok.mjs'],
+        protected_paths: defaultProtectedPaths(),
+        intended_change: 'Keep the heading change and fix syntax.',
+      },
+      targets: ['syntax:node --check ok.mjs:ok.mjs'],
+      evidence: {
+        targets: ['syntax:node --check ok.mjs:ok.mjs'],
+        blocker: 'Introduced syntax failure.',
+        checks: [
+          {
+            name: 'syntax:ok.mjs',
+            command: 'node --check ok.mjs',
+            status: 'failed',
+            exit_code: 1,
+            log: `SyntaxError OPENAI_API_KEY=${secret}`,
+          },
+        ],
+      },
+    },
+    new AbortController().signal,
+  );
+  expect(generate).toHaveBeenCalled();
+  expect(proposal.patch[0]?.before).toBe(failed);
+  expect(proposal.patch[0]?.after).toContain('After');
+});
+
+it('rejects a live repair whose before-text matches the original instead of the failed snapshot', async () => {
+  vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'false');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const original = 'export const heading = "Before";\n';
+  const failed = 'export const heading = "After"\nconst introduced = ;\n';
+  generate.mockResolvedValue({
+    output: {
+      summary: 'wrong baseline',
+      patch: [{ path: 'ok.mjs', before: original, after: 'export const heading = "After";\n' }],
+      notes: '',
+    },
+  });
+  await expect(
+    proposeConstructRepair(
+      'Repair only the introduced syntax failure.',
+      {
+        sourceFiles: [{ path: 'ok.mjs', content: original }],
+        originalPatch: [{ path: 'ok.mjs', before: original, after: failed }],
+        scope: {
+          allowed_paths: ['ok.mjs'],
+          protected_paths: defaultProtectedPaths(),
+          intended_change: 'Keep the heading change and fix syntax.',
+        },
+        targets: ['syntax:node --check ok.mjs:ok.mjs'],
+      },
+      new AbortController().signal,
+    ),
+  ).rejects.toThrow(/before-text|does not match|malformed|failed/i);
 });
 
 it('rejects a truncated before-text from the provider', async () => {

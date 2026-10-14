@@ -57,8 +57,11 @@ vi.mock('@/domains/intelligence/service', () => ({
 }));
 import {
   approveConstructChange,
+  approveRepairConstruct,
   cancelConstruct,
   constructStore,
+  proposeRepairConstruct,
+  readConstruct,
   startConstruct,
   startFixtureConstruct,
 } from '@/domains/architect-construct/service';
@@ -350,4 +353,290 @@ it('keeps cancel owner-scoped and does not replay a finished request', async () 
   await expect(
     cancelConstruct({ action: 'cancel', projectId: state.projectId, runId: requestId }),
   ).rejects.toThrow(/unavailable|not/i);
+});
+
+it('repairs a failed original once, refuses repair-of-repair and stale revisions, and retries the same request', async () => {
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'true');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const files = [{ path: 'ok.mjs', content: 'export const heading = "Before";\n' }];
+  const failed = 'export const heading = "After"\nconst introduced = ;\n';
+  const approved = await approveConstructChange({
+    action: 'approve-change',
+    projectId: state.projectId,
+    briefId: '00000000-0000-4000-8000-0000000000a1',
+    sourceId: '00000000-0000-4000-8000-0000000000a2',
+    expected: 1,
+    sourceKind: 'imported',
+    repository: null,
+    commit: null,
+    files,
+    intendedChange: 'Introduce the labelled syntax fixture.',
+    allowedPaths: ['ok.mjs'],
+    protectedPaths: defaultProtectedPaths(),
+    acceptanceChecks: [{ name: 'syntax:ok.mjs', command: 'node', args: ['--check', 'ok.mjs'] }],
+    patch: [{ path: 'ok.mjs', before: files[0]!.content, after: failed }],
+  });
+  const parentId = '00000000-0000-4000-8000-0000000000a3';
+  await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId: approved.brief.id,
+    requestId: parentId,
+    expected: 1,
+    approvalHash: approved.brief.approval_hash,
+  });
+  const stored = (
+    constructStore() as unknown as { runs: Map<string, { status: string; result: unknown }> }
+  ).runs.get(parentId)!;
+  stored.status = 'failed';
+  stored.result = {
+    isolation: 'process-fixture',
+    runtime_available: false,
+    sandbox: false,
+    blocker: 'Introduced syntax failure.',
+    source_hash: approved.source.tree_hash,
+    result_hash: null,
+    changed_files: ['ok.mjs'],
+    diff: '',
+    checks: [
+      {
+        name: 'syntax:ok.mjs',
+        command: 'node --check ok.mjs',
+        exit_code: 1,
+        status: 'failed',
+        log: 'SyntaxError',
+      },
+    ],
+    coverage: {
+      no_applicable: false,
+      preexisting_failures: [],
+      introduced_failures: ['syntax:node --check ok.mjs:ok.mjs'],
+      untested: [],
+      unsupported: [{ kind: 'typecheck', reason: 'Unsupported in this sandbox.' }],
+      revision_note: '1',
+    },
+    preview: { path: null, body: '', unavailable_reason: 'none' },
+    artifacts: [],
+  };
+  const proposed = await proposeRepairConstruct(
+    { action: 'propose-repair', projectId: state.projectId, parentRunId: parentId },
+    new AbortController().signal,
+  );
+  expect(proposed.proposal.patch[0]?.before).toBe(failed);
+  expect(proposed.combined[0]?.before).toBe(files[0]!.content);
+  const repairBriefId = '00000000-0000-4000-8000-0000000000a4';
+  const approvedRepair = await approveRepairConstruct({
+    action: 'approve-repair',
+    projectId: state.projectId,
+    briefId: repairBriefId,
+    parentRunId: parentId,
+    expected: 1,
+    patch: proposed.proposal.patch,
+    generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+  });
+  expect(approvedRepair.brief.scope.project_revision).toBe(1);
+  expect(approvedRepair.brief.scope.repair?.parent_run_id).toBe(parentId);
+  expect(approvedRepair.brief.approval_hash).not.toBe(approved.brief.approval_hash);
+  const first = await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId: approvedRepair.brief.id,
+    requestId: approvedRepair.brief.id,
+    expected: 1,
+    approvalHash: approvedRepair.brief.approval_hash,
+  });
+  const retry = await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId: approvedRepair.brief.id,
+    requestId: approvedRepair.brief.id,
+    expected: 1,
+    approvalHash: approvedRepair.brief.approval_hash,
+  });
+  expect(first.id).toBe(approvedRepair.brief.id);
+  expect(retry.id).toBe(approvedRepair.brief.id);
+  expect(first.parent_run_id).toBe(parentId);
+  await expect(
+    startConstruct({
+      action: 'start',
+      projectId: state.projectId,
+      briefId: approvedRepair.brief.id,
+      requestId: '00000000-0000-4000-8000-0000000000a6',
+      expected: 1,
+      approvalHash: approvedRepair.brief.approval_hash,
+    }),
+  ).rejects.toThrow(/brief identity|reuse the approved/i);
+  const repairRun = (
+    constructStore() as unknown as { runs: Map<string, { status: string; result: unknown; parent_run_id?: string }> }
+  ).runs.get(approvedRepair.brief.id)!;
+  repairRun.status = 'failed';
+  repairRun.result = stored.result;
+  await expect(
+    proposeRepairConstruct(
+      { action: 'propose-repair', projectId: state.projectId, parentRunId: approvedRepair.brief.id },
+      new AbortController().signal,
+    ),
+  ).rejects.toThrow(/already a repair|one repair/i);
+  state.revision = 2;
+  await expect(
+    proposeRepairConstruct(
+      { action: 'propose-repair', projectId: state.projectId, parentRunId: parentId },
+      new AbortController().signal,
+    ),
+  ).rejects.toThrow(/revision 1|newer revision|silently/i);
+});
+
+async function failedParentForRecovery() {
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'true');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const files = [{ path: 'ok.mjs', content: 'export const heading = "Before";\n' }];
+  const failed = 'export const heading = "After"\nconst introduced = ;\n';
+  const approved = await approveConstructChange({
+    action: 'approve-change',
+    projectId: state.projectId,
+    briefId: '00000000-0000-4000-8000-0000000000b1',
+    sourceId: '00000000-0000-4000-8000-0000000000b2',
+    expected: 1,
+    sourceKind: 'imported',
+    repository: null,
+    commit: null,
+    files,
+    intendedChange: 'Introduce the labelled syntax fixture.',
+    allowedPaths: ['ok.mjs'],
+    protectedPaths: defaultProtectedPaths(),
+    acceptanceChecks: [{ name: 'syntax:ok.mjs', command: 'node', args: ['--check', 'ok.mjs'] }],
+    patch: [{ path: 'ok.mjs', before: files[0]!.content, after: failed }],
+  });
+  const parentId = '00000000-0000-4000-8000-0000000000b3';
+  await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId: approved.brief.id,
+    requestId: parentId,
+    expected: 1,
+    approvalHash: approved.brief.approval_hash,
+  });
+  const stored = (
+    constructStore() as unknown as { runs: Map<string, { status: string; result: unknown }> }
+  ).runs.get(parentId)!;
+  stored.status = 'failed';
+  stored.result = {
+    isolation: 'process-fixture',
+    runtime_available: false,
+    sandbox: false,
+    blocker: 'Introduced syntax failure.',
+    source_hash: approved.source.tree_hash,
+    result_hash: null,
+    changed_files: ['ok.mjs'],
+    diff: '',
+    checks: [
+      {
+        name: 'syntax:ok.mjs',
+        command: 'node --check ok.mjs',
+        exit_code: 1,
+        status: 'failed',
+        log: 'SyntaxError',
+      },
+    ],
+    coverage: {
+      no_applicable: false,
+      preexisting_failures: [],
+      introduced_failures: ['syntax:node --check ok.mjs:ok.mjs'],
+      untested: [],
+      unsupported: [{ kind: 'typecheck', reason: 'Unsupported in this sandbox.' }],
+      revision_note: '1',
+    },
+    preview: { path: null, body: '', unavailable_reason: 'none' },
+    artifacts: [],
+  };
+  const proposed = await proposeRepairConstruct(
+    { action: 'propose-repair', projectId: state.projectId, parentRunId: parentId },
+    new AbortController().signal,
+  );
+  return { parentId, proposed, failed };
+}
+
+it('recovers an approved unstarted repair through read, then starts once after a lost response', async () => {
+  const { parentId, proposed } = await failedParentForRecovery();
+  const approvedRepair = await approveRepairConstruct({
+    action: 'approve-repair',
+    projectId: state.projectId,
+    briefId: '00000000-0000-4000-8000-0000000000b4',
+    parentRunId: parentId,
+    expected: 1,
+    patch: proposed.proposal.patch,
+    generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+  });
+  const beforeStart = await readConstruct(state.projectId);
+  expect(beforeStart.pendingRepair?.briefId).toBe(approvedRepair.brief.id);
+  expect(beforeStart.pendingRepair?.requestId).toBe(approvedRepair.brief.id);
+  expect(beforeStart.pendingRepair?.approvalHash).toBe(approvedRepair.brief.approval_hash);
+  expect(beforeStart.pendingRepair?.status).toBe('approved');
+  expect(beforeStart.pendingRepair?.generation.mode).toBe('mock');
+  expect(beforeStart.pendingRepair?.generation.notes).toMatch(/demonstration/i);
+  expect(beforeStart.pendingRepair?.patch[0]?.after).toBe(proposed.combined[0]?.after);
+  expect(beforeStart.runs.some((run) => run.parent_run_id === parentId)).toBe(false);
+  const recovered = beforeStart.pendingRepair;
+  if (!recovered) throw new Error('expected recovered approved repair');
+  const first = await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId: recovered.briefId,
+    requestId: recovered.requestId,
+    expected: 1,
+    approvalHash: recovered.approvalHash,
+  });
+  const lostResponseRetry = await startConstruct({
+    action: 'start',
+    projectId: state.projectId,
+    briefId: recovered.briefId,
+    requestId: recovered.requestId,
+    expected: 1,
+    approvalHash: recovered.approvalHash,
+  });
+  expect(first.id).toBe(recovered.requestId);
+  expect(lostResponseRetry.id).toBe(first.id);
+  expect(first.parent_run_id).toBe(parentId);
+  const children = [...(constructStore() as unknown as { runs: Map<string, { parent_run_id?: string }> }).runs.values()].filter(
+    (run) => run.parent_run_id === parentId,
+  );
+  expect(children).toHaveLength(1);
+  const after = await readConstruct(state.projectId);
+  expect(after.pendingRepair).toBeNull();
+  expect(after.runs.some((run) => run.id === first.id && run.parent_run_id === parentId)).toBe(true);
+});
+
+it('restores unknown provenance and refuses a revoked recovered approval', async () => {
+  const { parentId, proposed } = await failedParentForRecovery();
+  const approvedRepair = await approveRepairConstruct({
+    action: 'approve-repair',
+    projectId: state.projectId,
+    briefId: '00000000-0000-4000-8000-0000000000b5',
+    parentRunId: parentId,
+    expected: 1,
+    patch: proposed.proposal.patch,
+  });
+  const loaded = await readConstruct(state.projectId);
+  expect(loaded.pendingRepair?.generation.mode).toBe('unknown');
+  expect(loaded.pendingRepair?.generation.notes).toBeUndefined();
+  await constructStore().invalidateProjectBriefs(
+    state.owner,
+    state.projectId,
+    'Founder revoked this approval.',
+  );
+  const revoked = await readConstruct(state.projectId);
+  expect(revoked.pendingRepair?.status).toBe('invalidated');
+  expect(revoked.pendingRepair?.invalidationReason).toMatch(/revoked/i);
+  await expect(
+    startConstruct({
+      action: 'start',
+      projectId: state.projectId,
+      briefId: approvedRepair.brief.id,
+      requestId: approvedRepair.brief.id,
+      expected: 1,
+      approvalHash: approvedRepair.brief.approval_hash,
+    }),
+  ).rejects.toThrow(/revoked|invalidated/i);
 });

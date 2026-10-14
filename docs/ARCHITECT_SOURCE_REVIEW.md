@@ -80,4 +80,4 @@ Unrun / blocked:
 
 ## Next phase
 
-Bounded check-driven repair. This pass now records a reviewed check plan, baseline and post results, and introduced-versus-preexisting failures. The next slice can propose a repair only for introduced failures on the same immutable source, without autonomous loops, new-file creation, or expanded sandbox privileges.
+Bounded check-driven repair is implemented on the follow-on branch `cursor/architect-propose-repair-501f`. See [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md). This source-review pass still only records the check plan, baseline/post results, and introduced-versus-preexisting failures.
