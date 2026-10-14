@@ -56,16 +56,16 @@ Live voice, Live admission, production voice flags, Construct, Connections, Arch
 
 ## Exact-head checks on this branch
 
-Recorded on the atomic import pass before push. Browser evidence includes mocked-provider Playwright. PGlite SQL is disposable persistence, not a real Auth test. Local Docker/Auth is unavailable in this checkout; Quality `database` and Architect Origin `local-auth` run the Auth/PostgREST smoke and talk-auth suite on exact head.
+Recorded on the review-to-save consistency pass before push. Browser evidence includes mocked-provider Playwright. PGlite SQL is disposable persistence, not a real Auth test. Local Docker/Auth is unavailable in this checkout; Quality `database` and Architect Origin `local-auth` run the Auth/PostgREST smoke and talk-auth suite on exact head.
 
 - lint: pass
 - typecheck: pass
 - vitest: 942 passed (includes Talk persist/SQL/handoff/candidate/atomic import, UTF-16 parity, one-per-kind selection and copied-vs-referenced contracts)
 - db ledger: pass (Talk and import SQL remain unapplied on hosted; Origin production record unchanged)
 - production build: pass
-- Playwright (mocked providers): talk-creation 4/4, talk-creation-recovery 8/8, architect-origin 27/27
+- Playwright (mocked providers): talk-creation 4/4, talk-creation-recovery 8/8, architect-origin 27/27, aggregate `test:e2e` 583/583 including previously failing Grooming 768px navigations
 - Persistence used: PGlite with pgcrypto for ownership/idempotent import SQL; mocked `/api` for browser recovery; real Auth acceptance wired to CI disposable Supabase
-- Unrun until exact-head CI: Quality `database` and Architect Origin `local-auth` (real Auth/PostgREST two-owner journey, wrong-content denial, retired acknowledgement, Aethelios-menu navigation and draft leave vs Back/Forward), Quality application `test:e2e` remainder, physical Fold/Safari, paid OpenAI image calls, hosted migration apply
+- Unrun until exact-head CI: Quality `database` and Architect Origin `local-auth` (real Auth/PostgREST two-owner journey, reviewed-equals-saved, one-per-kind denial, wrong-content denial, retired acknowledgement, Aethelios-menu navigation and draft leave vs Back/Forward), physical Fold/Safari, paid OpenAI image calls, hosted migration apply
 
 ## Founder test
 
