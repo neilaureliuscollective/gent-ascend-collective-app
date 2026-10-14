@@ -12,6 +12,7 @@ import {
   sameConstructContext,
   selectCurrentRun,
   selectLastSuccessfulRun,
+  selectRepairJourney,
   selectRetainedConstructPreview,
   viewConstructLifecycle,
   type ConstructLifecycleLibrary,
@@ -256,5 +257,74 @@ describe('construct lifecycle selection', () => {
       labelledDemonstration: false,
       provenance: 'construct-fixture',
     })).toMatch(/fixture test output/i);
+  });
+
+  it('keeps the original attempt distinct from an enqueued repair and restores durable stages', () => {
+    const original = {
+      id: runA,
+      person_id: ownerA,
+      project_id: projectA,
+      project_revision: 1,
+      source_tree_hash: hashA,
+      status: 'failed',
+      parent_run_id: null,
+      result: {
+        isolation: 'process-fixture',
+        runtime_available: false,
+        sandbox: false,
+        blocker: 'introduced',
+        source_hash: hashA,
+        result_hash: null,
+        checks: [],
+        changed_files: ['ok.mjs'],
+        preview: { path: null, body: '', unavailable_reason: 'failed' },
+      },
+    };
+    const repair = {
+      id: runB,
+      person_id: ownerA,
+      project_id: projectA,
+      project_revision: 1,
+      source_tree_hash: hashA,
+      status: 'queued',
+      parent_run_id: runA,
+      result: null,
+    };
+    const loaded = selectRepairJourney({
+      library: {
+        project: { id: projectA, revision: 1, name: 'Alpha' },
+        runs: [repair, original],
+        briefs: [
+          {
+            id: runB,
+            status: 'approved',
+            scope: {
+              intended_change: `Repair of run ${runA}`,
+              project_revision: 1,
+              patch: [{ path: 'ok.mjs', before: 'Before', after: 'After' }],
+              repair: { kind: 'check-driven', parent_run_id: runA, targets: ['syntax:ok.mjs'] },
+            },
+          },
+        ],
+      },
+      ownerId: ownerA,
+      projectId: projectA,
+    });
+    expect(loaded.original?.id).toBe(runA);
+    expect(loaded.repair?.id).toBe(runB);
+    expect(loaded.steps).toEqual({
+      original: true,
+      observedFailure: true,
+      proposed: true,
+      approved: true,
+      observedResult: false,
+    });
+    const current = selectCurrentRun(
+      { project: { id: projectA, revision: 1 }, runs: [repair, original] },
+      projectA,
+      ownerA,
+    );
+    expect(current?.id).toBe(runB);
+    expect(current?.parent_run_id).toBe(runA);
   });
 });

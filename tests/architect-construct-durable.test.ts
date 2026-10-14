@@ -141,6 +141,7 @@ grant select on public.persons to authenticated; create table public.ai_conversa
   await db.exec(await readFile('supabase/migrations/20261013220000_architect_construct_lease_freshness.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013230000_architect_construct_finish_event.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014220000_architect_construct_repair.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014224500_architect_construct_one_repair.sql', 'utf8'));
   await db.exec(
     `set role authenticated; select set_config('request.jwt.claim.sub','${owner}',false); select public.architect_origin_save('${project}','${request}',0,${literal({ ...content, name: 'Synthetic durable construct' })},'Synthetic durable'); reset role;`,
   );

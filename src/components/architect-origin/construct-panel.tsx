@@ -20,6 +20,7 @@ import {
   constructInputSnapshot,
   sameConstructContext,
   selectCurrentRun,
+  selectRepairJourney,
   selectRetainedConstructPreview,
   startConstructFixture,
   startConstructRun,
@@ -69,6 +70,7 @@ type BoundApproval = {
   requestId: string;
   snapshot: string;
   revision: number;
+  parentRunId?: string;
 };
 
 type RequestContext = {
@@ -176,26 +178,48 @@ export function ArchitectConstructPanel({
     ownerId,
     projectId,
   });
-  const brief = run ? library?.briefs.find((row) => row.id === run.brief_id) : library?.briefs[0];
-  const source = run ? library?.sources.find((row) => row.id === run.source_id) : library?.sources[0];
-  const events = run ? (library?.events[run.id] ?? []) : [];
-  const repair = run
+  const journeyView = selectRepairJourney({
+    library,
+    ownerId,
+    projectId,
+    localProposal: repairProposal,
+    localApproval: repairApproval,
+  });
+  const original = (journeyView.original as ConstructRun | null) ?? null;
+  const repairRun = (journeyView.repair as ConstructRun | null) ?? null;
+  const resultRun = (repairRun ?? original) as ConstructRun | null;
+  const brief = resultRun
+    ? library?.briefs.find((row) => row.id === resultRun.brief_id)
+    : original
+      ? library?.briefs.find((row) => row.id === original.brief_id)
+      : library?.briefs[0];
+  const source = original
+    ? library?.sources.find((row) => row.id === original.source_id)
+    : run
+      ? library?.sources.find((row) => row.id === run.source_id)
+      : library?.sources[0];
+  const events = resultRun ? (library?.events[resultRun.id] ?? []) : run ? (library?.events[run.id] ?? []) : [];
+  const originalBrief = original ? library?.briefs.find((row) => row.id === original.brief_id) : null;
+  const repair = original
     ? repairEligible({
-        parent: run,
-        brief: brief ?? null,
+        parent: original,
+        brief: originalBrief ?? null,
         sourceTreeHash: source?.tree_hash,
+        projectRevision: revision,
         runs: library?.runs ?? [],
         briefs: library?.briefs ?? [],
       })
     : { ok: false as const, code: 'not-terminal' as const, message: '' };
-  const repairChild = library?.runs.find((item) => item.parent_run_id === run?.id) ?? null;
-  const journey = {
-    original: Boolean(run),
-    observedFailure: run?.status === 'failed',
-    proposed: Boolean(repairProposal),
-    approved: Boolean(repairApproval),
-    observedResult: Boolean(repairChild?.result),
-  };
+  const journey = journeyView.steps;
+  const restoredRepairChange =
+    !repairProposal && journeyView.durableBrief?.scope?.patch?.length
+      ? {
+          summary: journeyView.durableBrief.scope.intended_change || 'Restored repair',
+          notes: 'Restored from saved proposal and approval evidence. Combined patch is shown against the original pinned source.',
+          mocked: false,
+          patches: journeyView.durableBrief.scope.patch,
+        }
+      : null;
 
   function applyLibrary(next: Library, incoming: RequestContext) {
     if (
@@ -446,14 +470,14 @@ export function ArchitectConstructPanel({
   }
 
   async function proposeRepair() {
-    if (locked || busy || !run || !repair.ok) return;
+    if (locked || busy || !original || !repair.ok) return;
     setBusy(true);
     setError('');
     const incoming = currentContext();
     try {
       const proposed = await proposeConstructRepair({
         projectId,
-        parentRunId: run.id,
+        parentRunId: original.id,
         instruction: intendedChange,
       });
       if (!proposed.ok) throw new Error(proposed.error);
@@ -488,7 +512,7 @@ export function ArchitectConstructPanel({
   }
 
   async function approveRepair() {
-    if (locked || busy || !repairProposal || !run) return;
+    if (locked || busy || !repairProposal || !original) return;
     if (repairApproval) {
       setMessage('This repair is already approved. Enqueue retries reuse the same request.');
       return;
@@ -513,15 +537,16 @@ export function ArchitectConstructPanel({
         typeof approved.data.brief?.approval_hash === 'string' ? approved.data.brief.approval_hash : '';
       if (!/^[0-9a-f]{64}$/.test(digest))
         throw new Error('Approved repair did not return a fresh server digest.');
-      if (digest === run.approval_hash)
+      if (digest === original.approval_hash)
         throw new Error('Repair must use a fresh approval digest. The original approval cannot be reused.');
       setRepairApproval({
         briefId,
-        sourceId: run.source_id,
+        sourceId: original.source_id,
         approvalHash: digest,
         requestId,
         snapshot,
         revision,
+        parentRunId: original.id,
       });
       setMessage('Repair approved against the original pinned source. Enqueue retries reuse this request.');
       await refresh();
@@ -635,17 +660,17 @@ export function ArchitectConstructPanel({
       </p>
       <ol className="origin-repair-journey" aria-label="Repair journey">
         <li aria-current={journey.original && !journey.observedFailure ? 'step' : undefined}>
-          Original attempt{run ? ` · ${statusLabel(run.status)}` : ''}
+          Original attempt{original ? ` · ${statusLabel(original.status)}` : ''}
         </li>
         <li aria-current={journey.observedFailure && !journey.proposed ? 'step' : undefined}>
           Observed failure
-          {repair.ok ? ` · ${repair.targets.length} introduced` : ''}
+          {repair.ok ? ` · ${repair.targets.length} introduced` : journey.observedFailure ? ' · recorded' : ''}
         </li>
         <li aria-current={journey.proposed && !journey.approved ? 'step' : undefined}>Proposed correction</li>
         <li aria-current={journey.approved && !journey.observedResult ? 'step' : undefined}>Approved repair</li>
         <li aria-current={journey.observedResult ? 'step' : undefined}>
           Observed result
-          {repairChild ? ` · ${statusLabel(repairChild.status)}` : ''}
+          {repairRun ? ` · ${statusLabel(repairRun.status)}` : ''}
         </li>
       </ol>
       {!enabled && (
@@ -903,7 +928,20 @@ export function ArchitectConstructPanel({
                 onSelect={setSelectedChange}
               />
             )}
-            {contextPanel === 'change' && liveProposal && !repairProposal && (
+            {contextPanel === 'change' && !repairProposal && restoredRepairChange && (
+              <ChangeDiff
+                summary={restoredRepairChange.summary}
+                notes={restoredRepairChange.notes}
+                mocked={restoredRepairChange.mocked}
+                patches={restoredRepairChange.patches.map((file) => ({
+                  ...file,
+                  intent: restoredRepairChange.summary,
+                }))}
+                selectedPath={selectedChange}
+                onSelect={setSelectedChange}
+              />
+            )}
+            {contextPanel === 'change' && liveProposal && !repairProposal && !restoredRepairChange && (
               <ChangeDiff
                 summary={liveProposal.summary}
                 notes={liveProposal.notes}
@@ -920,7 +958,7 @@ export function ArchitectConstructPanel({
                 onSelect={setSelectedChange}
               />
             )}
-            {contextPanel === 'change' && !liveProposal && !repairProposal && (
+            {contextPanel === 'change' && !liveProposal && !repairProposal && !restoredRepairChange && (
               <article className="origin-construct-pane">
                 <h4>Proposed change awaiting approval</h4>
                 <p>Propose a change against complete authorized files to inspect a before/after diff.</p>
@@ -929,9 +967,9 @@ export function ArchitectConstructPanel({
             {contextPanel === 'evidence' && (
               <CheckEvidence
                 plan={reviewCoverage}
-                coverage={run?.result?.coverage}
-                checks={run?.result?.checks ?? []}
-                baseline={run?.result?.baseline_checks}
+                coverage={resultRun?.result?.coverage}
+                checks={resultRun?.result?.checks ?? []}
+                baseline={resultRun?.result?.baseline_checks}
                 selectedName={selectedCheck}
                 onSelect={setSelectedCheck}
               />
@@ -991,7 +1029,17 @@ export function ArchitectConstructPanel({
               onSelect={setSelectedChange}
             />
           )}
-          {sheet === 'change' && liveProposal && !repairProposal && (
+          {sheet === 'change' && !repairProposal && restoredRepairChange && (
+            <ChangeDiff
+              summary={restoredRepairChange.summary}
+              notes={restoredRepairChange.notes}
+              mocked={restoredRepairChange.mocked}
+              patches={restoredRepairChange.patches}
+              selectedPath={selectedChange}
+              onSelect={setSelectedChange}
+            />
+          )}
+          {sheet === 'change' && liveProposal && !repairProposal && !restoredRepairChange && (
             <ChangeDiff
               summary={liveProposal.summary}
               notes={liveProposal.notes}
@@ -1004,9 +1052,9 @@ export function ArchitectConstructPanel({
           {sheet === 'evidence' && (
             <CheckEvidence
               plan={reviewCoverage}
-              coverage={run?.result?.coverage}
-              checks={run?.result?.checks ?? []}
-              baseline={run?.result?.baseline_checks}
+              coverage={resultRun?.result?.coverage}
+              checks={resultRun?.result?.checks ?? []}
+              baseline={resultRun?.result?.baseline_checks}
               selectedName={selectedCheck}
               onSelect={setSelectedCheck}
             />
@@ -1043,11 +1091,13 @@ export function ArchitectConstructPanel({
                 {brief.scope.repository ?? 'unspecified'}.
               </p>
               <p>{brief.scope.intended_change}</p>
-              <p>Allowed paths: {brief.scope.allowed_paths.join(', ')}</p>
-              <p>Protected paths: {brief.scope.protected_paths.join(', ')}</p>
+              <p>Allowed paths: {(brief.scope.allowed_paths ?? []).join(', ') || 'none recorded'}.</p>
+              <p>Protected paths: {(brief.scope.protected_paths ?? []).join(', ') || 'none recorded'}.</p>
               <p>
-                Limits: {brief.scope.resource_limits.timeout_ms}ms timeout,{' '}
-                {brief.scope.resource_limits.max_files} files.
+                Limits:{' '}
+                {brief.scope.resource_limits
+                  ? `${brief.scope.resource_limits.timeout_ms}ms timeout, ${brief.scope.resource_limits.max_files} files.`
+                  : 'not recorded on this receipt.'}
               </p>
             </>
           ) : (
@@ -1057,6 +1107,18 @@ export function ArchitectConstructPanel({
             <p>
               Latest run {statusLabel(run.status)} · {lifecycleLabel(lifecyclePhase(run.status))}
               {run.result?.blocker ? ` — ${run.result.blocker}` : ''}.
+            </p>
+          )}
+          {original && (
+            <p>
+              Original attempt {statusLabel(original.status)}
+              {original.project_revision != null ? ` · revision ${original.project_revision}` : ''}.
+            </p>
+          )}
+          {repairRun && (
+            <p>
+              Repair result {statusLabel(repairRun.status)}
+              {repairRun.result?.blocker ? ` — ${repairRun.result.blocker}` : ''}.
             </p>
           )}
           {library?.proposal?.mode === 'mock' && (
@@ -1082,14 +1144,14 @@ export function ArchitectConstructPanel({
       {view === 'Changes' && (
         <article className="origin-construct-pane">
           <h4>Actual files and diffs</h4>
-          {run?.result?.changed_files.length ? (
+          {resultRun?.result?.changed_files.length ? (
             <>
-              <p>{run.result.changed_files.join(', ')}</p>
-              <pre>{run.result.diff || 'No textual diff was collected.'}</pre>
+              <p>{resultRun.result.changed_files.join(', ')}</p>
+              <pre>{resultRun.result.diff || 'No textual diff was collected.'}</pre>
             </>
           ) : (
             <p>
-              {run?.result?.blocker ||
+              {resultRun?.result?.blocker ||
                 'No execution result yet. Queued runs do not display a simulated diff.'}
             </p>
           )}
@@ -1100,9 +1162,9 @@ export function ArchitectConstructPanel({
           <h4>Actual commands</h4>
           <CheckEvidence
             plan={brief?.scope.check_plan ?? reviewCoverage}
-            coverage={run?.result?.coverage}
-            checks={run?.result?.checks ?? []}
-            baseline={run?.result?.baseline_checks}
+            coverage={resultRun?.result?.coverage}
+            checks={resultRun?.result?.checks ?? []}
+            baseline={resultRun?.result?.baseline_checks}
             selectedName={selectedCheck}
             onSelect={setSelectedCheck}
           />

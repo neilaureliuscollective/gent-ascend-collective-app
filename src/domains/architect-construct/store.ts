@@ -145,6 +145,12 @@ export class MemoryConstructStore implements ConstructStore {
       return existing;
     }
     if (input.parentRunId) {
+      const parent = this.runs.get(input.parentRunId);
+      if (!parent || parent.person_id !== input.personId || parent.project_id !== input.projectId)
+        throw new ConstructStoreError('Repair parent unavailable.');
+      if (parent.parent_run_id) throw new ConstructStoreError('Repair of a repair is not allowed.');
+      if (parent.project_revision !== input.expected)
+        throw new ConstructStoreError('Repair evidence is bound to an older project revision.');
       const sibling = [...this.runs.values()].find(
         (run) => run.person_id === input.personId && run.parent_run_id === input.parentRunId,
       );

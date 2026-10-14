@@ -21,7 +21,8 @@ import {
   startFixtureCommand,
 } from './schema';
 import { constructProviderStatus, proposeConstructChange, proposeConstructRepair } from './provider';
-import { combineRepairPatch } from './combine-patch';
+import { applyWholeFilePatch, combineRepairPatch } from './combine-patch';
+import { sanitizeRepairEvidence } from './repair-evidence';
 import { repairEligible } from './repair-eligibility';
 import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
@@ -139,6 +140,26 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
         'Source base or project revision changed. The previous execution approval is invalid.',
         409,
       );
+    }
+    if (brief.scope.repair) {
+      const parent = await store.readRun(person.id, brief.scope.repair.parent_run_id);
+      if (!parent || parent.project_id !== project.id)
+        throw new IntelligenceError('Repair parent unavailable.', 404);
+      if (parent.parent_run_id)
+        throw new IntelligenceError(
+          'This run is already a repair. Only one repair is allowed per original journey.',
+          409,
+        );
+      if (parent.project_revision !== project.revision)
+        throw new IntelligenceError(
+          `This failed run is bound to project revision ${parent.project_revision}. The project is now revision ${project.revision}. A repair cannot silently follow the newer revision.`,
+          409,
+        );
+      if (brief.scope.project_revision !== parent.project_revision)
+        throw new IntelligenceError(
+          'Repair cannot take a newer project revision than its parent evidence.',
+          409,
+        );
     }
     const source = await store.readSource(person.id, brief.scope.source_id);
     if (!source)
@@ -294,11 +315,41 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
   }
 }
 
+function validateRepairAgainstFailedSnapshot(
+  sourceFiles: { path: string; content: string }[],
+  originalPatch: ConstructBrief['scope']['patch'],
+  repairPatch: ConstructBrief['scope']['patch'],
+  allowedPaths: string[],
+  protectedPaths: string[],
+) {
+  let failed: { path: string; content: string }[];
+  try {
+    failed = applyWholeFilePatch(sourceFiles, originalPatch);
+  } catch (error) {
+    throw new IntelligenceError(
+      error instanceof Error
+        ? error.message
+        : 'The original approved patch no longer applies to the pinned source.',
+      409,
+    );
+  }
+  const validated = validateExistingFilePatches({
+    files: failed,
+    patch: repairPatch,
+    allowedPaths,
+    protectedPaths,
+    editablePaths: failed.map((file) => file.path),
+  });
+  if (!validated.ok) throw new IntelligenceError(`${validated.message} ${validated.actionable}`, 409);
+  return { failed, repairPatch: validated.patch };
+}
+
 async function requireEligibleRepair(
   store: ConstructStore,
   personId: string,
   projectId: string,
   parentRunId: string,
+  projectRevision: number,
 ) {
   const parent = await store.readRun(personId, parentRunId);
   if (!parent || parent.project_id !== projectId) throw new IntelligenceError('Parent run unavailable.', 404);
@@ -314,6 +365,7 @@ async function requireEligibleRepair(
     parent,
     brief,
     sourceTreeHash: source?.tree_hash,
+    projectRevision,
     runs,
     briefs,
   });
@@ -328,13 +380,14 @@ export async function proposeRepairConstruct(
 ) {
   requireReady();
   try {
-    const { person, client } = await requireOwnedProject(input.projectId);
+    const { person, project, client } = await requireOwnedProject(input.projectId);
     const store = constructStore({ client, plane: 'owner' });
     const { parent, brief, source, eligibility } = await requireEligibleRepair(
       store,
       person.id,
       input.projectId,
       input.parentRunId,
+      project.revision,
     );
     const proposal = await proposeConstructRepair(
       input.instruction ??
@@ -348,13 +401,25 @@ export async function proposeRepairConstruct(
           intended_change: brief.scope.intended_change,
         },
         targets: eligibility.targets,
+        evidence: sanitizeRepairEvidence({
+          targets: eligibility.targets,
+          blocker: parent.result?.blocker,
+          checks: parent.result?.checks,
+        }),
       },
       signal,
+    );
+    const validated = validateRepairAgainstFailedSnapshot(
+      source.files,
+      brief.scope.patch,
+      proposal.patch,
+      brief.scope.allowed_paths,
+      brief.scope.protected_paths,
     );
     const combined = combineRepairPatch({
       sourceFiles: source.files,
       originalPatch: brief.scope.patch,
-      repairPatch: proposal.patch,
+      repairPatch: validated.repairPatch,
       allowedPaths: brief.scope.allowed_paths,
       protectedPaths: brief.scope.protected_paths,
     });
@@ -388,13 +453,21 @@ export async function approveRepairConstruct(input: ReturnType<typeof approveRep
       person.id,
       input.projectId,
       input.parentRunId,
+      project.revision,
     );
     if (parent.approval_hash === undefined)
       throw new IntelligenceError('Parent approval digest is missing.', 409);
+    const validated = validateRepairAgainstFailedSnapshot(
+      source.files,
+      brief.scope.patch,
+      input.patch,
+      brief.scope.allowed_paths,
+      brief.scope.protected_paths,
+    );
     const combined = combineRepairPatch({
       sourceFiles: source.files,
       originalPatch: brief.scope.patch,
-      repairPatch: input.patch,
+      repairPatch: validated.repairPatch,
       allowedPaths: brief.scope.allowed_paths,
       protectedPaths: brief.scope.protected_paths,
     });
@@ -414,7 +487,7 @@ export async function approveRepairConstruct(input: ReturnType<typeof approveRep
       throw new IntelligenceError('Repair must use a fresh approval digest. The original approval cannot be reused.', 409);
     const scope = briefScopeSchema.parse({
       project_id: project.id,
-      project_revision: project.revision,
+      project_revision: parent.project_revision,
       source_id: source.id,
       repository: source.repository,
       source_commit: source.commit,

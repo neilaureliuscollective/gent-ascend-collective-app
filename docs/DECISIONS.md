@@ -1,3 +1,7 @@
+# Architect repair snapshot, one-journey limit, journey restore and stale revision — 2026-10-14
+
+Generate a live repair against the failed post-original-patch files, not the pinned original source, then combine the validated correction back onto that original. Refuse a parent that is itself a repair so uniqueness cannot become a repair-of-repair chain. Keep the workbench original and repair identities separate and restore proposal/approval/result from saved evidence. Compare the parent project revision before proposal, approval and execution; never copy a newer revision onto older evidence. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
 # Architect cancel status locator after repair journey — 2026-10-14
 
 The Repair journey names the original attempt status in the same view as `Latest run cancelled`. Scope the cancel check to that latest-run sentence and keep the journey step assertion, rather than matching every “cancelled” string. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).

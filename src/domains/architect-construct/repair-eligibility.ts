@@ -9,6 +9,8 @@ export type RepairRefusal =
   | 'unsupported-only'
   | 'no-introduced-failure'
   | 'repair-already-exists'
+  | 'parent-is-repair'
+  | 'stale-revision'
   | 'source-mismatch';
 
 export type RepairEligibility =
@@ -32,21 +34,40 @@ function coverageNote(brief: ConstructBrief | null): 'syntax-only' | 'mixed' {
 export function findRepairChild(
   parentRunId: string,
   runs: Array<Pick<ConstructRun, 'id' | 'parent_run_id'>>,
-  briefs: Array<Pick<ConstructBrief, 'scope'>>,
 ) {
-  const fromRun = runs.find((run) => run.parent_run_id === parentRunId);
-  if (fromRun) return fromRun;
-  const fromBrief = briefs.find((brief) => brief.scope.repair?.parent_run_id === parentRunId);
-  return fromBrief ? { id: fromBrief.scope.repair!.parent_run_id, parent_run_id: parentRunId } : null;
+  return runs.find((run) => run.parent_run_id === parentRunId) ?? null;
+}
+
+export function findRepairBrief(
+  parentRunId: string,
+  briefs: Array<Pick<ConstructBrief, 'scope' | 'status' | 'id'>>,
+) {
+  return briefs.find((brief) => brief.scope.repair?.parent_run_id === parentRunId) ?? null;
 }
 
 export function repairEligible(input: {
   parent: ConstructRun;
   brief: ConstructBrief | null;
   sourceTreeHash?: string | null;
+  projectRevision?: number | null;
   runs: Array<Pick<ConstructRun, 'id' | 'parent_run_id'>>;
-  briefs: Array<Pick<ConstructBrief, 'scope'>>;
+  briefs: Array<Pick<ConstructBrief, 'scope' | 'status' | 'id'>>;
 }): RepairEligibility {
+  if (input.parent.parent_run_id)
+    return {
+      ok: false,
+      code: 'parent-is-repair',
+      message: 'This run is already a repair. Only one repair is allowed per original journey.',
+    };
+  if (
+    input.projectRevision != null &&
+    input.parent.project_revision !== input.projectRevision
+  )
+    return {
+      ok: false,
+      code: 'stale-revision',
+      message: `This failed run is bound to project revision ${input.parent.project_revision}. The project is now revision ${input.projectRevision}. A repair cannot silently follow the newer revision.`,
+    };
   if (!(terminalStatuses as readonly string[]).includes(input.parent.status))
     return { ok: false, code: 'not-terminal', message: 'Propose repair is available only after a terminal run.' };
   if (input.parent.status !== 'failed')
@@ -93,7 +114,7 @@ export function repairEligible(input: {
       code: 'source-mismatch',
       message: 'The pinned source no longer matches this run. Repair stays on the original snapshot.',
     };
-  if (findRepairChild(input.parent.id, input.runs, input.briefs))
+  if (findRepairChild(input.parent.id, input.runs) || findRepairBrief(input.parent.id, input.briefs))
     return {
       ok: false,
       code: 'repair-already-exists',

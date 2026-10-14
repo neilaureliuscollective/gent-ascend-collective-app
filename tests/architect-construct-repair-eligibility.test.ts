@@ -66,6 +66,34 @@ describe('check-driven repair eligibility', () => {
     if (eligible.ok) expect(eligible.targets.join(' ')).toMatch(/ok\.mjs/);
   });
 
+  it('refuses a parent that is already a repair and a stale project revision', () => {
+    expect(
+      repairEligible({
+        parent: parentRun({ parent_run_id: '00000000-0000-4000-8000-000000000080' }),
+        brief: null,
+        runs: [],
+        briefs: [],
+      }).ok,
+    ).toBe(false);
+    expect(
+      repairEligible({
+        parent: parentRun({ parent_run_id: '00000000-0000-4000-8000-000000000080' }),
+        brief: null,
+        runs: [],
+        briefs: [],
+      }),
+    ).toMatchObject({ code: 'parent-is-repair' });
+    expect(
+      repairEligible({
+        parent: parentRun(),
+        brief: null,
+        projectRevision: 2,
+        runs: [],
+        briefs: [],
+      }),
+    ).toMatchObject({ ok: false, code: 'stale-revision' });
+  });
+
   it('refuses pre-existing-only, ambiguous and second repairs', () => {
     expect(
       repairEligible({
