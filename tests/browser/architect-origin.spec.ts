@@ -103,9 +103,11 @@ for (const width of [320, 344, 390, 720, 768, 1440, 1920])
     await page.setViewportSize({ width, height: 900 });
     await fixture(page);
     await page.goto(base);
-    await expect(
-      page.getByRole('heading', { name: 'Where vision becomes creation.' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What will you create?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create a Business' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Design an Application' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Develop a Product' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start without limits' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -335,4 +337,1034 @@ test('short keyboard-height workspace retains reachable save controls and drafts
     path: 'test-results/architect-immersive-short-window.png',
     fullPage: true,
   });
+});
+test('Construct plan, changes, checks and preview stay honest without forged success', async ({
+  page,
+}) => {
+  await fixture(page);
+  let receipt: {
+    project: { id: string; revision: number; name: string };
+    runs: Array<Record<string, unknown>>;
+    events: Record<string, Array<Record<string, unknown>>>;
+    briefs: Array<Record<string, unknown>>;
+    sources: Array<Record<string, unknown>>;
+  } | null = null;
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json:
+          receipt ?? {
+            project: { id: 'none', revision: 1, name: 'none' },
+            runs: [],
+            events: {},
+            briefs: [],
+            sources: [],
+          },
+      });
+    const body = route.request().postDataJSON();
+    if (body.action === 'start-fixture') {
+      const now = new Date().toISOString();
+      receipt = {
+        project: { id: body.projectId, revision: body.expected, name: 'Synthetic Origin' },
+        sources: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            kind: 'fixture',
+            repository: 'neilaureliuscollective/gent-ascend-collective-app',
+            commit: null,
+            label: 'Deterministic fixture source — labelled test tree, not an imported application snapshot.',
+            tree_hash: 'a'.repeat(64),
+            files: [],
+            created_at: now,
+          },
+        ],
+        briefs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            approval_hash: 'b'.repeat(64),
+            status: 'approved',
+            invalidation_reason: null,
+            scope: {
+              project_id: body.projectId,
+              project_revision: body.expected,
+              source_id: body.requestId,
+              repository: 'neilaureliuscollective/gent-ascend-collective-app',
+              source_commit: null,
+              source_tree_hash: 'a'.repeat(64),
+              allowed_paths: ['preview.html'],
+              protected_paths: ['.env'],
+              intended_change: 'Replace the fixture heading Before with After.',
+              acceptance_checks: [{ name: 'heading', command: 'node', args: ['check.mjs'] }],
+              resource_limits: {
+                timeout_ms: 30000,
+                lease_ms: 45000,
+                max_files: 32,
+                max_file_bytes: 65536,
+                max_output_bytes: 16384,
+                max_diff_bytes: 32768,
+              },
+              patch: [{ path: 'preview.html', before: 'Before', after: 'After' }],
+            },
+            created_at: now,
+          },
+        ],
+        runs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            project_id: body.projectId,
+            brief_id: body.requestId,
+            approval_hash: 'b'.repeat(64),
+            source_id: body.requestId,
+            source_kind: 'fixture',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: body.expected,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          [body.requestId]: [
+            {
+              id: crypto.randomUUID(),
+              run_id: body.requestId,
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued. The request handler does not execute software changes.',
+              created_at: now,
+            },
+          ],
+        },
+      };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Synthetic construct project');
+  await page.getByLabel('Project name (optional)').fill('Construct Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+  await expect(page.getByText('No approved brief for this project yet')).toBeVisible();
+  await page.getByRole('button', { name: 'Queue labelled fixture run' }).click();
+  await expect(page.getByText(/Deterministic fixture source/)).toBeVisible();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-plan.png', fullPage: true });
+  const review = page.getByRole('navigation', { name: 'Construct review' });
+  await review.getByRole('button', { name: 'Changes', exact: true }).click();
+  await expect(page.getByText(/Queued runs do not display a simulated diff/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-changes.png', fullPage: true });
+  await review.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByText(/The browser cannot forge them/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-checks.png', fullPage: true });
+  await review.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(page.getByText(/Preview is unavailable until isolated output is collected/)).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-construct-preview.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await review.getByRole('button', { name: 'Plan', exact: true }).click();
+  await expect(page.getByText(/Deterministic fixture source/)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/architect-construct-plan-390.png', fullPage: true });
+});
+
+test('integrated workbench polls construct states, cancels, and keeps project-bound output', async ({
+  page,
+}) => {
+  await fixture(page);
+  let receipt: {
+    project: { id: string; revision: number; name: string };
+    runs: Array<Record<string, unknown>>;
+    events: Record<string, Array<Record<string, unknown>>>;
+    briefs: Array<Record<string, unknown>>;
+    sources: Array<Record<string, unknown>>;
+  } | null = null;
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: {
+          ready: false,
+          repository: null,
+          reason: 'Connections is not configured in this fixture.',
+        },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json:
+          receipt ?? {
+            project: { id: 'none', revision: 1, name: 'none' },
+            runs: [],
+            events: {},
+            briefs: [],
+            sources: [],
+          },
+      });
+    const body = route.request().postDataJSON();
+    if (body.action === 'start-fixture') {
+      const now = new Date().toISOString();
+      receipt = {
+        project: { id: body.projectId, revision: body.expected, name: 'Journey Origin' },
+        sources: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            kind: 'imported',
+            repository: null,
+            commit: null,
+            label: 'Deterministic fixture source — labelled test tree, not an imported application snapshot.',
+            tree_hash: 'a'.repeat(64),
+            files: [],
+            created_at: now,
+          },
+        ],
+        briefs: [],
+        runs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            project_id: body.projectId,
+            brief_id: body.requestId,
+            approval_hash: 'b'.repeat(64),
+            source_id: body.requestId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: body.expected,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          [body.requestId]: [
+            {
+              id: crypto.randomUUID(),
+              run_id: body.requestId,
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued.',
+              created_at: now,
+            },
+          ],
+        },
+      };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    if (body.action === 'cancel' && receipt) {
+      receipt.runs[0] = { ...receipt.runs[0], status: 'cancelled', cancel_requested: true };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Journey construct');
+  await page.getByLabel('Project name (optional)').fill('Journey Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await page.getByRole('button', { name: 'Queue labelled fixture run' }).click();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel run' }).click();
+  await expect(page.getByText(/cancelled|Canceled/i)).toBeVisible();
+  for (const [width, height] of [
+    [320, 720],
+    [390, 844],
+    [720, 900],
+    [1440, 900],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.screenshot({ path: 'test-results/architect-creation-journey-1440.png', fullPage: true });
+  await page.setViewportSize({ width: 344, height: 430 });
+  await expect(page.getByRole('button', { name: 'Queue labelled fixture run' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/architect-creation-journey-keyboard.png', fullPage: true });
+});
+
+test('labelled demonstration is explicit and isolated from host', async ({ page }) => {
+  await fixture(page);
+  await page.goto(`${base}&demo=architect-preview`);
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Labelled demonstration idea');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(
+    page.getByText(/Labelled demonstration — not a live generated preview/),
+  ).toBeVisible();
+  const frame = page.frameLocator('iframe[title="Labelled demonstration preview"]');
+  await expect(frame.getByText('Labelled demonstration', { exact: false })).toBeVisible();
+  await expect(page.evaluate(() => 'injected' in window || 'pwned' in window)).resolves.toBe(false);
+});
+
+test('HTML document preview is sandboxed and keeps the prior artifact when Construct fails', async ({
+  page,
+}) => {
+  const html = `<!DOCTYPE html><html><body>
+    <script>window.top.injected=true</script>
+    <a href="javascript:alert(1)">Bad link</a>
+    <h1>Owned artifact</h1>
+  </body></html>`;
+  const state = await fixture(page);
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (!state.getProject())
+      return route.fulfill({
+        status: 404,
+        json: { error: 'Construct execution is not in this checkout.' },
+      });
+    return route.fulfill({
+      status: 503,
+      json: { error: 'Synthetic construct failure' },
+    });
+  });
+  await page.goto(base);
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Application with a static site');
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+  await page.getByLabel('Editable Markdown').fill(html);
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  const frame = page.frameLocator('iframe[title="Isolated artifact preview"]');
+  await expect(frame.getByRole('heading', { name: 'Owned artifact' })).toBeVisible();
+  await expect(page.locator('iframe[title="Isolated artifact preview"]')).toHaveAttribute(
+    'sandbox',
+    '',
+  );
+  await expect(page.evaluate(() => 'injected' in window)).resolves.toBe(false);
+  await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled();
+  await expect(page.locator('.origin-workbench-meta .origin-connection-chip')).toHaveText(
+    'Build connection pending',
+  );
+});
+
+test('emerging brief uses typed fields only and preserves drafts across Audience details', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto(base);
+  await page.getByRole('button', { name: 'Develop a Product' }).click();
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('A travel kettle for Fold desks.');
+  await page.getByRole('button', { name: '02 Audience' }).click();
+  await page.getByLabel('Audience (optional)').fill('Independent designers.');
+  await page.getByLabel('Constraints (optional)').fill('No lithium claims.');
+  await expect(page.getByRole('complementary', { name: 'Emerging brief' })).toContainText(
+    'Independent designers.',
+  );
+  await expect(page.getByRole('complementary', { name: 'Emerging brief' })).not.toContainText(
+    'proposed',
+  );
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await page.getByLabel('Blueprint section').selectOption('audience');
+  await expect(page.getByLabel('Intended audience', { exact: true })).toHaveValue(
+    'Independent designers.',
+  );
+});
+
+test('Fold dock reveals one panel at 720px without fabricating checks', async ({ page }) => {
+  await page.setViewportSize({ width: 720, height: 900 });
+  await fixture(page);
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Fold layout concept');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(page.getByRole('navigation', { name: 'Workbench panels' })).toBeVisible();
+  const dock = page.getByRole('navigation', { name: 'Workbench panels' });
+  await dock.getByRole('button', { name: 'Outline', exact: true }).click();
+  await expect(page.getByRole('complementary', { name: 'Outline and context' })).toBeVisible();
+  await dock.getByRole('button', { name: 'Canvas', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Workbench views' })
+    .getByRole('button', { name: 'Checks', exact: true })
+    .click();
+  await expect(page.locator('.origin-checks-pane')).toBeVisible();
+  await expect(page.locator('.origin-checks-pane')).toContainText(
+    'Construct checks are not in this checkout',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/architect-studio-fold-720.png', fullPage: true });
+});
+
+const htmlSite = `<!DOCTYPE html><html><body><h1>Owned artifact</h1></body></html>`;
+
+for (const width of [320, 390]) {
+  test(`phone workbench keeps Artifact preview reachable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 720 });
+    const state = await fixture(page);
+    await page.goto(base);
+    await page.getByLabel('Tell Aethelios what you want to create').fill('Phone preview concept');
+    await page.getByRole('button', { name: 'Create & save project' }).click();
+    await expect(page.getByRole('status')).toContainText('Saved revision 1');
+    await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+    await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+    await page.getByLabel('Editable Markdown').fill(htmlSite);
+    await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+    await expect(page.getByRole('status')).toContainText('Saved revision 2');
+    await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+    await page.getByLabel('Blueprint section').selectOption('audience');
+    await page
+      .getByLabel('Intended audience', { exact: true })
+      .fill('A phone draft that must survive preview navigation.');
+    const preview = page.getByRole('navigation', { name: 'Workbench views' }).getByRole('button', {
+      name: 'Artifact preview',
+    });
+    await expect(preview).toBeVisible();
+    await preview.focus();
+    await expect(preview).toBeFocused();
+    await page.keyboard.press('Enter');
+    const frame = page.frameLocator('iframe[title="Isolated artifact preview"]');
+    await expect(frame.getByRole('heading', { name: 'Owned artifact' })).toBeVisible();
+    await expect(page.getByText('Actual saved document', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+    await expect(page.getByLabel('Editable Markdown')).toContainText('Owned artifact');
+    await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+    await expect(page.getByLabel('Intended audience', { exact: true })).toHaveValue(
+      'A phone draft that must survive preview navigation.',
+    );
+    expect(state.getProject()!.content.blueprint.audience).toBe('');
+    await page.screenshot({
+      path: `test-results/architect-phone-preview-${width}.png`,
+      fullPage: true,
+    });
+  });
+}
+
+test('unsaved document preview is not labelled as a saved revision', async ({ page }) => {
+  await fixture(page);
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Draft provenance concept');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+  await page.getByLabel('Editable Markdown').fill('# Saved document\n\nConfirmed copy.');
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  await page.getByLabel('Editable Markdown').fill('# Unsaved rewrite\n\nStill a draft.');
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  await expect(page.getByText('Unsaved draft preview', { exact: false })).toBeVisible();
+  await expect(page.getByText('Actual saved document', { exact: false })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await expect(page.getByLabel('Editable Markdown')).toHaveValue(
+    '# Unsaved rewrite\n\nStill a draft.',
+  );
+});
+
+test('delayed failed construct fetch cannot leak another project preview', async ({ page }) => {
+  const projects: OriginProject[] = [];
+  const versions: OriginVersion[] = [];
+  let releaseB: () => void = () => undefined;
+  const holdB = new Promise<void>((resolve) => {
+    releaseB = resolve;
+  });
+  const hash = 'c'.repeat(64);
+  await page.route('**/api/architect-origin*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { projects, versions, runs: [] } });
+    const body = route.request().postDataJSON();
+    if (body.action !== 'save') return route.fulfill({ json: { error: 'unused' }, status: 400 });
+    const now = new Date().toISOString();
+    const project: OriginProject = {
+      id: body.projectId,
+      person_id: 'owner',
+      revision: (projects.find((item) => item.id === body.projectId)?.revision ?? 0) + 1,
+      content: body.content,
+      created_at: now,
+      updated_at: now,
+    };
+    const existing = projects.findIndex((item) => item.id === project.id);
+    if (existing >= 0) projects[existing] = project;
+    else projects.unshift(project);
+    versions.unshift({
+      id: body.requestId,
+      project_id: body.projectId,
+      person_id: 'owner',
+      revision: project.revision,
+      content: body.content,
+      note: body.note,
+      created_at: now,
+    });
+    return route.fulfill({
+      json: { revision: project.revision, requestId: body.requestId, personId: 'owner' },
+    });
+  });
+  await page.route('**/api/architect-construct*', async (route) => {
+    const projectId = new URL(route.request().url()).searchParams.get('project');
+    const current = projects.find((item) => item.id === projectId);
+    if (!current) return route.fulfill({ status: 404, json: { error: 'Unknown project' } });
+    if (projects.length > 1 && projectId === projects[0]!.id) {
+      await holdB;
+      return route.fulfill({ status: 503, json: { error: 'Synthetic construct failure' } });
+    }
+    return route.fulfill({
+      json: {
+        project: { id: current.id, revision: current.revision, name: current.content.name },
+        runs: [
+          {
+            id: '77777777-7777-4777-8777-777777777777',
+            person_id: 'owner',
+            project_id: current.id,
+            project_revision: current.revision,
+            source_tree_hash: hash,
+            status: 'succeeded',
+            result: {
+              isolation: 'process-fixture',
+              runtime_available: true,
+              sandbox: false,
+              blocker: null,
+              source_hash: hash,
+              result_hash: hash,
+              changed_files: ['index.html'],
+              diff: '',
+              checks: [],
+              preview: {
+                path: 'index.html',
+                body: '<html><body><h1>Project A site</h1></body></html>',
+                unavailable_reason: null,
+              },
+            },
+          },
+        ],
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('First project with a site');
+  await page.getByLabel('Project name (optional)').fill('Project Alpha');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(
+    page.frameLocator('iframe[title="Isolated artifact preview"]').getByRole('heading', {
+      name: 'Project A site',
+    }),
+  ).toBeVisible();
+  await page.locator('summary', { hasText: 'Projects / switch creation' }).click();
+  await page
+    .getByRole('navigation', { name: 'Project library' })
+    .getByRole('button', { name: 'New vision +' })
+    .click();
+  await page
+    .getByLabel('Tell Aethelios what you want to create')
+    .fill('Second project without a site');
+  await page.getByLabel('Project name (optional)').fill('Project Beta');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Project Beta');
+  await expect(page.locator('iframe[title="Isolated artifact preview"]')).toHaveCount(0);
+  await expect(page.getByText('Project A site')).toHaveCount(0);
+  releaseB();
+  await page
+    .getByRole('navigation', { name: 'Workbench views' })
+    .getByRole('button', { name: 'Checks', exact: true })
+    .click();
+  await expect(page.getByText('Synthetic construct failure')).toBeVisible();
+  await expect(page.getByText('Project A site')).toHaveCount(0);
+});
+
+test('approve, enqueue, progress and revision-bound preview stay on the selected project', async ({
+  page,
+}) => {
+  await fixture(page);
+  let receipt: {
+    project: { id: string; revision: number; name: string };
+    runs: Array<Record<string, unknown>>;
+    events: Record<string, Array<Record<string, unknown>>>;
+    briefs: Array<Record<string, unknown>>;
+    sources: Array<Record<string, unknown>>;
+  } | null = null;
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: {
+          ready: false,
+          repository: null,
+          reason: 'Connections is not configured. Imported files can still be approved.',
+        },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        json:
+          receipt ?? {
+            project: { id: 'none', revision: 1, name: 'none' },
+            runs: [],
+            events: {},
+            briefs: [],
+            sources: [],
+          },
+      });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === 'propose') {
+      return route.fulfill({
+        json: {
+          mocked: true,
+          proposal: {
+            summary: 'Labelled mocked provider proposal. Not a paid OpenAI call.',
+            notes: 'MOCKED PROVIDER — development only.',
+            patch: [
+              {
+                path: 'preview.html',
+                before: 'Before',
+                after: 'After',
+              },
+            ],
+          },
+        },
+      });
+    }
+    if (body.action === 'approve-change') {
+      expect(body.sourceKind).toBe('imported');
+      expect(body.files.length).toBeGreaterThan(0);
+      return route.fulfill({
+        json: {
+          source: { id: body.sourceId, kind: body.sourceKind, label: 'Imported source snapshot' },
+          brief: { id: body.briefId, status: 'approved', approval_hash: 'b'.repeat(64) },
+        },
+      });
+    }
+    if (body.action === 'start') {
+      expect(body.approvalHash).toBe('b'.repeat(64));
+      expect(body.requestId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+      if (receipt?.runs[0]) {
+        expect(body.requestId).toBe(receipt.runs[0].id);
+        return route.fulfill({ json: { run: receipt.runs[0] } });
+      }
+      const now = new Date().toISOString();
+      receipt = {
+        project: { id: body.projectId, revision: body.expected, name: 'Approved Origin' },
+        sources: [
+          {
+            id: body.briefId,
+            person_id: 'owner',
+            kind: 'imported',
+            repository: null,
+            commit: null,
+            label: 'Imported source snapshot — exact attached files, not live repository knowledge.',
+            tree_hash: 'a'.repeat(64),
+            files: [],
+            created_at: now,
+          },
+        ],
+        briefs: [
+          {
+            id: body.briefId,
+            person_id: 'owner',
+            approval_hash: 'b'.repeat(64),
+            status: 'approved',
+            invalidation_reason: null,
+            scope: {
+              project_id: body.projectId,
+              project_revision: body.expected,
+              source_id: body.briefId,
+              intended_change: 'Replace the imported heading.',
+              allowed_paths: ['preview.html'],
+              protected_paths: ['.env'],
+              repository: null,
+              source_commit: null,
+              source_tree_hash: 'a'.repeat(64),
+              acceptance_checks: [{ name: 'present', command: 'true', args: [] }],
+              resource_limits: {
+                timeout_ms: 30000,
+                lease_ms: 45000,
+                max_files: 32,
+                max_file_bytes: 65536,
+                max_output_bytes: 16384,
+                max_diff_bytes: 32768,
+              },
+              patch: [{ path: 'preview.html', before: 'Before', after: 'After' }],
+            },
+            created_at: now,
+          },
+        ],
+        runs: [
+          {
+            id: body.requestId,
+            person_id: 'owner',
+            project_id: body.projectId,
+            brief_id: body.briefId,
+            approval_hash: 'b'.repeat(64),
+            source_id: body.briefId,
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: body.expected,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          [body.requestId]: [
+            {
+              id: crypto.randomUUID(),
+              run_id: body.requestId,
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued.',
+              created_at: now,
+            },
+          ],
+        },
+      };
+      return route.fulfill({ json: { run: receipt.runs[0] } });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported construct action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Approved construct path');
+  await page.getByLabel('Project name (optional)').fill('Approved Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Authorized source and project brief' })).toBeVisible();
+  await page.getByRole('button', { name: 'Propose change' }).click();
+  await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
+  await expect(
+    page.getByText('Labelled mocked provider. This is not a paid OpenAI call.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Approve proposed change' }).click();
+  await expect(page.getByText(/Change approved against the pinned source/)).toBeVisible();
+  await expect(page.getByText(/Approved inputs are bound to server digest/)).toBeVisible();
+  await page.getByRole('button', { name: 'Enqueue approved change' }).click();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await page.getByRole('button', { name: 'Enqueue approved change' }).click();
+  await expect(page.getByText(/Retries reuse this request/)).toBeVisible();
+  await expect(page.getByText(/Latest run succeeded/)).toHaveCount(0);
+  await page.getByLabel('Intended change').fill('Edited after approval — previous digest is invalid.');
+  await expect(
+    page.getByText(/The previous approval is invalid/),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Enqueue approved change' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Approve proposed change' })).toBeDisabled();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('heading', { name: 'Construct', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 720, height: 900 });
+  await expect(page.getByRole('button', { name: 'Propose change' })).toBeVisible();
+});
+
+test('construct panel drops a late poll after the project switches', async ({ page }) => {
+  const projects: OriginProject[] = [];
+  const versions: OriginVersion[] = [];
+  let releaseB: () => void = () => undefined;
+  const holdB = new Promise<void>((resolve) => {
+    releaseB = resolve;
+  });
+  await page.route('**/api/architect-origin*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { projects, versions, runs: [] } });
+    const body = route.request().postDataJSON();
+    if (body.action !== 'save') return route.fulfill({ json: { error: 'unused' }, status: 400 });
+    const now = new Date().toISOString();
+    const project: OriginProject = {
+      id: body.projectId,
+      person_id: 'owner',
+      revision: (projects.find((item) => item.id === body.projectId)?.revision ?? 0) + 1,
+      content: body.content,
+      created_at: now,
+      updated_at: now,
+    };
+    const existing = projects.findIndex((item) => item.id === project.id);
+    if (existing >= 0) projects[existing] = project;
+    else projects.unshift(project);
+    versions.unshift({
+      id: body.requestId,
+      project_id: body.projectId,
+      person_id: 'owner',
+      revision: project.revision,
+      content: body.content,
+      note: body.note,
+      created_at: now,
+    });
+    return route.fulfill({
+      json: { revision: project.revision, requestId: body.requestId, personId: 'owner' },
+    });
+  });
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: { ready: false, repository: null, reason: 'Connections is not configured.' },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    const projectId = new URL(route.request().url()).searchParams.get('project');
+    const current = projects.find((item) => item.id === projectId);
+    if (route.request().method() === 'GET') {
+      if (!current) return route.fulfill({ status: 404, json: { error: 'Unknown project' } });
+      if (projects.length > 1 && projectId === projects[0]!.id) await holdB;
+      return route.fulfill({
+        json: {
+          project: { id: current.id, revision: current.revision, name: current.content.name },
+          runs:
+            current.content.name === 'Panel Alpha'
+              ? [
+                  {
+                    id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                    person_id: 'owner',
+                    project_id: current.id,
+                    brief_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                    approval_hash: 'b'.repeat(64),
+                    source_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                    source_kind: 'imported',
+                    source_tree_hash: 'a'.repeat(64),
+                    project_revision: current.revision,
+                    status: 'succeeded',
+                    result: {
+                      isolation: 'docker',
+                      runtime_available: true,
+                      sandbox: true,
+                      blocker: null,
+                      source_hash: 'a'.repeat(64),
+                      result_hash: 'b'.repeat(64),
+                      changed_files: ['alpha.html'],
+                      diff: '',
+                      checks: [],
+                      preview: {
+                        path: 'alpha.html',
+                        body: '<html><body>Alpha receipt</body></html>',
+                        unavailable_reason: null,
+                      },
+                    },
+                  },
+                ]
+              : [],
+          events: {},
+          briefs: [],
+          sources: [],
+        },
+      });
+    }
+    return route.fulfill({ status: 400, json: { error: 'unused' } });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Panel project A');
+  await page.getByLabel('Project name (optional)').fill('Panel Alpha');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByText('Saved revision 1. Confirmed by the server.')).toBeVisible();
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByText(/Latest run succeeded/)).toBeVisible();
+  await page.locator('summary', { hasText: 'Projects / switch creation' }).click();
+  await page
+    .getByRole('navigation', { name: 'Project library' })
+    .getByRole('button', { name: 'New vision +' })
+    .click();
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Panel project B');
+  await page.getByLabel('Project name (optional)').fill('Panel Beta');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByText('Saved revision 1. Confirmed by the server.')).toBeVisible();
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Panel Beta');
+  await expect(page.getByText('Alpha receipt')).toHaveCount(0);
+  await expect(page.getByText(/Latest run succeeded/)).toHaveCount(0);
+  releaseB();
+  await expect(page.getByText(/No approved brief for this project yet/)).toBeVisible();
+  await expect(page.getByText('Alpha receipt')).toHaveCount(0);
+});
+
+test('construct stays off without persistence and does not invent a live run', async ({ page }) => {
+  await fixture(page);
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Unavailable worker draft');
+  await page.getByLabel('Project name (optional)').fill('Blocked Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByText(/Execution persistence is off in this environment/)).toBeVisible();
+  await expect(page.getByText(/No simulated success is shown as a live run/)).toBeVisible();
+  await expect(page.getByText(/Latest run succeeded/)).toHaveCount(0);
+  await expect(page.getByText(/Latest run queued/)).toHaveCount(0);
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Blocked Origin');
+  await expect(page.getByRole('textbox', { name: 'Intended change' })).toHaveValue(
+    'Unavailable worker draft',
+  );
+});
+
+test('keeps last success and drafts when worker, connections and provider are unavailable', async ({
+  page,
+}) => {
+  await fixture(page);
+  const now = new Date().toISOString();
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: {
+          ready: false,
+          repository: null,
+          reason: 'GitHub App setup is required.',
+        },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    if (route.request().method() !== 'GET')
+      return route.fulfill({
+        status: 503,
+        json: { error: 'Isolated worker is not running. The queued request was not executed.' },
+      });
+    const projectId = new URL(route.request().url()).searchParams.get('project') ?? 'project';
+    return route.fulfill({
+      json: {
+        project: { id: projectId, revision: 1, name: 'Blocked Origin' },
+        proposal: {
+          mode: 'disabled',
+          reason:
+            'Construct model proposals stay disabled until ARCHITECT_CONSTRUCT_ENABLED, ARCHITECT_CONSTRUCT_AI_ENABLED, a server-only OPENAI_API_KEY, and funded non-production testing are authorized. A funded OpenAI account does not supply a sandbox, durable worker, or repository connection.',
+        },
+        sources: [],
+        briefs: [],
+        runs: [
+          {
+            id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+            approval_hash: 'c'.repeat(64),
+            source_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'queued',
+            cancel_requested: false,
+            worker_id: null,
+            lease_until: null,
+            result: null,
+            created_at: now,
+            updated_at: now,
+          },
+          {
+            id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            person_id: 'owner',
+            project_id: projectId,
+            brief_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            approval_hash: 'b'.repeat(64),
+            source_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            source_kind: 'imported',
+            source_tree_hash: 'a'.repeat(64),
+            project_revision: 1,
+            status: 'succeeded',
+            result: {
+              isolation: 'docker',
+              runtime_available: true,
+              sandbox: true,
+              blocker: null,
+              source_hash: 'a'.repeat(64),
+              result_hash: 'b'.repeat(64),
+              changed_files: ['kept.html'],
+              diff: '',
+              checks: [
+                {
+                  name: 'heading',
+                  status: 'passed',
+                  command: 'node check.mjs',
+                  exit_code: 0,
+                  log: '',
+                },
+              ],
+              preview: {
+                path: 'kept.html',
+                body: '<html><body><h1>Kept success</h1></body></html>',
+                unavailable_reason: null,
+              },
+            },
+            created_at: now,
+            updated_at: now,
+          },
+        ],
+        events: {
+          'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb': [
+            {
+              id: crypto.randomUUID(),
+              run_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+              person_id: 'owner',
+              seq: 1,
+              kind: 'queued',
+              detail: 'Run queued. Isolated worker is not running.',
+              created_at: now,
+            },
+          ],
+        },
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Unavailable capabilities');
+  await page.getByLabel('Project name (optional)').fill('Blocked Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByText(/GitHub App setup is required/)).toBeVisible();
+  await expect(page.getByText(/Publishing and deployment stay unavailable/)).toBeVisible();
+  await expect(page.getByText(/A funded OpenAI account does not supply/)).toBeVisible();
+  await expect(page.getByText(/Latest run queued/)).toBeVisible();
+  await expect(page.getByText(/Isolated worker is not running/)).toBeVisible();
+  await page.getByRole('button', { name: 'Artifact preview' }).click();
+  await expect(page.frameLocator('iframe[title="Isolated artifact preview"]').getByText('Kept success')).toBeVisible();
+  await expect(page.locator('.origin-artifact-caption')).toContainText(/Isolated static preview|Last successful Construct/);
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  const review = page.getByRole('navigation', { name: 'Construct review' });
+  await review.getByRole('button', { name: 'Changes', exact: true }).click();
+  await expect(page.getByText(/Queued runs do not display a simulated diff|No execution result yet/)).toBeVisible();
+  await review.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByText(/The browser cannot forge them/)).toBeVisible();
+  await page.getByRole('button', { name: 'Propose change' }).click();
+  await expect(page.getByRole('alert')).toContainText(/Isolated worker is not running|stay disabled|not executed/);
+  await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Blocked Origin');
 });

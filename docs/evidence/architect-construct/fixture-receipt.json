@@ -1,0 +1,47 @@
+{
+  "label": "Deterministic Architect construct fixture — execution mechanics, not a model-generated Aethelios feature.",
+  "candidate": "Find and resume Architect projects remains a future model-generated candidate and was not prewritten.",
+  "source": {
+    "kind": "fixture",
+    "label": "Deterministic fixture source — labelled test tree, not an imported application snapshot.",
+    "tree_hash": "bae8a9930a2e66806dcf3774042a6677ee1718330215ad8c42b2b4f4ab5292c6",
+    "preview": "preview.html"
+  },
+  "run": {
+    "id": "00000000-0000-4000-8000-000000000041",
+    "status": "succeeded",
+    "events": [
+      "queued",
+      "claimed",
+      "started",
+      "source_prepared",
+      "check_started",
+      "check_finished",
+      "check_started",
+      "check_finished",
+      "preview_collected",
+      "blocked",
+      "blocked"
+    ],
+    "changed_files": [
+      "preview.html"
+    ],
+    "checks": [
+      {
+        "name": "syntax",
+        "status": "passed",
+        "exit_code": 0
+      },
+      {
+        "name": "heading",
+        "status": "passed",
+        "exit_code": 0
+      }
+    ],
+    "preview_contains_after": true,
+    "isolation": "process-fixture",
+    "runtime_available": false,
+    "sandbox": false,
+    "worker_isolation": "unavailable"
+  }
+}

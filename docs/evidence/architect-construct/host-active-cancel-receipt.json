@@ -1,0 +1,19 @@
+{
+  "label": "Host running-container cancel — not a model-generated Aethelios feature.",
+  "proof": "unavailable",
+  "store": "memory-construct-store",
+  "not_durable_database": true,
+  "durable_smoke": "scripts/architect-construct-durable-smoke.mjs",
+  "available": false,
+  "observed_running": false,
+  "container": null,
+  "after_inspect": null,
+  "exit_code": null,
+  "aborted": false,
+  "stopped": false,
+  "container_gone": false,
+  "durable_status": null,
+  "durable_blocker": null,
+  "teardown_confirmed": false,
+  "reason": "Docker is not installed in this runtime. Isolated container execution is blocked."
+}

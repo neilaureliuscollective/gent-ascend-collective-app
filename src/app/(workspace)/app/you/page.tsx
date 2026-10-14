@@ -51,6 +51,9 @@ export default async function You({
                 <Link className="text-link" href="/app/founder/launch">
                   Launch readiness →
                 </Link>
+                <Link className="text-link" href="/app/founder/connections">
+                  Connections →
+                </Link>
               </>
             )}
             <Image

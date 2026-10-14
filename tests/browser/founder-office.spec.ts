@@ -18,8 +18,9 @@ for (const width of [320, 344, 768, 900, 1440, 2560]) {
       founderOfficeFixture.companies[0]!.id,
     );
     await page.getByLabel('Assigned Coworker').selectOption('mara');
+    await expect(page.getByRole('link', { name: 'Connections' })).toBeVisible();
     await expect(
-      page.getByText('No authorized repository writes or private access.', { exact: false }),
+      page.getByText('Setup required. Register the provider application', { exact: false }).first(),
     ).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

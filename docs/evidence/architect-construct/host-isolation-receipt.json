@@ -1,0 +1,16 @@
+{
+  "label": "Host isolation integration — not a model-generated Aethelios feature.",
+  "probe": {
+    "available": false,
+    "backend": "unavailable",
+    "code": "not-installed",
+    "reason": "Docker is not installed in this runtime. Isolated container execution is blocked."
+  },
+  "image": {
+    "ready": false,
+    "reason": "Docker is not installed in this runtime. Isolated container execution is blocked.",
+    "pulled": false
+  },
+  "outcome": "unavailable",
+  "execution": null
+}
