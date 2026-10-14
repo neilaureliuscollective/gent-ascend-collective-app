@@ -1,8 +1,14 @@
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { isGeneratedAppPath, isSealedAppPath } from './catalog';
+import {
+  buildAppGenerationContext,
+  validateProposalAgainstContext,
+  type AppGenerationContext,
+  type AppGenerationDirection,
+} from './context';
 import { labeledAppSource } from './hash';
 import { appsAiMockReady, appsAiReady } from './readiness';
-import { appProposalSchema, type AppFile, type AppProposal } from './schema';
+import { appProposalSchema, type AppCollection, type AppFile, type AppProposal } from './schema';
 import {
   trackerPriorityCollections,
   trackerPriorityOperations,
@@ -43,13 +49,7 @@ export function appProviderStatus(env: NodeJS.ProcessEnv | Record<string, string
   return { enabled: true as const, mode, reason: labeledAppSource('openai') };
 }
 
-export type AppGenerationTransport = (input: {
-  instruction: string;
-  kind: 'create' | 'revise';
-  files: AppFile[];
-  brief?: string;
-  direction?: string;
-}) => Promise<unknown>;
+export type AppGenerationTransport = (input: AppGenerationContext) => Promise<unknown>;
 
 export function assertGeneratedOnly(proposal: AppProposal) {
   for (const file of proposal.files) {
@@ -87,17 +87,26 @@ export async function generateAppProposal(
     kind: 'create' | 'revise';
     demo: 'tracker' | 'none';
     baseFiles: AppFile[];
+    collections?: AppCollection[];
     brief?: string;
-    direction?: string;
+    direction?: AppGenerationDirection;
   },
   transport?: AppGenerationTransport,
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
-): Promise<{ proposal: AppProposal; mode: Exclude<AppGenerationMode, 'disabled'> }> {
+): Promise<{ proposal: AppProposal; mode: Exclude<AppGenerationMode, 'disabled'>; context: AppGenerationContext }> {
   const mode = appProposalMode(env);
+  const context = buildAppGenerationContext({
+    instruction: input.instruction,
+    kind: input.kind,
+    files: input.baseFiles,
+    collections: input.collections,
+    brief: input.brief,
+    direction: input.direction,
+  });
   if (mode === 'disabled')
     throw new IntelligenceError(appProviderStatus(env).reason ?? 'App generation is unavailable.', 503);
   if (input.demo === 'tracker') {
-    return { proposal: mockedTrackerProposal(input.kind, input.baseFiles), mode: 'fixture' };
+    return { proposal: mockedTrackerProposal(input.kind, input.baseFiles), mode: 'fixture', context };
   }
   if (!transport)
     throw new IntelligenceError(
@@ -106,18 +115,9 @@ export async function generateAppProposal(
         : 'App generation requires the mocked or OpenAI adapter. The labelled tracker fixture is available only when demo=tracker.',
       503,
     );
-  const raw = await transport({
-    instruction: input.instruction,
-    kind: input.kind,
-    files: input.baseFiles,
-    brief: input.brief,
-    direction: input.direction,
-  });
-  const proposal = assertGeneratedOnly(appProposalSchema.parse(raw));
-  if (input.kind === 'revise' && input.baseFiles.length && proposal.operations?.length) {
-    applyFileOperations(overlaySealedFiles(input.baseFiles), proposal.operations);
-  }
-  return { proposal, mode };
+  const raw = await transport(context);
+  const proposal = validateProposalAgainstContext(assertGeneratedOnly(appProposalSchema.parse(raw)), context);
+  return { proposal, mode, context };
 }
 
 export function appGenerationProvenance(mode: Exclude<AppGenerationMode, 'disabled'> | 'unknown') {

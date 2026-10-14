@@ -42,6 +42,7 @@ export function ArchitectAppPanel({
   const frame = useRef<HTMLIFrameElement>(null);
   const scroll = useRef(0);
   const plane = useRef<HTMLDivElement>(null);
+  const boundPreview = useRef({ session: '', generation: 0, revisionId: '', document: 0 });
 
   const recovered = library?.pendingStart ?? null;
   const current = library?.current ?? null;
@@ -95,18 +96,41 @@ export function ArchitectAppPanel({
   }, [panel, viewport, selectedFile]);
 
   useEffect(() => {
+    boundPreview.current = {
+      session: library?.previewSession ?? '',
+      generation: preview?.generation ?? 0,
+      revisionId: preview?.revisionId ?? '',
+      document: boundPreview.current.document + 1,
+    };
+  }, [library?.previewSession, preview?.generation, preview?.revisionId, preview?.srcDoc]);
+
+  useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.source !== frame.current?.contentWindow) return;
       if (event.origin !== 'null' && event.origin !== window.location.origin) return;
       const data = event.data as { schema?: string; session?: string; requestId?: string };
       if (!data || data.schema !== 'architect-apps-data/v1' || !data.session) return;
-      const revisionId = preview?.revisionId ?? (current?.status === 'ready' ? current.id : working?.id);
-      if (!revisionId) return;
-      void forwardAppData(data, projectId, revisionId)
+      const snapshot = { ...boundPreview.current };
+      if (!snapshot.revisionId || data.session !== snapshot.session) return;
+      void forwardAppData(data, projectId, snapshot.revisionId)
         .then((result) => {
+          if (
+            boundPreview.current.document !== snapshot.document ||
+            boundPreview.current.session !== snapshot.session ||
+            boundPreview.current.revisionId !== snapshot.revisionId ||
+            boundPreview.current.generation !== snapshot.generation
+          )
+            return;
           frame.current?.contentWindow?.postMessage({ schema: 'architect-apps-data/v1', ...result }, event.origin === 'null' ? '*' : event.origin);
         })
         .catch((reason: unknown) => {
+          if (
+            boundPreview.current.document !== snapshot.document ||
+            boundPreview.current.session !== snapshot.session ||
+            boundPreview.current.revisionId !== snapshot.revisionId ||
+            boundPreview.current.generation !== snapshot.generation
+          )
+            return;
           frame.current?.contentWindow?.postMessage(
             {
               schema: 'architect-apps-data/v1',
@@ -120,7 +144,7 @@ export function ArchitectAppPanel({
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [current, working, preview?.revisionId, projectId]);
+  }, [projectId]);
 
   const files = useMemo(() => {
     const row = library?.revisions.find((item) => item.revision === displayed?.revision) ?? library?.revisions.find((item) => item.id === current?.id);

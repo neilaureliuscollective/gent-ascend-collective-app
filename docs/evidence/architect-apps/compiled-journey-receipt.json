@@ -1,0 +1,30 @@
+{
+  "schema": "architect-apps-compiled-journey/v1",
+  "date": "2026-10-14",
+  "label": "Deterministic host-fixture + mocked-provider evidence. Not a paid OpenAI call and not isolated Docker success.",
+  "app": "Field Notes",
+  "generation": { "mode": "mock", "notes": "Labelled mocked provider. Not a paid OpenAI call." },
+  "bundle": {
+    "entry": "assets/app.js",
+    "format": "iife",
+    "isolation": "host-fixture",
+    "sandbox": false,
+    "dollarAmpersandPreserved": true
+  },
+  "iframe": {
+    "sandbox": "allow-scripts allow-forms",
+    "allowSameOrigin": false,
+    "mounted": true,
+    "createEditRetryReload": true,
+    "parentStorageReadable": false
+  },
+  "docker": {
+    "available": false,
+    "reason": "docker: command not found. No Docker-enabled Apps job in .github/workflows/architect-origin.yml."
+  },
+  "talk": {
+    "contract": "talk.architect.source.resolve",
+    "version": "2026-10-14.1",
+    "registered": false
+  }
+}

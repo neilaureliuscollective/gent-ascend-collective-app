@@ -50,7 +50,7 @@ import {
 } from '@/domains/architect-apps/service';
 import { MemoryAppStore } from '@/domains/architect-apps/store';
 import { processAppBuildOnce } from '@/domains/architect-apps/worker';
-import { signPreviewSession } from '@/domains/architect-apps/preview';
+import { resetPreviewSessions, signPreviewSession } from '@/domains/architect-apps/preview';
 import { isSealedAppPath } from '@/domains/architect-apps/catalog';
 
 beforeEach(() => {
@@ -58,7 +58,9 @@ beforeEach(() => {
   vi.stubEnv('ARCHITECT_APPS_ENABLED', 'true');
   vi.stubEnv('ARCHITECT_APPS_STORE', 'memory');
   vi.stubEnv('ARCHITECT_APPS_FIXTURE', 'true');
+  vi.stubEnv('ARCHITECT_APPS_PREVIEW_SECRET', 'service-preview-secret-key');
   vi.stubEnv('APP_ENV', 'local');
+  resetPreviewSessions();
   const store = appStore() as MemoryAppStore;
   store.apps.clear();
   store.revisions.clear();
@@ -205,7 +207,14 @@ it('keeps the last working app when a later build fails and isolates owners', as
         blocker: 'Host-fixture toolchain.',
         stages: [],
       },
-      artifacts: [{ path: 'index.html', content: '<html><body>tracker</body></html>' }],
+      artifacts: [
+        {
+          path: 'index.html',
+          content:
+            '<!doctype html><html><head></head><body><div id="root"></div><script type="module" src="./assets/app.js"></script></body></html>',
+        },
+        { path: 'assets/app.js', content: 'document.getElementById("root").innerHTML="<h1>tracker</h1>";' },
+      ],
       manifestHash: 'c'.repeat(64),
     }),
   });
@@ -282,10 +291,41 @@ it('cancels a queued job and stores host records against the app, not the previe
     jobId: job.id,
   });
   expect(cancelled.status).toBe('cancelled');
+  await startArchitectApp({
+    action: 'start',
+    projectId: state.projectId,
+    revisionId: approved.revision.id,
+    requestId: '00000000-0000-4000-8000-000000000434',
+    expected: 1,
+    approvalHash: approved.revision.approval_hash,
+  });
+  await processAppBuildOnce(appStore(), 'worker-a', new Date(), {
+    build: async () => ({
+      result: {
+        ok: true,
+        isolation: 'host-fixture' as const,
+        sandbox: false,
+        typecheck: { ok: true, log: 'ok' },
+        bundle: { ok: true, log: 'ok' },
+        blocker: 'Host-fixture toolchain.',
+        stages: [],
+      },
+      artifacts: [
+        {
+          path: 'index.html',
+          content:
+            '<!doctype html><html><head></head><body><div id="root"></div><script type="module" src="./assets/app.js"></script></body></html>',
+        },
+        { path: 'assets/app.js', content: 'document.getElementById("root").innerHTML="<h1>tracker</h1>";' },
+      ],
+      manifestHash: 'c'.repeat(64),
+    }),
+  });
   const session = signPreviewSession({
     personId: state.owner,
     projectId: state.projectId,
     revisionId: approved.revision.id,
+    secret: 'service-preview-secret-key',
   });
   const created = await operateArchitectAppData({
     projectId: state.projectId,
@@ -295,7 +335,7 @@ it('cancels a queued job and stores host records against the app, not the previe
     operation: 'create',
     collection: 'items',
     payload: { id: '00000000-0000-4000-8000-000000000441', title: 'Ship review', notes: '', status: 'open', hours: 2 },
-    idempotencyKey: '00000000-0000-4000-8000-000000000441',
+    idempotencyKey: '00000000-0000-4000-8000-000000000711',
   });
   const replay = await operateArchitectAppData({
     projectId: state.projectId,
@@ -305,7 +345,7 @@ it('cancels a queued job and stores host records against the app, not the previe
     operation: 'create',
     collection: 'items',
     payload: { id: '00000000-0000-4000-8000-000000000441', title: 'Ship review', notes: '', status: 'open', hours: 2 },
-    idempotencyKey: '00000000-0000-4000-8000-000000000441',
+    idempotencyKey: '00000000-0000-4000-8000-000000000711',
   });
   expect((created.records[0] as { title?: string }).title).toBe('Ship review');
   expect(replay.records[0]?.id).toBe(created.records[0]?.id);

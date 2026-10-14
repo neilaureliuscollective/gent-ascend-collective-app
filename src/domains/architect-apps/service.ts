@@ -6,7 +6,13 @@ import { DatabaseAppStore, type AppPersistenceClient } from './database-store';
 import { assertAdditiveSchema, assertDataRate, recordToItem, validateCollectionPayload } from './data-bridge';
 import { appGenerationProvenance, appProviderStatus, generateAppProposal, type AppGenerationTransport } from './generation';
 import { appApprovalHash, treeHash } from './hash';
-import { assemblePreviewDocument, signPreviewSession, verifyPreviewSession } from './preview';
+import {
+  assemblePreviewDocument,
+  previewSessionGeneration,
+  revisionAllowsPreview,
+  signPreviewSession,
+  verifyPreviewSession,
+} from './preview';
 import { defaultAppGenerationTransport } from './provider';
 import { appsReady, memoryAppStoreAllowed } from './readiness';
 import {
@@ -121,11 +127,12 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
       selected && (selected.status === 'ready' || selected.working) && selectedArtifact ? selected : working;
     const previewArtifact =
       previewRevision?.id === selected?.id && selectedArtifact ? selectedArtifact : workingArtifact;
-    const session = previewRevision
-      ? signPreviewSession({ personId: person.id, projectId, revisionId: previewRevision.id })
-      : null;
+    const session =
+      previewRevision && previewArtifact && revisionAllowsPreview(previewRevision)
+        ? signPreviewSession({ personId: person.id, projectId, revisionId: previewRevision.id })
+        : null;
     const preview =
-      previewRevision && previewArtifact && session
+      previewRevision && previewArtifact && session && revisionAllowsPreview(previewRevision)
         ? assemblePreviewDocument({
             artifacts: previewArtifact.files,
             session,
@@ -133,6 +140,7 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
             title: app?.name,
             revision: previewRevision.revision,
             revisionId: previewRevision.id,
+            generation: previewSessionGeneration(previewRevision.id),
           })
         : null;
     const pendingStart =
@@ -208,8 +216,18 @@ export async function proposeArchitectApp(
         kind: parsed.data.kind,
         demo: parsed.data.demo,
         baseFiles: base?.files ?? [],
+        collections: base?.collections ?? [],
         brief: project.content.blueprint?.vision,
-        direction: direction?.receipt.content.summary,
+        direction: direction
+          ? {
+              schema: direction.receipt.schema,
+              name: direction.receipt.content.name,
+              summary: direction.receipt.content.summary,
+              digest: direction.digest,
+              verified: direction.verified,
+              sourceKind: direction.source_kind,
+            }
+          : null,
       },
       transport ?? defaultAppGenerationTransport(),
     );
@@ -335,6 +353,7 @@ export async function reopenArchitectApp(input: unknown) {
       personId: person.id,
       projectId: parsed.data.projectId,
       revisionId: revision.id,
+      replace: true,
     });
     return {
       revision,
@@ -345,6 +364,7 @@ export async function reopenArchitectApp(input: unknown) {
         title: revision.generation.notes,
         revision: revision.revision,
         revisionId: revision.id,
+        generation: previewSessionGeneration(revision.id),
       }),
       session,
       selectedRevision: revision.revision,
@@ -368,12 +388,14 @@ export async function operateArchitectAppData(input: {
   try {
     const { person, client } = await requireOwnedProject(input.projectId);
     if (!verifyPreviewSession(input.session, { personId: person.id, projectId: input.projectId, revisionId: input.revisionId }))
-      throw new IntelligenceError('Preview session is not bound to this application revision.', 403);
+      throw new IntelligenceError('Preview session is expired, revoked, or not bound to this application revision.', 403);
     assertDataRate(person.id);
     const store = appStore({ client, plane: 'owner' });
     const revision = await store.readRevision(person.id, input.revisionId);
     const app = await store.readApp(person.id, input.projectId);
     if (!revision || !app) throw new IntelligenceError('Application unavailable.', 404);
+    if (!revisionAllowsPreview(revision))
+      throw new IntelligenceError('Preview data is authorized only for a ready or last-working revision.', 403);
     const schema = revision.collections.find((row) => row.name === input.collection);
     if (!schema) throw new IntelligenceError('Unknown host collection.', 404);
     if (input.operation === 'list') {

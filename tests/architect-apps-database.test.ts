@@ -161,13 +161,27 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
     ]);
     const record = await asUser(
       ownerAuth,
-      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit' })},'idem-1',null) as id`,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit' })},'create-1',null) as id`,
     );
-    const replay = await asUser(
+    const replayCreate = await asUser(
       ownerAuth,
-      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Changed' })},'idem-1',null) as id`,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Changed' })},'create-1',null) as id`,
     );
-    expect(replay.rows[0]).toEqual(record.rows[0]);
+    expect(replayCreate.rows[0]).toEqual(record.rows[0]);
+    const edited = await asUser(
+      ownerAuth,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit edited' })},'edit-1','${(record.rows[0] as { id: string }).id}') as id`,
+    );
+    expect(edited.rows[0]).toEqual(record.rows[0]);
+    const retryEdit = await asUser(
+      ownerAuth,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Should not revert' })},'edit-1','${(record.rows[0] as { id: string }).id}') as id`,
+    );
+    expect(retryEdit.rows[0]).toEqual(record.rows[0]);
+    expect(
+      (await asUser(ownerAuth, `select payload->>'title' as title from public.architect_app_records where id='${(record.rows[0] as { id: string }).id}'`))
+        .rows,
+    ).toEqual([{ title: 'Site visit edited' }]);
     expect((await asUser(foreignAuth, `select id from public.architect_app_records`)).rows).toEqual([]);
     expect(
       (

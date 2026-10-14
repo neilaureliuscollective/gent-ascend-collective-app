@@ -352,7 +352,13 @@ export class MemoryAppStore implements AppStore {
       if (replay) return replay;
     }
     const existing = input.id ? this.records.get(input.id) : null;
-    if (existing && existing.person_id !== input.personId) throw new AppStoreError('Record unavailable.', 'not_found');
+    if (
+      existing &&
+      (existing.person_id !== input.personId ||
+        existing.app_id !== input.appId ||
+        existing.collection !== input.collection)
+    )
+      throw new AppStoreError('Record unavailable.', 'not_found');
     const rows = await this.listRecords(input.personId, input.appId, input.collection);
     if (!existing && rows.length >= defaultAppLimits.max_records)
       throw new AppStoreError('Collection quota exceeded.');

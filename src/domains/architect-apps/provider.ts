@@ -4,7 +4,12 @@ import { generateText, Output } from 'ai';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { sharedCharacter } from '@/domains/intelligence/prompt';
-import { isGeneratedAppPath, isSealedAppPath } from './catalog';
+import { isGeneratedAppPath } from './catalog';
+import {
+  APP_DATA_BRIDGE_CONTRACT,
+  buildAppGenerationContext,
+  type AppGenerationContext,
+} from './context';
 import { labeledAppSource } from './hash';
 import { notesProposal, notesTagCollections, notesTagOperations } from './notes-fixture';
 import { appsAiMockReady, appsAiReady } from './readiness';
@@ -12,9 +17,16 @@ import { appProposalSchema, type AppFile, type AppProposal } from './schema';
 import { applyFileOperations, overlaySealedFiles } from './tree';
 import type { AppGenerationTransport } from './generation';
 
-export function mockedSupportedAppProposal(input: { kind: 'create' | 'revise'; files: AppFile[] }): AppProposal {
+export function mockedSupportedAppProposal(
+  input: {
+    kind: 'create' | 'revise';
+    files: Array<{ path: string; content: string; hash?: string }>;
+    collections?: AppGenerationContext['collections'];
+  },
+): AppProposal {
+  const files: AppFile[] = input.files.map((file) => ({ path: file.path, content: file.content }));
   if (input.kind === 'revise') {
-    const base = overlaySealedFiles(input.files.length ? input.files : notesProposal().files);
+    const base = overlaySealedFiles(files.length ? files : notesProposal().files);
     const operations = notesTagOperations(base);
     const applied = applyFileOperations(base, operations);
     return appProposalSchema.parse({
@@ -29,12 +41,10 @@ export function mockedSupportedAppProposal(input: { kind: 'create' | 'revise'; f
   return appProposalSchema.parse(notesProposal());
 }
 
-export async function openaiAppTransport(
-  input: { instruction: string; kind: 'create' | 'revise'; files: AppFile[] },
-  signal?: AbortSignal,
-): Promise<unknown> {
+export async function openaiAppTransport(input: AppGenerationContext, signal?: AbortSignal): Promise<unknown> {
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY) throw new IntelligenceError('Model connection unavailable.', 503);
+  const context = buildAppGenerationContext(input);
   const openai = createOpenAI({
     apiKey: config.OPENAI_API_KEY,
     baseURL: 'https://api.openai.com/v1',
@@ -42,13 +52,15 @@ export async function openaiAppTransport(
   const result = await generateText({
     model: openai.responses(config.AURELIUS_AI_MODEL),
     instructions: `You are Aethelios in Architect Apps. ${sharedCharacter}
-Return only a validated React/TypeScript/Vite application under src/. You cannot install packages, edit sealed toolchain files, invent servers, authentication, payments or publishing. Preserve unchanged files. Update and delete operations must bind exact base hashes. Additive collection schema only.`,
+Return only a validated React/TypeScript/Vite application under src/. You cannot install packages, edit sealed toolchain files, invent servers, authentication, payments or publishing. Preserve unchanged files. Update and delete operations must bind the exact base hashes supplied in context.files. Additive collection schema only. Persist only through the host bridge ${APP_DATA_BRIDGE_CONTRACT.schema}. Paths and character counts are not a revision base.`,
     prompt: JSON.stringify({
-      instruction: input.instruction.slice(0, 2000),
-      kind: input.kind,
-      base_files: input.files
-        .filter((file) => isGeneratedAppPath(file.path) && !isSealedAppPath(file.path))
-        .map((file) => ({ path: file.path, bytes: file.content.length })),
+      instruction: context.instruction,
+      kind: context.kind,
+      files: context.files,
+      collections: context.collections,
+      bridge: context.bridge,
+      brief: context.brief ?? null,
+      direction: context.direction ?? null,
     }),
     output: Output.object({ schema: appProposalSchema }),
     maxOutputTokens: 4000,

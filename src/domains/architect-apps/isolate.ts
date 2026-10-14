@@ -1,10 +1,12 @@
 import { execFile, spawn } from 'node:child_process';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { APP_TOOLCHAIN_VERSION, approvedDependencies } from './catalog';
 import { artifactManifestHash } from './hash';
+import { assertSingleBundleArtifacts } from './bundle';
 import type { AppFile, AppJobResult } from './schema';
 import { overlaySealedFiles } from './tree';
 
@@ -54,7 +56,6 @@ export function appsDockerInvocation(
     throw new Error('Disposable container names must stay inside the apps- prefix.');
   const args = [
     'run',
-    '--rm',
     '--network',
     'none',
     '--read-only',
@@ -192,7 +193,67 @@ export function parseAppsToolchainVersions(raw: string) {
   };
 }
 
-export const trustedAppsContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+export function appsContainerName(jobId: string) {
+  const compact = jobId.replace(/-/g, '').slice(0, 20);
+  return `apps-${compact || Date.now().toString(36)}`;
+}
+
+export function collectArtifactTree(dir: string, prefix = ''): AppFile[] {
+  const artifacts: AppFile[] = [];
+  if (!existsSync(dir)) return artifacts;
+  for (const name of readdirSync(dir)) {
+    const relative = prefix ? `${prefix}/${name}` : name;
+    const target = join(dir, name);
+    const st = statSync(target);
+    if (st.isDirectory()) artifacts.push(...collectArtifactTree(target, relative));
+    else artifacts.push({ path: relative, content: readFileSync(target, 'utf8') });
+  }
+  return artifacts;
+}
+
+export const isolatedArtifactCollectorModule = `import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+const artifacts = [];
+function walk(dir, prefix) {
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir)) {
+    const relative = prefix ? prefix + '/' + name : name;
+    const target = join(dir, name);
+    const st = statSync(target);
+    if (st.isDirectory()) walk(target, relative);
+    else artifacts.push({ path: relative, content: readFileSync(target, 'utf8') });
+  }
+}
+walk(process.argv[2], '');
+process.stdout.write(JSON.stringify(artifacts));
+`;
+
+export async function removeNamedAppsContainer(
+  name: string,
+  exec: AppsDockerExec = (file, args, options) => execFileAsync(file, args, options),
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+): Promise<{ removed: boolean; confirmed: boolean; inspect: string }> {
+  if (!/^apps-[A-Za-z0-9_-]+$/.test(name)) throw new Error('Disposable container names must stay inside the apps- prefix.');
+  const dockerEnv = { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv;
+  try {
+    await exec('docker', ['rm', '-f', name], { timeout: 4000, env: dockerEnv });
+  } catch {
+    /* confirm below */
+  }
+  try {
+    const inspected = await exec('docker', ['inspect', '-f', '{{.Name}} {{.State.Running}}', name], {
+      timeout: 4000,
+      env: dockerEnv,
+    });
+    return { removed: true, confirmed: false, inspect: inspected.stdout.trim() };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const gone = /no such container|not found/i.test(message) || (error as NodeJS.ErrnoException).code === 'ENOENT';
+    return { removed: true, confirmed: gone, inspect: message };
+  }
+}
+
+export const trustedAppsContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 function can(path, mode) { try { accessSync(path, mode); return true; } catch { return false; } }
@@ -255,7 +316,7 @@ const bundle = typecheck.ok
 const artifacts = [];
 function walk(dir, prefix) {
   if (!existsSync(dir)) return;
-  for (const name of require('node:fs').readdirSync(dir)) {
+  for (const name of readdirSync(dir)) {
     const relative = prefix ? prefix + '/' + name : name;
     const target = join(dir, name);
     const st = statSync(target);
@@ -347,98 +408,140 @@ export async function buildIsolatedGeneratedApp(
     await writeFile(jobFile, JSON.stringify({ files: tree.map((file) => ({ path: file.path })), timeout_ms: timeoutMs }), 'utf8');
     const invocation = appsDockerInvocation(join(work, 'src-tree'), runnerFile, image, { jobFile, name });
     assertSafeAppsDockerArgs(invocation.args);
-    const exec = options.exec;
+    const exec = options.exec ?? ((file, args, execOptions) => execFileAsync(file, args, execOptions));
+    const teardown = async () => removeNamedAppsContainer(name, exec, env);
     let stdout = '';
     let stderr = '';
-    if (exec) {
-      const ran = await exec(invocation.command, invocation.args, {
-        timeout: timeoutMs,
-        env: { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
-      });
-      stdout = ran.stdout;
-      stderr = ran.stderr ?? '';
-    } else {
-      const ran = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve, reject) => {
-        const child = spawn(invocation.command, invocation.args, {
-          env: { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin', NODE_ENV: 'production' } as NodeJS.ProcessEnv,
-          stdio: ['ignore', 'pipe', 'pipe'] satisfies ['ignore', 'pipe', 'pipe'],
+    try {
+      if (options.exec) {
+        if (options.signal?.aborted) {
+          await teardown();
+          await record('cancelled', 'Owner cancelled the isolated build.');
+          return {
+            result: {
+              ok: false,
+              isolation: 'docker',
+              sandbox: false,
+              typecheck: { ok: false, log: '' },
+              bundle: { ok: false, log: '' },
+              blocker: 'Owner cancelled the isolated build.',
+              stages,
+            } satisfies AppJobResult,
+            artifacts: [],
+            manifestHash: null,
+          };
+        }
+        const ran = await options.exec(invocation.command, invocation.args, {
+          timeout: timeoutMs,
+          env: { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
         });
-        const onAbort = () => {
-          child.kill('SIGKILL');
-          void execFileAsync('docker', ['rm', '-f', name], { timeout: 4000 }).catch(() => undefined);
-        };
-        options.signal?.addEventListener('abort', onAbort, { once: true });
-        child.stdout.on('data', (chunk: Buffer) => {
-          if (stdout.length < 400000) stdout += chunk.toString('utf8');
+        stdout = ran.stdout;
+        stderr = ran.stderr ?? '';
+      } else {
+        const ran = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve, reject) => {
+          const child = spawn(invocation.command, invocation.args, {
+            env: { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin', NODE_ENV: 'production' } as NodeJS.ProcessEnv,
+            stdio: ['ignore', 'pipe', 'pipe'] satisfies ['ignore', 'pipe', 'pipe'],
+          });
+          let settled = false;
+          const finish = (result: { stdout: string; stderr: string; code: number | null }) => {
+            if (settled) return;
+            settled = true;
+            options.signal?.removeEventListener('abort', onAbort);
+            resolve(result);
+          };
+          const onAbort = () => {
+            child.kill('SIGKILL');
+            void teardown();
+          };
+          options.signal?.addEventListener('abort', onAbort, { once: true });
+          child.stdout.on('data', (chunk: Buffer) => {
+            if (stdout.length < 400000) stdout += chunk.toString('utf8');
+          });
+          child.stderr.on('data', (chunk: Buffer) => {
+            if (stderr.length < 20000) stderr += chunk.toString('utf8');
+          });
+          const timer = setTimeout(() => {
+            child.kill('SIGKILL');
+            void teardown();
+            finish({ stdout, stderr: `${stderr}\nIsolated build timed out.`, code: 1 });
+          }, timeoutMs);
+          child.on('error', (error: Error) => {
+            clearTimeout(timer);
+            options.signal?.removeEventListener('abort', onAbort);
+            reject(error);
+          });
+          child.on('close', (code: number | null) => {
+            clearTimeout(timer);
+            finish({ stdout, stderr, code });
+          });
         });
-        child.stderr.on('data', (chunk: Buffer) => {
-          if (stderr.length < 20000) stderr += chunk.toString('utf8');
-        });
-        const timer = setTimeout(() => {
-          child.kill('SIGKILL');
-          resolve({ stdout, stderr: `${stderr}\nIsolated build timed out.`, code: 1 });
-        }, timeoutMs);
-        child.on('error', (error: Error) => {
-          clearTimeout(timer);
-          options.signal?.removeEventListener('abort', onAbort);
-          reject(error);
-        });
-        child.on('close', (code: number | null) => {
-          clearTimeout(timer);
-          options.signal?.removeEventListener('abort', onAbort);
-          resolve({ stdout, stderr, code });
-        });
-      });
-      stdout = ran.stdout;
-      stderr = ran.stderr;
-      if (options.signal?.aborted) {
-        await record('cancelled', 'Owner cancelled the isolated build.');
-        return {
-          result: {
-            ok: false,
-            isolation: 'docker',
-            sandbox: false,
-            typecheck: { ok: false, log: '' },
-            bundle: { ok: false, log: '' },
-            blocker: 'Owner cancelled the isolated build.',
-            stages,
-          } satisfies AppJobResult,
-          artifacts: [],
-          manifestHash: null,
-        };
+        stdout = ran.stdout;
+        stderr = ran.stderr;
+        if (options.signal?.aborted) {
+          const closed = await teardown();
+          await record(
+            'cancelled',
+            closed.confirmed
+              ? 'Owner cancelled the isolated build. Named container teardown confirmed.'
+              : 'Owner cancelled the isolated build. Named container teardown was requested.',
+          );
+          return {
+            result: {
+              ok: false,
+              isolation: 'docker',
+              sandbox: false,
+              typecheck: { ok: false, log: '' },
+              bundle: { ok: false, log: '' },
+              blocker: 'Owner cancelled the isolated build.',
+              stages,
+            } satisfies AppJobResult,
+            artifacts: [],
+            manifestHash: null,
+          };
+        }
       }
-    }
-    void stderr;
-    const parsed = parseAppsContainerResult(stdout);
-    if (!parsed) {
-      const reason = 'Isolated runner did not emit a fenced result. Generated code never executed in the credentialed host process.';
-      await record('failed', reason);
-      return isolatedBuildUnavailable(reason);
-    }
-    if (parsed.versions) {
-      const versions = parseAppsToolchainVersions(JSON.stringify(parsed.versions));
-      if (!versions.ok) {
-        await record('failed', versions.reason ?? 'Toolchain mismatch.');
-        return isolatedBuildUnavailable(versions.reason ?? 'Toolchain mismatch.');
+      void stderr;
+      const parsed = parseAppsContainerResult(stdout);
+      if (!parsed) {
+        await teardown();
+        const reason = 'Isolated runner did not emit a fenced result. Generated code never executed in the credentialed host process.';
+        await record('failed', reason);
+        return isolatedBuildUnavailable(reason);
       }
+      if (parsed.versions) {
+        const versions = parseAppsToolchainVersions(JSON.stringify(parsed.versions));
+        if (!versions.ok) {
+          await teardown();
+          await record('failed', versions.reason ?? 'Toolchain mismatch.');
+          return isolatedBuildUnavailable(versions.reason ?? 'Toolchain mismatch.');
+        }
+      }
+      await record('typecheck', parsed.typecheck.ok ? 'Isolated TypeScript noEmit passed.' : 'Isolated TypeScript noEmit failed.');
+      await record('bundle', parsed.bundle.ok ? 'Isolated Vite production bundle passed.' : 'Isolated Vite production bundle failed.');
+      const artifacts = parsed.ok ? parsed.artifacts : [];
+      if (parsed.ok) assertSingleBundleArtifacts(artifacts);
+      const closed = await teardown();
+      if (!closed.confirmed && !options.exec)
+        await record('failed', 'Named container teardown was not confirmed after the isolated build.');
+      return {
+        result: {
+          ok: parsed.ok,
+          isolation: 'docker',
+          sandbox: parsed.ok,
+          toolchain: APP_TOOLCHAIN_VERSION,
+          typecheck: parsed.typecheck,
+          bundle: parsed.bundle,
+          blocker: parsed.ok ? null : 'Isolated typecheck or bundle failed. The last successful application is retained.',
+          stages,
+        } satisfies AppJobResult,
+        artifacts,
+        manifestHash: artifacts.length ? artifactManifestHash(artifacts) : null,
+      };
+    } catch (error) {
+      await teardown();
+      throw error;
     }
-    await record('typecheck', parsed.typecheck.ok ? 'Isolated TypeScript noEmit passed.' : 'Isolated TypeScript noEmit failed.');
-    await record('bundle', parsed.bundle.ok ? 'Isolated Vite production bundle passed.' : 'Isolated Vite production bundle failed.');
-    const artifacts = parsed.ok ? parsed.artifacts : [];
-    return {
-      result: {
-        ok: parsed.ok,
-        isolation: 'docker',
-        sandbox: parsed.ok,
-        toolchain: APP_TOOLCHAIN_VERSION,
-        typecheck: parsed.typecheck,
-        bundle: parsed.bundle,
-        blocker: parsed.ok ? null : 'Isolated typecheck or bundle failed. The last successful application is retained.',
-        stages,
-      } satisfies AppJobResult,
-      artifacts,
-      manifestHash: artifacts.length ? artifactManifestHash(artifacts) : null,
-    };
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'Isolated build unavailable.';
     await record('failed', reason);

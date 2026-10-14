@@ -88,7 +88,24 @@ export function sealedViteConfig() {
 export default defineConfig({
   base: './',
   esbuild: { jsx: 'automatic', jsxImportSource: 'react' },
-  build: { outDir: 'dist', assetsDir: 'assets', sourcemap: false, emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    emptyOutDir: true,
+    cssCodeSplit: false,
+    modulePreload: false,
+    rollupOptions: {
+      output: {
+        format: 'iife',
+        name: 'AetheliosGeneratedApp',
+        inlineDynamicImports: true,
+        entryFileNames: 'assets/app.js',
+        chunkFileNames: 'assets/app.js',
+        assetFileNames: 'assets/[name][extname]',
+      },
+    },
+  },
 });
 `;
 }

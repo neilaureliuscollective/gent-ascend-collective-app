@@ -131,6 +131,8 @@ export function App() {
   const [body, setBody] = useState('');
   const [hours, setHours] = useState('1');
   const [issues, setIssues] = useState<string[]>([]);
+  const [createMutationId, setCreateMutationId] = useState(() => crypto.randomUUID());
+  const [editMutationId, setEditMutationId] = useState(() => crypto.randomUUID());
   const visible = useMemo(() => filterNotes(notes, query), [notes, query]);
   const total = useMemo(() => hoursLogged(notes), [notes]);
   async function refresh() { setNotes(await requestNotes('list')); }
@@ -139,7 +141,7 @@ export function App() {
     const next = validateNote(note);
     setIssues(next);
     if (next.length) return;
-    await requestNotes(note.persisted ? 'update' : 'create', note, note.id);
+    await requestNotes(note.persisted ? 'update' : 'create', note, note.persisted ? editMutationId : createMutationId);
     await refresh();
     setRoute({ name: 'note', id: note.id });
   }
@@ -151,13 +153,13 @@ export function App() {
       <p>{total}h logged</p>
       <nav>
         <button type="button" onClick={() => setRoute({ name: 'list' })}>Notes</button>
-        <button type="button" onClick={() => setRoute({ name: 'compose' })}>New note</button>
+        <button type="button" onClick={() => { setCreateMutationId(crypto.randomUUID()); setRoute({ name: 'compose' }); }}>New note</button>
       </nav>
       {route.name === 'list' ? (
         <section>
           <input value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="Filter" />
           {visible.map((note) => (
-            <button key={note.id} type="button" className="card" onClick={() => setRoute({ name: 'note', id: note.id })}>
+            <button key={note.id} type="button" className="card" onClick={() => { setEditMutationId(crypto.randomUUID()); setRoute({ name: 'note', id: note.id }); }}>
               <strong>{note.title}</strong>
               <p>{note.hours}h</p>
             </button>

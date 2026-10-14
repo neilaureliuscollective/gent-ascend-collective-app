@@ -1,5 +1,5 @@
 import { buildGeneratedApp } from './builder';
-import { buildIsolatedGeneratedApp } from './isolate';
+import { appsContainerName, buildIsolatedGeneratedApp, removeNamedAppsContainer } from './isolate';
 import { defaultAppLimits, terminalJobStatuses, type AppJob, type AppJobResult, type AppRevision } from './schema';
 import { AppStoreError, type AppStore } from './store';
 
@@ -34,13 +34,20 @@ export function resolveAppExecutionKind(
 
 export async function defaultAppBuild(
   files: Parameters<typeof buildGeneratedApp>[0],
-  options: Parameters<typeof buildGeneratedApp>[1] & { kind?: 'docker' | 'host-fixture'; signal?: AbortSignal } = {},
+  options: Parameters<typeof buildGeneratedApp>[1] & {
+    kind?: 'docker' | 'host-fixture';
+    signal?: AbortSignal;
+    name?: string;
+    env?: NodeJS.ProcessEnv | Record<string, string | undefined>;
+  } = {},
 ) {
   if ((options.kind ?? 'docker') === 'host-fixture') return buildGeneratedApp(files, options);
   return buildIsolatedGeneratedApp(files, {
     timeoutMs: options.timeoutMs,
     onStage: options.onStage,
     signal: options.signal,
+    name: options.name,
+    env: options.env,
   });
 }
 
@@ -116,14 +123,49 @@ export async function processAppBuildOnce(
     if (!revision || revision.approval_hash !== claimed.approval_hash)
       throw new AppStoreError('Approved revision is no longer bound to this build.');
     const kind = resolveAppExecutionKind(revision.generation, options.env);
-    const built = await (options.build ?? defaultAppBuild)(revision.files, {
-      kind,
-      onStage: async (kindStage, detail) => {
-        if (lost) throw new AppLeaseLostError();
-        await store.appendEvent(claimed, kindStage, detail);
-      },
-    });
+    const name = appsContainerName(claimed.id);
+    const controller = new AbortController();
+    const poll = setInterval(() => {
+      void store.readJob(claimed.person_id, claimed.id).then((job) => {
+        if (lost || options.shouldAbort?.() || job?.cancel_requested) controller.abort();
+      });
+    }, 1000);
+    let built;
+    try {
+      built = await (options.build ?? defaultAppBuild)(revision.files, {
+        kind,
+        name,
+        signal: controller.signal,
+        env: options.env,
+        onStage: async (kindStage, detail) => {
+          if (lost || controller.signal.aborted) throw new AppLeaseLostError();
+          const job = await store.readJob(claimed.person_id, claimed.id);
+          if (job?.cancel_requested) {
+            controller.abort();
+            throw new AppLeaseLostError('Owner cancelled the isolated build.');
+          }
+          await store.appendEvent(claimed, kindStage, detail);
+        },
+      });
+    } finally {
+      clearInterval(poll);
+      if (kind === 'docker') await removeNamedAppsContainer(name).catch(() => undefined);
+    }
+    if (controller.signal.aborted || lost) {
+      if (lost) throw new AppLeaseLostError();
+      await store.appendEvent(claimed, 'cancelled', 'Owner cancelled the isolated build.');
+      return finish('cancelled', {
+        ok: false,
+        isolation: 'docker',
+        sandbox: false,
+        typecheck: { ok: false, log: '' },
+        bundle: { ok: false, log: '' },
+        blocker: 'Owner cancelled the isolated build.',
+        stages: built?.result.stages ?? [],
+      });
+    }
     if (lost) throw new AppLeaseLostError();
+    if (!built) throw new AppStoreError('Isolated build did not return a result.');
     const acceptance = acceptAppBuildSuccess(built.result, revision.generation);
     if (acceptance !== 'reject' && built.artifacts.length && built.manifestHash) {
       await store.saveArtifact(

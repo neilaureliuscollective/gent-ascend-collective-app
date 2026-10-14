@@ -30,7 +30,14 @@ export type AppLibrary = {
   current: { id: string; revision: number; status: string; working: boolean; approval_hash: string } | null;
   working: { id: string; revision: number } | null;
   selected: { id: string; revision: number; status: string; working: boolean } | null;
-  preview: { srcDoc: string; sandbox: string; label: string; revision?: number | null; revisionId?: string | null } | null;
+  preview: {
+    srcDoc: string;
+    sandbox: string;
+    label: string;
+    revision?: number | null;
+    revisionId?: string | null;
+    generation?: number;
+  } | null;
   previewSession: string | null;
   pendingStart: { revisionId: string; requestId: string; approvalHash: string; revision: number } | null;
   records: Record<string, Record<string, unknown>[]>;

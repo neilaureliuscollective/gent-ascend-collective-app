@@ -1,3 +1,7 @@
+# Architect generated applications compiled journey — 2026-10-14
+
+Exact-base revisions require source contents and hashes, not path/byte counts. Each user mutation has its own idempotency key; `record.id` is not that key. Isolated success still requires Docker plus confirmed named-container teardown. Preview signing has no fallback secret; sessions expire and revoke; direct navigation is CSP-sandboxed. Compiled preview mounts only the sealed IIFE, inserted without String.replace interpolation. Talk authorization uses the published shared contract; a client digest is not authority. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
 # Architect generated applications finish — 2026-10-14
 
 Durable Apps persistence uses dedicated tables and RPCs, not Origin/Construct receipt JSON. Isolated success is Docker-only (`sandbox=true`). Host-fixture stays a labelled tracker compiler. Person identity is `persons.auth_user_id`, never `person_id = auth.uid()`. Talk direction schema stays `talk-architect-direction/v1`; Talk board resolution is an explicit adapter on the Talk workstream. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).

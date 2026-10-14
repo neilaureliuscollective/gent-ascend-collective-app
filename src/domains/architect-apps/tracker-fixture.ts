@@ -163,8 +163,8 @@ export function listItems() {
   return requestItems('list');
 }
 
-export function saveItem(item: TrackerItem) {
-  return requestItems(item.persisted ? 'update' : 'create', item, item.id);
+export function saveItem(item: TrackerItem, mutationId: string) {
+  return requestItems(item.persisted ? 'update' : 'create', item, mutationId);
 }
 `;
 
@@ -256,8 +256,8 @@ export function App() {
       ) : null}
       {ready && route.name === 'compose' ? (
         <Compose
-          onSave={async (item) => {
-            await saveItem(item);
+          onSave={async (item, mutationId) => {
+            await saveItem(item, mutationId);
             await refresh();
             setRoute({ name: 'item', id: item.id });
           }}
@@ -267,8 +267,8 @@ export function App() {
       {ready && route.name === 'item' ? (
         <Item
           item={items.find((row) => row.id === route.id) ?? null}
-          onSave={async (item) => {
-            await saveItem(item);
+          onSave={async (item, mutationId) => {
+            await saveItem(item, mutationId);
             await refresh();
           }}
           onBack={() => setRoute({ name: 'board' })}
@@ -319,9 +319,10 @@ export function Compose({
   onSave,
   onCancel,
 }: {
-  onSave: (item: TrackerItem) => Promise<void>;
+  onSave: (item: TrackerItem, mutationId: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const [mutationId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<Status>('open');
@@ -341,7 +342,7 @@ export function Compose({
         };
         const next = validateItem(item);
         setIssues(next);
-        if (!next.length) void onSave(item);
+        if (!next.length) void onSave(item, mutationId);
       }}
     >
       <h2>New item</h2>
@@ -389,9 +390,10 @@ export function Item({
   onBack,
 }: {
   item: TrackerItem | null;
-  onSave: (item: TrackerItem) => Promise<void>;
+  onSave: (item: TrackerItem, mutationId: string) => Promise<void>;
   onBack: () => void;
 }) {
+  const [mutationId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState(item?.title ?? '');
   const [notes, setNotes] = useState(item?.notes ?? '');
   const [status, setStatus] = useState<Status>(item?.status ?? 'open');
@@ -412,7 +414,7 @@ export function Item({
         };
         const found = validateItem(next);
         setIssues(found);
-        if (!found.length) void onSave(next);
+        if (!found.length) void onSave(next, mutationId);
       }}
     >
       <h2>Edit item</h2>

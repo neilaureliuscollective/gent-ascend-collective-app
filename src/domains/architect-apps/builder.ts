@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { APP_TOOLCHAIN_VERSION } from './catalog';
 import { artifactManifestHash } from './hash';
+import { assertSingleBundleArtifacts } from './bundle';
 import type { AppFile, AppJobResult } from './schema';
 import { overlaySealedFiles } from './tree';
 
@@ -204,6 +205,7 @@ export async function buildGeneratedApp(
       };
     }
     const artifacts = await collectArtifacts(join(work, 'dist'));
+    assertSingleBundleArtifacts(artifacts);
     return {
       result: {
         ok: true,

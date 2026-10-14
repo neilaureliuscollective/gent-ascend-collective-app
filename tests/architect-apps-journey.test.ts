@@ -51,7 +51,7 @@ import {
 import { MemoryAppStore } from '@/domains/architect-apps/store';
 import { acceptAppBuildSuccess, processAppBuildOnce } from '@/domains/architect-apps/worker';
 import { mockedSupportedAppProposal } from '@/domains/architect-apps/provider';
-import { signPreviewSession } from '@/domains/architect-apps/preview';
+import { resetPreviewSessions, signPreviewSession } from '@/domains/architect-apps/preview';
 import { writeFile, mkdir } from 'node:fs/promises';
 
 beforeEach(() => {
@@ -59,7 +59,9 @@ beforeEach(() => {
   vi.stubEnv('ARCHITECT_APPS_ENABLED', 'true');
   vi.stubEnv('ARCHITECT_APPS_STORE', 'memory');
   vi.stubEnv('ARCHITECT_APPS_AI_MOCK', 'true');
+  vi.stubEnv('ARCHITECT_APPS_PREVIEW_SECRET', 'journey-preview-secret-key');
   vi.stubEnv('APP_ENV', 'local');
+  resetPreviewSessions();
   const store = appStore() as MemoryAppStore;
   store.apps.clear();
   store.revisions.clear();
@@ -70,10 +72,10 @@ beforeEach(() => {
   state.revision = 1;
 });
 
-const transport = async (input: { kind: 'create' | 'revise'; files: { path: string; content: string }[] }) =>
+const transport = async (input: { kind: 'create' | 'revise'; files: { path: string; content: string; hash?: string }[] }) =>
   mockedSupportedAppProposal(input);
 
-function isolatedBuild(body = '<html><body><h1>Field notes</h1><p id="note">Site visit</p></body></html>') {
+function isolatedBuild(title = 'Field notes') {
   return async () => ({
     result: {
       ok: true,
@@ -87,7 +89,14 @@ function isolatedBuild(body = '<html><body><h1>Field notes</h1><p id="note">Site
         { kind: 'bundle' as const, at: new Date().toISOString(), detail: 'Isolated Vite production bundle passed.' },
       ],
     },
-    artifacts: [{ path: 'index.html', content: body }],
+    artifacts: [
+      {
+        path: 'index.html',
+        content:
+          '<!doctype html><html><head></head><body><div id="root"></div><script type="module" src="./assets/app.js"></script></body></html>',
+      },
+      { path: 'assets/app.js', content: `document.getElementById('root').innerHTML=${JSON.stringify(`<h1>${title}</h1>`)}` },
+    ],
     manifestHash: 'd'.repeat(64),
   });
 }
@@ -158,7 +167,7 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     operation: 'create',
     collection: 'notes',
     payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Site visit', body: 'North wall', hours: 2 },
-    idempotencyKey: '00000000-0000-4000-8000-000000000541',
+    idempotencyKey: '00000000-0000-4000-8000-000000000611',
   });
   const replay = await operateArchitectAppData({
     projectId: state.projectId,
@@ -168,10 +177,11 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     operation: 'create',
     collection: 'notes',
     payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Changed', body: 'North wall', hours: 2 },
-    idempotencyKey: '00000000-0000-4000-8000-000000000541',
+    idempotencyKey: '00000000-0000-4000-8000-000000000611',
   });
   expect((created.records[0] as { title?: string }).title).toBe('Site visit');
   expect(replay.records[0]?.id).toBe(created.records[0]?.id);
+  expect((replay.records[0] as { title?: string }).title).toBe('Site visit');
   await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
@@ -180,7 +190,19 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     operation: 'update',
     collection: 'notes',
     payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Site visit edited', body: 'North wall', hours: 3 },
+    idempotencyKey: '00000000-0000-4000-8000-000000000612',
   });
+  const retryEdit = await operateArchitectAppData({
+    projectId: state.projectId,
+    revisionId: approved.revision.id,
+    session,
+    requestId: '00000000-0000-4000-8000-000000000536',
+    operation: 'update',
+    collection: 'notes',
+    payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Should not revert', body: 'North wall', hours: 9 },
+    idempotencyKey: '00000000-0000-4000-8000-000000000612',
+  });
+  expect((retryEdit.records[0] as { title?: string }).title).toBe('Site visit edited');
   const listed = await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
@@ -241,7 +263,7 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     approvalHash: next.revision.approval_hash,
   });
   await processAppBuildOnce(appStore(), 'worker-a', new Date(), {
-    build: isolatedBuild('<html><body><h1>Field notes tagged</h1></body></html>'),
+    build: isolatedBuild('Field notes tagged'),
   });
   const afterRevision = await readArchitectApp(state.projectId);
   expect(afterRevision.current?.revision).toBe(2);
@@ -261,7 +283,12 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
   const stillListed = await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
-    session,
+    session: signPreviewSession({
+      personId: state.owner,
+      projectId: state.projectId,
+      revisionId: approved.revision.id,
+      secret: 'journey-preview-secret-key',
+    }),
     requestId: '00000000-0000-4000-8000-000000000535',
     operation: 'list',
     collection: 'notes',
