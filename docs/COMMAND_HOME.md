@@ -12,6 +12,8 @@ Implemented 2026-10-14 on `cursor/aethelios-command-home-6146` from released mai
 | Ordinary signed-in user | Redirect to `/app/aethelios` | Command home from owner-scoped reads | `/app` (unchanged) |
 | Founder | Redirect to `/app/founder` | Same Command home. Founder Office stays at `/app/founder`. | `/app/founder` (unchanged) |
 
+Local harness `enterFounder` follows `/app` so the founder also opens the shared home. Public authenticated `/`, `/experience` and `/enter` already rewrite to `/app` and now stay there. Founder Office remains linked from Command and from the existing `/app/founder` destination after `/enter` password sign-in.
+
 Deep links to Talk, Architect, Studio, company jobs and Founder Office are unchanged. The wordmark and manifest `start_url` already pointed at `/app` and now open Command. Main navigation adds **Home** → `/app`. The working heading is **Command**. Talk Tools already linked Home to `/app`.
 
 `/app` matching for `aria-current` is exact so Home is not current on every `/app/*` route.
@@ -54,4 +56,6 @@ Command uses smoked graphite `#111111` / `#1A1A1A` / `#242424`, localized emeral
 
 ## Remaining gates
 
-Real disposable Auth with two owners, expired Studio image after a revoked session, physical Fold, and exact-head CI/preview are recorded at the PR head. Fixture evidence is labelled and separate from persistence.
+Harness `enterFounder` and authenticated public `/` `/experience` `/enter` now land on Command `/app`. Founder Office stays at `/app/founder` after `/enter` password sign-in and from the Command founder operations link. Sidebar footer is in-flow so the seventh Home destination does not cover the Aethelios trigger.
+
+Real disposable Auth with two owners, expired Studio image after a revoked session, physical Fold, and exact-head CI/preview are recorded at the PR head. This environment has no Docker, so the live founder Playwright suite was not re-run here. Fixture evidence is labelled and separate from persistence.
