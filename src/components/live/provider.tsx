@@ -1,8 +1,7 @@
 'use client';
 import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
-import { LiveController } from '@/domains/live/controller';
+import { LiveController, type LiveState } from '@/domains/live/controller';
 import './live.css';
 import {
   IntelligencePresence,
@@ -57,16 +56,38 @@ export function LiveConversationProvider({
     </LiveAvailabilityContext.Provider>
   );
 }
-const idleSnapshot = { phase: 'idle', cleanupPending: false };
+const idleSnapshot: LiveState = {
+  phase: 'idle',
+  mode: 'compact',
+  muted: false,
+  error: '',
+  conversationId: null,
+  sessionId: null,
+  jobs: [],
+  artifactWorkspace: { artifacts: [], selectedId: null, projects: [] },
+  artifactBusy: false,
+  reviewedAction: null,
+  expiresAt: null,
+  transcript: [],
+  playbackBlocked: false,
+  cleanupPending: false,
+  recovering: false,
+  speechDetected: false,
+  responsePending: false,
+};
 const noopSubscribe = () => () => {};
 const getIdle = () => idleSnapshot;
-export function useLiveBusy() {
+export function useLiveSession() {
   const controller = useContext(LiveContext);
   const state = useSyncExternalStore(
     controller?.subscribe ?? noopSubscribe,
     controller?.getSnapshot ?? getIdle,
     controller?.getSnapshot ?? getIdle,
   );
+  return { controller, state };
+}
+export function useLiveBusy() {
+  const { state } = useLiveSession();
   return state.cleanupPending || ['connecting', 'listening', 'speaking'].includes(state.phase);
 }
 function LiveEntryLabel() {
@@ -83,10 +104,12 @@ export function LiveVoiceEntry({
   conversationId,
   includeContext,
   disabled = false,
+  onAdoptConversation,
 }: {
   conversationId: string | null;
   includeContext: boolean;
   disabled?: boolean;
+  onAdoptConversation?: (conversationId: string) => void;
 }) {
   const controller = useContext(LiveContext);
   const unavailable = useContext(LiveAvailabilityContext);
@@ -187,35 +210,34 @@ export function LiveVoiceEntry({
               <option value="marin">Marin</option>
             </select>
           </label>
-          <button
-            type="button"
-            disabled={!approved}
-            onClick={() => {
-              setConsent(false);
-              setApproved(false);
-              void controller.start(
-                conversationId ?? crypto.randomUUID(),
-                includeContext && contextApproved,
-                voice,
-                backgroundWork,
-              );
-              setContextApproved(false);
-              setBackgroundWork(false);
-            }}
-          >
-            Start voice
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setConsent(false);
-              setApproved(false);
-              setContextApproved(false);
-              setBackgroundWork(false);
-            }}
-          >
-            Cancel
-          </button>
+          <div className="live-consent-actions">
+            <button
+              type="button"
+              disabled={!approved}
+              onClick={() => {
+                const id = conversationId ?? crypto.randomUUID();
+                onAdoptConversation?.(id);
+                setConsent(false);
+                setApproved(false);
+                void controller.start(id, includeContext && contextApproved, voice, backgroundWork);
+                setContextApproved(false);
+                setBackgroundWork(false);
+              }}
+            >
+              Start voice
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConsent(false);
+                setApproved(false);
+                setContextApproved(false);
+                setBackgroundWork(false);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -348,7 +370,12 @@ function LiveSurface({ controller }: { controller: LiveController }) {
       )}
       {controls}
       <LiveDiagnostics controller={controller} />
-      <ArtifactSurface controller={controller} />
+      {active && (
+        <details className="live-creation">
+          <summary>Creation and background work</summary>
+          <ArtifactSurface controller={controller} />
+        </details>
+      )}
       {transcript && (
         <div
           className="live-transcript"
@@ -417,7 +444,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           {job.status === 'failed' && <p>The task did not complete. No result is claimed.</p>}
         </section>
       ))}
-      {active && (
+      {active && state.mode === 'immersive' && (
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -440,13 +467,10 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         Mute keeps the microphone connected. End releases it. Transcript text is provisional until
         it appears in saved Talk history.
       </p>
-      {!active && state.conversationId && (
-        <Link
-          href={`/app/aethelios?conversation=${state.conversationId}`}
-          onClick={() => controller.mode('compact')}
-        >
-          Return to Talk to resume or delete this conversation
-        </Link>
+      {!active && state.error && (
+        <button type="button" onClick={() => controller.dismiss()}>
+          Stay in Talk
+        </button>
       )}
     </>
   );
@@ -466,7 +490,9 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         </div>
         <div className="live-content">{content}</div>
       </dialog>
-      {visible && state.mode === 'compact' && (
+      {visible &&
+        state.mode === 'compact' &&
+        (active || state.cleanupPending || (state.phase === 'ended' && !state.error)) && (
         <section
           ref={compact}
           className="live-compact"

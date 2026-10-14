@@ -9,6 +9,9 @@ export function apiError(error: unknown) {
         error instanceof IntelligenceError
           ? error.message
           : 'Aethelios could not complete this request.',
+      ...(error instanceof IntelligenceError && error.safeDetail
+        ? { detail: error.safeDetail }
+        : {}),
     },
     error instanceof IntelligenceError ? error.status : 503,
   );

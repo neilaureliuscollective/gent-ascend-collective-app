@@ -1,7 +1,7 @@
 'use client';
 import { Icon } from '@/components/visual/icon';
 import { ConversationArtifacts } from '@/components/live/artifacts';
-import { LiveVoiceEntry, useLiveBusy } from '@/components/live/provider';
+import { LiveVoiceEntry, useLiveBusy, useLiveSession } from '@/components/live/provider';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -128,6 +128,7 @@ export function AureliusWorkspace({
     if (turn.assistant_text) streamTiming.current?.mark('first-render');
   }, [data?.turns, operation.id]);
   const liveBusy = useLiveBusy();
+  const { controller: liveController, state: liveState } = useLiveSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -401,7 +402,6 @@ export function AureliusWorkspace({
     requestedCouncil: CouncilSelection | null = councilSelection,
   ) {
     if (
-      liveBusy ||
       generation.current ||
       preview ||
       !data?.configured ||
@@ -411,6 +411,13 @@ export function AureliusWorkspace({
       data.currentConversation?.archived_at
     )
       return;
+    if (liveBusy && liveController) {
+      if (['listening', 'speaking'].includes(liveState.phase)) {
+        liveController.text(messageText);
+        setDraft('');
+      }
+      return;
+    }
     reading.current?.abort();
     const id = selected ?? crypto.randomUUID();
     const requestId = crypto.randomUUID();
@@ -612,7 +619,53 @@ export function AureliusWorkspace({
       setDeleting(false);
     }
   }
+  function adoptLiveConversation(id: string) {
+    setSelected(id);
+    rememberConversation(id);
+  }
+  const liveOwner = useRef<string>('');
+  useEffect(() => {
+    if (liveBusy && liveState.conversationId && selected && liveState.conversationId !== selected)
+      void liveController?.end('Voice ended because you opened another conversation.');
+  }, [liveBusy, liveState.conversationId, selected, liveController]);
+  useEffect(() => {
+    if (preview && liveBusy)
+      void liveController?.end('Voice ended because the session is no longer signed in.');
+  }, [preview, liveBusy, liveController]);
+  useEffect(() => {
+    const owner = data?.ownerId ?? '';
+    const previous = liveOwner.current;
+    if (owner) liveOwner.current = owner;
+    if (previous && owner && previous !== owner && liveBusy)
+      void liveController?.end('Voice ended because the signed-in account changed.');
+  }, [data?.ownerId, liveBusy, liveController]);
+  useEffect(() => {
+    if (compact) return;
+    const onPop = () => {
+      if (!window.location.pathname.endsWith('/aethelios')) return;
+      const raw = new URL(window.location.href).searchParams.get('conversation');
+      const next =
+        raw &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)
+          ? raw
+          : null;
+      if (next === selected) return;
+      if (liveBusy && liveState.conversationId && liveState.conversationId !== next)
+        void liveController?.end('Voice ended because you opened another conversation.');
+      void load(next).catch(() => {});
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [compact, selected, liveBusy, liveState.conversationId, liveController, load]);
+  const previousLivePhase = useRef(liveState.phase);
+  useEffect(() => {
+    const wasActive = ['connecting', 'listening', 'speaking'].includes(previousLivePhase.current);
+    previousLivePhase.current = liveState.phase;
+    if (wasActive && ['ended', 'error', 'idle'].includes(liveState.phase) && selected)
+      void load(selected).catch(() => {});
+  }, [liveState.phase, selected, load]);
   function newConversation() {
+    if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
     memoryOnlyDraft.current = false;
     if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
@@ -633,7 +686,7 @@ export function AureliusWorkspace({
     follow.current = true;
     composer.current?.focus();
   }
-  const blocked = liveBusy || busy || loading || deleting || orchestrating;
+  const blocked = busy || loading || deleting || orchestrating;
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
 
   async function prepareCapability() {
@@ -710,6 +763,7 @@ export function AureliusWorkspace({
             conversationId={selected}
             includeContext={includeContext}
             disabled={busy || preview || !data.canChat}
+            onAdoptConversation={adoptLiveConversation}
           />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
@@ -1183,6 +1237,22 @@ export function AureliusWorkspace({
                   />
                 ))
             )}
+            {liveState.transcript
+              .filter(
+                (line) =>
+                  line.text &&
+                  !data.turns.some(
+                    (turn) =>
+                      turn.id === line.id ||
+                      (line.role === 'user' && turn.user_text === line.text) ||
+                      (line.role === 'assistant' && turn.assistant_text === line.text),
+                  ),
+              )
+              .map((line) => (
+                <p key={line.id} className="live-provisional" data-live-status="provisional">
+                  <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
+                </p>
+              ))}
             {busy && !data.turns.some((turn) => turn.id === operation.id) && (
               <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
             )}
@@ -1195,6 +1265,24 @@ export function AureliusWorkspace({
             </p>
           )}
           <div className="aurelius-compose-region">
+            {liveState.error && (
+              <p className="connection-note" role="alert">
+                {liveState.error} Text remains available.{' '}
+                {!liveBusy && (
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() =>
+                      document
+                        .querySelector<HTMLButtonElement>('[aria-label="Aethelios Live"]')
+                        ?.click()
+                    }
+                  >
+                    Retry voice
+                  </button>
+                )}
+              </p>
+            )}
             {awayFromLatest && (
               <button
                 className="latest-message"
@@ -1283,7 +1371,7 @@ export function AureliusWorkspace({
                 inputRef={composer}
                 value={draft}
                 onChange={setDraft}
-                disabled={liveBusy || loading || deleting || orchestrating}
+                disabled={loading || deleting || orchestrating}
                 placeholder={
                   councilSelection?.kind === 'specialist'
                     ? `Message ${councilLabel(councilSelection)}…`
@@ -1309,6 +1397,7 @@ export function AureliusWorkspace({
                     className="button"
                     disabled={
                       blocked ||
+                      liveState.phase === 'connecting' ||
                       !data.configured ||
                       !data.canChat ||
                       !draft.trim() ||

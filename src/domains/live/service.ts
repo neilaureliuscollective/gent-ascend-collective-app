@@ -32,8 +32,30 @@ import {
 } from '@/domains/artifacts/service';
 import { z } from 'zod';
 import { visualContext } from '@/domains/artifacts/visual';
+import { openLiveControlSocket } from './control-socket';
 const base = 'https://api.openai.com/v1/realtime/calls';
 const promptVersion = 'aethelios-live-pilot.1';
+const seedLimit = 12;
+type AdmissionStage =
+  'context' | 'provider' | 'call-id' | 'attachment' | 'sideband' | 'seed' | 'cleanup';
+function admissionFailure(
+  stage: AdmissionStage,
+  category: 'timeout' | 'rejected' | 'unavailable' | 'invalid-response' | 'network',
+  message: string,
+  started: number,
+  correlationId: string,
+  providerStatus: number | null = null,
+) {
+  const receipt = {
+    stage,
+    category,
+    providerStatus,
+    durationMs: Date.now() - started,
+    correlationId,
+  };
+  console.info('live-admission', receipt);
+  return new IntelligenceError(message, 503, receipt);
+}
 export async function admitLive(input: LiveAdmission) {
   const config = liveConfig();
   const session = await intelligenceSession();
@@ -53,6 +75,8 @@ export async function admitLive(input: LiveAdmission) {
       429,
     );
   const deadline = new Date(reserved.data).getTime();
+  const started = Date.now();
+  const correlationId = randomUUID();
   let call = '';
   let socket: WebSocket | undefined;
   try {
@@ -66,7 +90,14 @@ export async function admitLive(input: LiveAdmission) {
         .eq('person_id', person.id)
         .single(),
     ]);
-    if (thread.error) throw new Error('Conversation context unavailable');
+    if (thread.error)
+      throw admissionFailure(
+        'context',
+        'unavailable',
+        'This conversation could not be prepared for voice. Your text workspace remains available.',
+        started,
+        correlationId,
+      );
     const messages = buildMessages(
       turns.filter((turn) => !turns.some((newer) => newer.parent_turn_id === turn.id)),
       '',
@@ -135,25 +166,64 @@ export async function admitLive(input: LiveAdmission) {
       redirect: 'error',
       signal: AbortSignal.timeout(20000),
     });
-    if (!response.ok) throw new Error('Provider admission failed');
+    if (!response.ok)
+      throw admissionFailure(
+        'provider',
+        response.status === 429 ? 'rejected' : response.status >= 500 ? 'unavailable' : 'rejected',
+        'The voice provider did not complete admission. Your text workspace remains available.',
+        started,
+        correlationId,
+        response.status,
+      );
     const location = response.headers.get('location');
     call = location?.split('/').filter(Boolean).at(-1) ?? '';
-    if (!/^rtc_[a-zA-Z0-9_-]{1,180}$/.test(call)) throw new Error('Invalid provider call');
+    if (!/^rtc_[a-zA-Z0-9_-]{1,180}$/.test(call))
+      throw admissionFailure(
+        'call-id',
+        'invalid-response',
+        'The voice session identifier was invalid. Your text workspace remains available.',
+        started,
+        correlationId,
+        response.status,
+      );
     const answer = await response.text();
     if (!answer.startsWith('v=0') || answer.length > 65536)
-      throw new Error('Invalid provider answer');
+      throw admissionFailure(
+        'provider',
+        'invalid-response',
+        'The voice provider returned an unusable session. Your text workspace remains available.',
+        started,
+        correlationId,
+        response.status,
+      );
     const attached = await client.rpc('ai_live_attach', {
       p_id: input.sessionId,
       p_call: call,
       p_tag: tag(config.key, person.id, input.sessionId, call),
     });
-    if (attached.error || !attached.data) throw new Error('Session attachment failed');
-    socket = new WebSocket(`wss://api.openai.com/v1/realtime?call_id=${encodeURIComponent(call)}`, [
-      'realtime',
-      `openai-insecure-api-key.${config.key}`,
-    ]);
+    if (attached.error || !attached.data)
+      throw admissionFailure(
+        'attachment',
+        'unavailable',
+        'The voice session could not be recorded. Your text workspace remains available.',
+        started,
+        correlationId,
+      );
+    socket = openLiveControlSocket(call, config.key);
     await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Voice control timeout')), 10000);
+      const timeout = setTimeout(
+        () =>
+          reject(
+            admissionFailure(
+              'sideband',
+              'timeout',
+              'Voice control could not attach to the provider session. Your text workspace remains available.',
+              started,
+              correlationId,
+            ),
+          ),
+        10000,
+      );
       socket!.addEventListener(
         'open',
         () => {
@@ -166,7 +236,15 @@ export async function admitLive(input: LiveAdmission) {
         'error',
         () => {
           clearTimeout(timeout);
-          reject(new Error('Voice control unavailable'));
+          reject(
+            admissionFailure(
+              'sideband',
+              'unavailable',
+              'Voice control could not attach to the provider session. Your text workspace remains available.',
+              started,
+              correlationId,
+            ),
+          );
         },
         { once: true },
       );
@@ -174,7 +252,15 @@ export async function admitLive(input: LiveAdmission) {
         'close',
         () => {
           clearTimeout(timeout);
-          reject(new Error('Voice control closed'));
+          reject(
+            admissionFailure(
+              'sideband',
+              'unavailable',
+              'Voice control closed before admission finished. Your text workspace remains available.',
+              started,
+              correlationId,
+            ),
+          );
         },
         { once: true },
       );
@@ -182,6 +268,7 @@ export async function admitLive(input: LiveAdmission) {
     // Confirm bounded context is admitted before the browser can transmit live audio.
     const seed = messages
       .filter((message) => message.content && typeof message.content === 'string')
+      .slice(-seedLimit)
       .map((message) => ({ id: `ctx_${randomUUID().replaceAll('-', '')}`, message }));
     await new Promise<void>((resolve, reject) => {
       const pending = new Set(seed.map((item) => item.id));
@@ -192,13 +279,29 @@ export async function admitLive(input: LiveAdmission) {
       };
       const closed = () => {
         cleanup();
-        reject(new Error('Context connection closed'));
+        reject(
+          admissionFailure(
+            'seed',
+            'unavailable',
+            'Conversation context could not be admitted to voice. Your text workspace remains available.',
+            started,
+            correlationId,
+          ),
+        );
       };
       const message = (event: MessageEvent) => {
         const value = readLiveEvent(event.data);
         if (value?.type === 'error') {
           cleanup();
-          reject(new Error('Context admission failed'));
+          reject(
+            admissionFailure(
+              'seed',
+              'rejected',
+              'Conversation context could not be admitted to voice. Your text workspace remains available.',
+              started,
+              correlationId,
+            ),
+          );
           return;
         }
         if (
@@ -214,7 +317,15 @@ export async function admitLive(input: LiveAdmission) {
       };
       const timeout = setTimeout(() => {
         cleanup();
-        reject(new Error('Context admission timeout'));
+        reject(
+          admissionFailure(
+            'seed',
+            'timeout',
+            'Conversation context could not be admitted to voice. Your text workspace remains available.',
+            started,
+            correlationId,
+          ),
+        );
       }, 10000);
       socket!.addEventListener('message', message);
       socket!.addEventListener('close', closed, { once: true });
@@ -790,19 +901,29 @@ export async function admitLive(input: LiveAdmission) {
       }
     };
     return { answer, expiresAt: reserved.data, model: config.model, monitor };
-  } catch {
+  } catch (error) {
     socket?.close();
-    if (call) {
+    if (/^rtc_[a-zA-Z0-9_-]{1,180}$/.test(call)) {
       try {
         await hangup(config.key, call);
       } catch {
-        throw new IntelligenceError('Voice admission failed; cleanup remains pending.', 503);
+        throw new IntelligenceError('Voice admission failed; cleanup remains pending.', 503, {
+          stage: 'cleanup',
+          category: 'unavailable',
+          providerStatus: null,
+          durationMs: Date.now() - started,
+          correlationId,
+        });
       }
     }
     await client.rpc('ai_live_end', { p_id: input.sessionId, p_reason: 'failed' });
-    throw new IntelligenceError(
+    if (error instanceof IntelligenceError) throw error;
+    throw admissionFailure(
+      'provider',
+      'network',
       'The voice connection could not be established. Your text workspace remains available.',
-      503,
+      started,
+      correlationId,
     );
   }
 }

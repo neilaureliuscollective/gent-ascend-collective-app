@@ -55,17 +55,26 @@
 .live-compact {
   position: fixed;
   z-index: 90;
-  right: 1rem;
-  bottom: 1rem;
-  width: min(26rem, calc(100vw - 2rem));
-  max-height: 70dvh;
+  left: max(0.75rem, env(safe-area-inset-left));
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  width: auto;
+  max-width: 40rem;
+  margin-inline: auto;
+  max-height: min(36dvh, 18rem);
   overflow: auto;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--io-glass);
   color: var(--io-text, #dce9d6);
   border: 1px solid var(--aether-border, #c4912f50);
   border-radius: 1rem;
-  box-shadow: 0 12px 60px #0009;
+}
+.live-creation {
+  margin: 0.75rem 0;
+}
+.live-provisional {
+  margin: 0.5rem 0;
+  opacity: 0.88;
 }
 .live-compact .live-transcript {
   max-height: 16vh;
@@ -102,14 +111,28 @@
   top: calc(100% + 6px);
   left: 0;
   width: min(22rem, calc(100vw - 2rem));
+  max-height: min(70dvh, 28rem);
+  overflow: auto;
 }
 .live-consent {
   max-width: 34rem;
+  max-height: min(70dvh, 32rem);
+  overflow: auto;
   padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
   background: var(--io-glass);
   color: var(--io-text, #dce9d6);
   border: 1px solid var(--aether-border, #c4912f50);
   border-radius: 0.75rem;
+}
+.live-consent-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  background: inherit;
 }
 .live-consent label {
   display: block;

@@ -75,6 +75,48 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 const conversation = 'ed000000-0000-4000-8000-000000000001';
+it('starts voice inline instead of forcing a new immersive conversation', async () => {
+  const controller = new LiveController();
+  expect(controller.getSnapshot().mode).toBe('compact');
+  await controller.start(conversation, false);
+  expect(controller.getSnapshot().mode).toBe('compact');
+  expect(controller.getSnapshot().conversationId).toBe(conversation);
+  controller.mode('immersive');
+  expect(controller.getSnapshot().mode).toBe('immersive');
+  expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
+  await controller.end();
+});
+it('keeps a failed admission in the same conversation and does not reconnect on expand', async () => {
+  fetchMock.mockResolvedValueOnce(
+    Response.json(
+      {
+        error: 'The voice provider did not complete admission. Your text workspace remains available.',
+        detail: { stage: 'provider' },
+      },
+      { status: 503 },
+    ),
+  );
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  expect(controller.getSnapshot()).toMatchObject({
+    phase: 'error',
+    mode: 'compact',
+    conversationId: conversation,
+    error: expect.stringMatching(/provider did not complete admission/),
+  });
+  controller.mode('immersive');
+  expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
+  controller.dismiss();
+  expect(controller.getSnapshot().phase).toBe('idle');
+});
+it('does not send typed Talk text until the voice channel is open', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.channel.readyState = 'connecting';
+  controller.text('Typed while connecting');
+  expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
+  await controller.end();
+});
 it('exports content-free diagnostics with trusted configuration and preserves them after End', async () => {
   fetchMock.mockImplementation(async (_url, init) =>
     Response.json(
