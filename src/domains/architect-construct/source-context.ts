@@ -1,3 +1,5 @@
+import { isProtectedSourcePath } from './path-protection';
+
 export const SOURCE_CONTEXT_BUDGET = {
   maxInventoryFiles: 32,
   maxEditableFiles: 8,
@@ -30,6 +32,8 @@ export type SourceManifestEntry = {
   complete: boolean;
 };
 
+export type ExcludedSource = { path: string; reason: string };
+
 export type SourceContextManifest = {
   complete_repository: false;
   outcome: string;
@@ -38,6 +42,7 @@ export type SourceContextManifest = {
   editable: SourceInventoryFile[];
   provider_files: Array<SourceInventoryFile & { editable: boolean }>;
   missing: string[];
+  excluded: ExcludedSource[];
   refusal: string | null;
 };
 
@@ -130,21 +135,45 @@ export function prepareSourceContext(input: {
 }): SourceContextManifest {
   const allowed = new Set(input.allowedPaths);
   const protectedPaths = input.protectedPaths;
-  const byPath = new Map(input.files.map((file) => [file.path, file]));
+  const excluded: ExcludedSource[] = [];
+  const usable = input.files.filter((file) => {
+    if (!isProtectedSourcePath(file.path, protectedPaths)) return true;
+    excluded.push({
+      path: file.path,
+      reason: 'Protected path. Architect will not send or edit this file.',
+    });
+    return false;
+  });
+  const byPath = new Map(usable.map((file) => [file.path, file]));
   const missing = new Set<string>();
   const related = new Set<string>();
 
-  for (const file of input.files) {
+  for (const file of usable) {
     for (const specifier of referencedSpecifiers(file.content)) {
       const relative = resolveRelativeSpecifier(file.path, specifier);
       if (!relative) continue;
+      if (isProtectedSourcePath(relative, protectedPaths)) {
+        excluded.push({
+          path: relative,
+          reason: 'Protected reference. Architect will not import or send this path.',
+        });
+        continue;
+      }
       const existing = existingPathForSpecifier(relative, byPath.keys());
-      if (existing) related.add(existing);
-      else missing.add(relative);
+      if (existing) {
+        if (isProtectedSourcePath(existing, protectedPaths)) {
+          excluded.push({
+            path: existing,
+            reason: 'Protected reference. Architect will not import or send this path.',
+          });
+          continue;
+        }
+        related.add(existing);
+      } else missing.add(relative);
     }
   }
 
-  const ranked = [...input.files].sort(
+  const ranked = [...usable].sort(
     (a, b) =>
       editableScore(b, input.intendedChange, allowed) - editableScore(a, input.intendedChange, allowed) ||
       a.path.localeCompare(b.path),
@@ -155,24 +184,24 @@ export function prepareSourceContext(input: {
   const chosen = new Set<string>();
   const entries: SourceManifestEntry[] = [];
 
-  const isProtected = (path: string) =>
-    protectedPaths.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  const isProtected = (path: string) => isProtectedSourcePath(path, protectedPaths);
+
+  for (const excludedPath of excluded) {
+    entries.push({
+      path: excludedPath.path,
+      role: 'unsupported',
+      inclusion: 'omitted',
+      bytes: 0,
+      content_hash: null,
+      reason: excludedPath.reason,
+      excerpt: null,
+      complete: false,
+    });
+  }
 
   for (const file of ranked) {
     const bytes = utf8Bytes(file.content);
-    if (isProtected(file.path)) {
-      entries.push({
-        path: file.path,
-        role: 'unsupported',
-        inclusion: 'omitted',
-        bytes,
-        content_hash: hashOrNull(file.content, input.hash),
-        reason: 'Protected path. Architect will not send or edit this file.',
-        excerpt: null,
-        complete: false,
-      });
-      continue;
-    }
+    if (isProtected(file.path)) continue;
     if (bytes > SOURCE_CONTEXT_BUDGET.maxEditableFileBytes) {
       entries.push({
         path: file.path,
@@ -306,8 +335,44 @@ export function prepareSourceContext(input: {
     editable,
     provider_files,
     missing: [...missing].sort(),
+    excluded: uniqueExcluded(excluded),
     refusal,
   };
+}
+
+function uniqueExcluded(items: ExcludedSource[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.path)) return false;
+    seen.add(item.path);
+    return true;
+  });
+}
+
+export function assembleProviderPrompt(context: SourceContextManifest) {
+  const visible = context.entries.filter(
+    (entry) => !isProtectedSourcePath(entry.path) && entry.inclusion !== 'omitted',
+  );
+  return {
+    complete_repository: false as const,
+    budget: context.budget,
+    missing: context.missing.filter((path) => !isProtectedSourcePath(path)),
+    manifest: visible.map((entry) => ({
+      path: entry.path,
+      role: entry.role,
+      inclusion: entry.inclusion,
+      bytes: entry.bytes,
+      content_hash: entry.content_hash,
+      reason: entry.reason,
+      excerpt: entry.excerpt,
+      complete: entry.complete,
+    })),
+    files: context.provider_files.filter((file) => !isProtectedSourcePath(file.path)),
+  };
+}
+
+export function providerPromptText(context: SourceContextManifest) {
+  return JSON.stringify(assembleProviderPrompt(context));
 }
 
 export function editablePathSet(context: SourceContextManifest) {

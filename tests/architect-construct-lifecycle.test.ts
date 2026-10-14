@@ -12,6 +12,7 @@ import {
   sameConstructContext,
   selectCurrentRun,
   selectLastSuccessfulRun,
+  selectRetainedConstructPreview,
   viewConstructLifecycle,
   type ConstructLifecycleLibrary,
 } from '@/components/architect-origin/construct-lifecycle';
@@ -81,6 +82,101 @@ describe('construct lifecycle selection', () => {
     );
     expect(selectCurrentRun(library(), projectB, ownerA)).toBeNull();
     expect(selectLastSuccessfulRun(library(), projectB, ownerA)).toBeNull();
+  });
+
+  it('retains labelled successful A through queued, running, failed and cancelled B', () => {
+    const ownerB = '99999999-9999-4999-8999-999999999999';
+    const previewA = '<html><body>After</body></html>';
+    const previewB = '<html><body>Preview B</body></html>';
+    const successA = library().runs![1]!;
+    const nextB = (status: 'queued' | 'running' | 'failed' | 'cancelled' | 'succeeded', result: unknown) => {
+      const base = library();
+      return {
+        ...base,
+        runs: [
+          {
+            ...base.runs![0]!,
+            status,
+            result,
+          },
+          successA,
+        ],
+      } as ConstructLifecycleLibrary;
+    };
+    const expectRetainedA = (status: 'queued' | 'running' | 'failed' | 'cancelled') => {
+      const selected = selectRetainedConstructPreview({
+        library: nextB(status, null),
+        ownerId: ownerA,
+        projectId: projectA,
+      });
+      expect(selected.body).toBe(previewA);
+      expect(selected.stale).toBe(true);
+      expect(selected.revision).toBe(1);
+      expect(selected.artifactId).toBe(runA);
+      expect(selected.label).toMatch(/Last successful revision 1/);
+      expect(selected.label).toMatch(/not the current attempt/i);
+      expect(selected.body).not.toBe(previewB);
+    };
+    expectRetainedA('queued');
+    expectRetainedA('running');
+    expectRetainedA('failed');
+    expectRetainedA('cancelled');
+
+    const replaced = selectRetainedConstructPreview({
+      library: nextB('succeeded', {
+        isolation: 'docker',
+        runtime_available: true,
+        sandbox: true,
+        blocker: null,
+        source_hash: hashB,
+        result_hash: hashA,
+        changed_files: ['preview.html'],
+        diff: '',
+        checks: [],
+        preview: { path: 'preview.html', body: previewB, unavailable_reason: null },
+      }),
+      ownerId: ownerA,
+      projectId: projectA,
+    });
+    expect(replaced.body).toBe(previewB);
+    expect(replaced.stale).toBe(false);
+    expect(replaced.revision).toBe(2);
+    expect(replaced.label).toMatch(/Current Construct output · revision 2/);
+
+    const malformed = selectRetainedConstructPreview({
+      library: nextB('succeeded', {
+        isolation: 'docker',
+        runtime_available: true,
+        sandbox: true,
+        blocker: null,
+        source_hash: 'not-a-hash',
+        result_hash: 'also-bad',
+        changed_files: [],
+        diff: '',
+        checks: [],
+        preview: { path: 'preview.html', body: previewB, unavailable_reason: null },
+      }),
+      ownerId: ownerA,
+      projectId: projectA,
+    });
+    expect(malformed.body).toBe(previewA);
+    expect(malformed.stale).toBe(true);
+
+    const foreign = selectRetainedConstructPreview({
+      library: library(),
+      ownerId: ownerB,
+      projectId: projectA,
+      held: successA,
+    });
+    expect(foreign.body).toBeNull();
+    expect(
+      selectRetainedConstructPreview({
+        library: library(),
+        ownerId: ownerA,
+        projectId: projectB,
+        held: successA,
+      }).body,
+    ).toBeNull();
   });
 
   it('never offers a running-server preview and labels fixture output as test output', () => {

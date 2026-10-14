@@ -10,8 +10,10 @@ import { sha256Text } from './hash';
 import { validateExistingFilePatches } from './patch-contract';
 import { constructAiMockReady, constructAiReady } from './readiness';
 import { briefScopeSchema, type BriefScope } from './schema';
+import { isProtectedSourcePath } from './path-protection';
 import {
   SOURCE_CONTEXT_BUDGET,
+  assembleProviderPrompt,
   prepareSourceContext,
   type SourceContextManifest,
 } from './source-context';
@@ -95,7 +97,7 @@ export function mockedConstructProposal(
   const file = context.editable.find((item) => scope.allowed_paths.includes(item.path));
   if (!file)
     throw new IntelligenceError('Mocked provider has no complete editable file to patch.', 409);
-  if (scope.protected_paths.some((path) => file.path === path || file.path.startsWith(`${path}/`)))
+  if (isProtectedSourcePath(file.path, scope.protected_paths))
     throw new IntelligenceError('Mocked provider cannot touch a protected path.', 409);
   if (!file.content.includes('Before'))
     throw new IntelligenceError(
@@ -146,12 +148,9 @@ Only files marked complete-editable include exact whole-file content and may app
       prompt: JSON.stringify({
         instruction: instruction.slice(0, 2000),
         intended_change: scope.intended_change,
-        allowed_paths: scope.allowed_paths,
+        allowed_paths: scope.allowed_paths.filter((path) => !isProtectedSourcePath(path, scope.protected_paths)),
         protected_paths: scope.protected_paths,
-        complete_repository: false,
-        budget: SOURCE_CONTEXT_BUDGET,
-        manifest: context.entries,
-        files: context.provider_files,
+        ...assembleProviderPrompt(context),
       }),
       output: Output.object({ schema: constructProposalSchema }),
       maxOutputTokens: SOURCE_CONTEXT_BUDGET.maxOutputTokens,

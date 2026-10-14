@@ -5,6 +5,7 @@ import { fixtureScope, importedFixtureSource } from './fixture';
 import { constructReady } from './readiness';
 import { acceptanceChecksFromPlan, persistableCheckPlan, planCheckCoverage } from './check-coverage';
 import { validateExistingFilePatches } from './patch-contract';
+import { effectiveProtectedPaths } from './path-protection';
 import {
   type ConstructBrief,
   type ConstructEvent,
@@ -13,7 +14,6 @@ import {
   briefScopeSchema,
   cancelCommand,
   defaultLimits,
-  defaultProtectedPaths,
   proposeCommand,
   startCommand,
   startFixtureCommand,
@@ -241,7 +241,7 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
         /* Imported files stay owner-supplied when a pin cannot be verified. */
       }
     }
-    const protectedPaths = input.protectedPaths ?? defaultProtectedPaths();
+    const protectedPaths = effectiveProtectedPaths(input.protectedPaths);
     const validated = validateExistingFilePatches({
       files,
       patch: input.patch,
@@ -297,7 +297,7 @@ export async function proposeConstruct(input: ReturnType<typeof proposeCommand.p
       input.instruction,
       {
         allowed_paths: input.allowedPaths,
-        protected_paths: input.protectedPaths,
+        protected_paths: effectiveProtectedPaths(input.protectedPaths),
         intended_change: input.intendedChange,
       },
       input.excerpts,

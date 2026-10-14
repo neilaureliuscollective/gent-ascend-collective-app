@@ -118,6 +118,43 @@ it('uses complete content for a file larger than 4KB and never a truncated origi
   expect(proposal.context.editable[0]?.content).toBe(content);
 });
 
+it('never sends protected sentinels in the assembled OpenAI prompt', async () => {
+  vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_ENABLED', 'true');
+  vi.stubEnv('ARCHITECT_CONSTRUCT_AI_MOCK', 'false');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NODE_ENV', 'development');
+  const sentinel = 'SYNTHETIC_PROTECTED_SENTINEL_DO_NOT_SHIP';
+  generate.mockResolvedValue({
+    output: {
+      summary: 'ok',
+      patch: [{ path: 'preview.html', before: '<h1>Before</h1>', after: '<h1>After</h1>' }],
+      notes: '',
+    },
+  });
+  await proposeConstructChange(
+    'replace the heading',
+    {
+      allowed_paths: ['preview.html', '.env.local', 'certs/server.pem'],
+      protected_paths: [],
+      intended_change: 'Stay inside the fixture.',
+    },
+    [
+      { path: 'preview.html', content: '<h1>Before</h1>' },
+      { path: '.env.local', content: `KEY=${sentinel}` },
+      { path: 'certs/server.pem', content: sentinel },
+    ],
+    new AbortController().signal,
+  );
+  expect(generate).toHaveBeenCalled();
+  const prompt = JSON.stringify(generate.mock.calls[0]?.[0].prompt ?? '');
+  expect(prompt).not.toContain(sentinel);
+  expect(prompt).toContain('<h1>Before</h1>');
+  expect(prompt).not.toContain('.env.local');
+});
+
 it('rejects a truncated before-text from the provider', async () => {
   vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
   vi.stubEnv('ARCHITECT_CONSTRUCT_ENABLED', 'true');

@@ -18,6 +18,7 @@ import {
   constructInputSnapshot,
   sameConstructContext,
   selectCurrentRun,
+  selectRetainedConstructPreview,
   startConstructFixture,
   startConstructRun,
   type ConstructSourceReadiness,
@@ -28,6 +29,7 @@ import {
   persistableCheckPlan,
   planCheckCoverage,
 } from '@/domains/architect-construct/check-coverage';
+import { effectiveProtectedPaths } from '@/domains/architect-construct/path-protection';
 import { prepareSourceContext, type SourceContextManifest } from '@/domains/architect-construct/source-context';
 import { SourceUnderstanding } from './source-understanding';
 import { ChangeDiff } from './change-diff';
@@ -150,7 +152,7 @@ export function ArchitectConstructPanel({
       prepareSourceContext({
         files,
         allowedPaths: files.map((file) => file.path),
-        protectedPaths: ['.env'],
+        protectedPaths: effectiveProtectedPaths(),
         intendedChange,
       }),
     [files, intendedChange],
@@ -162,6 +164,11 @@ export function ArchitectConstructPanel({
   const liveApproval =
     approval && approval.snapshot === snapshot && approval.revision === revision ? approval : null;
   const run = selectCurrentRun(library, projectId, ownerId) as ConstructRun | null;
+  const retained = selectRetainedConstructPreview({
+    library,
+    ownerId,
+    projectId,
+  });
   const brief = run ? library?.briefs.find((row) => row.id === run.brief_id) : library?.briefs[0];
   const source = run ? library?.sources.find((row) => row.id === run.source_id) : library?.sources[0];
   const events = run ? (library?.events[run.id] ?? []) : [];
@@ -259,7 +266,7 @@ export function ArchitectConstructPanel({
         instruction: intendedChange,
         intendedChange,
         allowedPaths: paths,
-        protectedPaths: ['.env'],
+        protectedPaths: effectiveProtectedPaths(),
         excerpts: files,
       });
       if (!proposed.ok) throw new Error(proposed.error);
@@ -276,6 +283,7 @@ export function ArchitectConstructPanel({
       });
       setSelectedChange(proposed.data.proposal.patch[0]?.path ?? null);
       setContextPanel('change');
+      if (window.matchMedia('(max-width: 639px)').matches) setSheet('change');
       setApproval(null);
       setMessage(
         proposed.data.mocked
@@ -366,7 +374,7 @@ export function ArchitectConstructPanel({
         files,
         intendedChange,
         allowedPaths: files.map((file) => file.path),
-        protectedPaths: ['.env'],
+        protectedPaths: effectiveProtectedPaths(),
         acceptanceChecks: acceptanceChecksFromPlan(planCheckCoverage(files)),
         checkPlan: reviewCoverage,
         patch: liveProposal.patch,
@@ -658,30 +666,6 @@ export function ArchitectConstructPanel({
         </p>
       )}
       <div className="origin-construct-review">
-        <section className="origin-construct-canvas" aria-label="Last valid preview">
-          <h4>Isolated preview</h4>
-          {run?.result?.preview.body ? (
-            <iframe
-              title="Construct preview"
-              sandbox=""
-              srcDoc={run.result.preview.body}
-              className="origin-construct-preview"
-            />
-          ) : (
-            <p>
-              {run?.result?.preview.unavailable_reason ||
-                run?.result?.blocker ||
-                'Last valid isolated preview is held here once a worker records output. Static HTML is not a running application.'}
-            </p>
-          )}
-          {run?.result && (
-            <p>
-              Isolation {run.result.isolation}. Runtime available{' '}
-              {run.result.runtime_available ? 'yes' : 'no'}. Sandbox executed{' '}
-              {run.result.sandbox ? 'yes' : 'no'}. A Docker probe is not a sandbox.
-            </p>
-          )}
-        </section>
         <aside className="origin-construct-context" ref={panelScrollRef} aria-label="Review context">
           <nav className="origin-construct-views" aria-label="Review context">
             {(
@@ -704,7 +688,7 @@ export function ArchitectConstructPanel({
                     if (panelScrollRef.current)
                       panelScrollRef.current.scrollTop = panelScrollByView.current[id] ?? 0;
                   });
-                  if (window.matchMedia('(max-width: 719px)').matches) {
+                  if (window.matchMedia('(max-width: 639px)').matches) {
                     lastFocusRef.current = document.activeElement as HTMLElement;
                     setSheet(id);
                   }
@@ -765,6 +749,39 @@ export function ArchitectConstructPanel({
             )}
           </div>
         </aside>
+        <section className="origin-construct-canvas" aria-label="Last valid preview">
+          <h4>Isolated preview</h4>
+          <p>{retained.label}</p>
+          {run && retained.stale && (
+            <p>
+              Current attempt {statusLabel(run.status)}
+              {run.project_revision != null ? ` · revision ${run.project_revision}` : ''}. This
+              preview is not that attempt.
+            </p>
+          )}
+          {retained.body ? (
+            <iframe
+              title="Construct preview"
+              sandbox=""
+              srcDoc={retained.body}
+              className="origin-construct-preview"
+            />
+          ) : (
+            <p>
+              {run?.result?.preview.unavailable_reason ||
+                run?.result?.blocker ||
+                retained.label}
+            </p>
+          )}
+          {retained.run?.result && (
+            <p>
+              Isolation {retained.run.result.isolation}. Runtime available{' '}
+              {retained.run.result.runtime_available ? 'yes' : 'no'}. Sandbox executed{' '}
+              {retained.run.result.sandbox ? 'yes' : 'no'}. Artifact {retained.artifactId}. A Docker
+              probe is not a sandbox.
+            </p>
+          )}
+        </section>
       </div>
       {sheet && (
         <div
@@ -814,19 +831,6 @@ export function ArchitectConstructPanel({
             </div>
           </div>
         </div>
-      )}
-      {liveProposal && contextPanel !== 'change' && (
-        <ChangeDiff
-          summary={liveProposal.summary}
-          notes={liveProposal.notes}
-          mocked={liveProposal.mocked}
-          patches={liveProposal.patch}
-          selectedPath={selectedChange}
-          onSelect={(path) => {
-            setSelectedChange(path);
-            setContextPanel('change');
-          }}
-        />
       )}
       <nav className="origin-construct-views" aria-label="Construct review">
         {views.map((tab) => (
@@ -926,11 +930,19 @@ export function ArchitectConstructPanel({
       {view === 'Preview' && (
         <article className="origin-construct-pane">
           <h4>Isolated preview</h4>
-          {run?.result?.preview.body ? (
+          <p>{retained.label}</p>
+          {run && retained.stale && (
+            <p>
+              Current attempt {statusLabel(run.status)}
+              {run.project_revision != null ? ` · revision ${run.project_revision}` : ''}. This
+              preview is not that attempt.
+            </p>
+          )}
+          {retained.body ? (
             <iframe
               title="Construct preview"
               sandbox=""
-              srcDoc={run.result.preview.body}
+              srcDoc={retained.body}
               className="origin-construct-preview"
             />
           ) : (
@@ -940,11 +952,11 @@ export function ArchitectConstructPanel({
                 'Preview is unavailable until isolated output is collected.'}
             </p>
           )}
-          {run?.result && (
+          {retained.run?.result && (
             <p>
-              Isolation {run.result.isolation}. Runtime available{' '}
-              {run.result.runtime_available ? 'yes' : 'no'}. Sandbox executed{' '}
-              {run.result.sandbox ? 'yes' : 'no'}. A Docker probe is not a sandbox.
+              Isolation {retained.run.result.isolation}. Runtime available{' '}
+              {retained.run.result.runtime_available ? 'yes' : 'no'}. Sandbox executed{' '}
+              {retained.run.result.sandbox ? 'yes' : 'no'}. A Docker probe is not a sandbox.
             </p>
           )}
         </article>

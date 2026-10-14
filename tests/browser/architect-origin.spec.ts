@@ -1073,36 +1073,112 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
   await expect(
     page.getByText('Labelled mocked provider. This is not a paid OpenAI call.'),
   ).toBeVisible();
-  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Source' }).click();
+  async function openReview(task: 'Source' | 'Change' | 'Evidence') {
+    const close = page.getByRole('button', { name: 'Close review' });
+    if (await close.isVisible()) await close.click();
+    await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: task }).click();
+  }
+  async function captureReview(
+    width: number,
+    height: number,
+    task: 'source' | 'change' | 'evidence',
+    extraName?: string,
+  ) {
+    await page.setViewportSize({ width, height });
+    await openReview(task === 'source' ? 'Source' : task === 'change' ? 'Change' : 'Evidence');
+    const sheet = page.locator('.origin-construct-sheet-card');
+    const review = page.locator('.origin-construct-review');
+    const target = (await sheet.isVisible()) ? sheet : review;
+    await expect(target).toBeVisible();
+    if (task === 'change') {
+      const diff = target.locator('.origin-diff').first();
+      if (await diff.count()) await diff.scrollIntoViewIfNeeded();
+    }
+    const path = extraName
+      ? `docs/evidence/architect-construct/${extraName}.png`
+      : `docs/evidence/architect-construct/architect-source-review-${task}-${width}.png`;
+    await target.screenshot({ path });
+    return target;
+  }
+
+  await openReview('Source');
   await expect(page.getByRole('heading', { name: 'What Architect understands' })).toBeVisible();
   await page.getByRole('button', { name: /preview\.html/ }).first().click();
   await expect(page.getByLabel('Inspect preview.html')).toContainText('Complete content is available');
-  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Change' }).click();
+  await captureReview(1440, 900, 'source');
+  await openReview('Change');
   await expect(page.locator('.origin-diff [data-diff="remove"]').first()).toContainText('Before');
   await expect(page.locator('.origin-diff [data-diff="add"]').first()).toContainText('After');
+  const desktopChange = await captureReview(1440, 900, 'change');
   await page.screenshot({
     path: 'docs/evidence/architect-construct/architect-source-review-1440.png',
     fullPage: true,
   });
+  const desktopDiff = desktopChange.locator('.origin-diff');
+  await expect(desktopDiff).toBeVisible();
+  const desktopDiffBox = await desktopDiff.boundingBox();
+  expect(desktopDiffBox && desktopDiffBox.width).toBeGreaterThan(360);
+
   await page.setViewportSize({ width: 720, height: 900 });
+  await openReview('Change');
   await expect(page.getByRole('heading', { name: 'Proposed change awaiting approval' })).toBeVisible();
+  const foldReview = page.locator('.origin-construct-review');
+  const foldContext = page.locator('.origin-construct-context');
+  const foldCanvas = page.locator('.origin-construct-canvas');
+  const foldBox = await foldReview.boundingBox();
+  const foldContextBox = await foldContext.boundingBox();
+  const foldCanvasBox = await foldCanvas.boundingBox();
+  expect(foldBox).toBeTruthy();
+  expect(foldContextBox).toBeTruthy();
+  expect(foldCanvasBox).toBeTruthy();
+  if (!foldBox || !foldContextBox || !foldCanvasBox) throw new Error('Fold review layout missing');
+  expect(foldContextBox.width).toBeGreaterThan(foldBox.width * 0.72);
+  expect(foldCanvasBox.y).toBeGreaterThan(foldContextBox.y);
+  await expect(page.locator('.origin-diff [data-diff="remove"]').first()).toBeVisible();
+  await captureReview(720, 900, 'change');
   await page.screenshot({
     path: 'docs/evidence/architect-construct/architect-source-review-720.png',
     fullPage: true,
   });
+  await captureReview(720, 900, 'source');
+  await captureReview(720, 900, 'evidence');
+
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Source' }).click();
+  await openReview('Source');
   await expect(page.getByRole('heading', { name: 'What Architect understands' })).toBeVisible();
+  const sourceButton = page
+    .locator('.origin-construct-sheet-card .origin-understand-list button')
+    .first();
+  await expect(sourceButton).toBeVisible();
+  const fileBox = await sourceButton.locator('.origin-understand-file').boundingBox();
+  const inclusionBox = await sourceButton.locator('.origin-understand-inclusion').boundingBox();
+  expect(fileBox).toBeTruthy();
+  expect(inclusionBox).toBeTruthy();
+  if (!fileBox || !inclusionBox) throw new Error('Source filename and inclusion label missing');
+  expect(inclusionBox.y).toBeGreaterThan(fileBox.y + fileBox.height - 2);
+  await captureReview(390, 844, 'source');
   await page.screenshot({
     path: 'docs/evidence/architect-construct/architect-source-review-390.png',
     fullPage: true,
   });
+  await captureReview(390, 844, 'change');
+  await captureReview(390, 844, 'evidence');
   const closeSheet = page.getByRole('button', { name: 'Close review' });
   if (await closeSheet.isVisible()) await closeSheet.click();
+
+  await page.setViewportSize({ width: 390, height: 480 });
+  await openReview('Change');
+  await expect(page.locator('.origin-diff [data-diff="add"]').first()).toContainText('After');
+  await expect(page.getByRole('button', { name: 'Approve proposed change' })).toBeVisible();
+  await captureReview(390, 480, 'change', 'architect-source-review-keyboard-390');
+  if (await page.getByRole('button', { name: 'Close review' }).isVisible())
+    await page.getByRole('button', { name: 'Close review' }).click();
+
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Evidence' }).click();
+  await openReview('Evidence');
   await expect(page.getByRole('heading', { name: 'Check coverage' })).toBeVisible();
   await expect(page.getByText('No applicable checks available. That is not a pass.')).toBeVisible();
+  await captureReview(1440, 900, 'evidence');
   await expect(intended).toHaveValue('Replace the imported heading and keep this draft.');
   await page.getByRole('button', { name: 'Approve proposed change' }).click();
   await expect(page.getByText(/Change approved against the pinned source/)).toBeVisible();

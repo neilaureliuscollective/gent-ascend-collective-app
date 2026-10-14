@@ -1,5 +1,6 @@
 import { lstatSync, realpathSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
+import { isProtectedSourcePath, matchesPathPrefix } from './path-protection';
 import { relPath, type BriefScope } from './schema';
 
 export class PathGuardError extends Error {
@@ -15,22 +16,12 @@ export function assertRelPath(value: string) {
 }
 
 export function matchesPrefix(path: string, prefix: string) {
-  return path === prefix || path.startsWith(`${prefix}/`);
+  return matchesPathPrefix(path, prefix);
 }
 
 export function isProtectedPath(path: string, protectedPaths: string[]) {
   const safe = assertRelPath(path);
-  if (
-    safe === '.env' ||
-    safe.startsWith('.env.') ||
-    safe.includes('/.env') ||
-    safe.endsWith('.pem') ||
-    safe.endsWith('.key') ||
-    matchesPrefix(safe, '.git') ||
-    matchesPrefix(safe, 'secrets')
-  )
-    return true;
-  return protectedPaths.some((prefix) => matchesPrefix(safe, prefix));
+  return isProtectedSourcePath(safe, protectedPaths);
 }
 
 export function isAllowedPath(path: string, allowedPaths: string[]) {

@@ -8,6 +8,14 @@ Talk #121 (`28361628c6db6d16dd1db76be8e471440c58d37f`) overlaps this pass only o
 
 Construct #116, Connections #117 and UI #119 are already in main via #120. They were not merged again.
 
+## Correction pass (same PR)
+
+Reviewed head `7bc82ae` kept the complete-file contract and Source / Change / Evidence review. This follow-up does not start a new build phase:
+
+1. **One shared browser-safe path-protection predicate** (`path-protection.ts`) is used for context eligibility and edit protection. Intrinsic `.env` / `.env.*` / nested environment files, `.pem`, `.key`, `.git` and `secrets` stay out of prompts, excerpts and manifests even when a browser allowlist includes them. Server-side `effectiveProtectedPaths` still unions the execution defaults. Protected contents are never logged.
+2. **Last successful preview is retained** via `selectRetainedConstructPreview`. A newer queued, running, failed or cancelled run no longer blanks the pane. The displayed revision is labelled, and older output is never described as the current attempt. Held output is owner/project scoped and cleared on switch.
+3. **Fold / phone / desktop review.** The selected Source, Change or Evidence task is the main surface. Fold (≤1023px) shows one stacked secondary preview instead of squeezed columns. Phone sheets stack filename and inclusion label. Diffs stay in a padded scroll area, including a short keyboard-height viewport.
+
 ## What this pass adds
 
 1. **Source context that matches the whole-file edit contract.** `prepareSourceContext` selects at most eight complete files totaling 48 KiB (64 KiB per file). Truncated excerpts are labelled and never used as `before` text. Relevant files past the former eight-file cutoff become an explicit omitted/missing-context state. Missing imports are listed so the owner can add them through the existing authorized path. Browser-claimed repository provenance is still ignored.
@@ -44,17 +52,17 @@ Ran:
 
 - `npm run lint` — pass, zero warnings
 - `npm run typecheck` — pass
-- `npm test` — 914 unit/SQL tests
+- `npm test` — 922 unit/SQL tests
 - `npm run db:ledger` — pass; no new hosted migration
 - `npm run build` — production build pass
-- Origin browser: 27/27, including source selection, before/after diff, evidence, draft preservation, 390/720/1440
+- Origin browser: 27/27, including protected-context regressions, retained-preview lifecycle, Source / Change / Evidence at 390/720/1440 and a 390×480 keyboard-height viewport
 
-Screenshots of the implemented review: `docs/evidence/architect-construct/architect-source-review-390.png`, `architect-source-review-720.png`, `architect-source-review-1440.png`.
+Screenshots: `docs/evidence/architect-construct/architect-source-review-{source,change,evidence}-{390,720,1440}.png`, `architect-source-review-keyboard-390.png`, plus the original 390/720/1440 full-page names.
 
 Unrun / blocked:
 
 - Exact-head hosted CI (starts after this push)
-- Disposable local Supabase Auth/PostgREST Construct acceptance
+- Disposable local Supabase Auth/PostgREST Construct acceptance (`test:integration` needs `.env.development.local`)
 - Host Docker isolated execution in this executor
 - Paid OpenAI proposal calls
 - Physical Fold / Safari / device review

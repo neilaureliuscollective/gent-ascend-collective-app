@@ -1,3 +1,7 @@
+# Architect source-context and review continuity — 2026-10-14
+
+Use one browser-safe path-protection predicate for both model context and edit protection; do not send protected contents because a later patch check would reject them. Keep the last successful owner/project-scoped preview while a newer run is in flight or unsuccessful, and label the displayed revision. Make Source / Change / Evidence the main review surface instead of competing Fold columns. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).
+
 # Architect source-aware review — 2026-10-14
 
 Keep the existing whole-file before/after patch contract. Do not send truncated excerpts as originals. Bound complete editable context to eight files / 48 KiB so output stays valid. Creating and deleting files stay unsupported; emptying a file is not deletion. Replace the no-op `present` check with explicit coverage: `node --check` when JavaScript is present, otherwise “no applicable checks available.” Record the check plan in the approval snapshot and run the same checks before and after the patch. Presentation is a focused Source / Change / Evidence surface beside the last valid preview. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md). No Construct activation, hosted migration, or paid model call.

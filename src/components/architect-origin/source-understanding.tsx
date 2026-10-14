@@ -40,8 +40,8 @@ export function SourceUnderstanding({
               aria-current={selectedPath === entry.path ? 'true' : undefined}
               onClick={() => onSelect(entry.path)}
             >
-              <strong>{entry.path}</strong>
-              <span>{inclusionLabel[entry.inclusion]}</span>
+              <strong className="origin-understand-file">{entry.path}</strong>
+              <span className="origin-understand-inclusion">{inclusionLabel[entry.inclusion]}</span>
             </button>
             {onToggleFile && entry.inclusion !== 'missing' && (
               <button type="button" className="origin-understand-adjust" onClick={() => onToggleFile(entry.path)}>
