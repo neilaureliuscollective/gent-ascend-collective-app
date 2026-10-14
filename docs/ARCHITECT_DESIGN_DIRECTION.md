@@ -16,9 +16,12 @@ Architect owns this receiving contract. Talk owns generating or selecting the de
 
 - Authenticated session cookie only.
 - Owner, project and digest authority come from server-owned records.
-- The receiver recomputes `designDirectionDigest(content, sourceRecords)`. A client-supplied hash is not authority.
+- Compatible `talk-architect-handoff/v1` text import binds the digest to the submitted payload. That is integrity of the import, not verification of a Talk board.
+- Talk-owned boards require `src/domains/architect-design-direction/talk-source.ts`. Architect does not invent a Talk store. The adapter is pending on the Talk workstream.
+- A client-supplied hash is not authority.
 - Retry of the same `requestId` creates or reopens exactly one private project.
 - Execution never starts on import (`started: false`).
+- Schema/module version stays `2026-10-14.1`. Communicate any later version change explicitly to the Talk workstream.
 
 ## v1 fields
 

@@ -1,10 +1,12 @@
 import { expect, it } from 'vitest';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { resolveTrustedToolchain, buildGeneratedApp } from '@/domains/architect-apps/builder';
 import { trackerSourceFiles } from '@/domains/architect-apps/tracker-fixture';
+import { notesSourceFiles } from '@/domains/architect-apps/notes-fixture';
 import { applyFileOperations, overlaySealedFiles } from '@/domains/architect-apps/tree';
 import { trackerPriorityOperations } from '@/domains/architect-apps/tracker-fixture';
 import { isSealedAppPath } from '@/domains/architect-apps/catalog';
-import { assemblePreviewDocument, previewCsp, APP_PREVIEW_SANDBOX } from '@/domains/architect-apps/preview';
+import { assemblePreviewDocument, previewCsp, signPreviewSession, APP_PREVIEW_SANDBOX } from '@/domains/architect-apps/preview';
 
 it('rejects sealed-path operations and preserves unchanged files on a priority revision', () => {
   const base = trackerSourceFiles();
@@ -19,6 +21,22 @@ it('rejects sealed-path operations and preserves unchanged files on a priority r
   );
   expect(revised.files.find((file) => file.path === 'src/types.ts')?.content).toMatch(/priority/);
   expect(overlaySealedFiles(revised.files).filter((file) => isSealedAppPath(file.path))).toHaveLength(4);
+});
+
+it('does not let compiled JS close the preview document', () => {
+  const preview = assemblePreviewDocument({
+    artifacts: [
+      { path: 'index.html', content: '<!doctype html><html><head></head><body><div id="root"></div></body></html>' },
+      { path: 'assets/app.js', content: 'const html="</body></html>"; window.__ready=true' },
+    ],
+    session: 'v1.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    parentOrigin: 'http://127.0.0.1:3100',
+    revision: 1,
+    revisionId: '00000000-0000-4000-8000-000000000009',
+  });
+  expect(preview.srcDoc).toMatch(/<\\\/body><\\\/html>/);
+  expect(preview.srcDoc.match(/<\/body>/g)?.length).toBe(1);
+  expect(preview.revision).toBe(1);
 });
 
 it('assembles a script-enabled preview without parent cookies or service workers', () => {
@@ -49,4 +67,36 @@ it('typechecks and bundles the tracker with the pinned trusted toolchain when pr
   expect(built.result.bundle.ok, built.result.bundle.log).toBe(true);
   expect(built.artifacts.some((file) => file.path === 'index.html' || file.path.endsWith('.js'))).toBe(true);
   expect(built.manifestHash).toMatch(/^[0-9a-f]{64}$/);
+  expect(built.result.isolation).toBe('host-fixture');
+  expect(built.result.sandbox).toBe(false);
+}, 120000);
+
+it('compiles Field Notes with the labelled host-fixture runner and does not claim isolation', async () => {
+  const host = resolveTrustedToolchain();
+  if (!host.typecheckBin || !host.viteBin) {
+    expect(host.isolation).toBe('unavailable');
+    return;
+  }
+  const built = await buildGeneratedApp(notesSourceFiles(), { host, timeoutMs: 90000 });
+  expect(built.result.typecheck.ok, built.result.typecheck.log).toBe(true);
+  expect(built.result.bundle.ok, built.result.bundle.log).toBe(true);
+  expect(built.result.isolation).toBe('host-fixture');
+  expect(built.result.sandbox).toBe(false);
+  const session = signPreviewSession({
+    personId: '00000000-0000-4000-8000-000000000001',
+    projectId: '00000000-0000-4000-8000-000000000003',
+    revisionId: '00000000-0000-4000-8000-000000000009',
+  });
+  const preview = assemblePreviewDocument({
+    artifacts: built.artifacts,
+    session,
+    parentOrigin: 'http://127.0.0.1:3100',
+    title: 'Field notes',
+    revision: 1,
+    revisionId: '00000000-0000-4000-8000-000000000009',
+  });
+  await mkdir('test-results', { recursive: true });
+  await writeFile('test-results/architect-apps-notes-host-fixture.html', preview.srcDoc, 'utf8');
+  expect(preview.srcDoc).toMatch(/Field notes|Aethelios generated application/i);
+  expect(preview.revision).toBe(1);
 }, 120000);

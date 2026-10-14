@@ -2124,7 +2124,7 @@ test('confirmed tool save with a failed library refresh offers reload, not anoth
   await expect(page.locator('.origin-tool [role="status"]')).toContainText('The confirmed revision was not saved again');
 });
 
-test('app workbench reviews files, recovers approved start after reload, and keeps last working preview', async ({
+test('UI fixture: app workbench reviews files, recovers approved start after reload, and keeps last working preview', async ({
   page,
 }) => {
   await fixture(page);
@@ -2152,13 +2152,14 @@ test('app workbench reviews files, recovers approved start after reload, and kee
         ]
       : [],
     jobs: starts
-      ? [{ id: revisionId, revision_id: revisionId, status: 'succeeded', cancel_requested: false, result: { ok: true, isolation: 'host-trusted', blocker: null, typecheck: { ok: true }, bundle: { ok: true } } }]
+      ? [{ id: revisionId, revision_id: revisionId, status: 'succeeded', cancel_requested: false, result: { ok: true, isolation: 'host-fixture', sandbox: false, blocker: null, typecheck: { ok: true }, bundle: { ok: true } } }]
       : [],
     events: [],
     current: approved
       ? { id: revisionId, revision: 1, status: starts ? 'ready' : 'approved', working: starts > 0, approval_hash: 'a'.repeat(64) }
       : null,
     working: starts ? { id: revisionId, revision: 1 } : null,
+    selected: starts ? { id: revisionId, revision: 1, status: 'ready', working: true } : null,
     preview: starts
       ? {
           srcDoc: '<!doctype html><title>Tracker</title><p>Working tracker</p>',

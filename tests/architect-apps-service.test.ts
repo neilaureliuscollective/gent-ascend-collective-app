@@ -198,11 +198,11 @@ it('keeps the last working app when a later build fails and isolates owners', as
     build: async () => ({
       result: {
         ok: true,
-        isolation: 'host-trusted',
+        isolation: 'host-fixture',
         sandbox: false,
         typecheck: { ok: true, log: 'ok' },
         bundle: { ok: true, log: 'ok' },
-        blocker: null,
+        blocker: 'Host-fixture toolchain.',
         stages: [],
       },
       artifacts: [{ path: 'index.html', content: '<html><body>tracker</body></html>' }],
@@ -246,7 +246,7 @@ it('keeps the last working app when a later build fails and isolates owners', as
     build: async () => ({
       result: {
         ok: false,
-        isolation: 'host-trusted',
+        isolation: 'host-fixture',
         sandbox: false,
         typecheck: { ok: false, log: 'broken' },
         bundle: { ok: false, log: '' },

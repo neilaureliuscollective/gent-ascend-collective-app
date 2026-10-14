@@ -4,23 +4,26 @@ Dedicated `architect-apps` domain for one supported profile: React + TypeScript 
 
 ## What is implemented
 
-- Immutable source-tree snapshots and app revisions, separate from Origin documents and Construct receipt JSON.
-- Explicit create/update/delete only under `src/`, bound to exact base hashes. Package, lock, Vite, TypeScript and runner files stay sealed.
-- Approved dependency catalog only. Model-defined package scripts, Dockerfiles and plugins are never executed.
-- App-generation and revision contracts returning files, declared collections and intended behaviors.
-- Trusted typecheck (`tsc --noEmit`) and Vite production bundle through a versioned host/image adapter.
-- Private compiled preview (inlined bundle, `sandbox="allow-scripts"` without `allow-same-origin`, restrictive CSP, service workers disabled).
-- Host-managed collections over a versioned postMessage bridge. Generated code receives no platform credential.
-- Additive schema evolution only. Records belong to the app and survive preview sessions.
-- App workbench: working canvas, desktop/phone viewports, files/changes/records/revisions, adjacent Refine, recovered approve → explicit start → lost response → retry.
+- Generalized generation adapter. The labelled tracker fixture stays `demo=tracker`. Supported apps and revisions use the same production adapter with mocked or authorized OpenAI transport bound to the user brief, selected design and exact source revision.
+- Durable owner-scoped store for apps, immutable source revisions, compiled artifacts, jobs, records and design-direction receipts. Writes go through SECURITY DEFINER RPCs. `person_id` is `persons.id`; authenticated identity is `persons.auth_user_id = auth.uid()`.
+- Isolated Docker build adapter: pinned image, nobody `65534:65534`, `--network none`, no Docker socket or host secrets, versioned toolchain check, fenced results, cancellation and cleanup. Host-fixture compilation is labelled local evidence for the tracker fixture only and cannot mark a mock or model-generated app as isolated success.
+- Worker entry supplies the durable Apps store. Optional supervisor hook is no longer the only wiring.
+- Versioned `architect-apps-data/v1` bridge. Compact `v1.nonce.mac` preview sessions stay inside the derived 96-character bound. Parent→API payloads are allowlisted; iframe fields never overwrite owner, project or revision.
+- Workbench shows the selected saved revision, file contents, actual before/after changes, live job status, and keeps the last working preview when a later build fails.
+- Talk `talk-architect-direction/v1` remains stable. Text-import compatibility is preserved. Talk board verification requires the documented adapter on the Talk workstream.
+
+## Isolation
+
+| Runner | When | Can mark isolated success |
+| --- | --- | --- |
+| Docker image `ARCHITECT_APPS_IMAGE` (`aethelios-architect-apps:2026-10-14.1`) | Normal and mock/OpenAI apps | Yes, only when `isolation=docker` and `sandbox=true` |
+| Host-fixture TypeScript/Vite | Labelled `demo=tracker` with `ARCHITECT_APPS_ALLOW_HOST_FIXTURE=true` | No. `sandbox` stays false |
+
+Generated project code does not execute in the credentialed host process for the production path. Model-controlled package scripts, build plugins and Dockerfiles stay prohibited.
 
 ## Talk contract
 
-Architect owns `talk-architect-direction/v1`. Module: `src/domains/architect-design-direction/contract.ts`. Receiver: `src/domains/architect-design-direction/receiver.ts`. Path: `POST /api/architect-design-direction`. Talk must not treat a client hash as authority. Retry creates exactly one private project. Execution never starts on import. See [ARCHITECT_DESIGN_DIRECTION.md](ARCHITECT_DESIGN_DIRECTION.md).
-
-## Host requirement
-
-Isolated builds need image `ARCHITECT_APPS_IMAGE` (default `aethelios-architect-apps:2026-10-14.1`) with pinned React/TypeScript/Vite preinstalled, no Docker socket, no inherited secrets, measured CPU/memory/disk/process/time/network limits. This checkout uses a trusted in-process toolchain adapter when those binaries are already installed for the platform. That adapter is development evidence, not an isolated production sandbox.
+Architect owns `talk-architect-direction/v1`. Schema/module version remains `2026-10-14.1`. Adapter boundary: `src/domains/architect-design-direction/talk-source.ts`. Talk must register an authorized source adapter that resolves conversation, board, version, direction and assets from immutable Talk server records. Until that adapter exists, only compatible `talk-architect-handoff/v1` text import can be retained. See [ARCHITECT_DESIGN_DIRECTION.md](ARCHITECT_DESIGN_DIRECTION.md).
 
 ## Flags
 
@@ -28,12 +31,22 @@ Isolated builds need image `ARCHITECT_APPS_IMAGE` (default `aethelios-architect-
 | --- | --- | --- |
 | `ARCHITECT_APPS_ENABLED` | false | Owner API and workbench |
 | `ARCHITECT_APPS_FIXTURE` | false | Labelled tracker fixture |
-| `ARCHITECT_APPS_AI_MOCK` | false | Labelled mocked provider |
+| `ARCHITECT_APPS_AI_MOCK` | false | Labelled mocked provider (Field Notes) |
 | `ARCHITECT_APPS_AI_ENABLED` | false | Authorized non-production OpenAI |
 | `ARCHITECT_APPS_STORE` | unset | `memory` only for tests/non-production |
+| `ARCHITECT_APPS_ALLOW_HOST_FIXTURE` | false | Permit host-fixture compilation for the labelled tracker only |
+| `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-14.1` | Pinned isolated build image |
 
-Additive migration `20261015080000_architect_apps.sql` is local-only until founder-approved hosted application.
+Additive migrations `20261015080000_architect_apps.sql` and `20261015120000_architect_apps_durable.sql` are local-only until founder-approved hosted application.
 
-## First founder action for a real non-production generated journey
+## Evidence classes
 
-Inspected settings: Origin, Construct and Apps flags default to false; no `.env.local` Apps enablement; OpenAI app generation remains unauthorized; hosted Apps migrations are unapplied; this host has no isolated build image. The first founder action is: apply `20261015080000_architect_apps.sql` on the local Supabase instance and set `ARCHITECT_ORIGIN_ENABLED=true` plus `ARCHITECT_APPS_ENABLED=true` and `ARCHITECT_APPS_FIXTURE=true` in local env. Leave `ARCHITECT_APPS_AI_ENABLED` false. That is a labelled fixture journey, not a paid model call.
+- Deterministic mocked-provider generation is labelled `mock`, not a paid model call.
+- Tracker fixture is labelled `fixture`.
+- Simulated phone/Fold/desktop viewports are not physical-device acceptance.
+- Intercepted browser HTML (`Working tracker`) is a UI fixture, not app execution or persistence acceptance.
+- Funded OpenAI generation stays closed until founder-authorized.
+
+## First founder action
+
+Apply both Apps migrations on the local Supabase instance and set `ARCHITECT_ORIGIN_ENABLED=true`, `ARCHITECT_APPS_ENABLED=true`, plus a local worker token. Load or build image `aethelios-architect-apps:2026-10-14.1` so isolated Docker execution can run. Leave `ARCHITECT_APPS_AI_ENABLED` false. Missing funding must not be confused with a missing adapter; the adapter is implemented.

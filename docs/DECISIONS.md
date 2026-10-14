@@ -1,3 +1,7 @@
+# Architect generated applications finish — 2026-10-14
+
+Durable Apps persistence uses dedicated tables and RPCs, not Origin/Construct receipt JSON. Isolated success is Docker-only (`sandbox=true`). Host-fixture stays a labelled tracker compiler. Person identity is `persons.auth_user_id`, never `person_id = auth.uid()`. Talk direction schema stays `talk-architect-direction/v1`; Talk board resolution is an explicit adapter on the Talk workstream. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
 # Architect generated applications — 2026-10-14
 
 Own source snapshots, revisions, sealed toolchain, generation adapter, trusted typecheck/bundle, private preview and host-managed collections in `architect-apps` rather than expanding Construct receipts or Origin documents. Reuse Construct worker supervision, Origin project ownership, approval-hash / request-id idempotency and Talk text-handoff compatibility through narrow adapters. Do not imply arbitrary servers, independent auth, payments or production publishing. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
