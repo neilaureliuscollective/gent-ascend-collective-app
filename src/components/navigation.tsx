@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from './visual/icon';
 import { BplusMaterial } from './visual/bplus-material';
 const destinations: [string, string, IconName][] = [
+  ['/app', 'Home', 'command'],
   ['/app/aethelios', 'Talk', 'spark'],
   ['/app/work', 'Work', 'command'],
   ['/app/studio', 'Studio', 'collection'],
@@ -51,12 +52,16 @@ export function Navigation() {
           href={href === '/app/aethelios' && path.startsWith('/app/companies/') ? path : href}
           prefetch={href === '/app/health' ? false : undefined}
           aria-current={
-            path === href ||
-            path.startsWith(href + '/') ||
-            (href === '/app/aethelios' && path.startsWith('/app/companies/')) ||
-            (href === '/app/lifestyle' && path.startsWith('/app/collection'))
-              ? 'page'
-              : undefined
+            href === '/app'
+              ? path === '/app'
+                ? 'page'
+                : undefined
+              : path === href ||
+                  path.startsWith(href + '/') ||
+                  (href === '/app/aethelios' && path.startsWith('/app/companies/')) ||
+                  (href === '/app/lifestyle' && path.startsWith('/app/collection'))
+                ? 'page'
+                : undefined
           }
         >
           {(href === '/app/aethelios' || href === '/app/work') && path === href && (

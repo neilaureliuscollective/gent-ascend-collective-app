@@ -4,7 +4,7 @@ for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto('/app');
+    await page.goto('/app/aethelios');
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
@@ -46,7 +46,7 @@ for (const width of [360, 768, 1440]) {
     );
     expect(errors).toEqual([]);
     if (width === 360 || width === 1440) {
-      await page.goto('/app');
+      await page.goto('/app/aethelios');
       await page.screenshot({ path: `test-results/workspace-${width}.png`, fullPage: true });
     }
   });
@@ -58,8 +58,9 @@ test('production runtime denies developer routes and query bypass', async ({ pag
     (await request.post('/dev', { data: { membership: 'admin', token: 'fake' } })).status(),
   ).toBeGreaterThanOrEqual(400);
   await page.goto('/app?dev=true');
-  // The entry route streams a redirect; wait for it before the next navigation.
-  await page.waitForURL('**/app/aethelios');
+  await expect(page).toHaveURL(/\/app/);
+  await expect(page.getByRole('heading', { name: 'Command', exact: true })).toBeVisible();
+  await page.goto('/app/aethelios');
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Developer console' })).toHaveCount(0);
   await page.goto('/app/you');

@@ -9,6 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     start_url: '/app',
     shortcuts: [
+      { name: 'Command', url: '/app' },
       { name: 'Aethelios', url: '/app/aethelios' },
       { name: 'Company work', url: '/app/work' },
     ],

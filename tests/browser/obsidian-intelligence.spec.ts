@@ -49,7 +49,7 @@ for (const viewport of [
         const navigation = page.getByRole('navigation', {
           name: compactTalk ? 'Aethelios destinations' : 'Main navigation',
         });
-        await expect(navigation.getByRole('link')).toHaveCount(compactTalk ? 11 : 6);
+        await expect(navigation.getByRole('link')).toHaveCount(compactTalk ? 11 : 7);
         await expect(navigation.getByRole('link', { name: 'Health', exact: true })).toHaveAttribute(
           'href',
           '/app/health',

@@ -228,6 +228,8 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   width: 218px;
   padding: 33px 22px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(165deg, #151514f5, #080909f5 70%);
   border-right: 1px solid var(--border);
 }
@@ -298,10 +300,9 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   display: none;
 }
 .sidebar-footer {
-  position: absolute;
-  bottom: 35px;
-  left: 36px;
-  right: 22px;
+  margin-top: auto;
+  padding-top: 18px;
+  flex-shrink: 0;
 }
 .sidebar-footer p {
   color: var(--aether-silver);

@@ -75,7 +75,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx supabase start
+      - name: Start local Supabase
+        run: |
+          npx supabase start || {
+            echo 'supabase start failed; retrying after stop'
+            npx supabase stop --no-backup || true
+            sleep 8
+            npx supabase start
+          }
       - run: npx supabase db reset --local
       - run: node scripts/dev-setup.mjs --running
       - run: npx supabase db advisors --local --type security --level warn --fail-on none
