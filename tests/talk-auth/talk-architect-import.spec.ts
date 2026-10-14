@@ -118,6 +118,7 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   const importId = crypto.randomUUID();
   const wrongHandoffId = crypto.randomUUID();
   const wrongImportId = crypto.randomUUID();
+  const occupiedBriefId = crypto.randomUUID();
   const expectedProject = originProjectIdentity(person.data!.id, handoffId);
   const expectedSave = originSaveIdentity(person.data!.id, handoffId);
   const wrongProject = originProjectIdentity(person.data!.id, wrongHandoffId);
@@ -283,13 +284,21 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   );
   expect(review.body.images).toEqual([]);
 
+  const occupiedBrief = await api<{ id: string }>(page, '/api/aurelius/creations', 'POST', {
+    id: occupiedBriefId,
+    conversationId: conversation,
+    kind: 'brief',
+    predecessorId: null,
+    content: { ...brief, title: 'Occupied destination brief' },
+  });
+  expect(occupiedBrief.status).toBe(201);
   const wrongPrepared = await api<{ imported?: boolean }>(page, '/api/aurelius/creations', 'POST', {
     id: wrongHandoffId,
     conversationId: conversation,
     discipline: 'business',
     idea: 'A quieter luxury brand.',
     decisions: 'Keep emerald restrained.',
-    creationIds: [briefV2],
+    creationIds: [occupiedBriefId],
     imageIds: [],
     preparedAt: '2026-10-14T00:00:00.000Z',
   });
