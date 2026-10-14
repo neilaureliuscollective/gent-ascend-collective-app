@@ -208,6 +208,7 @@ createRoot(document.getElementById('root')!).render(
         enabled
         aiEnabled
         constructEnabled={params.get('construct') === 'adapter'}
+        appsEnabled={params.get('apps') === 'adapter'}
       />
     </EnvironmentFrame>
   ) : mode === 'founder-office' ? (

@@ -125,6 +125,41 @@ export interface Database {
         never,
         never
       >;
+      architect_apps: Table<
+        import('@/domains/architect-apps/schema').ArchitectApp,
+        never,
+        never
+      >;
+      architect_app_revisions: Table<
+        import('@/domains/architect-apps/schema').AppRevision,
+        never,
+        never
+      >;
+      architect_app_artifacts: Table<
+        import('@/domains/architect-apps/schema').AppArtifact,
+        never,
+        never
+      >;
+      architect_app_jobs: Table<
+        import('@/domains/architect-apps/schema').AppJob,
+        never,
+        never
+      >;
+      architect_app_events: Table<
+        import('@/domains/architect-apps/schema').AppEvent,
+        never,
+        never
+      >;
+      architect_app_records: Table<
+        import('@/domains/architect-apps/schema').AppRecord,
+        never,
+        never
+      >;
+      architect_design_directions: Table<
+        import('@/domains/architect-design-direction/store').RetainedDirection,
+        never,
+        never
+      >;
       intelligence_missions: Table<
         import('@/domains/missions/schema').Mission,
         Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>,

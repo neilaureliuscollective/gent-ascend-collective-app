@@ -657,8 +657,133 @@
   }
 }
 
+.architect-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(220px, 0.45fr);
+  grid-template-areas:
+    'stage side'
+    'refine refine';
+  gap: 12px;
+  min-height: 420px;
+  color: var(--studio-text, #e8e4dc);
+}
+
+.architect-app-stage {
+  grid-area: stage;
+  display: flex;
+  flex-direction: column;
+  min-height: 360px;
+  border: 1px solid color-mix(in srgb, #0b3b32 70%, #111412);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #0b3b32 28%, #050706), #050706 42%),
+    #050706;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.architect-app-toolbar,
+.architect-app-side,
+.architect-app-refine {
+  padding: 12px 14px;
+}
+
+.architect-app-kicker {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c4912f;
+  font-size: 0.7rem;
+  margin: 0 0 4px;
+}
+
+.architect-app-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid color-mix(in srgb, #c4912f 24%, #2a2d2a);
+}
+
+.architect-app-viewports,
+.architect-app-tabs,
+.architect-app-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.architect-app-frame {
+  flex: 1;
+  min-height: 280px;
+  background: #050706;
+}
+
+.architect-app-frame iframe,
+.architect-app-empty {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  border: 0;
+  background: #050706;
+}
+
+.architect-app-frame-phone {
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.architect-app-side {
+  grid-area: side;
+  border: 1px solid #2a2d2a;
+  border-radius: 16px;
+  background: color-mix(in srgb, #111412 88%, #0b3b32);
+}
+
+.architect-app-refine {
+  grid-area: refine;
+  border: 1px solid #2a2d2a;
+  border-radius: 16px;
+}
+
+.architect-app-refine textarea {
+  width: 100%;
+  min-height: 72px;
+}
+
+.architect-app-checks,
+.architect-app-empty,
+.architect-app-side li {
+  color: #9aa39a;
+}
+
+@media (max-width: 1100px) {
+  .origin-app .origin-rail {
+    display: none;
+  }
+  .architect-app {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 0.4fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .architect-app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'stage'
+      'refine';
+  }
+  .architect-app-side {
+    display: none;
+  }
+  .architect-app-refine.is-open,
+  .architect-app-refine {
+    display: block;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .origin-choice {
+    transition: none;
+  }
+  .architect-app-frame iframe {
     transition: none;
   }
 }

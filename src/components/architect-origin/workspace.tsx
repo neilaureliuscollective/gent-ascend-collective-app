@@ -6,6 +6,7 @@ import { compileDocument } from '@/domains/architect-origin/documents';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import { ArchitectAppPanel } from './app-panel';
 import { ArchitectConstructPanel } from './construct-panel';
 import { ArchitectToolPanel } from './tool-panel';
 import type { ToolWorkspaceState } from './tool-session';
@@ -58,7 +59,7 @@ import {
 import type { z } from 'zod';
 const markdownComponents = { img: () => <span>[External image omitted]</span> };
 type Library = { projects: OriginProject[]; versions: OriginVersion[]; runs: OriginRun[] };
-const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Tool', 'Construct', 'History'] as const;
+const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Tool', 'App', 'Construct', 'History'] as const;
 type Surface = (typeof surfaces)[number];
 type DocumentView = 'Edit' | 'Preview' | 'Split';
 type PendingReference = { url: string; title: string; provenance: 'user' };
@@ -107,10 +108,12 @@ export function ArchitectOrigin({
   enabled = false,
   aiEnabled = false,
   constructEnabled = false,
+  appsEnabled = false,
 }: {
   enabled?: boolean;
   aiEnabled?: boolean;
   constructEnabled?: boolean;
+  appsEnabled?: boolean;
 }) {
   const [library, setLibrary] = useState<Library>({ projects: [], versions: [], runs: [] });
   const [selected, setSelected] = useState<OriginProject | null>(null);
@@ -1032,6 +1035,7 @@ export function ArchitectOrigin({
                     if (tab === 'Conversation') setWorkbenchView('changes');
                     if (tab === 'Deliverables' || tab === 'Research') setWorkbenchView('changes');
                     if (tab === 'History') setWorkbenchView('checks');
+                    if (tab === 'App') setWorkbenchView('preview');
                   }}
                 >
                   {surface === tab && <BplusMaterial radius={8} />}
@@ -1043,7 +1047,8 @@ export function ArchitectOrigin({
               surface !== 'Blueprint' &&
               surface !== 'History' &&
               surface !== 'Construct' &&
-              surface !== 'Tool' && (
+              surface !== 'Tool' &&
+              surface !== 'App' && (
               <div className="origin-canvas-tools">
                 <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
                   {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
@@ -1051,7 +1056,7 @@ export function ArchitectOrigin({
               </div>
             )}
             <div
-              className={`origin-workspace origin-workbench origin-${surface.toLowerCase()} origin-view-${workbenchView}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' && surface !== 'Tool' ? ' origin-canvas-focused' : ''}`}
+              className={`origin-workspace origin-workbench origin-${surface.toLowerCase()} origin-view-${workbenchView}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' && surface !== 'Tool' && surface !== 'App' ? ' origin-canvas-focused' : ''}`}
             >
               <OutlineRail
                 draft={draft}
@@ -1067,7 +1072,7 @@ export function ArchitectOrigin({
               {(surface === 'Conversation' ||
                 surface === 'Research' ||
                 surface === 'Deliverables' ||
-                (workbenchView === 'preview' && surface !== 'Tool' && surface !== 'Construct')) && (
+                (workbenchView === 'preview' && surface !== 'Tool' && surface !== 'Construct' && surface !== 'App')) && (
                 <aside
                   className="origin-conversation origin-refine"
                   hidden={focusCanvas && surface !== 'Conversation'}
@@ -1167,7 +1172,7 @@ export function ArchitectOrigin({
                 </aside>
               )}
               <section className="origin-plane" aria-label={surface} ref={planeRef}>
-                {workbenchView === 'preview' && (
+                {workbenchView === 'preview' && surface !== 'App' && (
                   <ArtifactCanvas
                     decision={originArtifactDecision()}
                     stale={(() => {
@@ -1182,7 +1187,7 @@ export function ArchitectOrigin({
                     title={draft.name}
                   />
                 )}
-                {workbenchView === 'checks' && (
+                {workbenchView === 'checks' && surface !== 'App' && (
                   <aside className="origin-notice origin-checks-pane">
                     <h3>Checks</h3>
                     <p>
@@ -1594,6 +1599,16 @@ export function ArchitectOrigin({
                       onState={reportToolState}
                     />
                   </div>
+                )}
+                {surface === 'App' && selected && (
+                  <ArchitectAppPanel
+                    key={`${selected.person_id}:${selected.id}:app`}
+                    ownerId={selected.person_id}
+                    projectId={selected.id}
+                    revision={selected.revision}
+                    enabled={appsEnabled}
+                    locked={locked}
+                  />
                 )}
                 {surface === 'Construct' && selected && (
                   <ArchitectConstructPanel
