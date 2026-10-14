@@ -153,6 +153,15 @@ export const briefScopeSchema = z
     check_plan: checkPlanSchema.optional(),
     resource_limits: resourceLimitsSchema,
     patch: z.array(patchFileSchema).min(1).max(16),
+    repair: z
+      .object({
+        kind: z.literal('check-driven'),
+        parent_run_id: z.uuid(),
+        parent_approval_hash: sha256,
+        targets: z.array(z.string().min(1).max(400)).min(1).max(8),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine(
@@ -292,6 +301,7 @@ export const constructRunSchema = z
     lease_token: z.uuid().nullable(),
     lease_until: z.string().nullable(),
     result: runResultSchema.nullable(),
+    parent_run_id: z.uuid().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })
@@ -362,6 +372,24 @@ export const proposeCommand = z
     excerpts: z.array(sourceFileSchema).min(1).max(32),
   })
   .strict();
+export const proposeRepairCommand = z
+  .object({
+    action: z.literal('propose-repair'),
+    projectId: z.uuid(),
+    parentRunId: z.uuid(),
+    instruction: z.string().trim().min(1).max(2000).optional(),
+  })
+  .strict();
+export const approveRepairCommand = z
+  .object({
+    action: z.literal('approve-repair'),
+    projectId: z.uuid(),
+    briefId: z.uuid(),
+    parentRunId: z.uuid(),
+    expected: z.number().int().positive().max(500),
+    patch: z.array(patchFileSchema).min(1).max(16),
+  })
+  .strict();
 export const approveChangeCommand = z
   .object({
     action: z.literal('approve-change'),
@@ -390,6 +418,8 @@ export const constructCommand = z.discriminatedUnion('action', [
   cancelCommand,
   proposeCommand,
   approveChangeCommand,
+  proposeRepairCommand,
+  approveRepairCommand,
 ]);
 
 export const sourceKindLabels: Record<(typeof sourceKinds)[number], string> = {

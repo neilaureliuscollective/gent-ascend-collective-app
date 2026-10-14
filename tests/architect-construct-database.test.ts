@@ -49,6 +49,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261013193000_architect_construct_isolation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013220000_architect_construct_lease_freshness.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013230000_architect_construct_finish_event.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014220000_architect_construct_repair.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`,

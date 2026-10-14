@@ -115,6 +115,81 @@ export function mockedConstructProposal(
   };
 }
 
+export function mockedConstructRepairProposal(input: {
+  sourceFiles: { path: string; content: string }[];
+  originalPatch: { path: string; before: string; after: string }[];
+  scope: Pick<BriefScope, 'allowed_paths' | 'protected_paths' | 'intended_change'>;
+  targets: string[];
+}) {
+  const afterOriginal = input.originalPatch.reduce(
+    (files, file) => files.map((item) => (item.path === file.path ? { ...item, content: file.after } : item)),
+    input.sourceFiles,
+  );
+  const broken = afterOriginal.find(
+    (file) =>
+      file.content.includes('const introduced = ;') &&
+      input.scope.allowed_paths.includes(file.path) &&
+      input.targets.some((target) => target.includes(file.path)),
+  );
+  if (!broken)
+    throw new IntelligenceError(
+      'Mocked repair only fixes the labelled introduced JavaScript syntax fixture. This is not a paid OpenAI call.',
+      409,
+    );
+  const originalContext = prepareSourceContext({
+    files: input.sourceFiles,
+    allowedPaths: input.scope.allowed_paths,
+    protectedPaths: input.scope.protected_paths,
+    intendedChange: input.scope.intended_change,
+    hash: sha256Text,
+  });
+  if (originalContext.refusal) throw new IntelligenceError(originalContext.refusal, 409);
+  const repairContext = prepareSourceContext({
+    files: afterOriginal,
+    allowedPaths: input.scope.allowed_paths,
+    protectedPaths: input.scope.protected_paths,
+    intendedChange: input.scope.intended_change,
+    hash: sha256Text,
+  });
+  if (repairContext.refusal) throw new IntelligenceError(repairContext.refusal, 409);
+  const proposal = constructProposalSchema.parse({
+    summary: 'Labelled mocked repair of the introduced syntax failure. Not a paid OpenAI call.',
+    patch: [
+      {
+        path: broken.path,
+        before: broken.content,
+        after: broken.content.replace(/\n?const introduced = ;\n?/, '\n'),
+      },
+    ],
+    notes: 'MOCKED REPAIR — syntax-only fixture. One bounded correction. No autonomous loop.',
+  });
+  return {
+    ...assertCompleteProposal(input.scope, afterOriginal, proposal, repairContext),
+    context: originalContext,
+  };
+}
+
+export async function proposeConstructRepair(
+  instruction: string,
+  input: {
+    sourceFiles: { path: string; content: string }[];
+    originalPatch: { path: string; before: string; after: string }[];
+    scope: Pick<BriefScope, 'allowed_paths' | 'protected_paths' | 'intended_change'>;
+    targets: string[];
+  },
+  signal: AbortSignal,
+): Promise<ConstructProposalPayload> {
+  const status = constructProviderStatus();
+  if (!status.enabled) throw new IntelligenceError(status.reason, 503);
+  if (status.mode === 'mock') return mockedConstructRepairProposal(input);
+  return proposeConstructChange(
+    `${instruction}\nRepair only these introduced failures: ${input.targets.join(', ')}. Do not expand the allowlist.`,
+    input.scope,
+    input.sourceFiles,
+    signal,
+  );
+}
+
 export async function proposeConstructChange(
   instruction: string,
   scope: Pick<BriefScope, 'allowed_paths' | 'protected_paths' | 'intended_change'>,

@@ -152,6 +152,68 @@ export async function proposeConstructChange(
   );
 }
 
+export async function proposeConstructRepair(
+  input: { projectId: string; parentRunId: string; instruction?: string },
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    mocked: boolean;
+    parentRunId: string;
+    targets: string[];
+    coverageNote: 'syntax-only' | 'mixed';
+    proposal: { summary: string; patch: { path: string; before: string; after: string }[]; notes: string };
+    combined: { path: string; before: string; after: string }[];
+    context?: import('@/domains/architect-construct/source-context').SourceContextManifest;
+    coverage?: import('@/domains/architect-construct/schema').CheckPlan;
+  }>(
+    '/api/architect-construct',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        action: 'propose-repair',
+        projectId: input.projectId,
+        parentRunId: input.parentRunId,
+        instruction: input.instruction,
+      }),
+    },
+    fetchImpl,
+  );
+}
+
+export async function approveConstructRepair(
+  input: {
+    projectId: string;
+    briefId: string;
+    parentRunId: string;
+    expected: number;
+    patch: { path: string; before: string; after: string }[];
+  },
+  signal?: AbortSignal,
+  fetchImpl: FetchLike = fetch,
+) {
+  return constructJson<{
+    source: NonNullable<ConstructLifecycleLibrary['sources']>[number];
+    brief: NonNullable<ConstructLifecycleLibrary['briefs']>[number];
+    combined: { path: string; before: string; after: string }[];
+    parentRunId: string;
+  }>(
+    '/api/architect-construct',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        action: 'approve-repair',
+        ...input,
+      }),
+    },
+    fetchImpl,
+  );
+}
+
 export async function approveConstructChange(
   input: {
     projectId: string;

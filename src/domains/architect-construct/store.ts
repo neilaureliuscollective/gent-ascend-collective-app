@@ -36,6 +36,7 @@ export type ConstructStore = {
     sourceTreeHash: string;
     approvalHash: string;
     sourceId: string;
+    parentRunId?: string | null;
   }): Promise<ConstructRun>;
   readRun(personId: string, runId: string): Promise<ConstructRun | null>;
   listRuns(personId: string, projectId: string): Promise<ConstructRun[]>;
@@ -143,6 +144,12 @@ export class MemoryConstructStore implements ConstructStore {
         throw new ConstructStoreError('Request already reserved with a different brief or source pin.');
       return existing;
     }
+    if (input.parentRunId) {
+      const sibling = [...this.runs.values()].find(
+        (run) => run.person_id === input.personId && run.parent_run_id === input.parentRunId,
+      );
+      if (sibling) throw new ConstructStoreError('This original run already has one repair.');
+    }
     const run: ConstructRun = {
       id: input.requestId,
       person_id: input.personId,
@@ -159,6 +166,7 @@ export class MemoryConstructStore implements ConstructStore {
       lease_token: null,
       lease_until: null,
       result: null,
+      parent_run_id: input.parentRunId ?? null,
       created_at: at(),
       updated_at: at(),
     };

@@ -11,14 +11,18 @@ import {
   type ConstructEvent,
   type SourceSnapshot,
   approveChangeCommand,
+  approveRepairCommand,
   briefScopeSchema,
   cancelCommand,
   defaultLimits,
   proposeCommand,
+  proposeRepairCommand,
   startCommand,
   startFixtureCommand,
 } from './schema';
-import { constructProviderStatus, proposeConstructChange } from './provider';
+import { constructProviderStatus, proposeConstructChange, proposeConstructRepair } from './provider';
+import { combineRepairPatch } from './combine-patch';
+import { repairEligible } from './repair-eligibility';
 import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
 import { verifyConstructGitPin } from './connections-source';
@@ -156,6 +160,7 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
       sourceTreeHash: source.tree_hash,
       approvalHash: brief.approval_hash,
       sourceId: source.id,
+      parentRunId: brief.scope.repair?.parent_run_id ?? null,
     });
   } catch (error) {
     asIntelligence(error);
@@ -284,6 +289,159 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
     );
     const brief = await store.approveBrief(person.id, input.briefId, scope);
     return { source, brief };
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
+async function requireEligibleRepair(
+  store: ConstructStore,
+  personId: string,
+  projectId: string,
+  parentRunId: string,
+) {
+  const parent = await store.readRun(personId, parentRunId);
+  if (!parent || parent.project_id !== projectId) throw new IntelligenceError('Parent run unavailable.', 404);
+  const brief = await store.readBrief(personId, parent.brief_id);
+  const source = await store.readSource(personId, parent.source_id);
+  const runs = await store.listRuns(personId, projectId);
+  const briefs: ConstructBrief[] = [];
+  for (const run of runs) {
+    const item = await store.readBrief(personId, run.brief_id);
+    if (item && !briefs.some((row) => row.id === item.id)) briefs.push(item);
+  }
+  const eligibility = repairEligible({
+    parent,
+    brief,
+    sourceTreeHash: source?.tree_hash,
+    runs,
+    briefs,
+  });
+  if (!eligibility.ok) throw new IntelligenceError(eligibility.message, 409);
+  if (!brief || !source) throw new IntelligenceError('Parent source or brief unavailable.', 404);
+  return { parent, brief, source, eligibility, runs, briefs };
+}
+
+export async function proposeRepairConstruct(
+  input: ReturnType<typeof proposeRepairCommand.parse>,
+  signal: AbortSignal,
+) {
+  requireReady();
+  try {
+    const { person, client } = await requireOwnedProject(input.projectId);
+    const store = constructStore({ client, plane: 'owner' });
+    const { parent, brief, source, eligibility } = await requireEligibleRepair(
+      store,
+      person.id,
+      input.projectId,
+      input.parentRunId,
+    );
+    const proposal = await proposeConstructRepair(
+      input.instruction ??
+        `Repair only the introduced failures from run ${parent.id}: ${eligibility.targets.join(', ')}.`,
+      {
+        sourceFiles: source.files,
+        originalPatch: brief.scope.patch,
+        scope: {
+          allowed_paths: brief.scope.allowed_paths,
+          protected_paths: brief.scope.protected_paths,
+          intended_change: brief.scope.intended_change,
+        },
+        targets: eligibility.targets,
+      },
+      signal,
+    );
+    const combined = combineRepairPatch({
+      sourceFiles: source.files,
+      originalPatch: brief.scope.patch,
+      repairPatch: proposal.patch,
+      allowedPaths: brief.scope.allowed_paths,
+      protectedPaths: brief.scope.protected_paths,
+    });
+    if (!combined.ok) throw new IntelligenceError(`${combined.message} ${combined.actionable}`, 409);
+    return {
+      mocked: constructProviderStatus().mode === 'mock',
+      parentRunId: parent.id,
+      targets: eligibility.targets,
+      coverageNote: eligibility.coverageNote,
+      proposal: {
+        summary: proposal.summary,
+        patch: proposal.patch,
+        notes: proposal.notes,
+      },
+      combined: combined.patch,
+      context: proposal.context,
+      coverage: persistableCheckPlan(planCheckCoverage(source.files)),
+    };
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
+export async function approveRepairConstruct(input: ReturnType<typeof approveRepairCommand.parse>) {
+  requireReady();
+  try {
+    const { person, project, client } = await requireOwnedProject(input.projectId, input.expected);
+    const store = constructStore({ client, plane: 'owner' });
+    const { parent, brief, source, eligibility } = await requireEligibleRepair(
+      store,
+      person.id,
+      input.projectId,
+      input.parentRunId,
+    );
+    if (parent.approval_hash === undefined)
+      throw new IntelligenceError('Parent approval digest is missing.', 409);
+    const combined = combineRepairPatch({
+      sourceFiles: source.files,
+      originalPatch: brief.scope.patch,
+      repairPatch: input.patch,
+      allowedPaths: brief.scope.allowed_paths,
+      protectedPaths: brief.scope.protected_paths,
+    });
+    if (!combined.ok) throw new IntelligenceError(`${combined.message} ${combined.actionable}`, 409);
+    const digest = approvalHash({
+      ...brief.scope,
+      patch: combined.patch,
+      intended_change: `Repair of run ${parent.id}: ${eligibility.targets.join(', ')}`,
+      repair: {
+        kind: 'check-driven',
+        parent_run_id: parent.id,
+        parent_approval_hash: parent.approval_hash,
+        targets: eligibility.targets,
+      },
+    });
+    if (digest === parent.approval_hash)
+      throw new IntelligenceError('Repair must use a fresh approval digest. The original approval cannot be reused.', 409);
+    const scope = briefScopeSchema.parse({
+      project_id: project.id,
+      project_revision: project.revision,
+      source_id: source.id,
+      repository: source.repository,
+      source_commit: source.commit,
+      source_tree_hash: source.tree_hash,
+      allowed_paths: brief.scope.allowed_paths,
+      protected_paths: brief.scope.protected_paths,
+      intended_change: `Repair of run ${parent.id}: ${eligibility.targets.join(', ')}`,
+      acceptance_checks: brief.scope.acceptance_checks,
+      check_plan: brief.scope.check_plan,
+      resource_limits: brief.scope.resource_limits,
+      patch: combined.patch,
+      repair: {
+        kind: 'check-driven',
+        parent_run_id: parent.id,
+        parent_approval_hash: parent.approval_hash,
+        targets: eligibility.targets,
+      },
+    });
+    await store.invalidateProjectBriefs(
+      person.id,
+      project.id,
+      'A reviewed repair replaced earlier execution approval for this project revision.',
+    );
+    const approved = await store.approveBrief(person.id, input.briefId, scope);
+    if (approved.approval_hash === parent.approval_hash)
+      throw new IntelligenceError('Repair must use a fresh approval digest. The original approval cannot be reused.', 409);
+    return { source, brief: approved, combined: combined.patch, parentRunId: parent.id };
   } catch (error) {
     asIntelligence(error);
   }

@@ -77,6 +77,7 @@ function asRun(row: unknown): ConstructRun {
     updated_at: asIso(record.updated_at),
     lease_token: record.lease_token ?? null,
     lease_until: record.lease_until ? asIso(record.lease_until) : null,
+    parent_run_id: record.parent_run_id ?? null,
   });
 }
 

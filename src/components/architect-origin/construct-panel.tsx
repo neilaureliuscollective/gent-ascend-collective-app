@@ -10,8 +10,10 @@ import type {
 } from '@/domains/architect-construct/schema';
 import {
   approveConstructChange,
+  approveConstructRepair,
   cancelConstructRun,
   proposeConstructChange,
+  proposeConstructRepair,
   readConstructLibrary,
   readConstructSource,
   readPinnedConstructFile,
@@ -23,6 +25,7 @@ import {
   startConstructRun,
   type ConstructSourceReadiness,
 } from './construct-lifecycle';
+import { repairEligible } from '@/domains/architect-construct/repair-eligibility';
 import { lifecycleLabel, lifecyclePhase } from '@/domains/architect-construct/lifecycle';
 import {
   acceptanceChecksFromPlan,
@@ -125,6 +128,10 @@ export function ArchitectConstructPanel({
   const [intendedChange, setIntendedChange] = useState(briefText.slice(0, 2000));
   const [proposal, setProposal] = useState<ProposedChange | null>(null);
   const [approval, setApproval] = useState<BoundApproval | null>(null);
+  const [repairProposal, setRepairProposal] = useState<
+    (ProposedChange & { parentRunId: string; combined: ProposedChange['patch']; targets: string[] }) | null
+  >(null);
+  const [repairApproval, setRepairApproval] = useState<BoundApproval | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedChange, setSelectedChange] = useState<string | null>(null);
   const [selectedCheck, setSelectedCheck] = useState<string | null>(null);
@@ -172,6 +179,23 @@ export function ArchitectConstructPanel({
   const brief = run ? library?.briefs.find((row) => row.id === run.brief_id) : library?.briefs[0];
   const source = run ? library?.sources.find((row) => row.id === run.source_id) : library?.sources[0];
   const events = run ? (library?.events[run.id] ?? []) : [];
+  const repair = run
+    ? repairEligible({
+        parent: run,
+        brief: brief ?? null,
+        sourceTreeHash: source?.tree_hash,
+        runs: library?.runs ?? [],
+        briefs: library?.briefs ?? [],
+      })
+    : { ok: false as const, code: 'not-terminal' as const, message: '' };
+  const repairChild = library?.runs.find((item) => item.parent_run_id === run?.id) ?? null;
+  const journey = {
+    original: Boolean(run),
+    observedFailure: run?.status === 'failed',
+    proposed: Boolean(repairProposal),
+    approved: Boolean(repairApproval),
+    observedResult: Boolean(repairChild?.result),
+  };
 
   function applyLibrary(next: Library, incoming: RequestContext) {
     if (
@@ -421,6 +445,120 @@ export function ArchitectConstructPanel({
     }
   }
 
+  async function proposeRepair() {
+    if (locked || busy || !run || !repair.ok) return;
+    setBusy(true);
+    setError('');
+    const incoming = currentContext();
+    try {
+      const proposed = await proposeConstructRepair({
+        projectId,
+        parentRunId: run.id,
+        instruction: intendedChange,
+      });
+      if (!proposed.ok) throw new Error(proposed.error);
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
+      setRepairProposal({
+        mocked: proposed.data.mocked,
+        summary: proposed.data.proposal.summary,
+        notes: proposed.data.proposal.notes,
+        patch: proposed.data.proposal.patch,
+        combined: proposed.data.combined,
+        parentRunId: proposed.data.parentRunId,
+        targets: proposed.data.targets,
+        snapshot,
+        context: proposed.data.context ?? localContext,
+        coverage: proposed.data.coverage ?? localCoverage,
+      });
+      setRepairApproval(null);
+      setSelectedChange(proposed.data.combined[0]?.path ?? null);
+      setContextPanel('change');
+      if (window.matchMedia('(max-width: 639px)').matches) setSheet('change');
+      setMessage(
+        proposed.data.coverageNote === 'syntax-only'
+          ? 'Proposed repair is syntax-only coverage. Review the combined diff before approval. No run has been queued.'
+          : 'Proposed repair is ready for explicit approval. No run has been queued.',
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not propose a repair.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function approveRepair() {
+    if (locked || busy || !repairProposal || !run) return;
+    if (repairApproval) {
+      setMessage('This repair is already approved. Enqueue retries reuse the same request.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    const incoming = currentContext();
+    try {
+      const briefId = newId();
+      const requestId = newId();
+      const approved = await approveConstructRepair({
+        projectId,
+        briefId,
+        parentRunId: repairProposal.parentRunId,
+        expected: revision,
+        patch: repairProposal.patch,
+      });
+      if (!approved.ok) throw new Error(approved.error);
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
+      const digest =
+        typeof approved.data.brief?.approval_hash === 'string' ? approved.data.brief.approval_hash : '';
+      if (!/^[0-9a-f]{64}$/.test(digest))
+        throw new Error('Approved repair did not return a fresh server digest.');
+      if (digest === run.approval_hash)
+        throw new Error('Repair must use a fresh approval digest. The original approval cannot be reused.');
+      setRepairApproval({
+        briefId,
+        sourceId: run.source_id,
+        approvalHash: digest,
+        requestId,
+        snapshot,
+        revision,
+      });
+      setMessage('Repair approved against the original pinned source. Enqueue retries reuse this request.');
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not approve the repair.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function enqueueRepair() {
+    if (locked || busy || !repairApproval) return;
+    setBusy(true);
+    setError('');
+    const incoming = currentContext();
+    try {
+      const started = await startConstructRun({
+        projectId,
+        briefId: repairApproval.briefId,
+        requestId: repairApproval.requestId,
+        expected: revision,
+        approvalHash: repairApproval.approvalHash,
+      });
+      if (!started.ok) throw new Error(started.error);
+      if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
+        return;
+      setMessage(
+        'Approved repair queued. If it still fails, the evidence is kept and control returns here. No second repair is started automatically.',
+      );
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not enqueue the approved repair.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function enqueueApproved() {
     if (locked || busy || !liveApproval) return;
     setBusy(true);
@@ -495,6 +633,21 @@ export function ArchitectConstructPanel({
         Request a source-pinned execution, review the real diff and checks, then inspect isolated
         preview output. This lane does not invent repository files or mark a release complete.
       </p>
+      <ol className="origin-repair-journey" aria-label="Repair journey">
+        <li aria-current={journey.original && !journey.observedFailure ? 'step' : undefined}>
+          Original attempt{run ? ` · ${statusLabel(run.status)}` : ''}
+        </li>
+        <li aria-current={journey.observedFailure && !journey.proposed ? 'step' : undefined}>
+          Observed failure
+          {repair.ok ? ` · ${repair.targets.length} introduced` : ''}
+        </li>
+        <li aria-current={journey.proposed && !journey.approved ? 'step' : undefined}>Proposed correction</li>
+        <li aria-current={journey.approved && !journey.observedResult ? 'step' : undefined}>Approved repair</li>
+        <li aria-current={journey.observedResult ? 'step' : undefined}>
+          Observed result
+          {repairChild ? ` · ${statusLabel(repairChild.status)}` : ''}
+        </li>
+      </ol>
       {!enabled && (
         <p className="origin-notice">
           Execution persistence is off in this environment. Origin editing remains available. No
@@ -646,6 +799,18 @@ export function ArchitectConstructPanel({
           Enqueue approved change
         </button>
         <button
+          disabled={!enabled || locked || busy || !repair.ok}
+          onClick={() => void proposeRepair()}
+        >
+          Propose repair
+        </button>
+        <button disabled={!enabled || locked || busy || !repairProposal} onClick={() => void approveRepair()}>
+          Approve proposed repair
+        </button>
+        <button disabled={!enabled || locked || busy || !repairApproval} onClick={() => void enqueueRepair()}>
+          Enqueue approved repair
+        </button>
+        <button
           disabled={!enabled || locked || busy}
           onClick={() => void startFixture()}
         >
@@ -725,7 +890,20 @@ export function ArchitectConstructPanel({
                 }}
               />
             )}
-            {contextPanel === 'change' && liveProposal && (
+            {contextPanel === 'change' && repairProposal && (
+              <ChangeDiff
+                summary={repairProposal.summary}
+                notes={`${repairProposal.notes} Combined patch is shown against the original pinned source.`}
+                mocked={repairProposal.mocked}
+                patches={repairProposal.combined.map((file) => ({
+                  ...file,
+                  intent: repairProposal.summary,
+                }))}
+                selectedPath={selectedChange}
+                onSelect={setSelectedChange}
+              />
+            )}
+            {contextPanel === 'change' && liveProposal && !repairProposal && (
               <ChangeDiff
                 summary={liveProposal.summary}
                 notes={liveProposal.notes}
@@ -742,7 +920,7 @@ export function ArchitectConstructPanel({
                 onSelect={setSelectedChange}
               />
             )}
-            {contextPanel === 'change' && !liveProposal && (
+            {contextPanel === 'change' && !liveProposal && !repairProposal && (
               <article className="origin-construct-pane">
                 <h4>Proposed change awaiting approval</h4>
                 <p>Propose a change against complete authorized files to inspect a before/after diff.</p>
@@ -803,7 +981,17 @@ export function ArchitectConstructPanel({
               onSelect={setSelectedSource}
             />
           )}
-          {sheet === 'change' && liveProposal && (
+          {sheet === 'change' && repairProposal && (
+            <ChangeDiff
+              summary={repairProposal.summary}
+              notes={`${repairProposal.notes} Combined patch is shown against the original pinned source.`}
+              mocked={repairProposal.mocked}
+              patches={repairProposal.combined}
+              selectedPath={selectedChange}
+              onSelect={setSelectedChange}
+            />
+          )}
+          {sheet === 'change' && liveProposal && !repairProposal && (
             <ChangeDiff
               summary={liveProposal.summary}
               notes={liveProposal.notes}

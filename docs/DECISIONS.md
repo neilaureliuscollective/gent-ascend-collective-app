@@ -1,3 +1,7 @@
+# Architect one reviewed check-driven repair — 2026-10-14
+
+Propose a repair only for a terminal failed Construct run with reliably identified introduced check failures. Keep the same owner, project, source revision, allowlist, protected paths, check plan and limits. Show the combined diff against the original pinned source, then require a fresh approval digest. Persist at most one repair child per original run, replay-safe. If the repair still fails, keep the receipt and stop. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
 # Architect estimator JSONB equality, full-precision money and confirmed-refresh — 2026-10-14
 
 Compare trusted-engine and database estimator receipts with validated structural equality, not `JSON.stringify`. JSONB key order is not a different calculation; array order and types stay strict. Money multiplies quantity × (1 + waste) × unit cost at full precision, then half-up to currency minor units; displayed quantity is rounded separately. Reject JSON-null identity fields and null/type-invalid/over-max overrides in SQL. Treat a confirmed save whose library refresh failed as a refresh offer, not an uncertain write. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).

@@ -1486,6 +1486,8 @@ test('keeps last success and drafts when worker, connections and provider are un
   await page.getByRole('button', { name: 'Create & save project' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 1');
   await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'Repair journey' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Propose repair' })).toBeDisabled();
   await expect(page.getByText(/GitHub App setup is required/)).toBeVisible();
   await expect(page.getByText(/Publishing and deployment stay unavailable/)).toBeVisible();
   await expect(page.getByText(/A funded OpenAI account does not supply/)).toBeVisible();
