@@ -86,6 +86,21 @@ export interface Database {
         never,
         never
       >;
+      architect_origin_tools: Table<
+        import('@/domains/architect-tools/schema').SavedEstimatorTool,
+        never,
+        never
+      >;
+      architect_origin_tool_versions: Table<
+        import('@/domains/architect-tools/schema').SavedEstimatorVersion,
+        never,
+        never
+      >;
+      architect_origin_tool_invocations: Table<
+        import('@/domains/architect-tools/schema').SavedEstimatorInvocation,
+        never,
+        never
+      >;
       architect_construct_sources: Table<
         import('@/domains/architect-construct/schema').SourceSnapshot,
         never,
@@ -1029,6 +1044,40 @@ export interface Database {
         Returns: boolean;
       };
       architect_origin_finish: { Args: { p_request: string; p_output: unknown }; Returns: boolean };
+      architect_origin_tool_save: {
+        Args: {
+          p_tool: string;
+          p_project: string;
+          p_request: string;
+          p_expected: number;
+          p_name: string;
+          p_config: import('@/domains/architect-tools/schema').SaveToolCommand['configuration'];
+          p_note: string;
+        };
+        Returns: number;
+      };
+      architect_origin_tool_record_invocation: {
+        Args: {
+          p_id: string;
+          p_tool: string;
+          p_revision: number;
+          p_inputs: unknown;
+          p_result: unknown;
+          p_source: string;
+        };
+        Returns: boolean;
+      };
+      architect_origin_tool_invoke: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_tool: string;
+          p_revision: number;
+          p_inputs: unknown;
+          p_source: string;
+        };
+        Returns: import('@/domains/architect-tools/engine').EstimatorResult;
+      };
       architect_construct_import_source: {
         Args: {
           p_id: string;

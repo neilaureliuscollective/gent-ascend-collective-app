@@ -3,10 +3,12 @@ import { BplusMaterial } from '@/components/visual/bplus-material';
 import '@/components/visual/bplus-operator.css';
 import './studio.css';
 import { compileDocument } from '@/domains/architect-origin/documents';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { ArchitectConstructPanel } from './construct-panel';
+import { ArchitectToolPanel } from './tool-panel';
+import type { ToolWorkspaceState } from './tool-session';
 import { ArtifactCanvas } from './artifact-canvas';
 import { CreationEntry, type BriefStage } from './creation-entry';
 import { ReadinessNotice } from './readiness-notice';
@@ -56,7 +58,7 @@ import {
 import type { z } from 'zod';
 const markdownComponents = { img: () => <span>[External image omitted]</span> };
 type Library = { projects: OriginProject[]; versions: OriginVersion[]; runs: OriginRun[] };
-const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Construct', 'History'] as const;
+const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Tool', 'Construct', 'History'] as const;
 type Surface = (typeof surfaces)[number];
 type DocumentView = 'Edit' | 'Preview' | 'Split';
 type PendingReference = { url: string; title: string; provenance: 'user' };
@@ -148,6 +150,11 @@ export function ArchitectOrigin({
   const [constructView, setConstructView] = useState<ConstructLifecycleView | null>(null);
   const [constructSource, setConstructSource] = useState<ConstructSourceReadiness | null>(null);
   const constructRequest = useRef<string | null>(null);
+  const openToolAfterSave = useRef(false);
+  const [toolState, setToolState] = useState<ToolWorkspaceState | null>(null);
+  const reportToolState = useCallback((state: ToolWorkspaceState | null) => {
+    setToolState(state);
+  }, []);
   const constructGeneration = useRef(0);
   const heldPreviewRef = useRef<PreviewDecision | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -243,7 +250,7 @@ export function ArchitectOrigin({
   }, [enabled, handoff, loadAttempt]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (dirty || pending || busy) event.preventDefault();
+      if (dirty || pending || busy || toolState?.dirty || toolState?.pending) event.preventDefault();
     };
     const guard = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
@@ -252,7 +259,7 @@ export function ArchitectOrigin({
       const shortcutExit =
         !!target?.closest('button.aurelius-trigger') && matchMedia('(max-width: 1100px)').matches;
       if (
-        !(dirty || pending || busy) ||
+        !(dirty || pending || busy || toolState?.dirty || toolState?.pending) ||
         event.button !== 0 ||
         event.metaKey ||
         event.ctrlKey ||
@@ -285,7 +292,7 @@ export function ArchitectOrigin({
       window.removeEventListener('beforeunload', warn);
       document.removeEventListener('click', guard, true);
     };
-  }, [dirty, pending, busy, handoff]);
+  }, [dirty, pending, busy, toolState?.dirty, toolState?.pending, handoff]);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     if (!loaded || !selected || location.pathname !== '/app/architect') return;
@@ -514,7 +521,11 @@ export function ArchitectOrigin({
     setMessage('Unsaved draft. Approved project is unchanged.');
   }
   async function open(project: OriginProject) {
-    if (locked || (dirty && !window.confirm('Discard unsaved draft and open this project?')))
+    if (
+      locked ||
+      ((dirty || toolState?.dirty || toolState?.pending) &&
+        !window.confirm('Discard unsaved draft and open this project?'))
+    )
       return;
     setBusy(true);
     setError('');
@@ -657,6 +668,10 @@ export function ArchitectOrigin({
       }));
       projectLocation(project.id);
       setMessage(`Saved revision ${result.revision}. Confirmed by the server.`);
+      if (openToolAfterSave.current) {
+        setSurface('Tool');
+        openToolAfterSave.current = false;
+      }
       try {
         const data = await request<Library>(`/api/architect-origin?project=${project.id}`);
         setLibrary(data);
@@ -812,7 +827,12 @@ export function ArchitectOrigin({
               aria-current={studioTab === 'origin' && !selected ? 'page' : undefined}
               onClick={() => {
                 setStudioTab('origin');
-                if (selected && dirty && !window.confirm('Discard unsaved changes?')) return;
+                if (
+                  selected &&
+                  (dirty || toolState?.dirty || toolState?.pending) &&
+                  !window.confirm('Discard unsaved changes?')
+                )
+                  return;
                 if (selected) {
                   setSelected(null);
                   setDraft(null);
@@ -904,6 +924,17 @@ export function ArchitectOrigin({
                 expected: 0,
                 content: shapedContent(),
                 note: 'User created project from their vision',
+              });
+            }}
+            onCreateTool={() => {
+              openToolAfterSave.current = true;
+              void save({
+                action: 'save',
+                projectId: crypto.randomUUID(),
+                requestId: crypto.randomUUID(),
+                expected: 0,
+                content: shapedContent(),
+                note: 'User created project for a quantity-and-cost estimator',
               });
             }}
           />
@@ -1011,7 +1042,8 @@ export function ArchitectOrigin({
             {surface !== 'Conversation' &&
               surface !== 'Blueprint' &&
               surface !== 'History' &&
-              surface !== 'Construct' && (
+              surface !== 'Construct' &&
+              surface !== 'Tool' && (
               <div className="origin-canvas-tools">
                 <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
                   {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
@@ -1019,7 +1051,7 @@ export function ArchitectOrigin({
               </div>
             )}
             <div
-              className={`origin-workspace origin-workbench origin-${surface.toLowerCase()} origin-view-${workbenchView}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' ? ' origin-canvas-focused' : ''}`}
+              className={`origin-workspace origin-workbench origin-${surface.toLowerCase()} origin-view-${workbenchView}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' && surface !== 'Tool' ? ' origin-canvas-focused' : ''}`}
             >
               <OutlineRail
                 draft={draft}
@@ -1035,7 +1067,7 @@ export function ArchitectOrigin({
               {(surface === 'Conversation' ||
                 surface === 'Research' ||
                 surface === 'Deliverables' ||
-                workbenchView === 'preview') && (
+                (workbenchView === 'preview' && surface !== 'Tool' && surface !== 'Construct')) && (
                 <aside
                   className="origin-conversation origin-refine"
                   hidden={focusCanvas && surface !== 'Conversation'}
@@ -1552,6 +1584,17 @@ export function ArchitectOrigin({
                     )}
                   </>
                 )}
+                {selected && (
+                  <div hidden={surface !== 'Tool'}>
+                    <ArchitectToolPanel
+                      key={`${selected.person_id}:${selected.id}:tool`}
+                      ownerId={selected.person_id}
+                      projectId={selected.id}
+                      locked={locked}
+                      onState={reportToolState}
+                    />
+                  </div>
+                )}
                 {surface === 'Construct' && selected && (
                   <ArchitectConstructPanel
                     key={`${selected.person_id}:${selected.id}`}
@@ -1745,21 +1788,50 @@ export function ArchitectOrigin({
             <FoldDock panel={foldPanel} onPanel={setFoldPanel} />
             <footer className="origin-savebar">
               <p>
-                {pending
-                  ? 'Save outcome unconfirmed. Exact draft retained.'
-                  : dirty
-                    ? 'Unsaved draft — approved content is unchanged.'
-                    : `All changes saved · revision ${selected.revision}`}
+                {surface === 'Tool'
+                  ? toolState?.pending
+                    ? 'Tool save unconfirmed. Retry uses the submitted snapshot.'
+                    : toolState?.refreshNeeded
+                      ? `Tool revision ${toolState.expected} saved. Library refresh failed — reload receipts. Do not save this revision again.`
+                      : toolState?.dirty
+                        ? 'Unsaved tool draft — this is not a saved tool revision.'
+                        : toolState?.expected
+                          ? `Tool revision ${toolState.expected} saved. Project revision ${selected.revision} is separate.`
+                          : `No tool revision saved yet. Project revision ${selected.revision} is separate.`
+                  : pending
+                    ? 'Save outcome unconfirmed. Exact draft retained.'
+                    : dirty
+                      ? toolState?.dirty
+                        ? 'Unsaved project draft. An unsaved tool draft is also kept in Tool.'
+                        : 'Unsaved draft — approved content is unchanged.'
+                      : toolState?.dirty || toolState?.pending
+                        ? 'Project revision saved. Unsaved tool draft kept — open Tool to save it.'
+                        : `All project changes saved · revision ${selected.revision}`}
               </p>
               <button
                 className="button"
                 data-bplus-surface="action"
-                disabled={busy || (!dirty && !pending)}
-                onClick={() => void save()}
+                disabled={
+                  surface === 'Tool'
+                    ? busy || locked || (!toolState?.dirty && !toolState?.pending)
+                    : busy || (!dirty && !pending)
+                }
+                onClick={() => (surface === 'Tool' ? void toolState?.persist() : void save())}
               >
                 <BplusMaterial radius={8} />
-                {pending ? 'Retry same save' : 'Save & confirm revision'}
+                {surface === 'Tool'
+                  ? toolState?.pending
+                    ? 'Retry exact save'
+                    : 'Save tool revision'
+                  : pending
+                    ? 'Retry same save'
+                    : 'Save & confirm revision'}
               </button>
+              {surface === 'Tool' && toolState?.refreshNeeded && (
+                <button disabled={busy || locked} onClick={() => void toolState.refresh?.()}>
+                  Reload tool receipts
+                </button>
+              )}
               {dirty && !pending && (
                 <button
                   disabled={busy}

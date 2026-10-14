@@ -1063,3 +1063,107 @@
     padding: 10px 12px;
   }
 }
+.origin-tool-entry {
+  color: var(--text-muted);
+  max-width: 42rem;
+}
+.origin-tool {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+.origin-tool-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+.origin-tool-layout {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.8fr);
+}
+.origin-tool-canvas,
+.origin-tool-config,
+.origin-tool-result,
+.origin-tool-provenance {
+  border: 1px solid var(--origin-edge);
+  border-radius: var(--radius);
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(16, 43, 38, 0.28), rgba(8, 13, 13, 0.72)),
+    var(--io-chamber, #080d0d);
+}
+.origin-tool-result h4 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.04em;
+  margin: 0 0 8px;
+}
+.origin-tool table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.origin-tool th,
+.origin-tool td {
+  text-align: left;
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--origin-edge) 70%, transparent);
+}
+.origin-tool-item-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.origin-tool-items {
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+.origin-tool-actions,
+.origin-tool-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.origin-tool input,
+.origin-tool select,
+.origin-tool textarea {
+  width: 100%;
+}
+.origin-tool textarea {
+  min-height: 72px;
+}
+@media (max-width: 1023px) {
+  .origin-tool-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .origin-workspace.origin-tool {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .origin-workspace.origin-tool .origin-rail {
+    display: none;
+  }
+}
+@media (max-width: 639px) {
+  .origin-tool-item-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .origin-tool-head {
+    flex-direction: column;
+  }
+}
+@media (max-height: 520px) {
+  .origin-tool-result {
+    max-height: 42dvh;
+    overflow: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .origin-tool button,
+  .origin-tool input,
+  .origin-tool select {
+    transition: none;
+  }
+}
