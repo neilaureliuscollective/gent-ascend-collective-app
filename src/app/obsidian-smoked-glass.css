@@ -1,7 +1,7 @@
 /* Founder-approved smoked glass, 2026-10-13. Reuse the io material and B+ optics
    contracts. Route adoption is deliberate: public worlds, Work and Architect
    retain their existing material identity. No geometry or motion ownership here. */
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity)) {
   --io-environment: var(--aether-smoke-canvas);
   --io-navigation: var(--aether-smoke-panel);
   --io-raised: var(--aether-smoke-raised);
@@ -34,18 +34,18 @@
   --io-raised-contact: inset 0 1px #ffffff12, inset 0 -2px #0009, 0 8px 14px -6px #000b;
 }
 
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(.sidebar, .topbar, .navigation, .aethelios-space-navigation, .talk-toolbar) {
   background: var(--io-glass);
   border-color: var(--io-divider);
   box-shadow: var(--io-elevation);
 }
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(.navigation a, .aethelios-space-navigation a):not([aria-current='page']) {
   color: var(--io-secondary);
   background: transparent;
 }
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(.navigation a, .aethelios-space-navigation a):hover {
   color: var(--io-text);
   background: var(--io-raised);
@@ -66,7 +66,7 @@
     inset 2px 0 var(--io-gold);
   color: var(--io-text);
 }
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(.talk-drawer.talk-drawer, .talk-expanded-editor, .context-sheet-surface, .council-dialog) {
   background: var(--io-glass);
   border-color: var(--aether-smoke-edge);
@@ -90,7 +90,7 @@
 
 /* Recolor existing optical geometry rather than adding another renderer. Emerald
    remains in the inner rim / right return; the broad face and slab become neutral. */
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is([data-bplus='talk'], .navigation) {
   --aether-optical-substrate: var(--aether-smoke-panel);
   --aether-optical-outer-stroke: var(--aether-smoke-edge);
@@ -152,7 +152,7 @@
   color: var(--io-secondary);
 }
 /* Reserve Gold remains exactly the brand color. Filled actions need dark ink. */
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(.button, .aurelius-send):not(:disabled) {
   background: var(--io-gold);
   color: var(--aether-smoke-canvas);
@@ -162,7 +162,7 @@
     inset 0 -1px #0005,
     0 3px 8px #0004;
 }
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(button, a, input, textarea, select):focus-visible {
   outline: 2px solid var(--io-text);
   outline-offset: 2px;
@@ -195,7 +195,7 @@
 
 /* A narrow reflective perimeter and inset bevel give raised objects thickness.
    The body remains neutral; no broad glow or moving highlight is introduced. */
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(
     .conversation-starters button,
     .studio-project-heading,
@@ -212,7 +212,7 @@
     var(--io-raised-rim) border-box;
   box-shadow: var(--io-raised-contact);
 }
-.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+.app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(
     .conversation-starters button,
     .studio-project-heading,
@@ -262,7 +262,7 @@
 
 /* Existing Still/reduced-motion behavior is retained. No animation or blur is added.
    Solid and contrast preferences replace translucent paint, including native dialogs. */
-html[data-material='solid'] .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+html[data-material='solid'] .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity)) {
   --io-satin: var(--io-navigation);
   --io-living: var(--io-navigation);
   --io-selected: var(--io-raised);
@@ -275,7 +275,7 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
   background: none;
 }
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
-  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity)) {
     --io-satin: var(--io-navigation);
     --io-living: var(--io-navigation);
     --io-selected: var(--io-raised);
@@ -290,7 +290,7 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
   }
 }
 @media (forced-colors: active) {
-  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page)) {
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity)) {
     --io-environment: Canvas;
     --io-navigation: Canvas;
     --io-raised: Canvas;
@@ -319,21 +319,21 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
   .app-shell.imperial-workspace:has(.studio-page) .studio-page :is(input, textarea, select) {
     border-color: ButtonText;
   }
-  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
     :is(.button, .aurelius-send):not(:disabled) {
     background: ButtonFace;
     color: ButtonText;
     border-color: ButtonText;
     box-shadow: none;
   }
-  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
     :is(button, a, input, textarea, select):focus-visible {
     outline-color: Highlight;
   }
 }
 
 html[data-material='solid']
-  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
   :is(
     .conversation-starters button,
     .studio-project-heading,
@@ -362,7 +362,7 @@ html[data-material='solid']
   display: none;
 }
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page))
+  .app-shell.imperial-workspace:has(:is(.talk-page, .studio-page, .command-continuity))
     :is(
       .conversation-starters button,
       .studio-project-heading,

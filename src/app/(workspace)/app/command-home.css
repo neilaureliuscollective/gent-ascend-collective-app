@@ -1,0 +1,243 @@
+.command-continuity {
+  --command-canvas: var(--aether-smoke-canvas, #111111);
+  --command-panel: var(--aether-smoke-panel, #1a1a1a);
+  --command-raised: var(--aether-smoke-raised, #242424);
+  --command-gold: #c4912f;
+  --command-ink: var(--aether-smoke-text, #f2f2ee);
+  --command-muted: var(--aether-smoke-secondary, #b9bebb);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  color: var(--command-ink);
+}
+.command-heading {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  max-width: 52rem;
+}
+.command-heading h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+.command-orientation,
+.command-status,
+.command-provenance,
+.command-needs-note,
+.command-talk p,
+.command-founder p {
+  margin: 0;
+  color: var(--command-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.command-status[role='alert'] {
+  color: #e8c48a;
+}
+.command-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+.command-stage,
+.command-talk,
+.command-needs,
+.command-founder,
+.command-library {
+  background:
+    radial-gradient(ellipse 180px 110px at 88% 0, #245b4824, transparent 72%),
+    linear-gradient(165deg, #292929f2, var(--command-panel) 68%);
+  border: 1px solid color-mix(in srgb, #e6e7e2 16%, transparent);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent),
+    0 12px 28px -16px #000a;
+  padding: 18px;
+}
+.command-stage header,
+.command-talk header,
+.command-needs header,
+.command-library header {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.command-stage h2,
+.command-talk h2,
+.command-needs h2,
+.command-library h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.command-artifact-excerpt,
+.command-artifact-fallback {
+  min-height: 180px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--command-raised);
+  color: var(--command-ink);
+}
+.command-artifact-excerpt pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  line-height: 1.5;
+}
+.command-artifact-image,
+.command-artifact-preview {
+  display: block;
+  width: 100%;
+  max-height: min(52vh, 520px);
+  object-fit: contain;
+  border: 0;
+  border-radius: 12px;
+  background: #0a0a0a;
+}
+.command-stage-actions,
+.command-talk-actions,
+.command-talk-links,
+.command-library-links,
+.command-founder nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 14px;
+}
+.command-action,
+.command-talk .command-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--command-gold) 45%, transparent);
+  background: linear-gradient(165deg, #3a2a14, #1a1a1a 70%);
+  color: #f2e4c4;
+  text-decoration: none;
+}
+.command-action:disabled {
+  opacity: 0.45;
+}
+.command-talk textarea {
+  width: 100%;
+  min-height: 72px;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #e6e7e2 16%, transparent);
+  background: var(--command-raised);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+.command-talk-actions small,
+.command-stage-actions small {
+  color: var(--command-muted);
+  max-width: 36rem;
+}
+.command-needs ul,
+.command-library ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.command-needs a,
+.command-library button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--command-raised);
+  color: inherit;
+  text-decoration: none;
+}
+.command-needs-kind {
+  color: var(--command-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.command-library button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--command-gold) 50%, transparent);
+}
+.command-search input {
+  width: min(100%, 280px);
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #e6e7e2 16%, transparent);
+  background: var(--command-raised);
+  color: inherit;
+}
+.command-library-links a,
+.command-founder a,
+.command-sources a,
+.command-talk-links a {
+  color: #e6d3a4;
+}
+.command-library,
+.command-sources {
+  margin-top: 16px;
+}
+.command-sources {
+  color: var(--command-muted);
+  font-size: 0.9rem;
+}
+.command-talk-context {
+  margin: 0 0 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--aether-smoke-raised, #242424);
+  color: var(--aether-smoke-secondary, #b9bebb);
+  font-size: 0.85rem;
+}
+@media (max-width: 1100px) {
+  .command-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .command-continuity {
+    padding: 12px 12px 28px;
+  }
+  .command-heading h1 {
+    font-size: 1.7rem;
+  }
+  .command-artifact-excerpt,
+  .command-artifact-fallback {
+    min-height: 120px;
+  }
+}
+@media (max-height: 700px) {
+  .command-heading {
+    margin-bottom: 10px;
+  }
+  .command-artifact-excerpt,
+  .command-artifact-fallback,
+  .command-artifact-image,
+  .command-artifact-preview {
+    min-height: 96px;
+    max-height: 36vh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .command-continuity * {
+    transition: none !important;
+  }
+}
+html[data-motion='ambient']:not([data-quiet='true']) .command-stage,
+html[data-motion='ambient']:not([data-quiet='true']) .command-talk {
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}

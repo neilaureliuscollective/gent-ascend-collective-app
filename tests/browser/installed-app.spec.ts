@@ -137,7 +137,7 @@ for (const platform of ['Android', 'Apple'] as const) {
     }, platform);
     await page.clock.install();
     await page.goto('/app');
-    await expect(page.locator('.aethelios-page')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Command', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Replay arrival' })).toHaveCount(0);
     await page.clock.runFor(500);
     await expect(page.locator('.command-opening')).toHaveCount(0);

@@ -56,7 +56,7 @@ for (const width of [320, 344, 390, 412, 720, 768, 960, 1100, 1101, 1440, 2560])
     await field(page).evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(12, 25));
     await expect(page.locator('[data-bplus-surface]')).toHaveCount(3);
     await expect(page.locator('.conversation-scroll .bplus-optics')).toHaveCount(0);
-    await expect(page.locator('.navigation a')).toHaveCount(6);
+    await expect(page.locator('.navigation a')).toHaveCount(7);
     const geometry = await page.evaluate(() => ({
       overflow: document.documentElement.scrollWidth > innerWidth,
       controls: [
@@ -138,5 +138,5 @@ test('Talk and Work retain distinct explicit material adoption', async ({ page }
   await expect(page.locator('.company-work[data-bplus="work"]')).toBeVisible();
   await expect(page.locator('.company-work [data-bplus-surface]')).toHaveCount(2);
   await expect(page.locator('.company-job-list .bplus-optics')).toHaveCount(0);
-  await expect(page.locator('.navigation a')).toHaveCount(6);
+  await expect(page.locator('.navigation a')).toHaveCount(7);
 });

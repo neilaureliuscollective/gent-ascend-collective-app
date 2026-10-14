@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 for (const width of [360, 768, 1440]) {
   test(`company work opens reviewable briefs at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/app');
+    await page.goto('/app/aethelios');
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Tools & context', exact: true }).click();

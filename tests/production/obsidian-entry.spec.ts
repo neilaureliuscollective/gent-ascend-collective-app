@@ -73,8 +73,9 @@ test('the verified production application serves Obsidian and preserves public e
           await page.keyboard.press('Escape');
         } else {
           const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-          await expect(navigation.getByRole('link')).toHaveCount(6);
+          await expect(navigation.getByRole('link')).toHaveCount(7);
           for (const [name, href] of [
+            ['Home', '/app'],
             ['Talk', '/app/aethelios'],
             ['Health', '/app/health'],
             ['Work', '/app/work'],
