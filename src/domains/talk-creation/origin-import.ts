@@ -53,6 +53,8 @@ export type ReferencedHandoffAsset = {
 
 export const originImportMappingVersion = 'talk-origin-import/v1';
 export const originImportNote = 'Imported from Talk';
+export const uniqueKindSelectionMessage =
+  'Choose one current brief, plan or palette of each kind.';
 
 export type HandoffTransfer = {
   mappingVersion: typeof originImportMappingVersion;
@@ -63,68 +65,119 @@ export type HandoffTransfer = {
   contrastCopied: false;
 };
 
-function clip(value: string, max: number) {
-  return value.slice(0, max);
+/** Canonical length: UTF-16 code units, matching Zod `.max()` / JavaScript `.length`. */
+export function utf16Length(value: string) {
+  return value.length;
+}
+
+export function exceedsBound(value: string, max: number) {
+  return utf16Length(value) > max;
+}
+
+/**
+ * Truncate to at most `max` UTF-16 code units without splitting a surrogate pair.
+ * The result also satisfies PostgreSQL character-length checks because the code-point
+ * count is never greater than the UTF-16 unit count.
+ */
+export function boundText(value: string, max: number) {
+  if (utf16Length(value) <= max) return value;
+  let end = max;
+  if (end > 0) {
+    const unit = value.charCodeAt(end - 1);
+    if (unit >= 0xd800 && unit <= 0xdbff) end -= 1;
+  }
+  return value.slice(0, end);
+}
+
+export function assertOneSelectionPerKind(selections: Array<{ kind: 'brief' | 'plan' | 'palette' }>) {
+  const kinds = selections.map((item) => item.kind);
+  if (new Set(kinds).size !== kinds.length) throw new Error(uniqueKindSelectionMessage);
+}
+
+function copiedField(into: string, from: string, source: string, max: number): CopiedHandoffField {
+  return { into, from, truncated: exceedsBound(source, max) };
+}
+
+function mappedSources(resolved: ResolvedArchitectPackage) {
+  const { handoff, brief, plan, palette } = resolved;
+  const description = brief
+    ? handoff.description || brief.purpose
+    : handoff.description || handoff.idea;
+  const descriptionFrom = brief
+    ? handoff.description
+      ? 'handoff.description'
+      : 'brief.purpose'
+    : handoff.description
+      ? 'handoff.description'
+      : 'handoff.idea';
+  const requirements = brief
+    ? [brief.purpose, brief.visualDirection, ...brief.requirements].filter(Boolean).join('\n')
+    : '';
+  const risks = brief ? brief.unresolved.join('\n') : '';
+  const solution = plan
+    ? [plan.summary, ...plan.steps.map((step) => `${step.title}: ${step.detail}`)].join('\n')
+    : '';
+  const milestones = plan ? plan.steps.map((step) => step.title).join('\n') : '';
+  const deliverables = palette
+    ? `Palette ${palette.title}: ${palette.swatches.map((swatch) => `${swatch.name} ${swatch.hex}`).join(', ')}`
+    : '';
+  const next = brief?.unresolved[0] || 'Review the imported brief in Architect before any model build.';
+  const name = brief ? brief.title : handoff.idea;
+  return {
+    name,
+    namedFromBrief: Boolean(brief),
+    description,
+    descriptionFrom,
+    audience: brief?.audience ?? '',
+    requirements,
+    risks,
+    solution,
+    milestones,
+    vision: handoff.idea,
+    decisions: handoff.decisions,
+    deliverables,
+    next,
+  };
 }
 
 export function describeHandoffTransfer(resolved: ResolvedArchitectPackage): HandoffTransfer {
-  const { handoff, brief, plan, palette } = resolved;
+  assertOneSelectionPerKind(resolved.selections);
+  const { brief, plan, palette } = resolved;
+  const sources = mappedSources(resolved);
   const copied: CopiedHandoffField[] = [];
   if (brief) {
-    copied.push({ into: 'name', from: 'brief.title', truncated: brief.title.length > 100 });
-    copied.push({
-      into: 'description',
-      from: handoff.description ? 'handoff.description' : 'brief.purpose',
-      truncated: (handoff.description || brief.purpose).length > 2000,
-    });
-    copied.push({
-      into: 'blueprint.audience',
-      from: 'brief.audience',
-      truncated: brief.audience.length > 3000,
-    });
-    copied.push({
-      into: 'blueprint.requirements',
-      from: 'brief.purpose, brief.visualDirection, brief.requirements',
-      truncated: [brief.purpose, brief.visualDirection, ...brief.requirements].filter(Boolean).join('\n').length > 3000,
-    });
-    copied.push({
-      into: 'blueprint.risks',
-      from: 'brief.unresolved',
-      truncated: brief.unresolved.join('\n').length > 3000,
-    });
+    copied.push(copiedField('name', 'brief.title', sources.name, 100));
+    copied.push(copiedField('description', sources.descriptionFrom, sources.description, 2000));
+    copied.push(copiedField('blueprint.audience', 'brief.audience', sources.audience, 3000));
+    copied.push(
+      copiedField(
+        'blueprint.requirements',
+        'brief.purpose, brief.visualDirection, brief.requirements',
+        sources.requirements,
+        3000,
+      ),
+    );
+    copied.push(copiedField('blueprint.risks', 'brief.unresolved', sources.risks, 3000));
   } else {
-    copied.push({
-      into: 'description',
-      from: handoff.description ? 'handoff.description' : 'handoff.idea',
-      truncated: (handoff.description || handoff.idea).length > 2000,
-    });
+    copied.push(copiedField('description', sources.descriptionFrom, sources.description, 2000));
   }
   if (plan) {
-    copied.push({
-      into: 'blueprint.solution',
-      from: 'plan.summary and plan.steps title/detail',
-      truncated: [plan.summary, ...plan.steps.map((step) => `${step.title}: ${step.detail}`)].join('\n').length > 3000,
-    });
-    copied.push({
-      into: 'blueprint.milestones',
-      from: 'plan.steps.title',
-      truncated: plan.steps.map((step) => step.title).join('\n').length > 3000,
-    });
+    copied.push(
+      copiedField('blueprint.solution', 'plan.summary and plan.steps title/detail', sources.solution, 3000),
+    );
+    copied.push(copiedField('blueprint.milestones', 'plan.steps.title', sources.milestones, 3000));
   }
-  copied.push({ into: 'blueprint.vision', from: 'handoff.idea', truncated: handoff.idea.length > 3000 });
-  copied.push({
-    into: 'blueprint.decisions',
-    from: 'handoff.decisions',
-    truncated: handoff.decisions.length > 3000,
-  });
+  copied.push(copiedField('blueprint.vision', 'handoff.idea', sources.vision, 3000));
+  copied.push(copiedField('blueprint.decisions', 'handoff.decisions', sources.decisions, 3000));
   if (palette) {
-    copied.push({
-      into: 'blueprint.deliverables',
-      from: 'palette.title and swatch name+hex (roles and contrast not copied)',
-      truncated:
-        `Palette ${palette.title}: ${palette.swatches.map((swatch) => `${swatch.name} ${swatch.hex}`).join(', ')}`
-          .length > 3000,
-    });
+    copied.push(
+      copiedField(
+        'blueprint.deliverables',
+        'palette.title and swatch name+hex (roles and contrast not copied)',
+        sources.deliverables,
+        3000,
+      ),
+    );
   }
   return {
     mappingVersion: originImportMappingVersion,
@@ -165,7 +218,7 @@ export function importStateText(resolved: ResolvedArchitectPackage, transfer: Ha
         : `${asset.kind} ${asset.versionId} v${asset.version}`,
     )
     .join('; ');
-  return clip(
+  return boundText(
     [
       `Imported from Talk conversation ${resolved.handoff.conversationId}. Package prepared ${resolved.handoff.preparedAt}.`,
       `Copied into this Origin project as text only: ${copied || 'none'}.`,
@@ -178,41 +231,31 @@ export function importStateText(resolved: ResolvedArchitectPackage, transfer: Ha
 }
 
 export function projectFromResolvedHandoff(resolved: ResolvedArchitectPackage): ProjectContent {
+  assertOneSelectionPerKind(resolved.selections);
   const { handoff, brief, plan, palette } = resolved;
+  const sources = mappedSources(resolved);
   const transfer = describeHandoffTransfer(resolved);
   const project = initialProject(handoff.idea, handoff.discipline);
+  project.name = sources.namedFromBrief
+    ? boundText(sources.name, 100)
+    : boundText(sources.name, 100).trim() || 'Untitled project';
+  project.description = boundText(sources.description, 2000);
   if (brief) {
-    project.name = clip(brief.title, 100);
-    project.description = clip(handoff.description || brief.purpose, 2000);
-    project.blueprint.audience = clip(brief.audience, 3000);
-    project.blueprint.requirements = clip(
-      [brief.purpose, brief.visualDirection, ...brief.requirements].filter(Boolean).join('\n'),
-      3000,
-    );
-    project.blueprint.risks = clip(brief.unresolved.join('\n'), 3000);
-  } else {
-    project.description = clip(handoff.description || handoff.idea, 2000);
+    project.blueprint.audience = boundText(sources.audience, 3000);
+    project.blueprint.requirements = boundText(sources.requirements, 3000);
+    project.blueprint.risks = boundText(sources.risks, 3000);
   }
   if (plan) {
-    project.blueprint.solution = clip(
-      [plan.summary, ...plan.steps.map((step) => `${step.title}: ${step.detail}`)].join('\n'),
-      3000,
-    );
-    project.blueprint.milestones = clip(plan.steps.map((step) => step.title).join('\n'), 3000);
+    project.blueprint.solution = boundText(sources.solution, 3000);
+    project.blueprint.milestones = boundText(sources.milestones, 3000);
   }
-  project.blueprint.vision = clip(handoff.idea, 3000);
-  project.blueprint.decisions = clip(handoff.decisions, 3000);
+  project.blueprint.vision = boundText(sources.vision, 3000);
+  project.blueprint.decisions = boundText(sources.decisions, 3000);
   if (palette) {
-    project.blueprint.deliverables = clip(
-      `Palette ${palette.title}: ${palette.swatches.map((swatch) => `${swatch.name} ${swatch.hex}`).join(', ')}`,
-      3000,
-    );
+    project.blueprint.deliverables = boundText(sources.deliverables, 3000);
   }
   project.blueprint.state = importStateText(resolved, transfer);
-  project.blueprint.next = clip(
-    brief?.unresolved[0] || 'Review the imported brief in Architect before any model build.',
-    3000,
-  );
+  project.blueprint.next = boundText(sources.next, 3000);
   return projectContentSchema.parse(project);
 }
 

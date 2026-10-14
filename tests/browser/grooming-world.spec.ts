@@ -52,7 +52,7 @@ for (const width of [360, 768, 1440]) {
       await expect(page).toHaveURL(new RegExp(`area=${id}`));
       await expect(page.locator('#grooming-area .gw-action')).toHaveAttribute('href', link!);
     }
-    await page.reload();
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('button', { name: 'Professional', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -272,7 +272,7 @@ for (const width of [344, 768])
       return route.fulfill({ json: { id: ritualId, requestId: body.requestId } });
     });
     await page.setViewportSize({ width, height: 850 });
-    await page.goto('/experience/grooming');
+    await page.goto('/experience/grooming', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Refine ritual ↗' }).click();
     await page.getByLabel('Name', { exact: true }).fill('My sharper morning');
     await page
@@ -367,7 +367,7 @@ for (const width of [344, 768])
       return route.fulfill({ json: { id: ritualId, requestId: body.requestId } });
     });
     await page.setViewportSize({ width, height: 850 });
-    await page.goto('/experience/grooming');
+    await page.goto('/experience/grooming', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Refine ritual ↗' }).click();
     await page.getByText('Arrange individual steps', { exact: true }).click();
     await page.getByRole('button', { name: 'Move step 2 up', exact: true }).click();

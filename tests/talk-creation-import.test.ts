@@ -289,12 +289,14 @@ describe('Talk Origin import service', () => {
       mappingVersion: 'talk-origin-import/v1',
     });
     expect(first.transfer.imagesCopied).toBe(false);
+    expect(first.project).toEqual(preview.project);
     expect(state.rpc).toEqual(['ai_talk_import_origin']);
     expect(state.versions).toHaveLength(1);
     expect(state.versions[0]).toMatchObject({
       note: 'Imported from Talk',
       content: first.project,
     });
+    expect(state.versions[0]?.content).toEqual(preview.project);
     const retry = await importArchitectHandoff({
       action: 'import-origin',
       id: importId,
@@ -302,7 +304,9 @@ describe('Talk Origin import service', () => {
       conversationId: conversation,
     });
     expect(retry.projectId).toBe(first.projectId);
+    expect(retry.saveId).toBe(first.saveId);
     expect(retry.recovered).toBe(true);
+    expect(retry.project).toEqual(preview.project);
     expect(state.versions).toHaveLength(1);
     const concurrent = await Promise.all([
       importArchitectHandoff({
@@ -393,5 +397,105 @@ describe('Talk Origin import service', () => {
         conversationId: conversation,
       }),
     ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('commits the exact reviewed project for emoji and multiline bounds, then replays it', async () => {
+    const heavyBrief = {
+      title: '💎'.repeat(40),
+      purpose: 'A'.repeat(800),
+      audience: 'Founders',
+      visualDirection: 'C'.repeat(800),
+      requirements: Array.from({ length: 12 }, () => 'D'.repeat(280)),
+      unresolved: ['Typeface'],
+    };
+    state.rows[0] = { ...state.rows[0]!, content: heavyBrief };
+    const handoff = state.rows[1]!;
+    const content = handoff.content as {
+      idea: string;
+      selections: Array<{ title: string }>;
+    };
+    content.idea = `Reserve site\n${'e\u0301'.repeat(40)}`;
+    content.selections[0]!.title = heavyBrief.title;
+    const preview = await reviewArchitectImport(handoffId);
+    expect(preview.project.name).toBe(heavyBrief.title);
+    expect(preview.project.blueprint.requirements.length).toBe(3000);
+    const first = await importArchitectHandoff({
+      action: 'import-origin',
+      id: importId,
+      handoffId,
+      conversationId: conversation,
+    });
+    expect(first.imported).toBe(true);
+    expect(first.recovered).toBe(false);
+    expect(first.project).toEqual(preview.project);
+    expect(state.versions[0]?.content).toEqual(preview.project);
+    const retry = await importArchitectHandoff({
+      action: 'import-origin',
+      id: importId,
+      handoffId,
+      conversationId: conversation,
+    });
+    expect(retry.projectId).toBe(first.projectId);
+    expect(retry.saveId).toBe(first.saveId);
+    expect(retry.recovered).toBe(true);
+    expect(retry.project).toEqual(preview.project);
+    expect(state.versions).toHaveLength(1);
+    expect(state.rpc.every((name) => name === 'ai_talk_import_origin')).toBe(true);
+  });
+
+  it('rejects two selected briefs before any Origin write', async () => {
+    const otherBrief = '50000000-0000-4000-8000-000000000099';
+    state.rows.push({
+      id: otherBrief,
+      person_id: state.person,
+      conversation_id: conversation,
+      source_turn_id: null,
+      lineage_id: otherBrief,
+      version: 1,
+      kind: 'brief',
+      content: {
+        title: 'Other reserve brief',
+        purpose: 'A second reviewed brief.',
+        audience: 'Founders',
+        visualDirection: 'Obsidian and gold',
+        requirements: ['Phone first'],
+        unresolved: ['Typeface'],
+      },
+      predecessor_id: null,
+      superseded_by: null,
+      created_at: '2026-10-14T00:00:00.000Z',
+    });
+    const handoff = state.rows[1]!;
+    const content = handoff.content as {
+      selections: Array<{
+        kind: 'brief' | 'plan' | 'palette';
+        lineageId: string;
+        versionId: string;
+        version: number;
+        title: string;
+      }>;
+    };
+    content.selections = [
+      content.selections[0]!,
+      {
+        kind: 'brief',
+        lineageId: otherBrief,
+        versionId: otherBrief,
+        version: 1,
+        title: 'Other reserve brief',
+      },
+    ];
+    await expect(reviewArchitectImport(handoffId)).rejects.toMatchObject({ status: 409 });
+    await expect(
+      importArchitectHandoff({
+        action: 'import-origin',
+        id: importId,
+        handoffId,
+        conversationId: conversation,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(state.rpc).toEqual([]);
+    expect(state.receipts).toEqual([]);
+    expect(state.versions).toEqual([]);
   });
 });

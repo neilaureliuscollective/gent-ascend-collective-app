@@ -430,9 +430,9 @@ export function CreationDetail({
             Prepare for Architect
           </button>
           <p className="quiet-label">
-            This saves a reviewable package. Creating the Architect project happens only after you
-            review and confirm it. Completed images:{' '}
-            {images.filter((item) => item.status === 'complete').length}.
+            This saves a reviewable package from one selected brief, plan or palette of each kind.
+            Creating the Architect project happens only after you review and confirm it. Completed
+            images: {images.filter((item) => item.status === 'complete').length}.
           </p>
         </div>
       )}

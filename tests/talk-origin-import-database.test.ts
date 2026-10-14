@@ -4,8 +4,12 @@ import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { readFile } from 'node:fs/promises';
 import { initialProject, projectContentSchema } from '@/domains/architect-origin/schema';
 import {
+  boundText,
+  describeHandoffTransfer,
   originImportNote,
   projectFromResolvedHandoff,
+  uniqueKindSelectionMessage,
+  utf16Length,
   type ResolvedArchitectPackage,
 } from '@/domains/talk-creation/origin-import';
 import { originProjectIdentity, originSaveIdentity } from '@/domains/talk-creation/persist';
@@ -139,6 +143,7 @@ beforeAll(async () => {
   await db.exec('create extension if not exists pgcrypto');
   await db.exec(await readFile('supabase/migrations/20261014020000_talk_origin_import_bind.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014030000_talk_origin_import_atomic.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014040000_talk_origin_import_consistency.sql', 'utf8'));
   await db.exec(`
     create function public.talk_import_fail_receipt() returns trigger
     language plpgsql as $$
@@ -164,6 +169,9 @@ describe('Talk Origin atomic import SQL (PGlite; not Supabase Auth)', () => {
       (mapped.rows[0] as { mapped: { content: unknown } }).mapped.content,
     );
     expect(sqlProject).toEqual(projectFromResolvedHandoff(resolvedPackage()));
+    expect((mapped.rows[0] as { mapped: { mappingVersion: string; provenance: unknown } }).mapped.provenance).toEqual(
+      describeHandoffTransfer(resolvedPackage()),
+    );
     expect((mapped.rows[0] as { mapped: { mappingVersion: string } }).mapped.mappingVersion).toBe(
       'talk-origin-import/v1',
     );
@@ -355,5 +363,134 @@ describe('Talk Origin atomic import SQL (PGlite; not Supabase Auth)', () => {
     ).toMatchObject({
       receipt: { id: rollbackImport, handoffId: rollbackHandoff, recovered: false },
     });
+  });
+
+  it('matches TypeScript UTF-16 bounds, provenance flags and rejects two of one kind before mutation', async () => {
+    const diamond = '💎';
+    const combining = 'e\u0301';
+    const quote = (value: string) => `'${value.replace(/'/g, "''")}'`;
+    const lengthSql = async (value: string) =>
+      ((await db.query(`select public.talk_utf16_length(${quote(value)}) as n`)).rows[0] as { n: number }).n;
+    const boundSql = async (value: string, max: number) =>
+      ((await db.query(`select public.talk_bound_text(${quote(value)},${max}) as n`)).rows[0] as { n: string }).n;
+    for (const [value, max] of [
+      ['A'.repeat(100), 100],
+      ['A'.repeat(101), 100],
+      [diamond.repeat(50), 100],
+      [diamond.repeat(51), 100],
+      [`${diamond.repeat(50)}${diamond}`, 101],
+      [combining.repeat(50), 100],
+      [combining.repeat(51), 100],
+      [`${'x'.repeat(99)}\ny`, 100],
+      [`${'x'.repeat(2000)}Y`, 2000],
+      [`${'x'.repeat(1999)}\ny`, 2000],
+      [`${'x'.repeat(3000)}Y`, 3000],
+      [`${'x'.repeat(2999)}\ny`, 3000],
+      [diamond.repeat(1501), 3000],
+    ] as Array<[string, number]>) {
+      expect(await lengthSql(value)).toBe(utf16Length(value));
+      expect(await boundSql(value, max)).toBe(boundText(value, max));
+    }
+    await expect(asUser(owner, `select public.talk_utf16_length('A')`)).rejects.toThrow(
+      /permission denied/i,
+    );
+    await expect(asUser(owner, `select public.talk_bound_text('A',100)`)).rejects.toThrow(
+      /permission denied/i,
+    );
+
+    const longTitle = `${diamond.repeat(51)} Reserve`;
+    const longPurpose = `${diamond.repeat(1001)} purpose`;
+    const longVision = `${'Keep the reserve site exact.\n'.repeat(80)}${diamond.repeat(40)}`;
+    const boundedBrief = {
+      ...brief,
+      title: longTitle,
+      purpose: longPurpose,
+    };
+    const boundedHandoff = {
+      ...handoff,
+      idea: longVision,
+      description: '',
+      selections: [{ ...handoff.selections[0]!, title: longTitle }],
+      images: [],
+    };
+    const resolvedBounded = {
+      ...resolvedPackage(),
+      handoff: boundedHandoff,
+      brief: boundedBrief,
+      plan: undefined,
+      palette: undefined,
+      selections: [{ ...resolvedPackage().selections[0]!, title: longTitle, content: boundedBrief }],
+      images: [],
+    };
+    const mapped = await db.query(
+      `select public.ai_talk_origin_mapped_project(${literal(boundedHandoff)},${literal(boundedBrief)},null,null,'[]'::jsonb) as mapped`,
+    );
+    const sqlMapped = (mapped.rows[0] as { mapped: { content: unknown; provenance: unknown } }).mapped;
+    expect(projectContentSchema.parse(sqlMapped.content)).toEqual(projectFromResolvedHandoff(resolvedBounded));
+    expect(sqlMapped.provenance).toEqual(describeHandoffTransfer(resolvedBounded));
+    expect(
+      (sqlMapped.provenance as { copied: Array<{ into: string; truncated: boolean | null }> }).copied.find(
+        (field) => field.into === 'name',
+      ),
+    ).toEqual({ into: 'name', from: 'brief.title', truncated: true });
+    expect(
+      (sqlMapped.provenance as { copied: Array<{ truncated: boolean | null }> }).copied.every(
+        (field) => field.truncated === true || field.truncated === false,
+      ),
+    ).toBe(true);
+
+    const secondBrief = '00000000-0000-4000-8000-000000000021';
+    const secondPlan = '00000000-0000-4000-8000-000000000022';
+    const secondPalette = '00000000-0000-4000-8000-000000000023';
+    const ambiguousHandoff = '00000000-0000-4000-8000-000000000024';
+    const ambiguousImport = '00000000-0000-4000-8000-000000000025';
+    const otherBrief = { ...brief, title: 'Other reserve brief' };
+    const otherPlan = { ...plan, title: 'Other launch plan' };
+    const otherPalette = { ...palette, title: 'Other imperial palette' };
+    expect((await saveCreation(secondBrief, 'brief', otherBrief)).rows[0]).toMatchObject({
+      receipt: { id: secondBrief, version: 1 },
+    });
+    expect((await saveCreation(secondPlan, 'plan', otherPlan)).rows[0]).toMatchObject({
+      receipt: { id: secondPlan, version: 1 },
+    });
+    expect((await saveCreation(secondPalette, 'palette', otherPalette)).rows[0]).toMatchObject({
+      receipt: { id: secondPalette, version: 1 },
+    });
+    const ambiguousPackage = {
+      ...briefOnly,
+      selections: [
+        { kind: 'brief', lineageId: secondBrief, versionId: secondBrief, version: 1, title: 'Other reserve brief' },
+        { kind: 'brief', lineageId: briefId, versionId: briefId, version: 1, title: 'Reserve site' },
+        { kind: 'plan', lineageId: secondPlan, versionId: secondPlan, version: 1, title: 'Other launch plan' },
+        { kind: 'plan', lineageId: planId, versionId: planId, version: 1, title: 'Launch plan' },
+        { kind: 'palette', lineageId: secondPalette, versionId: secondPalette, version: 1, title: 'Other imperial palette' },
+        { kind: 'palette', lineageId: paletteId, versionId: paletteId, version: 1, title: 'Imperial palette' },
+      ],
+    };
+    expect((await saveCreation(ambiguousHandoff, 'handoff', ambiguousPackage)).rows[0]).toMatchObject({
+      receipt: { id: ambiguousHandoff, version: 1 },
+    });
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_import_origin('${ambiguousImport}','${ambiguousHandoff}','${conversation}')`,
+      ),
+    ).rejects.toThrow(new RegExp(uniqueKindSelectionMessage.replace(/\./g, '\\.')));
+    expect(
+      (
+        await asUser(
+          owner,
+          `select count(*)::int as count from public.ai_talk_origin_imports where handoff_id='${ambiguousHandoff}'`,
+        )
+      ).rows,
+    ).toEqual([{ count: 0 }]);
+    expect(
+      (
+        await asUser(
+          owner,
+          `select count(*)::int as count from public.architect_origin_projects where id='${originProjectIdentity(owner, ambiguousHandoff)}'`,
+        )
+      ).rows,
+    ).toEqual([{ count: 0 }]);
   });
 });

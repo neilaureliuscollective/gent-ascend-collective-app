@@ -30,11 +30,13 @@ import {
 } from './schema';
 import { matchesHandoffDestination, persistKind } from './persist';
 import {
+  assertOneSelectionPerKind,
   describeHandoffTransfer,
   originImportMappingVersion,
   originImportNote,
   overlayHandoffImport,
   projectFromResolvedHandoff,
+  uniqueKindSelectionMessage,
   type ResolvedArchitectPackage,
 } from './origin-import';
 import { withCalculatedContrast } from './contrast';
@@ -299,6 +301,13 @@ export async function prepareArchitectHandoff(input: unknown) {
       title: 'title' in creation.content ? creation.content.title : creation.kind,
     };
   });
+  try {
+    assertOneSelectionPerKind(selections);
+  } catch (error) {
+    if (error instanceof Error && error.message === uniqueKindSelectionMessage)
+      throw new IntelligenceError(uniqueKindSelectionMessage, 409);
+    throw error;
+  }
   const images = parsed.data.imageIds.map((id) => {
     const image = workspace.images.find((item) => item.id === id);
     if (!image || image.status !== 'complete' || !image.version_id || !image.project_id)
@@ -388,6 +397,13 @@ async function resolveArchitectPackage(
       prompt: image.prompt,
     };
   });
+  try {
+    assertOneSelectionPerKind(selections);
+  } catch (error) {
+    if (error instanceof Error && error.message === uniqueKindSelectionMessage)
+      throw new IntelligenceError(uniqueKindSelectionMessage, 409);
+    throw error;
+  }
   return {
     handoff,
     sourceTurnId: handoffRow.source_turn_id,
@@ -554,8 +570,10 @@ export async function importArchitectHandoff(input: unknown) {
         ? 'This import request was already used with a different package.'
         : /Project unavailable|Replay mismatch/i.test(recorded.error?.message ?? '')
           ? 'This Architect project already exists with different content. The Talk package was not imported.'
-          : 'Architect could not save this project. The package stays prepared and was not imported.',
-      /reused with different inputs|Project unavailable|Replay mismatch/i.test(
+          : /one current brief, plan or palette of each kind/i.test(recorded.error?.message ?? '')
+            ? uniqueKindSelectionMessage
+            : 'Architect could not save this project. The package stays prepared and was not imported.',
+      /reused with different inputs|Project unavailable|Replay mismatch|one current brief, plan or palette of each kind/i.test(
         recorded.error?.message ?? '',
       )
         ? 409

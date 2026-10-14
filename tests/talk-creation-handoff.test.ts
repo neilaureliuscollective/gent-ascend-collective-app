@@ -120,6 +120,7 @@ vi.mock('../src/domains/intelligence/service', () => ({
   }),
 }));
 
+import { uniqueKindSelectionMessage } from '../src/domains/talk-creation/origin-import';
 import { prepareArchitectHandoff } from '../src/domains/talk-creation/service';
 
 const conversation = '30000000-0000-4000-8000-000000000001';
@@ -258,5 +259,39 @@ describe('Talk Architect handoff recovery', () => {
     expect(left.recovered).toBe(true);
     expect(right.recovered).toBe(true);
     expect(state.rows.filter((item) => item.kind === 'handoff')).toHaveLength(1);
+  });
+
+  it('rejects two current briefs of the same kind before creating a package', async () => {
+    const otherBrief = '50000000-0000-4000-8000-000000000099';
+    seedBrief(briefV1, null, 'Reserve brand');
+    state.rows.push({
+      id: otherBrief,
+      person_id: state.person,
+      conversation_id: conversation,
+      source_turn_id: '40000000-0000-4000-8000-000000000011',
+      lineage_id: otherBrief,
+      version: 1,
+      kind: 'brief',
+      content: {
+        title: 'Other reserve brief',
+        purpose: 'A second reviewed brief.',
+        audience: 'Founders',
+        visualDirection: 'Obsidian and gold',
+        requirements: ['Phone first'],
+        unresolved: ['Typeface'],
+      },
+      predecessor_id: null,
+      superseded_by: null,
+      created_at: '2026-10-13T00:00:00.000Z',
+    });
+    await expect(
+      prepareArchitectHandoff({
+        ...request,
+        id: '70000000-0000-4000-8000-000000000099',
+        creationIds: [briefV1, otherBrief],
+      }),
+    ).rejects.toMatchObject({ status: 409, message: uniqueKindSelectionMessage });
+    expect(state.rows.filter((item) => item.kind === 'handoff')).toHaveLength(0);
+    expect(state.rpcs).toEqual([]);
   });
 });

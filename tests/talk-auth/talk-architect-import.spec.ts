@@ -242,6 +242,28 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   ).toBe(briefV2);
 
   const paletteRow = await owner.from('ai_talk_creations').select('id').eq('id', lost).maybeSingle();
+  const extraBrief = await api<{ id: string }>(page, '/api/aurelius/creations', 'POST', {
+    id: crypto.randomUUID(),
+    conversationId: conversation,
+    kind: 'brief',
+    predecessorId: null,
+    content: { ...brief, title: 'Other reserve brief' },
+  });
+  expect(extraBrief.status).toBe(201);
+  expect(
+    (
+      await api(page, '/api/aurelius/creations', 'POST', {
+        id: crypto.randomUUID(),
+        conversationId: conversation,
+        discipline: 'business',
+        idea: 'A premium brand and website.',
+        decisions: 'Keep emerald restrained.',
+        creationIds: [briefV2, extraBrief.body.id],
+        imageIds: [],
+        preparedAt: '2026-10-14T00:00:00.000Z',
+      })
+    ).status,
+  ).toBe(409);
   const prepared = await api<{ imported?: boolean; id: string }>(page, '/api/aurelius/creations', 'POST', {
     id: handoffId,
     conversationId: conversation,
@@ -255,7 +277,7 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(prepared.status).toBe(201);
   expect(prepared.body.imported).toBe(false);
   const review = await api<{
-    project?: { name: string; blueprint?: { deliverables?: string; state?: string } };
+    project?: Record<string, unknown> & { name: string; blueprint?: { deliverables?: string; state?: string } };
     originReady?: boolean;
     mappingVersion?: string;
     transfer?: {
@@ -372,6 +394,7 @@ test('authenticated Talk recovery and Architect import through real routes', asy
         revision: 1,
         note: 'Imported from Talk',
       });
+      expect(version.data?.content).toEqual(review.body.project);
       expect((version.data?.content as { name?: string } | null)?.name).toBe(review.body.project?.name);
       expect((version.data?.content as { blueprint?: { state?: string } } | null)?.blueprint?.state).toBe(
         review.body.project?.blueprint?.state,
@@ -387,13 +410,23 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(lostImport.body.imported).not.toBe(true);
   await page.unroute('**/api/aurelius/creations');
   const [one, two] = await Promise.all([
-    api<{ projectId?: string; imported?: boolean; saveId?: string }>(page, '/api/aurelius/creations', 'POST', {
+    api<{
+      projectId?: string;
+      imported?: boolean;
+      saveId?: string;
+      project?: Record<string, unknown>;
+    }>(page, '/api/aurelius/creations', 'POST', {
       action: 'import-origin',
       id: importId,
       handoffId,
       conversationId: conversation,
     }),
-    api<{ projectId?: string; imported?: boolean; saveId?: string }>(page, '/api/aurelius/creations', 'POST', {
+    api<{
+      projectId?: string;
+      imported?: boolean;
+      saveId?: string;
+      project?: Record<string, unknown>;
+    }>(page, '/api/aurelius/creations', 'POST', {
       action: 'import-origin',
       id: crypto.randomUUID(),
       handoffId,
@@ -405,6 +438,8 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(one.body.imported).toBe(true);
   expect(two.body.imported).toBe(true);
   expect(two.body.projectId).toBe(one.body.projectId);
+  expect(one.body.project).toEqual(review.body.project);
+  expect(two.body.project).toEqual(review.body.project);
   expect(one.body.projectId).toBe(expectedProject);
   expect(one.body.saveId).toBe(expectedSave);
   expect((await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', handoffId)).data?.length).toBe(1);

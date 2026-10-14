@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertOneSelectionPerKind,
+  boundText,
   describeHandoffTransfer,
+  exceedsBound,
   projectFromResolvedHandoff,
+  uniqueKindSelectionMessage,
+  utf16Length,
   type ResolvedArchitectPackage,
 } from '@/domains/talk-creation/origin-import';
 import { originProjectIdentity, originSaveIdentity } from '@/domains/talk-creation/persist';
@@ -138,6 +143,72 @@ describe('Talk Origin handoff transfer', () => {
     expect(transfer.referenced.some((item) => item.kind === 'brief' && item.versionId === briefId)).toBe(
       true,
     );
+  });
+
+  it('truncates by UTF-16 units without splitting surrogate pairs', () => {
+    const diamond = '💎';
+    const combining = 'e\u0301';
+    expect(utf16Length(diamond)).toBe(2);
+    expect(utf16Length(combining)).toBe(2);
+    expect(boundText('A'.repeat(100), 100)).toBe('A'.repeat(100));
+    expect(boundText('A'.repeat(101), 100)).toBe('A'.repeat(100));
+    expect(boundText(diamond.repeat(50), 100)).toBe(diamond.repeat(50));
+    expect(boundText(diamond.repeat(51), 100)).toBe(diamond.repeat(50));
+    expect(boundText(diamond.repeat(50) + 'X', 101)).toBe(diamond.repeat(50) + 'X');
+    expect(boundText(`${diamond.repeat(50)}${diamond}`, 101)).toBe(diamond.repeat(50));
+    expect(boundText(combining.repeat(50), 100)).toBe(combining.repeat(50));
+    expect(boundText(combining.repeat(51), 100)).toBe(combining.repeat(50));
+    expect(boundText(`${'x'.repeat(99)}\ny`, 100)).toBe(`${'x'.repeat(99)}\n`);
+    expect(boundText(`${'x'.repeat(1999)}\ny`, 2000)).toBe(`${'x'.repeat(1999)}\n`);
+    expect(boundText(`${'x'.repeat(2999)}\ny`, 3000)).toBe(`${'x'.repeat(2999)}\n`);
+    expect(exceedsBound(diamond.repeat(51), 100)).toBe(true);
+    expect(exceedsBound(diamond.repeat(50), 100)).toBe(false);
+  });
+
+  it('derives truncation flags from the bound decision and rejects two of one kind', () => {
+    const longTitle = `${'💎'.repeat(51)} Reserve`;
+    const packageForImport = resolved();
+    packageForImport.brief = { ...packageForImport.brief!, title: longTitle };
+    const transfer = describeHandoffTransfer(packageForImport);
+    expect(transfer.copied.find((field) => field.into === 'name')).toEqual({
+      into: 'name',
+      from: 'brief.title',
+      truncated: true,
+    });
+    expect(transfer.copied.every((field) => typeof field.truncated === 'boolean')).toBe(true);
+    expect(transfer.copied.find((field) => field.into === 'description')?.truncated).toBe(false);
+    expect(projectFromResolvedHandoff(packageForImport).name).toBe(boundText(longTitle, 100));
+    const missingOptional = resolved();
+    missingOptional.plan = undefined;
+    missingOptional.palette = undefined;
+    missingOptional.handoff = {
+      ...missingOptional.handoff,
+      selections: [missingOptional.handoff.selections[0]!],
+      images: [],
+    };
+    missingOptional.selections = [missingOptional.selections[0]!];
+    missingOptional.images = [];
+    const briefOnly = describeHandoffTransfer(missingOptional);
+    expect(briefOnly.copied.some((field) => field.into === 'blueprint.solution')).toBe(false);
+    expect(briefOnly.copied.some((field) => field.into === 'blueprint.deliverables')).toBe(false);
+    expect(briefOnly.referenced.some((item) => item.kind === 'image')).toBe(false);
+    expect(briefOnly.imagesCopied).toBe(false);
+    expect(() =>
+      assertOneSelectionPerKind([
+        { kind: 'brief' },
+        { kind: 'brief' },
+        { kind: 'plan' },
+      ]),
+    ).toThrow(uniqueKindSelectionMessage);
+    expect(() =>
+      projectFromResolvedHandoff({
+        ...packageForImport,
+        selections: [
+          packageForImport.selections[0]!,
+          { ...packageForImport.selections[0]!, versionId: paletteId, title: 'Other brief' },
+        ],
+      }),
+    ).toThrow(uniqueKindSelectionMessage);
   });
 
   it('derives one project and one save identity from the owner and package', () => {

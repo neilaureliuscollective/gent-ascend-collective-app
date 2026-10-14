@@ -44,12 +44,13 @@ Live voice, Live admission, production voice flags, Construct, Connections, Arch
 - `imported` is overlaid from the receipt only after the saved Origin content matches the reviewed mapping. Failed or unavailable Origin saves leave the package prepared.
 - Copied into Origin as bounded text: brief title/purpose/audience/requirements, plan summary and step text, palette names and hex values. Palette roles, contrast pairs and image pixels are not copied. Selected version and image ids stay referenced on the Talk package/receipt and in the imported project's `blueprint.state`.
 - An existing unsent Origin draft is mounted-app memory. Import does not open, overwrite or discard it. Supported Back/Forward retains the draft; accepted explicit leave discards it.
-- Additive migrations: `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql` and `20261014030000_talk_origin_import_atomic.sql`. They do not change previously applied Origin or Talk files.
+- Additive migrations: `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql` and `20261014040000_talk_origin_import_consistency.sql`. They do not change previously applied Origin or Talk files.
+- Review, SQL mapping and receipt verification share one UTF-16 truncation rule that never splits surrogate pairs, one selected creation per kind, and provenance flags taken from the actual bound decision. Ambiguous same-kind packages fail before any Origin write. Bounded text and palette hex remain copied; other palette details and images stay referenced in Talk.
 
 ## Remaining dependencies
 
-- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql` and `20261014030000_talk_origin_import_atomic.sql` requires founder authorization. None of these files broaden production access until applied.
-- Additive `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql` and `20261014030000_talk_origin_import_atomic.sql` are local/reviewable. Hosted apply of the Talk files, including the receipt table, save bind and atomic import, requires founder authorization. Do not edit the already-applied Origin migration record.
+- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql` and `20261014040000_talk_origin_import_consistency.sql` requires founder authorization. None of these files broaden production access until applied.
+- Additive `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql` and `20261014040000_talk_origin_import_consistency.sql` are local/reviewable. Hosted apply of the Talk files, including the receipt table, save bind, atomic import and consistency helpers, requires founder authorization. Do not edit the already-applied Origin migration record.
 - Paid image generation still needs Studio entitlement, OpenAI image access and the existing quota/RPC pilot checks.
 - Physical Fold/Safari and live-provider acceptance remain separate gates.
 
@@ -59,7 +60,7 @@ Recorded on the atomic import pass before push. Browser evidence includes mocked
 
 - lint: pass
 - typecheck: pass
-- vitest: 936 passed (includes Talk persist/SQL/handoff/candidate/atomic import and copied-vs-referenced contracts)
+- vitest: 942 passed (includes Talk persist/SQL/handoff/candidate/atomic import, UTF-16 parity, one-per-kind selection and copied-vs-referenced contracts)
 - db ledger: pass (Talk and import SQL remain unapplied on hosted; Origin production record unchanged)
 - production build: pass
 - Playwright (mocked providers): talk-creation 4/4, talk-creation-recovery 8/8, architect-origin 27/27
