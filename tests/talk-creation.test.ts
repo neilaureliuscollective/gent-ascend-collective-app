@@ -11,7 +11,14 @@ import {
   selectedCreationContext,
 } from '@/domains/talk-creation/schema';
 import { imageIntent } from '@/domains/talk-creation/intent';
-import { clearTalkSave, rememberTalkSave, readTalkSave } from '@/domains/talk-creation/pending';
+import {
+  bindTalkSave,
+  clearTalkSave,
+  matchesTalkSave,
+  rememberTalkSave,
+  readTalkSave,
+} from '@/domains/talk-creation/pending';
+import { idleCreationScope, shouldApplyCreation, shouldContinueWatch } from '@/domains/talk-creation/scope';
 import { contrastRatio, paletteContrast, withCalculatedContrast } from '@/domains/talk-creation/contrast';
 import {
   extractCreationFences,
@@ -178,6 +185,38 @@ describe('Talk creation contracts', () => {
         created_at: '2026-10-13T00:00:00.000Z',
       },
     ]);
+    const candidate = {
+      id: '50000000-0000-4000-8000-000000000013',
+      person_id: 'synthetic',
+      conversation_id: '30000000-0000-4000-8000-000000000011',
+      source_turn_id: '40000000-0000-4000-8000-000000000011',
+      lineage_id: '50000000-0000-4000-8000-000000000011',
+      version: 3,
+      kind: 'brief' as const,
+      content: { ...brief, title: 'Generated proposal' },
+      predecessor_id: '50000000-0000-4000-8000-000000000011',
+      superseded_by: null,
+      candidate: true,
+      created_at: '2026-10-13T00:00:02.000Z',
+    };
+    expect(
+      selectedCreationContext([
+        {
+          id: '50000000-0000-4000-8000-000000000011',
+          person_id: 'synthetic',
+          conversation_id: '30000000-0000-4000-8000-000000000011',
+          source_turn_id: null,
+          lineage_id: '50000000-0000-4000-8000-000000000011',
+          version: 2,
+          kind: 'brief',
+          content: brief,
+          predecessor_id: null,
+          superseded_by: null,
+          created_at: '2026-10-13T00:00:00.000Z',
+        },
+        candidate,
+      ]),
+    ).not.toContain('Generated proposal');
     expect(context).toContain('Untrusted user-reviewed records');
     expect(context).toContain('A premium brand and website.');
     expect(context).toContain('selected brief v2');
@@ -225,5 +264,86 @@ describe('Talk creation contracts', () => {
     expect(readTalkSave('owner', payload.conversationId, 'revision', store)?.id).toBe(first);
     clearTalkSave('owner', payload.conversationId, 'revision', store);
     expect(readTalkSave('owner', payload.conversationId, 'revision', store)).toBeNull();
+  });
+
+  it('reuses one handoff identity and preparedAt across retries, then issues a new identity for a changed selection', () => {
+    const store = (() => {
+      const values = new Map<string, string>();
+      return {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, next: string) => {
+          values.set(key, next);
+        },
+        removeItem: (key: string) => {
+          values.delete(key);
+        },
+      };
+    })();
+    const intended = {
+      conversationId: '30000000-0000-4000-8000-000000000001',
+      discipline: 'business',
+      idea: 'A premium brand and website.',
+      decisions: '',
+      creationIds: ['50000000-0000-4000-8000-000000000011'],
+      imageIds: [],
+    };
+    const first = bindTalkSave('owner', intended.conversationId, 'handoff', intended, store, 1);
+    const retry = bindTalkSave('owner', intended.conversationId, 'handoff', intended, store, 2);
+    expect(retry.id).toBe(first.id);
+    expect(retry.payload.preparedAt).toBe(first.payload.preparedAt);
+    expect(matchesTalkSave('owner', intended.conversationId, 'handoff', first.id, store, 2)).toBe(true);
+    const changed = bindTalkSave(
+      'owner',
+      intended.conversationId,
+      'handoff',
+      { ...intended, creationIds: ['50000000-0000-4000-8000-000000000012'] },
+      store,
+      3,
+    );
+    expect(changed.id).not.toBe(first.id);
+    expect(changed.payload.preparedAt).not.toBe(first.payload.preparedAt);
+    expect(readTalkSave('other', intended.conversationId, 'handoff', store, 3)).toBeNull();
+    expect(readTalkSave('owner', intended.conversationId, 'handoff', store, 3)?.id).toBe(changed.id);
+  });
+
+  it('keeps one handoff identity when session storage is temporarily unavailable', () => {
+    const store = {
+      getItem: () => {
+        throw new Error('Storage unavailable');
+      },
+      setItem: () => {
+        throw new Error('Storage unavailable');
+      },
+      removeItem: () => {
+        throw new Error('Storage unavailable');
+      },
+    };
+    const intended = {
+      conversationId: '30000000-0000-4000-8000-000000000001',
+      discipline: 'business',
+      idea: 'A premium brand and website.',
+      decisions: '',
+      creationIds: ['50000000-0000-4000-8000-000000000011'],
+      imageIds: [],
+    };
+    const first = bindTalkSave('owner-unavailable', intended.conversationId, 'handoff', intended, store, 1);
+    const retry = bindTalkSave('owner-unavailable', intended.conversationId, 'handoff', intended, store, 2);
+    expect(retry.id).toBe(first.id);
+    expect(retry.payload.preparedAt).toBe(first.payload.preparedAt);
+  });
+
+  it('ignores late creation results after the conversation scope is cleared', () => {
+    const idle = idleCreationScope('owner');
+    expect(shouldApplyCreation(idle, 'owner', '30000000-0000-4000-8000-000000000001')).toBe(false);
+    expect(
+      shouldContinueWatch(2, 1, { owner: 'owner', conversation: '30000000-0000-4000-8000-000000000001' }, 'owner', '30000000-0000-4000-8000-000000000001'),
+    ).toBe(false);
+    expect(
+      shouldApplyCreation(
+        { owner: 'owner', conversation: '30000000-0000-4000-8000-000000000001' },
+        'other',
+        '30000000-0000-4000-8000-000000000001',
+      ),
+    ).toBe(false);
   });
 });

@@ -26,8 +26,8 @@ export function CreationCard({
     <article className="talk-creation-card" data-kind={creation.kind} data-selected={selected || undefined}>
       <header>
         <p className="eyebrow">
-          {kind} · v{creation.version}
-          {selected ? ' · selected' : ''}
+          {creation.candidate ? 'Proposal · not applied' : `${kind} · v${creation.version}`}
+          {selected && !creation.candidate ? ' · selected' : ''}
         </p>
       </header>
       <h3>{title}</h3>
@@ -37,6 +37,11 @@ export function CreationCard({
       {creation.kind === 'plan' && 'summary' in creation.content && <p>{creation.content.summary}</p>}
       {creation.kind === 'palette' && 'swatches' in creation.content && (
         <PaletteSwatches palette={creation.content} />
+      )}
+      {creation.candidate && (
+        <p className="talk-creation-status">
+          A newer version was already saved. Review this proposal before keeping it.
+        </p>
       )}
       {creation.kind === 'handoff' && 'imported' in creation.content && (
         <p className="talk-creation-status">

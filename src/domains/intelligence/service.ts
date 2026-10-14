@@ -827,32 +827,27 @@ export async function prepareReply(
             if (parsed.brief || parsed.plan || parsed.palette) offered = [parsed];
           }
           if (offered.length) {
-            try {
-              const saved = await persistOfferedCreations(
-                client,
-                input.conversationId,
-                input.requestId,
-                offered,
-                current,
-              );
-              creations = saved.map((item) => ({
+            const persisted = await persistOfferedCreations(
+              client,
+              input.conversationId,
+              input.requestId,
+              offered,
+              current,
+            );
+            creations = persisted.saved.map((item) => ({
+              id: item.id,
+              kind: item.kind,
+              title: 'title' in item.content ? item.content.title : item.kind,
+              status: 'saved',
+            }));
+            creations.push(
+              ...persisted.stale.map((item) => ({
                 id: item.id,
                 kind: item.kind,
-                title: 'title' in item.content ? item.content.title : item.kind,
-                status: 'saved',
-              }));
-            } catch (error) {
-              if (error instanceof Error && error.message === 'Stale creation version') {
-                creations = (['brief', 'plan', 'palette'] as const)
-                  .filter((kind) => offered.some((offer) => offer[kind]))
-                  .map((kind) => ({
-                    id: current[kind] ?? input.requestId,
-                    kind,
-                    title: offered.find((offer) => offer[kind])?.[kind]?.title ?? kind,
-                    status: 'stale',
-                  }));
-              }
-            }
+                title: item.title,
+                status: item.preserved ? 'stale' : 'stale-lost',
+              })),
+            );
           }
           creations.push(
             ...creation.images.map((image) => ({

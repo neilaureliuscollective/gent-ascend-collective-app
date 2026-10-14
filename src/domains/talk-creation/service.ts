@@ -39,12 +39,14 @@ function asCreation(row: {
   content: unknown;
   predecessor_id: string | null;
   superseded_by: string | null;
+  candidate?: boolean;
   created_at: string;
 }): TalkCreation | null {
   try {
     return {
       ...row,
       kind: row.kind as CreationKind,
+      candidate: Boolean(row.candidate),
       content: contentForKind(row.kind as CreationKind, row.content),
     };
   } catch {
@@ -192,7 +194,7 @@ export async function prepareArchitectHandoff(input: unknown) {
   const workspace = await readTalkCreations(parsed.data.conversationId);
   const selections = parsed.data.creationIds.map((id) => {
     const creation = workspace.creations.find((item) => item.id === id);
-    if (!creation || creation.kind === 'handoff' || creation.superseded_by)
+    if (!creation || creation.kind === 'handoff' || creation.superseded_by || creation.candidate)
       throw new IntelligenceError('Choose current brief, plan or palette versions.', 409);
     return {
       kind: creation.kind,

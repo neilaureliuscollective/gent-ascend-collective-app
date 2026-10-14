@@ -27,30 +27,39 @@ Live voice, Live admission, production voice flags, Construct, Connections, Arch
 - Attachments resolve before `ai_begin_turn`, so a bad file does not leave a pending reservation.
 - Architect packages are labeled **Prepared for Architect** until a receiver acknowledges import.
 
+## Continuity (2026-10-13)
+
+- One intended Architect handoff reuses the same request id, `preparedAt`, selections and contents across retry and reload. A changed selection mints a new identity. Server-side save is atomic: same identity+payload returns the original receipt; reused identity with different inputs is rejected.
+- Pending revision/handoff records are owner-scoped. After authenticated owner and conversation identity are established, Talk recovers the original operation. Pending is cleared only after a matching receipt. Conflicts, failed network and other-owner records stay pending or untouched. Ordinary chat remains usable.
+- New Conversation, conversation selection, owner change and unmount invalidate the previous creation generation, stop the image watcher and ignore outstanding responses. Server-side image jobs and saved results stay intact; reopening reconciles actual status.
+- A stale generated proposal is stored as an owner-scoped `candidate` on the existing creation table (`ai_talk_save_candidate`). It is not selected, applied or current. The user can inspect it and explicitly keep it as a new version against the current predecessor. Failed preservation is labeled `stale-lost` and is never claimed saved. Additive migration: `20261013260000_talk_creation_candidates.sql`.
+
 ## Remaining dependencies
 
-- Hosted apply of `20261013240000_talk_creation.sql` and `20261013250000_talk_image_entitlement.sql` requires founder authorization. Neither file broadens production access until applied.
+- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql` and `20261013260000_talk_creation_candidates.sql` requires founder authorization. None of these files broaden production access until applied.
 - Architect receiving `ConversationDraft.take('architect')` is a follow-up after PR #120. Until then the package is saved and staged, not imported.
 - Paid image generation still needs Studio entitlement, OpenAI image access and the existing quota/RPC pilot checks.
 - Physical Fold/Safari and live-provider acceptance remain separate gates.
 
 ## Exact-head checks on this branch
 
-Recorded on the recovery pass before push. Browser evidence is mocked-provider Playwright, not a paid image receipt. PGlite SQL is not a real Supabase Auth test. Local founder harness was absent.
+Recorded on the continuity pass before push. Browser evidence is mocked-provider Playwright, not a paid image receipt. PGlite SQL is disposable persistence, not a real Supabase Auth test. Local founder Auth/PostgREST was absent; CI `database` applies the additive Talk migrations on disposable local Auth.
 
 - lint: pass
 - typecheck: pass
-- vitest: 790 passed
+- vitest: 797 passed (includes Talk persist/SQL/handoff/candidate contracts)
 - db ledger: pass (Talk SQL remains unapplied on hosted)
 - production build: pass
-- Playwright (mocked providers): talk-creation 3/3, talk-layout 6/6, talk-recovery 10/10, talk-interaction-recovery 4/4, aurelius 18/18, bplus-talk 13/13, fluid-conversation 16/16, live-artifacts 2/2
+- Playwright (mocked providers): talk-creation 3/3, talk-creation-recovery 7/7, talk-layout 6/6, talk-recovery 10/10, talk-interaction-recovery 4/4
+- Persistence used: PGlite for ownership/idempotent handoff/candidate SQL; mocked `/api` for browser recovery; no local Auth/PostgREST
 - Unrun: remaining Quality `test:e2e` files, founder Auth smoke, physical Fold/Safari, paid OpenAI image calls, hosted migration apply, Architect import acknowledgement
 
 ## Founder test
 
 1. Open Talk with voice unavailable.
 2. Send “Help me develop a premium brand and website.”
-3. Review the brief and palette in the thread; refine and save a new version.
-4. Reload: selected versions remain.
-5. If funded, explicitly ask for an image, approve cost, then request an edit of the selected version.
-6. Use in Architect: confirm the package is saved and that Architect does not claim import.
+3. Review the brief; save a new version.
+4. Reload while a save is still pending: the original identity recovers or stays pending honestly.
+5. Prepare for Architect, lose the response, retry: one package, same receipt, `imported: false`.
+6. Start New conversation during a slow image in A: B stays clean. Reopen A: saved result is still there.
+7. If a generation finishes after a newer manual save: current version stays; the proposal is a reviewable candidate, not applied.

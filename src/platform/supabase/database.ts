@@ -1290,6 +1290,17 @@ export interface Database {
         };
         Returns: { id: string; lineageId: string; version: number };
       };
+      ai_talk_save_candidate: {
+        Args: {
+          p_id: string;
+          p_conversation: string;
+          p_turn: string;
+          p_kind: string;
+          p_base: string;
+          p_content: unknown;
+        };
+        Returns: { id: string; lineageId: string; version: number; recovered?: boolean };
+      };
       ai_talk_select_creation: {
         Args: { p_conversation: string; p_creation: string };
         Returns: boolean;

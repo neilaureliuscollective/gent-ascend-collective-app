@@ -112,6 +112,62 @@ describe('Talk creation SQL versions and ownership (PGlite; not Supabase Auth)',
       ),
     ).rejects.toThrow(/different inputs/);
   });
+
+  it('returns the same Architect package after a lost-response retry and rejects a changed selection on that identity', async () => {
+    const handoffId = '00000000-0000-4000-8000-000000000031';
+    const packageContent = {
+      schema: 'talk-architect-handoff/v1',
+      conversationId: conversation,
+      preparedAt: '2026-10-13T00:00:00.000Z',
+      discipline: 'business',
+      idea: 'A premium brand and website.',
+      description: '',
+      decisions: '',
+      selections: [
+        {
+          kind: 'brief',
+          lineageId: first,
+          versionId: second,
+          version: 2,
+          title: 'Lineage refined',
+        },
+      ],
+      images: [],
+      imported: false,
+    };
+    const save = (content: unknown) =>
+      `select public.ai_talk_save_creation('${handoffId}','${conversation}',null,'handoff',null,${literal(content)}) as receipt`;
+    expect((await asUser(owner, save(packageContent))).rows[0]).toMatchObject({
+      receipt: { id: handoffId, version: 1 },
+    });
+    expect((await asUser(owner, save(packageContent))).rows[0]).toMatchObject({
+      receipt: { id: handoffId, version: 1, recovered: true },
+    });
+    expect(
+      (await asUser(owner, `select count(*)::int as n from public.ai_talk_creations where kind='handoff'`))
+        .rows[0],
+    ).toEqual({ n: 1 });
+    await expect(
+      asUser(owner, save({ ...packageContent, idea: 'A different package.' })),
+    ).rejects.toThrow(/different inputs/);
+    await expect(
+      asUser(
+        owner,
+        save({
+          ...packageContent,
+          selections: [
+            {
+              kind: 'brief',
+              lineageId: first,
+              versionId: first,
+              version: 1,
+              title: 'Reserve site',
+            },
+          ],
+        }),
+      ),
+    ).rejects.toThrow(/different inputs/);
+  });
 });
 
 describe('Talk studio entitlement (PGlite; not Supabase Auth)', () => {
@@ -149,5 +205,75 @@ describe('Talk studio entitlement (PGlite; not Supabase Auth)', () => {
     expect((await db.query(`select public.talk_studio_entitled('${owner}') as ok`)).rows[0]).toEqual({
       ok: true,
     });
+  });
+});
+
+describe('Talk stale proposal candidates (PGlite; not Supabase Auth)', () => {
+  const candidate = '00000000-0000-4000-8000-000000000041';
+  const applied = '00000000-0000-4000-8000-000000000042';
+
+  beforeAll(async () => {
+    await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
+  });
+
+  it('keeps a stale proposal without superseding the current version, and isolates it from another owner', async () => {
+    const refined = { ...brief, title: 'Manual edit v2' };
+    const proposal = { ...brief, title: 'Generated proposal' };
+    const selectedBefore = (
+      await asUser(owner, `select creation_id from public.ai_talk_selection where kind='brief'`)
+    ).rows;
+    await asUser(
+      owner,
+      `select public.ai_talk_save_candidate('${candidate}','${conversation}','${turn}','brief','${second}',${literal(proposal)})`,
+    );
+    const retry = await asUser(
+      owner,
+      `select public.ai_talk_save_candidate('${candidate}','${conversation}','${turn}','brief','${second}',${literal(proposal)}) as receipt`,
+    );
+    expect(retry.rows[0]).toMatchObject({ receipt: { id: candidate, recovered: true, candidate: true } });
+    expect(
+      (await asUser(
+        owner,
+        `select id,version,candidate,superseded_by from public.ai_talk_creations where lineage_id='${first}' order by version`,
+      )).rows,
+    ).toEqual([
+      { id: first, version: 1, candidate: false, superseded_by: second },
+      { id: second, version: 2, candidate: false, superseded_by: null },
+      { id: candidate, version: 3, candidate: true, superseded_by: null },
+    ]);
+    const selectedAfter = (
+      await asUser(owner, `select creation_id from public.ai_talk_selection where kind='brief'`)
+    ).rows;
+    expect(selectedAfter).toEqual(selectedBefore);
+    expect(selectedAfter.some((row) => (row as { creation_id: string }).creation_id === candidate)).toBe(
+      false,
+    );
+    expect((await asUser(foreign, `select id from public.ai_talk_creations where id='${candidate}'`)).rows).toEqual(
+      [],
+    );
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_select_creation('${conversation}','${candidate}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_save_candidate('${candidate}','${conversation}','${turn}','brief','${second}',${literal(refined)})`,
+      ),
+    ).rejects.toThrow(/different inputs/);
+    expect(
+      (await asUser(
+        owner,
+        `select public.ai_talk_save_creation('${applied}','${conversation}','${turn}','brief','${second}',${literal(proposal)}) as receipt`,
+      )).rows[0],
+    ).toMatchObject({ receipt: { id: applied, version: 4 } });
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_save_candidate('00000000-0000-4000-8000-000000000043','${conversation}','${turn}','brief','00000000-0000-4000-8000-000000000099',${literal(proposal)})`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
   });
 });

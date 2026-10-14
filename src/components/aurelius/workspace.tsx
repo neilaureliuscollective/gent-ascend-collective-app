@@ -47,7 +47,13 @@ import {
   readTalkCreationWorkspace,
   type TalkCreationWorkspace,
 } from '@/domains/talk-creation/schema';
-import { clearTalkSave, readTalkSave, rememberTalkSave } from '@/domains/talk-creation/pending';
+import {
+  bindTalkSave,
+  clearTalkSave,
+  matchesTalkSave,
+  readTalkSave,
+} from '@/domains/talk-creation/pending';
+import { idleCreationScope, shouldApplyCreation, shouldContinueWatch } from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
@@ -181,7 +187,8 @@ export function AureliusWorkspace({
   const creationGeneration = useRef(0);
   const imageWatch = useRef(0);
   const imageTimer = useRef<number | null>(null);
-  const creationScope = useRef({ owner: '', conversation: null as string | null });
+  const recoverGeneration = useRef(0);
+  const creationScope = useRef(idleCreationScope());
   const stopImageWatch = useCallback(() => {
     imageWatch.current += 1;
     if (imageTimer.current) {
@@ -191,8 +198,7 @@ export function AureliusWorkspace({
   }, []);
   const applyCreationWorkspace = useCallback(
     (conversationId: string, owner: string, workspace: TalkCreationWorkspace | null) => {
-      if (creationScope.current.conversation !== conversationId) return;
-      if (creationScope.current.owner && creationScope.current.owner !== owner) return;
+      if (!shouldApplyCreation(creationScope.current, owner, conversationId)) return;
       setCreationWorkspace(workspace);
     },
     [],
@@ -203,15 +209,31 @@ export function AureliusWorkspace({
       const generation = imageWatch.current;
       let delay = 1500;
       const tick = async () => {
-        if (imageWatch.current !== generation) return;
-        if (creationScope.current.conversation !== conversationId) return;
-        if (creationScope.current.owner && creationScope.current.owner !== owner) return;
+        if (
+          !shouldContinueWatch(
+            imageWatch.current,
+            generation,
+            creationScope.current,
+            owner,
+            conversationId,
+          )
+        )
+          return;
         try {
           const response = await fetch(
             `/api/aurelius/creations?conversationId=${conversationId}`,
             { cache: 'no-store' },
           );
-          if (imageWatch.current !== generation) return;
+          if (
+            !shouldContinueWatch(
+              imageWatch.current,
+              generation,
+              creationScope.current,
+              owner,
+              conversationId,
+            )
+          )
+            return;
           if (!response.ok) return;
           const workspace = readTalkCreationWorkspace(await response.json());
           applyCreationWorkspace(conversationId, owner, workspace);
@@ -222,7 +244,16 @@ export function AureliusWorkspace({
         } catch {
           /* A missed poll is not a failed job. Resume while this conversation is open. */
         }
-        if (imageWatch.current !== generation) return;
+        if (
+          !shouldContinueWatch(
+            imageWatch.current,
+            generation,
+            creationScope.current,
+            owner,
+            conversationId,
+          )
+        )
+          return;
         delay = Math.min(delay * 1.4, 8000);
         imageTimer.current = window.setTimeout(() => void tick(), delay);
       };
@@ -239,6 +270,7 @@ export function AureliusWorkspace({
       const controller = new AbortController();
       creationRead.current = controller;
       if (!conversationId) {
+        recoverGeneration.current += 1;
         stopImageWatch();
         setCreationWorkspace(null);
         return;
@@ -270,14 +302,33 @@ export function AureliusWorkspace({
   );
   const recoverPendingSaves = useCallback(
     async (conversationId: string, owner: string) => {
+      const generation = ++recoverGeneration.current;
       for (const intent of ['revision', 'handoff'] as const) {
         const pending = readTalkSave(owner, conversationId, intent);
         if (!pending) continue;
+        if (generation !== recoverGeneration.current) return;
+        if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+        if (
+          creationScope.current.conversation &&
+          creationScope.current.conversation !== conversationId
+        )
+          return;
+        setCreationNotice(
+          intent === 'handoff'
+            ? 'Finishing a prepared Architect package…'
+            : 'Finishing a previous save…',
+        );
         try {
           await jsonRequest('/api/aurelius/creations', 'POST', {
             ...pending.payload,
             id: pending.id,
           });
+          if (generation !== recoverGeneration.current) return;
+          if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+          if (!matchesTalkSave(owner, conversationId, intent, pending.id)) {
+            await loadCreations(conversationId);
+            continue;
+          }
           clearTalkSave(owner, conversationId, intent);
           setCreationNotice(
             intent === 'handoff'
@@ -285,8 +336,14 @@ export function AureliusWorkspace({
               : 'Recovered the previous save.',
           );
           await loadCreations(conversationId);
-        } catch {
-          setCreationNotice('A previous save did not confirm. Open the work and save again.');
+        } catch (error) {
+          if (generation !== recoverGeneration.current) return;
+          const message = error instanceof Error ? error.message : '';
+          setCreationNotice(
+            /changed|already used|different content/i.test(message)
+              ? 'A recovered save conflicts with newer work. Open the work to resolve it.'
+              : 'A previous save did not confirm. It is still pending.',
+          );
         }
       }
     },
@@ -323,8 +380,7 @@ export function AureliusWorkspace({
           setSelected(null);
           setDraft('');
           setNeedsReload(false);
-          stopImageWatch();
-          setCreationWorkspace(null);
+          void loadCreations(null);
           return;
         }
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
@@ -373,7 +429,7 @@ export function AureliusWorkspace({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact, homeDraft, loadCreations, recoverPendingSaves, stopImageWatch],
+    [compact, homeDraft, loadCreations, recoverPendingSaves],
   );
   useEffect(() => {
     const media = window.matchMedia('(min-width: 900px)');
@@ -542,7 +598,11 @@ export function AureliusWorkspace({
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
         setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version ?? ''));
-        void loadCreations(result && initialConversation ? initialConversation : null);
+        const conversation = result && initialConversation ? initialConversation : null;
+        void loadCreations(conversation).then(() => {
+          if (controller.signal.aborted) return;
+          if (result?.ownerId && conversation) void recoverPendingSaves(conversation, result.ownerId);
+        });
         setLoading(false);
       })
       .catch((error) => {
@@ -554,8 +614,13 @@ export function AureliusWorkspace({
     return () => {
       reading.current?.abort();
       generation.current?.abort();
+      creationRead.current?.abort();
+      creationGeneration.current += 1;
+      recoverGeneration.current += 1;
+      stopImageWatch();
+      creationScope.current = idleCreationScope();
     };
-  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations]);
+  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
@@ -704,7 +769,11 @@ export function AureliusWorkspace({
           );
           if (item.creations?.some((creation) => creation.status === 'stale'))
             setCreationNotice(
-              'A newer version was saved while this reply was generating. The proposal was not applied.',
+              'A newer version was saved while this reply was generating. The proposal was kept for review.',
+            );
+          if (item.creations?.some((creation) => creation.status === 'stale-lost'))
+            setCreationNotice(
+              'A newer version was saved while this reply was generating. The proposal could not be stored.',
             );
           break; // A durable receipt is terminal; do not wait for transport EOF.
         } else if (item.type === 'error') throw new Error(item.message);
@@ -804,7 +873,7 @@ export function AureliusWorkspace({
     setNotice('');
     setTab('conversation');
     setRevision(null);
-    setCreationWorkspace(null);
+    void loadCreations(null);
     setOpenWorkId(null);
     setAttachment(null);
     follow.current = true;
@@ -817,32 +886,79 @@ export function AureliusWorkspace({
   }
   async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'handoff', content: unknown) {
     if (!selected || !openWorkId || !data?.ownerId) return;
-    const current =
-      creationWorkspace?.creations.find((item) => item.id === openWorkId) ??
-      creationWorkspace?.creations.find(
-        (item) => item.lineage_id === openCreation?.lineage_id && !item.superseded_by,
-      );
+    const current = creationWorkspace?.creations.find(
+      (item) =>
+        item.kind === kind &&
+        (item.lineage_id === openCreation?.lineage_id || item.id === openWorkId) &&
+        !item.superseded_by &&
+        !item.candidate,
+    );
     const payload = {
       conversationId: selected,
       kind,
       predecessorId: current?.id ?? null,
-      sourceTurnId: current?.source_turn_id ?? null,
+      sourceTurnId: current?.source_turn_id ?? openCreation?.source_turn_id ?? null,
       content,
     };
-    const id = rememberTalkSave(data.ownerId, selected, 'revision', payload);
+    const bound = bindTalkSave(data.ownerId, selected, 'revision', payload);
+    recoverGeneration.current += 1;
     setCreationBusy(true);
     setCreationError('');
     try {
       const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
-        ...payload,
-        id,
+        ...bound.payload,
+        id: bound.id,
       })) as { id: string };
-      clearTalkSave(data.ownerId, selected, 'revision');
+      if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
+        clearTalkSave(data.ownerId, selected, 'revision');
       setOpenWorkId(saved.id);
       setCreationNotice('New version saved.');
       await loadCreations(selected);
     } catch (error) {
       setCreationError(error instanceof Error ? error.message : 'This work could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function keepProposal(id = openWorkId) {
+    if (!selected || !id || !data?.ownerId) return;
+    const candidate = creationWorkspace?.creations.find((item) => item.id === id && item.candidate);
+    if (!candidate || candidate.kind === 'handoff') {
+      setCreationError('This proposal is no longer available.');
+      return;
+    }
+    const current = creationWorkspace?.creations.find(
+      (item) => item.kind === candidate.kind && !item.superseded_by && !item.candidate,
+    );
+    if (!current) {
+      setCreationError('The current version is no longer available. The proposal was not applied.');
+      return;
+    }
+    const payload = {
+      conversationId: selected,
+      kind: candidate.kind,
+      predecessorId: current.id,
+      sourceTurnId: candidate.source_turn_id,
+      content: candidate.content,
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'revision', payload);
+    recoverGeneration.current += 1;
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { id: string };
+      if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
+        clearTalkSave(data.ownerId, selected, 'revision');
+      setOpenWorkId(saved.id);
+      setCreationNotice('Proposal kept as a new version.');
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(
+        error instanceof Error ? error.message : 'This proposal could not be applied to the current version.',
+      );
     } finally {
       setCreationBusy(false);
     }
@@ -912,23 +1028,23 @@ export function AureliusWorkspace({
       decisions: input.decisions,
       creationIds: selectedIds,
       imageIds: creationWorkspace?.selectedImageId ? [creationWorkspace.selectedImageId] : [],
-      preparedAt: new Date().toISOString(),
     };
-    const id = rememberTalkSave(data.ownerId, selected, 'handoff', payload);
+    const bound = bindTalkSave(data.ownerId, selected, 'handoff', payload);
+    recoverGeneration.current += 1;
     setCreationBusy(true);
     setCreationError('');
     try {
       const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
-        ...payload,
-        id,
+        ...bound.payload,
+        id: bound.id,
       })) as { id?: string; content?: { imported?: boolean } };
-      clearTalkSave(data.ownerId, selected, 'handoff');
+      if (matchesTalkSave(data.ownerId, selected, 'handoff', bound.id))
+        clearTalkSave(data.ownerId, selected, 'handoff');
       setCreationNotice(
         saved.content?.imported
           ? 'Architect accepted the package.'
           : 'Prepared for Architect. Import is pending the destination contract.',
       );
-      if (saved.id) setOpenWorkId(saved.id);
       handoff?.stage({
         text: input.idea,
         ownerId: data.ownerId,
@@ -1621,6 +1737,7 @@ export function AureliusWorkspace({
                 onSave={(kind, content) => void saveOpenCreation(kind, content)}
                 onCopy={(text) => void navigator.clipboard.writeText(text)}
                 onSelect={() => void selectOpenCreation()}
+                onKeepProposal={() => void keepProposal()}
                 onHandoff={(input) => void prepareArchitectPackage(input)}
                 onOpenVersion={(id) => setOpenWorkId(id)}
                 onHistory={rememberHistory}
@@ -1777,10 +1894,16 @@ export function AureliusWorkspace({
         </>
         <p className="aurelius-notice" role="status">
           {notice}
+          {creationNotice && !(openWorkId && (openCreation || openImage))
+            ? ` ${creationNotice}`
+            : ''}
           {creationWorkspace?.imageAccess === 'unavailable' && selected
             ? ' Image generation is unavailable; text work remains available.'
             : ''}
         </p>
+        {creationError && !(openWorkId && (openCreation || openImage)) ? (
+          <p role="alert">{creationError}</p>
+        ) : null}
         <dialog
           ref={detailDialog}
           className="talk-drawer talk-creation-dialog"
@@ -1803,6 +1926,7 @@ export function AureliusWorkspace({
               onSave={(kind, content) => void saveOpenCreation(kind, content)}
               onCopy={(text) => void navigator.clipboard.writeText(text)}
               onSelect={() => void selectOpenCreation()}
+              onKeepProposal={() => void keepProposal()}
               onHandoff={(input) => void prepareArchitectPackage(input)}
               onOpenVersion={(id) => setOpenWorkId(id)}
               onHistory={rememberHistory}

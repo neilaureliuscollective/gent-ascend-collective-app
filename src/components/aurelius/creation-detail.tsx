@@ -24,6 +24,7 @@ export function CreationDetail({
   onSave,
   onCopy,
   onSelect,
+  onKeepProposal,
   onHandoff,
   onOpenVersion,
   onHistory,
@@ -39,6 +40,7 @@ export function CreationDetail({
   onSave: (kind: TalkCreation['kind'], content: unknown) => void;
   onCopy: (text: string) => void;
   onSelect: () => void;
+  onKeepProposal?: () => void;
   onHandoff: (input: { idea: string; discipline: HandoffContent['discipline']; decisions: string }) => void;
   onOpenVersion?: (id: string) => void;
   onHistory?: (versions: TalkCreation[]) => void;
@@ -83,7 +85,7 @@ export function CreationDetail({
       <header>
         <p className="eyebrow">
           {creation
-            ? `${creation.kind === 'handoff' ? 'Prepared for Architect' : creation.kind} · v${creation.version}`
+            ? `${creation.candidate ? 'Proposal · not applied' : creation.kind === 'handoff' ? 'Prepared for Architect' : creation.kind} · v${creation.version}`
             : `Image · ${image?.status}`}
         </p>
         <h2>{creation && 'title' in creation.content ? creation.content.title : image?.prompt.slice(0, 80)}</h2>
@@ -207,7 +209,7 @@ export function CreationDetail({
                 >
                   v{version.version}
                   {version.id === creation?.id ? ' · this version' : ''}
-                  {version.superseded_by ? '' : ' · current'}
+                  {version.candidate ? ' · proposal' : version.superseded_by ? '' : ' · current'}
                 </button>
               </li>
             ))}
@@ -227,16 +229,22 @@ export function CreationDetail({
             >
               Save new version
             </button>
-            <button type="button" className="text-button" disabled={busy} onClick={onSelect}>
-              Keep this version
-            </button>
+            {creation.candidate ? (
+              <button type="button" className="button" disabled={!canEdit || busy} onClick={onKeepProposal}>
+                Keep as new version
+              </button>
+            ) : (
+              <button type="button" className="text-button" disabled={busy} onClick={onSelect}>
+                Keep this version
+              </button>
+            )}
           </>
         )}
         <button type="button" className="text-button" onClick={() => onCopy(exportText)}>
           Copy
         </button>
       </div>
-      {creation && creation.kind !== 'handoff' && (
+      {creation && creation.kind !== 'handoff' && !creation.candidate && (
         <div className="field">
           <label>
             Architect idea
