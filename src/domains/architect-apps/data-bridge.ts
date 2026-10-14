@@ -2,12 +2,12 @@ import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import type { AppCollection } from './schema';
 import { defaultAppLimits } from './schema';
-import { APP_DATA_SCHEMA } from './preview';
+import { APP_DATA_SCHEMA, PREVIEW_SESSION_MAX } from './schema';
 
 export const appDataMessageSchema = z
   .object({
     schema: z.literal(APP_DATA_SCHEMA),
-    session: z.string().min(16).max(200),
+    session: z.string().min(16).max(PREVIEW_SESSION_MAX),
     requestId: z.uuid(),
     operation: z.enum(['list', 'get', 'create', 'update']),
     collection: z.string().trim().min(1).max(40),

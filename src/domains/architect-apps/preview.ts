@@ -1,9 +1,11 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { APP_PROFILE_VERSION } from './catalog';
+import { APP_DATA_SCHEMA, PREVIEW_SESSION_MAX } from './schema';
 import type { AppFile } from './schema';
 
 export const APP_PREVIEW_SANDBOX = 'allow-scripts';
-export const APP_DATA_SCHEMA = 'architect-apps-data/v1';
+export { APP_DATA_SCHEMA };
+export const PREVIEW_SESSION_VERSION = 'v1';
 
 export function previewCsp() {
   return [
@@ -21,34 +23,43 @@ export function previewCsp() {
   ].join('; ');
 }
 
+function previewSecret(secret?: string) {
+  return secret ?? process.env.ARCHITECT_APPS_PREVIEW_SECRET ?? 'architect-apps-dev-preview';
+}
+
+function mac(body: string, secret: string) {
+  return createHmac('sha256', secret).update(body).digest('hex').slice(0, 32);
+}
+
 export function signPreviewSession(input: {
   personId: string;
   projectId: string;
   revisionId: string;
   secret?: string;
 }) {
-  const nonce = randomBytes(12).toString('hex');
-  const body = `${input.personId}:${input.projectId}:${input.revisionId}:${nonce}:${APP_PROFILE_VERSION}`;
-  const secret = input.secret ?? process.env.ARCHITECT_APPS_PREVIEW_SECRET ?? 'architect-apps-dev-preview';
-  const digest = createHmac('sha256', secret).update(body).digest('hex');
-  return `${body}:${digest}`;
+  const nonce = randomBytes(8).toString('hex');
+  const body = `${input.personId}|${input.projectId}|${input.revisionId}|${nonce}|${APP_PROFILE_VERSION}`;
+  const session = `${PREVIEW_SESSION_VERSION}.${nonce}.${mac(body, previewSecret(input.secret))}`;
+  if (session.length > PREVIEW_SESSION_MAX)
+    throw new Error('Preview session exceeded the derived token bound.');
+  return session;
 }
 
 export function verifyPreviewSession(
   session: string,
   expected: { personId: string; projectId: string; revisionId: string },
-  secret = process.env.ARCHITECT_APPS_PREVIEW_SECRET ?? 'architect-apps-dev-preview',
+  secret = previewSecret(),
 ) {
-  const parts = session.split(':');
-  if (parts.length !== 6) return false;
-  const [personId, projectId, revisionId, , version, digest] = parts;
-  if (personId !== expected.personId || projectId !== expected.projectId || revisionId !== expected.revisionId)
+  if (session.length < 16 || session.length > PREVIEW_SESSION_MAX) return false;
+  const [version, nonce, digest] = session.split('.');
+  if (version !== PREVIEW_SESSION_VERSION || !nonce || !digest || digest.length !== 32) return false;
+  const body = `${expected.personId}|${expected.projectId}|${expected.revisionId}|${nonce}|${APP_PROFILE_VERSION}`;
+  const check = mac(body, secret);
+  try {
+    return timingSafeEqual(Buffer.from(check, 'utf8'), Buffer.from(digest, 'utf8'));
+  } catch {
     return false;
-  if (version !== APP_PROFILE_VERSION) return false;
-  const body = parts.slice(0, 5).join(':');
-  if (!digest) return false;
-  const check = createHmac('sha256', secret).update(body).digest('hex');
-  return check === digest;
+  }
 }
 
 export function validateArtifactPath(path: string) {
@@ -56,8 +67,11 @@ export function validateArtifactPath(path: string) {
 }
 
 function decodeAsset(file: AppFile) {
-  if (file.path.endsWith('.html') || file.path.endsWith('.js') || file.path.endsWith('.css')) return file.content;
   return file.content;
+}
+
+function escapeInlineScript(content: string) {
+  return content.replace(/<\/(script|style|body|html)/gi, '<\\/$1');
 }
 
 export function assemblePreviewDocument(input: {
@@ -65,12 +79,14 @@ export function assemblePreviewDocument(input: {
   session: string;
   parentOrigin: string;
   title?: string;
+  revision?: number;
+  revisionId?: string;
 }) {
   const html = input.artifacts.find((file) => file.path === 'index.html' || file.path.endsWith('/index.html'));
   const scripts = input.artifacts.filter((file) => file.path.endsWith('.js'));
   const styles = input.artifacts.filter((file) => file.path.endsWith('.css'));
   const styleTags = styles.map((file) => `<style>${decodeAsset(file)}</style>`).join('\n');
-  const scriptTags = scripts.map((file) => `<script type="module">${decodeAsset(file)}</script>`).join('\n');
+  const scriptTags = scripts.map((file) => `<script type="module">${escapeInlineScript(decodeAsset(file))}</script>`).join('\n');
   const body = html
     ? html.content
         .replace(/<link[^>]+href="[^"]+\.css"[^>]*>/g, '')
@@ -78,7 +94,7 @@ export function assemblePreviewDocument(input: {
         .replace('</head>', `${styleTags}</head>`)
         .replace('</body>', `${scriptTags}</body>`)
     : `<!doctype html><html><head><meta charset="utf-8" /><title>${input.title ?? 'Generated application'}</title>${styleTags}</head><body><div id="root"></div>${scriptTags}</body></html>`;
-  const bootstrap = `<script>window.__AETHELIOS_APP_SESSION__=${JSON.stringify(input.session)};window.__AETHELIOS_PARENT_ORIGIN__=${JSON.stringify(input.parentOrigin)};if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rows){rows.forEach(function(row){row.unregister();});});}</script>`;
+  const bootstrap = `<script>window.__AETHELIOS_APP_SESSION__=${JSON.stringify(input.session)};window.__AETHELIOS_PARENT_ORIGIN__=${JSON.stringify(input.parentOrigin)};window.__AETHELIOS_APP_REVISION__=${JSON.stringify(input.revision ?? null)};if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rows){rows.forEach(function(row){row.unregister();});});}</script>`;
   const srcDoc = body.includes('<head>')
     ? body.replace('<head>', `<head><meta http-equiv="Content-Security-Policy" content="${previewCsp()}" />${bootstrap}`)
     : `${bootstrap}${body}`;
@@ -88,7 +104,11 @@ export function assemblePreviewDocument(input: {
     csp: previewCsp(),
     scriptEnabled: true,
     serviceWorkers: false,
-    label: 'Private compiled preview. Generated code cannot read parent cookies, tokens or DOM.',
+    revision: input.revision ?? null,
+    revisionId: input.revisionId ?? null,
+    label: input.revision
+      ? `Private compiled preview of saved revision ${input.revision}. Generated code cannot read parent cookies, tokens or DOM.`
+      : 'Private compiled preview. Generated code cannot read parent cookies, tokens or DOM.',
   };
 }
 

@@ -12,14 +12,14 @@ import { applyFileOperations, overlaySealedFiles } from './tree';
 
 export type AppGenerationMode = 'disabled' | 'fixture' | 'mock' | 'openai';
 
-export function appProposalMode(env: NodeJS.ProcessEnv = process.env): AppGenerationMode {
+export function appProposalMode(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env): AppGenerationMode {
   if (appsAiMockReady(env)) return 'mock';
   if (appsAiReady(env)) return 'openai';
   if (env.ARCHITECT_APPS_FIXTURE === 'true' || env.ARCHITECT_APPS_STORE === 'memory') return 'fixture';
   return 'disabled';
 }
 
-export function appProviderStatus(env: NodeJS.ProcessEnv = process.env) {
+export function appProviderStatus(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
   const mode = appProposalMode(env);
   if (mode === 'disabled')
     return {
@@ -47,12 +47,20 @@ export type AppGenerationTransport = (input: {
   instruction: string;
   kind: 'create' | 'revise';
   files: AppFile[];
+  brief?: string;
+  direction?: string;
 }) => Promise<unknown>;
 
-function assertGeneratedOnly(proposal: AppProposal) {
+export function assertGeneratedOnly(proposal: AppProposal) {
   for (const file of proposal.files) {
     if (!isGeneratedAppPath(file.path) || isSealedAppPath(file.path))
       throw new IntelligenceError('Generated applications may only return files under src/.', 409);
+  }
+  if (proposal.operations) {
+    for (const operation of proposal.operations) {
+      if (!isGeneratedAppPath(operation.path) || isSealedAppPath(operation.path))
+        throw new IntelligenceError('Generated applications may only change files under src/.', 409);
+    }
   }
   return proposal;
 }
@@ -67,7 +75,7 @@ export function mockedTrackerProposal(kind: 'create' | 'revise', base: AppFile[]
       operations,
       collections: trackerPriorityCollections(),
       behaviors: trackerProposal().behaviors,
-      notes: labeledAppSource(appProposalMode() === 'mock' ? 'mock' : 'fixture'),
+      notes: labeledAppSource('fixture'),
     });
   }
   return assertGeneratedOnly(appProposalSchema.parse(trackerProposal()));
@@ -83,27 +91,33 @@ export async function generateAppProposal(
     direction?: string;
   },
   transport?: AppGenerationTransport,
-  env: NodeJS.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
 ): Promise<{ proposal: AppProposal; mode: Exclude<AppGenerationMode, 'disabled'> }> {
   const mode = appProposalMode(env);
   if (mode === 'disabled')
     throw new IntelligenceError(appProviderStatus(env).reason ?? 'App generation is unavailable.', 503);
-  if (input.demo !== 'tracker')
-    throw new IntelligenceError('This phase supports the labelled project-tracker profile only.', 400);
-  if (mode === 'openai' && transport) {
-    const raw = await transport({
-      instruction: input.instruction,
-      kind: input.kind,
-      files: input.baseFiles,
-    });
-    return { proposal: assertGeneratedOnly(appProposalSchema.parse(raw)), mode };
+  if (input.demo === 'tracker') {
+    return { proposal: mockedTrackerProposal(input.kind, input.baseFiles), mode: 'fixture' };
   }
-  if (mode === 'openai' && !transport)
+  if (!transport)
     throw new IntelligenceError(
-      'OpenAI app generation is authorized but no injected transport was supplied. Paid calls stay off unless a founder-authorized adapter is configured.',
+      mode === 'openai'
+        ? 'OpenAI app generation is authorized but the provider adapter was not wired. Paid calls stay off unless a founder-authorized adapter runs.'
+        : 'App generation requires the mocked or OpenAI adapter. The labelled tracker fixture is available only when demo=tracker.',
       503,
     );
-  return { proposal: mockedTrackerProposal(input.kind, input.baseFiles), mode };
+  const raw = await transport({
+    instruction: input.instruction,
+    kind: input.kind,
+    files: input.baseFiles,
+    brief: input.brief,
+    direction: input.direction,
+  });
+  const proposal = assertGeneratedOnly(appProposalSchema.parse(raw));
+  if (input.kind === 'revise' && input.baseFiles.length && proposal.operations?.length) {
+    applyFileOperations(overlaySealedFiles(input.baseFiles), proposal.operations);
+  }
+  return { proposal, mode };
 }
 
 export function appGenerationProvenance(mode: Exclude<AppGenerationMode, 'disabled'> | 'unknown') {

@@ -180,8 +180,9 @@ export type AppJob = {
 
 export type AppJobResult = {
   ok: boolean;
-  isolation: 'host-trusted' | 'docker' | 'unavailable';
+  isolation: 'docker' | 'host-fixture' | 'unavailable';
   sandbox: boolean;
+  toolchain?: string;
   typecheck: { ok: boolean; log: string };
   bundle: { ok: boolean; log: string };
   blocker: string | null;
@@ -229,7 +230,7 @@ export const proposeAppCommand = z
     instruction: z.string().trim().min(1).max(2000),
     kind: z.enum(['create', 'revise']),
     baseRevision: z.number().int().positive().max(500).optional(),
-    demo: z.enum(['tracker', 'none']).default('tracker'),
+    demo: z.enum(['tracker', 'none']).default('none'),
   })
   .strict();
 
@@ -278,12 +279,16 @@ export const reopenAppCommand = z
   })
   .strict();
 
+export const PREVIEW_SESSION_MAX = 96;
+export const APP_DATA_SCHEMA = 'architect-apps-data/v1';
+
 export const appDataCommand = z
   .object({
     action: z.literal('data'),
+    schema: z.literal('architect-apps-data/v1'),
     projectId: z.uuid(),
     revisionId: z.uuid(),
-    session: z.string().min(16).max(200),
+    session: z.string().min(16).max(PREVIEW_SESSION_MAX),
     requestId: z.uuid(),
     operation: z.enum(['list', 'get', 'create', 'update']),
     collection: z.string().trim().min(1).max(40),
