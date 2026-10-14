@@ -8,6 +8,7 @@ export const SOURCE_CONTEXT_BUDGET = {
   maxExcerptFiles: 8,
   excerptChars: 2000,
   maxInstructionChars: 4000,
+  maxExcerptTotalBytes: 8 * 4000,
   maxOutputTokens: 8000,
   formerExcerptChars: 4000,
   formerFileCutoff: 8,
@@ -256,7 +257,7 @@ export function prepareSourceContext(input: {
         reason: overCount
           ? `Relevant beyond the ${SOURCE_CONTEXT_BUDGET.maxEditableFiles}-file editable cutoff. Add it by removing another complete file first. This is not complete-repository understanding.`
           : `Including this complete file would exceed the ${SOURCE_CONTEXT_BUDGET.maxEditableTotalBytes}-byte editable budget. Request a smaller scope. A truncated excerpt cannot be used as the original.`,
-        excerpt: excerptText(file.content),
+        excerpt: overCount ? null : excerptText(file.content),
         complete: false,
       });
       continue;
@@ -295,8 +296,9 @@ export function prepareSourceContext(input: {
     });
   }
 
+  applyExcerptBudget(entries, ranked.map((file) => file.path));
   entries.sort((a, b) => a.path.localeCompare(b.path));
-  const excerptEntries = entries.filter((entry) => entry.inclusion === 'excerpt').slice(0, SOURCE_CONTEXT_BUDGET.maxExcerptFiles);
+  const excerptEntries = entries.filter((entry) => Boolean(entry.excerpt));
   const excerptPaths = new Set(excerptEntries.map((entry) => entry.path));
   const provider_files = [
     ...editable.map((file) => ({ ...file, editable: true })),
@@ -340,6 +342,33 @@ export function prepareSourceContext(input: {
   };
 }
 
+function applyExcerptBudget(entries: SourceManifestEntry[], rankedPaths: string[]) {
+  const rank = new Map(rankedPaths.map((path, index) => [path, index]));
+  const candidates = entries
+    .filter((entry) => Boolean(entry.excerpt) && entry.inclusion !== 'complete' && entry.inclusion !== 'missing')
+    .sort(
+      (a, b) =>
+        (rank.get(a.path) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.path) ?? Number.MAX_SAFE_INTEGER) ||
+        a.path.localeCompare(b.path),
+    );
+  let excerptCount = 0;
+  let excerptBytes = 0;
+  for (const entry of candidates) {
+    const bytes = utf8Bytes(entry.excerpt ?? '');
+    if (
+      entry.inclusion !== 'omitted' &&
+      excerptCount < SOURCE_CONTEXT_BUDGET.maxExcerptFiles &&
+      excerptBytes + bytes <= SOURCE_CONTEXT_BUDGET.maxExcerptTotalBytes
+    ) {
+      excerptCount += 1;
+      excerptBytes += bytes;
+      continue;
+    }
+    entry.excerpt = null;
+    entry.reason = `${entry.reason} Excerpt omitted: beyond the ${SOURCE_CONTEXT_BUDGET.maxExcerptFiles}-excerpt / ${SOURCE_CONTEXT_BUDGET.maxExcerptTotalBytes}-byte context budget. Metadata only — not sent to the model.`;
+  }
+}
+
 function uniqueExcluded(items: ExcludedSource[]) {
   const seen = new Set<string>();
   return items.filter((item) => {
@@ -350,6 +379,7 @@ function uniqueExcluded(items: ExcludedSource[]) {
 }
 
 export function assembleProviderPrompt(context: SourceContextManifest) {
+  const files = context.provider_files.filter((file) => !isProtectedSourcePath(file.path));
   const visible = context.entries.filter(
     (entry) => !isProtectedSourcePath(entry.path) && entry.inclusion !== 'omitted',
   );
@@ -364,10 +394,22 @@ export function assembleProviderPrompt(context: SourceContextManifest) {
       bytes: entry.bytes,
       content_hash: entry.content_hash,
       reason: entry.reason,
-      excerpt: entry.excerpt,
+      excerpt: null,
       complete: entry.complete,
     })),
-    files: context.provider_files.filter((file) => !isProtectedSourcePath(file.path)),
+    files,
+  };
+}
+
+export function providerRequestContentStats(context: SourceContextManifest) {
+  const prompt = assembleProviderPrompt(context);
+  const excerptFiles = prompt.files.filter((file) => !file.editable);
+  const smuggled = prompt.manifest.filter((entry) => Boolean(entry.excerpt));
+  return {
+    excerptFileCount: excerptFiles.length,
+    smuggledManifestExcerpts: smuggled.length,
+    excerptBytes: excerptFiles.reduce((total, file) => total + utf8Bytes(file.content), 0),
+    serializedBytes: utf8Bytes(JSON.stringify(prompt)),
   };
 }
 

@@ -1161,6 +1161,30 @@ test('approve, enqueue, progress and revision-bound preview stay on the selected
     path: 'docs/evidence/architect-construct/architect-source-review-390.png',
     fullPage: true,
   });
+  const closeReview = page.getByRole('button', { name: 'Close review' });
+  if (await closeReview.isVisible()) await closeReview.click();
+  const sourceOpener = page.getByRole('navigation', { name: 'Review context' }).getByRole('button', { name: 'Source' });
+  await sourceOpener.focus();
+  await sourceOpener.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('h2')).toBeFocused();
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true);
+  await page.keyboard.press('Shift+Tab');
+  expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(sourceOpener).toBeFocused();
+  await openReview('Source');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Close review' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await openReview('Source');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
   await captureReview(390, 844, 'change');
   await captureReview(390, 844, 'evidence');
   const closeSheet = page.getByRole('button', { name: 'Close review' });

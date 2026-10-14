@@ -15,8 +15,10 @@ import {
   classifyCheckDelta,
   persistableCheckPlan,
   planCheckCoverage,
+  recordedCheckResult,
   type CheckOutcome,
 } from './check-coverage';
+import { boundRunResult } from './receipt-budget';
 import type { z } from 'zod';
 import { PathGuardError, assertNoSymlink, assertWritable, resolveInside } from './paths';
 import { assertNoHostSecrets, sanitizeLog, strippedEnv } from './sanitize';
@@ -249,11 +251,8 @@ export function blockedResult(
   extras: Partial<Pick<RunResult, 'isolation' | 'runtime_available' | 'sandbox'>> = {},
 ): RunResult {
   const checks = job.scope.acceptance_checks.map((check) => ({
-    name: check.name,
-    command: [check.command, ...check.args].join(' '),
-    exit_code: -1,
+    ...recordedCheckResult(check, { exit_code: -1, log: blocker }),
     status: 'blocked' as const,
-    log: blocker,
   }));
   const plan = job.scope.check_plan ?? persistableCheckPlan(planCheckCoverage(job.source.files));
   return {
@@ -280,6 +279,20 @@ export function blockedResult(
   };
 }
 
+function enrichRecordedCheck(
+  check: z.infer<typeof checkResultSchema>,
+  planned?: { name: string; command: 'node' | 'true' | 'false'; args: string[] },
+) {
+  if (!planned) return check;
+  const recorded = recordedCheckResult(planned, { exit_code: check.exit_code, log: check.log });
+  return {
+    ...check,
+    id: check.id ?? recorded.id,
+    target: check.target ?? recorded.target,
+    status: check.status,
+  };
+}
+
 function parseCheckResults(value: unknown) {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -294,12 +307,15 @@ function coverageFromResults(
   post: CheckOutcome[],
 ): NonNullable<RunResult['coverage']> {
   const plan = job.scope.check_plan ?? persistableCheckPlan(planCheckCoverage(job.source.files));
+  const delta = classifyCheckDelta(baseline, post);
   return {
     no_applicable: plan.no_applicable,
-    ...classifyCheckDelta(baseline, post),
+    preexisting_failures: delta.preexisting_failures,
+    introduced_failures: delta.introduced_failures,
     untested: plan.untested,
     unsupported: plan.unsupported,
     revision_note: `${job.source.kind} ${job.source.tree_hash.slice(0, 12)}`,
+    ...(delta.comparison_note ? { comparison_note: delta.comparison_note } : {}),
   };
 }
 
@@ -316,13 +332,12 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
         work,
         Math.min(8000, job.scope.resource_limits.timeout_ms),
       );
-      baseline.push({
-        name: check.name,
-        command: [check.command, ...check.args].join(' '),
-        exit_code: executed.exit_code,
-        status: executed.exit_code === 0 ? 'passed' : 'failed',
-        log: executed.log.slice(0, job.scope.resource_limits.max_output_bytes),
-      });
+      baseline.push(
+        recordedCheckResult(check, {
+          exit_code: executed.exit_code,
+          log: executed.log.slice(0, job.scope.resource_limits.max_output_bytes),
+        }),
+      );
     }
     await applyTrustedPatch(work, job.scope);
     for (const check of job.scope.acceptance_checks) {
@@ -332,13 +347,12 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
         work,
         Math.min(8000, job.scope.resource_limits.timeout_ms),
       );
-      checks.push({
-        name: check.name,
-        command: [check.command, ...check.args].join(' '),
-        exit_code: executed.exit_code,
-        status: executed.exit_code === 0 ? 'passed' : 'failed',
-        log: executed.log.slice(0, job.scope.resource_limits.max_output_bytes),
-      });
+      checks.push(
+        recordedCheckResult(check, {
+          exit_code: executed.exit_code,
+          log: executed.log.slice(0, job.scope.resource_limits.max_output_bytes),
+        }),
+      );
     }
     const observed = await collectObservedFiles(
       work,
@@ -355,7 +369,7 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
           unavailable_reason: null,
         }
       : await collectPreview(work, previewPath, job.scope.resource_limits.max_output_bytes);
-    return {
+    return boundRunResult({
       isolation: 'process-fixture',
       runtime_available: false,
       sandbox: false,
@@ -372,7 +386,7 @@ export async function executeInProcess(job: ExecutionJob): Promise<RunResult> {
         { kind: 'diff', ref: 'result.diff', hash: sha256Text(observedResult.diff) },
         { kind: 'preview', ref: preview.path ?? 'preview', hash: sha256Text(preview.body) },
       ],
-    };
+    });
   } finally {
     await rm(work, { recursive: true, force: true });
   }
@@ -703,9 +717,13 @@ export async function executeInContainer(
       ),
       unavailable_reason: previewFile ? null : 'Observed preview file was not present in isolated output.',
     };
-    const checks = parseCheckResults(parsed.checks);
-    const baseline = parseCheckResults(parsed.baseline_checks);
-    result = {
+    const checks = parseCheckResults(parsed.checks).map((check, index) =>
+      enrichRecordedCheck(check, job.scope.acceptance_checks[index]),
+    );
+    const baseline = parseCheckResults(parsed.baseline_checks).map((check, index) =>
+      enrichRecordedCheck(check, job.scope.acceptance_checks[index]),
+    );
+    result = boundRunResult({
       isolation: 'docker',
       runtime_available: true,
       sandbox: true,
@@ -733,7 +751,7 @@ export async function executeInContainer(
           hash: sha256Text(JSON.stringify(workspace ?? { missing: true })),
         },
       ],
-    };
+    });
     return result;
   } finally {
     try {

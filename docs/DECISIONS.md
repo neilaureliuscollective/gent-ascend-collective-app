@@ -1,3 +1,7 @@
+# Architect excerpt budget, check identity, phone modal and receipt bound — 2026-10-14
+
+Count every content-bearing excerpt, including too-large manifest entries, against the existing eight-excerpt / 32 KiB excerpt budget. Compare checks by canonical identity (kind, command, full validated target), never by truncated display names; ambiguous historical evidence is comparison-unavailable, not pre-existing. Phone review reuses `ContextSheet` native modality. Bound the complete serialized UTF-8 receipt to the existing 120,000-byte SQL limit before persist, marking truncated logs and never converting missing evidence into a pass. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).
+
 # Architect source-context and review continuity — 2026-10-14
 
 Use one browser-safe path-protection predicate for both model context and edit protection; do not send protected contents because a later patch check would reject them. Keep the last successful owner/project-scoped preview while a newer run is in flight or unsuccessful, and label the displayed revision. Make Source / Change / Evidence the main review surface instead of competing Fold columns. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).

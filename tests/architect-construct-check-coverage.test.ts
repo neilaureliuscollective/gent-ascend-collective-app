@@ -75,11 +75,11 @@ describe('construct check coverage', () => {
     const result = await executeInProcess({ source, scope });
     expect(result.baseline_checks?.map((check) => check.status)).toEqual(['failed', 'passed']);
     expect(result.checks.map((check) => check.status)).toEqual(['failed', 'failed']);
-    expect(result.coverage?.preexisting_failures).toEqual(['syntax:broken.mjs']);
-    expect(result.coverage?.introduced_failures).toEqual(['syntax:ok.mjs']);
-    expect(classifyCheckDelta(result.baseline_checks ?? [], result.checks)).toEqual({
-      preexisting_failures: ['syntax:broken.mjs'],
-      introduced_failures: ['syntax:ok.mjs'],
-    });
+    expect(result.coverage?.preexisting_failures.join(' ')).toMatch(/broken\.mjs/);
+    expect(result.coverage?.introduced_failures.join(' ')).toMatch(/ok\.mjs/);
+    const delta = classifyCheckDelta(result.baseline_checks ?? [], result.checks);
+    expect(delta.preexisting_failures.join(' ')).toMatch(/broken\.mjs/);
+    expect(delta.introduced_failures.join(' ')).toMatch(/ok\.mjs/);
+    expect(delta.comparison_note).toBeUndefined();
   });
 });

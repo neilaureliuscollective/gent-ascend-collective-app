@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { approvalHash } from './hash';
+import { RESULT_RECEIPT_MAX_BYTES, serializedReceiptBytes } from './receipt-budget';
 import {
   type ConstructBrief,
   type ConstructEvent,
@@ -289,6 +290,11 @@ export class MemoryConstructStore implements ConstructStore {
     if (terminalStatuses.includes(run.status as (typeof terminalStatuses)[number])) return run;
     if (!this.ownsFresh(run, workerId, leaseToken, now))
       throw new ConstructStoreError('Run is not claimed by this worker lease.');
+    if (serializedReceiptBytes(result) > RESULT_RECEIPT_MAX_BYTES)
+      throw new ConstructStoreError(
+        'Durable result exceeds the 120000-byte receipt limit.',
+        'too-large',
+      );
     const kind =
       status === 'timed_out'
         ? 'timed_out'

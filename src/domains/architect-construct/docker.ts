@@ -251,6 +251,8 @@ function runJobChecks() {
     results.push({
       name: check.name,
       command: [check.command, ...check.args].join(' '),
+      target: (check.args || []).find((arg) => arg !== '--check') || undefined,
+      id: ['syntax', [check.command, ...(check.args || [])].join(' '), (check.args || []).find((arg) => arg !== '--check') || ''].join(':'),
       exit_code: ran.status ?? 1,
       status: ran.status === 0 ? 'passed' : 'failed',
       log: ((ran.stdout || '') + (ran.stderr || '')).slice(0, 16384),

@@ -16,6 +16,7 @@ import {
   type eventKinds,
   terminalStatuses,
 } from './schema';
+import { RESULT_RECEIPT_MAX_BYTES, serializedReceiptBytes } from './receipt-budget';
 import { ConstructStoreError, type ConstructStore } from './store';
 
 export type ConstructPersistenceClient = {
@@ -310,6 +311,11 @@ export class DatabaseConstructStore implements ConstructStore {
     void now;
     this.assertWorker();
     const parsed = runResultSchema.parse(result);
+    if (serializedReceiptBytes(parsed) > RESULT_RECEIPT_MAX_BYTES)
+      throw new ConstructStoreError(
+        'Durable result exceeds the 120000-byte receipt limit.',
+        'too-large',
+      );
     const saved = await this.client.rpc('architect_construct_finish', {
       p_worker: workerId,
       p_run: runId,

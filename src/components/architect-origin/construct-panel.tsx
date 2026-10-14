@@ -31,6 +31,7 @@ import {
 } from '@/domains/architect-construct/check-coverage';
 import { effectiveProtectedPaths } from '@/domains/architect-construct/path-protection';
 import { prepareSourceContext, type SourceContextManifest } from '@/domains/architect-construct/source-context';
+import { ContextSheet } from '@/components/interaction/context-sheet';
 import { SourceUnderstanding } from './source-understanding';
 import { ChangeDiff } from './change-diff';
 import { CheckEvidence } from './check-evidence';
@@ -130,7 +131,6 @@ export function ArchitectConstructPanel({
   const [contextPanel, setContextPanel] = useState<'understand' | 'change' | 'evidence'>('understand');
   const [sheet, setSheet] = useState<'understand' | 'change' | 'evidence' | null>(null);
   const panelScrollRef = useRef<HTMLElement>(null);
-  const lastFocusRef = useRef<HTMLElement | null>(null);
   const panelScrollByView = useRef<Record<string, number>>({});
   const [gitPin, setGitPin] = useState<{
     repository: string;
@@ -252,6 +252,20 @@ export function ArchitectConstructPanel({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, ownerId, projectId, revision, run?.id, run?.status]);
+
+  useEffect(() => {
+    if (!sheet) return;
+    const media = window.matchMedia('(max-width: 639px)');
+    const onChange = () => {
+      if (!media.matches) setSheet(null);
+    };
+    media.addEventListener('change', onChange);
+    window.addEventListener('resize', onChange);
+    return () => {
+      media.removeEventListener('change', onChange);
+      window.removeEventListener('resize', onChange);
+    };
+  }, [sheet]);
 
   async function proposeChange() {
     if (locked || busy) return;
@@ -688,10 +702,7 @@ export function ArchitectConstructPanel({
                     if (panelScrollRef.current)
                       panelScrollRef.current.scrollTop = panelScrollByView.current[id] ?? 0;
                   });
-                  if (window.matchMedia('(max-width: 639px)').matches) {
-                    lastFocusRef.current = document.activeElement as HTMLElement;
-                    setSheet(id);
-                  }
+                  if (window.matchMedia('(max-width: 639px)').matches) setSheet(id);
                 }}
               >
                 {contextPanel === id && <BplusMaterial radius={8} />}
@@ -783,55 +794,37 @@ export function ArchitectConstructPanel({
           )}
         </section>
       </div>
-      {sheet && (
-        <div
-          className="origin-construct-sheet"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="construct-sheet-title"
-        >
-          <div className="origin-construct-sheet-card">
-            <button
-              type="button"
-              onClick={() => {
-                setSheet(null);
-                lastFocusRef.current?.focus();
-              }}
-            >
-              Close review
-            </button>
-            <div id="construct-sheet-title">
-              {sheet === 'understand' && (
-                <SourceUnderstanding
-                  context={reviewContext}
-                  selectedPath={selectedSource}
-                  onSelect={setSelectedSource}
-                />
-              )}
-              {sheet === 'change' && liveProposal && (
-                <ChangeDiff
-                  summary={liveProposal.summary}
-                  notes={liveProposal.notes}
-                  mocked={liveProposal.mocked}
-                  patches={liveProposal.patch}
-                  selectedPath={selectedChange}
-                  onSelect={setSelectedChange}
-                />
-              )}
-              {sheet === 'evidence' && (
-                <CheckEvidence
-                  plan={reviewCoverage}
-                  coverage={run?.result?.coverage}
-                  checks={run?.result?.checks ?? []}
-                  baseline={run?.result?.baseline_checks}
-                  selectedName={selectedCheck}
-                  onSelect={setSelectedCheck}
-                />
-              )}
-            </div>
-          </div>
+      <ContextSheet open={Boolean(sheet)} title="review" onClose={() => setSheet(null)}>
+        <div className="origin-construct-sheet-card">
+          {sheet === 'understand' && (
+            <SourceUnderstanding
+              context={reviewContext}
+              selectedPath={selectedSource}
+              onSelect={setSelectedSource}
+            />
+          )}
+          {sheet === 'change' && liveProposal && (
+            <ChangeDiff
+              summary={liveProposal.summary}
+              notes={liveProposal.notes}
+              mocked={liveProposal.mocked}
+              patches={liveProposal.patch}
+              selectedPath={selectedChange}
+              onSelect={setSelectedChange}
+            />
+          )}
+          {sheet === 'evidence' && (
+            <CheckEvidence
+              plan={reviewCoverage}
+              coverage={run?.result?.coverage}
+              checks={run?.result?.checks ?? []}
+              baseline={run?.result?.baseline_checks}
+              selectedName={selectedCheck}
+              onSelect={setSelectedCheck}
+            />
+          )}
         </div>
-      )}
+      </ContextSheet>
       <nav className="origin-construct-views" aria-label="Construct review">
         {views.map((tab) => (
           <button

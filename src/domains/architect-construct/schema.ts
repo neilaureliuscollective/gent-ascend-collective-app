@@ -115,6 +115,7 @@ export const patchFileSchema = z
 export const checkKinds = ['syntax', 'typecheck', 'build', 'functional'] as const;
 export const checkPlanItemSchema = z
   .object({
+    id: z.string().trim().min(1).max(400).optional(),
     name: z.string().trim().min(1).max(80),
     kind: z.enum(checkKinds),
     reason: z.string().min(1).max(400),
@@ -192,8 +193,10 @@ export type ConstructBrief = z.infer<typeof constructBriefSchema>;
 export const checkStatuses = ['passed', 'failed', 'blocked', 'not-run'] as const;
 export const checkResultSchema = z
   .object({
+    id: z.string().min(1).max(400).optional(),
     name: z.string().min(1).max(80),
     command: z.string().min(1).max(200),
+    target: relPath.optional(),
     exit_code: z.number().int().min(-1).max(255),
     status: z.enum(checkStatuses),
     log: z.string().max(16384),
@@ -202,11 +205,12 @@ export const checkResultSchema = z
 export const checkCoverageSchema = z
   .object({
     no_applicable: z.boolean(),
-    preexisting_failures: z.array(z.string().min(1).max(80)).max(8),
-    introduced_failures: z.array(z.string().min(1).max(80)).max(8),
+    preexisting_failures: z.array(z.string().min(1).max(400)).max(8),
+    introduced_failures: z.array(z.string().min(1).max(400)).max(8),
     untested: z.array(z.string().min(1).max(160)).max(16),
     unsupported: z.array(unsupportedCheckSchema).max(8),
     revision_note: z.string().min(1).max(200),
+    comparison_note: z.string().min(1).max(400).optional(),
   })
   .strict();
 

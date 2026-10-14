@@ -996,14 +996,15 @@
 .origin-diff [data-diff='remove'] {
   color: #d7b07a;
 }
-.origin-construct-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: grid;
-  align-items: end;
-  background: rgba(5, 7, 6, 0.62);
-  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+.origin-construct .context-sheet-surface {
+  background:
+    linear-gradient(180deg, rgba(16, 43, 38, 0.42), rgba(8, 13, 13, 0.88)),
+    var(--io-chamber, #080d0d);
+  border-top: 1px solid color-mix(in srgb, #c4912f 28%, var(--origin-edge));
+}
+.origin-construct .context-sheet-surface > header h2,
+.origin-construct .context-sheet-surface > header button {
+  color: inherit;
 }
 .origin-construct-sheet-card {
   max-height: min(80dvh, 720px);

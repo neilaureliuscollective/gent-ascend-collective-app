@@ -3,6 +3,8 @@ import { sha256Text } from '@/domains/architect-construct/hash';
 import {
   SOURCE_CONTEXT_BUDGET,
   prepareSourceContext,
+  providerPromptText,
+  providerRequestContentStats,
 } from '@/domains/architect-construct/source-context';
 
 function files(items: Array<[string, string]>) {
@@ -91,5 +93,100 @@ describe('Architect source context', () => {
     });
     expect(context.editable.map((file) => file.path)).toEqual(['app.js']);
     expect(context.entries.find((entry) => entry.path === 'package.json')?.inclusion).toBe('excerpt');
+  });
+
+  it('keeps too-large manifest excerpts inside the eight-excerpt content budget', () => {
+    const large = `export const heading = 'Before';\n${'x'.repeat(48000)}`;
+    const extras = Array.from({ length: 9 }, (_, index) => [
+      `extra-${index}.js`,
+      `${'y'.repeat(2001)}\n`,
+    ] as [string, string]);
+    const context = prepareSourceContext({
+      files: files([['app.js', large], ...extras]),
+      allowedPaths: ['app.js', ...extras.map(([path]) => path)],
+      protectedPaths: ['.env'],
+      intendedChange: 'Edit app.js heading.',
+    });
+    expect(context.editable.map((file) => file.path)).toEqual(['app.js']);
+    expect(context.refusal).toBeNull();
+    const contentBearing = context.entries.filter((entry) => Boolean(entry.excerpt));
+    expect(contentBearing.length).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxExcerptFiles);
+    const stats = providerRequestContentStats(context);
+    expect(stats.excerptFileCount).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxExcerptFiles);
+    expect(stats.smuggledManifestExcerpts).toBe(0);
+    expect(stats.excerptBytes).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxExcerptTotalBytes);
+    const prompt = providerPromptText(context);
+    expect(prompt).toContain('export const heading');
+    const omittedExtras = context.entries.filter(
+      (entry) => entry.path.startsWith('extra-') && !entry.excerpt,
+    );
+    expect(omittedExtras.length).toBeGreaterThan(0);
+    expect(omittedExtras[0]?.reason).toMatch(/excerpt omitted|context budget|cutoff|complete file/i);
+  });
+
+  it('accounts referenced excerpts with the same serialized content budget', () => {
+    const related = Array.from({ length: 10 }, (_, index) => [
+      `lib-${index}.js`,
+      `export const n${index} = ${index};\n${'z'.repeat(1800)}`,
+    ] as [string, string]);
+    const importer = `import { n0 } from './lib-0.js';\n${related
+      .slice(1)
+      .map(([path], index) => `import { n${index + 1} } from './${path}';`)
+      .join('\n')}\nexport const heading = 'Before';\n`;
+    const context = prepareSourceContext({
+      files: files([['app.js', importer], ...related]),
+      allowedPaths: ['app.js', ...related.map(([path]) => path)],
+      protectedPaths: ['.env'],
+      intendedChange: 'Keep the importer.',
+    });
+    const stats = providerRequestContentStats(context);
+    expect(stats.excerptFileCount).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxExcerptFiles);
+    expect(stats.smuggledManifestExcerpts).toBe(0);
+    expect(context.editable.some((file) => file.path === 'app.js')).toBe(true);
+  });
+
+  it('keeps mixed editable, referenced, instruction and too-large files inside the serialized contract', () => {
+    const editable = `export const heading = 'Before';\n`;
+    const instruction = `${'{"name":"app","scripts":{"build":"next build"}}'}${' '.repeat(500)}`;
+    const related = Array.from({ length: 6 }, (_, index) => [
+      `lib-${index}.js`,
+      `export const n${index} = ${index};\n${'z'.repeat(1800)}`,
+    ] as [string, string]);
+    const oversized = Array.from({ length: 12 }, (_, index) => [
+      `bulk-${index}.js`,
+      `${'w'.repeat(3000)}\n`,
+    ] as [string, string]);
+    const importer = `${related
+      .map(([path], index) => `import { n${index} } from './${path}';`)
+      .join('\n')}\n${editable}`;
+    const context = prepareSourceContext({
+      files: files([
+        ['app.js', importer],
+        ['package.json', instruction],
+        ...related,
+        ...oversized,
+      ]),
+      allowedPaths: ['app.js', 'package.json', ...related.map(([path]) => path), ...oversized.map(([path]) => path)],
+      protectedPaths: ['.env', 'secrets/token'],
+      intendedChange: 'Keep the importer heading.',
+    });
+    const stats = providerRequestContentStats(context);
+    expect(context.editable.length).toBeGreaterThan(0);
+    expect(context.editable.length).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxEditableFiles);
+    expect(context.editable.reduce((total, file) => total + file.content.length, 0)).toBeLessThanOrEqual(
+      SOURCE_CONTEXT_BUDGET.maxEditableTotalBytes,
+    );
+    expect(stats.excerptFileCount).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxExcerptFiles);
+    expect(stats.excerptBytes).toBeLessThanOrEqual(SOURCE_CONTEXT_BUDGET.maxExcerptTotalBytes);
+    expect(stats.smuggledManifestExcerpts).toBe(0);
+    const prompt = JSON.parse(providerPromptText(context)) as {
+      files: Array<{ path: string; content: string; editable: boolean }>;
+      manifest: Array<{ path: string; excerpt: string | null }>;
+    };
+    expect(prompt.files.filter((file) => file.editable).map((file) => file.path)).toEqual(
+      context.editable.map((file) => file.path),
+    );
+    expect(prompt.manifest.every((entry) => entry.excerpt === null)).toBe(true);
+    expect(prompt.files.every((file) => file.path !== '.env')).toBe(true);
   });
 });

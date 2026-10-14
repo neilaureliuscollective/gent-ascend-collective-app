@@ -8,6 +8,15 @@ Talk #121 (`28361628c6db6d16dd1db76be8e471440c58d37f`) overlaps this pass only o
 
 Construct #116, Connections #117 and UI #119 are already in main via #120. They were not merged again.
 
+## Completion pass (same PR)
+
+Reviewed head `ea99d85` kept path protection, last-good preview and Fold review. This follow-up does not start a new build phase:
+
+1. **Excerpt budget on every content path.** `applyExcerptBudget` ranks content-bearing excerpts (`excerpt` and `too-large`) before provider assembly. Count and total UTF-8 bytes stay inside eight excerpts / 32 KiB. Assembled prompts set `manifest.excerpt` to null so metadata cannot smuggle snippets. Editable whole files are not truncated to make room.
+2. **Collision-free check identity.** Display names may still truncate at 80 characters. Comparison uses `checkIdentity` (kind + command + full target). Duplicate or insufficient historical identity is labelled comparison-unavailable; a new failure is never silently pre-existing. Stored receipts are not rewritten.
+3. **Phone review is a real modal.** Construct reuses `ContextSheet` (`showModal`, focus move, Tab containment, Escape, close control, focus restore). Crossing 639px while open closes the sheet so desktop review does not keep an inert background.
+4. **Durable receipt bound.** `boundRunResult` shrinks baseline/post logs, then diff/preview, to the existing 120,000-byte SQL `result` limit. Truncation is marked. Status is never flipped to passed. Store rejection is `too-large`; the worker persists a failed bounded receipt instead of reporting success or leaving the run stuck.
+
 ## Correction pass (same PR)
 
 Reviewed head `7bc82ae` kept the complete-file contract and Source / Change / Evidence review. This follow-up does not start a new build phase:
@@ -31,7 +40,8 @@ Reviewed head `7bc82ae` kept the complete-file contract and Source / Change / Ev
 | Complete editable files | 8 |
 | Complete editable bytes (total) | 49,152 |
 | Complete editable bytes (per file) | 65,536 |
-| Context excerpts | 8 × 2,000 characters (instructions up to 4,000) |
+| Context excerpts | 8 files / 32,000 bytes total (2,000 characters each; instructions up to 4,000) |
+| Durable execution receipt | 120,000 UTF-8 bytes (existing SQL `octet_length(result::text)` limit) |
 | Provider output tokens | 8,000 |
 | Patch files | 1–16 existing files |
 | New files / deletions | Unsupported |
@@ -52,10 +62,10 @@ Ran:
 
 - `npm run lint` — pass, zero warnings
 - `npm run typecheck` — pass
-- `npm test` — 922 unit/SQL tests
+- `npm test` — 937 unit/SQL tests
 - `npm run db:ledger` — pass; no new hosted migration
 - `npm run build` — production build pass
-- Origin browser: 27/27, including protected-context regressions, retained-preview lifecycle, Source / Change / Evidence at 390/720/1440 and a 390×480 keyboard-height viewport
+- Origin browser: 27/27, including protected-context regressions, retained-preview lifecycle, Source / Change / Evidence at 390/720/1440, phone modal keyboard/Escape/focus-restore/resize, and a 390×480 keyboard-height viewport
 
 Screenshots: `docs/evidence/architect-construct/architect-source-review-{source,change,evidence}-{390,720,1440}.png`, `architect-source-review-keyboard-390.png`, plus the original 390/720/1440 full-page names.
 
