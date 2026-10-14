@@ -22,13 +22,32 @@ export type ConstructLifecycleLibrary = ConstructLibraryEnvelope & {
     id?: string;
     approval_hash?: string;
     status?: string;
+    invalidation_reason?: string | null;
     scope?: {
       intended_change?: string;
       project_revision?: number;
+      source_id?: string;
       patch?: Array<{ path: string; before: string; after: string }>;
-      repair?: { kind?: string; parent_run_id?: string; targets?: string[] };
+      repair?: {
+        kind?: string;
+        parent_run_id?: string;
+        targets?: string[];
+        generation?: { mode?: string; notes?: string };
+      };
     };
   }>;
+  pendingRepair?: {
+    briefId: string;
+    requestId: string;
+    parentRunId: string;
+    approvalHash: string;
+    status: string;
+    invalidationReason: string | null;
+    projectRevision: number;
+    generation: { mode: 'mock' | 'openai' | 'unknown'; notes?: string };
+    patch: Array<{ path: string; before: string; after: string }>;
+    intendedChange: string;
+  } | null;
   sources?: Array<{ id?: string; kind?: string; label?: string; repository?: string | null }>;
 };
 
@@ -195,6 +214,7 @@ export async function approveConstructRepair(
     parentRunId: string;
     expected: number;
     patch: { path: string; before: string; after: string }[];
+    generation?: { mode: 'mock' | 'openai' | 'unknown'; notes?: string };
   },
   signal?: AbortSignal,
   fetchImpl: FetchLike = fetch,
@@ -375,11 +395,31 @@ export function selectRepairJourney(input: {
   const repair = original
     ? (runs.find((run) => run.parent_run_id === original.id) ?? null)
     : null;
-  const durableBrief = original
-    ? ((input.library?.briefs ?? []).find(
+  const durableBrief =
+    (original &&
+      ((input.library?.briefs ?? []).find(
         (brief) => brief.scope?.repair?.parent_run_id === original.id,
-      ) ?? null)
-    : null;
+      ) ??
+        null)) ||
+    (input.library?.pendingRepair
+      ? ((input.library?.briefs ?? []).find((brief) => brief.id === input.library?.pendingRepair?.briefId) ??
+        {
+          id: input.library.pendingRepair.briefId,
+          approval_hash: input.library.pendingRepair.approvalHash,
+          status: input.library.pendingRepair.status,
+          invalidation_reason: input.library.pendingRepair.invalidationReason,
+          scope: {
+            intended_change: input.library.pendingRepair.intendedChange,
+            project_revision: input.library.pendingRepair.projectRevision,
+            patch: input.library.pendingRepair.patch,
+            repair: {
+              kind: 'check-driven',
+              parent_run_id: input.library.pendingRepair.parentRunId,
+              generation: input.library.pendingRepair.generation,
+            },
+          },
+        })
+      : null);
   const localProposal = original && input.localProposal?.parentRunId === original.id;
   const localApproval =
     original &&

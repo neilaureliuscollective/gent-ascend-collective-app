@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { combineRepairPatch } from '@/domains/architect-construct/combine-patch';
-import { repairEligible } from '@/domains/architect-construct/repair-eligibility';
+import { repairEligible, selectPendingRepair } from '@/domains/architect-construct/repair-eligibility';
+import {
+  generationProvenanceLabel,
+  persistableGeneration,
+  repairExecutionRequestId,
+} from '@/domains/architect-construct/repair-evidence';
 import { executeInProcess } from '@/domains/architect-construct/runner';
 import { fixtureScope, fixtureSource } from '@/domains/architect-construct/fixture';
 import { treeHash } from '@/domains/architect-construct/hash';
@@ -217,6 +222,36 @@ describe('combined repair patch', () => {
     });
     expect(result.checks[0]?.status).toBe('passed');
     expect(result.coverage?.introduced_failures).toEqual([]);
+  });
+});
+
+describe('approved repair recovery and generation provenance', () => {
+  it('selects the unused approved repair and binds execution identity to the brief', () => {
+    const brief = {
+      id: '00000000-0000-4000-8000-000000000091',
+      status: 'approved' as const,
+      approval_hash: hash,
+      invalidation_reason: null,
+      scope: {
+        repair: { parent_run_id: parentId },
+      },
+    } as Pick<ConstructBrief, 'id' | 'status' | 'scope' | 'approval_hash' | 'invalidation_reason'>;
+    expect(selectPendingRepair([brief], [parentRun()])?.id).toBe(brief.id);
+    expect(selectPendingRepair([brief], [parentRun(), { id: brief.id, brief_id: brief.id, parent_run_id: parentId }])).toBeNull();
+    expect(repairExecutionRequestId(brief.id)).toBe(brief.id);
+  });
+
+  it('keeps demonstration and unknown provenance distinct from a live model result', () => {
+    expect(persistableGeneration({ mode: 'mock', notes: 'Labelled demonstration.' })).toEqual({
+      mode: 'mock',
+      notes: 'Labelled demonstration.',
+    });
+    expect(persistableGeneration(undefined).mode).toBe('unknown');
+    expect(persistableGeneration({ mode: 'openai', notes: 'sk-secret-value' }).notes).not.toMatch(/sk-secret/);
+    expect(generationProvenanceLabel({ mode: 'mock' })).toMatch(/demonstration/i);
+    expect(generationProvenanceLabel(undefined)).toMatch(/unknown/i);
+    expect(generationProvenanceLabel(undefined)).toMatch(/not labelled as a live model-generated result/i);
+    expect(generationProvenanceLabel({ mode: 'openai' })).toMatch(/Authorized model/i);
   });
 });
 

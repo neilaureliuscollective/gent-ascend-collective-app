@@ -25,6 +25,7 @@ export type ConstructStore = {
   readSource(personId: string, sourceId: string): Promise<SourceSnapshot | null>;
   approveBrief(personId: string, briefId: string, scope: ConstructBrief['scope']): Promise<ConstructBrief>;
   readBrief(personId: string, briefId: string): Promise<ConstructBrief | null>;
+  listProjectBriefs(personId: string, projectId: string): Promise<ConstructBrief[]>;
   invalidateProjectBriefs(personId: string, projectId: string, reason: string): Promise<number>;
   startRun(input: {
     personId: string;
@@ -118,6 +119,13 @@ export class MemoryConstructStore implements ConstructStore {
   async readBrief(personId: string, briefId: string) {
     const brief = this.briefs.get(briefId);
     return brief?.person_id === personId ? brief : null;
+  }
+
+  async listProjectBriefs(personId: string, projectId: string) {
+    return [...this.briefs.values()]
+      .filter((brief) => brief.person_id === personId && brief.scope.project_id === projectId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 30);
   }
 
   async invalidateProjectBriefs(personId: string, projectId: string, reason: string) {

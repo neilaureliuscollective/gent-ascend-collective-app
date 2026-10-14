@@ -327,4 +327,59 @@ describe('construct lifecycle selection', () => {
     expect(current?.id).toBe(runB);
     expect(current?.parent_run_id).toBe(runA);
   });
+
+  it('restores an approved unstarted repair from the read contract without inventing a child run', () => {
+    const original = {
+      id: runA,
+      person_id: ownerA,
+      project_id: projectA,
+      project_revision: 1,
+      source_tree_hash: hashA,
+      status: 'failed',
+      parent_run_id: null,
+      result: {
+        isolation: 'process-fixture',
+        runtime_available: false,
+        sandbox: false,
+        blocker: 'introduced',
+        source_hash: hashA,
+        result_hash: null,
+        checks: [],
+        changed_files: ['ok.mjs'],
+        preview: { path: null, body: '', unavailable_reason: 'failed' },
+      },
+    };
+    const loaded = selectRepairJourney({
+      library: {
+        project: { id: projectA, revision: 1, name: 'Alpha' },
+        runs: [original],
+        briefs: [],
+        pendingRepair: {
+          briefId: runB,
+          requestId: runB,
+          parentRunId: runA,
+          approvalHash: hashB,
+          status: 'approved',
+          invalidationReason: null,
+          projectRevision: 1,
+          generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+          patch: [{ path: 'ok.mjs', before: 'Before', after: 'After' }],
+          intendedChange: `Repair of run ${runA}`,
+        },
+      },
+      ownerId: ownerA,
+      projectId: projectA,
+    });
+    expect(loaded.original?.id).toBe(runA);
+    expect(loaded.repair).toBeNull();
+    expect(loaded.durableBrief?.id).toBe(runB);
+    expect(loaded.durableBrief?.scope?.repair?.generation?.mode).toBe('mock');
+    expect(loaded.steps).toEqual({
+      original: true,
+      observedFailure: true,
+      proposed: true,
+      approved: true,
+      observedResult: false,
+    });
+  });
 });

@@ -15,12 +15,14 @@ One **Propose repair** action for an eligible terminal Construct run that record
 7. If the repair still fails, the receipt is kept and control returns. There is no hidden loop.
 8. Live repair generation receives the failed post-original-patch snapshot, the original change, and bounded sanitized failure evidence. The returned correction is validated against that snapshot, then combined against the pinned original source.
 9. Proposal, approval, and execution refuse a repair when the parent’s project revision no longer matches the current project. A newer project revision is never written onto repair evidence.
+10. An approved repair without a child run is returned on the read contract as `pendingRepair`. Reload restores that approval, the reviewable combined patch, and a stable execution request identity (`requestId === briefId`). Start stays explicit. Lost HTTP retries return the same run. Stale or revoked approvals explain why they cannot run.
+11. Generation provenance (`mock` / `openai` / `unknown`) is persisted on the approved repair scope. A demonstration stays a demonstration after reload. Missing historical provenance displays as unknown and never implies a live model-generated result. Notes are sanitized; secrets stay out of client-visible metadata.
 
 Coverage remains **syntax-only** unless the approved plan says otherwise. Typecheck, build and functional tests stay unsupported in this sandbox.
 
 ## Workbench
 
-Original attempt → observed failure → proposed correction → approved repair → observed result. The current in-flight run is not labelled as the original attempt after a repair is enqueued. Milestones restore from saved proposal, approval, and run evidence after reload. The last working preview is retained.
+Original attempt → observed failure → proposed correction → approved repair → observed result. The current in-flight run is not labelled as the original attempt after a repair is enqueued. An approved-but-unstarted repair is recovered after reload so Start can be used once. Historical execution receipts are not labelled live telemetry. The last working preview, journey anchor, and unsent intended-change text are retained.
 
 Phone is canvas-first. Fold keeps the canvas plus one secondary review panel.
 
@@ -46,6 +48,8 @@ A funded OpenAI account does not supply a sandbox, worker, or repository connect
 - Origin browser: repair journey is visible; Propose repair stays disabled without an eligible failed run
 - Origin / Quality: cancel assertion scoped to `Latest run cancelled` plus the Repair journey step, after the journey strip also named the cancelled original attempt
 - Provider, eligibility, service, SQL and workbench tests for failed-snapshot generation, one-repair limit, stale revision and journey restore
+- Service read/write coverage for approve → read recovered approval → start → lost-response retry → one persisted child, plus demonstration/unknown provenance
+- Origin browser: recovered approved repair can enqueue after reload; a lost start response retries the same brief identity
 
 Exact-head hosted CI starts after this push. Live workflows stay unrun on a stacked PR.
 

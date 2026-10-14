@@ -16,6 +16,7 @@ export function ChangeDiff({
   summary,
   notes,
   mocked,
+  heading,
 }: {
   patches: ReviewPatch[];
   selectedPath: string | null;
@@ -23,12 +24,13 @@ export function ChangeDiff({
   summary: string;
   notes?: string;
   mocked?: boolean;
+  heading?: string;
 }) {
   const selected = patches.find((file) => file.path === selectedPath) ?? patches[0] ?? null;
   const lines = selected ? lineDiff(selected.before, selected.after) : [];
   return (
     <section className="origin-change-diff" aria-labelledby="architect-proposed-change">
-      <h4 id="architect-proposed-change">Proposed change awaiting approval</h4>
+      <h4 id="architect-proposed-change">{heading ?? 'Proposed change awaiting approval'}</h4>
       <p>{summary}</p>
       {mocked && <p>Labelled mocked provider. This is not a paid OpenAI call.</p>}
       {notes && <p>{notes}</p>}

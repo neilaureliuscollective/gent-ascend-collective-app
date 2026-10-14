@@ -1,3 +1,7 @@
+# Architect approved-repair recovery and generation provenance — 2026-10-14
+
+Read unused owner/project repair briefs through the existing read contract so an approved repair without a child run survives reload. Bind repair enqueue identity to the brief id; lost HTTP retries return that same run. Persist sanitized generation provenance (`mock` / `openai` / `unknown`) and never imply a live model result when history is missing. Start stays an explicit owner action and revalidates owner, revision, pin, digest, ancestry and the one-repair limit. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
 # Architect repair snapshot, one-journey limit, journey restore and stale revision — 2026-10-14
 
 Generate a live repair against the failed post-original-patch files, not the pinned original source, then combine the validated correction back onto that original. Refuse a parent that is itself a repair so uniqueness cannot become a repair-of-repair chain. Keep the workbench original and repair identities separate and restore proposal/approval/result from saved evidence. Compare the parent project revision before proposal, approval and execution; never copy a newer revision onto older evidence. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).

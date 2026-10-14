@@ -1666,6 +1666,191 @@ test('repair journey keeps the original attempt after enqueue and restores durab
   await expect(page.frameLocator('iframe[title="Isolated artifact preview"]').getByText('Kept success')).toBeVisible();
 });
 
+test('approved repair recovers after reload and retries one enqueue after a lost response', async ({
+  page,
+}) => {
+  await fixture(page);
+  const now = new Date().toISOString();
+  const originalId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa21';
+  const repairBriefId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb21';
+  const successId = 'cccccccc-cccc-4ccc-8ccc-cccccccccc21';
+  const digest = 'd'.repeat(64);
+  const starts: Array<{ briefId?: string; requestId?: string }> = [];
+  let queued: Record<string, unknown> | null = null;
+  const original = (projectId: string) => ({
+    id: originalId,
+    person_id: 'owner',
+    project_id: projectId,
+    brief_id: originalId,
+    approval_hash: 'e'.repeat(64),
+    source_id: successId,
+    source_kind: 'imported',
+    source_tree_hash: 'a'.repeat(64),
+    project_revision: 1,
+    status: 'failed',
+    parent_run_id: null,
+    result: {
+      isolation: 'process-fixture',
+      runtime_available: false,
+      sandbox: false,
+      blocker: 'Introduced syntax failure.',
+      source_hash: 'a'.repeat(64),
+      result_hash: null,
+      changed_files: ['ok.mjs'],
+      diff: '',
+      checks: [],
+      coverage: {
+        no_applicable: false,
+        preexisting_failures: [],
+        introduced_failures: ['syntax:ok.mjs'],
+        untested: [],
+        unsupported: [],
+        revision_note: '1',
+      },
+      preview: { path: null, body: '', unavailable_reason: 'failed' },
+    },
+    created_at: now,
+    updated_at: now,
+  });
+  const success = (projectId: string) => ({
+    id: successId,
+    person_id: 'owner',
+    project_id: projectId,
+    brief_id: successId,
+    approval_hash: 'f'.repeat(64),
+    source_id: successId,
+    source_kind: 'imported',
+    source_tree_hash: 'a'.repeat(64),
+    project_revision: 1,
+    status: 'succeeded',
+    parent_run_id: null,
+    result: {
+      isolation: 'docker',
+      runtime_available: true,
+      sandbox: true,
+      blocker: null,
+      source_hash: 'a'.repeat(64),
+      result_hash: 'b'.repeat(64),
+      changed_files: ['kept.html'],
+      diff: '',
+      checks: [],
+      preview: {
+        path: 'kept.html',
+        body: '<html><body><h1>Kept success</h1></body></html>',
+        unavailable_reason: null,
+      },
+    },
+    created_at: now,
+    updated_at: now,
+  });
+  await page.route('**/api/architect-construct/source*', async (route) =>
+    route.fulfill({
+      json: {
+        access: 'read-only',
+        publishing: false,
+        deployment: false,
+        github: { ready: false, repository: null, reason: 'GitHub App setup is required.' },
+        vercel: { ready: false, project: null, reason: 'Publishing is unavailable.' },
+      },
+    }),
+  );
+  await page.route('**/api/architect-construct*', async (route) => {
+    if (route.request().url().includes('/source')) return;
+    const projectId = new URL(route.request().url()).searchParams.get('project') ?? 'project';
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as { action?: string; briefId?: string; requestId?: string };
+      if (body.action === 'start') {
+        starts.push({ briefId: body.briefId, requestId: body.requestId });
+        queued = {
+          id: repairBriefId,
+          person_id: 'owner',
+          project_id: projectId,
+          brief_id: repairBriefId,
+          approval_hash: digest,
+          source_id: successId,
+          source_kind: 'imported',
+          source_tree_hash: 'a'.repeat(64),
+          project_revision: 1,
+          status: 'queued',
+          parent_run_id: originalId,
+          cancel_requested: false,
+          result: null,
+          created_at: now,
+          updated_at: now,
+        };
+        if (starts.length === 1) return route.abort('connectionreset');
+        return route.fulfill({ json: { run: queued } });
+      }
+      return route.fulfill({ status: 409, json: { error: 'This original run already has one repair.' } });
+    }
+    return route.fulfill({
+      json: {
+        project: { id: projectId, revision: 1, name: 'Recovered Origin' },
+        proposal: { mode: 'mock', reason: null },
+        pendingRepair: queued
+          ? null
+          : {
+              briefId: repairBriefId,
+              requestId: repairBriefId,
+              parentRunId: originalId,
+              approvalHash: digest,
+              status: 'approved',
+              invalidationReason: null,
+              projectRevision: 1,
+              generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+              patch: [{ path: 'ok.mjs', before: 'const introduced = ;\n', after: 'export const heading = "After";\n' }],
+              intendedChange: `Repair of run ${originalId}: syntax`,
+            },
+        sources: [],
+        briefs: [
+          {
+            id: repairBriefId,
+            status: 'approved',
+            approval_hash: digest,
+            scope: {
+              intended_change: `Repair of run ${originalId}: syntax`,
+              project_revision: 1,
+              allowed_paths: ['ok.mjs'],
+              protected_paths: ['.env'],
+              resource_limits: { timeout_ms: 30000, max_files: 8 },
+              patch: [{ path: 'ok.mjs', before: 'const introduced = ;\n', after: 'export const heading = "After";\n' }],
+              repair: {
+                kind: 'check-driven',
+                parent_run_id: originalId,
+                parent_approval_hash: 'e'.repeat(64),
+                targets: ['syntax:ok.mjs'],
+                generation: { mode: 'mock', notes: 'Labelled demonstration. Not a paid OpenAI call.' },
+              },
+            },
+          },
+        ],
+        runs: queued ? [queued, original(projectId), success(projectId)] : [original(projectId), success(projectId)],
+        events: {},
+      },
+    });
+  });
+  await page.goto(`${base}&construct=adapter`);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Recovered repair');
+  await page.getByLabel('Project name (optional)').fill('Recovered Origin');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Construct', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Recovered approved repair' })).toBeVisible();
+  await expect(page.getByText('Labelled demonstration. Not a paid OpenAI call.').first()).toBeVisible();
+  await expect(page.getByText(/Recovered approved repair is waiting for Start/)).toBeVisible();
+  const enqueue = page.getByRole('button', { name: 'Enqueue approved repair' });
+  await expect(enqueue).toBeEnabled();
+  await enqueue.click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await enqueue.click();
+  await expect(page.getByRole('list', { name: 'Repair journey' })).toContainText('Observed result · queued');
+  await expect(page.getByText(/Repair result queued/)).toBeVisible();
+  expect(starts).toEqual([
+    { briefId: repairBriefId, requestId: repairBriefId },
+    { briefId: repairBriefId, requestId: repairBriefId },
+  ]);
+});
+
 test('quantity-and-cost estimator can be created, saved, reopened and invoked', async ({ page }) => {
   const tools: Array<Record<string, unknown>> = [];
   const versions: Array<Record<string, unknown>> = [];

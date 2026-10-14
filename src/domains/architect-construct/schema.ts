@@ -159,6 +159,13 @@ export const briefScopeSchema = z
         parent_run_id: z.uuid(),
         parent_approval_hash: sha256,
         targets: z.array(z.string().min(1).max(400)).min(1).max(8),
+        generation: z
+          .object({
+            mode: z.enum(['mock', 'openai', 'unknown']),
+            notes: z.string().max(2000).optional(),
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .optional(),
@@ -388,6 +395,13 @@ export const approveRepairCommand = z
     parentRunId: z.uuid(),
     expected: z.number().int().positive().max(500),
     patch: z.array(patchFileSchema).min(1).max(16),
+    generation: z
+      .object({
+        mode: z.enum(['mock', 'openai', 'unknown']),
+        notes: z.string().max(2000).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export const approveChangeCommand = z

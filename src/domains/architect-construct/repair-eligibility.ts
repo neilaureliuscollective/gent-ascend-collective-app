@@ -38,6 +38,20 @@ export function findRepairChild(
   return runs.find((run) => run.parent_run_id === parentRunId) ?? null;
 }
 
+export function selectPendingRepair(
+  briefs: Array<Pick<ConstructBrief, 'id' | 'status' | 'scope' | 'approval_hash' | 'invalidation_reason'>>,
+  runs: Array<Pick<ConstructRun, 'id' | 'brief_id' | 'parent_run_id'>>,
+) {
+  const unused = briefs.filter(
+    (brief) =>
+      brief.scope.repair &&
+      !runs.some(
+        (run) => run.brief_id === brief.id || run.parent_run_id === brief.scope.repair?.parent_run_id,
+      ),
+  );
+  return unused.find((brief) => brief.status === 'approved') ?? unused[0] ?? null;
+}
+
 export function findRepairBrief(
   parentRunId: string,
   briefs: Array<Pick<ConstructBrief, 'scope' | 'status' | 'id'>>,

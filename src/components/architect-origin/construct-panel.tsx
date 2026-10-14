@@ -26,6 +26,7 @@ import {
   startConstructRun,
   type ConstructSourceReadiness,
 } from './construct-lifecycle';
+import { generationProvenanceLabel } from '@/domains/architect-construct/repair-evidence';
 import { repairEligible } from '@/domains/architect-construct/repair-eligibility';
 import { lifecycleLabel, lifecyclePhase } from '@/domains/architect-construct/lifecycle';
 import {
@@ -50,6 +51,18 @@ type Library = {
   briefs: ConstructBrief[];
   sources: SourceSnapshot[];
   proposal?: { mode?: string; reason?: string | null };
+  pendingRepair?: {
+    briefId: string;
+    requestId: string;
+    parentRunId: string;
+    approvalHash: string;
+    status: string;
+    invalidationReason: string | null;
+    projectRevision: number;
+    generation: { mode: 'mock' | 'openai' | 'unknown'; notes?: string };
+    patch: { path: string; before: string; after: string }[];
+    intendedChange: string;
+  } | null;
 };
 
 type SourceFile = { path: string; content: string };
@@ -147,6 +160,7 @@ export function ArchitectConstructPanel({
     files: string;
   } | null>(null);
   const fixtureKeyRef = useRef<{ key: string; id: string } | null>(null);
+  const recoveredShownRef = useRef(false);
   const generationRef = useRef(0);
   const snapshot = constructInputSnapshot({
     sourceKind,
@@ -211,15 +225,47 @@ export function ArchitectConstructPanel({
       })
     : { ok: false as const, code: 'not-terminal' as const, message: '' };
   const journey = journeyView.steps;
-  const restoredRepairChange =
-    !repairProposal && journeyView.durableBrief?.scope?.patch?.length
+  const pendingRepair = library?.pendingRepair ?? null;
+  const recoveredGeneration =
+    pendingRepair?.generation ?? journeyView.durableBrief?.scope?.repair?.generation ?? null;
+  const recoveredApproval =
+    pendingRepair &&
+    pendingRepair.status === 'approved' &&
+    pendingRepair.projectRevision === revision &&
+    !repairRun
       ? {
-          summary: journeyView.durableBrief.scope.intended_change || 'Restored repair',
-          notes: 'Restored from saved proposal and approval evidence. Combined patch is shown against the original pinned source.',
-          mocked: false,
-          patches: journeyView.durableBrief.scope.patch,
+          briefId: pendingRepair.briefId,
+          sourceId: original?.source_id ?? source?.id ?? pendingRepair.briefId,
+          approvalHash: pendingRepair.approvalHash,
+          requestId: pendingRepair.requestId,
+          snapshot,
+          revision: pendingRepair.projectRevision,
+          parentRunId: pendingRepair.parentRunId,
         }
       : null;
+  const restoredRepairChange =
+    !repairProposal && (pendingRepair?.patch.length || journeyView.durableBrief?.scope?.patch?.length)
+      ? {
+          summary: pendingRepair?.intendedChange || journeyView.durableBrief?.scope?.intended_change || 'Restored repair',
+          notes: `${generationProvenanceLabel(recoveredGeneration)} Combined patch is shown against the original pinned source.`,
+          mocked: recoveredGeneration?.mode === 'mock',
+          heading:
+            recoveredApproval ||
+            pendingRepair?.status === 'approved' ||
+            journeyView.durableBrief?.status === 'approved'
+              ? 'Recovered approved repair'
+              : 'Restored repair proposal',
+          patches: pendingRepair?.patch ?? journeyView.durableBrief?.scope?.patch ?? [],
+        }
+      : null;
+  const activeRepairApproval = repairApproval ?? recoveredApproval;
+  const recoveredBlocker =
+    pendingRepair && pendingRepair.status !== 'approved'
+      ? pendingRepair.invalidationReason ||
+        'This repair approval was revoked. Approve a new repair before starting.'
+      : pendingRepair && pendingRepair.projectRevision !== revision
+        ? `This approved repair is bound to project revision ${pendingRepair.projectRevision}. The project is now revision ${revision}. It cannot start.`
+        : '';
 
   function applyLibrary(next: Library, incoming: RequestContext) {
     if (
@@ -277,6 +323,20 @@ export function ArchitectConstructPanel({
     // applyLibrary closes over current project; remount/key plus generation drop late polls.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, ownerId, projectId, revision, briefText]);
+
+  useEffect(() => {
+    const patch = pendingRepair?.patch ?? journeyView.durableBrief?.scope?.patch;
+    if (repairProposal || !patch?.length || recoveredShownRef.current) return;
+    recoveredShownRef.current = true;
+    setContextPanel('change');
+    setSelectedChange(patch[0]?.path ?? null);
+  }, [
+    repairProposal,
+    pendingRepair?.briefId,
+    pendingRepair?.patch,
+    journeyView.durableBrief?.id,
+    journeyView.durableBrief?.scope?.patch,
+  ]);
 
   useEffect(() => {
     if (!enabled || !run || !['queued', 'claimed', 'running'].includes(run.status)) return;
@@ -522,13 +582,16 @@ export function ArchitectConstructPanel({
     const incoming = currentContext();
     try {
       const briefId = newId();
-      const requestId = newId();
       const approved = await approveConstructRepair({
         projectId,
         briefId,
         parentRunId: repairProposal.parentRunId,
         expected: revision,
         patch: repairProposal.patch,
+        generation: {
+          mode: repairProposal.mocked ? 'mock' : 'openai',
+          notes: repairProposal.notes,
+        },
       });
       if (!approved.ok) throw new Error(approved.error);
       if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
@@ -543,12 +606,14 @@ export function ArchitectConstructPanel({
         briefId,
         sourceId: original.source_id,
         approvalHash: digest,
-        requestId,
+        requestId: briefId,
         snapshot,
         revision,
         parentRunId: original.id,
       });
-      setMessage('Repair approved against the original pinned source. Enqueue retries reuse this request.');
+      setMessage(
+        'Repair approved against the original pinned source. Start is explicit. Reload keeps this approval; retries reuse the same brief identity.',
+      );
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not approve the repair.');
@@ -558,17 +623,17 @@ export function ArchitectConstructPanel({
   }
 
   async function enqueueRepair() {
-    if (locked || busy || !repairApproval) return;
+    if (locked || busy || !activeRepairApproval) return;
     setBusy(true);
     setError('');
     const incoming = currentContext();
     try {
       const started = await startConstructRun({
         projectId,
-        briefId: repairApproval.briefId,
-        requestId: repairApproval.requestId,
+        briefId: activeRepairApproval.briefId,
+        requestId: activeRepairApproval.requestId,
         expected: revision,
-        approvalHash: repairApproval.approvalHash,
+        approvalHash: activeRepairApproval.approvalHash,
       });
       if (!started.ok) throw new Error(started.error);
       if (!sameConstructContext({ ownerId, projectId, revision, generation: generationRef.current }, incoming))
@@ -832,7 +897,10 @@ export function ArchitectConstructPanel({
         <button disabled={!enabled || locked || busy || !repairProposal} onClick={() => void approveRepair()}>
           Approve proposed repair
         </button>
-        <button disabled={!enabled || locked || busy || !repairApproval} onClick={() => void enqueueRepair()}>
+        <button
+          disabled={!enabled || locked || busy || !activeRepairApproval}
+          onClick={() => void enqueueRepair()}
+        >
           Enqueue approved repair
         </button>
         <button
@@ -841,7 +909,7 @@ export function ArchitectConstructPanel({
         >
           Queue labelled fixture run
         </button>
-        <button disabled={!enabled || locked || busy || !run} onClick={() => void refresh()}>
+        <button disabled={!enabled || locked || busy} onClick={() => void refresh()}>
           Reload receipts
         </button>
         <button
@@ -868,6 +936,16 @@ export function ArchitectConstructPanel({
           Approved inputs are bound to server digest {liveApproval.approvalHash.slice(0, 12)}. Enqueue
           retries reuse the same request until a new approval is created.
         </p>
+      )}
+      {recoveredApproval && (
+        <p>
+          Recovered approved repair {recoveredApproval.approvalHash.slice(0, 12)}. Start is explicit
+          and reuses brief identity {recoveredApproval.requestId.slice(0, 8)}. This is a saved
+          receipt, not live telemetry.
+        </p>
+      )}
+      {recoveredBlocker && (
+        <p role="status">{recoveredBlocker}</p>
       )}
       <div className="origin-construct-review">
         <aside className="origin-construct-context" ref={panelScrollRef} aria-label="Review context">
@@ -930,6 +1008,7 @@ export function ArchitectConstructPanel({
             )}
             {contextPanel === 'change' && !repairProposal && restoredRepairChange && (
               <ChangeDiff
+                heading={restoredRepairChange.heading}
                 summary={restoredRepairChange.summary}
                 notes={restoredRepairChange.notes}
                 mocked={restoredRepairChange.mocked}
@@ -1031,6 +1110,7 @@ export function ArchitectConstructPanel({
           )}
           {sheet === 'change' && !repairProposal && restoredRepairChange && (
             <ChangeDiff
+              heading={restoredRepairChange.heading}
               summary={restoredRepairChange.summary}
               notes={restoredRepairChange.notes}
               mocked={restoredRepairChange.mocked}
@@ -1115,12 +1195,27 @@ export function ArchitectConstructPanel({
               {original.project_revision != null ? ` · revision ${original.project_revision}` : ''}.
             </p>
           )}
+          {recoveredApproval && (
+            <p>
+              Recovered approved repair is waiting for Start. Provenance:{' '}
+              {generationProvenanceLabel(recoveredGeneration)} The reviewed patch is restored; this
+              is not live telemetry.
+            </p>
+          )}
+          {recoveredBlocker && <p>{recoveredBlocker}</p>}
           {repairRun && (
             <p>
               Repair result {statusLabel(repairRun.status)}
               {repairRun.result?.blocker ? ` — ${repairRun.result.blocker}` : ''}.
+              {repairRun.result
+                ? ' Historical execution receipt — not live telemetry.'
+                : ''}
             </p>
           )}
+          {!recoveredApproval &&
+            (recoveredGeneration || journeyView.durableBrief?.scope?.repair?.generation) && (
+              <p>{generationProvenanceLabel(recoveredGeneration)}</p>
+            )}
           {library?.proposal?.mode === 'mock' && (
             <p>Labelled mocked provider is available. This is not a paid OpenAI call.</p>
           )}

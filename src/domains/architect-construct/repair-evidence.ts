@@ -25,6 +25,33 @@ export function sanitizeRepairPatch(patch: PatchFile[]): PatchFile[] {
   }));
 }
 
+export type RepairGeneration = {
+  mode: 'mock' | 'openai' | 'unknown';
+  notes?: string;
+};
+
+export function persistableGeneration(input?: { mode?: string; notes?: string } | null): RepairGeneration {
+  const mode = input?.mode === 'mock' || input?.mode === 'openai' ? input.mode : 'unknown';
+  const notes = input?.notes ? sanitizeLog(input.notes, [], 2000).trim() : '';
+  return notes ? { mode, notes } : { mode };
+}
+
+export function generationProvenanceLabel(generation?: { mode?: string; notes?: string } | null) {
+  const persisted = persistableGeneration(generation);
+  if (persisted.mode === 'unknown')
+    return (
+      persisted.notes ||
+      'Generation provenance unknown. This is not labelled as a live model-generated result.'
+    );
+  if (persisted.mode === 'mock')
+    return persisted.notes || 'Labelled demonstration. Not a paid OpenAI call.';
+  return persisted.notes || 'Authorized model proposal. Isolated execution is still required.';
+}
+
+export function repairExecutionRequestId(briefId: string) {
+  return briefId;
+}
+
 export function sanitizeRepairEvidence(input?: {
   targets?: string[];
   blocker?: string | null;

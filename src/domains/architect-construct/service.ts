@@ -22,8 +22,12 @@ import {
 } from './schema';
 import { constructProviderStatus, proposeConstructChange, proposeConstructRepair } from './provider';
 import { applyWholeFilePatch, combineRepairPatch } from './combine-patch';
-import { sanitizeRepairEvidence } from './repair-evidence';
-import { repairEligible } from './repair-eligibility';
+import {
+  persistableGeneration,
+  repairExecutionRequestId,
+  sanitizeRepairEvidence,
+} from './repair-evidence';
+import { repairEligible, selectPendingRepair } from './repair-eligibility';
 import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
 import { verifyConstructGitPin } from './connections-source';
@@ -95,6 +99,9 @@ export async function readConstruct(projectId: string) {
   const events: Record<string, ConstructEvent[]> = {};
   const briefs: ConstructBrief[] = [];
   const sources: SourceSnapshot[] = [];
+  for (const brief of await store.listProjectBriefs(person.id, projectId)) {
+    if (!briefs.some((row) => row.id === brief.id)) briefs.push(brief);
+  }
   for (const run of runs) {
     events[run.id] = await store.listEvents(person.id, run.id);
     const brief = await store.readBrief(person.id, run.brief_id);
@@ -102,12 +109,31 @@ export async function readConstruct(projectId: string) {
     const source = await store.readSource(person.id, run.source_id);
     if (source && !sources.some((row) => row.id === source.id)) sources.push(source);
   }
+  for (const brief of briefs) {
+    const source = await store.readSource(person.id, brief.scope.source_id);
+    if (source && !sources.some((row) => row.id === source.id)) sources.push(source);
+  }
+  const pending = selectPendingRepair(briefs, runs);
   return {
     project: { id: project.id, revision: project.revision, name: project.content.name },
     runs,
     events,
     briefs,
     sources,
+    pendingRepair: pending
+      ? {
+          briefId: pending.id,
+          requestId: repairExecutionRequestId(pending.id),
+          parentRunId: pending.scope.repair!.parent_run_id,
+          approvalHash: pending.approval_hash,
+          status: pending.status,
+          invalidationReason: pending.invalidation_reason,
+          projectRevision: pending.scope.project_revision,
+          generation: persistableGeneration(pending.scope.repair?.generation),
+          patch: pending.scope.patch,
+          intendedChange: pending.scope.intended_change,
+        }
+      : null,
     proposal: constructProviderStatus(),
   };
 }
@@ -126,6 +152,19 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
       );
     if (brief.approval_hash !== input.approvalHash)
       throw new IntelligenceError('Approval digest does not match the reviewed brief.', 409);
+    if (brief.scope.repair && input.requestId !== repairExecutionRequestId(brief.id))
+      throw new IntelligenceError(
+        'Repair enqueue retries must reuse the approved brief identity. A new request is not created.',
+        409,
+      );
+    const alreadyStarted = brief.scope.repair
+      ? (await store.listRuns(person.id, project.id)).find((run) => run.brief_id === brief.id)
+      : null;
+    if (alreadyStarted) {
+      if (alreadyStarted.approval_hash !== brief.approval_hash)
+        throw new IntelligenceError('The queued repair no longer matches this approval digest.', 409);
+      return alreadyStarted;
+    }
     if (
       brief.scope.project_id !== project.id ||
       brief.scope.project_revision !== project.revision ||
@@ -357,6 +396,9 @@ async function requireEligibleRepair(
   const source = await store.readSource(personId, parent.source_id);
   const runs = await store.listRuns(personId, projectId);
   const briefs: ConstructBrief[] = [];
+  for (const brief of await store.listProjectBriefs(personId, projectId)) {
+    if (!briefs.some((row) => row.id === brief.id)) briefs.push(brief);
+  }
   for (const run of runs) {
     const item = await store.readBrief(personId, run.brief_id);
     if (item && !briefs.some((row) => row.id === item.id)) briefs.push(item);
@@ -472,6 +514,7 @@ export async function approveRepairConstruct(input: ReturnType<typeof approveRep
       protectedPaths: brief.scope.protected_paths,
     });
     if (!combined.ok) throw new IntelligenceError(`${combined.message} ${combined.actionable}`, 409);
+    const generation = persistableGeneration(input.generation);
     const digest = approvalHash({
       ...brief.scope,
       patch: combined.patch,
@@ -481,6 +524,7 @@ export async function approveRepairConstruct(input: ReturnType<typeof approveRep
         parent_run_id: parent.id,
         parent_approval_hash: parent.approval_hash,
         targets: eligibility.targets,
+        generation,
       },
     });
     if (digest === parent.approval_hash)
@@ -504,6 +548,7 @@ export async function approveRepairConstruct(input: ReturnType<typeof approveRep
         parent_run_id: parent.id,
         parent_approval_hash: parent.approval_hash,
         targets: eligibility.targets,
+        generation,
       },
     });
     await store.invalidateProjectBriefs(
