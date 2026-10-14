@@ -9,6 +9,7 @@ import {
   readTalkCreationWorkspace,
   saveCreationInput,
   selectedCreationContext,
+  matchesFrozenHandoff,
 } from '@/domains/talk-creation/schema';
 import { imageIntent } from '@/domains/talk-creation/intent';
 import {
@@ -18,7 +19,7 @@ import {
   rememberTalkSave,
   readTalkSave,
 } from '@/domains/talk-creation/pending';
-import { idleCreationScope, shouldApplyCreation, shouldContinueWatch } from '@/domains/talk-creation/scope';
+import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
 import { contrastRatio, paletteContrast, withCalculatedContrast } from '@/domains/talk-creation/contrast';
 import {
   extractCreationFences,
@@ -345,5 +346,79 @@ describe('Talk creation contracts', () => {
         '30000000-0000-4000-8000-000000000001',
       ),
     ).toBe(false);
+    expect(
+      shouldRecoverPending(idle, 'owner', '30000000-0000-4000-8000-000000000001'),
+    ).toBe(false);
+    expect(
+      shouldRecoverPending(
+        { owner: 'owner', conversation: '30000000-0000-4000-8000-000000000001' },
+        'owner',
+        '30000000-0000-4000-8000-000000000001',
+      ),
+    ).toBe(true);
+    expect(
+      shouldRecoverPending(
+        { owner: 'owner', conversation: '30000000-0000-4000-8000-000000000002' },
+        'owner',
+        '30000000-0000-4000-8000-000000000001',
+      ),
+    ).toBe(false);
+    expect(
+      shouldRecoverPending(
+        { owner: 'other', conversation: '30000000-0000-4000-8000-000000000001' },
+        'owner',
+        '30000000-0000-4000-8000-000000000001',
+      ),
+    ).toBe(false);
+    expect(
+      shouldRecoverPending(
+        { owner: 'owner', conversation: '30000000-0000-4000-8000-000000000001' },
+        'owner',
+        '30000000-0000-4000-8000-000000000001',
+        3,
+        2,
+      ),
+    ).toBe(false);
+  });
+
+  it('matches a frozen Architect request against the stored package, not the current brief', () => {
+    const content = {
+      schema: 'talk-architect-handoff/v1' as const,
+      conversationId: '30000000-0000-4000-8000-000000000001',
+      preparedAt: '2026-10-13T00:00:00.000Z',
+      discipline: 'business' as const,
+      idea: 'A premium brand and website.',
+      description: '',
+      decisions: '',
+      selections: [
+        {
+          kind: 'brief' as const,
+          lineageId: '50000000-0000-4000-8000-000000000011',
+          versionId: '50000000-0000-4000-8000-000000000011',
+          version: 1,
+          title: 'Reserve brand',
+        },
+      ],
+      images: [],
+      imported: false as const,
+    };
+    const request = {
+      conversationId: content.conversationId,
+      preparedAt: content.preparedAt,
+      discipline: content.discipline,
+      idea: content.idea,
+      decisions: content.decisions,
+      creationIds: ['50000000-0000-4000-8000-000000000011'],
+      imageIds: [],
+    };
+    expect(matchesFrozenHandoff(content, request)).toBe(true);
+    expect(matchesFrozenHandoff(content, { ...request, idea: 'Changed' })).toBe(false);
+    expect(
+      matchesFrozenHandoff(content, {
+        ...request,
+        creationIds: ['50000000-0000-4000-8000-000000000012'],
+      }),
+    ).toBe(false);
+    expect(matchesFrozenHandoff(content, { ...request, preparedAt: undefined })).toBe(false);
   });
 });

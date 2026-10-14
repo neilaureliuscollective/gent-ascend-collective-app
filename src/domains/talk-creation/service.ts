@@ -15,6 +15,7 @@ import {
   contentForKind,
   handoffContentSchema,
   handoffInput,
+  matchesFrozenHandoff,
   saveCreationInput,
   selectCreationInput,
   type CreationKind,
@@ -191,6 +192,36 @@ export async function reviewTalkImage(id: string, approve: boolean) {
 export async function prepareArchitectHandoff(input: unknown) {
   const parsed = handoffInput.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Review the Architect package before saving.');
+  const { client, person } = await intelligenceSession();
+  if (!(await currentAccess()).has('aurelius.context'))
+    throw new IntelligenceError('Aethelios access is not enabled for this account.', 403);
+  const existing = await client
+    .from('ai_talk_creations')
+    .select('*')
+    .eq('id', parsed.data.id)
+    .eq('person_id', person.id)
+    .eq('conversation_id', parsed.data.conversationId)
+    .eq('kind', 'handoff')
+    .maybeSingle();
+  if (existing.error) throw new IntelligenceError('The Architect package could not be saved.', 503);
+  if (existing.data) {
+    const creation = asCreation(existing.data);
+    const content =
+      creation?.kind === 'handoff' && 'schema' in creation.content ? creation.content : null;
+    if (!content || !matchesFrozenHandoff(content, parsed.data))
+      throw new IntelligenceError(
+        'This save request was already used with different content. Start a new edit.',
+        409,
+      );
+    return {
+      id: existing.data.id,
+      lineageId: existing.data.lineage_id,
+      version: existing.data.version,
+      content,
+      recovered: true,
+      imported: false as const,
+    };
+  }
   const workspace = await readTalkCreations(parsed.data.conversationId);
   const selections = parsed.data.creationIds.map((id) => {
     const creation = workspace.creations.find((item) => item.id === id);

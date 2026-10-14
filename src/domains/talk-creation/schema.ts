@@ -231,6 +231,35 @@ export const handoffInput = z
   })
   .strict();
 
+export function matchesFrozenHandoff(
+  content: HandoffContent,
+  request: {
+    conversationId: string;
+    preparedAt?: string;
+    discipline: HandoffContent['discipline'];
+    idea: string;
+    description?: string;
+    decisions: string;
+    creationIds: string[];
+    imageIds?: string[];
+  },
+) {
+  if (!request.preparedAt || content.preparedAt !== request.preparedAt) return false;
+  if (content.conversationId !== request.conversationId) return false;
+  if (content.discipline !== request.discipline) return false;
+  if (content.idea !== request.idea) return false;
+  if (content.description !== (request.description ?? '')) return false;
+  if (content.decisions !== request.decisions) return false;
+  if (content.imported !== false) return false;
+  const storedIds = content.selections.map((item) => item.versionId);
+  if (storedIds.length !== request.creationIds.length) return false;
+  if (storedIds.some((id, index) => id !== request.creationIds[index])) return false;
+  const storedImages = content.images.map((item) => item.artifactId);
+  const imageIds = request.imageIds ?? [];
+  if (storedImages.length !== imageIds.length) return false;
+  return storedImages.every((id, index) => id === imageIds[index]);
+}
+
 export function contentForKind(kind: 'brief', value: unknown): BriefContent;
 export function contentForKind(kind: 'plan', value: unknown): PlanContent;
 export function contentForKind(kind: 'palette', value: unknown): PaletteContent;

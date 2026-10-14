@@ -53,7 +53,7 @@ import {
   matchesTalkSave,
   readTalkSave,
 } from '@/domains/talk-creation/pending';
-import { idleCreationScope, shouldApplyCreation, shouldContinueWatch } from '@/domains/talk-creation/scope';
+import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
@@ -303,16 +303,20 @@ export function AureliusWorkspace({
   const recoverPendingSaves = useCallback(
     async (conversationId: string, owner: string) => {
       const generation = ++recoverGeneration.current;
+      const bound = () =>
+        shouldRecoverPending(
+          creationScope.current,
+          owner,
+          conversationId,
+          recoverGeneration.current,
+          generation,
+        ) &&
+        (!verifiedDraftOwner.current || verifiedDraftOwner.current === owner);
+      if (!bound()) return;
       for (const intent of ['revision', 'handoff'] as const) {
         const pending = readTalkSave(owner, conversationId, intent);
         if (!pending) continue;
-        if (generation !== recoverGeneration.current) return;
-        if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
-        if (
-          creationScope.current.conversation &&
-          creationScope.current.conversation !== conversationId
-        )
-          return;
+        if (!bound()) return;
         setCreationNotice(
           intent === 'handoff'
             ? 'Finishing a prepared Architect package…'
@@ -323,21 +327,22 @@ export function AureliusWorkspace({
             ...pending.payload,
             id: pending.id,
           });
-          if (generation !== recoverGeneration.current) return;
-          if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+          if (!bound()) return;
           if (!matchesTalkSave(owner, conversationId, intent, pending.id)) {
-            await loadCreations(conversationId);
+            if (bound()) await loadCreations(conversationId);
             continue;
           }
+          if (!bound()) return;
           clearTalkSave(owner, conversationId, intent);
           setCreationNotice(
             intent === 'handoff'
               ? 'Prepared for Architect. Import is pending the destination contract.'
               : 'Recovered the previous save.',
           );
+          if (!bound()) return;
           await loadCreations(conversationId);
         } catch (error) {
-          if (generation !== recoverGeneration.current) return;
+          if (!bound()) return;
           const message = error instanceof Error ? error.message : '';
           setCreationNotice(
             /changed|already used|different content/i.test(message)
@@ -359,6 +364,7 @@ export function AureliusWorkspace({
   }
   const load = useCallback(
     async (id: string | null = null) => {
+      recoverGeneration.current += 1;
       reading.current?.abort();
       const controller = new AbortController();
       reading.current = controller;
@@ -371,6 +377,7 @@ export function AureliusWorkspace({
         if (controller.signal.aborted) return;
         setError('');
         if (response.status === 401) {
+          recoverGeneration.current += 1;
           clearTalkDrafts();
           verifiedDraftOwner.current = '';
           memoryOnlyDraft.current = false;
@@ -402,8 +409,13 @@ export function AureliusWorkspace({
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
         setSelected(id);
+        const boundRecover = recoverGeneration.current;
         void loadCreations(id).then(() => {
-          if (id && owner) void recoverPendingSaves(id, owner);
+          if (recoverGeneration.current !== boundRecover) return;
+          if (!id || !owner) return;
+          if (!shouldRecoverPending(creationScope.current, owner, id)) return;
+          if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+          void recoverPendingSaves(id, owner);
         });
         if (!compact && window.location.pathname.endsWith('/aethelios')) {
           const url = new URL(window.location.href);
@@ -599,9 +611,15 @@ export function AureliusWorkspace({
         setData(result ?? disconnectedWorkspace);
         setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version ?? ''));
         const conversation = result && initialConversation ? initialConversation : null;
+        const owner = result?.ownerId ?? '';
+        const boundRecover = recoverGeneration.current;
         void loadCreations(conversation).then(() => {
           if (controller.signal.aborted) return;
-          if (result?.ownerId && conversation) void recoverPendingSaves(conversation, result.ownerId);
+          if (recoverGeneration.current !== boundRecover) return;
+          if (!conversation || !owner) return;
+          if (!shouldRecoverPending(creationScope.current, owner, conversation)) return;
+          if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+          void recoverPendingSaves(conversation, owner);
         });
         setLoading(false);
       })
@@ -856,6 +874,11 @@ export function AureliusWorkspace({
     }
   }
   function newConversation() {
+    recoverGeneration.current += 1;
+    creationGeneration.current += 1;
+    creationRead.current?.abort();
+    stopImageWatch();
+    creationScope.current = idleCreationScope(verifiedDraftOwner.current);
     memoryOnlyDraft.current = false;
     if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));

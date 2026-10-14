@@ -29,3 +29,19 @@ export function shouldContinueWatch(
     currentGeneration === generation && shouldApplyCreation(scope, owner, conversation)
   );
 }
+
+/** Null/new conversation is never permission to recover another conversation. */
+export function shouldRecoverPending(
+  scope: CreationScope,
+  owner: string,
+  conversation: string,
+  currentGeneration?: number,
+  generation?: number,
+) {
+  if (!owner || !conversation) return false;
+  if (currentGeneration !== undefined && generation !== undefined && currentGeneration !== generation)
+    return false;
+  if (scope.conversation !== conversation) return false;
+  if (scope.owner && scope.owner !== owner) return false;
+  return true;
+}

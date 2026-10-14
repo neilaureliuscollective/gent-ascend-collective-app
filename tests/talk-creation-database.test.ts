@@ -168,6 +168,66 @@ describe('Talk creation SQL versions and ownership (PGlite; not Supabase Auth)',
       ),
     ).rejects.toThrow(/different inputs/);
   });
+
+  it('replays the original Architect receipt after the source brief is revised', async () => {
+    const briefId = '00000000-0000-4000-8000-000000000051';
+    const revisedId = '00000000-0000-4000-8000-000000000052';
+    const handoffId = '00000000-0000-4000-8000-000000000053';
+    const packageContent = {
+      schema: 'talk-architect-handoff/v1',
+      conversationId: conversation,
+      preparedAt: '2026-10-13T00:00:01.000Z',
+      discipline: 'business',
+      idea: 'Replay after a later brief.',
+      description: '',
+      decisions: '',
+      selections: [
+        {
+          kind: 'brief',
+          lineageId: briefId,
+          versionId: briefId,
+          version: 1,
+          title: 'Original brief',
+        },
+      ],
+      images: [],
+      imported: false,
+    };
+    await asUser(
+      owner,
+      `select public.ai_talk_save_creation('${briefId}','${conversation}','${turn}','brief',null,${literal({ ...brief, title: 'Original brief' })})`,
+    );
+    expect(
+      (await asUser(
+        owner,
+        `select public.ai_talk_save_creation('${handoffId}','${conversation}',null,'handoff',null,${literal(packageContent)}) as receipt`,
+      )).rows[0],
+    ).toMatchObject({ receipt: { id: handoffId, version: 1 } });
+    await asUser(
+      owner,
+      `select public.ai_talk_save_creation('${revisedId}','${conversation}','${turn}','brief','${briefId}',${literal({ ...brief, title: 'Revised brief' })})`,
+    );
+    expect(
+      (await asUser(
+        owner,
+        `select public.ai_talk_save_creation('${handoffId}','${conversation}',null,'handoff',null,${literal(packageContent)}) as receipt`,
+      )).rows[0],
+    ).toMatchObject({ receipt: { id: handoffId, version: 1, recovered: true } });
+    expect(
+      (
+        await asUser(
+          owner,
+          `select count(*)::int as n from public.ai_talk_creations where id='${handoffId}'`,
+        )
+      ).rows[0],
+    ).toEqual({ n: 1 });
+    await expect(
+      asUser(
+        foreign,
+        `select public.ai_talk_save_creation('${handoffId}','${conversation}',null,'handoff',null,${literal(packageContent)})`,
+      ),
+    ).rejects.toThrow(/unavailable|different inputs|Unauthorized/i);
+  });
 });
 
 describe('Talk studio entitlement (PGlite; not Supabase Auth)', () => {

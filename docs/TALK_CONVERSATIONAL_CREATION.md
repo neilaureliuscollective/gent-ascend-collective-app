@@ -31,7 +31,8 @@ Live voice, Live admission, production voice flags, Construct, Connections, Arch
 
 - One intended Architect handoff reuses the same request id, `preparedAt`, selections and contents across retry and reload. A changed selection mints a new identity. Server-side save is atomic: same identity+payload returns the original receipt; reused identity with different inputs is rejected.
 - Pending revision/handoff records are owner-scoped. After authenticated owner and conversation identity are established, Talk recovers the original operation. Pending is cleared only after a matching receipt. Conflicts, failed network and other-owner records stay pending or untouched. Ordinary chat remains usable.
-- New Conversation, conversation selection, owner change and unmount invalidate the previous creation generation, stop the image watcher and ignore outstanding responses. Server-side image jobs and saved results stay intact; reopening reconciles actual status.
+- New Conversation, conversation selection, owner change and unmount immediately invalidate the previous generation. A late initial-fetch continuation cannot recover another conversation into a null/new screen. Pending records for A stay owner-scoped so reopening A can recover them. Server-side image jobs stay intact.
+- A committed Architect handoff is reconciled from the owner-scoped stored payload before current selections are revalidated. An exact replay returns the original receipt after the source brief is revised. A changed payload on that identity is rejected. Foreign or revoked access cannot recover the package.
 - A stale generated proposal is stored as an owner-scoped `candidate` on the existing creation table (`ai_talk_save_candidate`). It is not selected, applied or current. The user can inspect it and explicitly keep it as a new version against the current predecessor. Failed preservation is labeled `stale-lost` and is never claimed saved. Additive migration: `20261013260000_talk_creation_candidates.sql`.
 
 ## Remaining dependencies
@@ -47,10 +48,10 @@ Recorded on the continuity pass before push. Browser evidence is mocked-provider
 
 - lint: pass
 - typecheck: pass
-- vitest: 797 passed (includes Talk persist/SQL/handoff/candidate contracts)
+- vitest: 804 passed (includes Talk persist/SQL/handoff/candidate contracts and recover-first handoff)
 - db ledger: pass (Talk SQL remains unapplied on hosted)
 - production build: pass
-- Playwright (mocked providers): talk-creation 3/3, talk-creation-recovery 7/7, talk-layout 6/6, talk-recovery 10/10, talk-interaction-recovery 4/4
+- Playwright (mocked providers): talk-creation 3/3, talk-creation-recovery 8/8, talk-layout 6/6, talk-recovery 10/10, talk-interaction-recovery 4/4
 - Persistence used: PGlite for ownership/idempotent handoff/candidate SQL; mocked `/api` for browser recovery; no local Auth/PostgREST
 - Unrun: remaining Quality `test:e2e` files, founder Auth smoke, physical Fold/Safari, paid OpenAI image calls, hosted migration apply, Architect import acknowledgement
 
