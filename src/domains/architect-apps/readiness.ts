@@ -1,11 +1,13 @@
 import { parseEnvironment } from '@/platform/environment';
 import { supabaseConnection } from '@/platform/supabase/connection';
 
-export function appsReady(env: NodeJS.ProcessEnv = process.env) {
+type Env = NodeJS.ProcessEnv | Record<string, string | undefined>;
+
+export function appsReady(env: Env = process.env) {
   return env.ARCHITECT_ORIGIN_ENABLED === 'true' && env.ARCHITECT_APPS_ENABLED === 'true';
 }
 
-export function appsAiReady(env: NodeJS.ProcessEnv = process.env) {
+export function appsAiReady(env: Env = process.env) {
   if (!appsReady(env) || env.ARCHITECT_APPS_AI_ENABLED !== 'true') return false;
   try {
     if (parseEnvironment(env).mode === 'production') return false;
@@ -15,7 +17,7 @@ export function appsAiReady(env: NodeJS.ProcessEnv = process.env) {
   return Boolean(env.OPENAI_API_KEY);
 }
 
-export function appsAiMockReady(env: NodeJS.ProcessEnv = process.env) {
+export function appsAiMockReady(env: Env = process.env) {
   if (!appsReady(env) || env.ARCHITECT_APPS_AI_MOCK !== 'true') return false;
   try {
     if (parseEnvironment(env).mode === 'production') return false;
@@ -25,11 +27,11 @@ export function appsAiMockReady(env: NodeJS.ProcessEnv = process.env) {
   return true;
 }
 
-export function appsFixtureReady(env: NodeJS.ProcessEnv = process.env) {
+export function appsFixtureReady(env: Env = process.env) {
   return appsReady(env) || env.ARCHITECT_APPS_STORE === 'memory';
 }
 
-export function memoryAppStoreAllowed(env: NodeJS.ProcessEnv = process.env) {
+export function memoryAppStoreAllowed(env: Env = process.env) {
   if (env.ARCHITECT_APPS_STORE !== 'memory') return false;
   try {
     if (parseEnvironment(env).mode === 'production') return false;
@@ -40,7 +42,7 @@ export function memoryAppStoreAllowed(env: NodeJS.ProcessEnv = process.env) {
   return true;
 }
 
-export function appsWorkerAuthorized(env: NodeJS.ProcessEnv = process.env) {
+export function appsWorkerAuthorized(env: Env = process.env) {
   const token = env.ARCHITECT_CONSTRUCT_WORKER_TOKEN;
   if (!token || token.trim().length < 32) return false;
   try {
@@ -52,11 +54,11 @@ export function appsWorkerAuthorized(env: NodeJS.ProcessEnv = process.env) {
   return appsReady(env);
 }
 
-export function appsControlPlaneReady(env: NodeJS.ProcessEnv = process.env) {
+export function appsControlPlaneReady(env: Env = process.env) {
   return Boolean(supabaseConnection(env) && env.SUPABASE_SERVICE_ROLE_KEY?.trim());
 }
 
-export function founderAppModelRunBlockers(env: NodeJS.ProcessEnv = process.env) {
+export function founderAppModelRunBlockers(env: Env = process.env) {
   const blockers: string[] = [];
   if (env.ARCHITECT_ORIGIN_ENABLED !== 'true') blockers.push('ARCHITECT_ORIGIN_ENABLED is not true.');
   if (env.ARCHITECT_APPS_ENABLED !== 'true') blockers.push('ARCHITECT_APPS_ENABLED is not true.');
@@ -74,7 +76,7 @@ export function founderAppModelRunBlockers(env: NodeJS.ProcessEnv = process.env)
   if (env.VERCEL || env.VERCEL_ENV) blockers.push('Hosted Vercel cannot run the isolated app-build worker.');
   blockers.push('Additive Architect Apps migrations are unapplied on hosted projects until founder-approved.');
   blockers.push(
-    'A versioned build image with pinned React/TypeScript/Vite is required for isolated builds. Host-trusted typecheck/bundle is development evidence only.',
+    'A versioned Docker image with pinned React/TypeScript/Vite is required for isolated builds. Host-fixture compilation cannot mark a normal app as isolated success.',
   );
   return { ready: false, blockers };
 }

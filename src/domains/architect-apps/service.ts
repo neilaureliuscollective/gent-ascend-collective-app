@@ -1,10 +1,13 @@
 import 'server-only';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
+import { readRetainedDirection } from '@/domains/architect-design-direction/receiver';
 import { APP_PROFILE, APP_PROFILE_VERSION, APP_TOOLCHAIN_VERSION } from './catalog';
+import { DatabaseAppStore, type AppPersistenceClient } from './database-store';
 import { assertAdditiveSchema, assertDataRate, recordToItem, validateCollectionPayload } from './data-bridge';
 import { appGenerationProvenance, appProviderStatus, generateAppProposal, type AppGenerationTransport } from './generation';
 import { appApprovalHash, treeHash } from './hash';
 import { assemblePreviewDocument, signPreviewSession, verifyPreviewSession } from './preview';
+import { defaultAppGenerationTransport } from './provider';
 import { appsReady, memoryAppStoreAllowed } from './readiness';
 import {
   approveAppCommand,
@@ -19,15 +22,17 @@ import { applyFileOperations, diffAppFiles, overlaySealedFiles } from './tree';
 
 let memory: MemoryAppStore | null = null;
 
-export function appStore(): AppStore {
+export function appStore(options?: { client?: AppPersistenceClient; plane?: 'owner' | 'worker' }): AppStore {
   if (memoryAppStoreAllowed()) {
     memory ??= new MemoryAppStore();
     return memory;
   }
-  throw new AppStoreError(
-    'Database-backed Architect Apps store is required outside labelled memory tests. Apply the additive apps migration locally.',
-    'unavailable',
-  );
+  if (!options?.client)
+    throw new AppStoreError(
+      'Database-backed Architect Apps store is required outside labelled memory tests. Apply the additive apps migrations locally.',
+      'unavailable',
+    );
+  return new DatabaseAppStore(options.client, options.plane ?? 'owner');
 }
 
 function requireReady() {
@@ -57,7 +62,16 @@ async function requireOwnedProject(projectId: string, expected?: number) {
   if (!owned.data) throw new IntelligenceError('Project unavailable.', 404);
   if (expected != null && owned.data.revision !== expected)
     throw new IntelligenceError('Project revision changed. Reload before approving or starting this application.', 409);
-  return { person, project: owned.data as { id: string; person_id: string; revision: number; content: { name?: string; blueprint?: { vision?: string } } } };
+  return {
+    person,
+    client: client as unknown as AppPersistenceClient,
+    project: owned.data as {
+      id: string;
+      person_id: string;
+      revision: number;
+      content: { name?: string; blueprint?: { vision?: string } };
+    },
+  };
 }
 
 function scopeHash(input: {
@@ -80,11 +94,11 @@ function scopeHash(input: {
   };
 }
 
-export async function readArchitectApp(projectId: string) {
+export async function readArchitectApp(projectId: string, selectedRevision?: number) {
   requireReady();
   try {
-    const { person } = await requireOwnedProject(projectId);
-    const store = appStore();
+    const { person, client } = await requireOwnedProject(projectId);
+    const store = appStore({ client, plane: 'owner' });
     const app = await store.readApp(person.id, projectId);
     const revisions = await store.listRevisions(person.id, projectId);
     const jobs = await store.listJobs(person.id, projectId);
@@ -93,12 +107,20 @@ export async function readArchitectApp(projectId: string) {
       revisions.find((row) => row.revision === app?.last_working_revision && row.working) ??
       revisions.find((row) => row.working) ??
       null;
+    const selected =
+      selectedRevision != null
+        ? revisions.find((row) => row.revision === selectedRevision) ?? null
+        : current?.status === 'ready'
+          ? current
+          : working;
     const latestJob = jobs[0] ?? null;
     const events = latestJob ? await store.listEvents(person.id, latestJob.id) : [];
-    const artifact = current ? await store.readArtifact(person.id, current.id) : null;
+    const selectedArtifact = selected ? await store.readArtifact(person.id, selected.id) : null;
     const workingArtifact = working ? await store.readArtifact(person.id, working.id) : null;
-    const previewRevision = current?.status === 'ready' ? current : working;
-    const previewArtifact = current?.status === 'ready' ? artifact : workingArtifact;
+    const previewRevision =
+      selected && (selected.status === 'ready' || selected.working) && selectedArtifact ? selected : working;
+    const previewArtifact =
+      previewRevision?.id === selected?.id && selectedArtifact ? selectedArtifact : workingArtifact;
     const session = previewRevision
       ? signPreviewSession({ personId: person.id, projectId, revisionId: previewRevision.id })
       : null;
@@ -109,6 +131,8 @@ export async function readArchitectApp(projectId: string) {
             session,
             parentOrigin: '*',
             title: app?.name,
+            revision: previewRevision.revision,
+            revisionId: previewRevision.id,
           })
         : null;
     const pendingStart =
@@ -139,6 +163,7 @@ export async function readArchitectApp(projectId: string) {
       events,
       current,
       working,
+      selected,
       preview,
       previewSession: session,
       pendingStart,
@@ -167,8 +192,8 @@ export async function proposeArchitectApp(
   const parsed = proposeAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application proposal fields.', 400);
   try {
-    const { person, project } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
-    const store = appStore();
+    const { person, project, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
+    const store = appStore({ client, plane: 'owner' });
     const revisions = await store.listRevisions(person.id, parsed.data.projectId);
     const base =
       parsed.data.kind === 'revise'
@@ -176,6 +201,7 @@ export async function proposeArchitectApp(
         : null;
     if (parsed.data.kind === 'revise' && !base)
       throw new IntelligenceError('A saved application revision is required before requesting a change.', 409);
+    const direction = await readRetainedDirection(parsed.data.projectId).catch(() => null);
     const generated = await generateAppProposal(
       {
         instruction: parsed.data.instruction,
@@ -183,8 +209,9 @@ export async function proposeArchitectApp(
         demo: parsed.data.demo,
         baseFiles: base?.files ?? [],
         brief: project.content.blueprint?.vision,
+        direction: direction?.receipt.content.summary,
       },
-      transport,
+      transport ?? defaultAppGenerationTransport(),
     );
     const files = generated.proposal.operations
       ? applyFileOperations(base?.files ?? overlaySealedFiles(generated.proposal.files), generated.proposal.operations).files
@@ -213,8 +240,8 @@ export async function approveArchitectApp(input: unknown) {
   const parsed = approveAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application approval fields.', 400);
   try {
-    const { person, project } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
-    const store = appStore();
+    const { person, project, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
+    const store = appStore({ client, plane: 'owner' });
     const revisions = await store.listRevisions(person.id, parsed.data.projectId);
     const base = parsed.data.baseRevision
       ? revisions.find((row) => row.revision === parsed.data.baseRevision)
@@ -255,8 +282,8 @@ export async function startArchitectApp(input: unknown) {
   const parsed = startAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application start fields.', 400);
   try {
-    const { person } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
-    const store = appStore();
+    const { person, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
+    const store = appStore({ client, plane: 'owner' });
     const revision = await store.readRevision(person.id, parsed.data.revisionId);
     if (!revision || revision.project_id !== parsed.data.projectId)
       throw new IntelligenceError('Approved application revision unavailable.', 404);
@@ -284,8 +311,8 @@ export async function cancelArchitectApp(input: unknown) {
   const parsed = cancelAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application cancel fields.', 400);
   try {
-    const { person } = await requireOwnedProject(parsed.data.projectId);
-    return await appStore().cancelJob(person.id, parsed.data.jobId);
+    const { person, client } = await requireOwnedProject(parsed.data.projectId);
+    return await appStore({ client, plane: 'owner' }).cancelJob(person.id, parsed.data.jobId);
   } catch (error) {
     asIntelligence(error);
   }
@@ -296,12 +323,13 @@ export async function reopenArchitectApp(input: unknown) {
   const parsed = reopenAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application reopen fields.', 400);
   try {
-    const { person } = await requireOwnedProject(parsed.data.projectId);
-    const revisions = await appStore().listRevisions(person.id, parsed.data.projectId);
+    const { person, client } = await requireOwnedProject(parsed.data.projectId);
+    const store = appStore({ client, plane: 'owner' });
+    const revisions = await store.listRevisions(person.id, parsed.data.projectId);
     const revision = revisions.find((row) => row.revision === parsed.data.revision);
     if (!revision || !revision.working)
       throw new IntelligenceError('Only a saved working application can be reopened.', 409);
-    const artifact = await appStore().readArtifact(person.id, revision.id);
+    const artifact = await store.readArtifact(person.id, revision.id);
     if (!artifact) throw new IntelligenceError('Compiled artifacts for that revision are unavailable.', 404);
     const session = signPreviewSession({
       personId: person.id,
@@ -315,8 +343,11 @@ export async function reopenArchitectApp(input: unknown) {
         session,
         parentOrigin: '*',
         title: revision.generation.notes,
+        revision: revision.revision,
+        revisionId: revision.id,
       }),
       session,
+      selectedRevision: revision.revision,
     };
   } catch (error) {
     asIntelligence(error);
@@ -335,11 +366,11 @@ export async function operateArchitectAppData(input: {
 }) {
   requireReady();
   try {
-    const { person } = await requireOwnedProject(input.projectId);
+    const { person, client } = await requireOwnedProject(input.projectId);
     if (!verifyPreviewSession(input.session, { personId: person.id, projectId: input.projectId, revisionId: input.revisionId }))
       throw new IntelligenceError('Preview session is not bound to this application revision.', 403);
     assertDataRate(person.id);
-    const store = appStore();
+    const store = appStore({ client, plane: 'owner' });
     const revision = await store.readRevision(person.id, input.revisionId);
     const app = await store.readApp(person.id, input.projectId);
     if (!revision || !app) throw new IntelligenceError('Application unavailable.', 404);

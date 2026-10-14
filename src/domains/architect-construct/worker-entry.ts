@@ -3,6 +3,9 @@ import {
   constructWorkerControlPlaneReady,
   constructWorkerMissingNames,
 } from '@/domains/architect-construct/readiness';
+import { createWorkerAppStore } from '@/domains/architect-apps/database-store';
+import { appsControlPlaneReady, appsWorkerAuthorized } from '@/domains/architect-apps/readiness';
+import { processAppBuildOnce } from '@/domains/architect-apps/worker';
 import { createWorkerConstructStore } from '@/domains/architect-construct/database-store';
 import { superviseConstructWorker } from '@/domains/architect-construct/supervisor';
 import { constructWorkerIdentity, processConstructOnce } from '@/domains/architect-construct/worker';
@@ -22,6 +25,8 @@ const supervised =
 try {
   const store = createWorkerConstructStore();
   const workerId = constructWorkerIdentity();
+  const appStore =
+    appsWorkerAuthorized() && appsControlPlaneReady() ? createWorkerAppStore() : undefined;
   if (supervised) {
     const shutdown = new AbortController();
     const stop = () => {
@@ -34,6 +39,7 @@ try {
       store,
       workerId,
       signal: shutdown.signal,
+      appStore,
     });
     console.log(
       JSON.stringify({
@@ -51,6 +57,7 @@ try {
   } else {
     console.error('construct-worker: starting');
     const run = await processConstructOnce(store, workerId);
+    const appJob = appStore ? await processAppBuildOnce(appStore, workerId) : null;
     console.log(
       JSON.stringify({
         ok: true,
@@ -61,6 +68,10 @@ try {
         sandbox: run?.result?.sandbox ?? false,
         blocker: run?.result?.blocker ?? null,
         worker: workerId,
+        appJob: appJob?.id ?? null,
+        appStatus: appJob?.status ?? 'idle',
+        appIsolation: appJob?.result?.isolation ?? null,
+        appSandbox: appJob?.result?.sandbox ?? false,
       }),
     );
     console.error('construct-worker: shutdown');

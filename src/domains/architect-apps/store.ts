@@ -33,8 +33,12 @@ export type AppStore = {
     revisionId: string,
     status: AppRevision['status'],
     working?: boolean,
+    fence?: { workerId: string; jobId: string; leaseToken: string },
   ): Promise<AppRevision>;
-  saveArtifact(artifact: AppArtifact): Promise<AppArtifact>;
+  saveArtifact(
+    artifact: AppArtifact,
+    fence?: { workerId: string; jobId: string; leaseToken: string },
+  ): Promise<AppArtifact>;
   readArtifact(personId: string, revisionId: string): Promise<AppArtifact | null>;
   startJob(input: {
     requestId: string;

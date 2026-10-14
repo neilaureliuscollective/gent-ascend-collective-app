@@ -17,7 +17,7 @@ export type AppBuildHost = {
   nodePath?: string;
 };
 
-export function resolveTrustedToolchain(cwd = process.cwd()): AppBuildHost {
+export function resolveHostFixtureToolchain(cwd = process.cwd()): AppBuildHost {
   const nodePath = join(cwd, 'node_modules');
   const typecheckBin = join(nodePath, 'typescript/bin/tsc');
   const viteBin = join(nodePath, 'vite/bin/vite.js');
@@ -30,7 +30,7 @@ export function resolveTrustedToolchain(cwd = process.cwd()): AppBuildHost {
   }
   return {
     toolchain: APP_TOOLCHAIN_VERSION,
-    isolation: 'host-trusted',
+    isolation: 'host-fixture',
     sandbox: false,
     typecheckBin,
     viteBin,
@@ -38,12 +38,17 @@ export function resolveTrustedToolchain(cwd = process.cwd()): AppBuildHost {
   };
 }
 
+/** Labelled local fixture compiler only. Never an isolated production runner. */
+export function resolveTrustedToolchain(cwd = process.cwd()) {
+  return resolveHostFixtureToolchain(cwd);
+}
+
 export function appBuildHostRequirement() {
   return {
     image: process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-14.1',
     toolchain: APP_TOOLCHAIN_VERSION,
     requirement:
-      'Isolated builds need a versioned image with pinned React 19.3.0, TypeScript 6.0.3 and Vite 8.3.0 preinstalled. The worker invokes only trusted typecheck and vite build entry points. Model-defined package scripts, Dockerfiles and plugins are never executed. Docker socket, host secrets and privileged execution stay closed. This host currently offers a trusted in-process toolchain adapter when those binaries are already installed for the platform.',
+      'Isolated builds need image ARCHITECT_APPS_IMAGE with pinned React 19.3.0, TypeScript 6.0.3 and Vite 8.3.0. Generated project code must not execute in the credentialed host process. The host-fixture runner is labelled local evidence for demo=tracker only and cannot mark a normal app execution as isolated success.',
   };
 }
 
@@ -114,7 +119,7 @@ export async function buildGeneratedApp(
   files: AppFile[],
   options: { host?: AppBuildHost; timeoutMs?: number; onStage?: (kind: 'typecheck' | 'bundle', detail: string) => Promise<void> } = {},
 ) {
-  const host = options.host ?? resolveTrustedToolchain();
+  const host = options.host ?? resolveHostFixtureToolchain();
   const timeoutMs = options.timeoutMs ?? 90000;
   const stages: AppJobResult['stages'] = [];
   const record = async (kind: AppJobResult['stages'][number]['kind'], detail: string) => {
@@ -206,7 +211,10 @@ export async function buildGeneratedApp(
         sandbox: host.sandbox,
         typecheck,
         bundle,
-        blocker: host.isolation === 'host-trusted' ? 'Host-trusted toolchain. Isolated image execution remains the production requirement.' : null,
+        blocker:
+          host.isolation === 'host-fixture'
+            ? 'Host-fixture toolchain. This is labelled local evidence and is not isolated Docker success.'
+            : null,
         stages,
       } satisfies AppJobResult,
       artifacts,
