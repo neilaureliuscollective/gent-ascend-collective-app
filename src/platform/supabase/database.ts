@@ -794,6 +794,124 @@ export interface Database {
           updated_at?: string;
         }
       >;
+      ai_studio_designs: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          title: string;
+          document: import('@/domains/studio/design/document').DesignDocument;
+          revision: number;
+          updated_at: string;
+        },
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          title: string;
+          document: import('@/domains/studio/design/document').DesignDocument;
+        },
+        {
+          title?: string;
+          document?: import('@/domains/studio/design/document').DesignDocument;
+          revision?: number;
+          updated_at?: string;
+        }
+      >;
+      ai_studio_design_revisions: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          design_id: string;
+          revision: number;
+          kind: 'autosave' | 'explicit';
+          document: import('@/domains/studio/design/document').DesignDocument;
+          created_at: string;
+        },
+        never,
+        { kind?: 'autosave' | 'explicit' }
+      >;
+      ai_studio_design_exports: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          design_id: string;
+          revision_id: string;
+          format: 'png' | 'svg' | 'pdf';
+          storage_key: string;
+          width_px: number;
+          height_px: number;
+          ppi: number;
+          created_at: string;
+        },
+        never,
+        never
+      >;
+      ai_studio_compositions: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          title: string;
+          document: import('@/domains/studio/composition/model').CompositionDocument;
+          revision: number;
+          updated_at: string;
+        },
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          title: string;
+          document: import('@/domains/studio/composition/model').CompositionDocument;
+        },
+        {
+          title?: string;
+          document?: import('@/domains/studio/composition/model').CompositionDocument;
+          revision?: number;
+          updated_at?: string;
+        }
+      >;
+      ai_studio_composition_revisions: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          composition_id: string;
+          revision: number;
+          kind: 'autosave' | 'explicit';
+          document: import('@/domains/studio/composition/model').CompositionDocument;
+          created_at: string;
+        },
+        never,
+        { kind?: 'autosave' | 'explicit' }
+      >;
+      ai_studio_render_jobs: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          composition_id: string;
+          revision_id: string;
+          idempotency_key: string;
+          status: 'queued' | 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted';
+          lease_token: string | null;
+          lease_until: string | null;
+          failure_code: string | null;
+          storage_film: string | null;
+          storage_cover: string | null;
+          storage_captions: string | null;
+          width: number | null;
+          height: number | null;
+          duration_ms: number | null;
+          created_at: string;
+          updated_at: string;
+        },
+        never,
+        never
+      >;
+      ai_studio_footage: Table<import('@/domains/studio/footage').FootageJob, never, never>;
       ai_turns: Table<Turn, never, { feedback: Turn['feedback'] }>;
       ai_messages: Table<ChatMessage, never, never>;
       ai_aux_usage: Table<
@@ -1231,6 +1349,70 @@ export interface Database {
       ai_studio_finish: {
         Args: { p_id: string; p_status: string; p_key?: string | null; p_failure?: string | null };
         Returns: boolean;
+      };
+      ai_studio_design_save: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_title: string;
+          p_document: import('@/domains/studio/design/document').DesignDocument;
+          p_updated: string | null;
+          p_expected: number;
+        };
+        Returns: { id: string; revision: number; updated_at: string }[];
+      };
+      ai_studio_design_freeze: { Args: { p_id: string }; Returns: string };
+      ai_studio_composition_save: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_title: string;
+          p_document: import('@/domains/studio/composition/model').CompositionDocument;
+          p_updated: string | null;
+          p_expected: number;
+        };
+        Returns: { id: string; revision: number; updated_at: string }[];
+      };
+      ai_studio_composition_freeze: { Args: { p_id: string }; Returns: string };
+      ai_studio_render_begin: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_composition: string;
+          p_revision: string;
+          p_key: string;
+        };
+        Returns: boolean;
+      };
+      ai_studio_render_cancel: { Args: { p_id: string }; Returns: boolean };
+      ai_studio_render_claim: { Args: { p_id: string; p_token: string }; Returns: boolean };
+      ai_studio_render_heartbeat: { Args: { p_id: string; p_token: string }; Returns: boolean };
+      ai_studio_render_finish: {
+        Args: {
+          p_id: string;
+          p_token: string;
+          p_film: string;
+          p_cover: string;
+          p_captions: string;
+          p_width: number;
+          p_height: number;
+          p_duration: number;
+        };
+        Returns: boolean;
+      };
+      ai_studio_render_fail: { Args: { p_id: string; p_token: string; p_code: string }; Returns: boolean };
+      ai_studio_render_recover: { Args: Record<string, never>; Returns: number };
+      ai_studio_export_record: {
+        Args: {
+          p_design: string;
+          p_revision: string;
+          p_format: string;
+          p_key: string;
+          p_width: number;
+          p_height: number;
+          p_ppi: number;
+        };
+        Returns: string;
       };
       ai_studio_scene_create: {
         Args: {

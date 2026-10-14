@@ -1951,5 +1951,115 @@ describe('Studio footage owner, quote and spending boundary', () => {
       await db.exec('reset role');
     }
   });
+  it('isolates editable design documents and film render leases between owners', async () => {
+    const project = 'a1000000-0000-4000-8000-000000000001';
+    const design = 'a1000000-0000-4000-8000-000000000002';
+    const composition = 'a1000000-0000-4000-8000-000000000003';
+    const scene = 'a1000000-0000-4000-8000-000000000004';
+    const asset = 'a1000000-0000-4000-8000-000000000005';
+    const job = 'a1000000-0000-4000-8000-000000000006';
+    const key = 'a1000000-0000-4000-8000-000000000007';
+    const token = 'a1000000-0000-4000-8000-000000000008';
+    const own = `(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(
+      founder,
+      `insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Design film')`,
+    );
+    const document = JSON.stringify({
+      schema: 'studio-design/v1',
+      id: design,
+      title: 'Label',
+      page: {
+        width: 100,
+        height: 70,
+        unit: 'mm',
+        ppi: 300,
+        bleed: { top: 0, right: 0, bottom: 0, left: 0 },
+        safe: { top: 0, right: 0, bottom: 0, left: 0 },
+        dimensionSource: 'supplied',
+        dimensionNote: 'Supplier die',
+        background: '#080A0B',
+      },
+      layers: [],
+      guides: { trim: true, bleed: true, safe: true },
+    }).replace(/'/g, "''");
+    const saved = await asUser<{ id: string; revision: number }>(
+      founder,
+      `select id,revision from public.ai_studio_design_save('${design}','${project}','Label','${document}'::jsonb,null,0)`,
+    );
+    expect(saved.rows[0]).toMatchObject({ id: design, revision: 1 });
+    expect((await asUser(member, 'select id from public.ai_studio_designs')).rows).toHaveLength(0);
+    await expect(
+      asUser(
+        member,
+        `select public.ai_studio_design_save('${design}','${project}','Intrusion','${document}'::jsonb,null,0)`,
+      ),
+    ).rejects.toThrow();
+    const film = JSON.stringify({
+      schema: 'studio-composition/v1',
+      id: composition,
+      title: 'Short film',
+      aspect: 'landscape',
+      fps: 24,
+      scenes: [
+        {
+          id: scene,
+          kind: 'image',
+          assetId: asset,
+          assetKind: 'version',
+          name: 'Open',
+          inMs: 0,
+          outMs: 3000,
+          durationMs: 3000,
+          crop: { x: 0, y: 0, width: 1, height: 1 },
+          placement: { x: 0, y: 0, width: 1, height: 1 },
+          transition: 'cut',
+          stillMotion: 'none',
+        },
+      ],
+      titles: [],
+      captions: [],
+      narration: null,
+      music: null,
+    }).replace(/'/g, "''");
+    await asUser(
+      founder,
+      `select public.ai_studio_composition_save('${composition}','${project}','Short film','${film}'::jsonb,null,0)`,
+    );
+    const revision = (
+      await asUser<{ id: string }>(
+        founder,
+        `select id from public.ai_studio_composition_revisions where composition_id='${composition}'`,
+      )
+    ).rows[0]!.id;
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(false);
+    expect(
+      (await asUser<{ ok: boolean }>(member, `select public.ai_studio_render_claim('${job}','${token}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(false);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_claim('${job}','${token}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_cancel('${job}') as ok`)).rows[0]!
+        .ok,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ status: string }>(
+          founder,
+          `select status from public.ai_studio_render_jobs where id='${job}'`,
+        )
+      ).rows[0]!.status,
+    ).toBe('cancelled');
+  });
 });
 

@@ -75,43 +75,98 @@ export async function studioWorkspace(projectId?: string) {
   const current = projectId ?? projects.data?.[0]?.id;
   if (current && !projects.data?.some((project) => project.id === current))
     throw new IntelligenceError('Project not found.', 404);
-  const [versions, references, scenes, finishes] = current
-    ? await Promise.all([
-        client
-          .from('ai_studio_versions')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .order('created_at', { ascending: false })
-          .limit(100),
-        client
-          .from('ai_studio_references')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .order('created_at', { ascending: false })
-          .limit(30),
-        client
-          .from('ai_studio_scenes')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .order('position', { ascending: true })
-          .limit(8),
-        client
-          .from('ai_studio_finishes')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .limit(100),
-      ])
-    : [
-        { data: [], error: null },
-        { data: [], error: null },
-        { data: [], error: null },
-        { data: [], error: null },
-      ];
-  if (versions.error || references.error || scenes.error || finishes.error)
+  const [versions, references, scenes, finishes, designs, compositions, renders, narrations, footage] =
+    current
+      ? await Promise.all([
+          client
+            .from('ai_studio_versions')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(100),
+          client
+            .from('ai_studio_references')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(30),
+          client
+            .from('ai_studio_scenes')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('position', { ascending: true })
+            .limit(8),
+          client
+            .from('ai_studio_finishes')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .limit(100),
+          client
+            .from('ai_studio_designs')
+            .select('id,title,revision,updated_at,document')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('updated_at', { ascending: false })
+            .limit(20),
+          client
+            .from('ai_studio_compositions')
+            .select('id,title,revision,updated_at,document')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('updated_at', { ascending: false })
+            .limit(8),
+          client
+            .from('ai_studio_render_jobs')
+            .select(
+              'id,composition_id,revision_id,status,width,height,duration_ms,created_at,failure_code',
+            )
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(12),
+          client
+            .from('ai_studio_narrations')
+            .select('id,title,status,duration,created_at')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .eq('status', 'complete')
+            .order('created_at', { ascending: false })
+            .limit(20),
+          client
+            .from('ai_studio_footage')
+            .select('id,title,status,duration,ratio,created_at')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .eq('status', 'complete')
+            .order('created_at', { ascending: false })
+            .limit(20),
+        ])
+      : [
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+        ];
+  if (
+    versions.error ||
+    references.error ||
+    scenes.error ||
+    finishes.error ||
+    designs.error ||
+    compositions.error ||
+    renders.error ||
+    narrations.error ||
+    footage.error
+  )
     throw new IntelligenceError('Studio history could not be loaded.', 503);
   return {
     owner: person.id,
@@ -121,8 +176,19 @@ export async function studioWorkspace(projectId?: string) {
     references: references.data ?? [],
     scenes: scenes.data ?? [],
     finishes: finishes.data ?? [],
+    designs: designs.data ?? [],
+    compositions: compositions.data ?? [],
+    renders: renders.data ?? [],
+    narrations: narrations.data ?? [],
+    footage: footage.data ?? [],
     configured: Boolean(process.env.OPENAI_API_KEY),
     canCreate: (await currentAccess()).has('studio.create'),
+    render: {
+      hosted: process.env.STUDIO_RENDER_WORKER === 'true' ? 'implemented' : 'unavailable',
+      generation: process.env.OPENAI_API_KEY ? 'configuration required' : 'disabled',
+      narration: process.env.STUDIO_NARRATION_ENABLED === 'true' ? 'implemented' : 'disabled',
+      footage: process.env.STUDIO_FOOTAGE_ENABLED === 'true' ? 'implemented' : 'disabled',
+    },
   };
 }
 import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';

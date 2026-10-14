@@ -34,6 +34,16 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
       next: 'Enable STUDIO_FOOTAGE_ENABLED only after schema, private video, actual approved render/cost/recovery and output-host acceptance.',
     },
     {
+      name: 'Design documents',
+      status: 'detected',
+      next: 'Editable Fabric-backed documents persist as owner JSON. No commercial editor SDK.',
+    },
+    {
+      name: 'Film renderer',
+      status: env.STUDIO_RENDER_WORKER === 'true' ? 'detected' : 'unavailable',
+      next: 'Hosted rendering stays unavailable until a worker host with FFmpeg 6.1+ libx264/aac runs scripts/studio-render-worker.mjs. Local execution can still produce a real MP4.',
+    },
+    {
       name: 'Live acceptance',
       status: 'unverified',
       next: 'This read-only report does not generate media, verify billing, test private bucket configuration or prove two-account RLS. Record ordinary-login acceptance in a protected preview using the existing database.',

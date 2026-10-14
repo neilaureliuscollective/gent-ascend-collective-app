@@ -40,9 +40,12 @@
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
     "ai": "7.0.107",
+    "fabric": "7.4.0",
     "gsap": "^3.15.0",
+    "jpeg-js": "0.4.4",
     "next": "16.3.5",
     "pdf-lib": "1.17.1",
+    "pngjs": "7.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
@@ -56,6 +59,7 @@
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24",
+    "@types/pngjs": "6.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "0.186.0",
@@ -69,4 +73,3 @@
     "vitest": "5.0.1"
   }
 }
-

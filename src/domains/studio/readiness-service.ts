@@ -14,6 +14,9 @@ export async function studioReadiness() {
     ['Narration allowance', 'ai_studio_narration_usage', 'id,created_at'],
     ['Footage records', 'ai_studio_footage', 'id,status,quote_signature,provider_signature'],
     ['Footage allowance', 'ai_studio_footage_usage', 'id,estimate'],
+    ['Design documents', 'ai_studio_designs', 'id,revision,document'],
+    ['Film compositions', 'ai_studio_compositions', 'id,revision,document'],
+    ['Film renders', 'ai_studio_render_jobs', 'id,status,revision_id'],
   ] as const;
   const schemas = await Promise.all(
     tables.map(async ([name, table, columns]): Promise<StudioSetupCheck> => {
