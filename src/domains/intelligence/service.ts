@@ -19,6 +19,7 @@ export class IntelligenceError extends Error {
   constructor(
     message: string,
     public status = 400,
+    public safeDetail?: Record<string, string | number | null>,
   ) {
     super(message);
   }

@@ -79,11 +79,12 @@ for (const width of [390, 1440])
     await expect(page.getByRole('button', { name: 'Start voice', exact: true })).toBeDisabled();
     await page.getByRole('checkbox', { name: /I consent/ }).check();
     await page.getByRole('button', { name: 'Start voice', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('status')).toHaveText('Listening');
-    await expect(dialog.locator('.im-presence')).toHaveAttribute('data-phase', 'listening');
-    await expect(dialog.locator('.im-presence')).toHaveAttribute('data-motion', 'still');
+    const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
+    await expect(compact).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toHaveCount(0);
+    await expect(compact.getByRole('status')).toHaveText('Listening');
+    await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'listening');
+    await expect(compact.locator('.im-presence')).toHaveAttribute('data-motion', 'still');
     await page.screenshot({ path: `test-results/guiding-voice-${width}.png`, fullPage: true });
     await page.evaluate(() => {
       (
@@ -96,11 +97,9 @@ for (const width of [390, 1440])
         }),
       });
     });
-    await expect(dialog.getByRole('log')).toContainText('Synthetic question');
-    await dialog.getByRole('button', { name: 'Minimize', exact: true }).click();
+    await expect(compact.getByRole('log')).toContainText('Synthetic question');
     await page.getByRole('button', { name: 'Navigate workspace', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Studio', exact: true })).toBeVisible();
-    const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
     await expect(compact.getByRole('status')).toHaveText('Listening');
     expect(starts).toBe(1);
     expect(ends).toBe(0);
@@ -120,6 +119,7 @@ for (const width of [390, 1440])
     await expect(compact.getByRole('status')).toHaveText('Speaking');
     await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'speaking');
     await compact.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(compact).toBeVisible();
@@ -152,9 +152,9 @@ test('voice diagnostic download excludes transcript and record IDs', async ({ pa
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
+  const dialog = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
   await expect(dialog).toBeVisible();
-  // Dialog visibility precedes async admission and fake channel creation.
+  // Compact chrome precedes async admission and fake channel creation.
   await expect
     .poll(() =>
       page.evaluate(
@@ -221,7 +221,7 @@ test('cancelling during slow SDP admission revokes the late call without restori
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
   await expect(dialog.getByRole('status')).toHaveText('Connecting');
   await expect.poll(() => admissions).toBe(1);
   await dialog.getByRole('button', { name: 'End', exact: true }).click();
@@ -256,7 +256,7 @@ test('late ASR stays ordered and uncertain cleanup prevents another voice sessio
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
+  const dialog = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
   await expect(dialog.getByRole('status')).toHaveText('Listening');
   await page.evaluate(() => {
     const channel = (
@@ -291,6 +291,59 @@ test('late ASR stays ordered and uncertain cleanup prevents another voice sessio
   await dialog.getByRole('button', { name: 'End / retry cleanup', exact: true }).click();
   await expect(dialog).not.toContainText('Server cleanup is pending');
   expect(starts).toBe(1);
+});
+
+test('connection failure stays compact with a usable retry and does not force fullscreen', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await fakeTransport(page);
+  await page.route('**/api/aethelios/live', async (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { jobs: [] } });
+    if (route.request().method() === 'DELETE') return route.fulfill({ json: { ended: true } });
+    return route.fulfill({
+      status: 503,
+      json: {
+        error: 'The voice provider did not complete admission. Your text workspace remains available.',
+        detail: { stage: 'provider', category: 'rejected', providerStatus: 401 },
+      },
+    });
+  });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+  await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Persistent Aethelios voice controls' })).toHaveCount(
+    0,
+  );
+});
+
+test('simulated phone and unfolded-Fold consent stays scrollable with reachable Start', async ({
+  page,
+}, testInfo) => {
+  testInfo.annotations.push({
+    type: 'viewport',
+    description: 'Simulated Chromium viewports, not a physical Fold or phone.',
+  });
+  for (const viewport of [
+    { name: 'phone', width: 390, height: 844 },
+    { name: 'fold-unfolded', width: 768, height: 712 },
+  ]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+    await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
+    const consent = page.getByRole('group', { name: 'Voice pilot consent' });
+    await expect(consent).toBeVisible();
+    const box = await consent.boundingBox();
+    expect(box?.height ?? 9999).toBeLessThanOrEqual(viewport.height * 0.8);
+    await expect(consent.getByRole('button', { name: 'Start voice', exact: true })).toBeVisible();
+    await page.screenshot({
+      path: `test-results/talk-live-consent-${viewport.name}-${viewport.width}.png`,
+      fullPage: true,
+    });
+    await consent.getByRole('button', { name: 'Cancel', exact: true }).click();
+  }
 });
 
 test('unavailable Live remains visible in Talk with an understandable reason', async ({ page }) => {

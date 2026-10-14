@@ -19,6 +19,7 @@ vi.mock('@/domains/intelligence/service', () => ({
     constructor(
       message: string,
       public status = 400,
+      public safeDetail?: Record<string, string | number | null>,
     ) {
       super(message);
     }
@@ -45,11 +46,13 @@ import { admitLive } from '@/domains/live/service';
 class Socket extends EventTarget {
   static OPEN = 1;
   static last: Socket;
+  static lastInit: unknown;
   readyState = 1;
   sent: { item?: { id?: string; content?: { text: string }[] } }[] = [];
-  constructor() {
+  constructor(_url?: string, init?: unknown) {
     super();
     Socket.last = this;
+    Socket.lastInit = init;
     queueMicrotask(() => this.dispatchEvent(new Event('open')));
   }
   send(raw: string) {
@@ -165,6 +168,25 @@ it('denies an ordinary beta account before reservations or provider admission', 
   expect(rpc).not.toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
 });
+it('opens the official server sideband with an Authorization header rather than the browser protocol', async () => {
+  await admitLive(input);
+  expect(Socket.lastInit).toEqual({
+    headers: { Authorization: 'Bearer synthetic-provider' },
+  });
+});
+it('reports a sanitized provider rejection instead of one generic connection message', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(new Response('no', { status: 401 }));
+  await expect(admitLive(input)).rejects.toMatchObject({
+    status: 503,
+    message: expect.stringMatching(/provider did not complete admission/),
+    safeDetail: expect.objectContaining({
+      stage: 'provider',
+      category: 'rejected',
+      providerStatus: 401,
+    }),
+  });
+  expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));
+});
 it('seeds saved typed history before admitting audio, omits private context without consent, and survives cancel races', async () => {
   const admission = await admitLive(input);
   const socket = Socket.last;
@@ -234,6 +256,81 @@ it('leaves cleanup unconfirmed when provider hangup fails', async () => {
   await expect(monitor).rejects.toThrow(/cleanup/);
   expect(rpc.mock.calls.some(([name]) => name === 'ai_live_end')).toBe(false);
 });
+it('reports a missing conversation as a context-stage failure and releases the reservation', async () => {
+  const session = await mock.session();
+  mock.session.mockResolvedValue({
+    person: session.person,
+    client: {
+      ...session.client,
+      from: (table: string) => {
+        const query = {
+          select: () => query,
+          eq: () => query,
+          is: () => query,
+          lte: () => query,
+          order: () => query,
+          limit: async () => ({ data: [], error: null }),
+          single: async () =>
+            table === 'ai_conversations'
+              ? { data: null, error: { message: 'missing' } }
+              : { data: { ended_at: null, conversation_id: input.conversationId }, error: null },
+          maybeSingle: async () => ({ data: null, error: null }),
+        };
+        return query;
+      },
+    },
+  });
+  await expect(admitLive(input)).rejects.toMatchObject({
+    safeDetail: expect.objectContaining({ stage: 'context', category: 'unavailable' }),
+  });
+  expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));
+  expect(fetch).not.toHaveBeenCalled();
+});
+it('does not hang up an invalid provider call id', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response('v=0', { headers: { location: '/v1/realtime/calls/not-a-call' } }),
+  );
+  await expect(admitLive(input)).rejects.toMatchObject({
+    safeDetail: expect.objectContaining({ stage: 'call-id', category: 'invalid-response' }),
+  });
+  expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/hangup'))).toBe(false);
+  expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));
+});
+it('hangs up and ends the reservation when session attachment fails', async () => {
+  rpc.mockImplementation(async (name: string) =>
+    name === 'ai_live_attach'
+      ? { data: false, error: null }
+      : {
+          data: name === 'ai_live_reserve' ? new Date(Date.now() + 120000).toISOString() : true,
+          error: null,
+        },
+  );
+  await expect(admitLive(input)).rejects.toMatchObject({
+    safeDetail: expect.objectContaining({ stage: 'attachment', category: 'unavailable' }),
+  });
+  expect(fetch).toHaveBeenCalledWith(
+    expect.stringContaining('/hangup'),
+    expect.objectContaining({ redirect: 'error' }),
+  );
+  expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));
+});
+it('reports a sideband timeout when the control socket never opens', async () => {
+  class SilentSocket extends EventTarget {
+    readyState = 0;
+    send() {}
+    close() {
+      this.readyState = 3;
+    }
+  }
+  vi.stubGlobal('WebSocket', SilentSocket);
+  vi.useFakeTimers();
+  const pending = expect(admitLive(input)).rejects.toMatchObject({
+    safeDetail: expect.objectContaining({ stage: 'sideband', category: 'timeout' }),
+  });
+  await vi.advanceTimersByTimeAsync(10000);
+  await pending;
+});
+
 it('does not confirm monitor cleanup when the database does not acknowledge End', async () => {
   const admission = await admitLive(input);
   const monitor = admission.monitor();

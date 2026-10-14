@@ -29,7 +29,7 @@ export type LiveState = {
 export class LiveController {
   private state: LiveState = {
     phase: 'idle',
-    mode: 'immersive',
+    mode: 'compact',
     muted: false,
     error: '',
     conversationId: null,
@@ -162,7 +162,7 @@ export class LiveController {
       recovering: false,
       speechDetected: false,
       responsePending: false,
-      mode: 'immersive',
+      mode: 'compact',
       muted: false,
       error: '',
       conversationId,
@@ -281,6 +281,7 @@ export class LiveController {
         expiresAt?: string;
         model?: string;
         error?: string;
+        detail?: { stage?: string };
       };
       if (epoch !== this.epoch) {
         // An earlier End may have read no reservation before this POST completed.
