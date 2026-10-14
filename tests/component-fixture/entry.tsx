@@ -13,7 +13,7 @@ import { HealthWorkspace, type HealthView } from '@/components/health/workspace'
 import { healthFixture } from './health';
 import { MissionHandoffFixture } from './mission-handoff';
 import { FounderOffice } from '@/components/founder-office/office';
-import { founderOfficeFixture } from './founder-office-data';
+import { configuredSetup, founderOfficeFixture, verifiedSetup } from './founder-office-data';
 import { ConnectionsWorkspace } from '@/components/connections/workspace';
 import '@/app/(workspace)/app/work/work.css';
 import '@/app/(workspace)/app/founder/office.css';
@@ -200,11 +200,7 @@ createRoot(document.getElementById('root')!).render(
       }
       controls={<p>Synthetic Origin fixture · no real account or model.</p>}
     >
-      <ArchitectOrigin
-        enabled
-        aiEnabled
-        constructEnabled={params.get('construct') === 'adapter'}
-      />
+      <ArchitectOrigin enabled aiEnabled constructEnabled={params.get('construct') === 'adapter'} />
     </EnvironmentFrame>
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
@@ -221,6 +217,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'expired',
             setupRequired: false,
             configured: true,
+            setup: configuredSetup,
             accountLogin: 'synthetic-founder',
             selectedName: 'neilaureliuscollective/gent-ascend-collective-app',
             lastError:
@@ -235,6 +232,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'revoked',
             setupRequired: false,
             configured: true,
+            setup: configuredSetup,
             summary: 'The provider grant was revoked. Aethelios no longer has usable credentials.',
           },
         }}
@@ -251,8 +249,10 @@ createRoot(document.getElementById('root')!).render(
             status: 'connecting',
             setupRequired: false,
             configured: true,
+            setup: { ...configuredSetup, accountAuthorized: true },
             accountLogin: 'synthetic-founder',
-            summary: 'Authorization is in progress. Complete the provider prompt, then return here.',
+            summary:
+              'Authorization is in progress. Complete the provider prompt, then return here.',
             resources: [
               {
                 id: '1',
@@ -266,10 +266,16 @@ createRoot(document.getElementById('root')!).render(
             status: 'connecting',
             setupRequired: false,
             configured: true,
+            setup: { ...configuredSetup, accountAuthorized: true },
             accountLogin: 'synthetic-team',
-            summary: 'Authorization is in progress. Complete the provider prompt, then return here.',
+            summary:
+              'Authorization is in progress. Complete the provider prompt, then return here.',
             resources: [
-              { id: 'prj_synthetic', name: 'gent-ascend-collective-app', detail: 'Selected project' },
+              {
+                id: 'prj_synthetic',
+                name: 'gent-ascend-collective-app',
+                detail: 'Selected project',
+              },
             ],
           },
         }}
@@ -286,6 +292,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'disconnected',
             setupRequired: false,
             configured: true,
+            setup: configuredSetup,
             summary: 'Not connected. Aethelios has no usable credential for this service.',
           },
           vercel: {
@@ -293,6 +300,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'disconnected',
             setupRequired: false,
             configured: true,
+            setup: configuredSetup,
             summary: 'Not connected. Aethelios has no usable credential for this service.',
           },
         }}
@@ -308,6 +316,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'disconnected',
             setupRequired: false,
             configured: true,
+            setup: configuredSetup,
             summary: 'Not connected. Aethelios has no usable credential for this service.',
           },
           vercel: {
@@ -315,6 +324,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'disconnected',
             setupRequired: false,
             configured: true,
+            setup: configuredSetup,
             summary: 'Not connected. Aethelios has no usable credential for this service.',
           },
         }}
@@ -335,6 +345,7 @@ createRoot(document.getElementById('root')!).render(
             status: 'connected',
             setupRequired: false,
             configured: true,
+            setup: verifiedSetup,
             accountLogin: 'synthetic-founder',
             selectedName: 'neilaureliuscollective/gent-ascend-collective-app',
             selectedId: '1',
@@ -344,13 +355,15 @@ createRoot(document.getElementById('root')!).render(
               'Read repository contents and metadata for the selected repository only.',
               'No administration, secrets, workflows, branch-protection bypass or repository write access.',
             ],
-            summary: 'Connected and verified for neilaureliuscollective/gent-ascend-collective-app.',
+            summary:
+              'Connected and verified for neilaureliuscollective/gent-ascend-collective-app.',
           },
           vercel: {
             ...founderOfficeFixture.connections.vercel,
             status: 'connected',
             setupRequired: false,
             configured: true,
+            setup: verifiedSetup,
             accountLogin: 'synthetic-team',
             selectedName: 'gent-ascend-collective-app',
             selectedId: 'prj_synthetic',

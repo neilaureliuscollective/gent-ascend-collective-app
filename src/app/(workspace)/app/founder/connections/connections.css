@@ -100,6 +100,14 @@
   padding: 0.9rem 0 0;
   border-top: 1px solid var(--io-divider);
 }
+.connections-detail h4 {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+}
+.connections-detail code {
+  color: var(--io-text);
+  overflow-wrap: anywhere;
+}
 .connections-status {
   color: var(--io-highlight, #c4912f);
 }

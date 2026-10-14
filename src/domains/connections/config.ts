@@ -90,13 +90,160 @@ export function vercelIntegrationConfig(env: Record<string, string | undefined> 
     clientId: client.data,
     clientSecret: clientSecret.data,
     slug: slugValue.data,
-    webhookSecret: env.VERCEL_INTEGRATION_WEBHOOK_SECRET?.length
-      ? secret.safeParse(env.VERCEL_INTEGRATION_WEBHOOK_SECRET).success
-        ? env.VERCEL_INTEGRATION_WEBHOOK_SECRET
-        : null
-      : null,
+    // Official Vercel integration webhooks are HMAC-SHA1 signed with the
+    // Integration Secret (client secret). Do not invent a separate webhook secret.
+    webhookSecret: clientSecret.data,
     callback: `${host}/api/connections/vercel/callback`,
     webhook: `${host}/api/connections/webhooks/vercel`,
+  };
+}
+
+export type SettingNameStatus = {
+  name: string;
+  present: boolean;
+  valid: boolean;
+};
+
+function inspectSetting(name: string, raw: string | undefined, valid: boolean): SettingNameStatus {
+  const present = Boolean(raw?.length);
+  return { name, present, valid: present ? valid : false };
+}
+
+export function inspectGithubSettings(
+  env: Record<string, string | undefined> = process.env,
+): SettingNameStatus[] {
+  const webhookRaw = env.GITHUB_APP_WEBHOOK_SECRET;
+  return [
+    inspectSetting(
+      'NEXT_PUBLIC_APP_URL',
+      env.NEXT_PUBLIC_APP_URL,
+      Boolean(origin(env.NEXT_PUBLIC_APP_URL)),
+    ),
+    inspectSetting(
+      'CONNECTIONS_CREDENTIAL_KEY',
+      env.CONNECTIONS_CREDENTIAL_KEY,
+      Boolean(connectionsCredentialKey(env)),
+    ),
+    inspectSetting('GITHUB_APP_ID', env.GITHUB_APP_ID, appId.safeParse(env.GITHUB_APP_ID).success),
+    inspectSetting(
+      'GITHUB_APP_SLUG',
+      env.GITHUB_APP_SLUG,
+      slug.safeParse(env.GITHUB_APP_SLUG).success,
+    ),
+    inspectSetting(
+      'GITHUB_APP_CLIENT_ID',
+      env.GITHUB_APP_CLIENT_ID,
+      clientId.safeParse(env.GITHUB_APP_CLIENT_ID).success,
+    ),
+    inspectSetting(
+      'GITHUB_APP_CLIENT_SECRET',
+      env.GITHUB_APP_CLIENT_SECRET,
+      secret.safeParse(env.GITHUB_APP_CLIENT_SECRET).success,
+    ),
+    inspectSetting(
+      'GITHUB_APP_PRIVATE_KEY',
+      env.GITHUB_APP_PRIVATE_KEY,
+      Boolean(pem(env.GITHUB_APP_PRIVATE_KEY)),
+    ),
+    inspectSetting('GITHUB_APP_WEBHOOK_SECRET', webhookRaw, secret.safeParse(webhookRaw).success),
+  ];
+}
+
+export function inspectVercelSettings(
+  env: Record<string, string | undefined> = process.env,
+): SettingNameStatus[] {
+  return [
+    inspectSetting(
+      'NEXT_PUBLIC_APP_URL',
+      env.NEXT_PUBLIC_APP_URL,
+      Boolean(origin(env.NEXT_PUBLIC_APP_URL)),
+    ),
+    inspectSetting(
+      'CONNECTIONS_CREDENTIAL_KEY',
+      env.CONNECTIONS_CREDENTIAL_KEY,
+      Boolean(connectionsCredentialKey(env)),
+    ),
+    inspectSetting(
+      'VERCEL_INTEGRATION_SLUG',
+      env.VERCEL_INTEGRATION_SLUG,
+      slug.safeParse(env.VERCEL_INTEGRATION_SLUG).success,
+    ),
+    inspectSetting(
+      'VERCEL_INTEGRATION_CLIENT_ID',
+      env.VERCEL_INTEGRATION_CLIENT_ID,
+      clientId.safeParse(env.VERCEL_INTEGRATION_CLIENT_ID).success,
+    ),
+    inspectSetting(
+      'VERCEL_INTEGRATION_CLIENT_SECRET',
+      env.VERCEL_INTEGRATION_CLIENT_SECRET,
+      secret.safeParse(env.VERCEL_INTEGRATION_CLIENT_SECRET).success,
+    ),
+  ];
+}
+
+const GITHUB_CORE_NAMES = [
+  'NEXT_PUBLIC_APP_URL',
+  'CONNECTIONS_CREDENTIAL_KEY',
+  'GITHUB_APP_ID',
+  'GITHUB_APP_SLUG',
+  'GITHUB_APP_CLIENT_ID',
+  'GITHUB_APP_CLIENT_SECRET',
+  'GITHUB_APP_PRIVATE_KEY',
+] as const;
+
+const VERCEL_CORE_NAMES = [
+  'NEXT_PUBLIC_APP_URL',
+  'CONNECTIONS_CREDENTIAL_KEY',
+  'VERCEL_INTEGRATION_SLUG',
+  'VERCEL_INTEGRATION_CLIENT_ID',
+  'VERCEL_INTEGRATION_CLIENT_SECRET',
+] as const;
+
+export function describeProviderSetup(
+  provider: 'github' | 'vercel',
+  env: Record<string, string | undefined> = process.env,
+  record: {
+    accountLogin: string | null;
+    selectedId: string | null;
+    lastVerifiedAt: string | null;
+    status: string;
+    userAuthorization: string | null;
+  } | null = null,
+) {
+  const settings = provider === 'github' ? inspectGithubSettings(env) : inspectVercelSettings(env);
+  const core = provider === 'github' ? GITHUB_CORE_NAMES : VERCEL_CORE_NAMES;
+  const missing = settings.filter((item) => !item.present).map((item) => item.name);
+  const invalid = settings.filter((item) => item.present && !item.valid).map((item) => item.name);
+  const configurationReady = core.every((name) => {
+    const item = settings.find((entry) => entry.name === name);
+    return Boolean(item?.present && item.valid);
+  });
+  const webhookReady =
+    provider === 'github'
+      ? settings.some(
+          (item) => item.name === 'GITHUB_APP_WEBHOOK_SECRET' && item.present && item.valid,
+        )
+      : configurationReady;
+  const accountAuthorized = Boolean(
+    record &&
+    record.accountLogin &&
+    record.userAuthorization !== 'revoked' &&
+    record.status !== 'setup_required',
+  );
+  const resourceVerified = Boolean(
+    record &&
+    record.status === 'connected' &&
+    record.selectedId &&
+    record.lastVerifiedAt &&
+    record.userAuthorization !== 'revoked',
+  );
+  return {
+    configurationReady,
+    webhookReady,
+    accountAuthorized,
+    resourceVerified,
+    missing,
+    invalid,
   };
 }
 

@@ -125,6 +125,27 @@ export type SelectableResource = {
   private?: boolean;
 };
 
+export type ConnectionSetup = {
+  configurationReady: boolean;
+  webhookReady: boolean;
+  accountAuthorized: boolean;
+  resourceVerified: boolean;
+  missing: string[];
+  invalid: string[];
+};
+
+export function emptyConnectionSetup(extras: Partial<ConnectionSetup> = {}): ConnectionSetup {
+  return {
+    configurationReady: false,
+    webhookReady: false,
+    accountAuthorized: false,
+    resourceVerified: false,
+    missing: [],
+    invalid: [],
+    ...extras,
+  };
+}
+
 export type ConnectionView = {
   provider: ConnectionProvider;
   label: string;
@@ -144,6 +165,7 @@ export type ConnectionView = {
   resources: SelectableResource[];
   deployment: z.infer<typeof deploymentStatus> | null;
   summary: string;
+  setup: ConnectionSetup;
 };
 
 export const selectInput = z.object({
@@ -167,8 +189,7 @@ export function statusSummary(view: Pick<ConnectionView, 'status' | 'selectedNam
       return view.lastError ?? 'Connected, but a required resource is missing or reduced.';
     case 'expired':
       return (
-        view.lastError ??
-        'The provider grant expired. Connect again to restore verified access.'
+        view.lastError ?? 'The provider grant expired. Connect again to restore verified access.'
       );
     case 'revoked':
       return (

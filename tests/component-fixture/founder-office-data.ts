@@ -1,4 +1,40 @@
+import { emptyConnectionSetup } from '@/domains/connections/schema';
 import type { FounderOfficeData } from '@/domains/founder-office/service';
+
+const githubSetupRequired = emptyConnectionSetup({
+  missing: [
+    'NEXT_PUBLIC_APP_URL',
+    'CONNECTIONS_CREDENTIAL_KEY',
+    'GITHUB_APP_ID',
+    'GITHUB_APP_SLUG',
+    'GITHUB_APP_CLIENT_ID',
+    'GITHUB_APP_CLIENT_SECRET',
+    'GITHUB_APP_PRIVATE_KEY',
+    'GITHUB_APP_WEBHOOK_SECRET',
+  ],
+});
+
+const vercelSetupRequired = emptyConnectionSetup({
+  missing: [
+    'NEXT_PUBLIC_APP_URL',
+    'CONNECTIONS_CREDENTIAL_KEY',
+    'VERCEL_INTEGRATION_SLUG',
+    'VERCEL_INTEGRATION_CLIENT_ID',
+    'VERCEL_INTEGRATION_CLIENT_SECRET',
+  ],
+});
+
+const configuredSetup = emptyConnectionSetup({
+  configurationReady: true,
+  webhookReady: true,
+});
+
+const verifiedSetup = emptyConnectionSetup({
+  configurationReady: true,
+  webhookReady: true,
+  accountAuthorized: true,
+  resourceVerified: true,
+});
 export const founderOfficeFixture: FounderOfficeData = {
   ownerId: 'synthetic-owner',
   person: {
@@ -59,6 +95,7 @@ export const founderOfficeFixture: FounderOfficeData = {
       deployment: null,
       summary:
         'Setup required. Register the provider application and server secrets before connecting.',
+      setup: githubSetupRequired,
     },
     vercel: {
       provider: 'vercel',
@@ -83,6 +120,9 @@ export const founderOfficeFixture: FounderOfficeData = {
       deployment: null,
       summary:
         'Setup required. Register the provider application and server secrets before connecting.',
+      setup: vercelSetupRequired,
     },
   },
 };
+
+export { configuredSetup, verifiedSetup };

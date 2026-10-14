@@ -8,6 +8,12 @@ for (const width of [390, 720, 1440]) {
     await expect(page.getByRole('heading', { name: 'GitHub' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Vercel' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Setup required' }).first()).toBeDisabled();
+    await page.getByRole('button', { name: 'View setup' }).first().click();
+    await expect(page.getByText('Configuration ready')).toBeVisible();
+    await expect(page.getByText('Webhook ready')).toBeVisible();
+    await expect(page.getByText('Account authorization completed')).toBeVisible();
+    await expect(page.getByText('Selected resource verified')).toBeVisible();
+    await expect(page.getByText('GITHUB_APP_ID')).toBeVisible();
     await expect(page.getByText('read-only', { exact: false }).first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
@@ -65,7 +71,9 @@ test('Authorization success asks for repository selection before Connected', asy
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('http://127.0.0.1:3102/?mode=connections-select');
   await expect(
-    page.getByText('Authorization succeeded. Select the exact repository or project to verify access.'),
+    page.getByText(
+      'Authorization succeeded. Select the exact repository or project to verify access.',
+    ),
   ).toBeVisible();
   await expect(page.getByLabel('Select repository')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Disconnect' }).first()).toBeVisible();
@@ -77,7 +85,9 @@ test('Expired GitHub authorization requires reconnect and does not claim uninsta
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('http://127.0.0.1:3102/?mode=connections-expired');
-  await expect(page.getByText('GitHub user authorization was revoked', { exact: false })).toBeVisible();
+  await expect(
+    page.getByText('GitHub user authorization was revoked', { exact: false }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Connect again' }).first()).toBeVisible();
   await page.getByRole('button', { name: 'What Aethelios can do' }).first().click();
   await expect(

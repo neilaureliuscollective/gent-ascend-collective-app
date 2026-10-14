@@ -35,6 +35,7 @@ export function ConnectionsWorkspace({ initial, notice }: { initial: Board; noti
   const [busy, setBusy] = useState<ConnectionProvider | null>(null);
   const [message, setMessage] = useState(notice ?? '');
   const [detail, setDetail] = useState<ConnectionProvider | null>(null);
+  const [setup, setSetup] = useState<ConnectionProvider | null>(null);
   const [confirm, setConfirm] = useState<ConnectionProvider | null>(null);
   const alive = useRef(true);
   const titleId = useId();
@@ -127,7 +128,14 @@ export function ConnectionsWorkspace({ initial, notice }: { initial: Board; noti
         {providers.map((provider) => {
           const view = board[provider];
           const open = detail === provider;
+          const showingSetup = setup === provider;
           const asking = confirm === provider;
+          const readiness = [
+            ['Configuration ready', view.setup.configurationReady],
+            ['Webhook ready', view.setup.webhookReady],
+            ['Account authorization completed', view.setup.accountAuthorized],
+            ['Selected resource verified', view.setup.resourceVerified],
+          ] as const;
           return (
             <article
               className={`connections-card founder-card ${statusTone(view.status)}`}
@@ -260,21 +268,29 @@ export function ConnectionsWorkspace({ initial, notice }: { initial: Board; noti
                   </button>
                 )}
                 {view.status !== 'disconnected' && view.status !== 'setup_required' && (
-                    <button
-                      className="secondary-button"
-                      disabled={Boolean(busy)}
-                      onClick={() =>
-                        void act(
-                          provider,
-                          '/api/connections/disconnect',
-                          { provider },
-                          view.installationRemainsHint,
-                        )
-                      }
-                    >
-                      Disconnect
-                    </button>
-                  )}
+                  <button
+                    className="secondary-button"
+                    disabled={Boolean(busy)}
+                    onClick={() =>
+                      void act(
+                        provider,
+                        '/api/connections/disconnect',
+                        { provider },
+                        view.installationRemainsHint,
+                      )
+                    }
+                  >
+                    Disconnect
+                  </button>
+                )}
+                <button
+                  className="secondary-button"
+                  disabled={Boolean(busy)}
+                  aria-expanded={showingSetup}
+                  onClick={() => setSetup(showingSetup ? null : provider)}
+                >
+                  {showingSetup ? 'Hide setup' : 'View setup'}
+                </button>
                 <button
                   className="secondary-button"
                   disabled={Boolean(busy)}
@@ -284,6 +300,51 @@ export function ConnectionsWorkspace({ initial, notice }: { initial: Board; noti
                   {open ? 'Hide detail' : 'What Aethelios can do'}
                 </button>
               </div>
+              {showingSetup && (
+                <div
+                  className="connections-detail"
+                  role="region"
+                  aria-label={`${view.label} setup`}
+                >
+                  <h3>Setup</h3>
+                  <dl className="connections-meta">
+                    {readiness.map(([label, ready]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{ready ? 'Ready' : 'Not ready'}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {view.setup.missing.length > 0 && (
+                    <>
+                      <h4>Missing settings</h4>
+                      <ul>
+                        {view.setup.missing.map((name) => (
+                          <li key={name}>
+                            <code>{name}</code>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {view.setup.invalid.length > 0 && (
+                    <>
+                      <h4>Invalid settings</h4>
+                      <ul>
+                        {view.setup.invalid.map((name) => (
+                          <li key={name}>
+                            <code>{name}</code>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  <p>
+                    Connect stays disabled until configuration is ready. Webhook readiness, an
+                    enabled button, or a successful deploy is not a connected account.
+                  </p>
+                </div>
+              )}
               {open && (
                 <div className="connections-detail">
                   <h3>Current capability</h3>

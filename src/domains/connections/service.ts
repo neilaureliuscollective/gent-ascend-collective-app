@@ -5,6 +5,7 @@ import { intelligenceSession } from '@/domains/intelligence/service';
 import {
   appOrigin,
   connectionsCredentialKey,
+  describeProviderSetup,
   flowCookieName,
   githubAppConfig,
   requireGithubConfig,
@@ -32,6 +33,7 @@ import {
   verifyVercelConnection,
 } from './vercel';
 import {
+  emptyConnectionSetup,
   githubPermissionSummary,
   selectInput,
   statusSummary,
@@ -80,6 +82,7 @@ function emptyView(
     resources: extras.resources ?? [],
     deployment: extras.deployment ?? null,
     summary: '',
+    setup: extras.setup ?? emptyConnectionSetup(),
   };
   const view = { ...base, ...extras, provider, status };
   return { ...view, summary: statusSummary(view) };
@@ -90,9 +93,11 @@ function fromRecord(
   provider: ConnectionProvider,
   configured: boolean,
   resources: SelectableResource[] = [],
+  env: Record<string, string | undefined> = process.env,
 ): ConnectionView {
-  if (!configured) return emptyView(provider, 'setup_required');
-  if (!record) return emptyView(provider, 'disconnected', { configured: true });
+  const setup = describeProviderSetup(provider, env, record);
+  if (!configured) return emptyView(provider, 'setup_required', { setup });
+  if (!record) return emptyView(provider, 'disconnected', { configured: true, setup });
   if (record.userAuthorization === 'revoked')
     return emptyView(provider, 'expired', {
       configured: true,
@@ -104,6 +109,7 @@ function fromRecord(
       lastError:
         record.lastError ??
         'GitHub user authorization was revoked. Connect again to restore the association.',
+      setup,
     });
   return emptyView(provider, record.status, {
     configured: true,
@@ -116,6 +122,7 @@ function fromRecord(
     resources,
     accessMode:
       record.status === 'connected' || record.status === 'degraded' ? 'read-only' : 'none',
+    setup,
   });
 }
 
@@ -153,8 +160,8 @@ export async function describeConnections(
     }
   }
   return {
-    github: fromRecord(github, 'github', Boolean(githubConfig), githubResources),
-    vercel: fromRecord(vercel, 'vercel', Boolean(vercelConfig), vercelResources),
+    github: fromRecord(github, 'github', Boolean(githubConfig), githubResources, env),
+    vercel: fromRecord(vercel, 'vercel', Boolean(vercelConfig), vercelResources, env),
   };
 }
 

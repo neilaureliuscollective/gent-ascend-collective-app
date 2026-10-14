@@ -1,16 +1,21 @@
 # Aethelios Connections — GitHub and Vercel
 
-Date: 2026-10-13. Branch `cursor/aethelios-connections-8d20`. No production merge, hosted migration, billing or live provider registration in this task.
+Date: 2026-10-14. Commissioning on `cursor/aethelios-connections-setup-d35e` from main `273ee6d`. Implementation already merged via PR #117. This follow-up corrects setup docs, reports hosted-ledger status, and adds a founder-only View setup action. No production merge, hosted migration, billing or autonomous provider registration.
 
 ## What this is
 
 Founder Office previously showed fixed strings for GitHub and Vercel. Public GitHub inspection of the canonical repository remains a separate, unauthenticated observation. This work adds a real, founder-gated Connections surface:
 
 - Entry: `/app/founder/connections`, Founder Office navigation, and the verified founder account page.
-- GitHub App installation + user association (not generic OAuth-as-app).
-- Vercel native integration OAuth with selected-project read access.
+- GitHub App installation + later user association (not generic OAuth-as-app).
+- Vercel **connectable-account / OAuth integration** with selected-project read access. This is not a native Marketplace product.
 - Verified states: setup required, disconnected, connecting, connected, degraded, expired, revoked, verification failed.
+- Founder-only **View setup** shows setting *names* and four separate statuses: configuration ready, webhook ready, account authorization completed, selected resource verified. It never prints secret values.
 - Connecting a repository does not start Architect, a runner, or any AI operation.
+
+## Current founder step
+
+1. Open the `neilaureliuscollective` GitHub Apps list and say whether an Aethelios or Gent Ascend app already exists. Do not create an app until that list is confirmed.
 
 ## Official research (2026-10-13)
 
@@ -21,10 +26,12 @@ GitHub:
 - Installation tokens: `POST /app/installations/{id}/access_tokens` with `repository_ids` and read-only `permissions`. They expire in one hour and are minted server-side, never stored. [Generating an installation access token](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app).
 - User tokens (association only) support PKCE `S256` and optional `offline_access`. Default user-token expiry is 8 hours with a 6-month refresh token when expiration is enabled.
 
-Vercel:
+Vercel (official docs re-checked 2026-10-14):
 
-- Native integrations exchange a 30-minute `code` once at `POST https://api.vercel.com/v2/oauth/access_token` for a **long-lived** access token plus `installation_id`, `user_id`, `team_id`. This is not GitHub’s one-hour installation-token model. [Building Integrations with the Vercel REST API](https://vercel.com/docs/integrations/create-integration/vercel-api-integrations).
-- PKCE is required for Sign in with Vercel (`https://vercel.com/oauth/authorize`, one-hour access / 30-day rotating refresh). That IdP flow is identity, not selected-project installation. Connections uses the native integration install URL `https://vercel.com/integrations/{slug}/new`.
+- The implementation is a **connectable-account / REST OAuth integration**, not a native Marketplace product. Native onboarding requires a product, Base URL, billing plans and Vercel partnership. Do not create that offering. Sources: [Create an Integration](https://vercel.com/docs/integrations/create-integration), [Building Integrations with the Vercel REST API](https://vercel.com/docs/integrations/create-integration/vercel-api-integrations).
+- Connectable-account integrations exchange a 30-minute `code` once at `POST https://api.vercel.com/v2/oauth/access_token` for a **long-lived** access token plus `installation_id`, `user_id`, `team_id`. This is not GitHub’s one-hour installation-token model.
+- PKCE is required for Sign in with Vercel (`https://vercel.com/oauth/authorize`, one-hour access / 30-day rotating refresh). That IdP flow is identity, not selected-project installation. Connections uses `https://vercel.com/integrations/{slug}/new`.
+- Official integration webhooks are HMAC-SHA1 of the raw body, compared to `x-vercel-signature`, using the **Integration Secret (client secret)**. Do not invent a separate `VERCEL_INTEGRATION_WEBHOOK_SECRET`. Source: [Webhooks API](https://vercel.com/docs/webhooks/webhooks-api).
 - Read scopes requested in the Integration Console: Project (read), Deployment (read), User (read), Integration configuration (read). Not requested: project-env-vars, domain, billing, deployment write.
 - Disconnect deletes Aethelios credentials. Removing the Vercel installation itself requires the founder to uninstall it in Vercel (configuration delete is a write).
 
@@ -45,15 +52,20 @@ Do not paste secret values into chat. Register the applications yourself, then s
 
 ### GitHub App
 
-1. GitHub → Settings → Developer settings → GitHub Apps → New GitHub App.
-2. Callback URL: `{NEXT_PUBLIC_APP_URL}/api/connections/github/callback`
-3. Setup URL: `{NEXT_PUBLIC_APP_URL}/api/connections/github/setup` with Redirect on update enabled.
-4. Webhook URL: `{NEXT_PUBLIC_APP_URL}/api/connections/webhooks/github`
-5. Repository permissions (read-only): Contents, Metadata, Pull requests, Checks, Commit statuses.
-6. Subscribe to: `installation`, `installation_repositories`, `github_app_authorization`.
-7. Where can this app be installed: Only on this account (or allow selected repositories).
-8. Do **not** request administration, secrets, workflows, or contents write.
-9. Generate a client secret and a private key. Store:
+Inspect the owning organization Apps list first. Do not create a second app if an appropriate Aethelios/Gent Ascend app already exists.
+
+The implemented sequence is: install with `state` → Setup URL claims `installation_id` → PKCE user authorization at the Callback URL. Leave **Request user authorization (OAuth) during installation** unchecked. Enabling it removes the Setup URL and conflicts with this flow.
+
+1. Organization `neilaureliuscollective` → Settings → Developer settings → GitHub Apps.
+2. Callback URL: `https://www.gentascend.com/api/connections/github/callback`
+3. Setup URL: `https://www.gentascend.com/api/connections/github/setup` with Redirect on update enabled.
+4. Webhook URL: `https://www.gentascend.com/api/connections/webhooks/github`
+5. Keep Expire user authorization tokens selected. Do not enable Device Flow.
+6. Repository permissions (read-only): Contents, Metadata, Pull requests, Checks, Commit statuses.
+7. Subscribe to: `installation`, `installation_repositories`, `github_app_authorization`.
+8. Where can this app be installed: Only on this account. Selected repositories only.
+9. Do **not** request administration, secrets, workflows, or contents write.
+10. Generate a client secret and a private key. Store:
 
 ```
 CONNECTIONS_CREDENTIAL_KEY   # 64 hex chars, independent AES key
@@ -66,39 +78,43 @@ GITHUB_APP_PRIVATE_KEY
 GITHUB_APP_WEBHOOK_SECRET
 ```
 
-### Vercel integration
+### Vercel connectable-account integration
 
-1. Vercel dashboard → Integrations → Create (native REST integration).
-2. Redirect URL: `{NEXT_PUBLIC_APP_URL}/api/connections/vercel/callback`
-3. Webhook URL: `{NEXT_PUBLIC_APP_URL}/api/connections/webhooks/vercel`
-4. Scopes, read-only: `project`, `deployment`, `user`, `integration-configuration`.
-5. Do **not** enable domain, billing, environment-variable or deployment-write.
-6. Store:
+Do this only after GitHub App registration. Do **not** create a native Marketplace product, Sign in with Vercel, or a personal token.
+
+1. Vercel dashboard → team that owns `gent-ascend-collective-app` → Integrations → Integrations Console → Create.
+2. Choose the connectable-account / OAuth integration type. Skip Create Product.
+3. Redirect URL: `{NEXT_PUBLIC_APP_URL}/api/connections/vercel/callback`
+4. Webhook URL: `{NEXT_PUBLIC_APP_URL}/api/connections/webhooks/vercel`
+5. Scopes, read-only: `project`, `deployment`, `user`, `integration-configuration`.
+6. Do **not** enable domain, billing, environment-variable or deployment-write.
+7. Store the Integration slug, client ID and client secret. Vercel signs webhooks with that same client secret.
 
 ```
 VERCEL_INTEGRATION_SLUG
 VERCEL_INTEGRATION_CLIENT_ID
 VERCEL_INTEGRATION_CLIENT_SECRET
-VERCEL_INTEGRATION_WEBHOOK_SECRET
 ```
 
-If any of these are absent, Connections shows **Setup required**. That is not a successful connection.
+`VERCEL_INTEGRATION_WEBHOOK_SECRET` is unused. Official signing uses `VERCEL_INTEGRATION_CLIENT_SECRET`.
 
-## Production activation audit (2026-10-13, names only)
+If any core names above (or the GitHub core names) are absent, Connections shows **Setup required** and Connect stays disabled. That is not a successful connection. Webhook readiness is reported separately and does not enable Connect.
 
-Inspected against implementation and official GitHub/Vercel docs. Presence of secret *values* was not printed. A READY Vercel preview is not a connected GitHub/Vercel account.
+## Production activation audit (2026-10-14, names only)
+
+Inspected against implementation and official GitHub/Vercel docs. Presence of secret *values* was not printed. A READY Vercel preview is not a connected GitHub/Vercel account. This workspace cannot read the hosted Supabase ledger or the Vercel Environment UI; founder-verified facts below are recorded rather than re-probed.
 
 | Prerequisite | Production (`https://www.gentascend.com`) | Notes |
 |---|---|---|
-| `20261013183000_service_connections.sql` | missing | Not in the hosted ledger snapshot. Apply only with founder authorization, before the trusted-writes migration. |
-| `20261013194500_connection_trusted_writes.sql` | missing | Apply after the first Connections migration. Tightens RPC grants. |
-| `20261013203000_connection_broker_role.sql` | missing | Apply after trusted writes. Replaces `require_broker` to use official `auth.role()`. |
-| `NEXT_PUBLIC_APP_URL` | not accessible here | Must be exactly `https://www.gentascend.com` (no path/query). Callbacks are derived from it. |
-| `CONNECTIONS_CREDENTIAL_KEY` | not accessible here | Independent 64-hex AES key. Do not reuse another secret. |
-| GitHub App registration | missing | Not created in this task. |
+| `20261013183000_service_connections.sql` | applied | Founder-verified on canonical Supabase `volpzkfsnmtztrovexcw`. Do not rerun. |
+| `20261013194500_connection_trusted_writes.sql` | applied | Founder-verified on the same project. Do not rerun. |
+| `20261013203000_connection_broker_role.sql` | applied | Founder-verified on the same project. Do not rerun or apply other hosted migrations. |
+| `NEXT_PUBLIC_APP_URL` | missing | Metadata-only Vercel listing at 2026-10-14 ~19:11 UTC showed none of the Connections names. Must be exactly `https://www.gentascend.com`. |
+| `CONNECTIONS_CREDENTIAL_KEY` | missing | Independent 64-hex AES key. Do not reuse another secret. Do not rotate an existing key without a compatibility plan. |
+| GitHub App registration | not found here | Public slugs `aethelios`, `aethelios-connections`, `gent-ascend`, `gent-ascend-collective`, `aethelios-github`, `gentascend` returned 404. Inspect the org Apps list before creating a duplicate. |
 | GitHub App installation on the selected repository | missing | Read-only Contents, Metadata, Pull requests, Checks, Commit statuses. |
-| Vercel native integration | missing | Not created in this task. Read project, deployment, user, integration-configuration. |
-| Server-only GitHub/Vercel env names | not accessible here | This workspace has no production secret inventory. Preview must not be assumed to have production configuration. |
+| Vercel connectable-account integration | missing | Not a native Marketplace product. Read project, deployment, user, integration-configuration. |
+| Server-only GitHub/Vercel env names | missing | Canonical Vercel project `gent-ascend-collective-app` had none of the Connections entries in the 2026-10-14 metadata-only listing. |
 | Hosted webhook delivery | missing | Requires registration plus the URLs below. |
 
 Production callback and webhook URLs derived from the code when `NEXT_PUBLIC_APP_URL=https://www.gentascend.com`:
@@ -111,11 +127,13 @@ Production callback and webhook URLs derived from the code when `NEXT_PUBLIC_APP
 
 ## Live tests still blocked on founder authorization
 
-- Registering the GitHub App and Vercel integration.
+The three Connections migrations are already applied. Do not rerun them.
+
+- Inspecting and, only if absent, registering the GitHub App in the owning organization.
+- Registering the Vercel connectable-account integration (not a native product).
 - Installing them on the canonical repository/project.
-- Setting server secrets in local or protected preview (never production in this task).
-- Hosted migration of `20261013183000_service_connections.sql`, then `20261013194500_connection_trusted_writes.sql`, then `20261013203000_connection_broker_role.sql`.
+- Securely entering server secrets in the canonical Vercel project, then approving the production deployment that loads them.
 - Real webhook delivery and provider revocation.
-- Live GitHub/Vercel login after registration.
+- Live GitHub/Vercel login after registration. The founder completes consent. An enabled Connect button is not proof of a linked account.
 
 `scripts/connections-auth-smoke.mjs` is included in `npm run test:integration`. It reads the disposable service-role key from `npx supabase status -o json` for the same loopback instance as `.env.development.local`. It does not read that key from the env file. A generic Origin Auth job does not cover these RPCs.

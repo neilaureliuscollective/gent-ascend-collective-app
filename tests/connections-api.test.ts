@@ -74,9 +74,7 @@ describe('Connections HTTP boundaries', () => {
     const { NextRequest } = await import('next/server');
     const { GET: callback } = await import('../src/app/api/connections/github/callback/route');
     const response = await callback(
-      new NextRequest(
-        'https://app.test/api/connections/github/callback?state=forged-state&code=x',
-      ),
+      new NextRequest('https://app.test/api/connections/github/callback?state=forged-state&code=x'),
     );
     expect(response.status).toBe(303);
     expect(response.headers.get('location')).toContain('github=failed');
@@ -90,5 +88,12 @@ describe('Connections HTTP boundaries', () => {
     const body = await response.json();
     expect(body.github.status).toBe('setup_required');
     expect(body.vercel.status).toBe('setup_required');
+    expect(body.github.setup.configurationReady).toBe(false);
+    expect(body.github.setup.webhookReady).toBe(false);
+    expect(body.github.setup.accountAuthorized).toBe(false);
+    expect(body.github.setup.resourceVerified).toBe(false);
+    expect(body.github.setup.missing).toContain('GITHUB_APP_ID');
+    expect(body.vercel.setup.missing).toContain('VERCEL_INTEGRATION_CLIENT_ID');
+    expect(JSON.stringify(body)).not.toMatch(/-----BEGIN|PRIVATE KEY-----/);
   });
 });

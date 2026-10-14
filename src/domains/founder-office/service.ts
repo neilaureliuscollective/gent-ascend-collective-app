@@ -6,7 +6,7 @@ import { createWork, readWork } from '@/domains/company-work/service';
 import { inspectPlatform, platformEvidence } from './platform';
 import { describeConnections } from '@/domains/connections/service';
 import { sessionStore } from '@/domains/connections/store';
-import type { ConnectionView } from '@/domains/connections/schema';
+import { emptyConnectionSetup, type ConnectionView } from '@/domains/connections/schema';
 import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { founderRequest, founderScope } from './schema';
 import { workContractReady } from '@/domains/company-work/activation';
@@ -254,6 +254,7 @@ export async function readFounderOffice() {
           resources: [],
           deployment: null,
           summary: 'GitHub connection state could not be loaded.',
+          setup: emptyConnectionSetup(),
         },
         vercel: {
           provider: 'vercel',
@@ -274,6 +275,7 @@ export async function readFounderOffice() {
           resources: [],
           deployment: null,
           summary: 'Vercel connection state could not be loaded.',
+          setup: emptyConnectionSetup(),
         },
       }),
     ),
