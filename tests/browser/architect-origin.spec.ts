@@ -1592,12 +1592,18 @@ test('quantity-and-cost estimator can be created, saved, reopened and invoked', 
   await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
   await expect(page.locator('.origin-status')).toContainText('Saved revision 1');
   await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await expect(page.locator('.origin-savebar')).toContainText('No tool revision saved yet');
+  await expect(page.locator('.origin-savebar')).not.toContainText('Unsaved tool draft');
   await page.getByRole('button', { name: 'Load labelled sample' }).click();
   await expect(page.locator('.origin-tool-result').getByText(/Sample demonstration/)).toBeVisible();
   await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
   await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
   await expect(page.getByRole('button', { name: 'Agent fixture invoke' })).toHaveCount(0);
   await expect(page.locator('.origin-savebar')).toContainText('Unsaved tool draft');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('link', { name: 'Open project Talk ↗' }).click();
+  await expect(page).toHaveURL(/\/app\/architect/);
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
   await page.getByRole('button', { name: 'Save tool revision' }).click();
   await expect(page.locator('.origin-tool [role="status"]')).toContainText('Saved tool revision 1');
   const intended = page.getByLabel('Assumptions');
@@ -1703,4 +1709,63 @@ test('estimator save retries the exact snapshot after a dropped response', async
   await expect(page.locator('.origin-tool [role="status"]')).toContainText('Later edits remain an unsaved draft');
   await expect(page.getByLabel('Assumptions')).toHaveValue('Later edit after submit.');
   await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
+});
+
+test('confirmed tool save with a failed library refresh offers reload, not another save', async ({ page }) => {
+  const tools: Array<Record<string, unknown>> = [];
+  const versions: Array<Record<string, unknown>> = [];
+  const gate = { failRefresh: true };
+  await fixture(page);
+  await page.route('**/api/architect-tools*', async (route) => {
+    if (route.request().method() === 'GET') {
+      if (tools.length && gate.failRefresh)
+        return route.fulfill({ status: 503, json: { error: 'Tool library unavailable. Reload before editing.' } });
+      return route.fulfill({ json: { tools, versions, invocations: [] } });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === 'save') {
+      const now = new Date().toISOString();
+      tools.splice(0, tools.length, {
+        id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        kind: 'quantity-cost-estimator',
+        name: body.name,
+        revision: 1,
+        created_at: now,
+        updated_at: now,
+      });
+      versions.unshift({
+        id: body.requestId,
+        tool_id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        revision: 1,
+        name: body.name,
+        configuration: body.configuration,
+        note: body.note,
+        created_at: now,
+      });
+      return route.fulfill({
+        json: { revision: 1, requestId: body.requestId, personId: 'owner', toolId: body.toolId },
+      });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported tool action' } });
+  });
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Keep the confirmed tool identity.');
+  await page.getByLabel('Project name (optional)').fill('Refresh estimator');
+  await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.getByRole('button', { name: 'Load labelled sample' }).click();
+  await page.getByRole('button', { name: 'Save tool revision' }).click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText(
+    /Library refresh failed — reload receipts. Do not save this revision again/,
+  );
+  await expect(page.getByRole('button', { name: 'Reload tool receipts' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save tool revision' })).toBeDisabled();
+  await expect(page.locator('.origin-savebar')).not.toContainText('Tool save unconfirmed');
+  gate.failRefresh = false;
+  await page.getByRole('button', { name: 'Reload tool receipts' }).first().click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText('The confirmed revision was not saved again');
 });

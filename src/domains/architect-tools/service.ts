@@ -2,6 +2,7 @@ import 'server-only';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { originReady } from '@/domains/architect-origin/service';
 import { calculateEstimator } from './engine';
+import { sameJsonValue } from './json';
 import {
   estimatorConfigSchema,
   type InvokeToolCommand,
@@ -126,7 +127,7 @@ export async function invokeArchitectTool(input: InvokeToolCommand) {
   });
   if (recorded.error || recorded.data == null) failSave(recorded.error);
   const result = recorded.data as typeof preview;
-  if (JSON.stringify(result) !== JSON.stringify(preview))
+  if (!sameJsonValue(result, preview))
     throw new IntelligenceError('Saved-tool calculation did not match the trusted engine.', 500);
   return {
     toolId: input.toolId,

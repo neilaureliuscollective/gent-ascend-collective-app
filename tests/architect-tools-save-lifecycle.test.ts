@@ -4,7 +4,9 @@ import {
   acceptToolSaveReceipt,
   beginOrRetryToolSave,
   findCommittedToolSave,
+  isToolDraftDirty,
   replayPayloadChanged,
+  toolLibraryRefreshFollowUp,
 } from '@/domains/architect-tools/save-lifecycle';
 
 const owner = '00000000-0000-4000-8000-000000000001';
@@ -113,5 +115,114 @@ describe('estimator save snapshot retries', () => {
     });
     expect(accepted.status).toBe('ignored-stale-scope');
     expect(accepted.pendingCleared).toBe(false);
+  });
+
+  it('recovers a committed save when JSONB key order differs', () => {
+    const pending = beginOrRetryToolSave({
+      pending: null,
+      ownerId: owner,
+      projectId: project,
+      toolId: tool,
+      expected: 0,
+      name: 'Plywood estimator',
+      configuration: sampleEstimatorConfig(),
+      note: 'User saved estimator revision',
+      nextIds: { toolId: tool, requestId: request },
+    }).snapshot;
+    const shuffled = {
+      ...sampleEstimatorConfig(),
+      items: [...sampleEstimatorConfig().items].reverse(),
+    };
+    expect(
+      findCommittedToolSave(
+        [
+          {
+            id: request,
+            tool_id: tool,
+            project_id: project,
+            person_id: owner,
+            revision: 1,
+            name: 'Plywood estimator',
+            configuration: {
+              assumptions: pending.configuration.assumptions,
+              items: pending.configuration.items,
+              markup_percent: pending.configuration.markup_percent,
+              waste_percent: pending.configuration.waste_percent,
+              rounding: pending.configuration.rounding,
+              currency: pending.configuration.currency,
+              kind: pending.configuration.kind,
+            },
+            note: 'User saved estimator revision',
+          },
+        ],
+        pending,
+      )?.revision,
+    ).toBe(1);
+    expect(
+      findCommittedToolSave(
+        [
+          {
+            id: request,
+            tool_id: tool,
+            project_id: project,
+            person_id: owner,
+            revision: 1,
+            name: 'Plywood estimator',
+            configuration: shuffled,
+            note: 'User saved estimator revision',
+          },
+        ],
+        pending,
+      ),
+    ).toBeNull();
+  });
+
+  it('does not mark an empty hydrated Tool panel dirty, and treats refresh failure as confirmed', () => {
+    const empty = sampleEstimatorConfig();
+    expect(
+      isToolDraftDirty({
+        pending: false,
+        hydrated: true,
+        baseline: { name: 'Quantity and cost estimator', configuration: empty },
+        name: 'Quantity and cost estimator',
+        configuration: empty,
+        restoredDirty: false,
+      }),
+    ).toBe(false);
+    expect(
+      isToolDraftDirty({
+        pending: false,
+        hydrated: false,
+        baseline: null,
+        name: 'Quantity and cost estimator',
+        configuration: empty,
+        restoredDirty: false,
+      }),
+    ).toBe(false);
+    expect(
+      isToolDraftDirty({
+        pending: false,
+        hydrated: true,
+        baseline: { name: 'Quantity and cost estimator', configuration: empty },
+        name: 'Quantity and cost estimator',
+        configuration: { ...empty, waste_percent: '20' },
+        restoredDirty: false,
+      }),
+    ).toBe(true);
+    expect(toolLibraryRefreshFollowUp({ writeConfirmed: false, libraryRefreshed: false })).toEqual({
+      pending: true,
+      refreshNeeded: false,
+      retryCommittedWrite: true,
+    });
+    expect(toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: false })).toEqual({
+      pending: false,
+      refreshNeeded: true,
+      retryCommittedWrite: false,
+    });
+    expect(toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: true })).toEqual({
+      pending: false,
+      refreshNeeded: false,
+      retryCommittedWrite: false,
+    });
   });
 });

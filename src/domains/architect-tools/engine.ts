@@ -175,18 +175,19 @@ export function calculateEstimator(
     const maxCost = parseDecimal(String(ESTIMATOR_LIMITS.maxUnitCost), moneyScale, `${item.name} unit cost`);
     if (unitCost > maxCost) throw new EstimatorError(`${item.name} unit cost exceeds the supported range.`);
     const moneyBase = 10n ** BigInt(qtyScale);
+    const percentDenom = percentBase * 100n;
     const extension = mulDivHalfUp(quantity, unitCost, moneyBase);
-    const wasteQty = wasteBps === null ? 0n : mulDivHalfUp(quantity, wasteBps, percentBase * 100n);
-    const effective = quantity + wasteQty;
-    const lineTotal = mulDivHalfUp(effective, unitCost, moneyBase);
+    const wasteFactor = wasteBps === null ? percentDenom : percentDenom + wasteBps;
+    const lineTotal = mulDivHalfUp(quantity * unitCost, wasteFactor, moneyBase * percentDenom);
     const waste = lineTotal - extension;
+    const effectiveDisplay = wasteBps === null ? quantity : mulDivHalfUp(quantity, wasteFactor, percentDenom);
     subtotal += extension;
     wasteTotal += waste;
     lines.push({
       id: item.id,
       name: item.name.trim(),
       quantity: formatDecimal(quantity, qtyScale),
-      effective_quantity: formatDecimal(effective, qtyScale),
+      effective_quantity: formatDecimal(effectiveDisplay, qtyScale),
       unit: item.unit.trim(),
       unit_cost: formatDecimal(unitCost, moneyScale),
       extension: formatDecimal(extension, moneyScale),
@@ -207,7 +208,7 @@ export function calculateEstimator(
     `${config.currency} amounts use half-up rounding to ${moneyScale} minor unit${moneyScale === 1 ? '' : 's'}.`,
     wasteBps === null
       ? 'No waste factor is applied.'
-      : `Waste adds ${config.waste_percent}% to each item quantity before monetary rounding. Line totals use effective quantity × unit cost, then half-up to currency minor units. Waste is not a price increase.`,
+      : `Waste adds ${config.waste_percent}% to each item quantity. Money uses full precision of quantity × (1 + waste) × unit cost, then half-up to currency minor units. Displayed quantity is rounded separately. Waste is not a price increase.`,
     markupBps === null
       ? 'No markup is applied. Markup is not margin.'
       : `Markup adds ${config.markup_percent}% to the wasted-cost subtotal. Markup is not margin. Implied margin is ${impliedMargin}% of the selling total.`,

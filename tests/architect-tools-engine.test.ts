@@ -7,6 +7,7 @@ import {
 } from '@/domains/architect-tools/engine';
 import { estimatorConfigSchema } from '@/domains/architect-tools/schema';
 import { fixtureAgentInvoke } from '@/domains/architect-tools/contract';
+import { sameJsonValue } from '@/domains/architect-tools/json';
 import { initialProject } from '@/domains/architect-origin/schema';
 
 describe('quantity-and-cost estimator', () => {
@@ -98,7 +99,121 @@ describe('quantity-and-cost estimator', () => {
     expect(result.lines[0]?.waste).toBe('0.00');
     expect(result.lines[0]?.line_total).toBe('0.01');
     expect(result.total).toBe('0.01');
-    expect(result.assumptions.join(' ')).toMatch(/before monetary rounding/);
+    expect(result.assumptions.join(' ')).toMatch(/full precision/);
+  });
+
+  it('keeps full precision through the monetary boundary', () => {
+    const result = calculateEstimator({
+      ...sampleEstimatorConfig(),
+      waste_percent: '50',
+      markup_percent: null,
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Fine cut',
+          quantity: '0.0001',
+          unit: 'tonne',
+          unit_cost: '10000',
+        },
+      ],
+    });
+    expect(result.lines[0]?.effective_quantity).toBe('0.0002');
+    expect(result.lines[0]?.extension).toBe('1.00');
+    expect(result.lines[0]?.waste).toBe('0.50');
+    expect(result.lines[0]?.line_total).toBe('1.50');
+    expect(result.total).toBe('1.50');
+  });
+
+  it('agrees on every supported currency and accepted maxima', () => {
+    for (const currency of ['USD', 'EUR', 'GBP'] as const) {
+      const result = calculateEstimator({
+        ...sampleEstimatorConfig(),
+        currency,
+        waste_percent: null,
+        markup_percent: null,
+        items: [
+          {
+            id: '00000000-0000-4000-8000-000000000111',
+            name: 'Sheet',
+            quantity: '2',
+            unit: 'sheet',
+            unit_cost: '10.00',
+          },
+        ],
+      });
+      expect(result.currency).toBe(currency);
+      expect(result.total).toBe('20.00');
+    }
+    const yen = calculateEstimator({
+      ...sampleEstimatorConfig(),
+      currency: 'JPY',
+      waste_percent: null,
+      markup_percent: null,
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Bracket',
+          quantity: '2',
+          unit: 'each',
+          unit_cost: '10',
+        },
+      ],
+    });
+    expect(yen.total).toBe('20');
+    const maximum = calculateEstimator({
+      ...sampleEstimatorConfig(),
+      waste_percent: '100',
+      markup_percent: '1000',
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Ceiling',
+          quantity: '1000000000',
+          unit: 'unit',
+          unit_cost: '1000000000',
+        },
+      ],
+    });
+    expect(maximum.subtotal).toBe('1000000000000000000.00');
+    expect(maximum.waste_total).toBe('1000000000000000000.00');
+    expect(maximum.markup_amount).toBe('20000000000000000000.00');
+    expect(maximum.total).toBe('22000000000000000000.00');
+    expect(() =>
+      calculateEstimator({
+        ...sampleEstimatorConfig(),
+        items: [{ ...sampleEstimatorConfig().items[0]!, quantity: '1000000000.0001' }],
+      }),
+    ).toThrow(/exceeds the supported range/);
+  });
+
+  it('treats reordered JSON as the same calculation and rejects a different total', () => {
+    const result = calculateEstimator(sampleEstimatorConfig());
+    const reordered = {
+      implied_margin_percent: result.implied_margin_percent,
+      assumptions: result.assumptions,
+      total: result.total,
+      markup_amount: result.markup_amount,
+      waste_total: result.waste_total,
+      subtotal: result.subtotal,
+      lines: result.lines.map((line) => ({
+        line_total: line.line_total,
+        waste: line.waste,
+        extension: line.extension,
+        unit_cost: line.unit_cost,
+        unit: line.unit,
+        effective_quantity: line.effective_quantity,
+        quantity: line.quantity,
+        name: line.name,
+        id: line.id,
+      })),
+      rounding: result.rounding,
+      currency: result.currency,
+    };
+    expect(JSON.stringify(reordered) === JSON.stringify(result)).toBe(false);
+    expect(sameJsonValue(reordered, result)).toBe(true);
+    expect(sameJsonValue({ ...result, total: '0.00' }, result)).toBe(false);
+    expect(sameJsonValue(result.assumptions, [...result.assumptions].reverse())).toBe(false);
+    expect(sameJsonValue({ total: '1.50' }, { total: 1.5 })).toBe(false);
   });
 
   it('rejects invalid quantities and currency precision at the shared save contract', () => {

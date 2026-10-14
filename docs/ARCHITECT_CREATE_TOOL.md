@@ -6,9 +6,11 @@ Date: 2026-10-14. Branch `cursor/architect-create-tool-501f` stacked on Architec
 
 1. Invocation receipts are computed by `architect_origin_tool_invoke`. Direct `architect_origin_tool_record_invocation` calls are refused; a browser-supplied result cannot be stored.
 2. Tool save retries an immutable pending snapshot (owner, project, tool, expected revision, request, payload). A lost HTTP response reconciles the committed revision. Later edits stay separate.
-3. The Tool panel stays mounted while switching surfaces. Tab-local draft recovery is honest: unsaved edits survive Tool/Blueprint and Back/Forward in this tab, not a hard browser restart unless sessionStorage still has them. The footer never says the project is fully saved while a tool draft is unsaved.
-4. Quantity waste is applied before monetary rounding. Schema and SQL reject zero/invalid quantities and currency-precision mismatches. Markup remains distinct from margin.
-5. Agent-fixture invoke is a typed contract and test helper, not a normal user control.
+3. The Tool panel stays mounted while switching surfaces. Tab-local draft recovery is honest: unsaved edits survive Tool/Blueprint and Back/Forward in this tab, not a hard browser restart unless sessionStorage still has them. The footer never says the project is fully saved while a tool draft is unsaved. An empty mounted Tool panel is not dirty. Navigation and unload protect tool-only dirty or pending state.
+4. Quantity waste is applied to money at full internal precision (`quantity × (1 + waste) × unit cost`), then half-up to currency minor units. Displayed effective quantity is rounded separately. Schema and SQL reject zero/invalid quantities, over-max overrides, JSON-null kind/currency/rounding, and currency-precision mismatches. Markup remains distinct from margin.
+5. Invoke and committed-save recovery compare results with order-independent JSON equality. PostgreSQL JSONB key order is not a calculation mismatch.
+6. A confirmed save or invoke whose library refresh then fails keeps the confirmed identity and offers **Reload tool receipts**. It is not an uncertain write and does not retry the committed snapshot.
+7. Agent-fixture invoke is a typed contract and test helper, not a normal user control.
 
 ## What is implemented
 
@@ -45,18 +47,18 @@ Owner, project and permission come from the session. A browser-supplied owner ID
 
 ## Verification in this run
 
-Ran locally on this branch:
+Ran locally on this branch after the precision / JSONB / lifecycle pass:
 
 - `npm run lint` — pass, zero warnings
 - `npm run typecheck` — pass
-- `npm test` — 955 unit/SQL tests
-- `npm run db:ledger` — pass; authority migration is additive and unhosted
+- `npm test` — 961 unit/SQL tests
+- `npm run db:ledger` — pass; additive unhosted `20261014203000_architect_origin_tool_precision.sql`
 - `npm run build` — production build pass, including `/api/architect-tools`
-- Origin browser: 29/29, including create → calculate → save → switch Blueprint → return → invoke, plus dropped-response retry
+- Origin browser: 30/30, including empty mount stays clean → calculate → leave-confirm → save → switch Blueprint → return → invoke, plus dropped-response retry and confirmed-save refresh failure
 
 Screenshots: `docs/evidence/architect-construct/architect-tool-{390,720,1440}.png` and `architect-tool-keyboard-390.png`. Simulated viewports, not physical-device testing.
 
-Exact-head hosted CI starts after this push. Origin local-auth smoke now includes owner-scoped tool save and foreign invoke denial; that job is unrun on this executor until CI.
+Exact-head hosted CI starts after this push. Origin local-auth must still show `invoked Sample plywood estimator revision 1` after Invoke; that assertion is not weakened. Auth smoke also records the 0.0001 × 10000 × 50% waste total `1.50`.
 
 Unrun / blocked unless later recorded:
 

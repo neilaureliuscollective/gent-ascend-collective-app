@@ -1,4 +1,5 @@
 import type { EstimatorConfig } from './engine';
+import { sameJsonValue } from './json';
 import { estimatorConfigSchema } from './schema';
 
 export type ToolSaveSnapshot = {
@@ -27,7 +28,7 @@ export function snapshotEqual(left: ToolSaveSnapshot, right: Pick<ToolSaveSnapsh
   return (
     left.name === right.name &&
     left.note === right.note &&
-    JSON.stringify(left.configuration) === JSON.stringify(right.configuration)
+    sameJsonValue(left.configuration, right.configuration)
   );
 }
 
@@ -76,7 +77,7 @@ export function findCommittedToolSave(
         version.revision === pending.expected + 1 &&
         version.name === pending.name &&
         version.note === pending.note &&
-        JSON.stringify(version.configuration) === JSON.stringify(pending.configuration),
+        sameJsonValue(version.configuration, pending.configuration),
     ) ?? null
   );
 }
@@ -102,10 +103,31 @@ export function acceptToolSaveReceipt(input: {
     expected: input.receipt.revision,
     draftStillUnsaved:
       input.currentName !== input.pending.name ||
-      JSON.stringify(input.currentConfiguration) !== JSON.stringify(input.pending.configuration),
+      !sameJsonValue(input.currentConfiguration, input.pending.configuration),
   };
 }
 
 export function replayPayloadChanged(pending: ToolSaveSnapshot, next: { name: string; configuration: EstimatorConfig; note: string }) {
   return !snapshotEqual(pending, next);
+}
+
+export function isToolDraftDirty(input: {
+  pending: boolean;
+  hydrated: boolean;
+  baseline: { name: string; configuration: EstimatorConfig } | null;
+  name: string;
+  configuration: EstimatorConfig;
+  restoredDirty: boolean;
+}) {
+  if (input.pending) return true;
+  if (!input.hydrated) return false;
+  if (input.baseline)
+    return input.name !== input.baseline.name || !sameJsonValue(input.configuration, input.baseline.configuration);
+  return input.restoredDirty;
+}
+
+export function toolLibraryRefreshFollowUp(input: { writeConfirmed: boolean; libraryRefreshed: boolean }) {
+  if (!input.writeConfirmed) return { pending: true, refreshNeeded: false, retryCommittedWrite: true };
+  if (!input.libraryRefreshed) return { pending: false, refreshNeeded: true, retryCommittedWrite: false };
+  return { pending: false, refreshNeeded: false, retryCommittedWrite: false };
 }

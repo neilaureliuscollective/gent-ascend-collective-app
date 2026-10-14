@@ -250,7 +250,7 @@ export function ArchitectOrigin({
   }, [enabled, handoff, loadAttempt]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (dirty || pending || busy) event.preventDefault();
+      if (dirty || pending || busy || toolState?.dirty || toolState?.pending) event.preventDefault();
     };
     const guard = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
@@ -259,7 +259,7 @@ export function ArchitectOrigin({
       const shortcutExit =
         !!target?.closest('button.aurelius-trigger') && matchMedia('(max-width: 1100px)').matches;
       if (
-        !(dirty || pending || busy) ||
+        !(dirty || pending || busy || toolState?.dirty || toolState?.pending) ||
         event.button !== 0 ||
         event.metaKey ||
         event.ctrlKey ||
@@ -292,7 +292,7 @@ export function ArchitectOrigin({
       window.removeEventListener('beforeunload', warn);
       document.removeEventListener('click', guard, true);
     };
-  }, [dirty, pending, busy, handoff]);
+  }, [dirty, pending, busy, toolState?.dirty, toolState?.pending, handoff]);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     if (!loaded || !selected || location.pathname !== '/app/architect') return;
@@ -521,7 +521,11 @@ export function ArchitectOrigin({
     setMessage('Unsaved draft. Approved project is unchanged.');
   }
   async function open(project: OriginProject) {
-    if (locked || (dirty && !window.confirm('Discard unsaved draft and open this project?')))
+    if (
+      locked ||
+      ((dirty || toolState?.dirty || toolState?.pending) &&
+        !window.confirm('Discard unsaved draft and open this project?'))
+    )
       return;
     setBusy(true);
     setError('');
@@ -823,7 +827,12 @@ export function ArchitectOrigin({
               aria-current={studioTab === 'origin' && !selected ? 'page' : undefined}
               onClick={() => {
                 setStudioTab('origin');
-                if (selected && dirty && !window.confirm('Discard unsaved changes?')) return;
+                if (
+                  selected &&
+                  (dirty || toolState?.dirty || toolState?.pending) &&
+                  !window.confirm('Discard unsaved changes?')
+                )
+                  return;
                 if (selected) {
                   setSelected(null);
                   setDraft(null);
@@ -1782,11 +1791,13 @@ export function ArchitectOrigin({
                 {surface === 'Tool'
                   ? toolState?.pending
                     ? 'Tool save unconfirmed. Retry uses the submitted snapshot.'
-                    : toolState?.dirty
-                      ? 'Unsaved tool draft — this is not a saved tool revision.'
-                      : toolState?.expected
-                        ? `Tool revision ${toolState.expected} saved. Project revision ${selected.revision} is separate.`
-                        : `No tool revision saved yet. Project revision ${selected.revision} is separate.`
+                    : toolState?.refreshNeeded
+                      ? `Tool revision ${toolState.expected} saved. Library refresh failed — reload receipts. Do not save this revision again.`
+                      : toolState?.dirty
+                        ? 'Unsaved tool draft — this is not a saved tool revision.'
+                        : toolState?.expected
+                          ? `Tool revision ${toolState.expected} saved. Project revision ${selected.revision} is separate.`
+                          : `No tool revision saved yet. Project revision ${selected.revision} is separate.`
                   : pending
                     ? 'Save outcome unconfirmed. Exact draft retained.'
                     : dirty
@@ -1816,6 +1827,11 @@ export function ArchitectOrigin({
                     ? 'Retry same save'
                     : 'Save & confirm revision'}
               </button>
+              {surface === 'Tool' && toolState?.refreshNeeded && (
+                <button disabled={busy || locked} onClick={() => void toolState.refresh?.()}>
+                  Reload tool receipts
+                </button>
+              )}
               {dirty && !pending && (
                 <button
                   disabled={busy}

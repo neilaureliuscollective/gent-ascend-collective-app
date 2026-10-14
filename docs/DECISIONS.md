@@ -1,3 +1,7 @@
+# Architect estimator JSONB equality, full-precision money and confirmed-refresh — 2026-10-14
+
+Compare trusted-engine and database estimator receipts with validated structural equality, not `JSON.stringify`. JSONB key order is not a different calculation; array order and types stay strict. Money multiplies quantity × (1 + waste) × unit cost at full precision, then half-up to currency minor units; displayed quantity is rounded separately. Reject JSON-null identity fields and null/type-invalid/over-max overrides in SQL. Treat a confirmed save whose library refresh failed as a refresh offer, not an uncertain write. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
 # Architect estimator authority, exact save and draft continuity — 2026-10-14
 
 Record estimator invocations only through a session-authenticated function that loads the exact saved revision and computes the result. Do not accept a caller-supplied total. Retry saves from an immutable snapshot; reconcile a committed request before minting new identities. Keep tool drafts in owner/project scope across Architect surfaces and tell the truth about project vs tool save state. Apply quantity waste before monetary rounding. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).

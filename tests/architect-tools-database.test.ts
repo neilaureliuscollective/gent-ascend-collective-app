@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import { initialProject } from '@/domains/architect-origin/schema';
-import { sampleEstimatorConfig } from '@/domains/architect-tools/engine';
+import { calculateEstimator, sampleEstimatorConfig } from '@/domains/architect-tools/engine';
+import { sameJsonValue } from '@/domains/architect-tools/json';
 
 const db = new PGlite();
 const owner = '00000000-0000-4000-8000-000000000001';
@@ -31,6 +32,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014080000_architect_origin_tools.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014190000_architect_origin_tool_authority.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014203000_architect_origin_tool_precision.sql', 'utf8'));
   await asUser(
     owner,
     `select public.architect_origin_save('${project}','00000000-0000-4000-8000-000000000004',0,${literal(content)},'Host project')`,
@@ -133,6 +135,125 @@ describe('Architect tool SQL ownership and versioning (PGlite; not Supabase Auth
       total: '0.01',
       lines: [expect.objectContaining({ effective_quantity: '1.0000', line_total: '0.01', waste: '0.00' })],
     });
+    const fine = {
+      ...sampleEstimatorConfig(),
+      waste_percent: '50',
+      markup_percent: null,
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Fine cut',
+          quantity: '0.0001',
+          unit: 'tonne',
+          unit_cost: '10000',
+        },
+      ],
+    };
+    const precision = await db.query(
+      `select public.architect_origin_tool_calculate(${literal(fine)},'{}'::jsonb) as result`,
+    );
+    const sqlFine = (precision.rows[0] as { result: unknown }).result;
+    expect(sameJsonValue(sqlFine, calculateEstimator(fine))).toBe(true);
+    expect((sqlFine as { total: string }).total).toBe('1.50');
+    const jsSample = calculateEstimator(sampleEstimatorConfig());
+    const sqlSample = (computed.rows[0] as { result: unknown }).result;
+    expect(JSON.stringify(sqlSample) === JSON.stringify(jsSample)).toBe(false);
+    expect(sameJsonValue(sqlSample, jsSample)).toBe(true);
+    for (const currency of ['USD', 'EUR', 'GBP'] as const) {
+      const priced = {
+        ...sampleEstimatorConfig(),
+        currency,
+        waste_percent: null,
+        markup_percent: null,
+        items: [
+          {
+            id: '00000000-0000-4000-8000-000000000111',
+            name: 'Sheet',
+            quantity: '2',
+            unit: 'sheet',
+            unit_cost: '10.00',
+          },
+        ],
+      };
+      const row = await db.query(
+        `select public.architect_origin_tool_calculate(${literal(priced)},'{}'::jsonb) as result`,
+      );
+      const sql = (row.rows[0] as { result: unknown }).result;
+      expect(sameJsonValue(sql, calculateEstimator(priced))).toBe(true);
+      expect((sql as { total: string }).total).toBe('20.00');
+    }
+    const yen = {
+      ...sampleEstimatorConfig(),
+      currency: 'JPY' as const,
+      waste_percent: null,
+      markup_percent: null,
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Bracket',
+          quantity: '2',
+          unit: 'each',
+          unit_cost: '10',
+        },
+      ],
+    };
+    const yenRow = await db.query(
+      `select public.architect_origin_tool_calculate(${literal(yen)},'{}'::jsonb) as result`,
+    );
+    expect(sameJsonValue((yenRow.rows[0] as { result: unknown }).result, calculateEstimator(yen))).toBe(true);
+    const ceiling = {
+      ...sampleEstimatorConfig(),
+      waste_percent: '100',
+      markup_percent: '1000',
+      items: [
+        {
+          id: '00000000-0000-4000-8000-000000000111',
+          name: 'Ceiling',
+          quantity: '1000000000',
+          unit: 'unit',
+          unit_cost: '1000000000',
+        },
+      ],
+    };
+    const maxRow = await db.query(
+      `select public.architect_origin_tool_calculate(${literal(ceiling)},'{}'::jsonb) as result`,
+    );
+    const sqlMax = (maxRow.rows[0] as { result: { total: string } }).result;
+    expect(sqlMax.total).toBe('22000000000000000000.00');
+    expect(sameJsonValue(sqlMax, calculateEstimator(ceiling))).toBe(true);
+  });
+
+  it('rejects JSON-null identity fields and invalid overrides', async () => {
+    for (const field of ['kind', 'currency', 'rounding'] as const) {
+      expect(
+        (
+          await db.query(
+            `select public.architect_origin_tool_valid(${literal({ ...sampleEstimatorConfig(), [field]: null })}) as ok`,
+          )
+        ).rows,
+      ).toEqual([{ ok: false }]);
+    }
+    await expect(
+      db.query(
+        `select public.architect_origin_tool_calculate(${literal(sampleEstimatorConfig())}, ${literal({
+          [sampleEstimatorConfig().items[0]!.id]: null,
+        })})`,
+      ),
+    ).rejects.toThrow(/Invalid invocation/);
+    await expect(
+      db.query(
+        `select public.architect_origin_tool_calculate(${literal(sampleEstimatorConfig())}, ${literal({
+          [sampleEstimatorConfig().items[0]!.id]: 12,
+        })})`,
+      ),
+    ).rejects.toThrow(/Invalid invocation/);
+    await expect(
+      db.query(
+        `select public.architect_origin_tool_calculate(${literal(sampleEstimatorConfig())}, ${literal({
+          [sampleEstimatorConfig().items[0]!.id]: '1000000001',
+        })})`,
+      ),
+    ).rejects.toThrow(/Invalid invocation/);
   });
 
   it('rejects invalid configuration at the persistence boundary', async () => {

@@ -15,6 +15,8 @@ import {
   acceptToolSaveReceipt,
   beginOrRetryToolSave,
   findCommittedToolSave,
+  isToolDraftDirty,
+  toolLibraryRefreshFollowUp,
   type ToolSaveSnapshot,
 } from '@/domains/architect-tools/save-lifecycle';
 import { invokeSavedTool, readToolLibrary, saveToolRevision, type ToolLibrary } from './tool-lifecycle';
@@ -27,10 +29,6 @@ import {
 
 function cloneConfig(config: EstimatorConfig): EstimatorConfig {
   return structuredClone(config);
-}
-
-function configEqual(left: EstimatorConfig, right: EstimatorConfig | null) {
-  return right ? JSON.stringify(left) === JSON.stringify(right) : false;
 }
 
 export function ArchitectToolPanel({
@@ -53,6 +51,10 @@ export function ArchitectToolPanel({
   const [selectedRevision, setSelectedRevision] = useState<number | null>(restored?.selectedRevision ?? null);
   const [pending, setPending] = useState<ToolSaveSnapshot | null>(restored?.pending ?? null);
   const [hydrated, setHydrated] = useState(!!restored?.dirty || !!restored?.pending);
+  const [baseline, setBaseline] = useState<{ name: string; configuration: EstimatorConfig } | null>(
+    restored && !restored.dirty && !restored.pending ? { name: restored.name, configuration: restored.draft } : null,
+  );
+  const [refreshNeeded, setRefreshNeeded] = useState(false);
   const [message, setMessage] = useState(
     'Unsaved tool edits stay in this browser tab until you save a revision. A full browser restart is not a server save.',
   );
@@ -62,11 +64,17 @@ export function ArchitectToolPanel({
   const lastFocus = useRef<HTMLElement | null>(null);
   const generation = useRef(0);
   const persistRef = useRef<() => Promise<void>>(async () => undefined);
+  const refreshRef = useRef<() => Promise<void>>(async () => undefined);
   const draftRef = useRef(draft);
   const nameRef = useRef(name);
-  const savedVersion = library.versions.find((version) => version.revision === expected) ?? library.versions[0] ?? null;
-  const unsaved =
-    !configEqual(draft, savedVersion?.configuration ?? null) || (savedVersion ? savedVersion.name !== name : true);
+  const unsaved = isToolDraftDirty({
+    pending: !!pending,
+    hydrated,
+    baseline,
+    name,
+    configuration: draft,
+    restoredDirty: !!restored?.dirty,
+  });
   const compared = library.versions.find((version) => version.revision === selectedRevision) ?? null;
   const live = useMemo(() => {
     const started = draft.items.some((item) => item.name || item.quantity || item.unit || item.unit_cost);
@@ -133,6 +141,7 @@ export function ArchitectToolPanel({
           return;
         }
         if (!current) {
+          setBaseline({ name: nameRef.current, configuration: draftRef.current });
           setHydrated(true);
           return;
         }
@@ -140,7 +149,11 @@ export function ArchitectToolPanel({
         setName(current.name);
         setExpected(current.revision);
         const version = data.versions.find((item) => item.revision === current.revision);
-        if (version) setDraft(cloneConfig(version.configuration));
+        if (version) {
+          const next = cloneConfig(version.configuration);
+          setDraft(next);
+          setBaseline({ name: current.name, configuration: next });
+        }
         setHydrated(true);
       })
       .catch((loadError) => {
@@ -241,13 +254,26 @@ export function ArchitectToolPanel({
       }
       setToolId(saved.toolId);
       setExpected(accepted.expected);
-      setPending(null);
-      setLibrary(await readToolLibrary(projectId, saved.toolId));
-      setMessage(
-        accepted.draftStillUnsaved
-          ? `Saved tool revision ${saved.revision}. Later edits remain an unsaved draft.`
-          : `Saved tool revision ${saved.revision}. Invocation uses this exact configuration.`,
-      );
+      setBaseline({ name: snapshot.name, configuration: snapshot.configuration });
+      const confirmed = toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: false });
+      setPending(confirmed.pending ? snapshot : null);
+      try {
+        setLibrary(await readToolLibrary(projectId));
+        const followUp = toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: true });
+        setRefreshNeeded(followUp.refreshNeeded);
+        setMessage(
+          accepted.draftStillUnsaved
+            ? `Saved tool revision ${saved.revision}. Later edits remain an unsaved draft.`
+            : `Saved tool revision ${saved.revision}. Invocation uses this exact configuration.`,
+        );
+      } catch {
+        const followUp = toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: false });
+        setPending(followUp.pending ? snapshot : null);
+        setRefreshNeeded(followUp.refreshNeeded);
+        setMessage(
+          `Saved tool revision ${saved.revision}. Confirmed by the server. Library refresh failed — reload receipts. Do not save this revision again.`,
+        );
+      }
     } catch (saveError) {
       setError(
         (saveError instanceof Error ? saveError.message : 'Save unconfirmed.') +
@@ -258,8 +284,23 @@ export function ArchitectToolPanel({
     }
   }
 
+  async function refreshLibrary() {
+    setBusy(true);
+    setError('');
+    try {
+      setLibrary(await readToolLibrary(projectId, toolId ?? undefined));
+      setRefreshNeeded(false);
+      setMessage('Tool receipts reloaded. The confirmed revision was not saved again.');
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : 'Library refresh failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   useEffect(() => {
     persistRef.current = persist;
+    refreshRef.current = refreshLibrary;
     draftRef.current = draft;
     nameRef.current = name;
   });
@@ -269,8 +310,10 @@ export function ArchitectToolPanel({
       pending: !!pending,
       expected,
       persist: () => persistRef.current(),
+      refresh: () => refreshRef.current(),
+      refreshNeeded,
     });
-  }, [unsaved, pending, expected, onState]);
+  }, [unsaved, pending, expected, refreshNeeded, onState]);
   useEffect(() => () => onState?.(null), [onState]);
 
   async function invokeRevision(revision: number) {
@@ -290,11 +333,17 @@ export function ArchitectToolPanel({
         source: 'architect',
       });
       setInvocation(receipt);
-      setMessage(
-        `Architect invoked ${receipt.name} revision ${receipt.revision}. Total ${receipt.result.currency} ${receipt.result.total}.`,
-      );
-      const data = await readToolLibrary(projectId, toolId);
-      setLibrary(data);
+      const invoked = `Architect invoked ${receipt.name} revision ${receipt.revision}. Total ${receipt.result.currency} ${receipt.result.total}.`;
+      try {
+        setLibrary(await readToolLibrary(projectId, toolId));
+        const followUp = toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: true });
+        setRefreshNeeded(followUp.refreshNeeded);
+        setMessage(invoked);
+      } catch {
+        const followUp = toolLibraryRefreshFollowUp({ writeConfirmed: true, libraryRefreshed: false });
+        setRefreshNeeded(followUp.refreshNeeded);
+        setMessage(`${invoked} Library refresh failed — reload receipts.`);
+      }
     } catch (invokeError) {
       setError(invokeError instanceof Error ? invokeError.message : 'Invocation refused.');
     } finally {
@@ -523,6 +572,11 @@ export function ArchitectToolPanel({
         <button type="button" disabled={locked || busy || !expected} onClick={() => void invokeRevision(expected)}>
           Invoke saved revision
         </button>
+        {refreshNeeded && (
+          <button type="button" disabled={locked || busy} onClick={() => void refreshLibrary()}>
+            Reload tool receipts
+          </button>
+        )}
       </footer>
       {library.versions.length > 0 && (
         <nav className="origin-tool-versions" aria-label="Saved tool versions">

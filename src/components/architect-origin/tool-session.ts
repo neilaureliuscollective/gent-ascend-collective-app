@@ -19,6 +19,8 @@ export type ToolWorkspaceState = {
   pending: boolean;
   expected: number;
   persist: () => Promise<void>;
+  refresh?: () => Promise<void>;
+  refreshNeeded?: boolean;
 };
 
 const memory = new Map<string, ToolSessionDraft>();

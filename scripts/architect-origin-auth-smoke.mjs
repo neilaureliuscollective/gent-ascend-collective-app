@@ -266,6 +266,49 @@ try {
       })
     ).error,
   );
+  const fineTool = crypto.randomUUID();
+  const fineReceipt = crypto.randomUUID();
+  const fineConfig = {
+    kind: 'quantity-cost-estimator',
+    currency: 'USD',
+    rounding: 'half-up-minor',
+    waste_percent: '50',
+    markup_percent: null,
+    assumptions: 'Fine-cut Auth smoke. Not a live supplier quote.',
+    items: [
+      {
+        id: crypto.randomUUID(),
+        name: 'Fine cut',
+        quantity: '0.0001',
+        unit: 'tonne',
+        unit_cost: '10000',
+      },
+    ],
+  };
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_tool_save', {
+        p_tool: fineTool,
+        p_project: project,
+        p_request: fineReceipt,
+        p_expected: 0,
+        p_name: 'Fine-cut estimator',
+        p_config: fineConfig,
+        p_note: 'Precision tool save',
+      })
+    ).data,
+    1,
+  );
+  const fineInvoked = await owner.rpc('architect_origin_tool_invoke', {
+    p_id: crypto.randomUUID(),
+    p_project: project,
+    p_tool: fineTool,
+    p_revision: 1,
+    p_inputs: { quantities: {} },
+    p_source: 'architect',
+  });
+  assert.equal(fineInvoked.data.total, '1.50');
+  assert.equal(fineInvoked.data.lines[0].waste, '0.50');
   assert.ok(
     (
       await foreign.rpc('architect_origin_tool_invoke', {
