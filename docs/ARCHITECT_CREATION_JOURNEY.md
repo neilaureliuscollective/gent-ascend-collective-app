@@ -10,7 +10,7 @@ Date: 2026-10-13. Branch `cursor/architect-creation-journey-165a`. Base: current
 | Connections | #117 | `cursor/aethelios-connections-8d20` | `c5581234b6badf2d8dcf0b9ed21fb91256897b5f` |
 | Architect immersive UI | #119 | `cursor/architect-immersive-studio-5865` | `7e0cf2c4534a3f8d88e337b22af8f127c0301a5b` |
 | main at refresh | #118 | `main` | `9dda52549dac548b59b3e3175f2ee832cb4ed471` |
-| Integration follow-up on this PR | #120 | `cursor/architect-creation-journey-165a` | Commissioning on top of `c1eaab9267314875abca432a0d5b333a0f839f29`. Source branches above were not rewritten. Talk #121 stays separate. |
+| Integration follow-up on this PR | #120 | `cursor/architect-creation-journey-165a` | Commissioning correction on `ef5f93d`. Talk #121 (`7560583`) stays separate. |
 
 Those source branches were not rewritten. Shared overlap (docs, `.env.example`, `package.json`, `database.ts`, `tests/component-fixture/entry.tsx`, Architect workspace/spec) was combined, not blindly overwritten.
 
@@ -43,7 +43,7 @@ Use existing local/loopback infrastructure only.
 
 1. Local Supabase already used by Origin (`127.0.0.1`). Additive Construct migrations stay unapplied on hosted projects until founder approval.
 2. Run the compiled worker as a separate long-lived process on the founder workstation or a loopback VM:
-   `ARCHITECT_CONSTRUCT_ENABLED=true ARCHITECT_ORIGIN_ENABLED=true ARCHITECT_CONSTRUCT_WORKER_MODE=supervised ARCHITECT_CONSTRUCT_WORKER_TOKEN=<32+> npm run architect:worker:supervised`
+   Matching `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `ARCHITECT_ORIGIN_ENABLED=true`, `ARCHITECT_CONSTRUCT_ENABLED=true`, `ARCHITECT_CONSTRUCT_WORKER_MODE=supervised`, `ARCHITECT_CONSTRUCT_WORKER_TOKEN` (≥32), then `npm run architect:worker:supervised`. Production and Vercel stay closed. Values are not printed.
 3. Docker Engine on that same machine, image `node:24-alpine`, `--network none`, nobody 65534. Do not mount the host docker socket or app secrets.
 4. Do not place the worker on Vercel. `/api/internal/architect-construct` stays closed in production.
 5. If a later founder-approved host is needed, reuse an existing always-on box that already reaches loopback Supabase. Do not buy a new service in this phase.
@@ -63,13 +63,12 @@ Until that checklist is completed, development uses `ARCHITECT_CONSTRUCT_AI_MOCK
 
 ## Remaining founder setup (grouped)
 
-Do not do these in this phase. One checklist after independent work:
+Saved-project use is Origin-only. An all-flags-off deploy is entrance-only. Full names, first action, and later non-production worker/model steps: [ARCHITECT_COMMISSIONING.md](ARCHITECT_COMMISSIONING.md).
 
-1. Approve and apply additive Construct (`20261013160000`, `20261013180000`, `20261013193000`, `20261013220000`, `20261013230000`) and Connections (`20261013183000`, `20261013194500`, `20261013203000`) migrations on a chosen non-production database.
-2. Register GitHub App + Vercel integration credentials and `CONNECTIONS_CREDENTIAL_KEY` if live selected-repository reads are wanted. Keep them server-only.
-3. Set `ARCHITECT_CONSTRUCT_WORKER_TOKEN` locally and run the supervised worker beside Docker.
-4. Authorize a funded non-production OpenAI proposal test before enabling `ARCHITECT_CONSTRUCT_AI_ENABLED`. Do not treat the labelled mock as that test.
-5. Do not merge to main, deploy production, or change hosted billing/live configuration.
+1. Approve and apply `20261012230000_architect_origin.sql` on the canonical Gent database, then set `ARCHITECT_ORIGIN_ENABLED=true` on the intended Vercel environment.
+2. Construct/Connections migrations and the durable worker (matching Supabase URL/key + `SUPABASE_SERVICE_ROLE_KEY` + worker token, not Vercel) stay a later non-production step.
+3. Authorize a funded non-production OpenAI proposal test before `ARCHITECT_CONSTRUCT_AI_ENABLED`. Credit alone is not enough.
+4. Do not merge to main, deploy production flags for Construct/AI, or change hosted billing/live configuration in this pass.
 
 ## Evidence
 

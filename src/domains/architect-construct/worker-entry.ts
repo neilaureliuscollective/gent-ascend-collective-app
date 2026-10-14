@@ -1,11 +1,16 @@
-import { constructWorkerAuthorized } from '@/domains/architect-construct/readiness';
+import {
+  constructWorkerAuthorized,
+  constructWorkerControlPlaneReady,
+  constructWorkerMissingNames,
+} from '@/domains/architect-construct/readiness';
 import { createWorkerConstructStore } from '@/domains/architect-construct/database-store';
 import { superviseConstructWorker } from '@/domains/architect-construct/supervisor';
 import { constructWorkerIdentity, processConstructOnce } from '@/domains/architect-construct/worker';
 
-if (!constructWorkerAuthorized()) {
+const missing = constructWorkerMissingNames();
+if (!constructWorkerAuthorized() || !constructWorkerControlPlaneReady()) {
   console.error(
-    'Construct worker refused: requires local ARCHITECT_ORIGIN_ENABLED, ARCHITECT_CONSTRUCT_ENABLED, and ARCHITECT_CONSTRUCT_WORKER_TOKEN (>=32). Production and hosted runtimes stay closed.',
+    `Construct worker refused: missing ${missing.join(', ') || 'authorization'}. Requires matching NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, server-only SUPABASE_SERVICE_ROLE_KEY, ARCHITECT_ORIGIN_ENABLED, ARCHITECT_CONSTRUCT_ENABLED, and ARCHITECT_CONSTRUCT_WORKER_TOKEN (>=32) on a non-Vercel host. Production and hosted runtimes stay closed. Do not disguise a production worker as development. Values are not printed.`,
   );
   process.exit(2);
 }
