@@ -1,7 +1,16 @@
 // Disposable local Supabase only. Real Auth/PostgREST, no model or hosted writes.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+
+function scopedTalkIdentity(seed) {
+  const bytes = Uint8Array.from(createHash('sha1').update(seed).digest().subarray(0, 16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 const env = Object.fromEntries(
   readFileSync('.env.development.local', 'utf8')
@@ -220,8 +229,14 @@ try {
       ].map((key) => [key, key === 'vision' ? 'A premium brand and website.' : '']),
     ),
   };
-  const originProject = crypto.randomUUID();
-  const originSave = crypto.randomUUID();
+  const person = await owner.from('persons').select('id').eq('auth_user_id', (await owner.auth.getUser()).data.user.id).single();
+  assert.equal(person.error, null);
+  const originProject = scopedTalkIdentity(`talk-origin-project:${person.data.id}:${handoffId}`);
+  const originSave = scopedTalkIdentity(`talk-origin-save:${person.data.id}:${handoffId}`);
+  assert.equal(
+    (await owner.rpc('ai_talk_scoped_identity', { p_seed: `talk-origin-project:${person.data.id}:${handoffId}` })).data,
+    originProject,
+  );
   assert.equal(
     (
       await owner.rpc('architect_origin_save', {
@@ -238,16 +253,20 @@ try {
     p_id: importId,
     p_handoff: handoffId,
     p_project: originProject,
+    p_save: originSave,
     p_conversation: conversation,
     p_prepared: handoff.preparedAt,
+    p_provenance: { imagesCopied: false, paletteRolesCopied: false },
   });
   assert.equal(first.error, null);
   assert.equal(first.data.projectId, originProject);
+  assert.equal(first.data.saveId, originSave);
   const [left, right] = await Promise.all([
     owner.rpc('ai_talk_record_origin_import', {
       p_id: importId,
       p_handoff: handoffId,
       p_project: originProject,
+      p_save: originSave,
       p_conversation: conversation,
       p_prepared: handoff.preparedAt,
     }),
@@ -255,15 +274,55 @@ try {
       p_id: crypto.randomUUID(),
       p_handoff: handoffId,
       p_project: originProject,
+      p_save: originSave,
       p_conversation: conversation,
       p_prepared: handoff.preparedAt,
     }),
   ]);
   assert.equal(left.data.projectId, originProject);
   assert.equal(right.data.projectId, originProject);
+  assert.equal(left.data.saveId, originSave);
   assert.equal(
     (await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', handoffId)).data.length,
     1,
+  );
+  const unrelatedProject = crypto.randomUUID();
+  const unrelatedSave = crypto.randomUUID();
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_save', {
+        p_project: unrelatedProject,
+        p_request: unrelatedSave,
+        p_expected: 0,
+        p_content: project,
+        p_note: 'Imported from Talk',
+      })
+    ).data,
+    1,
+  );
+  assert.ok(
+    (
+      await owner.rpc('ai_talk_record_origin_import', {
+        p_id: crypto.randomUUID(),
+        p_handoff: handoffId,
+        p_project: unrelatedProject,
+        p_save: unrelatedSave,
+        p_conversation: conversation,
+        p_prepared: handoff.preparedAt,
+      })
+    ).error,
+  );
+  assert.ok(
+    (
+      await owner.rpc('ai_talk_record_origin_import', {
+        p_id: importId,
+        p_handoff: crypto.randomUUID(),
+        p_project: originProject,
+        p_save: originSave,
+        p_conversation: conversation,
+        p_prepared: handoff.preparedAt,
+      })
+    ).error,
   );
   assert.equal(
     (await foreign.from('ai_talk_creations').select('id').eq('id', handoffId)).data.length,
@@ -283,13 +342,14 @@ try {
         p_id: crypto.randomUUID(),
         p_handoff: handoffId,
         p_project: originProject,
+        p_save: originSave,
         p_conversation: conversation,
         p_prepared: handoff.preparedAt,
       })
     ).error,
   );
   console.log(
-    'PASS: Talk→Architect real Auth/PostgREST brief/palette save, candidate beside current, handoff replay, one import receipt, concurrent retry, foreign denial. No provider evaluation.',
+    'PASS: Talk→Architect real Auth/PostgREST brief/palette save, candidate beside current, handoff replay, exact-save import bind, unrelated owned project denial, concurrent retry, foreign denial. No provider evaluation.',
   );
 } finally {
   await owner.from('ai_conversations').delete().eq('id', conversation);

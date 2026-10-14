@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectContent } from '@/domains/architect-origin/schema';
+import type { HandoffTransfer } from '@/domains/talk-creation/origin-import';
 import type {
   BriefContent,
   HandoffContent,
@@ -63,7 +64,9 @@ export function CreationDetail({
     projectId: string | null;
     originReady: boolean;
     project: ProjectContent | null;
+    transfer: HandoffTransfer | null;
     selections: Array<{ kind: string; versionId: string; version: number; title: string }>;
+    images: Array<{ artifactId: string; versionId: string; projectId: string }>;
     error?: string;
   } | null>(null);
   const historyCallback = onHistory;
@@ -99,7 +102,9 @@ export function CreationDetail({
           projectId?: string | null;
           originReady?: boolean;
           project?: ProjectContent;
+          transfer?: HandoffTransfer;
           selections?: Array<{ kind: string; versionId: string; version: number; title: string }>;
+          images?: Array<{ artifactId: string; versionId: string; projectId: string }>;
           error?: string;
         };
         if (ignore) return;
@@ -109,7 +114,9 @@ export function CreationDetail({
             projectId: null,
             originReady: Boolean(body.originReady),
             project: null,
+            transfer: null,
             selections: [],
+            images: [],
             error: typeof body.error === 'string' ? body.error : 'This package could not be reviewed.',
           });
         else
@@ -118,7 +125,9 @@ export function CreationDetail({
             projectId: body.projectId ?? null,
             originReady: Boolean(body.originReady),
             project: body.project,
+            transfer: body.transfer ?? null,
             selections: body.selections ?? [],
+            images: body.images ?? [],
           });
       })
       .catch(() => {
@@ -128,7 +137,9 @@ export function CreationDetail({
             projectId: null,
             originReady: false,
             project: null,
+            transfer: null,
             selections: [],
+            images: [],
             error: 'This package could not be reviewed.',
           });
       });
@@ -258,6 +269,38 @@ export function CreationDetail({
                 <dt>Vision</dt>
                 <dd>{review.project.blueprint.vision || handoff.idea}</dd>
               </div>
+              {review.transfer && (
+                <>
+                  <div>
+                    <dt>Copied into Architect</dt>
+                    <dd>
+                      {review.transfer.copied.length
+                        ? review.transfer.copied
+                            .map(
+                              (field) =>
+                                `${field.into} from ${field.from}${field.truncated ? ' (truncated)' : ''}`,
+                            )
+                            .join('; ')
+                        : 'None.'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Referenced in Talk only</dt>
+                    <dd>
+                      {review.transfer.referenced.length
+                        ? review.transfer.referenced
+                            .map((asset) =>
+                              asset.kind === 'image'
+                                ? `image ${asset.artifactId} (pixels not copied)`
+                                : `${asset.kind} v${asset.version} ${asset.title ?? asset.versionId}`,
+                            )
+                            .join('; ')
+                        : 'None.'}{' '}
+                      Palette roles, contrast pairs and images stay in Talk.
+                    </dd>
+                  </div>
+                </>
+              )}
               {review.selections.map((item) => (
                 <div key={item.versionId}>
                   <dt>
@@ -271,6 +314,15 @@ export function CreationDetail({
                     >
                       Open {item.title}
                     </button>
+                  </dd>
+                </div>
+              ))}
+              {review.images.map((image) => (
+                <div key={image.artifactId}>
+                  <dt>Selected image</dt>
+                  <dd>
+                    Version {image.versionId}. Referenced from Talk only; not inserted into the Origin
+                    project.
                   </dd>
                 </div>
               ))}

@@ -159,6 +159,25 @@ async function mockTalk(page: Page, turns: Turn[] = [turn]) {
                 discipline: 'business',
                 blueprint: { vision: 'A premium brand and website.' },
               },
+              transfer: {
+                copied: [
+                  { into: 'name', from: 'brief.title', truncated: false },
+                  { into: 'blueprint.vision', from: 'handoff.idea', truncated: false },
+                ],
+                referenced: [
+                  {
+                    kind: 'brief',
+                    title: 'Reserve brand',
+                    versionId: '50000000-0000-4000-8000-000000000011',
+                    version: 1,
+                    retainedInTalk: true,
+                    copiedIntoProject: false,
+                  },
+                ],
+                imagesCopied: false,
+                paletteRolesCopied: false,
+                contrastCopied: false,
+              },
               selections: [
                 {
                   kind: 'brief',
@@ -330,6 +349,9 @@ test('reviewed Architect import creates one project and can reopen it', async ({
   await page.locator('[data-kind="handoff"]').getByRole('button', { name: 'Open', exact: true }).click();
   await expect(panel.getByText('Project name')).toBeVisible();
   await expect(panel.getByText('Reserve brand', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Copied into Architect')).toBeVisible();
+  await expect(panel.getByText(/Referenced in Talk only/)).toBeVisible();
+  await expect(panel.getByText(/Palette roles, contrast pairs and images stay in Talk/)).toBeVisible();
   await panel.getByRole('button', { name: 'Create Architect project', exact: true }).click();
   await expect(panel.getByRole('link', { name: 'Open saved Architect project' })).toHaveAttribute(
     'href',

@@ -33,12 +33,148 @@ export type ResolvedArchitectPackage = {
   images: ResolvedHandoffImage[];
 };
 
+export type CopiedHandoffField = {
+  into: string;
+  from: string;
+  truncated: boolean;
+};
+
+export type ReferencedHandoffAsset = {
+  kind: 'brief' | 'plan' | 'palette' | 'image';
+  title?: string;
+  lineageId?: string;
+  versionId: string;
+  version?: number;
+  artifactId?: string;
+  projectId?: string;
+  retainedInTalk: true;
+  copiedIntoProject: false;
+};
+
+export type HandoffTransfer = {
+  copied: CopiedHandoffField[];
+  referenced: ReferencedHandoffAsset[];
+  imagesCopied: false;
+  paletteRolesCopied: false;
+  contrastCopied: false;
+};
+
 function clip(value: string, max: number) {
   return value.slice(0, max);
 }
 
+export function describeHandoffTransfer(resolved: ResolvedArchitectPackage): HandoffTransfer {
+  const { handoff, brief, plan, palette } = resolved;
+  const copied: CopiedHandoffField[] = [];
+  if (brief) {
+    copied.push({ into: 'name', from: 'brief.title', truncated: brief.title.length > 100 });
+    copied.push({
+      into: 'description',
+      from: handoff.description ? 'handoff.description' : 'brief.purpose',
+      truncated: (handoff.description || brief.purpose).length > 2000,
+    });
+    copied.push({
+      into: 'blueprint.audience',
+      from: 'brief.audience',
+      truncated: brief.audience.length > 3000,
+    });
+    copied.push({
+      into: 'blueprint.requirements',
+      from: 'brief.purpose, brief.visualDirection, brief.requirements',
+      truncated: [brief.purpose, brief.visualDirection, ...brief.requirements].filter(Boolean).join('\n').length > 3000,
+    });
+    copied.push({
+      into: 'blueprint.risks',
+      from: 'brief.unresolved',
+      truncated: brief.unresolved.join('\n').length > 3000,
+    });
+  } else {
+    copied.push({
+      into: 'description',
+      from: handoff.description ? 'handoff.description' : 'handoff.idea',
+      truncated: (handoff.description || handoff.idea).length > 2000,
+    });
+  }
+  if (plan) {
+    copied.push({
+      into: 'blueprint.solution',
+      from: 'plan.summary and plan.steps title/detail',
+      truncated: [plan.summary, ...plan.steps.map((step) => `${step.title}: ${step.detail}`)].join('\n').length > 3000,
+    });
+    copied.push({
+      into: 'blueprint.milestones',
+      from: 'plan.steps.title',
+      truncated: plan.steps.map((step) => step.title).join('\n').length > 3000,
+    });
+  }
+  copied.push({ into: 'blueprint.vision', from: 'handoff.idea', truncated: handoff.idea.length > 3000 });
+  copied.push({
+    into: 'blueprint.decisions',
+    from: 'handoff.decisions',
+    truncated: handoff.decisions.length > 3000,
+  });
+  if (palette) {
+    copied.push({
+      into: 'blueprint.deliverables',
+      from: 'palette.title and swatch name+hex (roles and contrast not copied)',
+      truncated:
+        `Palette ${palette.title}: ${palette.swatches.map((swatch) => `${swatch.name} ${swatch.hex}`).join(', ')}`
+          .length > 3000,
+    });
+  }
+  return {
+    copied,
+    referenced: [
+      ...resolved.selections.map((selection) => ({
+        kind: selection.kind,
+        title: selection.title,
+        lineageId: selection.lineageId,
+        versionId: selection.versionId,
+        version: selection.version,
+        retainedInTalk: true as const,
+        copiedIntoProject: false as const,
+      })),
+      ...resolved.images.map((image) => ({
+        kind: 'image' as const,
+        versionId: image.versionId,
+        artifactId: image.artifactId,
+        projectId: image.projectId,
+        retainedInTalk: true as const,
+        copiedIntoProject: false as const,
+      })),
+    ],
+    imagesCopied: false,
+    paletteRolesCopied: false,
+    contrastCopied: false,
+  };
+}
+
+export function importStateText(resolved: ResolvedArchitectPackage, transfer: HandoffTransfer) {
+  const copied = transfer.copied
+    .map((field) => `${field.into} from ${field.from}${field.truncated ? ' (truncated)' : ''}`)
+    .join('; ');
+  const referenced = transfer.referenced
+    .map((asset) =>
+      asset.kind === 'image'
+        ? `image artifact ${asset.artifactId} version ${asset.versionId} studio project ${asset.projectId}`
+        : `${asset.kind} ${asset.versionId} v${asset.version}`,
+    )
+    .join('; ');
+  return clip(
+    [
+      `Imported from Talk conversation ${resolved.handoff.conversationId}. Package prepared ${resolved.handoff.preparedAt}.`,
+      `Copied into this Origin project as text only: ${copied || 'none'}.`,
+      `Palette roles, contrast pairs and image pixels were not copied.`,
+      `Referenced and retained in Talk only: ${referenced || 'none'}.`,
+      'Requirements and feasibility remain to be confirmed.',
+    ].join(' '),
+    3000,
+  );
+}
+
 export function projectFromResolvedHandoff(resolved: ResolvedArchitectPackage): ProjectContent {
   const { handoff, brief, plan, palette } = resolved;
+  const transfer = describeHandoffTransfer(resolved);
   const project = initialProject(handoff.idea, handoff.discipline);
   if (brief) {
     project.name = clip(brief.title, 100);
@@ -67,10 +203,7 @@ export function projectFromResolvedHandoff(resolved: ResolvedArchitectPackage): 
       3000,
     );
   }
-  project.blueprint.state = clip(
-    `Imported from Talk conversation ${handoff.conversationId}. Package prepared ${handoff.preparedAt}. Requirements and feasibility remain to be confirmed.`,
-    3000,
-  );
+  project.blueprint.state = importStateText(resolved, transfer);
   project.blueprint.next = clip(
     brief?.unresolved[0] || 'Review the imported brief in Architect before any model build.',
     3000,
@@ -90,3 +223,5 @@ export function overlayHandoffImport(creation: TalkCreation, projectId?: string 
     },
   };
 }
+
+export const originImportNote = 'Imported from Talk';

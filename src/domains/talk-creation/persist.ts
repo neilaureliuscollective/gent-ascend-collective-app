@@ -29,6 +29,18 @@ export function originSaveIdentity(personId: string, handoffId: string) {
   return scopedTalkIdentity(`talk-origin-save:${personId}:${handoffId}`);
 }
 
+export function matchesHandoffDestination(
+  personId: string,
+  handoffId: string,
+  receipt: { project_id: string; save_id?: string | null } | null | undefined,
+) {
+  return Boolean(
+    receipt &&
+      receipt.project_id === originProjectIdentity(personId, handoffId) &&
+      receipt.save_id === originSaveIdentity(personId, handoffId),
+  );
+}
+
 export async function persistKind(
   client: Client,
   input: {

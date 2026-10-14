@@ -84,6 +84,7 @@ vi.mock('../src/domains/intelligence/service', () => ({
           if (
             existing.handoff_id !== args.p_handoff ||
             existing.project_id !== args.p_project ||
+            existing.save_id !== args.p_save ||
             existing.prepared_at !== args.p_prepared
           )
             return { data: null, error: { message: 'Import request reused with different inputs' } };
@@ -92,6 +93,7 @@ vi.mock('../src/domains/intelligence/service', () => ({
               id: existing.id,
               handoffId: existing.handoff_id,
               projectId: existing.project_id,
+              saveId: existing.save_id,
               recovered: true,
             },
             error: null,
@@ -103,11 +105,18 @@ vi.mock('../src/domains/intelligence/service', () => ({
           handoff_id: args.p_handoff,
           conversation_id: args.p_conversation,
           project_id: args.p_project,
+          save_id: args.p_save,
           prepared_at: args.p_prepared,
         };
         state.receipts.push(row);
         return {
-          data: { id: row.id, handoffId: row.handoff_id, projectId: row.project_id, recovered: false },
+          data: {
+            id: row.id,
+            handoffId: row.handoff_id,
+            projectId: row.project_id,
+            saveId: row.save_id,
+            recovered: false,
+          },
           error: null,
         };
       },
@@ -196,7 +205,9 @@ describe('Talk Origin import service', () => {
       conversationId: conversation,
     });
     expect(first).toMatchObject({ imported: true, recovered: false, projectId: first.projectId });
+    expect(first.transfer.imagesCopied).toBe(false);
     expect(state.saves).toHaveLength(1);
+    expect(state.saves[0]).toMatchObject({ note: 'Imported from Talk', expected: 0 });
     const retry = await importArchitectHandoff({
       action: 'import-origin',
       id: importId,

@@ -1,6 +1,7 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Route } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { originProjectIdentity, originSaveIdentity } from '../../src/domains/talk-creation/persist';
 
 const env = Object.fromEntries(
   readFileSync('.env.development.local', 'utf8')
@@ -66,6 +67,25 @@ async function api<T>(page: Page, path: string, method = 'GET', body?: unknown) 
   );
 }
 
+async function dropResponseAfterCommit(
+  page: Page,
+  match: (payload: Record<string, unknown>) => boolean,
+  verify: () => Promise<void>,
+) {
+  await page.route('**/api/aurelius/creations', async (route: Route) => {
+    if (route.request().method() === 'POST') {
+      const payload = route.request().postDataJSON() as Record<string, unknown>;
+      if (match(payload)) {
+        const response = await route.fetch();
+        expect(response.ok()).toBeTruthy();
+        await verify();
+        return route.abort('failed');
+      }
+    }
+    return route.continue();
+  });
+}
+
 test('authenticated Talk recovery and Architect import through real routes', async ({
   page,
   browser,
@@ -78,6 +98,12 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(
     (await foreign.auth.signInWithPassword({ email: 'member@aurelius.test', password })).error,
   ).toBeNull();
+  const person = await owner
+    .from('persons')
+    .select('id')
+    .eq('auth_user_id', (await owner.auth.getUser()).data.user!.id)
+    .single();
+  expect(person.error).toBeNull();
   const conversation = crypto.randomUUID();
   const turn = crypto.randomUUID();
   const briefId = crypto.randomUUID();
@@ -85,6 +111,8 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   const candidateId = crypto.randomUUID();
   const handoffId = crypto.randomUUID();
   const importId = crypto.randomUUID();
+  const expectedProject = originProjectIdentity(person.data!.id, handoffId);
+  const expectedSave = originSaveIdentity(person.data!.id, handoffId);
   expect(
     (
       await owner.rpc('ai_begin_turn', {
@@ -98,6 +126,7 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     ).error,
   ).toBeNull();
 
+  page.on('dialog', (dialog) => dialog.accept());
   await signIn(page, 'founder@aurelius.test');
   await page.goto('/app/architect');
   const draftName = `Unsent Origin draft ${Date.now()}`;
@@ -114,7 +143,10 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     'Unsent Origin draft that must survive Talk import.',
   );
 
-  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Talk' }).click();
+  await expect(page).toHaveURL(/\/app\/aethelios/);
+  expect(page.url()).not.toMatch(/architect/);
+
   const saved = await api<{ id: string }>(page, '/api/aurelius/creations', 'POST', {
     id: briefId,
     conversationId: conversation,
@@ -141,13 +173,15 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     ).body.creations?.some((item) => item.id === briefV2 && item.version === 2),
   ).toBe(true);
   const lost = crypto.randomUUID();
-  await page.route('**/api/aurelius/creations', async (route) => {
-    if (route.request().method() === 'POST') {
-      const payload = route.request().postDataJSON() as { id?: string };
-      if (payload.id === lost) return route.abort();
-    }
-    return route.continue();
-  });
+  await dropResponseAfterCommit(
+    page,
+    (payload) => payload.id === lost && payload.kind === 'palette',
+    async () => {
+      const row = await owner.from('ai_talk_creations').select('id,version').eq('id', lost).maybeSingle();
+      expect(row.data?.id).toBe(lost);
+      expect(row.data?.version).toBe(1);
+    },
+  );
   const firstTry = await api<{ error?: string }>(page, '/api/aurelius/creations', 'POST', {
     id: lost,
     conversationId: conversation,
@@ -189,24 +223,6 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     ).data?.creation_id,
   ).toBe(briefV2);
 
-  let delayed = true;
-  await page.route(`**/api/aurelius/creations?conversationId=${conversation}`, async (route) => {
-    if (delayed && route.request().method() === 'GET') {
-      delayed = false;
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-    }
-    return route.continue();
-  });
-  const reloading = page.reload();
-  await expect(page.getByRole('heading', { name: 'Aethelios' })).toBeVisible();
-  await page.getByRole('button', { name: 'New', exact: true }).click();
-  await reloading;
-  await expect(page.getByText('Reserve site refined')).toHaveCount(0);
-  await page.unroute(`**/api/aurelius/creations?conversationId=${conversation}`);
-  await page.goto(`/app/aethelios?conversation=${conversation}`);
-  await expect(page.getByText('Reserve site refined')).toBeVisible();
-  await expect(page.getByText('Proposal · not applied')).toBeVisible();
-
   const paletteRow = await owner
     .from('ai_talk_creations')
     .select('id')
@@ -229,21 +245,80 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   );
   expect(prepared.status).toBe(201);
   expect(prepared.body.imported).toBe(false);
-  const review = await api<{ project?: { name: string }; originReady?: boolean }>(
-    page,
-    `/api/aurelius/creations?handoff=${handoffId}`,
-  );
+  const review = await api<{
+    project?: { name: string; blueprint?: { deliverables?: string; state?: string } };
+    originReady?: boolean;
+    transfer?: {
+      imagesCopied?: boolean;
+      paletteRolesCopied?: boolean;
+      copied?: unknown[];
+      referenced?: Array<{ kind: string; versionId?: string }>;
+    };
+    images?: unknown[];
+  }>(page, `/api/aurelius/creations?handoff=${handoffId}`);
   expect(review.status).toBe(200);
   expect(review.body.originReady).toBe(true);
   expect(review.body.project?.name).toBeTruthy();
+  expect(review.body.transfer?.imagesCopied).toBe(false);
+  expect(review.body.transfer?.paletteRolesCopied).toBe(false);
+  expect(review.body.project?.blueprint?.deliverables ?? '').not.toMatch(/background|accent/i);
+  expect(review.body.project?.blueprint?.state).toMatch(/Referenced and retained in Talk only/);
+  expect(review.body.images).toEqual([]);
 
-  await page.route('**/api/aurelius/creations', async (route) => {
-    if (route.request().method() === 'POST') {
-      const payload = route.request().postDataJSON() as { action?: string; id?: string };
-      if (payload.action === 'import-origin' && payload.id === importId) return route.abort();
-    }
-    return route.continue();
-  });
+  expect(
+    (
+      await owner.rpc('architect_origin_save', {
+        p_project: expectedProject,
+        p_request: expectedSave,
+        p_expected: 0,
+        p_content: review.body.project,
+        p_note: 'Imported from Talk',
+      })
+    ).data,
+  ).toBe(1);
+  expect(
+    (await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', handoffId)).data,
+  ).toEqual([]);
+  const unrelated = crypto.randomUUID();
+  expect(
+    (
+      await owner.rpc('ai_talk_record_origin_import', {
+        p_id: crypto.randomUUID(),
+        p_handoff: handoffId,
+        p_project: unrelated,
+        p_save: crypto.randomUUID(),
+        p_conversation: conversation,
+        p_prepared: '2026-10-14T00:00:00.000Z',
+      })
+    ).error,
+  ).toBeTruthy();
+
+  await dropResponseAfterCommit(
+    page,
+    (payload) => payload.action === 'import-origin' && payload.id === importId,
+    async () => {
+      const receipt = await owner
+        .from('ai_talk_origin_imports')
+        .select('id,project_id,save_id')
+        .eq('id', importId)
+        .maybeSingle();
+      expect(receipt.data).toMatchObject({
+        id: importId,
+        project_id: expectedProject,
+        save_id: expectedSave,
+      });
+      const version = await owner
+        .from('architect_origin_versions')
+        .select('id,revision,note')
+        .eq('id', expectedSave)
+        .maybeSingle();
+      expect(version.data).toMatchObject({
+        id: expectedSave,
+        revision: 1,
+        note: 'Imported from Talk',
+      });
+    },
+  );
   const lostImport = await api<{ imported?: boolean }>(page, '/api/aurelius/creations', 'POST', {
     action: 'import-origin',
     id: importId,
@@ -253,29 +328,68 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(lostImport.body.imported).not.toBe(true);
   await page.unroute('**/api/aurelius/creations');
   const [one, two] = await Promise.all([
-    api<{ projectId?: string; imported?: boolean }>(page, '/api/aurelius/creations', 'POST', {
-      action: 'import-origin',
-      id: importId,
-      handoffId,
-      conversationId: conversation,
-    }),
-    api<{ projectId?: string; imported?: boolean }>(page, '/api/aurelius/creations', 'POST', {
-      action: 'import-origin',
-      id: crypto.randomUUID(),
-      handoffId,
-      conversationId: conversation,
-    }),
+    api<{ projectId?: string; imported?: boolean; saveId?: string }>(
+      page,
+      '/api/aurelius/creations',
+      'POST',
+      {
+        action: 'import-origin',
+        id: importId,
+        handoffId,
+        conversationId: conversation,
+      },
+    ),
+    api<{ projectId?: string; imported?: boolean; saveId?: string }>(
+      page,
+      '/api/aurelius/creations',
+      'POST',
+      {
+        action: 'import-origin',
+        id: crypto.randomUUID(),
+        handoffId,
+        conversationId: conversation,
+      },
+    ),
   ]);
   expect(one.status).toBe(201);
   expect(two.status).toBe(201);
   expect(one.body.imported).toBe(true);
   expect(two.body.projectId).toBe(one.body.projectId);
-  const opened = await api<{ projects?: Array<{ id: string }> }>(
-    page,
-    `/api/architect-origin?project=${one.body.projectId}`,
-  );
+  expect(one.body.projectId).toBe(expectedProject);
+  expect(one.body.saveId).toBe(expectedSave);
+  expect(
+    (await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', handoffId)).data?.length,
+  ).toBe(1);
+  expect(
+    (
+      await api(page, '/api/aurelius/creations', 'POST', {
+        action: 'import-origin',
+        id: importId,
+        handoffId: crypto.randomUUID(),
+        conversationId: conversation,
+      })
+    ).status,
+  ).toBeGreaterThanOrEqual(400);
+  expect(
+    (
+      await api(page, '/api/aurelius/creations', 'POST', {
+        action: 'import-origin',
+        id: importId,
+        handoffId,
+        conversationId: crypto.randomUUID(),
+      })
+    ).status,
+  ).toBeGreaterThanOrEqual(400);
+  const opened = await api<{
+    projects?: Array<{ id: string; content?: { blueprint?: { state?: string; vision?: string } } }>;
+  }>(page, `/api/architect-origin?project=${one.body.projectId}`);
   expect(opened.status).toBe(200);
   expect(opened.body.projects?.some((item) => item.id === one.body.projectId)).toBe(true);
+  const importedProject = opened.body.projects?.find((item) => item.id === one.body.projectId);
+  expect(importedProject?.content?.blueprint?.vision).not.toBe(
+    'Unsent Origin draft that must survive Talk import.',
+  );
+  expect(importedProject?.content?.blueprint?.state).toMatch(/Referenced and retained in Talk only/);
 
   const other = await browser.newContext();
   const foreignPage = await other.newPage();
@@ -298,10 +412,48 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   ).toBeGreaterThanOrEqual(400);
   await other.close();
 
-  await page.goto(draftUrl);
+  await page.goBack();
+  await expect(page).toHaveURL(draftUrl);
   await expect(page.getByLabel('Project vision')).toHaveValue(
     'Unsent Origin draft that must survive Talk import.',
   );
+
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Talk' }).click();
+  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await expect(page.getByText('Reserve site refined')).toBeVisible();
+  let releaseHeldGet: (() => void) | undefined;
+  const heldGet = new Promise<void>((resolve) => {
+    releaseHeldGet = resolve;
+  });
+  let resolveSawHeldGet: (() => void) | undefined;
+  const sawHeldGet = new Promise<void>((resolve) => {
+    resolveSawHeldGet = resolve;
+  });
+  let holding = false;
+  await page.route(`**/api/aurelius/creations?conversationId=${conversation}`, async (route) => {
+    const url = new URL(route.request().url());
+    if (
+      !holding &&
+      route.request().method() === 'GET' &&
+      url.searchParams.get('conversationId') === conversation
+    ) {
+      holding = true;
+      resolveSawHeldGet?.();
+      await heldGet;
+    }
+    return route.continue();
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await sawHeldGet;
+  await expect(page.getByRole('heading', { name: 'Aethelios' })).toBeVisible();
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  releaseHeldGet?.();
+  await expect(page.getByText('Reserve site refined')).toHaveCount(0);
+  await page.unroute(`**/api/aurelius/creations?conversationId=${conversation}`);
+  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await expect(page.getByText('Reserve site refined')).toBeVisible();
+  await expect(page.getByText('Proposal · not applied')).toBeVisible();
+  await expect(page.getByText('Saved in Architect.')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/app/aethelios?conversation=${conversation}`);
   await expect(page.getByText('Saved in Architect.')).toBeVisible();

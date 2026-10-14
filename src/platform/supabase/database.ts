@@ -613,7 +613,9 @@ export interface Database {
           handoff_id: string;
           conversation_id: string;
           project_id: string;
+          save_id: string;
           prepared_at: string;
+          provenance: Record<string, unknown>;
           created_at: string;
         },
         never,
@@ -1526,11 +1528,20 @@ export interface Database {
           p_id: string;
           p_handoff: string;
           p_project: string;
+          p_save: string;
           p_conversation: string;
           p_prepared: string;
+          p_provenance?: unknown;
         };
-        Returns: { id: string; handoffId: string; projectId: string; recovered?: boolean };
+        Returns: {
+          id: string;
+          handoffId: string;
+          projectId: string;
+          saveId?: string;
+          recovered?: boolean;
+        };
       };
+      ai_talk_scoped_identity: { Args: { p_seed: string }; Returns: string };
       talk_studio_entitled: { Args: { p_person: string }; Returns: boolean };
       ai_talk_propose_image: {
         Args: {

@@ -28,8 +28,14 @@ import {
   type TalkCreationWorkspace,
   type TalkImageJob,
 } from './schema';
-import { originProjectIdentity, originSaveIdentity, persistKind } from './persist';
-import { overlayHandoffImport, projectFromResolvedHandoff, type ResolvedArchitectPackage } from './origin-import';
+import { matchesHandoffDestination, originProjectIdentity, originSaveIdentity, persistKind } from './persist';
+import {
+  describeHandoffTransfer,
+  originImportNote,
+  overlayHandoffImport,
+  projectFromResolvedHandoff,
+  type ResolvedArchitectPackage,
+} from './origin-import';
 import { withCalculatedContrast } from './contrast';
 import { originReady, saveOrigin } from '@/domains/architect-origin/service';
 
@@ -92,14 +98,16 @@ export async function readTalkCreations(conversationId: string): Promise<TalkCre
     talkAttachmentProject(false).catch(() => null),
     client
       .from('ai_talk_origin_imports')
-      .select('handoff_id,project_id')
+      .select('handoff_id,project_id,save_id')
       .eq('person_id', person.id)
       .eq('conversation_id', conversationId),
   ]);
   if (rows.error || selected.error)
     throw new IntelligenceError('Saved Talk work could not be loaded.', 503);
   const imported = new Map(
-    (imports.error ? [] : (imports.data ?? [])).map((row) => [row.handoff_id, row.project_id] as const),
+    (imports.error ? [] : (imports.data ?? []))
+      .filter((row) => matchesHandoffDestination(person.id, row.handoff_id, row))
+      .map((row) => [row.handoff_id, row.project_id] as const),
   );
   const creations = (rows.data ?? [])
     .map(asCreation)
@@ -232,11 +240,14 @@ export async function prepareArchitectHandoff(input: unknown) {
       );
     const receipt = await client
       .from('ai_talk_origin_imports')
-      .select('project_id')
+      .select('project_id,save_id')
       .eq('person_id', person.id)
       .eq('handoff_id', existing.data.id)
       .maybeSingle();
-    const imported = !receipt.error && Boolean(receipt.data?.project_id);
+    const imported =
+      !receipt.error &&
+      Boolean(receipt.data?.project_id) &&
+      matchesHandoffDestination(person.id, existing.data.id, receipt.data);
     return {
       id: existing.data.id,
       lineageId: existing.data.lineage_id,
@@ -379,19 +390,25 @@ export async function reviewArchitectImport(handoffId: string) {
   const resolved = await resolveArchitectPackage(creation);
   const receipt = await client
     .from('ai_talk_origin_imports')
-    .select('project_id')
+    .select('project_id,save_id,provenance')
     .eq('person_id', person.id)
     .eq('handoff_id', handoffId)
     .maybeSingle();
+  const acknowledged =
+    Boolean(receipt.data?.project_id) &&
+    matchesHandoffDestination(person.id, handoffId, receipt.data);
+  const transfer = describeHandoffTransfer(resolved);
   return {
     handoffId,
     conversationId: resolved.handoff.conversationId,
     preparedAt: resolved.handoff.preparedAt,
     sourceTurnId: resolved.sourceTurnId,
-    imported: Boolean(receipt.data?.project_id),
-    projectId: receipt.data?.project_id ?? null,
+    imported: acknowledged,
+    projectId: acknowledged ? receipt.data?.project_id ?? null : null,
+    saveId: acknowledged ? receipt.data?.save_id ?? null : null,
     originReady: originReady(),
     project: projectFromResolvedHandoff(resolved),
+    transfer,
     selections: resolved.selections.map((item) => ({
       kind: item.kind,
       lineageId: item.lineageId,
@@ -424,20 +441,28 @@ export async function importArchitectHandoff(input: unknown) {
   if (existing.data) {
     if (
       existing.data.handoff_id !== parsed.data.handoffId ||
-      existing.data.conversation_id !== parsed.data.conversationId
+      existing.data.conversation_id !== parsed.data.conversationId ||
+      !matchesHandoffDestination(person.id, existing.data.handoff_id, existing.data)
     )
       throw new IntelligenceError(
         'This import request was already used with a different package.',
         409,
       );
     const reviewed = await reviewArchitectImport(existing.data.handoff_id);
+    if (!reviewed.imported)
+      throw new IntelligenceError(
+        'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
+        503,
+      );
     return {
       id: existing.data.id,
       handoffId: existing.data.handoff_id,
       projectId: existing.data.project_id,
+      saveId: existing.data.save_id,
       imported: true as const,
       recovered: true,
       project: reviewed.project,
+      transfer: reviewed.transfer,
     };
   }
   const prior = await client
@@ -448,14 +473,29 @@ export async function importArchitectHandoff(input: unknown) {
     .maybeSingle();
   if (prior.error) throw new IntelligenceError('The Architect import receipt could not be read.', 503);
   if (prior.data) {
+    if (
+      prior.data.conversation_id !== parsed.data.conversationId ||
+      !matchesHandoffDestination(person.id, prior.data.handoff_id, prior.data)
+    )
+      throw new IntelligenceError(
+        'This import request was already used with a different package.',
+        409,
+      );
     const reviewed = await reviewArchitectImport(prior.data.handoff_id);
+    if (!reviewed.imported)
+      throw new IntelligenceError(
+        'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
+        503,
+      );
     return {
       id: prior.data.id,
       handoffId: prior.data.handoff_id,
       projectId: prior.data.project_id,
+      saveId: prior.data.save_id,
       imported: true as const,
       recovered: true,
       project: reviewed.project,
+      transfer: reviewed.transfer,
     };
   }
   const row = await client
@@ -473,15 +513,17 @@ export async function importArchitectHandoff(input: unknown) {
   if (resolved.handoff.conversationId !== parsed.data.conversationId)
     throw new IntelligenceError('This import request was already used with a different package.', 409);
   const content = projectFromResolvedHandoff(resolved);
+  const transfer = describeHandoffTransfer(resolved);
   const projectId = originProjectIdentity(person.id, parsed.data.handoffId);
+  const saveId = originSaveIdentity(person.id, parsed.data.handoffId);
   try {
     await saveOrigin({
       action: 'save',
       projectId,
-      requestId: originSaveIdentity(person.id, parsed.data.handoffId),
+      requestId: saveId,
       expected: 0,
       content,
-      note: 'Imported from Talk',
+      note: originImportNote,
     });
   } catch (error) {
     throw new IntelligenceError(
@@ -495,8 +537,10 @@ export async function importArchitectHandoff(input: unknown) {
     p_id: parsed.data.id,
     p_handoff: parsed.data.handoffId,
     p_project: projectId,
+    p_save: saveId,
     p_conversation: parsed.data.conversationId,
     p_prepared: resolved.handoff.preparedAt,
+    p_provenance: transfer,
   });
   if (recorded.error || !recorded.data)
     throw new IntelligenceError(
@@ -505,14 +549,27 @@ export async function importArchitectHandoff(input: unknown) {
         : 'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
       /reused with different inputs/i.test(recorded.error?.message ?? '') ? 409 : 503,
     );
-  const receipt = recorded.data as { id: string; handoffId: string; projectId: string; recovered?: boolean };
+  const receipt = recorded.data as {
+    id: string;
+    handoffId: string;
+    projectId: string;
+    saveId?: string;
+    recovered?: boolean;
+  };
+  if (receipt.projectId !== projectId || (receipt.saveId && receipt.saveId !== saveId))
+    throw new IntelligenceError(
+      'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
+      503,
+    );
   return {
     id: receipt.id,
     handoffId: receipt.handoffId,
     projectId: receipt.projectId,
+    saveId: receipt.saveId ?? saveId,
     imported: true as const,
     recovered: Boolean(receipt.recovered),
     project: content,
+    transfer,
   };
 }
 

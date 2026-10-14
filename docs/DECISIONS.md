@@ -1,3 +1,7 @@
+# Talk → Architect Origin import bind — 2026-10-14
+
+`ai_talk_record_origin_import` must acknowledge only this handoff's deterministic Origin project and save, including the `Imported from Talk` version row. An owned but unrelated project is denied the same as a foreign project. Overlay `imported` only after that verification. Selected image references and palette roles stay in Talk; Origin receives bounded text and palette hex. Unsent Origin drafts remain mounted-app memory. Additive `20261014020000_talk_origin_import_bind.sql` does not rewrite applied Origin SQL.
+
 # Talk → Architect Origin import — 2026-10-14
 
 Reuse existing Origin `architect_origin_save` and Talk creation rows. Do not invent a second project store or trust browser package contents. Resolve selected immutable versions server-side, show a review, and create one private project only after explicit confirmation. Bind import to an owner-scoped receipt so lost-response and concurrent retries cannot duplicate the project. Overlay `imported` from the receipt only after destination persistence is confirmed. Additive `20261014010000_talk_origin_import.sql` stays local/reviewable; do not rewrite the applied Origin migration record. Construct, voice and publishing stay closed.
