@@ -6,14 +6,14 @@ export type Handoff = {
   text: string;
   recovery?: 'memory' | 'tab';
   ownerId: string;
-  target?: CapabilityId;
+  target?: CapabilityId | 'architect';
   conversationId?: string;
   payload?: unknown;
 };
 type DraftHandoff = {
   peek: () => Handoff | null;
   stage: (draft: Handoff | null) => void;
-  take: (target?: CapabilityId, ownerId?: string) => Handoff | null;
+  take: (target?: CapabilityId | 'architect', ownerId?: string) => Handoff | null;
 };
 const DraftContext = createContext<DraftHandoff | null>(null);
 

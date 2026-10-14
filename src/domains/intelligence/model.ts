@@ -5,6 +5,7 @@ import type { ModelMessage } from 'ai';
 import type { ActivityReporter } from './stream';
 import { streamAurelius } from './agent';
 import { aiConfigSchema } from './validation';
+import type { TalkAgentSession } from '@/domains/talk-creation/tools';
 
 export function generateReply(
   model: string,
@@ -13,6 +14,7 @@ export function generateReply(
   founder = false,
   onSource?: (source: import('./research').ResearchSource) => void,
   onActivity?: ActivityReporter,
+  creation?: TalkAgentSession | null,
 ) {
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY) throw new Error('OpenAI is not configured');
@@ -20,7 +22,15 @@ export function generateReply(
     apiKey: config.OPENAI_API_KEY,
     baseURL: 'https://api.openai.com/v1',
   });
-  return streamAurelius(openai.responses(model), messages, signal, founder, onSource, onActivity);
+  return streamAurelius(
+    openai.responses(model),
+    messages,
+    signal,
+    founder,
+    onSource,
+    onActivity,
+    creation,
+  );
 }
 type AuxiliaryResult = { text: string; input: number | null; output: number | null };
 export async function generateConversationTitle(

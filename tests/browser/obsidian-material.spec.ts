@@ -169,9 +169,9 @@ for (const width of [344, 720, 1440]) {
     await expect(field(page)).toBeEnabled();
     await expect(page.locator('.talk-welcome-presence')).toBeVisible();
     await expect(page.locator('.talk-expand svg[aria-hidden="true"]')).toBeVisible();
-    await expect(page.locator('.conversation-starters button svg[aria-hidden="true"]')).toHaveCount(
-      3,
-    );
+    const starters = page.locator('.conversation-starters button');
+    await expect(starters).toHaveCount(4);
+    await expect(starters.locator('svg[aria-hidden="true"]')).toHaveCount(4);
     await expect(page.locator('.conversation-starters')).not.toContainText('↗');
     await noOverflow(page);
     await shot(page, `talk-empty-${width}`);
