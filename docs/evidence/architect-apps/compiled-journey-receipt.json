@@ -19,8 +19,11 @@
     "parentStorageReadable": false
   },
   "docker": {
-    "available": false,
-    "reason": "docker: command not found. No Docker-enabled Apps job in .github/workflows/architect-origin.yml."
+    "workstation": "not-installed",
+    "ciEngine": "present on GitHub Actions ubuntu-latest",
+    "pinnedImage": "aethelios-architect-apps:2026-10-14.1",
+    "imageLoaded": false,
+    "reason": "Isolated success requires the pinned image. The journey inspects that image without pulling and does not treat a host Docker engine as isolated success."
   },
   "talk": {
     "contract": "talk.architect.source.resolve",

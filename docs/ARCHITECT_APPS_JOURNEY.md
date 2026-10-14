@@ -28,7 +28,7 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 
 ## Unavailable in this workspace
 
-- Docker executable is not installed (`docker: command not found`). Live isolated image execution against `aethelios-architect-apps:2026-10-14.1` was not run. There is no Docker-enabled Apps job in `.github/workflows/architect-origin.yml`.
+- This workstation has no Docker executable (`docker: command not found`). GitHub Actions has a Docker engine. Isolated success still requires the pinned image `aethelios-architect-apps:2026-10-14.1`; that image is not loaded in CI and there is no Apps image-build job in `.github/workflows/architect-origin.yml`. The compiled journey inspects the image without pulling and only runs isolation when it is present.
 - No funded OpenAI call was made.
 - Talk authorized source adapter is implemented on the Architect side and still pending Talk workstream registration.
 - Hosted Apps migrations are unapplied.

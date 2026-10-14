@@ -57,7 +57,13 @@ import { assemblePreviewDocument, resetPreviewSessions, signPreviewSession } fro
 import { resolveHostFixtureToolchain, buildGeneratedApp } from '@/domains/architect-apps/builder';
 import { notesSourceFiles } from '@/domains/architect-apps/notes-fixture';
 import { APP_BUNDLE_ENTRY } from '@/domains/architect-apps/bundle';
-import { collectArtifactTree, isolatedArtifactCollectorModule, probeAppsDockerIsolation } from '@/domains/architect-apps/isolate';
+import {
+  buildIsolatedGeneratedApp,
+  collectArtifactTree,
+  defaultAppsImage,
+  isolatedArtifactCollectorModule,
+  probeAppsDockerIsolation,
+} from '@/domains/architect-apps/isolate';
 import { APP_DATA_BRIDGE_CONTRACT } from '@/domains/architect-apps/context';
 
 beforeEach(() => {
@@ -290,7 +296,21 @@ it('compiles Field Notes, mounts the sealed bundle, and replays create/edit agai
   expect(failed.working?.revision).toBe(1);
   expect(failed.preview?.entry).toBe(APP_BUNDLE_ENTRY);
   const docker = await probeAppsDockerIsolation({ PATH: process.env.PATH });
-  expect(docker.available).toBe(false);
+  expect(compiled.result.isolation).toBe('host-fixture');
+  expect(compiled.result.sandbox).toBe(false);
+  if (docker.available) {
+    const image = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', defaultAppsImage], { encoding: 'utf8' });
+    if (image.status === 0) {
+      const isolated = await buildIsolatedGeneratedApp(notesSourceFiles(), {
+        timeoutMs: 120000,
+        name: 'apps-journey-ci',
+      });
+      expect(isolated.result.ok, isolated.result.blocker ?? isolated.result.typecheck.log).toBe(true);
+      expect(isolated.result.isolation).toBe('docker');
+      expect(isolated.result.sandbox).toBe(true);
+      expect(isolated.artifacts.some((file) => file.path === APP_BUNDLE_ENTRY)).toBe(true);
+    }
+  }
   const preview = assemblePreviewDocument({
     artifacts: compiled.artifacts,
     session,
