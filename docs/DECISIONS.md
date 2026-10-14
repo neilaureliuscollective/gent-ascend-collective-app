@@ -1,3 +1,7 @@
+# Architect quantity-and-cost estimator — 2026-10-14
+
+Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
 # Architect excerpt budget, check identity, phone modal and receipt bound — 2026-10-14
 
 Count every content-bearing excerpt, including too-large manifest entries, against the existing eight-excerpt / 32 KiB excerpt budget. Compare checks by canonical identity (kind, command, full validated target), never by truncated display names; ambiguous historical evidence is comparison-unavailable, not pre-existing. Phone review reuses `ContextSheet` native modality. Bound the complete serialized UTF-8 receipt to the existing 120,000-byte SQL limit before persist, marking truncated logs and never converting missing evidence into a pass. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).

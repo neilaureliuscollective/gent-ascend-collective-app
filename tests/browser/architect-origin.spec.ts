@@ -1504,3 +1504,123 @@ test('keeps last success and drafts when worker, connections and provider are un
   await expect(page.getByRole('alert')).toContainText(/Isolated worker is not running|stay disabled|not executed/);
   await expect(page.locator('.origin-workbench-identity h2')).toHaveText('Blocked Origin');
 });
+
+test('quantity-and-cost estimator can be created, saved, reopened and invoked', async ({ page }) => {
+  const tools: Array<Record<string, unknown>> = [];
+  const versions: Array<Record<string, unknown>> = [];
+  const invocations: Array<Record<string, unknown>> = [];
+  await fixture(page);
+  await page.route('**/api/architect-tools*', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { tools, versions, invocations } });
+    const body = route.request().postDataJSON();
+    if (body.action === 'save') {
+      if (tools[0] && body.expected !== tools[0].revision)
+        return route.fulfill({ status: 409, json: { error: 'This tool changed after you opened it.' } });
+      const now = new Date().toISOString();
+      const revision = body.expected + 1;
+      const tool = {
+        id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        kind: 'quantity-cost-estimator',
+        name: body.name,
+        revision,
+        created_at: now,
+        updated_at: now,
+      };
+      tools.splice(0, tools.length, tool);
+      versions.unshift({
+        id: body.requestId,
+        tool_id: body.toolId,
+        person_id: 'owner',
+        project_id: body.projectId,
+        revision,
+        name: body.name,
+        configuration: body.configuration,
+        note: body.note,
+        created_at: now,
+      });
+      return route.fulfill({
+        json: { revision, requestId: body.requestId, personId: 'owner', toolId: body.toolId },
+      });
+    }
+    if (body.action === 'invoke') {
+      if (body.projectId === '00000000-0000-4000-8000-000000000099')
+        return route.fulfill({ status: 404, json: { error: 'Saved tool revision unavailable.' } });
+      const version = versions.find((item) => item.revision === body.revision);
+      if (!version) return route.fulfill({ status: 404, json: { error: 'Saved tool revision unavailable.' } });
+      const receipt = {
+        toolId: body.toolId,
+        projectId: body.projectId,
+        revision: body.revision,
+        name: version.name,
+        configuration: version.configuration,
+        inputs: { quantities: body.quantities ?? {} },
+        assumptions: ['Markup is not margin.'],
+        result: {
+          currency: 'USD',
+          rounding: 'half-up-minor',
+          lines: [],
+          subtotal: '310.00',
+          waste_total: '31.00',
+          markup_amount: '51.15',
+          total: '392.15',
+          implied_margin_percent: '13.04',
+          assumptions: ['Markup is not margin.'],
+        },
+        provenance: {
+          source: body.source,
+          requestId: body.requestId,
+          personId: 'owner',
+          recorded: true,
+        },
+      };
+      invocations.unshift(receipt);
+      return route.fulfill({ json: receipt });
+    }
+    return route.fulfill({ status: 400, json: { error: 'Unsupported tool action' } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(base);
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Estimate sheet goods for a workshop.');
+  await page.getByLabel('Project name (optional)').fill('Workshop estimator');
+  await page.getByRole('button', { name: 'Create a quantity & cost estimator' }).click();
+  await expect(page.locator('.origin-status')).toContainText('Saved revision 1');
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.getByRole('button', { name: 'Load labelled sample' }).click();
+  await expect(page.locator('.origin-tool-result').getByText(/Sample demonstration/)).toBeVisible();
+  await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
+  await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
+  await page.getByRole('button', { name: 'Save tool revision' }).click();
+  await expect(page.locator('.origin-tool [role="status"]')).toContainText('Saved tool revision 1');
+  const intended = page.getByLabel('Assumptions');
+  await intended.fill('Edited after save — still a draft until the next revision.');
+  await expect(page.locator('.origin-tool .origin-connection-chip')).toHaveText('Unsaved preview');
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-1440.png',
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Invoke saved revision' }).click();
+  await expect(page.getByText(/invoked Sample plywood estimator revision 1/)).toBeVisible();
+  await expect(page.getByText(/This is the saved revision, not the unsaved draft/)).toBeVisible();
+  await page.setViewportSize({ width: 720, height: 900 });
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-720.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save tool revision' })).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-390.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 480 });
+  await expect(page.locator('.origin-tool-result h4')).toBeVisible();
+  await page.screenshot({
+    path: 'docs/evidence/architect-construct/architect-tool-keyboard-390.png',
+    fullPage: true,
+  });
+});
