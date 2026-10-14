@@ -468,7 +468,8 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   await expect(page.getByLabel('Project vision')).toHaveValue(savedVision);
 
   await page.goto(`/app/aethelios?conversation=${conversation}`);
-  await expect(page.getByText('Reserve site refined')).toBeVisible();
+  const refinedBrief = page.getByRole('heading', { name: 'Reserve site refined', exact: true });
+  await expect(refinedBrief.first()).toBeVisible();
   let releaseHeldGet: (() => void) | undefined;
   const heldGet = new Promise<void>((resolve) => {
     releaseHeldGet = resolve;
@@ -496,10 +497,10 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   await expect(page.getByRole('heading', { name: 'Aethelios' })).toBeVisible();
   await page.getByRole('button', { name: 'New', exact: true }).click();
   releaseHeldGet?.();
-  await expect(page.getByText('Reserve site refined')).toHaveCount(0);
+  await expect(refinedBrief).toHaveCount(0);
   await page.unroute(`**/api/aurelius/creations?conversationId=${conversation}`);
   await page.goto(`/app/aethelios?conversation=${conversation}`);
-  await expect(page.getByText('Reserve site refined')).toBeVisible();
+  await expect(refinedBrief.first()).toBeVisible();
   await expect(page.getByText('Proposal · not applied')).toBeVisible();
   await expect(page.getByText('Saved in Architect.')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
