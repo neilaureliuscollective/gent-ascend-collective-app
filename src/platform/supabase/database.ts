@@ -606,6 +606,24 @@ export interface Database {
         never,
         never
       >;
+      ai_talk_direction_transfers: Table<
+        {
+          id: string;
+          person_id: string;
+          conversation_id: string;
+          board_id: string;
+          board_version: number;
+          direction_id: string;
+          direction_uuid: string;
+          project_id: string;
+          digest: string;
+          receipt: unknown;
+          imported: boolean;
+          created_at: string;
+        },
+        never,
+        never
+      >;
       ai_talk_origin_imports: Table<
         {
           id: string;
@@ -1523,6 +1541,49 @@ export interface Database {
       ai_talk_select_creation: {
         Args: { p_conversation: string; p_creation: string };
         Returns: boolean;
+      };
+      ai_live_bind_turn: {
+        Args: {
+          p_session: string;
+          p_conversation: string;
+          p_item: string;
+          p_response: string | null;
+          p_turn: string;
+        };
+        Returns: {
+          providerItemId: string;
+          providerResponseId: string | null;
+          turnId: string;
+          recovered?: boolean;
+        };
+      };
+      ai_live_read_bindings: {
+        Args: { p_session: string; p_conversation: string };
+        Returns: Array<{
+          providerItemId: string;
+          providerResponseId: string | null;
+          turnId: string;
+        }>;
+      };
+      ai_talk_record_direction_transfer: {
+        Args: {
+          p_id: string;
+          p_conversation: string;
+          p_board: string;
+          p_version: number;
+          p_direction: string;
+          p_direction_uuid: string;
+          p_project: string;
+          p_digest: string;
+          p_receipt: unknown;
+        };
+        Returns: {
+          id: string;
+          projectId: string;
+          digest: string;
+          imported: boolean;
+          recovered?: boolean;
+        };
       };
       ai_talk_import_origin: {
         Args: { p_id: string; p_handoff: string; p_conversation: string };

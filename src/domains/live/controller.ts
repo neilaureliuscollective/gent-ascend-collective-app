@@ -20,12 +20,14 @@ export type LiveState = {
   reviewedAction: ReviewedActionDraft | null;
   expiresAt: string | null;
   transcript: { id: string; role: 'user' | 'assistant'; text: string }[];
+  savedItemIds: string[];
   playbackBlocked: boolean;
   cleanupPending: boolean;
   recovering: boolean;
   speechDetected: boolean;
   responsePending: boolean;
   persistence: 'idle' | 'pending' | 'acknowledged' | 'uncertain';
+  persistenceEpoch: number;
 };
 /** One transport per workspace. Presentation changes never create a transport. */
 export class LiveController {
@@ -42,13 +44,16 @@ export class LiveController {
     reviewedAction: null,
     expiresAt: null,
     transcript: [],
+    savedItemIds: [],
     playbackBlocked: false,
     cleanupPending: false,
     recovering: false,
     speechDetected: false,
     responsePending: false,
     persistence: 'idle',
+    persistenceEpoch: 0,
   };
+  private artifactConversationId: string | null = null;
   private listeners = new Set<() => void>();
   private pc: RTCPeerConnection | null = null;
   private stream: MediaStream | null = null;
@@ -170,18 +175,21 @@ export class LiveController {
       error: '',
       conversationId,
       reviewedAction:
-        this.state.conversationId === conversationId ? this.state.reviewedAction : null,
+        this.scopedConversation() === conversationId ? this.state.reviewedAction : null,
       artifactWorkspace:
-        this.state.conversationId === conversationId
+        this.scopedConversation() === conversationId
           ? this.state.artifactWorkspace
           : { artifacts: [], selectedId: null, projects: [] },
       sessionId: id,
       jobs: [],
       expiresAt: null,
       transcript: [],
+      savedItemIds: [],
       persistence: 'idle',
+      persistenceEpoch: this.state.persistenceEpoch + 1,
       playbackBlocked: false,
     });
+    this.artifactConversationId = conversationId;
     try {
       if (
         !window.isSecureContext ||
@@ -419,13 +427,22 @@ export class LiveController {
   invalidateTranscript() {
     if (['connecting', 'listening', 'speaking'].includes(this.state.phase)) return;
     ++this.epoch;
-    this.update({ transcript: [], persistence: 'idle' });
+    this.update({
+      transcript: [],
+      savedItemIds: [],
+      persistence: 'idle',
+      persistenceEpoch: this.state.persistenceEpoch + 1,
+    });
   }
   markPersistence(persistence: LiveState['persistence']) {
     this.update({ persistence });
   }
-  acknowledgePersistence() {
-    this.update({ persistence: 'acknowledged', transcript: [] });
+  markSavedItems(ids: string[]) {
+    this.update({ savedItemIds: [...new Set([...this.state.savedItemIds, ...ids])] });
+  }
+  acknowledgePersistence(sessionId?: string | null) {
+    if (sessionId && this.state.sessionId && sessionId !== this.state.sessionId) return;
+    this.update({ persistence: 'acknowledged', transcript: [], savedItemIds: [] });
   }
   private send(value: unknown) {
     if (this.channel?.readyState === 'open') this.channel.send(JSON.stringify(value));
@@ -567,20 +584,19 @@ export class LiveController {
     else lines[index] = line;
     this.update({ transcript: lines.slice(-60) });
   }
+  private scopedConversation() {
+    return this.artifactConversationId ?? this.state.conversationId;
+  }
   bindConversation(conversationId: string) {
-    if (
-      ['connecting', 'listening', 'speaking'].includes(this.state.phase) ||
-      this.state.conversationId === conversationId
-    )
-      return;
+    if (this.artifactConversationId === conversationId) return;
+    this.artifactConversationId = conversationId;
     this.update({
-      conversationId,
       artifactWorkspace: { artifacts: [], selectedId: null, projects: [] },
       reviewedAction: null,
     });
   }
   async refreshArtifacts() {
-    const id = this.state.conversationId;
+    const id = this.scopedConversation();
     if (!id || this.artifactReading) return;
     this.artifactReading = true;
     try {
@@ -590,14 +606,14 @@ export class LiveController {
       );
       if (!response.ok) return;
       const result = (await response.json()) as ArtifactWorkspace;
-      if (this.state.conversationId === id && Array.isArray(result.artifacts))
+      if (this.scopedConversation() === id && Array.isArray(result.artifacts))
         this.update({ artifactWorkspace: result });
     } finally {
       this.artifactReading = false;
     }
   }
   async prepareDailyAction(reviewId: string) {
-    const conversationId = this.state.conversationId;
+    const conversationId = this.scopedConversation();
     if (
       !conversationId ||
       this.state.reviewedAction?.phase === 'saving' ||
@@ -607,7 +623,7 @@ export class LiveController {
     try {
       const prepared = await this.readDailyAction(conversationId, reviewId);
       if (
-        this.state.conversationId !== conversationId ||
+        this.scopedConversation() !== conversationId ||
         ['saving', 'uncertain'].includes(this.state.reviewedAction?.phase ?? '')
       )
         return;
@@ -625,7 +641,7 @@ export class LiveController {
         },
       });
     } catch (error) {
-      if (this.state.conversationId === conversationId)
+      if (this.scopedConversation() === conversationId)
         this.update({
           error: error instanceof Error ? error.message : 'Daily action preparation unavailable.',
         });
@@ -660,7 +676,7 @@ export class LiveController {
     if (!draft || draft.phase === 'saving') return;
     try {
       const saved = await this.readDailyAction(draft.conversationId, draft.reviewId);
-      if (this.state.reviewedAction !== draft || this.state.conversationId !== draft.conversationId)
+      if (this.state.reviewedAction !== draft || this.scopedConversation() !== draft.conversationId)
         return;
       this.update({
         reviewedAction: saved.receipt
@@ -689,7 +705,7 @@ export class LiveController {
       !draft ||
       draft.phase !== 'editing' ||
       !draft.title.trim() ||
-      draft.conversationId !== this.state.conversationId
+      draft.conversationId !== this.scopedConversation()
     )
       return;
     this.update({ reviewedAction: { ...draft, phase: 'saving', error: '' } });
@@ -721,7 +737,7 @@ export class LiveController {
         throw new Error(value.error ?? 'Saved action receipt is unconfirmed.');
       if (
         this.state.reviewedAction?.id === draft.id &&
-        this.state.conversationId === draft.conversationId
+        this.scopedConversation() === draft.conversationId
       )
         this.update({
           reviewedAction: { ...draft, receipt: value.receipt, phase: 'receipt', error: '' },
@@ -729,7 +745,7 @@ export class LiveController {
     } catch (error) {
       if (
         this.state.reviewedAction?.id === draft.id &&
-        this.state.conversationId === draft.conversationId
+        this.scopedConversation() === draft.conversationId
       )
         this.update({
           reviewedAction: {

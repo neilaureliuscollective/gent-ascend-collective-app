@@ -181,7 +181,12 @@ export async function admitLive(input: LiveAdmission) {
         started,
         correlationId,
         response.status,
-        readProviderRejection(response.status, response.headers.get('content-type'), providerBody),
+        readProviderRejection(
+          response.status,
+          response.headers.get('content-type'),
+          providerBody,
+          response.headers,
+        ),
       );
     }
     const location = response.headers.get('location');
@@ -761,6 +766,16 @@ export async function admitLive(input: LiveAdmission) {
               });
               if (finished.error || !finished.data)
                 throw new Error('Voice turn persistence failed');
+              if (turn.providerItemId) {
+                const bound = await client.rpc('ai_live_bind_turn', {
+                  p_session: input.sessionId,
+                  p_conversation: input.conversationId,
+                  p_item: turn.providerItemId,
+                  p_response: turn.providerResponseId ?? null,
+                  p_turn: id,
+                });
+                if (bound.error || !bound.data) throw new Error('Voice turn binding failed');
+              }
             }),
           ),
         )

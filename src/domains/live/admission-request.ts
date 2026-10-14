@@ -27,13 +27,27 @@ function fieldKind(value: FormDataEntryValue | null) {
 const token = (value: unknown) =>
   typeof value === 'string' && /^[a-zA-Z0-9_.-]{1,80}$/.test(value) ? value : null;
 
+const requestIdHeaders = ['x-request-id', 'openai-request-id', 'x-openai-request-id'] as const;
+
+export function allowlistedRequestId(headers: Headers | null | undefined) {
+  if (!headers) return null;
+  for (const name of requestIdHeaders) {
+    const value = token(headers.get(name));
+    if (value) return value;
+  }
+  return null;
+}
+
 /** Allowlisted provider diagnostics only. Never retain raw SDP, keys, conversation text or unrestricted messages. */
 export function readProviderRejection(
   status: number,
   contentType: string | null,
   body: string,
+  headers?: Headers | null,
 ): Record<string, string | number | null> {
   const receipt: Record<string, string | number | null> = { providerStatus: status };
+  const headerId = allowlistedRequestId(headers);
+  if (headerId) receipt.providerRequestId = headerId;
   if (!body || body.length > 4000 || !contentType?.toLowerCase().includes('application/json'))
     return receipt;
   try {
@@ -45,7 +59,7 @@ export function readProviderRejection(
     receipt.providerCode = token(error.code);
     receipt.providerType = token(error.type);
     receipt.providerParam = token(error.param);
-    receipt.providerRequestId = token(parsed.request_id);
+    receipt.providerRequestId = token(parsed.request_id) ?? receipt.providerRequestId ?? null;
   } catch {
     /* Non-JSON or unexpected shapes stay status-only. */
   }

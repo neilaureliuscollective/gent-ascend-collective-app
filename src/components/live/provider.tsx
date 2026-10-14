@@ -69,12 +69,14 @@ const idleSnapshot: LiveState = {
   reviewedAction: null,
   expiresAt: null,
   transcript: [],
+  savedItemIds: [],
   playbackBlocked: false,
   cleanupPending: false,
   recovering: false,
   speechDetected: false,
   responsePending: false,
   persistence: 'idle',
+  persistenceEpoch: 0,
 };
 const noopSubscribe = () => () => {};
 const getIdle = () => idleSnapshot;
@@ -449,8 +451,8 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            controller.text(draft);
-            setDraft('');
+            const sent = controller.text(draft);
+            if (sent.accepted) setDraft('');
           }}
         >
           <label>

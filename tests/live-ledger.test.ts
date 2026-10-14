@@ -35,7 +35,15 @@ describe('provider voice ledger', () => {
       save,
     );
     expect(turns).toEqual([
-      { user: 'Hi', assistant: 'Hello', status: 'complete', input: 50, output: 20 },
+      {
+        user: 'Hi',
+        assistant: 'Hello',
+        status: 'complete',
+        input: 50,
+        output: 20,
+        providerItemId: 'u1',
+        providerResponseId: 'r1',
+      },
     ]);
     expect(ledger.inputTokens).toBe(50);
   });
@@ -211,7 +219,15 @@ it('latches interruption before response.done, waits for usage, and ignores dupl
   await ledger.accept(done, save);
   await ledger.accept({ ...done, event_id: 'different-duplicate-event' }, save);
   expect(turns).toEqual([
-    { user: 'Question', assistant: '', status: 'cancelled', input: 7, output: 3 },
+    {
+      user: 'Question',
+      assistant: '',
+      status: 'cancelled',
+      input: 7,
+      output: 3,
+      providerItemId: 'user',
+      providerResponseId: 'reply',
+    },
   ]);
   expect(ledger.inputTokens).toBe(7);
 });

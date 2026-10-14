@@ -40,3 +40,16 @@ it('keeps only allowlisted provider rejection fields', () => {
   });
   expect(JSON.stringify(receipt)).not.toMatch(/SECRET|SDP|conversation/);
 });
+
+it('captures an allowlisted provider request id from headers when the body omits it', () => {
+  const headers = new Headers({
+    'openai-request-id': 'req_from_header',
+    'content-type': 'text/plain',
+  });
+  const receipt = readProviderRejection(400, 'text/plain', 'raw provider text', headers);
+  expect(receipt).toEqual({
+    providerStatus: 400,
+    providerRequestId: 'req_from_header',
+  });
+  expect(JSON.stringify(receipt)).not.toMatch(/raw provider/);
+});

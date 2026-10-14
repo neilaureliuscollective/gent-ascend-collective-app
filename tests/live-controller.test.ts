@@ -277,6 +277,28 @@ it('preserves owned visual selection through minimize/end and clears it for a di
   expect(controller.getSnapshot().artifactWorkspace.selectedId).toBeNull();
 });
 
+it('does not relabel voice session identity or transcript when artifacts open another conversation', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-1',
+    transcript: 'Same words twice',
+  });
+  await controller.end();
+  const ended = controller.getSnapshot();
+  expect(ended.conversationId).toBe(conversation);
+  expect(ended.transcript[0]?.text).toBe('Same words twice');
+  controller.bindConversation('00000000-0000-4000-8000-000000000098');
+  expect(controller.getSnapshot().conversationId).toBe(conversation);
+  expect(controller.getSnapshot().sessionId).toBe(ended.sessionId);
+  expect(controller.getSnapshot().transcript).toEqual(ended.transcript);
+  controller.acknowledgePersistence('00000000-0000-4000-8000-000000000077');
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  controller.acknowledgePersistence(ended.sessionId);
+  expect(controller.getSnapshot().persistence).toBe('acknowledged');
+});
+
 it('shows speech detection and processing from real provider events', async () => {
   const controller = new LiveController();
   await controller.start(conversation, false);
