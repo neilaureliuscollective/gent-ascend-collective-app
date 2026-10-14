@@ -143,7 +143,7 @@ export async function readTalkCreations(conversationId: string): Promise<TalkCre
     .map((item) => overlayHandoffImport(item, imported.get(item.id)));
   const selection: TalkCreationWorkspace['selected'] = {};
   for (const row of selected.data ?? []) {
-    if (row.kind === 'brief' || row.kind === 'plan' || row.kind === 'palette')
+    if (row.kind === 'brief' || row.kind === 'plan' || row.kind === 'palette' || row.kind === 'board')
       selection[row.kind] = row.creation_id;
   }
   const imageJobs: TalkImageJob[] = (images?.artifacts ?? [])
@@ -260,7 +260,7 @@ export async function prepareArchitectHandoff(input: unknown) {
   if (existing.data) {
     const creation = asCreation(existing.data);
     const content =
-      creation?.kind === 'handoff' && 'schema' in creation.content ? creation.content : null;
+      creation?.kind === 'handoff' && 'imported' in creation.content ? creation.content : null;
     if (!content || !matchesFrozenHandoff(content, parsed.data))
       throw new IntelligenceError(
         'This save request was already used with different content. Start a new edit.',
@@ -289,17 +289,20 @@ export async function prepareArchitectHandoff(input: unknown) {
     };
   }
   const workspace = await readTalkCreations(parsed.data.conversationId);
-  const selections = parsed.data.creationIds.map((id) => {
+  const selections = parsed.data.creationIds.flatMap((id) => {
     const creation = workspace.creations.find((item) => item.id === id);
     if (!creation || creation.kind === 'handoff' || creation.superseded_by || creation.candidate)
       throw new IntelligenceError('Choose current brief, plan or palette versions.', 409);
-    return {
-      kind: creation.kind,
-      lineageId: creation.lineage_id,
-      versionId: creation.id,
-      version: creation.version,
-      title: 'title' in creation.content ? creation.content.title : creation.kind,
-    };
+    if (creation.kind === 'board') return [];
+    return [
+      {
+        kind: creation.kind as 'brief' | 'plan' | 'palette',
+        lineageId: creation.lineage_id,
+        versionId: creation.id,
+        version: creation.version,
+        title: 'title' in creation.content ? creation.content.title : creation.kind,
+      },
+    ];
   });
   try {
     assertOneSelectionPerKind(selections);
@@ -344,7 +347,7 @@ export async function prepareArchitectHandoff(input: unknown) {
 async function resolveArchitectPackage(
   handoffRow: TalkCreation,
 ): Promise<ResolvedArchitectPackage> {
-  if (handoffRow.kind !== 'handoff' || !('schema' in handoffRow.content))
+  if (handoffRow.kind !== 'handoff' || !('imported' in handoffRow.content))
     throw new IntelligenceError('This Architect package is unavailable.', 404);
   const { client, person } = await intelligenceSession();
   const handoff = handoffRow.content;

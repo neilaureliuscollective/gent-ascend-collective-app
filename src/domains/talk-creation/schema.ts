@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { designBoardContentSchema, hexColor, type DesignBoardContent } from './design-board';
 
-export const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
-export const creationKinds = ['brief', 'plan', 'palette', 'handoff'] as const;
+export { hexColor };
+export const creationKinds = ['brief', 'plan', 'palette', 'board', 'handoff'] as const;
 export type CreationKind = (typeof creationKinds)[number];
 export const swatchRoles = [
   'background',
@@ -135,10 +136,11 @@ export const offeredTextSchema = z
     brief: briefContentSchema.optional(),
     plan: planContentSchema.optional(),
     palette: paletteContentSchema.optional(),
+    board: designBoardContentSchema.optional(),
   })
   .strict()
-  .refine((value) => Boolean(value.brief || value.plan || value.palette), {
-    message: 'Offer at least one brief, plan or palette.',
+  .refine((value) => Boolean(value.brief || value.plan || value.palette || value.board), {
+    message: 'Offer at least one brief, plan, palette or design board.',
   });
 
 export const imageRequestSchema = z
@@ -152,12 +154,14 @@ export const creationContentSchema = z.union([
   briefContentSchema,
   planContentSchema,
   paletteContentSchema,
+  designBoardContentSchema,
   handoffContentSchema,
 ]);
 
 export type BriefContent = z.infer<typeof briefContentSchema>;
 export type PlanContent = z.infer<typeof planContentSchema>;
 export type PaletteContent = z.infer<typeof paletteContentSchema>;
+export type BoardContent = DesignBoardContent;
 export type HandoffContent = z.infer<typeof handoffContentSchema>;
 export type OfferedText = z.infer<typeof offeredTextSchema>;
 export type ImageRequest = z.infer<typeof imageRequestSchema>;
@@ -170,7 +174,7 @@ export type TalkCreation = {
   lineage_id: string;
   version: number;
   kind: CreationKind;
-  content: BriefContent | PlanContent | PaletteContent | HandoffContent;
+  content: BriefContent | PlanContent | PaletteContent | BoardContent | HandoffContent;
   predecessor_id: string | null;
   superseded_by: string | null;
   candidate?: boolean;
@@ -193,7 +197,7 @@ export type TalkImageJob = {
 
 export type TalkCreationWorkspace = {
   creations: TalkCreation[];
-  selected: Partial<Record<'brief' | 'plan' | 'palette', string>>;
+  selected: Partial<Record<'brief' | 'plan' | 'palette' | 'board', string>>;
   images: TalkImageJob[];
   selectedImageId: string | null;
   canCreateImages: boolean;
@@ -206,7 +210,7 @@ export const saveCreationInput = z
     id: z.uuid(),
     conversationId: z.uuid(),
     sourceTurnId: z.uuid().nullable().optional(),
-    kind: z.enum(['brief', 'plan', 'palette', 'handoff']),
+    kind: z.enum(['brief', 'plan', 'palette', 'board', 'handoff']),
     predecessorId: z.uuid().nullable().default(null),
     content: z.unknown(),
   })
@@ -274,15 +278,17 @@ export function matchesFrozenHandoff(
 export function contentForKind(kind: 'brief', value: unknown): BriefContent;
 export function contentForKind(kind: 'plan', value: unknown): PlanContent;
 export function contentForKind(kind: 'palette', value: unknown): PaletteContent;
+export function contentForKind(kind: 'board', value: unknown): BoardContent;
 export function contentForKind(kind: 'handoff', value: unknown): HandoffContent;
 export function contentForKind(
   kind: CreationKind,
   value: unknown,
-): BriefContent | PlanContent | PaletteContent | HandoffContent;
+): BriefContent | PlanContent | PaletteContent | BoardContent | HandoffContent;
 export function contentForKind(kind: CreationKind, value: unknown) {
   if (kind === 'brief') return briefContentSchema.parse(value);
   if (kind === 'plan') return planContentSchema.parse(value);
   if (kind === 'palette') return paletteContentSchema.parse(value);
+  if (kind === 'board') return designBoardContentSchema.parse(value);
   return handoffContentSchema.parse(value);
 }
 

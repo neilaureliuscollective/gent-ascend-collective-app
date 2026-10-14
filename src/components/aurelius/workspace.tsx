@@ -55,6 +55,7 @@ import {
 } from '@/domains/talk-creation/pending';
 import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
+import { liveComposerLimit, liveTextRejection } from '@/domains/live/limits';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
   let parent = turn.parent_turn_id;
@@ -379,7 +380,7 @@ export function AureliusWorkspace({
           signal: controller.signal,
         });
         const result = await response.json();
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) return null;
         setError('');
         if (response.status === 401) {
           recoverGeneration.current += 1;
@@ -393,7 +394,7 @@ export function AureliusWorkspace({
           setDraft('');
           setNeedsReload(false);
           void loadCreations(null);
-          return;
+          return null;
         }
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
@@ -437,11 +438,13 @@ export function AureliusWorkspace({
             'An earlier reply is still unresolved. Reload saved state before sending again.',
           );
         setConfirmDelete(false);
+        return result as WorkspaceData;
       } catch (e) {
         if (!controller.signal.aborted) {
           setError(e instanceof Error ? e.message : 'Your workspace could not be loaded.');
           throw e;
         }
+        return null;
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -492,7 +495,7 @@ export function AureliusWorkspace({
   function reload(id: string | null = null) {
     setLoading(true);
     setError('');
-    return load(id);
+    return load(id).then(() => undefined);
   }
   async function updateConversation(id: string, title: string | null, archived: boolean | null) {
     try {
@@ -665,8 +668,13 @@ export function AureliusWorkspace({
       return;
     if (liveBusy && liveController) {
       if (['listening', 'speaking'].includes(liveState.phase)) {
-        liveController.text(messageText);
-        setDraft('');
+        const sent = liveController.text(messageText);
+        if (sent.accepted) setDraft('');
+        else setError(liveTextRejection(sent.reason));
+        return;
+      }
+      if (liveState.phase === 'connecting') {
+        setError('Voice is still connecting. Your draft is unchanged.');
       }
       return;
     }
@@ -901,8 +909,10 @@ export function AureliusWorkspace({
     const owner = data?.ownerId ?? '';
     const previous = liveOwner.current;
     if (owner) liveOwner.current = owner;
-    if (previous && owner && previous !== owner && liveBusy)
-      void liveController?.end('Voice ended because the signed-in account changed.');
+    if (previous && owner && previous !== owner) {
+      if (liveBusy) void liveController?.end('Voice ended because the signed-in account changed.');
+      liveController?.invalidateTranscript();
+    }
   }, [data?.ownerId, liveBusy, liveController]);
   useEffect(() => {
     if (compact) return;
@@ -923,14 +933,40 @@ export function AureliusWorkspace({
     return () => window.removeEventListener('popstate', onPop);
   }, [compact, selected, liveBusy, liveState.conversationId, liveController, load]);
   const previousLivePhase = useRef(liveState.phase);
+  const reconcileVoiceHistory = useCallback(
+    async (id: string) => {
+      const expectedUsers = liveState.transcript.filter((line) => line.role === 'user').length;
+      const before = data?.turns.length ?? 0;
+      liveController?.markPersistence('pending');
+      setNotice('Saving the voice turns…');
+      for (let attempt = 0; attempt < 8; attempt++) {
+        try {
+          const result = await load(id);
+          const count = result?.turns.length ?? 0;
+          if (expectedUsers === 0 || count >= before + expectedUsers) {
+            liveController?.acknowledgePersistence();
+            setNotice('');
+            return;
+          }
+        } catch {
+          /* Keep polling until the timeout. */
+        }
+        await new Promise((resolve) => setTimeout(resolve, 750));
+      }
+      liveController?.markPersistence('uncertain');
+      setNotice('Voice ended. Some turns may still be saving. Reload if they appear later.');
+    },
+    [data?.turns.length, liveController, liveState.transcript, load],
+  );
   useEffect(() => {
     const wasActive = ['connecting', 'listening', 'speaking'].includes(previousLivePhase.current);
     previousLivePhase.current = liveState.phase;
     if (wasActive && ['ended', 'error', 'idle'].includes(liveState.phase) && selected)
-      void load(selected).catch(() => {});
-  }, [liveState.phase, selected, load]);
+      void reconcileVoiceHistory(selected);
+  }, [liveState.phase, selected, reconcileVoiceHistory]);
   function newConversation() {
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
+    liveController?.invalidateTranscript();
     recoverGeneration.current += 1;
     creationGeneration.current += 1;
     creationRead.current?.abort();
@@ -964,7 +1000,7 @@ export function AureliusWorkspace({
     setCreationError('');
     setCreationNotice('');
   }
-  async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'handoff', content: unknown) {
+  async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff', content: unknown) {
     if (!selected || !openWorkId || !data?.ownerId) return;
     const current = creationWorkspace?.creations.find(
       (item) =>
@@ -1831,22 +1867,20 @@ export function AureliusWorkspace({
                   />
                 ))
             )}
-            {liveState.transcript
-              .filter(
-                (line) =>
-                  line.text &&
-                  !data.turns.some(
-                    (turn) =>
-                      turn.id === line.id ||
-                      (line.role === 'user' && turn.user_text === line.text) ||
-                      (line.role === 'assistant' && turn.assistant_text === line.text),
-                  ),
-              )
-              .map((line) => (
-                <p key={line.id} className="live-provisional" data-live-status="provisional">
-                  <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
-                </p>
-              ))}
+            {liveState.conversationId === selected
+              ? liveState.transcript
+                  .filter((line) => line.text && !data.turns.some((turn) => turn.id === line.id))
+                  .map((line) => (
+                    <p
+                      key={line.id}
+                      className="live-provisional"
+                      data-live-status="provisional"
+                      data-conversation={liveState.conversationId ?? undefined}
+                    >
+                      <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
+                    </p>
+                  ))
+              : null}
             {busy && !data.turns.some((turn) => turn.id === operation.id) && (
               <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
             )}
@@ -1998,6 +2032,7 @@ export function AureliusWorkspace({
                 value={draft}
                 onChange={setDraft}
                 disabled={loading || deleting || orchestrating}
+                maxLength={liveComposerLimit(liveState.phase)}
                 placeholder={
                   councilSelection?.kind === 'specialist'
                     ? `Message ${councilLabel(councilSelection)}…`

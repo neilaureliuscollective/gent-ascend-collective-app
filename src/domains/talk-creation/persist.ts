@@ -17,7 +17,7 @@ export function scopedTalkIdentity(seed: string) {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-export function candidateIdentity(requestId: string, kind: 'brief' | 'plan' | 'palette') {
+export function candidateIdentity(requestId: string, kind: 'brief' | 'plan' | 'palette' | 'board') {
   return scopedTalkIdentity(`talk-candidate:${requestId}:${kind}`);
 }
 
@@ -59,7 +59,9 @@ export async function persistKind(
         ? contentForKind('plan', input.content)
         : input.kind === 'palette'
           ? withCalculatedContrast(contentForKind('palette', input.content))
-          : contentForKind('handoff', input.content);
+          : input.kind === 'board'
+            ? contentForKind('board', input.content)
+            : contentForKind('handoff', input.content);
   const id = input.id ?? crypto.randomUUID();
   const result = await client.rpc('ai_talk_save_creation', {
     p_id: id,
@@ -95,7 +97,7 @@ export async function persistCandidate(
     id: string;
     conversationId: string;
     sourceTurnId: string;
-    kind: 'brief' | 'plan' | 'palette';
+    kind: 'brief' | 'plan' | 'palette' | 'board';
     baseId: string;
     content: unknown;
   },
@@ -137,19 +139,19 @@ export async function persistOfferedCreations(
   conversationId: string,
   sourceTurnId: string,
   offered: OfferedText[],
-  selected: Partial<Record<'brief' | 'plan' | 'palette', string>>,
+  selected: Partial<Record<'brief' | 'plan' | 'palette' | 'board', string>>,
 ) {
   const saved: TalkCreation[] = [];
   const stale: Array<{
     id: string;
-    kind: 'brief' | 'plan' | 'palette';
+    kind: 'brief' | 'plan' | 'palette' | 'board';
     title: string;
     status: 'stale';
     preserved: boolean;
   }> = [];
   const current = { ...selected };
   for (const offer of offered) {
-    for (const kind of ['brief', 'plan', 'palette'] as const) {
+    for (const kind of ['brief', 'plan', 'palette', 'board'] as const) {
       const content = offer[kind];
       if (!content) continue;
       try {
@@ -177,7 +179,7 @@ export async function persistOfferedCreations(
       } catch (error) {
         if (!(error instanceof Error && error.message === 'Stale creation version')) continue;
         const baseId = selected[kind];
-        const title = content.title ?? kind;
+        const title = 'title' in content && content.title ? content.title : kind;
         if (!baseId) {
           stale.push({ id: sourceTurnId, kind, title, status: 'stale', preserved: false });
           continue;

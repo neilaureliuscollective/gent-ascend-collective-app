@@ -40,6 +40,8 @@ beforeAll(async () => {
  create table public.ai_turns(id uuid primary key, person_id uuid, conversation_id uuid);
  insert into public.ai_turns values('${turn}','${owner}','${conversation}');`);
   await db.exec(await readFile('supabase/migrations/20261013240000_talk_creation.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
 });
 afterAll(() => db.close());
 
@@ -272,10 +274,6 @@ describe('Talk stale proposal candidates (PGlite; not Supabase Auth)', () => {
   const candidate = '00000000-0000-4000-8000-000000000041';
   const applied = '00000000-0000-4000-8000-000000000042';
 
-  beforeAll(async () => {
-    await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
-  });
-
   it('keeps a stale proposal without superseding the current version, and isolates it from another owner', async () => {
     const refined = { ...brief, title: 'Manual edit v2' };
     const proposal = { ...brief, title: 'Generated proposal' };
@@ -335,5 +333,44 @@ describe('Talk stale proposal candidates (PGlite; not Supabase Auth)', () => {
         `select public.ai_talk_save_candidate('00000000-0000-4000-8000-000000000043','${conversation}','${turn}','brief','00000000-0000-4000-8000-000000000099',${literal(proposal)})`,
       ),
     ).rejects.toThrow(/unavailable/i);
+  });
+});
+
+describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
+  it('saves a board, selects B, then a warmer revision without losing A or C', async () => {
+    const { legacyReserveBoard, refineSelectedDirection } = await import(
+      '@/domains/talk-creation/design-board'
+    );
+    const firstId = '00000000-0000-4000-8000-000000000061';
+    const secondId = '00000000-0000-4000-8000-000000000062';
+    const board = legacyReserveBoard();
+    const warmer = refineSelectedDirection(board, { warmer: true });
+    await asUser(
+      owner,
+      `select public.ai_talk_save_creation('${firstId}','${conversation}',null,'board',null,${literal(board)})`,
+    );
+    await asUser(
+      owner,
+      `select public.ai_talk_save_creation('${secondId}','${conversation}',null,'board','${firstId}',${literal(warmer)})`,
+    );
+    const current = (
+      await asUser(
+        owner,
+        `select id, version, superseded_by, content->>'selectedDirectionId' as selected from public.ai_talk_creations where id='${secondId}'`,
+      )
+    ).rows[0] as { version: number; selected: string };
+    expect(current.version).toBe(2);
+    expect(current.selected).toBe('direction-b');
+    const prior = (
+      await asUser(owner, `select superseded_by from public.ai_talk_creations where id='${firstId}'`)
+    ).rows[0] as { superseded_by: string };
+    expect(prior.superseded_by).toBe(secondId);
+    const directions = (
+      await asUser(
+        owner,
+        `select jsonb_array_length(content->'directions') as count from public.ai_talk_creations where id='${secondId}'`,
+      )
+    ).rows[0] as { count: number };
+    expect(Number(directions.count)).toBe(3);
   });
 });

@@ -74,6 +74,7 @@ const idleSnapshot: LiveState = {
   recovering: false,
   speechDetected: false,
   responsePending: false,
+  persistence: 'idle',
 };
 const noopSubscribe = () => () => {};
 const getIdle = () => idleSnapshot;

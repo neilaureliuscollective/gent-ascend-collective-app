@@ -144,6 +144,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261014020000_talk_origin_import_bind.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014030000_talk_origin_import_atomic.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014040000_talk_origin_import_consistency.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
   await db.exec(`
     create function public.talk_import_fail_receipt() returns trigger
     language plpgsql as $$

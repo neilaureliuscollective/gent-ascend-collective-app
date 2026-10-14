@@ -6,6 +6,7 @@ import type {
 import { readLiveEvent, type LiveJob } from './contract';
 import { recoverableLiveError } from './provider-errors';
 import { VoiceDiagnostics, rtcHealth } from './diagnostics';
+import { LIVE_TEXT_LIMIT, type LiveTextSend } from './limits';
 export type LiveState = {
   phase: 'idle' | 'connecting' | 'listening' | 'speaking' | 'ended' | 'error';
   mode: 'immersive' | 'compact';
@@ -24,6 +25,7 @@ export type LiveState = {
   recovering: boolean;
   speechDetected: boolean;
   responsePending: boolean;
+  persistence: 'idle' | 'pending' | 'acknowledged' | 'uncertain';
 };
 /** One transport per workspace. Presentation changes never create a transport. */
 export class LiveController {
@@ -45,6 +47,7 @@ export class LiveController {
     recovering: false,
     speechDetected: false,
     responsePending: false,
+    persistence: 'idle',
   };
   private listeners = new Set<() => void>();
   private pc: RTCPeerConnection | null = null;
@@ -176,6 +179,7 @@ export class LiveController {
       jobs: [],
       expiresAt: null,
       transcript: [],
+      persistence: 'idle',
       playbackBlocked: false,
     });
     try {
@@ -357,6 +361,7 @@ export class LiveController {
       expiresAt: null,
       error: message,
       playbackBlocked: false,
+      persistence: this.state.transcript.some((line) => line.text) ? 'pending' : 'idle',
     });
     if (this.id) await this.revoke(this.id);
   }
@@ -395,9 +400,11 @@ export class LiveController {
     this.update({ phase: 'listening', responsePending: false });
     if (cuttingOff) this.diagnostics.cutoff(performance.now() - started, this.currentResponse);
   }
-  text(text: string) {
+  text(text: string): LiveTextSend {
     const value = text.trim();
-    if (!value || value.length > 4000 || this.channel?.readyState !== 'open') return;
+    if (!value) return { accepted: false, reason: 'empty' };
+    if (value.length > LIVE_TEXT_LIMIT) return { accepted: false, reason: 'limit' };
+    if (this.channel?.readyState !== 'open') return { accepted: false, reason: 'channel' };
     const pending = this.generating;
     this.interrupt();
     this.diagnostics.typedTurn(performance.now());
@@ -407,6 +414,18 @@ export class LiveController {
     });
     if (pending) this.pendingCreate = true;
     else this.send({ type: 'response.create' });
+    return { accepted: true };
+  }
+  invalidateTranscript() {
+    if (['connecting', 'listening', 'speaking'].includes(this.state.phase)) return;
+    ++this.epoch;
+    this.update({ transcript: [], persistence: 'idle' });
+  }
+  markPersistence(persistence: LiveState['persistence']) {
+    this.update({ persistence });
+  }
+  acknowledgePersistence() {
+    this.update({ persistence: 'acknowledged', transcript: [] });
   }
   private send(value: unknown) {
     if (this.channel?.readyState === 'open') this.channel.send(JSON.stringify(value));
@@ -779,7 +798,14 @@ export class LiveController {
   }
   dismiss() {
     if (!this.id && !this.starting && !this.state.cleanupPending)
-      this.update({ phase: 'idle', transcript: [], jobs: [], sessionId: null, error: '' });
+      this.update({
+        phase: 'idle',
+        transcript: [],
+        jobs: [],
+        sessionId: null,
+        error: '',
+        persistence: 'idle',
+      });
   }
   dispose() {
     void this.end();

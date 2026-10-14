@@ -84,7 +84,7 @@ export type StreamTimingStage =
   | 'persistence-start' | 'persistence-end' | 'stream-end';
 export type StreamCreation = {
   id: string;
-  kind: 'brief' | 'plan' | 'palette' | 'handoff' | 'image';
+  kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff' | 'image';
   title?: string;
   status?: string;
 };

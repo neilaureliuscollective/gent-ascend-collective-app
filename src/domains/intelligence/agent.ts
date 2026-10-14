@@ -103,7 +103,7 @@ export async function* streamAurelius(
     ) {
       changeActivity(searches.size ? 'searching' : 'generating');
       if (part.toolName === 'offer_text_work') {
-        for (const kind of ['brief', 'plan', 'palette'] as const) {
+        for (const kind of ['brief', 'plan', 'palette', 'board'] as const) {
           if (creation?.offered.some((offer) => offer[kind]))
             yield { type: 'creation', item: { id: creation.requestId, kind, status: 'offered' } };
         }

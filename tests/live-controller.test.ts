@@ -113,9 +113,34 @@ it('does not send typed Talk text until the voice channel is open', async () => 
   const controller = new LiveController();
   await controller.start(conversation, false);
   FakePC.instances.at(-1)!.channel.readyState = 'connecting';
-  controller.text('Typed while connecting');
+  expect(controller.text('Typed while connecting')).toEqual({
+    accepted: false,
+    reason: 'channel',
+  });
   expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
   await controller.end();
+});
+it('rejects over-limit typed voice text and keeps it unsent', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const sent = controller.text('x'.repeat(4001));
+  expect(sent).toEqual({ accepted: false, reason: 'limit' });
+  expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
+  await controller.end();
+});
+it('scopes late transcript invalidation after End without starting another admission', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-1',
+    transcript: 'Yes',
+  });
+  await controller.end();
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  expect(controller.getSnapshot().transcript.some((line) => line.text === 'Yes')).toBe(true);
+  controller.invalidateTranscript();
+  expect(controller.getSnapshot().transcript).toEqual([]);
 });
 it('exports content-free diagnostics with trusted configuration and preserves them after End', async () => {
   fetchMock.mockImplementation(async (_url, init) =>

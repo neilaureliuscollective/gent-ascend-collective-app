@@ -600,7 +600,7 @@ export interface Database {
         {
           person_id: string;
           conversation_id: string;
-          kind: 'brief' | 'plan' | 'palette';
+          kind: 'brief' | 'plan' | 'palette' | 'board';
           creation_id: string;
         },
         never,

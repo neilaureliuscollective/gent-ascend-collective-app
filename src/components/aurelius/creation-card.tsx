@@ -2,6 +2,8 @@
 import Image from 'next/image';
 import type { TalkCreation, TalkImageJob } from '@/domains/talk-creation/schema';
 import { PaletteSwatches } from './palette-swatches';
+import { DesignBoardView } from './design-board';
+import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
 import './creation.css';
 
 export function CreationCard({
@@ -21,7 +23,9 @@ export function CreationCard({
         ? 'Plan'
         : creation.kind === 'palette'
           ? 'Palette'
-          : 'Architect package';
+          : creation.kind === 'board'
+            ? 'Design board'
+            : 'Architect package';
   return (
     <article className="talk-creation-card" data-kind={creation.kind} data-selected={selected || undefined}>
       <header>
@@ -37,6 +41,9 @@ export function CreationCard({
       {creation.kind === 'plan' && 'summary' in creation.content && <p>{creation.content.summary}</p>}
       {creation.kind === 'palette' && 'swatches' in creation.content && (
         <PaletteSwatches palette={creation.content} />
+      )}
+      {creation.kind === 'board' && 'directions' in creation.content && (
+        <DesignBoardView board={creation.content as DesignBoardContent} />
       )}
       {creation.candidate && (
         <p className="talk-creation-status">

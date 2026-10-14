@@ -42,7 +42,28 @@ vi.mock('@/domains/artifacts/service', () => ({
   coworkerWorkTool: {},
 }));
 vi.mock('@/domains/live/background', () => ({ backgroundTool: {}, runBackgroundTask: vi.fn() }));
+vi.mock('@/domains/talk-creation/context', () => ({
+  selectedTalkContext: async () => '',
+  selectedTalkPredecessors: async () => ({}),
+}));
+vi.mock('@/domains/talk-creation/service', () => ({
+  readTalkCreations: async () => ({
+    creations: [],
+    selected: {},
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  }),
+}));
+vi.mock('@/domains/talk-creation/live-adapter', () => ({
+  talkLiveCreationTools: [],
+  runTalkLiveOffer: vi.fn(),
+  runTalkLiveRefine: vi.fn(),
+}));
 import { admitLive } from '@/domains/live/service';
+import { liveAdmissionFieldKinds } from '@/domains/live/admission-request';
 class Socket extends EventTarget {
   static OPEN = 1;
   static last: Socket;
@@ -174,15 +195,35 @@ it('opens the official server sideband with an Authorization header rather than 
     headers: { Authorization: 'Bearer synthetic-provider' },
   });
 });
+it('posts official string FormData fields instead of Blob file parts', async () => {
+  await admitLive(input);
+  const [, init] = vi.mocked(fetch).mock.calls[0] as [string, { body: FormData }];
+  const fields = liveAdmissionFieldKinds(init.body);
+  expect(fields.sdpKind).toBe('string');
+  expect(fields.sessionKind).toBe('string');
+  expect(fields.sdp).toBe(input.sdp);
+  expect(JSON.parse(fields.session ?? '').type).toBe('realtime');
+});
 it('reports a sanitized provider rejection instead of one generic connection message', async () => {
-  vi.mocked(fetch).mockResolvedValueOnce(new Response('no', { status: 401 }));
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        error: { code: 'invalid_request_error', type: 'invalid_request_error', param: 'sdp', message: 'raw' },
+        request_id: 'req_test1',
+      }),
+      { status: 400, headers: { 'content-type': 'application/json' } },
+    ),
+  );
   await expect(admitLive(input)).rejects.toMatchObject({
     status: 503,
     message: expect.stringMatching(/provider did not complete admission/),
     safeDetail: expect.objectContaining({
       stage: 'provider',
       category: 'rejected',
-      providerStatus: 401,
+      providerStatus: 400,
+      providerCode: 'invalid_request_error',
+      providerParam: 'sdp',
+      providerRequestId: 'req_test1',
     }),
   });
   expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));

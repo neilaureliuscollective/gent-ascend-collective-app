@@ -46,9 +46,9 @@ export async function selectedTalkPredecessors(
     .select('kind,creation_id')
     .eq('person_id', personId)
     .eq('conversation_id', conversationId);
-  const current: Partial<Record<'brief' | 'plan' | 'palette', string>> = {};
+  const current: Partial<Record<'brief' | 'plan' | 'palette' | 'board', string>> = {};
   for (const item of selected.data ?? []) {
-    if (item.kind === 'brief' || item.kind === 'plan' || item.kind === 'palette')
+    if (item.kind === 'brief' || item.kind === 'plan' || item.kind === 'palette' || item.kind === 'board')
       current[item.kind] = item.creation_id;
   }
   return current;

@@ -206,6 +206,114 @@
     display: none;
   }
 }
+.talk-design-board {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--io-gold, #c4912f) 28%, transparent);
+  background: color-mix(in srgb, #121416 88%, #0b3b32);
+  color: #f4efe6;
+}
+.talk-design-board:not([data-expanded]) {
+  gap: 8px;
+  padding: 10px;
+}
+.talk-design-board:not([data-expanded]) .talk-design-hero {
+  padding: 12px;
+}
+.talk-design-board:not([data-expanded]) .talk-design-bottle {
+  height: 72px;
+}
+.talk-design-board:not([data-expanded]) .talk-design-hero h4 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+.talk-design-directions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+}
+.talk-design-direction {
+  flex: 1 1 6rem;
+  min-height: 44px;
+  min-width: 6rem;
+  padding: 8px 10px;
+  border: 1px solid #2a2e32;
+  background: #121416;
+  color: inherit;
+  text-align: left;
+}
+.talk-design-direction[data-selected] {
+  border-color: #c4912f;
+}
+.talk-design-hero {
+  padding: 16px;
+  background: var(--board-surface, #163028);
+  color: var(--board-text, #e4bd70);
+  border: 1px solid var(--board-border, #205443);
+}
+.talk-design-hero[data-shape='soft'] {
+  border-radius: 16px;
+}
+.talk-design-hero[data-shape='pill'] {
+  border-radius: 28px;
+}
+.talk-design-hero[data-spacing='compact'] {
+  padding: 10px;
+}
+.talk-design-hero[data-spacing='generous'] {
+  padding: 24px;
+}
+.talk-design-pack {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 12px 0;
+}
+.talk-design-bottle {
+  width: 44px;
+  height: 88px;
+  border-radius: 14px 14px 8px 8px;
+  background: linear-gradient(180deg, var(--board-highlight, #c4912f), var(--board-accent, #0b3b32));
+}
+.talk-design-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.talk-design-swatch {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #2a2e32;
+}
+.talk-design-swatches input[type='color'] {
+  width: 100%;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+}
+.talk-design-meta,
+.talk-design-assets {
+  margin: 0;
+  font-size: 13px;
+}
+.talk-design-cta {
+  display: inline-block;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--board-highlight, #c4912f);
+  color: #050706;
+}
+@media (max-width: 720px) {
+  .talk-design-board {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .talk-creation-card,
   .talk-creation-panel,

@@ -260,7 +260,7 @@ export function projectFromResolvedHandoff(resolved: ResolvedArchitectPackage): 
 }
 
 export function overlayHandoffImport(creation: TalkCreation, projectId?: string | null): TalkCreation {
-  if (creation.kind !== 'handoff' || !('schema' in creation.content)) return creation;
+  if (creation.kind !== 'handoff' || !('imported' in creation.content)) return creation;
   return {
     ...creation,
     originProjectId: projectId ?? null,

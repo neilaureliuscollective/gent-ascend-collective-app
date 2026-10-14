@@ -11,6 +11,8 @@ import type {
   TalkImageJob,
 } from '@/domains/talk-creation/schema';
 import { PaletteSwatches } from './palette-swatches';
+import { DesignBoardView } from './design-board';
+import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
 import Image from 'next/image';
 import './creation.css';
 
@@ -52,6 +54,7 @@ export function CreationDetail({
   const brief = creation?.kind === 'brief' ? (creation.content as BriefContent) : null;
   const plan = creation?.kind === 'plan' ? (creation.content as PlanContent) : null;
   const palette = creation?.kind === 'palette' ? (creation.content as PaletteContent) : null;
+  const board = creation?.kind === 'board' ? (creation.content as DesignBoardContent) : null;
   const handoff = creation?.kind === 'handoff' ? (creation.content as HandoffContent) : null;
   const [draft, setDraft] = useState(creation?.content);
   const [idea, setIdea] = useState(
@@ -246,6 +249,21 @@ export function CreationDetail({
           canEdit={canEdit && !busy}
           onChange={(next) => setDraft(next)}
         />
+      )}
+      {board && draft && 'directions' in draft && (
+        <>
+          <DesignBoardView
+            board={draft as DesignBoardContent}
+            editable={canEdit && !busy}
+            expanded
+            onChange={(next) => setDraft(next)}
+            onCommit={(next) => onSave('board', next)}
+          />
+          <p className="talk-creation-status" data-adapter="local-test">
+            Architect has not published the design-direction receiver. This board stays in Talk.
+            v1 text import remains available for brief, plan and palette. Transfer is not complete.
+          </p>
+        </>
       )}
       {handoff && (
         <div className="talk-origin-review">
