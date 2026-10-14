@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   description: aethelios.description,
 };
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
+import { CommandTalkContext } from '@/components/command-home/talk-context';
 import { companyJob } from '@/domains/company-work/starters';
+import '../command-home.css';
 export default async function AetheliosPage({
   searchParams,
 }: {
@@ -54,13 +56,15 @@ export default async function AetheliosPage({
       : null;
   return (
     <ConversationViewport>
-      <section className="aurelius-surface">
-        <AureliusWorkspace
-          key={initialConversation ?? (initialDraft || 'new')}
-          initialDraft={initialDraft}
-          initialConversation={initialConversation}
-        />
-      </section>
+      <CommandTalkContext>
+        <section className="aurelius-surface">
+          <AureliusWorkspace
+            key={initialConversation ?? (initialDraft || 'new')}
+            initialDraft={initialDraft}
+            initialConversation={initialConversation}
+          />
+        </section>
+      </CommandTalkContext>
     </ConversationViewport>
   );
 }
