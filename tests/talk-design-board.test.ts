@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import {
   adjustDesignSwatch,
+  bindOfferedBoard,
   legacyReserveBoard,
   refineSelectedDirection,
   selectDesignDirection,
@@ -42,4 +43,17 @@ it('updates the selected direction immediately and preserves the others and prio
   expect(swatch.directions.find((item) => item.id === 'direction-c')).toEqual(
     board.directions.find((item) => item.id === 'direction-c'),
   );
+});
+
+it('binds a typed replacement board to the selected direction only', () => {
+  const current = selectDesignDirection(legacyReserveBoard(), 'direction-c');
+  const offered = structuredClone(current);
+  offered.directions = offered.directions.map((item) => ({
+    ...item,
+    name: item.id === 'direction-c' ? 'Emerald Glass warmer' : 'Should not survive',
+  }));
+  const bound = bindOfferedBoard(current, offered);
+  expect(bound.directions.find((item) => item.id === 'direction-a')?.name).toBe('Graphite Chamber');
+  expect(bound.directions.find((item) => item.id === 'direction-b')?.name).toBe('Warm Reserve');
+  expect(bound.directions.find((item) => item.id === 'direction-c')?.name).toBe('Emerald Glass warmer');
 });

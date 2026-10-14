@@ -62,6 +62,15 @@ export function CreationDetail({
   );
   const [decisions, setDecisions] = useState('');
   const [history, setHistory] = useState<TalkCreation[]>([]);
+  const [directionReview, setDirectionReview] = useState<{
+    receipt?: { digest: string; content: { name: string; summary: string; copy: { title: string } } };
+    unsupported: string[];
+    imported: boolean;
+    projectId: string | null;
+    requestId: string | null;
+    error?: string;
+  } | null>(null);
+  const [directionRequestId] = useState(() => crypto.randomUUID());
   const [review, setReview] = useState<{
     imported: boolean;
     projectId: string | null;
@@ -259,10 +268,118 @@ export function CreationDetail({
             onChange={(next) => setDraft(next)}
             onCommit={(next) => onSave('board', next)}
           />
-          <p className="talk-creation-status" data-adapter="local-test">
-            Architect has not published the design-direction receiver. This board stays in Talk.
-            v1 text import remains available for brief, plan and palette. Transfer is not complete.
-          </p>
+          <div className="talk-origin-review">
+            <p className="talk-creation-status" data-adapter="talk-architect-direction">
+              {directionReview?.imported
+                ? 'Imported. Architect acknowledged this exact reviewed direction.'
+                : 'Review the shared talk-architect-direction/v1 manifest, then transfer. v1 text import stays for brief, plan and palette only.'}
+            </p>
+            {directionReview?.unsupported?.map((item) => (
+              <p key={item} className="talk-creation-status">
+                {item}
+              </p>
+            ))}
+            {directionReview?.receipt && (
+              <dl className="talk-origin-preview">
+                <div>
+                  <dt>Direction</dt>
+                  <dd>{directionReview.receipt.content.name}</dd>
+                </div>
+                <div>
+                  <dt>Summary</dt>
+                  <dd>{directionReview.receipt.content.summary}</dd>
+                </div>
+                <div>
+                  <dt>Digest</dt>
+                  <dd>{directionReview.receipt.digest}</dd>
+                </div>
+              </dl>
+            )}
+            {directionReview?.error && <p role="alert">{directionReview.error}</p>}
+            <button
+              type="button"
+              className="button"
+              disabled={busy || !creation}
+              onClick={() => {
+                if (!creation) return;
+                void (async () => {
+                  const reviewed = await fetch(`/api/aurelius/creations?direction=${creation.id}`, {
+                    cache: 'no-store',
+                  });
+                  const body = (await reviewed.json()) as {
+                    receipt?: {
+                      digest: string;
+                      content: { name: string; summary: string; copy: { title: string } };
+                    };
+                    unsupported?: string[];
+                    imported?: boolean;
+                    projectId?: string | null;
+                    requestId?: string | null;
+                    error?: string;
+                  };
+                  if (!reviewed.ok || !body.receipt) {
+                    setDirectionReview({
+                      unsupported: body.unsupported ?? [],
+                      imported: false,
+                      projectId: null,
+                      requestId: null,
+                      error: body.error ?? 'This design could not be reviewed.',
+                    });
+                    return;
+                  }
+                  setDirectionReview({
+                    receipt: body.receipt,
+                    unsupported: body.unsupported ?? [],
+                    imported: Boolean(body.imported),
+                    projectId: body.projectId ?? null,
+                    requestId: body.requestId ?? null,
+                  });
+                  if (body.imported) return;
+                  const requestId = body.requestId ?? directionRequestId;
+                  const transferred = await fetch('/api/aurelius/creations', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                      action: 'transfer-direction',
+                      id: requestId,
+                      conversationId: creation.conversation_id,
+                      boardId: creation.id,
+                    }),
+                  });
+                  const result = (await transferred.json()) as {
+                    imported?: boolean;
+                    projectId?: string;
+                    digest?: string;
+                    error?: string;
+                  };
+                  if (!transferred.ok || !result.imported)
+                    setDirectionReview({
+                      receipt: body.receipt,
+                      unsupported: body.unsupported ?? [],
+                      imported: false,
+                      projectId: null,
+                      requestId,
+                      error: result.error ?? 'Architect did not acknowledge this direction.',
+                    });
+                  else
+                    setDirectionReview({
+                      receipt: body.receipt,
+                      unsupported: body.unsupported ?? [],
+                      imported: true,
+                      projectId: result.projectId ?? null,
+                      requestId,
+                    });
+                })();
+              }}
+            >
+              {directionReview?.imported ? 'Imported' : 'Review and transfer'}
+            </button>
+            {directionReview?.imported && directionReview.projectId && (
+              <a className="button" href={`/app/architect?project=${directionReview.projectId}`}>
+                Open in Architect
+              </a>
+            )}
+          </div>
         </>
       )}
       {handoff && (

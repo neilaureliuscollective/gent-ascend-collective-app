@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/platform/supabase/database';
 import { contentForKind, type CreationKind, type OfferedText, type TalkCreation } from './schema';
 import { withCalculatedContrast } from './contrast';
+import { bindOfferedBoard, designBoardContentSchema } from './design-board';
 
 type Client = SupabaseClient<Database>;
 
@@ -152,8 +153,29 @@ export async function persistOfferedCreations(
   const current = { ...selected };
   for (const offer of offered) {
     for (const kind of ['brief', 'plan', 'palette', 'board'] as const) {
-      const content = offer[kind];
+      let content = offer[kind];
       if (!content) continue;
+      if (kind === 'board' && current.board) {
+        const row = await client
+          .from('ai_talk_creations')
+          .select('content')
+          .eq('id', current.board)
+          .maybeSingle();
+        const existing = row.data ? designBoardContentSchema.safeParse(row.data.content) : null;
+        if (!existing?.success) continue;
+        try {
+          content = bindOfferedBoard(existing.data, designBoardContentSchema.parse(content));
+        } catch {
+          stale.push({
+            id: current.board,
+            kind,
+            title: 'title' in content && content.title ? content.title : kind,
+            status: 'stale',
+            preserved: false,
+          });
+          continue;
+        }
+      }
       try {
         const result = await persistKind(client, {
           conversationId,

@@ -246,6 +246,15 @@ export const importOriginInput = z
   })
   .strict();
 
+export const transferDirectionInput = z
+  .object({
+    action: z.literal('transfer-direction'),
+    id: z.uuid(),
+    conversationId: z.uuid(),
+    boardId: z.uuid(),
+  })
+  .strict();
+
 export function matchesFrozenHandoff(
   content: HandoffContent,
   request: {

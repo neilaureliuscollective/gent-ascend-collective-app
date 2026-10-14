@@ -122,6 +122,7 @@ vi.mock('../src/domains/intelligence/service', () => ({
 
 import { uniqueKindSelectionMessage } from '../src/domains/talk-creation/origin-import';
 import { prepareArchitectHandoff } from '../src/domains/talk-creation/service';
+import { legacyReserveBoard } from '../src/domains/talk-creation/design-board';
 
 const conversation = '30000000-0000-4000-8000-000000000001';
 const briefV1 = '50000000-0000-4000-8000-000000000011';
@@ -293,5 +294,44 @@ describe('Talk Architect handoff recovery', () => {
     ).rejects.toMatchObject({ status: 409, message: uniqueKindSelectionMessage });
     expect(state.rows.filter((item) => item.kind === 'handoff')).toHaveLength(0);
     expect(state.rpcs).toEqual([]);
+  });
+
+  it('explains unsupported design boards instead of silently dropping them from v1 text import', async () => {
+    const boardId = '50000000-0000-4000-8000-000000000041';
+    state.rows.push({
+      id: boardId,
+      person_id: state.person,
+      conversation_id: conversation,
+      source_turn_id: '40000000-0000-4000-8000-000000000011',
+      lineage_id: boardId,
+      version: 1,
+      kind: 'board',
+      content: legacyReserveBoard(),
+      predecessor_id: null,
+      superseded_by: null,
+      created_at: '2026-10-13T00:00:00.000Z',
+    });
+    await expect(
+      prepareArchitectHandoff({
+        ...request,
+        id: '70000000-0000-4000-8000-000000000088',
+        creationIds: [boardId],
+      }),
+    ).rejects.toMatchObject({
+      status: 409,
+      message: /design-direction transfer/i,
+    });
+    seedBrief(briefV1, null, 'Reserve brand');
+    await expect(
+      prepareArchitectHandoff({
+        ...request,
+        id: '70000000-0000-4000-8000-000000000089',
+        creationIds: [briefV1, boardId],
+      }),
+    ).rejects.toMatchObject({
+      status: 409,
+      message: /cannot include a design board/i,
+    });
+    expect(state.rows.filter((item) => item.kind === 'handoff')).toHaveLength(0);
   });
 });

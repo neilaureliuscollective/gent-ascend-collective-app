@@ -7,7 +7,7 @@ Development branch only. No production merge, hosted migration, Live flag change
 Talk now keeps useful work inside one conversation across text and voice:
 
 - Schema-validated **design boards** with three selectable directions, named color tokens, typography, spacing/shape/material, a trusted hero demonstration, proposed copy and labelled asset provenance. Swatch and direction changes update the sample immediately. “Make this warmer” revises the selected direction only.
-- Architect **design-direction** transfer is a marked **local test adapter** until Architect publishes the shared receiver. v1 text import of brief/plan/palette is unchanged and is not stuffed with tokens.
+- Architect **design-direction** transfer uses the published `talk-architect-direction/v1` contract. Talk produces a mapped receipt from immutable board/version/direction records and registers the authorized source adapter. Architect v1 demo is `tracker|none`; Talk hero-product stays in Talk. v1 text import of brief/plan/palette is unchanged and refuses silent board drops.
 
 - Schema-validated **brief**, **plan** and **palette** artifacts with owner-scoped versions. Edits write a new version against an explicit predecessor; a stale predecessor is rejected.
 - Palettes render **actual CSS swatches** and calculated contrast. Image generation is never used to draw color blocks.
@@ -18,7 +18,7 @@ Talk now keeps useful work inside one conversation across text and voice:
 
 ## Not changed
 
-Production voice flags, Construct, Connections, Architect worker/runtime/receiver, and existing Studio/Live artifact RPCs for paid image work. Live admission stays on `/v1/realtime/calls` with string FormData fields. Architect design-direction transfer is not complete.
+Production voice flags, Construct, Connections, Architect worker/runtime, and existing Studio/Live artifact RPCs for paid image work. Live admission stays on `/v1/realtime/calls` with string FormData fields. Architect Apps durable retain SQL stays on the Architect branch; Talk registers the producer and source adapter against the published receiver.
 
 ## Persistence and recovery (2026-10-13)
 
@@ -52,7 +52,7 @@ Production voice flags, Construct, Connections, Architect worker/runtime/receive
 
 ## Remaining dependencies
 
-- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql`, `20261014040000_talk_origin_import_consistency.sql` and `20261014100000_talk_design_board.sql` requires founder authorization. None of these files broaden production access until applied.
+- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql`, `20261014040000_talk_origin_import_consistency.sql`, `20261014100000_talk_design_board.sql`, `20261014120000_talk_live_bindings.sql` and `20261014130000_talk_direction_transfers.sql` requires founder authorization. None of these files broaden production access until applied.
 - Additive `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql` and `20261014040000_talk_origin_import_consistency.sql` are local/reviewable. Hosted apply of the Talk files, including the receipt table, save bind, atomic import and consistency helpers, requires founder authorization. Do not edit the already-applied Origin migration record.
 - Paid image generation still needs Studio entitlement, OpenAI image access and the existing quota/RPC pilot checks.
 - Physical Fold/Safari and live-provider acceptance remain separate gates.
@@ -63,12 +63,12 @@ Recorded on this creative-conversation branch before push. Browser evidence incl
 
 - lint: pass
 - typecheck: pass
-- vitest: 979 passed (includes Live string-FormData admission, context budget, composer send status, design-board versions, local-test design-direction adapter, Talk persist/SQL/handoff)
-- db ledger: pass (Talk, import and design-board SQL remain unapplied on hosted; Origin production record unchanged)
-- production build: pass
-- Playwright (mocked providers): talk-design-board 1/1, talk-creation 4/4, talk-creation-recovery 8/8, talk-live 2/2
-- Persistence used: PGlite with pgcrypto for ownership/idempotent import SQL; mocked `/api` for browser recovery; real Auth acceptance wired to CI disposable Supabase
-- Unrun until exact-head CI: Quality `database` and Architect Origin `local-auth`, physical Fold/Safari two-way audio, paid OpenAI image/voice calls, hosted migration apply
+- vitest: 990 passed (includes session-scoped voice receipts, provider-item bindings, inline board bind, typed `offer_text_work` persist, v1 board-refusal, `talk-architect-direction/v1` producer/receiver retry)
+- db ledger: pass (Talk, import, design-board, live-binding and direction-transfer SQL remain unapplied on hosted; Origin production record unchanged)
+- production build: pass (`/api/aethelios/live/receipt`, `/api/architect-design-direction`)
+- Playwright (mocked providers): retained UI fixtures; not counted as the saved/refined/imported journey
+- Persistence used: PGlite with pgcrypto for ownership/idempotent transfer SQL; authenticated talk-auth journey wired to CI disposable Supabase (`/app` landing, inline C, refinement, transfer retry, owner denial)
+- Unrun in this checkout: talk-auth (no local `.env.development.local` / Docker Auth), Quality `database`, Architect Origin `local-auth`, physical Fold/Safari two-way audio, paid OpenAI image/voice calls, hosted migration apply. Production HTTP 400 remains unverified.
 
 ## Capability matrix
 
@@ -80,7 +80,7 @@ Recorded on this creative-conversation branch before push. Browser evidence incl
 | Refine selected direction | Works | Same persist | Other directions and prior versions kept |
 | Studio images | Entitled only | Same Studio path | Explains unavailability; no automatic paid calls |
 | v1 Architect text import | Works | Same package | Atomic/idempotent Origin receipt |
-| Rich design-direction transfer | Local test adapter only | Same | Not complete until Architect publishes the receiver |
+| Rich design-direction transfer | Connected producer + source adapter | Same | Architect v1 demo is tracker/none; Talk hero-product stays referenced |
 | Two-way audio | n/a | Founder device only | READY or mocked handshake is not acceptance |
 
 ## Founder test

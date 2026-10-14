@@ -10,10 +10,14 @@ export function CreationCard({
   creation,
   selected,
   onOpen,
+  onBoardCommit,
+  boardStatus,
 }: {
   creation: TalkCreation;
   selected?: boolean;
   onOpen: (id: string) => void;
+  onBoardCommit?: (id: string, board: DesignBoardContent) => void;
+  boardStatus?: 'pending' | 'saved' | 'failed' | 'stale';
 }) {
   const title = 'title' in creation.content ? creation.content.title : creation.kind;
   const kind =
@@ -43,7 +47,24 @@ export function CreationCard({
         <PaletteSwatches palette={creation.content} />
       )}
       {creation.kind === 'board' && 'directions' in creation.content && (
-        <DesignBoardView board={creation.content as DesignBoardContent} />
+        <>
+          <DesignBoardView
+            board={creation.content as DesignBoardContent}
+            editable={Boolean(onBoardCommit)}
+            onCommit={
+              onBoardCommit ? (next) => onBoardCommit(creation.id, next) : undefined
+            }
+          />
+          {boardStatus && boardStatus !== 'saved' && (
+            <p className="talk-creation-status" data-board-status={boardStatus}>
+              {boardStatus === 'pending'
+                ? 'Saving the selected direction…'
+                : boardStatus === 'stale'
+                  ? 'This board changed. Reload the saved work before selecting again.'
+                  : 'The selected direction could not be saved.'}
+            </p>
+          )}
+        </>
       )}
       {creation.candidate && (
         <p className="talk-creation-status">

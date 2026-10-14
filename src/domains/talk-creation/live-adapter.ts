@@ -1,6 +1,5 @@
 import { offeredTextSchema, imageRequestSchema, type ImageRequest } from './schema';
-import { designBoardContentSchema } from './design-board';
-import { refineSelectedDirection } from './design-board';
+import { bindOfferedBoard, designBoardContentSchema, refineSelectedDirection } from './design-board';
 import { withCalculatedContrast } from './contrast';
 import { persistKind } from './persist';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -57,11 +56,22 @@ export async function runTalkLiveOffer(
   const parsed = offeredTextSchema.parse(JSON.parse(input.arguments));
   const kinds: Array<'brief' | 'plan' | 'palette' | 'board'> = [];
   for (const kind of ['brief', 'plan', 'palette', 'board'] as const) {
-    const content =
+    let content =
       kind === 'palette' && parsed.palette
         ? withCalculatedContrast(parsed.palette)
         : parsed[kind];
     if (!content) continue;
+    if (kind === 'board' && input.selected.board) {
+      const row = await client
+        .from('ai_talk_creations')
+        .select('content')
+        .eq('id', input.selected.board)
+        .maybeSingle();
+      const existing = row.data ? designBoardContentSchema.safeParse(row.data.content) : null;
+      if (!existing?.success)
+        return { accepted: false, reason: 'The selected design board is unavailable.' };
+      content = bindOfferedBoard(existing.data, designBoardContentSchema.parse(content));
+    }
     await persistKind(client, {
       conversationId: input.conversationId,
       sourceTurnId: null,

@@ -8,6 +8,7 @@ import {
   importOriginInput,
   saveCreationInput,
   selectCreationInput,
+  transferDirectionInput,
 } from '@/domains/talk-creation/schema';
 import {
   importArchitectHandoff,
@@ -16,9 +17,11 @@ import {
   readCreationLineage,
   readTalkCreations,
   reviewArchitectImport,
+  reviewDesignDirection,
   reviewTalkImage,
   saveTalkCreation,
   selectTalkCreation,
+  transferDesignDirection,
 } from '@/domains/talk-creation/service';
 import { imageProposal } from '@/domains/artifacts/contract';
 
@@ -38,6 +41,11 @@ export async function GET(request: Request) {
       if (!z.uuid().safeParse(handoff).success) throw new IntelligenceError('Invalid package.');
       return privateJson(await reviewArchitectImport(handoff));
     }
+    const direction = params.get('direction');
+    if (direction) {
+      if (!z.uuid().safeParse(direction).success) throw new IntelligenceError('Invalid design board.');
+      return privateJson(await reviewDesignDirection(direction));
+    }
     const id = z.uuid().safeParse(params.get('conversationId'));
     if (!id.success) throw new IntelligenceError('Invalid conversation.');
     return privateJson(await readTalkCreations(id.data));
@@ -51,6 +59,8 @@ export async function POST(request: Request) {
     const body = await mutationBody(request, 24000);
     if (importOriginInput.safeParse(body).success)
       return privateJson(await importArchitectHandoff(body), 201);
+    if (transferDirectionInput.safeParse(body).success)
+      return privateJson(await transferDesignDirection(body), 201);
     if (handoffInput.safeParse(body).success)
       return privateJson(await prepareArchitectHandoff(body), 201);
     if (imageProposal.safeParse(body).success)

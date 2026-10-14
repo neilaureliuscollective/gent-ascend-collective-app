@@ -49,6 +49,8 @@ export const ConversationTurn = memo(function ConversationTurn({
   onOpenCreation,
   onApproveImage,
   onSelectImage,
+  onBoardCommit,
+  boardStatus,
 }: {
   turn: Turn;
   operation?: IntelligenceOperation;
@@ -67,6 +69,8 @@ export const ConversationTurn = memo(function ConversationTurn({
   onOpenCreation?: (id: string) => void;
   onApproveImage?: (id: string, approve: boolean) => void;
   onSelectImage?: (id: string) => void;
+  onBoardCommit?: (id: string, board: import('@/domains/talk-creation/design-board').DesignBoardContent) => void;
+  boardStatus?: { id: string; state: 'pending' | 'saved' | 'failed' | 'stale' };
 }) {
   const ritual =
     !companyWork && turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
@@ -105,6 +109,8 @@ export const ConversationTurn = memo(function ConversationTurn({
             creation={creation}
             selected={creation.id === selectedCreationId}
             onOpen={onOpenCreation ?? (() => {})}
+            onBoardCommit={onBoardCommit}
+            boardStatus={boardStatus?.id === creation.id ? boardStatus.state : undefined}
           />
         ))}
         {images?.map((image) => (

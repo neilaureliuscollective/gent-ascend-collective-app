@@ -150,6 +150,22 @@ export function adjustDesignSwatch(
   });
 }
 
+export function bindOfferedBoard(
+  current: DesignBoardContent,
+  offered: DesignBoardContent,
+): DesignBoardContent {
+  const saved = designBoardContentSchema.parse(current);
+  const incoming = designBoardContentSchema.parse(offered);
+  const selectedId = saved.selectedDirectionId;
+  const next = incoming.directions.find((item) => item.id === selectedId);
+  if (!next) throw new Error('Refinement must target the selected direction.');
+  return designBoardContentSchema.parse({
+    ...saved,
+    selectedDirectionId: selectedId,
+    directions: saved.directions.map((item) => (item.id === selectedId ? next : item)),
+  });
+}
+
 export function refineSelectedDirection(
   board: DesignBoardContent,
   input: { warmer?: boolean; role?: (typeof designColorRoles)[number]; hex?: string },

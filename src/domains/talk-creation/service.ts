@@ -19,6 +19,7 @@ import {
   matchesFrozenHandoff,
   saveCreationInput,
   selectCreationInput,
+  transferDirectionInput,
   type BriefContent,
   type CreationKind,
   type HandoffContent,
@@ -29,6 +30,13 @@ import {
   type TalkImageJob,
 } from './schema';
 import { matchesHandoffDestination, persistKind } from './persist';
+import { designBoardContentSchema, selectedDirection } from './design-board';
+import {
+  directionProjectIdentity,
+  produceArchitectDirection,
+} from './architect-direction';
+import { receiveDesignDirection } from '@/domains/architect-design-direction/receiver';
+import '@/domains/talk-creation/architect-source';
 import {
   assertOneSelectionPerKind,
   describeHandoffTransfer,
@@ -289,21 +297,33 @@ export async function prepareArchitectHandoff(input: unknown) {
     };
   }
   const workspace = await readTalkCreations(parsed.data.conversationId);
-  const selections = parsed.data.creationIds.flatMap((id) => {
+  const requested = parsed.data.creationIds.map((id) => {
     const creation = workspace.creations.find((item) => item.id === id);
     if (!creation || creation.kind === 'handoff' || creation.superseded_by || creation.candidate)
       throw new IntelligenceError('Choose current brief, plan or palette versions.', 409);
-    if (creation.kind === 'board') return [];
-    return [
-      {
-        kind: creation.kind as 'brief' | 'plan' | 'palette',
-        lineageId: creation.lineage_id,
-        versionId: creation.id,
-        version: creation.version,
-        title: 'title' in creation.content ? creation.content.title : creation.kind,
-      },
-    ];
+    return creation;
   });
+  const boards = requested.filter((item) => item.kind === 'board');
+  const text = requested.filter(
+    (item) => item.kind === 'brief' || item.kind === 'plan' || item.kind === 'palette',
+  );
+  if (boards.length && !text.length)
+    throw new IntelligenceError(
+      'Design boards use the Architect design-direction transfer, not v1 text import.',
+      409,
+    );
+  if (boards.length)
+    throw new IntelligenceError(
+      'v1 Architect text import cannot include a design board. Transfer the board separately or omit it.',
+      409,
+    );
+  const selections = text.map((creation) => ({
+    kind: creation.kind as 'brief' | 'plan' | 'palette',
+    lineageId: creation.lineage_id,
+    versionId: creation.id,
+    version: creation.version,
+    title: 'title' in creation.content ? creation.content.title : creation.kind,
+  }));
   try {
     assertOneSelectionPerKind(selections);
   } catch (error) {
@@ -612,6 +632,155 @@ export async function importArchitectHandoff(input: unknown) {
     mappingVersion: receipt.mappingVersion ?? originImportMappingVersion,
     project: content,
     transfer,
+  };
+}
+
+async function authorizedBoard(conversationId: string, boardId: string) {
+  const { client, person } = await intelligenceSession();
+  const row = await client
+    .from('ai_talk_creations')
+    .select('*')
+    .eq('id', boardId)
+    .eq('person_id', person.id)
+    .eq('conversation_id', conversationId)
+    .eq('kind', 'board')
+    .maybeSingle();
+  if (row.error) throw new IntelligenceError('The design board could not be reviewed.', 503);
+  const board = row.data ? designBoardContentSchema.safeParse(row.data.content) : null;
+  if (!row.data || row.data.candidate || !board?.success)
+    throw new IntelligenceError('Design board unavailable.', 404);
+  return { person, client, creation: row.data, board: board.data };
+}
+
+export async function reviewDesignDirection(boardId: string) {
+  const { client, person } = await intelligenceSession();
+  if (!(await currentAccess()).has('aurelius.context'))
+    throw new IntelligenceError('Aethelios access is not enabled for this account.', 403);
+  const row = await client
+    .from('ai_talk_creations')
+    .select('*')
+    .eq('id', boardId)
+    .eq('person_id', person.id)
+    .eq('kind', 'board')
+    .maybeSingle();
+  if (row.error) throw new IntelligenceError('The design board could not be reviewed.', 503);
+  if (!row.data) throw new IntelligenceError('Design board unavailable.', 404);
+  const { creation, board } = await authorizedBoard(row.data.conversation_id, boardId);
+  const receipt = produceArchitectDirection({
+    conversationId: creation.conversation_id,
+    boardId: creation.id,
+    version: creation.version,
+    board,
+  });
+  const existing = await client
+    .from('ai_talk_direction_transfers')
+    .select('id,project_id,digest,imported')
+    .eq('person_id', person.id)
+    .eq('board_id', creation.id)
+    .eq('board_version', creation.version)
+    .eq('direction_id', selectedDirection(board).id)
+    .maybeSingle();
+  return {
+    boardId: creation.id,
+    conversationId: creation.conversation_id,
+    version: creation.version,
+    directionId: selectedDirection(board).id,
+    receipt,
+    unsupported: [
+      'Talk hero-product demonstration stays in Talk. Architect v1 demo is tracker or none.',
+      'Typeface names, shape, material, surface/border roles and disclaimer stay in Talk.',
+    ],
+    requestId: existing.data?.id ?? null,
+    imported: Boolean(existing.data?.imported && existing.data.digest === receipt.digest),
+    projectId: existing.data?.imported ? existing.data.project_id : null,
+    originReady: originReady(),
+  };
+}
+
+export async function transferDesignDirection(input: unknown) {
+  const parsed = transferDirectionInput.safeParse(input);
+  if (!parsed.success) throw new IntelligenceError('Confirm the selected design direction before transfer.');
+  if (!(await currentAccess()).has('aurelius.context'))
+    throw new IntelligenceError('Aethelios access is not enabled for this account.', 403);
+  const { person, client, creation, board } = await authorizedBoard(
+    parsed.data.conversationId,
+    parsed.data.boardId,
+  );
+  const receipt = produceArchitectDirection({
+    conversationId: creation.conversation_id,
+    boardId: creation.id,
+    version: creation.version,
+    board,
+  });
+  const projectId = directionProjectIdentity(
+    person.id,
+    creation.id,
+    creation.version,
+    selectedDirection(board).id,
+  );
+  const existing = await client
+    .from('ai_talk_direction_transfers')
+    .select('*')
+    .eq('id', parsed.data.id)
+    .eq('person_id', person.id)
+    .maybeSingle();
+  if (existing.error) throw new IntelligenceError('The design-direction receipt could not be read.', 503);
+  if (existing.data) {
+    if (
+      existing.data.conversation_id !== creation.conversation_id ||
+      existing.data.board_id !== creation.id ||
+      existing.data.board_version !== creation.version ||
+      existing.data.digest !== receipt.digest
+    )
+      throw new IntelligenceError('This transfer request was already used with a different design.', 409);
+    return {
+      id: existing.data.id,
+      projectId: existing.data.project_id,
+      digest: existing.data.digest,
+      imported: Boolean(existing.data.imported),
+      recovered: true,
+      receipt,
+      started: false,
+    };
+  }
+  const retained = await receiveDesignDirection({
+    action: 'receive',
+    requestId: parsed.data.id,
+    projectId,
+    receipt,
+  });
+  if (retained.digest !== receipt.digest || retained.project_id !== projectId)
+    throw new IntelligenceError(
+      'Architect did not acknowledge this exact reviewed design direction.',
+      409,
+    );
+  const recorded = await client.rpc('ai_talk_record_direction_transfer', {
+    p_id: parsed.data.id,
+    p_conversation: creation.conversation_id,
+    p_board: creation.id,
+    p_version: creation.version,
+    p_direction: selectedDirection(board).id,
+    p_direction_uuid: receipt.identity.directionId,
+    p_project: retained.project_id,
+    p_digest: retained.digest,
+    p_receipt: receipt,
+  });
+  if (recorded.error || !recorded.data)
+    throw new IntelligenceError(
+      /reused with different inputs/i.test(recorded.error?.message ?? '')
+        ? 'This transfer request was already used with a different design.'
+        : 'Architect acknowledged the direction but Talk could not retain the receipt. Retry the same request.',
+      409,
+    );
+  const saved = recorded.data as { id: string; projectId: string; digest: string; imported: boolean; recovered?: boolean };
+  return {
+    id: saved.id,
+    projectId: saved.projectId,
+    digest: saved.digest,
+    imported: true as const,
+    recovered: Boolean(saved.recovered),
+    receipt,
+    started: false as const,
   };
 }
 

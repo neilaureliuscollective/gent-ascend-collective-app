@@ -46,7 +46,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
-  await expect(page).toHaveURL(/\/app\//);
+  await expect(page).toHaveURL(/\/app(?:\/|$|\?)/);
 }
 
 async function openArchitectMenu(page: Page) {

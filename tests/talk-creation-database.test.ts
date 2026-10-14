@@ -42,6 +42,8 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261013240000_talk_creation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014120000_talk_live_bindings.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014130000_talk_direction_transfers.sql', 'utf8'));
 });
 afterAll(() => db.close());
 
@@ -372,5 +374,84 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
       )
     ).rows[0] as { count: number };
     expect(Number(directions.count)).toBe(3);
+  });
+
+  it('selects C, records one direction transfer receipt, and denies another owner', async () => {
+    const { legacyReserveBoard, selectDesignDirection } = await import(
+      '@/domains/talk-creation/design-board'
+    );
+    await db.exec(`delete from public.ai_talk_creations where person_id='${owner}'`);
+    const boardId = '00000000-0000-4000-8000-000000000071';
+    const requestId = '00000000-0000-4000-8000-000000000072';
+    const projectId = '00000000-0000-4000-8000-000000000073';
+    const directionUuid = '00000000-0000-4000-8000-000000000074';
+    const board = selectDesignDirection(legacyReserveBoard(), 'direction-c');
+    await asUser(
+      owner,
+      `select public.ai_talk_save_creation('${boardId}','${conversation}',null,'board',null,${literal(board)})`,
+    );
+    const selected = (
+      await asUser(
+        owner,
+        `select content->>'selectedDirectionId' as selected from public.ai_talk_creations where id='${boardId}'`,
+      )
+    ).rows[0] as { selected: string };
+    expect(selected.selected).toBe('direction-c');
+    const digest = 'a'.repeat(64);
+    const receipt = { schema: 'talk-architect-direction/v1', digest };
+    const first = await asUser(
+      owner,
+      `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)}) as receipt`,
+    );
+    const retry = await asUser(
+      owner,
+      `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)}) as receipt`,
+    );
+    expect(first.rows[0]).toMatchObject({ receipt: { imported: true, projectId } });
+    expect(retry.rows[0]).toMatchObject({ receipt: { imported: true, recovered: true, projectId } });
+    expect(
+      (await asUser(owner, `select count(*)::int as n from public.ai_talk_direction_transfers`)).rows[0],
+    ).toEqual({ n: 1 });
+    expect(
+      (await asUser(foreign, `select id from public.ai_talk_direction_transfers`)).rows,
+    ).toEqual([]);
+    await expect(
+      asUser(
+        foreign,
+        `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)})`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+  });
+});
+
+describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
+  it('maps distinct provider items to durable turns, including repeated text', async () => {
+    const session = '00000000-0000-4000-8000-000000000081';
+    const turnA = '00000000-0000-4000-8000-000000000082';
+    const turnB = '00000000-0000-4000-8000-000000000083';
+    await db.exec(
+      `insert into public.ai_turns values('${turnA}','${owner}','${conversation}'),('${turnB}','${owner}','${conversation}')`,
+    );
+    await asUser(
+      owner,
+      `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,
+    );
+    await asUser(
+      owner,
+      `select public.ai_live_bind_turn('${session}','${conversation}','item-same-again','resp-2','${turnB}')`,
+    );
+    const replay = await asUser(
+      owner,
+      `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${turnA}') as receipt`,
+    );
+    expect(replay.rows[0]).toMatchObject({ receipt: { turnId: turnA, recovered: true } });
+    const bindings = (
+      await asUser(owner, `select public.ai_live_read_bindings('${session}','${conversation}') as rows`)
+    ).rows[0] as { rows: Array<{ providerItemId: string; turnId: string }> };
+    expect(bindings.rows).toHaveLength(2);
+    expect(bindings.rows.map((item) => item.turnId).sort()).toEqual([turnA, turnB].sort());
+    expect((await asUser(foreign, `select public.ai_live_read_bindings('${session}','${conversation}') as rows`)).rows[0]).toEqual(
+      { rows: [] },
+    );
   });
 });
