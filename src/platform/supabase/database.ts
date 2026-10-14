@@ -86,6 +86,30 @@ export interface Database {
         never,
         never
       >;
+      architect_construct_sources: Table<
+        import('@/domains/architect-construct/schema').SourceSnapshot,
+        never,
+        never
+      >;
+      architect_construct_briefs: Table<
+        import('@/domains/architect-construct/schema').ConstructBrief & {
+          project_id: string;
+          project_revision: number;
+          source_id: string;
+        },
+        never,
+        never
+      >;
+      architect_construct_runs: Table<
+        import('@/domains/architect-construct/schema').ConstructRun,
+        never,
+        never
+      >;
+      architect_construct_events: Table<
+        import('@/domains/architect-construct/schema').ConstructEvent,
+        never,
+        never
+      >;
       intelligence_missions: Table<
         import('@/domains/missions/schema').Mission,
         Omit<import('@/domains/missions/schema').Mission, 'revision' | 'created_at' | 'updated_at'>,
@@ -837,6 +861,61 @@ export interface Database {
         never,
         never
       >;
+      service_connections: Table<
+        {
+          id: string;
+          person_id: string;
+          provider: 'github' | 'vercel';
+          status:
+            | 'setup_required'
+            | 'disconnected'
+            | 'connecting'
+            | 'connected'
+            | 'degraded'
+            | 'expired'
+            | 'revoked'
+            | 'verification_failed';
+          account_login: string | null;
+          account_id: string | null;
+          installation_id: string | null;
+          selected_id: string | null;
+          selected_name: string | null;
+          capabilities: Record<string, unknown>;
+          last_verified_at: string | null;
+          last_error: string | null;
+          user_authorization: 'active' | 'revoked' | null;
+          created_at: string;
+          updated_at: string;
+        },
+        never,
+        never
+      >;
+      service_connection_secrets: Table<
+        { connection_id: string; ciphertext: string; updated_at: string },
+        never,
+        never
+      >;
+      service_connection_flows: Table<
+        {
+          id: string;
+          person_id: string;
+          provider: 'github' | 'vercel';
+          state: string;
+          nonce: string;
+          verifier: string;
+          claimed_installation_id: string | null;
+          expires_at: string;
+          consumed_at: string | null;
+          created_at: string;
+        },
+        never,
+        never
+      >;
+      service_connection_events: Table<
+        { provider: 'github' | 'vercel'; delivery_id: string; received_at: string },
+        never,
+        never
+      >;
       pilot_invitations: Table<
         {
           id: string;
@@ -878,6 +957,71 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      service_connection_begin_flow: {
+        Args: {
+          p_id: string;
+          p_provider: string;
+          p_state: string;
+          p_nonce: string;
+          p_verifier: string;
+          p_expires: string;
+        };
+        Returns: boolean;
+      };
+      service_connection_read_flow: { Args: { p_state: string }; Returns: unknown };
+      service_connection_claim_install: {
+        Args: { p_person: string; p_state: string; p_installation: string };
+        Returns: boolean;
+      };
+      service_connection_consume_flow: {
+        Args: { p_state: string; p_consumed: string };
+        Returns: boolean;
+      };
+      service_connection_read: { Args: { p_provider: string }; Returns: unknown };
+      service_connection_list: { Args: Record<string, never>; Returns: unknown };
+      service_connection_upsert: {
+        Args: {
+          p_person: string;
+          p_id: string;
+          p_provider: string;
+          p_status: string;
+          p_account_login: string | null;
+          p_account_id: string | null;
+          p_installation: string | null;
+          p_selected_id: string | null;
+          p_selected_name: string | null;
+          p_capabilities: unknown;
+          p_verified: string | null;
+          p_error: string | null;
+          p_user_authorization: string | null;
+        };
+        Returns: boolean;
+      };
+      service_connection_put_secret: {
+        Args: { p_person: string; p_id: string; p_ciphertext: string };
+        Returns: boolean;
+      };
+      service_connection_take_secret: {
+        Args: { p_person: string; p_id: string };
+        Returns: string | null;
+      };
+      service_connection_clear: { Args: { p_provider: string }; Returns: boolean };
+      service_connection_set_selection: {
+        Args: { p_provider: string; p_selected_id: string; p_selected_name: string };
+        Returns: boolean;
+      };
+      service_connection_record_event: {
+        Args: { p_provider: string; p_delivery: string };
+        Returns: boolean;
+      };
+      service_connection_apply_status: {
+        Args: { p_provider: string; p_installation: string; p_status: string; p_error: string | null };
+        Returns: boolean;
+      };
+      service_connection_apply_account: {
+        Args: { p_provider: string; p_account: string; p_status: string; p_error: string | null };
+        Returns: boolean;
+      };
       architect_origin_save: {
         Args: {
           p_project: string;
@@ -900,6 +1044,65 @@ export interface Database {
         Returns: boolean;
       };
       architect_origin_finish: { Args: { p_request: string; p_output: unknown }; Returns: boolean };
+      architect_construct_import_source: {
+        Args: {
+          p_id: string;
+          p_kind: string;
+          p_repository: string | null;
+          p_commit: string | null;
+          p_label: string;
+          p_tree: string;
+          p_files: unknown;
+        };
+        Returns: boolean;
+      };
+      architect_construct_approve_brief: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_expected: number;
+          p_source: string;
+          p_hash: string;
+          p_scope: unknown;
+        };
+        Returns: boolean;
+      };
+      architect_construct_start: {
+        Args: { p_project: string; p_request: string; p_brief: string; p_expected: number };
+        Returns: boolean;
+      };
+      architect_construct_cancel: {
+        Args: { p_project: string; p_run: string };
+        Returns: boolean;
+      };
+      architect_construct_claim: { Args: { p_worker: string; p_lease: number }; Returns: string | null };
+      architect_construct_finish: {
+        Args: {
+          p_worker: string;
+          p_run: string;
+          p_token: string;
+          p_status: string;
+          p_result: unknown;
+        };
+        Returns: boolean;
+      };
+      architect_construct_timeout: { Args: Record<string, never>; Returns: number };
+      architect_construct_heartbeat: {
+        Args: { p_worker: string; p_run: string; p_token: string; p_lease: number };
+        Returns: boolean;
+      };
+      architect_construct_mark_running: {
+        Args: { p_worker: string; p_run: string; p_token: string };
+        Returns: boolean;
+      };
+      architect_construct_append_event: {
+        Args: { p_worker: string; p_run: string; p_token: string; p_kind: string; p_detail: string };
+        Returns: boolean;
+      };
+      architect_construct_invalidate_briefs: {
+        Args: { p_project: string; p_reason: string };
+        Returns: number;
+      };
       health_export_history: { Args: Record<string, never>; Returns: unknown };
       health_read: { Args: Record<string, never>; Returns: unknown };
       health_mutate: {

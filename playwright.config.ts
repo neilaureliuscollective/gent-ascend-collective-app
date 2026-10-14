@@ -2,6 +2,9 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/browser',
   fullyParallel: true,
+  // Software-rendered CI can leave `load` pending after the page is already
+  // interactive. One retry keeps the existing assertions.
+  retries: process.env.CI ? 1 : 0,
   // Software-rendered CI needs time for hydration; assertions remain unchanged.
   timeout: 90000,
   expect: { timeout: 15000 },

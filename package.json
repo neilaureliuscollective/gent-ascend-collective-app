@@ -16,7 +16,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:integration": "node scripts/auth-smoke.mjs && node scripts/founder-office-auth-smoke.mjs",
+    "test:integration": "node scripts/auth-smoke.mjs && node scripts/founder-office-auth-smoke.mjs && node scripts/connections-auth-smoke.mjs",
     "test:live:auth": "node scripts/live-auth-smoke.mjs",
     "db:reset": "supabase db reset --local && node scripts/dev-setup.mjs --running",
     "db:types": "supabase gen types typescript --local > src/platform/supabase/database.generated.ts",
@@ -28,7 +28,9 @@
     "prebuild": "node scripts/prepare-mirror.mjs",
     "pretest:e2e": "node scripts/prepare-mirror.mjs",
     "test:health": "vitest run tests/health.test.ts tests/health-database.test.ts tests/health-pdf.test.ts tests/health-api.test.ts tests/health-export.test.ts tests/health-owner.test.ts",
-    "test:health:bundle": "node scripts/build-health-fixture.mjs"
+    "test:health:bundle": "node scripts/build-health-fixture.mjs",
+    "architect:worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs",
+    "architect:worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs --supervised"
   },
   "dependencies": {
     "@ai-sdk/openai": "4.0.72",

@@ -5,7 +5,8 @@ export async function proxy(request: NextRequest) {
   // Infrastructure endpoints enforce their own credentials, independent of browser cookies.
   if (
     request.nextUrl.pathname === '/api/billing/webhook' ||
-    request.nextUrl.pathname === '/api/internal/live-expiry'
+    request.nextUrl.pathname === '/api/internal/live-expiry' ||
+    request.nextUrl.pathname.startsWith('/api/connections/webhooks/')
   ) {
     const response = NextResponse.next({ request });
     response.headers.set('Cache-Control', 'private, no-store');
@@ -43,7 +44,9 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/app/health') ||
     request.nextUrl.pathname.startsWith('/api/health') ||
     request.nextUrl.pathname === '/app/collection/orders' ||
-    request.nextUrl.pathname.startsWith('/api/commerce/customer')
+    request.nextUrl.pathname.startsWith('/api/commerce/customer') ||
+    request.nextUrl.pathname.startsWith('/app/founder/connections') ||
+    request.nextUrl.pathname.startsWith('/api/connections')
   )
     response.headers.set('Referrer-Policy', 'no-referrer');
   return response;
