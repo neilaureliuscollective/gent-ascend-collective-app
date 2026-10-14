@@ -13,9 +13,12 @@ import { IntelligenceError } from '@/domains/intelligence/service';
 
 export async function GET(request: Request) {
   try {
-    const project = new URL(request.url).searchParams.get('project');
+    const params = new URL(request.url).searchParams;
+    const project = params.get('project');
+    const selected = params.get('selected');
     if (!project || !z.uuid().safeParse(project).success) throw new IntelligenceError('Invalid project.');
-    return privateJson(await readArchitectApp(project));
+    const revision = selected && /^\d+$/.test(selected) ? Number(selected) : undefined;
+    return privateJson(await readArchitectApp(project, revision));
   } catch (error) {
     return apiError(error);
   }

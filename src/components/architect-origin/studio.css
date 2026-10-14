@@ -754,6 +754,27 @@
   color: #9aa39a;
 }
 
+.architect-app-source-view,
+.architect-app-diff-before,
+.architect-app-diff-after {
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 8px;
+  background: #050706;
+  color: #e8e4dc;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+}
+
+.architect-app-diff-before {
+  border-left: 3px solid #8a3a32;
+}
+
+.architect-app-diff-after {
+  border-left: 3px solid #0b3b32;
+}
+
 @media (max-width: 1100px) {
   .origin-app .origin-rail {
     display: none;

@@ -1,3 +1,5 @@
+import { allowlistedAppDataPayload } from '@/domains/architect-apps/allowlist';
+
 export type AppLibrary = {
   app: {
     id: string;
@@ -14,18 +16,21 @@ export type AppLibrary = {
     generation: { mode: string; notes?: string };
     files: { path: string; content: string }[];
     collections: { name: string }[];
+    person_id?: string;
+    project_id?: string;
   }[];
   jobs: {
     id: string;
     revision_id: string;
     status: string;
     cancel_requested: boolean;
-    result: { ok: boolean; isolation: string; blocker: string | null; typecheck: { ok: boolean }; bundle: { ok: boolean } } | null;
+    result: { ok: boolean; isolation: string; sandbox?: boolean; blocker: string | null; typecheck: { ok: boolean }; bundle: { ok: boolean } } | null;
   }[];
   events: { kind: string; detail: string; created_at: string }[];
   current: { id: string; revision: number; status: string; working: boolean; approval_hash: string } | null;
   working: { id: string; revision: number } | null;
-  preview: { srcDoc: string; sandbox: string; label: string } | null;
+  selected: { id: string; revision: number; status: string; working: boolean } | null;
+  preview: { srcDoc: string; sandbox: string; label: string; revision?: number | null; revisionId?: string | null } | null;
   previewSession: string | null;
   pendingStart: { revisionId: string; requestId: string; approvalHash: string; revision: number } | null;
   records: Record<string, Record<string, unknown>[]>;
@@ -55,8 +60,9 @@ async function request<T>(url: string, body?: unknown): Promise<T> {
   return data;
 }
 
-export function readArchitectApps(projectId: string) {
-  return request<AppLibrary>(`/api/architect-apps?project=${projectId}`);
+export function readArchitectApps(projectId: string, selectedRevision?: number) {
+  const selected = selectedRevision ? `&selected=${selectedRevision}` : '';
+  return request<AppLibrary>(`/api/architect-apps?project=${projectId}${selected}`);
 }
 
 export function proposeArchitectApp(body: Record<string, unknown>) {
@@ -83,7 +89,11 @@ export function cancelArchitectApp(projectId: string, jobId: string) {
 }
 
 export function reopenArchitectApp(projectId: string, revision: number) {
-  return request<{ preview: { srcDoc: string; sandbox: string } }>('/api/architect-apps', {
+  return request<{
+    preview: { srcDoc: string; sandbox: string; label?: string; revision?: number | null; revisionId?: string | null };
+    revision: { id: string; revision: number; status: string; working: boolean };
+    selectedRevision: number;
+  }>('/api/architect-apps', {
     action: 'reopen',
     projectId,
     revision,
@@ -91,21 +101,10 @@ export function reopenArchitectApp(projectId: string, revision: number) {
 }
 
 export async function forwardAppData(
-  message: {
-    session: string;
-    requestId: string;
-    operation: string;
-    collection: string;
-    payload?: unknown;
-    idempotencyKey?: string;
-  },
+  message: unknown,
   projectId: string,
   revisionId: string,
 ) {
-  return request<Record<string, unknown>>('/api/architect-apps/data', {
-    action: 'data',
-    projectId,
-    revisionId,
-    ...message,
-  });
+  const payload = allowlistedAppDataPayload(message, { projectId, revisionId });
+  return request<Record<string, unknown>>('/api/architect-apps/data', payload);
 }

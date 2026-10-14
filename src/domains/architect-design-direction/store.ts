@@ -17,6 +17,8 @@ export type RetainedDirection = {
   digest: string;
   receipt: DesignDirectionReceipt;
   started: false;
+  source_kind: 'text-import' | 'talk-authorized' | 'pending';
+  verified: boolean;
   created_at: string;
 };
 
@@ -27,6 +29,8 @@ export type DesignDirectionStore = {
     projectId: string;
     digest: string;
     receipt: DesignDirectionReceipt;
+    sourceKind?: RetainedDirection['source_kind'];
+    verified?: boolean;
   }): Promise<RetainedDirection>;
   read(personId: string, requestId: string): Promise<RetainedDirection | null>;
   readProject(personId: string, projectId: string): Promise<RetainedDirection | null>;
@@ -59,6 +63,8 @@ export class MemoryDesignDirectionStore implements DesignDirectionStore {
       digest: input.digest,
       receipt: input.receipt,
       started: false,
+      source_kind: input.sourceKind ?? 'text-import',
+      verified: input.verified ?? input.sourceKind === 'talk-authorized',
       created_at: new Date().toISOString(),
     };
     this.rows.set(input.requestId, row);

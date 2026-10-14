@@ -37,6 +37,8 @@ export function ArchitectAppPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const scroll = useRef(0);
   const plane = useRef<HTMLDivElement>(null);
@@ -44,10 +46,13 @@ export function ArchitectAppPanel({
   const recovered = library?.pendingStart ?? null;
   const current = library?.current ?? null;
   const working = library?.working ?? null;
+  const selected = library?.selected ?? null;
   const latestJob = library?.jobs[0] ?? null;
+  const displayed = selected ?? (current?.status === 'ready' ? current : working);
+  const preview = library?.preview ?? null;
 
-  async function refresh() {
-    const next = await readArchitectApps(projectId);
+  async function refresh(nextSelected = selectedRevision) {
+    const next = await readArchitectApps(projectId, nextSelected ?? undefined);
     setLibrary(next);
     return next;
   }
@@ -55,7 +60,10 @@ export function ArchitectAppPanel({
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    void fetch(`/api/architect-apps?project=${projectId}`, { cache: 'no-store', signal: controller.signal })
+    void fetch(`/api/architect-apps?project=${projectId}${selectedRevision ? `&selected=${selectedRevision}` : ''}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
       .then(async (response) => {
         const data = (await response.json()) as AppLibrary & { error?: string };
         if (!response.ok) throw new Error(data.error || 'Application library unavailable.');
@@ -66,7 +74,17 @@ export function ArchitectAppPanel({
         setError(reason instanceof Error ? reason.message : 'Application library unavailable.');
       });
     return () => controller.abort();
-  }, [enabled, ownerId, projectId]);
+  }, [enabled, ownerId, projectId, selectedRevision]);
+
+  useEffect(() => {
+    if (!latestJob || (latestJob.status !== 'queued' && latestJob.status !== 'running')) return;
+    const timer = window.setInterval(() => {
+      void readArchitectApps(projectId, selectedRevision ?? undefined)
+        .then(setLibrary)
+        .catch(() => undefined);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [latestJob, projectId, selectedRevision]);
 
   useEffect(() => {
     const node = plane.current;
@@ -74,17 +92,19 @@ export function ArchitectAppPanel({
     return () => {
       if (node) scroll.current = node.scrollTop;
     };
-  }, [panel, viewport]);
+  }, [panel, viewport, selectedFile]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
+      if (event.source !== frame.current?.contentWindow) return;
+      if (event.origin !== 'null' && event.origin !== window.location.origin) return;
       const data = event.data as { schema?: string; session?: string; requestId?: string };
-      if (!data || data.schema !== 'architect-apps-data/v1' || event.source !== frame.current?.contentWindow) return;
-      const revisionId = current?.status === 'ready' ? current.id : working?.id;
-      if (!revisionId || !data.session) return;
-      void forwardAppData(data as never, projectId, revisionId)
+      if (!data || data.schema !== 'architect-apps-data/v1' || !data.session) return;
+      const revisionId = preview?.revisionId ?? (current?.status === 'ready' ? current.id : working?.id);
+      if (!revisionId) return;
+      void forwardAppData(data, projectId, revisionId)
         .then((result) => {
-          frame.current?.contentWindow?.postMessage({ schema: 'architect-apps-data/v1', ...result }, '*');
+          frame.current?.contentWindow?.postMessage({ schema: 'architect-apps-data/v1', ...result }, event.origin === 'null' ? '*' : event.origin);
         })
         .catch((reason: unknown) => {
           frame.current?.contentWindow?.postMessage(
@@ -94,19 +114,40 @@ export function ArchitectAppPanel({
               ok: false,
               error: reason instanceof Error ? reason.message : 'Host collection refused the request.',
             },
-            '*',
+            event.origin === 'null' ? '*' : event.origin,
           );
         });
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [current, working, projectId]);
+  }, [current, working, preview?.revisionId, projectId]);
 
-  const files = useMemo(
-    () => library?.revisions.find((row) => row.id === current?.id)?.files.filter((file) => file.path.startsWith('src/')) ?? [],
-    [library, current],
-  );
-  const changes = ((proposal?.changes as { path: string; kind: string }[]) ?? []).filter((row) => row.kind !== 'unchanged');
+  const files = useMemo(() => {
+    const row = library?.revisions.find((item) => item.revision === displayed?.revision) ?? library?.revisions.find((item) => item.id === current?.id);
+    return row?.files.filter((file) => file.path.startsWith('src/')) ?? [];
+  }, [library, displayed, current]);
+  const selectedSource = files.find((file) => file.path === selectedFile) ?? files[0] ?? null;
+  const parentFiles = useMemo(() => {
+    const row = library?.revisions.find((item) => item.revision === (displayed?.revision ?? 0) - 1);
+    return row?.files ?? [];
+  }, [library, displayed]);
+  const fileDiffs = useMemo(() => {
+    const pending = (proposal?.changes as { path: string; kind: string }[] | undefined) ?? [];
+    if (pending.length) return pending.filter((row) => row.kind !== 'unchanged');
+    const previous = new Map(parentFiles.map((file) => [file.path, file.content]));
+    const next = new Map(files.map((file) => [file.path, file.content]));
+    return [...new Set([...previous.keys(), ...next.keys()])]
+      .sort()
+      .map((path) => {
+        const left = previous.get(path);
+        const right = next.get(path);
+        if (left == null && right != null) return { path, kind: 'create', before: '', after: right };
+        if (left != null && right == null) return { path, kind: 'delete', before: left, after: '' };
+        if (left !== right) return { path, kind: 'update', before: left ?? '', after: right ?? '' };
+        return { path, kind: 'unchanged', before: left ?? '', after: right ?? '' };
+      })
+      .filter((row) => row.kind !== 'unchanged');
+  }, [proposal, parentFiles, files]);
 
   async function propose() {
     setBusy(true);
@@ -119,7 +160,7 @@ export function ArchitectAppPanel({
         instruction: draft.trim(),
         kind: library?.app ? 'revise' : 'create',
         baseRevision: library?.app?.current_revision,
-        demo: 'tracker',
+        demo: library?.provider.mode === 'mock' || library?.provider.mode === 'openai' ? 'none' : 'tracker',
       });
       setProposal(next);
       setPanel('Changes');
@@ -173,9 +214,38 @@ export function ArchitectAppPanel({
         approvalHash: pending.approvalHash,
       });
       await refresh();
-      setMessage('Trusted build queued. An unsent refine draft is kept.');
+      setMessage('Isolated build queued. An unsent refine draft is kept.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Build was not queued.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopen(rowRevision: number) {
+    setBusy(true);
+    setError('');
+    try {
+      const opened = await reopenArchitectApp(projectId, rowRevision);
+      setSelectedRevision(opened.selectedRevision);
+      setLibrary((currentLibrary) =>
+        currentLibrary
+          ? {
+              ...currentLibrary,
+              selected: opened.revision,
+              preview: {
+                srcDoc: opened.preview.srcDoc,
+                sandbox: opened.preview.sandbox,
+                label: opened.preview.label ?? `Private compiled preview of saved revision ${opened.selectedRevision}.`,
+                revision: opened.preview.revision ?? opened.selectedRevision,
+                revisionId: opened.preview.revisionId ?? opened.revision.id,
+              },
+            }
+          : currentLibrary,
+      );
+      setMessage(`Showing saved revision ${opened.selectedRevision}. This is the selected compiled artifact, not a refresh of the latest build.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Revision could not be reopened.');
     } finally {
       setBusy(false);
     }
@@ -196,8 +266,9 @@ export function ArchitectAppPanel({
           <div>
             <p className="architect-app-kicker">Working application</p>
             <h3>
-              {current ? `Revision ${current.revision}` : 'No application yet'}
-              {working && working.revision !== current?.revision ? ` · last working ${working.revision}` : ''}
+              {displayed ? `Revision ${displayed.revision}` : 'No application yet'}
+              {selectedRevision && current && selectedRevision !== current.revision ? ` · selected, current ${current.revision}` : ''}
+              {working && working.revision !== displayed?.revision ? ` · last working ${working.revision}` : ''}
             </h3>
             <p>
               {latestJob
@@ -217,12 +288,12 @@ export function ArchitectAppPanel({
           </div>
         </header>
         <div className={`architect-app-frame architect-app-frame-${viewport}`} ref={plane}>
-          {library?.preview ? (
+          {preview ? (
             <iframe
               ref={frame}
               title="Private generated application preview"
-              sandbox={library.preview.sandbox}
-              srcDoc={library.preview.srcDoc}
+              sandbox={preview.sandbox}
+              srcDoc={preview.srcDoc}
             />
           ) : (
             <div className="architect-app-empty">
@@ -233,8 +304,9 @@ export function ArchitectAppPanel({
         </div>
         <p className="architect-app-checks">
           Typecheck {latestJob?.result?.typecheck.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Bundle{' '}
-          {latestJob?.result?.bundle.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Profile{' '}
-          {library?.profile.toolchain}
+          {latestJob?.result?.bundle.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Isolation{' '}
+          {latestJob?.result?.isolation ?? 'none'} · Profile {library?.profile.toolchain}
+          {preview?.revision ? ` · preview revision ${preview.revision}` : ''}
         </p>
       </div>
       <aside className="architect-app-side" aria-label="Application details">
@@ -246,23 +318,36 @@ export function ArchitectAppPanel({
           ))}
         </div>
         {panel === 'Files' && (
-          <ol>
-            {files.map((file) => (
-              <li key={file.path}>
-                <code>{file.path}</code>
-              </li>
-            ))}
-            {!files.length && <li>No generated files yet.</li>}
-          </ol>
+          <div className="architect-app-source">
+            <ol>
+              {files.map((file) => (
+                <li key={file.path}>
+                  <button type="button" aria-current={selectedSource?.path === file.path ? 'true' : undefined} onClick={() => setSelectedFile(file.path)}>
+                    <code>{file.path}</code>
+                  </button>
+                </li>
+              ))}
+              {!files.length && <li>No generated files yet.</li>}
+            </ol>
+            {selectedSource ? <pre className="architect-app-source-view">{selectedSource.content}</pre> : null}
+          </div>
         )}
         {panel === 'Changes' && (
           <ol>
-            {changes.map((change) => (
+            {fileDiffs.map((change) => (
               <li key={change.path}>
-                {change.kind} <code>{change.path}</code>
+                <p>
+                  {change.kind} <code>{change.path}</code>
+                </p>
+                {'before' in change && (change.kind === 'update' || change.kind === 'delete') ? (
+                  <pre className="architect-app-diff-before">{String(change.before).slice(0, 600)}</pre>
+                ) : null}
+                {'after' in change && (change.kind === 'update' || change.kind === 'create') ? (
+                  <pre className="architect-app-diff-after">{String(change.after).slice(0, 600)}</pre>
+                ) : null}
               </li>
             ))}
-            {!changes.length && <li>No pending revision. Request a change to preview the file operations.</li>}
+            {!fileDiffs.length && <li>No pending revision. Request a change to preview the file operations.</li>}
           </ol>
         )}
         {panel === 'Records' && (
@@ -283,8 +368,9 @@ export function ArchitectAppPanel({
               <li key={row.id}>
                 Revision {row.revision} · {row.status}
                 {row.working ? ' · last working' : ''}
+                {displayed?.revision === row.revision ? ' · showing' : ''}
                 {row.working ? (
-                  <button type="button" disabled={busy || locked} onClick={() => void reopenArchitectApp(projectId, row.revision).then(refresh)}>
+                  <button type="button" disabled={busy || locked} onClick={() => void reopen(row.revision)}>
                     Reopen
                   </button>
                 ) : null}
@@ -306,7 +392,7 @@ export function ArchitectAppPanel({
             </button>
           ) : null}
           {latestJob && (latestJob.status === 'queued' || latestJob.status === 'running') ? (
-            <button disabled={busy} onClick={() => void cancelArchitectApp(projectId, latestJob.id).then(refresh)}>
+            <button disabled={busy} onClick={() => void cancelArchitectApp(projectId, latestJob.id).then(() => refresh())}>
               Cancel build
             </button>
           ) : null}

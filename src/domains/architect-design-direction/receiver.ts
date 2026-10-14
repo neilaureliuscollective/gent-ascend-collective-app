@@ -2,13 +2,14 @@ import 'server-only';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import { initialProject } from '@/domains/architect-origin/schema';
 import { originReady } from '@/domains/architect-origin/service';
+import { memoryAppStoreAllowed } from '@/domains/architect-apps/readiness';
 import {
   DESIGN_DIRECTION_SCHEMA,
   TEXT_HANDOFF_SCHEMA,
-  designDirectionDigest,
   receiveDesignDirectionCommand,
   type DesignDirectionReceipt,
 } from './contract';
+import { resolveAuthorizedTalkSource, talkSourceAdapterStatus } from './talk-source';
 import {
   DesignDirectionStoreError,
   MemoryDesignDirectionStore,
@@ -19,8 +20,13 @@ import {
 let memory: MemoryDesignDirectionStore | null = null;
 
 export function designDirectionStore(): DesignDirectionStore {
-  memory ??= new MemoryDesignDirectionStore();
-  return memory;
+  if (memoryAppStoreAllowed() || process.env.ARCHITECT_APPS_STORE === 'memory') {
+    memory ??= new MemoryDesignDirectionStore();
+    return memory;
+  }
+  throw new DesignDirectionStoreError(
+    'Durable design-direction retention requires the additive Apps migration. Memory retention is labelled test-only.',
+  );
 }
 
 function requireSessionReady() {
@@ -29,25 +35,6 @@ function requireSessionReady() {
       'Architect cannot retain a Talk design direction until Origin persistence is enabled.',
       503,
     );
-}
-
-export function authorizeDesignDirectionDigest(receipt: DesignDirectionReceipt) {
-  const digest = designDirectionDigest(receipt.content, receipt.sourceRecords);
-  if (digest !== receipt.digest)
-    throw new IntelligenceError(
-      'Design-direction digest does not match server-authorized records. A client-supplied hash is not authority.',
-      409,
-    );
-  if (receipt.content.schema !== DESIGN_DIRECTION_SCHEMA)
-    throw new IntelligenceError('Incompatible or unknown design-direction schema.', 400);
-  if (
-    receipt.identity.conversationId !== receipt.content.identity.conversationId ||
-    receipt.identity.boardId !== receipt.content.identity.boardId ||
-    receipt.identity.directionId !== receipt.content.identity.directionId ||
-    receipt.identity.boardVersion !== receipt.content.identity.boardVersion
-  )
-    throw new IntelligenceError('Foreign conversation or board identity.', 409);
-  return digest;
 }
 
 async function bindOriginProject(
@@ -100,28 +87,72 @@ async function bindOriginProject(
     );
 }
 
+async function retainDurably(
+  client: { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }> },
+  input: {
+    requestId: string;
+    personId: string;
+    projectId: string;
+    digest: string;
+    receipt: DesignDirectionReceipt;
+    sourceKind: RetainedDirection['source_kind'];
+    verified: boolean;
+  },
+): Promise<RetainedDirection> {
+  const saved = await client.rpc('architect_apps_retain_design', {
+    p_request: input.requestId,
+    p_project: input.projectId,
+    p_digest: input.digest,
+    p_receipt: input.receipt,
+    p_source_kind: input.sourceKind,
+    p_verified: input.verified,
+  });
+  if (saved.error) throw new DesignDirectionStoreError(saved.error.message);
+  return {
+    request_id: input.requestId,
+    person_id: input.personId,
+    project_id: input.projectId,
+    revision: 1,
+    digest: input.digest,
+    receipt: input.receipt,
+    started: false,
+    source_kind: input.sourceKind,
+    verified: input.verified,
+    created_at: new Date().toISOString(),
+  };
+}
+
 export async function receiveDesignDirection(input: unknown): Promise<RetainedDirection> {
   const parsed = receiveDesignDirectionCommand.safeParse(input);
   if (!parsed.success)
     throw new IntelligenceError('Check the design-direction identity, copy bounds and receipt fields.', 400);
   requireSessionReady();
   const { person, client } = await intelligenceSession();
-  const digest = authorizeDesignDirectionDigest(parsed.data.receipt);
+  const authorized = await resolveAuthorizedTalkSource({
+    personId: person.id,
+    receipt: parsed.data.receipt,
+  });
   try {
     await bindOriginProject(
       person.id,
       parsed.data.projectId,
       parsed.data.requestId,
-      parsed.data.receipt,
+      authorized.receipt,
       client as never,
     );
-    return await designDirectionStore().retain({
+    const payload = {
       requestId: parsed.data.requestId,
       personId: person.id,
       projectId: parsed.data.projectId,
-      digest,
-      receipt: parsed.data.receipt,
-    });
+      digest: authorized.digest,
+      receipt: authorized.receipt,
+      sourceKind: authorized.kind,
+      verified: authorized.kind === 'talk-authorized' || authorized.kind === 'text-import',
+    };
+    if (memoryAppStoreAllowed() || process.env.ARCHITECT_APPS_STORE === 'memory') {
+      return await designDirectionStore().retain(payload);
+    }
+    return await retainDurably(client as never, payload);
   } catch (error) {
     if (error instanceof IntelligenceError) throw error;
     if (error instanceof DesignDirectionStoreError)
@@ -131,7 +162,30 @@ export async function receiveDesignDirection(input: unknown): Promise<RetainedDi
 }
 
 export async function readRetainedDirection(projectId: string) {
-  const { person } = await intelligenceSession();
+  const { person, client } = await intelligenceSession();
   requireSessionReady();
-  return designDirectionStore().readProject(person.id, projectId);
+  if (memoryAppStoreAllowed() || process.env.ARCHITECT_APPS_STORE === 'memory') {
+    return designDirectionStore().readProject(person.id, projectId);
+  }
+  const query = client as unknown as {
+    from: (table: string) => {
+      select: (columns: string) => {
+        eq: (column: string, value: string) => {
+          eq: (column: string, value: string) => {
+            maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
+          };
+        };
+      };
+    };
+  };
+  const { data, error } = await query
+    .from('architect_design_directions')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('person_id', person.id)
+    .maybeSingle();
+  if (error) throw new IntelligenceError('Design direction unavailable.', 503);
+  return (data as RetainedDirection | null) ?? null;
 }
+
+export { talkSourceAdapterStatus, DESIGN_DIRECTION_SCHEMA };

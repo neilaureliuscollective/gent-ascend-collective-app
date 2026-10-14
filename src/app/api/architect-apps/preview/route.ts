@@ -12,11 +12,17 @@ export async function GET(request: Request) {
     if (!project || !z.uuid().safeParse(project).success) throw new IntelligenceError('Invalid project.');
     if (revision && !z.uuid().safeParse(revision).success) throw new IntelligenceError('Invalid revision.');
     const { person } = await intelligenceSession();
-    const library = await readArchitectApp(project);
-    const current = library.current;
-    if (!current || denyForeignPreview(person.id, project, { personId: current.person_id, projectId: current.project_id }))
+    const selectedNumber = params.get('selected');
+    const library = await readArchitectApp(
+      project,
+      selectedNumber && /^\d+$/.test(selectedNumber) ? Number(selectedNumber) : undefined,
+    );
+    const target = revision
+      ? library.revisions.find((row) => row.id === revision) ?? null
+      : library.selected ?? library.current;
+    if (!target || denyForeignPreview(person.id, project, { personId: target.person_id, projectId: target.project_id }))
       throw new IntelligenceError('Preview unavailable.', 404);
-    if (revision && current.id !== revision && library.working?.id !== revision)
+    if (revision && library.preview?.revisionId !== revision && library.working?.id !== revision && target.id !== revision)
       throw new IntelligenceError('Foreign or stale preview revision.', 403);
     if (!library.preview)
       throw new IntelligenceError('Compiled preview is not ready. The last working application stays available when one exists.', 409);
