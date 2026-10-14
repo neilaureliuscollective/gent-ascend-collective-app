@@ -313,14 +313,16 @@ export function AureliusWorkspace({
         ) &&
         (!verifiedDraftOwner.current || verifiedDraftOwner.current === owner);
       if (!bound()) return;
-      for (const intent of ['revision', 'handoff'] as const) {
+      for (const intent of ['revision', 'handoff', 'import'] as const) {
         const pending = readTalkSave(owner, conversationId, intent);
         if (!pending) continue;
         if (!bound()) return;
         setCreationNotice(
-          intent === 'handoff'
-            ? 'Finishing a prepared Architect package…'
-            : 'Finishing a previous save…',
+          intent === 'import'
+            ? 'Finishing the Architect import…'
+            : intent === 'handoff'
+              ? 'Finishing a prepared Architect package…'
+              : 'Finishing a previous save…',
         );
         try {
           await jsonRequest('/api/aurelius/creations', 'POST', {
@@ -335,9 +337,11 @@ export function AureliusWorkspace({
           if (!bound()) return;
           clearTalkSave(owner, conversationId, intent);
           setCreationNotice(
-            intent === 'handoff'
-              ? 'Prepared for Architect. Import is pending the destination contract.'
-              : 'Recovered the previous save.',
+            intent === 'import'
+              ? 'Saved in Architect. Open the project when you are ready.'
+              : intent === 'handoff'
+                ? 'Prepared for Architect. Review the package, then create the project.'
+                : 'Recovered the previous save.',
           );
           if (!bound()) return;
           await loadCreations(conversationId);
@@ -1065,8 +1069,8 @@ export function AureliusWorkspace({
         clearTalkSave(data.ownerId, selected, 'handoff');
       setCreationNotice(
         saved.content?.imported
-          ? 'Architect accepted the package.'
-          : 'Prepared for Architect. Import is pending the destination contract.',
+          ? 'Saved in Architect. Open the project when you are ready.'
+          : 'Prepared for Architect. Review the package, then create the project.',
       );
       handoff?.stage({
         text: input.idea,
@@ -1078,6 +1082,38 @@ export function AureliusWorkspace({
       await loadCreations(selected);
     } catch (error) {
       setCreationError(error instanceof Error ? error.message : 'The Architect package could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function importArchitectPackage(handoffId: string) {
+    if (!selected || !data?.ownerId) return;
+    const payload = {
+      action: 'import-origin' as const,
+      handoffId,
+      conversationId: selected,
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'import', payload);
+    recoverGeneration.current += 1;
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { imported?: boolean; projectId?: string };
+      if (matchesTalkSave(data.ownerId, selected, 'import', bound.id))
+        clearTalkSave(data.ownerId, selected, 'import');
+      setCreationNotice(
+        saved.imported
+          ? 'Saved in Architect. Open the project when you are ready.'
+          : 'The package is still prepared. Architect did not confirm a project.',
+      );
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(
+        error instanceof Error ? error.message : 'Architect could not save this project.',
+      );
     } finally {
       setCreationBusy(false);
     }
@@ -1762,6 +1798,7 @@ export function AureliusWorkspace({
                 onSelect={() => void selectOpenCreation()}
                 onKeepProposal={() => void keepProposal()}
                 onHandoff={(input) => void prepareArchitectPackage(input)}
+                onImport={(id) => void importArchitectPackage(id)}
                 onOpenVersion={(id) => setOpenWorkId(id)}
                 onHistory={rememberHistory}
               />
@@ -1951,6 +1988,7 @@ export function AureliusWorkspace({
               onSelect={() => void selectOpenCreation()}
               onKeepProposal={() => void keepProposal()}
               onHandoff={(input) => void prepareArchitectPackage(input)}
+              onImport={(id) => void importArchitectPackage(id)}
               onOpenVersion={(id) => setOpenWorkId(id)}
               onHistory={rememberHistory}
             />

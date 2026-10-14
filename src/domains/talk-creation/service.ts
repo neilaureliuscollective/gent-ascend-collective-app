@@ -15,17 +15,23 @@ import {
   contentForKind,
   handoffContentSchema,
   handoffInput,
+  importOriginInput,
   matchesFrozenHandoff,
   saveCreationInput,
   selectCreationInput,
+  type BriefContent,
   type CreationKind,
   type HandoffContent,
+  type PaletteContent,
+  type PlanContent,
   type TalkCreation,
   type TalkCreationWorkspace,
   type TalkImageJob,
 } from './schema';
-import { persistKind } from './persist';
+import { originProjectIdentity, originSaveIdentity, persistKind } from './persist';
+import { overlayHandoffImport, projectFromResolvedHandoff, type ResolvedArchitectPackage } from './origin-import';
 import { withCalculatedContrast } from './contrast';
+import { originReady, saveOrigin } from '@/domains/architect-origin/service';
 
 const talkProjectTitle = 'Talk references';
 
@@ -68,7 +74,7 @@ export async function readTalkCreations(conversationId: string): Promise<TalkCre
     .maybeSingle();
   if (conversation.error || !conversation.data)
     throw new IntelligenceError('Conversation unavailable.', 404);
-  const [rows, selected, images, attachment] = await Promise.all([
+  const [rows, selected, images, attachment, imports] = await Promise.all([
     client
       .from('ai_talk_creations')
       .select('*')
@@ -84,10 +90,21 @@ export async function readTalkCreations(conversationId: string): Promise<TalkCre
       .eq('conversation_id', conversationId),
     readArtifacts(conversationId).catch(() => null),
     talkAttachmentProject(false).catch(() => null),
+    client
+      .from('ai_talk_origin_imports')
+      .select('handoff_id,project_id')
+      .eq('person_id', person.id)
+      .eq('conversation_id', conversationId),
   ]);
   if (rows.error || selected.error)
     throw new IntelligenceError('Saved Talk work could not be loaded.', 503);
-  const creations = (rows.data ?? []).map(asCreation).filter((item): item is TalkCreation => !!item);
+  const imported = new Map(
+    (imports.error ? [] : (imports.data ?? [])).map((row) => [row.handoff_id, row.project_id] as const),
+  );
+  const creations = (rows.data ?? [])
+    .map(asCreation)
+    .filter((item): item is TalkCreation => !!item)
+    .map((item) => overlayHandoffImport(item, imported.get(item.id)));
   const selection: TalkCreationWorkspace['selected'] = {};
   for (const row of selected.data ?? []) {
     if (row.kind === 'brief' || row.kind === 'plan' || row.kind === 'palette')
@@ -213,13 +230,23 @@ export async function prepareArchitectHandoff(input: unknown) {
         'This save request was already used with different content. Start a new edit.',
         409,
       );
+    const receipt = await client
+      .from('ai_talk_origin_imports')
+      .select('project_id')
+      .eq('person_id', person.id)
+      .eq('handoff_id', existing.data.id)
+      .maybeSingle();
+    const imported = !receipt.error && Boolean(receipt.data?.project_id);
     return {
       id: existing.data.id,
       lineageId: existing.data.lineage_id,
       version: existing.data.version,
-      content,
+      content: imported && receipt.data
+        ? { ...content, imported: true, originProjectId: receipt.data.project_id }
+        : content,
       recovered: true,
-      imported: false as const,
+      imported,
+      projectId: receipt.data?.project_id ?? null,
     };
   }
   const workspace = await readTalkCreations(parsed.data.conversationId);
@@ -265,7 +292,228 @@ export async function prepareArchitectHandoff(input: unknown) {
     predecessorId: null,
     content,
   });
-  return { ...saved, content, imported: false as const };
+  return { ...saved, content, imported: false as const, projectId: null };
+}
+
+async function resolveArchitectPackage(
+  handoffRow: TalkCreation,
+): Promise<ResolvedArchitectPackage> {
+  if (handoffRow.kind !== 'handoff' || !('schema' in handoffRow.content))
+    throw new IntelligenceError('This Architect package is unavailable.', 404);
+  const { client, person } = await intelligenceSession();
+  const handoff = handoffRow.content;
+  const selections = await Promise.all(
+    handoff.selections.map(async (selection) => {
+      const row = await client
+        .from('ai_talk_creations')
+        .select('*')
+        .eq('id', selection.versionId)
+        .eq('person_id', person.id)
+        .eq('conversation_id', handoff.conversationId)
+        .maybeSingle();
+      const creation = row.data ? asCreation(row.data) : null;
+      if (
+        !creation ||
+        creation.kind === 'handoff' ||
+        creation.candidate ||
+        creation.kind !== selection.kind ||
+        creation.lineage_id !== selection.lineageId ||
+        creation.version !== selection.version
+      )
+        throw new IntelligenceError(
+          'A selected brief, plan or palette in this package is no longer available.',
+          409,
+        );
+      return {
+        kind: creation.kind,
+        lineageId: creation.lineage_id,
+        versionId: creation.id,
+        version: creation.version,
+        title: 'title' in creation.content ? creation.content.title : creation.kind,
+        content: creation.content as BriefContent | PlanContent | PaletteContent,
+      };
+    }),
+  );
+  const artifacts = await readArtifacts(handoff.conversationId).catch(() => null);
+  const images = handoff.images.map((image) => {
+    const artifact = artifacts?.artifacts.find((item) => item.id === image.artifactId);
+    if (
+      !artifact ||
+      artifact.status !== 'complete' ||
+      artifact.version_id !== image.versionId ||
+      artifact.project_id !== image.projectId
+    )
+      throw new IntelligenceError('A selected image in this package is no longer available.', 409);
+    return {
+      artifactId: image.artifactId,
+      versionId: image.versionId,
+      projectId: image.projectId,
+      prompt: image.prompt,
+    };
+  });
+  return {
+    handoff,
+    sourceTurnId: handoffRow.source_turn_id,
+    brief: selections.find((item) => item.kind === 'brief')?.content as BriefContent | undefined,
+    plan: selections.find((item) => item.kind === 'plan')?.content as PlanContent | undefined,
+    palette: selections.find((item) => item.kind === 'palette')?.content as PaletteContent | undefined,
+    selections,
+    images,
+  };
+}
+
+export async function reviewArchitectImport(handoffId: string) {
+  const { client, person } = await intelligenceSession();
+  if (!(await currentAccess()).has('aurelius.context'))
+    throw new IntelligenceError('Aethelios access is not enabled for this account.', 403);
+  const row = await client
+    .from('ai_talk_creations')
+    .select('*')
+    .eq('id', handoffId)
+    .eq('person_id', person.id)
+    .eq('kind', 'handoff')
+    .maybeSingle();
+  if (row.error) throw new IntelligenceError('The Architect package could not be reviewed.', 503);
+  const creation = row.data ? asCreation(row.data) : null;
+  if (!creation) throw new IntelligenceError('Architect package unavailable.', 404);
+  const resolved = await resolveArchitectPackage(creation);
+  const receipt = await client
+    .from('ai_talk_origin_imports')
+    .select('project_id')
+    .eq('person_id', person.id)
+    .eq('handoff_id', handoffId)
+    .maybeSingle();
+  return {
+    handoffId,
+    conversationId: resolved.handoff.conversationId,
+    preparedAt: resolved.handoff.preparedAt,
+    sourceTurnId: resolved.sourceTurnId,
+    imported: Boolean(receipt.data?.project_id),
+    projectId: receipt.data?.project_id ?? null,
+    originReady: originReady(),
+    project: projectFromResolvedHandoff(resolved),
+    selections: resolved.selections.map((item) => ({
+      kind: item.kind,
+      lineageId: item.lineageId,
+      versionId: item.versionId,
+      version: item.version,
+      title: item.title,
+    })),
+    images: resolved.images,
+  };
+}
+
+export async function importArchitectHandoff(input: unknown) {
+  const parsed = importOriginInput.safeParse(input);
+  if (!parsed.success) throw new IntelligenceError('Confirm the Architect package before importing.');
+  const { client, person } = await intelligenceSession();
+  if (!(await currentAccess()).has('aurelius.context'))
+    throw new IntelligenceError('Aethelios access is not enabled for this account.', 403);
+  if (!originReady())
+    throw new IntelligenceError(
+      'Architect persistence is unavailable. The package stays prepared and was not imported.',
+      503,
+    );
+  const existing = await client
+    .from('ai_talk_origin_imports')
+    .select('*')
+    .eq('id', parsed.data.id)
+    .eq('person_id', person.id)
+    .maybeSingle();
+  if (existing.error) throw new IntelligenceError('The Architect import receipt could not be read.', 503);
+  if (existing.data) {
+    if (
+      existing.data.handoff_id !== parsed.data.handoffId ||
+      existing.data.conversation_id !== parsed.data.conversationId
+    )
+      throw new IntelligenceError(
+        'This import request was already used with a different package.',
+        409,
+      );
+    const reviewed = await reviewArchitectImport(existing.data.handoff_id);
+    return {
+      id: existing.data.id,
+      handoffId: existing.data.handoff_id,
+      projectId: existing.data.project_id,
+      imported: true as const,
+      recovered: true,
+      project: reviewed.project,
+    };
+  }
+  const prior = await client
+    .from('ai_talk_origin_imports')
+    .select('*')
+    .eq('person_id', person.id)
+    .eq('handoff_id', parsed.data.handoffId)
+    .maybeSingle();
+  if (prior.error) throw new IntelligenceError('The Architect import receipt could not be read.', 503);
+  if (prior.data) {
+    const reviewed = await reviewArchitectImport(prior.data.handoff_id);
+    return {
+      id: prior.data.id,
+      handoffId: prior.data.handoff_id,
+      projectId: prior.data.project_id,
+      imported: true as const,
+      recovered: true,
+      project: reviewed.project,
+    };
+  }
+  const row = await client
+    .from('ai_talk_creations')
+    .select('*')
+    .eq('id', parsed.data.handoffId)
+    .eq('person_id', person.id)
+    .eq('conversation_id', parsed.data.conversationId)
+    .eq('kind', 'handoff')
+    .maybeSingle();
+  if (row.error) throw new IntelligenceError('The Architect package could not be imported.', 503);
+  const creation = row.data ? asCreation(row.data) : null;
+  if (!creation) throw new IntelligenceError('Architect package unavailable.', 404);
+  const resolved = await resolveArchitectPackage(creation);
+  if (resolved.handoff.conversationId !== parsed.data.conversationId)
+    throw new IntelligenceError('This import request was already used with a different package.', 409);
+  const content = projectFromResolvedHandoff(resolved);
+  const projectId = originProjectIdentity(person.id, parsed.data.handoffId);
+  try {
+    await saveOrigin({
+      action: 'save',
+      projectId,
+      requestId: originSaveIdentity(person.id, parsed.data.handoffId),
+      expected: 0,
+      content,
+      note: 'Imported from Talk',
+    });
+  } catch (error) {
+    throw new IntelligenceError(
+      error instanceof IntelligenceError
+        ? error.message
+        : 'Architect could not save this project. The package stays prepared and was not imported.',
+      error instanceof IntelligenceError ? error.status : 503,
+    );
+  }
+  const recorded = await client.rpc('ai_talk_record_origin_import', {
+    p_id: parsed.data.id,
+    p_handoff: parsed.data.handoffId,
+    p_project: projectId,
+    p_conversation: parsed.data.conversationId,
+    p_prepared: resolved.handoff.preparedAt,
+  });
+  if (recorded.error || !recorded.data)
+    throw new IntelligenceError(
+      /reused with different inputs/i.test(recorded.error?.message ?? '')
+        ? 'This import request was already used with a different package.'
+        : 'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
+      /reused with different inputs/i.test(recorded.error?.message ?? '') ? 409 : 503,
+    );
+  const receipt = recorded.data as { id: string; handoffId: string; projectId: string; recovered?: boolean };
+  return {
+    id: receipt.id,
+    handoffId: receipt.handoffId,
+    projectId: receipt.projectId,
+    imported: true as const,
+    recovered: Boolean(receipt.recovered),
+    project: content,
+  };
 }
 
 export async function talkAttachmentProject(create = true) {

@@ -606,6 +606,19 @@ export interface Database {
         never,
         never
       >;
+      ai_talk_origin_imports: Table<
+        {
+          id: string;
+          person_id: string;
+          handoff_id: string;
+          conversation_id: string;
+          project_id: string;
+          prepared_at: string;
+          created_at: string;
+        },
+        never,
+        never
+      >;
       ai_conversation_artifacts: Table<
         import('@/domains/artifacts/contract').Artifact & {
           person_id: string;
@@ -1507,6 +1520,16 @@ export interface Database {
       ai_talk_select_creation: {
         Args: { p_conversation: string; p_creation: string };
         Returns: boolean;
+      };
+      ai_talk_record_origin_import: {
+        Args: {
+          p_id: string;
+          p_handoff: string;
+          p_project: string;
+          p_conversation: string;
+          p_prepared: string;
+        };
+        Returns: { id: string; handoffId: string; projectId: string; recovered?: boolean };
       };
       talk_studio_entitled: { Args: { p_person: string }; Returns: boolean };
       ai_talk_propose_image: {

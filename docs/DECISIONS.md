@@ -1,3 +1,7 @@
+# Talk → Architect Origin import — 2026-10-14
+
+Reuse existing Origin `architect_origin_save` and Talk creation rows. Do not invent a second project store or trust browser package contents. Resolve selected immutable versions server-side, show a review, and create one private project only after explicit confirmation. Bind import to an owner-scoped receipt so lost-response and concurrent retries cannot duplicate the project. Overlay `imported` from the receipt only after destination persistence is confirmed. Additive `20261014010000_talk_origin_import.sql` stays local/reviewable; do not rewrite the applied Origin migration record. Construct, voice and publishing stay closed.
+
 # Talk conversational creation — 2026-10-13
 
 Reuse Studio image RPCs and the `aethelios-studio` reference store instead of a second asset service. Text artifacts are a new owner-scoped table so they can work when Live is unavailable, without changing Live `voice.use` gates. Architect receives a versioned handoff package; its workspace is not rewritten while #119/#120 are in flight. Image tools run only after an explicit-request guard. Research: existing Studio/Live artifact contracts and OpenAI image/file-input guides already recorded in AETHELIOS_CHAT_FOUNDATION.md.

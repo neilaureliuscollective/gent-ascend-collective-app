@@ -5,14 +5,17 @@ import { IntelligenceError } from '@/domains/intelligence/service';
 import { artifactReview } from '@/domains/artifacts/contract';
 import {
   handoffInput,
+  importOriginInput,
   saveCreationInput,
   selectCreationInput,
 } from '@/domains/talk-creation/schema';
 import {
+  importArchitectHandoff,
   prepareArchitectHandoff,
   proposeTalkImage,
   readCreationLineage,
   readTalkCreations,
+  reviewArchitectImport,
   reviewTalkImage,
   saveTalkCreation,
   selectTalkCreation,
@@ -30,6 +33,11 @@ export async function GET(request: Request) {
       if (!z.uuid().safeParse(lineage).success) throw new IntelligenceError('Invalid lineage.');
       return privateJson({ versions: await readCreationLineage(lineage) });
     }
+    const handoff = params.get('handoff');
+    if (handoff) {
+      if (!z.uuid().safeParse(handoff).success) throw new IntelligenceError('Invalid package.');
+      return privateJson(await reviewArchitectImport(handoff));
+    }
     const id = z.uuid().safeParse(params.get('conversationId'));
     if (!id.success) throw new IntelligenceError('Invalid conversation.');
     return privateJson(await readTalkCreations(id.data));
@@ -41,6 +49,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await mutationBody(request, 24000);
+    if (importOriginInput.safeParse(body).success)
+      return privateJson(await importArchitectHandoff(body), 201);
     if (handoffInput.safeParse(body).success)
       return privateJson(await prepareArchitectHandoff(body), 201);
     if (imageProposal.safeParse(body).success)

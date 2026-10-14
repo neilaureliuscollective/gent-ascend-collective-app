@@ -20,6 +20,8 @@ import {
   readTalkSave,
 } from '@/domains/talk-creation/pending';
 import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
+import { originProjectIdentity, originSaveIdentity } from '@/domains/talk-creation/persist';
+import { projectFromResolvedHandoff } from '@/domains/talk-creation/origin-import';
 import { contrastRatio, paletteContrast, withCalculatedContrast } from '@/domains/talk-creation/contrast';
 import {
   extractCreationFences,
@@ -150,7 +152,7 @@ describe('Talk creation contracts', () => {
     expect(parsed.success && parsed.data.imported).toBe(false);
     if (parsed.success)
       expect(handoffContentSchema.safeParse({ ...parsed.data, imported: true }).success).toBe(
-        false,
+        true,
       );
   });
 
@@ -420,5 +422,65 @@ describe('Talk creation contracts', () => {
       }),
     ).toBe(false);
     expect(matchesFrozenHandoff(content, { ...request, preparedAt: undefined })).toBe(false);
+    expect(matchesFrozenHandoff({ ...content, imported: true }, request)).toBe(false);
+  });
+});
+
+describe('Talk Origin import mapping', () => {
+  it('derives one owner-scoped project and save identity from the package', () => {
+    const person = '00000000-0000-4000-8000-000000000001';
+    const handoff = '70000000-0000-4000-8000-000000000011';
+    expect(originProjectIdentity(person, handoff)).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(originProjectIdentity(person, handoff)).toBe(originProjectIdentity(person, handoff));
+    expect(originSaveIdentity(person, handoff)).not.toBe(originProjectIdentity(person, handoff));
+    expect(originProjectIdentity(person, handoff)).not.toBe(
+      originProjectIdentity('00000000-0000-4000-8000-000000000002', handoff),
+    );
+  });
+
+  it('maps resolved Talk versions into a private Origin project without conversation history', () => {
+    const project = projectFromResolvedHandoff({
+      handoff: {
+        schema: 'talk-architect-handoff/v1',
+        conversationId: '30000000-0000-4000-8000-000000000001',
+        preparedAt: '2026-10-14T00:00:00.000Z',
+        discipline: 'business',
+        idea: 'A premium brand and website.',
+        description: '',
+        decisions: 'Keep emerald restrained.',
+        selections: [
+          {
+            kind: 'brief',
+            lineageId: '50000000-0000-4000-8000-000000000011',
+            versionId: '50000000-0000-4000-8000-000000000011',
+            version: 1,
+            title: 'Reserve site',
+          },
+        ],
+        images: [],
+        imported: false,
+      },
+      sourceTurnId: null,
+      brief,
+      selections: [
+        {
+          kind: 'brief',
+          lineageId: '50000000-0000-4000-8000-000000000011',
+          versionId: '50000000-0000-4000-8000-000000000011',
+          version: 1,
+          title: 'Reserve site',
+          content: brief,
+        },
+      ],
+      images: [],
+    });
+    expect(project.name).toBe('Reserve site');
+    expect(project.discipline).toBe('business');
+    expect(project.blueprint.vision).toContain('premium brand');
+    expect(project.blueprint.decisions).toBe('Keep emerald restrained.');
+    expect(project.blueprint.state).toContain('30000000-0000-4000-8000-000000000001');
+    expect(JSON.stringify(project)).not.toContain('assistant_text');
   });
 });

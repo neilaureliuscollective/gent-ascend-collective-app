@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import type { ProjectContent } from '@/domains/architect-origin/schema';
 import type {
   BriefContent,
   HandoffContent,
@@ -26,6 +27,7 @@ export function CreationDetail({
   onSelect,
   onKeepProposal,
   onHandoff,
+  onImport,
   onOpenVersion,
   onHistory,
 }: {
@@ -42,6 +44,7 @@ export function CreationDetail({
   onSelect: () => void;
   onKeepProposal?: () => void;
   onHandoff: (input: { idea: string; discipline: HandoffContent['discipline']; decisions: string }) => void;
+  onImport?: (handoffId: string) => void;
   onOpenVersion?: (id: string) => void;
   onHistory?: (versions: TalkCreation[]) => void;
 }) {
@@ -55,6 +58,14 @@ export function CreationDetail({
   );
   const [decisions, setDecisions] = useState('');
   const [history, setHistory] = useState<TalkCreation[]>([]);
+  const [review, setReview] = useState<{
+    imported: boolean;
+    projectId: string | null;
+    originReady: boolean;
+    project: ProjectContent | null;
+    selections: Array<{ kind: string; versionId: string; version: number; title: string }>;
+    error?: string;
+  } | null>(null);
   const historyCallback = onHistory;
   const exportText = useMemo(() => {
     if (image) return image.prompt;
@@ -78,6 +89,53 @@ export function CreationDetail({
       ignore = true;
     };
   }, [creation?.lineage_id, historyCallback]);
+  useEffect(() => {
+    if (creation?.kind !== 'handoff' || !creation.id) return;
+    let ignore = false;
+    void fetch(`/api/aurelius/creations?handoff=${creation.id}`, { cache: 'no-store' })
+      .then(async (response) => {
+        const body = (await response.json()) as {
+          imported?: boolean;
+          projectId?: string | null;
+          originReady?: boolean;
+          project?: ProjectContent;
+          selections?: Array<{ kind: string; versionId: string; version: number; title: string }>;
+          error?: string;
+        };
+        if (ignore) return;
+        if (!response.ok || !body.project)
+          setReview({
+            imported: false,
+            projectId: null,
+            originReady: Boolean(body.originReady),
+            project: null,
+            selections: [],
+            error: typeof body.error === 'string' ? body.error : 'This package could not be reviewed.',
+          });
+        else
+          setReview({
+            imported: Boolean(body.imported),
+            projectId: body.projectId ?? null,
+            originReady: Boolean(body.originReady),
+            project: body.project,
+            selections: body.selections ?? [],
+          });
+      })
+      .catch(() => {
+        if (!ignore)
+          setReview({
+            imported: false,
+            projectId: null,
+            originReady: false,
+            project: null,
+            selections: [],
+            error: 'This package could not be reviewed.',
+          });
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [creation?.id, creation?.kind]);
   const versions = creation?.lineage_id ? history : [];
   if (!creation && !image) return null;
   return (
@@ -179,11 +237,68 @@ export function CreationDetail({
         />
       )}
       {handoff && (
-        <p className="talk-creation-status">
-          {handoff.imported
-            ? 'Architect accepted this package.'
-            : 'Prepared for Architect. Navigating away does not import this package.'}
-        </p>
+        <div className="talk-origin-review">
+          <p className="talk-creation-status">
+            {handoff.imported || review?.imported
+              ? 'Saved in Architect. This Talk package is linked to that project.'
+              : 'Prepared for Architect. Review the project below, then create it. An existing unsent Architect draft is left untouched.'}
+          </p>
+          {review?.error && <p role="alert">{review.error}</p>}
+          {review?.project && (
+            <dl className="talk-origin-preview">
+              <div>
+                <dt>Project name</dt>
+                <dd>{review.project.name}</dd>
+              </div>
+              <div>
+                <dt>Discipline</dt>
+                <dd>{review.project.discipline}</dd>
+              </div>
+              <div>
+                <dt>Vision</dt>
+                <dd>{review.project.blueprint.vision || handoff.idea}</dd>
+              </div>
+              {review.selections.map((item) => (
+                <div key={item.versionId}>
+                  <dt>
+                    {item.kind} v{item.version}
+                  </dt>
+                  <dd>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => onOpenVersion?.(item.versionId)}
+                    >
+                      Open {item.title}
+                    </button>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {(handoff.imported || review?.imported) && (handoff.originProjectId || review?.projectId) ? (
+            <a
+              className="button"
+              href={`/app/architect?project=${handoff.originProjectId ?? review?.projectId}`}
+            >
+              Open saved Architect project
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="button"
+              disabled={busy || !creation || !review?.project || !review.originReady}
+              onClick={() => creation && onImport?.(creation.id)}
+            >
+              Create Architect project
+            </button>
+          )}
+          {!review?.imported && review && !review.originReady && !review.error && (
+            <p className="quiet-label">
+              Architect persistence is unavailable. The package stays prepared and was not imported.
+            </p>
+          )}
+        </div>
       )}
       {image?.status === 'complete' && image.version_id && (
         <Image
@@ -263,8 +378,8 @@ export function CreationDetail({
             Prepare for Architect
           </button>
           <p className="quiet-label">
-            This saves a reviewable package labeled Prepared for Architect. Import is shown only
-            after the destination acknowledges it. Completed images:{' '}
+            This saves a reviewable package. Creating the Architect project happens only after you
+            review and confirm it. Completed images:{' '}
             {images.filter((item) => item.status === 'complete').length}.
           </p>
         </div>

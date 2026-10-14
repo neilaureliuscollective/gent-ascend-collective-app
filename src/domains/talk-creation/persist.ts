@@ -6,17 +6,27 @@ import { withCalculatedContrast } from './contrast';
 
 type Client = SupabaseClient<Database>;
 
-export function candidateIdentity(requestId: string, kind: 'brief' | 'plan' | 'palette') {
-  const bytes = Uint8Array.from(
-    createHash('sha1').update(`talk-candidate:${requestId}:${kind}`).digest().subarray(0, 16),
-  );
+export function scopedTalkIdentity(seed: string) {
+  const bytes = Uint8Array.from(createHash('sha1').update(seed).digest().subarray(0, 16));
   const version = bytes[6];
   const variant = bytes[8];
-  if (version === undefined || variant === undefined) throw new Error('Candidate identity failed.');
+  if (version === undefined || variant === undefined) throw new Error('Talk identity failed.');
   bytes[6] = (version & 0x0f) | 0x50;
   bytes[8] = (variant & 0x3f) | 0x80;
   const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+export function candidateIdentity(requestId: string, kind: 'brief' | 'plan' | 'palette') {
+  return scopedTalkIdentity(`talk-candidate:${requestId}:${kind}`);
+}
+
+export function originProjectIdentity(personId: string, handoffId: string) {
+  return scopedTalkIdentity(`talk-origin-project:${personId}:${handoffId}`);
+}
+
+export function originSaveIdentity(personId: string, handoffId: string) {
+  return scopedTalkIdentity(`talk-origin-save:${personId}:${handoffId}`);
 }
 
 export async function persistKind(

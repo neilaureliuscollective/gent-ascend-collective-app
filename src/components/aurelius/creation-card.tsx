@@ -46,8 +46,8 @@ export function CreationCard({
       {creation.kind === 'handoff' && 'imported' in creation.content && (
         <p className="talk-creation-status">
           {creation.content.imported
-            ? 'Architect accepted this package.'
-            : 'Prepared for Architect. Import is pending the destination contract.'}
+            ? 'Saved in Architect.'
+            : 'Prepared for Architect. Review the package, then create the project.'}
         </p>
       )}
       <div className="talk-creation-actions">

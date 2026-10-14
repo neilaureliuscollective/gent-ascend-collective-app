@@ -84,6 +84,8 @@ jobs:
       - name: Real authenticated Founder Office persistence journey
         run: npx playwright test --config playwright.founder.config.ts tests/founder/founder-office.spec.ts
       - run: npm run test:founder
+      - name: Talk Architect authenticated import
+        run: npx playwright test --config playwright.talk-auth.config.ts
       - if: always()
         run: npx supabase stop --no-backup
 

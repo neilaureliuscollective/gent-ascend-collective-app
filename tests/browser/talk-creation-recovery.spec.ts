@@ -147,7 +147,7 @@ test('handoff retries reuse one identity and preparedAt', async ({ page }) => {
   await panel.getByRole('button', { name: 'Prepare for Architect', exact: true }).click();
   await expect(panel.getByText(/Failed to fetch|could not be saved/i)).toBeVisible();
   await panel.getByRole('button', { name: 'Prepare for Architect', exact: true }).click();
-  await expect(page.getByText('Prepared for Architect. Import is pending the destination contract.')).toBeVisible();
+  await expect(page.getByText(/Prepared for Architect/)).toBeVisible();
   await expect.poll(() => posts.length).toBe(2);
   expect(posts[0]?.id).toBe(posts[1]?.id);
   expect(posts[0]?.preparedAt).toBe(posts[1]?.preparedAt);

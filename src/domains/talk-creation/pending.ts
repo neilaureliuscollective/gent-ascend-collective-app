@@ -5,7 +5,7 @@ const lifetime = 24 * 60 * 60 * 1000;
 export type PendingTalkSave = {
   id: string;
   conversationId: string;
-  intent: 'revision' | 'handoff';
+  intent: 'revision' | 'handoff' | 'import';
   payload: Record<string, unknown>;
   at: number;
 };
@@ -32,7 +32,7 @@ function live(entries: PendingTalkSave[], now: number) {
       entry &&
       typeof entry.id === 'string' &&
       typeof entry.conversationId === 'string' &&
-      (entry.intent === 'revision' || entry.intent === 'handoff') &&
+      (entry.intent === 'revision' || entry.intent === 'handoff' || entry.intent === 'import') &&
       entry.payload &&
       Number.isFinite(entry.at) &&
       now - entry.at < lifetime,

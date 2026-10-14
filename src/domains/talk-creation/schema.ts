@@ -125,7 +125,8 @@ export const handoffContentSchema = z
     decisions: bounded(2000).default(''),
     selections: z.array(handoffSelectionSchema).min(1).max(6),
     images: z.array(handoffImageSchema).max(6),
-    imported: z.literal(false),
+    imported: z.boolean(),
+    originProjectId: z.uuid().optional(),
   })
   .strict();
 
@@ -173,6 +174,7 @@ export type TalkCreation = {
   predecessor_id: string | null;
   superseded_by: string | null;
   candidate?: boolean;
+  originProjectId?: string | null;
   created_at: string;
 };
 
@@ -231,6 +233,15 @@ export const handoffInput = z
   })
   .strict();
 
+export const importOriginInput = z
+  .object({
+    action: z.literal('import-origin'),
+    id: z.uuid(),
+    handoffId: z.uuid(),
+    conversationId: z.uuid(),
+  })
+  .strict();
+
 export function matchesFrozenHandoff(
   content: HandoffContent,
   request: {
@@ -250,7 +261,7 @@ export function matchesFrozenHandoff(
   if (content.idea !== request.idea) return false;
   if (content.description !== (request.description ?? '')) return false;
   if (content.decisions !== request.decisions) return false;
-  if (content.imported !== false) return false;
+  if (content.imported) return false;
   const storedIds = content.selections.map((item) => item.versionId);
   if (storedIds.length !== request.creationIds.length) return false;
   if (storedIds.some((id, index) => id !== request.creationIds[index])) return false;

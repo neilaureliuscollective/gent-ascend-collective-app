@@ -139,16 +139,58 @@ async function mockTalk(page: Page, turns: Turn[] = [turn]) {
           return route.fulfill({
             json: { versions: state.creations.filter((item) => item.lineage_id === lineage) },
           });
+        const handoffId = url.searchParams.get('handoff');
+        if (handoffId) {
+          const packageRow = state.creations.find((item) => item.id === handoffId);
+          return route.fulfill({
+            json: {
+              handoffId,
+              imported: Boolean(
+                packageRow && 'imported' in packageRow.content && packageRow.content.imported,
+              ),
+              projectId:
+                packageRow && 'originProjectId' in packageRow.content
+                  ? packageRow.content.originProjectId
+                  : null,
+              originReady: true,
+              project: {
+                name: 'Reserve brand',
+                description: 'A premium personal brand and website.',
+                discipline: 'business',
+                blueprint: { vision: 'A premium brand and website.' },
+              },
+              selections: [
+                {
+                  kind: 'brief',
+                  versionId: '50000000-0000-4000-8000-000000000011',
+                  version: 1,
+                  title: 'Reserve brand',
+                },
+              ],
+            },
+          });
+        }
         return route.fulfill({ json: state });
       }
       const body = route.request().postDataJSON() as {
         id?: string;
+        action?: string;
+        handoffId?: string;
         idea?: string;
         kind?: 'brief' | 'plan' | 'palette' | 'handoff';
         predecessorId?: string | null;
         sourceTurnId?: string | null;
         content?: TalkCreationWorkspace['creations'][number]['content'];
       };
+      if (body.action === 'import-origin' && body.handoffId) {
+        const existing = state.creations.find((item) => item.id === body.handoffId);
+        const projectId = '90000000-0000-4000-8000-000000000011';
+        if (existing && existing.kind === 'handoff' && 'imported' in existing.content) {
+          existing.content = { ...existing.content, imported: true, originProjectId: projectId };
+        }
+        savedHandoff = { id: body.id, imported: true, projectId, recovered: Boolean(savedHandoff) };
+        return route.fulfill({ json: savedHandoff });
+      }
       if (body.idea) {
         const existing = state.creations.find((item) => item.id === body.id);
         savedHandoff = { id: body.id, imported: false, content: { imported: false, idea: body.idea } };
@@ -274,4 +316,24 @@ test('Use in Architect saves a package without claiming import', async ({ page }
   await panel.getByLabel('Architect idea').fill('A premium brand and website.');
   await panel.getByRole('button', { name: 'Prepare for Architect', exact: true }).click();
   await expect.poll(() => mock.handoff()).toMatchObject({ imported: false });
+});
+
+test('reviewed Architect import creates one project and can reopen it', async ({ page }) => {
+  const mock = await mockTalk(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await page.getByRole('button', { name: 'Open', exact: true }).first().click();
+  const panel = page.getByRole('complementary', { name: 'Reviewed work' });
+  await panel.getByLabel('Architect idea').fill('A premium brand and website.');
+  await panel.getByRole('button', { name: 'Prepare for Architect', exact: true }).click();
+  await expect.poll(() => mock.handoff()).toMatchObject({ imported: false });
+  await page.locator('[data-kind="handoff"]').getByRole('button', { name: 'Open', exact: true }).click();
+  await expect(panel.getByText('Project name')).toBeVisible();
+  await expect(panel.getByText('Reserve brand', { exact: true })).toBeVisible();
+  await panel.getByRole('button', { name: 'Create Architect project', exact: true }).click();
+  await expect(panel.getByRole('link', { name: 'Open saved Architect project' })).toHaveAttribute(
+    'href',
+    '/app/architect?project=90000000-0000-4000-8000-000000000011',
+  );
+  await expect.poll(() => mock.handoff()).toMatchObject({ imported: true });
 });
