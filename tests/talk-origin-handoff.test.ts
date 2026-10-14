@@ -128,6 +128,7 @@ describe('Talk Origin handoff transfer', () => {
     expect(
       JSON.stringify({ ...project, blueprint: { ...project.blueprint, state: '' } }),
     ).not.toContain(imageId);
+    expect(transfer.mappingVersion).toBe('talk-origin-import/v1');
     expect(transfer.imagesCopied).toBe(false);
     expect(transfer.paletteRolesCopied).toBe(false);
     expect(transfer.contrastCopied).toBe(false);

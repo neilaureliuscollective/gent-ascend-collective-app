@@ -51,7 +51,11 @@ export type ReferencedHandoffAsset = {
   copiedIntoProject: false;
 };
 
+export const originImportMappingVersion = 'talk-origin-import/v1';
+export const originImportNote = 'Imported from Talk';
+
 export type HandoffTransfer = {
+  mappingVersion: typeof originImportMappingVersion;
   copied: CopiedHandoffField[];
   referenced: ReferencedHandoffAsset[];
   imagesCopied: false;
@@ -123,6 +127,7 @@ export function describeHandoffTransfer(resolved: ResolvedArchitectPackage): Han
     });
   }
   return {
+    mappingVersion: originImportMappingVersion,
     copied,
     referenced: [
       ...resolved.selections.map((selection) => ({
@@ -223,5 +228,3 @@ export function overlayHandoffImport(creation: TalkCreation, projectId?: string 
     },
   };
 }
-
-export const originImportNote = 'Imported from Talk';

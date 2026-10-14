@@ -1,3 +1,7 @@
+# Talk → Architect Origin atomic import — 2026-10-14
+
+`ai_talk_import_origin` is the only authenticated import write. It accepts request, handoff and conversation identity, derives destination IDs and bounded content from owner-authorized immutable Talk rows, and records `architect_origin_save` plus the receipt in one transaction. Preview and saved mapping share `talk-origin-import/v1`. Exact replay returns the committed receipt. Occupied expected IDs with different valid content are refused without overwrite. Retired `ai_talk_record_origin_import` overloads and authenticated `ai_talk_scoped_identity` cannot acknowledge separately supplied project, save or provenance values. Client digests, deterministic UUIDs and note text are not proof. Additive `20261014030000_talk_origin_import_atomic.sql` does not rewrite applied Origin SQL.
+
 # Talk → Architect Origin import bind — 2026-10-14
 
 `ai_talk_record_origin_import` must acknowledge only this handoff's deterministic Origin project and save, including the `Imported from Talk` version row. An owned but unrelated project is denied the same as a foreign project. Overlay `imported` only after that verification. Selected image references and palette roles stay in Talk; Origin receives bounded text and palette hex. Unsent Origin drafts remain mounted-app memory. Additive `20261014020000_talk_origin_import_bind.sql` does not rewrite applied Origin SQL.

@@ -28,16 +28,42 @@ import {
   type TalkCreationWorkspace,
   type TalkImageJob,
 } from './schema';
-import { matchesHandoffDestination, originProjectIdentity, originSaveIdentity, persistKind } from './persist';
+import { matchesHandoffDestination, persistKind } from './persist';
 import {
   describeHandoffTransfer,
+  originImportMappingVersion,
   originImportNote,
   overlayHandoffImport,
   projectFromResolvedHandoff,
   type ResolvedArchitectPackage,
 } from './origin-import';
 import { withCalculatedContrast } from './contrast';
-import { originReady, saveOrigin } from '@/domains/architect-origin/service';
+import { originReady } from '@/domains/architect-origin/service';
+import { projectContentSchema, type ProjectContent } from '@/domains/architect-origin/schema';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/platform/supabase/database';
+
+async function importedContentMatches(
+  client: SupabaseClient<Database>,
+  personId: string,
+  receipt: { project_id: string; save_id?: string | null },
+  expected: ProjectContent,
+) {
+  const verified = await client
+    .from('architect_origin_versions')
+    .select('id,project_id,content,note')
+    .eq('id', receipt.save_id ?? '')
+    .eq('project_id', receipt.project_id)
+    .eq('person_id', personId)
+    .maybeSingle();
+  const stored = verified.data ? projectContentSchema.safeParse(verified.data.content) : null;
+  return (
+    Boolean(verified.data) &&
+    verified.data?.note === originImportNote &&
+    Boolean(stored?.success) &&
+    JSON.stringify(stored?.success ? stored.data : null) === JSON.stringify(expected)
+  );
+}
 
 const talkProjectTitle = 'Talk references';
 
@@ -407,6 +433,7 @@ export async function reviewArchitectImport(handoffId: string) {
     projectId: acknowledged ? receipt.data?.project_id ?? null : null,
     saveId: acknowledged ? receipt.data?.save_id ?? null : null,
     originReady: originReady(),
+    mappingVersion: originImportMappingVersion,
     project: projectFromResolvedHandoff(resolved),
     transfer,
     selections: resolved.selections.map((item) => ({
@@ -449,10 +476,10 @@ export async function importArchitectHandoff(input: unknown) {
         409,
       );
     const reviewed = await reviewArchitectImport(existing.data.handoff_id);
-    if (!reviewed.imported)
+    if (!(await importedContentMatches(client, person.id, existing.data, reviewed.project)))
       throw new IntelligenceError(
-        'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
-        503,
+        'This Architect project already exists with different content. The Talk package was not imported.',
+        409,
       );
     return {
       id: existing.data.id,
@@ -461,6 +488,7 @@ export async function importArchitectHandoff(input: unknown) {
       saveId: existing.data.save_id,
       imported: true as const,
       recovered: true,
+      mappingVersion: originImportMappingVersion,
       project: reviewed.project,
       transfer: reviewed.transfer,
     };
@@ -482,10 +510,10 @@ export async function importArchitectHandoff(input: unknown) {
         409,
       );
     const reviewed = await reviewArchitectImport(prior.data.handoff_id);
-    if (!reviewed.imported)
+    if (!(await importedContentMatches(client, person.id, prior.data, reviewed.project)))
       throw new IntelligenceError(
-        'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
-        503,
+        'This Architect project already exists with different content. The Talk package was not imported.',
+        409,
       );
     return {
       id: prior.data.id,
@@ -494,6 +522,7 @@ export async function importArchitectHandoff(input: unknown) {
       saveId: prior.data.save_id,
       imported: true as const,
       recovered: true,
+      mappingVersion: originImportMappingVersion,
       project: reviewed.project,
       transfer: reviewed.transfer,
     };
@@ -514,60 +543,52 @@ export async function importArchitectHandoff(input: unknown) {
     throw new IntelligenceError('This import request was already used with a different package.', 409);
   const content = projectFromResolvedHandoff(resolved);
   const transfer = describeHandoffTransfer(resolved);
-  const projectId = originProjectIdentity(person.id, parsed.data.handoffId);
-  const saveId = originSaveIdentity(person.id, parsed.data.handoffId);
-  try {
-    await saveOrigin({
-      action: 'save',
-      projectId,
-      requestId: saveId,
-      expected: 0,
-      content,
-      note: originImportNote,
-    });
-  } catch (error) {
-    throw new IntelligenceError(
-      error instanceof IntelligenceError
-        ? error.message
-        : 'Architect could not save this project. The package stays prepared and was not imported.',
-      error instanceof IntelligenceError ? error.status : 503,
-    );
-  }
-  const recorded = await client.rpc('ai_talk_record_origin_import', {
+  const recorded = await client.rpc('ai_talk_import_origin', {
     p_id: parsed.data.id,
     p_handoff: parsed.data.handoffId,
-    p_project: projectId,
-    p_save: saveId,
     p_conversation: parsed.data.conversationId,
-    p_prepared: resolved.handoff.preparedAt,
-    p_provenance: transfer,
   });
   if (recorded.error || !recorded.data)
     throw new IntelligenceError(
       /reused with different inputs/i.test(recorded.error?.message ?? '')
         ? 'This import request was already used with a different package.'
-        : 'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
-      /reused with different inputs/i.test(recorded.error?.message ?? '') ? 409 : 503,
+        : /Project unavailable|Replay mismatch/i.test(recorded.error?.message ?? '')
+          ? 'This Architect project already exists with different content. The Talk package was not imported.'
+          : 'Architect could not save this project. The package stays prepared and was not imported.',
+      /reused with different inputs|Project unavailable|Replay mismatch/i.test(
+        recorded.error?.message ?? '',
+      )
+        ? 409
+        : 503,
     );
   const receipt = recorded.data as {
     id: string;
     handoffId: string;
     projectId: string;
     saveId?: string;
+    mappingVersion?: string;
     recovered?: boolean;
   };
-  if (receipt.projectId !== projectId || (receipt.saveId && receipt.saveId !== saveId))
+  if (
+    !(await importedContentMatches(
+      client,
+      person.id,
+      { project_id: receipt.projectId, save_id: receipt.saveId ?? '' },
+      content,
+    ))
+  )
     throw new IntelligenceError(
-      'Architect saved the project, but the Talk receipt was not confirmed. Retry to attach it without creating another project.',
+      'Architect could not save this project. The package stays prepared and was not imported.',
       503,
     );
   return {
     id: receipt.id,
     handoffId: receipt.handoffId,
     projectId: receipt.projectId,
-    saveId: receipt.saveId ?? saveId,
+    saveId: receipt.saveId ?? '',
     imported: true as const,
     recovered: Boolean(receipt.recovered),
+    mappingVersion: receipt.mappingVersion ?? originImportMappingVersion,
     project: content,
     transfer,
   };

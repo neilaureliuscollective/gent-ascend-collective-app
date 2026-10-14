@@ -38,32 +38,33 @@ Live voice, Live admission, production voice flags, Construct, Connections, Arch
 ## Origin import (2026-10-14)
 
 - Reviewing a prepared package resolves the owner's stored brief/plan/palette versions and authorized image references on the server. Browser contents are not trusted.
-- Explicit confirmation creates one private Origin project with `architect_origin_save`. No model build, Construct run or publication is started.
-- Import identity is owner-scoped. The acknowledgement RPC binds the receipt to this handoff's deterministic project and save ids and to the Origin version whose note is `Imported from Talk`. Unrelated owned projects and foreign projects are rejected. Lost-response and concurrent retries return that same project and one receipt.
-- `imported` is overlaid from the receipt only after that exact destination save is verified. Failed or unavailable Origin saves leave the package prepared.
+- Explicit confirmation calls one owner-authenticated `ai_talk_import_origin` with only request, handoff and conversation identity. Destination IDs, normalized bounded content, `talk-origin-import/v1` and copied/reference provenance are derived from authorized immutable Talk rows. The function calls existing `architect_origin_save` and records the receipt in the same transaction. No model build, Construct run or publication is started.
+- Exact replay of the same identities returns the original committed receipt. Changed identities fail. Expected project/save IDs that already hold different valid content, even with note `Imported from Talk`, are refused without overwrite or a success receipt. Client digests, deterministic UUIDs and note text are not treated as proof.
+- Standalone `ai_talk_record_origin_import` overloads are dropped. Authenticated callers cannot execute `ai_talk_scoped_identity` or the internal mapper.
+- `imported` is overlaid from the receipt only after the saved Origin content matches the reviewed mapping. Failed or unavailable Origin saves leave the package prepared.
 - Copied into Origin as bounded text: brief title/purpose/audience/requirements, plan summary and step text, palette names and hex values. Palette roles, contrast pairs and image pixels are not copied. Selected version and image ids stay referenced on the Talk package/receipt and in the imported project's `blueprint.state`.
-- An existing unsent Origin draft is mounted-app memory. Import does not open or overwrite it. In-app navigation can restore it; a hard reload is not claimed durable.
-- Additive migrations: `20261014010000_talk_origin_import.sql` and `20261014020000_talk_origin_import_bind.sql`. They do not change previously applied Origin or Talk files.
+- An existing unsent Origin draft is mounted-app memory. Import does not open, overwrite or discard it. Supported Back/Forward retains the draft; accepted explicit leave discards it.
+- Additive migrations: `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql` and `20261014030000_talk_origin_import_atomic.sql`. They do not change previously applied Origin or Talk files.
 
 ## Remaining dependencies
 
-- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql` and `20261014020000_talk_origin_import_bind.sql` requires founder authorization. None of these files broaden production access until applied.
-- Additive `20261014010000_talk_origin_import.sql` and `20261014020000_talk_origin_import_bind.sql` are local/reviewable. Hosted apply of the Talk files, including the receipt table and save bind, requires founder authorization. Do not edit the already-applied Origin migration record.
+- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql` and `20261014030000_talk_origin_import_atomic.sql` requires founder authorization. None of these files broaden production access until applied.
+- Additive `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql` and `20261014030000_talk_origin_import_atomic.sql` are local/reviewable. Hosted apply of the Talk files, including the receipt table, save bind and atomic import, requires founder authorization. Do not edit the already-applied Origin migration record.
 - Paid image generation still needs Studio entitlement, OpenAI image access and the existing quota/RPC pilot checks.
 - Physical Fold/Safari and live-provider acceptance remain separate gates.
 
 ## Exact-head checks on this branch
 
-Recorded on the focused import-acceptance pass before push. Browser evidence includes mocked-provider Playwright. PGlite SQL is disposable persistence, not a real Auth test. Local Docker/Auth is unavailable in this checkout; Quality `database` and Architect Origin `local-auth` run the Auth/PostgREST smoke and talk-auth suite on exact head.
+Recorded on the atomic import pass before push. Browser evidence includes mocked-provider Playwright. PGlite SQL is disposable persistence, not a real Auth test. Local Docker/Auth is unavailable in this checkout; Quality `database` and Architect Origin `local-auth` run the Auth/PostgREST smoke and talk-auth suite on exact head.
 
 - lint: pass
 - typecheck: pass
-- vitest: 932 passed (includes Talk persist/SQL/handoff/candidate/import bind and copied-vs-referenced contracts)
+- vitest: 936 passed (includes Talk persist/SQL/handoff/candidate/atomic import and copied-vs-referenced contracts)
 - db ledger: pass (Talk and import SQL remain unapplied on hosted; Origin production record unchanged)
 - production build: pass
 - Playwright (mocked providers): talk-creation 4/4, talk-creation-recovery 8/8, architect-origin 27/27
 - Persistence used: PGlite with pgcrypto for ownership/idempotent import SQL; mocked `/api` for browser recovery; real Auth acceptance wired to CI disposable Supabase
-- Unrun until exact-head CI: Quality `database` and Architect Origin `local-auth` (real Auth/PostgREST two-owner journey), Quality application `test:e2e` remainder, physical Fold/Safari, paid OpenAI image calls, hosted migration apply
+- Unrun until exact-head CI: Quality `database` and Architect Origin `local-auth` (real Auth/PostgREST two-owner journey, wrong-content denial, retired acknowledgement, Aethelios-menu navigation and draft leave vs Back/Forward), Quality application `test:e2e` remainder, physical Fold/Safari, paid OpenAI image calls, hosted migration apply
 
 ## Founder test
 

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { initialProject } from '../src/domains/architect-origin/schema';
 
 const state = vi.hoisted(() => ({
   person: '00000000-0000-4000-8000-000000000001',
@@ -6,7 +7,8 @@ const state = vi.hoisted(() => ({
   originReady: true,
   rows: [] as Array<Record<string, unknown>>,
   receipts: [] as Array<Record<string, unknown>>,
-  saves: [] as Array<Record<string, unknown>>,
+  versions: [] as Array<Record<string, unknown>>,
+  rpc: [] as string[],
   conversations: new Map<string, string>([
     ['30000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001'],
   ]),
@@ -23,9 +25,8 @@ vi.mock('../src/domains/artifacts/service', () => ({
 }));
 vi.mock('../src/domains/architect-origin/service', () => ({
   originReady: () => state.originReady,
-  saveOrigin: async (input: Record<string, unknown>) => {
-    state.saves.push(input);
-    return { revision: 1, requestId: input.requestId, personId: state.person };
+  saveOrigin: async () => {
+    throw new Error('standalone Origin save is not the import path');
   },
 }));
 vi.mock('../src/domains/intelligence/service', () => ({
@@ -61,6 +62,12 @@ vi.mock('../src/domains/intelligence/service', () => ({
               );
               return { data: row ?? null, error: null };
             }
+            if (table === 'architect_origin_versions') {
+              const row = state.versions.find((item) =>
+                Object.entries(filters).every(([key, value]) => item[key] === value),
+              );
+              return { data: row ?? null, error: null };
+            }
             if (table === 'ai_talk_creations' && filters.id) {
               const row = state.rows.find((item) =>
                 Object.entries(filters).every(([key, value]) => item[key] === value),
@@ -75,17 +82,24 @@ vi.mock('../src/domains/intelligence/service', () => ({
         return builder;
       },
       rpc: async (name: string, args: Record<string, unknown>) => {
-        if (name !== 'ai_talk_record_origin_import')
+        state.rpc.push(name);
+        if (name === 'ai_talk_record_origin_import' || name === 'ai_talk_scoped_identity')
+          return { data: null, error: { message: 'Could not find the function' } };
+        if (name !== 'ai_talk_import_origin')
           return { data: null, error: { message: 'unexpected' } };
+        const { originProjectIdentity, originSaveIdentity } = await import(
+          '../src/domains/talk-creation/persist'
+        );
+        const { originImportNote, projectFromResolvedHandoff } = await import(
+          '../src/domains/talk-creation/origin-import'
+        );
         const existing = state.receipts.find(
           (item) => item.id === args.p_id || item.handoff_id === args.p_handoff,
         );
         if (existing) {
           if (
             existing.handoff_id !== args.p_handoff ||
-            existing.project_id !== args.p_project ||
-            existing.save_id !== args.p_save ||
-            existing.prepared_at !== args.p_prepared
+            existing.conversation_id !== args.p_conversation
           )
             return { data: null, error: { message: 'Import request reused with different inputs' } };
           return {
@@ -94,27 +108,88 @@ vi.mock('../src/domains/intelligence/service', () => ({
               handoffId: existing.handoff_id,
               projectId: existing.project_id,
               saveId: existing.save_id,
+              mappingVersion: 'talk-origin-import/v1',
               recovered: true,
             },
             error: null,
           };
         }
+        const handoff = state.rows.find((item) => item.id === args.p_handoff);
+        const brief = state.rows.find((item) => item.kind === 'brief');
+        if (!handoff || handoff.kind !== 'handoff' || !brief)
+          return { data: null, error: { message: 'Package unavailable' } };
+        const content = handoff.content as {
+          selections: Array<{
+            kind: 'brief' | 'plan' | 'palette';
+            lineageId: string;
+            versionId: string;
+            version: number;
+            title: string;
+          }>;
+          conversationId: string;
+          preparedAt: string;
+          discipline: 'business';
+          idea: string;
+          description: string;
+          decisions: string;
+        };
+        const mapped = projectFromResolvedHandoff({
+          handoff: {
+            schema: 'talk-architect-handoff/v1',
+            imported: false,
+            images: [],
+            ...content,
+          },
+          sourceTurnId: null,
+          brief: brief.content as import('../src/domains/talk-creation/schema').BriefContent,
+          selections: [
+            {
+              kind: 'brief',
+              lineageId: brief.lineage_id as string,
+              versionId: brief.id as string,
+              version: brief.version as number,
+              title: 'Reserve site',
+              content: brief.content as import('../src/domains/talk-creation/schema').BriefContent,
+            },
+          ],
+          images: [],
+        });
+        const projectId = originProjectIdentity(state.person, String(args.p_handoff));
+        const saveId = originSaveIdentity(state.person, String(args.p_handoff));
+        const occupied = state.versions.find((item) => item.id === saveId);
+        if (
+          occupied &&
+          (occupied.person_id !== state.person ||
+            occupied.project_id !== projectId ||
+            occupied.note !== originImportNote ||
+            JSON.stringify(occupied.content) !== JSON.stringify(mapped))
+        )
+          return { data: null, error: { message: 'Project unavailable' } };
         const row = {
           id: args.p_id,
           person_id: state.person,
           handoff_id: args.p_handoff,
           conversation_id: args.p_conversation,
-          project_id: args.p_project,
-          save_id: args.p_save,
-          prepared_at: args.p_prepared,
+          project_id: projectId,
+          save_id: saveId,
+          prepared_at: content.preparedAt,
         };
         state.receipts.push(row);
+        if (!occupied)
+          state.versions.push({
+            id: saveId,
+            project_id: projectId,
+            person_id: state.person,
+            content: mapped,
+            note: originImportNote,
+          });
         return {
           data: {
             id: row.id,
             handoffId: row.handoff_id,
-            projectId: row.project_id,
-            saveId: row.save_id,
+            projectId,
+            saveId,
+            mappingVersion: 'talk-origin-import/v1',
             recovered: false,
           },
           error: null,
@@ -125,6 +200,7 @@ vi.mock('../src/domains/intelligence/service', () => ({
 }));
 
 import { importArchitectHandoff, reviewArchitectImport } from '../src/domains/talk-creation/service';
+import { originProjectIdentity, originSaveIdentity } from '../src/domains/talk-creation/persist';
 
 const conversation = '30000000-0000-4000-8000-000000000001';
 const briefId = '50000000-0000-4000-8000-000000000011';
@@ -135,8 +211,9 @@ beforeEach(() => {
   state.person = '00000000-0000-4000-8000-000000000001';
   state.access = true;
   state.originReady = true;
-  state.saves = [];
   state.receipts = [];
+  state.versions = [];
+  state.rpc = [];
   state.rows = [
     {
       id: briefId,
@@ -197,6 +274,7 @@ describe('Talk Origin import service', () => {
   it('reviews the resolved package and creates one Origin project on confirm', async () => {
     const preview = await reviewArchitectImport(handoffId);
     expect(preview.imported).toBe(false);
+    expect(preview.mappingVersion).toBe('talk-origin-import/v1');
     expect(preview.project.name).toBe('Reserve site');
     const first = await importArchitectHandoff({
       action: 'import-origin',
@@ -204,10 +282,19 @@ describe('Talk Origin import service', () => {
       handoffId,
       conversationId: conversation,
     });
-    expect(first).toMatchObject({ imported: true, recovered: false, projectId: first.projectId });
+    expect(first).toMatchObject({
+      imported: true,
+      recovered: false,
+      projectId: first.projectId,
+      mappingVersion: 'talk-origin-import/v1',
+    });
     expect(first.transfer.imagesCopied).toBe(false);
-    expect(state.saves).toHaveLength(1);
-    expect(state.saves[0]).toMatchObject({ note: 'Imported from Talk', expected: 0 });
+    expect(state.rpc).toEqual(['ai_talk_import_origin']);
+    expect(state.versions).toHaveLength(1);
+    expect(state.versions[0]).toMatchObject({
+      note: 'Imported from Talk',
+      content: first.project,
+    });
     const retry = await importArchitectHandoff({
       action: 'import-origin',
       id: importId,
@@ -216,7 +303,7 @@ describe('Talk Origin import service', () => {
     });
     expect(retry.projectId).toBe(first.projectId);
     expect(retry.recovered).toBe(true);
-    expect(state.saves).toHaveLength(1);
+    expect(state.versions).toHaveLength(1);
     const concurrent = await Promise.all([
       importArchitectHandoff({
         action: 'import-origin',
@@ -232,7 +319,30 @@ describe('Talk Origin import service', () => {
       }),
     ]);
     expect(new Set(concurrent.map((item) => item.projectId))).toEqual(new Set([first.projectId]));
-    expect(state.saves).toHaveLength(1);
+    expect(state.versions).toHaveLength(1);
+    expect(state.rpc.every((name) => name === 'ai_talk_import_origin')).toBe(true);
+  });
+
+  it('rejects expected IDs that already hold different valid Talk-imported content', async () => {
+    const occupied = initialProject('Wrong valid content', 'business');
+    state.versions.push({
+      id: originSaveIdentity(state.person, handoffId),
+      project_id: originProjectIdentity(state.person, handoffId),
+      person_id: state.person,
+      content: occupied,
+      note: 'Imported from Talk',
+    });
+    await expect(
+      importArchitectHandoff({
+        action: 'import-origin',
+        id: importId,
+        handoffId,
+        conversationId: conversation,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(state.receipts).toEqual([]);
+    expect(state.versions).toHaveLength(1);
+    expect(state.versions[0]?.content).toEqual(occupied);
   });
 
   it('keeps imported false when Origin is unavailable and rejects foreign or mismatched reuse', async () => {
@@ -245,8 +355,9 @@ describe('Talk Origin import service', () => {
         conversationId: conversation,
       }),
     ).rejects.toMatchObject({ status: 503 });
-    expect(state.saves).toEqual([]);
+    expect(state.rpc).toEqual([]);
     expect(state.receipts).toEqual([]);
+    expect(state.versions).toEqual([]);
     state.originReady = true;
     await importArchitectHandoff({
       action: 'import-origin',
