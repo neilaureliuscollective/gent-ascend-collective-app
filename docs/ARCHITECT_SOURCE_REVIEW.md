@@ -38,6 +38,28 @@ Already required for Construct, unchanged and still default-off: `ARCHITECT_ORIG
 
 Remaining code work is not configuration: bounded check-driven repair against the recorded plan, still inside the same sandbox and approval digest.
 
+## Verification in this run
+
+Ran:
+
+- `npm run lint` — pass, zero warnings
+- `npm run typecheck` — pass
+- `npm test` — 914 unit/SQL tests
+- `npm run db:ledger` — pass; no new hosted migration
+- `npm run build` — production build pass
+- Origin browser: 27/27, including source selection, before/after diff, evidence, draft preservation, 390/720/1440
+
+Screenshots of the implemented review: `docs/evidence/architect-construct/architect-source-review-390.png`, `architect-source-review-720.png`, `architect-source-review-1440.png`.
+
+Unrun / blocked:
+
+- Exact-head hosted CI (starts after this push)
+- Disposable local Supabase Auth/PostgREST Construct acceptance
+- Host Docker isolated execution in this executor
+- Paid OpenAI proposal calls
+- Physical Fold / Safari / device review
+- Talk #121 import-receipt correction (separate owner)
+
 ## Next phase
 
 Bounded check-driven repair. This pass now records a reviewed check plan, baseline and post results, and introduced-versus-preexisting failures. The next slice can propose a repair only for introduced failures on the same immutable source, without autonomous loops, new-file creation, or expanded sandbox privileges.
