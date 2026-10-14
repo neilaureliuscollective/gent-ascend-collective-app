@@ -209,6 +209,26 @@ describe('estimator save snapshot retries', () => {
         restoredDirty: false,
       }),
     ).toBe(true);
+    expect(
+      isToolDraftDirty({
+        pending: false,
+        hydrated: true,
+        baseline: { name: 'Plywood estimator', configuration: empty },
+        name: 'Plywood estimator',
+        configuration: empty,
+        restoredDirty: true,
+      }),
+    ).toBe(false);
+    expect(
+      isToolDraftDirty({
+        pending: false,
+        hydrated: true,
+        baseline: { name: 'Plywood estimator', configuration: empty },
+        name: 'Plywood estimator',
+        configuration: { ...empty, assumptions: 'Edited after the lost response.' },
+        restoredDirty: true,
+      }),
+    ).toBe(true);
     expect(toolLibraryRefreshFollowUp({ writeConfirmed: false, libraryRefreshed: false })).toEqual({
       pending: true,
       refreshNeeded: false,

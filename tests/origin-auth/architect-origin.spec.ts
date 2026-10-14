@@ -169,6 +169,9 @@ test('real Auth estimator: persist, switch surface, reopen and invoke the saved 
   await page.goto(projectUrl);
   await page.getByRole('button', { name: 'Tool', exact: true }).click();
   await expect(page.locator('.origin-tool .origin-connection-chip')).toContainText(/Revision 1|Unsaved preview/);
-  await page.getByRole('button', { name: 'Revision 1' }).click();
+  await page
+    .getByRole('navigation', { name: 'Saved tool versions' })
+    .getByRole('button', { name: 'Revision 1', exact: true })
+    .click();
   await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
 });

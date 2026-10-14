@@ -5,7 +5,7 @@ Date: 2026-10-14. Branch `cursor/architect-create-tool-501f` stacked on Architec
 ## Correction pass
 
 1. Invocation receipts are computed by `architect_origin_tool_invoke`. Direct `architect_origin_tool_record_invocation` calls are refused; a browser-supplied result cannot be stored.
-2. Tool save retries an immutable pending snapshot (owner, project, tool, expected revision, request, payload). A lost HTTP response reconciles the committed revision. Later edits stay separate.
+2. Tool save retries an immutable pending snapshot (owner, project, tool, expected revision, request, payload). A lost HTTP response reconciles the committed revision and sets that revision as the saved baseline, so unchanged recovered content is not falsely dirty. Later edits stay separate.
 3. The Tool panel stays mounted while switching surfaces. Tab-local draft recovery is honest: unsaved edits survive Tool/Blueprint and Back/Forward in this tab, not a hard browser restart unless sessionStorage still has them. The footer never says the project is fully saved while a tool draft is unsaved. An empty mounted Tool panel is not dirty. Navigation and unload protect tool-only dirty or pending state.
 4. Quantity waste is applied to money at full internal precision (`quantity × (1 + waste) × unit cost`), then half-up to currency minor units. Displayed effective quantity is rounded separately. Schema and SQL reject zero/invalid quantities, over-max overrides, JSON-null kind/currency/rounding, and currency-precision mismatches. Markup remains distinct from margin.
 5. Invoke and committed-save recovery compare results with order-independent JSON equality. PostgreSQL JSONB key order is not a calculation mismatch.
@@ -58,7 +58,7 @@ Ran locally on this branch after the precision / JSONB / lifecycle pass:
 
 Screenshots: `docs/evidence/architect-construct/architect-tool-{390,720,1440}.png` and `architect-tool-keyboard-390.png`. Simulated viewports, not physical-device testing.
 
-Exact-head hosted CI starts after this push. Origin local-auth must still show `invoked Sample plywood estimator revision 1` after Invoke; that assertion is not weakened. Auth smoke also records the 0.0001 × 10000 × 50% waste total `1.50`.
+Exact-head hosted CI starts after this push. Origin local-auth must still show `invoked Sample plywood estimator revision 1` after Invoke; that assertion is not weakened. After reopen, **Revision 1** is clicked only in **Saved tool versions**, exact match, so it cannot collide with workbench `Revision 1 · current`. Auth smoke also records the 0.0001 × 10000 × 50% waste total `1.50`.
 
 Unrun / blocked unless later recorded:
 

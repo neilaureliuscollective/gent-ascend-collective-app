@@ -129,12 +129,13 @@ export function ArchitectToolPanel({
             setPending(null);
             setToolId(committed.tool_id);
             setExpected(committed.revision);
+            setBaseline({ name: committed.name, configuration: cloneConfig(committed.configuration) });
             setHydrated(true);
             setMessage(`Recovered saved tool revision ${committed.revision} after an interrupted response.`);
-          } else {
-            setHydrated(true);
             return;
           }
+          setHydrated(true);
+          return;
         }
         if (local?.dirty) {
           setHydrated(true);
