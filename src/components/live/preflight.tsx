@@ -79,12 +79,10 @@ export function LivePreflight() {
               {report.previewDatabaseBinding} — configuration only; hosted access verification is
               still required.
             </dd>
-            <dt>Database pilot scope</dt>
-            <dd>
-              {report.canonicalPilot
-                ? 'Existing Gent database · founder-only admission'
-                : 'Configured local or isolated target'}
-            </dd>
+            <dt>Canonical pilot flag</dt>
+            <dd>{report.canonicalPilot ? 'On' : 'Off'}</dd>
+            <dt>Admission scope</dt>
+            <dd>{report.founderOnly ? 'Founder-only' : 'Configured local or isolated target'}</dd>
             <dt>Admission configuration</dt>
             <dd>
               {report.admissionConfigured

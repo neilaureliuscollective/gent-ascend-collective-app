@@ -60,6 +60,29 @@ it('cannot enable admission by declaring control readiness against production da
   expect(JSON.stringify(report)).not.toContain('https://');
 });
 
+it('matches production to the pinned Gent connection without the preview canonical flag', () => {
+  const production = {
+    APP_ENV: 'production',
+    NODE_ENV: 'production',
+    VERCEL: '1',
+    VERCEL_ENV: 'production',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://ashhohitbvfcfspcoojt.supabase.co',
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'stale-publishable',
+  };
+  expect(previewBinding(production)).toBe('configuration-matched');
+  expect(preflightConfiguration(production)).toMatchObject({
+    canonicalPilot: false,
+    founderOnly: true,
+    previewDatabaseBinding: 'configuration-matched',
+  });
+  expect(
+    previewBinding({
+      ...production,
+      AETHELIOS_LIVE_PREVIEW_PROJECT_REF: 'abcdefghijklmnopqrst',
+    }),
+  ).toBe('url-mismatch');
+});
+
 it('permits explicitly enabled canonical account pilot without requiring a second project', () => {
   const shared = {
     APP_ENV: 'preview',

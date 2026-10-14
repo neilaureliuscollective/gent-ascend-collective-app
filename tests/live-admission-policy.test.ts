@@ -49,7 +49,24 @@ it('admits a fully configured production founder pilot to the founder only', () 
   expect(preflightConfiguration(hosted)).toMatchObject({
     admissionConfigured: true,
     canonicalPilot: true,
+    founderOnly: true,
     launchAcceptance: 'unverified',
+  });
+});
+
+it('admits production using the pinned Gent connection when the preview canonical flag is unset', () => {
+  const production = { ...hosted, AETHELIOS_LIVE_CANONICAL_PILOT: 'false' };
+  expect(liveAdmissionPolicy(production)).toMatchObject({
+    mode: 'production',
+    founderOnly: true,
+    error: null,
+  });
+  expect(liveShellAvailability(production, true).enabled).toBe(true);
+  expect(preflightConfiguration(production)).toMatchObject({
+    admissionConfigured: true,
+    canonicalPilot: false,
+    founderOnly: true,
+    previewDatabaseBinding: 'configuration-matched',
   });
 });
 
@@ -82,6 +99,12 @@ it('exposes an understandable unavailable reason when cleanup or binding is miss
   expect(
     liveShellAvailability(
       { ...hosted, NEXT_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co' },
+      true,
+    ).enabled,
+  ).toBe(true);
+  expect(
+    liveShellAvailability(
+      { ...hosted, AETHELIOS_LIVE_PREVIEW_PROJECT_REF: 'abcdefghijklmnopqrst' },
       true,
     ).reason,
   ).toMatch(/database binding/);

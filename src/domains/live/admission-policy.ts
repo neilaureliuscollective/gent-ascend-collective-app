@@ -1,4 +1,5 @@
 import { parseEnvironment } from '@/platform/environment';
+import { supabaseConnection } from '@/platform/supabase/connection';
 import { canonicalLiveProject, previewBinding } from './preview-binding';
 import { expiryReadiness } from './expiry-readiness';
 import { liveModels } from './diagnostics';
@@ -27,8 +28,7 @@ export function liveAdmissionPolicy(env: Record<string, string | undefined>) {
     error = 'Voice hosting controls have not been verified for this deployment.';
   else if (
     mode !== 'local' &&
-    (previewBinding(env) !== 'configuration-matched' ||
-      productionHostUnsafe(mode, canonicalPilot, env))
+    (previewBinding(env) !== 'configuration-matched' || productionHostUnsafe(mode, env))
   )
     error = 'The voice database binding is missing or unsafe.';
   else if (mode !== 'local' && !expiryReadiness(env).configured)
@@ -38,14 +38,13 @@ export function liveAdmissionPolicy(env: Record<string, string | undefined>) {
 
 function productionHostUnsafe(
   mode: 'local' | 'preview' | 'production' | 'invalid',
-  canonicalPilot: boolean,
   env: Record<string, string | undefined>,
 ) {
   if (mode !== 'production') return false;
-  if (!canonicalPilot) return true;
   try {
+    const connection = supabaseConnection(env);
     return (
-      new URL(env.NEXT_PUBLIC_SUPABASE_URL ?? '').hostname !== `${canonicalLiveProject}.supabase.co`
+      !connection || new URL(connection.url).hostname !== `${canonicalLiveProject}.supabase.co`
     );
   } catch {
     return true;
