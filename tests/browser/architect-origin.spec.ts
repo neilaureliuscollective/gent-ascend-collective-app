@@ -1511,8 +1511,12 @@ test('quantity-and-cost estimator can be created, saved, reopened and invoked', 
   const invocations: Array<Record<string, unknown>> = [];
   await fixture(page);
   await page.route('**/api/architect-tools*', async (route) => {
-    if (route.request().method() === 'GET')
+    if (route.request().method() === 'GET') {
+      const requested = new URL(route.request().url()).searchParams.get('tool');
+      if (requested && !tools.some((item) => item.id === requested))
+        return route.fulfill({ status: 404, json: { error: 'Tool unavailable.' } });
       return route.fulfill({ json: { tools, versions, invocations } });
+    }
     const body = route.request().postDataJSON();
     if (body.action === 'save') {
       if (tools[0] && body.expected !== tools[0].revision)
@@ -1641,8 +1645,12 @@ test('estimator save retries the exact snapshot after a dropped response', async
   const gate = { release: () => {} };
   await fixture(page);
   await page.route('**/api/architect-tools*', async (route) => {
-    if (route.request().method() === 'GET')
+    if (route.request().method() === 'GET') {
+      const requested = new URL(route.request().url()).searchParams.get('tool');
+      if (requested && !tools.some((item) => item.id === requested))
+        return route.fulfill({ status: 404, json: { error: 'Tool unavailable.' } });
       return route.fulfill({ json: { tools, versions, invocations: [] } });
+    }
     const body = route.request().postDataJSON();
     if (body.action === 'save') {
       if (!tools.length) {

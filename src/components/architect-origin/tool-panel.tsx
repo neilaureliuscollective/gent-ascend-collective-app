@@ -214,7 +214,7 @@ export function ArchitectToolPanel({
     setError('');
     setMessage('Saving exact estimator revision…');
     try {
-      const latest = await readToolLibrary(projectId, snapshot.toolId);
+      const latest = await readToolLibrary(projectId);
       const committed = findCommittedToolSave(latest.versions, snapshot);
       const saved = committed
         ? { revision: committed.revision, requestId: snapshot.requestId, personId: committed.person_id, toolId: committed.tool_id }
