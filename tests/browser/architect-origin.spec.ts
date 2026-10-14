@@ -587,7 +587,10 @@ test('integrated workbench polls construct states, cancels, and keeps project-bo
   await page.getByRole('button', { name: 'Queue labelled fixture run' }).click();
   await expect(page.getByText(/Latest run queued/)).toBeVisible();
   await page.getByRole('button', { name: 'Cancel run' }).click();
-  await expect(page.getByText(/cancelled|Canceled/i)).toBeVisible();
+  await expect(page.getByText(/Latest run cancelled/)).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Repair journey' })).toContainText(
+    'Original attempt · cancelled',
+  );
   for (const [width, height] of [
     [320, 720],
     [390, 844],

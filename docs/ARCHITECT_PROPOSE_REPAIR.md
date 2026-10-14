@@ -42,6 +42,7 @@ A funded OpenAI account does not supply a sandbox, worker, or repository connect
 - `npx tsc --noEmit` — pass
 - Focused Construct unit/SQL tests, including eligibility, combined patch, and introduced-syntax repair execution
 - Origin browser: repair journey is visible; Propose repair stays disabled without an eligible failed run
+- Origin / Quality: cancel assertion scoped to `Latest run cancelled` plus the Repair journey step, after the journey strip also named the cancelled original attempt
 
 Exact-head hosted CI starts after this push. Live workflows stay unrun on a stacked PR.
 

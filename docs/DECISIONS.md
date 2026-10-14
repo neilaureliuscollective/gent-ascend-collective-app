@@ -1,3 +1,7 @@
+# Architect cancel status locator after repair journey — 2026-10-14
+
+The Repair journey names the original attempt status in the same view as `Latest run cancelled`. Scope the cancel check to that latest-run sentence and keep the journey step assertion, rather than matching every “cancelled” string. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
 # Architect one reviewed check-driven repair — 2026-10-14
 
 Propose a repair only for a terminal failed Construct run with reliably identified introduced check failures. Keep the same owner, project, source revision, allowlist, protected paths, check plan and limits. Show the combined diff against the original pinned source, then require a fresh approval digest. Persist at most one repair child per original run, replay-safe. If the repair still fails, keep the receipt and stop. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
