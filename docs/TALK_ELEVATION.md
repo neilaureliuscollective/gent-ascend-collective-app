@@ -59,4 +59,4 @@ The visible chip, opened artifact, `workTarget` on text, voice admission and typ
 
 ## Remaining to make this personally usable live
 
-See `docs/releases/TALK_INTEGRATED_RELEASE.md`. Health #136 is already on main as `20261015181000`. Talk does not rename `15180000`/`15190000`. Merging #131 is the next GitHub action, not proof that live Talk works.
+See `docs/releases/TALK_INTEGRATED_RELEASE.md`. Health #136 is already on main as `20261015181000`. Talk does not rename `15180000`/`15190000`. Next action is the read-only hosted diagnostic; merging #131 onto `main` auto-deploys Vercel Production.

@@ -2,7 +2,7 @@
 
 Development publication only. No main merge, hosted migration, production deploy, credential creation or paid provider call without founder approval.
 
-Merging #131 is the **next GitHub action**. It is not everything needed for working live Talk.
+The next action is **permission for the read-only schema diagnostic**, not a merge. Merging #131 onto `main` is expected to create a Vercel **Production** deployment (production branch is `main`). That is not a no-effect GitHub-only step.
 
 ## Combined release tree
 
@@ -39,19 +39,32 @@ Source of classification:
 - `docs/releases/TALK_121_HOSTED_APPLY.sql` was prepared and **not executed**. Planned hosted versions `20261014042300`–`20261014042306` are therefore not proof of apply.
 - Physical-schema query was **cancelled**. It is not retried here.
 
-Timestamp-only comparison is unsafe. A missing source timestamp does not prove the objects are absent. A matching name under a different hosted version is an equivalent **ledger** row, not a statement/hash proof.
+Timestamp-only comparison is unsafe. A missing source timestamp does not prove the objects are absent. A matching name under a different hosted version is a **ledger** fact, not a definition/ACL proof. **Object existence is not equivalence:** several Talk files replace functions in place (intended-turn bind, retain-provenance, atomic import). A present table or same-named RPC can still be older, partial or conflicting.
 
-### Verified equivalent (ledger)
+Classification states used after the diagnostic:
 
-| Repository file | Hosted evidence | Required objects (not re-queried this turn) |
+| State | Meaning | Action |
 |---|---|---|
-| `20261012230000_architect_origin.sql` | version `20261014010638`, name `20261012230000_architect_origin` | `architect_origin_projects`, `architect_origin_versions`, `architect_origin_save(uuid,uuid,integer,jsonb,text)`, `architect_origin_valid(jsonb)` |
+| verified equivalent | Final signature, definition markers, ACLs, policies and required constraints match | Do not replay |
+| missing | Final and older signatures/tables absent | Candidate to apply, in order, after review |
+| older | Obsolete signature or definition present; final contract absent | Stop for review; apply only the replacing file if safe |
+| partial | Some objects exist; final definition/ACL/column set incomplete | Stop for explicit review |
+| conflict | Impossible or unsafe combination (wrong grants, both observe overloads, Health name on Talk version) | Stop. Do not skip or replay |
+| unverified | Not inspected | Do not infer |
 
-Origin **objects** remain unverified this turn because the cancelled physical query would have covered them.
+### Ledger facts already inspected
 
-### Ledger-absent by name — objects unverified
+- **18 Talk/Architect-apps names were absent** from the hosted ledger read on `volpzkfsnmtztrovexcw`. That is a name fact, not object absence.
+- **Architect Origin** appears as hosted version `20261014010638` with name `20261012230000_architect_origin`. Ledger name-equivalent only. Objects, function definitions and ACLs remain **unverified**.
+- Unused TALK_121 alternate versions `20261014042300`–`06` were not listed either. That apply was never executed.
 
-None of these 18 names (or the unused TALK_121 alternate versions `20261014042300`–`06`) appeared on the current hosted name read. **Not** classified genuinely missing.
+### Physical objects — unverified (cancelled query, not retried)
+
+None of the 18 files is classified missing, older, partial, equivalent or conflict at the object layer. Existence of a table after a later inspection would still require definition/ACL comparison before calling it satisfied.
+
+### Final contracts the diagnostic compares
+
+Object presence alone cannot satisfy these. The diagnostic reports `equivalent-candidate` only when signature, definition markers and ACLs match. Founder review of that report is what can promote a row to verified equivalent.
 
 | File | Final contract this release requires |
 |---|---|
@@ -74,7 +87,7 @@ None of these 18 names (or the unused TALK_121 alternate versions `2026101404230
 | `20261015180000_talk_live_trusted_observe.sql` | 4-arg `ai_live_observe_trusted_item` service-role only (replaced next) |
 | `20261015190000_talk_live_bind_intended_turn.sql` | `ai_live_observed_items.intended_turn_id`; **final** `ai_live_observe_trusted_item(uuid,uuid,text,text,uuid)` service-role only; bind cannot attach a different completed turn or mismatched response |
 
-Do not blindly reapply all 18. Do not mark them applied. Do not rename hosted history.
+Do not blindly reapply all 18. Do not mark them applied because a table exists. Do not rename hosted history. Stop older, partial and conflict rows for review.
 
 ### Conflicting
 
@@ -88,10 +101,17 @@ Command, Health foundation, Construct, Connections, and Health `20261015181000` 
 
 ## Permissioned check still required
 
-The cancelled physical-schema query is still necessary before any hosted apply. Requested read-only SQL for **Gent Ascend App** (`volpzkfsnmtztrovexcw`) only:
+The cancelled physical-schema query is **not retried** here. The previous draft called `has_function_privilege` with textual signatures, which **aborts when a function is missing**. The replacement resolves `to_regprocedure` / `to_regclass` OIDs first and reports `null` / `missing` instead.
+
+Run this file only after explicit founder permission, in the SQL editor for **Gent Ascend App** (`volpzkfsnmtztrovexcw`):
+
+`docs/releases/TALK_RELEASE_DIAGNOSTIC.sql`
+
+It inspects catalog, function definitions, privileges, policies and constraints. It does **not** read conversations, turns, creations or other user content. It does not write.
+
+Optional ledger refresh (names only; already read once):
 
 ```sql
--- 1. Ledger names (already read once; repeat only if the founder wants a fresh copy)
 select version, name
 from supabase_migrations.schema_migrations
 where version in (
@@ -118,43 +138,9 @@ where version in (
   '20261015190000_talk_live_bind_intended_turn'
 )
 order by version;
-
--- 2. Physical objects (CANCELLED once — do not run without explicit founder permission)
-select jsonb_build_object(
-  'tables', jsonb_build_object(
-    'ai_talk_creations', to_regclass('public.ai_talk_creations') is not null,
-    'ai_talk_selection', to_regclass('public.ai_talk_selection') is not null,
-    'ai_talk_origin_imports', to_regclass('public.ai_talk_origin_imports') is not null,
-    'ai_talk_direction_transfers', to_regclass('public.ai_talk_direction_transfers') is not null,
-    'ai_live_observed_items', to_regclass('public.ai_live_observed_items') is not null,
-    'ai_live_turn_bindings', to_regclass('public.ai_live_turn_bindings') is not null,
-    'architect_origin_projects', to_regclass('public.architect_origin_projects') is not null,
-    'health_workspaces', to_regclass('health_private.workspaces') is not null
-  ),
-  'finalFunctions', jsonb_build_object(
-    'saveCreation', to_regprocedure('public.ai_talk_save_creation(uuid,uuid,uuid,text,uuid,jsonb)') is not null,
-    'importOrigin', to_regprocedure('public.ai_talk_import_origin(uuid,uuid,uuid)') is not null,
-    'observeTrusted5', to_regprocedure('public.ai_live_observe_trusted_item(uuid,uuid,text,text,uuid)') is not null,
-    'observeTrusted4', to_regprocedure('public.ai_live_observe_trusted_item(uuid,uuid,text,text)') is not null,
-    'bindFinished', to_regprocedure('public.ai_live_bind_finished_turn(uuid,uuid,text,text,uuid)') is not null,
-    'retainDesign', to_regprocedure('public.architect_apps_retain_design(uuid,uuid,text,jsonb,text,boolean)') is not null,
-    'originSave', to_regprocedure('public.architect_origin_save(uuid,uuid,integer,jsonb,text)') is not null
-  ),
-  'grants', jsonb_build_object(
-    'observeServiceOnly', has_function_privilege('service_role','public.ai_live_observe_trusted_item(uuid,uuid,text,text,uuid)','execute')
-      and not has_function_privilege('authenticated','public.ai_live_observe_trusted_item(uuid,uuid,text,text,uuid)','execute'),
-    'bindAuthenticated', has_function_privilege('authenticated','public.ai_live_bind_finished_turn(uuid,uuid,text,text,uuid)','execute'),
-    'importAuthenticated', has_function_privilege('authenticated','public.ai_talk_import_origin(uuid,uuid,uuid)','execute'),
-    'obsoleteAckGone', to_regprocedure('public.ai_talk_record_origin_import(uuid,uuid,uuid,uuid,text)') is null
-  ),
-  'intendedTurnColumn', exists (
-    select 1 from information_schema.columns
-    where table_schema='public' and table_name='ai_live_observed_items' and column_name='intended_turn_id'
-  )
-);
 ```
 
-Until query 2 is authorized and returned, Talk SQL is **unverified**, not missing and not applied.
+Until the diagnostic is authorized and returned, Talk SQL is **unverified**, not missing and not applied. After it returns, classify each contract from `contracts.*` plus function definition markers. Stop `older`, `partial` and `conflict`. Apply only `missing` files, in repository order.
 
 ## Isolated validation (this environment)
 
@@ -162,6 +148,7 @@ Until query 2 is authorized and returned, Talk SQL is **unverified**, not missin
 - PGlite `tests/health-database.test.ts` applies every `supabase/migrations/*.sql` in filename order, including Talk observe → Health workspace → intended-turn bind, then asserts both Health `workspaces` and the 5-arg observe/`intended_turn_id` exist.
 - PGlite `tests/talk-creation-database.test.ts` and `tests/talk-origin-import-database.test.ts` still pass (not Supabase Auth).
 - Isolated `supabase db reset` unrun: Docker/Podman are not available here.
+- `tests/talk-release-diagnostic.test.ts`: missing schema reports `missing` without aborting (text-signature `has_function_privilege` still throws); 4-arg observe / pre-intended-turn bind is `older`; final 5-arg observe + `intended_turn_id` authority is `equivalent-candidate`.
 
 ## Environment (names only)
 
@@ -204,9 +191,10 @@ Ordinary text must stay usable if voice remains blocked.
 
 ## Production target and rollback
 
-- Merge target: GitHub `main` → existing Vercel production for `gent-ascend-collective-app`.
-- Compatibility sequence: #131 (code + 18 SQL still unapplied) → optional text prove → #135 (no new SQL). Do not treat a #131 deploy as elevation-live.
-- Rollback: revert the Talk merge commit(s) on `main` and redeploy the previous production SHA (`544c156` before #131). Do not roll back hosted SQL; new Talk tables/RPCs are additive. If a Talk apply must be stopped mid-sequence, leave applied versions in place and resume from the next **name-absent and object-absent** file. Never rename an existing hosted row.
+- Vercel project `gent-ascend-collective-app` has **production branch `main`** (`docs/VERCEL_SETUP.md`). `vercel.json` does not disable Git deployments. A merge of #131 onto `main` is therefore expected to **auto-create a Production deployment** of foundation Talk code (not #135). This is not a GitHub-only step.
+- #135 stays stacked and does not deploy until it is merged to `main` after #131.
+- Compatibility: #131 code on current main is filename-compatible with Health `15181000`. It is not schema-compatible if Talk objects are missing or older. Ordinary existing chat can survive; Talk save/import/bind cannot.
+- Rollback: revert the Talk merge commit(s) on `main` (Vercel will rebuild Production from `544c156`) or redeploy that SHA. Do not roll back hosted SQL. If an apply stops mid-sequence, leave applied versions in place and resume only after re-running the diagnostic. Never rename an existing hosted row.
 
 ## Bounded live verification (after deploy, authorized separately)
 
@@ -224,8 +212,8 @@ Voice (proposed cap: one 30–60s Realtime call, stop if admission is not 2xx):
 
 ## Smallest next authorization
 
-1. **GitHub:** merge #131 onto current `main` `544c156` after required checks are green on the published head. This is the only merge requested now.
-2. **Database (separate):** permission to run the physical-schema query above on `volpzkfsnmtztrovexcw`, then apply only files that are both ledger-absent by name and object-absent.
-3. **Deploy / paid calls (separate):** production promote and the bounded text (then optional voice) plan.
+1. **Now:** permission to run `docs/releases/TALK_RELEASE_DIAGNOSTIC.sql` (read-only) on `volpzkfsnmtztrovexcw`.
+2. **After that report:** exact apply/skip list from missing vs older/partial/conflict vs equivalent-candidate. No apply is authorized yet.
+3. **Then, separately:** merge/deploy order. #131 merge onto `main` **will production-deploy**. #135 after that. Bounded text, then optional voice.
 
-Do not treat step 1 as completing steps 2–3.
+Do not merge first to “get it on main” while schema is unverified. Approval for step 1 is the only blocker for the next real action.
