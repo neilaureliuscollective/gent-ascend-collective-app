@@ -7,9 +7,21 @@ import {
   reopenArchitectApp,
   startArchitectApp,
 } from '@/domains/architect-apps/service';
+import { classifyAppRequestFailure } from '@/domains/architect-apps/generation-policy';
 import { appCommand } from '@/domains/architect-apps/schema';
-import { apiError, mutationBody, privateJson } from '@/domains/intelligence/http';
+import { mutationBody, privateJson } from '@/domains/intelligence/http';
 import { IntelligenceError } from '@/domains/intelligence/service';
+
+function appsApiError(error: unknown) {
+  const classified = classifyAppRequestFailure(error);
+  return privateJson(
+    {
+      error: classified.message,
+      class: classified.class,
+    },
+    error instanceof IntelligenceError ? error.status : 503,
+  );
+}
 
 export async function GET(request: Request) {
   try {
@@ -20,7 +32,7 @@ export async function GET(request: Request) {
     const revision = selected && /^\d+$/.test(selected) ? Number(selected) : undefined;
     return privateJson(await readArchitectApp(project, revision));
   } catch (error) {
-    return apiError(error);
+    return appsApiError(error);
   }
 }
 
@@ -34,6 +46,6 @@ export async function POST(request: Request) {
     if (input.data.action === 'reopen') return privateJson(await reopenArchitectApp(input.data));
     return privateJson({ job: await cancelArchitectApp(input.data) });
   } catch (error) {
-    return apiError(error);
+    return appsApiError(error);
   }
 }

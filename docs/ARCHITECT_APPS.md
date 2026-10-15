@@ -35,8 +35,9 @@ Architect owns `talk-architect-direction/v1` and the published shared contract `
 | --- | --- | --- |
 | `ARCHITECT_APPS_ENABLED` | false | Owner API and workbench |
 | `ARCHITECT_APPS_FIXTURE` | false | Labelled tracker fixture |
-| `ARCHITECT_APPS_AI_MOCK` | false | Labelled mocked provider (Field Notes) |
-| `ARCHITECT_APPS_AI_ENABLED` | false | Authorized non-production OpenAI |
+| `ARCHITECT_APPS_AI_MOCK` | false | Labelled mocked provider (Field Notes). Local/test only; refused in production. |
+| `ARCHITECT_APPS_AI_ENABLED` | false | Authorized OpenAI adapter. Production also requires `ARCHITECT_APPS_FOUNDER_PILOT`. |
+| `ARCHITECT_APPS_FOUNDER_PILOT` | false | Server-enforced founder-production coding path. Disabled until commissioned. Ordinary accounts stay unavailable. |
 | `ARCHITECT_APPS_STORE` | unset | `memory` only for tests/non-production |
 | `ARCHITECT_APPS_ALLOW_HOST_FIXTURE` | false | Permit host-fixture compilation for the labelled tracker only |
 | `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-15.1` | Pinned isolated build image |
@@ -55,8 +56,8 @@ Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_archite
 - Tracker fixture is labelled `fixture`.
 - Simulated phone/Fold/desktop viewports are not physical-device acceptance.
 - Intercepted browser HTML (`Working tracker`) is a UI fixture, not app execution or persistence acceptance.
-- Funded OpenAI generation stays closed until founder-authorized.
+- Funded OpenAI generation stays closed until `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` are commissioned. Mock generation cannot be used as a hosted stand-in.
 
 ## First founder action
 
-A founder phone/laptop does not need Docker. Architect CI already builds the pinned toolchain image and can build the worker image. Persistent production compilation still needs a commissioned non-Vercel host (recommended DigitalOcean Docker Droplet, $12/mo) plus founder-approved hosted Apps migrations. OpenAI credit alone does not provide the worker, database, permissions or isolated image. See [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
+A founder phone/laptop does not need Docker. Architect CI already builds the pinned toolchain image and can build the worker image. Persistent production compilation still needs a commissioned non-Vercel host (recommended DigitalOcean Docker Droplet, $12/mo) plus founder-approved hosted Apps migrations. OpenAI credit alone does not provide the worker, database, permissions or isolated image, and does not bypass `ARCHITECT_APPS_FOUNDER_PILOT`. See [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md) and [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).

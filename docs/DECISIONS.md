@@ -1,3 +1,7 @@
+# Architect generated applications founder-production policy — 2026-10-15
+
+Do not enable hosted generation by setting `ARCHITECT_APPS_AI_MOCK=true` or by renaming `APP_ENV`. Production OpenAI is a named founder pilot (`ARCHITECT_APPS_FOUNDER_PILOT`) plus `ARCHITECT_APPS_AI_ENABLED`, a server-only key, commissioned worker, and session-bound `founder_access`. Mock and memory stores stay local/test. Worker readiness must verify that generation policy, not only a port or image build. Talk’s 18-name package does not replace `20261015156000_architect_apps_preview_sessions.sql`. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
+
 # Architect generated applications runtime images and work-root — 2026-10-15
 
 Quality `application` stays independent of live Docker images. Jobs that prove packaged-worker acceptance (`apps-isolate`, Origin `local-auth`) must build both `aethelios-architect-apps:2026-10-15.1` and `aethelios-architect-apps-worker:2026-10-15.1` on that runner, then prepare `ARCHITECT_APPS_WORK_ROOT` as uid 1000 mode 0755. The worker creates workspaces, launches sibling compiles as 65534:65534 with daemon-host paths, and cleans up. Topology may read a host marker; write/compile proofs must not. Privileged containers, worker-as-root and chmod 777 are refused. Evidence: [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).

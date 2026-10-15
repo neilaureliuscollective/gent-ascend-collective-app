@@ -32,7 +32,7 @@ export function appProviderStatus(env: NodeJS.ProcessEnv | Record<string, string
       enabled: false as const,
       mode,
       reason:
-        'App generation stays disabled until ARCHITECT_APPS_ENABLED and either a labelled fixture, a mocked provider, or authorized non-production OpenAI is configured. A funded OpenAI account does not supply a sandbox or hosted publishing.',
+        'App generation stays disabled until ARCHITECT_APPS_ENABLED and either a labelled fixture, a mocked provider, or authorized OpenAI is configured. Production also requires ARCHITECT_APPS_FOUNDER_PILOT. A funded OpenAI account does not supply a sandbox or hosted publishing.',
     };
   if (mode === 'fixture')
     return {

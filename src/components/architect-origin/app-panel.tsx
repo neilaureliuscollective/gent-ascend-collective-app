@@ -2,6 +2,7 @@
 
 import { BplusMaterial } from '@/components/visual/bplus-material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { describeAppFailure } from '@/domains/architect-apps/generation-policy';
 import { appWorkbenchStage } from '@/domains/architect-apps/stage';
 import {
   approveArchitectApp,
@@ -231,7 +232,7 @@ export function ArchitectAppPanel({
       setPanel('Changes');
       setMessage('Reviewed files are shown before approval. Accepting a revision is not publishing.');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Proposal unavailable.');
+      setError(describeAppFailure(reason));
     } finally {
       setBusy(false);
     }
@@ -259,7 +260,7 @@ export function ArchitectAppPanel({
       );
       if (next.pendingStart) setPanel('Files');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Approval was not confirmed.');
+      setError(describeAppFailure(reason));
     } finally {
       setBusy(false);
     }
@@ -281,7 +282,7 @@ export function ArchitectAppPanel({
       await refresh();
       setMessage('Isolated build queued. An unsent refine draft is kept.');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Build was not queued.');
+      setError(describeAppFailure(reason));
     } finally {
       setBusy(false);
     }
@@ -336,6 +337,10 @@ export function ArchitectAppPanel({
               {working && working.revision !== displayed?.revision ? ` · last working ${working.revision}` : ''}
             </h3>
             <p className="architect-app-status" data-stage={workbench.stage} aria-live="polite">
+              {library?.provider.enabled === false ? `${library.provider.reason} ` : ''}
+              {library?.provider.mode === 'mock' || library?.provider.mode === 'fixture'
+                ? 'Labelled development generation is in use. '
+                : ''}
               {workbench.label}
               {displayed ? ` Running revision ${displayed.revision}.` : ''}
               {displayedCollections ? ` Data: ${displayedCollections}.` : ''}
@@ -519,7 +524,10 @@ export function ArchitectAppPanel({
             />
           </label>
           <p>Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
-          <button className="button" disabled={busy || locked || !library || !draft.trim()}>
+          <button
+            className="button"
+            disabled={busy || locked || !library || !draft.trim() || library.provider.enabled === false}
+          >
             <BplusMaterial radius={8} />
             Review proposed files
           </button>

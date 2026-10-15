@@ -41,7 +41,12 @@ export type AppLibrary = {
   previewSession: string | null;
   pendingStart: { revisionId: string; requestId: string; approvalHash: string; revision: number } | null;
   records: Record<string, Record<string, unknown>[]>;
-  provider: { enabled: boolean; mode: string; reason: string | null };
+  provider: {
+    enabled: boolean;
+    mode: string;
+    reason: string | null;
+    class?: string;
+  };
   profile: { id: string; version: string; toolchain: string };
   capabilities: Record<string, boolean>;
 };
@@ -50,6 +55,7 @@ class AppRequestError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly failureClass?: string,
   ) {
     super(message);
   }
@@ -62,8 +68,9 @@ async function request<T>(url: string, body?: unknown): Promise<T> {
     headers: body ? { 'content-type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = (await response.json().catch(() => ({}))) as { error?: string } & T;
-  if (!response.ok) throw new AppRequestError(data.error || 'Application request failed.', response.status);
+  const data = (await response.json().catch(() => ({}))) as { error?: string; class?: string } & T;
+  if (!response.ok)
+    throw new AppRequestError(data.error || 'Application request failed.', response.status, data.class);
   return data;
 }
 

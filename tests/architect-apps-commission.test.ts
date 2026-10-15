@@ -117,6 +117,7 @@ it('reports idle, working, unavailable and misconfigured without printing secret
 it('keeps paid generation closed and lists required schema names', async () => {
   const blockers = founderAppModelRunBlockers({ APP_ENV: 'production', VERCEL: '1' });
   expect(blockers.ready).toBe(false);
+  expect(blockers.generationReady).toBe(false);
   expect(blockers.blockers.join(' ')).toMatch(/commissioned|Vercel/i);
   expect(expectedAppsSchemaNames().tables).toContain('architect_app_jobs');
   expect(requiredAppsSchemaContracts.tables.architect_app_artifacts).toEqual(['revision_id']);

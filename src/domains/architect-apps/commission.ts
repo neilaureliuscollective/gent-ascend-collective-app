@@ -1,5 +1,6 @@
 import { parseEnvironment } from '@/platform/environment';
 import { supabaseConnection } from '@/platform/supabase/connection';
+import { appsGenerationPolicy } from './generation-policy';
 import {
   probeAppsSchemaCompatibility as probeSchemaContracts,
   requiredAppsSchemaContracts,
@@ -107,6 +108,8 @@ export function appsWorkerMissingNames(env: Env = process.env): string[] {
   if (hostedWorkerPlaneForbidden(env)) missing.push('VERCEL');
   const mode = appsDeploymentMode(env);
   if (mode === 'closed') missing.push('ARCHITECT_APPS_DEPLOYMENT_MODE');
+  const generation = appsGenerationPolicy(env);
+  if (!generation.permitted) missing.push(...generation.missing.filter((name) => !missing.includes(name)));
   if (mode === 'commissioned') {
     if (env.ARCHITECT_APPS_REQUIRE_ISOLATION !== 'true') missing.push('ARCHITECT_APPS_REQUIRE_ISOLATION');
     if (!parseAppsImageDigest(env.ARCHITECT_APPS_IMAGE_DIGEST)) missing.push('ARCHITECT_APPS_IMAGE_DIGEST');
@@ -191,17 +194,20 @@ export function classifyAppsWorkerHealth(input: {
   workerId: string | null;
   processId: string;
   isolation: 'docker' | 'unavailable';
+  generation: ReturnType<typeof appsGenerationPolicy>;
 } {
   const env = input.env ?? process.env;
   const mode = appsDeploymentMode(env);
   const missing = appsWorkerMissingNames(env);
-  const ready = appsWorkerAuthorized(env, {
-    isolationAvailable: input.isolationAvailable,
-    observedDigest: input.observedDigest,
-    schemaCompatible: input.schemaCompatible,
-  });
+  const generation = appsGenerationPolicy(env);
+  const ready =
+    appsWorkerAuthorized(env, {
+      isolationAvailable: input.isolationAvailable,
+      observedDigest: input.observedDigest,
+      schemaCompatible: input.schemaCompatible,
+    }) && generation.permitted;
   const identity = appsProcessIdentity(env);
-  if (!ready || missing.length) {
+  if (!ready || missing.length || !generation.permitted) {
     return {
       state: mode === 'closed' || hostedWorkerPlaneForbidden(env) ? 'unavailable' : 'misconfigured',
       mode,
@@ -210,6 +216,7 @@ export function classifyAppsWorkerHealth(input: {
       workerId: null,
       processId: identity.processId,
       isolation: input.isolationAvailable ? 'docker' : 'unavailable',
+      generation,
     };
   }
   return {
@@ -220,6 +227,7 @@ export function classifyAppsWorkerHealth(input: {
     workerId: appsWorkerIdentity(env),
     processId: identity.processId,
     isolation: input.isolationAvailable === false ? 'unavailable' : 'docker',
+    generation,
   };
 }
 

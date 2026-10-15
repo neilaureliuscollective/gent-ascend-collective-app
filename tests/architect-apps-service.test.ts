@@ -46,6 +46,7 @@ import {
   operateArchitectAppData,
   proposeArchitectApp,
   readArchitectApp,
+  requireAppsGenerationAccess,
   startArchitectApp,
 } from '@/domains/architect-apps/service';
 import { MemoryAppStore } from '@/domains/architect-apps/store';
@@ -358,4 +359,12 @@ it('cancels a queued job and stores host records against the app, not the previe
     collection: 'items',
   });
   expect(listed.records).toHaveLength(1);
+});
+
+it('requires server-verified founder access before the real generation path', async () => {
+  vi.stubEnv('ARCHITECT_APPS_FIXTURE', '');
+  vi.stubEnv('ARCHITECT_APPS_AI_ENABLED', 'true');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  await expect(requireAppsGenerationAccess(process.env, async () => false)).rejects.toThrow(/founder pilot/i);
+  await expect(requireAppsGenerationAccess(process.env, async () => true)).resolves.toBeUndefined();
 });

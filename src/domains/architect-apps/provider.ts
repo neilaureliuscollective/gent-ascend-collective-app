@@ -17,6 +17,7 @@ import {
   notesTagCollections,
   notesTagOperations,
 } from './notes-fixture';
+import { APP_GENERATION_LIMITS } from './generation-policy';
 import { appsAiMockReady, appsAiReady } from './readiness';
 import { appProposalSchema, type AppFile, type AppProposal } from './schema';
 import { applyFileOperations, overlaySealedFiles } from './tree';
@@ -86,9 +87,9 @@ Return only a validated React/TypeScript/Vite application under src/. You cannot
       direction: context.direction ?? null,
     }),
     output: Output.object({ schema: appProposalSchema }),
-    maxOutputTokens: 4000,
-    maxRetries: 0,
-    timeout: { totalMs: 30000 },
+    maxOutputTokens: APP_GENERATION_LIMITS.maxOutputTokens,
+    maxRetries: APP_GENERATION_LIMITS.maxRetries,
+    timeout: { totalMs: APP_GENERATION_LIMITS.timeoutMs },
     abortSignal: signal,
     providerOptions: { openai: { store: false } },
   });

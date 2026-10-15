@@ -1,10 +1,12 @@
 import 'server-only';
+import { currentFounderAccess } from '@/domains/access/founder';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import { readRetainedDirection } from '@/domains/architect-design-direction/receiver';
 import { APP_PROFILE, APP_PROFILE_VERSION, APP_TOOLCHAIN_VERSION } from './catalog';
 import { DatabaseAppStore, type AppPersistenceClient } from './database-store';
 import { assertAdditiveSchema, assertDataRate, recordToItem, validateCollectionPayload } from './data-bridge';
-import { appGenerationProvenance, appProviderStatus, generateAppProposal, type AppGenerationTransport } from './generation';
+import { appGenerationProvenance, appProposalMode, generateAppProposal, type AppGenerationTransport } from './generation';
+import { appsGenerationAdmission, appsGenerationPolicy } from './generation-policy';
 import { appApprovalHash, treeHash } from './hash';
 import {
   DatabasePreviewSessionStore,
@@ -55,6 +57,19 @@ function requireReady() {
     throw new IntelligenceError(
       'Architect applications are awaiting reviewed persistence and local enablement. Origin editing remains available.',
       503,
+    );
+}
+
+export async function requireAppsGenerationAccess(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+  verifyFounder: () => Promise<boolean> = currentFounderAccess,
+) {
+  const policy = appsGenerationPolicy(env);
+  if (policy.mode === 'refused') throw new IntelligenceError(policy.reason, 503);
+  if (policy.mode === 'openai' && !(await verifyFounder()))
+    throw new IntelligenceError(
+      'Model-backed application generation is a founder pilot and is not enabled for this account.',
+      403,
     );
 }
 
@@ -186,7 +201,9 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
       previewSession: session,
       pendingStart,
       records,
-      provider: appProviderStatus(),
+      provider: appsGenerationAdmission(
+        appProposalMode() === 'openai' ? await currentFounderAccess().catch(() => false) : false,
+      ),
       runtime: appsProcessIdentity(),
       profile: { id: APP_PROFILE, version: APP_PROFILE_VERSION, toolchain: APP_TOOLCHAIN_VERSION },
       capabilities: current?.behaviors ?? {
@@ -211,6 +228,7 @@ export async function proposeArchitectApp(
   const parsed = proposeAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application proposal fields.', 400);
   try {
+    await requireAppsGenerationAccess();
     const { person, project, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
     const store = appStore({ client, plane: 'owner' });
     const revisions = await store.listRevisions(person.id, parsed.data.projectId);

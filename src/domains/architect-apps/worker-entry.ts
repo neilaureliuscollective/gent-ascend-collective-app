@@ -18,6 +18,7 @@ import {
 import { createWorkerAppStore } from './database-store';
 import { buildIsolatedGeneratedApp, inspectAppsImageDigest, parseAppsImageDigest, probeAppsDockerIsolation } from './isolate';
 import { notesSourceFiles } from './notes-fixture';
+import { appsGenerationPolicy } from './generation-policy';
 import { appsControlPlaneReady } from './readiness';
 import { superviseAppsWorker } from './supervisor';
 import { processAppBuildOnce } from './worker';
@@ -72,6 +73,7 @@ const supervised =
   process.argv.includes('--supervised');
 
 const evidence = await gatherEvidence();
+const generation = appsGenerationPolicy();
 const health = classifyAppsWorkerHealth({
   env: process.env,
   isolationAvailable: evidence.isolationAvailable,
@@ -162,6 +164,14 @@ if (healthOnly) {
     missing: health.missing,
     schema: evidence.schemaClassification,
     workRoot: evidence.workRoot,
+    generation: {
+      mode: generation.mode,
+      permitted: generation.permitted,
+      production: generation.production,
+      founderPilot: generation.founderPilot,
+      generationReady: generation.generationReady,
+      missing: generation.missing,
+    },
   });
   process.exit(health.ready ? 0 : 2);
 }
@@ -172,6 +182,7 @@ const workRootBlocked = Boolean(
 
 if (
   !appsWorkerAuthorized(process.env, evidence) ||
+  !generation.permitted ||
   !appsControlPlaneReady() ||
   hostedWorkerPlaneForbidden() ||
   workRootBlocked ||
@@ -194,6 +205,14 @@ if (
     schema: evidence.schemaClassification,
     schemaMissing: evidence.schemaMissing,
     workRoot: evidence.workRoot,
+    generation: {
+      mode: generation.mode,
+      permitted: generation.permitted,
+      production: generation.production,
+      founderPilot: generation.founderPilot,
+      generationReady: generation.generationReady,
+      missing: generation.missing,
+    },
   });
   process.exit(2);
 }
@@ -211,6 +230,14 @@ if (preflight) {
     missing: [],
     schema: evidence.schemaClassification,
     workRoot: evidence.workRoot,
+    generation: {
+      mode: generation.mode,
+      permitted: generation.permitted,
+      production: generation.production,
+      founderPilot: generation.founderPilot,
+      generationReady: generation.generationReady,
+      missing: generation.missing,
+    },
   });
   process.exit(0);
 }
@@ -237,6 +264,13 @@ if (Number.isInteger(healthPort) && healthPort > 0) {
           worker: current.workerId,
           processId: current.processId,
           missing: current.missing,
+          generation: {
+            mode: current.generation.mode,
+            permitted: current.generation.permitted,
+            production: current.generation.production,
+            founderPilot: current.generation.founderPilot,
+            generationReady: current.generation.generationReady,
+          },
         }),
       ),
     );

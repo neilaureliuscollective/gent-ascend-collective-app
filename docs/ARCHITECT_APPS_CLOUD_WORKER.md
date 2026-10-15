@@ -43,7 +43,7 @@ Commissioned prerequisites (names only; values stay in the host secret store):
 - No `ARCHITECT_APPS_ALLOW_HOST_FIXTURE=true`
 - Schema contracts in `requiredAppsSchemaContracts` present, including `architect_app_artifacts.revision_id` and `architect_app_preview_sessions`
 
-Paid OpenAI (`ARCHITECT_APPS_AI_ENABLED`) stays a separate founder decision.
+Paid OpenAI stays a separate founder decision. Production generation requires `ARCHITECT_APPS_FOUNDER_PILOT=true`, `ARCHITECT_APPS_AI_ENABLED=true`, and a server-only `OPENAI_API_KEY`. `ARCHITECT_APPS_AI_MOCK=true` in production is a **refused** configuration: worker `--preflight` / `--health` fail. Mock stays labelled local/test only. See [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
 
 ## Images
 
@@ -180,7 +180,7 @@ Migrations, in order, local-only until founder-approved hosted application:
 
 A merge of this PR into `main` is **not** a GitHub-only operation. The connected Vercel project deploys Production from `main`. Merging would publish the web plane without a commissioned worker, without hosted Apps migrations, and without preview-cluster secrets. Do not merge until those hosted steps are separately approved. Vercel never runs the worker. An HTTP 200 from the Next.js server is not worker readiness.
 
-Readiness (`--health` / `--preflight`) reports isolation, schema contracts, work-root ownership, digest match and missing **names**. If the worker is down, Architect keeps jobs `queued` and the workbench says the build is queued; it does not invent a compiled preview.
+Readiness (`--health` / `--preflight`) reports isolation, schema contracts, work-root ownership, digest match, missing **names**, and the configured **generation policy** (`mode`, `permitted`, `founderPilot`, `generationReady`). A listening port or a successful Docker build is not readiness. Permitted: commissioned compile-only (generation disabled) or commissioned founder-pilot OpenAI. Denied: production + `ARCHITECT_APPS_AI_MOCK=true`. If the worker is down, Architect keeps jobs `queued` and the workbench says the build is queued; it does not invent a compiled preview.
 
 Deployment sequence after approval:
 
@@ -192,7 +192,7 @@ Deployment sequence after approval:
 6. `node scripts/architect-apps-packaged-worker.mjs --preflight` must report `ok` / `idle` with work-root `ready`.
 7. Start the supervised packaged worker.
 8. Enable `ARCHITECT_APPS_ENABLED=true` and preview-cluster on Vercel only after preflight is green.
-9. Do not enable paid OpenAI in the same step.
+9. Do not enable `ARCHITECT_APPS_FOUNDER_PILOT` or `ARCHITECT_APPS_AI_ENABLED` in the same step. Never set `ARCHITECT_APPS_AI_MOCK` on hosted production.
 
 Cost: **$12/month** Droplet. No additional Docker license. OpenAI remains a separate credit decision. A founder laptop with Docker is not the deployment plan.
 
