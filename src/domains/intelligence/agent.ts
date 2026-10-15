@@ -5,7 +5,7 @@ import {
   type ModelMessage,
   type LanguageModelMiddleware,
 } from 'ai';
-import { aureliusInstructions, sharedCharacter, founderConduct } from './prompt';
+import { aureliusInstructions, sharedCharacter, founderConduct, behaviorContract } from './prompt';
 import type { ModelChunk, ActivityReporter } from './stream';
 import { researchTools, researchPolicy, sourceFooter, type ResearchSource } from './research';
 // SDK default error logging must never receive raw provider request bodies.
@@ -57,6 +57,7 @@ export async function* streamAurelius(
     instructions: [
       aureliusInstructions,
       sharedCharacter,
+      behaviorContract,
       researchPolicy,
       founder
         ? founderConduct

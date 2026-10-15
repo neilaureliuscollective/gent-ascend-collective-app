@@ -8,7 +8,7 @@ Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aur
 
 - **Gent Ascend Collective**: master brand and men's advancement ecosystem; **Gent Ascend** is the compact display name.
 - **Aethelios**: Digital Co-Founder, AI intelligence and scalable extension of the human founder's mission. The former public AI identity is retired. See AETHELIOS_IDENTITY.md for personality, portrait, capabilities and implementation. The human founder remains the source of mission, culture and lived experience.
-- **Legacy Reserve**: separate grooming/wellness product and commerce brand. Do not rename it to Gent Ascend.
+- **Lifestyle**: Aethelios Lifestyle / Aethelios Human Ascendance is the current customer-facing product brand. **Legacy Reserve** is retired as a current brand name; keep the Shopify handle and historical records. Do not revive it as the live product brand.
 
 Purpose: help men become more capable across presentation, wellbeing, performance, discipline, character, work, relationships, community and legacy. Confident and grounded; no macho slogans or mythology inside ordinary product controls.
 
