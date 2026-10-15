@@ -176,6 +176,7 @@ export function bindOfferedBoard(
   if (!next) throw new Error('Refinement must target the selected direction.');
   return designBoardContentSchema.parse({
     ...saved,
+    ...(incoming.rendererVersion ? { rendererVersion: incoming.rendererVersion } : {}),
     selectedDirectionId: selectedId,
     directions: saved.directions.map((item) => (item.id === selectedId ? next : item)),
   });

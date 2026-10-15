@@ -699,15 +699,11 @@ export function AureliusWorkspace({
       stopImageWatch();
       creationScope.current = idleCreationScope();
     };
-  }, [
-    initialConversation,
-    homeDraft,
-    initialDraft,
-    compact,
-    loadCreations,
-    recoverPendingSaves,
-    stopImageWatch,
-  ]);
+  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
+  useEffect(() => {
+    if (follow.current && scroll.current)
+      scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
+  }, [data?.turns, busy, operation.id]);
   async function sendMessage(
     messageText: string,
     replace?: { sourceTurnId: string; revisionKind: 'retry' | 'regenerate' | 'edit' } | null,

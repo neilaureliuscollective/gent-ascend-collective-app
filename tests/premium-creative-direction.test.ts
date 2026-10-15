@@ -15,6 +15,8 @@ import {
 } from '@/domains/architect-design-direction/contract';
 import { supportedDirectionForGeneration } from '@/domains/architect-apps/context';
 import { creationBriefForGeneration } from '@/domains/architect-origin/creation-journey';
+import { compactAppStatus } from '@/domains/architect-apps/stage';
+import { contrastRatio } from '@/domains/talk-creation/contrast';
 import { compileTalkDocument } from '@/domains/work-items/document';
 
 vi.mock('server-only', () => ({}));
@@ -30,6 +32,10 @@ describe('premium creative identity', () => {
     expect(new Set(board.directions.map((item) => item.demo.kind)).size).toBe(3);
     expect(new Set(board.directions.map((item) => item.tokens.material)).size).toBe(3);
     for (const item of board.directions) {
+      const colors = Object.fromEntries(item.tokens.colors.map((color) => [color.role, color.hex]));
+      for (const role of ['text', 'accent', 'muted'])
+        expect(contrastRatio(colors[role]!, colors.background!)!).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio('#050706', colors.highlight!)!).toBeGreaterThanOrEqual(4.5);
       expect(JSON.stringify(item)).not.toMatch(/Legacy Reserve|bottle/i);
       expect(designAssetSource(item.demo.image)).toBeNull();
       expect(designAssetSource(item.assets[0]!)).toBe(
@@ -100,4 +106,13 @@ describe('premium creative identity', () => {
     expect(brief).toContain('Imported exact plan');
     expect(brief).toContain('Ink #123456');
   });
+});
+
+it('distinguishes approval, building, preview and blocked without discarding last-good preview', () => {
+  expect(compactAppStatus({ stage: 'idle', awaitingApproval: true })).toBe('Awaiting approval');
+  expect(compactAppStatus({ stage: 'building', awaitingApproval: true })).toBe('Building');
+  expect(compactAppStatus({ stage: 'preview-ready' })).toBe('Preview ready');
+  expect(compactAppStatus({ stage: 'idle', blocked: true, retained: true })).toBe(
+    'Blocked · last good preview kept',
+  );
 });

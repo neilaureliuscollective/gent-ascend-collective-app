@@ -186,6 +186,90 @@ export function DesignBoardView({
       </div>
       <details className="talk-design-details">
         <summary>{editable ? 'Edit colors & design details' : 'Design details'}</summary>
+        {expanded && editable && (
+          <div className="talk-direction-editor">
+            <label>
+              Campaign headline
+              <input
+                maxLength={80}
+                value={current.demo.headline}
+                onChange={(event) =>
+                  update({
+                    ...draft,
+                    rendererVersion: 'premium/v2',
+                    directions: draft.directions.map((item) =>
+                      item.id === current.id
+                        ? {
+                            ...item,
+                            demo: { ...item.demo, headline: event.target.value },
+                            copy: { ...item.copy, headline: event.target.value },
+                          }
+                        : item,
+                    ),
+                  })
+                }
+              />
+            </label>
+            <label>
+              Composition
+              <select
+                value={current.demo.kind}
+                onChange={(event) =>
+                  update({
+                    ...draft,
+                    rendererVersion: 'premium/v2',
+                    directions: draft.directions.map((item) =>
+                      item.id === current.id
+                        ? {
+                            ...item,
+                            demo: {
+                              ...item.demo,
+                              kind: event.target.value as DesignDirection['demo']['kind'],
+                            },
+                          }
+                        : item,
+                    ),
+                  })
+                }
+              >
+                <option value="hero-product">Classic split</option>
+                <option value="editorial">Editorial</option>
+                <option value="split-campaign">Split campaign</option>
+                <option value="statement">Statement</option>
+              </select>
+            </label>
+            <label>
+              Display type
+              <select
+                value={current.tokens.typography.display}
+                onChange={(event) =>
+                  update({
+                    ...draft,
+                    rendererVersion: 'premium/v2',
+                    directions: draft.directions.map((item) =>
+                      item.id === current.id
+                        ? {
+                            ...item,
+                            tokens: {
+                              ...item.tokens,
+                              typography: {
+                                ...item.tokens.typography,
+                                display: event.target.value,
+                              },
+                            },
+                          }
+                        : item,
+                    ),
+                  })
+                }
+              >
+                <option value="Sora">Sora · loaded</option>
+                <option value="Inter">Inter · loaded</option>
+                <option value="Editorial">Editorial · native serif</option>
+              </select>
+            </label>
+          </div>
+        )}
         <ul className="talk-design-swatches">
           {current.tokens.colors.map((color) => (
             <li key={color.role}>
