@@ -757,11 +757,15 @@ export function StudioWorkspace({
             />
             {data.capabilities?.setup && (view === 'design' || view === 'film') && (
               <p role="status" className="studio-dimension-banner">
-                {data.capabilities.setup}
+                Design and Film need workspace setup. Your existing Create, Campaign, Footage,
+                Narration, Finish and Delivery rooms remain available.
               </p>
             )}
             {selected && (
-              <div className={view === 'design' ? undefined : 'studio-room-parked'} aria-hidden={view !== 'design'}>
+              <div
+                className={view === 'design' ? undefined : 'studio-room-parked'}
+                aria-hidden={view !== 'design'}
+              >
                 {data.capabilities?.design === false ? null : (
                   <DesignWorkspace
                     projectId={selected}
@@ -775,7 +779,10 @@ export function StudioWorkspace({
               </div>
             )}
             {selected && (
-              <div className={view === 'film' ? undefined : 'studio-room-parked'} aria-hidden={view !== 'film'}>
+              <div
+                className={view === 'film' ? undefined : 'studio-room-parked'}
+                aria-hidden={view !== 'film'}
+              >
                 {data.capabilities?.film === false ? null : (
                   <FilmWorkspace
                     projectId={selected}

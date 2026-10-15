@@ -1,35 +1,22 @@
 /* Immersive Architect studio. Scoped to Origin; does not restyle Talk/Studio. */
-.app-shell.imperial-workspace:has(.origin-studio) {
-  --io-navigation: var(--aether-smoke-panel, #1a1a1a);
-  --io-raised: var(--aether-smoke-raised, #242424);
-  --io-floating: var(--aether-smoke-raised, #242424);
-  --io-text: var(--aether-smoke-text, #f2f2ee);
-  --io-secondary: var(--aether-smoke-secondary, #b9bebb);
-  --io-muted: var(--aether-smoke-secondary, #b9bebb);
-  --io-divider: color-mix(in srgb, var(--aether-smoke-light, #e6e7e2) 17%, transparent);
-  --io-chamber: var(--studio-glass, #1a1a1a);
-  --io-hero-material: var(--aether-smoke-canvas, #111111);
-}
 .app-shell.imperial-workspace:has(.origin-studio) .environment-bar,
 .app-shell.imperial-workspace:has(.origin-studio) .environment-main {
-  background: var(--aether-smoke-canvas, #111111);
-  color: var(--aether-smoke-text, #f2f2ee);
-  border-color: color-mix(in srgb, var(--aether-smoke-light, #e6e7e2) 16%, transparent);
+  background: var(--io-environment, #050706);
+  color: var(--io-text, #e8e9e2);
+  border-color: var(--io-divider, #6c90713d);
 }
 .origin-studio {
   position: relative;
-  --studio-base: var(--aether-smoke-canvas, #111111);
-  --studio-chrome: var(--aether-smoke-panel, #1a1a1a);
-  --studio-raised: var(--aether-smoke-raised, #242424);
+  --studio-base: var(--io-environment, #050706);
+  --studio-chrome: var(--io-navigation, #0d211b);
+  --studio-raised: var(--io-raised, #142e24);
   --studio-gold: var(--aether-gold, #c4912f);
   --studio-emerald: var(--aether-emerald-active, #245b48);
-  --studio-text: var(--aether-smoke-text, #f2f2ee);
-  --studio-muted: var(--aether-smoke-secondary, #b9bebb);
-  --studio-edge: color-mix(in srgb, var(--aether-smoke-light, #e6e7e2) 16%, transparent);
+  --studio-text: var(--io-text, #e8e9e2);
+  --studio-muted: var(--io-secondary, #bdccc3);
+  --studio-edge: var(--io-divider, #6c90713d);
   --studio-reflect: color-mix(in srgb, #fff 12%, transparent);
-  --studio-glass:
-    linear-gradient(145deg, #ffffff0c, transparent 34%),
-    linear-gradient(165deg, #242424f2, #1a1a1af6 72%);
+  --studio-glass: var(--io-glass, linear-gradient(165deg, #193b2ff5, #0c201af8 72%));
   --studio-bevel:
     inset 0 1px 0 var(--studio-reflect), inset 0 -1px 0 #0008, 0 10px 24px -12px #000c;
   color: var(--studio-text);
@@ -477,10 +464,32 @@
   opacity: 0.45;
 }
 
-.origin-active .origin-workbench {
+.environment-main .origin-active .origin-workbench:not(.origin-canvas-focused) {
   display: grid;
   grid-template-columns: minmax(200px, 0.22fr) minmax(0, 1.7fr) minmax(240px, 0.28fr);
   grid-template-areas: 'outline canvas refine';
+}
+
+/* Blueprint/history/tool views have no refine panel: do not reserve an empty track. */
+.environment-main .origin-studio.origin-active .origin-workbench:not(.origin-app):not(.origin-canvas-focused):not(:has(.origin-refine:not([hidden]))) {
+  grid-template-columns: minmax(200px, 0.22fr) minmax(0, 1.7fr) !important;
+  grid-template-areas: 'outline canvas' !important;
+}
+@media (max-width: 1100px) {
+  .environment-main .origin-studio.origin-active .origin-workbench:not(.origin-app):not(.origin-canvas-focused):not(:has(.origin-refine:not([hidden]))) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: 'canvas' !important;
+  }
+}
+
+/* Focus removes the named side tracks as well as the side panels. */
+.environment-main .origin-studio.origin-active .origin-workbench.origin-workspace.origin-canvas-focused {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-areas: 'canvas' !important;
+}
+.origin-workbench.origin-canvas-focused :is(.origin-rail, .origin-refine) {
+  display: none;
 }
 
 .origin-rail {
@@ -686,6 +695,19 @@
   }
 }
 @media (max-width: 1100px) and (min-width: 601px) {
+  .origin-studio .origin-workbench-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .origin-studio .origin-workbench-views {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    min-width: 0;
+    overflow-x: auto;
+  }
+  .origin-studio .origin-workbench-views button {
+    flex: 0 0 auto;
+  }
   .origin-studio.origin-active .origin-workbench.origin-workspace:not(.origin-app) {
     grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.4fr) !important;
     grid-template-areas: 'canvas refine' !important;
@@ -1496,8 +1518,7 @@
 
 /* Creation stage materials; entrance cards retain their original individual artwork. */
 .environment-main .origin-studio {
-  --studio-glass: linear-gradient(145deg, #183129e8, #0b1210f5 75%);
-  background: radial-gradient(ellipse at 12% 0%, #c4912f20, transparent 55%), #080e0b;
+  background: radial-gradient(ellipse at 12% 0%, #c4912f0a, transparent 55%), var(--studio-base);
 }
 .origin-choices-compact .origin-choice-stage,
 .origin-choices-compact .origin-choice > span:last-child {

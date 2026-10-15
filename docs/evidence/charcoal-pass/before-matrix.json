@@ -1,0 +1,2895 @@
+{
+  "commit": "d3dd41c7707bbb76d38cd0df80bf65d1fa3cfca9",
+  "phase": "before",
+  "rows": [
+    {
+      "route": "/",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/",
+      "headings": [
+        "Bring the ambition.Build the company.",
+        "Start with the work that matters.",
+        "From thought to possibility."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-home-fold.png",
+        "bytes": 308671,
+        "sha256": "27014cd5aa23a01aad831e41d5a784b3062e45e39654d4a8f43316e4206bb1bb"
+      }
+    },
+    {
+      "route": "/enter",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/enter",
+      "headings": [
+        "The world becomes yours.",
+        "The entrance is being prepared."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-enter-fold.png",
+        "bytes": 451908,
+        "sha256": "5df1d9a08e4259421d5bf630dfea5e01b8656019a262963184b930580b078fb7"
+      }
+    },
+    {
+      "route": "/join",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/join",
+      "headings": [
+        "Your chapterstarts here.",
+        "Create an account",
+        "Already here?"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/membership",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/membership",
+      "headings": [
+        "Your standard.Your next chapter.",
+        "Essential",
+        "Signature",
+        "Reserve",
+        "Useful today.Built to develop."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/shop",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/shop",
+      "headings": [
+        "The Collection.",
+        "Choose your standard.",
+        "A place in your day.A standard you return to."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/shop/cart",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/shop/cart",
+      "headings": [
+        "Cart."
+      ],
+      "alerts": [
+        "Shopping is not open yet. Retry"
+      ],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/lifestyle",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/lifestyle",
+      "headings": [
+        "The art ofliving well.",
+        "Discover your daily essentials.",
+        "A daily standard.Entirely your own."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "lifestyle-hero",
+          "background": "radial-gradient(at 46% 0%, rgb(36, 91, 72), rgba(0, 0, 0, 0) 68%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(125deg, rgb(22, 63, 53), rgb(16, 42, 36) 78%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "none"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/experience",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/experience",
+      "headings": [
+        "Make this yours.",
+        "Your life.More deliberately.",
+        "Aethelios",
+        "Make this yours."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Command",
+        "Your work will appear here"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app-fold.png",
+        "bytes": 170435,
+        "sha256": "1219ea2176ace53a6ac2ebfb7a839c21a1c3ff34fc5be5dd764684c0d0e75ff8"
+      }
+    },
+    {
+      "route": "/app/aethelios",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "labelled-API-fixture",
+      "status": 200,
+      "url": "/app/aethelios",
+      "headings": [
+        "Capture a thought",
+        "Get it out of your head.",
+        "Aethelios presence",
+        "Conversations",
+        "Aethelios",
+        "Tools & context",
+        "Give this work direction.",
+        "Your Entities",
+        "Writing space"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#0d211b",
+        "--io-glass": "linear-gradient(145deg, #dcebd609, transparent 38%), linear-gradient(165deg, #193b2ff5, #0c201af8 72%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "aurelius-composer",
+          "background": "rgb(6, 22, 15) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "color(srgb 0 0 0 / 0.73) 0px 7px 10px -2px"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_aethelios-fold.png",
+        "bytes": 269101,
+        "sha256": "9b6fb3a26c987eb097db79d0ef741fa606344f77d847fe5b7d53d474b6788266"
+      }
+    },
+    {
+      "route": "/app/studio",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "labelled-API-fixture",
+      "status": 200,
+      "url": "/app/studio",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Studio\u2726",
+        "Projects",
+        "Field notes atelier"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 600,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#0d211b",
+        "--io-glass": "linear-gradient(145deg, #dcebd609, transparent 38%), linear-gradient(165deg, #193b2ff5, #0c201af8 72%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "studio-world-heading io-hero",
+          "background": "linear-gradient(145deg, rgba(220, 235, 214, 0.035), rgba(0, 0, 0, 0) 38%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(165deg, rgba(25, 59, 47, 0.96), rgba(12, 32, 26, 0.973) 72%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(217, 230, 213, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.6) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.733) 0px 10px 24px -12px"
+        },
+        {
+          "className": "studio-view-tabs studio-room-console",
+          "background": "linear-gradient(145deg, rgba(220, 235, 214, 0.035), rgba(0, 0, 0, 0) 38%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(165deg, rgba(25, 59, 47, 0.96), rgba(12, 32, 26, 0.973) 72%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(217, 230, 213, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.6) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.733) 0px 10px 24px -12px"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_studio-fold.png",
+        "bytes": 293467,
+        "sha256": "d81bc33390d89ef3d710bcd457cea7b3cfefd45b40d996d548332714230b868a"
+      }
+    },
+    {
+      "route": "/app/architect",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "labelled-API-fixture",
+      "status": 200,
+      "url": "/app/architect",
+      "headings": [
+        "Your Aethelios environments",
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "What will you create?",
+        "Field notes studio",
+        "Field notes studio",
+        "Model requests are unavailable here.",
+        "Field notes studio",
+        "First useful outcome"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#0d211b",
+        "--io-glass": "linear-gradient(145deg, #dcebd609, transparent 38%), linear-gradient(165deg, #193b2ff5, #0c201af8 72%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_architect-fold.png",
+        "bytes": 183038,
+        "sha256": "4ef739047ae99342a7b96846cddb7b63dea476bf6403d98a5a1126bae6bddf96"
+      }
+    },
+    {
+      "route": "/app/work",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/work",
+      "visibleContent": "AETHELIOS / MISSION COMMAND\nWhat are we building?\n\nStart with the company and the outcome. Aethelios helps shape the work; you keep the decision.\n\nContinue in Talk \u2197\nMissions \u2197\nCommitments \u2197\nCreative projects \u2197\nYour company rooms\nCreate company\n\nSign in to use your Aethelios workspace. Sign in \u2197\n\nExplore a job in unassigned Talk\n01\nUnderstand a company\n\nDefine the customer, offer, economics and goal before recommending work.\n\n\u2197\n02\nSharpen the positioning\n\nMake the customer, promise and reason to choose the company clear.\n\n\u2197\n03\nPlan a launch\n\nConnect the offer, distribution, economics and execution sequence.\n\n\u2197\n04\nAnalyze the economics\n\nPressure-test price, cost, capacity and cash requirements.\n\n\u2197\n05\nDevelop a product\n\nMove from concept to research, sourcing and commercial feasibility.\n\n\u2197\n06\nScope a client engagement\n\nDefine what the client receives and what success means.\n\n\u2197\n07\nPrepare an investor presentation\n\nBuild a clear narrative supported by actual company evidence.\n\n\u2197\n08\nSpecify a website or app\n\nTurn a business problem into a bounded, testable build brief.\n\n\u2197\n\nAETHELIOS ARCHITECT\n\nShape what comes next.\n\nDevelop a vision, review a Living Blueprint and create useful deliverables in one persistent creation environment.\n\nOpen Architect \u2197\nOrigin \u00b7 project intelligence\nKeep useful work moving.\n\nTalk retains your conversations. Studio retains creative projects and image versions. Each starter opens a draft for your review.\n\nCompany rooms keep confirmed briefs and Talk histo",
+      "headings": [
+        "What are we building?",
+        "Your company rooms",
+        "Explore a job in unassigned Talk",
+        "Understand a company",
+        "Sharpen the positioning",
+        "Plan a launch",
+        "Analyze the economics",
+        "Develop a product",
+        "Scope a client engagement",
+        "Prepare an investor presentation",
+        "Specify a website or app",
+        "Shape what comes next."
+      ],
+      "alerts": [
+        "Sign in to use your Aethelios workspace. Sign in \u2197"
+      ],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "io-hero io-hero-work",
+          "background": "rgb(16, 42, 36) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "color(srgb 0.909804 0.913725 0.886275 / 0.1) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_work-fold.png",
+        "bytes": 142290,
+        "sha256": "1286d5e41f690a7175dda0af7b98079bc30ca7a281063f9241bb7dd57b236d13"
+      }
+    },
+    {
+      "route": "/app/health",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health",
+      "headings": [
+        "Begin with your own information.",
+        "A personal Health workspace",
+        "Start with something useful.",
+        "Inspector",
+        "Keep these edits?",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "health-stage",
+          "background": "rgb(11, 13, 12) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "none"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_health-fold.png",
+        "bytes": 104761,
+        "sha256": "48b488cb26977eccad56846e8e8c565f832f39f66d7a998b27b9a47363177ed6"
+      }
+    },
+    {
+      "route": "/app/health/labs",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/labs",
+      "headings": [
+        "Results, with perspective.",
+        "Begin with your own information.",
+        "Every result has context.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/records",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/records",
+      "headings": [
+        "Your private records vault.",
+        "Begin with your own information.",
+        "Keep the source.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/history",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/history",
+      "headings": [
+        "Your history. Kept in context.",
+        "Begin with your own information.",
+        "The information you have kept.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/privacy",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/privacy",
+      "headings": [
+        "Your information. Your authority.",
+        "Begin with your own information.",
+        "You choose what belongs here.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/connections",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/connections",
+      "headings": [
+        "Connected on your terms.",
+        "Begin with your own information.",
+        "You choose what belongs here.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/lifestyle",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/lifestyle",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your collection.",
+        "Cabinet and Grooming."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_lifestyle-fold.png",
+        "bytes": 232105,
+        "sha256": "79a8b5546382edbb362b58c969f343dc599e06fa0fee9ba0a9145d52e62210eb"
+      }
+    },
+    {
+      "route": "/app/collection",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "The Collection.",
+        "Choose your standard.",
+        "A place in your day.A standard you return to."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_collection-fold.png",
+        "bytes": 244804,
+        "sha256": "c158ea8f2398f605b087a9cc36df2fe1285023efdbc02426f1025d64102a989f"
+      }
+    },
+    {
+      "route": "/app/collection/cart",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection/cart",
+      "visibleContent": "YOUR SELECTION\nCart.\n\nReview what earns a place in your ritual.\n\nShopping is not open yet. Retry",
+      "headings": [
+        "Cart."
+      ],
+      "alerts": [
+        "Shopping is not open yet. Retry"
+      ],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/collection/orders",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection/orders",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your orders.A clear record."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/collection/cabinet",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection/cabinet",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Opening the Collection\u2026",
+        "Your Cabinet."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/grooming",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/grooming",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Grooming Concierge."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/ecosystem",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/ecosystem",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "One world.A greater possibility.",
+        "Aethelios Intelligence",
+        "Aethelios Health",
+        "Aethelios Lifestyle",
+        "Choose your next chapter."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "io-ecosystem-hero io-hero",
+          "background": "radial-gradient(at 46% 0%, rgb(36, 91, 72), rgba(0, 0, 0, 0) 68%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(125deg, rgb(22, 63, 53), rgb(16, 42, 36) 78%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(123, 231, 177, 0.21) 0px 1px 0px 0px inset, rgba(196, 145, 47, 0.15) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset, rgba(54, 137, 108, 0.047) 0px 0px 64px 0px"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_ecosystem-fold.png",
+        "bytes": 396515,
+        "sha256": "8130c69e1c15dd1fadd0421b32c424b0e08bd84a6312f75f65f034011fdcd4f2"
+      }
+    },
+    {
+      "route": "/app/membership",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/membership",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your founding chapter.",
+        "Membership access",
+        "A foundation that grows."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_membership-fold.png",
+        "bytes": 284751,
+        "sha256": "58218b00c472009b0804e72c305365b5004c7de581039b1613d7d8c4632edb54"
+      }
+    },
+    {
+      "route": "/app/you",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/you",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your foundation.",
+        "Build the manbehind the life."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel profile-panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_you-fold.png",
+        "bytes": 309040,
+        "sha256": "712024f8c35400f74d30d58712758860df3f70a9dc9f9f48afb7adc7ea67383f"
+      }
+    },
+    {
+      "route": "/app/founder/connections",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/founder/connections",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Connections"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "baselineUnavailable": "Loading shell was sampled before steady state; excluded from visual comparisons. No connected-provider proof."
+    },
+    {
+      "route": "/app/captures",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/captures",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your capture inbox"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/ongoing",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/ongoing",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your day. Your direction.",
+        "Leave room for what matters.",
+        "No account decisions in this view.",
+        "Confirm this is complete?"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/missions",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/missions",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Missions"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/goals",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/goals",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Make itmeaningful.",
+        "A goal worth working toward."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel empty-state",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/progress",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/progress",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Progress,over time.",
+        "Sign in to see your history."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel empty-state",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/daily",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/daily",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your day. Your direction.",
+        "Leave room for what matters.",
+        "No account decisions in this view.",
+        "Confirm this is complete?"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/performance",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/performance",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Ascend Performance.",
+        "Begin with your own direction."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/ascend-profile",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/ascend-profile",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your Ascend Profile"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/world",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/world",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "My world.",
+        "The Collection",
+        "LifeOS / Ascend",
+        "Ascend Performance",
+        "Presence",
+        "Progress",
+        "Aethelios",
+        "Aethelios Studio",
+        "Legacy Reserve"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/install",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/install",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your daily entrance.",
+        "Keep Gent Ascend close."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel install-guide",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/welcome",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/welcome",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Welcome to Aethelios.",
+        "Your own space begins here."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel pilot-section",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/founder",
+      "label": "fold",
+      "viewport": {
+        "width": 884,
+        "height": 690
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/founder",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Founder Office"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/",
+      "headings": [
+        "Bring the ambition.Build the company.",
+        "Start with the work that matters.",
+        "From thought to possibility."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-home-desktop.png",
+        "bytes": 565409,
+        "sha256": "6b263240b3a6502119cc213f09151c1f5616e8ffc56f09c36ef2df6976a732db"
+      }
+    },
+    {
+      "route": "/enter",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/enter",
+      "headings": [
+        "The world becomes yours.",
+        "The entrance is being prepared."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-enter-desktop.png",
+        "bytes": 795481,
+        "sha256": "b08661f16dce2b574c61f45c7122b3809754b88ce6f65816f0a91f10aeac4eb4"
+      }
+    },
+    {
+      "route": "/join",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/join",
+      "headings": [
+        "Your chapterstarts here.",
+        "Create an account",
+        "Already here?"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/membership",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/membership",
+      "headings": [
+        "Your standard.Your next chapter.",
+        "Essential",
+        "Signature",
+        "Reserve",
+        "Useful today.Built to develop."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/shop",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/shop",
+      "headings": [
+        "The Collection.",
+        "Choose your standard.",
+        "A place in your day.A standard you return to."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/shop/cart",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/shop/cart",
+      "headings": [
+        "Cart."
+      ],
+      "alerts": [
+        "Shopping is not open yet. Retry"
+      ],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/lifestyle",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/lifestyle",
+      "headings": [
+        "The art ofliving well.",
+        "Discover your daily essentials.",
+        "A daily standard.Entirely your own."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "lifestyle-hero",
+          "background": "radial-gradient(at 46% 0%, rgb(36, 91, 72), rgba(0, 0, 0, 0) 68%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(125deg, rgb(22, 63, 53), rgb(16, 42, 36) 78%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "none"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/experience",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/experience",
+      "headings": [
+        "Make this yours.",
+        "Your life.More deliberately.",
+        "Aethelios",
+        "Make this yours."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Command",
+        "Your work will appear here"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app-desktop.png",
+        "bytes": 293812,
+        "sha256": "83f7a6642576a05a4d3d0a450b423c0cb9f4034701318fcf3742b51eb0f2ea39"
+      }
+    },
+    {
+      "route": "/app/aethelios",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "labelled-API-fixture",
+      "status": 200,
+      "url": "/app/aethelios",
+      "headings": [
+        "Capture a thought",
+        "Get it out of your head.",
+        "Aethelios presence",
+        "Conversations",
+        "Aethelios",
+        "Tools & context",
+        "Give this work direction.",
+        "Your Entities",
+        "Writing space"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#0d211b",
+        "--io-glass": "linear-gradient(145deg, #dcebd609, transparent 38%), linear-gradient(165deg, #193b2ff5, #0c201af8 72%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "aurelius-composer",
+          "background": "rgb(6, 22, 15) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "color(srgb 0 0 0 / 0.73) 0px 7px 10px -2px"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_aethelios-desktop.png",
+        "bytes": 370388,
+        "sha256": "21a8a420d306005dcfb7893f97513fe4c715e7f40dd07c42076d7c87bb45029d"
+      }
+    },
+    {
+      "route": "/app/studio",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "labelled-API-fixture",
+      "status": 200,
+      "url": "/app/studio",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Studio\u2726",
+        "Projects",
+        "Field notes atelier"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 120,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#0d211b",
+        "--io-glass": "linear-gradient(145deg, #dcebd609, transparent 38%), linear-gradient(165deg, #193b2ff5, #0c201af8 72%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "studio-world-heading io-hero",
+          "background": "linear-gradient(145deg, rgba(220, 235, 214, 0.035), rgba(0, 0, 0, 0) 38%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(165deg, rgba(25, 59, 47, 0.96), rgba(12, 32, 26, 0.973) 72%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(217, 230, 213, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.6) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.733) 0px 10px 24px -12px"
+        },
+        {
+          "className": "studio-view-tabs studio-room-console",
+          "background": "linear-gradient(145deg, rgba(220, 235, 214, 0.035), rgba(0, 0, 0, 0) 38%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(165deg, rgba(25, 59, 47, 0.96), rgba(12, 32, 26, 0.973) 72%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(217, 230, 213, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.6) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.733) 0px 10px 24px -12px"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_studio-desktop.png",
+        "bytes": 604694,
+        "sha256": "f9fe142f6bba3a8f3aac849f63b0aec73655b6e6cb19d951d63b1125e3627a78"
+      }
+    },
+    {
+      "route": "/app/architect",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "labelled-API-fixture",
+      "status": 200,
+      "url": "/app/architect",
+      "headings": [
+        "Your Aethelios environments",
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "What will you create?",
+        "Field notes studio",
+        "Field notes studio",
+        "Model requests are unavailable here.",
+        "Field notes studio",
+        "First useful outcome"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#0d211b",
+        "--io-glass": "linear-gradient(145deg, #dcebd609, transparent 38%), linear-gradient(165deg, #193b2ff5, #0c201af8 72%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_architect-desktop.png",
+        "bytes": 276435,
+        "sha256": "c963a03118008cba7b80c2fca2ed60a91a1626239c6c43c1cf6a6a5824d4a3ed"
+      }
+    },
+    {
+      "route": "/app/work",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/work",
+      "visibleContent": "AETHELIOS / MISSION COMMAND\nWhat are we building?\n\nStart with the company and the outcome. Aethelios helps shape the work; you keep the decision.\n\nContinue in Talk \u2197\nMissions \u2197\nCommitments \u2197\nCreative projects \u2197\nYour company rooms\nCreate company\n\nSign in to use your Aethelios workspace. Sign in \u2197\n\nExplore a job in unassigned Talk\n01\nUnderstand a company\n\nDefine the customer, offer, economics and goal before recommending work.\n\n\u2197\n02\nSharpen the positioning\n\nMake the customer, promise and reason to choose the company clear.\n\n\u2197\n03\nPlan a launch\n\nConnect the offer, distribution, economics and execution sequence.\n\n\u2197\n04\nAnalyze the economics\n\nPressure-test price, cost, capacity and cash requirements.\n\n\u2197\n05\nDevelop a product\n\nMove from concept to research, sourcing and commercial feasibility.\n\n\u2197\n06\nScope a client engagement\n\nDefine what the client receives and what success means.\n\n\u2197\n07\nPrepare an investor presentation\n\nBuild a clear narrative supported by actual company evidence.\n\n\u2197\n08\nSpecify a website or app\n\nTurn a business problem into a bounded, testable build brief.\n\n\u2197\n\nAETHELIOS ARCHITECT\n\nShape what comes next.\n\nDevelop a vision, review a Living Blueprint and create useful deliverables in one persistent creation environment.\n\nOpen Architect \u2197\nOrigin \u00b7 project intelligence\nKeep useful work moving.\n\nTalk retains your conversations. Studio retains creative projects and image versions. Each starter opens a draft for your review.\n\nCompany rooms keep confirmed briefs and Talk histo",
+      "headings": [
+        "What are we building?",
+        "Your company rooms",
+        "Explore a job in unassigned Talk",
+        "Understand a company",
+        "Sharpen the positioning",
+        "Plan a launch",
+        "Analyze the economics",
+        "Develop a product",
+        "Scope a client engagement",
+        "Prepare an investor presentation",
+        "Specify a website or app",
+        "Shape what comes next."
+      ],
+      "alerts": [
+        "Sign in to use your Aethelios workspace. Sign in \u2197"
+      ],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "io-hero io-hero-work",
+          "background": "rgb(16, 42, 36) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "color(srgb 0.909804 0.913725 0.886275 / 0.1) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_work-desktop.png",
+        "bytes": 343696,
+        "sha256": "67e599737dca0eeb2f611f3eb9ee91ef7c9df91ad155be0a6a679f2598cb763f"
+      }
+    },
+    {
+      "route": "/app/health",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health",
+      "headings": [
+        "Begin with your own information.",
+        "A personal Health workspace",
+        "Start with something useful.",
+        "Inspector",
+        "Keep these edits?",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "health-stage",
+          "background": "rgb(11, 13, 12) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "none"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_health-desktop.png",
+        "bytes": 228982,
+        "sha256": "b58ecd98bbedcd31a9b340489b0b9935374e8b0eebf31d75925d63326ef1d032"
+      }
+    },
+    {
+      "route": "/app/health/labs",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/labs",
+      "headings": [
+        "Results, with perspective.",
+        "Begin with your own information.",
+        "Every result has context.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/records",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/records",
+      "headings": [
+        "Your private records vault.",
+        "Begin with your own information.",
+        "Keep the source.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/history",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/history",
+      "headings": [
+        "Your history. Kept in context.",
+        "Begin with your own information.",
+        "The information you have kept.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/privacy",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/privacy",
+      "headings": [
+        "Your information. Your authority.",
+        "Begin with your own information.",
+        "You choose what belongs here.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/health/connections",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/health/connections",
+      "headings": [
+        "Connected on your terms.",
+        "Begin with your own information.",
+        "You choose what belongs here.",
+        "Review imported results",
+        "Correct a reported result",
+        "Delete private Health information?",
+        "Aethelios \u00b7 private Health understanding"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/lifestyle",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/lifestyle",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your collection.",
+        "Cabinet and Grooming."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_lifestyle-desktop.png",
+        "bytes": 351209,
+        "sha256": "434ce15911fc648ded3b64e3e35a65f930ef84c3e98293606a9df1926850b960"
+      }
+    },
+    {
+      "route": "/app/collection",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "The Collection.",
+        "Choose your standard.",
+        "A place in your day.A standard you return to."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_collection-desktop.png",
+        "bytes": 300963,
+        "sha256": "1f8d42d239bd3daaf7f80938e99d732ff48b633bed9943c4e3f9234f31dd5e50"
+      }
+    },
+    {
+      "route": "/app/collection/cart",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection/cart",
+      "visibleContent": "YOUR SELECTION\nCart.\n\nReview what earns a place in your ritual.\n\nShopping is not open yet. Retry",
+      "headings": [
+        "Cart."
+      ],
+      "alerts": [
+        "Shopping is not open yet. Retry"
+      ],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/collection/orders",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection/orders",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your orders.A clear record."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/collection/cabinet",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/collection/cabinet",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Opening the Collection\u2026",
+        "Your Cabinet."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/grooming",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/grooming",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Grooming Concierge."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/ecosystem",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/ecosystem",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "One world.A greater possibility.",
+        "Aethelios Intelligence",
+        "Aethelios Health",
+        "Aethelios Lifestyle",
+        "Choose your next chapter."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "io-ecosystem-hero io-hero",
+          "background": "radial-gradient(at 46% 0%, rgb(36, 91, 72), rgba(0, 0, 0, 0) 68%) repeat scroll 0% 0% / auto padding-box border-box, rgba(0, 0, 0, 0) linear-gradient(125deg, rgb(22, 63, 53), rgb(16, 42, 36) 78%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(123, 231, 177, 0.21) 0px 1px 0px 0px inset, rgba(196, 145, 47, 0.15) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset, rgba(54, 137, 108, 0.047) 0px 0px 64px 0px"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_ecosystem-desktop.png",
+        "bytes": 777562,
+        "sha256": "232c90371487892ac2d2f96d1d1c79ecac5ba60cd2c4b6fc6e2b1145fd4c6e56"
+      }
+    },
+    {
+      "route": "/app/membership",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/membership",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your founding chapter.",
+        "Membership access",
+        "A foundation that grows."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "membership-grid",
+          "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "none"
+        },
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        },
+        {
+          "className": "panel perspective-panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_membership-desktop.png",
+        "bytes": 557696,
+        "sha256": "1ec4518fe9545f7c06d8a7c3709fad73f4e1539e2cd5870b39dd671e9c533480"
+      }
+    },
+    {
+      "route": "/app/you",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/you",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your foundation.",
+        "Build the manbehind the life."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel profile-panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "screenshot": {
+        "path": "before-app_you-desktop.png",
+        "bytes": 563606,
+        "sha256": "dfcea29be2e213d7d47903c3770ddb080378d8705afbdbc5d21a3cd63f49068a"
+      }
+    },
+    {
+      "route": "/app/founder/connections",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/founder/connections",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Connections"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": [],
+      "baselineUnavailable": "Loading shell was sampled before steady state; excluded from visual comparisons. No connected-provider proof."
+    },
+    {
+      "route": "/app/captures",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/captures",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your capture inbox"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/ongoing",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/ongoing",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your day. Your direction.",
+        "Leave room for what matters.",
+        "No account decisions in this view.",
+        "Confirm this is complete?"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/missions",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/missions",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Missions"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/goals",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/goals",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Make itmeaningful.",
+        "A goal worth working toward."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel empty-state",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/progress",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/progress",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Progress,over time.",
+        "Sign in to see your history."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel empty-state",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/daily",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/daily",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your day. Your direction.",
+        "Leave room for what matters.",
+        "No account decisions in this view.",
+        "Confirm this is complete?"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#111",
+        "--io-navigation": "#1a1a1a",
+        "--io-glass": "linear-gradient(145deg, #ffffff09, transparent 34%), linear-gradient(165deg, #242424ed, #1a1a1af5 72%)",
+        "--io-text": "#f2f2ee"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/performance",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/performance",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Ascend Performance.",
+        "Begin with your own direction."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/ascend-profile",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/ascend-profile",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your Ascend Profile"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/world",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/world",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "My world.",
+        "The Collection",
+        "LifeOS / Ascend",
+        "Ascend Performance",
+        "Presence",
+        "Progress",
+        "Aethelios",
+        "Aethelios Studio",
+        "Legacy Reserve"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [],
+      "errors": []
+    },
+    {
+      "route": "/app/install",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/install",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Your daily entrance.",
+        "Keep Gent Ascend close."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel install-guide",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/welcome",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/welcome",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Welcome to Aethelios.",
+        "Your own space begins here."
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel pilot-section",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "route": "/app/founder",
+      "label": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "kind": "production-build-default-access-state",
+      "status": 200,
+      "url": "/app/founder",
+      "headings": [
+        "Aethelios",
+        "Capture a thought",
+        "Get it out of your head.",
+        "Founder Office"
+      ],
+      "alerts": [],
+      "overflow": false,
+      "scrollY": 0,
+      "focusVisible": 0,
+      "tokens": {
+        "--io-environment": "#070b0a",
+        "--io-navigation": "#102a24",
+        "--io-glass": "linear-gradient(145deg, #102a24, #0d1c18 85%)",
+        "--io-text": "#e8e9e2"
+      },
+      "surfaces": [
+        {
+          "className": "panel",
+          "background": "rgba(0, 0, 0, 0) linear-gradient(145deg, rgb(16, 42, 36), rgb(13, 28, 24) 85%) repeat scroll 0% 0% / auto padding-box border-box",
+          "foreground": "rgb(232, 233, 226)",
+          "shadow": "rgba(0, 0, 0, 0.267) 0px 18px 48px 0px, rgba(230, 231, 226, 0.04) 0px 1px 0px 0px inset"
+        }
+      ],
+      "errors": []
+    }
+  ]
+}
