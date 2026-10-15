@@ -1,4 +1,5 @@
-export type CapabilityId = 'studio' | 'performance' | 'presence' | 'life' | 'company';
+export type CapabilityId =
+  'studio' | 'performance' | 'presence' | 'life' | 'company' | 'lifestyle' | 'health';
 
 export type CapabilityRoute = {
   id: CapabilityId;
@@ -48,11 +49,30 @@ const routes: CapabilityRoute[] = [
     href: '/app/work',
     description: 'Research, positioning, offers, product development and company economics.',
     instruction:
-      'Treat this as company work. Establish the company and outcome, then produce a bounded reviewable brief. Product development is not a shopping request. No company storage, execution or client sharing is implied.',
+      'Treat this as company work in the current Work environment. Agency is planned, not implemented. Establish the company and outcome, then produce a bounded reviewable brief. Product development is not a shopping request and not a promise that Neil will personally build a website. No company storage, execution or client sharing is implied.',
+  },
+  {
+    id: 'lifestyle',
+    label: 'Lifestyle',
+    href: '/app/lifestyle',
+    description:
+      'Aethelios Lifestyle products. Price and availability come from the live catalog when connected.',
+    instruction:
+      'Treat this as a Lifestyle product question. Use only supplied catalog records with source IDs, URL, retrieval time and missing-data status. Never infer formula, dosage, efficacy, size, stock or manufacturing from a name, image or vendor string. Missing facts stay unknown. This is not a sales pitch unless the person asked about products.',
+  },
+  {
+    id: 'health',
+    label: 'Health',
+    href: '/app/health',
+    description: 'Personal software for organizing health-related information. Not a clinic.',
+    instruction:
+      'Health work belongs in the Health environment. Do not mix general private memory, company briefs, Lifestyle catalog or unrelated business data into a Health answer. Do not diagnose or prescribe. Direct the person to Health for record-backed explanation.',
   },
 ];
 
 const patterns: Array<[CapabilityId, RegExp]> = [
+  ['lifestyle', /\b(lifestyle catalog|beard oil|ingredient list|product label|inci)\b/i],
+  ['health', /\b(health workspace|bloodwork|lab result|health record)\b/i],
   [
     'company',
     /\b(company|business|client|positioning|offer|revenue|pricing|economics|margin|sourcing|product development)\b/i,
