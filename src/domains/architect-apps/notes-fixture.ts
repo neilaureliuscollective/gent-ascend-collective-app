@@ -20,7 +20,7 @@ declare module 'react-dom/client' {
 }
 declare module '*.css' { const value: string; export default value; }
 declare namespace JSX { interface IntrinsicElements { [elemName: string]: Record<string, unknown>; } }
-declare global { interface Window { __AETHELIOS_APP_SESSION__?: string; __AETHELIOS_PARENT_ORIGIN__?: string; } }
+declare global { interface Window { __AETHELIOS_APP_SESSION__?: string; __AETHELIOS_PARENT_ORIGIN__?: string; __AETHELIOS_INSPECT__?: { projectId?: string; revisionId?: string } | null; } }
 `;
 
 export const notesCollections: AppCollection[] = [
@@ -148,6 +148,31 @@ export function App() {
   async function refresh() { setNotes(await requestNotes('list')); }
   useEffect(() => { void refresh().catch(() => setNotes([])); }, []);
   useEffect(() => {
+    function onHost(event: MessageEvent) {
+      const data = event.data as { schema?: string; mode?: string; projectId?: string; revisionId?: string };
+      if (!data || data.schema !== 'architect-apps-inspect/v1') return;
+      window.__AETHELIOS_INSPECT__ = data.mode === 'inspect' ? { projectId: data.projectId, revisionId: data.revisionId } : null;
+    }
+    window.addEventListener('message', onHost);
+    return () => window.removeEventListener('message', onHost);
+  }, []);
+  function reportInspect(targetId: string, event?: { preventDefault(): void; stopPropagation(): void }) {
+    const inspect = window.__AETHELIOS_INSPECT__;
+    if (!inspect) return false;
+    event?.preventDefault();
+    event?.stopPropagation();
+    window.parent.postMessage({
+      schema: 'architect-apps-inspect/v1',
+      source: 'preview',
+      session: window.__AETHELIOS_APP_SESSION__ || '',
+      projectId: inspect.projectId,
+      revisionId: inspect.revisionId,
+      targetId,
+      nonce: crypto.randomUUID(),
+    }, window.__AETHELIOS_PARENT_ORIGIN__ || '*');
+    return true;
+  }
+  useEffect(() => {
     if (!selected) return;
     setTitle(selected.title);
     setBody(selected.body);
@@ -203,17 +228,17 @@ export function App() {
   return (
     <div className="shell">
       <p className="eyebrow">Aethelios generated application</p>
-      <h1>Field notes</h1>
+      <h1 data-architect-target="file:src/App.tsx" onClick={(event) => { reportInspect('file:src/App.tsx', event); }}>Field notes</h1>
       <p>{total}h logged</p>
       <nav>
-        <button type="button" onClick={() => setRoute({ name: 'list' })}>Notes</button>
-        <button type="button" onClick={beginNewNote}>New note</button>
+        <button type="button" onClick={(event) => { if (reportInspect('file:src/App.tsx', event)) return; setRoute({ name: 'list' }); }}>Notes</button>
+        <button type="button" onClick={(event) => { if (reportInspect('file:src/App.tsx', event)) return; beginNewNote(); }}>New note</button>
       </nav>
       {route.name === 'list' ? (
         <section>
           <input value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="Filter" />
           {visible.map((note) => (
-            <button key={note.id} type="button" className="card" onClick={() => { setPending(null); setRoute({ name: 'note', id: note.id }); }}>
+            <button key={note.id} type="button" className="card" data-architect-target={'record:notes:' + note.id} onClick={(event) => { if (reportInspect('record:notes:' + note.id, event)) return; setPending(null); setRoute({ name: 'note', id: note.id }); }}>
               <strong>{note.title}</strong>
               <p>{note.hours}h</p>
             </button>

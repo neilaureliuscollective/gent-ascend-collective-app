@@ -2340,6 +2340,20 @@ test('App focus at Fold hides unused dock and keeps the preview usable', async (
   const preview = page.getByTitle('Private generated application preview');
   const box = await preview.boundingBox();
   expect(box?.height ?? 0).toBeGreaterThan(240);
+  await expect(page.getByText('Preview ready', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Request a change' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Refine', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Request a change' }).click();
+  const changeRequest = page.getByRole('region', { name: 'Application change request' });
+  await expect(changeRequest).toBeVisible();
+  await expect(changeRequest.getByLabel('Request')).toBeFocused();
+  await changeRequest.getByRole('button', { name: 'Close change request' }).click();
+  await expect(page.getByRole('button', { name: 'Request a change' })).toBeFocused();
   await page.getByRole('button', { name: 'Details' }).click();
   await expect(page.getByLabel('Application details')).toBeVisible();
+  for (const width of [320, 344, 390]) {
+    await page.setViewportSize({ width, height: 520 });
+    await expect(page.getByText('Preview ready', { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
 });

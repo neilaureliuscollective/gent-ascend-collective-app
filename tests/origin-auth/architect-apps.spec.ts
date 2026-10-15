@@ -264,9 +264,12 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Refine' }).click();
-  await page.getByLabel('Request').fill('Add an optional tag for office or field notes.');
-  await page.getByRole('button', { name: 'Review proposed files' }).click();
+  const changeRequest = page.getByRole('region', { name: 'Application change request' });
+  await page.getByRole('button', { name: 'Request a change' }).click();
+  await expect(changeRequest).toBeVisible();
+  await expect(changeRequest.getByLabel('Request')).toBeFocused();
+  await changeRequest.getByLabel('Request').fill('Add an optional tag for office or field notes.');
+  await changeRequest.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 2 accepted/)).toBeVisible();
@@ -281,11 +284,12 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
-  if (!(await page.getByLabel('Request').isVisible())) {
-    await page.getByRole('button', { name: 'Refine' }).click();
+  if (!(await changeRequest.getByLabel('Request').isVisible())) {
+    await page.getByRole('button', { name: 'Request a change' }).click();
   }
-  await page.getByLabel('Request').fill('Break the isolated typecheck so the last good preview stays.');
-  await page.getByRole('button', { name: 'Review proposed files' }).click();
+  await expect(changeRequest).toBeVisible();
+  await changeRequest.getByLabel('Request').fill('Break the isolated typecheck so the last good preview stays.');
+  await changeRequest.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 3 accepted/)).toBeVisible();

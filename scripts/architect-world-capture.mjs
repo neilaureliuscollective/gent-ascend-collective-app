@@ -36,9 +36,15 @@ const plannerPreview = `<!doctype html><html lang="en"><head><meta charset="utf-
 </ol>
 </body></html>`;
 
+const compiledEvidence = process.argv.includes('--compiled') || process.env.ARCHITECT_WORLD_COMPILED === '1';
+
 function compiledPreview() {
-  if (!existsSync('docs/evidence/architect-apps/compiled-preview.html')) return plannerPreview;
-  return readFileSync('docs/evidence/architect-apps/compiled-preview.html', 'utf8')
+  const path = 'docs/evidence/architect-apps/compiled-preview.html';
+  if (!existsSync(path)) {
+    if (compiledEvidence) throw new Error('Compiled-evidence capture requires docs/evidence/architect-apps/compiled-preview.html');
+    return plannerPreview;
+  }
+  return readFileSync(path, 'utf8')
     .replaceAll('http://127.0.0.1:3100', 'http://127.0.0.1:3102')
     .replace('Field notes', 'Field notes · labelled local compile');
 }
@@ -287,7 +293,13 @@ await reduced.close();
 const receipt = {
   schema: 'architect-world-capture/v1',
   capturedAt: new Date().toISOString(),
-  label: 'Local Vite fixture evidence. Not a commissioned or paid build.',
+  kind: compiledEvidence || existsSync('docs/evidence/architect-apps/compiled-preview.html')
+    ? 'labelled-compiled-fixture'
+    : 'labelled-visual-fixture',
+  compiledRequired: compiledEvidence,
+  label: compiledEvidence
+    ? 'Compiled-evidence run from docs/evidence/architect-apps/compiled-preview.html. Local fixture, not hosted production.'
+    : 'Local Vite fixture evidence. Not a commissioned or paid build.',
   timings,
   overflow,
   previewHeights,

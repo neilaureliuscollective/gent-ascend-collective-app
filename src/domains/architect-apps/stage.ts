@@ -48,3 +48,20 @@ export function appWorkbenchStage(input: {
   if (input.saveState === 'saved') return { stage: 'saved', label: 'Record saved.' };
   return { stage: 'idle', label: 'Describe a useful app, then review files before approval.' };
 }
+
+export function compactAppStatus(input: {
+  stage: AppWorkbenchStage;
+  retained?: boolean;
+  uncertain?: boolean;
+}) {
+  if (input.stage === 'preparing' || input.stage === 'building' || input.stage === 'checking') return 'Building';
+  if (input.stage === 'saving') return 'Saving';
+  if (input.stage === 'conflict' || input.uncertain) return 'Uncertain';
+  if (input.stage === 'failed' && input.retained) return 'Failed · last good preview kept';
+  if (input.stage === 'failed') return 'Failed';
+  if (input.stage === 'cancelled' && input.retained) return 'Cancelled · last good preview kept';
+  if (input.stage === 'cancelled') return 'Cancelled';
+  if (input.stage === 'preview-ready') return 'Preview ready';
+  if (input.stage === 'saved') return 'Saved';
+  return 'Waiting';
+}

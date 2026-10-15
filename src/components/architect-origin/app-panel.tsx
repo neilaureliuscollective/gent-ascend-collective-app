@@ -3,12 +3,13 @@
 import { BplusMaterial } from '@/components/visual/bplus-material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { describeAppFailure } from '@/domains/architect-apps/generation-policy';
-import { appWorkbenchStage } from '@/domains/architect-apps/stage';
+import { appWorkbenchStage, compactAppStatus } from '@/domains/architect-apps/stage';
 import {
   acceptInspectMessage,
   applicationPlan,
   changeScopeForTarget,
   explainInspectTarget,
+  inspectScopeForFiles,
   inspectTargets,
   revisionKind,
   type CreationBrief,
@@ -72,6 +73,9 @@ export function ArchitectAppPanel({
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const knownInspectIds = useRef<string[]>([]);
+  const seenInspectNonces = useRef<Set<string>>(new Set());
+  const refineButton = useRef<HTMLButtonElement>(null);
+  const requestField = useRef<HTMLTextAreaElement>(null);
   const scroll = useRef(0);
   const plane = useRef<HTMLDivElement>(null);
   const boundPreview = useRef({ session: '', generation: 0, revisionId: '', document: 0 });
@@ -184,6 +188,7 @@ export function ArchitectAppPanel({
           revisionId: snapshot.revisionId,
         },
         knownInspectIds.current,
+        seenInspectNonces.current,
       );
       if (data && typeof data === 'object' && (data as { schema?: string }).schema === 'architect-apps-inspect/v1') {
         if (inspectIdAccepted) setInspectId(inspectIdAccepted);
@@ -270,9 +275,39 @@ export function ArchitectAppPanel({
     [files, library?.records, plan, displayed?.revision],
   );
   const selectedTarget = targets.find((row) => row.id === inspectId) ?? targets[0] ?? null;
+  const inspectScope = useMemo(() => inspectScopeForFiles(files), [files]);
+  const retainedPreview =
+    Boolean(preview) && (latestJob?.status === 'failed' || latestJob?.status === 'cancelled');
+  const compactStatus = compactAppStatus({
+    stage: workbench.stage,
+    retained: retainedPreview,
+    uncertain: saveState === 'failed' || saveState === 'conflict',
+  });
   useEffect(() => {
     knownInspectIds.current = targets.map((row) => row.id);
   }, [targets]);
+  function setChangeRequest(open: boolean) {
+    setRefineOpen(open);
+    setAppSheet(open ? 'refine' : 'stage');
+    window.requestAnimationFrame(() => {
+      if (open) requestField.current?.focus();
+      else refineButton.current?.focus();
+    });
+  }
+  useEffect(() => {
+    const node = frame.current?.contentWindow;
+    if (!node || !preview) return;
+    node.postMessage(
+      {
+        schema: 'architect-apps-inspect/v1',
+        mode: interaction,
+        session: library?.previewSession ?? '',
+        projectId,
+        revisionId: preview.revisionId,
+      },
+      '*',
+    );
+  }, [interaction, library?.previewSession, preview, projectId]);
   const fileDiffs = useMemo(() => {
     const pending = (proposal?.changes as { path: string; kind: string }[] | undefined) ?? [];
     if (pending.length) return pending.filter((row) => row.kind !== 'unchanged');
@@ -419,38 +454,50 @@ export function ArchitectAppPanel({
               {working && working.revision !== displayed?.revision ? ` · last working ${working.revision}` : ''}
             </h3>
             <p className="architect-app-status" data-stage={workbench.stage} aria-live="polite">
-              {library?.provider.enabled === false ? `${library.provider.reason} ` : ''}
-              {library?.provider.mode === 'mock' || library?.provider.mode === 'fixture'
-                ? 'Labelled development generation is in use. '
-                : ''}
-              {workbench.label}
-              {displayed ? ` Running revision ${displayed.revision}.` : ''}
-              {displayedCollections ? ` Data: ${displayedCollections}.` : ''}
-              {preview?.revision && displayed && preview.revision !== displayed.revision
-                ? ` Preview still shows last working revision ${preview.revision}.`
-                : ''}
-              {latestJob?.status === 'failed' && working
-                ? ' The attempted revision did not replace the last working application.'
-                : ''}
-              {recovered && workbench.stage === 'idle' ? ` Approved revision ${recovered.revision} recovered. Start remains explicit.` : ''}
+              {compactStatus}
             </p>
-            <ul className="architect-app-flags">
-              {latestJob && (latestJob.status === 'queued' || latestJob.status === 'running') ? (
-                <li data-flag="build">Background build {latestJob.status}</li>
-              ) : null}
-              {library?.events.at(-1) ? (
-                <li data-flag="event">
-                  {library.events.at(-1)!.kind}
-                  {library.events.at(-1)!.detail ? ` · ${library.events.at(-1)!.detail.slice(0, 80)}` : ''}
-                </li>
-              ) : null}
-              {saveState === 'saving' ? <li data-flag="saving">Host save pending</li> : null}
-              {saveState === 'saved' ? <li data-flag="saved">Record saved</li> : null}
-              {saveState === 'conflict' ? <li data-flag="conflict">Reload before retry</li> : null}
-              {saveState === 'failed' ? <li data-flag="uncertain">Retry keeps the same record</li> : null}
-              {latestJob?.status === 'failed' && preview ? <li data-flag="retained">Last good preview kept</li> : null}
-              {latestJob?.status === 'cancelled' && preview ? <li data-flag="retained">Last good preview kept</li> : null}
-            </ul>
+            <details className="architect-app-status-details">
+              <summary>Build details</summary>
+              <p>
+                {library?.provider.enabled === false ? `${library.provider.reason} ` : ''}
+                {library?.provider.mode === 'mock' || library?.provider.mode === 'fixture'
+                  ? 'Labelled development generation is in use. '
+                  : ''}
+                {workbench.label}
+                {displayed ? ` Running revision ${displayed.revision}.` : ''}
+                {displayedCollections ? ` Data: ${displayedCollections}.` : ''}
+                {preview?.revision && displayed && preview.revision !== displayed.revision
+                  ? ` Preview still shows last working revision ${preview.revision}.`
+                  : ''}
+                {latestJob?.status === 'failed' && working
+                  ? ' The attempted revision did not replace the last working application.'
+                  : ''}
+                {recovered && workbench.stage === 'idle' ? ` Approved revision ${recovered.revision} recovered. Start remains explicit.` : ''}
+              </p>
+              <ul className="architect-app-flags">
+                {latestJob && (latestJob.status === 'queued' || latestJob.status === 'running') ? (
+                  <li data-flag="build">Background build {latestJob.status}</li>
+                ) : null}
+                {library?.events.at(-1) ? (
+                  <li data-flag="event">
+                    {library.events.at(-1)!.kind}
+                    {library.events.at(-1)!.detail ? ` · ${library.events.at(-1)!.detail.slice(0, 80)}` : ''}
+                  </li>
+                ) : null}
+                {saveState === 'saving' ? <li data-flag="saving">Host save pending</li> : null}
+                {saveState === 'saved' ? <li data-flag="saved">Record saved</li> : null}
+                {saveState === 'conflict' ? <li data-flag="conflict">Reload before retry</li> : null}
+                {saveState === 'failed' ? <li data-flag="uncertain">Retry keeps the same record</li> : null}
+                {latestJob?.status === 'failed' && preview ? <li data-flag="retained">Last good preview kept</li> : null}
+                {latestJob?.status === 'cancelled' && preview ? <li data-flag="retained">Last good preview kept</li> : null}
+              </ul>
+              <p className="architect-app-checks">
+                Typecheck {latestJob?.result?.typecheck.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Bundle{' '}
+                {latestJob?.result?.bundle.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Isolation{' '}
+                {latestJob?.result?.isolation ?? 'none'} · Profile {library?.profile.toolchain}
+                {preview?.revision ? ` · preview revision ${preview.revision}` : ''}
+              </p>
+            </details>
           </div>
           <div className="architect-app-viewports">
             <button type="button" aria-pressed={interaction === 'use'} onClick={() => setInteraction('use')}>
@@ -468,11 +515,26 @@ export function ArchitectAppPanel({
             <button type="button" aria-pressed={viewport === 'phone'} onClick={() => setViewport('phone')}>
               Phone
             </button>
-            <button type="button" aria-pressed={appSheet === 'side'} onClick={() => setAppSheet(appSheet === 'side' ? 'stage' : 'side')}>
+            <button
+              type="button"
+              aria-pressed={appSheet === 'side'}
+              onClick={() => {
+                const next = appSheet === 'side' ? 'stage' : 'side';
+                setAppSheet(next);
+                if (next !== 'refine') setRefineOpen(false);
+              }}
+            >
               Details
             </button>
-            <button type="button" aria-pressed={appSheet === 'refine'} onClick={() => setAppSheet(appSheet === 'refine' ? 'stage' : 'refine')}>
-              Refine
+            <button
+              ref={refineButton}
+              type="button"
+              aria-expanded={refineOpen}
+              aria-controls="architect-app-change-request"
+              aria-pressed={refineOpen}
+              onClick={() => setChangeRequest(!refineOpen)}
+            >
+              Request a change
             </button>
           </div>
         </header>
@@ -483,7 +545,7 @@ export function ArchitectAppPanel({
               title="Private generated application preview"
               sandbox={preview.sandbox}
               srcDoc={preview.srcDoc}
-              style={interaction === 'inspect' ? { pointerEvents: 'none' } : undefined}
+              style={interaction === 'inspect' && inspectScope !== 'elements' ? { pointerEvents: 'none' } : undefined}
             />
           ) : (
             <div className="architect-app-empty" data-schematic="true">
@@ -496,9 +558,11 @@ export function ArchitectAppPanel({
         {interaction === 'inspect' ? (
           <div className="architect-app-inspect">
             <p>
-              Inspect identifies a host-supported target for this project and revision. Appearance
-              alone is not evidence of behavior. Arbitrary iframe messages are ignored unless they
-              match the inspect schema, session and project/revision identity.
+              {inspectScope === 'elements'
+                ? 'This compiled preview can report verified element targets. Clicks map only to known files or records for this revision.'
+                : 'This preview is not instrumented. Inspect uses host Files, Records and Plan. The painted interface is not selectable.'}{' '}
+              Arbitrary iframe messages are ignored unless they match the inspect schema, session,
+              project and revision identity. Replayed preview nonces are rejected.
             </p>
             <ol className="architect-app-targets">
               {targets.map((target) => (
@@ -522,8 +586,7 @@ export function ArchitectAppPanel({
                 type="button"
                 onClick={() => {
                   setInspectAction('change');
-                  setRefineOpen(true);
-                  setAppSheet('refine');
+                  setChangeRequest(true);
                   if (selectedTarget) setDraft(changeScopeForTarget(selectedTarget, displayed?.revision));
                 }}
               >
@@ -553,7 +616,14 @@ export function ArchitectAppPanel({
                       {'after' in change ? <pre className="architect-app-diff-after">{String(change.after).slice(0, 400)}</pre> : null}
                     </li>
                   ))}
-                  <p>Comparing does not restore the previous revision.</p>
+                  <p>
+                    Comparing current revision {current?.revision ?? 'none'}
+                    {displayed && displayed.revision !== current?.revision
+                      ? `, selected revision ${displayed.revision}`
+                      : ''}
+                    {proposal ? ' and the proposed files' : parentFiles.length ? ' with the previous saved files' : ''}.
+                    Comparing does not restore or apply a revision.
+                  </p>
                 </ol>
               ) : (
                 <p>No current/previous file difference is available to compare.</p>
@@ -561,12 +631,6 @@ export function ArchitectAppPanel({
             ) : null}
           </div>
         ) : null}
-        <p className="architect-app-checks">
-          Typecheck {latestJob?.result?.typecheck.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Bundle{' '}
-          {latestJob?.result?.bundle.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Isolation{' '}
-          {latestJob?.result?.isolation ?? 'none'} · Profile {library?.profile.toolchain}
-          {preview?.revision ? ` · preview revision ${preview.revision}` : ''}
-        </p>
       </div>
       <aside className="architect-app-side" aria-label="Application details">
         <div className="architect-app-tabs">
@@ -703,9 +767,15 @@ export function ArchitectAppPanel({
           </button>
         </div>
       </aside>
-      <aside className={`architect-app-refine${refineOpen ? ' is-open' : ''}`}>
-        <button type="button" className="architect-app-refine-toggle" onClick={() => setRefineOpen(!refineOpen)}>
-          Refine
+      <aside
+        id="architect-app-change-request"
+        className={`architect-app-refine${refineOpen ? ' is-open' : ''}`}
+        hidden={!refineOpen}
+        role="region"
+        aria-label="Application change request"
+      >
+        <button type="button" className="architect-app-refine-toggle" onClick={() => setChangeRequest(false)}>
+          Close change request
         </button>
         <form
           onSubmit={(event) => {
@@ -716,6 +786,7 @@ export function ArchitectAppPanel({
           <label>
             Request
             <textarea
+              ref={requestField}
               value={draft}
               onChange={(event) => setDraft(event.currentTarget.value)}
               maxLength={2000}

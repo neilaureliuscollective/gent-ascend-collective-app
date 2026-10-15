@@ -43,6 +43,22 @@
     linear-gradient(180deg, #22241e 0%, #121410 34%, #080a09 100%);
   isolation: isolate;
 }
+.environment-main .origin-studio:not(.origin-active) {
+  background-image:
+    linear-gradient(180deg, #080a0980 0%, #080a09c2 52%, #050706 100%),
+    url('/media/world/threshold-chamber.webp');
+  background-size: cover;
+  background-position: 46% 18%;
+}
+@media (max-width: 720px) {
+  .environment-main .origin-studio:not(.origin-active) {
+    background-image:
+      linear-gradient(180deg, #080a09b3 0%, #080a09e0 50%, #050706 100%),
+      url('/media/world/threshold-chamber-mobile.webp');
+    background-size: cover;
+    background-position: 50% 20%;
+  }
+}
 .origin-studio::before {
   content: '';
   position: absolute;
@@ -851,9 +867,21 @@
 }
 
 .architect-app-refine {
+  display: none;
   grid-area: refine;
   border: 1px solid #2a2d2a;
   border-radius: 16px;
+}
+.architect-app-refine.is-open {
+  display: block;
+}
+.architect-app-status-details {
+  margin: 8px 0 0;
+}
+.architect-app-status-details summary {
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--studio-muted, #b9bebb);
 }
 
 .architect-app-refine textarea {
@@ -1040,12 +1068,14 @@
   .architect-app-diff-after {
     max-height: 140px;
   }
-  .architect-app-toolbar .architect-app-status,
-  .architect-app-toolbar .architect-app-flags,
-  .architect-app-toolbar .architect-app-checks {
-    display: none;
+  .architect-app-toolbar .architect-app-status {
+    display: block;
+    font-size: 0.92rem;
   }
-  .architect-app-viewports button[aria-pressed='false']:is([aria-pressed]) {
+  .architect-app-status-details p {
+    font-size: 0.82rem;
+  }
+  .architect-app-viewports button {
     min-width: 40px;
   }
 }

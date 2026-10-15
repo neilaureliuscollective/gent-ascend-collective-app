@@ -6,7 +6,7 @@ import {
   assertReplayPayload,
   mutationPayloadEquals,
 } from '@/domains/architect-apps/mutation';
-import { appWorkbenchStage } from '@/domains/architect-apps/stage';
+import { appWorkbenchStage, compactAppStatus } from '@/domains/architect-apps/stage';
 import { MemoryAppStore } from '@/domains/architect-apps/store';
 
 it('binds replay to an immutable payload snapshot and rejects a changed payload', () => {
@@ -138,4 +138,10 @@ it('derives workbench stages from real job, preview and save acknowledgments', (
     /Typecheck failed/,
   );
   expect(appWorkbenchStage({ job: { status: 'cancelled' } }).stage).toBe('cancelled');
+  expect(compactAppStatus({ stage: 'building' })).toBe('Building');
+  expect(compactAppStatus({ stage: 'saving' })).toBe('Saving');
+  expect(compactAppStatus({ stage: 'failed', retained: true })).toBe('Failed · last good preview kept');
+  expect(compactAppStatus({ stage: 'cancelled', retained: true })).toBe('Cancelled · last good preview kept');
+  expect(compactAppStatus({ stage: 'conflict' })).toBe('Uncertain');
+  expect(compactAppStatus({ stage: 'preview-ready' })).toBe('Preview ready');
 });

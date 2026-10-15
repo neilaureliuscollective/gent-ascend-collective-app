@@ -3,6 +3,7 @@ import {
   acceptInspectMessage,
   applicationPlan,
   changeScopeForTarget,
+  inspectScopeForFiles,
   creationBriefForGeneration,
   creationPathProfiles,
   encodeCreationDecision,
@@ -109,6 +110,22 @@ describe('Architect creation journey contracts', () => {
     expect(acceptInspectMessage({ schema: 'architect-apps-inspect/v1', session: 'nope', targetId: file!.id }, bound, [file!.id])).toBeNull();
     expect(acceptInspectMessage({ schema: 'architect-apps-data/v1', session: 's1', targetId: file!.id }, bound, [file!.id])).toBeNull();
     expect(acceptInspectMessage({ schema: 'architect-apps-inspect/v1', session: 's1', projectId: 'other', targetId: file!.id }, bound, [file!.id])).toBeNull();
+    const seen = new Set<string>();
+    const previewHit = {
+      schema: 'architect-apps-inspect/v1',
+      source: 'preview',
+      session: 's1',
+      projectId: 'p1',
+      revisionId: 'r1',
+      targetId: file!.id,
+      nonce: 'nonce-abc-1',
+    };
+    expect(acceptInspectMessage(previewHit, bound, [file!.id], seen)).toBe(file!.id);
+    expect(acceptInspectMessage(previewHit, bound, [file!.id], seen)).toBeNull();
+    expect(inspectScopeForFiles([{ path: 'src/App.tsx', content: 'data-architect-target architect-apps-inspect/v1' }])).toBe(
+      'elements',
+    );
+    expect(inspectScopeForFiles([{ path: 'src/App.tsx', content: 'export function App(){return null}' }])).toBe('host');
   });
 
   it('makes current, previous, proposed and failed revisions distinct', () => {

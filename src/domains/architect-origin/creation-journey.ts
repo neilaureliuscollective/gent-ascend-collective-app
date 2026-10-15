@@ -419,9 +419,9 @@ export function inspectTargets(input: {
 export function explainInspectTarget(target: InspectTarget) {
   if (target.kind === 'unsupported') return `${target.detail} ${target.evidence}`;
   if (target.kind === 'file')
-    return `${target.path} is a saved generated file. Evidence from the host file list, not the painted preview: ${target.evidence}`;
+    return `${target.path} is a saved generated file for this revision. Host evidence, not a filename guess: ${target.evidence}`;
   if (target.kind === 'record')
-    return `${target.title} is a host ${target.collection} record. Evidence: ${target.evidence}`;
+    return `${target.title} is a host ${target.collection} record that survives the preview session. Evidence: ${target.evidence}`;
   return `${target.title}: ${target.detail} ${target.evidence}`;
 }
 
@@ -430,10 +430,20 @@ export function changeScopeForTarget(target: InspectTarget, revision?: number) {
   return `Change ${scope} in revision ${revision ?? 'current'} without overwriting the working revision. Keep the last working preview available until this proposal is reviewed and accepted.`;
 }
 
+export function inspectScopeForFiles(files: { path: string; content: string }[]) {
+  return files.some(
+    (file) =>
+      file.content.includes('architect-apps-inspect/v1') && file.content.includes('data-architect-target'),
+  )
+    ? 'elements'
+    : 'host';
+}
+
 export function acceptInspectMessage(
   data: unknown,
   bound: { session: string; projectId: string; revisionId: string },
   knownIds: string[],
+  seenNonces?: Set<string>,
 ) {
   if (!data || typeof data !== 'object') return null;
   const row = data as Record<string, unknown>;
@@ -442,6 +452,11 @@ export function acceptInspectMessage(
   if (row.projectId && row.projectId !== bound.projectId) return null;
   if (row.revisionId && row.revisionId !== bound.revisionId) return null;
   if (typeof row.targetId !== 'string' || !knownIds.includes(row.targetId)) return null;
+  if (row.source === 'preview') {
+    if (typeof row.nonce !== 'string' || row.nonce.length < 8) return null;
+    if (seenNonces?.has(row.nonce)) return null;
+    seenNonces?.add(row.nonce);
+  }
   return row.targetId;
 }
 
