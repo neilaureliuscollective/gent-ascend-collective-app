@@ -4,7 +4,7 @@ Date: 2026-10-15. PR #130 continuation. This is a reviewable production path and
 
 ## Exact head and compatibility
 
-Refresh this section after the publish commit. The previous verified green head was `2c11f174337b97dbba94a5cba1a1798e493fa2de` (all six PR workflows passed). Current `origin/main` at refresh: `804c877` (Studio production on Health/Lifestyle). Merge-tree against that main was clean.
+Policy commit on this review branch: `d06441cd07d032c4a841ceea7087d9a21068df4e`. Previous verified green head was `2c11f174337b97dbba94a5cba1a1798e493fa2de` (all six PR workflows passed). Current `origin/main` at refresh: `804c877` (Studio production on Health/Lifestyle). Merge-tree against that main was clean. Terminal Quality/Origin checks for `d06441c` are the publish gate for this activation package.
 
 The founder-production capability is **off** until every name below is deliberately set. Default production remains production. Mock output cannot be presented as live AI generation.
 
