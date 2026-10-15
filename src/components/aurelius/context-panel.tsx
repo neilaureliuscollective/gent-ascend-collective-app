@@ -97,8 +97,14 @@ export function ContextPanel({
           Start a new conversation for a fresh context.
         </p>
         <p>
+          Reviewed public Aethelios knowledge is always supplied separately from your private
+          memory. Current published facts take precedence over older assistant replies when they
+          conflict about identity, brand or membership. Proposed prices are not checkout terms.
+        </p>
+        <p>
           Web research uses returned sources. Live voice is a gated pilot. Use Studio for images;
-          external services are not connected through this conversation.
+          external services are not connected through this conversation. Health keeps its own
+          record-backed context.
         </p>
         {!preview && (
           <p>

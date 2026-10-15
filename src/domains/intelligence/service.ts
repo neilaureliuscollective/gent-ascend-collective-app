@@ -15,6 +15,10 @@ import { readContinuity } from '@/domains/continuity/service';
 import { resolveNextMove } from '@/domains/command/next-move';
 import { capabilityContext } from './capabilities';
 import { selectedArtifactContext } from '@/domains/artifacts/context-service';
+import { selectConfirmedMemories } from './memory-retrieval';
+import { catalogConnectionRequirement, loadProductKnowledge } from './product-knowledge';
+import { getProduct } from '@/domains/commerce/shopify';
+import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -157,21 +161,7 @@ export async function personalContext(question?: string): Promise<PersonalContex
   )
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
   const reviewByDay = new Map((reviews.data ?? []).map((review) => [review.day, review]));
-  const tokens = new Set((question ?? '').toLowerCase().match(/[a-z]{4,}/g) ?? []);
-  const ranked = (memories.data ?? []).map((row) => ({
-    row,
-    score: [...tokens].reduce(
-      (n, word) => n + (row.content.toLowerCase().includes(word) ? 1 : 0),
-      0,
-    ),
-  }));
-  const selected = question
-    ? ranked
-        .sort((a, b) => b.score - a.score)
-        .filter((item) => item.score > 0)
-        .slice(0, 6)
-        .map((item) => item.row)
-    : (memories.data ?? []);
+  const selected = selectConfirmedMemories(memories.data ?? [], question);
   const dailyRelevant =
     !question ||
     /today|tomorrow|daily|routine|week|progress|energy|sleep|reflect|yesterday|plan/i.test(
@@ -673,10 +663,20 @@ export async function prepareReply(
   let context: PersonalContext | null;
   let threadSummary: string;
   let artifactContext = '';
+  let productKnowledge: Awaited<ReturnType<typeof loadProductKnowledge>> = null;
   try {
-    [history, context] = await Promise.all([
+    [history, context, productKnowledge] = await Promise.all([
       conversationTurns(input.conversationId, undefined, company?.id),
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
+      loadProductKnowledge(input.text, {
+        catalog: readLifestyleCatalog,
+        detail: getProduct,
+      }).catch(() => ({
+        retrievedAt: new Date().toISOString(),
+        status: 'error' as const,
+        connectionRequirement: catalogConnectionRequirement('error'),
+        records: [],
+      })),
     ]);
     measured('history-context');
     threadSummary = await prepareThreadSummary(client, person.id, input.conversationId, history);
@@ -704,6 +704,7 @@ export async function prepareReply(
     threadSummary,
     company ? null : capabilityContext(input.text),
     company,
+    { productKnowledge },
   );
   if (artifactContext)
     messages.splice(Math.max(0, messages.length - 1), 0, {
