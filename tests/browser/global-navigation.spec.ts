@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+
+// Keep this synthetic shell suite on its fixture origin in both dedicated and full runs.
+test.use({ baseURL: 'http://127.0.0.1:3102', serviceWorkers: 'block' });
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route('**/api/aurelius**', (route) =>
