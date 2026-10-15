@@ -4,32 +4,55 @@ import { selectedDirection } from '@/domains/talk-creation/design-board';
 import type { WorkItemRef } from './kinds';
 import { talkFieldLabel } from './document';
 
+export type WorkTarget = { creationId: string; field: string };
+
+export type ResolvedWorkTarget = {
+  status: 'clear' | 'active' | 'stale';
+  target: WorkTarget | null;
+  item: WorkItemRef | null;
+  reason: string | null;
+};
+
+export function resolveWorkTarget(
+  workspace: TalkCreationWorkspace | null,
+  target: WorkTarget | null,
+  openedId?: string | null,
+  conversationId?: string | null,
+): ResolvedWorkTarget {
+  if (target) {
+    const focused = findCurrentCreation(workspace, target.creationId, conversationId);
+    if (focused) {
+      return {
+        status: 'active',
+        target,
+        item: { ...describeCreation(focused), element: talkFieldLabel(target.field) },
+        reason: null,
+      };
+    }
+    const rebound = rebindSupersededTarget(workspace, target, conversationId);
+    if (rebound) return rebound;
+    return {
+      status: 'stale',
+      target: null,
+      item: describeOpenedOrSelected(workspace, openedId, conversationId),
+      reason: 'That selection is no longer current. Choose the field again before changing it.',
+    };
+  }
+  return {
+    status: 'clear',
+    target: null,
+    item: describeOpenedOrSelected(workspace, openedId, conversationId),
+    reason: null,
+  };
+}
+
 export function describeSelectedWork(
   workspace: TalkCreationWorkspace | null,
-  target?: { creationId: string; field: string } | null,
+  target?: WorkTarget | null,
+  openedId?: string | null,
+  conversationId?: string | null,
 ): WorkItemRef | null {
-  if (!workspace) return null;
-  const selectedId =
-    workspace.selected.board ||
-    workspace.selected.brief ||
-    workspace.selected.plan ||
-    workspace.selected.palette;
-  const creation = workspace.creations.find((item) => item.id === selectedId && !item.superseded_by);
-  if (creation) {
-    const described = describeCreation(creation);
-    if (target?.creationId === described.id) return { ...described, element: talkFieldLabel(target.field) };
-    return described;
-  }
-  const image = workspace.images.find((item) => item.id === workspace.selectedImageId);
-  if (!image) return null;
-  return {
-    source: 'artifact',
-    kind: 'image',
-    id: image.id,
-    conversationId: image.conversation_id,
-    title: image.prompt.slice(0, 80) || 'Talk image',
-    element: image.status,
-  };
+  return resolveWorkTarget(workspace, target ?? null, openedId, conversationId).item;
 }
 
 export function describeCreation(creation: TalkCreation): WorkItemRef {
@@ -54,4 +77,92 @@ export function selectionChipLabel(item: WorkItemRef) {
   const version = item.version ? ` · v${item.version}` : '';
   const element = item.element ? ` · ${item.element}` : '';
   return `${item.title}${version}${element}`;
+}
+
+export function workTargetVoicePrefix(resolved: ResolvedWorkTarget) {
+  if (resolved.status === 'active' && resolved.item)
+    return `Changing this: ${selectionChipLabel(resolved.item)}`;
+  if (resolved.status === 'stale')
+    return 'The previous selection expired. Ask which field to change. Do not guess another item or rewrite other directions.';
+  return '';
+}
+
+export function workTargetVoiceText(text: string, resolved: ResolvedWorkTarget) {
+  const prefix = workTargetVoicePrefix(resolved);
+  const value = text.trim();
+  if (!prefix) return value;
+  return value ? `${prefix}\n${value}` : prefix;
+}
+
+export function rebindWorkTarget(target: WorkTarget | null, fromId: string | null, toId: string) {
+  if (!target || !fromId || target.creationId !== fromId) return target;
+  return { ...target, creationId: toId };
+}
+
+function describeOpenedOrSelected(
+  workspace: TalkCreationWorkspace | null,
+  openedId?: string | null,
+  conversationId?: string | null,
+): WorkItemRef | null {
+  if (!workspace) return null;
+  const opened = openedId ? findCurrentCreation(workspace, openedId, conversationId) : null;
+  if (opened) return describeCreation(opened);
+  const selectedId =
+    workspace.selected.brief ||
+    workspace.selected.plan ||
+    workspace.selected.palette ||
+    workspace.selected.board;
+  const creation = selectedId ? findCurrentCreation(workspace, selectedId, conversationId) : null;
+  if (creation) return describeCreation(creation);
+  const image = workspace.images.find(
+    (item) =>
+      item.id === workspace.selectedImageId &&
+      (!conversationId || item.conversation_id === conversationId),
+  );
+  if (!image) return null;
+  return {
+    source: 'artifact',
+    kind: 'image',
+    id: image.id,
+    conversationId: image.conversation_id,
+    title: image.prompt.slice(0, 80) || 'Talk image',
+    element: image.status,
+  };
+}
+
+function findCurrentCreation(
+  workspace: TalkCreationWorkspace | null,
+  creationId: string,
+  conversationId?: string | null,
+) {
+  return (
+    workspace?.creations.find(
+      (item) =>
+        item.id === creationId &&
+        !item.superseded_by &&
+        !item.candidate &&
+        (!conversationId || item.conversation_id === conversationId),
+    ) ?? null
+  );
+}
+
+function rebindSupersededTarget(
+  workspace: TalkCreationWorkspace | null,
+  target: WorkTarget,
+  conversationId?: string | null,
+): ResolvedWorkTarget | null {
+  const prior = workspace?.creations.find(
+    (item) =>
+      item.id === target.creationId &&
+      (!conversationId || item.conversation_id === conversationId),
+  );
+  if (!prior?.superseded_by) return null;
+  const current = findCurrentCreation(workspace, prior.superseded_by, conversationId);
+  if (!current || current.lineage_id !== prior.lineage_id) return null;
+  return {
+    status: 'active',
+    target: { creationId: current.id, field: target.field },
+    item: { ...describeCreation(current), element: talkFieldLabel(target.field) },
+    reason: null,
+  };
 }

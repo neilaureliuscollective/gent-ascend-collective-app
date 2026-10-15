@@ -185,3 +185,69 @@ test('Talk elevation opens a Lifestyle brief as an editable document with honest
     animations: 'disabled',
   });
 });
+
+test('Talk keeps a brief Purpose target when a design board is also selected', async ({ page }) => {
+  const board = selectDesignDirection(lifestyleLaunchBoard(), 'direction-c');
+  const briefId = '50000000-0000-4000-8000-000000000444';
+  const boardId = '50000000-0000-4000-8000-000000000445';
+  const creations: TalkCreationWorkspace = {
+    creations: [
+      {
+        id: briefId,
+        person_id: 'synthetic',
+        conversation_id: conversation,
+        source_turn_id: turn.id,
+        lineage_id: briefId,
+        version: 2,
+        kind: 'brief',
+        content: {
+          title: 'Aethelios Lifestyle launch',
+          purpose: 'Introduce the line.',
+          audience: 'Founders',
+          visualDirection: 'Obsidian and emerald',
+          requirements: ['Phone-first'],
+          unresolved: [],
+        },
+        predecessor_id: null,
+        superseded_by: null,
+        created_at: '2026-10-15T03:00:02.000Z',
+      },
+      {
+        id: boardId,
+        person_id: 'synthetic',
+        conversation_id: conversation,
+        source_turn_id: turn.id,
+        lineage_id: boardId,
+        version: 4,
+        kind: 'board',
+        content: board,
+        predecessor_id: null,
+        superseded_by: null,
+        created_at: '2026-10-15T03:00:01.000Z',
+      },
+    ],
+    selected: { brief: briefId, board: boardId },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) return route.abort();
+    if (url.pathname === '/api/aurelius/creations') return route.fulfill({ json: creations });
+    if (url.pathname === '/api/aurelius') return route.fulfill({ json: workspace() });
+    if (url.pathname.startsWith('/api/')) return route.fulfill({ json: {} });
+    return route.continue();
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await page.locator('.talk-creation-card[data-kind="brief"]').getByRole('button', { name: 'Open' }).click();
+  await page.getByRole('button', { name: 'Change Purpose' }).click();
+  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
+  await expect(page.getByText('Changing this: Aethelios Lifestyle launch directions · v4 · Emerald Glass')).toHaveCount(0);
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toHaveCount(0);
+});

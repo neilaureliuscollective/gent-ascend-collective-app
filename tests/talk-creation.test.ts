@@ -274,7 +274,7 @@ describe('Talk creation contracts', () => {
         ],
         { creationId: '50000000-0000-4000-8000-000000000099', field: 'purpose' },
       ),
-    ).not.toContain('Exact target');
+    ).toContain('is not a current selected version');
     const latest = '40000000-0000-4000-8000-000000000012';
     const shown = creationsOnTurn(
       latest,

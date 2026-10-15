@@ -7,6 +7,7 @@ import { readLiveEvent, type LiveJob } from './contract';
 import { recoverableLiveError } from './provider-errors';
 import { VoiceDiagnostics, rtcHealth } from './diagnostics';
 import { LIVE_TEXT_LIMIT, type LiveTextSend } from './limits';
+import type { WorkTarget } from '@/domains/work-items';
 export type LiveState = {
   phase: 'idle' | 'connecting' | 'listening' | 'speaking' | 'ended' | 'error';
   mode: 'immersive' | 'compact';
@@ -151,6 +152,7 @@ export class LiveController {
     includeContext: boolean,
     voice: 'cedar' | 'marin' = 'cedar',
     backgroundWork = false,
+    workTarget: WorkTarget | null = null,
   ) {
     if (this.starting || this.id || this.state.cleanupPending) return;
     const epoch = ++this.epoch;
@@ -289,6 +291,7 @@ export class LiveController {
           includeContext,
           voice,
           backgroundWork,
+          ...(workTarget ? { workTarget } : {}),
         }),
       });
       const result = (await response.json()) as {
@@ -411,9 +414,10 @@ export class LiveController {
     this.update({ phase: 'listening', responsePending: false });
     if (cuttingOff) this.diagnostics.cutoff(performance.now() - started, this.currentResponse);
   }
-  text(text: string): LiveTextSend {
-    const value = text.trim();
-    if (!value) return { accepted: false, reason: 'empty' };
+  text(text: string, targetLine?: string | null): LiveTextSend {
+    const spoken = text.trim();
+    const value = targetLine?.trim() ? `${targetLine.trim()}\n${spoken}` : spoken;
+    if (!spoken) return { accepted: false, reason: 'empty' };
     if (value.length > LIVE_TEXT_LIMIT) return { accepted: false, reason: 'limit' };
     if (this.channel?.readyState !== 'open') return { accepted: false, reason: 'channel' };
     const pending = this.generating;

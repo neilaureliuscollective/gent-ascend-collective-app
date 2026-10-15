@@ -115,7 +115,12 @@ export async function admitLive(input: LiveAdmission) {
       thread.data.context_summary,
     );
     const application: { role: string; content: unknown }[] = built[0] ? [built[0]] : [];
-    const talkContext = await selectedTalkContext(client, person.id, input.conversationId);
+    const talkContext = await selectedTalkContext(
+      client,
+      person.id,
+      input.conversationId,
+      input.workTarget,
+    );
     if (talkContext) application.push({ role: 'user', content: talkContext });
     const workspace = await readArtifacts(input.conversationId, session);
     const activeImage = workspace.artifacts.find((item) => item.id === workspace.selectedId);

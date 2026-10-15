@@ -53,9 +53,10 @@ Reviewed: Realtime conversations, Voice agents, Live conversations, and ChatGPT 
 - Input responsiveness: 100ms
 - Save acknowledgment: 800ms
 
+## Selected-work lifecycle
+
+The visible chip, opened artifact, `workTarget` on text, voice admission and typed-in-voice prefix now resolve the same current creation. A brief Purpose target wins even when a board is also selected. Stale or cross-conversation targets ask instead of rewriting another item. New conversation, switching conversations and opening a different item clear the field. Saving a revision rebinds the same field to the new version.
+
 ## Remaining to make this personally usable live
 
-1. Founder-authorized hosted apply of Talk/Architect migrations from #131 including `15190000`
-2. Promote a build of the verified #131 SHA, then this elevation SHA
-3. Wire remaining Studio/Architect return artifacts through the same work-item surface after those destinations are activated
-4. Paid audio and production HTTP 400 remain separate
+See `docs/releases/TALK_INTEGRATED_RELEASE.md`. Health #136 must renumber its colliding `20261015180000` before merge. Talk does not rename `15180000`/`15190000`.

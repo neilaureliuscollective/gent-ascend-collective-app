@@ -120,6 +120,25 @@ it('does not send typed Talk text until the voice channel is open', async () => 
   expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
   await controller.end();
 });
+it('sends the exact Changing this target with typed voice text', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const sent = controller.text(
+    'Make this warmer.',
+    'Changing this: Aethelios Lifestyle launch · v2 · Purpose',
+  );
+  expect(sent).toEqual({ accepted: true });
+  const created = FakePC.instances
+    .at(-1)!
+    .channel.send.mock.calls.map((call) => JSON.parse(call[0] as string))
+    .find((event) => event.type === 'conversation.item.create');
+  expect(created.item.content[0].text).toBe(
+    'Changing this: Aethelios Lifestyle launch · v2 · Purpose\nMake this warmer.',
+  );
+  const admission = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
+  expect(admission.sdp).toMatch(/^v=0/);
+  await controller.end();
+});
 it('rejects over-limit typed voice text and keeps it unsent', async () => {
   const controller = new LiveController();
   await controller.start(conversation, false);

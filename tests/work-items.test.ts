@@ -5,7 +5,9 @@ import {
   describeSelectedWork,
   describeTalkDestination,
   exportTalkDocument,
+  resolveWorkTarget,
   selectionChipLabel,
+  workTargetVoiceText,
 } from '@/domains/work-items';
 import { lifestyleLaunchBoard, selectDesignDirection } from '@/domains/talk-creation/design-board';
 import type { TalkCreation, TalkCreationWorkspace } from '@/domains/talk-creation/schema';
@@ -106,6 +108,58 @@ it('names a targeted brief field for conversational change-this', () => {
   expect(
     describeSelectedWork(workspace, { creationId: '50000000-0000-4000-8000-000000000499', field: 'purpose' })?.element,
   ).toBeUndefined();
+});
+
+it('keeps a brief Purpose target when a design board is also selected', () => {
+  const board = selectDesignDirection(lifestyleLaunchBoard(), 'direction-c');
+  const brief: TalkCreation = {
+    id: '50000000-0000-4000-8000-000000000404',
+    person_id: '00000000-0000-4000-8000-000000000001',
+    conversation_id: '30000000-0000-4000-8000-000000000404',
+    source_turn_id: null,
+    lineage_id: '50000000-0000-4000-8000-000000000404',
+    version: 2,
+    kind: 'brief',
+    content: {
+      title: 'Aethelios Lifestyle launch',
+      purpose: 'Introduce the line.',
+      audience: 'Founders',
+      visualDirection: 'Obsidian and emerald',
+      requirements: [],
+      unresolved: [],
+    },
+    predecessor_id: null,
+    superseded_by: null,
+    created_at: '2026-10-15T03:00:00Z',
+  };
+  const boardRow: TalkCreation = {
+    ...brief,
+    id: '50000000-0000-4000-8000-000000000405',
+    lineage_id: '50000000-0000-4000-8000-000000000405',
+    kind: 'board',
+    version: 4,
+    content: board,
+  };
+  const workspace: TalkCreationWorkspace = {
+    creations: [brief, boardRow],
+    selected: { brief: brief.id, board: boardRow.id },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  const resolved = resolveWorkTarget(workspace, { creationId: brief.id, field: 'purpose' });
+  expect(resolved.status).toBe('active');
+  expect(selectionChipLabel(resolved.item!)).toBe('Aethelios Lifestyle launch · v2 · Purpose');
+  expect(workTargetVoiceText('Make this warmer.', resolved)).toBe(
+    'Changing this: Aethelios Lifestyle launch · v2 · Purpose\nMake this warmer.',
+  );
+  expect(
+    resolveWorkTarget(workspace, { creationId: '50000000-0000-4000-8000-000000000499', field: 'purpose' })
+      .status,
+  ).toBe('stale');
+  expect(describeSelectedWork(workspace, null, brief.id)?.kind).toBe('brief');
 });
 
 it('describes a bound Architect direction handoff without claiming unsupported work', () => {

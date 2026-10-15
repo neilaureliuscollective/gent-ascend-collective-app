@@ -111,11 +111,13 @@ export function LiveVoiceEntry({
   includeContext,
   disabled = false,
   onAdoptConversation,
+  workTarget = null,
 }: {
   conversationId: string | null;
   includeContext: boolean;
   disabled?: boolean;
   onAdoptConversation?: (conversationId: string) => void;
+  workTarget?: { creationId: string; field: string } | null;
 }) {
   const controller = useContext(LiveContext);
   const unavailable = useContext(LiveAvailabilityContext);
@@ -225,7 +227,13 @@ export function LiveVoiceEntry({
                 onAdoptConversation?.(id);
                 setConsent(false);
                 setApproved(false);
-                void controller.start(id, includeContext && contextApproved, voice, backgroundWork);
+                void controller.start(
+                  id,
+                  includeContext && contextApproved,
+                  voice,
+                  backgroundWork,
+                  workTarget,
+                );
                 setContextApproved(false);
                 setBackgroundWork(false);
               }}

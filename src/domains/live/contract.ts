@@ -12,6 +12,16 @@ export const liveAdmission = z
     includeContext: z.boolean(),
     voice: z.enum(['cedar', 'marin']).default('cedar'),
     backgroundWork: z.boolean().default(false),
+    workTarget: z
+      .object({
+        creationId: z.uuid(),
+        field: z
+          .string()
+          .trim()
+          .regex(/^[a-z][a-zA-Z0-9-]{0,47}$/),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export const liveEnd = z.object({ sessionId: z.uuid() }).strict();
