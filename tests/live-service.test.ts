@@ -8,6 +8,8 @@ const mock = vi.hoisted(() => ({
   context: vi.fn(),
   turns: vi.fn(),
   access: vi.fn(),
+  artifacts: vi.fn(),
+  background: vi.fn(),
 }));
 vi.mock('@/domains/access/founder', () => ({ currentFounderAccess: mock.founder }));
 vi.mock('@/domains/access/current', () => ({ currentAccess: mock.access }));
@@ -35,7 +37,7 @@ vi.mock('@/domains/commerce/lifestyle-catalog', () => ({
   readLifestyleCatalog: async () => ({ products: [], status: 'unconfigured' }),
 }));
 vi.mock('@/domains/artifacts/service', () => ({
-  readArtifacts: async () => ({ artifacts: [], selectedId: null, projects: [] }),
+  readArtifacts: mock.artifacts,
   proposeImage: vi.fn(),
   proposeVisual: vi.fn(),
   proposeCoworker: vi.fn(),
@@ -43,7 +45,10 @@ vi.mock('@/domains/artifacts/service', () => ({
   visualWorkTool: {},
   coworkerWorkTool: {},
 }));
-vi.mock('@/domains/live/background', () => ({ backgroundTool: {}, runBackgroundTask: vi.fn() }));
+vi.mock('@/domains/live/background', () => ({
+  backgroundTool: {},
+  runBackgroundTask: mock.background,
+}));
 vi.mock('@/domains/talk-creation/context', () => ({
   selectedTalkContext: async () => '',
   selectedTalkPredecessors: async () => ({}),
@@ -85,7 +90,7 @@ class Socket extends EventTarget {
   send(raw: string) {
     const item = JSON.parse(raw);
     this.sent.push(item);
-    if (item.item?.id?.startsWith('ctx_'))
+    if (item.type === 'conversation.item.create' && item.item?.type === 'message' && item.item.id)
       queueMicrotask(() => this.event({ type: 'conversation.item.added', item: item.item }));
   }
   event(value: unknown) {
@@ -110,6 +115,13 @@ let rpc: ReturnType<typeof vi.fn>;
 let stillFounder: boolean;
 beforeEach(() => {
   vi.clearAllMocks();
+  mock.artifacts.mockResolvedValue({ artifacts: [], selectedId: null, projects: [] });
+  mock.background.mockResolvedValue({
+    text: 'Synthetic approved result',
+    input: 1,
+    output: 2,
+    model: 'synthetic-model',
+  });
   for (const [key, value] of Object.entries({
     APP_ENV: 'production',
     VERCEL_ENV: 'production',
@@ -156,9 +168,15 @@ beforeEach(() => {
             : null
           : table === 'membership_accounts'
             ? { beta_access: true }
-            : table === 'ai_conversations'
-              ? { context_summary: null, archived_at: null, company_id: null }
-              : { ended_at: null, conversation_id: input.conversationId };
+            : table === 'ai_live_jobs'
+              ? { status: 'approved' }
+              : table === 'ai_conversations'
+                ? { context_summary: null, archived_at: null, company_id: null }
+                : {
+                    ended_at: null,
+                    conversation_id: input.conversationId,
+                    expires_at: new Date(Date.now() + 120000).toISOString(),
+                  };
       const query = {
         select: () => query,
         eq: () => query,
@@ -497,4 +515,77 @@ it('does not report a stale sideband-open failure when an admitted socket later 
   } finally {
     log.mockRestore();
   }
+});
+
+it('seeds real multirole history with compact IDs and independently correlated events', async () => {
+  await admitLive(input);
+  const items = Socket.last.sent as {
+    event_id?: string;
+    item?: { id?: string; role?: string; content?: { type?: string; text: string }[] };
+  }[];
+  const messages = items.filter((x) => x.item?.id);
+  expect(messages.map((x) => x.item?.role)).toEqual(['user', 'user', 'assistant']);
+  expect(new Set(messages.map((x) => x.item?.id)).size).toBe(messages.length);
+  for (const item of messages) {
+    expect(item.item?.id).toMatch(/^c[0-9a-z]{25}$/);
+    expect(item.event_id).toMatch(/^seed_[a-f0-9]{32}$/);
+  }
+  expect(messages[1]?.item?.content).toEqual([
+    { type: 'input_text', text: 'Saved synthetic typed question' },
+  ]);
+  expect(messages[2]?.item?.content).toEqual([{ type: 'output_text', text: 'Saved answer' }]);
+});
+for (const fail of [false, true])
+  it(`uses compact IDs for background ${fail ? 'failure' : 'completion'} messages`, async () => {
+    vi.useFakeTimers();
+    if (fail) mock.background.mockRejectedValueOnce(new Error('Synthetic task failure'));
+    const admission = await admitLive({ ...input, backgroundWork: true });
+    const socket = Socket.last;
+    const initial = socket.sent.length;
+    const monitor = admission.monitor();
+    socket.event({
+      type: 'response.function_call_arguments.done',
+      name: 'request_background_work',
+      call_id: 'synthetic-background',
+      arguments: JSON.stringify({ task: 'Synthetic approved task', coworker: null }),
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    const messages = socket.sent.slice(initial).filter((x) => x.item?.id);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.item?.id).toMatch(/^c[0-9a-z]{25}$/);
+    expect(messages[0]?.item?.content?.[0]?.text).toContain(
+      fail ? 'approved background work failed' : 'Synthetic approved result',
+    );
+    socket.close();
+    await monitor;
+  });
+it('uses compact IDs for changed selection and saved artifact messages', async () => {
+  vi.useFakeTimers();
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const initial = socket.sent.length;
+  const monitor = admission.monitor();
+  mock.artifacts.mockResolvedValue({
+    artifacts: [
+      {
+        id: 'synthetic-image',
+        status: 'complete',
+        visual: null,
+        version_id: 'synthetic-version',
+        project_id: null,
+        prompt: 'Synthetic image',
+      },
+    ],
+    selectedId: 'synthetic-image',
+    projects: [],
+  });
+  await vi.advanceTimersByTimeAsync(3000);
+  const messages = socket.sent.slice(initial).filter((x) => x.item?.id);
+  expect(messages).toHaveLength(2);
+  expect(new Set(messages.map((x) => x.item?.id)).size).toBe(2);
+  for (const message of messages) expect(message.item?.id).toMatch(/^c[0-9a-z]{25}$/);
+  expect(messages[0]?.item?.content?.[0]?.text).toContain('Application selection changed');
+  expect(messages[1]?.item?.content?.[0]?.text).toContain('Application saved image result');
+  socket.close();
+  await monitor;
 });

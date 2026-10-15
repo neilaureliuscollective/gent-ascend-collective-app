@@ -16,6 +16,7 @@ import {
 } from '@/domains/intelligence/prompt';
 import { budgetLiveSeed } from './context-budget';
 import { admitLiveSeed, LiveSeedError } from './seed';
+import { createLiveItemId } from './item-id';
 import {
   loadProductKnowledge,
   recentUserTextsFromTurns,
@@ -315,7 +316,7 @@ export async function admitLive(input: LiveAdmission) {
     // Confirm bounded context is admitted before the browser can transmit live audio.
     // Application/artifact context is already pinned separately from the history tail.
     const seed = messages.map((message) => ({
-      id: `ctx_${randomUUID().replaceAll('-', '')}`,
+      id: createLiveItemId(),
       eventId: `seed_${randomUUID().replaceAll('-', '')}`,
       message,
     }));
@@ -625,7 +626,7 @@ export async function admitLive(input: LiveAdmission) {
         emit({
           type: 'conversation.item.create',
           item: {
-            id: `ctx_${randomUUID().replaceAll('-', '')}`,
+            id: createLiveItemId(),
             type: 'message',
             role: 'user',
             content: [
@@ -652,7 +653,7 @@ export async function admitLive(input: LiveAdmission) {
           emit({
             type: 'conversation.item.create',
             item: {
-              id: `ctx_${randomUUID().replaceAll('-', '')}`,
+              id: createLiveItemId(),
               type: 'message',
               role: 'user',
               content: [
@@ -878,7 +879,7 @@ export async function admitLive(input: LiveAdmission) {
               emit({
                 type: 'conversation.item.create',
                 item: {
-                  id: `ctx_${randomUUID().replaceAll('-', '')}`,
+                  id: createLiveItemId(),
                   type: 'message',
                   role: 'user',
                   content: [
@@ -904,7 +905,7 @@ export async function admitLive(input: LiveAdmission) {
               emit({
                 type: 'conversation.item.create',
                 item: {
-                  id: `ctx_${randomUUID().replaceAll('-', '')}`,
+                  id: createLiveItemId(),
                   type: 'message',
                   role: 'user',
                   content: [
