@@ -1,3 +1,15 @@
+# Studio production release — October 15, 2026
+
+Founder explicitly instructed: “Push proper updates to main and deploy to live app.” This authorizes merge of PR #132 and the existing Vercel Git production pipeline. Hosted Studio migrations, Fly renderer, new credentials and paid generation remain off.
+
+## Released application
+
+PR #132 merged as `9b21a0e72059844adbe1f25811d82d8b68d06110` (parents `544c156` Health workspace + `e9e871179e4779a72e9a8a2105e619ef5c034273` Studio). Production deployment `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` is READY with production configuration and assigned to **https://www.gentascend.com**. Home HTML `data-dpl-id` matches that deployment. This is a production build through the existing Git pipeline, not promotion of a preview. Previous compatible production artifact is Health workspace SHA `544c156`; preserve private tables, buckets and records if reverting the app.
+
+Live signed-out checks: `/`, `/app`, `/app/studio` and `/app/health` return 200; `/api/studio`, narration and footage return 401 `private,no-store`; `/api/studio/readiness` returns 403 `Founder access required.`; `/dev` returns 404. Design/Film persistence and hosted PNG/PDF/Film rendering stay unavailable until the Studio migrations and a commissioned renderer are separately authorized.
+
+Rollback: restore the previous READY production deployment for `544c156`. Leave stored jobs/objects. Do not revert Lifestyle or the official icon. Do not launch or stop a Fly Machine (none is commissioned).
+
 # Studio production release — October 12, 2026
 
 Founder explicitly instructed: “Research and execute next build. Push to live app.” This authorizes the release of the reviewed Studio candidate; unverified paid media remains disabled.

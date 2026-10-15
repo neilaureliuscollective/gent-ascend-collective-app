@@ -1,6 +1,6 @@
 # Aethelios Studio — editable design and complete media productions
 
-Status: implemented on `cursor/studio-editable-productions-09ef` from refreshed main `529d5f1`. No production merge, hosted migration, paid provider call or credential configuration.
+Status: founder authorized 2026-10-15 merge of PR #132 onto main. Live production is merge `9b21a0e` / deployment `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` on https://www.gentascend.com. Hosted Studio migrations, Fly renderer, `STUDIO_RENDER_COMMISSIONED` and paid generation remain off.
 
 ## What landed
 
@@ -33,8 +33,8 @@ Open Talk #131 (`cursor/talk-creative-conversation-5b08`) and Architect #130 (`c
 
 Do **not** paste secret values into chat or Git. Configuration should only switch on already-implemented flows. This assignment does not apply hosted migrations, create grants or make paid calls.
 
-1. Merge review of this Studio PR onto the intended environment after founder approval. Do not deploy from this assignment.
-2. Apply `supabase/migrations/20261016010000_studio_editable_productions.sql`, `supabase/migrations/20261017010000_studio_attempt_storage.sql`, `supabase/migrations/20261018010000_studio_editor_lifecycle.sql` and `supabase/migrations/20261019010000_studio_design_export_jobs.sql` to the existing Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions`, `ai_studio_render_jobs`, `ai_studio_design_export_jobs` and the two private buckets exist. Do not reapply older narration/footage migrations. Do not apply this hosted from this assignment.
+1. ~~Merge review of this Studio PR onto the intended environment after founder approval.~~ Done 2026-10-15: PR #132 merged as `9b21a0e`; production `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` is READY on https://www.gentascend.com.
+2. Apply `supabase/migrations/20261016010000_studio_editable_productions.sql`, `supabase/migrations/20261017010000_studio_attempt_storage.sql`, `supabase/migrations/20261018010000_studio_editor_lifecycle.sql` and `supabase/migrations/20261019010000_studio_design_export_jobs.sql` to the existing Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions`, `ai_studio_render_jobs`, `ai_studio_design_export_jobs` and the two private buckets exist. Do not reapply older narration/footage migrations. Not applied hosted in the 2026-10-15 production promotion.
 3. Editing, save/reopen, PNG/SVG/PDF export and local FFmpeg film render do **not** require OpenAI or Runway. Verify them on an ordinary owner login first with permitted local or synthetic media.
 4. Leave `STUDIO_NARRATION_ENABLED` and `STUDIO_FOOTAGE_ENABLED` unset. Paid narration/Runway stay default-off.
 5. Leave `RUNWAYML_API_SECRET` and `STUDIO_FOOTAGE_SIGNING_KEY` unset until a later footage activation. A signing key must be ≥32 characters and independent of the Runway secret.
@@ -58,7 +58,7 @@ Apply `supabase/migrations/20261019010000_studio_design_export_jobs.sql` to the 
 
 **Running worker:** `npm run studio:worker` or `npm run studio:worker:supervised` on a host with FFmpeg 6.1+ libx264/aac and the existing Supabase URL plus service-role key. Leave `STUDIO_RENDER_WORKER` unset for in-request local execution. `STUDIO_RENDER_WORKER=true` only queues jobs.
 
-**Not deployed / not activated:** hosted migrations (including `20261018010000_studio_editor_lifecycle.sql` and `20261019010000_studio_design_export_jobs.sql`), Fly.io Machine, `STUDIO_RENDER_COMMISSIONED`, paid OpenAI/Runway calls, CMYK/PDF-X/spot/foil (explicitly unavailable). The renderer package is prepared; it is not a functioning production renderer. Docker/Auth is unavailable in this environment, so owner HTTP journeys against live PostgREST remain unrun.
+**Deployed application, not activated:** the Studio web app is on production `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo`. Still not activated: hosted migrations (including `20261018010000_studio_editor_lifecycle.sql` and `20261019010000_studio_design_export_jobs.sql`), Fly.io Machine, `STUDIO_RENDER_COMMISSIONED`, paid OpenAI/Runway calls, CMYK/PDF/X/spot/foil (explicitly unavailable). The renderer package is prepared; it is not a functioning production renderer. Docker/Auth is unavailable in this environment, so owner HTTP journeys against live PostgREST remain unrun.
 
 **Setup, not code:** hosted migration, worker host authorization with `STUDIO_RENDER_IDENTITY`, paid provider keys/credits, physical Fold/phone hardware, local Docker/Auth for signed-in journeys.
 
