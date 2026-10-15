@@ -24,12 +24,8 @@ test('live Health routes disclose no private data to a signed-out visitor', asyn
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/app/health');
-  await expect(
-    page.getByRole('heading', { name: 'A clearer understanding of you.' }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'Begin with your own information.' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'A personal Health workspace' })).toBeVisible();
+  await expect(page.getByText('Sign in to keep this workspace', { exact: false })).toBeVisible();
   await expect(
     page
       .getByRole('navigation', { name: 'Main navigation' })

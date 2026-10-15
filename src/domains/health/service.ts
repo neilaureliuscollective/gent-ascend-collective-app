@@ -8,9 +8,13 @@ import {
   observationSchema,
   type HealthData,
   type HealthRecord,
+  type HealthWorkspaceRecord,
   type Mutation,
   type SavedObservation,
 } from './schema';
+import { architectBlockedMessage, ARCHITECT_APPS_DEPENDENCY } from './architect-adapter';
+import { hostControlledValue } from './bloodwork';
+import { sampleBloodwork, sampleProjection } from './sample';
 import { originalMime, parseLabImport } from './imports';
 import { weightKg } from './trends';
 import { localDay } from '@/domains/daily/model';
@@ -52,11 +56,20 @@ export async function readHealth(): Promise<HealthData> {
   const data = snapshot.data as Pick<
     HealthData,
     'records' | 'observations' | 'consents' | 'jobs' | 'turns'
-  > & { activation: { ingestion: boolean; ai: boolean } };
+  > & {
+    activation: { ingestion: boolean; ai: boolean };
+    workspaces?: HealthWorkspaceRecord[];
+  };
   const result: HealthData = {
     ...emptyHealth('personal'),
     ...data,
     owner: person.id,
+    workspaces: Array.isArray(data.workspaces) ? data.workspaces : [],
+    architect: {
+      status: 'blocked',
+      blocker: architectBlockedMessage(),
+      dependency: ARCHITECT_APPS_DEPENDENCY,
+    },
     ingestionEnabled: process.env.HEALTH_INGESTION_ENABLED === 'true' && data.activation.ingestion,
     aiEnabled: process.env.HEALTH_AI_ENABLED === 'true' && data.activation.ai,
   };
@@ -273,6 +286,7 @@ export async function exportHealth(request: string) {
     consents: data.consents,
     conversations: data.turns,
     wellness: data.wellness,
+    workspaces: data.workspaces,
     history: audit.data,
   };
   return (async function* streamExport() {
@@ -349,7 +363,71 @@ export async function mutateHealth(input: Mutation) {
   } else if (input.kind === 'ask') {
     const { askHealth } = await import('./conversation');
     await askHealth(input);
+  } else if (
+    input.kind === 'workspace_save' ||
+    input.kind === 'workspace_copy' ||
+    input.kind === 'workspace_restore' ||
+    input.kind === 'workspace_bridge'
+  ) {
+    await healthRpc(input.kind, input.request, workspacePayload(input));
   }
   return readHealth();
+}
+
+function workspacePayload(input: Extract<Mutation, { kind: `workspace_${string}` }>) {
+  return Object.fromEntries(
+    Object.entries(input).filter(([key]) => key !== 'kind' && key !== 'request'),
+  );
+}
+
+export async function readHealthBridge(token: string) {
+  const { client, person } = await healthSession();
+  const result = await (
+    client as unknown as {
+      rpc: (
+        fn: string,
+        args: { p_token: string },
+      ) => Promise<{ error: { message: string } | null; data: unknown }>;
+    }
+  ).rpc('health_bridge_read', { p_token: token });
+  if (result.error || !result.data) throw new IntelligenceError('Health bridge unavailable.', 403);
+  const session = result.data as {
+    owner: string;
+    workspaceId: string;
+    revision: number;
+    sample: boolean;
+    fields: string[];
+    hostControlled: boolean;
+  };
+  if (session.owner !== person.id) throw new IntelligenceError('Health bridge unavailable.', 403);
+  const snapshot = await readHealth();
+  const workspace = snapshot.workspaces.find((row) => row.id === session.workspaceId);
+  if (!workspace || workspace.version !== session.revision)
+    throw new IntelligenceError('Health bridge unavailable.', 403);
+  const allowed = new Set(
+    session.fields.length
+      ? session.fields
+      : ['name', 'value', 'unit', 'date', 'range', 'specimen', 'method', 'flag'],
+  );
+  const rows = (
+    session.sample
+      ? sampleBloodwork
+      : snapshot.observations.filter((row) => row.status === 'active')
+  ).map((row) => {
+    const hosted = hostControlledValue(row);
+    return Object.fromEntries(
+      Object.entries(hosted).filter(([key]) => key === 'id' || key === 'host' || allowed.has(key)),
+    );
+  });
+  return {
+    sample: session.sample,
+    workspaceId: workspace.id,
+    revision: session.revision,
+    hostControlled: true,
+    notice: session.sample
+      ? sampleProjection().notice
+      : 'Host-controlled reviewed observations. Generated tools cannot replace these values.',
+    observations: rows,
+  };
 }
 export type HealthEvidence = SavedObservation;

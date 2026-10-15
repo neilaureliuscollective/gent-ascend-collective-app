@@ -1,3 +1,7 @@
+# Health transformation workspace — 2026-10-15
+
+Health stays named Health. The previous TRT/HRT clinic structure is not the product. Command becomes a personal workspace with two built-in foundations (evening sequence and Bloodwork Tracker) rather than a six-tab dashboard. Authoritative records, units, provenance, comparison rules, consent and deletion remain in trusted Health code. Architect customization of presentation/behavior uses a narrow adapter: it must not receive personal labs, original documents or Health history. Dynamic compilation depends on unmerged Architect Apps PR #130 head `9f858d1b5af4df710c4a01dd43668db7366f6626` and is reported blocked until that runtime is merged and enabled. No second coding engine. No generated diagnosis, dosing, treatment, readiness score or device control. Evidence: [HEALTH_TRANSFORMATION.md](HEALTH_TRANSFORMATION.md).
+
 # Official Aethelios install icon — 2026-10-15
 
 Founder supplied the approved gold-A / star / Earth application icon and authorized production installation replacement. Keep the existing Next App Router metadata files, stable manifest `id` `/`, `scope` `/` and `start_url` `/app`. Version the new PNG URLs, redirect previous install paths, and bump only the static fallback cache. Standard and maskable assets stay distinct; maskable gold art stays inside the W3C 80% safe circle. No in-app crest, account, entitlement or routing change.

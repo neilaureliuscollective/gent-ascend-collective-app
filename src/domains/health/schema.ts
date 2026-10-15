@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import type { ArchitectAttempt } from './architect-adapter';
+import { ARCHITECT_APPS_DEPENDENCY } from './architect-adapter';
+import type { HealthWorkspaceRecord } from './workspace-model';
+import { bloodworkSettingsSchema, workspaceSettingsSchema } from './workspace-model';
+import { routineProgressSchema } from './workspace-model';
+import { healthFoundations } from './foundations';
 
 export const purposes = ['wellness', 'records', 'ai'] as const;
 export type Purpose = (typeof purposes)[number];
@@ -83,6 +89,12 @@ export type HealthData = {
   };
   ingestionEnabled: boolean;
   aiEnabled: boolean;
+  workspaces: HealthWorkspaceRecord[];
+  architect: {
+    status: 'available' | 'blocked';
+    blocker: string | null;
+    dependency: typeof ARCHITECT_APPS_DEPENDENCY;
+  };
   asOf: string;
 };
 export const amendmentSchema = z
@@ -126,6 +138,49 @@ export const mutationSchema = z.discriminatedUnion('kind', [
       consentVersion: z.number().int().positive(),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal('workspace_save'),
+      request: z.uuid(),
+      id: z.uuid(),
+      expected: z.number().int().positive(),
+      foundation: z.enum(healthFoundations),
+      title: z.string().trim().min(1).max(120),
+      sample: z.boolean(),
+      settings: workspaceSettingsSchema,
+      progress: routineProgressSchema.nullable(),
+      architect: z.unknown().nullable(),
+      open: z.boolean().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('workspace_copy'),
+      request: z.uuid(),
+      id: z.uuid(),
+      sourceId: z.uuid(),
+      title: z.string().trim().min(1).max(120),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('workspace_restore'),
+      request: z.uuid(),
+      id: z.uuid(),
+      expected: z.number().int().positive(),
+      revision: z.number().int().positive(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('workspace_bridge'),
+      request: z.uuid(),
+      id: z.uuid(),
+      expected: z.number().int().positive(),
+      action: z.enum(['issue', 'revoke']),
+      fields: z.array(z.string().min(1).max(40)).max(12).optional(),
+    })
+    .strict(),
 ]);
 export type Mutation = z.infer<typeof mutationSchema>;
 export function emptyHealth(mode: HealthData['mode'] = 'signed-out'): HealthData {
@@ -140,6 +195,16 @@ export function emptyHealth(mode: HealthData['mode'] = 'signed-out'): HealthData
     wellness: { sleep: [], weight: [], movement: [], recovery: [], unavailable: [] },
     ingestionEnabled: false,
     aiEnabled: false,
+    workspaces: [],
+    architect: {
+      status: 'blocked',
+      blocker: `Dynamic compilation is blocked until Architect Apps PR #${ARCHITECT_APPS_DEPENDENCY.pr} is merged.`,
+      dependency: ARCHITECT_APPS_DEPENDENCY,
+    },
     asOf: new Date().toISOString(),
   };
 }
+
+export type ArchitectSnapshot = HealthData['architect'];
+export type { ArchitectAttempt, HealthWorkspaceRecord };
+export { bloodworkSettingsSchema };
