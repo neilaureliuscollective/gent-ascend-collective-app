@@ -6,7 +6,7 @@ import {
   sceneFrames,
   scenePlaybackStartMs,
 } from './timing';
-import { dbToRatio } from './audio';
+import { AMIX_FILTER, dbToRatio } from './audio';
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'wav';
 export type LocalAsset = {
@@ -170,7 +170,7 @@ export function compileRender(
     filters.push(`${audioMix[0]}anull[aout]`);
     audioMap = ['-map', '[aout]', '-c:a', 'aac', '-b:a', '192k'];
   } else if (audioMix.length === 2) {
-    filters.push(`${audioMix[0]}${audioMix[1]}amix=inputs=2:duration=longest:dropout_transition=0[aout]`);
+    filters.push(`${audioMix[0]}${audioMix[1]}${AMIX_FILTER}[aout]`);
     audioMap = ['-map', '[aout]', '-c:a', 'aac', '-b:a', '192k'];
   }
   assertSafePath(output.film);

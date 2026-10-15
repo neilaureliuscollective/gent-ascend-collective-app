@@ -849,6 +849,32 @@ export interface Database {
         never,
         never
       >;
+      ai_studio_design_export_jobs: Table<
+        {
+          id: string;
+          person_id: string;
+          project_id: string;
+          design_id: string;
+          revision_id: string;
+          format: 'png' | 'svg' | 'pdf';
+          font_mode: 'embed' | 'outline';
+          idempotency_key: string;
+          status: 'queued' | 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted';
+          lease_token: string | null;
+          lease_until: string | null;
+          failure_code: string | null;
+          storage_key: string | null;
+          export_id: string | null;
+          width: number | null;
+          height: number | null;
+          ppi: number | null;
+          retry_count: number;
+          created_at: string;
+          updated_at: string;
+        },
+        never,
+        never
+      >;
       ai_studio_compositions: Table<
         {
           id: string;
@@ -1418,6 +1444,35 @@ export interface Database {
         };
         Returns: string;
       };
+      ai_studio_design_export_begin: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_design: string;
+          p_revision: string;
+          p_format: string;
+          p_font_mode: string;
+          p_key: string;
+        };
+        Returns: { id: string; status: string; created: boolean; export_id: string | null }[];
+      };
+      ai_studio_design_export_cancel: { Args: { p_id: string }; Returns: boolean };
+      ai_studio_design_export_claim: { Args: { p_id: string; p_token: string }; Returns: boolean };
+      ai_studio_design_export_heartbeat: { Args: { p_id: string; p_token: string }; Returns: boolean };
+      ai_studio_design_export_finish: {
+        Args: {
+          p_id: string;
+          p_token: string;
+          p_key: string;
+          p_width: number;
+          p_height: number;
+          p_ppi: number;
+        };
+        Returns: string;
+      };
+      ai_studio_design_export_fail: { Args: { p_id: string; p_token: string; p_code: string }; Returns: boolean };
+      ai_studio_design_export_recover: { Args: Record<string, never>; Returns: number };
+      ai_studio_design_export_requeue: { Args: Record<string, never>; Returns: number };
       ai_studio_scene_create: {
         Args: {
           p_project: string;

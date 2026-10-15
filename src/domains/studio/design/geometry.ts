@@ -12,6 +12,45 @@ import {
  * baked into children after a transform so canvas, JSON and exporters agree without a second
  * coordinate system.
  */
+/** Document stores unrotated top-left. Rotation and Fabric origin are the box centre. */
+export function layerCenter(layer: { x: number; y: number; width: number; height: number }) {
+  return { x: layer.x + layer.width / 2, y: layer.y + layer.height / 2 };
+}
+
+export function fabricBoxFromLayer(
+  layer: { x: number; y: number; width: number; height: number; rotation: number },
+  px: (value: number) => number,
+  bleedX: number,
+  bleedY: number,
+) {
+  return {
+    originX: 'center' as const,
+    originY: 'center' as const,
+    left: bleedX + px(layer.x) + px(layer.width) / 2,
+    top: bleedY + px(layer.y) + px(layer.height) / 2,
+    angle: layer.rotation,
+  };
+}
+
+export function layerBoxFromFabricCenter(
+  center: { x: number; y: number },
+  widthPx: number,
+  heightPx: number,
+  angle: number,
+  bleedX: number,
+  bleedY: number,
+  fromPx: (value: number) => number,
+  snap: (value: number) => number,
+) {
+  return {
+    x: snap(fromPx(center.x - widthPx / 2 - bleedX)),
+    y: snap(fromPx(center.y - heightPx / 2 - bleedY)),
+    width: snap(fromPx(widthPx)),
+    height: snap(fromPx(heightPx)),
+    rotation: angle,
+  };
+}
+
 /** Axis-aligned bounds of a layer after its stored rotation about the box centre. */
 export function layerWorldCorners(layer: DesignLayer) {
   const cx = layer.x + layer.width / 2;

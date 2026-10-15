@@ -154,6 +154,7 @@ async function studio(page: Page) {
           },
         ],
         renders: [],
+        designExports: [],
         narrations: [],
         footage: [],
         render: { hosted: 'unavailable', generation: 'disabled', narration: 'disabled', footage: 'disabled' },

@@ -6,6 +6,7 @@ import { snapValue } from '@/domains/studio/design/commands';
 import { designFont } from '@/domains/studio/design/fonts';
 import { sanitizeSvg } from '@/domains/studio/design/sanitize';
 import { toPixels } from '@/domains/studio/design/units';
+import { fabricBoxFromLayer, layerBoxFromFabricCenter } from '@/domains/studio/design/geometry';
 
 type FabricModule = typeof import('fabric');
 type FabricObject = InstanceType<FabricModule['FabricObject']> & {
@@ -193,11 +194,16 @@ function readPatches(fabric: FabricModule, document: DesignDocument, target: Fab
     const bleedX = toPixels(page.bleed.left, page.unit, page.ppi);
     const bleedY = toPixels(page.bleed.top, page.unit, page.ppi);
     patches[layerId] = {
-      x: snapValue(fromPx(center.x - width / 2 - bleedX, page.unit, page.ppi), grid),
-      y: snapValue(fromPx(center.y - height / 2 - bleedY, page.unit, page.ppi), grid),
-      width: snapValue(fromPx(width, page.unit, page.ppi), grid),
-      height: snapValue(fromPx(height, page.unit, page.ppi), grid),
-      rotation: decomposed.angle,
+      ...layerBoxFromFabricCenter(
+        center,
+        width,
+        height,
+        decomposed.angle,
+        bleedX,
+        bleedY,
+        (value) => fromPx(value, page.unit, page.ppi),
+        (value) => snapValue(value, grid),
+      ),
       ...('text' in object && typeof object.text === 'string' ? { content: object.text } : {}),
     };
   };
@@ -221,9 +227,7 @@ function syncGeometry(canvas: InstanceType<FabricModule['Canvas']>, document: De
     const width = px(layer.width);
     const height = px(layer.height);
     object.set({
-      left: bleedX + px(layer.x),
-      top: bleedY + px(layer.y),
-      angle: layer.rotation,
+      ...fabricBoxFromLayer(layer, px, bleedX, bleedY),
       opacity: layer.opacity,
       selectable: !ancestorsLocked(document, layer.id),
       evented: !ancestorsLocked(document, layer.id),
@@ -280,11 +284,7 @@ async function paintDocument(
         .map((item) => made.get(item.id)!);
       if (!children.length || !ancestorsVisible(document, layer.id)) continue;
       const group = new fabric.Group(children, {
-        originX: 'left',
-        originY: 'top',
-        left: bleedX + px(layer.x),
-        top: bleedY + px(layer.y),
-        angle: layer.rotation,
+        ...fabricBoxFromLayer(layer, px, bleedX, bleedY),
         opacity: layer.opacity,
         selectable: !ancestorsLocked(document, layer.id),
         evented: !ancestorsLocked(document, layer.id),
@@ -337,14 +337,10 @@ async function makeObject(
   const bleedX = px(document.page.bleed.left);
   const bleedY = px(document.page.bleed.top);
   const common = {
-    left: bleedX + px(layer.x),
-    top: bleedY + px(layer.y),
-    angle: layer.rotation,
+    ...fabricBoxFromLayer(layer, px, bleedX, bleedY),
     opacity: layer.opacity,
     selectable: !locked,
     evented: !locked,
-    originX: 'left' as const,
-    originY: 'top' as const,
     layerId: layer.id,
   };
   if (layer.type === 'rect') {

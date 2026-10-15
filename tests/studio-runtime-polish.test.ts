@@ -255,7 +255,10 @@ describe('Studio faithful exports', () => {
     expect(Buffer.from(regular).equals(Buffer.from(bold))).toBe(false);
     const svg = new TextDecoder().decode(await exportSvg(make(700), [], 'embed'));
     expect(svg).toContain('font-weight="700"');
-    await expect(exportSvg(make(700), [], 'outline')).rejects.toThrow(/will not simulate bold/i);
+    expect(svg).toContain('font-weight:700');
+    const outlined = new TextDecoder().decode(await exportSvg(make(700), [], 'outline'));
+    expect(outlined).toContain('<path');
+    expect(outlined).not.toContain('font-weight="700"');
   });
 
   it('keeps trim 85.6 mm after 1.5 mm outward bleed', async () => {

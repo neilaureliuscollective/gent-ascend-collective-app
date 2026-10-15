@@ -73,7 +73,7 @@ it('uses only session-bound owner-filtered zero-row probes and never declares li
   state.founder = true;
   const report = await studioReadiness();
   expect(report.liveAccepted).toBe(false);
-  expect(report.schemas).toHaveLength(11);
+  expect(report.schemas).toHaveLength(12);
   for (const table of new Set(state.calls.map((c) => c[0]))) {
     expect(state.calls).toContainEqual([table, 'person_id', 'owner']);
     expect(state.calls).toContainEqual([table, 'limit', 0]);

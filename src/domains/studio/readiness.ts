@@ -41,7 +41,7 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
     {
       name: 'Film renderer',
       status: env.STUDIO_RENDER_COMMISSIONED === 'true' ? 'unverified' : 'unavailable',
-      next: 'Hosted rendering stays unavailable until a Fly.io Machine from ops/studio-render answers /health with FFmpeg libx264 and STUDIO_RENDER_COMMISSIONED is explicitly set after founder authorization. STUDIO_RENDER_WORKER=true only queues jobs; it is not readiness. Design PNG/PDF need the same FFmpeg host — the web runtime does not become a renderer by queuing Film jobs.',
+      next: 'Hosted rendering stays unavailable until a Fly.io Machine from ops/studio-render answers /health with status ok, deployment identity, recent queue contact, FFmpeg libx264, and STUDIO_RENDER_COMMISSIONED is set after founder authorization. STUDIO_RENDER_WORKER=true only queues Film and Design export jobs; it is not readiness.',
     },
     {
       name: 'Live acceptance',

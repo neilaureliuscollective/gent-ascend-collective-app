@@ -13,13 +13,26 @@ export function attemptObjectKeys(input: {
   };
 }
 
+export function designAttemptObjectKey(input: {
+  uid: string;
+  projectId: string;
+  jobId: string;
+  token: string;
+  format: 'png' | 'svg' | 'pdf';
+}) {
+  return `${input.uid}/${input.projectId}/${input.jobId}/${input.token}/design.${input.format}`;
+}
+
 export function publishedStorageKeys(row: {
   storage_film?: string | null;
   storage_cover?: string | null;
   storage_captions?: string | null;
+  storage_key?: string | null;
 } | null) {
   return new Set(
-    [row?.storage_film, row?.storage_cover, row?.storage_captions].filter((key): key is string => Boolean(key)),
+    [row?.storage_film, row?.storage_cover, row?.storage_captions, row?.storage_key].filter(
+      (key): key is string => Boolean(key),
+    ),
   );
 }
 
@@ -37,9 +50,10 @@ export type FinishReceipt = { error: unknown; data: unknown };
 export type JobSnapshot = {
   status: string;
   lease_token: string | null;
-  storage_film: string | null;
-  storage_cover: string | null;
-  storage_captions: string | null;
+  storage_film?: string | null;
+  storage_cover?: string | null;
+  storage_captions?: string | null;
+  storage_key?: string | null;
 };
 export type JobRead =
   | { available: true; row: JobSnapshot | null }

@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, writeFile, rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -11,6 +10,8 @@ import {
 import { compositionPlaybackMs } from '../composition/timing';
 import { type CompositionDocument } from '../composition/model';
 import { inspectRenderedMp4 } from './verify';
+import { RENDER_LIMITS, remainingMs } from './limits';
+import { combineAbortSignals, runCommand } from './process';
 
 export type RenderResult = {
   film: Uint8Array;
@@ -46,62 +47,27 @@ export async function inspectFfmpeg(binary = ffmpegBinary()) {
   return { path: binary, version, configuration, license: configuration.includes('--enable-gpl') ? 'GPL' : 'unknown' };
 }
 
-function runCapture(command: string, args: string[]) {
-  return new Promise<string>((resolve, reject) => {
-    const child = spawn(/* turbopackIgnore: true */ command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    const out: Buffer[] = [];
-    const err: Buffer[] = [];
-    child.stdout.on('data', (chunk) => out.push(chunk as Buffer));
-    child.stderr.on('data', (chunk) => err.push(chunk as Buffer));
-    child.on('error', reject);
-    child.on('close', (code) => {
-      const combined = `${Buffer.concat(out).toString('utf8')}\n${Buffer.concat(err).toString('utf8')}`;
-      if (code === 0) resolve(combined);
-      else reject(new Error(combined.slice(0, 600) || `Command failed (${code})`));
-    });
-  });
-}
-
-function run(command: string, args: string[], timeoutMs: number, signal?: AbortSignal) {
-  return new Promise<void>((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new Error('Studio render was cancelled.'));
-      return;
-    }
-    const child = spawn(/* turbopackIgnore: true */ command, args, { stdio: ['ignore', 'ignore', 'pipe'] });
-    const err: Buffer[] = [];
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      reject(new Error('Studio render exceeded the time limit.'));
-    }, timeoutMs);
-    const abort = () => {
-      child.kill('SIGKILL');
-      reject(new Error('Studio render was cancelled.'));
-    };
-    signal?.addEventListener('abort', abort, { once: true });
-    child.stderr.on('data', (chunk) => err.push(chunk as Buffer));
-    child.on('error', (error) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-    child.on('close', (code) => {
-      clearTimeout(timer);
-      signal?.removeEventListener('abort', abort);
-      if (code === 0) resolve();
-      else reject(new Error(Buffer.concat(err).toString('utf8').slice(0, 500) || `ffmpeg exited ${code}`));
-    });
-  });
+function runCapture(command: string, args: string[], timeoutMs = 8_000, signal?: AbortSignal) {
+  return runCommand(command, args, { timeoutMs, signal }).then(
+    (result) => `${result.stdout}\n${result.stderr}`,
+  );
 }
 
 export async function renderComposition(
   document: CompositionDocument,
   assets: LocalAsset[],
-  options: { signal?: AbortSignal; timeoutMs?: number } = {},
+  options: { signal?: AbortSignal; timeoutMs?: number; deadlineAt?: number } = {},
 ): Promise<RenderResult> {
   const binary = ffmpegBinary();
   const ffmpeg = await inspectFfmpeg(binary);
   if (!ffmpeg.configuration.includes('libx264'))
     throw new Error('The configured FFmpeg build does not include libx264.');
+  const deadlineAt = options.deadlineAt ?? Date.now() + (options.timeoutMs ?? RENDER_LIMITS.jobMs);
+  const signal = combineAbortSignals(
+    [options.signal, AbortSignal.timeout(Math.max(1, deadlineAt - Date.now()))].filter(
+      (value): value is AbortSignal => Boolean(value),
+    ),
+  );
   const dir = await mkdtemp(path.join(tmpdir(), 'studio-render-'));
   try {
     const film = path.join(dir, 'film.mp4');
@@ -111,10 +77,16 @@ export async function renderComposition(
     await mkdir(dir, { recursive: true });
     await writeFile(vtt, compositionVtt(document));
     await writeFile(ass, compositionAss(document));
-    const probed = await probeAssets(binary, assets);
+    const probed = await probeAssets(binary, assets, signal, deadlineAt);
     const plan = compileRender(document, probed, { film, cover, captions: ass });
-    await run(binary, plan.args, options.timeoutMs ?? 90_000, options.signal);
-    await run(binary, compileCoverArgs(film, cover), 15_000, options.signal);
+    await runCommand(binary, plan.args, {
+      timeoutMs: remainingMs(deadlineAt, RENDER_LIMITS.renderMs),
+      signal,
+    });
+    await runCommand(binary, compileCoverArgs(film, cover), {
+      timeoutMs: remainingMs(deadlineAt, RENDER_LIMITS.coverMs),
+      signal,
+    });
     const filmBytes = new Uint8Array(await readFile(film));
     const coverBytes = new Uint8Array(await readFile(cover));
     const duration = compositionPlaybackMs(document) / 1000;
@@ -133,7 +105,12 @@ export async function renderComposition(
   }
 }
 
-async function probeAssets(binary: string, assets: LocalAsset[]): Promise<LocalAsset[]> {
+async function probeAssets(
+  binary: string,
+  assets: LocalAsset[],
+  signal?: AbortSignal,
+  deadlineAt = Date.now() + RENDER_LIMITS.jobMs,
+): Promise<LocalAsset[]> {
   const probed: LocalAsset[] = [];
   for (const asset of assets) {
     if (asset.media !== 'video' && asset.media !== 'wav' && asset.media !== 'audio') {
@@ -141,14 +118,12 @@ async function probeAssets(binary: string, assets: LocalAsset[]): Promise<LocalA
       continue;
     }
     try {
-      const text = await runCapture(binary, [
-        '-hide_banner',
-        '-i',
-        asset.path,
-        '-f',
-        'null',
-        '-',
-      ]).catch((error) => (error instanceof Error ? error.message : ''));
+      const text = await runCapture(
+        binary,
+        ['-hide_banner', '-i', asset.path, '-f', 'null', '-'],
+        remainingMs(deadlineAt, RENDER_LIMITS.probeMs),
+        signal,
+      ).catch((error) => (error instanceof Error ? error.message : ''));
       const duration = text.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
       if (!duration) {
         probed.push(asset);

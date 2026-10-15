@@ -68,17 +68,32 @@ function readStoredDraft(row: SavedDesign | undefined) {
   }
 }
 
+type ExportJob = {
+  id: string;
+  design_id: string;
+  revision_id: string;
+  format: string;
+  status: string;
+  export_id: string | null;
+  width: number | null;
+  height: number | null;
+  ppi: number | null;
+  failure_code: string | null;
+};
+
 export function DesignWorkspace({
   projectId,
   designs,
   versions,
   references,
+  exportJobs = [],
   onChanged,
 }: {
   projectId: string;
   designs: SavedDesign[];
   versions: Version[];
   references: Reference[];
+  exportJobs?: ExportJob[];
   onChanged: () => void;
 }) {
   const [currentId, setCurrentId] = useState(designs[0]?.id ?? null);
@@ -122,6 +137,7 @@ export function DesignWorkspace({
   const dirty = useRef(false);
   const pauseAutosave = useRef(readStoredDraft(designs[0])?.kind === 'reconcile');
   const serial = useRef(createSerialLock());
+  const exportKeys = useRef(new Map<string, { jobId: string; key: string }>());
   const liveRef = useRef(live);
   const selected = document?.layers.find((layer) => layer.id === selectedId) ?? null;
   const alignedIds = markedIds.length > 1 ? markedIds : selectedId ? [selectedId] : [];
@@ -380,13 +396,18 @@ export function DesignWorkspace({
     const result = await persist('explicit', true);
     if (!result || !('pinned' in result) || !result.pinned || !result.revisionId)
       throw new Error('Export needs an acknowledged immutable revision. Reconcile or wait for save first.');
-    const revisionRow = { revisionId: result.revisionId };
+    const slot = `${document.id}:${result.revisionId}:${format}`;
+    const ids = exportKeys.current.get(slot) ?? { jobId: crypto.randomUUID(), key: crypto.randomUUID() };
+    exportKeys.current.set(slot, ids);
     const exported = await json<{
       id: string;
-      width: number;
-      height: number;
-      ppi: number;
-      issues: { message: string; code?: string }[];
+      status: string;
+      exportId?: string | null;
+      width?: number;
+      height?: number;
+      ppi?: number;
+      note?: string;
+      issues?: { message: string; code?: string }[];
     }>(
       await fetch('/api/studio/design/export', {
         method: 'POST',
@@ -394,16 +415,23 @@ export function DesignWorkspace({
         body: JSON.stringify({
           projectId,
           designId: document.id,
-          revisionId: revisionRow.revisionId,
+          revisionId: result.revisionId,
           format,
+          id: ids.jobId,
+          idempotencyKey: ids.key,
         }),
       }),
     );
     const warnings = (exported.issues ?? []).map((issue) => issue.message).join(' ');
-    setStatus(
-      `Exported ${format.toUpperCase()} at ${exported.width}×${exported.height} px / ${exported.ppi} PPI. RGB only — CMYK/PDF-X unavailable.${warnings ? ` Preflight: ${warnings}` : ''}`,
-    );
-    window.open(`/api/studio/design/file?id=${exported.id}`, '_blank', 'noopener');
+    if (exported.status === 'complete' && exported.exportId) {
+      setStatus(
+        `Exported ${format.toUpperCase()} at ${exported.width}×${exported.height} px / ${exported.ppi} PPI. RGB only — CMYK/PDF-X unavailable.${warnings ? ` Preflight: ${warnings}` : ''}`,
+      );
+      window.open(`/api/studio/design/file?id=${exported.exportId}`, '_blank', 'noopener');
+    } else {
+      setStatus(exported.note || `Design export ${exported.status}.`);
+    }
+    onChanged();
   }
 
   function addSvgFile(file: File) {
@@ -949,7 +977,7 @@ export function DesignWorkspace({
                 ))}
             </div>
             <div className="studio-export-actions">
-              <p>Exports freeze the current revision. RGB is not CMYK or PDF/X.</p>
+              <p>Exports freeze the current revision. RGB is not CMYK or PDF/X. PNG uses the renderer; SVG uses bundled static faces in this runtime.</p>
               <button type="button" onClick={() => void exportFormat('png').catch((err) => setError(err.message))}>
                 Export PNG
               </button>
@@ -959,6 +987,20 @@ export function DesignWorkspace({
               <button type="button" onClick={() => void exportFormat('pdf').catch((err) => setError(err.message))}>
                 Export PDF
               </button>
+              {exportJobs
+                .filter((job) => !document || job.design_id === document.id)
+                .map((job) => (
+                  <p key={job.id}>
+                    {job.format.toUpperCase()} · {job.status}
+                    {job.export_id ? (
+                      <>
+                        {' '}
+                        <a href={`/api/studio/design/file?id=${job.export_id}`}>Download</a>
+                      </>
+                    ) : null}
+                    {job.failure_code ? ` · ${job.failure_code}` : ''}
+                  </p>
+                ))}
             </div>
           </aside>
         </div>

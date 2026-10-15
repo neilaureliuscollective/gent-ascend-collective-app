@@ -144,6 +144,18 @@ type Workspace = {
     duration_ms: number | null;
     failure_code: string | null;
   }[];
+  designExports?: {
+    id: string;
+    design_id: string;
+    revision_id: string;
+    format: string;
+    status: string;
+    export_id: string | null;
+    width: number | null;
+    height: number | null;
+    ppi: number | null;
+    failure_code: string | null;
+  }[];
   narrations?: { id: string; title: string; status: string; duration: number | null }[];
   footage?: { id: string; title: string; status: string; duration: number; ratio: string }[];
   render?: { hosted: string; generation: string; narration: string; footage: string };
@@ -163,6 +175,7 @@ const empty: Workspace = {
   designs: [],
   compositions: [],
   renders: [],
+  designExports: [],
   narrations: [],
   footage: [],
   configured: false,
@@ -755,6 +768,7 @@ export function StudioWorkspace({
                     designs={data.designs ?? []}
                     versions={data.versions}
                     references={data.references}
+                    exportJobs={data.designExports ?? []}
                     onChanged={() => load(selected)}
                   />
                 )}

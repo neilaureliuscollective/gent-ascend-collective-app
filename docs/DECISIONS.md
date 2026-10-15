@@ -1,3 +1,7 @@
+# Aethelios Studio renderer/editor pipeline — 2026-10-15
+
+Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
+
 # Aethelios Studio editor/export lifecycle — 2026-10-15
 
 Finish the current Design/Film experience on PR #132: protect live drafts during paused reconcile and failed older saves; return the exact accepted revision from atomic save+freeze; inspect real PNG/PDF coordinates including SVG-path Y; treat failed render reads as unknown so completed objects survive a lost finish ack; make preview crop/audio match FFmpeg; package a Fly.io Machine worker without purchasing it. Do not expand Studio with another feature suite. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md) and [ops/studio-render/README.md](../ops/studio-render/README.md).

@@ -25,7 +25,8 @@ Do **not** buy, launch, or attach a credit card from this assignment.
 - Health `GET /health` on `STUDIO_RENDER_HEALTH_PORT` (8080)
 - Concurrency 1, SIGTERM drain 25s, lease recover on idle
 - FFmpeg 6.x with libx264/aac from Debian; Inter/Sora/DejaVu from the repo
-- Design SVG stays in the Next.js web runtime (pure JS). Design PNG and weighted/SVG PDF rasterization need this FFmpeg host. Starting Film jobs does not make PNG work on Vercel.
+- Design SVG of bundled static TTF faces is proven in the Node web runtime. Design PNG, and PDF with SVG marks, still need this FFmpeg host. The worker now claims `ai_studio_design_export_jobs` as well as Film jobs. Starting Film jobs alone does not make PNG work on Vercel.
+- `/health` is 503 unless preflight rendered bundled fonts, recent queue/database contact succeeded, and `STUDIO_RENDER_IDENTITY` is set. `STUDIO_RENDER_COMMISSIONED=true` is still not readiness by itself.
 
 ## Rollback
 
@@ -38,5 +39,6 @@ Do **not** buy, launch, or attach a credit card from this assignment.
 - Create the Fly app / attach billing
 - Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` on the Machine
 - Set `STUDIO_RENDER_WORKER=true` and `STUDIO_RENDER_HEALTH_URL` on Vercel
-- Set `STUDIO_RENDER_COMMISSIONED=true` only after `/health` returns `film: ffmpeg-libx264-aac`
-- Apply hosted migrations `20261016010000`, `20261017010000`, `20261018010000`
+- Set `STUDIO_RENDER_IDENTITY` to the Machine image/app/version identity
+- Set `STUDIO_RENDER_COMMISSIONED=true` only after `/health` returns HTTP 200 with `status: ok`, that identity, `queue: connected`, and `film: ffmpeg-libx264-aac`
+- Apply hosted migrations `20261016010000`, `20261017010000`, `20261018010000`, `20261019010000`

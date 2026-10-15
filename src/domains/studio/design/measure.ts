@@ -1,67 +1,26 @@
 import { readFile } from 'node:fs/promises';
 import fontkit, { type Font } from '@pdf-lib/fontkit';
 const createFont = (fontkit as unknown as { create: (bytes: Uint8Array) => Font }).create;
-import { designFont, designFontPath, fontSupportsWeight, type DesignFontId, type DesignFontWeight } from './fonts';
+import { designFontPath, fontSupportsWeight, type DesignFontId, type DesignFontWeight } from './fonts';
 import type { TextLayer } from './document';
 import { toInches } from './units';
-import { rasterizeSvgMarkup } from './raster';
 
-const cache = new Map<DesignFontId, Font>();
-const weightScale = new Map<string, number>();
+const cache = new Map<string, Font>();
 
 export async function loadDesignFont(id: DesignFontId, weight: DesignFontWeight = 400): Promise<Font> {
   if (!fontSupportsWeight(id, weight))
     throw new Error(`${id} does not include a real ${weight} instance. Studio will not substitute another face.`);
-  const hit = cache.get(id);
+  const key = `${id}:${weight}`;
+  const hit = cache.get(key);
   if (hit) return hit;
-  const bytes = await readFile(designFontPath(id));
+  const bytes = await readFile(designFontPath(id, weight));
   const font = createFont(bytes);
-  cache.set(id, font);
+  cache.set(key, font);
   return font;
 }
 
-/**
- * @pdf-lib/fontkit getVariation is broken for these WOFF2 files. Measurement uses the
- * real CSS/SVG weight via librsvg instead of treating 600/700 as the regular face.
- */
-export async function weightAdvanceScale(id: DesignFontId, weight: DesignFontWeight): Promise<number> {
-  if (weight === 400) return 1;
-  if (!fontSupportsWeight(id, weight))
-    throw new Error(`${id} does not include a real ${weight} instance. Studio will not substitute another face.`);
-  const key = `${id}:${weight}`;
-  const cached = weightScale.get(key);
-  if (cached) return cached;
-  const spec = designFont(id);
-  const bytes = await readFile(designFontPath(id));
-  const mime = spec.file.endsWith('.woff2') ? 'font/woff2' : 'font/ttf';
-  const fmt = mime === 'font/woff2' ? 'woff2' : 'truetype';
-  const probe = async (requested: DesignFontWeight) => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="96"><defs><style>@font-face{font-family:${JSON.stringify(spec.family)};src:url("data:${mime};base64,${Buffer.from(bytes).toString('base64')}") format("${fmt}");font-weight:100 900;}</style></defs><text x="8" y="64" font-family="${spec.family.replace(/"/g, '')}" font-size="56" font-weight="${requested}">Aethelios</text></svg>`;
-    const png = await rasterizeSvgMarkup(svg, 720, 96);
-    let min = 720;
-    let max = 0;
-    for (let i = 0; i < png.length; i += 4) {
-      if (png[i + 3]! < 16) continue;
-      const pixel = i / 4;
-      const x = pixel % 720;
-      if (x < min) min = x;
-      if (x > max) max = x;
-    }
-    return Math.max(1, max - min);
-  };
-  const regular = await probe(400);
-  const requested = await probe(weight);
-  if (regular < 8 || requested < 8)
-    throw new Error(
-      `Could not measure ${id} weight ${weight} from the real face. Studio will not substitute a regular instance.`,
-    );
-  const scale = requested / regular;
-  weightScale.set(key, scale);
-  return scale;
-}
-
-export function wrapText(layer: TextLayer, font: Font, boxWidthInches: number, advanceScale = 1) {
-  const scale = (layer.fontSize / font.unitsPerEm) * advanceScale;
+export function wrapText(layer: TextLayer, font: Font, boxWidthInches: number) {
+  const scale = layer.fontSize / font.unitsPerEm;
   const space = font.layout(' ').glyphs[0]?.advanceWidth ?? font.unitsPerEm * 0.3;
   const words = layer.content.replace(/\r/g, '').split(/(\s+)/);
   const lines: string[] = [];
@@ -123,7 +82,6 @@ export async function measureTextLayer(
   ppi: number,
 ) {
   const font = await loadDesignFont(layer.fontId, layer.fontWeight);
-  const advanceScale = await weightAdvanceScale(layer.fontId, layer.fontWeight);
   const missing: string[] = [];
   for (const char of layer.content) {
     if (char === '\n' || char === ' ') continue;
@@ -134,7 +92,7 @@ export async function measureTextLayer(
     throw new Error(
       `Font ${font.fullName ?? layer.fontId} cannot render: ${[...new Set(missing)].slice(0, 12).join(' ')}`,
     );
-  const box = wrapText(layer, font, toInches(layer.width, unit, ppi), advanceScale);
+  const box = wrapText(layer, font, toInches(layer.width, unit, ppi));
   const boxHeight = toInches(layer.height, unit, ppi) * 72;
   return {
     ...box,

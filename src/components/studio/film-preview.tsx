@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { compositionFrame, type CompositionDocument, type CompositionScene } from '@/domains/studio/composition/model';
 import {
   activeScenesAt,
@@ -152,7 +152,7 @@ export function FilmPreview({
                 src={mediaSrc(item.scene)}
                 playsInline
                 muted
-                style={cropPreviewStyle(item.scene.crop)}
+                style={cropPreviewStyle(item.scene.crop) as CSSProperties}
               />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
@@ -160,7 +160,7 @@ export function FilmPreview({
                 src={mediaSrc(item.scene)}
                 alt=""
                 style={{
-                  ...cropPreviewStyle(item.scene.crop),
+                  ...(cropPreviewStyle(item.scene.crop) as CSSProperties),
                   transform:
                     item.scene.stillMotion === 'slow-zoom'
                       ? `scale(${1 + (item.localMs / Math.max(1, item.scene.durationMs)) * 0.08})`

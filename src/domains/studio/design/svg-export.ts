@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { designFont, designFontPath } from './fonts';
 import { escapeXml, sanitizeSvg } from './sanitize';
-import { loadDesignFont, wrapText, weightAdvanceScale } from './measure';
+import { loadDesignFont, wrapText } from './measure';
 import { glyphScale, mediaInches, mediaPixels, pointsToPixels, toPixels } from './units';
 import { visibleOrder, type DesignDocument, type DesignLayer } from './document';
 import type { AssetBytes } from './assets';
@@ -44,17 +44,18 @@ export async function exportSvg(
 ) {
   const { width, height, offsetX, offsetY } = mediaPixels(document.page);
   const inches = mediaInches(document.page);
-  const fonts = [
-    ...new Set(document.layers.filter((layer) => layer.type === 'text').map((layer) => layer.fontId)),
-  ];
+  const used = document.layers.filter((layer) => layer.type === 'text');
   const faces: string[] = [];
   if (fontMode === 'embed') {
-    for (const id of fonts) {
-      const spec = designFont(id);
-      const bytes = await readFile(designFontPath(id));
-      const mime = spec.file.endsWith('.woff2') ? 'font/woff2' : 'font/ttf';
+    const seen = new Set<string>();
+    for (const layer of used) {
+      const key = `${layer.fontId}:${layer.fontWeight}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const spec = designFont(layer.fontId);
+      const bytes = await readFile(designFontPath(layer.fontId, layer.fontWeight));
       faces.push(
-        `@font-face{font-family:${JSON.stringify(spec.family)};src:url("data:${mime};base64,${Buffer.from(bytes).toString('base64')}") format("${mime === 'font/woff2' ? 'woff2' : 'truetype'}");font-weight:100 900;}`,
+        `@font-face{font-family:${JSON.stringify(spec.family)};src:url("data:font/ttf;base64,${Buffer.from(bytes).toString('base64')}") format("truetype");font-weight:${layer.fontWeight};font-style:normal;}`,
       );
     }
   }
@@ -100,18 +101,9 @@ export async function exportSvg(
     } else if (layer.type === 'text') {
       const font = await loadDesignFont(layer.fontId, layer.fontWeight);
       const spec = designFont(layer.fontId);
-      const wrapped = wrapText(
-        layer,
-        font,
-        t.w / document.page.ppi,
-        await weightAdvanceScale(layer.fontId, layer.fontWeight),
-      );
+      const wrapped = wrapText(layer, font, t.w / document.page.ppi);
       const ppi = document.page.ppi;
       if (fontMode === 'outline') {
-        if (layer.fontWeight !== 400)
-          throw new Error(
-            `Outline SVG cannot instantiate WOFF2 ${layer.fontId} weight ${layer.fontWeight}. Export embed SVG or PNG, which apply the real variable weight. Studio will not simulate bold.`,
-          );
         const scale = glyphScale(layer.fontSize, ppi, font.unitsPerEm);
         const tracking = pointsToPixels(layer.letterSpacing, ppi);
         if (t.attr) parts.push(`<g${t.attr}${opacity}>`);

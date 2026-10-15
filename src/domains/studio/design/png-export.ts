@@ -1,30 +1,19 @@
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { PNG } from 'pngjs';
 import { mediaPixels } from './units';
 import type { DesignDocument } from './document';
 import { exportSvg } from './svg-export';
 import type { AssetBytes } from './assets';
-
-function run(command: string, args: string[]) {
-  return new Promise<void>((resolve, reject) => {
-    const child = spawn(/* turbopackIgnore: true */ command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    const err: Buffer[] = [];
-    child.stderr.on('data', (chunk) => err.push(chunk as Buffer));
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`PNG rasterizer failed (${code}): ${Buffer.concat(err).toString('utf8').slice(0, 400)}`));
-    });
-  });
-}
+import { RENDER_LIMITS } from '../render/limits';
+import { runCommand } from '../render/process';
 
 export async function exportPng(
   document: DesignDocument,
   assets: AssetBytes[],
   ffmpegPath = process.env.STUDIO_FFMPEG_PATH || 'ffmpeg',
+  options: { signal?: AbortSignal; timeoutMs?: number } = {},
 ) {
   const svg = await exportSvg(document, assets, 'embed');
   const dir = await mkdtemp(path.join(tmpdir(), 'studio-png-'));
@@ -33,7 +22,7 @@ export async function exportPng(
     const pngPath = path.join(dir, 'design.png');
     await writeFile(svgPath, svg);
     const size = mediaPixels(document.page);
-    await run(ffmpegPath, [
+    await runCommand(ffmpegPath, [
       '-hide_banner',
       '-loglevel',
       'error',
@@ -47,7 +36,7 @@ export async function exportPng(
       '-update',
       '1',
       pngPath,
-    ]);
+    ], { timeoutMs: options.timeoutMs ?? RENDER_LIMITS.pngMs, signal: options.signal });
     const bytes = await readFile(pngPath);
     const png = PNG.sync.read(bytes);
     if (png.width !== size.width || png.height !== size.height)

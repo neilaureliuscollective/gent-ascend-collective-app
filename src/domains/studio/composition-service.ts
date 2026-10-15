@@ -4,6 +4,7 @@ import { IntelligenceError } from '@/domains/intelligence/service';
 import { studioSession, verifyStudioProject, bucket as imageBucket } from './service';
 import { parseComposition, type CompositionDocument } from './composition/model';
 import { inspectFfmpeg, renderComposition, renderWorkerRequested } from './render/ffmpeg';
+import { TempBudget } from './render/limits';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { mkdtemp } from 'node:fs/promises';
@@ -177,6 +178,8 @@ export async function executeRender(jobId: string, document: CompositionDocument
       document,
       dir,
       imageBucket,
+      signal: abort.signal,
+      budget: new TempBudget(),
     });
     const rendered = await renderComposition(document, assets, { signal: abort.signal });
     if (abort.signal.aborted) throw new IntelligenceError('Studio render was cancelled.', 409);
@@ -302,7 +305,11 @@ export async function renderReadiness() {
       healthError = error instanceof Error ? error.message.slice(0, 120) : 'health unavailable';
     }
   }
-  const workerLive = workerHealth?.status === 'ok' && workerHealth.film === 'ffmpeg-libx264-aac';
+  const workerLive =
+    workerHealth?.status === 'ok' &&
+    workerHealth.film === 'ffmpeg-libx264-aac' &&
+    Boolean((workerHealth as { identity?: string }).identity) &&
+    (workerHealth as { queue?: string }).queue === 'connected';
   const commissioned = process.env.STUDIO_RENDER_COMMISSIONED === 'true' && workerLive;
   return {
     hosted: commissioned ? ('detected' as const) : ('unavailable' as const),
@@ -313,7 +320,7 @@ export async function renderReadiness() {
     localBinary: ffmpeg ? 'implemented' : 'configuration required',
     ffmpeg,
     note: commissioned
-      ? 'A commissioned worker answered health with FFmpeg libx264. This is still not a production renderer until founder authorization.'
-      : 'Hosted rendering is unavailable. STUDIO_RENDER_WORKER=true only queues jobs. Package: ops/studio-render. A health URL without STUDIO_RENDER_COMMISSIONED is not readiness.',
+      ? 'A commissioned worker answered health with FFmpeg libx264, identity and recent queue contact. This is still not a production renderer until founder authorization.'
+      : 'Hosted rendering is unavailable. STUDIO_RENDER_WORKER=true only queues Film and Design export jobs. Package: ops/studio-render. HTTP 200 with binaries only, or a commissioned flag without identity/queue contact, is not readiness.',
   };
 }

@@ -76,7 +76,7 @@ export async function studioWorkspace(projectId?: string) {
   const current = projectId ?? projects.data?.[0]?.id;
   if (current && !projects.data?.some((project) => project.id === current))
     throw new IntelligenceError('Project not found.', 404);
-  const [versions, references, scenes, finishes, designs, compositions, renders, narrations, footage] =
+  const [versions, references, scenes, finishes, designs, compositions, renders, designExports, narrations, footage] =
     current
       ? await Promise.all([
           client
@@ -130,6 +130,13 @@ export async function studioWorkspace(projectId?: string) {
             .order('created_at', { ascending: false })
             .limit(12),
           client
+            .from('ai_studio_design_export_jobs')
+            .select('id,design_id,revision_id,format,status,export_id,width,height,ppi,failure_code,created_at')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(12),
+          client
             .from('ai_studio_narrations')
             .select('id,title,status,duration,created_at')
             .eq('project_id', current)
@@ -147,6 +154,7 @@ export async function studioWorkspace(projectId?: string) {
             .limit(20),
         ])
       : [
+          { data: [], error: null },
           { data: [], error: null },
           { data: [], error: null },
           { data: [], error: null },
@@ -180,6 +188,7 @@ export async function studioWorkspace(projectId?: string) {
     designs: editable ? (designs.data ?? []) : [],
     compositions: editable ? (compositions.data ?? []) : [],
     renders: editable ? (renders.data ?? []) : [],
+    designExports: editable ? (designExports.data ?? []) : [],
     narrations: narrations.data ?? [],
     footage: footage.data ?? [],
     configured: Boolean(process.env.OPENAI_API_KEY),

@@ -2187,6 +2187,51 @@ describe('Studio footage owner, quote and spending boundary', () => {
         )
       ).rows[0],
     ).toMatchObject({ status: 'complete', film: winnerFilm });
+    const exportJob = 'a1000000-0000-4000-8000-000000000021';
+    const exportKey = 'a1000000-0000-4000-8000-000000000022';
+    const exportToken = 'a1000000-0000-4000-8000-000000000023';
+    expect(
+      (
+        await asUser<{ id: string; status: string; created: boolean }>(
+          founder,
+          `select * from public.ai_studio_design_export_begin('${exportJob}','${project}','${design}','${frozenA}','svg','embed','${exportKey}')`,
+        )
+      ).rows[0],
+    ).toMatchObject({ id: exportJob, status: 'queued', created: true });
+    await expect(
+      asUser(
+        member,
+        `select * from public.ai_studio_design_export_begin('a1000000-0000-4000-8000-000000000024','${project}','${design}','${frozenA}','svg','embed','a1000000-0000-4000-8000-000000000025')`,
+      ),
+    ).rejects.toThrow();
+    const laterRevision = (
+      await asUser<{ id: string }>(founder, `select id from public.ai_studio_design_revisions where design_id='${design}' and revision=2`)
+    ).rows[0]!.id;
+    await expect(
+      asUser(
+        founder,
+        `select * from public.ai_studio_design_export_begin('${exportJob}','${project}','${design}','${laterRevision}','svg','embed','${exportKey}')`,
+      ),
+    ).rejects.toThrow(/DESIGN_EXPORT_INPUT_CHANGED/i);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_design_export_claim('${exportJob}','${exportToken}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    const exportObject = `${founder}/${project}/${exportJob}/${exportToken}/design.svg`;
+    const exportId = (
+      await asUser<{ id: string }>(
+        founder,
+        `select public.ai_studio_design_export_finish('${exportJob}','${exportToken}','${exportObject}',1011,638,300) as id`,
+      )
+    ).rows[0]!.id;
+    expect(exportId).toMatch(/^[0-9a-f-]{36}$/i);
+    expect((await asUser(member, 'select id from public.ai_studio_design_export_jobs')).rows).toHaveLength(0);
+    expect((await asUser(member, 'select id from public.ai_studio_design_exports')).rows).toHaveLength(0);
+    const stored = await asUser<{ revision: string; format: string }>(
+      founder,
+      `select revision_id as revision, format from public.ai_studio_design_exports where id='${exportId}'`,
+    );
+    expect(stored.rows[0]).toMatchObject({ revision: frozenA, format: 'svg' });
   });
 });
 

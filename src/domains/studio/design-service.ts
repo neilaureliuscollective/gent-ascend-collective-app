@@ -1,17 +1,13 @@
 import 'server-only';
 import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
-import { studioSession, verifyStudioProject, bucket as imageBucket } from './service';
-import { parseDesignDocument, usedFontIds, type DesignDocument } from './design/document';
-import { blockingIssues, imageAssetIds, validateDesign, type AssetInfo } from './design/validate';
-import { exportSvg } from './design/svg-export';
-import { exportPdf } from './design/pdf-export';
-import { exportPng, inspectPng } from './design/png-export';
-import { pagePixels } from './design/units';
+import { studioSession, verifyStudioProject } from './service';
+import { parseDesignDocument, type DesignDocument } from './design/document';
 import { presetDocument, finishLayoutPreset } from './design/presets';
-import type { AssetBytes } from './design/assets';
-import { imageDimensions } from './design/assets';
-import { referenceType } from './image-validation';
+import { renderWorkerRequested } from './render/ffmpeg';
+import { designExportNeedsFfmpeg, renderDesignBytes, runDesignExportJob } from './render/design-job';
+
+export { designExportNeedsFfmpeg, renderDesignBytes };
 
 export const designSaveInput = z
   .object({
@@ -40,8 +36,11 @@ export const designExportInput = z
     revisionId: z.uuid(),
     format: z.enum(['png', 'svg', 'pdf']),
     fontMode: z.enum(['embed', 'outline']).default('embed'),
+    id: z.uuid(),
+    idempotencyKey: z.uuid(),
   })
   .strict();
+
 
 type SaveRow = { id: string; revision: number; updated_at: string; revision_id: string };
 
@@ -115,116 +114,115 @@ export async function designRevision(projectId: string, revisionId: string) {
   };
 }
 
-async function ownedAssets(projectId: string, document: DesignDocument): Promise<{ info: AssetInfo[]; bytes: AssetBytes[] }> {
-  const { client, person } = await studioSession();
-  const needed = imageAssetIds(document);
-  const bytes: AssetBytes[] = [];
-  const info: AssetInfo[] = [];
-  for (const layer of needed) {
-    const row =
-      layer.assetKind === 'version'
-        ? await client
-            .from('ai_studio_versions')
-            .select('id,storage_key,project_id,status')
-            .eq('id', layer.assetId)
-            .eq('person_id', person.id)
-            .eq('project_id', projectId)
-            .eq('status', 'complete')
-            .maybeSingle()
-        : await client
-            .from('ai_studio_references')
-            .select('id,storage_key,project_id,media_type')
-            .eq('id', layer.assetId)
-            .eq('person_id', person.id)
-            .eq('project_id', projectId)
-            .maybeSingle();
-    if (row.error || !row.data?.storage_key)
-      throw new IntelligenceError('A placed image is not available in this project.', 404);
-    const file = await client.storage.from(imageBucket).download(row.data.storage_key);
-    if (file.error || !file.data) throw new IntelligenceError('A placed image could not be read.', 503);
-    const buffer = new Uint8Array(await file.data.arrayBuffer());
-    const media = referenceType(buffer);
-    if (!media) throw new IntelligenceError('A placed image is not a supported PNG, JPEG or WebP file.', 422);
-    const size = imageDimensions(buffer, media);
-    bytes.push({
-      id: layer.assetId,
-      kind: layer.assetKind,
-      bytes: buffer,
-      mediaType: media,
-      widthPx: size.widthPx,
-      heightPx: size.heightPx,
-    });
-    info.push({
-      id: layer.assetId,
-      kind: layer.assetKind,
-      widthPx: size.widthPx,
-      heightPx: size.heightPx,
-    });
-  }
-  return { info, bytes };
-}
-
-export async function exportDesign(input: z.infer<typeof designExportInput>) {
+export async function startDesignExport(input: z.infer<typeof designExportInput>, executeLocal = true) {
   const revision = await designRevision(input.projectId, input.revisionId);
   if (revision.design_id !== input.designId)
     throw new IntelligenceError('Export must use the selected design revision.', 422);
-  const document = revision.document;
-  void usedFontIds(document);
-  const assets = await ownedAssets(input.projectId, document);
-  const issues = await validateDesign(document, assets.info);
-  const blocked = blockingIssues(issues);
-  if (blocked.length) throw new IntelligenceError(blocked[0]!.message, 422);
-  const size = pagePixels(document.page);
-  let bytes: Uint8Array;
-  let type: string;
-  if (input.format === 'svg') {
-    bytes = await exportSvg(document, assets.bytes, input.fontMode);
-    type = 'image/svg+xml';
-  } else if (input.format === 'pdf') {
-    bytes = await exportPdf(document, assets.bytes);
-    type = 'application/pdf';
-  } else {
-    bytes = await exportPng(document, assets.bytes);
-    inspectPng(bytes);
-    type = 'image/png';
-  }
-  const { client, person } = await studioSession();
-  const key = `${(await authUid(client))}/${input.projectId}/${input.designId}/${input.revisionId}.${input.format}`;
-  const uploaded = await client.storage.from('aethelios-studio-designs').upload(key, bytes, {
-    contentType: type,
-    upsert: true,
-  });
-  if (uploaded.error) throw new IntelligenceError('The export could not be stored privately.', 503);
-  const recorded = await client.rpc('ai_studio_export_record', {
+  const { client } = await studioSession();
+  const begun = await client.rpc('ai_studio_design_export_begin', {
+    p_id: input.id,
+    p_project: input.projectId,
     p_design: input.designId,
     p_revision: input.revisionId,
     p_format: input.format,
-    p_key: key,
-    p_width: size.width,
-    p_height: size.height,
-    p_ppi: document.page.ppi,
+    p_font_mode: input.fontMode,
+    p_key: input.idempotencyKey,
   });
-  if (recorded.error)
-    throw new IntelligenceError('The export was stored but could not be recorded. Refresh before retrying.', 409);
-  void person;
-  return {
-    id: recorded.data as string,
-    format: input.format,
-    width: size.width,
-    height: size.height,
-    ppi: document.page.ppi,
-    issues,
-    bytes,
-    type,
-    prepress: 'unavailable' as const,
-    color: 'rgb' as const,
-  };
+  if (begun.error)
+    throw new IntelligenceError(begun.error.message.replace(/^.*ERROR:\s*/i, '') || 'Design export could not start.', 422);
+  const row = (Array.isArray(begun.data) ? begun.data[0] : begun.data) as
+    | { id: string; status: string; created: boolean; export_id: string | null }
+    | null;
+  if (!row?.id) throw new IntelligenceError('Design export could not start.', 503);
+  if (row.status === 'complete') {
+    return {
+      id: row.id,
+      status: 'complete' as const,
+      exportId: row.export_id,
+      format: input.format,
+      local: false,
+      hosted: false,
+      needsFfmpeg: designExportNeedsFfmpeg(revision.document, input.format),
+      note: 'Returned the existing finished export for this idempotency key.',
+    };
+  }
+  if (!row.created && row.status !== 'queued') {
+    return {
+      id: row.id,
+      status: row.status === 'running' ? 'existing' : row.status,
+      exportId: row.export_id,
+      format: input.format,
+      local: false,
+      hosted: false,
+      needsFfmpeg: designExportNeedsFfmpeg(revision.document, input.format),
+      note: `Returned the existing ${row.status} design export for this idempotency key.`,
+    };
+  }
+  if (renderWorkerRequested() && !executeLocal) {
+    return {
+      id: row.id,
+      status: row.created ? 'queued' : 'existing',
+      exportId: null,
+      format: input.format,
+      local: false,
+      hosted: false,
+      needsFfmpeg: designExportNeedsFfmpeg(revision.document, input.format),
+      note: 'Hosted rendering is unavailable. The design export is queued for scripts/studio-render-worker.mjs. Commissioning Film jobs alone does not render Design exports.',
+    };
+  }
+  return executeDesignExport(row.id, revision.document, input);
 }
 
-async function authUid(client: Awaited<ReturnType<typeof studioSession>>['client']) {
-  const { data } = await client.auth.getUser();
-  if (!data.user) throw new IntelligenceError('Sign in to export.', 401);
-  return data.user.id;
+export async function cancelDesignExport(id: string) {
+  const { client } = await studioSession();
+  const result = await client.rpc('ai_studio_design_export_cancel', { p_id: id });
+  if (result.error) throw new IntelligenceError('The design export could not be cancelled.', 409);
+  return { cancelled: Boolean(result.data) };
+}
+
+export async function executeDesignExport(
+  jobId: string,
+  document: DesignDocument,
+  input: { projectId: string; designId: string; revisionId: string; format: 'png' | 'svg' | 'pdf'; fontMode: 'embed' | 'outline' },
+) {
+  const { client, person } = await studioSession();
+  try {
+    const rendered = await runDesignExportJob({
+      client,
+      personId: person.id,
+      jobId,
+      document,
+      projectId: input.projectId,
+      format: input.format,
+      fontMode: input.fontMode,
+    });
+    return {
+      ...rendered,
+      local: true,
+      hosted: false,
+      prepress: 'unavailable' as const,
+      color: 'rgb' as const,
+      note: rendered.needsFfmpeg
+        ? 'Rendered the pinned revision through FFmpeg on this host.'
+        : 'Rendered the pinned revision in the Node web runtime with bundled static faces. No FFmpeg.',
+    };
+  } catch (error) {
+    throw error instanceof IntelligenceError
+      ? error
+      : new IntelligenceError(error instanceof Error ? error.message : 'The design could not be exported.', 503);
+  }
+}
+
+export async function designExportJob(id: string) {
+  const { client, person } = await studioSession();
+  const row = await client
+    .from('ai_studio_design_export_jobs')
+    .select('id,design_id,revision_id,format,status,export_id,width,height,ppi,failure_code')
+    .eq('id', id)
+    .eq('person_id', person.id)
+    .maybeSingle();
+  if (row.error || !row.data) throw new IntelligenceError('Design export not found.', 404);
+  return row.data;
 }
 
 export async function designExportBlob(id: string) {

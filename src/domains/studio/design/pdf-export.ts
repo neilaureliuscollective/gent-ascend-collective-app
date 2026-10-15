@@ -13,12 +13,12 @@ import {
   type PDFPage,
 } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { designFont, designFontPath, type DesignFontId } from './fonts';
-import { loadDesignFont, wrapText, weightAdvanceScale } from './measure';
+import { designFontPath } from './fonts';
+import { loadDesignFont, wrapText } from './measure';
 import { mediaPoints, toInches, toPoints } from './units';
 import type { Font } from '@pdf-lib/fontkit';
 import { visibleOrder, type DesignDocument, type DesignLayer } from './document';
-import { escapeXml, sanitizeSvg } from './sanitize';
+import { sanitizeSvg } from './sanitize';
 import { assetPngBytes, rasterizeSvgMarkup } from './raster';
 import type { AssetBytes } from './assets';
 
@@ -89,16 +89,14 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
     height: media.height,
     color: color(document.page.background),
   });
-  const fonts = new Map<DesignFontId, PDFFont>();
+  const fonts = new Map<string, PDFFont>();
   for (const layer of document.layers) {
     if (layer.type !== 'text') continue;
-    if (fonts.has(layer.fontId)) continue;
-    const spec = designFont(layer.fontId);
+    const key = `${layer.fontId}:${layer.fontWeight}`;
+    if (fonts.has(key)) continue;
     fonts.set(
-      layer.fontId,
-      await pdf.embedFont(await readFile(designFontPath(layer.fontId)), {
-        subset: spec.file.endsWith('.ttf'),
-      }),
+      key,
+      await pdf.embedFont(await readFile(designFontPath(layer.fontId, layer.fontWeight)), { subset: true }),
     );
   }
   const lookup = new Map(assets.map((asset) => [`${asset.kind}:${asset.id}`, asset]));
@@ -112,7 +110,7 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
     height: toInches(document.page.height, document.page.unit, document.page.ppi),
   };
   pdf.setSubject(
-    `RGB export trim ${inches.width.toFixed(4)}×${inches.height.toFixed(4)} in. Bleed extends the media box outward and does not shrink trim. SVG logos are rasterized to PNG in this PDF; they are not retained as vector artwork. Variable font weights 600/700 are rasterized from the real wght instance via SVG; they are not faux-bold. Not CMYK, PDF/X or printer-certified. Dimension source: ${document.page.dimensionSource}. ${document.page.dimensionNote}`,
+    `RGB export trim ${inches.width.toFixed(4)}×${inches.height.toFixed(4)} in. Bleed extends the media box outward and does not shrink trim. SVG logos are rasterized to PNG in this PDF; they are not retained as vector artwork. Type uses the bundled static Inter/Sora/DejaVu faces at the requested weight. Not CMYK, PDF/X or printer-certified. Dimension source: ${document.page.dimensionSource}. ${document.page.dimensionNote}`,
   );
   return pdf.save({ useObjectStreams: false });
 }
@@ -128,7 +126,7 @@ async function drawLayer(
   page: PDFPage,
   document: DesignDocument,
   layer: DesignLayer,
-  fonts: Map<DesignFontId, PDFFont>,
+  fonts: Map<string, PDFFont>,
   lookup: Map<string, AssetBytes>,
   media: ReturnType<typeof mediaPoints>,
 ) {
@@ -210,19 +208,11 @@ async function drawLayer(
     if (layer.type === 'rect' || layer.type === 'ellipse') return;
     throw new Error(`Layer “${layer.name}” (${layer.type}) cannot be exported to PDF.`);
   }
-  if (!fonts.get(layer.fontId))
-    throw new Error(`Missing font: ${layer.fontId}. Studio does not substitute another typeface.`);
+  const fontKey = `${layer.fontId}:${layer.fontWeight}`;
+  if (!fonts.get(fontKey))
+    throw new Error(`Missing font: ${layer.fontId} ${layer.fontWeight}. Studio does not substitute another typeface.`);
   const kit = await loadDesignFont(layer.fontId, layer.fontWeight);
-  const advanceScale = await weightAdvanceScale(layer.fontId, layer.fontWeight);
-  if (layer.fontWeight !== 400) {
-    const png = await rasterizeWeightedText(layer, document, width, height, advanceScale);
-    const image = await pdf.embedPng(png);
-    withRotation(page, cx, cy, layer.rotation, () => {
-      page.drawImage(image, { x, y, width, height, opacity });
-    });
-    return;
-  }
-  const wrapped = wrapText(layer, kit, width / 72, advanceScale);
+  const wrapped = wrapText(layer, kit, width / 72);
   withRotation(page, cx, cy, layer.rotation, () => {
     wrapped.lines.forEach((line, index) => {
       const lineWidth = wrapped.widths[index] ?? 0;
@@ -240,34 +230,6 @@ async function drawLayer(
       });
     });
   });
-}
-
-async function rasterizeWeightedText(
-  layer: Extract<DesignLayer, { type: 'text' }>,
-  document: DesignDocument,
-  widthPt: number,
-  heightPt: number,
-  advanceScale: number,
-) {
-  const spec = designFont(layer.fontId);
-  const bytes = await readFile(designFontPath(layer.fontId));
-  const mime = spec.file.endsWith('.woff2') ? 'font/woff2' : 'font/ttf';
-  const fmt = mime === 'font/woff2' ? 'woff2' : 'truetype';
-  const pxW = Math.max(1, Math.round(widthPt * (document.page.ppi / 72)));
-  const pxH = Math.max(1, Math.round(heightPt * (document.page.ppi / 72)));
-  const fontSizePx = layer.fontSize * (document.page.ppi / 72);
-  const kit = await loadDesignFont(layer.fontId, layer.fontWeight);
-  const wrapped = wrapText(layer, kit, widthPt / 72, advanceScale);
-  const anchor = layer.align === 'center' ? 'middle' : layer.align === 'right' ? 'end' : 'start';
-  const x = layer.align === 'center' ? pxW / 2 : layer.align === 'right' ? pxW : 0;
-  const lines = wrapped.lines
-    .map((line, index) => {
-      const y = (index + 0.9) * fontSizePx * layer.lineHeight;
-      return `<tspan x="${x}" y="${y}">${escapeXml(line)}</tspan>`;
-    })
-    .join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pxW}" height="${pxH}" viewBox="0 0 ${pxW} ${pxH}"><defs><style>@font-face{font-family:${JSON.stringify(spec.family)};src:url("data:${mime};base64,${Buffer.from(bytes).toString('base64')}") format("${fmt}");font-weight:100 900;}</style></defs><text xml:space="preserve" font-family="${escapeXml(spec.family)}" font-size="${fontSizePx}" font-weight="${layer.fontWeight}" fill="${escapeXml(layer.fill)}" text-anchor="${anchor}" letter-spacing="${layer.letterSpacing * (document.page.ppi / 72)}">${lines}</text></svg>`;
-  return rasterizeSvgMarkup(svg, pxW, pxH);
 }
 
 function drawGlyphRun(
