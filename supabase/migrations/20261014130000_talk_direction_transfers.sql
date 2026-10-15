@@ -65,13 +65,15 @@ begin
   end if;
   if to_regclass('public.architect_design_directions') is not null then
     execute
-      'select true from public.architect_design_directions
+      'select exists(
+        select 1 from public.architect_design_directions
         where request_id = $1 and person_id = $2 and project_id = $3
-          and digest = $4 and verified'
+          and digest = $4 and verified = true
+      )'
       into acknowledged
       using p_id, owner_id, p_project, p_digest;
   end if;
-  if not acknowledged then raise exception 'Architect acknowledgment missing'; end if;
+  if acknowledged is not true then raise exception 'Architect acknowledgment missing'; end if;
   select * into existing from public.ai_talk_direction_transfers
   where id = p_id and person_id = owner_id;
   if found then

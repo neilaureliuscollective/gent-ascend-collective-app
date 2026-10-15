@@ -424,6 +424,12 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
     );
     expect(first.rows[0]).toMatchObject({ receipt: { imported: true, projectId } });
     expect(retry.rows[0]).toMatchObject({ receipt: { imported: true, recovered: true, projectId } });
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_record_direction_transfer('${crypto.randomUUID()}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${crypto.randomUUID()}','${digest}',${literal(receipt)})`,
+      ),
+    ).rejects.toThrow(/acknowledgment missing/i);
     expect(
       (await asUser(owner, `select count(*)::int as n from public.ai_talk_direction_transfers`)).rows[0],
     ).toEqual({ n: 1 });

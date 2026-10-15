@@ -123,6 +123,22 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     const id = url.searchParams.get('conversationId');
     return route.fulfill({ json: workspace(saved, id) });
   });
+  await page.route('**/api/aethelios/live/receipt**', async (route) => {
+    const url = new URL(route.request().url());
+    return route.fulfill({
+      json: {
+        ownerId: owner,
+        conversationId: url.searchParams.get('conversationId'),
+        sessionId: url.searchParams.get('sessionId'),
+        bindings: [
+          { providerItemId: 'spoken-1', providerResponseId: null, turnId: 'spoken-1' },
+        ],
+        turns: [
+          { id: 'spoken-1', user_text: 'Spoken in Talk', created_at: '2026-10-14T18:24:00Z' },
+        ],
+      },
+    });
+  });
   await page.route('**/api/aethelios/live', async (route) => {
     if (route.request().method() === 'GET') return route.fulfill({ json: { jobs: [] } });
     if (route.request().method() === 'DELETE') return route.fulfill({ json: { ended: true } });
