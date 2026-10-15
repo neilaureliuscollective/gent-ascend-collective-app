@@ -1,18 +1,22 @@
+import { openGlobalMenu, globalMenu } from '../support/global-navigation';
 import { test, expect } from './fixtures';
 
 test('motion and solid-surface choices persist; OS reduced motion always wins', async ({
   page,
 }) => {
   await page.goto('/app/ongoing');
-  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
-  await page.getByRole('button', { name: 'Use solid surfaces' }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await globalMenu(page).getByRole('button', { name: 'Use solid surfaces', exact: true }).click();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'still');
   await expect(page.locator('html')).toHaveAttribute('data-material', 'solid');
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
   await expect(page.locator('.navigation')).toHaveCSS('backdrop-filter', 'none');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.getByRole('button', { name: 'Enable ambient motion' }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Enable ambient motion', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'still');
   await expect(page.locator('.presence-canvas')).toHaveCount(0);
   await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
@@ -94,7 +98,9 @@ test('connected light follows navigation and becomes still while reading a dialo
   await expect(page.locator('.connection-arrival')).toHaveCSS('animation-name', 'none');
   await page.keyboard.press('Escape');
   await expect(page.locator('html')).toHaveAttribute('data-quiet', 'false');
-  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.connection-arrival')).toBeHidden();
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.connection-field')).toBeHidden();

@@ -45,3 +45,9 @@ Remaining release checks: authenticated member/founder sessions, real active voi
 - Before/after screenshots inspected at phone, Fold and desktop widths. Narrow Talk wraps its toolbar; global sheet material remains consistent across route styling scopes.
 
 The broad 989-pass/four-failure unit run above was before current-main reconciliation; it is not claimed as a full post-reconciliation unit run. Exact logs and screenshot index: [navigation evidence](evidence/global-navigation/README.md). A real active voice session and authenticated founder/member browser flows remain unrun; neither screenshots nor synthetic props substitute for those gates.
+
+### Navigation test-contract completion
+
+The first published head left stale consumers in Lifestyle, Architect Auth/history, founder, appearance and visual/release tests. The completion pass adds a shared test helper scoped to the actual Menu dialog, distinguishes four primary shortcuts from the full destination list, and mounts the real shared Menu in the explicitly synthetic member Lifestyle shell. It retains destination visibility/current-page checks, adds real built-route Studio/Lifestyle click-through at three widths, and extends the existing real-auth Architect journey with member Studio/Lifestyle click-through before its unchanged persistence/revision/dirty-draft checks. Appearance settings are activated through Menu. No application access, SQL, feature implementation or deployment is changed by this pass.
+
+Final exact-head hosted workflow results are recorded in the PR review receipt. The earlier first-head hosted visual job's npm check passed 174 files / 1,031 tests; the four local host-dependent unit failures did not reproduce in that hosted job. They must not be described as hosted release failures.

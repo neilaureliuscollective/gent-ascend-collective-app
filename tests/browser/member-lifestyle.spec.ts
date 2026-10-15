@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations, globalMenu } from '../support/global-navigation';
 import { expect, test } from '@playwright/test';
 
 test.use({ baseURL: 'http://127.0.0.1:3102' });
@@ -23,13 +24,15 @@ for (const width of [344, 720, 1440]) {
     await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member');
     await expect(page.getByText('Synthetic commerce fixture', { exact: false })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Your collection.' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Home' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Talk' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Work' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Studio' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Health' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Lifestyle' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Ecosystem' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link')).toHaveText(['Home', 'Talk', 'Work', 'Architect']);
+    await openGlobalMenu(page);
+    const destinations = globalDestinations(page);
+    for (const [name, href] of [['Studio', '/app/studio'], ['Health', '/app/health'], ['Lifestyle', '/app/lifestyle'], ['Ecosystem', '/app/ecosystem']] as const) {
+      await expect(destinations.getByRole('link', { name, exact: true })).toBeVisible();
+      await expect(destinations.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
+    }
+    await expect(destinations.getByRole('link', { name: 'Lifestyle', exact: true })).toHaveAttribute('aria-current', 'page');
+    await globalMenu(page).getByRole('button', { name: 'Close Aethelios menu', exact: true }).click();
     await expect(page.getByRole('link', { name: 'Explore the collection' })).toHaveAttribute(
       'href',
       '/app/collection',
@@ -111,7 +114,9 @@ for (const width of [344, 1440]) {
     await page.goto('http://127.0.0.1:3102/?mode=lifestyle-list');
     await expect(page.getByRole('heading', { name: 'The Collection.' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Your Cabinet' })).toBeVisible();
-    await expect(mainNav(page).getByRole('link', { name: 'Lifestyle' })).toBeVisible();
+    await openGlobalMenu(page);
+    await expect(globalDestinations(page).getByRole('link', { name: 'Lifestyle', exact: true })).toHaveAttribute('aria-current', 'page');
+    await page.keyboard.press('Escape');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

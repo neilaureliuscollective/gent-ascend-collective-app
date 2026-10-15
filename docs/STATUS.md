@@ -1238,3 +1238,5 @@ Current-main source verified against tree `6f78d395807819ec99ae7308f51d07630b0ea
 ## Shared global navigation repair — 2026-10-15
 
 Review branch `fix/consistent-global-navigation` centralizes destination names/routes/icons and server-supplied presentation visibility; adds one recognizable Menu sheet across shell, Talk, Architect and public headers; keeps four primary shortcuts including Architect. Talk New remains separate from visible Tools and History. No feature internals, SQL, provider or entitlement change. See [GLOBAL_NAVIGATION.md](GLOBAL_NAVIGATION.md) for scope, overlap adapters, labeled evidence and remaining authenticated/voice/release gates. Not merged or deployed.
+
+Navigation PR #144 completion pass migrates the remaining Lifestyle, Architect Auth/history, founder and visual/appearance test contracts to primary shortcuts versus the full Menu. Actual Studio/Lifestyle click-through, founder visibility, settings activation and dirty-draft cancellation remain asserted. Final-head CI receipt is maintained on the PR; no merge, deployment or SQL operation is part of this pass.
