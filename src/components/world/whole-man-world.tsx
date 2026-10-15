@@ -74,7 +74,7 @@ export function WholeManWorld({ initialWorld = null }: { initialWorld?: string |
       >
         <WorldScenery world={world} saveData={saveData} />
         <div className="gw-atlas-intro">
-          <p className="gw-kicker">GENT ASCEND / WHOLE MAN</p>
+          <p className="gw-kicker">AETHELIOS / YOUR WORLD</p>
           <h1 id="world-heading" tabIndex={-1}>
             One life.
             <br />

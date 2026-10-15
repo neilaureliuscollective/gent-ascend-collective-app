@@ -46,6 +46,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/about">Our story</Link>
+          <Link href="/ecosystem">Ecosystem</Link>
           <Link href="/support">Member support</Link>
           <Link href="/app/studio">Studio</Link>
           <Link href="/app/work">Company work</Link>

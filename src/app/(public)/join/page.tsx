@@ -3,6 +3,7 @@ import { signIn } from '@/app/auth/actions';
 import { currentIdentity } from '@/domains/identity/current';
 import { registrationConfig } from '@/domains/identity/registration-config';
 import { MembershipRegistration } from '@/components/membership-registration';
+import { presentationPlan } from '@/domains/ecosystem/presentation-catalog';
 import '../founding-launch.css';
 export const dynamic = 'force-dynamic';
 export default async function Join({
@@ -16,7 +17,7 @@ export default async function Join({
   return (
     <main id="world-main" className="founding-world">
       <header className="world-page-intro founding-intro">
-        <p className="world-kicker">Gent Ascend / Your account</p>
+        <p className="world-kicker">Aethelios / Your account</p>
         <h1>
           Your chapter
           <br />
@@ -26,6 +27,13 @@ export default async function Join({
           Create your account, confirm your email, then review the founding offer. Creating an
           account does not subscribe you or charge you.
         </p>
+        {params.from === 'ecosystem' && presentationPlan(params.plan) ? (
+          <p className="founding-disclosure">
+            You arrived from Ecosystem with {presentationPlan(params.plan)!.name} selected as a
+            preview direction. That name is not a live product. If registration is closed, sign in
+            only if you already have access.
+          </p>
+        ) : null}
       </header>
       <section className="world-section membership-arrival">
         {identity ? (

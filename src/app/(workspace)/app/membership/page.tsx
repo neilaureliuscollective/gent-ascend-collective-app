@@ -6,6 +6,7 @@ import { billingPaidActive } from '@/domains/billing/policy';
 import { billingConfig } from '@/domains/billing/config';
 import { foundingPlan, foundingPrice } from '@/domains/billing/founding-catalog';
 import { MembershipControls } from '@/components/membership-controls';
+import { presentationPlan } from '@/domains/ecosystem/presentation-catalog';
 import './membership.css';
 
 export const dynamic = 'force-dynamic';
@@ -36,10 +37,17 @@ export default async function Membership({
     <>
       <div className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Gent Ascend / Your membership</p>
+          <p className="eyebrow">Aethelios / Your membership</p>
           <h1>Your founding chapter.</h1>
         </div>
       </div>
+      {params.from === 'ecosystem' && presentationPlan(params.plan) ? (
+        <p role="status">
+          Ecosystem preview selection: {presentationPlan(params.plan)!.name}. Existing founding
+          billing still uses Essential, Signature and Reserve. Preview names never open checkout
+          from this page.
+        </p>
+      ) : null}
       <div className="membership-grid">
         <section className="panel">
           <p className="eyebrow">Your account</p>

@@ -1,3 +1,7 @@
+# Ecosystem membership presentation catalog — 2026-10-15
+
+Keep a typed preview catalog (`access|ascend|create|architect|continuum`) separate from founding billing (`essential|signature|reserve`). The new names are a planning direction for Ecosystem and related preview screens. They do not grant entitlements, do not map onto existing Stripe prices, and cannot open checkout. Continuum is coming soon. Existing paid members keep Essential/Signature/Reserve until an approved migration exists. Lifestyle products and Reserve consultation remain separate from membership. Evidence: [ECOSYSTEM_MEMBERSHIP.md](ECOSYSTEM_MEMBERSHIP.md).
+
 # Aethelios Studio renderer/editor pipeline — 2026-10-15
 
 Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).

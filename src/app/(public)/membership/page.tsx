@@ -2,6 +2,10 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Chapter } from '@/components/public/editorial';
 import { foundingPlans, foundingPrice } from '@/domains/billing/founding-catalog';
+import {
+  presentationPlans,
+  presentationPrice,
+} from '@/domains/ecosystem/presentation-catalog';
 import '../founding-launch.css';
 import { billingConfig } from '@/domains/billing/config';
 export const dynamic = 'force-dynamic';
@@ -38,7 +42,42 @@ export default function Membership() {
             ? 'Founding enrollment is open. Review the current launch terms in your membership account before subscribing.'
             : 'Founding offer preview. Paid enrollment is not open. Free accounts and existing member access remain separate.'}
         </p>
+        <p className="founding-disclosure">
+          A later planning catalog — Access, Ascend, Create, Architect and Continuum — is shown on{' '}
+          <Link href="/ecosystem#ecosystem-membership">Ecosystem</Link>. Those names are not live
+          Stripe products and do not replace Essential, Signature or Reserve.
+        </p>
       </header>
+      <section className="world-section" aria-labelledby="preview-catalog-title">
+        <Chapter number="00" label="Planning catalog. Not for sale." />
+        <h2 id="preview-catalog-title">Where the next memberships are heading.</h2>
+        <p>
+          Use this only as a direction. Current founding billing remains Essential, Signature and
+          Reserve. Continuum is coming soon and never opens checkout. Lifestyle products stay
+          separate purchases.
+        </p>
+        <div className="founding-levels eco-preview-levels">
+          {presentationPlans.map((plan) => (
+            <article key={plan.id} className={`founding-level founding-level--${plan.id}`}>
+              <span className="world-kicker">
+                {plan.lifecycle === 'coming_soon' ? 'Coming soon' : 'Preview direction'}
+              </span>
+              <h3>{plan.name}</h3>
+              <p className="founding-price">
+                {presentationPrice(plan)}
+                {plan.monthlyCents ? <span> / month</span> : null}
+              </p>
+              <p>{plan.intendedUse}</p>
+              <p className="founding-detail-note">{plan.availability}</p>
+            </article>
+          ))}
+        </div>
+        <div className="world-actions">
+          <Link href="/ecosystem#ecosystem-membership" className="world-button">
+            Find your fit on Ecosystem ↓
+          </Link>
+        </div>
+      </section>
       <section id="founding-levels" className="world-section">
         <Chapter number="01" label="Three levels. One world." />
         <div className="founding-levels">

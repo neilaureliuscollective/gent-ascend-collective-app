@@ -17,7 +17,8 @@ export default function Reserve() {
         <p>
           A personal setting for grooming, performance, and the way you care for yourself.
           Consultation with Neil, Legacy Reserve products, and Katie’s men’s salon craft, brought
-          together with a shared standard of attention.
+          together with a shared standard of attention. Aethelios membership does not include this
+          visit, a human-service Partnership, or a promise that Neil will build a client website.
         </p>
         <div className="world-actions">
           {destination ? (

@@ -9,6 +9,7 @@ const links = [
   ['/app/aethelios', 'Talk'],
   ['/app/work', 'Company work'],
   ['/app/studio', 'Studio'],
+  ['/ecosystem', 'Ecosystem'],
   ['/lifestyle', 'Lifestyle'],
 ] as const;
 export function WorldHeader() {

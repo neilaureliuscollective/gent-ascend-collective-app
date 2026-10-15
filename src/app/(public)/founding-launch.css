@@ -15,6 +15,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(1rem, 3vw, 3rem);
 }
+.eco-preview-levels {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
 .founding-level {
   min-width: 0;
   padding: 2rem 0;
