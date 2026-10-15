@@ -3,7 +3,7 @@
   display: grid;
   gap: 0.125rem;
   min-width: 0;
-  margin-block: 0.125rem;
+  margin-block: 0;
   color: var(--aether-text);
 }
 .talk-image-actions,
@@ -83,7 +83,12 @@
 .talk-image-status progress {
   width: 3rem;
 }
-.talk-page .aurelius-composer:has(.talk-image-preview) .talk-expand {
-  top: auto;
-  bottom: calc(44px + 0.5rem);
+.talk-page .composer-controls:has(> .talk-image-attachment) {
+  flex-wrap: wrap;
+}
+.talk-page .composer-controls > .talk-image-attachment[data-expanded='true'] {
+  flex-basis: 100%;
+}
+.talk-page .composer-controls:has(> .talk-image-attachment) > .quiet-label {
+  flex: 1;
 }

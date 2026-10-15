@@ -115,7 +115,10 @@ export function TalkImageAttachment({
     }
   }
   return (
-    <div className="talk-image-attachment">
+    <div
+      className="talk-image-attachment"
+      data-expanded={Boolean(preview || value || progress || error)}
+    >
       <input
         ref={input}
         type="file"

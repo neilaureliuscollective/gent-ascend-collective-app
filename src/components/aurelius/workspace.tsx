@@ -2293,14 +2293,6 @@ export function AureliusWorkspace({
                   </button>
                 </div>
               )}
-              <TalkImageAttachment
-                key={`${data.ownerId ?? 'anonymous'}:${selected ?? 'new'}:${attachmentEpoch}`}
-                value={attachment}
-                disabled={blocked || preview || !data.canChat || liveBusy}
-                onChange={setAttachment}
-                onRemove={clearAttachment}
-                onBusyChange={setAttachmentBusy}
-              />
               {(() => {
                 const resolved = resolveWorkTarget(
                   creationWorkspace,
@@ -2335,6 +2327,14 @@ export function AureliusWorkspace({
                 }
               />
               <div className="composer-controls">
+                <TalkImageAttachment
+                  key={`${data.ownerId ?? 'anonymous'}:${selected ?? 'new'}:${attachmentEpoch}`}
+                  value={attachment}
+                  disabled={blocked || preview || !data.canChat || liveBusy}
+                  onChange={setAttachment}
+                  onRemove={clearAttachment}
+                  onBusyChange={setAttachmentBusy}
+                />
                 <span className="quiet-label">
                   {includeContext ? 'Personal context on' : 'Private conversation'}
                 </span>

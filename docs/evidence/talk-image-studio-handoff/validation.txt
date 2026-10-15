@@ -1,7 +1,10 @@
-Base: 0c4a59c884dbc133fbe8e9aa153c453f10846e89
+PR152 composer-layout correction
+Canonical base integrated: 6e35741e46fd5ec6e9d8fc94a634e22a99f4bdc5
+Integration commit: d8638a138cc2fe8b43fefc6007b2b9e074c53a56
 Branch: feat/talk-image-studio-reference
-PR #152 review correction: exclusive Studio source and compact, pointer-accessible Talk attachment.
-All evidence uses synthetic records, intercepted storage/provider traffic, and public original logo bytes. No paid or hosted acceptance.
+Browser evidence uses native Chromium renders, synthetic records and intercepted provider/storage APIs; not physical-device or hosted Auth acceptance.
+
+Contract unchanged: composer <=112px, transcript/app >0.6. Added target >=44px and pointer-actionability assertions at 320/360/390/412/768/1440px.
 
 Lint
 
@@ -9,7 +12,7 @@ Lint
 > eslint . --max-warnings 0
 
 
-Strict types
+Strict types including final evidence assertions
 
 > aurelius-collective-app@0.1.0 typecheck
 > next typegen && tsc --noEmit
@@ -17,66 +20,173 @@ Strict types
 Generating route types...
 ✓ Types generated successfully
 
-Focused attachment + brand ownership + exclusive source input
+Focused attachment/ownership/source suites
 
  RUN  v5.0.1 /workspace/gent-ascend-collective-app
 
 
  Test Files  4 passed (4)
       Tests  19 passed (19)
-   Start at  20:49:30
-   Duration  696ms (transform 50%, import 41%, tests 7%, worker 1%)
+   Start at  21:51:36
+   Duration  1.51s (transform 46%, import 42%, tests 11%, worker 1%)
 
 
-Complete attachment browser regressions (stable source)
-[WebServer] (node:54910) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+Aggregate Talk/Live/visual-layout/motion browser regressions
+[WebServer] (node:56818) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:56831) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:56987) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
 
-Running 9 tests using 1 worker
+Running 86 tests using 2 workers
 
-(node:54929) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:57123) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  1 tests/browser/talk-image.spec.ts:251:3 › Talk image analysis and durable Studio reference preserve original at 390px (6.3s)
-  ✓  2 tests/browser/talk-image.spec.ts:251:3 › Talk image analysis and durable Studio reference preserve original at 768px (6.0s)
-  ✓  3 tests/browser/talk-image.spec.ts:309:1 › uncertain upload completion retries the original reference without another transfer (1.7s)
-  ✓  4 tests/browser/talk-image.spec.ts:323:1 › Remove fences a late preparation; unsupported files never upload (1.3s)
-  ✓  5 tests/browser/talk-image.spec.ts:342:1 › starting a new conversation fences the previous pending image upload (1.3s)
-  ✓  6 tests/browser/talk-image.spec.ts:355:1 › a stale Studio handoff never silently selects another reference or starts generation (1.9s)
-  ✓  7 tests/browser/talk-image.spec.ts:372:1 › saved-version deep links override persisted references and every submitted source matches the preview (5.6s)
-  ✓  8 tests/browser/talk-image.spec.ts:430:3 › attachment leaves a readable transcript and pointer-reachable controls at 390px, including keyboard height (2.7s)
-  ✓  9 tests/browser/talk-image.spec.ts:430:3 › attachment leaves a readable transcript and pointer-reachable controls at 768px, including keyboard height (2.8s)
+(node:57126) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 tests/browser/intelligence-motion-integration.spec.ts:3:3 › real Talk reports search and saving only from fixture events at 344 (7.6s)
+  ✓   1 tests/browser/fluid-conversation.spec.ts:6:1 › local pending message precedes acceptance; acceptance preserves a newer draft (9.3s)
+  ✓   4 tests/browser/fluid-conversation.spec.ts:27:1 › acceptance clears only the sent draft and cancellation retains the newer draft (3.1s)
+  ✓   3 tests/browser/intelligence-motion-integration.spec.ts:3:3 › real Talk reports search and saving only from fixture events at 768 (5.3s)
+  ✓   5 tests/browser/fluid-conversation.spec.ts:40:1 › rejected submission retains draft and removes the local pending turn (3.0s)
+  ✓   6 tests/browser/intelligence-motion-integration.spec.ts:3:3 › real Talk reports search and saving only from fixture events at 1440 (4.4s)
+  ✓   7 tests/browser/fluid-conversation.spec.ts:49:3 › bounded multiline input remains usable at 344px (3.4s)
+  ✓   8 tests/browser/intelligence-motion-integration.spec.ts:29:1 › Stop preserves the draft and reports cancellation independently of failure (3.0s)
+  ✓   9 tests/browser/fluid-conversation.spec.ts:49:3 › bounded multiline input remains usable at 390px (4.1s)
+  ✓  10 tests/browser/intelligence-motion-integration.spec.ts:42:1 › Studio uses waiting until its synchronous endpoint confirms the save (5.0s)
+  ✓  11 tests/browser/fluid-conversation.spec.ts:49:3 › bounded multiline input remains usable at 720px (3.3s)
+  ✓  13 tests/browser/fluid-conversation.spec.ts:49:3 › bounded multiline input remains usable at 768px (3.1s)
+  ✓  12 tests/browser/intelligence-motion-integration.spec.ts:55:3 › response signature is visibly animated at the work location at 344px (4.7s)
+  ✓  14 tests/browser/fluid-conversation.spec.ts:49:3 › bounded multiline input remains usable at 1440px (4.5s)
+  ✓  15 tests/browser/intelligence-motion-integration.spec.ts:55:3 › response signature is visibly animated at the work location at 768px (4.8s)
+  ✓  16 tests/browser/fluid-conversation.spec.ts:72:1 › desktop Shift+Enter stays multiline, and Ctrl+Enter submits (2.6s)
+  ✓  17 tests/browser/intelligence-motion-integration.spec.ts:55:3 › response signature is visibly animated at the work location at 1440px (4.0s)
+FLUID_TIMING|[{"stage":"acknowledged","elapsedMs":0.2000000011175871},{"stage":"acknowledgement-render","elapsedMs":49.20000000111759},{"stage":"accepted","elapsedMs":67.10000000149012},{"stage":"first-event","elapsedMs":329.90000000037253},{"stage":"first-text","elapsedMs":330.1000000014901},{"stage":"first-render","elapsedMs":451.1000000014901}]
+  ✓  18 tests/browser/fluid-conversation.spec.ts:82:1 › records content-free acknowledgement and response DOM timings (2.9s)
+  ✓  19 tests/browser/intelligence-motion-integration.spec.ts:101:1 › response feedback stays visible and readable with reduced motion (2.6s)
+  ✓  21 tests/browser/intelligence-motion-integration.spec.ts:113:1 › feedback appears before response headers and never requires opening the orb (2.5s)
+  ✓  20 tests/browser/fluid-conversation.spec.ts:114:1 › streaming leaves readers in place until they choose the latest message (5.1s)
+  ✓  23 tests/browser/fluid-conversation.spec.ts:135:1 › leaving Talk during streaming aborts the transport and does not paint late content (4.0s)
+  ✓  22 tests/browser/intelligence-motion-integration.spec.ts:136:1 › long replies keep the primary motion visible as the text grows (4.6s)
+[WebServer] ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3100". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  ✓  24 tests/browser/fluid-conversation.spec.ts:158:1 › simulated VisualViewport transitions preserve focus and usable bounds, and ignore pinch zoom (4.1s)
+  ✓  25 tests/browser/intelligence-motion-integration.spec.ts:158:1 › image approval waits and running generation creates (4.0s)
+  ✓  26 tests/browser/fluid-conversation.spec.ts:244:1 › desktop Enter submits a single-line draft (3.5s)
+  ✓  27 tests/browser/intelligence-motion-integration.spec.ts:176:1 › Stop terminalizes in-progress artifacts and keeps completed ones (4.2s)
+  ✓  28 tests/browser/fluid-conversation.spec.ts:256:3 › touch composer actions › Send and Stop retain editor focus without forced refocusing (4.2s)
+  ✓  29 tests/browser/intelligence-motion-integration.spec.ts:197:1 › failure marks unfinished artifacts uncertain and does not revive them (4.3s)
+  ✓  31 tests/browser/intelligence-motion-integration.spec.ts:213:1 › one polite announcer follows operational transitions without duplicating inline status (5.8s)
+  ✓  30 tests/browser/fluid-conversation.spec.ts:270:1 › a confirmed answer cannot become interrupted while its saved list refreshes (7.0s)
+  ✓  32 tests/browser/intelligence-motion-integration.spec.ts:228:1 › confirmed Saved settles to the compact author mark and late search cannot revive it (5.1s)
+  ✓  33 tests/browser/live-consent-layout.spec.ts:11:3 › Talk consent remains pointer accessible at 320×568 (6.0s)
+  ✓  34 tests/browser/intelligence-motion-integration.spec.ts:248:1 › Stop shows Stopping then Stopped without clearing the draft (3.6s)
+  ✓  35 tests/browser/live-consent-layout.spec.ts:11:3 › Talk consent remains pointer accessible at 390×844 (5.0s)
+  ✓  36 tests/browser/intelligence-motion-integration.spec.ts:262:1 › synthetic voice envelope follows measured CSS level, not a waveform (2.8s)
+  ✓  38 tests/browser/intelligence-motion-integration.spec.ts:275:1 › Fold-like keyboard height keeps composer, Stop and compact status usable (2.9s)
+  ✓  37 tests/browser/live-consent-layout.spec.ts:11:3 › Talk consent remains pointer accessible at 390×420 (5.4s)
+  ✓  39 tests/browser/intelligence-motion-integration.spec.ts:309:3 › narrow Talk header controls stay inside 320px (6.1s)
+  ✓  40 tests/browser/live-consent-layout.spec.ts:11:3 › Talk consent remains pointer accessible at 720×540 (5.2s)
+  ✓  41 tests/browser/intelligence-motion-integration.spec.ts:309:3 › narrow Talk header controls stay inside 344px (5.4s)
+  ✓  42 tests/browser/live-consent-layout.spec.ts:11:3 › Talk consent remains pointer accessible at 884×690 (4.9s)
+  ✓  43 tests/browser/intelligence-motion-integration.spec.ts:309:3 › narrow Talk header controls stay inside 390px (5.3s)
+  ✓  44 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 390px (5.3s)
+  ✓  45 tests/browser/intelligence-motion-integration.spec.ts:309:3 › narrow Talk header controls stay inside 690px (4.0s)
+  ✓  46 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 1440px (4.0s)
+  ✓  47 tests/browser/intelligence-motion-integration.spec.ts:331:1 › persistent image-unavailable notice does not mask a later request (3.7s)
+  ✓  48 tests/browser/live-voice.spec.ts:135:1 › voice diagnostic download excludes transcript and record IDs (3.7s)
+  ✓  49 tests/browser/intelligence-motion-integration.spec.ts:356:1 › fixture Talk composer focus uses the shell ring, not an inner white box (2.1s)
+  ✓  50 tests/browser/live-voice.spec.ts:191:1 › cancelling during slow SDP admission revokes the late call without restoring audio (4.0s)
+  ✓  51 tests/browser/luminous-obsidian.spec.ts:4:3 › Luminous environments retain usable layouts at 320px (5.0s)
+  ✓  52 tests/browser/live-voice.spec.ts:236:1 › late ASR stays ordered and uncertain cleanup prevents another voice session (4.1s)
+  ✓  53 tests/browser/luminous-obsidian.spec.ts:4:3 › Luminous environments retain usable layouts at 390px (4.9s)
+  ✓  54 tests/browser/live-voice.spec.ts:296:1 › connection failure stays compact with a usable retry and does not force fullscreen (3.5s)
+  ✓  56 tests/browser/live-voice.spec.ts:323:1 › simulated phone and unfolded-Fold consent stays scrollable with reachable Start (4.3s)
+  ✓  55 tests/browser/luminous-obsidian.spec.ts:4:3 › Luminous environments retain usable layouts at 720px (5.7s)
+  ✓  57 tests/browser/live-voice.spec.ts:350:1 › unavailable Live remains visible in Talk with an understandable reason (2.7s)
+  ✓  58 tests/browser/luminous-obsidian.spec.ts:4:3 › Luminous environments retain usable layouts at 1024px (5.5s)
+  ✓  59 tests/browser/live-voice.spec.ts:362:1 › acknowledged voice retries in one tap without optional consent or automatic admission (5.1s)
+  ✓  60 tests/browser/luminous-obsidian.spec.ts:4:3 › Luminous environments retain usable layouts at 1440px (3.9s)
+  ✓  61 tests/browser/talk-image.spec.ts:251:3 › Talk image analysis and durable Studio reference preserve original at 390px (6.3s)
+  ✓  62 tests/browser/luminous-obsidian.spec.ts:4:3 › Luminous environments retain usable layouts at 1920px (4.7s)
+  ✓  64 tests/browser/luminous-obsidian.spec.ts:21:1 › Talk keeps its draft and compact composer through appearance changes (1.1s)
+  ✓  65 tests/browser/luminous-obsidian.spec.ts:46:1 › Solid and forced-color modes remove atmospheric hero decoration (1.0s)
+  ✓  66 tests/browser/luminous-obsidian.spec.ts:56:1 › Compact welcome suggestions stage the existing draft without sending (896ms)
+  ✓  67 tests/browser/talk-interaction-recovery.spec.ts:38:3 › Latest message stays above short and grown composers at 390x844 (2.0s)
+  ✓  63 tests/browser/talk-image.spec.ts:251:3 › Talk image analysis and durable Studio reference preserve original at 768px (6.9s)
+  ✓  68 tests/browser/talk-interaction-recovery.spec.ts:38:3 › Latest message stays above short and grown composers at 390x420 (2.1s)
+  ✓  69 tests/browser/talk-image.spec.ts:309:1 › uncertain upload completion retries the original reference without another transfer (2.5s)
+  ✓  70 tests/browser/talk-interaction-recovery.spec.ts:38:3 › Latest message stays above short and grown composers at 1440x900 (2.0s)
+  ✓  71 tests/browser/talk-image.spec.ts:323:1 › Remove fences a late preparation; unsupported files never upload (2.2s)
+  ✓  72 tests/browser/talk-interaction-recovery.spec.ts:74:1 › queued drawer close respects a newer keyboard focus target in forced colors (2.5s)
+  ✓  73 tests/browser/talk-image.spec.ts:342:1 › starting a new conversation fences the previous pending image upload (1.7s)
+  ✓  74 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 320px (2.0s)
+  ✓  75 tests/browser/talk-image.spec.ts:355:1 › a stale Studio handoff never silently selects another reference or starts generation (2.7s)
+  ✓  76 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 360px (2.3s)
+  ✓  78 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 390px (2.6s)
+  ✓  79 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 412px (2.0s)
+  ✓  80 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 768px (1.8s)
+  ✓  81 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 1440px (2.3s)
+  ✓  77 tests/browser/talk-image.spec.ts:372:1 › saved-version deep links override persisted references and every submitted source matches the preview (10.4s)
+  ✓  82 tests/browser/talk-live.spec.ts:114:1 › New voice adopts one Talk conversation and shares the composer and timeline (3.7s)
+  ✓  83 tests/browser/talk-image.spec.ts:430:3 › attachment leaves a readable transcript and pointer-reachable controls at 390px, including keyboard height (4.2s)
+  ✓  84 tests/browser/talk-live.spec.ts:250:1 › connection failure stays in Talk with retry and leaves the composer usable (2.4s)
+  ✓  86 tests/browser/talk-live.spec.ts:315:1 › a delayed workspace body cannot rewrite the current conversation after switch (2.2s)
+  ✓  85 tests/browser/talk-image.spec.ts:430:3 › attachment leaves a readable transcript and pointer-reachable controls at 768px, including keyboard height (3.9s)
 
-  9 passed (31.2s)
+  86 passed (3.0m)
 
-Migration ledger (read-only snapshot)
+Final contract capture rerun
+[WebServer] (node:66374) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:66387) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:66436) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+(node:66455) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3100". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  ✓  1 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 320px (1.8s)
+  ✓  2 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 360px (1.3s)
+  ✓  3 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 390px (1.4s)
+  ✓  4 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 412px (1.3s)
+  ✓  5 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 768px (1.4s)
+  ✓  6 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 1440px (1.5s)
+
+  6 passed (11.4s)
+
+Read-only migration ledger snapshot
 
 > aurelius-collective-app@0.1.0 db:ledger
 > node scripts/check-migration-ledger.mjs
 
 Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.
 
-Application production build: npx next build
+Application build: npx next build
 ▲ Next.js 16.3.5 (Turbopack)
-✓ Running next.config.ts took 162ms
+✓ Running next.config.ts took 212ms
 - Experiments (use with caution):
   ⨯ useTypeScriptCli
 
   Creating an optimized production build ...
-✓ Compiled successfully in 3.4s
+✓ Compiled successfully in 4.2s
   Running TypeScript ...
-  Finished TypeScript in 31.3s ...
+  Finished TypeScript in 34.9s ...
   Collecting page data using 4 workers ...
   Generating static pages using 4 workers (0/126) ...
-  Generating static pages using 4 workers (31/126) 
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-  Generating static pages using 4 workers (62/126) 
+  Generating static pages using 4 workers (31/126)
+  Generating static pages using 4 workers (62/126)
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-  Generating static pages using 4 workers (94/126) 
-✓ Generating static pages using 4 workers (126/126) in 586ms
+  Generating static pages using 4 workers (94/126)
+✓ Generating static pages using 4 workers (126/126) in 413ms
   Finalizing page optimization ...
 
 
-Full unit suite
+Full units on integrated PR branch
 {"image":"aethelios-architect-apps-worker:2026-10-15.1","action":"missing","reason":"Worker image build failed."}
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
@@ -92,9 +202,9 @@ Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
 Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
  Test Files  3 failed | 226 passed | 1 skipped (230)
       Tests  5 failed | 1355 passed | 1 skipped (1361)
-   Duration  77.78s (tests 79%, import 15%, transform 6%, worker 1%)
+   Duration  134.29s (tests 72%, import 21%, transform 7%, worker 1%)
 
-Untouched base: the same five environment failures
+Untouched canonical main: same five environment failures
 {"image":"aethelios-architect-apps-worker:2026-10-15.1","action":"missing","reason":"Worker image build failed."}
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
@@ -110,11 +220,10 @@ Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
 Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
  Test Files  3 failed (3)
       Tests  5 failed | 3 passed (8)
-   Duration  8.85s (tests 77%, transform 13%, import 9%)
+   Duration  14.81s (tests 76%, transform 15%, import 8%)
 
-Standard npm run build: existing Mirror prebuild blocked by EAI_AGAIN storage.googleapis.com on the initial PR check. Prebuild unchanged; final separate application build above passed.
-No SQL/migrations changed. git diff --check passed.
-Native component viewport screenshots: Talk and Studio at 390x844 and 768x712; keyboard-reduced Talk at 390x460 and 768x420. Browser fixtures, not hardware tests.
-Layout regression assertions: transcript >=180px normally and >=96px at keyboard heights before/after details; composer <280px; latest saved reply in viewport; input/Send/Remove/Use in Studio have unobstructed pointer centers and actual clicks succeed. Details <=16dvh.
-Source regression assertions: persisted reference A + saved-version B deep link (also after reload) submits only parentId B; reference selection submits only referenceId A; switching back submits only parentId B; explicit reference+version handoff wins and reload submits only A. All generation POSTs are intercepted synthetic failures.
-PR150 shared-style files inspected: no overlapping shared CSS changes, only scoped attachment styles using existing tokens. Existing Studio room-navigation wrapping remains visible and separate.
+Standard npm run build attempted: unchanged Mirror prebuild fails EAI_AGAIN storage.googleapis.com. Final separate application build above passes.
+No SQL, credential, original image, voice-domain or shared charcoal-style changes. git diff --check passed.
+
+Origin investigation: original job 116668974547 on run 38806609004 fails after Return to verified revision 2, at architect-apps.spec.ts:462, with the iframe 7h logged assertion missing after 5000ms. Earlier assertions show the retained working version and seven hours before reopening. No root cause is established by those logs. Source app-panel SHA-256 is unchanged between 845aed0 and canonical main.
+Artifact action retrieved metadata/file reference for artifact 12007275777, but environment transfer of the resulting ZIP link returned HTTP403 (including explicit network grant). No trace contents inspected. Origin runtime/tests/timeouts unchanged. Need reachable trace/ZIP or relevant extracted events to complete diagnosis.
