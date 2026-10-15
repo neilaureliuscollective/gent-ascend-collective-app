@@ -703,3 +703,49 @@ test('a recovered save that conflicts with newer work stays pending and does not
   );
   expect(leftover?.entries?.some((entry) => entry.id === pendingId)).toBe(true);
 });
+
+// Synthetic 503 represents a missing/unready schema; no hosted schema is changed.
+test('unavailable saved-work schema is recoverable without losing the composer draft', async ({
+  page,
+}) => {
+  let unavailable = true;
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) return route.abort();
+    if (url.pathname === '/api/aurelius/creations') {
+      if (unavailable)
+        return route.fulfill({
+          status: 503,
+          json: { error: 'Saved Talk work could not be loaded.' },
+        });
+      return route.fulfill({
+        json: {
+          creations: [brief(conversationA, 'Recovered saved brief')],
+          selected: { brief: '50000000-0000-4000-8000-000000000011' },
+          images: [],
+          selectedImageId: null,
+          canCreateImages: false,
+          imageAccess: 'unavailable',
+          attachmentProjectId: null,
+        },
+      });
+    }
+    if (url.pathname === '/api/aurelius')
+      return route.fulfill({ json: workspaceFor(conversationA, [turnA]) });
+    if (url.pathname.startsWith('/api/')) return route.fulfill({ json: {} });
+    return route.continue();
+  });
+  await page.goto(`/app/aethelios?conversation=${conversationA}`);
+  const composer = page.getByLabel('Message Aethelios', { exact: true });
+  await composer.fill('Keep my unsent direction');
+  await expect(
+    page.getByText('Saved work is temporarily unavailable. Your conversation is still available.'),
+  ).toBeVisible();
+  unavailable = false;
+  await page.getByRole('button', { name: 'Retry loading saved work', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Retry loading saved work', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByText('Recovered saved brief').first()).toBeVisible();
+  await expect(composer).toHaveValue('Keep my unsent direction');
+});
