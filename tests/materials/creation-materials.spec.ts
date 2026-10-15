@@ -81,6 +81,16 @@ for (const [label, width, height] of views) {
     await capture('talk-document');
 
     await openMaterialArchitect(page);
+    if (width > 600 && width <= 1100) {
+      const identity = await page.locator('.origin-workbench-identity').boundingBox();
+      const navigation = await page
+        .getByRole('navigation', { name: 'Workbench views', exact: true })
+        .boundingBox();
+      const connection = await page.locator('.origin-workbench-meta').boundingBox();
+      expect(navigation!.y).toBeGreaterThanOrEqual(identity!.y + identity!.height);
+      expect(navigation!.y).toBeGreaterThanOrEqual(connection!.y + connection!.height);
+    }
+
     expect((await page.locator('.origin-plane').boundingBox())!.width).toBeGreaterThan(
       width * (width > 1100 ? 0.7 : 0.82),
     );
