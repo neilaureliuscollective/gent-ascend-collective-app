@@ -7,6 +7,12 @@ on:
       - 'src/app/**'
       - 'src/platform/visual/**'
       - 'tests/browser/**'
+      - 'tests/materials/**'
+      - 'tests/fixtures/creation-materials.ts'
+      - 'playwright.materials.config.ts'
+      - 'playwright.charcoal.config.ts'
+      - 'scripts/capture-charcoal-routes.mjs'
+      - 'scripts/charcoal-coverage-report.mjs'
       - '.github/workflows/obsidian-visual.yml'
 concurrency:
   group: obsidian-${{ github.head_ref || github.ref_name }}
@@ -19,6 +25,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -37,6 +45,7 @@ jobs:
           tests/browser/luminous-obsidian.spec.ts
           tests/browser/imperial-tools.spec.ts
           tests/browser/talk-layout.spec.ts
+          tests/browser/live-consent-layout.spec.ts
           tests/browser/shell.spec.ts
           tests/browser/imperial-obsidian.spec.ts
           tests/browser/imperial-steel.spec.ts
@@ -47,6 +56,14 @@ jobs:
           tests/browser/company-room.spec.ts
           tests/browser/missions.spec.ts
           --workers=2
+      - name: Verify creation glass and document width with labelled API fixtures
+        run: npx playwright test --config playwright.materials.config.ts --output=test-results/creation-materials
+      - name: Verify screenshot hashes, source commit and finalized videos
+        run: node scripts/verify-creation-material-evidence.mjs
+      - name: Verify all app sections with matched charcoal viewports
+        run: |
+          npx playwright test --config playwright.charcoal.config.ts --output=test-results/charcoal-checks
+          node scripts/charcoal-coverage-report.mjs
       - name: Export compact rendered review excerpts
         if: always()
         run: node scripts/imperial-emerald-review.mjs

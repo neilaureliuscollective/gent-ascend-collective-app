@@ -74,7 +74,7 @@ test('Material conversation retains readable saved replies and dark writing spac
   await expect(page.locator('.message-markdown')).toHaveCSS('color', 'rgb(232, 233, 226)');
   await expect(page.locator('.user-message p')).toHaveCSS('color', 'rgb(232, 233, 226)');
   await expect(page.locator('.assistant-message')).toHaveCSS('color', 'rgb(242, 242, 238)');
-  // Preserve explicit reading text; the container and optical face use scoped smoke tokens.
+  // Preserve explicit reading text; the container and optical face use the shared emerald material.
   await expect(page.locator('.aurelius-composer')).toHaveCSS('background-color', 'rgb(26, 26, 26)');
   await expect(page.locator('.aurelius-composer > .bplus-optics')).toBeVisible();
   await expect(page.locator('.aurelius-composer [id$="-face"] stop').first()).toHaveCSS(
@@ -141,13 +141,13 @@ for (const width of [360, 768, 1440]) {
     await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(17, 17, 17)');
     await expect(page.locator('.studio-projects')).toHaveCSS(
       'background-image',
-      /rgba?\(26, 26, 26/,
+      /rgba?\(36, 36, 36/,
     );
     await expect(page.locator('.studio-side-note p')).toHaveCSS('color', 'rgb(185, 190, 187)');
     await expect(page.locator('.topbar .capture-trigger')).toHaveCSS('color', 'rgb(185, 190, 187)');
     await expect(page.locator('.studio-direction')).toHaveCSS(
       'background-image',
-      /rgba?\(26, 26, 26/,
+      /rgba?\(36, 36, 36/,
     );
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.screenshot({

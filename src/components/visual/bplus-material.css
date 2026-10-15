@@ -6,15 +6,16 @@
     :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
     .navigation a[data-bplus-surface='navigation']
   ) {
-  --io-optical-substrate: var(--aether-optical-substrate);
+  --io-optical-substrate: var(--aether-optical-substrate, #1a1a1a);
   --io-optical-contact: 0 7px 10px -2px
-    color-mix(in srgb, var(--aether-optical-shadow) 73%, transparent);
+    color-mix(in srgb, var(--aether-optical-shadow, #000) 73%, transparent);
+  color-scheme: dark;
   position: relative;
   isolation: isolate;
   background: var(--io-optical-substrate);
   border-color: transparent;
   box-shadow: var(--io-optical-contact);
-  color: var(--io-text);
+  color: var(--io-text, #e8e9e2);
 }
 .app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer[data-bplus-surface] {
   border-radius: 19px;

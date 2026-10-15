@@ -66,7 +66,7 @@ export function StudioRooms({
 }) {
   return (
     <div
-      className="studio-view-tabs studio-room-console imperial-control-surface"
+      className="studio-view-tabs studio-room-console"
       role="group"
       aria-label="Studio workspace views"
     >

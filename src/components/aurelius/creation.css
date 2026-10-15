@@ -3,16 +3,15 @@
   padding: 14px 16px;
   border: 1px solid color-mix(in srgb, var(--aether-gold, #c4912f) 28%, transparent);
   border-radius: 16px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--aether-imperial, #174438) 22%, transparent), transparent 42%),
-    var(--aether-carbon, #101413);
-  color: var(--aether-text);
+  background: var(--io-glass, linear-gradient(165deg, #193b2ff5, #0c201af8 72%));
+  box-shadow: var(--io-elevation, inset 0 1px #d9e6d51a);
+  color: var(--io-text, #e8e9e2);
 }
 .talk-creation-card.is-active {
-  box-shadow: inset 2px 0 0 #36896c;
+  box-shadow: var(--io-elevation, inset 0 1px #d9e6d51a), inset 2px 0 0 #36896c;
 }
 .talk-creation-card[data-ready] {
-  box-shadow: inset 2px 0 0 #c4912f;
+  box-shadow: var(--io-elevation, inset 0 1px #d9e6d51a), inset 2px 0 0 #c4912f;
 }
 .talk-creation-card header {
   display: flex;
@@ -74,6 +73,16 @@
 .talk-creation-actions button,
 .talk-creation-actions a {
   min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--io-divider, #6c90713d);
+  border-radius: 10px;
+  background: var(--io-glass, linear-gradient(165deg, #193b2ff5, #0c201af8 72%));
+  color: var(--io-text, #e8e9e2);
+  box-shadow: var(--io-raised-contact, inset 0 1px #d9e6d51a);
+  transition: border-color 160ms var(--io-ease, ease);
+}
+.talk-creation-actions :is(button, a):hover {
+  border-color: var(--io-selected-edge, #c4912f);
 }
 .talk-creation-status {
   margin: 8px 0 0;

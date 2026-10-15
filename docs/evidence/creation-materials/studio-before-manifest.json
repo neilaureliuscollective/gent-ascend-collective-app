@@ -1,0 +1,33 @@
+{
+  "kind": "served-production-CSS-replay-with-labelled-API-fixture",
+  "sourceCommit": "58a59df9cb1d56694f13c71c8f36d85d7b321daf",
+  "deployment": "dpl_2iuuEAW1FgidRuiMc2UXCiP4Wffz",
+  "fontReplay": "Exact repository Inter/Sora bytes, verified identical to baseline Git objects",
+  "files": [
+    {
+      "path": "before-studio-phone.png",
+      "bytes": 165340,
+      "sha256": "86e0b142c13daf3fbb626f1a1e963647b1165bd2d23f6caf833e7e991225872b"
+    },
+    {
+      "path": "before-studio-fold-narrow.png",
+      "bytes": 236023,
+      "sha256": "7caa6f7000e505bbd4b006ebdc4cb7988291bad68a9b7059ccdf8831b7876405"
+    },
+    {
+      "path": "before-studio-fold-wide.png",
+      "bytes": 253436,
+      "sha256": "4f56483d5f18bf5ef95a050e7b390a895e041d55a0b6eedb00a65dad2045771f"
+    },
+    {
+      "path": "before-studio-desktop.png",
+      "bytes": 339086,
+      "sha256": "97805c7051a9ff65d3b332b3f357b6b4d39724b446c19dc4a504b4eb7fa2daf4"
+    },
+    {
+      "path": "before-studio-keyboard.png",
+      "bytes": 161288,
+      "sha256": "45544b689137448bf842a307957d2904affd5c045fab6247f4f433e129db42e2"
+    }
+  ]
+}

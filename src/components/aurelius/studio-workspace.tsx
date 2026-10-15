@@ -842,7 +842,8 @@ export function StudioWorkspace({
             />
             {data.capabilities?.setup && (view === 'design' || view === 'film') && (
               <p role="status" className="studio-dimension-banner">
-                {data.capabilities.setup}
+                Design and Film need workspace setup. Your existing Create, Campaign, Footage,
+                Narration, Finish and Delivery rooms remain available.
               </p>
             )}
             {selected && (

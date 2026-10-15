@@ -68,6 +68,7 @@
     ),
     var(--io-chamber);
 }
+
 .app-shell.imperial-workspace {
   color-scheme: dark;
   --text-primary: var(--io-text);

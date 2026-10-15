@@ -7,11 +7,11 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
     await page.goto('/app/work');
     const chamber = page.locator('.company-work > header');
     await expect(chamber).toHaveCSS('background-image', 'none');
-    // Work keeps its opaque reading chamber and previously approved Emerald B+ action.
+    // Work keeps its opaque reading chamber and charcoal B+ action with emerald reflection.
     await expect(chamber.locator('[data-bplus-surface="action"] > .bplus-optics')).toBeVisible();
     await expect(chamber.locator('[id$="-face"] stop').first()).toHaveCSS(
       'stop-color',
-      'rgb(22, 55, 39)',
+      'rgb(56, 59, 56)',
     );
     await expect(page.locator('.company-job-list').last()).toHaveCSS('gap', '0px');
     await chamber.getByRole('link', { name: 'Continue in Talk' }).focus();
@@ -38,7 +38,7 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
       if (route === '/lifestyle') {
         await expect(page.locator('.lifestyle-hero .world-button')).toHaveCSS(
           'color',
-          'rgb(7, 11, 10)',
+          'rgb(17, 17, 17)',
         );
         const kicker = await page.locator('.lifestyle-hero .world-kicker').first().boundingBox();
         const header = await page.locator('.world-header').boundingBox();
