@@ -155,7 +155,7 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   page.once('dialog', (dialog) => dialog.dismiss());
   await openArchitectMenu(page);
   await page
-    .getByRole('dialog', { name: 'Menu', exact: true })
+    .getByRole('dialog', { name: 'Aethelios menu', exact: true })
     .getByRole('link', { name: 'Talk', exact: true })
     .click();
   await expect(page).toHaveURL(draftUrl);
@@ -535,7 +535,7 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   page.once('dialog', (dialog) => dialog.accept());
   await openArchitectMenu(page);
   await page
-    .getByRole('dialog', { name: 'Menu', exact: true })
+    .getByRole('dialog', { name: 'Aethelios menu', exact: true })
     .getByRole('link', { name: 'Talk', exact: true })
     .click();
   await expect(page).toHaveURL(/\/app\/aethelios/);
