@@ -5,7 +5,7 @@ import { healthApprovedSource, healthSyntheticExample } from './architect-source
 export const ARCHITECT_APPS_DEPENDENCY = {
   pr: 130,
   branch: 'cursor/architect-create-apps-501f',
-  commit: '97b9a645d88a7498f5661d69d3259ad7239d853b',
+  commit: '3248e8da6fce8b56af9fd310b7ad66ea02312248',
   inspectedAt: '2026-10-15',
 } as const;
 

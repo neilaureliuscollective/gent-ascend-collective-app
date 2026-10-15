@@ -15,7 +15,13 @@ import {
   initialBloodworkSettings,
   selectMarkersByName,
 } from '../src/domains/health/bloodwork';
-import { shouldClearDraft } from '../src/domains/health/save-receipts';
+import {
+  applyCompositionCommand,
+  createComposedTool,
+  interpretHealthCreation,
+  resolveComposition,
+} from '../src/domains/health/composition';
+import { canLeaveAfterSave, shouldClearDraft } from '../src/domains/health/save-receipts';
 import {
   acceptPendingPlan,
   defaultEveningProgress,
@@ -299,5 +305,51 @@ describe('Health assist and Architect adapter', () => {
         person_id: 'forged',
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('Health tool composition', () => {
+  it('creates distinct tools from foundations, blank canvases and bounded commands', () => {
+    const evening = createComposedTool({
+      foundation: 'evening-routine',
+      id: '00000000-0000-4000-8000-000000000021',
+    });
+    expect(resolveComposition(evening).sections.map((item) => item.kind)).toEqual([
+      'hero',
+      'sequence',
+      'notes',
+    ]);
+    const blank = createComposedTool({
+      blank: true,
+      intent: 'A recovery dashboard with dosing',
+      id: '00000000-0000-4000-8000-000000000022',
+    });
+    expect(resolveComposition(blank).sections).toEqual([]);
+    expect(blank.title).toBe('A recovery dashboard with dosing');
+    const added = applyCompositionCommand(blank, { kind: 'add-section', sectionKind: 'notes' });
+    expect(added.workspace.settings.composition?.sections).toHaveLength(1);
+    const removed = applyCompositionCommand(added.workspace, {
+      kind: 'remove-section',
+      sectionKind: 'notes',
+    });
+    expect(removed.workspace.settings.composition?.sections).toHaveLength(0);
+    expect(interpretHealthCreation('add a trend')).toMatchObject({
+      kind: 'command',
+      command: { kind: 'add-section', sectionKind: 'trend' },
+    });
+    expect(interpretHealthCreation('build me a clinic OS').kind).toBe('handoff');
+    expect(canLeaveAfterSave({ status: 'confirmed' })).toBe(true);
+    expect(
+      canLeaveAfterSave({ status: 'failed', message: 'Save failed' }),
+    ).toBe(false);
+    expect(
+      canLeaveAfterSave({ status: 'uncertain', message: 'Maybe saved' }),
+    ).toBe(false);
+  });
+  it('does not map an unsupported idea onto a hidden evening or bloodwork preset', () => {
+    const intent = interpretHealthCreation('Invent a wearable that diagnoses anemia');
+    expect(intent.kind).toBe('handoff');
+    const created = createComposedTool({ blank: true, intent: 'Invent a wearable that diagnoses anemia' });
+    expect(created.settings.composition?.sections).toEqual([]);
   });
 });

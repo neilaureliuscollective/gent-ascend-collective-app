@@ -15,24 +15,30 @@ import {
 } from '@/domains/health/routine';
 import type { SelectedElement } from '@/domains/health/workspace-model';
 
+export type RoutinePart = 'hero' | 'sequence' | 'notes';
+
 export function RoutineTool({
   progress,
   selected,
   blocked,
   onChange,
   onSelect,
+  parts = ['hero', 'sequence', 'notes'],
 }: {
   progress: RoutineProgress;
   selected: SelectedElement | null;
   blocked: boolean;
   onChange: (next: RoutineProgress) => void;
   onSelect: (next: SelectedElement) => void;
+  parts?: RoutinePart[];
 }) {
   const plan = progress.pending ?? progress.accepted;
   const next = nextRoutineStep(progress);
   const nextTimer = next && progress.timer?.stepId === next.id ? progress.timer : null;
+  const show = (part: RoutinePart) => parts.includes(part);
   return (
     <div className="health-tool" data-tool="evening-routine">
+      {show('hero') && (
       <section className="health-next" aria-label="Current evening action">
         <p className="health-kicker">Tonight</p>
         <h2>{next ? next.title : 'Evening sequence complete'}</h2>
@@ -81,6 +87,9 @@ export function RoutineTool({
           </div>
         )}
       </section>
+      )}
+      {show('sequence') && (
+      <>
       <div className="health-constraint-bar">
         <label>
           Available minutes
@@ -213,7 +222,9 @@ export function RoutineTool({
           );
         })}
       </ol>
-      {selected?.kind === 'step' && (
+      </>
+      )}
+      {show('notes') && selected?.kind === 'step' && (
         <label className="health-note">
           Preparation note
           <textarea

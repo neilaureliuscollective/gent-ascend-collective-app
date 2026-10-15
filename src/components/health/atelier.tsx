@@ -2,14 +2,20 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ContextSheet } from '@/components/interaction/context-sheet';
-import { interpretHealthAssist } from '@/domains/health/assist';
 import {
   architectDiagnostics,
   architectUnavailableMessage,
   type TrustedPresentation,
 } from '@/domains/health/architect-adapter';
-import { initialBloodworkSettings, selectMarkersByName } from '@/domains/health/bloodwork';
-import { foundationLibrary, type HealthFoundationId } from '@/domains/health/foundations';
+import { selectMarkersByName } from '@/domains/health/bloodwork';
+import {
+  applyCompositionCommand,
+  createComposedTool,
+  interpretHealthCreation,
+  pushToolHistory,
+  resolveComposition,
+} from '@/domains/health/composition';
+import { type HealthFoundationId } from '@/domains/health/foundations';
 import {
   proposeConstraintChange,
   tickRoutineTimer,
@@ -17,16 +23,17 @@ import {
 } from '@/domains/health/routine';
 import { sampleBloodwork } from '@/domains/health/sample';
 import type { HealthData, HealthSendResult, Mutation } from '@/domains/health/schema';
-import { shouldClearDraft } from '@/domains/health/save-receipts';
+import { canLeaveAfterSave, shouldClearDraft } from '@/domains/health/save-receipts';
 import {
-  createWorkspaceDraft,
   defaultBloodworkSettings,
   type HealthWorkspaceRecord,
   type SelectedElement,
 } from '@/domains/health/workspace-model';
 import { ArchitectWorkbench } from './architect-workbench';
-import { BloodworkTool } from './bloodwork-tool';
-import { eveningStepTitle, RoutineTool, unavailableCopy } from './routine-tool';
+import { CompositionPane } from './composition-pane';
+import { ComposedTool } from './composed-tool';
+import { CreationHome } from './creation-home';
+import { eveningStepTitle } from './routine-tool';
 
 const archive: [string, string][] = [
   ['/app/health/history', 'History'],
@@ -39,6 +46,7 @@ const archive: [string, string][] = [
 type PendingNav =
   | { kind: 'saved'; id: string }
   | { kind: 'foundation'; id: HealthFoundationId; sample?: boolean }
+  | { kind: 'home' }
   | { kind: 'restore' };
 
 export function HealthAtelier({
@@ -58,13 +66,17 @@ export function HealthAtelier({
   const [draft, setDraft] = useState<HealthWorkspaceRecord | null>(null);
   const [selected, setSelected] = useState<SelectedElement | null>(null);
   const [section, setSection] = useState<'workspace' | 'library' | 'archive'>('workspace');
-  const [inspect, setInspect] = useState(false);
   const [architect, setArchitect] = useState(false);
+  const [customize, setCustomize] = useState(false);
+  const [paneOpen, setPaneOpen] = useState(false);
   const [assist, setAssist] = useState('');
   const [assistNote, setAssistNote] = useState('');
+  const [composer, setComposer] = useState('');
   const [receipt, setReceipt] = useState<HealthSendResult | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [pendingNav, setPendingNav] = useState<PendingNav | null>(null);
+  const [past, setPast] = useState<HealthWorkspaceRecord[]>([]);
+  const [future, setFuture] = useState<HealthWorkspaceRecord[]>([]);
   const surface = useRef<HTMLElement>(null);
   const scroll = useRef(0);
   const ownerRef = useRef(data.owner);
@@ -79,7 +91,7 @@ export function HealthAtelier({
       ),
     [data.workspaces],
   );
-  const stored = saved.find((row) => row.id === (draft?.id ?? selectedId)) ?? saved[0] ?? null;
+  const stored = selectedId ? (saved.find((row) => row.id === selectedId) ?? null) : null;
   const current = draft
     ? stored && stored.id === draft.id
       ? {
@@ -93,6 +105,7 @@ export function HealthAtelier({
     : stored;
   const dirty = Boolean(draft);
   const savedArchitect = current ? saved.find((row) => row.id === current.id) : null;
+  const sampleBloodworkNeeded = !data.observations.some((row) => row.status === 'active');
 
   useEffect(() => {
     if (!current?.progress?.timer?.running) return;
@@ -128,6 +141,28 @@ export function HealthAtelier({
   }, [current?.id]);
 
   function replace(next: HealthWorkspaceRecord) {
+    if (current) setPast((history) => pushToolHistory(history, current));
+    setFuture([]);
+    generation.current += 1;
+    setSelectedId(next.id);
+    setDraft(next);
+  }
+
+  function undo() {
+    const previous = past[past.length - 1];
+    if (!previous || !current) return;
+    setPast(past.slice(0, -1));
+    setFuture((history) => pushToolHistory(history, current));
+    generation.current += 1;
+    setSelectedId(previous.id);
+    setDraft(previous);
+  }
+
+  function redo() {
+    const next = future[future.length - 1];
+    if (!next || !current) return;
+    setFuture(future.slice(0, -1));
+    setPast((history) => pushToolHistory(history, current));
     generation.current += 1;
     setSelectedId(next.id);
     setDraft(next);
@@ -137,30 +172,39 @@ export function HealthAtelier({
     setSelectedId(id);
     setDraft(null);
     setArchitect(false);
+    setCustomize(false);
     setSection('workspace');
+    setPast([]);
+    setFuture([]);
+    setSelected(null);
+  }
+
+  function openHome() {
+    setSelectedId(null);
+    setDraft(null);
+    setArchitect(false);
+    setCustomize(false);
+    setSection('workspace');
+    setPast([]);
+    setFuture([]);
+    setSelected(null);
   }
 
   function openFoundation(foundation: HealthFoundationId, sample = false) {
-    const existing = saved.find((row) => row.foundation === foundation && row.sample === sample);
-    if (existing) {
-      openSaved(existing.id);
-      return;
-    }
-    const created = createWorkspaceDraft(foundation, {
+    const created = createComposedTool({
+      foundation,
       sample:
         sample ||
-        (foundation === 'bloodwork-tracker' &&
-          !data.observations.some((row) => row.status === 'active')),
+        (foundation === 'bloodwork-tracker' && sampleBloodworkNeeded),
     });
-    if (created.foundation === 'bloodwork-tracker') {
-      created.settings.bloodwork = initialBloodworkSettings(
-        created.sample ? sampleBloodwork : data.observations,
-      );
-    }
     setSelectedId(created.id);
     setDraft(created);
     setArchitect(false);
+    setCustomize(false);
     setSection('workspace');
+    setPast([]);
+    setFuture([]);
+    setSelected(null);
   }
 
   function requestLeave(next: PendingNav) {
@@ -177,6 +221,7 @@ export function HealthAtelier({
     setPendingNav(null);
     if (next.kind === 'saved') openSaved(next.id);
     if (next.kind === 'foundation') openFoundation(next.id, next.sample);
+    if (next.kind === 'home') openHome();
     if (next.kind === 'restore') void restoreLast(true);
   }
 
@@ -184,7 +229,7 @@ export function HealthAtelier({
     workspace: HealthWorkspaceRecord,
     sentGeneration: number,
     result: HealthSendResult | void,
-  ) {
+  ): Promise<HealthSendResult> {
     const outcome: HealthSendResult = result ?? {
       status: 'uncertain',
       message: 'The last request may have reached the server.',
@@ -195,19 +240,31 @@ export function HealthAtelier({
         ? null
         : currentDraft,
     );
+    return outcome;
   }
 
-  async function saveWorkspace(workspace = current, asCopy = false) {
-    if (!workspace || !signedIn) return;
+  async function saveWorkspace(
+    workspace = current,
+    asCopy = false,
+  ): Promise<HealthSendResult> {
+    if (!workspace) return { status: 'failed', message: 'Nothing to save.' };
+    if (!signedIn) {
+      return { status: 'failed', message: 'Sign in to save this tool. The draft is still here.' };
+    }
+    if (data.mode === 'unavailable') {
+      return {
+        status: 'failed',
+        message: 'Health storage is not available in this environment. The draft is still here.',
+      };
+    }
     const request = crypto.randomUUID();
     const sentGeneration = generation.current;
     if (asCopy) {
       if (!saved.some((row) => row.id === workspace.id)) {
-        await saveWorkspace(
+        return saveWorkspace(
           { ...workspace, id: crypto.randomUUID(), title: `${workspace.title} copy` },
           false,
         );
-        return;
       }
       const result = await send({
         kind: 'workspace_copy',
@@ -220,8 +277,7 @@ export function HealthAtelier({
         progress: dirty ? workspace.progress : undefined,
         architect: dirty ? workspace.architect : undefined,
       });
-      await finishSend(workspace, sentGeneration, result);
-      return;
+      return finishSend(workspace, sentGeneration, result);
     }
     const expected = saved.some((row) => row.id === workspace.id) ? workspace.version : 1;
     const result = await send({
@@ -247,7 +303,7 @@ export function HealthAtelier({
       architect: workspace.architect,
       open: true,
     });
-    await finishSend(workspace, sentGeneration, result);
+    return finishSend(workspace, sentGeneration, result);
   }
 
   async function restoreLast(confirmed = false) {
@@ -267,29 +323,84 @@ export function HealthAtelier({
     await finishSend(current, sentGeneration, result);
   }
 
-  function applyAssist(text: string) {
-    const action = interpretHealthAssist(text);
+  function applyCreation(text: string, fromHome = false) {
+    const intent = interpretHealthCreation(text);
+    if (intent.kind === 'blank') {
+      const created = createComposedTool({ blank: true, intent: text, sample: false });
+      setSelectedId(created.id);
+      setDraft(created);
+      setCustomize(true);
+      setAssistNote(intent.reason);
+      return;
+    }
+    if (intent.kind === 'handoff') {
+      const created = createComposedTool({
+        blank: true,
+        intent: text,
+        title: text.slice(0, 80) || 'Untitled tool',
+      });
+      setSelectedId(created.id);
+      setDraft(created);
+      setCustomize(true);
+      setArchitect(false);
+      setAssistNote(intent.reason);
+      return;
+    }
+    if (intent.kind === 'command') {
+      if (!current) {
+        setAssistNote('Open or create a tool before changing its structure.');
+        return;
+      }
+      const result = applyCompositionCommand(current, intent.command, data.observations);
+      replace(result.workspace);
+      setCustomize(true);
+      setAssistNote(result.note || intent.reason);
+      return;
+    }
+    if (intent.kind !== 'assist') return;
+    const action = intent.action;
     setAssistNote(action.reason);
-    if (action.kind === 'open') requestLeave({ kind: 'foundation', id: action.foundation });
-    if (action.kind === 'minutes' && current?.progress)
-      replace({
-        ...current,
-        progress: proposeConstraintChange(current.progress, { availableMinutes: action.minutes }),
+    if (action.kind === 'open') {
+      if (fromHome || !current) openFoundation(action.foundation);
+      else requestLeave({ kind: 'foundation', id: action.foundation });
+      return;
+    }
+    if (action.kind === 'help') return;
+    let tool = current;
+    if (!tool) {
+      tool = createComposedTool({
+        foundation: action.kind === 'markers' ? 'bloodwork-tracker' : 'evening-routine',
+        intent: text,
+        sample: action.kind === 'markers' && sampleBloodworkNeeded,
       });
-    if (action.kind === 'finish' && current?.progress)
+      setSelectedId(tool.id);
+      setDraft(tool);
+    }
+    if (action.kind === 'minutes' && tool.progress) {
       replace({
-        ...current,
-        progress: proposeConstraintChange(current.progress, { finishAt: action.finishAt }),
+        ...tool,
+        progress: proposeConstraintChange(tool.progress, { availableMinutes: action.minutes }),
       });
-    if (action.kind === 'markers' && current?.foundation === 'bloodwork-tracker') {
-      const source = current.sample ? sampleBloodwork : data.observations;
+    }
+    if (action.kind === 'finish' && tool.progress) {
+      replace({
+        ...tool,
+        progress: proposeConstraintChange(tool.progress, { finishAt: action.finishAt }),
+      });
+    }
+    if (action.kind === 'markers') {
+      const source = tool.sample ? sampleBloodwork : data.observations;
       const markerKeys = selectMarkersByName(source, action.names);
+      const prepared = resolveComposition(tool).sections.some((item) => item.kind === 'trend')
+        ? tool
+        : applyCompositionCommand(tool, { kind: 'add-section', sectionKind: 'trend' }, data.observations)
+            .workspace;
       replace({
-        ...current,
+        ...prepared,
         settings: {
-          ...current.settings,
+          ...prepared.settings,
           bloodwork: {
-            ...(current.settings.bloodwork ?? defaultBloodworkSettings()),
+            ...(prepared.settings.bloodwork ?? defaultBloodworkSettings()),
             markerKeys,
             focusKey: markerKeys[0] ?? null,
           },
@@ -299,14 +410,22 @@ export function HealthAtelier({
   }
 
   const inspector = current ? inspectorCopy(current, selected) : null;
-  const sampleBloodworkNeeded = !data.observations.some((row) => row.status === 'active');
   const diagnostics = architectDiagnostics();
+  const owned = Boolean(current && saved.some((row) => row.id === current.id) && !dirty);
 
   return (
-    <div className="health-atelier" data-section={section} data-architect={architect}>
+    <div
+      className="health-atelier"
+      data-section={section}
+      data-architect={architect}
+      data-mode={current ? 'canvas' : 'home'}
+      data-customize={customize}
+    >
       <nav className="health-rail" aria-label="Health workspace">
         <p className="health-kicker">Health</p>
-        <p className="health-rail-lead">A personal environment. Open a foundation and keep it.</p>
+        <button type="button" className="health-rail-item" onClick={() => requestLeave({ kind: 'home' })}>
+          Creation home
+        </button>
         <div className="health-mobile-sections" role="tablist" aria-label="Health sections">
           {(
             [
@@ -345,28 +464,33 @@ export function HealthAtelier({
               </button>
             ))
           ) : (
-            <p>No saved workspace yet. Open a foundation.</p>
+            <p>No saved tool yet.</p>
           )}
         </div>
         <div className="health-rail-block">
           <p className="health-kicker">Foundations</p>
-          {foundationLibrary.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="health-rail-item"
-              onClick={() =>
-                requestLeave({
-                  kind: 'foundation',
-                  id: item.id,
-                  sample: item.id === 'bloodwork-tracker' && sampleBloodworkNeeded,
-                })
-              }
-            >
-              {item.title}
-              <small>{item.intention}</small>
-            </button>
-          ))}
+          <button
+            type="button"
+            className="health-rail-item"
+            onClick={() => requestLeave({ kind: 'foundation', id: 'evening-routine' })}
+          >
+            Evenings, made usable
+            <small>A short cooking sequence after work.</small>
+          </button>
+          <button
+            type="button"
+            className="health-rail-item"
+            onClick={() =>
+              requestLeave({
+                kind: 'foundation',
+                id: 'bloodwork-tracker',
+                sample: sampleBloodworkNeeded,
+              })
+            }
+          >
+            Bloodwork Tracker
+            <small>Chronological laboratory evidence.</small>
+          </button>
         </div>
         <div className="health-rail-archive">
           <p className="health-kicker">Records & privacy</p>
@@ -378,21 +502,52 @@ export function HealthAtelier({
         </div>
       </nav>
       <div className="health-stage">
-        <div className="health-context">
-          <div>
-            <p className="health-kicker">Working surface</p>
-            <h1>{current?.title ?? 'A personal Health workspace'}</h1>
-            <p>
-              {current
-                ? `${current.foundation === 'evening-routine' ? 'Evening sequence' : 'Bloodwork Tracker'} · ${
-                    dirty ? 'Unsaved edits' : signedIn ? 'Saved' : 'Not signed in'
-                  } · v${current.version}`
-                : 'Open a ready foundation. You do not need to design an app first.'}
-            </p>
-          </div>
-          <div className="health-context-actions">
-            {current && (
-              <>
+        {recovery}
+        {current ? (
+          <>
+            <div className="health-context">
+              <div>
+                <p className="health-kicker">{owned ? 'Your tool' : dirty ? 'Draft' : 'Active tool'}</p>
+                <h1>{current.title}</h1>
+                <p>
+                  {dirty ? 'Unsaved edits' : signedIn && owned ? 'Saved' : signedIn ? 'Not saved yet' : 'Not signed in'}
+                  {current.sample ? ' · labelled sample' : ''}
+                  {` · v${current.version}`}
+                </p>
+              </div>
+              <div className="health-context-actions">
+                <button type="button" onClick={() => requestLeave({ kind: 'home' })}>
+                  All tools
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={!customize}
+                  onClick={() => setCustomize(false)}
+                >
+                  Use
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={customize}
+                  onClick={() => setCustomize(true)}
+                >
+                  Customize
+                </button>
+                {customize && (
+                  <button
+                    type="button"
+                    className="health-mobile-inspect"
+                    onClick={() => setPaneOpen(true)}
+                  >
+                    Structure
+                  </button>
+                )}
+                <button disabled={!past.length} onClick={undo}>
+                  Undo
+                </button>
+                <button disabled={!future.length} onClick={redo}>
+                  Redo
+                </button>
                 <button disabled={lock || !dirty || !signedIn} onClick={() => void saveWorkspace()}>
                   Save
                 </button>
@@ -412,197 +567,191 @@ export function HealthAtelier({
                   Restore last
                 </button>
                 <button type="button" onClick={() => setArchitect(true)}>
-                  Customize with Architect
+                  Architect brief
                 </button>
-              </>
-            )}
-            <button
-              type="button"
-              className="health-mobile-inspect"
-              onClick={() => setInspect(true)}
-            >
-              Inspect
-            </button>
-          </div>
-        </div>
-        {data.mode === 'signed-out' && (
-          <div className="health-notice" role="status">
-            <p>
-              Sign in to keep this workspace. Foundations still open as a labelled sample or local
-              draft.
-            </p>
-            <Link href="/enter">Sign in</Link>
-          </div>
-        )}
-        {receipt && receipt.status !== 'confirmed' && receipt.status !== 'ignored' && (
-          <div className="health-notice" role="status" data-save-receipt={receipt.status}>
-            <p>
-              {receipt.status === 'failed'
-                ? `Save failed. Your edits are still here. ${receipt.message}`
-                : `Save is uncertain. Your edits are still here. ${receipt.message}`}
-            </p>
-          </div>
-        )}
-        {recovery}
-        <section
-          className="health-surface"
-          ref={surface}
-          tabIndex={-1}
-          aria-label="Active Health tool"
-        >
-          {architect && current ? (
-            <ArchitectWorkbench
-              workspace={current}
-              blocked={lock}
-              onPresentation={(presentation: TrustedPresentation) =>
-                replace({
-                  ...current,
-                  settings: {
-                    ...current.settings,
-                    presentation,
-                    bloodwork: current.settings.bloodwork
-                      ? {
-                          ...current.settings.bloodwork,
-                          dateRange: presentation.dateRange,
-                          comparisonDrawer: presentation.comparisonDrawer,
-                          density: presentation.density,
-                          arrangement:
-                            presentation.arrangement === 'sequence'
-                              ? current.settings.bloodwork.arrangement
-                              : presentation.arrangement,
-                        }
-                      : current.settings.bloodwork,
-                  },
-                })
-              }
-              onCompile={(instruction) => {
-                if (!signedIn) return;
-                if (!savedArchitect) {
-                  setReceipt({
-                    status: 'failed',
-                    message: 'Save this workspace before compiling a customization.',
-                  });
-                  return;
-                }
-                void send({
-                  kind: 'workspace_architect',
-                  request: crypto.randomUUID(),
-                  id: current.id,
-                  expected: current.version,
-                  action: 'compile',
-                  instruction,
-                });
-              }}
-              onAccept={() => {
-                if (!signedIn) return;
-                void send({
-                  kind: 'workspace_architect',
-                  request: crypto.randomUUID(),
-                  id: current.id,
-                  expected: current.version,
-                  action: 'accept',
-                });
-              }}
-              onClose={() => setArchitect(false)}
-            />
-          ) : current?.foundation === 'evening-routine' && current.progress ? (
-            <RoutineTool
-              progress={current.progress}
-              selected={selected}
-              blocked={lock}
-              onChange={(progress: RoutineProgress) => replace({ ...current, progress })}
-              onSelect={setSelected}
-            />
-          ) : current?.foundation === 'bloodwork-tracker' ? (
-            <BloodworkTool
-              observations={data.observations}
-              records={data.records}
-              settings={current.settings.bloodwork ?? defaultBloodworkSettings()}
-              sample={current.sample}
-              selected={selected}
-              blocked={lock}
-              onSettings={(bloodwork) =>
-                replace({ ...current, settings: { ...current.settings, bloodwork } })
-              }
-              onSelect={setSelected}
-            />
-          ) : (
-            <div className="health-empty-surface">
-              <h2>Start with something useful.</h2>
-              <p>{foundationLibrary[0]!.prompt}</p>
-              <button type="button" onClick={() => openFoundation('evening-routine')}>
-                Open evening sequence
-              </button>
-              <button
-                type="button"
-                onClick={() => openFoundation('bloodwork-tracker', sampleBloodworkNeeded)}
-              >
-                Open Bloodwork Tracker
-              </button>
+              </div>
             </div>
-          )}
-        </section>
-        <form
-          className="health-dock"
-          onSubmit={(e) => {
-            e.preventDefault();
-            applyAssist(assist);
-            setAssist('');
-          }}
-        >
-          <label>
-            Assist this surface
-            <input
-              value={assist}
-              maxLength={300}
-              placeholder="Change to ten minutes, or show LDL"
-              onChange={(e) => setAssist(e.target.value)}
-            />
-          </label>
-          <button type="submit">Apply</button>
-          {assistNote && <p role="status">{assistNote}</p>}
-        </form>
-      </div>
-      <aside className="health-inspector" aria-label="Selection inspector">
-        {inspector ? (
-          <>
-            <p className="health-kicker">Inspector</p>
-            <h2>{inspector.title}</h2>
-            <p>{inspector.body}</p>
-            <p className="health-footnote">{inspector.source}</p>
-            {current?.foundation === 'evening-routine' && (
-              <div className="health-unavailable" aria-label="Unavailable external actions">
-                <p className="health-kicker">Not connected</p>
-                {unavailableCopy().map((item) => (
-                  <p key={item.id}>
-                    <button type="button" disabled>
-                      {item.label}
-                    </button>
-                    <small>{item.reason}</small>
-                  </p>
-                ))}
+            {data.mode === 'signed-out' && (
+              <div className="health-notice" role="status">
+                <p>Sign in to keep this tool. Foundations still open as a labelled sample or local draft.</p>
+                <Link href="/enter">Sign in</Link>
               </div>
             )}
+            {data.mode === 'unavailable' && (
+              <div className="health-notice" role="status">
+                <p>Health storage is not available in this environment. The draft stays here and has not been saved.</p>
+              </div>
+            )}
+            {receipt && receipt.status !== 'confirmed' && receipt.status !== 'ignored' && (
+              <div className="health-notice" role="status" data-save-receipt={receipt.status}>
+                <p>
+                  {receipt.status === 'failed'
+                    ? `Save failed. Your edits are still here. ${receipt.message}`
+                    : `Save is uncertain. Your edits are still here. ${receipt.message}`}
+                </p>
+              </div>
+            )}
+            <div className="health-canvas-split">
+              <section
+                className="health-surface"
+                ref={surface}
+                tabIndex={-1}
+                aria-label="Active Health tool"
+              >
+                {architect ? (
+                  <ArchitectWorkbench
+                    workspace={current}
+                    blocked={lock}
+                    onPresentation={(presentation: TrustedPresentation) =>
+                      replace({
+                        ...current,
+                        settings: {
+                          ...current.settings,
+                          presentation,
+                          bloodwork: current.settings.bloodwork
+                            ? {
+                                ...current.settings.bloodwork,
+                                dateRange: presentation.dateRange,
+                                comparisonDrawer: presentation.comparisonDrawer,
+                                density: presentation.density,
+                                arrangement:
+                                  presentation.arrangement === 'sequence'
+                                    ? current.settings.bloodwork.arrangement
+                                    : presentation.arrangement,
+                              }
+                            : current.settings.bloodwork,
+                        },
+                      })
+                    }
+                    onCompile={(instruction) => {
+                      if (!signedIn) return;
+                      if (!savedArchitect) {
+                        setReceipt({
+                          status: 'failed',
+                          message: 'Save this workspace before compiling a customization.',
+                        });
+                        return;
+                      }
+                      void send({
+                        kind: 'workspace_architect',
+                        request: crypto.randomUUID(),
+                        id: current.id,
+                        expected: current.version,
+                        action: 'compile',
+                        instruction,
+                      });
+                    }}
+                    onAccept={() => {
+                      if (!signedIn) return;
+                      void send({
+                        kind: 'workspace_architect',
+                        request: crypto.randomUUID(),
+                        id: current.id,
+                        expected: current.version,
+                        action: 'accept',
+                      });
+                    }}
+                    onClose={() => setArchitect(false)}
+                  />
+                ) : (
+                  <ComposedTool
+                    workspace={current}
+                    observations={data.observations}
+                    records={data.records}
+                    selected={selected}
+                    blocked={lock}
+                    customize={customize}
+                    onChange={(progress: RoutineProgress) => replace({ ...current, progress })}
+                    onBloodwork={(bloodwork) =>
+                      replace({ ...current, settings: { ...current.settings, bloodwork } })
+                    }
+                    onSelect={setSelected}
+                  />
+                )}
+              </section>
+              {customize && !architect && (
+                <aside className="health-inspector" aria-label="Tool structure">
+                  <CompositionPane
+                    workspace={current}
+                    selected={selected}
+                    observations={data.observations}
+                    blocked={lock}
+                    onApply={(next, note) => {
+                      replace(next);
+                      setAssistNote(note);
+                    }}
+                  />
+                </aside>
+              )}
+            </div>
+            <form
+              className="health-dock"
+              onSubmit={(event) => {
+                event.preventDefault();
+                applyCreation(assist);
+                setAssist('');
+              }}
+            >
+              <label>
+                Change your tool…
+                <input
+                  value={assist}
+                  maxLength={300}
+                  placeholder="Add notes, remove the table, or show LDL"
+                  onChange={(event) => setAssist(event.target.value)}
+                />
+              </label>
+              <button type="submit">Apply</button>
+              {assistNote && <p role="status">{assistNote}</p>}
+            </form>
           </>
         ) : (
-          <>
-            <p className="health-kicker">Inspector</p>
-            <p>
-              Select a step, marker or time limit to see settings, sources and allowed behavior.
-            </p>
-            <p className="health-footnote">{architectUnavailableMessage()}</p>
-          </>
+          <CreationHome
+            data={data}
+            saved={saved}
+            composer={composer}
+            note={assistNote}
+            signedIn={signedIn}
+            onComposer={setComposer}
+            onCreate={() => {
+              applyCreation(composer || 'blank tool', true);
+              setComposer('');
+            }}
+            onOpenSaved={(id) => requestLeave({ kind: 'saved', id })}
+            onOpenFoundation={(id, sample) => requestLeave({ kind: 'foundation', id, sample })}
+          />
         )}
-      </aside>
-      <ContextSheet open={inspect} title="Inspector" onClose={() => setInspect(false)}>
-        {inspector ? (
-          <div className="health-dialog">
-            <h3>{inspector.title}</h3>
-            <p>{inspector.body}</p>
-            <p>{inspector.source}</p>
-          </div>
-        ) : (
-          <p>Nothing is selected.</p>
+      </div>
+      {!customize && current && (
+        <aside className="health-inspector health-use-inspector" aria-label="Selection inspector">
+          {inspector ? (
+            <>
+              <p className="health-kicker">Selected</p>
+              <h2>{inspector.title}</h2>
+              <p>{inspector.body}</p>
+              <p className="health-footnote">{inspector.source}</p>
+            </>
+          ) : (
+            <>
+              <p className="health-kicker">Use</p>
+              <p>The tool stays in the center. Select a step or marker when you need its detail.</p>
+              <p className="health-footnote">{architectUnavailableMessage()}</p>
+            </>
+          )}
+        </aside>
+      )}
+      <ContextSheet open={paneOpen && customize} title="Customize" onClose={() => setPaneOpen(false)}>
+        {current && (
+          <CompositionPane
+            workspace={current}
+            selected={selected}
+            observations={data.observations}
+            blocked={lock}
+            onApply={(next, note) => {
+              replace(next);
+              setAssistNote(note);
+            }}
+          />
         )}
       </ContextSheet>
       <ContextSheet
@@ -622,7 +771,10 @@ export function HealthAtelier({
             type="button"
             disabled={lock || !signedIn}
             onClick={() => {
-              void saveWorkspace().then(() => pendingNav && applyNav(pendingNav));
+              const destination = pendingNav;
+              void saveWorkspace().then((result) => {
+                if (canLeaveAfterSave(result) && destination) applyNav(destination);
+              });
             }}
           >
             Save and continue
@@ -646,10 +798,19 @@ export function HealthAtelier({
 }
 
 function inspectorCopy(workspace: HealthWorkspaceRecord, selected: SelectedElement | null) {
+  const composition = resolveComposition(workspace);
+  if (selected?.kind === 'section') {
+    const section = composition.sections.find((item) => item.id === selected.id);
+    return {
+      title: section?.title ?? 'Section',
+      body: 'This piece can be renamed, reordered or removed. Source records stay in Health.',
+      source: workspace.sample ? 'Synthetic sample workspace' : 'Private Health workspace',
+    };
+  }
   if (!selected)
     return {
       title: workspace.title,
-      body: 'The working surface stays in the center. Time, markers and sources open here when selected.',
+      body: 'Use the tool in the center. Customize adds or rearranges supported sections without hiding it.',
       source: workspace.sample ? 'Synthetic sample workspace' : 'Private Health workspace',
     };
   if (selected.kind === 'constraint')

@@ -330,7 +330,7 @@ export function HealthWorkspace({
           </nav>
         </>
       )}
-      {data.mode === 'signed-out' && (
+      {data.mode === 'signed-out' && view !== 'command' && (
         <section className="health-notice">
           <h2>Begin with your own information.</h2>
           <p>
@@ -340,7 +340,7 @@ export function HealthWorkspace({
           <Link href="/enter">Sign in →</Link>
         </section>
       )}
-      {data.mode === 'unavailable' && (
+      {data.mode === 'unavailable' && view !== 'command' && (
         <section className="health-notice">
           <h2>Your private foundation is being prepared.</h2>
           <p>
