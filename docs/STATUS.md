@@ -1,3 +1,7 @@
+## Architect entrance-card restoration — 2026-10-15
+
+Founder-authorized scoped repair on PR #130: restored the four separate photographic entrance cards and original house/application/cube/infinity artwork from `243fd0e`. Business, Application and Product retain the exact original assets and crops. Start without limits uses existing `threshold-chamber.webp` instead of the retired bottle image. Current shaping, draft retention, compiler, revision/compare/recovery/reopen, workspace hierarchy and all backend guards are preserved. Before/after fixture evidence records the baseline and tested commit; it is not hosted production proof. No merge, deployment, SQL, activation or paid generation.
+
 > Quality application (2026-10-15): Same PR #130 after Knowledge/logo merge `297b011`. Unverified `/shop/[handle]` now sets `openGraph: null` and `twitter: null` so the root brand card cannot satisfy the launch indexing gate. Origin `local-auth` on that head already published `architect-apps-connected-journey`. Work → Agency stays reserved. No merge, hosted SQL, Droplet, credentials or paid model call.
 
 ## Architect creation environment — verification in progress (2026-10-15)

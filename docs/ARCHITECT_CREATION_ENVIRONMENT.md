@@ -4,7 +4,7 @@ Continues PR #130 from `243fd0e50ffacbb1418b97afa7180ed8edc1d0d8` in an isolated
 
 ## Implementation
 
-- Removed photographic chamber/card plates, including the unrelated retired product image. Four paths now share the same planar geometry, perspective, emerald glass, obsidian floor and warm edge light. The official emblem is unchanged. Selected paths collapse to navigation and reconfigure the working stage. Desktop shaping brings the stage and brief together; examples use a native disclosure.
+- Founder-authorized entrance restoration supersedes the first material-study pass: four separate photographic cards and original house/application/cube/infinity emblems from `243fd0e` are restored. The first three background assets/crops are unchanged; Start without limits replaces only the retired bottle with existing threshold-chamber photography. Current selected-path navigation, shaping layout and native examples disclosure remain. The released official app identity is unchanged.
 - Guided first outcome now has an editable field. Audience, constraints, first-visit choice and outcome continue through the existing saved creation brief.
 - Mobile project navigation uses a single horizontally accessible row; saved documents put selection/context in a native disclosure and move secondary management after content; idle project-save controls recede in the App surface; compact app controls preserve the artifact's width. Generated Apps and saved document surfaces retain separate responsive tests.
 - Scoped proposals use the displayed revision as their base. Comparison follows the stored parent revision, and proposal comparison displays actual complete before/after source, rather than operation names or a 600-character prefix.
