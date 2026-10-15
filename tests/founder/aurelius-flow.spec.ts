@@ -49,7 +49,15 @@ test('Studio activation report is founder-only and never claims live acceptance'
   expect(response.headers()['cache-control']).toContain('no-store');
   const report = await response.json();
   expect(report.liveAccepted).toBe(false);
-  expect(report.schemas).toHaveLength(8);
+  expect(report.schemas).toHaveLength(11);
+  expect(report.schemas.map((check: { name: string }) => check.name)).toEqual(
+    expect.arrayContaining([
+      'Image projects',
+      'Design documents',
+      'Film compositions',
+      'Film renders',
+    ]),
+  );
   expect(report.schemas.every((check: { status: string }) => check.status === 'detected')).toBe(
     true,
   );
