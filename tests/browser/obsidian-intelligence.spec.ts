@@ -62,8 +62,7 @@ for (const viewport of [
           background: getComputedStyle(el).backgroundColor,
           text: getComputedStyle(el).color,
         }));
-        const creation = ['/app/aethelios', '/app/studio'].includes(route);
-        expect(surface.background).toBe(creation ? 'rgb(5, 7, 6)' : 'rgb(7, 11, 10)');
+        expect(surface.background).toBe('rgb(7, 11, 10)');
         expect(surface.text).toBe('rgb(232, 233, 226)');
         for (const link of await navigation.getByRole('link').all()) {
           const box = await link.boundingBox();

@@ -138,7 +138,7 @@ for (const width of [360, 768, 1440]) {
     expect(material.foreground).toBe('rgb(189, 204, 195)');
     expect(material.background).toContain('linear-gradient');
     expect(material.overflow).toBe(false);
-    await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(5, 7, 6)');
+    await expect(page.locator('.studio-main')).toHaveCSS('background-color', 'rgb(7, 11, 10)');
     await expect(page.locator('.studio-projects')).toHaveCSS(
       'background-image',
       /rgba?\(25, 59, 47/,
