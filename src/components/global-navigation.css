@@ -143,6 +143,6 @@ body .global-navigation .context-sheet .context-sheet-surface {
     display: none;
   }
 }
-.app-shell.imperial-workspace .talk-toolbar:has(.global-navigation) .talk-title {
+.app-shell.imperial-workspace .talk-page .talk-toolbar:has(.global-navigation) .talk-title {
   min-width: 80px;
 }
