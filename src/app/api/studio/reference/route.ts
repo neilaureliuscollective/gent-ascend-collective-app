@@ -5,13 +5,18 @@ import { maxReferenceBytes, referenceExtension, referenceType } from '@/domains/
 import { supabaseConnection } from '@/platform/supabase/connection';
 import { z } from 'zod';
 
+import { selectStudioReference } from '@/domains/studio/reference-selection';
+
 export const runtime = 'nodejs';
 const init = z.object({action:z.literal('prepare'),projectId:z.uuid(),mediaType:z.enum(['image/png','image/jpeg','image/webp']),byteSize:z.number().int().min(100).max(maxReferenceBytes)}).strict();
+const selection = z.object({ action: z.literal('select'), projectId: z.uuid(), id: z.uuid().nullable() }).strict();
 const finish = z.object({action:z.literal('complete'),projectId:z.uuid(),id:z.uuid(),mediaType:z.enum(['image/png','image/jpeg','image/webp'])}).strict();
 
 export async function POST(request: Request) {
   try {
     const body = await mutationBody(request);
+    const selected = selection.safeParse(body);
+    if (selected.success) return privateJson(await selectStudioReference(selected.data.projectId, selected.data.id));
     const preparation = init.safeParse(body);
     const completion = finish.safeParse(body);
     if (!preparation.success && !completion.success) throw new IntelligenceError('Invalid reference request.');
@@ -38,13 +43,13 @@ export async function POST(request: Request) {
     if (stored.error || !stored.data) throw new IntelligenceError('Upload did not finish. Try selecting the image again.',409);
     const bytes = new Uint8Array(await stored.data.arrayBuffer());
     if (referenceType(bytes) !== input.mediaType) {
-      await client.storage.from(bucket).remove([key]);
+      // Invalid uploads remain untouched; no asset deletion.
       throw new IntelligenceError('Choose a PNG, JPEG, or WebP image smaller than 10 MB.',422);
     }
     const record = await client.from('ai_studio_references').insert({id,person_id:person.id,project_id:input.projectId,storage_key:key,media_type:input.mediaType,byte_size:bytes.length});
     if (record.error) {
       // A concurrent completion may have saved the same record; do not remove its object.
-      const check = await client.from('ai_studio_references').select('id').eq('id',id).eq('person_id',person.id).maybeSingle();
+      const check = await client.from('ai_studio_references').select('id').eq('id',id).eq('person_id',person.id).eq('project_id',input.projectId).maybeSingle();
       if (check.data) return privateJson({id});
       throw new IntelligenceError('Reference could not be saved.',503);
     }

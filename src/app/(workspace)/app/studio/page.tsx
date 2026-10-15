@@ -15,10 +15,11 @@ export const metadata: Metadata = {
 export default async function StudioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; version?: string }>;
+  searchParams: Promise<{ project?: string; version?: string; reference?: string }>;
 }) {
   const params = await searchParams;
   const initialProject = z.uuid().safeParse(params.project);
+  const initialReference = z.uuid().safeParse(params.reference);
   const initialVersion = z.uuid().safeParse(params.version);
   return (
     <div className="studio-page">
@@ -43,6 +44,7 @@ export default async function StudioPage({
       </div>
       <StudioWorkspace
         initialProject={initialProject.success ? initialProject.data : undefined}
+        initialReference={initialReference.success ? initialReference.data : undefined}
         initialVersion={initialVersion.success ? initialVersion.data : undefined}
       />
     </div>

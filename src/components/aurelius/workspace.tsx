@@ -1,4 +1,6 @@
 'use client';
+import { TalkImageAttachment } from './talk-image-attachment';
+import type { TalkAttachment } from './talk-image-upload';
 import { Icon } from '@/components/visual/icon';
 import { ConversationArtifacts } from '@/components/live/artifacts';
 import { LiveVoiceEntry, useLiveBusy, useLiveSession } from '@/components/live/provider';
@@ -63,7 +65,12 @@ import {
   matchesTalkSave,
   readTalkSave,
 } from '@/domains/talk-creation/pending';
-import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
+import {
+  idleCreationScope,
+  shouldApplyCreation,
+  shouldContinueWatch,
+  shouldRecoverPending,
+} from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
 import { liveComposerLimit, liveTextRejection, talkComposerSendRoute } from '@/domains/live/limits';
 import {
@@ -205,13 +212,14 @@ export function AureliusWorkspace({
   );
   const [widePanel, setWidePanel] = useState(false);
   const [workTarget, setWorkTarget] = useState<{ creationId: string; field: string } | null>(null);
-  const [attachment, setAttachment] = useState<{
-    id: string;
-    name: string;
-    projectId: string;
-  } | null>(null);
+  const [attachment, setAttachment] = useState<TalkAttachment | null>(null);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const [attachmentEpoch, setAttachmentEpoch] = useState(0);
+  const clearAttachment = useCallback(() => {
+    setAttachment(null);
+    setAttachmentEpoch((value) => value + 1);
+  }, []);
   const detailDialog = useRef<HTMLDialogElement>(null);
-  const attachInput = useRef<HTMLInputElement>(null);
   const creationRead = useRef<AbortController | null>(null);
   const creationGeneration = useRef(0);
   const imageWatch = useRef(0);
@@ -249,10 +257,9 @@ export function AureliusWorkspace({
         )
           return;
         try {
-          const response = await fetch(
-            `/api/aurelius/creations?conversationId=${conversationId}`,
-            { cache: 'no-store' },
-          );
+          const response = await fetch(`/api/aurelius/creations?conversationId=${conversationId}`, {
+            cache: 'no-store',
+          });
           if (
             !shouldContinueWatch(
               imageWatch.current,
@@ -460,6 +467,7 @@ export function AureliusWorkspace({
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
         if (id !== selectedRef.current) {
+          clearAttachment();
           setWorkTarget(null);
           setOpenWorkId(null);
         }
@@ -499,7 +507,7 @@ export function AureliusWorkspace({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact, homeDraft, loadCreations, recoverPendingSaves],
+    [compact, homeDraft, loadCreations, recoverPendingSaves, clearAttachment],
   );
   useEffect(() => {
     const media = window.matchMedia('(min-width: 900px)');
@@ -699,7 +707,15 @@ export function AureliusWorkspace({
       stopImageWatch();
       creationScope.current = idleCreationScope();
     };
-  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
+  }, [
+    initialConversation,
+    homeDraft,
+    initialDraft,
+    compact,
+    loadCreations,
+    recoverPendingSaves,
+    stopImageWatch,
+  ]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
@@ -720,13 +736,13 @@ export function AureliusWorkspace({
     )
       return;
     const sendRoute = talkComposerSendRoute(liveState.phase);
+    if (attachment && attachment.analysisPending !== false && sendRoute === 'voice') {
+      setError('End voice before sending an image for analysis, or remove the image.');
+      return;
+    }
+    if (attachmentBusy) return;
     if (liveController && sendRoute === 'voice') {
-      const resolved = resolveWorkTarget(
-        creationWorkspace,
-        workTarget,
-        openWorkId,
-        selected,
-      );
+      const resolved = resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected);
       const sent = liveController.text(messageText, workTargetVoicePrefix(resolved) || null);
       if (sent.accepted) setDraft('');
       else setError(liveTextRejection(sent.reason));
@@ -812,7 +828,7 @@ export function AureliusWorkspace({
           includeContext,
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
-          ...(attachment ? { attachmentId: attachment.id } : {}),
+          ...(attachment && attachment.analysisPending !== false ? { attachmentId: attachment.id } : {}),
           ...(() => {
             const resolved = resolveWorkTarget(
               creationWorkspace,
@@ -870,9 +886,13 @@ export function AureliusWorkspace({
           );
         } else if (item.type === 'delta') {
           setOperation((previous) =>
-            previous.id === requestId && ['searching', 'generating', 'stopping', 'cancelled', 'failed'].includes(previous.phase)
+            previous.id === requestId &&
+            ['searching', 'generating', 'stopping', 'cancelled', 'failed'].includes(previous.phase)
               ? previous
-              : nextObservedOperation(previous, observedOperation(requestId, 'generating', 'pending')),
+              : nextObservedOperation(
+                  previous,
+                  observedOperation(requestId, 'generating', 'pending'),
+                ),
           );
           timing.mark('first-text');
           painted.append(item.text);
@@ -907,7 +927,7 @@ export function AureliusWorkspace({
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
       setRevision(null);
       setNotice('Reply saved.');
-      setAttachment(null);
+      if (attachment) setAttachment(current => current?.id === attachment.id ? { ...current, analysisPending: false } : current);
       void loadCreations(id);
       // The saved receipt owns completion. Metadata refresh cannot hold the next request.
       void refreshMetadata(id);
@@ -1024,8 +1044,9 @@ export function AureliusWorkspace({
       voiceReconcile.current += 1;
       if (liveBusy) void liveController?.end('Voice ended because the signed-in account changed.');
       liveController?.invalidateTranscript();
+      clearAttachment();
     }
-  }, [data?.ownerId, liveBusy, liveController]);
+  }, [data?.ownerId, liveBusy, liveController, clearAttachment]);
   useEffect(() => {
     if (compact) return;
     const onPop = () => {
@@ -1054,7 +1075,10 @@ export function AureliusWorkspace({
       const token = ++voiceReconcile.current;
       const stillCurrent = () =>
         token === voiceReconcile.current &&
-        matchesVoiceReconcile(ownerId && liveController ? liveController.voiceIdentity(ownerId) : null, input);
+        matchesVoiceReconcile(
+          ownerId && liveController ? liveController.voiceIdentity(ownerId) : null,
+          input,
+        );
       if (!stillCurrent()) return;
       liveController?.markPersistence('pending', input);
       setNotice('Saving the voice turns…');
@@ -1168,17 +1192,8 @@ export function AureliusWorkspace({
   useEffect(() => {
     if (!liveController || !['listening', 'speaking'].includes(liveState.phase)) return;
     const resolved = resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected);
-    void liveController.setSpokenTarget(
-      resolved.status === 'stale' ? workTarget : resolved.target,
-    );
-  }, [
-    liveController,
-    liveState.phase,
-    creationWorkspace,
-    workTarget,
-    openWorkId,
-    selected,
-  ]);
+    void liveController.setSpokenTarget(resolved.status === 'stale' ? workTarget : resolved.target);
+  }, [liveController, liveState.phase, creationWorkspace, workTarget, openWorkId, selected]);
   function newConversation() {
     voiceReconcile.current += 1;
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
@@ -1211,7 +1226,7 @@ export function AureliusWorkspace({
     void loadCreations(null);
     setOpenWorkId(null);
     setWorkTarget(null);
-    setAttachment(null);
+    clearAttachment();
     follow.current = true;
     composer.current?.focus();
   }
@@ -1221,7 +1236,10 @@ export function AureliusWorkspace({
     setCreationError('');
     setCreationNotice('');
   }
-  async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff', content: unknown) {
+  async function saveOpenCreation(
+    kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff',
+    content: unknown,
+  ) {
     if (!selected || !openWorkId || !data?.ownerId) return;
     const current = creationWorkspace?.creations.find(
       (item) =>
@@ -1264,7 +1282,8 @@ export function AureliusWorkspace({
   ) {
     if (!selected || !data?.ownerId) return;
     const current = creationWorkspace?.creations.find(
-      (item) => item.id === creationId && item.kind === 'board' && !item.superseded_by && !item.candidate,
+      (item) =>
+        item.id === creationId && item.kind === 'board' && !item.superseded_by && !item.candidate,
     );
     if (!current) {
       setInlineBoardStatus({ id: creationId, state: 'failed' });
@@ -1343,7 +1362,9 @@ export function AureliusWorkspace({
       await loadCreations(selected);
     } catch (error) {
       setCreationError(
-        error instanceof Error ? error.message : 'This proposal could not be applied to the current version.',
+        error instanceof Error
+          ? error.message
+          : 'This proposal could not be applied to the current version.',
       );
     } finally {
       setCreationBusy(false);
@@ -1447,7 +1468,9 @@ export function AureliusWorkspace({
       });
       await loadCreations(selected);
     } catch (error) {
-      setCreationError(error instanceof Error ? error.message : 'The Architect package could not be saved.');
+      setCreationError(
+        error instanceof Error ? error.message : 'The Architect package could not be saved.',
+      );
     } finally {
       setCreationBusy(false);
     }
@@ -1482,51 +1505,6 @@ export function AureliusWorkspace({
       );
     } finally {
       setCreationBusy(false);
-    }
-  }
-  async function attachImage(file: File) {
-    const mediaType =
-      file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/webp'
-        ? file.type
-        : null;
-    if (!mediaType) {
-      setError('Choose a PNG, JPEG, or WebP image smaller than 10 MB.');
-      return;
-    }
-    try {
-      const prepared = (await jsonRequest('/api/aurelius/attachments', 'POST', {
-        action: 'prepare',
-        mediaType,
-        byteSize: file.size,
-      })) as {
-        id: string;
-        projectId: string;
-        path: string;
-        token: string;
-        url: string;
-        publishableKey: string;
-      };
-      const { createClient } = await import('@supabase/supabase-js');
-      const transferred = await createClient(prepared.url, prepared.publishableKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      })
-        .storage.from('aethelios-studio')
-        .uploadToSignedUrl(prepared.path, prepared.token, file, {
-          contentType: mediaType,
-          upsert: false,
-        });
-      if (transferred.error) throw new Error('The image could not be uploaded.');
-      await jsonRequest('/api/aurelius/attachments', 'POST', {
-        action: 'complete',
-        projectId: prepared.projectId,
-        id: prepared.id,
-        mediaType,
-      });
-      setAttachment({ id: prepared.id, name: file.name, projectId: prepared.projectId });
-      setNotice('Image attached for analysis. Generation still requires an explicit request.');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'The image could not be attached.');
-      setAttachment(null);
     }
   }
   const blocked = busy || loading || deleting || orchestrating || creationBusy;
@@ -1735,31 +1713,6 @@ export function AureliusWorkspace({
                 ))}
               </nav>
               <ConversationArtifacts conversationId={selected} />
-              <div className="talk-attachment-tools">
-                <input
-                  ref={attachInput}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  hidden
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = '';
-                    if (file) void attachImage(file);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="text-button"
-                  disabled={blocked || preview || !data.canChat}
-                  onClick={() => attachInput.current?.click()}
-                >
-                  Attach an image for analysis
-                </button>
-                <p className="quiet-label">
-                  PNG, JPEG or WebP under 10 MB. Pixels are sent only with the next message, for
-                  analysis, not automatic generation.
-                </p>
-              </div>
               <AppearanceControls />
               {!preview && (
                 <div className="intelligence-work-access">
@@ -2057,7 +2010,9 @@ export function AureliusWorkspace({
                     </Link>
                   </div>
                 </div>
-                <p>Share an idea, a question or the work ahead. We’ll find the next useful step.</p>
+                  <p>
+                    Share an idea, a question or the work ahead. We’ll find the next useful step.
+                  </p>
                 <div className="conversation-starters">
                   {[
                     {
@@ -2140,14 +2095,20 @@ export function AureliusWorkspace({
                     creations={creationsOnTurn(
                       turn.id,
                       data.turns
-                        .filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id))
+                          .filter(
+                            (item) => !data.turns.some((newer) => newer.parent_turn_id === item.id),
+                          )
                         .at(-1)?.id,
                       creationWorkspace?.creations,
                       data.turns.map((item) => item.id),
                     )}
                     images={
                       turn.id ===
-                      data.turns.filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id)).at(-1)?.id
+                        data.turns
+                          .filter(
+                            (item) => !data.turns.some((newer) => newer.parent_turn_id === item.id),
+                          )
+                          .at(-1)?.id
                         ? creationWorkspace?.images
                         : undefined
                     }
@@ -2211,10 +2172,14 @@ export function AureliusWorkspace({
                 onOpenVersion={(id) => setOpenWorkId(id)}
                 onHistory={rememberHistory}
                 targetField={
-                  workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null
+                    workTarget && workTarget.creationId === openCreation?.id
+                      ? workTarget.field
+                      : null
                 }
                 onTargetField={(field) =>
-                  setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
+                    setWorkTarget(
+                      openCreation && field ? { creationId: openCreation.id, field } : null,
+                    )
                 }
               />
             </aside>
@@ -2328,14 +2293,14 @@ export function AureliusWorkspace({
                   </button>
                 </div>
               )}
-              {attachment && (
-                <div className="talk-attachment-chip">
-                  <span>Attached for analysis: {attachment.name}</span>
-                  <button type="button" className="text-button" onClick={() => setAttachment(null)}>
-                    Remove
-                  </button>
-                </div>
-              )}
+              <TalkImageAttachment
+                key={`${data.ownerId ?? 'anonymous'}:${selected ?? 'new'}:${attachmentEpoch}`}
+                value={attachment}
+                disabled={blocked || preview || !data.canChat || liveBusy}
+                onChange={setAttachment}
+                onRemove={clearAttachment}
+                onBusyChange={setAttachmentBusy}
+              />
               {(() => {
                 const resolved = resolveWorkTarget(
                   creationWorkspace,
@@ -2388,6 +2353,7 @@ export function AureliusWorkspace({
                     className="button"
                     disabled={
                       blocked ||
+                      attachmentBusy ||
                       liveState.phase === 'connecting' ||
                       !data.configured ||
                       !data.canChat ||
@@ -2406,11 +2372,7 @@ export function AureliusWorkspace({
             </form>
           </div>
         </>
-        <ConversationAnnouncer
-          operation={operation}
-          artifacts={streamArtifacts}
-          notice={notice}
-        />
+        <ConversationAnnouncer operation={operation} artifacts={streamArtifacts} notice={notice} />
         <p className="aurelius-notice">
           {notice}
           {creationNotice && !(openWorkId && (openCreation || openImage))
@@ -2462,7 +2424,9 @@ export function AureliusWorkspace({
               onImport={(id) => void importArchitectPackage(id)}
               onOpenVersion={(id) => setOpenWorkId(id)}
               onHistory={rememberHistory}
-              targetField={workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null}
+              targetField={
+                workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null
+              }
               onTargetField={(field) =>
                 setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
               }

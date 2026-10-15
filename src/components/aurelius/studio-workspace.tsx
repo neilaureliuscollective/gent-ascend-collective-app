@@ -4,7 +4,7 @@ import { IntelligenceActivity } from '../intelligence-motion/presence';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { StudioRooms, type StudioRoom } from './studio-rooms';
@@ -87,6 +87,7 @@ import { useConversationDraft } from './draft-handoff';
 
 type CreativeType = 'open' | 'brand' | 'campaign' | 'product' | 'personal';
 type Brief = {
+  referenceId?: string | null;
   purpose: string;
   audience: string;
   direction: string;
@@ -224,8 +225,12 @@ function imageUrl(id: string, kind: 'version' | 'reference') {
 export function StudioWorkspace({
   initialProject,
   initialVersion,
-}: { initialProject?: string; initialVersion?: string } = {}) {
+  initialReference,
+}: { initialProject?: string; initialVersion?: string; initialReference?: string } = {}) {
   const handoff = useConversationDraft();
+  const activeProject = useRef<string | null>(initialProject ?? null);
+  const acceptedProject = useRef<string | null>(null);
+  const readGeneration = useRef(0);
   const [data, setData] = useState<Workspace>(empty);
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<View>('design');
@@ -253,10 +258,24 @@ export function StudioWorkspace({
 
   const accept = useCallback(
     (next: Workspace) => {
+      const changed = acceptedProject.current !== next.projectId;
+      acceptedProject.current = next.projectId;
+      activeProject.current = next.projectId;
       setData(next);
       setSelected(next.projectId);
       const current = next.projects.find((item) => item.id === next.projectId);
       setBrief({ ...blankBrief, ...current?.brief });
+      if (changed) {
+        setParent(null);
+        const savedReference = current?.brief.referenceId;
+        setReference(
+          savedReference && next.references.some((item) => item.id === savedReference)
+            ? savedReference
+            : null,
+        );
+        if (savedReference && !next.references.some((item) => item.id === savedReference))
+          setError('The saved reference is unavailable. Choose another reference.');
+      }
       const carried = next.owner ? handoff?.take('studio', next.owner) : null;
       if (carried) {
         setPreparedNew(true);
@@ -278,13 +297,19 @@ export function StudioWorkspace({
         setNaming(true);
         setView('create');
       }
-      setError('');
+      if (
+        !current?.brief.referenceId ||
+        next.references.some((item) => item.id === current.brief.referenceId)
+      )
+        setError('');
       setLoading(false);
     },
     [handoff],
   );
   const load = useCallback(
     async (projectId?: string | null) => {
+      const read = ++readGeneration.current;
+      if (projectId) activeProject.current = projectId;
       try {
         const next = await jsonResponse<Workspace>(
           await fetch(
@@ -292,8 +317,9 @@ export function StudioWorkspace({
             { cache: 'no-store' },
           ),
         );
-        accept(next);
+        if (read === readGeneration.current) accept(next);
       } catch (cause) {
+        if (read !== readGeneration.current) return;
         setError((cause as Error).message);
         setLoading(false);
       }
@@ -302,14 +328,31 @@ export function StudioWorkspace({
   );
   useEffect(() => {
     let active = true;
+    const read = ++readGeneration.current;
     fetch(
       '/api/studio' + (initialProject ? '?project=' + encodeURIComponent(initialProject) : ''),
       { cache: 'no-store' },
     )
       .then((response) => jsonResponse<Workspace>(response))
       .then((next) => {
-        if (active) {
+        if (active && read === readGeneration.current) {
           accept(next);
+          if (initialReference) {
+            const current = next.projects.find((item) => item.id === next.projectId);
+            if (
+              current?.brief.referenceId === initialReference &&
+              next.references.some((item) => item.id === initialReference)
+            ) {
+              setReference(initialReference);
+              setParent(null);
+              setView('create');
+            } else {
+              setReference(null);
+              setError(
+                'This reference handoff is stale or unavailable. Choose a project reference again.',
+              );
+            }
+          }
           if (
             initialVersion &&
             next.versions.some(
@@ -322,7 +365,7 @@ export function StudioWorkspace({
         }
       })
       .catch((cause) => {
-        if (active) {
+        if (active && read === readGeneration.current) {
           setError(cause.message);
           setLoading(false);
         }
@@ -330,7 +373,7 @@ export function StudioWorkspace({
     return () => {
       active = false;
     };
-  }, [accept, initialProject, initialVersion]);
+  }, [accept, initialProject, initialVersion, initialReference]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
@@ -351,6 +394,7 @@ export function StudioWorkspace({
             creativeType: newType,
             brief: {
               ...initialBrief,
+              referenceId: null,
               brand: { ...readBrandKit(initialBrief.brand), logoReferenceId: null },
             },
           }),
@@ -482,8 +526,14 @@ export function StudioWorkspace({
       );
       acknowledged = true;
       setOperation(observedOperation(motionId, 'complete', 'confirmed'));
-      await load(selected);
+      if (activeProject.current !== selected) return;
+      await jsonResponse(await fetch('/api/studio/reference', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'select', projectId: selected, id: saved.id }),
+      }));
+      if (activeProject.current !== selected) return;
       setReference(saved.id);
+      await load(selected);
       setParent(null);
       setView('create');
     } catch (cause) {
@@ -585,11 +635,30 @@ export function StudioWorkspace({
     setDraft('');
     setView('create');
   }
-  function selectReference(id: string) {
-    setReference(id);
-    setParent(null);
-    setForScene(null);
-    setView('create');
+  async function selectReference(id: string | null) {
+    if (!selected || busy) return;
+    const projectId = selected;
+    setBusy(true);
+    setError('');
+    try {
+      await jsonResponse(
+        await fetch('/api/studio/reference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'select', projectId, id }),
+        }),
+      );
+      if (activeProject.current !== projectId) return;
+      setReference(id);
+      setParent(null);
+      setForScene(null);
+      setView('create');
+      await load(projectId);
+    } catch (cause) {
+      if (activeProject.current === projectId) setError((cause as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
   function createSceneFrame(scene: StudioScene) {
     setForScene(scene.id);
@@ -761,7 +830,10 @@ export function StudioWorkspace({
               </p>
             )}
             {selected && (
-              <div className={view === 'design' ? undefined : 'studio-room-parked'} aria-hidden={view !== 'design'}>
+              <div
+                className={view === 'design' ? undefined : 'studio-room-parked'}
+                aria-hidden={view !== 'design'}
+              >
                 {data.capabilities?.design === false ? null : (
                   <DesignWorkspace
                     projectId={selected}
@@ -775,7 +847,10 @@ export function StudioWorkspace({
               </div>
             )}
             {selected && (
-              <div className={view === 'film' ? undefined : 'studio-room-parked'} aria-hidden={view !== 'film'}>
+              <div
+                className={view === 'film' ? undefined : 'studio-room-parked'}
+                aria-hidden={view !== 'film'}
+              >
                 {data.capabilities?.film === false ? null : (
                   <FilmWorkspace
                     projectId={selected}
@@ -981,7 +1056,7 @@ export function StudioWorkspace({
                         type="button"
                         onClick={() => {
                           setParent(null);
-                          setReference(null);
+                          void selectReference(null);
                         }}
                       >
                         Clear
@@ -1202,7 +1277,7 @@ export function StudioWorkspace({
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => selectReference(item.id)}
+                        onClick={() => void selectReference(item.id)}
                         disabled={busy}
                       >
                         <Image

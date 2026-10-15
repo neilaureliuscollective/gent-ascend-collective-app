@@ -1,7 +1,7 @@
 import 'server-only';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { currentAccess } from '@/domains/access/current';
-import { bucket } from '@/domains/studio/service';
+import { bucket, verifyStudioProject } from '@/domains/studio/service';
 import {
   maxReferenceBytes,
   referenceExtension,
@@ -878,17 +878,17 @@ export async function completeTalkAttachment(
     .select('id')
     .eq('id', projectId)
     .eq('person_id', person.id)
+    .is('company_id', null)
     .maybeSingle();
   if (owner.error || !owner.data) throw new IntelligenceError('Attachment project unavailable.', 404);
   const existing = await client
     .from('ai_studio_references')
-    .select('id')
+    .select('id,media_type,byte_size')
     .eq('id', id)
     .eq('person_id', person.id)
     .eq('project_id', projectId)
     .maybeSingle();
   if (existing.error) throw new IntelligenceError('Attachment could not be verified.', 503);
-  if (existing.data) return { id, projectId };
   const auth = await client.auth.getUser();
   if (!auth.data.user) throw new IntelligenceError('Session expired.', 401);
   const key = `${auth.data.user.id}/${projectId}/${id}.${referenceExtension(mediaType)}`;
@@ -897,8 +897,13 @@ export async function completeTalkAttachment(
     throw new IntelligenceError('Upload did not finish. Try selecting the image again.', 409);
   const bytes = new Uint8Array(await stored.data.arrayBuffer());
   if (referenceType(bytes) !== mediaType) {
-    await client.storage.from(bucket).remove([key]);
+    // Validation failure leaves the asset untouched; no deletion.
     throw new IntelligenceError('Choose a PNG, JPEG, or WebP image smaller than 10 MB.', 422);
+  }
+  if (existing.data) {
+    if (existing.data.media_type !== mediaType || existing.data.byte_size !== bytes.length)
+      throw new IntelligenceError('The stored attachment changed. Choose the image again.', 409);
+    return { id, projectId };
   }
   const record = await client.from('ai_studio_references').insert({
     id,
@@ -914,6 +919,7 @@ export async function completeTalkAttachment(
       .select('id')
       .eq('id', id)
       .eq('person_id', person.id)
+      .eq('project_id', projectId)
       .maybeSingle();
     if (check.data) return { id, projectId };
     throw new IntelligenceError('Attachment could not be saved.', 503);
@@ -931,6 +937,7 @@ export async function readTalkAttachment(id: string) {
     .maybeSingle();
   if (row.error) throw new IntelligenceError('Attachment could not be verified.', 503);
   if (!row.data) throw new IntelligenceError('Attachment unavailable.', 404);
+  await verifyStudioProject(row.data.project_id);
   const stored = await client.storage.from(bucket).download(row.data.storage_key);
   if (stored.error || !stored.data) throw new IntelligenceError('Attachment unavailable.', 404);
   const bytes = new Uint8Array(await stored.data.arrayBuffer());

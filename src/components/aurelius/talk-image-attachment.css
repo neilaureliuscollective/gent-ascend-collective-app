@@ -1,0 +1,26 @@
+.talk-image-attachment {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-block: 0.5rem;
+  color: var(--aether-text);
+}
+.talk-image-actions,
+.talk-image-preview {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.talk-image-preview span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.talk-image-preview img {
+  object-fit: contain;
+  max-width: 88px;
+}
+.talk-image-attachment small {
+  color: var(--aether-muted, currentColor);
+  overflow-wrap: anywhere;
+}
