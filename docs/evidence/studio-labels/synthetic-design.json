@@ -1,0 +1,216 @@
+{
+  "schema": "studio-design/v1",
+  "label": {
+    "profile": {
+      "schema": "studio-supplier-profile/v1",
+      "supplier": "Supliful",
+      "sku": "SYNTHETIC-NOT-A-SKU",
+      "category": "other",
+      "fixture": true,
+      "template": {
+        "source": "Synthetic template-source.txt; not supplier artwork",
+        "revision": "fixture-1",
+        "sha256": "f24fd84f98e03588acd47731cddc8990da47c9f87f7b73b98874c30ef3be092c"
+      },
+      "facts": {
+        "source": "Synthetic facts-source.txt; no product claims",
+        "revision": "fixture-1",
+        "sha256": "5a68c72584117c4d0881daf8910a1b50fb1432fde2b708d300ede1471c727c3d"
+      },
+      "trim": {
+        "width": 120,
+        "height": 60
+      },
+      "bleed": {
+        "top": 2,
+        "right": 2,
+        "bottom": 2,
+        "left": 2
+      },
+      "safe": {
+        "x": 3,
+        "y": 3,
+        "width": 114,
+        "height": 54
+      },
+      "artwork": {
+        "x": 4,
+        "y": 4,
+        "width": 62,
+        "height": 46
+      },
+      "matrix": {
+        "x": 4,
+        "y": 51,
+        "width": 6,
+        "height": 6
+      },
+      "protected": [
+        {
+          "id": "a0000000-0000-4000-8000-000000000001",
+          "name": "Supplier specimen copy",
+          "box": {
+            "x": 72,
+            "y": 5,
+            "width": 42,
+            "height": 42
+          },
+          "format": "text",
+          "content": "SYNTHETIC SPECIMEN\nNot a food or supplement.\nNo ingredients or health claims.\nFor software testing only.\nDo not manufacture.",
+          "fontSize": 8
+        }
+      ]
+    },
+    "brief": {
+      "schema": "studio-label-brief/v1",
+      "productName": "Aethelios Specimen",
+      "direction": "Quiet emerald and gold with centered type. Synthetic demonstration only.",
+      "source": {
+        "kind": "talk",
+        "reference": "synthetic-conversation",
+        "revision": "fixture-1"
+      }
+    },
+    "brand": {
+      "name": "Aethelios",
+      "voice": "",
+      "background": "#0B3B32",
+      "foreground": "#FFFFFF",
+      "accent": "#C4912F",
+      "typography": "editorial",
+      "logoReferenceId": null
+    },
+    "generation": "deterministic",
+    "layout": {
+      "alignment": "center",
+      "titleSize": 16,
+      "logoFraction": 0.32,
+      "accent": "rule"
+    }
+  },
+  "id": "b0000000-0000-4000-8000-000000000001",
+  "title": "Aethelios Specimen",
+  "page": {
+    "width": 120,
+    "height": 60,
+    "unit": "mm",
+    "ppi": 300,
+    "bleed": {
+      "top": 2,
+      "right": 2,
+      "bottom": 2,
+      "left": 2
+    },
+    "safe": {
+      "top": 3,
+      "right": 3,
+      "bottom": 3,
+      "left": 3
+    },
+    "dimensionSource": "supplied",
+    "dimensionNote": "Supliful SYNTHETIC-NOT-A-SKU; template fixture-1. User supplied; supplier approval not established.",
+    "background": "#FFFFFF"
+  },
+  "layers": [
+    {
+      "id": "234bbf19-eb33-456a-bcd2-f44f923b86a5",
+      "name": "Brand field",
+      "parentId": null,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "x": 4,
+      "y": 4,
+      "width": 62,
+      "height": 46,
+      "rotation": 0,
+      "type": "rect",
+      "fill": "#0B3B32",
+      "stroke": null,
+      "strokeWidth": 0,
+      "cornerRadius": 0
+    },
+    {
+      "id": "98bbef0a-f699-4137-9c2e-e8d266aa125c",
+      "name": "Approved logo",
+      "parentId": null,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "x": 27.64,
+      "y": 6.76,
+      "width": 14.72,
+      "height": 14.72,
+      "rotation": 0,
+      "type": "svg",
+      "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><path fill=\"#C4912F\" d=\"M50 8 L92 90 L72 90 L50 44 L28 90 L8 90 Z\"></path><path fill=\"#C4912F\" d=\"M30 68 H70 V77 H30 Z\"></path></svg>"
+    },
+    {
+      "id": "48213700-458a-4ad4-9b39-ee41d7830ed0",
+      "name": "Product name",
+      "parentId": null,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "x": 6.76,
+      "y": 27.92,
+      "width": 56.480000000000004,
+      "height": 17.48,
+      "rotation": 0,
+      "type": "text",
+      "content": "Aethelios Specimen",
+      "fontId": "sora",
+      "fontSize": 16,
+      "fontWeight": 600,
+      "align": "center",
+      "letterSpacing": 0,
+      "lineHeight": 1.15,
+      "fill": "#FFFFFF"
+    },
+    {
+      "id": "427716b2-cb66-4d4b-90f2-7f9a8954fb64",
+      "name": "Gold rule",
+      "parentId": null,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "x": 6.76,
+      "y": 25.16,
+      "width": 56.480000000000004,
+      "height": 0.4,
+      "rotation": 0,
+      "type": "rect",
+      "fill": "#C4912F",
+      "stroke": null,
+      "strokeWidth": 0,
+      "cornerRadius": 0
+    },
+    {
+      "id": "a0000000-0000-4000-8000-000000000001",
+      "name": "Supplier specimen copy",
+      "parentId": null,
+      "visible": true,
+      "locked": true,
+      "opacity": 1,
+      "x": 72,
+      "y": 5,
+      "width": 42,
+      "height": 42,
+      "rotation": 0,
+      "type": "text",
+      "content": "SYNTHETIC SPECIMEN\nNot a food or supplement.\nNo ingredients or health claims.\nFor software testing only.\nDo not manufacture.",
+      "fontId": "inter",
+      "fontSize": 8,
+      "fontWeight": 400,
+      "align": "left",
+      "letterSpacing": 0,
+      "lineHeight": 1.15,
+      "fill": "#000000"
+    }
+  ],
+  "guides": {
+    "trim": true,
+    "bleed": true,
+    "safe": true
+  }
+}

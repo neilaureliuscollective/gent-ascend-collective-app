@@ -571,3 +571,7 @@ Finish the missing Architect execution path inside the canonical app only. Reuse
 ## 2026-10-12 — Architect immersive workspace
 
 Founder requested research and execution of a premium full-screen next phase. Use a route-owned application-window frame with contextual shared navigation, primary creation canvas, adaptive supporting tools, Blueprint outline and document edit/preview modes. Preserve Origin ownership, explicit approval and persistence. CSS viewport sizing supplies immersion without mandatory browser Fullscreen, new graphics or execution infrastructure. Primary evidence, audit, rationale and boundaries: ARCHITECT_IMMERSIVE_WORKSPACE.md. Pending Studio/Imperial Emerald II/legacy creation branches remain separate. No main merge, hosted activation or production deployment authorized.
+
+## 2026-10-15 — Supplier label profiles
+
+Extend the existing Studio Design pipeline using versioned SKU profiles, protected source copy and a file-based Talk brief contract. Supplier official guidance requires RGB/sRGB PDF with outlined text, embedded images, exact template geometry and an empty matrix-code reservation; do not assume CMYK or generic bottle dimensions. See STUDIO_SUPPLIER_LABELS.md. XML parsing uses pinned saxes 6.0.0 (already transitive via existing tooling); upstream is archived, so the deliberately bounded allowlist remains application-owned and tested. No hosted changes or paid provider calls.

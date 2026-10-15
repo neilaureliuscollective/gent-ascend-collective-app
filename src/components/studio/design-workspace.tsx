@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { LabelSetup } from './label-setup';
+import { assertLabelRevision } from '@/domains/studio/label/document';
 import { designPresets } from '@/domains/studio/design/presets';
 import {
   cloneDocument,
@@ -9,7 +11,13 @@ import {
   type DesignDocument,
   type DesignLayer,
 } from '@/domains/studio/design/document';
-import { alignLayers, commitDesign, emptyHistory, redoDesign, undoDesign } from '@/domains/studio/design/commands';
+import {
+  alignLayers,
+  commitDesign,
+  emptyHistory,
+  redoDesign,
+  undoDesign,
+} from '@/domains/studio/design/commands';
 import { designFontIds } from '@/domains/studio/design/fonts';
 import { DEFAULT_PPI } from '@/domains/studio/design/units';
 import { sanitizeSvg } from '@/domains/studio/design/sanitize';
@@ -25,10 +33,13 @@ import {
 import { applyLayerPatches, createGroupLayer } from '@/domains/studio/design/geometry';
 import { fontSupportsWeight } from '@/domains/studio/design/fonts';
 
-const DesignCanvas = dynamic(() => import('./design-canvas').then((module) => module.DesignCanvas), {
-  ssr: false,
-  loading: () => <p className="studio-room-loading">Opening the design canvas…</p>,
-});
+const DesignCanvas = dynamic(
+  () => import('./design-canvas').then((module) => module.DesignCanvas),
+  {
+    ssr: false,
+    loading: () => <p className="studio-room-loading">Opening the design canvas…</p>,
+  },
+);
 
 type SavedDesign = {
   id: string;
@@ -51,8 +62,15 @@ function readStoredDraft(row: SavedDesign | undefined) {
   try {
     const raw = sessionStorage.getItem(draftStorageKey('design', row.id));
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { document: DesignDocument; revision: number; updatedAt?: string | null };
-    const recovered = interpretLocalDraft(parsed, { document: row.document, revision: row.revision });
+    const parsed = JSON.parse(raw) as {
+      document: DesignDocument;
+      revision: number;
+      updatedAt?: string | null;
+    };
+    const recovered = interpretLocalDraft(parsed, {
+      document: row.document,
+      revision: row.revision,
+    });
     if (!recovered) return null;
     return {
       id: row.id,
@@ -96,6 +114,8 @@ export function DesignWorkspace({
   exportJobs?: ExportJob[];
   onChanged: () => void;
 }) {
+  const [labelSetup, setLabelSetup] = useState(false);
+  const [preflight, setPreflight] = useState<{ code: string; message: string }[]>([]);
   const [currentId, setCurrentId] = useState(designs[0]?.id ?? null);
   const saved = designs.find((item) => item.id === currentId) ?? designs[0] ?? null;
   const [draft, setDraft] = useState<{
@@ -106,7 +126,15 @@ export function DesignWorkspace({
     history: ReturnType<typeof emptyHistory>;
   } | null>(() => {
     const recovered = readStoredDraft(designs[0]);
-    return recovered ? { id: recovered.id, document: recovered.document, revision: recovered.revision, updatedAt: recovered.updatedAt, history: recovered.history } : null;
+    return recovered
+      ? {
+          id: recovered.id,
+          document: recovered.document,
+          revision: recovered.revision,
+          updatedAt: recovered.updatedAt,
+          history: recovered.history,
+        }
+      : null;
   });
   const live = useMemo(() => {
     if (draft && saved && draft.id === saved.id) return draft;
@@ -158,6 +186,15 @@ export function DesignWorkspace({
         });
         return;
       }
+      try {
+        assertLabelRevision(document!, next);
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : 'Protected supplier content cannot change.',
+        );
+        return;
+      }
+      setPreflight([]);
       const committed = commitDesign(document!, history, { type: 'replace', document: next });
       setLive({ ...live, document: committed.document, history: committed.history });
     },
@@ -179,7 +216,12 @@ export function DesignWorkspace({
       setSaveState('pending');
       setError('');
       try {
-        const savedRow = await json<{ id: string; revision: number; updated_at: string; revision_id?: string }>(
+        const savedRow = await json<{
+          id: string;
+          revision: number;
+          updated_at: string;
+          revision_id?: string;
+        }>(
           await fetch('/api/studio/design', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -220,7 +262,8 @@ export function DesignWorkspace({
           setSaveState('local-draft');
           setStatus('Newer edits kept locally. The earlier revision is not this draft.');
           const keptDraft = liveRef.current?.id === snapshot.id ? liveRef.current : null;
-          if (keptDraft) writeLocalDraft(sessionStorage, draftStorageKey('design', snapshot.id), keptDraft);
+          if (keptDraft)
+            writeLocalDraft(sessionStorage, draftStorageKey('design', snapshot.id), keptDraft);
           return { savedRow, ack, frozen: false as const };
         }
         const next = { ...current, revision: ack.revision, updatedAt: ack.updatedAt };
@@ -238,7 +281,10 @@ export function DesignWorkspace({
         const message = err instanceof Error ? err.message : 'Design could not be saved.';
         setSaveState(message.includes('changed elsewhere') ? 'conflict' : 'error');
         setError(message);
-        const latest = draftAfterFailedSave({ failed: snapshot, live: liveRef.current?.id === snapshot.id ? liveRef.current : null });
+        const latest = draftAfterFailedSave({
+          failed: snapshot,
+          live: liveRef.current?.id === snapshot.id ? liveRef.current : null,
+        });
         writeLocalDraft(sessionStorage, draftStorageKey('design', snapshot.id), latest);
         throw err;
       }
@@ -260,7 +306,12 @@ export function DesignWorkspace({
 
   useEffect(() => {
     const block = (event: BeforeUnloadEvent) => {
-      if (saveState === 'pending' || saveState === 'local-draft' || saveState === 'error' || dirty.current) {
+      if (
+        saveState === 'pending' ||
+        saveState === 'local-draft' ||
+        saveState === 'error' ||
+        dirty.current
+      ) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -297,7 +348,16 @@ export function DesignWorkspace({
 
   async function createFrom(presetId: string) {
     setError('');
-    const created = await json<{ id: string; revision: number; updated_at: string; document: DesignDocument }>(
+    if (presetId === 'unconfirmed-label') {
+      setLabelSetup(true);
+      return;
+    }
+    const created = await json<{
+      id: string;
+      revision: number;
+      updated_at: string;
+      document: DesignDocument;
+    }>(
       await fetch('/api/studio/design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -395,9 +455,14 @@ export function DesignWorkspace({
     setError('');
     const result = await persist('explicit', true);
     if (!result || !('pinned' in result) || !result.pinned || !result.revisionId)
-      throw new Error('Export needs an acknowledged immutable revision. Reconcile or wait for save first.');
+      throw new Error(
+        'Export needs an acknowledged immutable revision. Reconcile or wait for save first.',
+      );
     const slot = `${document.id}:${result.revisionId}:${format}`;
-    const ids = exportKeys.current.get(slot) ?? { jobId: crypto.randomUUID(), key: crypto.randomUUID() };
+    const ids = exportKeys.current.get(slot) ?? {
+      jobId: crypto.randomUUID(),
+      key: crypto.randomUUID(),
+    };
     exportKeys.current.set(slot, ids);
     const exported = await json<{
       id: string;
@@ -466,7 +531,38 @@ export function DesignWorkspace({
   );
 
   return (
-    <div className="studio-workbench">
+    <div className={`studio-workbench ${document?.label ? 'studio-label-workbench' : ''}`}>
+      <button type="button" onClick={() => setLabelSetup((value) => !value)}>
+        {labelSetup ? 'Close label setup' : 'Create supplier label'}
+      </button>
+      {labelSetup ? (
+        <LabelSetup
+          projectId={projectId}
+          onCreated={(created) => {
+            setCurrentId(created.id);
+            setLive({
+              id: created.id,
+              document: parseDesignDocument(created.document),
+              revision: created.revision,
+              updatedAt: created.updated_at,
+              history: emptyHistory(),
+            });
+            setLabelSetup(false);
+            onChanged();
+          }}
+        />
+      ) : null}
+      {document?.label ? (
+        <p className="studio-dimension-banner">
+          {document.label.profile.fixture ? 'SYNTHETIC FIXTURE · NOT FOR MANUFACTURING. ' : ''}
+          {document.label.profile.supplier} {document.label.profile.sku} · template{' '}
+          {document.label.profile.template.revision} ·{' '}
+          {document.label.generation === 'model'
+            ? 'Model-generated layout'
+            : 'Deterministic layout; no model call'}
+          . Supplier copy and geometry protected. Supliful approval not established.
+        </p>
+      ) : null}
       <div className="studio-workbench-toolbar imperial-control-surface">
         <label>
           Document
@@ -475,7 +571,11 @@ export function DesignWorkspace({
             onChange={(event) => {
               const nextId = event.target.value || null;
               void (async () => {
-                if (live && live.id !== nextId && (dirty.current || saveState === 'pending' || saveState === 'local-draft')) {
+                if (
+                  live &&
+                  live.id !== nextId &&
+                  (dirty.current || saveState === 'pending' || saveState === 'local-draft')
+                ) {
                   try {
                     await persist('autosave');
                   } catch {
@@ -542,7 +642,12 @@ export function DesignWorkspace({
         >
           Redo
         </button>
-        <button type="button" className="button" onClick={() => void persist('explicit', true).catch(() => undefined)} disabled={!document}>
+        <button
+          type="button"
+          className="button"
+          onClick={() => void persist('explicit', true).catch(() => undefined)}
+          disabled={!document}
+        >
           Save revision
         </button>
         <button type="button" className="studio-sheet-toggle" onClick={() => setSheet('assets')}>
@@ -557,7 +662,8 @@ export function DesignWorkspace({
       </div>
       {unconfirmed && (
         <p role="status" className="studio-dimension-banner">
-          Dimensions are unconfirmed. Enter a printer or supplier die size before treating this as a print master.
+          Dimensions are unconfirmed. Enter a printer or supplier die size before treating this as a
+          print master.
         </p>
       )}
       {error && (
@@ -623,7 +729,9 @@ export function DesignWorkspace({
         <div className="studio-empty">
           <p className="eyebrow">DESIGN</p>
           <h3>Start a document with real type and layers.</h3>
-          <p>Choose a verified paper size, an unconfirmed label canvas, or a Finish pixel preset.</p>
+          <p>
+            Choose a verified paper size, an unconfirmed label canvas, or a Finish pixel preset.
+          </p>
         </div>
       ) : (
         <div className="studio-workbench-grid">
@@ -633,7 +741,11 @@ export function DesignWorkspace({
             {versions
               .filter((version) => version.status === 'complete')
               .map((version) => (
-                <button key={version.id} type="button" onClick={() => addImage(version.id, 'version')}>
+                <button
+                  key={version.id}
+                  type="button"
+                  onClick={() => addImage(version.id, 'version')}
+                >
                   Add image to design
                 </button>
               ))}
@@ -667,97 +779,132 @@ export function DesignWorkspace({
               />
             )}
           </div>
-          <aside className={`studio-inspector ${sheet === 'inspect' || sheet === 'export' ? 'is-open' : ''}`}>
+          <aside
+            className={`studio-inspector ${sheet === 'inspect' || sheet === 'export' ? 'is-open' : ''}`}
+          >
             <h3>Inspector</h3>
             {document && (
-              <div className="studio-inspector-fields">
-                <label>
-                  Title
-                  <input
-                    value={document.title}
-                    onChange={(event) => apply({ ...document, title: event.target.value })}
-                  />
-                </label>
-                <label>
-                  Width
-                  <input
-                    type="number"
-                    value={document.page.width}
-                    onChange={(event) =>
-                      apply({
-                        ...document,
-                        page: { ...document.page, width: Number(event.target.value), dimensionSource: 'supplied' },
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  Height
-                  <input
-                    type="number"
-                    value={document.page.height}
-                    onChange={(event) =>
-                      apply({
-                        ...document,
-                        page: { ...document.page, height: Number(event.target.value), dimensionSource: 'supplied' },
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  Units
-                  <select
-                    value={document.page.unit}
-                    onChange={(event) =>
-                      apply(convertDocumentUnits(document, event.target.value as DesignDocument['page']['unit']))
-                    }
-                  >
-                    <option value="mm">mm</option>
-                    <option value="in">inches</option>
-                    <option value="px">pixels</option>
-                  </select>
-                </label>
-                <label>
-                  Export PPI
-                  <input
-                    type="number"
-                    min={72}
-                    max={600}
-                    value={document.page.ppi}
-                    onChange={(event) =>
-                      apply({ ...document, page: { ...document.page, ppi: Number(event.target.value) || DEFAULT_PPI } })
-                    }
-                  />
-                </label>
-                    <p className="muted">{document.page.dimensionNote}</p>
-                    {(['bleed', 'safe'] as const).map((box) => (
-                      <fieldset key={box}>
-                        <legend>{box === 'bleed' ? 'Bleed (outward from trim)' : 'Safe area (inset from trim)'}</legend>
-                        {(['top', 'right', 'bottom', 'left'] as const).map((edge) => (
-                          <label key={edge}>
-                            {box} {edge} ({document.page.unit})
-                            <input
-                              type="number"
-                              min={0}
-                              step={document.page.unit === 'mm' ? 0.1 : 0.01}
-                              value={document.page[box][edge]}
-                              onChange={(event) =>
-                                apply({
-                                  ...document,
-                                  page: {
-                                    ...document.page,
-                                    [box]: { ...document.page[box], [edge]: Number(event.target.value) || 0 },
+              <details className="studio-label-page-details" open={!document.label}>
+                <summary>Document and supplier geometry</summary>
+                <div className="studio-inspector-fields">
+                  <label>
+                    Title
+                    <input
+                      value={document.title}
+                      onChange={(event) => apply({ ...document, title: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Width
+                    <input
+                      type="number"
+                      disabled={Boolean(document.label)}
+                      value={document.page.width}
+                      onChange={(event) =>
+                        apply({
+                          ...document,
+                          page: {
+                            ...document.page,
+                            width: Number(event.target.value),
+                            dimensionSource: 'supplied',
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Height
+                    <input
+                      type="number"
+                      disabled={Boolean(document.label)}
+                      value={document.page.height}
+                      onChange={(event) =>
+                        apply({
+                          ...document,
+                          page: {
+                            ...document.page,
+                            height: Number(event.target.value),
+                            dimensionSource: 'supplied',
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Units
+                    <select
+                      disabled={Boolean(document.label)}
+                      value={document.page.unit}
+                      onChange={(event) =>
+                        apply(
+                          convertDocumentUnits(
+                            document,
+                            event.target.value as DesignDocument['page']['unit'],
+                          ),
+                        )
+                      }
+                    >
+                      <option value="mm">mm</option>
+                      <option value="in">inches</option>
+                      <option value="px">pixels</option>
+                    </select>
+                  </label>
+                  <label>
+                    Export PPI
+                    <input
+                      type="number"
+                      min={72}
+                      max={600}
+                      disabled={Boolean(document.label)}
+                      value={document.page.ppi}
+                      onChange={(event) =>
+                        apply({
+                          ...document,
+                          page: {
+                            ...document.page,
+                            ppi: Number(event.target.value) || DEFAULT_PPI,
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  <p className="muted">{document.page.dimensionNote}</p>
+                  {(['bleed', 'safe'] as const).map((box) => (
+                    <fieldset key={box} disabled={Boolean(document.label)}>
+                      <legend>
+                        {box === 'bleed'
+                          ? 'Bleed (outward from trim)'
+                          : 'Safe area (inset from trim)'}
+                      </legend>
+                      {(['top', 'right', 'bottom', 'left'] as const).map((edge) => (
+                        <label key={edge}>
+                          {box} {edge} ({document.page.unit})
+                          <input
+                            type="number"
+                            min={0}
+                            step={document.page.unit === 'mm' ? 0.1 : 0.01}
+                            value={document.page[box][edge]}
+                            onChange={(event) =>
+                              apply({
+                                ...document,
+                                page: {
+                                  ...document.page,
+                                  [box]: {
+                                    ...document.page[box],
+                                    [edge]: Number(event.target.value) || 0,
                                   },
-                                })
-                              }
-                            />
-                          </label>
-                        ))}
-                      </fieldset>
-                    ))}
-                  </div>
-                )}
-            {selected?.type === 'text' && document && (
+                                },
+                              })
+                            }
+                          />
+                        </label>
+                      ))}
+                    </fieldset>
+                  ))}
+                </div>
+              </details>
+            )}
+            {selected?.type === 'text' && document && !selected.locked && (
               <div className="studio-inspector-fields">
                 <label>
                   Copy
@@ -800,7 +947,9 @@ export function DesignWorkspace({
                       const weight = Number(event.target.value) as 400 | 600 | 700;
                       if (layer && layer.type === 'text') {
                         if (!fontSupportsWeight(layer.fontId, weight)) {
-                          setError(`${layer.fontId} does not include weight ${weight}. Studio will not simulate bold.`);
+                          setError(
+                            `${layer.fontId} does not include weight ${weight}. Studio will not simulate bold.`,
+                          );
                           return;
                         }
                         layer.fontWeight = weight;
@@ -836,112 +985,182 @@ export function DesignWorkspace({
                 </label>
               </div>
             )}
-            {document && selected && (
-              <div className="studio-export-actions">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = cloneDocument(document);
-                    const layer = next.layers.find((item) => item.id === selected.id);
-                    if (layer) layer.locked = !layer.locked;
-                    apply(next);
-                  }}
-                >
-                  {selected.locked ? 'Unlock' : 'Lock'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = cloneDocument(document);
-                    const layer = next.layers.find((item) => item.id === selected.id);
-                    if (layer) layer.visible = !layer.visible;
-                    apply(next);
-                  }}
-                >
-                  {selected.visible ? 'Hide' : 'Show'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ids = document.layers.map((layer) => layer.id);
-                    const index = ids.indexOf(selected.id);
-                    if (index <= 0) return;
-                    [ids[index - 1], ids[index]] = [ids[index]!, ids[index - 1]!];
-                    apply({ ...document, layers: ids.map((id) => document.layers.find((layer) => layer.id === id)!) });
-                  }}
-                >
-                  Layer down
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ids = document.layers.map((layer) => layer.id);
-                    const index = ids.indexOf(selected.id);
-                    if (index < 0 || index >= ids.length - 1) return;
-                    [ids[index], ids[index + 1]] = [ids[index + 1]!, ids[index]!];
-                    apply({ ...document, layers: ids.map((id) => document.layers.find((layer) => layer.id === id)!) });
-                  }}
-                >
-                  Layer up
-                </button>
-                {(['left', 'center', 'right', 'top', 'middle', 'bottom'] as const).map((edge) => (
-                  <button
-                    key={edge}
-                    type="button"
-                    disabled={alignedIds.length < 1}
-                    onClick={() => {
-                      if (alignedIds.length > 1) {
-                        apply(alignLayers(document, alignedIds, edge));
-                        return;
+            {document && selected && !selected.locked ? (
+              <div className="studio-inspector-fields">
+                {(['x', 'y', 'width', 'height', 'rotation'] as const).map((key) => (
+                  <label key={key}>
+                    {key}
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={selected[key]}
+                      onChange={(event) =>
+                        apply(
+                          applyLayerPatches(document, {
+                            [selected.id]: { [key]: Number(event.target.value) },
+                          }),
+                        )
                       }
+                    />
+                  </label>
+                ))}
+                {selected.type === 'text' ? (
+                  <label>
+                    Font size (pt)
+                    <input
+                      type="number"
+                      min="4"
+                      max="400"
+                      value={selected.fontSize}
+                      onChange={(event) =>
+                        apply({
+                          ...document,
+                          layers: document.layers.map((layer) =>
+                            layer.id === selected.id
+                              ? { ...selected, fontSize: Number(event.target.value) }
+                              : layer,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                ) : null}
+                {'fill' in selected ? (
+                  <label>
+                    Layer color
+                    <input
+                      type="color"
+                      value={selected.fill}
+                      onChange={(event) =>
+                        apply({
+                          ...document,
+                          layers: document.layers.map((layer) =>
+                            layer.id === selected.id
+                              ? { ...selected, fill: event.target.value }
+                              : layer,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+            {document &&
+              selected &&
+              !document.label?.profile.protected.some((item) => item.id === selected.id) && (
+                <div className="studio-export-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
                       const next = cloneDocument(document);
                       const layer = next.layers.find((item) => item.id === selected.id);
-                      if (!layer || layer.locked) return;
-                      if (edge === 'left') layer.x = document.page.safe.left;
-                      if (edge === 'right')
-                        layer.x = document.page.width - document.page.safe.right - layer.width;
-                      if (edge === 'center') layer.x = (document.page.width - layer.width) / 2;
-                      if (edge === 'top') layer.y = document.page.safe.top;
-                      if (edge === 'bottom')
-                        layer.y = document.page.height - document.page.safe.bottom - layer.height;
-                      if (edge === 'middle') layer.y = (document.page.height - layer.height) / 2;
+                      if (layer) layer.locked = !layer.locked;
                       apply(next);
                     }}
                   >
-                    Align {edge}
+                    {selected.locked ? 'Unlock' : 'Lock'}
                   </button>
-                ))}
-                <button
-                  type="button"
-                  disabled={markedIds.length < 2}
-                  onClick={() => {
-                    const group = createGroupLayer(document, markedIds, crypto.randomUUID());
-                    const next = cloneDocument(document);
-                    for (const id of markedIds) {
-                      const layer = next.layers.find((item) => item.id === id);
-                      if (layer) layer.parentId = group.id;
-                    }
-                    next.layers.push(group);
-                    apply(next);
-                    setSelectedId(group.id);
-                  }}
-                >
-                  Group marked
-                </button>
-                <button
-                  type="button"
-                  disabled={selected.type !== 'group'}
-                  onClick={() => {
-                    const next = cloneDocument(document);
-                    for (const layer of next.layers) if (layer.parentId === selected.id) layer.parentId = null;
-                    next.layers = next.layers.filter((layer) => layer.id !== selected.id);
-                    apply(next);
-                  }}
-                >
-                  Ungroup
-                </button>
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = cloneDocument(document);
+                      const layer = next.layers.find((item) => item.id === selected.id);
+                      if (layer) layer.visible = !layer.visible;
+                      apply(next);
+                    }}
+                  >
+                    {selected.visible ? 'Hide' : 'Show'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ids = document.layers.map((layer) => layer.id);
+                      const index = ids.indexOf(selected.id);
+                      if (index <= 0) return;
+                      [ids[index - 1], ids[index]] = [ids[index]!, ids[index - 1]!];
+                      apply({
+                        ...document,
+                        layers: ids.map((id) => document.layers.find((layer) => layer.id === id)!),
+                      });
+                    }}
+                  >
+                    Layer down
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ids = document.layers.map((layer) => layer.id);
+                      const index = ids.indexOf(selected.id);
+                      if (index < 0 || index >= ids.length - 1) return;
+                      [ids[index], ids[index + 1]] = [ids[index + 1]!, ids[index]!];
+                      apply({
+                        ...document,
+                        layers: ids.map((id) => document.layers.find((layer) => layer.id === id)!),
+                      });
+                    }}
+                  >
+                    Layer up
+                  </button>
+                  {(['left', 'center', 'right', 'top', 'middle', 'bottom'] as const).map((edge) => (
+                    <button
+                      key={edge}
+                      type="button"
+                      disabled={alignedIds.length < 1}
+                      onClick={() => {
+                        if (alignedIds.length > 1) {
+                          apply(alignLayers(document, alignedIds, edge));
+                          return;
+                        }
+                        const next = cloneDocument(document);
+                        const layer = next.layers.find((item) => item.id === selected.id);
+                        if (!layer || layer.locked) return;
+                        if (edge === 'left') layer.x = document.page.safe.left;
+                        if (edge === 'right')
+                          layer.x = document.page.width - document.page.safe.right - layer.width;
+                        if (edge === 'center') layer.x = (document.page.width - layer.width) / 2;
+                        if (edge === 'top') layer.y = document.page.safe.top;
+                        if (edge === 'bottom')
+                          layer.y = document.page.height - document.page.safe.bottom - layer.height;
+                        if (edge === 'middle') layer.y = (document.page.height - layer.height) / 2;
+                        apply(next);
+                      }}
+                    >
+                      Align {edge}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={markedIds.length < 2}
+                    onClick={() => {
+                      const group = createGroupLayer(document, markedIds, crypto.randomUUID());
+                      const next = cloneDocument(document);
+                      for (const id of markedIds) {
+                        const layer = next.layers.find((item) => item.id === id);
+                        if (layer) layer.parentId = group.id;
+                      }
+                      next.layers.push(group);
+                      apply(next);
+                      setSelectedId(group.id);
+                    }}
+                  >
+                    Group marked
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selected.type !== 'group'}
+                    onClick={() => {
+                      const next = cloneDocument(document);
+                      for (const layer of next.layers)
+                        if (layer.parentId === selected.id) layer.parentId = null;
+                      next.layers = next.layers.filter((layer) => layer.id !== selected.id);
+                      apply(next);
+                    }}
+                  >
+                    Ungroup
+                  </button>
+                </div>
+              )}
             <div className="studio-layer-list">
               <h4>Layers</h4>
               {document?.layers
@@ -977,14 +1196,62 @@ export function DesignWorkspace({
                 ))}
             </div>
             <div className="studio-export-actions">
-              <p>Exports freeze the current revision. RGB is not CMYK or PDF/X. PNG uses the renderer; SVG uses bundled static faces in this runtime.</p>
-              <button type="button" onClick={() => void exportFormat('png').catch((err) => setError(err.message))}>
+              {document?.label ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const result = await json<{ issues: { code: string; message: string }[] }>(
+                          await fetch('/api/studio/label', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ projectId, document }),
+                          }),
+                        );
+                        setPreflight(result.issues);
+                        setStatus(
+                          'Preflight checked this draft. Export rechecks the pinned revision. Supplier approval is separate.',
+                        );
+                      } catch (error) {
+                        setError(error instanceof Error ? error.message : 'Preflight unavailable.');
+                      }
+                    }}
+                  >
+                    Check label preflight
+                  </button>
+                  <ul>
+                    {preflight.map((issue, index) => (
+                      <li key={index}>
+                        {['label-blocked', 'missing-font', 'missing-asset'].includes(issue.code)
+                          ? 'BLOCKING: '
+                          : 'Note: '}
+                        {issue.message}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              <p>
+                Exports freeze the current revision. RGB is not CMYK or PDF/X. PNG uses the
+                renderer; SVG uses bundled static faces in this runtime.
+              </p>
+              <button
+                type="button"
+                onClick={() => void exportFormat('png').catch((err) => setError(err.message))}
+              >
                 Export PNG
               </button>
-              <button type="button" onClick={() => void exportFormat('svg').catch((err) => setError(err.message))}>
+              <button
+                type="button"
+                onClick={() => void exportFormat('svg').catch((err) => setError(err.message))}
+              >
                 Export SVG
               </button>
-              <button type="button" onClick={() => void exportFormat('pdf').catch((err) => setError(err.message))}>
+              <button
+                type="button"
+                onClick={() => void exportFormat('pdf').catch((err) => setError(err.message))}
+              >
                 Export PDF
               </button>
               {exportJobs

@@ -1,12 +1,6 @@
 import { z } from 'zod';
-import {
-  DEFAULT_PPI,
-  MAX_PPI,
-  MIN_PPI,
-  convertLength,
-  roundUnit,
-  type DesignUnit,
-} from './units';
+import { labelMetadataSchema } from '../label/contract';
+import { DEFAULT_PPI, MAX_PPI, MIN_PPI, convertLength, roundUnit, type DesignUnit } from './units';
 import { designFontIds, type DesignFontId } from './fonts';
 import { sanitizeSvg } from './sanitize';
 
@@ -128,6 +122,7 @@ export const designLayerSchema = z.discriminatedUnion('type', [
 export const designDocumentSchema = z
   .object({
     schema: z.literal('studio-design/v1'),
+    label: labelMetadataSchema.optional(),
     id: z.uuid(),
     title: z.string().trim().min(1).max(80),
     page: designPageSchema,
@@ -145,11 +140,26 @@ export const designDocumentSchema = z
   .superRefine((document, ctx) => {
     const ids = new Set<string>();
     for (const layer of document.layers) {
-      if (ids.has(layer.id))
-        ctx.addIssue({ code: 'custom', message: 'Layer IDs must be unique.' });
+      if (ids.has(layer.id)) ctx.addIssue({ code: 'custom', message: 'Layer IDs must be unique.' });
       ids.add(layer.id);
-      if (layer.parentId && !document.layers.some((item) => item.id === layer.parentId && item.type === 'group'))
-        ctx.addIssue({ code: 'custom', message: `Layer ${layer.name} points at an unknown group.` });
+      if (
+        layer.parentId &&
+        !document.layers.some((item) => item.id === layer.parentId && item.type === 'group')
+      )
+        ctx.addIssue({
+          code: 'custom',
+          message: `Layer ${layer.name} points at an unknown group.`,
+        });
+      const visited = new Set([layer.id]);
+      let parent = layer.parentId;
+      while (parent) {
+        if (visited.has(parent)) {
+          ctx.addIssue({ code: 'custom', message: 'Layer groups cannot form cycles.' });
+          break;
+        }
+        visited.add(parent);
+        parent = document.layers.find((item) => item.id === parent)?.parentId ?? null;
+      }
       if (layer.parentId === layer.id)
         ctx.addIssue({ code: 'custom', message: 'A layer cannot parent itself.' });
     }

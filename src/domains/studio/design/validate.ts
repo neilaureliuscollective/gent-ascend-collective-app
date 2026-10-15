@@ -1,3 +1,5 @@
+import { labelGeometryErrors } from '../label/document';
+import { vectorSvg } from './svg-vector';
 import { fontSupportsWeight } from './fonts';
 import { measureTextLayer } from './measure';
 import { pagePixels, toInches } from './units';
@@ -5,6 +7,7 @@ import type { DesignDocument, ImageLayer, TextLayer } from './document';
 
 export type DesignIssue = {
   code:
+    | 'label-blocked'
     | 'missing-font'
     | 'missing-asset'
     | 'text-overflow'
@@ -28,6 +31,26 @@ export async function validateDesign(
   assets: AssetInfo[],
 ): Promise<DesignIssue[]> {
   const issues: DesignIssue[] = [];
+  if (document.label) {
+    issues.push(
+      ...labelGeometryErrors(document).map((message) => ({
+        code: 'label-blocked' as const,
+        message,
+      })),
+    );
+    for (const layer of document.layers)
+      if (layer.type === 'svg') {
+        try {
+          vectorSvg(layer.markup);
+        } catch (error) {
+          issues.push({
+            code: 'label-blocked',
+            message: error instanceof Error ? error.message : 'SVG cannot be retained as vector.',
+            layerId: layer.id,
+          });
+        }
+      }
+  }
   if (document.page.dimensionSource === 'unconfirmed')
     issues.push({
       code: 'unconfirmed-size',
@@ -36,8 +59,9 @@ export async function validateDesign(
     });
   issues.push({
     code: 'unsupported-prepress',
-    message:
-      'RGB PDF and SVG exports are not CMYK, PDF/X, spot-color, foil-separation or printer-certified output. Those prepress modes are unavailable.',
+    message: document.label
+      ? 'Supliful technical output: RGB PDF, outlined type and embedded assets. Technical validation is not supplier approval.'
+      : 'RGB PDF and SVG exports are not CMYK, PDF/X, spot-color, foil-separation or printer-certified output. Those prepress modes are unavailable.',
   });
   const owned = new Map(assets.map((asset) => [`${asset.kind}:${asset.id}`, asset]));
   for (const layer of document.layers) {
@@ -97,20 +121,40 @@ export async function validateDesign(
         message: `“${layer.name}” extends outside the safe area.`,
       });
   }
-  return issues;
+  return document.label
+    ? issues.map((issue) =>
+        ['text-overflow', 'outside-safe', 'unconfirmed-size'].includes(issue.code)
+          ? { ...issue, code: 'label-blocked' as const }
+          : issue,
+      )
+    : issues;
 }
 
-function outsideSafe(document: DesignDocument, layer: { x: number; y: number; width: number; height: number }) {
+function outsideSafe(
+  document: DesignDocument,
+  layer: { x: number; y: number; width: number; height: number },
+) {
   const { page } = document;
   const left = page.safe.left;
   const top = page.safe.top;
   const right = page.width - page.safe.right;
   const bottom = page.height - page.safe.bottom;
-  return layer.x < left || layer.y < top || layer.x + layer.width > right || layer.y + layer.height > bottom;
+  return (
+    layer.x < left ||
+    layer.y < top ||
+    layer.x + layer.width > right ||
+    layer.y + layer.height > bottom
+  );
 }
 
 export function blockingIssues(issues: DesignIssue[]) {
-  return issues.filter((issue) => issue.code === 'missing-font' || issue.code === 'missing-asset');
+  return issues.filter(
+    (issue) =>
+      issue.code === 'unconfirmed-size' ||
+      issue.code === 'label-blocked' ||
+      issue.code === 'missing-font' ||
+      issue.code === 'missing-asset',
+  );
 }
 
 export function imageAssetIds(document: DesignDocument): ImageLayer[] {

@@ -1,3 +1,4 @@
+import { drawVectorSvg } from './svg-vector';
 import { readFile } from 'node:fs/promises';
 import {
   PDFDocument,
@@ -46,7 +47,14 @@ function withRotation(page: PDFPage, cx: number, cy: number, angle: number, draw
   const sin = Math.sin(r);
   page.pushOperators(
     pushGraphicsState(),
-    concatTransformationMatrix(cos, sin, -sin, cos, cx - cos * cx + sin * cy, cy - sin * cx - cos * cy),
+    concatTransformationMatrix(
+      cos,
+      sin,
+      -sin,
+      cos,
+      cx - cos * cx + sin * cy,
+      cy - sin * cx - cos * cy,
+    ),
   );
   draw();
   page.pushOperators(popGraphicsState());
@@ -91,12 +99,14 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
   });
   const fonts = new Map<string, PDFFont>();
   for (const layer of document.layers) {
-    if (layer.type !== 'text') continue;
+    if (layer.type !== 'text' || document.label) continue;
     const key = `${layer.fontId}:${layer.fontWeight}`;
     if (fonts.has(key)) continue;
     fonts.set(
       key,
-      await pdf.embedFont(await readFile(designFontPath(layer.fontId, layer.fontWeight)), { subset: true }),
+      await pdf.embedFont(await readFile(designFontPath(layer.fontId, layer.fontWeight)), {
+        subset: true,
+      }),
     );
   }
   const lookup = new Map(assets.map((asset) => [`${asset.kind}:${asset.id}`, asset]));
@@ -110,7 +120,7 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
     height: toInches(document.page.height, document.page.unit, document.page.ppi),
   };
   pdf.setSubject(
-    `RGB export trim ${inches.width.toFixed(4)}×${inches.height.toFixed(4)} in. Bleed extends the media box outward and does not shrink trim. SVG logos are rasterized to PNG in this PDF; they are not retained as vector artwork. Type uses the bundled static Inter/Sora/DejaVu faces at the requested weight. Not CMYK, PDF/X or printer-certified. Dimension source: ${document.page.dimensionSource}. ${document.page.dimensionNote}`,
+    `RGB export trim ${inches.width.toFixed(4)}×${inches.height.toFixed(4)} in. Bleed extends the media box outward and does not shrink trim. ${document.label ? 'Label SVG logos retained as vectors; text outlined. Supplier approval not established.' : 'SVG logos rasterized to PNG.'} Type uses the bundled static Inter/Sora/DejaVu faces at the requested weight. Not CMYK, PDF/X or printer-certified. Dimension source: ${document.page.dimensionSource}. ${document.page.dimensionNote}`,
   );
   return pdf.save({ useObjectStreams: false });
 }
@@ -197,7 +207,17 @@ async function drawLayer(
   }
   if (layer.type === 'svg') {
     const markup = sanitizeSvg(layer.markup);
-    const png = await rasterizeSvgMarkup(markup, Math.max(1, Math.round(width * (document.page.ppi / 72))), Math.max(1, Math.round(height * (document.page.ppi / 72))));
+    if (document.label) {
+      withRotation(page, cx, cy, layer.rotation, () =>
+        drawVectorSvg(page, markup, { x, y, width, height, opacity }),
+      );
+      return;
+    }
+    const png = await rasterizeSvgMarkup(
+      markup,
+      Math.max(1, Math.round(width * (document.page.ppi / 72))),
+      Math.max(1, Math.round(height * (document.page.ppi / 72))),
+    );
     const image = await pdf.embedPng(png);
     withRotation(page, cx, cy, layer.rotation, () => {
       page.drawImage(image, { x, y, width, height, opacity });
@@ -209,8 +229,10 @@ async function drawLayer(
     throw new Error(`Layer “${layer.name}” (${layer.type}) cannot be exported to PDF.`);
   }
   const fontKey = `${layer.fontId}:${layer.fontWeight}`;
-  if (!fonts.get(fontKey))
-    throw new Error(`Missing font: ${layer.fontId} ${layer.fontWeight}. Studio does not substitute another typeface.`);
+  if (!document.label && !fonts.get(fontKey))
+    throw new Error(
+      `Missing font: ${layer.fontId} ${layer.fontWeight}. Studio does not substitute another typeface.`,
+    );
   const kit = await loadDesignFont(layer.fontId, layer.fontWeight);
   const wrapped = wrapText(layer, kit, width / 72);
   withRotation(page, cx, cy, layer.rotation, () => {
@@ -252,7 +274,10 @@ function drawGlyphRun(
     const path = glyph.path.toSVG();
     if (path) {
       // Font paths are y-up. drawSvgPath also flips SVG y-down, so pre-flip to keep glyphs upright.
-      page.pushOperators(pushGraphicsState(), concatTransformationMatrix(scale, 0, 0, -scale, cursor, input.y));
+      page.pushOperators(
+        pushGraphicsState(),
+        concatTransformationMatrix(scale, 0, 0, -scale, cursor, input.y),
+      );
       page.drawSvgPath(path, { x: 0, y: 0, color: input.color, opacity: input.opacity });
       page.pushOperators(popGraphicsState());
     }

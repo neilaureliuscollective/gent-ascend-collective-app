@@ -1,0 +1,4 @@
+SYNTHETIC TEMPLATE ONLY — NOT A SUPLIFUL SKU
+Trim: 120 x 60 mm. Bleed: 2 mm each edge, media 124 x 64 mm.
+Safe: x3 y3 w114 h54. Artwork: x4 y4 w62 h46.
+Required specimen copy: x72 y5 w42 h42. Reserved matrix: x4 y51 w6 h6.

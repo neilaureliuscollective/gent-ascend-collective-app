@@ -1,0 +1,38 @@
+name: Studio supplier labels
+on:
+  pull_request:
+    paths:
+      - 'src/domains/studio/**'
+      - 'src/components/studio/**'
+      - 'src/app/api/studio/**'
+      - 'src/app/(workspace)/app/studio/**'
+      - 'tests/studio-label*'
+      - 'tests/label-*/**'
+      - 'tests/fixtures/labels/**'
+      - 'scripts/studio-label-fixture.mjs'
+      - 'playwright.studio-label.config.ts'
+      - '.github/workflows/studio-labels.yml'
+permissions:
+  contents: read
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx vitest run tests/studio-label.test.ts tests/studio-label-service.test.ts tests/studio-label-database.test.ts
+      - run: STUDIO_LABEL_DEMO=1 npx playwright test --config playwright.studio-label.config.ts
+      - run: node scripts/inspect-studio-labels.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-studio-label-evidence
+          path: |
+            docs/evidence/studio-labels
+            test-results

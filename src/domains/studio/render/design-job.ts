@@ -18,7 +18,7 @@ const DESIGN_BUCKET = 'aethelios-studio-designs';
 export function designExportNeedsFfmpeg(document: DesignDocument, format: 'png' | 'svg' | 'pdf') {
   if (format === 'png') return true;
   if (format === 'svg') return false;
-  return document.layers.some((layer) => layer.type === 'svg');
+  return !document.label && document.layers.some((layer) => layer.type === 'svg');
 }
 
 export async function renderDesignBytes(
@@ -33,6 +33,9 @@ export async function renderDesignBytes(
     return { bytes: await exportSvg(document, assets, fontMode), type: 'image/svg+xml' as const };
   }
   if (format === 'pdf') {
+    const issues = await validateDesign(document, assets);
+    const blocked = blockingIssues(issues);
+    if (blocked.length) throw new Error(blocked.map((i) => i.message).join(' '));
     return { bytes: await exportPdf(document, assets), type: 'application/pdf' as const };
   }
   const bytes = await exportPng(document, assets, undefined, options);
@@ -70,9 +73,14 @@ export async function ownedDesignAssets(
             .eq('person_id', personId)
             .eq('project_id', projectId)
             .maybeSingle();
-    if (row.error || !row.data?.storage_key) throw new Error('A placed image is not available in this project.');
+    if (row.error || !row.data?.storage_key)
+      throw new Error('A placed image is not available in this project.');
     const buffer = new Uint8Array(
-      await downloadBounded(client.storage.from(IMAGE_BUCKET).download(row.data.storage_key), budget, signal),
+      await downloadBounded(
+        client.storage.from(IMAGE_BUCKET).download(row.data.storage_key),
+        budget,
+        signal,
+      ),
     );
     const media = referenceType(buffer);
     if (!media) throw new Error('A placed image is not a supported PNG, JPEG or WebP file.');
@@ -107,8 +115,12 @@ export async function runDesignExportJob(input: {
   signal?: AbortSignal;
 }) {
   const token = crypto.randomUUID();
-  const claimed = await input.client.rpc('ai_studio_design_export_claim', { p_id: input.jobId, p_token: token });
-  if (claimed.error || !claimed.data) throw new Error('This design export could not obtain a lease.');
+  const claimed = await input.client.rpc('ai_studio_design_export_claim', {
+    p_id: input.jobId,
+    p_token: token,
+  });
+  if (claimed.error || !claimed.data)
+    throw new Error('This design export could not obtain a lease.');
   const deadlineAt = jobDeadlineAt();
   const abort = new AbortController();
   const signal = combineAbortSignals(
@@ -125,24 +137,45 @@ export async function runDesignExportJob(input: {
           .select('status,lease_token')
           .eq('id', input.jobId)
           .maybeSingle();
-        if (!pulse.data || row.data?.status === 'cancelled' || row.data?.lease_token !== token) abort.abort();
+        if (!pulse.data || row.data?.status === 'cancelled' || row.data?.lease_token !== token)
+          abort.abort();
       });
   }, 15_000);
   const uploaded: string[] = [];
   try {
     if (signal.aborted) throw new Error('Studio design export was cancelled.');
-    const assets = await ownedDesignAssets(input.client, input.personId, input.projectId, input.document, signal);
+    const assets = await ownedDesignAssets(
+      input.client,
+      input.personId,
+      input.projectId,
+      input.document,
+      signal,
+    );
     const issues = await validateDesign(input.document, assets.info);
     const blocked = blockingIssues(issues);
     if (blocked.length) throw new Error(blocked[0]!.message);
     const size = pagePixels(input.document.page);
-    const rendered = await renderDesignBytes(input.document, assets.bytes, input.format, input.fontMode, {
-      signal,
-      timeoutMs: remainingMs(deadlineAt, RENDER_LIMITS.pngMs),
-    });
+    const rendered = await renderDesignBytes(
+      input.document,
+      assets.bytes,
+      input.format,
+      input.fontMode,
+      {
+        signal,
+        timeoutMs: remainingMs(deadlineAt, RENDER_LIMITS.pngMs),
+      },
+    );
+    if (input.document.label && rendered.bytes.byteLength >= 10_000_000)
+      throw new Error('Supplier PDF must be smaller than 10 MB.');
     if (signal.aborted) throw new Error('Studio design export was cancelled.');
-    const person = await input.client.from('persons').select('auth_user_id').eq('id', input.personId).maybeSingle();
-    const uid = (person.data?.auth_user_id as string | undefined) ?? (await input.client.auth.getUser()).data.user?.id;
+    const person = await input.client
+      .from('persons')
+      .select('auth_user_id')
+      .eq('id', input.personId)
+      .maybeSingle();
+    const uid =
+      (person.data?.auth_user_id as string | undefined) ??
+      (await input.client.auth.getUser()).data.user?.id;
     if (!uid) throw new Error('Owner identity unavailable for private design storage.');
     const key = designAttemptObjectKey({
       uid,
@@ -155,7 +188,10 @@ export async function runDesignExportJob(input: {
     const remove = async (paths: string[]) => {
       if (paths.length) await bucket.remove(paths);
     };
-    const stored = await bucket.upload(key, rendered.bytes, { contentType: rendered.type, upsert: false });
+    const stored = await bucket.upload(key, rendered.bytes, {
+      contentType: rendered.type,
+      upsert: false,
+    });
     uploaded.push(key);
     if (stored.error) throw new Error('The export could not be stored privately.');
     const still = await input.client
@@ -190,7 +226,8 @@ export async function runDesignExportJob(input: {
       remove,
       token,
     });
-    if (!outcome.published) throw new Error('Completion receipt was rejected; late output was not published.');
+    if (!outcome.published)
+      throw new Error('Completion receipt was rejected; late output was not published.');
     const finished = await input.client
       .from('ai_studio_design_export_jobs')
       .select('export_id,width,height,ppi')

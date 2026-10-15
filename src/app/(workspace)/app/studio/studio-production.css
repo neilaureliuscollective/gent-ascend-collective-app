@@ -669,3 +669,104 @@ html[data-motion='still'] .app-shell.imperial-workspace .studio-room-console but
     scroll-behavior: auto;
   }
 }
+
+.studio-label-setup {
+  padding: clamp(1rem, 3vw, 2rem);
+  margin: 1rem 0;
+  background: var(--io-raised, #102b26);
+  border: 1px solid var(--io-divider, #456057);
+  border-radius: 18px;
+}
+.studio-label-setup h3 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  margin: 0.6rem 0;
+}
+.studio-label-setup p {
+  max-width: 78ch;
+  line-height: 1.6;
+}
+.studio-label-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0;
+}
+.studio-label-inputs label {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.studio-label-inputs input,
+.studio-label-inputs textarea,
+.studio-label-inputs select {
+  width: 100%;
+  min-width: 0;
+  color: var(--io-text);
+  background: var(--io-reading, #080d0d);
+  padding: 0.75rem;
+  border: 1px solid var(--io-divider);
+  border-radius: 8px;
+}
+.studio-label-inputs input[type='checkbox'] {
+  width: auto;
+}
+.studio-label-direction {
+  grid-column: 1/-1;
+}
+.studio-label-setup button {
+  min-height: 44px;
+  padding: 0.7rem 1.2rem;
+}
+@media (max-width: 700px) {
+  .studio-label-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+.studio-label-workbench .studio-inspector {
+  max-height: 78vh;
+  overflow: auto;
+  background: var(--io-raised, #102b26);
+}
+.studio-label-workbench .studio-inspector-fields label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.85rem;
+}
+.studio-label-workbench .studio-inspector-fields input,
+.studio-label-workbench .studio-inspector-fields textarea,
+.studio-label-workbench .studio-inspector-fields select {
+  width: 100%;
+}
+.studio-label-workbench .studio-label-page-details {
+  border-bottom: 1px solid var(--io-divider);
+  padding-bottom: 12px;
+}
+.studio-label-workbench .studio-label-page-details summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.studio-label-workbench .studio-design-stage {
+  min-height: 300px;
+  display: grid;
+  align-content: center;
+  background: #121918;
+}
+.studio-label-workbench .studio-asset-rail {
+  align-self: start;
+}
+.studio-label-workbench .studio-export-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.studio-label-workbench .studio-export-actions p,
+.studio-label-workbench .studio-export-actions ul {
+  grid-column: 1/-1;
+}
+@media (max-width: 980px) {
+  .studio-label-workbench .studio-design-stage {
+    min-height: 180px;
+  }
+  .studio-label-workbench .studio-inspector.is-open {
+    max-height: 65vh;
+    position: relative;
+  }
+}
