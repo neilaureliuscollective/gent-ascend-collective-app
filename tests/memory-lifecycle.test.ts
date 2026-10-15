@@ -15,7 +15,7 @@ type MemoryRow = {
   confirmed_at: string;
 };
 
-/** Mirrors ai_save_memory / ai_delete_memory: owner-scoped, OCC, delete removes the row. */
+/** In-memory contract mirror of ai_save_memory / ai_delete_memory, not end-to-end database proof. Persistence remains tests/database.test.ts. */
 class MemoryLedger {
   rows: MemoryRow[] = [];
 

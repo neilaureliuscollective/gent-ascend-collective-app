@@ -378,6 +378,9 @@ function awaitProductSnapshot() {
     mode: 'detail' as const,
     catalogMaxAgeSeconds: 300 as const,
     catalogFetchedAt: null,
+    unresolved: false,
+    unresolvedKind: null,
+    clarifyingQuestion: null,
     connectionRequirement: null,
     records: [
       shapeProductRecord(

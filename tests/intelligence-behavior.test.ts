@@ -57,22 +57,25 @@ describe('deterministic scenario fixtures', () => {
     ).toEqual(
       expect.arrayContaining([
         'premium-craft',
-        'challenge-perfect',
-        'three-directions',
-        'keep-second-direction',
-        'uncertain-tool',
-        'mid-conversation-correction',
-        'long-voice',
-        'stale-product-detail',
-        'variant-consistency',
+        'three-directions-then-second',
+        'corrected-audience',
+        'current-brand-over-history',
+        'switch-product-then-that-one',
+        'similar-variants',
+        'ambiguous-unscented',
+        'ambiguous-that-one',
+        'voice-lookup-after-admission',
+        'tool-failure-late',
         'visitor-neil',
+        'context-off',
+        'long-voice',
         'diagnosis-efficacy',
         'provenance',
       ]),
     );
     expect(
       behaviorScenarios.some(
-        (scenario) => scenario.heldOut && scenario.id === 'held-out-quiet-help',
+        (scenario) => scenario.heldOut && scenario.id === 'casual-conversation',
       ),
     ).toBe(true);
     expect(humanReviewRubric.dimensions).toHaveLength(7);
