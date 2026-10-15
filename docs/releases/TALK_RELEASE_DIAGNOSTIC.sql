@@ -209,7 +209,8 @@ select jsonb_build_object(
       'authenticatedExecute', authenticated_execute,
       'serviceRoleExecute', service_role_execute,
       'hasIntendedTurnAuthority', coalesce(prosrc like '%intended_turn_id%', false),
-      'hasDerivedReceipt', coalesce(prosrc like '%ai_talk_derived_design_receipt%', false)
+      'hasDerivedReceipt', coalesce(prosrc like '%ai_talk_derived_design_receipt%', false),
+      'hasQualifiedRecovery', coalesce(prosrc like '%intended_save_id%' and prosrc like '%intended_project_id%', false)
     )), '{}'::jsonb)
     from fn_probe
   ),
@@ -287,7 +288,18 @@ select jsonb_build_object(
           where conname = 'ai_talk_origin_imports_mapping_version'
             and definition like '%talk-origin-import/v1%'
         )
+        and coalesce((select prosrc from import), '') like '%intended_save_id%'
+        and coalesce((select prosrc from import), '') like '%intended_project_id%'
         then 'equivalent-candidate'
+      when (select oid from import) is not null
+        and (select oid from ack5) is null
+        and (select oid from ack7) is null
+        and exists (select 1 from col where table_name = 'ai_talk_origin_imports' and column_name = 'mapping_version')
+        and (
+          coalesce((select prosrc from import), '') not like '%intended_save_id%'
+          or coalesce((select prosrc from import), '') not like '%intended_project_id%'
+        )
+        then 'older'
       when (select oid from import) is null
         and ((select oid from ack5) is not null or (select oid from ack7) is not null)
         then 'older'

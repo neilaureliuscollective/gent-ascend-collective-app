@@ -2,7 +2,16 @@
 
 Development publication only. No main merge, hosted migration, production deploy, credential creation or paid provider call without founder approval.
 
-The next action is **permission for the read-only schema diagnostic**, not a merge. Merging #131 onto `main` is expected to create a Vercel **Production** deployment (production branch is `main`). That is not a no-effect GitHub-only step.
+Merging #131 onto `main` is expected to create a Vercel **Production** deployment (production branch is `main`). That is not a no-effect GitHub-only step. This checkpoint is not a live-activation approval.
+
+## Release package — four separate facts
+
+| Item | Hosted status | What this checkpoint did |
+|---|---|---|
+| Original 18 Talk/Architect-apps migrations | Application is **partial**. The first four canonical files succeeded; the fifth is awaiting a separate tool approval. Do not assume all 18 are installed. | Not applied from Cursor. Wait for a verified application receipt before calling the 18 ready. Reconcile that receipt by ledger **name** (canonical filename stem). The connector may assign an application-time `version` while preserving the stem as `name`. Do not rewrite `schema_migrations` or replay because prefixes differ. |
+| New recovery migration `20261019120000_talk_origin_import_recovery.sql` | **Not hosted.** Prepared and locally verified on real PostgreSQL 16. Not part of the 18. | Qualifies the unique-violation branch in `ai_talk_import_origin`. Does **not** edit `20261014040000_talk_origin_import_consistency.sql`. Hosted apply needs a later, separate founder approval after the 18 receipt. |
+| Production configuration | Expected **names** exist on the Vercel/Supabase projects. Values, key validity and real provider access have **not** been proven from this environment. | No credential change. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` must stay unset. |
+| Talk code (#131 / #135) | **Unmerged.** Current production remains main `804c877` / Studio `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo`. | Review branches only. Merge is still a later explicit approval and will auto-deploy Production. |
 
 ## Combined release tree
 
@@ -22,7 +31,7 @@ An intermediate #131 production deploy ships Talk foundation **code** on the alr
 
 ### #131 alone
 
-Creative conversation: briefs/plans/palettes/handoffs, Origin import, design boards, direction transfers, trusted voice observation, intended-turn bind, Architect Apps retain-provenance, labelled `legacy-reserve` composer fixture, and the 18 Talk/Architect-apps migrations.
+Creative conversation: briefs/plans/palettes/handoffs, Origin import, design boards, direction transfers, trusted voice observation, intended-turn bind, Architect Apps retain-provenance, labelled `legacy-reserve` composer fixture, the 18 Talk/Architect-apps migrations, and forward `20261019120000_talk_origin_import_recovery.sql` (not part of the 18).
 
 Does **not** include: voice dock in Talk, Edit/Preview/Split documents, the shared selected-work resolver, mid-call `POST /api/aethelios/live/target`, or `talkComposerSendRoute` (text during voice cleanup).
 
@@ -56,13 +65,15 @@ Classification states used after the diagnostic:
 
 ### Ledger facts already inspected
 
-- **18 Talk/Architect-apps names were absent** from the hosted ledger read on `volpzkfsnmtztrovexcw`. That is a name fact, not object absence.
-- **Architect Origin** appears as hosted version `20261014010638` with name `20261012230000_architect_origin`. Ledger name-equivalent only. Objects, function definitions and ACLs remain **unverified**.
+- **18 Talk/Architect-apps names were absent** from the earlier hosted ledger read on `volpzkfsnmtztrovexcw`. The owner later approved applying that exact batch after a completed schema inspection.
+- **Application of those 18 is partial:** the first four canonical files succeeded; the fifth is awaiting a tool approval handled outside Cursor. This is not a verified completion receipt.
+- **Architect Origin** appears as hosted version `20261014010638` with name `20261012230000_architect_origin`. Ledger name-equivalent only. That remapping is the pattern to expect: reconcile the forthcoming 18 receipt by `name`, not by assuming the filename prefix is the hosted `version`.
 - Unused TALK_121 alternate versions `20261014042300`–`06` were not listed either. That apply was never executed.
+- `20261019120000_talk_origin_import_recovery.sql` is **not** in the approved 18 and must not be applied from this checkpoint.
 
-### Physical objects — unverified (cancelled query, not retried)
+### Physical objects — partial apply in progress, objects not receipted here
 
-None of the 18 files is classified missing, older, partial, equivalent or conflict at the object layer. Existence of a table after a later inspection would still require definition/ACL comparison before calling it satisfied.
+Do not treat the first four successful files as the full 18. Do not classify remaining files missing/older/equivalent from this environment. After the verified 18 receipt, classify each contract from `contracts.*` plus function definition markers. The recovery file is a later, separate apply.
 
 ### Final contracts the diagnostic compares
 
@@ -76,7 +87,8 @@ Object presence alone cannot satisfy these. The diagnostic now also lists owners
 | `20261014010000_talk_origin_import.sql` | `ai_talk_origin_imports` (later columns supersede the first receipt function) |
 | `20261014020000_talk_origin_import_bind.sql` | `save_id`, `provenance`; `ai_talk_scoped_identity(text)` (not granted to authenticated after later files) |
 | `20261014030000_talk_origin_import_atomic.sql` | `mapping_version='talk-origin-import/v1'`; `ai_talk_import_origin(uuid,uuid,uuid)` authenticated; obsolete `ai_talk_record_origin_import` overloads dropped |
-| `20261014040000_talk_origin_import_consistency.sql` | `talk_utf16_length(text)`, `talk_bound_text(text,integer)` internal; one-per-kind import; derived `copied[].truncated` |
+| `20261014040000_talk_origin_import_consistency.sql` | `talk_utf16_length(text)`, `talk_bound_text(text,integer)` internal; one-per-kind import; derived `copied[].truncated`. Unique-violation recovery in this file is historically ambiguous (`save_id=save_id` / `project_id=project_id`) and must stay untouched. |
+| `20261019120000_talk_origin_import_recovery.sql` | **Not one of the 18.** Replaces `ai_talk_import_origin` so recovery qualifies `origin_import.save_id` / `origin_import.project_id` against `intended_save_id` / `intended_project_id`. The table alias is not `receipt`, which is the PL/pgSQL row variable. Owner checks, immutable provenance, idempotency and atomic import unchanged. Diagnostic `originImport` is `older` until this body is present. |
 | `20261014100000_talk_design_board.sql` | design-board tables/RPCs used by inline boards |
 | `20261014120000_talk_live_bindings.sql` | `ai_live_observed_items`, `ai_live_turn_bindings`; later files revoke the first observe/bind overloads |
 | `20261014130000_talk_direction_transfers.sql` | `ai_talk_direction_transfers`; `ai_talk_record_direction_transfer(...)` authenticated |
@@ -125,7 +137,7 @@ where version in (
   '20261014100000','20261014120000','20261014130000','20261014140000',
   '20261015080000','20261015120000','20261015140000',
   '20261015160000','20261015170000','20261015180000','20261015181000',
-  '20261015190000'
+  '20261015190000','20261019120000'
 ) or name in (
   '20261012230000_architect_origin','20261012230000_architect_origin.sql',
   '20261013240000_talk_creation','20261013250000_talk_image_entitlement',
@@ -137,20 +149,22 @@ where version in (
   '20261015120000_architect_apps_durable','20261015140000_architect_apps_mutation',
   '20261015160000_architect_apps_retain_authority','20261015170000_architect_apps_retain_provenance',
   '20261015180000_talk_live_trusted_observe','20261015181000_health_workspace',
-  '20261015190000_talk_live_bind_intended_turn'
+  '20261015190000_talk_live_bind_intended_turn',
+  '20261019120000_talk_origin_import_recovery'
 )
 order by version;
 ```
 
-Until the diagnostic is authorized and returned, Talk SQL is **unverified**, not missing and not applied. After it returns, classify each contract from `contracts.*` plus function definition markers. Stop `older`, `partial` and `conflict`. Apply only `missing` files, in repository order.
+The original 18 are in a partial hosted apply. Wait for the verified receipt before classifying remaining files. After that receipt, classify each contract from `contracts.*` plus function definition markers. Stop `older`, `partial` and `conflict`. Do not replay a name-equivalent row because the hosted `version` prefix differs. The recovery file is not in that batch.
 
 ## Isolated validation (this environment)
 
-- `npm run db:ledger`: 37 recorded snapshot files unchanged; source versions unique (`15180000` Talk, `15181000` Health, `15190000` Talk).
-- PGlite `tests/health-database.test.ts` applies every `supabase/migrations/*.sql` in filename order, including Talk observe → Health workspace → intended-turn bind, then asserts both Health `workspaces` and the 5-arg observe/`intended_turn_id` exist.
-- PGlite `tests/talk-creation-database.test.ts` and `tests/talk-origin-import-database.test.ts` still pass (not Supabase Auth).
+- `npm run db:ledger`: 37 recorded snapshot files unchanged; source versions unique (`15180000` Talk, `15181000` Health, `15190000` Talk, `19120000` recovery after Studio `19010000`).
+- PGlite `tests/health-database.test.ts` applies every `supabase/migrations/*.sql` in filename order, including Talk observe → Health workspace → intended-turn bind, then the recovery file.
+- PGlite `tests/talk-origin-import-database.test.ts` applies the recovery file and covers normal import, same-request replay, forced unique-violation recovery, occupied save/project rejection, and foreign-owner isolation (not Supabase Auth).
+- `npm run test:talk-import-recovery` / `tests/talk-origin-import-recovery-postgres.test.ts`: real local PostgreSQL 16, default `plpgsql.variable_conflict=error`. Occupied `(person_id,save_id)` hits the unique-violation branch. Historical `14040000` raises `column reference "save_id" is ambiguous`. The forward file rejects the mismatch and leaves the original pairing. Same-request replay and foreign-owner isolation are also checked. Ambiguity checks were not disabled.
 - Isolated `supabase db reset` unrun: Docker/Podman are not available here.
-- `tests/talk-release-diagnostic.test.ts`: missing schema reports `missing` without aborting (text-signature `has_function_privilege` still throws); 4-arg observe / pre-intended-turn bind is `older`; final 5-arg observe + `intended_turn_id` + owner SELECT policies is `equivalent-candidate`; dropping the observe owner policy downgrades that contract to `partial`.
+- `tests/talk-release-diagnostic.test.ts`: missing schema reports `missing` without aborting; 4-arg observe / pre-intended-turn bind is `older`; final 5-arg observe + `intended_turn_id` + owner SELECT policies is `equivalent-candidate`; dropping the observe owner policy downgrades that contract to `partial`; `14040000` origin import is `older` until `19120000` supplies `intended_save_id` / `intended_project_id`.
 
 ## Environment (names only)
 
@@ -181,7 +195,7 @@ Enter any missing values in Vercel Project Settings → Environment Variables (P
 |---|---|---|
 | Authentication / access | Code-ready; live founder session **unknown** until signed-in production check | Same |
 | Provider / model configuration | `OPENAI_API_KEY` presence on the deployed project is **unknown** from this environment; fixture ≠ live | Same key, plus Realtime model admission **unknown**; historical HTTP 400 unconfirmed |
-| Schema | Existing chat tables are on the 2026-10-12 hosted snapshot. Talk creation/import/board tables: **ledger-absent / objects unverified** | Bindings + 5-arg observe + `intended_turn_id`: **ledger-absent / objects unverified** |
+| Schema | Existing chat tables are on the 2026-10-12 hosted snapshot. Talk creation/import/board tables: **18-file apply partial; no completion receipt**. Recovery file **not hosted** | Bindings + 5-arg observe + `intended_turn_id`: **same 18-file apply; no completion receipt** |
 | Normal reply streaming | Implemented; live stream **unknown** until one authorized chat completion | Not a text prerequisite |
 | Saved / reopened conversation | Existing chat path implemented; Talk artifact save/reopen needs unverified Talk SQL | Durable transcript association needs unverified bind SQL |
 | Provider admission | n/a | **Unknown** (do not spend to discover) |
@@ -202,13 +216,14 @@ Ordinary text must stay usable if voice remains blocked.
 
 ## Ordered integration and activation
 
-Keep these separately identified. None of 2–5 is authorized by a green Quality run.
+Keep these separately identified. A green Quality run does not authorize any of them.
 
-1. **Source release (Git):** exact-head Quality green on reconciled #131, then #135 stacked on that SHA. Merge #131 to `main` (auto Production), then #135.
-2. **Database readiness:** founder-authorized read-only diagnostic on `volpzkfsnmtztrovexcw`. Classify `contracts.*` plus `requiredPolicies` / `requiredConstraints`. Apply only `missing` files in repository order. Stop `older` / `partial` / `conflict`. No apply plan is generated from unknown schema.
-3. **Provider configuration (names only):** Production `OPENAI_API_KEY` on the Vercel project; Auth public URL/key matching Gent; hosted `AETHELIOS_TALK_CREATION_FIXTURE` unset. Voice additionally needs `AETHELIOS_LIVE_ENABLED`, founder-pilot flags, service-role observe, Realtime model access. Do not paste values.
-4. **Text functional acceptance (after 1–3, separately authorized):** one authenticated production message, streamed reply, saved conversation, reopen the same conversation. Proposed cap: one chat completion, well under $1.
-5. **Voice functional acceptance (independent, separately authorized):** microphone permission, connection, audible two-way conversation, interruption, minimize/restore, return to the same conversation. A handshake is not a conversation. Proposed cap: one 30–60s Realtime call; stop if admission is not 2xx. Keep text usable if voice is unavailable.
+1. **Finish the 18 (database, already in progress):** wait for the verified application receipt of the original 18. Reconcile by ledger `name`. Do not apply remaining files from Cursor. Do not rewrite history. If the apply stops mid-sequence, leave applied versions in place.
+2. **Recovery migration (database, later and separate):** after the 18 receipt, apply only `20261019120000_talk_origin_import_recovery.sql` when explicitly approved. It is prepared and locally verified; it is not hosted by this checkpoint.
+3. **Source merge (Git → Production):** exact-head Quality green on #131, then #135 stacked on that SHA. Merge #131 to `main` **auto-deploys Vercel Production** of Talk foundation onto released Studio. Then merge #135. Rollback of a Talk merge must return to `804c877`, not Health-only `544c156`. Do not merge while the 18 receipt is incomplete.
+4. **Configuration assertions (names only, values unproven):** Production `OPENAI_API_KEY` present on the Vercel project; Auth public URL/key matching Gent `volpzkfsnmtztrovexcw`; hosted `AETHELIOS_TALK_CREATION_FIXTURE` unset. Voice additionally needs `AETHELIOS_LIVE_ENABLED`, founder-pilot flags, service-role observe, Realtime model access. Do not paste values or rotate keys here.
+5. **Text functional acceptance (after 1–4, separately authorized):** one authenticated production message, streamed reply, saved conversation, reopen the same conversation. Proposed cap: one chat completion, well under $1.
+6. **Voice functional acceptance (independent, separately authorized):** microphone permission, connection, audible two-way conversation, interruption, minimize/restore, return to the same conversation. A handshake is not a conversation. Proposed cap: one 30–60s Realtime call; stop if admission is not 2xx. Keep text usable if voice is unavailable.
 
 ## Bounded live verification (after deploy, authorized separately)
 
@@ -226,9 +241,9 @@ Voice (proposed cap: one 30–60s Realtime call, stop if admission is not 2xx):
 
 ## Smallest next authorization
 
-1. **Now (unblocked by this pass):** permission to run `docs/releases/TALK_RELEASE_DIAGNOSTIC.sql` (read-only catalog metadata) on `volpzkfsnmtztrovexcw`. No user-content read. Not a merge, apply, deploy or paid call.
-2. **After that report (still blocked):** exact apply/skip list from missing vs older/partial/conflict vs equivalent-candidate. No apply is authorized yet.
+1. **Now (outside Cursor):** verified completion receipt for the original 18. The fifth file is awaiting a tool approval. This checkpoint does not apply, skip or rewrite that batch.
+2. **Then, separately:** founder approval to apply `20261019120000_talk_origin_import_recovery.sql` only. Local PostgreSQL verification is not a hosted proof.
 3. **Then, separately (blocked until 1–2 and exact-head Quality):** merge #131 onto `main`. That **will production-deploy** Talk foundation onto released Studio. Rollback target is `804c877`.
 4. **Then, separately:** merge #135. Then bounded text (under $1). Voice only after a second explicit approval (30–60s cap).
 
-Do not merge first to “get it on main” while schema is unverified. Approval for step 1 is the only source-complete next action. Merge/deploy/apply/paid calls remain blocked.
+Do not merge first to “get it on main” while the 18 receipt is incomplete or the recovery file is unapplied. Merge/deploy/hosted SQL/paid calls remain blocked from this prompt.
