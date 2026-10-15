@@ -52,4 +52,3 @@ Stream/design/lineage database unit regressions
       Tests  24 passed (24)
    Start at  22:38:42
    Duration  2.89s (tests 76%, import 13%, transform 10%, worker 1%)
-
