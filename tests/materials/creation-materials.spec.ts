@@ -81,6 +81,9 @@ for (const [label, width, height] of views) {
     await capture('talk-document');
 
     await openMaterialArchitect(page);
+    expect((await page.locator('.origin-plane').boundingBox())!.width).toBeGreaterThan(
+      width * (width > 1100 ? 0.7 : 0.82),
+    );
     await capture('architect-blueprint');
     await openMaterialDocument(page);
     const canvas = await page.locator('.origin-plane').boundingBox();

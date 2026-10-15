@@ -470,6 +470,18 @@
   grid-template-areas: 'outline canvas refine';
 }
 
+/* Blueprint/history/tool views have no refine panel: do not reserve an empty track. */
+.environment-main .origin-studio.origin-active .origin-workbench:not(.origin-app):not(.origin-canvas-focused):not(:has(.origin-refine:not([hidden]))) {
+  grid-template-columns: minmax(200px, 0.22fr) minmax(0, 1.7fr) !important;
+  grid-template-areas: 'outline canvas' !important;
+}
+@media (max-width: 1100px) {
+  .environment-main .origin-studio.origin-active .origin-workbench:not(.origin-app):not(.origin-canvas-focused):not(:has(.origin-refine:not([hidden]))) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: 'canvas' !important;
+  }
+}
+
 /* Focus removes the named side tracks as well as the side panels. */
 .environment-main .origin-studio.origin-active .origin-workbench.origin-workspace.origin-canvas-focused {
   display: grid;
