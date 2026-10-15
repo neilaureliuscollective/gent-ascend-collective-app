@@ -2,106 +2,132 @@
   "kind": "served-production-CSS-replay-with-labelled-API-fixture",
   "sourceCommit": "58a59df9cb1d56694f13c71c8f36d85d7b321daf",
   "deployment": "dpl_2iuuEAW1FgidRuiMc2UXCiP4Wffz",
+  "fontReplay": "Exact repository Inter/Sora bytes, verified identical to baseline Git objects",
   "files": [
     {
       "path": "before-talk-phone.png",
-      "bytes": 124662,
-      "sha256": "10b1058a065849845825da2dc0586284f0f559b703e524f182642f164526d5cb"
+      "bytes": 127088,
+      "sha256": "719d043b12af89e2a4839a14a1671c39fcffd741fe821458beeec0e5337114e0"
     },
     {
       "path": "before-talk-document-phone.png",
-      "bytes": 67447,
-      "sha256": "0ab3ce4e70b7a162b74a29ba05a1daa94fe42a20025c5de90e3cddec640ac593"
+      "bytes": 68379,
+      "sha256": "77d1483b93f29dad71ea0a6678ed2f0138c598c426264e28e318becbcc49545b"
     },
     {
       "path": "before-architect-blueprint-phone.png",
-      "bytes": 102898,
-      "sha256": "5d0e008c7eaa9f8670077683a8cab0eb8aeb1f5e2b732344f9016001ded0b2a7"
+      "bytes": 102853,
+      "sha256": "5e8babc295d9d1bff650ced1136c5f33a55670d7e70d03ed76e482d1690b2f26"
     },
     {
       "path": "before-architect-document-phone.png",
-      "bytes": 100479,
-      "sha256": "ac159145a30847bbd6f5b0ca57bb71725ef2a67bc0b06a30d3d9fa079d1dff99"
+      "bytes": 103411,
+      "sha256": "b1eaac37f80e09f0fd7353377cce6dc42e78a88ab19e92a336bab2c590d3d1d8"
+    },
+    {
+      "path": "before-studio-phone.png",
+      "bytes": 165340,
+      "sha256": "86e0b142c13daf3fbb626f1a1e963647b1165bd2d23f6caf833e7e991225872b"
     },
     {
       "path": "before-talk-fold-narrow.png",
-      "bytes": 152857,
-      "sha256": "17a6129029bed4eae74d72b7903378302463988e41bb3c7f507a21968779a4c0"
+      "bytes": 156060,
+      "sha256": "a5c356f281ee4a4cf38344d6ffb8ab3afcb052ca22e8087acdb6bbb3aa4ef165"
     },
     {
       "path": "before-talk-document-fold-narrow.png",
-      "bytes": 82690,
-      "sha256": "543735f597551c6dbbddaa2f13e40358556674fad00107aba969332ca757fd02"
+      "bytes": 83905,
+      "sha256": "a4dca700eb01f54b7555ccd39ef61ae5b2f48254ed34ebe6b494e87e04fd7a05"
     },
     {
       "path": "before-architect-blueprint-fold-narrow.png",
-      "bytes": 139058,
-      "sha256": "3e2bb5ef145ddc8e3ab5dd665f7f055c47163195b300111d73e65cdd79e84006"
+      "bytes": 142608,
+      "sha256": "2b2a72a34d40c50b1f2cb3d1b0453ecb0a4dd0081e2e7bf6e9b2553dbeff2cc7"
     },
     {
       "path": "before-architect-document-fold-narrow.png",
-      "bytes": 167132,
-      "sha256": "607ec0abf6095897fd54f178d05eef601cc9590194766d6c71a5283527626744"
+      "bytes": 171865,
+      "sha256": "0c70c47fa8303584f9adada22c5c66451490c450550ee8ab6116db28355a3fff"
+    },
+    {
+      "path": "before-studio-fold-narrow.png",
+      "bytes": 236023,
+      "sha256": "7caa6f7000e505bbd4b006ebdc4cb7988291bad68a9b7059ccdf8831b7876405"
     },
     {
       "path": "before-talk-fold-wide.png",
-      "bytes": 143475,
-      "sha256": "aa9b99dbb4ead93c8162f38f6ee131dd385a589d9d315a3b86d6192d48a63640"
+      "bytes": 146807,
+      "sha256": "00c9290b6d7681d2a73a934ca37e2a9b2a287f6a5f8bd59890c9f4cdc37cf13e"
     },
     {
       "path": "before-talk-document-fold-wide.png",
-      "bytes": 71392,
-      "sha256": "42aba2bf832a5c96e71c48f1bbafed93a8341c0e8c1281c185dbf0346608f9f7"
+      "bytes": 71722,
+      "sha256": "4510d26352b4b207190739f7b84191d9e6c98ba7d2ed538958566d8249104ad5"
     },
     {
       "path": "before-architect-blueprint-fold-wide.png",
-      "bytes": 141783,
-      "sha256": "6719258a7e6077d04d070ea5ceeb9cb3eadc8d8016f2b89f1d59d714e02d7ecc"
+      "bytes": 143313,
+      "sha256": "26ea142b114087ce1fbbcbdd42b7f9c4fa6573526ee9b21040ccf0341f802bf5"
     },
     {
       "path": "before-architect-document-fold-wide.png",
-      "bytes": 178877,
-      "sha256": "d20750ef8aeeecdaccf4e62864bac42d91b43f454aa65e1ee723518b8d295a46"
+      "bytes": 184065,
+      "sha256": "14a060c066415537f64b491ec7e17c62ddbe0c7d092c89a407df02a83191053c"
+    },
+    {
+      "path": "before-studio-fold-wide.png",
+      "bytes": 253436,
+      "sha256": "4f56483d5f18bf5ef95a050e7b390a895e041d55a0b6eedb00a65dad2045771f"
     },
     {
       "path": "before-talk-desktop.png",
-      "bytes": 169185,
-      "sha256": "b8d252b956367e61fddc052304febbee3ff3b0e6156b47765a88e7b384b70f63"
+      "bytes": 171525,
+      "sha256": "a8561a07c23da7b120b7e09892cc306caafceda3fed8e1719911dc7352903a5d"
     },
     {
       "path": "before-talk-document-desktop.png",
-      "bytes": 192489,
-      "sha256": "170536425f01cbcbe3a300c30b77886ac87dc1e6ac9e531353e0be3d1b3f85c3"
+      "bytes": 197743,
+      "sha256": "69e5c427415a4985f40e743f25a6b388b3435a6419388fc44059c4d550213012"
     },
     {
       "path": "before-architect-blueprint-desktop.png",
-      "bytes": 217562,
-      "sha256": "93914be6e2c80f2368d24f3e2ef7effaece47c5a42660a38abe37b2dec077489"
+      "bytes": 215498,
+      "sha256": "e94ff39621b8248c165fc6d94725a06cecd13c0ac9d4ab2643658a5e9cdd42ee"
     },
     {
       "path": "before-architect-document-desktop.png",
-      "bytes": 246395,
-      "sha256": "ac9f6dc078040a83718b09d126caa93a64e9aaaf4b917666d2a89b914e327641"
+      "bytes": 250797,
+      "sha256": "0b8a0819a100b376b77ecc7d0ffae27c2289904a1f17ac6fdaac5691ddebad98"
+    },
+    {
+      "path": "before-studio-desktop.png",
+      "bytes": 339086,
+      "sha256": "97805c7051a9ff65d3b332b3f357b6b4d39724b446c19dc4a504b4eb7fa2daf4"
     },
     {
       "path": "before-talk-keyboard.png",
-      "bytes": 97550,
-      "sha256": "995372f71b57d0945b1fef81b3ae493f3ec62a8e3b9e88b53897b9670887cc03"
+      "bytes": 99310,
+      "sha256": "6ccb1e52c97a8fbfd26002feb6fca8fd415a2f2c0f9be219229adba443e21c2d"
     },
     {
       "path": "before-talk-document-keyboard.png",
-      "bytes": 43878,
-      "sha256": "d9a5e1e90937b3a5125712c8adfe02795ac7e4d822e9d2de0120ef966e4aec71"
+      "bytes": 43922,
+      "sha256": "44e59d3623235c9c86d039b8f4ff5a65612bb4ba44d1610714734981cda58f7b"
     },
     {
       "path": "before-architect-blueprint-keyboard.png",
-      "bytes": 85291,
-      "sha256": "85a023fdd1f4d4ba57e17bc5c8b7b8ef25f5c3e32cf85eff5fd6413a9bcc65ae"
+      "bytes": 83490,
+      "sha256": "9718b227ee8416216c81422a2ec1f7abf03306fe0bcc093523209f73a2dc7a86"
     },
     {
       "path": "before-architect-document-keyboard.png",
-      "bytes": 50516,
-      "sha256": "6dfedd0ae2ea06e38a0a84358f5708433f39463af1ef7562ed4e5745944a4d38"
+      "bytes": 39965,
+      "sha256": "83520557d0279d64f0b584985f26acf0184e00d177f2552edbcf11c790e773f1"
+    },
+    {
+      "path": "before-studio-keyboard.png",
+      "bytes": 161288,
+      "sha256": "45544b689137448bf842a307957d2904affd5c045fab6247f4f433e129db42e2"
     }
   ]
 }

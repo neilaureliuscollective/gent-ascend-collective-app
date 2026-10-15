@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -52,6 +54,8 @@ jobs:
           --workers=2
       - name: Verify creation glass and document width with labelled API fixtures
         run: npx playwright test --config playwright.materials.config.ts --output=test-results/creation-materials
+      - name: Verify screenshot hashes, source commit and finalized videos
+        run: node scripts/verify-creation-material-evidence.mjs
       - name: Export compact rendered review excerpts
         if: always()
         run: node scripts/imperial-emerald-review.mjs

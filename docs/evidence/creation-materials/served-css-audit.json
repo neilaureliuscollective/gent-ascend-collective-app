@@ -68,5 +68,17 @@
       "/_next/static/immutable/chunks/0o3em-7lp7qod.css",
       "/_next/static/immutable/chunks/1iszx8bth6uvk.css"
     ]
+  },
+  "baselineFonts": {
+    "inter": {
+      "source": "src/assets/fonts/inter.woff2",
+      "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+      "baselineGitBlob": "d15208de03cd1ad7c5199f0a0ce915fe841e4722"
+    },
+    "sora": {
+      "source": "src/assets/fonts/sora.woff2",
+      "sha256": "fa26406eeda9a3c6ec3d9ea8813c3045d6dc755e30c716d5c094e8ef43be5a7f",
+      "baselineGitBlob": "3dbf56eb49eadd3ab4c09b71b9158b042d812584"
+    }
   }
 }
