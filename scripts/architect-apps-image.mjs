@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 
-const image = process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-14.1';
+const image = process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-15.1';
 const inspect = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', image], { encoding: 'utf8' });
 if (inspect.status === 0 && inspect.stdout.trim()) {
   console.log(JSON.stringify({ image, id: inspect.stdout.trim(), action: 'present' }));

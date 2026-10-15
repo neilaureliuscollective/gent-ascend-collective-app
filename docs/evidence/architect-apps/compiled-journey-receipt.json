@@ -21,7 +21,7 @@
   "docker": {
     "workstation": "not-installed",
     "ciEngine": "present on GitHub Actions ubuntu-latest",
-    "pinnedImage": "aethelios-architect-apps:2026-10-14.1",
+    "pinnedImage": "aethelios-architect-apps:2026-10-15.1",
     "imageLoaded": false,
     "reason": "Isolated success requires the pinned image. The journey inspects that image without pulling and does not treat a host Docker engine as isolated success."
   },

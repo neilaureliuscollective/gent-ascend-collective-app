@@ -46,7 +46,7 @@ export function resolveTrustedToolchain(cwd = process.cwd()) {
 
 export function appBuildHostRequirement() {
   return {
-    image: process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-14.1',
+    image: process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-15.1',
     toolchain: APP_TOOLCHAIN_VERSION,
     requirement:
       'Isolated builds need image ARCHITECT_APPS_IMAGE with pinned React 19.3.0, TypeScript 6.0.3 and Vite 8.3.0. Generated project code must not execute in the credentialed host process. The host-fixture runner is labelled local evidence for demo=tracker only and cannot mark a normal app execution as isolated success.',

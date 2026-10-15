@@ -20,7 +20,7 @@ Dedicated `architect-apps` domain for one supported profile: React + TypeScript 
 
 | Runner | When | Can mark isolated success |
 | --- | --- | --- |
-| Docker image `ARCHITECT_APPS_IMAGE` (`aethelios-architect-apps:2026-10-14.1`) | Normal and mock/OpenAI apps | Yes, only when `isolation=docker` and `sandbox=true` |
+| Docker image `ARCHITECT_APPS_IMAGE` (`aethelios-architect-apps:2026-10-15.1`) | Normal and mock/OpenAI apps | Yes, only when `isolation=docker` and `sandbox=true` |
 | Host-fixture TypeScript/Vite | Labelled `demo=tracker` with `ARCHITECT_APPS_ALLOW_HOST_FIXTURE=true` | No. `sandbox` stays false |
 
 Generated project code does not execute in the credentialed host process for the production path. Model-controlled package scripts, build plugins and Dockerfiles stay prohibited.
@@ -39,7 +39,7 @@ Architect owns `talk-architect-direction/v1` and the published shared contract `
 | `ARCHITECT_APPS_AI_ENABLED` | false | Authorized non-production OpenAI |
 | `ARCHITECT_APPS_STORE` | unset | `memory` only for tests/non-production |
 | `ARCHITECT_APPS_ALLOW_HOST_FIXTURE` | false | Permit host-fixture compilation for the labelled tracker only |
-| `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-14.1` | Pinned isolated build image |
+| `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-15.1` | Pinned isolated build image |
 | `ARCHITECT_APPS_PREVIEW_SECRET` | required | Preview session HMAC. Fallback signing secrets are not permitted. |
 
 Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql` and `20261015160000_architect_apps_retain_verified.sql` are local-only until founder-approved hosted application.

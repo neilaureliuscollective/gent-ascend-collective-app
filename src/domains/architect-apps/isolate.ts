@@ -13,7 +13,7 @@ import { overlaySealedFiles } from './tree';
 const execFileAsync = promisify(execFile);
 
 export const appsImageName = 'ARCHITECT_APPS_IMAGE';
-export const defaultAppsImage = 'aethelios-architect-apps:2026-10-14.1';
+export const defaultAppsImage = 'aethelios-architect-apps:2026-10-15.1';
 export const appsNobody = '65534:65534';
 export const appsResultFenceStart = 'APPS_RESULT_BEGIN';
 export const appsResultFenceEnd = 'APPS_RESULT_END';
@@ -547,7 +547,9 @@ export async function buildIsolatedGeneratedApp(
           toolchain: APP_TOOLCHAIN_VERSION,
           typecheck: parsed.typecheck,
           bundle: parsed.bundle,
-          blocker: parsed.ok ? null : 'Isolated typecheck or bundle failed. The last successful application is retained.',
+          blocker: parsed.ok
+            ? null
+            : `Isolated typecheck or bundle failed. The last successful application is retained.\n${parsed.typecheck.log}\n${parsed.bundle.log}`.trim(),
           stages,
         } satisfies AppJobResult,
         artifacts,

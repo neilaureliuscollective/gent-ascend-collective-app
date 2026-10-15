@@ -142,7 +142,7 @@ assert.equal(
   true,
 );
 
-const image = process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-14.1';
+const image = process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-15.1';
 const inspect = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', image], { encoding: 'utf8' });
 const imageId = inspect.status === 0 ? inspect.stdout.trim() || null : null;
 assert.equal(

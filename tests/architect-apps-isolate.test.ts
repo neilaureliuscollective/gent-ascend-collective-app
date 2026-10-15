@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -21,7 +21,7 @@ import { acceptAppBuildSuccess, resolveAppExecutionKind } from '@/domains/archit
 import { notesSourceFiles } from '@/domains/architect-apps/notes-fixture';
 
 it('builds a non-root isolated Docker invocation without host credentials or socket', () => {
-  const invocation = appsDockerInvocation('/tmp/apps-src', '/tmp/apps-runner.mjs', 'aethelios-architect-apps:2026-10-14.1', {
+  const invocation = appsDockerInvocation('/tmp/apps-src', '/tmp/apps-runner.mjs', 'aethelios-architect-apps:2026-10-15.1', {
     jobFile: '/tmp/apps-job.json',
     name: 'apps-unit',
   });
@@ -121,7 +121,7 @@ it('runs the production isolated adapter through deterministic injected transpor
       expect(args).toContain('--name');
       return { stdout: fenced, stderr: 'APPS_WORKSPACE {"identity":{"uid":65534,"gid":65534}}' };
     },
-    env: { PATH: '/usr/bin', ARCHITECT_APPS_IMAGE: 'aethelios-architect-apps:2026-10-14.1' },
+    env: { PATH: '/usr/bin', ARCHITECT_APPS_IMAGE: 'aethelios-architect-apps:2026-10-15.1' },
     name: 'apps-unit',
   });
   expect(built.result.isolation).toBe('docker');
@@ -228,6 +228,13 @@ it('builds the pinned image and runs the isolated Field Notes compile when isola
   const leftover = spawnSync('docker', ['inspect', 'apps-required-timeout'], { encoding: 'utf8' });
   expect(leftover.status !== 0 || /no such container/i.test(`${leftover.stderr}${leftover.stdout}`)).toBe(true);
 }, 360000);
+
+it('pins React type declarations in the isolated image', async () => {
+  const dockerfile = await readFile('deploy/architect-apps/Dockerfile', 'utf8');
+  expect(dockerfile).toMatch(/@types\/react@19\.3\.0/);
+  expect(dockerfile).toMatch(/@types\/react-dom@19\.3\.0/);
+  expect(defaultAppsImage).toBe('aethelios-architect-apps:2026-10-15.1');
+});
 
 it('Field Notes create retains the pending record identity across retries', () => {
   const app = notesSourceFiles().find((file) => file.path === 'src/App.tsx')?.content ?? '';
