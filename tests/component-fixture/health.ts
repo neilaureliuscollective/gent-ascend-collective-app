@@ -1,3 +1,7 @@
+import {
+  architectUnavailableMessage,
+  ARCHITECT_APPS_DEPENDENCY,
+} from '@/domains/health/architect-adapter';
 import type { HealthData } from '@/domains/health/schema';
 export const healthFixture: HealthData = {
   owner: '20000000-0000-4000-8000-000000000001',
@@ -60,5 +64,11 @@ export const healthFixture: HealthData = {
     movement: [],
     recovery: [],
     unavailable: [],
+  },
+  workspaces: [],
+  architect: {
+    status: 'blocked',
+    blocker: architectUnavailableMessage(),
+    dependency: ARCHITECT_APPS_DEPENDENCY,
   },
 };
