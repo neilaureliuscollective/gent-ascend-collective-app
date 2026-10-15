@@ -1827,11 +1827,17 @@
   background: linear-gradient( 0deg, color-mix(in srgb, var(--aether-obsidian) 73.33%, transparent), transparent 60% );
 }
 
-/* Full official seal is a deliberate closing identity moment. */
+/* Full official lockup is a deliberate closing identity moment. */
 .footer-crest {
   display: block;
-  width: 180px;
+  width: 220px;
   height: auto;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   filter: drop-shadow(0 6px 18px #0006);
+}
+.story-lockup {
+  display: block;
+  width: min(240px, 42vw);
+  height: auto;
+  margin: 0 0 28px;
 }

@@ -18,6 +18,15 @@ import { selectedArtifactContext } from '@/domains/artifacts/context-service';
 import { selectedTalkContext } from '@/domains/talk-creation/context';
 import { talkCreationFixtureEnabled } from '@/domains/talk-creation/fixture-stream';
 import type { TalkAgentSession } from '@/domains/talk-creation/tools';
+import { selectConfirmedMemories } from './memory-retrieval';
+import {
+  catalogConnectionRequirement,
+  loadProductKnowledge,
+  recentUserTextsFromTurns,
+} from './product-knowledge';
+import { selectPlaybooks } from './playbooks';
+import { getProduct } from '@/domains/commerce/shopify';
+import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 export class IntelligenceError extends Error {
   constructor(
     message: string,
@@ -160,21 +169,7 @@ export async function personalContext(question?: string): Promise<PersonalContex
   )
     throw new IntelligenceError('Your personal context could not be loaded.', 503);
   const reviewByDay = new Map((reviews.data ?? []).map((review) => [review.day, review]));
-  const tokens = new Set((question ?? '').toLowerCase().match(/[a-z]{4,}/g) ?? []);
-  const ranked = (memories.data ?? []).map((row) => ({
-    row,
-    score: [...tokens].reduce(
-      (n, word) => n + (row.content.toLowerCase().includes(word) ? 1 : 0),
-      0,
-    ),
-  }));
-  const selected = question
-    ? ranked
-        .sort((a, b) => b.score - a.score)
-        .filter((item) => item.score > 0)
-        .slice(0, 6)
-        .map((item) => item.row)
-    : (memories.data ?? []);
+  const selected = selectConfirmedMemories(memories.data ?? [], question);
   const dailyRelevant =
     !question ||
     /today|tomorrow|daily|routine|week|progress|energy|sleep|reflect|yesterday|plan/i.test(
@@ -693,10 +688,33 @@ export async function prepareReply(
   let selectedPredecessors: Partial<Record<'brief' | 'plan' | 'palette' | 'board', string>> = {};
   let selectedImageId: string | null = null;
   let completeImageCount = 0;
+  let productKnowledge: Awaited<ReturnType<typeof loadProductKnowledge>> = null;
+  let recentUserTexts: string[] = [];
   try {
-    [history, context] = await Promise.all([
-      conversationTurns(input.conversationId, undefined, company?.id),
+    history = await conversationTurns(input.conversationId, undefined, company?.id);
+    recentUserTexts = recentUserTextsFromTurns(history);
+    [context, productKnowledge] = await Promise.all([
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
+      loadProductKnowledge(
+        input.text,
+        {
+          catalog: readLifestyleCatalog,
+          detail: getProduct,
+        },
+        { recentUserTexts },
+      ).catch(() => ({
+        retrievedAt: new Date().toISOString(),
+        status: 'error' as const,
+        freshness: 'unknown' as const,
+        mode: 'detail' as const,
+        catalogMaxAgeSeconds: 300 as const,
+        catalogFetchedAt: null,
+        connectionRequirement: catalogConnectionRequirement('error'),
+        records: [],
+        unresolved: false,
+        unresolvedKind: null,
+        clarifyingQuestion: null,
+      })),
     ]);
     measured('history-context');
     threadSummary = await prepareThreadSummary(client, person.id, input.conversationId, history);
@@ -741,7 +759,14 @@ export async function prepareReply(
     threadSummary,
     company ? null : capabilityContext(input.text),
     company,
-    attachment,
+    {
+      attachment,
+      productKnowledge,
+      playbooks: company
+        ? []
+        : selectPlaybooks(input.text, capabilityContext(input.text)?.id, 2, { recentUserTexts }),
+      channel: 'text',
+    },
   );
   if (artifactContext)
     messages.splice(Math.max(0, messages.length - 1), 0, {
@@ -809,9 +834,8 @@ export async function prepareReply(
         try {
           const { persistOfferedCreations } = await import('@/domains/talk-creation/persist');
           const { extractCreationFences } = await import('@/domains/talk-creation/intent');
-          const { briefContentSchema, planContentSchema, paletteContentSchema } = await import(
-            '@/domains/talk-creation/schema'
-          );
+          const { briefContentSchema, planContentSchema, paletteContentSchema } =
+            await import('@/domains/talk-creation/schema');
           const current = creation.selected;
           let offered = creation.offered;
           if (!offered.length) {

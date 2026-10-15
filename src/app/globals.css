@@ -1557,6 +1557,10 @@ form > .button {
   margin: 0 auto;
   padding: 40px 24px;
 }
+.console img {
+  display: block;
+  margin-bottom: 20px;
+}
 .console h1 {
   margin: 20px 0;
 }
@@ -2786,7 +2790,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
   background: linear-gradient(175deg, var(--aether-surface), var(--obsidian-950) 62%);
 }
 .brand-seal {
-  border-radius: 50%;
+  border-radius: 0;
   flex-shrink: 0;
 }
 .brand-type {
@@ -2975,7 +2979,7 @@ html[data-motion='ambient']:not([data-quiet='true'])
 .identity-crest {
   display: block;
   margin: 0 0 24px;
-  border-radius: 50%;
+  border-radius: 0;
 }
 .reserve-relationship {
   display: grid;
@@ -3572,8 +3576,8 @@ html[data-motion='ambient']:not([data-quiet='true'])
   .aethelios-page .conversation-starters { margin-top: 10px; }
 }
 
-/* September 26 founder crest: keep the circular artwork intact at every placement. */
-.identity-crest, .account-brand img { border-radius:50%; object-fit:contain; }
+/* Human Ascendance mark is square. Do not circular-crop the ascending A or wordmark. */
+.identity-crest, .account-brand img { border-radius:0; object-fit:contain; }
 .brand-seal { filter:drop-shadow(0 2px 6px #c4912f22); }
 
 /* Aethelios conversation library controls */

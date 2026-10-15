@@ -1,5 +1,7 @@
 # Talk integrated release
 
+Pinned 2026-10-15 package: [TALK_RELEASE_PACKAGE.md](TALK_RELEASE_PACKAGE.md). Exact-head Quality is green on #131 `b822c31` and #135 `a859c23`. Receipt commits `431e9a24` / `1ec886a3` are GitHub merge checkouts, not those source heads. Code/CI are complete; hosted 18-file completion is the next external action. Review readiness is not live-ready.
+
 Development publication only. No main merge, hosted migration, production deploy, credential creation or paid provider call without founder approval.
 
 Review readiness (exact-head Quality, including the mandatory `npm run test:talk-import-recovery` database step) is not production text or voice acceptance. Those remain separately authorized after the 18-file receipt, the nineteenth recovery apply, and a founder-approved merge.
@@ -223,7 +225,7 @@ Keep these separately identified. A green Quality run does not authorize any of 
 
 1. **Finish the 18 (database, already in progress):** wait for the verified application receipt of the original 18. Reconcile by ledger `name`. Do not apply remaining files from Cursor. Do not rewrite history. If the apply stops mid-sequence, leave applied versions in place.
 2. **Recovery migration (database, later and separate):** after the 18 receipt, apply only `20261019120000_talk_origin_import_recovery.sql` when explicitly approved. It is prepared and locally verified; it is not hosted by this checkpoint.
-3. **Source merge (Git → Production):** exact-head Quality green on #131, then #135 stacked on that SHA. Merge #131 to `main` **auto-deploys Vercel Production** of Talk foundation onto released Studio. Then merge #135. Rollback of a Talk merge must return to `804c877`, not Health-only `544c156`. Do not merge while the 18 receipt is incomplete.
+3. **Source merge (Git → Production):** exact-head Quality is now green on #131 `b822c31` and stacked #135 `a859c23` (see [TALK_RELEASE_PACKAGE.md](TALK_RELEASE_PACKAGE.md)). Merge #131 to `main` **auto-deploys Vercel Production** of Talk foundation onto released Studio. Then merge #135. Rollback of a Talk merge must return to `804c877`, not Health-only `544c156`. Do not merge while the 18 receipt is incomplete.
 4. **Configuration assertions (names only, values unproven):** Production `OPENAI_API_KEY` present on the Vercel project; Auth public URL/key matching Gent `volpzkfsnmtztrovexcw`; hosted `AETHELIOS_TALK_CREATION_FIXTURE` unset. Voice additionally needs `AETHELIOS_LIVE_ENABLED`, founder-pilot flags, service-role observe, Realtime model access. Do not paste values or rotate keys here.
 5. **Text functional acceptance (after 1–4, separately authorized):** one authenticated production message, streamed reply, saved conversation, reopen the same conversation. Proposed cap: one chat completion, well under $1.
 6. **Voice functional acceptance (independent, separately authorized):** microphone permission, connection, audible two-way conversation, interruption, minimize/restore, return to the same conversation. A handshake is not a conversation. Proposed cap: one 30–60s Realtime call; stop if admission is not 2xx. Keep text usable if voice is unavailable.
@@ -246,7 +248,7 @@ Voice (proposed cap: one 30–60s Realtime call, stop if admission is not 2xx):
 
 1. **Now (outside Cursor):** verified completion receipt for the original 18. The fifth file is awaiting a tool approval. This checkpoint does not apply, skip or rewrite that batch.
 2. **Then, separately:** founder approval to apply `20261019120000_talk_origin_import_recovery.sql` only. Local PostgreSQL verification is not a hosted proof.
-3. **Then, separately (blocked until 1–2 and exact-head Quality):** merge #131 onto `main`. That **will production-deploy** Talk foundation onto released Studio. Rollback target is `804c877`.
+3. **Then, separately (blocked until 1–2; exact-head Quality is already green):** merge #131 onto `main`. That **will production-deploy** Talk foundation onto released Studio. Rollback target is `804c877`.
 4. **Then, separately:** merge #135. Then bounded text (under $1). Voice only after a second explicit approval (30–60s cap).
 
 Do not merge first to “get it on main” while the 18 receipt is incomplete or the recovery file is unapplied. Merge/deploy/hosted SQL/paid calls remain blocked from this prompt.

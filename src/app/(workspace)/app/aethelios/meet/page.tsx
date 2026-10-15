@@ -40,7 +40,8 @@ export default function MeetAetheliosPage() {
             Made present.
           </h1>
           <p className="aethelios-intro-lead">
-            Aethelios is the digital co-founder of Gent Ascend Collective.
+            Aethelios is the digital co-founder of Gent Ascend Collective — the intelligence of
+            AETHELIOS — The Human Ascendance.
           </p>
           <p>
             One founder can only be in one place at a time. Aethelios extends the mission into your

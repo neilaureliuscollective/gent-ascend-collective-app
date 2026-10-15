@@ -20,7 +20,7 @@ export function generateReply(
   onActivity?: ActivityReporter,
   creation?: TalkAgentSession | null,
 ) {
-  if (talkCreationFixtureEnabled() && creation) return streamTalkCreationFixture(creation);
+  if (talkCreationFixtureEnabled() && creation) return streamTalkCreationFixture(creation, signal);
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY) throw new Error('OpenAI is not configured');
   const openai = createOpenAI({

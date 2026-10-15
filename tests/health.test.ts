@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import { performancePayload } from '../src/domains/release/performance';
 import { parseCsv, parseLabImport, originalMime } from '../src/domains/health/imports';
@@ -90,6 +91,15 @@ describe('Health evidence and imports', () => {
   it('uses actual file signatures, never a trusted extension', () => {
     expect(originalMime(new TextEncoder().encode('%PDF-1.7'))).toBe('application/pdf');
     expect(originalMime(new TextEncoder().encode('<script>'))).toBeNull();
+  });
+  it('keeps Health AI off the general knowledge and memory path', () => {
+    const source = readFileSync('src/domains/health/conversation.ts', 'utf8');
+    expect(source).toContain(
+      'general memory, Lifestyle catalog, company briefs, published brand knowledge',
+    );
+    expect(source).not.toMatch(
+      /published-knowledge|product-knowledge|personalContext|buildMessages/,
+    );
   });
   it('does not accept client ownership, expanded AI contexts or unversioned writes', () => {
     expect(

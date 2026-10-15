@@ -117,6 +117,11 @@ describe('Talk attachment reservation', () => {
   it('accepts the labelled Talk fixture without a paid model key', async () => {
     vi.stubEnv('OPENAI_API_KEY', undefined);
     vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', 'legacy-reserve');
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('APP_ENV', 'local');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:54321');
+    vi.stubEnv('VERCEL', undefined);
+    vi.stubEnv('VERCEL_ENV', undefined);
     state.attachment.mockResolvedValue({
       id: input.attachmentId,
       projectId: '60000000-0000-4000-8000-000000000001',

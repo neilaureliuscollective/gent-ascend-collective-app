@@ -81,7 +81,8 @@ export function MemoryEditor({
       <h3>Memory, on your terms.</h3>
       <p>
         Only details you explicitly save here become durable memory. Chatting does not silently add
-        facts.
+        facts. Corrections keep the same record id and increment the version; a stale version is
+        rejected. Forgotten memories stay out of future context.
       </p>
       {preview && (
         <p className="memory-preview-label">Preview · sign in to confirm and save memories.</p>
@@ -143,7 +144,9 @@ export function MemoryEditor({
       <ul className="memory-list">
         {memories.map((memory) => (
           <li key={memory.id}>
-            <span className="eyebrow">{memory.kind}</span>
+            <span className="eyebrow">
+              {memory.kind} · v{memory.version} · confirmed {memory.confirmed_at.slice(0, 10)}
+            </span>
             <p>{memory.content}</p>
             <div className="button-row">
               <button

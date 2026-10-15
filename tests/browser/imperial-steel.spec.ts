@@ -15,6 +15,7 @@ for (const width of [320, 360, 412, 768, 1024, 1440, 2560]) {
     ).toBeVisible();
     await expect(page.locator('.imperial-presence')).toHaveAttribute('aria-hidden', 'true');
     await expect(page.locator('.imperial-presence canvas')).toHaveCount(0);
+    await expect(page.locator('.imperial-presence-mark')).toBeVisible();
     await expect(page.locator('.company-arrival-actions .button')).toHaveAttribute(
       'href',
       '/enter',
