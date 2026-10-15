@@ -15,6 +15,10 @@ function availability(route) {
     return 'Membership UI; owner billing unavailable while signed out.';
   if (route === '/membership')
     return 'Public plan presentation checked; purchase/provider activation unavailable.';
+  if (route === '/shop/vitalis')
+    return 'Labelled existing product preview; live purchasing unavailable.';
+  if (route === '/app/collection/vitalis')
+    return 'Live-only product gate; availability cannot be verified without commerce configuration.';
   if (route === '/app/you') return 'Foundation preview; personal profile persistence unavailable.';
   if (route === '/shop/cart' || route === '/app/collection/cart')
     return 'Cart UI; shopping is not open in this configuration.';
@@ -55,7 +59,7 @@ for (const route of routes) {
 }
 lines.push(
   '',
-  'The early Connections before capture showed a loading shell and was excluded from comparison images; its baseline state is explicitly unavailable. After capture requires that loading shell to close. Private-data routes and dynamic owner/company/project IDs were source-audited for shared styling; no account, entitlement, price, provider or record was fabricated to open them.',
+  'Product-detail routes were added after the 41-route baseline and have after/access-state evidence only; they are not claimed as matched before captures. The early Connections before capture showed a loading shell and was excluded from comparison images; its baseline state is explicitly unavailable. After capture requires that loading shell to close. Private-data routes and dynamic owner/company/project IDs were source-audited for shared styling; no account, entitlement, price, provider or record was fabricated to open them.',
   '',
   'Existing approved imagery, product labels, Work naming, layouts, charts/state indicators, opt-in material/motion preferences and all owner/nonce/revision/isolated-preview controls are retained. No backend, voice/transcript, schema or release changes are included.',
   '',

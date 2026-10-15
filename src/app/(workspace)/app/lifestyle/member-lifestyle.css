@@ -121,7 +121,7 @@
   align-items: stretch;
   padding: 14px 6% 16px;
   background:
-    radial-gradient(ellipse 46% 80% at 18% 80%, #245b4866, transparent 68%),
+    radial-gradient(ellipse 46% 80% at 18% 80%, #245b481c, transparent 68%),
     linear-gradient(180deg, #0a0a0a, #111111 72%);
 }
 .member-lifestyle-focal {
@@ -137,8 +137,8 @@
   color: inherit;
   text-decoration: none;
   background:
-    radial-gradient(ellipse 70% 90% at 50% 110%, #36896c55, transparent 62%),
-    linear-gradient(165deg, #163f35, #08110e 78%);
+    radial-gradient(ellipse 70% 90% at 50% 110%, #36896c18, transparent 62%),
+    var(--io-glass);
   box-shadow:
     inset 0 1px #ffffff24,
     0 18px 36px #0007;
@@ -413,8 +413,8 @@
 .member-collection .product-image-stage,
 .member-collection .reserve-product-stage {
   background:
-    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4848, transparent 70%),
-    linear-gradient(180deg, #163f35, #111111 74%);
+    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4818, transparent 70%),
+    var(--io-glass);
   border: 0;
   box-shadow: inset 0 1px #ffffff1f;
 }

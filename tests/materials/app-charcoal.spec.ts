@@ -32,12 +32,13 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
       tokens?: Record<string, string>;
       screenshot?: { path: string; bytes: number; sha256: string };
       viewport: { width: number; height: number };
+      surfaces: { className: string; background: string }[];
     }[];
   };
   expect(matrix.commit).toBe(
     execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   );
-  expect(matrix.rows).toHaveLength(82);
+  expect(matrix.rows).toHaveLength(86);
   for (const row of matrix.rows) {
     expect(row.unavailable, `${row.route} ${row.label}`).toBeUndefined();
     expect(row.errors, `${row.route} ${row.label}`).toEqual([]);
@@ -46,6 +47,12 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
       ?.trim()
       .replace(/^#([a-f0-9])([a-f0-9])([a-f0-9])$/i, '#$1$1$2$2$3$3');
     expect(environment, row.route).toBe('#111111');
+    for (const surface of row.surfaces.filter((surface) =>
+      surface.className.includes('member-lifestyle-focal'),
+    )) {
+      expect(surface.background).toContain('rgba(36, 36, 36');
+      expect(surface.background).not.toContain('rgb(22, 63, 53)');
+    }
     if (row.screenshot) {
       const bytes = await readFile(`${output}/${row.screenshot.path}`);
       expect(bytes.length).toBe(row.screenshot.bytes);

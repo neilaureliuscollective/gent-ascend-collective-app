@@ -20,6 +20,7 @@ const routes = [
   '/membership',
   '/shop',
   '/shop/cart',
+  '/shop/vitalis',
   '/lifestyle',
   '/experience',
   '/app',
@@ -36,6 +37,7 @@ const routes = [
   '/app/lifestyle',
   '/app/collection',
   '/app/collection/cart',
+  '/app/collection/vitalis',
   '/app/collection/orders',
   '/app/collection/cabinet',
   '/app/grooming',
@@ -57,6 +59,8 @@ const routes = [
   '/app/founder',
 ];
 const representatives = new Set([
+  '/shop/vitalis',
+  '/app/collection/vitalis',
   '/',
   '/enter',
   '/app',
@@ -136,7 +140,7 @@ for (const [label, width, height] of [
         ),
         surfaces: Array.from(
           document.querySelectorAll(
-            '.panel,.io-hero,.studio-room-console,.health-stage,.company-work > header,.lifestyle-hero,.product-card,.membership-grid,.aurelius-composer',
+            '.panel,.io-hero,.studio-room-console,.health-stage,.company-work > header,.lifestyle-hero,.product-card,.member-lifestyle-focal,.product-image-stage,.reserve-product-visual,.product-atelier-stage,.membership-grid,.aurelius-composer',
           ),
         )
           .filter((el) => el.getBoundingClientRect().width > 0)
