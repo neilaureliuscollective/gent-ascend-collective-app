@@ -135,8 +135,12 @@ export function ArchitectAppPanel({
             boundPreview.current.generation !== snapshot.generation
           )
             return;
-          if (mutating)
-            setSaveState(typeof result.error === 'string' && /conflict|changed|identity/i.test(result.error) ? 'conflict' : 'saved');
+          if (mutating) {
+            const detail = typeof result.error === 'string' ? result.error : '';
+            setSaveState(
+              /conflict|changed|identity/i.test(detail) ? 'conflict' : result.ok === false || detail ? 'failed' : 'saved',
+            );
+          }
           frame.current?.contentWindow?.postMessage({ schema: 'architect-apps-data/v1', ...result }, event.origin === 'null' ? '*' : event.origin);
         })
         .catch((reason: unknown) => {
@@ -327,6 +331,12 @@ export function ArchitectAppPanel({
             <ul className="architect-app-flags">
               {latestJob && (latestJob.status === 'queued' || latestJob.status === 'running') ? (
                 <li data-flag="build">Background build {latestJob.status}</li>
+              ) : null}
+              {library?.events.at(-1) ? (
+                <li data-flag="event">
+                  {library.events.at(-1)!.kind}
+                  {library.events.at(-1)!.detail ? ` · ${library.events.at(-1)!.detail.slice(0, 80)}` : ''}
+                </li>
               ) : null}
               {saveState === 'saving' ? <li data-flag="saving">Host save pending</li> : null}
               {saveState === 'saved' ? <li data-flag="saved">Record saved</li> : null}

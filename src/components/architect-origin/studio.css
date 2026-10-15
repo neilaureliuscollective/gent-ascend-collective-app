@@ -811,6 +811,12 @@
   color: #e8e4dc;
 }
 
+.architect-app-flags [data-flag='build'],
+.architect-app-flags [data-flag='event'] {
+  border-color: color-mix(in srgb, #8fbc8f 45%, #2a2d2a);
+  color: #8fbc8f;
+}
+
 .architect-app-flags [data-flag='saving'],
 .architect-app-flags [data-flag='conflict'] {
   border-color: color-mix(in srgb, #c4912f 50%, #2a2d2a);
@@ -864,15 +870,31 @@
   }
 }
 
+@media (max-width: 820px) {
+  .architect-app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'stage'
+      'side'
+      'refine';
+  }
+}
+
 @media (max-width: 600px) {
   .architect-app {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       'stage'
+      'side'
       'refine';
   }
   .architect-app-side {
-    display: none;
+    display: block;
+  }
+  .architect-app-source-view,
+  .architect-app-diff-before,
+  .architect-app-diff-after {
+    max-height: 140px;
   }
   .architect-app-refine.is-open,
   .architect-app-refine {

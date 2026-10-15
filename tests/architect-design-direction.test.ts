@@ -87,7 +87,7 @@ it('retries the same request into exactly one private project and never starts e
   expect(first.started).toBe(false);
   expect(second.started).toBe(false);
   expect(first.source_kind).toBe('text-import');
-  expect(first.verified).toBe(true);
+  expect(first.verified).toBe(false);
   expect([...((designDirectionStore() as MemoryDesignDirectionStore).rows.values())]).toHaveLength(1);
 });
 

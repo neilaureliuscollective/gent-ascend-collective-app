@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 
 const env = Object.fromEntries(
@@ -14,18 +14,34 @@ const env = Object.fromEntries(
 if (new URL(env.NEXT_PUBLIC_SUPABASE_URL!).hostname !== '127.0.0.1')
   throw new Error('Disposable local synthetic Supabase required');
 
-function workerEnv() {
+function localControlPlane() {
+  const status = JSON.parse(
+    execFileSync('npx', ['--no-install', 'supabase', 'status', '-o', 'json'], { encoding: 'utf8' }),
+  ) as { API_URL?: string; SERVICE_ROLE_KEY?: string };
+  if (!status.API_URL || !status.SERVICE_ROLE_KEY) throw new Error('Local Supabase control plane unavailable.');
+  if (new URL(status.API_URL).hostname !== '127.0.0.1') throw new Error('Loopback Supabase required for the Apps worker.');
+  return { url: status.API_URL, serviceRoleKey: status.SERVICE_ROLE_KEY };
+}
+
+function workerEnv(): NodeJS.ProcessEnv {
+  const plane = localControlPlane();
+  const next = { ...process.env, ...env };
+  delete next.VERCEL;
+  delete next.VERCEL_ENV;
   return {
-    ...process.env,
-    ...env,
+    ...next,
+    PATH: process.env.PATH,
+    NODE_ENV: 'development',
+    APP_ENV: 'local',
+    NEXT_PUBLIC_SUPABASE_URL: plane.url,
+    SUPABASE_SERVICE_ROLE_KEY: plane.serviceRoleKey,
     ARCHITECT_ORIGIN_ENABLED: 'true',
     ARCHITECT_CONSTRUCT_ENABLED: 'true',
     ARCHITECT_APPS_ENABLED: 'true',
-    ARCHITECT_CONSTRUCT_WORKER_TOKEN: env.ARCHITECT_CONSTRUCT_WORKER_TOKEN || 'a'.repeat(32),
-    APP_ENV: 'local',
-    VERCEL: '',
-    VERCEL_ENV: '',
-  };
+    ARCHITECT_CONSTRUCT_STORE: 'database',
+    ARCHITECT_CONSTRUCT_WORKER_TOKEN: env.ARCHITECT_CONSTRUCT_WORKER_TOKEN || 'x'.repeat(32),
+    ARCHITECT_CONSTRUCT_WORKER_ID: 'apps-connected',
+  } as NodeJS.ProcessEnv;
 }
 
 async function runAppsWorkerTick() {
@@ -42,6 +58,17 @@ async function runAppsWorkerTick() {
   });
   const code = await new Promise<number>((resolve) => child.on('close', (value) => resolve(value ?? 1)));
   return { code, out };
+}
+
+async function runAppsWorkerUntilSucceeded() {
+  let last = { code: 1, out: '' };
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    last = await runAppsWorkerTick();
+    if (last.code === 0 && /"appStatus":"succeeded"/.test(last.out) && /"appIsolation":"docker"/.test(last.out)) {
+      return last;
+    }
+  }
+  return last;
 }
 
 test('connected Architect Apps journey uses Auth, worker, Docker and the compiled iframe', async ({ page, browser }) => {
@@ -68,9 +95,12 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Start approved build' }).click();
   await expect(page.locator('[data-stage]')).toHaveAttribute('data-stage', /preparing|building|checking/);
 
-  const first = await runAppsWorkerTick();
+  const first = await runAppsWorkerUntilSucceeded();
   expect(first.code, first.out).toBe(0);
-  expect(first.out).toMatch(/"appStatus":"succeeded"|"appIsolation":"docker"/);
+  expect(first.out, first.out).toMatch(/"appStatus":"succeeded"/);
+  expect(first.out, first.out).toMatch(/"appIsolation":"docker"/);
+  expect(first.out).not.toMatch(/"appStatus":"failed"|"appStatus":"cancelled"/);
+  await page.getByRole('button', { name: 'Reload receipts' }).click();
 
   await expect(page.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 180000 });
   await expect(page.getByText(/Compiled preview is ready/)).toBeVisible();
@@ -123,8 +153,11 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 2 accepted/)).toBeVisible();
   await page.getByRole('button', { name: 'Start approved build' }).click();
-  const second = await runAppsWorkerTick();
+  const second = await runAppsWorkerUntilSucceeded();
   expect(second.code, second.out).toBe(0);
+  expect(second.out, second.out).toMatch(/"appStatus":"succeeded"/);
+  expect(second.out).not.toMatch(/"appStatus":"failed"|"appStatus":"cancelled"/);
+  await page.getByRole('button', { name: 'Reload receipts' }).click();
   await expect(page.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 180000 });
   await page.getByRole('button', { name: 'Records' }).click();
   await expect(page.getByText(/Site visit B/)).toBeVisible();
@@ -162,7 +195,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
         projectUrl,
         name,
         worker: { first: first.out.slice(-800), second: second.out.slice(-800) },
-        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. Next.js webServer stayed for the session; browser context and worker processes were restarted.',
+        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. Playwright did not kill the Next.js webServer; browser context and worker processes were restarted. A new Supabase client or srcdoc replacement is not claimed as a restart.',
       },
       null,
       2,

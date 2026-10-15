@@ -88,7 +88,18 @@ async function bindOriginProject(
 }
 
 async function retainDurably(
-  client: { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }> },
+  client: {
+    rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+    from: (table: string) => {
+      select: (columns: string) => {
+        eq: (column: string, value: string) => {
+          eq: (column: string, value: string) => {
+            maybeSingle: () => Promise<{ data: RetainedDirection | null; error: { message: string } | null }>;
+          };
+        };
+      };
+    };
+  },
   input: {
     requestId: string;
     personId: string;
@@ -105,21 +116,24 @@ async function retainDurably(
     p_digest: input.digest,
     p_receipt: input.receipt,
     p_source_kind: input.sourceKind,
-    // Signature kept for Talk #131 bf47627. The RPC ignores this flag and derives verified from source_kind.
+    // Signature kept for Talk #131 f357385. The RPC ignores p_verified and
+    // cannot take talk-authorized verification from the caller.
     p_verified: false,
   });
   if (saved.error) throw new DesignDirectionStoreError(saved.error.message);
+  const stored = await client
+    .from('architect_design_directions')
+    .select('*')
+    .eq('request_id', input.requestId)
+    .eq('person_id', input.personId)
+    .maybeSingle();
+  if (stored.error || !stored.data) throw new DesignDirectionStoreError('Design direction was not retained.');
   return {
-    request_id: input.requestId,
-    person_id: input.personId,
-    project_id: input.projectId,
-    revision: 1,
-    digest: input.digest,
-    receipt: input.receipt,
+    ...stored.data,
+    verified: Boolean(stored.data.verified),
+    source_kind: stored.data.source_kind,
+    receipt: stored.data.receipt ?? input.receipt,
     started: false,
-    source_kind: input.sourceKind,
-    verified: input.verified,
-    created_at: new Date().toISOString(),
   };
 }
 
@@ -148,7 +162,7 @@ export async function receiveDesignDirection(input: unknown): Promise<RetainedDi
       digest: authorized.digest,
       receipt: authorized.receipt,
       sourceKind: authorized.kind,
-      verified: authorized.kind === 'talk-authorized' || authorized.kind === 'text-import',
+      verified: authorized.kind === 'talk-authorized',
     };
     if (memoryAppStoreAllowed() || process.env.ARCHITECT_APPS_STORE === 'memory') {
       return await designDirectionStore().retain(payload);

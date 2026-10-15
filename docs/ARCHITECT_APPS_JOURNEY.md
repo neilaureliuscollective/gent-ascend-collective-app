@@ -25,14 +25,14 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 | Required CI `apps-isolate` builds `deploy/architect-apps/Dockerfile` and runs isolated compile | Implemented; runs on GitHub-hosted Ubuntu |
 | Sandboxed iframe mounts Field Notes and cannot read parent storage | Pass when toolchain present; parent-page records remain a mount unit test |
 | Direct preview CSP includes `sandbox allow-scripts allow-forms` and omits `allow-same-origin` | Pass |
-| Talk `talk.architect.source.resolve` pending on this checkout; Talk #131 `bf47627` is the integration candidate | Documented, not merged |
+| Talk `talk.architect.source.resolve` pending on this checkout; Talk #131 `f357385` is the integration candidate | Documented, not merged |
 | Intercepted browser `Working tracker` HTML | UI fixture only |
 
 ## Unavailable in this workspace
 
 - This workstation has no Docker executable (`docker: command not found`). Isolated compile is implemented and required in `.github/workflows/quality.yml` `apps-isolate`. It is not accepted here.
 - No funded OpenAI call was made.
-- Talk authorized source adapter is implemented on Talk #131 (`src/domains/talk-creation/architect-source.ts`) and remains pending on this Architect checkout. Talk files were not copied.
+- Talk authorized source adapter is implemented on Talk #131 `f3573856002d16ac69341eb99f91e32deff76f64` (`src/domains/talk-creation/architect-source.ts`, retain authority/provenance SQL) and remains pending on this Architect checkout. Talk files were not copied.
 - Hosted Apps migrations are unapplied.
 - Preview sessions are in-process. Library GET issues a new session after restart; that is not a srcdoc replacement of parent memory.
 
