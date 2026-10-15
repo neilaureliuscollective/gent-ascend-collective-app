@@ -25,6 +25,7 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
     commit: string;
     rows: {
       route: string;
+      visibleContent: string;
       label: string;
       unavailable?: string;
       errors: string[];
@@ -43,6 +44,9 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
     expect(row.unavailable, `${row.route} ${row.label}`).toBeUndefined();
     expect(row.errors, `${row.route} ${row.label}`).toEqual([]);
     expect(row.overflow, `${row.route} ${row.label}`).toBe(false);
+    expect(row.visibleContent, `${row.route} ${row.label}`).not.toMatch(
+      /Loading your (companies|selection)…/,
+    );
     const environment = row.tokens?.['--io-environment']
       ?.trim()
       .replace(/^#([a-f0-9])([a-f0-9])([a-f0-9])$/i, '#$1$1$2$2$3$3');

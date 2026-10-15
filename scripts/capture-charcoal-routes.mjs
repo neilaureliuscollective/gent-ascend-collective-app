@@ -108,6 +108,9 @@ for (const [label, width, height] of [
       await expect.poll(() => page.locator(pageRoot).count()).toBeGreaterThan(0);
       await expect(page.locator('.workspace-loading')).toHaveCount(0);
       await expect(
+        page.getByRole('status').filter({ hasText: /^Loading your (companies|selection)…$/ }),
+      ).toHaveCount(0);
+      await expect(
         page.getByRole('heading', { name: 'A moment to reconnect.', exact: true }),
       ).toHaveCount(0);
       await page.evaluate(() => document.fonts.ready);

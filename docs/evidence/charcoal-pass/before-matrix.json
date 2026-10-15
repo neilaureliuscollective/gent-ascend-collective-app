@@ -425,10 +425,8 @@
       "kind": "production-build-default-access-state",
       "status": 200,
       "url": "/app/work",
+      "visibleContent": "AETHELIOS / MISSION COMMAND\nWhat are we building?\n\nStart with the company and the outcome. Aethelios helps shape the work; you keep the decision.\n\nContinue in Talk \u2197\nMissions \u2197\nCommitments \u2197\nCreative projects \u2197\nYour company rooms\nCreate company\n\nSign in to use your Aethelios workspace. Sign in \u2197\n\nExplore a job in unassigned Talk\n01\nUnderstand a company\n\nDefine the customer, offer, economics and goal before recommending work.\n\n\u2197\n02\nSharpen the positioning\n\nMake the customer, promise and reason to choose the company clear.\n\n\u2197\n03\nPlan a launch\n\nConnect the offer, distribution, economics and execution sequence.\n\n\u2197\n04\nAnalyze the economics\n\nPressure-test price, cost, capacity and cash requirements.\n\n\u2197\n05\nDevelop a product\n\nMove from concept to research, sourcing and commercial feasibility.\n\n\u2197\n06\nScope a client engagement\n\nDefine what the client receives and what success means.\n\n\u2197\n07\nPrepare an investor presentation\n\nBuild a clear narrative supported by actual company evidence.\n\n\u2197\n08\nSpecify a website or app\n\nTurn a business problem into a bounded, testable build brief.\n\n\u2197\n\nAETHELIOS ARCHITECT\n\nShape what comes next.\n\nDevelop a vision, review a Living Blueprint and create useful deliverables in one persistent creation environment.\n\nOpen Architect \u2197\nOrigin \u00b7 project intelligence\nKeep useful work moving.\n\nTalk retains your conversations. Studio retains creative projects and image versions. Each starter opens a draft for your review.\n\nCompany rooms keep confirmed briefs and Talk histo",
       "headings": [
-        "Aethelios",
-        "Capture a thought",
-        "Get it out of your head.",
         "What are we building?",
         "Your company rooms",
         "Explore a job in unassigned Talk",
@@ -437,9 +435,14 @@
         "Plan a launch",
         "Analyze the economics",
         "Develop a product",
-        "Scope a client engagement"
+        "Scope a client engagement",
+        "Prepare an investor presentation",
+        "Specify a website or app",
+        "Shape what comes next."
       ],
-      "alerts": [],
+      "alerts": [
+        "Sign in to use your Aethelios workspace. Sign in \u2197"
+      ],
       "overflow": false,
       "scrollY": 0,
       "focusVisible": 0,
@@ -460,8 +463,8 @@
       "errors": [],
       "screenshot": {
         "path": "before-app_work-fold.png",
-        "bytes": 139414,
-        "sha256": "2f73509ea29b2986bd6306926a2f8d1be69375bfa75bdf8004d5748b1b8436f9"
+        "bytes": 142290,
+        "sha256": "1286d5e41f690a7175dda0af7b98079bc30ca7a281063f9241bb7dd57b236d13"
       }
     },
     {
@@ -751,13 +754,13 @@
       "kind": "production-build-default-access-state",
       "status": 200,
       "url": "/app/collection/cart",
+      "visibleContent": "YOUR SELECTION\nCart.\n\nReview what earns a place in your ritual.\n\nShopping is not open yet. Retry",
       "headings": [
-        "Aethelios",
-        "Capture a thought",
-        "Get it out of your head.",
         "Cart."
       ],
-      "alerts": [],
+      "alerts": [
+        "Shopping is not open yet. Retry"
+      ],
       "overflow": false,
       "scrollY": 0,
       "focusVisible": 0,
@@ -1857,10 +1860,8 @@
       "kind": "production-build-default-access-state",
       "status": 200,
       "url": "/app/work",
+      "visibleContent": "AETHELIOS / MISSION COMMAND\nWhat are we building?\n\nStart with the company and the outcome. Aethelios helps shape the work; you keep the decision.\n\nContinue in Talk \u2197\nMissions \u2197\nCommitments \u2197\nCreative projects \u2197\nYour company rooms\nCreate company\n\nSign in to use your Aethelios workspace. Sign in \u2197\n\nExplore a job in unassigned Talk\n01\nUnderstand a company\n\nDefine the customer, offer, economics and goal before recommending work.\n\n\u2197\n02\nSharpen the positioning\n\nMake the customer, promise and reason to choose the company clear.\n\n\u2197\n03\nPlan a launch\n\nConnect the offer, distribution, economics and execution sequence.\n\n\u2197\n04\nAnalyze the economics\n\nPressure-test price, cost, capacity and cash requirements.\n\n\u2197\n05\nDevelop a product\n\nMove from concept to research, sourcing and commercial feasibility.\n\n\u2197\n06\nScope a client engagement\n\nDefine what the client receives and what success means.\n\n\u2197\n07\nPrepare an investor presentation\n\nBuild a clear narrative supported by actual company evidence.\n\n\u2197\n08\nSpecify a website or app\n\nTurn a business problem into a bounded, testable build brief.\n\n\u2197\n\nAETHELIOS ARCHITECT\n\nShape what comes next.\n\nDevelop a vision, review a Living Blueprint and create useful deliverables in one persistent creation environment.\n\nOpen Architect \u2197\nOrigin \u00b7 project intelligence\nKeep useful work moving.\n\nTalk retains your conversations. Studio retains creative projects and image versions. Each starter opens a draft for your review.\n\nCompany rooms keep confirmed briefs and Talk histo",
       "headings": [
-        "Aethelios",
-        "Capture a thought",
-        "Get it out of your head.",
         "What are we building?",
         "Your company rooms",
         "Explore a job in unassigned Talk",
@@ -1869,9 +1870,14 @@
         "Plan a launch",
         "Analyze the economics",
         "Develop a product",
-        "Scope a client engagement"
+        "Scope a client engagement",
+        "Prepare an investor presentation",
+        "Specify a website or app",
+        "Shape what comes next."
       ],
-      "alerts": [],
+      "alerts": [
+        "Sign in to use your Aethelios workspace. Sign in \u2197"
+      ],
       "overflow": false,
       "scrollY": 0,
       "focusVisible": 0,
@@ -1892,8 +1898,8 @@
       "errors": [],
       "screenshot": {
         "path": "before-app_work-desktop.png",
-        "bytes": 343695,
-        "sha256": "d2d951a04a448ccbfd8b31e52f5f1ca20fe5081d267885fe8d0ff5c174847ef0"
+        "bytes": 343696,
+        "sha256": "67e599737dca0eeb2f611f3eb9ee91ef7c9df91ad155be0a6a679f2598cb763f"
       }
     },
     {
@@ -2183,13 +2189,13 @@
       "kind": "production-build-default-access-state",
       "status": 200,
       "url": "/app/collection/cart",
+      "visibleContent": "YOUR SELECTION\nCart.\n\nReview what earns a place in your ritual.\n\nShopping is not open yet. Retry",
       "headings": [
-        "Aethelios",
-        "Capture a thought",
-        "Get it out of your head.",
         "Cart."
       ],
-      "alerts": [],
+      "alerts": [
+        "Shopping is not open yet. Retry"
+      ],
       "overflow": false,
       "scrollY": 0,
       "focusVisible": 0,
