@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
+import { createHash } from 'node:crypto';
+import { PNG } from 'pngjs';
 import { readFile, readdir, mkdir, copyFile } from 'node:fs/promises';
 
 test('app-wide charcoal route coverage preserves real access states and reflow', async () => {
@@ -20,6 +22,7 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
     },
   );
   const matrix = JSON.parse(await readFile(`${output}/after-matrix.json`, 'utf8')) as {
+    commit: string;
     rows: {
       route: string;
       label: string;
@@ -27,9 +30,13 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
       errors: string[];
       overflow?: boolean;
       tokens?: Record<string, string>;
-      screenshot?: { path: string };
+      screenshot?: { path: string; bytes: number; sha256: string };
+      viewport: { width: number; height: number };
     }[];
   };
+  expect(matrix.commit).toBe(
+    execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  );
   expect(matrix.rows).toHaveLength(82);
   for (const row of matrix.rows) {
     expect(row.unavailable, `${row.route} ${row.label}`).toBeUndefined();
@@ -39,7 +46,13 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
       ?.trim()
       .replace(/^#([a-f0-9])([a-f0-9])([a-f0-9])$/i, '#$1$1$2$2$3$3');
     expect(environment, row.route).toBe('#111111');
-    if (row.screenshot)
-      expect((await readFile(`${output}/${row.screenshot.path}`)).length).toBeGreaterThan(1000);
+    if (row.screenshot) {
+      const bytes = await readFile(`${output}/${row.screenshot.path}`);
+      expect(bytes.length).toBe(row.screenshot.bytes);
+      expect(bytes.length).toBeGreaterThan(1000);
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(row.screenshot.sha256);
+      const png = PNG.sync.read(bytes);
+      expect({ width: png.width, height: png.height }).toEqual(row.viewport);
+    }
   }
 });

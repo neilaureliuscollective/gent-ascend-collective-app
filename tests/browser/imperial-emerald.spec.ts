@@ -38,7 +38,7 @@ for (const width of [344, 390, 720, 960, 1440, 2560]) {
       if (route === '/lifestyle') {
         await expect(page.locator('.lifestyle-hero .world-button')).toHaveCSS(
           'color',
-          'rgb(7, 11, 10)',
+          'rgb(17, 17, 17)',
         );
         const kicker = await page.locator('.lifestyle-hero .world-kicker').first().boundingBox();
         const header = await page.locator('.world-header').boundingBox();

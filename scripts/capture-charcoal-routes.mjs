@@ -1,5 +1,5 @@
 import { chromium, expect } from '@playwright/test';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
@@ -99,6 +99,10 @@ for (const [label, width, height] of [
         await openMaterialDocument(page);
       } else response = await page.goto(route);
       await expect.poll(() => page.locator('main').count()).toBeGreaterThan(0);
+      await expect(page.locator('.workspace-loading')).toHaveCount(0);
+      await expect(
+        page.getByRole('heading', { name: 'A moment to reconnect.', exact: true }),
+      ).toHaveCount(0);
       await page.evaluate(() => document.fonts.ready);
       await page.mouse.move(1, 1);
       await page.evaluate(

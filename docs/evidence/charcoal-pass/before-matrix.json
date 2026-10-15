@@ -340,7 +340,7 @@
         "Aethelios",
         "Capture a thought",
         "Get it out of your head.",
-        "Studio✦",
+        "Studio\u2726",
         "Projects",
         "Field notes atelier"
       ],
@@ -483,7 +483,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -527,7 +527,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -559,7 +559,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -591,7 +591,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -623,7 +623,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -655,7 +655,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -813,7 +813,7 @@
         "Aethelios",
         "Capture a thought",
         "Get it out of your head.",
-        "Opening the Collection…",
+        "Opening the Collection\u2026",
         "Your Cabinet."
       ],
       "alerts": [],
@@ -1016,11 +1016,7 @@
         }
       ],
       "errors": [],
-      "screenshot": {
-        "path": "before-app_founder_connections-fold.png",
-        "bytes": 273826,
-        "sha256": "9c3c3013bd7fa79cb5cc4387d0d8ef385312e65e85589697d474615c15f145ca"
-      }
+      "baselineUnavailable": "Loading shell was sampled before steady state; excluded from visual comparisons. No connected-provider proof."
     },
     {
       "route": "/app/captures",
@@ -1776,7 +1772,7 @@
         "Aethelios",
         "Capture a thought",
         "Get it out of your head.",
-        "Studio✦",
+        "Studio\u2726",
         "Projects",
         "Field notes atelier"
       ],
@@ -1919,7 +1915,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -1963,7 +1959,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -1995,7 +1991,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -2027,7 +2023,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -2059,7 +2055,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -2091,7 +2087,7 @@
         "Review imported results",
         "Correct a reported result",
         "Delete private Health information?",
-        "Aethelios · private Health understanding"
+        "Aethelios \u00b7 private Health understanding"
       ],
       "alerts": [],
       "overflow": false,
@@ -2249,7 +2245,7 @@
         "Aethelios",
         "Capture a thought",
         "Get it out of your head.",
-        "Opening the Collection…",
+        "Opening the Collection\u2026",
         "Your Cabinet."
       ],
       "alerts": [],
@@ -2471,11 +2467,7 @@
         }
       ],
       "errors": [],
-      "screenshot": {
-        "path": "before-app_founder_connections-desktop.png",
-        "bytes": 673027,
-        "sha256": "8169fe649297ce3e8a029164bdaf529a92a48314927cc282434aefaaa534af71"
-      }
+      "baselineUnavailable": "Loading shell was sampled before steady state; excluded from visual comparisons. No connected-provider proof."
     },
     {
       "route": "/app/captures",
