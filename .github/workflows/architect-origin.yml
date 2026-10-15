@@ -76,6 +76,13 @@ jobs:
         run: npx playwright test --config playwright.origin-auth.config.ts
       - uses: actions/upload-artifact@v4
         if: always()
-        with: {name: architect-origin-auth-evidence, path: test-results, if-no-files-found: ignore}
+        with:
+          name: architect-origin-auth-evidence
+          path: |
+            test-results
+            docs/evidence/architect-apps/workbench-*.png
+            docs/evidence/architect-apps/connected-journey.json
+            docs/evidence/architect-apps/runtime-receipt.json
+          if-no-files-found: ignore
       - if: always()
         run: npx supabase stop --no-backup

@@ -285,13 +285,17 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Records' }).click();
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible({ timeout: 15000 });
 
+  mkdirSync('test-results', { recursive: true });
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-desktop.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/architect-apps-workbench-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.getByRole('button', { name: 'Fold' }).click();
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-fold.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/architect-apps-workbench-fold.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Phone' }).click();
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-phone.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/architect-apps-workbench-phone.png', fullPage: true });
 
   const originalOrigin = new URL(page.url()).origin;
   const projectPath = `${new URL(page.url()).pathname}${new URL(page.url()).search}`;
@@ -347,6 +351,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
     await expect(next.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
     await expect(next.locator('[data-record-title="Site visit B"]')).toBeVisible();
     await next.screenshot({ path: 'docs/evidence/architect-apps/workbench-reopen.png', fullPage: true });
+    await next.screenshot({ path: 'test-results/architect-apps-workbench-reopen.png', fullPage: true });
     await restarted.close();
   } finally {
     replacement.kill('SIGTERM');
