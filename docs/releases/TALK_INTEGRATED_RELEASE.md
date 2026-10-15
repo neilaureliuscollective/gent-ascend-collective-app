@@ -2,6 +2,8 @@
 
 Development publication only. No main merge, hosted migration, production deploy, credential creation or paid provider call without founder approval.
 
+Review readiness (exact-head Quality, including the mandatory `npm run test:talk-import-recovery` database step) is not production text or voice acceptance. Those remain separately authorized after the 18-file receipt, the nineteenth recovery apply, and a founder-approved merge.
+
 Merging #131 onto `main` is expected to create a Vercel **Production** deployment (production branch is `main`). That is not a no-effect GitHub-only step. This checkpoint is not a live-activation approval.
 
 ## Release package — four separate facts
@@ -9,9 +11,9 @@ Merging #131 onto `main` is expected to create a Vercel **Production** deploymen
 | Item | Hosted status | What this checkpoint did |
 |---|---|---|
 | Original 18 Talk/Architect-apps migrations | Application is **partial**. The first four canonical files succeeded; the fifth is awaiting a separate tool approval. Do not assume all 18 are installed. | Not applied from Cursor. Wait for a verified application receipt before calling the 18 ready. Reconcile that receipt by ledger **name** (canonical filename stem). The connector may assign an application-time `version` while preserving the stem as `name`. Do not rewrite `schema_migrations` or replay because prefixes differ. |
-| New recovery migration `20261019120000_talk_origin_import_recovery.sql` | **Not hosted.** Prepared and locally verified on real PostgreSQL 16. Not part of the 18. | Qualifies the unique-violation branch in `ai_talk_import_origin`. Does **not** edit `20261014040000_talk_origin_import_consistency.sql`. Hosted apply needs a later, separate founder approval after the 18 receipt. |
+| New recovery migration `20261019120000_talk_origin_import_recovery.sql` | **Not hosted.** Prepared earlier on real PostgreSQL 16; Quality now requires PostgreSQL 17 at loopback `54322` in a disposable database. Not part of the 18. | Qualifies the unique-violation branch in `ai_talk_import_origin`. Does **not** edit `20261014040000_talk_origin_import_consistency.sql`. Hosted apply needs a later, separate founder approval after the 18 receipt. This closeout does not apply it. |
 | Production configuration | Expected **names** exist on the Vercel/Supabase projects. Values, key validity and real provider access have **not** been proven from this environment. | No credential change. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` must stay unset. |
-| Talk code (#131 / #135) | **Unmerged.** Current production remains main `804c877` / Studio `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo`. | Review branches only. Merge is still a later explicit approval and will auto-deploy Production. |
+| Talk code (#131 / #135) | **Unmerged.** Current production remains main `804c877` / deployment `dpl_G85ZzGhokxzRYrXx6tzEz9QT7JXT`. | Review branches only. Merge is still a later explicit approval and will auto-deploy Production. |
 
 ## Combined release tree
 
@@ -19,7 +21,7 @@ Merging #131 onto `main` is expected to create a Vercel **Production** deploymen
 |---|---|---|---|
 | Foundation | #131 | `cursor/talk-creative-conversation-5b08` | Talk + live main `804c877` (Studio #132, icon, Lifestyle, Health `20261015181000`) |
 | Elevation | #135 | `cursor/talk-elevation-5b08` | Stacks on #131. Dock, documents, selected-work, mid-call spoken target |
-| Current main / production | — | `main` `804c8770754aced1837e82dffa4a416c24baa595` | Studio production `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` on https://www.gentascend.com |
+| Current main / production | — | `main` `804c8770754aced1837e82dffa4a416c24baa595` | Last verified Production `dpl_G85ZzGhokxzRYrXx6tzEz9QT7JXT` on https://www.gentascend.com |
 | Health | #136 | merged on main | Published as `20261015181000_health_workspace.sql`. Do not absorb or rewrite |
 | Studio | #132 | merged on main | FFmpeg Quality setup, Fabric/package changes, Design/Film types. Keep on rollback. |
 
@@ -162,8 +164,9 @@ The original 18 are in a partial hosted apply. Wait for the verified receipt bef
 - `npm run db:ledger`: 37 recorded snapshot files unchanged; source versions unique (`15180000` Talk, `15181000` Health, `15190000` Talk, `19120000` recovery after Studio `19010000`).
 - PGlite `tests/health-database.test.ts` applies every `supabase/migrations/*.sql` in filename order, including Talk observe → Health workspace → intended-turn bind, then the recovery file.
 - PGlite `tests/talk-origin-import-database.test.ts` applies the recovery file and covers normal import, same-request replay, forced unique-violation recovery, occupied save/project rejection, and foreign-owner isolation (not Supabase Auth).
-- `npm run test:talk-import-recovery` / `tests/talk-origin-import-recovery-postgres.test.ts`: real local PostgreSQL 16, default `plpgsql.variable_conflict=error`. Occupied `(person_id,save_id)` hits the unique-violation branch. Historical `14040000` raises `column reference "save_id" is ambiguous`. The forward file rejects the mismatch and leaves the original pairing. Same-request replay and foreign-owner isolation are also checked. Ambiguity checks were not disabled.
-- Isolated `supabase db reset` unrun: Docker/Podman are not available here.
+- `npm run test:talk-import-recovery` is now a **mandatory Quality database-job step**. It connects only to loopback `127.0.0.1:54322` (local Supabase PostgreSQL 17), creates a quoted disposable database, and refuses hosted/system/application names. It never uses sudo peer-role escalation and never drops `postgres`. A missing listener fails the job; it does not skip.
+- The script writes `docs/evidence/talk-origin-import-recovery/receipt.json` with the exact commit SHA plus historical-ambiguity, corrected recovery, normal import, replay, unique-violation rejection, owner isolation and occupied-pairing proofs. Quality uploads that artifact. The application job’s vitest wrapper still skips when 54322 is absent; that skip is not the gate.
+- Isolated `supabase start` in this closeout environment is unrun: Docker/Podman are not available here. The Quality database job is the PostgreSQL 17 proof.
 - `tests/talk-release-diagnostic.test.ts`: missing schema reports `missing` without aborting; 4-arg observe / pre-intended-turn bind is `older`; final 5-arg observe + `intended_turn_id` + owner SELECT policies is `equivalent-candidate`; dropping the observe owner policy downgrades that contract to `partial`; `14040000` origin import is `older` until `19120000` supplies `intended_save_id` / `intended_project_id`.
 
 ## Environment (names only)
@@ -208,7 +211,7 @@ Ordinary text must stay usable if voice remains blocked.
 ## Production target and rollback
 
 - Vercel project: `stutes-legacy/gent-ascend-collective-app` (`docs/VERCEL_SETUP.md`, Studio release evidence). Production URL https://www.gentascend.com.
-- Current production: main `804c8770754aced1837e82dffa4a416c24baa595` / deployment `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` (Studio #132). Git-linked Production deploys from `main`. `vercel.json` does not disable Git deployments.
+- Current production: main `804c8770754aced1837e82dffa4a416c24baa595` / last verified deployment `dpl_G85ZzGhokxzRYrXx6tzEz9QT7JXT`. Git-linked Production deploys from `main`. `vercel.json` does not disable Git deployments. The original 18 Talk/Architect-apps files remain a distinct hosted package from the nineteenth recovery migration; only the first four of the 18 were last confirmed applied. Neither package is applied from this closeout.
 - A merge of #131 onto `main` is therefore expected to **auto-create a Production deployment** of foundation Talk code on top of released Studio (not #135). This is not a GitHub-only step.
 - #135 stays stacked and does not deploy until it is merged to `main` after #131.
 - Compatibility: #131 code on current main is filename-compatible with Health `15181000` and includes Studio FFmpeg/package/database types. It is not schema-compatible if Talk objects are missing or older. Ordinary existing chat can survive; Talk save/import/bind cannot.

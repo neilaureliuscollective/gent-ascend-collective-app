@@ -2,9 +2,12 @@
 // Real PostgreSQL verification of Talk Origin unique-violation recovery.
 // Does not mock success, disable plpgsql.variable_conflict, or edit 20261014040000.
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { recoveryTarget } from './talk-import-recovery-target.mjs';
 
-const database = process.env.TALK_IMPORT_RECOVERY_DB || 'talk_import_recovery';
+const target = recoveryTarget(process.env);
+const database = target.database;
+const quotedDatabase = target.quotedDatabase;
 const owner = '00000000-0000-4000-8000-000000000001';
 const foreign = '00000000-0000-4000-8000-000000000002';
 const conversation = '00000000-0000-4000-8000-000000000003';
@@ -53,9 +56,14 @@ function literal(value) {
   return "'" + JSON.stringify(value).replace(/'/g, "''") + "'::jsonb";
 }
 
+function psqlEnv() {
+  return { ...process.env, PGPASSWORD: target.password, PGSSLMODE: 'disable' };
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     encoding: 'utf8',
+    env: psqlEnv(),
     ...options,
   });
   if (result.status !== 0) {
@@ -65,55 +73,81 @@ function run(command, args, options = {}) {
   return result.stdout;
 }
 
-function sql(text, extraArgs = []) {
-  return run('psql', ['-v', 'ON_ERROR_STOP=1', '-d', database, '-At', '-q', ...extraArgs, '-c', text]);
-}
-
-function sqlFile(path) {
-  return run('psql', ['-v', 'ON_ERROR_STOP=1', '-d', database, '-At', '-q', '-f', path]);
-}
-
-function requirePsql() {
-  const ready = spawnSync('pg_isready', { encoding: 'utf8' });
-  if (ready.status !== 0) {
-    throw new Error(`PostgreSQL is not ready: ${ready.stdout || ready.stderr || 'pg_isready failed'}`);
-  }
-  ensurePeerRole();
-  const version = run('psql', ['-At', '-d', 'postgres', '-c', 'show server_version;']).trim();
-  if (!/^\d+/.test(version)) throw new Error(`Could not read PostgreSQL version: ${version}`);
-  return version;
-}
-
-function ensurePeerRole() {
-  const who = process.env.USER || process.env.LOGNAME || 'ubuntu';
-  const probe = spawnSync('psql', ['-d', 'postgres', '-At', '-c', 'select 1'], { encoding: 'utf8' });
-  if (probe.status === 0) return;
-  const created = spawnSync(
-    'sudo',
-    ['-u', 'postgres', 'psql', '-v', 'ON_ERROR_STOP=1', '-c', `do $$ begin
-      if not exists (select 1 from pg_roles where rolname='${who}') then
-        create role ${who} login superuser;
-      else
-        alter role ${who} with login superuser;
-      end if;
-    end $$;`],
-    { encoding: 'utf8' },
-  );
-  if (created.status !== 0) {
-    throw new Error(`Cannot create PostgreSQL role ${who}: ${created.stderr || created.stdout}`);
-  }
-}
-
-function recreateDatabase() {
-  const who = run('psql', ['-At', '-d', 'postgres', '-c', 'select current_user;']).trim();
-  run('psql', ['-v', 'ON_ERROR_STOP=1', '-d', 'postgres', '-c', `drop database if exists ${database};`]);
-  run('psql', [
+function psqlArgs(db, extra = []) {
+  return [
+    '-h',
+    target.host,
+    '-p',
+    String(target.port),
+    '-U',
+    target.user,
     '-v',
     'ON_ERROR_STOP=1',
     '-d',
-    'postgres',
+    db,
+    '-At',
+    '-q',
+    ...extra,
+  ];
+}
+
+function sql(text, extraArgs = []) {
+  return run('psql', [...psqlArgs(database), ...extraArgs, '-c', text]);
+}
+
+function sqlFile(path) {
+  return run('psql', [...psqlArgs(database), '-f', path]);
+}
+
+function requirePsql() {
+  const ready = spawnSync(
+    'pg_isready',
+    ['-h', target.host, '-p', String(target.port), '-U', target.user, '-d', target.maintenanceDatabase],
+    { encoding: 'utf8', env: psqlEnv() },
+  );
+  if (ready.status !== 0) {
+    throw new Error(
+      `Local Supabase PostgreSQL is not ready on ${target.host}:${target.port}. Start it with supabase start. ${ready.stdout || ready.stderr || 'pg_isready failed'}`,
+    );
+  }
+  const version = run('psql', [
+    ...psqlArgs(target.maintenanceDatabase),
     '-c',
-    `create database ${database} owner ${who};`,
+    'show server_version;',
+  ]).trim();
+  if (!/^17\./.test(version)) {
+    throw new Error(
+      `Expected local Supabase PostgreSQL 17 at ${target.host}:${target.port}, got ${version || 'no version'}`,
+    );
+  }
+  return version;
+}
+
+function recreateDatabase() {
+  const who = run('psql', [...psqlArgs(target.maintenanceDatabase), '-c', 'select current_user;']).trim();
+  const currentDb = run('psql', [
+    ...psqlArgs(target.maintenanceDatabase),
+    '-c',
+    'select current_database();',
+  ]).trim();
+  if (currentDb !== target.maintenanceDatabase) {
+    throw new Error(`Refusing to manage databases while connected to ${currentDb}`);
+  }
+  if (quotedDatabase === `"${target.maintenanceDatabase}"`) {
+    throw new Error('Refusing to drop or recreate the application/maintenance database.');
+  }
+  run('psql', [
+    ...psqlArgs(target.maintenanceDatabase),
+    '-c',
+    `drop database if exists ${quotedDatabase};`,
+  ]);
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(who)) {
+    throw new Error(`Refusing database owner ${JSON.stringify(who)}`);
+  }
+  run('psql', [
+    ...psqlArgs(target.maintenanceDatabase),
+    '-c',
+    `create database ${quotedDatabase} owner "${who}";`,
   ]);
 }
 
@@ -246,12 +280,7 @@ recreateDatabase();
 bootstrap();
 
 const conflict = run('psql', [
-  '-v',
-  'ON_ERROR_STOP=1',
-  '-d',
-  database,
-  '-At',
-  '-q',
+  ...psqlArgs(database),
   '-c',
   "load 'plpgsql'",
   '-c',
@@ -393,20 +422,32 @@ if (!source.includes('save_id=save_id') || !source.includes('project_id=project_
   throw new Error('historical 20261014040000 no longer contains the recorded collision');
 }
 
-console.log(
-  JSON.stringify(
-    {
-      engine: `PostgreSQL ${version}`,
-      variableConflict: conflict,
-      historicalAmbiguity: /ambiguous/i.test(probe) && /ambiguous/i.test(historicalRecovery),
-      normalImport: /"recovered"\s*:\s*false/.test(first),
-      sameRequestReplay: /"recovered"\s*:\s*true/.test(replay),
-      uniqueViolationRecovery: true,
-      foreignOwnerRejected: true,
-      failedRecoveryUnchanged: true,
-      historicalFileUnchanged: true,
-    },
-    null,
-    2,
-  ),
+const sha = (
+  process.env.GITHUB_SHA ||
+  run('git', ['rev-parse', 'HEAD'], { env: process.env }).trim()
 );
+const receipt = {
+  commit: sha,
+  engine: `PostgreSQL ${version}`,
+  host: target.host,
+  port: target.port,
+  disposableDatabase: database,
+  applicationDatabaseUntouched: true,
+  sudoPeerEscalation: false,
+  variableConflict: conflict,
+  historicalAmbiguity: /ambiguous/i.test(probe) && /ambiguous/i.test(historicalRecovery),
+  correctedRecoveryPath: true,
+  normalImport: /"recovered"\s*:\s*false/.test(first),
+  sameRequestReplay: /"recovered"\s*:\s*true/.test(replay),
+  uniqueViolationRecovery: true,
+  foreignOwnerRejected: true,
+  failedRecoveryUnchanged: true,
+  occupiedPairingPreserved: true,
+  historicalFileUnchanged: true,
+};
+mkdirSync('docs/evidence/talk-origin-import-recovery', { recursive: true });
+writeFileSync(
+  'docs/evidence/talk-origin-import-recovery/receipt.json',
+  `${JSON.stringify(receipt, null, 2)}\n`,
+);
+console.log(JSON.stringify(receipt, null, 2));
