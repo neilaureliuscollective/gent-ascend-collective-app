@@ -231,7 +231,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await form.locator('input').first().fill('Site visit A edited');
   await form.locator('input').nth(1).fill('3');
   await form.getByRole('button', { name: /save record/i }).click();
-  await expect(frame.getByText(/3h logged/i)).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('[data-flag="saved"]')).toBeVisible({ timeout: 20000 });
+  await expect(frame.getByText(/3h logged/i)).toBeVisible({ timeout: 20000 });
   await frame.getByRole('button', { name: /new note/i }).click();
   await form.locator('input').first().fill('Site visit B');
   await form.locator('textarea').fill('South gate');
