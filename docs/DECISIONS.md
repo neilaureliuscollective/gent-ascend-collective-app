@@ -1,3 +1,7 @@
+# Aethelios current knowledge production — 2026-10-15
+
+Founder authorized merge of PR #141 onto main and deploy through the existing Vercel Git production pipeline. Merge `bbda46f` (parents `af29723` Human Ascendance logo + `5488060` knowledge). Production `dpl_Dq6DwWY2sPfbtxLsr2CnY6qAZ7oR` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify write or paid model call. Talk #131 creation remains unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
 # Aethelios conversational knowledge reliability — 2026-10-15
 
 Current user product and variant selections outrank older mentions. Variant identity requires a unique match across normalized option dimensions. Voice can look up the same read-only catalog after admission through `lookup_lifestyle_catalog` (function_call_output, no instruction rewrite, no speech interrupt). Playbooks follow current intent. Multi-turn deterministic scenarios are separate from unpaid model eval and human voice-naturalness review. Talk #131 `budgetLiveSeed` and creation tools stay unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).

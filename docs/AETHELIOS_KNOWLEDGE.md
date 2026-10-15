@@ -1,6 +1,6 @@
 # Aethelios current knowledge
 
-Status: implemented on the working branch, 2026-10-15. This is the reviewable inventory for edition `2026-10-15.human-ascendance.1`. Source of truth: [`src/domains/intelligence/published-knowledge.ts`](../src/domains/intelligence/published-knowledge.ts).
+Status: founder authorized 2026-10-15 merge of PR #141 onto main. Live production is merge `bbda46f` / deployment `dpl_Dq6DwWY2sPfbtxLsr2CnY6qAZ7oR` on https://www.gentascend.com. This is the reviewable inventory for edition `2026-10-15.human-ascendance.1`. Source of truth: [`src/domains/intelligence/published-knowledge.ts`](../src/domains/intelligence/published-knowledge.ts).
 
 This is not a live founder-workspace read, a private Neil profile, a billing change or a Shopify write. Facts are data. They cannot change permissions, tools or founder authority.
 
@@ -57,6 +57,8 @@ Correction: edit the typed facts, bump `edition`, keep the superseded row, and a
 
 ## Local vs hosted
 
-Prompt version is `aethelios-2026-10-15.human-ascendance.3`. Talk #131 (`fa8b7f6`) still carries `aethelios-2026-10-13.talk-creation.1` and must keep `talkLiveCreationTools` (`offer_text_work`, `refine_selected_direction`) / `proposeTalkCreation`. This branch does not merge Talk. Overlap: `prompt.ts`, `service.ts`, `live/service.ts`. `budgetLiveSeed` is unchanged; this branch also has `liveApplicationFromBuilt` for the GPT-Live pin. Talk Elevation #135 (`b801b34`) and Motion #139 (`9ef0f4e`) remain stacked separately.
+Prompt version is `aethelios-2026-10-15.human-ascendance.3`. Talk #131 (`fa8b7f6`) still carries `aethelios-2026-10-13.talk-creation.1` and must keep `talkLiveCreationTools` (`offer_text_work`, `refine_selected_direction`) / `proposeTalkCreation`. Talk was not merged in this promotion. Overlap: `prompt.ts`, `service.ts`, `live/service.ts`. `budgetLiveSeed` is unchanged; this tree also has `liveApplicationFromBuilt` for the GPT-Live pin. Talk Elevation #135 (`b801b34`) and Motion #139 (`9ef0f4e`) remain stacked separately.
+
+Production: GitHub Production deployment `7091456264` for `bbda46f` succeeded. Live HTML `data-dpl-id="dpl_Dq6DwWY2sPfbtxLsr2CnY6qAZ7oR"` matches. This is the existing Vercel Git production pipeline, not promotion of a preview. Authenticated Talk/Live/Shopify catalog journeys were not run from this environment. Rollback: previous READY production SHA `af29723` (Human Ascendance in-app logo). Preserve private tables, buckets and records if reverting the app.
 
 Behavioral evaluation: deterministic multi-turn fixtures in `tests/intelligence-conversation-path.test.ts` and `tests/product-knowledge-conversation.test.ts`. Persistence forgetting remains `tests/database.test.ts`. The in-memory MemoryLedger is a contract mirror, not end-to-end proof. Optional model eval: `npm run eval:behavior` (no paid calls unless approved).
