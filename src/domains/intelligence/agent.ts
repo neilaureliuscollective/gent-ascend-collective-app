@@ -5,7 +5,7 @@ import {
   type ModelMessage,
   type LanguageModelMiddleware,
 } from 'ai';
-import { aureliusInstructions, sharedCharacter, founderConduct, behaviorContract } from './prompt';
+import { aureliusInstructions, sharedCharacter, founderConduct } from './prompt';
 import type { ModelChunk, ActivityReporter } from './stream';
 import { researchTools, researchPolicy, sourceFooter, type ResearchSource } from './research';
 import {
@@ -63,7 +63,6 @@ export async function* streamAurelius(
     instructions: [
       aureliusInstructions,
       sharedCharacter,
-      behaviorContract,
       researchPolicy,
       creation ? talkCreationPolicy() : '',
       founder
@@ -112,7 +111,12 @@ export async function* streamAurelius(
         const image = creation.images.at(-1)!;
         yield {
           type: 'creation',
-          item: { id: image.id, kind: 'image', title: image.prompt.slice(0, 80), status: 'approval' },
+          item: {
+            id: image.id,
+            kind: 'image',
+            title: image.prompt.slice(0, 80),
+            status: 'approval',
+          },
         };
       }
     } else if (part.type === 'reasoning-start') {

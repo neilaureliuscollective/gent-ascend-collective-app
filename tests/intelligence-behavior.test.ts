@@ -31,6 +31,8 @@ describe('behavioral contract and playbooks', () => {
     expect(behaviorContract).toContain('Lead with the answer');
     expect(behaviorContract).toContain('Do not end every response with a question');
     expect(sharedCharacter).toContain(behaviorContract);
+    expect(sharedCharacter).toContain('VISION:');
+    expect(sharedCharacter).toContain('CRAFT:');
     expect(sharedCharacter).not.toContain('TEXT DELIVERY');
     expect(String(text[0]?.content)).toContain('TEXT DELIVERY');
     expect(String(voice[0]?.content)).toContain(voiceDelivery);
@@ -71,6 +73,18 @@ describe('deterministic scenario fixtures', () => {
         'long-voice',
         'diagnosis-efficacy',
         'provenance',
+        'vague-business-idea',
+        'reject-first-direction',
+        'preserve-charcoal-glass',
+        'changed-requirement-reload',
+        'launch-campaign-honest',
+        'technical-advice-evidence',
+        'search-failure-honest',
+        'unavailable-tool-not-done',
+        'retrieved-instruction-ignored',
+        'foreign-memory-isolation',
+        'voice-concise-text-depth',
+        'application-looking-user-message',
       ]),
     );
     expect(

@@ -24,7 +24,8 @@ import {
   loadProductKnowledge,
   recentUserTextsFromTurns,
 } from './product-knowledge';
-import { selectPlaybooks } from './playbooks';
+import { playbooksForTurn } from './playbooks';
+import { deriveWorkingState } from './working-state';
 import { getProduct } from '@/domains/commerce/shopify';
 import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 export class IntelligenceError extends Error {
@@ -750,8 +751,36 @@ export async function prepareReply(
     }
   }
   measured('artifact-context');
+  const visibleHistory = history.filter(
+    (turn) => !history.some((newer) => newer.parent_turn_id === turn.id),
+  );
+  const selectedArtifact = selectedImageId
+    ? { kind: 'image' as const, title: null, prompt: null }
+    : selectedPredecessors.board
+      ? { kind: 'board' as const, title: null, prompt: null }
+      : selectedPredecessors.brief
+        ? { kind: 'brief' as const, title: null, prompt: null }
+        : null;
+  const workingState = company
+    ? null
+    : deriveWorkingState({
+        currentText: input.text,
+        userTexts: recentUserTexts,
+        assistantTexts: visibleHistory.map((turn) => turn.assistant_text),
+        threadSummary,
+        selectedArtifact,
+      });
+  const selectedPlaybooks = company
+    ? { playbooks: [], playbookSelection: null }
+    : playbooksForTurn(input.text, capabilityContext(input.text)?.id, {
+        recentUserTexts,
+        selectedArtifact,
+        workingState,
+        approvedDirection: workingState?.approvedDirection,
+        recentCorrections: workingState?.corrections,
+      });
   const messages = buildMessages(
-    history.filter((turn) => !history.some((newer) => newer.parent_turn_id === turn.id)),
+    visibleHistory,
     input.text,
     context,
     new Date(),
@@ -762,9 +791,9 @@ export async function prepareReply(
     {
       attachment,
       productKnowledge,
-      playbooks: company
-        ? []
-        : selectPlaybooks(input.text, capabilityContext(input.text)?.id, 2, { recentUserTexts }),
+      playbooks: selectedPlaybooks.playbooks,
+      playbookSelection: selectedPlaybooks.playbookSelection,
+      workingState,
       channel: 'text',
     },
   );

@@ -1,3 +1,7 @@
+# Aethelios collaborator intelligence — 2026-10-15
+
+Keep published-knowledge edition `2026-10-15.human-ascendance.1`. Put Talk prompt version, knowledge edition and the Live persistence tag in one `edition.ts` source. Expand playbooks into bounded vision/architect/ux/brand/studio/lifestyle/health modules with inspectable, non-LLM selection (max two). Derive working state from existing conversation turns rather than a second memory system. Strengthen vision/craft/research/conversation in the shared character without changing Cedar, VAD or charcoal-glass UI. Upgrade `eval:behavior` so it can score actual returned answers when explicitly approved and executed, with USD/request caps and honest skip reports. No paid evaluation, merge or deploy from this task. Evidence: [AETHELIOS_COLLABORATOR.md](AETHELIOS_COLLABORATOR.md), [evals/aethelios-behavior.md](../evals/aethelios-behavior.md).
+
 # Architect immersive creation world and budget lock — 2026-10-15
 
 Close the concurrent reservation race without weakening 156600 execution or settlement rules. Distinct request IDs now take a person+run budget row `FOR UPDATE` before counting. The $1.00 figure is a reserved allowance; character-count input bounds remain approximate. Architect’s existing entry, choice, workbench and app-panel surfaces become one connected creation world: arrival, path, shape, labelled direction, plan, real work, Use/Inspect and return. Agency remains the founder’s first Architect project. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).

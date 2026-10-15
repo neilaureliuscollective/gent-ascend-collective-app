@@ -21,7 +21,9 @@ import {
   loadProductKnowledge,
   recentUserTextsFromTurns,
 } from '@/domains/intelligence/product-knowledge';
-import { selectPlaybooks } from '@/domains/intelligence/playbooks';
+import { playbooksForTurn } from '@/domains/intelligence/playbooks';
+import { deriveWorkingState } from '@/domains/intelligence/working-state';
+import { intelligenceEdition } from '@/domains/intelligence/edition';
 import { getProduct } from '@/domains/commerce/shopify';
 import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 import { createProductLookupRuntime, productLookupTool } from './product-lookup';
@@ -55,7 +57,7 @@ import { observeTrustedVoiceItem } from './trusted-observe';
 import { selectedTalkContext, selectedTalkPredecessors } from '@/domains/talk-creation/context';
 import { readTalkCreations } from '@/domains/talk-creation/service';
 const base = 'https://api.openai.com/v1/realtime/calls';
-const promptVersion = 'aethelios-live-pilot.3';
+const promptVersion = intelligenceEdition.livePromptVersion;
 const seedLimit = 12;
 type AdmissionStage =
   'context' | 'provider' | 'call-id' | 'attachment' | 'sideband' | 'seed' | 'cleanup';
@@ -131,6 +133,18 @@ export async function admitLive(input: LiveAdmission) {
       { catalog: readLifestyleCatalog, detail: getProduct },
       { recentUserTexts },
     ).catch(() => null);
+    const workingState = deriveWorkingState({
+      currentText: latestUser,
+      userTexts: recentUserTexts,
+      assistantTexts: visibleTurns.map((turn) => turn.assistant_text),
+      threadSummary: thread.data.context_summary,
+    });
+    const selectedPlaybooks = playbooksForTurn(latestUser, null, {
+      recentUserTexts,
+      workingState,
+      approvedDirection: workingState.approvedDirection,
+      recentCorrections: workingState.corrections,
+    });
     const built = buildMessages(
       visibleTurns,
       '',
@@ -142,7 +156,9 @@ export async function admitLive(input: LiveAdmission) {
       null,
       {
         productKnowledge,
-        playbooks: selectPlaybooks(latestUser, null, 2, { recentUserTexts }),
+        playbooks: selectedPlaybooks.playbooks,
+        playbookSelection: selectedPlaybooks.playbookSelection,
+        workingState,
         channel: 'voice',
       },
     );

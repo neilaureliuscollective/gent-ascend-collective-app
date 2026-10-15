@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildMessages, promptVersion } from '../src/domains/intelligence/prompt';
+import { intelligenceEdition } from '../src/domains/intelligence/edition';
 import { selectPlaybooks } from '../src/domains/intelligence/playbooks';
 import { chooseVariant, loadProductKnowledge } from '../src/domains/intelligence/product-knowledge';
 import { budgetLiveSeed } from '../src/domains/live/context-budget';
@@ -47,7 +48,8 @@ const scentVariants = {
 
 describe('labeled request/context path fixtures', () => {
   it('is a synthetic composition journey, not a hosted browser or live Shopify session', () => {
-    expect(promptVersion).toBe('aethelios-2026-10-15.human-ascendance.talk.1');
+    expect(promptVersion).toBe(intelligenceEdition.promptVersion);
+    expect(promptVersion).toBe('aethelios-2026-10-15.collaborator.1');
     expect(process.env[optionalModelEvalFlag]).toBeFalsy();
     expect(behaviorScenarios.every((scenario) => scenario.turns.length >= 1)).toBe(true);
   });

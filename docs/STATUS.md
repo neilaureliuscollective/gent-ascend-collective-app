@@ -1,3 +1,5 @@
+> Aethelios collaborator intelligence (2026-10-15): focused branch on current main. Operational expertise modules, derived conversation working state, shared vision/craft/research/conversation strengths, single prompt-version source, and an opt-in eval runner that can score actual answers. Charcoal-glass UI, Cedar, Realtime, transcript filtering and compact motion are unchanged. Deterministic Vitest is the no-cost path; paid model evaluation was not launched. No merge, deploy, hosted SQL or credential change. See [AETHELIOS_COLLABORATOR.md](AETHELIOS_COLLABORATOR.md).
+
 > Focused Live voice repair (2026-10-15): versioned device-local audio/transcript acknowledgement is scoped to the verified auth user; subsequent Live gestures start/retry explicitly with optional context and proposals off. Seed admission now correlates client event IDs with allowlisted rejection fields and removes handshake listeners on settlement. No paid acceptance, hosted SQL/configuration/credentials, merge or deployment. Verified checks and remaining production diagnosis: [LIVE_VOICE_REPAIR.md](LIVE_VOICE_REPAIR.md).
 ## Architect / released Talk and Motion integration — 2026-10-15
 
