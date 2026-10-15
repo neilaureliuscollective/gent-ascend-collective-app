@@ -21,6 +21,7 @@ export const designSaveInput = z
     document: z.unknown(),
     updatedAt: z.iso.datetime({ offset: true }).nullable(),
     revision: z.number().int().min(0),
+    freeze: z.boolean().optional(),
   })
   .strict();
 
@@ -42,7 +43,7 @@ export const designExportInput = z
   })
   .strict();
 
-type SaveRow = { id: string; revision: number; updated_at: string };
+type SaveRow = { id: string; revision: number; updated_at: string; revision_id: string };
 
 export async function createDesign(input: z.infer<typeof designCreateInput>) {
   await verifyStudioProject(input.projectId);
@@ -70,6 +71,7 @@ export async function saveDesign(input: z.infer<typeof designSaveInput>) {
     p_document: document,
     p_updated: input.updatedAt,
     p_expected: input.revision,
+    p_freeze: input.freeze ?? false,
   });
   if (result.error) {
     if (result.error.message.includes('DESIGN_CONFLICT'))
@@ -81,11 +83,17 @@ export async function saveDesign(input: z.infer<typeof designSaveInput>) {
   return { ...row, document };
 }
 
-export async function freezeDesign(designId: string) {
+export async function freezeDesign(designId: string, expectedRevision: number) {
   const { client } = await studioSession();
-  const result = await client.rpc('ai_studio_design_freeze', { p_id: designId });
-  if (result.error || !result.data)
+  const result = await client.rpc('ai_studio_design_freeze', {
+    p_id: designId,
+    p_expected: expectedRevision,
+  });
+  if (result.error || !result.data) {
+    if (result.error?.message.includes('STALE_DESIGN_REVISION'))
+      throw new IntelligenceError('That design revision is no longer the selected freeze target.', 409);
     throw new IntelligenceError('The design revision could not be frozen.', 409);
+  }
   return { revisionId: result.data as string };
 }
 

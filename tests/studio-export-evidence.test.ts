@@ -438,4 +438,158 @@ describe('Studio export evidence', () => {
       await rm(dir, { recursive: true, force: true });
     }
   }, 120000);
+
+  it('renders owned moving footage, title cards and non-tone audio', async () => {
+    await mkdir(out, { recursive: true });
+    const dir = await mkdtemp(path.join(tmpdir(), 'studio-moving-'));
+    const run = (args: string[]) =>
+      new Promise<void>((resolve, reject) => {
+        const child = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args]);
+        child.on('error', reject);
+        child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg ${args[args.length - 1]} failed (${code})`))));
+      });
+    try {
+      const footage = path.join(dir, 'moving.mp4');
+      const still = path.join(dir, 'card.png');
+      const voice = path.join(dir, 'voice.wav');
+      const score = path.join(dir, 'score.wav');
+      await run([
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc2=size=1280x720:rate=24:duration=8',
+        '-f',
+        'lavfi',
+        '-i',
+        'anoisesrc=color=brown:duration=8',
+        '-shortest',
+        '-c:v',
+        'libx264',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        footage,
+      ]);
+      const card = new PNG({ width: 1280, height: 720, fill: true });
+      for (let y = 0; y < 720; y += 1) {
+        for (let x = 0; x < 1280; x += 1) {
+          const i = (y * 1280 + x) * 4;
+          card.data[i] = x < 640 ? 11 : 196;
+          card.data[i + 1] = x < 640 ? 59 : 145;
+          card.data[i + 2] = x < 640 ? 50 : 47;
+          card.data[i + 3] = 255;
+        }
+      }
+      await writeFile(still, PNG.sync.write(card));
+      await run(['-f', 'lavfi', '-i', 'anoisesrc=color=pink:duration=12', '-ac', '1', '-ar', '48000', voice]);
+      await run(['-f', 'lavfi', '-i', 'anoisesrc=color=brown:duration=36', '-ac', '1', '-ar', '48000', score]);
+      const film = parseComposition({
+        schema: 'studio-composition/v1',
+        id: '40000000-0000-4000-8000-000000000090',
+        title: 'Owned mixed-media film',
+        aspect: 'landscape',
+        fps: 24,
+        scenes: [
+          {
+            id: '40000000-0000-4000-8000-000000000091',
+            kind: 'video',
+            assetId: '40000000-0000-4000-8000-000000000092',
+            assetKind: 'footage',
+            name: 'Moving bars',
+            inMs: 0,
+            outMs: 8000,
+            durationMs: 8000,
+            crop: { x: 0.05, y: 0.1, width: 0.9, height: 0.8 },
+            placement: { x: 0, y: 0, width: 1, height: 1 },
+            transition: 'cut',
+            stillMotion: 'none',
+          },
+          {
+            id: '40000000-0000-4000-8000-000000000093',
+            kind: 'image',
+            assetId: '40000000-0000-4000-8000-000000000094',
+            assetKind: 'version',
+            name: 'Split card',
+            inMs: 0,
+            outMs: 8000,
+            durationMs: 8000,
+            crop: { x: 0, y: 0.1, width: 1, height: 0.8 },
+            placement: { x: 0, y: 0, width: 1, height: 1 },
+            transition: 'dissolve',
+            stillMotion: 'slow-zoom',
+          },
+          {
+            id: '40000000-0000-4000-8000-000000000095',
+            kind: 'video',
+            assetId: '40000000-0000-4000-8000-000000000092',
+            assetKind: 'footage',
+            name: 'Return',
+            inMs: 1000,
+            outMs: 7000,
+            durationMs: 16000,
+            crop: { x: 0.1, y: 0.05, width: 0.8, height: 0.9 },
+            placement: { x: 0, y: 0, width: 1, height: 1 },
+            transition: 'dissolve',
+            stillMotion: 'none',
+          },
+        ],
+        titles: [
+          {
+            id: '40000000-0000-4000-8000-000000000096',
+            startMs: 400,
+            endMs: 3600,
+            text: 'Aethelios Studio',
+            fontId: 'inter',
+          },
+        ],
+        captions: [
+          {
+            id: '40000000-0000-4000-8000-000000000097',
+            startMs: 8000,
+            endMs: 14000,
+            text: 'Owned moving footage, not generated stills',
+          },
+        ],
+        narration: {
+          assetId: '40000000-0000-4000-8000-000000000098',
+          assetKind: 'narration',
+          gainDb: -4,
+          fadeInMs: 250,
+          fadeOutMs: 400,
+        },
+        music: {
+          assetId: '40000000-0000-4000-8000-000000000099',
+          assetKind: 'music',
+          gainDb: -10,
+          fadeInMs: 500,
+          fadeOutMs: 800,
+        },
+      });
+      const media = [
+        {
+          id: '40000000-0000-4000-8000-000000000092',
+          kind: 'footage' as const,
+          path: footage,
+          media: 'video' as const,
+          durationMs: 8000,
+        },
+        { id: '40000000-0000-4000-8000-000000000094', kind: 'version' as const, path: still, media: 'image' as const },
+        { id: '40000000-0000-4000-8000-000000000098', kind: 'narration' as const, path: voice, media: 'wav' as const },
+        { id: '40000000-0000-4000-8000-000000000099', kind: 'music' as const, path: score, media: 'wav' as const },
+      ];
+      const rendered = await renderComposition(film, media);
+      await writeFile(path.join(out, 'film-moving.mp4'), rendered.film);
+      inspectRenderedMp4(rendered.film, {
+        seconds: compositionPlaybackMs(film) / 1000,
+        width: 1920,
+        height: 1080,
+        audio: true,
+      });
+      expect(rendered.durationMs).toBeGreaterThan(28_000);
+      expect(rendered.durationMs).toBeLessThan(36_000);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 180000);
 });

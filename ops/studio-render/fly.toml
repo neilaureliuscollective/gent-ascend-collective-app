@@ -1,0 +1,26 @@
+# Example Fly.io Machine spec. Not created, purchased or launched from this assignment.
+# Exact decision: one always-on shared-cpu-1x / 2GB Machine in iad.
+app = "aethelios-studio-render"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  STUDIO_RENDER_WORKER_MODE = "supervised"
+  STUDIO_RENDER_HEALTH_PORT = "8080"
+  STUDIO_RENDER_HEALTH_BIND = "0.0.0.0"
+  STUDIO_RENDER_CONCURRENCY = "1"
+  STUDIO_FFMPEG_PATH = "/usr/bin/ffmpeg"
+
+[http_service]
+  internal_port = 8080
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2gb"
+  cpus = 1

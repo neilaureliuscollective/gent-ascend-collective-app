@@ -1,15 +1,12 @@
 'use client';
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import {
-  compositionFrame,
-  type CompositionDocument,
-  type CompositionScene,
-} from '@/domains/studio/composition/model';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { compositionFrame, type CompositionDocument, type CompositionScene } from '@/domains/studio/composition/model';
 import {
   activeScenesAt,
   compositionPlaybackMs,
 } from '@/domains/studio/composition/timing';
 import { elementVolume, trackGainAt } from '@/domains/studio/composition/audio';
+import { cropPreviewStyle } from '@/domains/studio/composition/crop';
 
 function mediaSrc(scene: CompositionScene) {
   if (scene.kind === 'image')
@@ -35,6 +32,8 @@ export function FilmPreview({
   const music = useRef<HTMLAudioElement | null>(null);
   const narrationGain = useRef<GainNode | null>(null);
   const musicGain = useRef<GainNode | null>(null);
+  const audioCtx = useRef<AudioContext | null>(null);
+  const audioSources = useRef(new WeakMap<HTMLAudioElement, MediaElementAudioSourceNode>());
 
   const active = useMemo(() => activeScenesAt(document, timeMs), [document, timeMs]);
   const title = document.titles.find((item) => timeMs >= item.startMs && timeMs <= item.endMs);
@@ -47,6 +46,7 @@ export function FilmPreview({
       music.current?.pause();
       return;
     }
+    void audioCtx.current?.resume();
     started.current = performance.now() - timeMs;
     const tick = (now: number) => {
       const next = Math.min(duration, now - started.current);
@@ -96,10 +96,27 @@ export function FilmPreview({
   }, [document.music, document.narration, playing, timeMs, duration]);
 
   function attachGain(node: HTMLAudioElement | null, gainRef: { current: GainNode | null }) {
-    if (!node || gainRef.current || typeof AudioContext === 'undefined') return;
+    if (typeof AudioContext === 'undefined') return;
+    if (!node) {
+      if (gainRef.current) {
+        try {
+          gainRef.current.disconnect();
+        } catch {
+          /* already gone */
+        }
+        gainRef.current = null;
+      }
+      return;
+    }
+    if (gainRef.current) return;
     try {
-      const ctx = new AudioContext();
-      const source = ctx.createMediaElementSource(node);
+      if (!audioCtx.current) audioCtx.current = new AudioContext();
+      const ctx = audioCtx.current;
+      let source = audioSources.current.get(node);
+      if (!source) {
+        source = ctx.createMediaElementSource(node);
+        audioSources.current.set(node, source);
+      }
       const gain = ctx.createGain();
       source.connect(gain).connect(ctx.destination);
       gainRef.current = gain;
@@ -135,7 +152,7 @@ export function FilmPreview({
                 src={mediaSrc(item.scene)}
                 playsInline
                 muted
-                style={cropStyle(item.scene)}
+                style={cropPreviewStyle(item.scene.crop)}
               />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
@@ -143,7 +160,7 @@ export function FilmPreview({
                 src={mediaSrc(item.scene)}
                 alt=""
                 style={{
-                  ...cropStyle(item.scene),
+                  ...cropPreviewStyle(item.scene.crop),
                   transform:
                     item.scene.stillMotion === 'slow-zoom'
                       ? `scale(${1 + (item.localMs / Math.max(1, item.scene.durationMs)) * 0.08})`
@@ -186,7 +203,14 @@ export function FilmPreview({
         />
       )}
       <div className="studio-film-transport">
-        <button type="button" onClick={() => setPlaying((value) => !value)} aria-pressed={playing}>
+        <button
+          type="button"
+          onClick={() => {
+            void audioCtx.current?.resume();
+            setPlaying((value) => !value);
+          }}
+          aria-pressed={playing}
+        >
           {playing ? 'Pause preview' : 'Play composed preview'}
         </button>
         <input
@@ -209,15 +233,3 @@ export function FilmPreview({
   );
 }
 
-function cropStyle(scene: CompositionScene): CSSProperties {
-  const width = 100 / scene.crop.width;
-  const height = 100 / scene.crop.height;
-  return {
-    width: `${width}%`,
-    height: `${height}%`,
-    marginLeft: `${-scene.crop.x * width}%`,
-    marginTop: `${-scene.crop.y * height}%`,
-    objectFit: 'cover',
-    maxWidth: 'none',
-  };
-}

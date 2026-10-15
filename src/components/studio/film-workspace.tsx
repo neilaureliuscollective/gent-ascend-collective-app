@@ -12,8 +12,11 @@ import { FilmPreview } from './film-preview';
 import { acknowledgedSave } from '@/domains/studio/design/save-ack';
 import {
   createSerialLock,
+  draftAfterFailedSave,
+  draftStorageKey,
   interpretLocalDraft,
   rebaseDraftForExplicitKeep,
+  writeLocalDraft,
 } from '@/domains/studio/design/local-draft';
 
 type SavedComposition = {
@@ -44,7 +47,7 @@ async function json<T>(response: Response): Promise<T> {
 }
 
 function filmDraftKey(id: string) {
-  return `studio-film-draft:${id}`;
+  return draftStorageKey('film', id);
 }
 
 function readStoredFilm(row: SavedComposition | undefined) {
@@ -177,7 +180,7 @@ export function FilmWorkspace({
       setSaveState('pending');
       setError('');
       try {
-        const savedRow = await json<{ id: string; revision: number; updated_at: string }>(
+        const savedRow = await json<{ id: string; revision: number; updated_at: string; revision_id?: string }>(
           await fetch('/api/studio/film', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -188,6 +191,7 @@ export function FilmWorkspace({
               document: sent,
               updatedAt: snapshot.updatedAt,
               revision: snapshot.revision,
+              freeze,
             }),
           }),
         );
@@ -210,10 +214,7 @@ export function FilmWorkspace({
           setDraft(kept);
           setSaveState('local-draft');
           setStatus('Newer film edits kept locally. The earlier snapshot was not applied.');
-          sessionStorage.setItem(
-            filmDraftKey(sent.id),
-            JSON.stringify({ document: kept.document, revision: kept.revision, updatedAt: kept.updatedAt }),
-          );
+          writeLocalDraft(sessionStorage, filmDraftKey(sent.id), kept);
           return savedRow;
         }
         const applied = {
@@ -229,15 +230,9 @@ export function FilmWorkspace({
         sessionStorage.removeItem(filmDraftKey(sent.id));
         setStatus(kind === 'explicit' ? 'Revision saved on the server.' : 'Saved.');
         if (freeze) {
-          const frozen = await json<{ revisionId: string }>(
-            await fetch('/api/studio/film/revision', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ compositionId: sent.id }),
-            }),
-          );
+          if (!savedRow.revision_id) throw new Error('The exact accepted film revision was not returned.');
           onChanged();
-          return frozen;
+          return { revisionId: savedRow.revision_id };
         }
         onChanged();
         return savedRow;
@@ -245,14 +240,11 @@ export function FilmWorkspace({
         const message = err instanceof Error ? err.message : 'Film could not be saved.';
         setSaveState(message.includes('changed elsewhere') ? 'conflict' : 'error');
         setError(message);
-        sessionStorage.setItem(
-          filmDraftKey(snapshot.id),
-          JSON.stringify({
-            document: snapshot.document,
-            revision: snapshot.revision,
-            updatedAt: snapshot.updatedAt,
-          }),
-        );
+        const latest = draftAfterFailedSave({
+          failed: snapshot,
+          live: liveRef.current?.id === snapshot.id ? liveRef.current : null,
+        });
+        writeLocalDraft(sessionStorage, filmDraftKey(snapshot.id), latest);
         throw err;
       }
     });
@@ -260,11 +252,9 @@ export function FilmWorkspace({
 
   const documentJson = live ? JSON.stringify(live.document) : '';
   useEffect(() => {
-    if (!live || pauseAutosave.current) return;
-    sessionStorage.setItem(
-      filmDraftKey(live.id),
-      JSON.stringify({ document: live.document, revision: live.revision, updatedAt: live.updatedAt }),
-    );
+    if (!live) return;
+    writeLocalDraft(sessionStorage, filmDraftKey(live.id), live);
+    if (pauseAutosave.current) return;
     if (!dirty.current) return;
     const timer = window.setTimeout(() => void persist('autosave').catch(() => undefined), 900);
     return () => window.clearTimeout(timer);

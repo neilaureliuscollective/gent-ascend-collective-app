@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { inflateSync } from 'node:zlib';
 import { PDFDocument } from 'pdf-lib';
-import { interpretLocalDraft, rebaseDraftForExplicitKeep } from '../src/domains/studio/design/local-draft';
-import { applyLayerPatches, createGroupLayer, groupWorldBounds } from '../src/domains/studio/design/geometry';
+import {
+  draftAfterFailedSave,
+  interpretLocalDraft,
+  rebaseDraftForExplicitKeep,
+  writeLocalDraft,
+} from '../src/domains/studio/design/local-draft';
+import { applyLayerPatches, createGroupLayer, groupWorldBounds, layerWorldCorners } from '../src/domains/studio/design/geometry';
 import { nestedSvg } from '../src/domains/studio/design/svg-export';
 import { emptyDocument, parseDesignDocument } from '../src/domains/studio/design/document';
 import { exportPdf } from '../src/domains/studio/design/pdf-export';
@@ -17,8 +23,11 @@ import {
   queueErrorBackoffMs,
   shouldRecoverWhileIdle,
 } from '../src/domains/studio/render/attempt-storage';
-import { dbToRatio, trackGainAt } from '../src/domains/studio/composition/audio';
+import { dbToRatio, MIX_POLICY, trackGainAt } from '../src/domains/studio/composition/audio';
+import { cropPreviewBox } from '../src/domains/studio/composition/crop';
 import { compileRender, coverScaleFilter } from '../src/domains/studio/composition/compile';
+import { PNG } from 'pngjs';
+import { sanitizeWorkerLog } from '../src/domains/studio/render/preflight';
 import { compositionAss } from '../src/domains/studio/composition/captions';
 import { parseComposition } from '../src/domains/studio/composition/model';
 
@@ -47,6 +56,21 @@ describe('Studio draft recovery', () => {
     });
     expect(kept.revision).toBe(4);
     expect(kept.document).toEqual({ title: 'older' });
+  });
+
+  it('keeps the latest live draft when an older failed save returns, including during paused reconcile', () => {
+    const storage = new Map<string, string>();
+    const failed = { document: { title: 'sent-old' }, revision: 2, updatedAt: 't0' };
+    const live = { document: { title: 'typed-newer' }, revision: 2, updatedAt: 't0' };
+    const persisted = draftAfterFailedSave({ failed, live });
+    writeLocalDraft({ setItem: (key, value) => storage.set(key, value) }, 'studio-design-draft:doc', persisted);
+    expect(JSON.parse(storage.get('studio-design-draft:doc')!).document.title).toBe('typed-newer');
+    writeLocalDraft({ setItem: (key, value) => storage.set(key, value) }, 'studio-design-draft:doc', {
+      document: { title: 'paused-edit' },
+      revision: 2,
+      updatedAt: 't0',
+    });
+    expect(JSON.parse(storage.get('studio-design-draft:doc')!).document.title).toBe('paused-edit');
   });
 });
 
@@ -136,6 +160,40 @@ describe('Studio canvas geometry', () => {
     const ungrouped = commitDesign(grouped.document, grouped.history, { type: 'ungroup', groupId: group.id });
     expect(ungrouped.document.layers.some((layer) => layer.type === 'group')).toBe(false);
     expect(ungrouped.document.layers.every((layer) => layer.parentId === null)).toBe(true);
+    const rotated = parseDesignDocument({
+      ...emptyDocument({
+        id,
+        title: 'Rotated bounds',
+        width: 100,
+        height: 70,
+        unit: 'mm',
+        dimensionSource: 'supplied',
+      }),
+      layers: [
+        {
+          id: '20000000-0000-4000-8000-000000000049',
+          type: 'rect',
+          name: 'Tall',
+          parentId: null,
+          visible: true,
+          locked: false,
+          opacity: 1,
+          x: 10,
+          y: 10,
+          width: 8,
+          height: 30,
+          rotation: 90,
+          fill: '#0B3B32',
+          stroke: null,
+          strokeWidth: 0,
+          cornerRadius: 0,
+        },
+      ],
+    });
+    const box = groupWorldBounds(rotated.layers);
+    expect(box.width).toBeGreaterThan(20);
+    expect(box.height).toBeLessThan(20);
+    expect(layerWorldCorners(rotated.layers[0]!).length).toBe(4);
   });
 });
 
@@ -274,11 +332,14 @@ describe('Studio render attempts and idle recovery', () => {
     const outcome = await publishOrReconcileAttempt({
       finish: async () => ({ error: new Error('uncertain'), data: null }),
       readJob: async () => ({
-        status: 'complete',
-        lease_token: null,
-        storage_film: winner.film,
-        storage_cover: winner.cover,
-        storage_captions: winner.captions,
+        available: true,
+        row: {
+          status: 'complete',
+          lease_token: null,
+          storage_film: winner.film,
+          storage_cover: winner.cover,
+          storage_captions: winner.captions,
+        },
       }),
       uploaded: [loser.film, loser.cover, loser.captions],
       remove: async (keys) => {
@@ -335,11 +396,14 @@ describe('Studio render attempts and idle recovery', () => {
         return { error: null, data: true };
       },
       readJob: async () => ({
-        status: published ? 'complete' : 'running',
-        lease_token: published ? null : winnerToken,
-        storage_film: published?.film ?? null,
-        storage_cover: published?.cover ?? null,
-        storage_captions: published?.captions ?? null,
+        available: true,
+        row: {
+          status: published ? 'complete' : 'running',
+          lease_token: published ? null : winnerToken,
+          storage_film: published?.film ?? null,
+          storage_cover: published?.cover ?? null,
+          storage_captions: published?.captions ?? null,
+        },
       }),
       uploaded: [winner.film, winner.cover, winner.captions],
       remove: async (keys) => {
@@ -355,11 +419,14 @@ describe('Studio render attempts and idle recovery', () => {
       readJob: async () => {
         await new Promise((resolve) => setTimeout(resolve, 40));
         return {
-          status: published ? 'complete' : 'running',
-          lease_token: published ? null : 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-          storage_film: published?.film ?? null,
-          storage_cover: published?.cover ?? null,
-          storage_captions: published?.captions ?? null,
+          available: true as const,
+          row: {
+            status: published ? 'complete' : 'running',
+            lease_token: published ? null : 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+            storage_film: published?.film ?? null,
+            storage_cover: published?.cover ?? null,
+            storage_captions: published?.captions ?? null,
+          },
         };
       },
       uploaded: [loser.film, loser.cover, loser.captions],
@@ -375,6 +442,98 @@ describe('Studio render attempts and idle recovery', () => {
     expect(loserResult.ours).toBe(false);
     expect(store.get(winner.film)).toBe('winner-mp4');
     expect(store.has(loser.film)).toBe(false);
+  });
+
+  it('does not delete uploaded output when reconciliation reads fail after a lost finish ack', async () => {
+    const keys = attemptObjectKeys({
+      uid: 'user',
+      projectId: 'proj',
+      jobId: 'job',
+      token: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    });
+    const store = new Map<string, string>([
+      [keys.film, 'kept-mp4'],
+      [keys.cover, 'kept-png'],
+      [keys.captions, 'kept-vtt'],
+    ]);
+    const removed: string[] = [];
+    const lost = await publishOrReconcileAttempt({
+      finish: async () => ({ error: new Error('lost ack'), data: null }),
+      readJob: async () => ({ available: false, reason: 'database timeout' }),
+      uploaded: [keys.film, keys.cover, keys.captions],
+      remove: async (paths) => {
+        for (const key of paths) {
+          removed.push(key);
+          store.delete(key);
+        }
+      },
+      token: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    });
+    expect(lost.uncertain).toBe(true);
+    expect(removed).toEqual([]);
+    expect(store.get(keys.film)).toBe('kept-mp4');
+    const recovered = await publishOrReconcileAttempt({
+      finish: async () => ({ error: new Error('already complete'), data: null }),
+      readJob: async () => ({
+        available: true,
+        row: {
+          status: 'complete',
+          lease_token: null,
+          storage_film: keys.film,
+          storage_cover: keys.cover,
+          storage_captions: keys.captions,
+        },
+      }),
+      uploaded: [keys.film, keys.cover, keys.captions],
+      remove: async (paths) => {
+        for (const key of paths) {
+          removed.push(key);
+          store.delete(key);
+        }
+      },
+    });
+    expect(recovered.published).toBe(true);
+    expect(store.get(keys.film)).toBe('kept-mp4');
+    expect(removed).toEqual([]);
+  });
+
+  it('cleans an abandoned attempt without deleting a newer published winner', async () => {
+    const winner = attemptObjectKeys({
+      uid: 'user',
+      projectId: 'proj',
+      jobId: 'job',
+      token: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+    });
+    const abandoned = attemptObjectKeys({
+      uid: 'user',
+      projectId: 'proj',
+      jobId: 'job',
+      token: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaab',
+    });
+    const store = new Map([
+      [winner.film, 'winner'],
+      [abandoned.film, 'abandoned'],
+    ]);
+    const outcome = await publishOrReconcileAttempt({
+      finish: async () => ({ error: new Error('stale lease'), data: null }),
+      readJob: async () => ({
+        available: true,
+        row: {
+          status: 'complete',
+          lease_token: null,
+          storage_film: winner.film,
+          storage_cover: winner.cover,
+          storage_captions: winner.captions,
+        },
+      }),
+      uploaded: [abandoned.film],
+      remove: async (paths) => {
+        for (const key of paths) store.delete(key);
+      },
+    });
+    expect(outcome.ours).toBe(false);
+    expect(store.get(winner.film)).toBe('winner');
+    expect(store.has(abandoned.film)).toBe(false);
   });
 
   it('recovers during idle polling after a restart before lease expiry', () => {
@@ -436,5 +595,89 @@ describe('Studio preview/export contract', () => {
     expect(ass).toContain('Caption line');
     expect(trackGainAt(0, 1000, document.narration!)).toBe(0);
     expect(trackGainAt(500, 1000, document.narration!)).toBeCloseTo(dbToRatio(-6), 3);
+    expect(MIX_POLICY.ffmpeg).toContain('afade');
+    const portrait = cropPreviewBox({ x: 0.1, y: 0.25, width: 0.5, height: 0.5 });
+    expect(portrait.topPct).toBe(-50);
+    expect(portrait.leftPct).toBe(-20);
+    expect(portrait.topPct).not.toBe(portrait.leftPct);
   });
+});
+
+describe('Studio PDF coordinates and worker logs', () => {
+  it('places a top-left rectangle at the top of the PNG and keeps glyphs upright in the PDF stream', async () => {
+    const document = parseDesignDocument({
+      ...emptyDocument({
+        id,
+        title: 'Y proof',
+        width: 80,
+        height: 50,
+        unit: 'mm',
+        dimensionSource: 'supplied',
+        ppi: 150,
+      }),
+      layers: [
+        {
+          id: '20000000-0000-4000-8000-000000000061',
+          type: 'rect',
+          name: 'Top',
+          parentId: null,
+          visible: true,
+          locked: false,
+          opacity: 1,
+          x: 0,
+          y: 0,
+          width: 20,
+          height: 12,
+          rotation: 0,
+          fill: '#C4912F',
+          stroke: null,
+          strokeWidth: 0,
+          cornerRadius: 0,
+        },
+        {
+          id: '20000000-0000-4000-8000-000000000062',
+          type: 'text',
+          name: 'Letter',
+          parentId: null,
+          visible: true,
+          locked: false,
+          opacity: 1,
+          x: 24,
+          y: 8,
+          width: 50,
+          height: 20,
+          rotation: 0,
+          content: 'L',
+          fontId: 'dejavu',
+          fontSize: 28,
+          fontWeight: 400,
+          align: 'left',
+          letterSpacing: 0,
+          lineHeight: 1,
+          fill: '#E6E7E2',
+        },
+      ],
+    });
+    const png = PNG.sync.read(Buffer.from(await exportPng(document, [])));
+    const sample = (x: number, y: number) => {
+      const i = (y * png.width + x) * 4;
+      return [png.data[i]!, png.data[i + 1]!, png.data[i + 2]!];
+    };
+    const top = sample(8, 8);
+    expect(top[0]).toBeGreaterThan(150);
+    expect(top[1]).toBeGreaterThan(100);
+    const pdfBytes = Buffer.from(await exportPdf(document, []));
+    const raw = pdfBytes.toString('latin1');
+    const inflated = [...raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)].map((match) => {
+      try {
+        return inflateSync(Buffer.from(match[1]!, 'latin1')).toString('latin1');
+      } catch {
+        return match[1]!;
+      }
+    }).join('\n');
+    expect(inflated).toMatch(/[0-9.]+ 0 0 -[0-9.]+ [0-9.]+ [0-9.]+ cm/);
+    expect(sanitizeWorkerLog('token eyJhbGciOi.payload.sig SUPABASE_SERVICE_ROLE_KEY=secret')).not.toContain(
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
+  }, 30000);
 });

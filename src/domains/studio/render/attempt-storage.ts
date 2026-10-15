@@ -41,39 +41,54 @@ export type JobSnapshot = {
   storage_cover: string | null;
   storage_captions: string | null;
 };
+export type JobRead =
+  | { available: true; row: JobSnapshot | null }
+  | { available: false; reason: string };
 
-async function readDurableJob(readJob: () => Promise<JobSnapshot | null>) {
-  let row: JobSnapshot | null = null;
+async function readDurableJob(readJob: () => Promise<JobRead>) {
+  let lastUnavailable: JobRead | null = null;
+  let lastAvailable: Extract<JobRead, { available: true }> | null = null;
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    row = await readJob();
-    if (row?.status && row.status !== 'running') return row;
+    const read = await readJob();
+    if (!read.available) {
+      lastUnavailable = read;
+    } else {
+      lastAvailable = read;
+      if (read.row?.status && read.row.status !== 'running') return read;
+    }
     if (attempt < 5) await new Promise((resolve) => setTimeout(resolve, 40 * (attempt + 1)));
   }
-  return row;
+  if (lastAvailable) return lastAvailable;
+  return lastUnavailable ?? { available: false as const, reason: 'Job state could not be read.' };
 }
 
 /** Reconcile durable job state before deleting anything after an uncertain finish. */
 export async function publishOrReconcileAttempt(input: {
   finish: () => Promise<FinishReceipt>;
-  readJob: () => Promise<JobSnapshot | null>;
+  readJob: () => Promise<JobRead>;
   uploaded: string[];
   remove: (keys: string[]) => Promise<unknown>;
   token?: string;
 }) {
   const finished = await input.finish();
-  if (!finished.error && finished.data) return { published: true, ours: true, reconciled: false };
-  const row = await readDurableJob(input.readJob);
+  if (!finished.error && finished.data)
+    return { published: true, ours: true, reconciled: false, uncertain: false };
+  const read = await readDurableJob(input.readJob);
+  if (!read.available) {
+    return { published: false, ours: false, reconciled: false, uncertain: true };
+  }
+  const row = read.row;
   const keep = publishedStorageKeys(row);
   if (row?.status === 'complete') {
     await cleanupAttemptObjects(input.remove, input.uploaded, keep);
     const ours = input.uploaded.length > 0 && input.uploaded.every((key) => keep.has(key));
-    return { published: ours, ours, reconciled: true };
+    return { published: ours, ours, reconciled: true, uncertain: false };
   }
   if (row?.status === 'running' && input.token && row.lease_token === input.token) {
-    return { published: false, ours: false, reconciled: true };
+    return { published: false, ours: false, reconciled: true, uncertain: true };
   }
   await cleanupAttemptObjects(input.remove, input.uploaded, keep);
-  return { published: false, ours: false, reconciled: true };
+  return { published: false, ours: false, reconciled: true, uncertain: false };
 }
 
 export const IDLE_POLL_MS = 2000;

@@ -14,7 +14,14 @@ import { designFontIds } from '@/domains/studio/design/fonts';
 import { DEFAULT_PPI } from '@/domains/studio/design/units';
 import { sanitizeSvg } from '@/domains/studio/design/sanitize';
 import { acknowledgedSave } from '@/domains/studio/design/save-ack';
-import { createSerialLock, interpretLocalDraft, rebaseDraftForExplicitKeep } from '@/domains/studio/design/local-draft';
+import {
+  createSerialLock,
+  draftAfterFailedSave,
+  draftStorageKey,
+  interpretLocalDraft,
+  rebaseDraftForExplicitKeep,
+  writeLocalDraft,
+} from '@/domains/studio/design/local-draft';
 import { applyLayerPatches, createGroupLayer } from '@/domains/studio/design/geometry';
 import { fontSupportsWeight } from '@/domains/studio/design/fonts';
 
@@ -42,7 +49,7 @@ async function json<T>(response: Response): Promise<T> {
 function readStoredDraft(row: SavedDesign | undefined) {
   if (!row || typeof sessionStorage === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(`studio-design-draft:${row.id}`);
+    const raw = sessionStorage.getItem(draftStorageKey('design', row.id));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { document: DesignDocument; revision: number; updatedAt?: string | null };
     const recovered = interpretLocalDraft(parsed, { document: row.document, revision: row.revision });
@@ -56,7 +63,7 @@ function readStoredDraft(row: SavedDesign | undefined) {
       kind: recovered.kind,
     };
   } catch {
-    sessionStorage.removeItem(`studio-design-draft:${row.id}`);
+    sessionStorage.removeItem(draftStorageKey('design', row.id));
     return null;
   }
 }
@@ -156,7 +163,7 @@ export function DesignWorkspace({
       setSaveState('pending');
       setError('');
       try {
-        const savedRow = await json<{ id: string; revision: number; updated_at: string }>(
+        const savedRow = await json<{ id: string; revision: number; updated_at: string; revision_id?: string }>(
           await fetch('/api/studio/design', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -167,6 +174,7 @@ export function DesignWorkspace({
               document: snapshot.document,
               updatedAt: snapshot.updatedAt,
               revision: snapshot.revision,
+              freeze,
             }),
           }),
         );
@@ -195,40 +203,27 @@ export function DesignWorkspace({
           }
           setSaveState('local-draft');
           setStatus('Newer edits kept locally. The earlier revision is not this draft.');
+          const keptDraft = liveRef.current?.id === snapshot.id ? liveRef.current : null;
+          if (keptDraft) writeLocalDraft(sessionStorage, draftStorageKey('design', snapshot.id), keptDraft);
           return { savedRow, ack, frozen: false as const };
         }
         const next = { ...current, revision: ack.revision, updatedAt: ack.updatedAt };
         liveRef.current = next;
         setLive(next);
         setSaveState('saved');
-        sessionStorage.removeItem(`studio-design-draft:${snapshot.id}`);
+        sessionStorage.removeItem(draftStorageKey('design', snapshot.id));
         setStatus(kind === 'explicit' ? 'Revision saved on the server.' : 'Saved.');
         setCurrentId(savedRow.id);
-        let revisionId: string | undefined;
-        if (freeze) {
-          const frozen = await json<{ revisionId: string }>(
-            await fetch('/api/studio/design/revision', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ designId: snapshot.id }),
-            }),
-          );
-          revisionId = frozen.revisionId;
-        }
+        const revisionId = freeze ? savedRow.revision_id : undefined;
+        if (freeze && !revisionId) throw new Error('The exact accepted revision was not returned.');
         onChanged();
         return { savedRow, ack, pinned: true as const, revisionId };
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Design could not be saved.';
         setSaveState(message.includes('changed elsewhere') ? 'conflict' : 'error');
         setError(message);
-        sessionStorage.setItem(
-          `studio-design-draft:${snapshot.id}`,
-          JSON.stringify({
-            document: snapshot.document,
-            revision: snapshot.revision,
-            updatedAt: snapshot.updatedAt,
-          }),
-        );
+        const latest = draftAfterFailedSave({ failed: snapshot, live: liveRef.current?.id === snapshot.id ? liveRef.current : null });
+        writeLocalDraft(sessionStorage, draftStorageKey('design', snapshot.id), latest);
         throw err;
       }
     });
@@ -236,13 +231,11 @@ export function DesignWorkspace({
 
   const documentJson = live ? JSON.stringify(live.document) : '';
   useEffect(() => {
-    if (!live || pauseAutosave.current) return;
+    if (!live) return;
+    writeLocalDraft(sessionStorage, draftStorageKey('design', live.id), live);
+    if (pauseAutosave.current) return;
     dirty.current = true;
     persistGen.current += 1;
-    sessionStorage.setItem(
-      `studio-design-draft:${live.id}`,
-      JSON.stringify({ document: live.document, revision: live.revision, updatedAt: live.updatedAt }),
-    );
     const timer = window.setTimeout(() => void persist('autosave').catch(() => undefined), 900);
     return () => window.clearTimeout(timer);
     // persist reads liveRef; documentJson is the dirty signal.
@@ -587,7 +580,7 @@ export function DesignWorkspace({
           <button
             type="button"
             onClick={() => {
-              sessionStorage.removeItem(`studio-design-draft:${live.id}`);
+              sessionStorage.removeItem(draftStorageKey('design', live.id));
               pauseAutosave.current = false;
               setDraft(null);
               setSaveState('idle');

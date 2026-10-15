@@ -5,9 +5,12 @@ import { z } from 'zod';
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
   try {
-    const input = z.object({ designId: z.uuid() }).strict().safeParse(await mutationBody(request));
+    const input = z
+      .object({ designId: z.uuid(), expectedRevision: z.number().int().min(1) })
+      .strict()
+      .safeParse(await mutationBody(request));
     if (!input.success) throw new IntelligenceError('Check the design revision.');
-    return privateJson(await freezeDesign(input.data.designId));
+    return privateJson(await freezeDesign(input.data.designId, input.data.expectedRevision));
   } catch (error) {
     return apiError(error);
   }

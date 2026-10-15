@@ -1359,10 +1359,11 @@ export interface Database {
           p_document: import('@/domains/studio/design/document').DesignDocument;
           p_updated: string | null;
           p_expected: number;
+          p_freeze?: boolean;
         };
-        Returns: { id: string; revision: number; updated_at: string }[];
+        Returns: { id: string; revision: number; updated_at: string; revision_id: string }[];
       };
-      ai_studio_design_freeze: { Args: { p_id: string }; Returns: string };
+      ai_studio_design_freeze: { Args: { p_id: string; p_expected: number }; Returns: string };
       ai_studio_composition_save: {
         Args: {
           p_id: string;
@@ -1371,10 +1372,11 @@ export interface Database {
           p_document: import('@/domains/studio/composition/model').CompositionDocument;
           p_updated: string | null;
           p_expected: number;
+          p_freeze?: boolean;
         };
-        Returns: { id: string; revision: number; updated_at: string }[];
+        Returns: { id: string; revision: number; updated_at: string; revision_id: string }[];
       };
-      ai_studio_composition_freeze: { Args: { p_id: string }; Returns: string };
+      ai_studio_composition_freeze: { Args: { p_id: string; p_expected: number }; Returns: string };
       ai_studio_render_begin: {
         Args: {
           p_id: string;

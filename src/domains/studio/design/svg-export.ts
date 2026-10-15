@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { designFont, designFontPath } from './fonts';
 import { escapeXml, sanitizeSvg } from './sanitize';
-import { loadDesignFont, wrapText } from './measure';
+import { loadDesignFont, wrapText, weightAdvanceScale } from './measure';
 import { glyphScale, mediaInches, mediaPixels, pointsToPixels, toPixels } from './units';
 import { visibleOrder, type DesignDocument, type DesignLayer } from './document';
 import type { AssetBytes } from './assets';
@@ -100,7 +100,12 @@ export async function exportSvg(
     } else if (layer.type === 'text') {
       const font = await loadDesignFont(layer.fontId, layer.fontWeight);
       const spec = designFont(layer.fontId);
-      const wrapped = wrapText(layer, font, t.w / document.page.ppi);
+      const wrapped = wrapText(
+        layer,
+        font,
+        t.w / document.page.ppi,
+        await weightAdvanceScale(layer.fontId, layer.fontWeight),
+      );
       const ppi = document.page.ppi;
       if (fontMode === 'outline') {
         if (layer.fontWeight !== 400)

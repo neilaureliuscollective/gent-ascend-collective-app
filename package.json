@@ -31,6 +31,8 @@
     "test:health:bundle": "node scripts/build-health-fixture.mjs",
     "studio:worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/studio-render-worker.mjs",
     "studio:worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/studio-render-worker.mjs --supervised",
+    "studio:render:preflight": "node scripts/studio-render-preflight.mjs",
+    "studio:render:bundle": "node scripts/studio-render-bundle.mjs",
     "architect:worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs",
     "architect:worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs --supervised"
   },

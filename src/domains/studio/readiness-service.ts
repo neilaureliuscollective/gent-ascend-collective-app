@@ -3,6 +3,7 @@ import { currentFounderAccess } from '@/domains/access/founder';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { studioConfiguration, type StudioSetupCheck } from './readiness';
 import { missingStudioSchema } from './schema-absence';
+import { renderReadiness } from './composition-service';
 export async function studioReadiness() {
   if (!(await currentFounderAccess())) throw new IntelligenceError('Founder access required.', 403);
   const { client, person } = await intelligenceSession();
@@ -47,5 +48,6 @@ export async function studioReadiness() {
     liveAccepted: false,
     configuration: studioConfiguration(process.env),
     schemas,
+    renderer: await renderReadiness(),
   };
 }

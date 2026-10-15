@@ -1983,11 +1983,35 @@ describe('Studio footage owner, quote and spending boundary', () => {
       layers: [],
       guides: { trim: true, bleed: true, safe: true },
     }).replace(/'/g, "''");
-    const saved = await asUser<{ id: string; revision: number }>(
+    const saved = await asUser<{ id: string; revision: number; revision_id: string; updated_at: string }>(
       founder,
-      `select id,revision from public.ai_studio_design_save('${design}','${project}','Label','${document}'::jsonb,null,0)`,
+      `select id,revision,revision_id,updated_at from public.ai_studio_design_save('${design}','${project}','Label','${document}'::jsonb,null,0,true)`,
     );
     expect(saved.rows[0]).toMatchObject({ id: design, revision: 1 });
+    expect(saved.rows[0]!.revision_id).toMatch(/^[0-9a-f-]{36}$/i);
+    const frozenA = saved.rows[0]!.revision_id;
+    const documentB = document.replace('"title":"Label"', '"title":"Tab B"');
+    const savedAt = new Date(saved.rows[0]!.updated_at).toISOString();
+    const later = await asUser<{ revision: number; revision_id: string }>(
+      founder,
+      `select revision,revision_id from public.ai_studio_design_save('${design}','${project}','Tab B','${documentB}'::jsonb,'${savedAt}'::timestamptz,1,false)`,
+    );
+    expect(later.rows[0]!.revision).toBe(2);
+    expect(later.rows[0]!.revision_id).not.toBe(frozenA);
+    const pinned = await asUser<{ title: string; kind: string }>(
+      founder,
+      `select document->>'title' as title, kind from public.ai_studio_design_revisions where id='${frozenA}'`,
+    );
+    expect(pinned.rows[0]).toMatchObject({ title: 'Label', kind: 'explicit' });
+    const liveTitle = await asUser<{ title: string }>(
+      founder,
+      `select document->>'title' as title from public.ai_studio_designs where id='${design}'`,
+    );
+    expect(liveTitle.rows[0]!.title).toBe('Tab B');
+    await expect(asUser(founder, `select public.ai_studio_design_freeze('${design}', 1)`)).resolves.toBeTruthy();
+    await expect(asUser(founder, `select public.ai_studio_design_freeze('${design}', 99)`)).rejects.toThrow(
+      /STALE_DESIGN_REVISION/i,
+    );
     expect((await asUser(member, 'select id from public.ai_studio_designs')).rows).toHaveLength(0);
     await expect(
       asUser(

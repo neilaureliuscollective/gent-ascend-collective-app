@@ -1,3 +1,15 @@
+/**
+ * Preview and FFmpeg share this contract:
+ * linearGain = dbToRatio(gainDb) * fadeEnvelope(time, duration, fadeInMs, fadeOutMs).
+ * Web Audio GainNode uses the full ratio. HTMLMediaElement.volume is clamped to 1 only when
+ * AudioContext is unavailable. FFmpeg uses volume=linearGain then afade in/out at the same
+ * times, then amix=inputs=2:duration=longest:dropout_transition=0.
+ */
+export const MIX_POLICY = {
+  preview: 'trackGainAt → GainNode, or elementVolume fallback',
+  ffmpeg: 'volume + afade + amix',
+} as const;
+
 /** Shared preview/export gain. Schema allows -24..+6 dB; both paths use this linear ratio. */
 export function dbToRatio(db: number) {
   return Math.round(10 ** (db / 20) * 1000) / 1000;

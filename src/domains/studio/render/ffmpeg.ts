@@ -26,8 +26,9 @@ export function ffmpegBinary() {
   return process.env.STUDIO_FFMPEG_PATH || 'ffmpeg';
 }
 
+/** Never implied by STUDIO_RENDER_WORKER. Requires an explicit commissioned worker. */
 export function hostedRenderConfigured() {
-  return false;
+  return process.env.STUDIO_RENDER_COMMISSIONED === 'true';
 }
 
 export function renderWorkerRequested() {

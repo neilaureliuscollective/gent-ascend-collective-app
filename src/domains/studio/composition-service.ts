@@ -20,10 +20,11 @@ export const compositionSaveInput = z
     document: z.unknown(),
     updatedAt: z.iso.datetime({ offset: true }).nullable(),
     revision: z.number().int().min(0),
+    freeze: z.boolean().optional(),
   })
   .strict();
 
-type SaveRow = { id: string; revision: number; updated_at: string };
+type SaveRow = { id: string; revision: number; updated_at: string; revision_id: string };
 
 export async function saveComposition(input: z.infer<typeof compositionSaveInput>) {
   await verifyStudioProject(input.projectId);
@@ -37,6 +38,7 @@ export async function saveComposition(input: z.infer<typeof compositionSaveInput
     p_document: document,
     p_updated: input.updatedAt,
     p_expected: input.revision,
+    p_freeze: input.freeze ?? false,
   });
   if (result.error) {
     if (result.error.message.includes('COMPOSITION_CONFLICT'))
@@ -48,11 +50,17 @@ export async function saveComposition(input: z.infer<typeof compositionSaveInput
   return { ...row, document };
 }
 
-export async function freezeComposition(compositionId: string) {
+export async function freezeComposition(compositionId: string, expectedRevision: number) {
   const { client } = await studioSession();
-  const result = await client.rpc('ai_studio_composition_freeze', { p_id: compositionId });
-  if (result.error || !result.data)
+  const result = await client.rpc('ai_studio_composition_freeze', {
+    p_id: compositionId,
+    p_expected: expectedRevision,
+  });
+  if (result.error || !result.data) {
+    if (result.error?.message.includes('STALE_COMPOSITION_REVISION'))
+      throw new IntelligenceError('That film revision is no longer the selected freeze target.', 409);
     throw new IntelligenceError('The film revision could not be frozen.', 409);
+  }
   return { revisionId: result.data as string };
 }
 
@@ -214,7 +222,8 @@ export async function executeRender(jobId: string, document: CompositionDocument
           .select('status,lease_token,storage_film,storage_cover,storage_captions')
           .eq('id', jobId)
           .maybeSingle();
-        return row.data;
+        if (row.error) return { available: false as const, reason: row.error.message };
+        return { available: true as const, row: row.data };
       },
       uploaded,
       remove,
@@ -282,11 +291,29 @@ export async function renderReadiness() {
   } catch {
     ffmpeg = null;
   }
+  const healthUrl = process.env.STUDIO_RENDER_HEALTH_URL;
+  let workerHealth: { status: string; commissioned?: boolean; film?: string } | null = null;
+  let healthError: string | null = null;
+  if (healthUrl) {
+    try {
+      const response = await fetch(healthUrl, { signal: AbortSignal.timeout(2500) });
+      workerHealth = (await response.json()) as { status: string; commissioned?: boolean; film?: string };
+    } catch (error) {
+      healthError = error instanceof Error ? error.message.slice(0, 120) : 'health unavailable';
+    }
+  }
+  const workerLive = workerHealth?.status === 'ok' && workerHealth.film === 'ffmpeg-libx264-aac';
+  const commissioned = process.env.STUDIO_RENDER_COMMISSIONED === 'true' && workerLive;
   return {
-    hosted: 'unavailable' as const,
+    hosted: commissioned ? ('detected' as const) : ('unavailable' as const),
+    commissioned,
     workerRequested: renderWorkerRequested(),
+    workerHealth: workerLive ? 'detected' : healthUrl ? 'unavailable' : 'unconfigured',
+    healthError,
     localBinary: ffmpeg ? 'implemented' : 'configuration required',
     ffmpeg,
-    note: 'Hosted rendering is unavailable until a functioning worker is verified. STUDIO_RENDER_WORKER=true only queues jobs. Run scripts/studio-render-worker.mjs on a host with FFmpeg 6.1+ libx264/aac, or leave the flag unset so /api/studio/film/render executes locally.',
+    note: commissioned
+      ? 'A commissioned worker answered health with FFmpeg libx264. This is still not a production renderer until founder authorization.'
+      : 'Hosted rendering is unavailable. STUDIO_RENDER_WORKER=true only queues jobs. Package: ops/studio-render. A health URL without STUDIO_RENDER_COMMISSIONED is not readiness.',
   };
 }

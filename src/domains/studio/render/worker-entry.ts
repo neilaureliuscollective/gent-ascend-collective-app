@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { parseComposition } from '../composition/model';
 import { materializeCompositionAssets } from './materialize';
-import { inspectFfmpeg, renderComposition } from './ffmpeg';
+import { renderComposition } from './ffmpeg';
 import {
   IDLE_POLL_MS,
   attemptObjectKeys,
@@ -12,6 +12,15 @@ import {
   queueErrorBackoffMs,
   shouldRecoverWhileIdle,
 } from './attempt-storage';
+import { createServer, type Server } from 'node:http';
+import {
+  healthBind,
+  healthPort,
+  rendererPreflight,
+  renderConcurrency,
+  RENDER_SHUTDOWN_MS,
+  sanitizeWorkerLog,
+} from './preflight';
 
 const IMAGE_BUCKET = 'aethelios-studio';
 const RENDER_BUCKET = 'aethelios-studio-renders';
@@ -41,16 +50,21 @@ function client() {
 
 let stopping = false;
 const active = new Map<string, AbortController>();
+let health: Server | null = null;
+const limit = renderConcurrency();
 
 async function main() {
   const supervised = process.argv.includes('--supervised') || process.env.STUDIO_RENDER_WORKER_MODE === 'supervised';
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
-  const ffmpeg = await inspectFfmpeg();
-  if (!ffmpeg.configuration.includes('libx264'))
-    throw new Error('The configured FFmpeg build does not include libx264.');
+  process.on('SIGINT', () => void shutdown());
+  process.on('SIGTERM', () => void shutdown());
+  const preflight = await rendererPreflight();
+  if (!preflight.ok || !preflight.libx264)
+    throw new Error(preflight.ffmpegError || 'Studio render preflight failed.');
+  health = listenHealth(preflight);
   console.error(
-    `Studio render worker ready. FFmpeg ${ffmpeg.version}. Hosted rendering remains unavailable until this process is separately authorized.`,
+    sanitizeWorkerLog(
+      `Studio render worker ready. FFmpeg ${preflight.ffmpeg?.version}. Concurrency ${limit}. Hosted rendering remains unavailable until this process is separately commissioned.`,
+    ),
   );
   const db = client();
   await recoverAndRequeue(db);
@@ -59,6 +73,10 @@ async function main() {
   do {
     if (stopping) break;
     try {
+      if (active.size >= limit) {
+        await sleep(IDLE_POLL_MS);
+        continue;
+      }
       const job = await nextJob(db);
       queueFailures = 0;
       if (!job) {
@@ -73,11 +91,40 @@ async function main() {
       await recoverAndRequeue(db);
     } catch (error) {
       queueFailures += 1;
-      console.error(`Studio render queue error: ${error instanceof Error ? error.message : 'unknown'}`);
+      console.error(
+        sanitizeWorkerLog(`Studio render queue error: ${error instanceof Error ? error.message : 'unknown'}`),
+      );
       if (!supervised) throw error;
       await sleep(queueErrorBackoffMs(queueFailures));
     }
   } while (supervised && !stopping);
+}
+
+function listenHealth(preflight: Awaited<ReturnType<typeof rendererPreflight>>) {
+  const port = healthPort();
+  if (!port) return null;
+  const server = createServer((request, response) => {
+    if (request.url !== '/health' && request.url !== '/') {
+      response.writeHead(404);
+      response.end();
+      return;
+    }
+    const body = JSON.stringify({
+      status: stopping ? 'stopping' : 'ok',
+      commissioned: process.env.STUDIO_RENDER_COMMISSIONED === 'true',
+      film: preflight.film,
+      designExport: preflight.designExport,
+      ffmpeg: preflight.ffmpeg
+        ? { version: preflight.ffmpeg.version, libx264: preflight.libx264 }
+        : null,
+      active: active.size,
+      concurrency: limit,
+    });
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(body);
+  });
+  server.listen(port, healthBind());
+  return server;
 }
 
 async function recoverAndRequeue(db: ReturnType<typeof client>) {
@@ -87,9 +134,12 @@ async function recoverAndRequeue(db: ReturnType<typeof client>) {
   if (requeued.error) throw new Error(requeued.error.message || 'Studio render requeue failed.');
 }
 
-function shutdown() {
+async function shutdown() {
   stopping = true;
   for (const abort of active.values()) abort.abort();
+  const deadline = Date.now() + RENDER_SHUTDOWN_MS;
+  while (active.size && Date.now() < deadline) await sleep(200);
+  health?.close();
 }
 
 async function nextJob(db: ReturnType<typeof client>): Promise<Job | null> {
@@ -177,7 +227,8 @@ async function processJob(db: ReturnType<typeof client>, job: Job) {
           .select('status,lease_token,storage_film,storage_cover,storage_captions')
           .eq('id', job.id)
           .maybeSingle();
-        return row.data;
+        if (row.error) return { available: false as const, reason: row.error.message };
+        return { available: true as const, row: row.data };
       },
       uploaded,
       remove,
@@ -185,14 +236,16 @@ async function processJob(db: ReturnType<typeof client>, job: Job) {
     });
     if (!outcome.published)
       throw new Error('Completion receipt was rejected; late output was not published.');
-    console.error(`Studio render ${job.id} complete (${rendered.durationMs}ms).`);
+    console.error(sanitizeWorkerLog(`Studio render ${job.id} complete (${rendered.durationMs}ms).`));
   } catch (error) {
     await db.rpc('ai_studio_render_fail', {
       p_id: job.id,
       p_token: token,
       p_code: abort.signal.aborted ? 'cancelled' : job.retry_count + 1 >= MAX_ATTEMPTS ? 'render_failed' : 'retry',
     });
-    console.error(`Studio render ${job.id} failed: ${error instanceof Error ? error.message : 'unknown'}`);
+    console.error(
+      sanitizeWorkerLog(`Studio render ${job.id} failed: ${error instanceof Error ? error.message : 'unknown'}`),
+    );
   } finally {
     clearInterval(beat);
     active.delete(job.id);
@@ -205,6 +258,6 @@ function sleep(ms: number) {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : 'Studio render worker failed.');
+  console.error(sanitizeWorkerLog(error instanceof Error ? error.message : 'Studio render worker failed.'));
   process.exit(1);
 });

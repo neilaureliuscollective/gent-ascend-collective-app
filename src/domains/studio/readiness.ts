@@ -40,8 +40,8 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
     },
     {
       name: 'Film renderer',
-      status: 'unavailable',
-      next: 'Hosted rendering stays unavailable until a verified worker host with FFmpeg 6.1+ libx264/aac runs scripts/studio-render-worker.mjs. STUDIO_RENDER_WORKER=true only queues jobs; it is not readiness. Local execution can still produce a real MP4.',
+      status: env.STUDIO_RENDER_COMMISSIONED === 'true' ? 'unverified' : 'unavailable',
+      next: 'Hosted rendering stays unavailable until a Fly.io Machine from ops/studio-render answers /health with FFmpeg libx264 and STUDIO_RENDER_COMMISSIONED is explicitly set after founder authorization. STUDIO_RENDER_WORKER=true only queues jobs; it is not readiness. Design PNG/PDF need the same FFmpeg host — the web runtime does not become a renderer by queuing Film jobs.',
     },
     {
       name: 'Live acceptance',

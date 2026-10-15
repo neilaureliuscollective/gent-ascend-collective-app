@@ -12,12 +12,33 @@ import {
  * baked into children after a transform so canvas, JSON and exporters agree without a second
  * coordinate system.
  */
+/** Axis-aligned bounds of a layer after its stored rotation about the box centre. */
+export function layerWorldCorners(layer: DesignLayer) {
+  const cx = layer.x + layer.width / 2;
+  const cy = layer.y + layer.height / 2;
+  const rad = ((layer.rotation || 0) * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const points = [
+    [layer.x, layer.y],
+    [layer.x + layer.width, layer.y],
+    [layer.x + layer.width, layer.y + layer.height],
+    [layer.x, layer.y + layer.height],
+  ] as const;
+  return points.map(([px, py]) => {
+    const dx = px - cx;
+    const dy = py - cy;
+    return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+  });
+}
+
 export function groupWorldBounds(layers: DesignLayer[]) {
   if (!layers.length) return { x: 0, y: 0, width: 1, height: 1 };
-  const left = Math.min(...layers.map((layer) => layer.x));
-  const top = Math.min(...layers.map((layer) => layer.y));
-  const right = Math.max(...layers.map((layer) => layer.x + layer.width));
-  const bottom = Math.max(...layers.map((layer) => layer.y + layer.height));
+  const corners = layers.flatMap(layerWorldCorners);
+  const left = Math.min(...corners.map((point) => point.x));
+  const top = Math.min(...corners.map((point) => point.y));
+  const right = Math.max(...corners.map((point) => point.x));
+  const bottom = Math.max(...corners.map((point) => point.y));
   return {
     x: left,
     y: top,
