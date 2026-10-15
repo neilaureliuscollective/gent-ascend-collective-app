@@ -118,7 +118,8 @@ for (const width of [320, 344, 390, 720, 768, 1440, 1920])
       'aria-pressed',
       'true',
     );
-    await expect(page.getByText('Create intelligent, beautiful software experiences.')).toBeVisible();
+    await expect(page.getByLabel('Design an Application working stage')).toContainText('Expected:');
+  await expect(page.locator('.origin-choice-art image')).toHaveCount(0);
     await page.screenshot({
       path: `test-results/architect-immersive-entry-${width}.png`,
       fullPage: true,
@@ -2387,7 +2388,8 @@ test('welcome arrival explains paths and saved Deliverables fill the phone canva
   await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Design an Application' }).click();
   await expect(page.getByRole('button', { name: 'Design an Application' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText('Create intelligent, beautiful software experiences.')).toBeVisible();
+  await expect(page.getByLabel('Design an Application working stage')).toContainText('Expected:');
+  await expect(page.locator('.origin-choice-art image')).toHaveCount(0);
   await expect(page.getByLabel('Design an Application working stage')).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-arrival-application.png', fullPage: true });
   await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-application.png', fullPage: true });
@@ -2395,6 +2397,10 @@ test('welcome arrival explains paths and saved Deliverables fill the phone canva
   await expect(page.getByLabel('Project name (optional)')).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-arrival-shaping.png', fullPage: true });
   await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-shaping.png', fullPage: true });
+  await page.getByRole('button', { name: 'Next question', exact: true }).click();
+  await page.getByLabel('Audience (optional)', { exact: true }).fill('Studio visitors');
+  await page.getByRole('button', { name: 'Next question', exact: true }).click();
+  await page.locator('#origin-guided-field').fill('Save a visit and calculate total hours');
   await page.getByLabel('Project name (optional)').fill('Field notes studio');
   await page.getByRole('button', { name: 'Create & save project' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 1');

@@ -6,7 +6,7 @@ import { aiConfigSchema } from '@/domains/intelligence/validation';
 import { APP_ACCEPTANCE_MODEL, appGenerationInstructions, assertApprovedAppGenerationModel } from './budget';
 import { isGeneratedAppPath } from './catalog';
 import { buildAppGenerationContext, type AppGenerationContext } from './context';
-import { labeledAppSource } from './hash';
+import { fileHash, labeledAppSource } from './hash';
 import {
   notesBrokenTypecheckOperations,
   notesProposal,
@@ -43,6 +43,26 @@ export function mockedSupportedAppProposal(
       collections: input.collections?.length ? input.collections : notesProposal().collections,
       behaviors: notesProposal().behaviors,
       notes: 'Labelled mocked compile-failure fixture. This is not a paid OpenAI call.',
+    });
+  }
+  if (input.kind === 'revise' && /warm gold heading/i.test(input.instruction ?? '')) {
+    const base = overlaySealedFiles(files);
+    const app = base.find((file) => file.path === 'src/App.tsx');
+    if (!app || !app.content.includes('<h1 data-architect-target='))
+      throw new Error('The labelled visual fixture requires the verified notes heading.');
+    const operations = [{
+      op: 'update' as const,
+      path: app.path,
+      baseHash: fileHash(app.content),
+      content: app.content.replace('<h1 data-architect-target=', '<h1 style={{ color: "#e8c980", letterSpacing: "0.03em" }} data-architect-target='),
+    }];
+    return appProposalSchema.parse({
+      summary: 'Warm gold heading; keep saved notes, validation and hours calculation unchanged.',
+      files: applyFileOperations(base, operations).files.filter((file) => isGeneratedAppPath(file.path)),
+      operations,
+      collections: input.collections?.length ? input.collections : notesProposal().collections,
+      behaviors: notesProposal().behaviors,
+      notes: 'Labelled deterministic visual revision, not a paid model call.',
     });
   }
   if (input.kind === 'revise') {

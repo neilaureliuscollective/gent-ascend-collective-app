@@ -209,3 +209,16 @@ it('labels a compile-failure revision and refuses HMAC-only preview after restar
     ),
   ).toBe(false);
 });
+
+
+it('scoped visual fixture changes only the verified heading and retains data contracts', () => {
+  const created = mockedSupportedAppProposal({ kind: 'create', files: [] });
+  const revised = mockedSupportedAppProposal({ kind: 'revise', files: created.files, collections: created.collections, instruction: 'Use a warm gold heading' });
+  expect(revised.collections).toEqual(created.collections);
+  expect(revised.behaviors).toEqual(created.behaviors);
+  expect(revised.operations).toHaveLength(1);
+  expect(revised.operations?.[0]?.path).toBe('src/App.tsx');
+  const before = created.files.find((file) => file.path === 'src/App.tsx')!.content;
+  const after = revised.files.find((file) => file.path === 'src/App.tsx')!.content;
+  expect(after.replace(' style={{ color: "#e8c980", letterSpacing: "0.03em" }}', '')).toBe(before);
+});

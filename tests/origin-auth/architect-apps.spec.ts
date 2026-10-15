@@ -192,6 +192,15 @@ async function captureWorkbench(target: Page, name: string) {
   await target.screenshot({ path: `${dirs.connected}/${name}.png`, fullPage: true });
 }
 
+async function capturePhase(page: Page, phase: string) {
+  for (const [label, width, height] of [['desktop', 1440, 900], ['fold', 720, 900], ['phone', 390, 844]] as const) {
+    await page.setViewportSize({ width, height });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await captureWorkbench(page, `workbench-${phase}-${label}`);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
+
 async function fillNote(form: Locator, input: { title: string; note: string; hours: string }) {
   await form.getByRole('textbox', { name: 'Title', exact: true }).fill(input.title);
   await form.getByRole('textbox', { name: 'Note', exact: true }).fill(input.note);
@@ -214,11 +223,11 @@ async function enableAppsExecutionPolicy() {
   }
 }
 
-test.afterEach(async ({ page }) => {
+test.afterEach(async ({ page, context }) => {
   const video = page.video();
   if (!video) return;
   const dirs = evidenceDir();
-  await page.close();
+  await context.close();
   await video.saveAs(`${dirs.docs}/connected-journey.webm`);
   await video.saveAs(`${dirs.connected}/connected-journey.webm`);
 });
@@ -232,9 +241,13 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/founder$/);
   await page.goto('/app/architect');
+  await capturePhase(page, 'arrival');
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await capturePhase(page, 'selected-path');
   const name = `Synthetic Apps ${Date.now()}`;
   await page.getByLabel('Tell Aethelios what you want to create').fill('Create field notes I can save.');
   await page.getByLabel('Project name (optional)').fill(name);
+  await capturePhase(page, 'shaping');
   await page.getByRole('button', { name: 'Create & save project' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 1');
   const projectUrl = page.url();
@@ -285,6 +298,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   const frame = page.frameLocator('iframe[title="Private generated application preview"]');
   await expect(frame.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
 
+  await capturePhase(page, 'compiled');
   let dropCreateAck = true;
   const capturedCreate: { body?: Record<string, unknown> } = {};
   await page.route('**/api/architect-apps/data', async (route) => {
@@ -368,10 +382,11 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.getByRole('button', { name: /src\/App\.tsx|Field notes/ })).toBeVisible();
   await page.getByRole('button', { name: 'Explain' }).click();
   await expect(page.getByText(/Host evidence, not a filename guess/)).toBeVisible();
-  await page.getByRole('button', { name: 'Change' }).click();
+  await page.getByRole('region', { name: 'Selected application target', exact: true }).getByRole('button', { name: 'Change', exact: true }).click();
   await expect(changeDraft).toBeVisible();
   await expect(requestField).toHaveValue(/Change src\/App\.tsx in revision/);
-  await page.getByRole('button', { name: 'Compare' }).click();
+  await capturePhase(page, 'precise-edit');
+  await page.getByRole('button', { name: 'Compare', exact: true }).click();
   await expect(
     page.getByText(/Comparing does not restore or apply a revision|No current\/previous file difference is available to compare/),
   ).toBeVisible();
@@ -383,9 +398,10 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Request a change' }).click();
   await expect(changeDraft).toBeVisible();
   await expect(requestField).toBeFocused();
-  await requestField.fill('Add an optional tag for office or field notes.');
+  await requestField.fill('Change src/App.tsx in revision 1: use a warm gold heading; preserve hours calculations and saved records.');
   await changeDraft.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
+  await capturePhase(page, 'comparison');
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 2 accepted/)).toBeVisible();
   await expect(primaryStatus(page)).toHaveText('Preview ready');
@@ -400,6 +416,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await openBuildDiagnostics(page);
   await expect(buildDiagnostics(page)).toContainText('Compiled preview is ready');
   await closeBuildDiagnostics(page);
+  await expect(frame.getByRole('heading', { name: /field notes/i })).toHaveCSS('color', 'rgb(232, 201, 128)');
+  await expect(frame.getByText(/7h logged/i)).toBeVisible();
   await page.getByRole('button', { name: 'Records' }).click();
   await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
@@ -425,25 +443,28 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(buildDiagnostics(page).locator('[data-flag="retained"]')).toHaveText('Last good preview kept');
   await closeBuildDiagnostics(page);
   await expect(frame.getByRole('heading', { name: /field notes/i })).toBeVisible();
+  await expect(frame.getByText(/7h logged/i)).toBeVisible();
   await expect(frame.getByRole('button', { name: /site visit a edited/i })).toBeVisible();
   await expect(frame.getByRole('button', { name: /site visit b/i })).toBeVisible();
   await page.getByRole('button', { name: 'Records' }).click();
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible({ timeout: 15000 });
 
+  await page.getByRole('button', { name: 'Return to verified revision 2', exact: true }).click();
+  await expect(frame.getByText(/7h logged/i)).toBeVisible();
+  await capturePhase(page, 'recovered');
   evidenceDir();
   await expect(primaryStatus(page)).toHaveText('Failed · last good preview kept');
-  await page.waitForTimeout(600);
   await captureWorkbench(page, 'workbench-desktop');
   await page.setViewportSize({ width: 720, height: 900 });
   await page.getByRole('button', { name: 'Fold' }).click();
   await expect(primaryStatus(page)).toBeVisible();
-  await page.waitForTimeout(400);
   await captureWorkbench(page, 'workbench-fold');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Phone' }).click();
   await expect(primaryStatus(page)).toHaveText('Failed · last good preview kept');
-  await page.waitForTimeout(400);
   await captureWorkbench(page, 'workbench-phone');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await captureWorkbench(page, 'workbench-phone-320');
   await page.setViewportSize({ width: 344, height: 882 });
   await expect(primaryStatus(page)).toBeVisible();
   await captureWorkbench(page, 'workbench-phone-344');
@@ -504,6 +525,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
     await closeBuildDiagnostics(next);
     const reopened = next.frameLocator('iframe[title="Private generated application preview"]');
     await expect(reopened.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
+    await expect(reopened.getByText(/7h logged/i)).toBeVisible();
+    await capturePhase(next, 'reopened');
     await expect(reopened.getByRole('button', { name: /site visit a edited/i })).toBeVisible();
     await expect(reopened.getByRole('button', { name: /site visit b/i })).toBeVisible();
     await next.getByRole('button', { name: 'Records' }).click();
@@ -519,6 +542,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   const receipt = JSON.stringify(
     {
       schema: 'architect-apps-connected-journey/v1',
+      commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
       kind: 'connected-local-acceptance',
       not: ['labelled-visual-fixture', 'hosted-production-proof'],
       generation: 'ARCHITECT_APPS_AI_MOCK=true labelled mocked model transport',

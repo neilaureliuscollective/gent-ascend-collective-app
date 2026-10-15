@@ -1,4 +1,3 @@
-import { BplusMaterial } from '@/components/visual/bplus-material';
 import { ChoiceArtwork } from './choice-artwork';
 import type { ProjectContent } from '@/domains/architect-origin/schema';
 
@@ -46,11 +45,9 @@ export function ChoiceCard({
       className="origin-choice"
       data-discipline={discipline}
       aria-pressed={selected}
-      data-bplus-surface={selected ? 'selection' : undefined}
       onClick={onSelect}
       disabled={disabled}
     >
-      {selected && <BplusMaterial radius={8} />}
       <span className="origin-choice-stage">
         <ChoiceArtwork discipline={discipline} />
       </span>

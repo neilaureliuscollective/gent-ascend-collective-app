@@ -13,6 +13,7 @@ export type AppLibrary = {
     status: string;
     working: boolean;
     approval_hash: string;
+    parent_revision?: number | null;
     generation: { mode: string; notes?: string };
     files: { path: string; content: string }[];
     collections: { name: string }[];
@@ -107,6 +108,7 @@ export function reopenArchitectApp(projectId: string, revision: number) {
     preview: { srcDoc: string; sandbox: string; label?: string; revision?: number | null; revisionId?: string | null };
     revision: { id: string; revision: number; status: string; working: boolean };
     selectedRevision: number;
+    session: string;
   }>('/api/architect-apps', {
     action: 'reopen',
     projectId,

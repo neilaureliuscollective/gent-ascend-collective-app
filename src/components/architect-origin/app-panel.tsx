@@ -142,12 +142,13 @@ export function ArchitectAppPanel({
 
   useEffect(() => {
     if (!latestJob || (latestJob.status !== 'queued' && latestJob.status !== 'running')) return;
+    let active = true;
     const timer = window.setInterval(() => {
       void readArchitectApps(projectId, selectedRevision ?? undefined)
-        .then(setLibrary)
+        .then((next) => { if (active) setLibrary(next); })
         .catch(() => undefined);
     }, 2000);
-    return () => window.clearInterval(timer);
+    return () => { active = false; window.clearInterval(timer); };
   }, [latestJob, projectId, selectedRevision]);
 
   useEffect(() => {
@@ -248,8 +249,10 @@ export function ArchitectAppPanel({
   }, [library, displayed, current]);
   const selectedSource = files.find((file) => file.path === selectedFile) ?? files[0] ?? null;
   const parentFiles = useMemo(() => {
-    const row = library?.revisions.find((item) => item.revision === (displayed?.revision ?? 0) - 1);
-    return row?.files ?? [];
+    const shown = library?.revisions.find((item) => item.revision === displayed?.revision);
+    const parent = shown?.parent_revision;
+    const row = library?.revisions.find((item) => item.revision === (parent === undefined ? (displayed?.revision ?? 0) - 1 : parent));
+    return row?.files.filter((file) => file.path.startsWith('src/')) ?? [];
   }, [library, displayed]);
   const plan = useMemo(
     () =>
@@ -311,10 +314,10 @@ export function ArchitectAppPanel({
     );
   }, [interaction, library?.previewSession, preview, projectId]);
   const fileDiffs = useMemo(() => {
-    const pending = (proposal?.changes as { path: string; kind: string }[] | undefined) ?? [];
-    if (pending.length) return pending.filter((row) => row.kind !== 'unchanged');
-    const previous = new Map(parentFiles.map((file) => [file.path, file.content]));
-    const next = new Map(files.map((file) => [file.path, file.content]));
+    const proposedFiles = (proposal?.proposal as { files?: { path: string; content: string }[] } | undefined)?.files;
+    const baseFiles = proposal ? library?.revisions.find((row) => row.revision === proposal.baseRevision)?.files ?? [] : parentFiles;
+    const previous = new Map(baseFiles.filter((file) => file.path.startsWith('src/')).map((file) => [file.path, file.content]));
+    const next = new Map((proposedFiles ?? files).map((file) => [file.path, file.content]));
     return [...new Set([...previous.keys(), ...next.keys()])]
       .sort()
       .map((path) => {
@@ -326,7 +329,7 @@ export function ArchitectAppPanel({
         return { path, kind: 'unchanged', before: left ?? '', after: right ?? '' };
       })
       .filter((row) => row.kind !== 'unchanged');
-  }, [proposal, parentFiles, files]);
+  }, [proposal, parentFiles, files, library]);
 
   async function propose() {
     setBusy(true);
@@ -338,7 +341,7 @@ export function ArchitectAppPanel({
         expected: revision,
         instruction: draft.trim(),
         kind: library?.app ? 'revise' : 'create',
-        baseRevision: library?.app?.current_revision,
+        baseRevision: displayed?.revision ?? library?.app?.current_revision,
         demo: library?.provider.mode === 'fixture' ? 'tracker' : 'none',
       });
       setProposal(next);
@@ -414,6 +417,7 @@ export function ArchitectAppPanel({
           ? {
               ...currentLibrary,
               selected: opened.revision,
+              previewSession: opened.session,
               preview: {
                 srcDoc: opened.preview.srcDoc,
                 sandbox: opened.preview.sandbox,
@@ -561,13 +565,12 @@ export function ArchitectAppPanel({
           )}
         </div>
         {interaction === 'inspect' ? (
-          <div className="architect-app-inspect">
+          <section className="architect-app-inspect" aria-label="Selected application target">
             <p>
               {inspectScope === 'elements'
                 ? 'This compiled preview can report verified element targets. Clicks map only to known files or records for this revision.'
                 : 'This preview is not instrumented. Inspect uses host Files, Records and Plan. The painted interface is not selectable.'}{' '}
-              Arbitrary iframe messages are ignored unless they match the inspect schema, session,
-              project and revision identity. Replayed preview nonces are rejected.
+              {selectedTarget ? ` Selected: ${selectedTarget.title} · revision ${displayed?.revision ?? 'not built'}.` : ''}
             </p>
             <ol className="architect-app-targets">
               {targets.map((target) => (
@@ -592,7 +595,7 @@ export function ArchitectAppPanel({
                 onClick={() => {
                   setInspectAction('change');
                   setChangeRequest(true);
-                  if (selectedTarget) setDraft(changeScopeForTarget(selectedTarget, displayed?.revision));
+                  if (selectedTarget && !refineOpen) setDraft(changeScopeForTarget(selectedTarget, displayed?.revision));
                 }}
               >
                 Change
@@ -634,7 +637,7 @@ export function ArchitectAppPanel({
                 <p>No current/previous file difference is available to compare.</p>
               )
             ) : null}
-          </div>
+          </section>
         ) : null}
       </div>
       <aside className="architect-app-side" aria-label="Application details">
@@ -697,10 +700,10 @@ export function ArchitectAppPanel({
                   {change.kind} <code>{change.path}</code>
                 </p>
                 {'before' in change && (change.kind === 'update' || change.kind === 'delete') ? (
-                  <pre className="architect-app-diff-before">{String(change.before).slice(0, 600)}</pre>
+                  <pre className="architect-app-diff-before">{String(change.before)}</pre>
                 ) : null}
                 {'after' in change && (change.kind === 'update' || change.kind === 'create') ? (
-                  <pre className="architect-app-diff-after">{String(change.after).slice(0, 600)}</pre>
+                  <pre className="architect-app-diff-after">{String(change.after)}</pre>
                 ) : null}
               </li>
             ))}
@@ -736,11 +739,11 @@ export function ArchitectAppPanel({
                   {row.working ? ' · last working' : ''}
                   {displayed?.revision === row.revision ? ' · showing' : ''}
                   {row.working ? (
-                    <button type="button" disabled={busy || locked} onClick={() => void reopen(row.revision)}>
+                    <button type="button" aria-label={`Open verified revision ${row.revision}`} disabled={busy || locked || (row.status !== 'ready' && !row.working)} onClick={() => void reopen(row.revision)}>
                       Reopen
                     </button>
                   ) : (
-                    <button type="button" disabled={busy || locked} onClick={() => void reopen(row.revision)}>
+                    <button type="button" aria-label={`Open verified revision ${row.revision}`} disabled={busy || locked || (row.status !== 'ready' && !row.working)} onClick={() => void reopen(row.revision)}>
                       View without restoring
                     </button>
                   )}
@@ -750,6 +753,11 @@ export function ArchitectAppPanel({
           </ol>
         )}
         <div className="architect-app-actions">
+          {retainedPreview && working ? (
+            <button type="button" disabled={busy || locked} onClick={() => void reopen(working.revision)}>
+              Return to verified revision {working.revision}
+            </button>
+          ) : null}
           {proposal ? (
             <button className="button" disabled={busy || locked} onClick={() => void approve()}>
               <BplusMaterial radius={8} />
@@ -797,7 +805,7 @@ export function ArchitectAppPanel({
             maxLength={2000}
             disabled={busy || locked || latestJob?.status === 'running'}
           />
-          <p>Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
+          <p>{displayed ? `Editing revision ${displayed.revision}. ` : 'Creating from your saved brief. '}Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
           <button
             className="button"
             disabled={busy || locked || !library || !draft.trim() || library.provider.enabled === false}

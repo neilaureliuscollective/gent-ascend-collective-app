@@ -78,11 +78,8 @@ jobs:
         if: always()
         run: |
           mkdir -p docs/evidence/architect-apps test-results/architect-apps-connected
-          video="$(find test-results -name '*.webm' -not -path '*/architect-apps-connected/*' | head -n 1 || true)"
-          if [ -n "$video" ]; then
-            cp "$video" docs/evidence/architect-apps/connected-journey.webm
-            cp "$video" test-results/architect-apps-connected/connected-journey.webm
-          fi
+          # The Apps test finalizes its own video after context closure. Never
+          # substitute an unrelated test's first video for connected evidence.
           for shot in docs/evidence/architect-apps/workbench-*.png docs/evidence/architect-apps/connected-journey.json; do
             if [ -f "$shot" ]; then
               cp "$shot" test-results/architect-apps-connected/

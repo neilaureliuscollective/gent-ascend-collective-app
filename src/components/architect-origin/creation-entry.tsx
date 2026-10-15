@@ -182,7 +182,7 @@ export function CreationEntry({
         {guided && pathOpened ? (
           <div className="origin-guided">
             <label htmlFor="origin-guided-field">{currentQuestion.prompt}</label>
-            {currentQuestion.field !== 'idea' && currentQuestion.field !== 'outcome' && stage !== 'audience' ? (
+            {currentQuestion.field !== 'idea' && stage !== 'audience' ? (
               <textarea
                 id="origin-guided-field"
                 maxLength={3000}
@@ -369,7 +369,8 @@ export function CreationEntry({
           outcome={outcome}
         />
       )}
-      <section className="origin-directions" aria-label="Supported directions">
+      <details className="origin-directions" aria-label="Supported directions">
+        <summary>Explore path examples and tradeoffs</summary>
         <p className="origin-kicker">Compare a labelled example</p>
         {directions.map((option) => (
           <article key={option.id}>
@@ -390,7 +391,7 @@ export function CreationEntry({
           </article>
         ))}
         <p>Unselected directions stay available. These are labelled examples, not generated alternatives or confidence scores.</p>
-      </section>
+      </details>
       <CreationGuide teach={teachFor(discipline)} open={helpOpen} onToggle={() => onToggleHelp?.()} />
       <div className="origin-entry-lower">
         {projects.length > 0 ? (
