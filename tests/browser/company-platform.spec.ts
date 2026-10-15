@@ -36,7 +36,7 @@ for (const width of [360, 768, 1440]) {
     ).toBe(true);
     await page.getByRole('link', { name: /Scope a client engagement/ }).click();
     await expect(page.getByLabel('Message Aethelios')).toHaveValue(
-      /scope an Ascend Architects engagement/,
+      /scope a software-assisted client engagement/,
     );
     await page.getByRole('button', { name: 'Tools & context' }).click();
     await expect(page.getByRole('checkbox', { name: 'Use personal context' })).not.toBeChecked();

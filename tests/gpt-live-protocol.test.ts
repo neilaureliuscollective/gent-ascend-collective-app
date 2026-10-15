@@ -120,6 +120,8 @@ describe('GPT-Live evaluation contract', () => {
     );
     expect(config.client.data_channel.allowed_client_events).not.toContain('response.create');
     expect(config.input[0]?.role).toBe('user');
+    expect(config.instructions).toContain('Aethelios — The Human Ascendance');
+    expect(config.instructions).toContain('without a real receipt');
   });
   it('uses JSON Live session creation and preserves the provider session ID unchanged', async () => {
     const request = vi.fn().mockResolvedValue(

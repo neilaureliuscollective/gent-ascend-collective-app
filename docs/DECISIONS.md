@@ -1,3 +1,7 @@
+# Aethelios current knowledge — 2026-10-15
+
+Replace the hardcoded 2026-10-06 company-platform identity with a typed published-knowledge contract (stable IDs, scope, source, dates, status, supersedes). Current facts describe AETHELIOS — The Human Ascendance; planned Agency/pricing stay labeled planned; superseded company-building / separate-Legacy-Reserve / Ascend Architects rows remain as history and are not injected. Composition is shared through `buildMessages` for Talk, Live and council. Health does not import this graph. Product intelligence reuses existing Storefront readers only. Founder authority remains `founder_access`. No billing, Shopify Admin, hosted migration or production merge. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
 # Aethelios Studio renderer/editor pipeline — 2026-10-15
 
 Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
