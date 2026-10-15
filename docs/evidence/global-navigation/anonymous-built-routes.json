@@ -1,0 +1,225 @@
+{
+  "kind": "Actual local production build; anonymous, no configured backend or live provider",
+  "results": [
+    {
+      "route": "/",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/aethelios",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/work",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/architect",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/studio",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/health",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/lifestyle",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/ecosystem",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/membership",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    },
+    {
+      "route": "/app/you",
+      "status": 200,
+      "links": [
+        "/",
+        "/app/aethelios",
+        "/app/work",
+        "/app/architect",
+        "/app/studio",
+        "/app/health",
+        "/lifestyle",
+        "/app/ecosystem",
+        "/app/missions",
+        "/app/entities",
+        "/membership",
+        "/app/you",
+        "/app/aethelios/meet",
+        "/support"
+      ]
+    }
+  ]
+}

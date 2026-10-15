@@ -7,12 +7,12 @@ for (const width of [360, 768, 1440]) {
     await page.goto('/app/aethelios');
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
-    let navigation = page.getByRole('navigation', { name: 'Aethelios destinations' });
-    await expect(navigation.getByRole('link')).toHaveCount(11);
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    let navigation = page.getByRole('navigation', { name: 'Global navigation' });
+    await expect(navigation.getByRole('link')).toHaveCount(14);
     await expect(navigation.getByRole('link', { name: 'Lifestyle', exact: true })).toHaveAttribute(
       'href',
-      '/app/lifestyle',
+      '/lifestyle',
     );
     await expect(navigation.getByRole('link', { name: 'Architect', exact: true })).toHaveAttribute(
       'href',
@@ -30,7 +30,7 @@ for (const width of [360, 768, 1440]) {
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(trigger).toBeFocused();
-    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await navigation.getByRole('link', { name: 'Work', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
     navigation = page.getByRole('navigation', { name: 'Main navigation' });
@@ -38,8 +38,11 @@ for (const width of [360, 768, 1440]) {
       'aria-current',
       'page',
     );
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    navigation = page.getByRole('navigation', { name: 'Global navigation' });
     await navigation.getByRole('link', { name: 'Studio', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Make the vision visible.' })).toBeVisible();
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await expect(navigation.getByRole('link', { name: 'Studio', exact: true })).toHaveAttribute(
       'aria-current',
       'page',

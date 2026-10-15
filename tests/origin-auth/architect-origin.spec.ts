@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations, globalMenu } from '../support/global-navigation';
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 const env = Object.fromEntries(
@@ -21,9 +22,19 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
   await expect(page).toHaveURL(/\/app\/founder$/);
   await page.goto('/app/architect');
   await expect(page.locator('.environment-immersive')).toBeVisible();
-  await page.getByRole('button', { name: 'Aethelios menu' }).click();
-  await expect(page.getByRole('link', { name: 'Founder Office' })).toBeVisible();
+  await openGlobalMenu(page);
+  await expect(globalDestinations(page).getByRole('link', { name: 'Founder Office', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
+  // Real authenticated click-through: these destinations moved to the full menu.
+  for (const [name, route] of [['Studio', '/app/studio'], ['Lifestyle', '/app/lifestyle']] as const) {
+    await openGlobalMenu(page);
+    await globalDestinations(page).getByRole('link', { name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${route}$`));
+    await expect(page.locator('h1').first()).toBeVisible();
+  }
+  await openGlobalMenu(page);
+  await globalDestinations(page).getByRole('link', { name: 'Architect', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/architect$/);
   const name = `Synthetic Origin ${Date.now()}`;
   await page
     .getByLabel('Tell Aethelios what you want to create')
@@ -54,9 +65,8 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
   await page.getByRole('button', { name: 'Mark reviewed & approved in draft' }).click();
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 4');
-  await page.getByRole('button', { name: 'Aethelios menu' }).click();
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
+  await openGlobalMenu(page);
+  await globalDestinations(page)
     .getByRole('link', { name: 'Work', exact: true })
     .click();
   await expect(page).toHaveURL(/\/app\/work$/);
@@ -90,22 +100,18 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     });
     await page.getByRole('button', { name: 'Split', exact: true }).click();
     await page.getByRole('button', { name: 'Show Aethelios tools', exact: true }).click();
-    await page.getByRole('button', { name: 'Aethelios menu' }).click();
+    await openGlobalMenu(page);
     await expect(
-      page
-        .getByRole('navigation', { name: 'Main navigation' })
+      globalDestinations(page)
         .getByRole('link', { name: 'Health', exact: true }),
     ).toBeInViewport();
-    const shortcut = page.getByRole('button', { name: 'Aethelios', exact: true });
-    await expect(shortcut).toBeInViewport();
-    expect(
-      await shortcut
-        .locator('span')
-        .last()
-        .evaluate((label) => label.getBoundingClientRect().width),
-    ).toBeGreaterThan(40);
-    await expect(shortcut.locator('span').last()).toHaveCSS('clip-path', 'none');
-    await expect(page.getByRole('link', { name: 'Council ↗', exact: true })).toBeInViewport();
+    for (const [name, href] of [['Talk', '/app/aethelios'], ['Council', '/app/entities']] as const) {
+      const destination = globalDestinations(page).getByRole('link', { name, exact: true });
+      await destination.scrollIntoViewIfNeeded();
+      await expect(destination).toBeInViewport();
+      await expect(destination).toHaveAttribute('href', href);
+      expect((await destination.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
     await page.screenshot({
       path: `test-results/architect-immersive-real-menu-${width}.png`,
       fullPage: false,
@@ -118,11 +124,11 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     .getByLabel('Editable Markdown')
     .fill('# Unsaved local draft\n\nKeep this when navigation is declined.');
   const draftUrl = page.url();
-  await page.getByRole('button', { name: 'Aethelios menu' }).click();
+  await openGlobalMenu(page);
   page.once('dialog', (dialog) => dialog.dismiss());
-  await page.getByRole('button', { name: 'Aethelios', exact: true }).click();
+  await globalDestinations(page).getByRole('link', { name: 'Talk', exact: true }).click();
   await expect(page).toHaveURL(draftUrl);
-  await expect(page.getByRole('dialog', { name: 'Your Aethelios environments' })).toBeVisible();
+  await expect(globalMenu(page)).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByLabel('Editable Markdown')).toContainText(
     'Keep this when navigation is declined.',

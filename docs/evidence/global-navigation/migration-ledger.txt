@@ -1,0 +1,5 @@
+
+> aurelius-collective-app@0.1.0 db:ledger
+> node scripts/check-migration-ledger.mjs
+
+Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.

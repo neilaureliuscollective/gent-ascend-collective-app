@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations } from '../support/global-navigation';
 import { expect, test } from '@playwright/test';
 
 test('live Health routes disclose no private data to a signed-out visitor', async ({
@@ -26,11 +27,12 @@ test('live Health routes disclose no private data to a signed-out visitor', asyn
   await page.goto('/app/health');
   await expect(page.getByRole('heading', { name: 'A personal Health workspace' })).toBeVisible();
   await expect(page.getByText('Sign in to keep this workspace', { exact: false })).toBeVisible();
+  await openGlobalMenu(page);
   await expect(
-    page
-      .getByRole('navigation', { name: 'Main navigation' })
+    globalDestinations(page)
       .getByRole('link', { name: 'Health', exact: true }),
   ).toHaveAttribute('aria-current', 'page');
+  await page.keyboard.press('Escape');
   await page.screenshot({ path: 'test-results/health-live-signed-out-390.png', fullPage: true });
   expect((await request.get('/dev', { maxRedirects: 0 })).status()).toBe(404);
 });

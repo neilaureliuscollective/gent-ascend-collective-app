@@ -32,19 +32,21 @@ for (const width of [320, 360, 412, 768, 1024, 1440, 2560]) {
       '0s',
     );
     if (width <= 850) {
-      const toggle = page.getByRole('button', { name: /Explore/ });
+      const toggle = page.getByRole('button', { name: 'Menu', exact: true });
       await toggle.click();
-      const navigation = page.getByRole('navigation', { name: 'Public navigation' });
-      await expect(navigation.getByRole('link', { name: 'Open Aethelios' })).toHaveAttribute(
+      const navigation = page.getByRole('navigation', { name: 'Global navigation' });
+      await expect(navigation.getByRole('link', { name: 'Account & settings' })).toHaveAttribute(
         'href',
-        '/enter',
+        '/app/you',
       );
       await page.keyboard.press('Escape');
       await expect(navigation).toBeHidden();
       await expect(toggle).toBeFocused();
     } else {
-      await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeVisible();
+      await page.getByRole('button', { name: 'Menu', exact: true }).click();
+      await expect(page.getByRole('navigation', { name: 'Global navigation' })).toBeVisible();
     }
+    await page.keyboard.press('Escape');
     await page.screenshot({
       path: `test-results/imperial-steel-home-${width}.png`,
       fullPage: true,

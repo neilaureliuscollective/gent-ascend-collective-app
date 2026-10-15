@@ -247,11 +247,11 @@ test('source URLs and raw model HTML cannot inject active content', async ({ pag
 test('immersive frame keeps its menu accessible and restores keyboard focus', async ({ page }) => {
   await fixture(page);
   await page.goto(base);
-  const trigger = page.getByRole('button', { name: 'Aethelios menu', exact: true });
+  const trigger = page.getByRole('button', { name: 'Menu', exact: true });
   await trigger.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('dialog', { name: 'Your Aethelios environments' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+  await expect(page.getByRole('dialog', { name: 'Aethelios menu' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Aethelios menu' })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(trigger).toBeFocused();

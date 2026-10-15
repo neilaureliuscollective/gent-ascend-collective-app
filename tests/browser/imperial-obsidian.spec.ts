@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations } from '../support/global-navigation';
 import { expect, test } from './fixtures';
 
 for (const width of [320, 360, 768, 1024, 1920]) {
@@ -21,11 +22,13 @@ for (const width of [320, 360, 768, 1024, 1920]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    const navigation = page.getByRole('navigation', { name: 'Main navigation' });
+    await openGlobalMenu(page);
+    const navigation = globalDestinations(page);
     await expect(navigation.getByRole('link', { name: 'Ecosystem' })).toHaveAttribute(
       'aria-current',
       'page',
     );
+    await page.keyboard.press('Escape');
     await page.screenshot({
       path: `test-results/imperial-obsidian-ecosystem-${width}.png`,
       fullPage: true,

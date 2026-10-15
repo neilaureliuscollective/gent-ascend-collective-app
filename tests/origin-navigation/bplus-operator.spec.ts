@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalMenu } from '../support/global-navigation';
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProject,
@@ -69,8 +70,7 @@ for (const width of [320, 390, 720, 1440]) {
     await expect(page.locator('.company-work[data-bplus="work"]')).toBeVisible();
     await expect(page.locator('.company-work [data-bplus-surface]')).toHaveCount(2);
     await expect(page.locator('.company-job-list .bplus-optics')).toHaveCount(0);
-    const work = page
-      .getByRole('navigation', { name: 'Main navigation' })
+    const work = page.getByRole('navigation', { name: 'Main navigation', exact: true })
       .getByRole('link', { name: 'Work', exact: true });
     await expect(work).toHaveAttribute('aria-current', 'page');
     await expect(work.locator(':scope > .bplus-optics')).toBeVisible();
@@ -132,9 +132,9 @@ test('Architect optics respect solid, forced colors, focus and disabled save sta
   await page.goto(`/app/architect?project=${projectId}&surface=Blueprint&section=vision`);
   const vision = page.getByLabel('Project vision', { exact: true });
   await vision.fill('Retain this draft across appearance preferences');
-  await page.getByRole('button', { name: 'Aethelios menu', exact: true }).click();
-  await page.getByRole('button', { name: 'Use solid surfaces', exact: true }).click();
-  await page.getByRole('button', { name: 'Close menu', exact: true }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Use solid surfaces', exact: true }).click();
+  await globalMenu(page).getByRole('button', { name: 'Close Aethelios menu', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-material', 'solid');
   for (const surface of await page.locator('.origin [data-bplus-surface]').all()) {
     await expect(surface.locator(':scope > .bplus-optics')).toBeHidden();
