@@ -10,11 +10,12 @@ test('fresh installation has one current crest identity across manifest and Appl
   const manifest = await response.json();
   expect(manifest.id).toBe('/');
   expect(manifest.start_url).toBe('/app');
-  expect(manifest.icons).toHaveLength(3);
+  expect(manifest.icons).toHaveLength(4);
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
-    '/brand/aethelios-imperial-obsidian-20261010-192.png',
-    '/brand/aethelios-imperial-obsidian-20261010-512.png',
-    '/brand/aethelios-imperial-obsidian-20261010-maskable-512.png',
+    '/brand/aethelios-official-20261015-192.png',
+    '/brand/aethelios-official-20261015-512.png',
+    '/brand/aethelios-official-20261015-maskable-192.png',
+    '/brand/aethelios-official-20261015-maskable-512.png',
   ]);
   for (const icon of manifest.icons) {
     const response = await request.get(icon.src);
@@ -26,7 +27,15 @@ test('fresh installation has one current crest identity across manifest and Appl
   expect(manifest.icons.filter((icon: { purpose: string }) => icon.purpose === 'any')).toHaveLength(
     2,
   );
-  const mask = await request.get(manifest.icons[2].src);
+  expect(
+    manifest.icons.filter((icon: { purpose: string }) => icon.purpose === 'maskable'),
+  ).toHaveLength(2);
+  const maskable512 = manifest.icons.find(
+    (icon: { src: string; purpose: string }) =>
+      icon.purpose === 'maskable' && icon.src.endsWith('-maskable-512.png'),
+  );
+  expect(maskable512).toBeTruthy();
+  const mask = await request.get(maskable512!.src);
   const { data, info } = await sharp(await mask.body())
     .removeAlpha()
     .raw()
@@ -63,15 +72,18 @@ test('fresh installation has one current crest identity across manifest and Appl
   await expect(page.getByText(/Review app update/)).toBeVisible();
 });
 
-test('retired blue installation URLs resolve to the current phone artwork', async ({ request }) => {
-  for (const suffix of ['192', '512', 'maskable-512']) {
-    const response = await request.get(`/brand/aethelios-official-20261008-${suffix}.png`, {
-      maxRedirects: 0,
-    });
-    expect(response.status()).toBe(307);
-    expect(response.headers().location).toBe(
-      `/brand/aethelios-imperial-obsidian-20261010-${suffix}.png`,
-    );
+test('retired installation URLs resolve to the current phone artwork', async ({ request }) => {
+  for (const version of [
+    'aethelios-official-20261008',
+    'aethelios-imperial-obsidian-20261010',
+  ]) {
+    for (const suffix of ['192', '512', 'maskable-512']) {
+      const response = await request.get(`/brand/${version}-${suffix}.png`, {
+        maxRedirects: 0,
+      });
+      expect(response.status()).toBe(307);
+      expect(response.headers().location).toBe(`/brand/aethelios-official-20261015-${suffix}.png`);
+    }
   }
 });
 
@@ -109,7 +121,7 @@ test('fallback upgrade removes old app cache without reloading the open workspac
       }),
     )
     .toEqual({
-      cache: ['gent-ascend-fallback-v7', 'unrelated-test-cache'],
+      cache: ['gent-ascend-fallback-v8', 'unrelated-test-cache'],
       controlled: true,
       waiting: false,
       updateViaCache: 'none',
