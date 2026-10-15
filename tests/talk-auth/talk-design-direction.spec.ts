@@ -150,7 +150,7 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   await page.locator('[data-kind="board"]').getByRole('button', { name: 'Open', exact: true }).click();
   const reviewPanel = page.getByLabel('Reviewed work');
   await reviewPanel.getByRole('button', { name: 'Review design transfer' }).click();
-  await expect(reviewPanel.getByText('Emerald Glass')).toBeVisible();
+  await expect(reviewPanel.getByText(/Emerald Glass · v3/)).toBeVisible();
   await expect(reviewPanel.getByText(/Mapped color roles/)).toBeVisible();
   await expect(reviewPanel.getByText(/Hero-product demonstration/)).toBeVisible();
   const reviewed = await api<{
