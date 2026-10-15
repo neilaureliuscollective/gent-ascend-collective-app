@@ -174,6 +174,7 @@ export function AureliusWorkspace({
   const [creationWorkspace, setCreationWorkspace] = useState<TalkCreationWorkspace | null>(null);
   const [openWorkId, setOpenWorkId] = useState<string | null>(null);
   const [creationError, setCreationError] = useState('');
+  const [creationLoadError, setCreationLoadError] = useState('');
   const [creationNotice, setCreationNotice] = useState('');
   const [creationBusy, setCreationBusy] = useState(false);
   const [inlineBoardStatus, setInlineBoardStatus] = useState<{
@@ -279,37 +280,52 @@ export function AureliusWorkspace({
     async (conversationId: string | null) => {
       const generation = ++creationGeneration.current;
       const owner = verifiedDraftOwner.current;
+      const sameScope =
+        creationScope.current.owner === owner &&
+        creationScope.current.conversation === conversationId;
       creationScope.current = { owner, conversation: conversationId };
       creationRead.current?.abort();
       const controller = new AbortController();
       creationRead.current = controller;
+      if (!sameScope || !conversationId) {
+        setCreationWorkspace(null);
+        setCreationLoadError('');
+      }
       if (!conversationId) {
         recoverGeneration.current += 1;
         stopImageWatch();
-        setCreationWorkspace(null);
         return;
       }
+      const bound = () =>
+        !controller.signal.aborted &&
+        generation === creationGeneration.current &&
+        (!verifiedDraftOwner.current || verifiedDraftOwner.current === owner);
       try {
         const response = await fetch(`/api/aurelius/creations?conversationId=${conversationId}`, {
           cache: 'no-store',
           signal: controller.signal,
         });
-        if (controller.signal.aborted || generation !== creationGeneration.current) return;
-        if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
-        if (!response.ok) {
-          applyCreationWorkspace(conversationId, owner, null);
-          return;
-        }
+        if (!bound()) return;
+        if (!response.ok) throw new Error('Saved work unavailable');
         const workspace = readTalkCreationWorkspace(await response.json());
+        if (!bound()) return;
+        if (!workspace) throw new Error('Saved work unavailable');
         applyCreationWorkspace(conversationId, owner, workspace);
+        setCreationLoadError('');
         if (
-          workspace?.images.some((item) => ['approval', 'running', 'uncertain'].includes(item.status))
+          workspace.images.some((item) =>
+            ['approval', 'running', 'uncertain'].includes(item.status),
+          )
         )
           watchImages(conversationId, owner);
         else stopImageWatch();
       } catch {
-        if (!controller.signal.aborted && generation === creationGeneration.current)
-          applyCreationWorkspace(conversationId, owner, null);
+        if (bound()) {
+          stopImageWatch();
+          setCreationLoadError(
+            'Saved work is temporarily unavailable. Your conversation is still available.',
+          );
+        }
       }
     },
     [applyCreationWorkspace, stopImageWatch, watchImages],
@@ -2246,6 +2262,18 @@ export function AureliusWorkspace({
             ? ' Image generation is unavailable; text work remains available.'
             : ''}
         </p>
+        {creationLoadError && selected ? (
+          <div role="alert">
+            <p>{creationLoadError}</p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => void loadCreations(selected)}
+            >
+              Retry loading saved work
+            </button>
+          </div>
+        ) : null}
         {creationError && !(openWorkId && (openCreation || openImage)) ? (
           <p role="alert">{creationError}</p>
         ) : null}

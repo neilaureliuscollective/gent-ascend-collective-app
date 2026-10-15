@@ -76,7 +76,7 @@ for (const width of [390, 690])
     expect(box!.y + box!.height).toBeLessThanOrEqual(420);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(composer).toHaveValue('');
-    await expect(page.getByText(text, { exact: true })).toHaveCount(1);
+    await expect(page.locator('.conversation-scroll').getByText(text, { exact: true })).toHaveCount(1);
     const newButton = page.getByRole('button', { name: 'New', exact: true });
     if (await newButton.isVisible()) await newButton.click();
     else {
@@ -85,7 +85,7 @@ for (const width of [390, 690])
       await page.keyboard.press('Escape');
     }
     await page.goto(`/app/aethelios?conversation=${conversation}`);
-    await expect(page.getByText(text, { exact: true })).toHaveCount(1);
+    await expect(page.locator('.conversation-scroll').getByText(text, { exact: true })).toHaveCount(1);
     expect(await rows()).toHaveLength(2);
     await owner.from('ai_conversations').delete().eq('id', conversation!);
   });
