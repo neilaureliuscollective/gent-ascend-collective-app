@@ -24,10 +24,16 @@ const client = () =>
 const owner = client();
 const foreign = client();
 for (const [session, email] of [
-  [owner, 'member@aurelius.test'],
-  [foreign, 'founder@aurelius.test'],
+  [owner, 'founder@aurelius.test'],
+  [foreign, 'member@aurelius.test'],
 ])
   assert.equal((await session.auth.signInWithPassword({ email, password: env.AURELIUS_FOUNDER_PASSWORD })).error, null);
+const worker = createClient(plane.url, plane.serviceRoleKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const policy = await worker.rpc('architect_apps_set_execution_policy', { p_enabled: true });
+assert.equal(policy.error, null, policy.error?.message);
+assert.equal(policy.data, true);
 
 const ownerAuth = (await owner.auth.getUser()).data.user?.id;
 const foreignAuth = (await foreign.auth.getUser()).data.user?.id;
@@ -73,6 +79,44 @@ assert.equal(
   1,
 );
 assert.equal((await foreign.from('architect_origin_projects').select('id').eq('id', project)).data.length, 0);
+const ordinaryProject = crypto.randomUUID();
+assert.equal(
+  (
+    await foreign.rpc('architect_origin_save', {
+      p_project: ordinaryProject,
+      p_request: crypto.randomUUID(),
+      p_expected: 0,
+      p_content: { ...content, name: 'Ordinary owner Apps project' },
+      p_note: 'Ordinary owner cannot execute',
+    })
+  ).data,
+  1,
+);
+const ordinaryDenied = await foreign.rpc('architect_apps_approve', {
+  p_request: crypto.randomUUID(),
+  p_project: ordinaryProject,
+  p_name: 'Field notes',
+  p_parent: null,
+  p_tree: 'b'.repeat(64),
+  p_hash: 'a'.repeat(64),
+  p_files: [{ path: 'src/App.tsx', content: 'export function App() { return null; }' }],
+  p_collections: [
+    {
+      name: 'notes',
+      fields: [{ name: 'title', type: 'string', required: true, max: 80 }],
+    },
+  ],
+  p_behaviors: {
+    navigation: true,
+    forms: true,
+    validation: true,
+    filtering: true,
+    calculations: true,
+    persistence: true,
+  },
+  p_generation: { mode: 'mock', notes: 'Labelled mocked provider. Not a paid OpenAI call.' },
+});
+assert.match(ordinaryDenied.error?.message ?? '', /founder pilot|not enabled for this account|executable work stays off/i);
 
 const files = [{ path: 'src/App.tsx', content: 'export function App() { return null; }' }];
 const collections = [
@@ -128,9 +172,6 @@ assert.equal(
 assert.equal((await foreign.from('architect_apps').select('id').eq('project_id', project)).data.length, 0);
 assert.equal((await foreign.from('architect_app_revisions').select('id').eq('id', revision)).data.length, 0);
 
-const worker = createClient(plane.url, plane.serviceRoleKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
 const claimed = await worker.rpc('architect_apps_claim', { p_worker: 'apps-auth-smoke', p_lease: 120000 });
 assert.equal(claimed.error, null, claimed.error?.message);
 assert.equal(claimed.data, revision);
@@ -290,7 +331,7 @@ assert.ok(
 
 const restarted = client();
 assert.equal(
-  (await restarted.auth.signInWithPassword({ email: 'member@aurelius.test', password: env.AURELIUS_FOUNDER_PASSWORD }))
+  (await restarted.auth.signInWithPassword({ email: 'founder@aurelius.test', password: env.AURELIUS_FOUNDER_PASSWORD }))
     .error,
   null,
 );
@@ -319,8 +360,8 @@ const receipt = {
   title: persisted.data?.payload?.title,
   version: persisted.data?.version,
   note: imageId
-    ? 'Auth/PostgREST mutation identity and owner fencing passed. Isolated compile is required in the apps-isolate job, not this smoke.'
-    : 'Auth/PostgREST mutation identity and owner fencing passed. Isolated Docker publish stayed unrun because the pinned image is absent.',
+    ? 'Local Auth/PostgREST with architect_apps_execution_policy enabled. Founder owner passed; ordinary owner approve was denied. This is not production authorization or paid-model proof. Isolated compile is required in the apps-isolate job, not this smoke.'
+    : 'Local Auth/PostgREST with architect_apps_execution_policy enabled. Founder owner passed; ordinary owner approve was denied. This is not production authorization or paid-model proof. Isolated Docker publish stayed unrun because the pinned image is absent.',
 };
 mkdirSync('docs/evidence/architect-apps', { recursive: true });
 mkdirSync('test-results', { recursive: true });

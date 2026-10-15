@@ -4,7 +4,7 @@ Date: 2026-10-15. PR #130 continuation. This is a reviewable production path and
 
 ## Exact head and compatibility
 
-Previous verified green head was `507c27587199a5ae4e432401f6af8532301859de` (all six PR workflows passed). This continuation adds end-to-end founder execution, worker-readiness-before-spend, and a two-call `$1.00` reserved budget. Current `origin/main` at refresh: `804c877`. Merge-tree against that main was clean. Terminal Quality/Origin checks for the published head of this pass are the publish gate.
+Previous verified green head was `5e6fc0092227b7268fe2b017d37a737e824adcfe`. This continuation closes direct RPC execution, client settlement, and model-bind gaps. Next-layer founder checks and worker-readiness-before-spend stay as shipped. Current `origin/main` at refresh: `804c877`. Merge-tree against that main was clean. Terminal Quality/Origin checks for the published head of this pass are the publish gate.
 
 The founder-production capability is **off** until every name below is deliberately set. Default production remains production. Mock output cannot be presented as live AI generation.
 
@@ -53,8 +53,9 @@ Shared with #130 (apply once): `20261015080000`, `20261015120000`, `202610151400
 | `20261015155000_architect_apps_retain_verified.sql` | Interim retain contract on this branch | After `140000`, before `156000`. **Skip** if Talk `160000`/`170000` are applied in the same commissioning — Talk remains the merge-winning retain contract. |
 | `20261015156000_architect_apps_preview_sessions.sql` | `architect_app_preview_sessions` plus `architect_apps_preview_issue` / `read` / `current` / `revoke`. Talk’s 18-name package does **not** include this. | After the shared Apps three (and after `155000` only when that file is used). |
 | `20261015156500_architect_apps_pilot_budget.sql` | `architect_app_generation_runs`, `architect_app_worker_presence`, reserve/finish/presence/readiness RPCs, and the replaced schema probe. Talk’s 18-name package does **not** include this. | After `156000`, before Talk `160000`/`170000`. Unique forward file; do not replay Talk’s batch. |
+| `20261015156600_architect_apps_execution_gate.sql` | `architect_apps_execution_policy` (default `founder_pilot=false`), `architect_apps_require_execution`, service-role `architect_apps_set_execution_policy`, approve/start gate, `started` settlement, `begin_generation`, approved-model reserve. Talk’s 18-name package does **not** include this. | After `156500`, before Talk `160000`/`170000`. Unique forward file; do not replay Talk’s batch or any later Talk recovery file. |
 
-Probe contracts that must exist after apply: tables `architect_apps`, `architect_app_revisions`, `architect_app_artifacts.revision_id`, `architect_app_jobs`, `architect_app_events`, `architect_app_records`, `architect_app_preview_sessions.nonce`, `architect_app_generation_runs.request_id`, `architect_app_worker_presence.worker_id`; RPCs `architect_apps_approve`, `_start`, `_claim`, `_heartbeat`, `_finish`, `_write_record`, `_timeout`, `_schema_probe`, `_preview_issue`, `_preview_read`, `_preview_current`, `_preview_revoke`, `_reserve_generation`, `_finish_generation`, `_report_worker_presence`, `_worker_readiness`.
+Probe contracts that must exist after apply: tables `architect_apps`, `architect_app_revisions`, `architect_app_artifacts.revision_id`, `architect_app_jobs`, `architect_app_events`, `architect_app_records`, `architect_app_preview_sessions.nonce`, `architect_app_generation_runs.request_id`, `architect_app_worker_presence.worker_id`, `architect_apps_execution_policy.founder_pilot`; RPCs `architect_apps_approve`, `_start`, `_claim`, `_heartbeat`, `_finish`, `_write_record`, `_timeout`, `_schema_probe`, `_preview_issue`, `_preview_read`, `_preview_current`, `_preview_revoke`, `_reserve_generation`, `_begin_generation`, `_finish_generation`, `_report_worker_presence`, `_worker_readiness`, `_set_execution_policy`, `_require_execution`.
 
 This branch also carries Origin tool/repair files that are not on current main (`20261014080000`, `190000`, `203000`, `220000`, `224500`). They are not Apps worker contracts. Do not assume hosted Talk apply creates them.
 
@@ -70,7 +71,7 @@ Web plane (Vercel Production), generation only:
 - `ARCHITECT_APPS_FOUNDER_PILOT=true` (off until commissioned)
 - `ARCHITECT_APPS_AI_ENABLED=true` (off until commissioned)
 - `OPENAI_API_KEY` (server-only; existing OpenAI credit path)
-- `AURELIUS_AI_MODEL` (optional; default `gpt-6-astra`)
+- `AURELIUS_AI_MODEL` (must be unset or `gpt-6-astra`; any other value is refused)
 - `ARCHITECT_APPS_PREVIEW_SECRET` (≥16)
 - `ARCHITECT_APPS_PREVIEW_CLUSTER=true`
 - Matching `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
@@ -141,7 +142,7 @@ Through Supabase (not this agent):
 
 Do not merge `main` until the founder separately approves the automatic Vercel Production deploy that merge causes.
 
-1. **Schema.** Apply shared Apps `080000` / `120000` / `140000` once (skip if Talk already applied those exact names). Apply `156000` then `156500` from this branch. Apply `155000` only when Talk retain `160000`/`170000` will not be applied. Apply Talk’s remaining files on the Talk release, not twice. Do not replay the original 18-name batch.
+1. **Schema.** Apply shared Apps `080000` / `120000` / `140000` once (skip if Talk already applied those exact names). Apply `156000`, then `156500`, then `156600` from this branch. Apply `155000` only when Talk retain `160000`/`170000` will not be applied. Apply Talk’s remaining files on the Talk release, not twice. Do not replay the original 18-name batch or any later Talk recovery file.
 2. **Worker host.** Create the $12 Docker Droplet. Install nothing extra if `docker version` already works. Clone this SHA. `node scripts/architect-apps-prepare-runtime.mjs`.
 3. **Proofs.** `--prove-write`, `--prove-compile`, `--prove-topology`. Then `--preflight` must be `ok` / `idle` with work-root `ready` and generation `permitted`.
 4. **Denied proof.** A disposable local env with production + `ARCHITECT_APPS_AI_MOCK=true` must report generation `refused` and fail health. Do not use that env for hosting.
@@ -149,13 +150,14 @@ Do not merge `main` until the founder separately approves the automatic Vercel P
 6. **Web flags.** Set Origin/Apps + preview cluster on Vercel. Generation names stay **off**.
 7. **Compile acceptance.** One labelled Field Notes isolated compile (mock or fixture on a local/CI host, or an already-approved revision). Not a paid model call.
 8. **Founder-pilot enable.** Separate approval: set `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` with the existing server-only key. Confirm an ordinary account still sees not-enabled.
-9. **Bounded real-model case.** Only after step 8 and a separate spend approval.
+9. **SQL execution policy.** Separate approval: as `service_role`, `select public.architect_apps_set_execution_policy(true)`. Env flags do not authorize a direct PostgREST approve/start. Default remains false.
+10. **Bounded real-model case.** Only after step 9 and a separate spend approval.
 
 ## Bounded real-model acceptance case (not executed)
 
-Selected model: configured default `AURELIUS_AI_MODEL=gpt-6-astra` (not GPT-5.5). Official standard short-context list price inspected 2026-10-15 from https://developers.openai.com/api/docs/pricing: **$10.00 / 1M input** and **$50.00 / 1M output** for ≤272K input tokens. Long-context (>272K) is $20 / $75 and is refused by the 16k input ceiling.
+Selected model: **only** `gpt-6-astra` (not GPT-5.5, not an `AURELIUS_AI_MODEL` override). Official standard short-context list price inspected 2026-10-15 from https://developers.openai.com/api/docs/pricing: **$10.00 / 1M input** and **$50.00 / 1M output** for ≤272K input tokens. Long-context (>272K) is $20 / $75 and is refused by the 16k input ceiling.
 
-Server-side acceptance allowance (atomic, person+run): 2 calls, 16k input / 4k output per call, **$1.00 reserved cap**. Two ceiling reservations cost $0.72 list ($0.16 input + $0.20 output each). Per-call `maxRetries=0`, `maxOutputTokens=4000`, 30s generation timeout, 90s compile timeout remain. Concurrent requests and retries reuse the same `requestId` without a second provider call.
+Server-side acceptance allowance (atomic, person+run+request): 2 calls, 16k input / 4k output per call, **$1.00 reserved cap**. Input accounting serializes instructions, prompt (files, collections, bridge, brief, direction) and output-schema stub at 2 characters/token plus 512 tokens. That is a conservative bound, **not a guaranteed spending cap**. Two ceiling reservations cost $0.72 list ($0.16 input + $0.20 output each). Per-call `maxRetries=0`, `maxOutputTokens=4000`, 30s generation timeout, 90s compile timeout remain. `begin_generation` is the provider-start boundary; pre-start cancel can zero a reserved row; started or uncertain rows stay reserved until trustworthy reconciliation. Concurrent requests and retries reuse the same `requestId` without a second provider call.
 
 1. Sign in as the founder on production Aethelios. An ordinary owner of the same project must still receive not-enabled on propose/approve/start.
 2. Confirm worker readiness (`architect_apps_worker_readiness`) is recent, digest-matched, isolated, and schema/queue/artifact capable. Do not send a paid propose if it is missing or stale.
@@ -171,7 +173,7 @@ Implemented readiness (code + local tests) is not commissioned infrastructure. N
 
 ## Recovery and rollback
 
-1. Unset `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` on Vercel. Generation stops immediately. Existing revisions remain.
+1. `select public.architect_apps_set_execution_policy(false)` as service-role, then unset `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` on Vercel. Direct RPC execution and generation stop. Existing revisions remain.
 2. Set `ARCHITECT_APPS_ENABLED=false` if the workbench must disappear.
 3. Stop the worker process or power off the Droplet. Queued jobs stay queued.
 4. Leave tables in place. Do not drop owner records.
@@ -187,7 +189,8 @@ Implemented readiness (code + local tests) is not commissioned infrastructure. N
 | Create DigitalOcean account / Droplet / SSH | Not approved |
 | Write `OPENAI_API_KEY`, worker token, or service-role key onto a host | Not approved |
 | Set `ARCHITECT_APPS_FOUNDER_PILOT` or `ARCHITECT_APPS_AI_ENABLED` in production | Not approved |
-| Paid OpenAI acceptance case (max $1.00, gpt-6-astra short-context) | Not approved |
+| Set `architect_apps_execution_policy.founder_pilot=true` via service-role | Not approved |
+| Paid OpenAI acceptance case (max $1.00 reserved, gpt-6-astra short-context; bound is not a guaranteed cap) | Not approved |
 | Talk #131 merge / Talk SQL | Separate Talk release |
 
 This workstream may only publish code and documentation to the review branch.

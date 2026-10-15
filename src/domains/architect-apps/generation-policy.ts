@@ -214,7 +214,11 @@ export function classifyAppRequestFailure(error: unknown): { class: AppFailureCl
     )
   )
     return { class: 'worker', message };
-  if (/acceptance run|reserved budget|token acceptance ceiling/i.test(message))
+  if (
+    /acceptance run|reserved budget|token acceptance ceiling|approved override|cannot be cancelled to zero|bound to gpt-6-astra/i.test(
+      message,
+    )
+  )
     return { class: 'model', message };
   if (
     status === 503 ||

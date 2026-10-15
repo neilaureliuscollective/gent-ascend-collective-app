@@ -62,6 +62,8 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015155000_architect_apps_retain_verified.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156000_architect_apps_preview_sessions.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156500_architect_apps_pilot_budget.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015156600_architect_apps_execution_gate.sql', 'utf8'));
+  await asWorker(`select public.architect_apps_set_execution_policy(true)`);
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
 
@@ -261,11 +263,19 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
     await expect(db.query('select id from public.architect_app_artifacts limit 0')).rejects.toThrow(/column .*id|does not exist/i);
     expect((await db.query('select revision_id from public.architect_app_artifacts limit 0')).rows).toEqual([]);
     const probe = await asWorker(`select public.architect_apps_schema_probe() as report`);
-    const report = (probe.rows[0] as { report: { ok: boolean; missing: string[]; contracts: { architect_app_artifacts: string } } })
-      .report;
+    const report = (
+      probe.rows[0] as {
+        report: {
+          ok: boolean;
+          missing: string[];
+          contracts: { architect_app_artifacts: string; architect_apps_execution_policy: string };
+        };
+      }
+    ).report;
     expect(report.ok).toBe(true);
     expect(report.missing).toEqual([]);
     expect(report.contracts.architect_app_artifacts).toBe('revision_id');
+    expect(report.contracts.architect_apps_execution_policy).toBe('founder_pilot');
     await expect(asUser(ownerAuth, `select public.architect_apps_schema_probe()`)).rejects.toThrow(
       /permission denied|Worker authorization required/i,
     );
@@ -365,6 +375,110 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
         `select public.architect_apps_report_worker_presence('apps-cloud','${digest}','docker',true,true,true,'idle')`,
       ),
     ).rejects.toThrow(/Worker authorization required|permission denied/i);
+  });
+
+  it('denies ordinary owners and a disabled pilot on direct approve/start, and keeps settlement server-authoritative', async () => {
+    const ordinaryProject = '00000000-0000-4000-8000-000000000703';
+    const ordinaryRevision = '00000000-0000-4000-8000-000000000704';
+    const disabledRevision = '00000000-0000-4000-8000-000000000705';
+    const startedRequest = '00000000-0000-4000-8000-000000000835';
+    const startedRun = '00000000-0000-4000-8000-000000000836';
+    const reducedRequest = '00000000-0000-4000-8000-000000000837';
+    const overrideRequest = '00000000-0000-4000-8000-000000000838';
+    await asUser(
+      foreignAuth,
+      `select public.architect_origin_save('${ordinaryProject}','${ordinaryProject}',0,${literal(content)},'Ordinary owner project')`,
+    );
+    await expect(
+      asUser(
+        foreignAuth,
+        `select public.architect_apps_approve('${ordinaryRevision}','${ordinaryProject}','Field notes',null,'${tree}','${hash}',${literal(files)},${literal(collections)},${literal(behaviors)},${literal(generation)})`,
+      ),
+    ).rejects.toThrow(/founder pilot|not enabled for this account/i);
+    await expect(
+      asUser(
+        foreignAuth,
+        `select public.architect_apps_start('${ordinaryRevision}','${ordinaryProject}','${ordinaryRevision}','${hash}')`,
+      ),
+    ).rejects.toThrow(/founder pilot|not enabled for this account/i);
+    await expect(asUser(ownerAuth, `select public.architect_apps_set_execution_policy(true)`)).rejects.toThrow(
+      /Worker authorization required|permission denied/i,
+    );
+    await asWorker(`select public.architect_apps_set_execution_policy(false)`);
+    await expect(
+      asUser(
+        ownerAuth,
+        `select public.architect_apps_approve('${disabledRevision}','${project}','Field notes',1,'${tree}','${hash}',${literal(files)},${literal(collections)},${literal(behaviors)},${literal(generation)})`,
+      ),
+    ).rejects.toThrow(/executable work stays off|Ownership of a project is not founder entitlement/i);
+    await asWorker(`select public.architect_apps_set_execution_policy(true)`);
+    await expect(
+      asUser(
+        ownerAuth,
+        `select public.architect_apps_reserve_generation('${overrideRequest}','${startedRun}',1000,4000,'gpt-4o')`,
+      ),
+    ).rejects.toThrow(/gpt-6-astra|Unsupported model/i);
+    const reserved = await asUser(
+      ownerAuth,
+      `select public.architect_apps_reserve_generation('${startedRequest}','${startedRun}',1000,4000) as receipt`,
+    );
+    expect((reserved.rows[0] as { receipt: { status: string; created: boolean } }).receipt).toMatchObject({
+      created: true,
+      status: 'reserved',
+    });
+    const begun = await asUser(
+      ownerAuth,
+      `select public.architect_apps_begin_generation('${startedRequest}') as receipt`,
+    );
+    expect((begun.rows[0] as { receipt: { status: string } }).receipt.status).toBe('started');
+    const replayBegin = await asUser(
+      ownerAuth,
+      `select public.architect_apps_begin_generation('${startedRequest}') as receipt`,
+    );
+    expect((replayBegin.rows[0] as { receipt: { status: string } }).receipt.status).toBe('started');
+    await expect(
+      asUser(ownerAuth, `select public.architect_apps_finish_generation('${startedRequest}','cancelled',0,0)`),
+    ).rejects.toThrow(/cannot be cancelled to zero/i);
+    expect(
+      (
+        await asUser(
+          ownerAuth,
+          `select status, used_micros from public.architect_app_generation_runs where request_id='${startedRequest}'`,
+        )
+      ).rows,
+    ).toEqual([{ status: 'started', used_micros: null }]);
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_finish_generation('${startedRequest}','completed',1,1)`,
+    );
+    expect(
+      (
+        await asUser(
+          ownerAuth,
+          `select status, used_input, used_output, used_micros from public.architect_app_generation_runs where request_id='${startedRequest}'`,
+        )
+      ).rows,
+    ).toEqual([{ status: 'completed', used_input: 1000, used_output: 4000, used_micros: 210000 }]);
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_reserve_generation('${reducedRequest}','${startedRun}',800,4000)`,
+    );
+    await asUser(ownerAuth, `select public.architect_apps_begin_generation('${reducedRequest}')`);
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_finish_generation('${reducedRequest}','uncertain',0,0)`,
+    );
+    expect(
+      (
+        await asUser(
+          ownerAuth,
+          `select status, used_micros from public.architect_app_generation_runs where request_id='${reducedRequest}'`,
+        )
+      ).rows,
+    ).toEqual([{ status: 'uncertain', used_micros: 208000 }]);
+    await expect(
+      asUser(ownerAuth, `select public.architect_apps_finish_generation('${reducedRequest}','cancelled',0,0)`),
+    ).rejects.toThrow(/cannot be cancelled to zero/i);
   });
 });
 

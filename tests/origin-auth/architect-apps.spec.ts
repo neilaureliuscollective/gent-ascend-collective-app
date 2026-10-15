@@ -135,8 +135,25 @@ async function waitForUrl(url: string, child: ChildProcess, timeoutMs = 60000, l
   throw new Error(`Replacement application server did not start at ${url}.`);
 }
 
+async function enableAppsExecutionPolicy() {
+  const plane = localControlPlane();
+  const response = await fetch(`${plane.url}/rest/v1/rpc/architect_apps_set_execution_policy`, {
+    method: 'POST',
+    headers: {
+      apikey: plane.serviceRoleKey,
+      Authorization: `Bearer ${plane.serviceRoleKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_enabled: true }),
+  });
+  if (!response.ok) {
+    throw new Error(`Local execution policy could not be enabled (${response.status}). ${await response.text()}`);
+  }
+}
+
 test('connected Architect Apps journey uses Auth, worker, Docker and the compiled iframe', async ({ page, browser }) => {
   test.setTimeout(300000);
+  await enableAppsExecutionPolicy();
   await page.goto('/enter');
   await page.getByLabel('Email').fill('founder@aurelius.test');
   await page.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);

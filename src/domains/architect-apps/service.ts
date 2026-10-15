@@ -7,11 +7,13 @@ import { DatabaseAppStore, type AppPersistenceClient } from './database-store';
 import { assertAdditiveSchema, assertDataRate, recordToItem, validateCollectionPayload } from './data-bridge';
 import {
   APP_ACCEPTANCE_BUDGET,
+  assertApprovedAppGenerationModel,
+  boundAppGenerationInputTokens,
   databaseAppBudgetStore,
   defaultAppBudgetStore,
-  estimateAppGenerationTokens,
   type AppBudgetStore,
 } from './budget';
+import { buildAppGenerationContext } from './context';
 import { appGenerationProvenance, appProposalMode, generateAppProposal, type AppGenerationTransport } from './generation';
 import { appsGenerationAdmission, appsGenerationPolicy } from './generation-policy';
 import {
@@ -270,6 +272,7 @@ export async function proposeArchitectApp(
     const { person, project, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
     const policy = appsGenerationPolicy();
     if (policy.mode === 'openai') {
+      assertApprovedAppGenerationModel();
       requirePaidGenerationRuntime(options?.runtime ?? (await readPaidGenerationRuntime(client)));
     }
     const store = appStore({ client, plane: 'owner' });
@@ -309,10 +312,19 @@ export async function proposeArchitectApp(
         ? (options?.budget ??
           (memoryAppStoreAllowed() ? defaultAppBudgetStore() : databaseAppBudgetStore(client)))
         : null;
-    const inputTokens = estimateAppGenerationTokens(generationInput);
+    const inputTokens = boundAppGenerationInputTokens(
+      buildAppGenerationContext({
+        instruction: parsed.data.instruction,
+        kind: parsed.data.kind,
+        files: base?.files ?? [],
+        collections: base?.collections ?? [],
+        brief: project.content.blueprint?.vision,
+        direction: generationInput.direction,
+      }),
+    );
     if (budget && inputTokens > APP_ACCEPTANCE_BUDGET.maxInputTokens)
       throw new IntelligenceError(
-        `Generation input exceeds the ${APP_ACCEPTANCE_BUDGET.maxInputTokens}-token acceptance ceiling.`,
+        `Generation input exceeds the ${APP_ACCEPTANCE_BUDGET.maxInputTokens}-token acceptance ceiling. This bound is conservative, not a guaranteed spending cap.`,
         413,
       );
     const reserved = budget
@@ -336,8 +348,11 @@ export async function proposeArchitectApp(
     let providerStarted = false;
     let generated;
     try {
-      generated = await generateAppProposal(generationInput, async (context) => {
+      if (reservation) {
+        await budget?.begin({ requestId: parsed.data.requestId, personId: person.id });
         providerStarted = true;
+      }
+      generated = await generateAppProposal(generationInput, async (context) => {
         const next = transport ?? defaultAppGenerationTransport();
         if (!next) throw new IntelligenceError('OpenAI app generation is authorized but the provider adapter was not wired.', 503);
         return next(context);

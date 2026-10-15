@@ -1,3 +1,6 @@
+import { sharedCharacter } from '@/domains/intelligence/prompt';
+import { APP_DATA_BRIDGE_CONTRACT, type AppGenerationContext } from './context';
+
 export const APP_ACCEPTANCE_MODEL = 'gpt-6-astra';
 export const APP_ACCEPTANCE_CONTEXT_TIER = 'short' as const;
 export const APP_ACCEPTANCE_SHORT_CONTEXT_MAX = 272000;
@@ -21,7 +24,7 @@ export const APP_ACCEPTANCE_BUDGET = {
   heartbeatMaxAgeMs: 90_000,
 } as const;
 
-export type AppGenerationCallStatus = 'reserved' | 'completed' | 'failed' | 'uncertain' | 'cancelled';
+export type AppGenerationCallStatus = 'reserved' | 'started' | 'completed' | 'failed' | 'uncertain' | 'cancelled';
 
 export type AppGenerationReservation = {
   requestId: string;
@@ -49,10 +52,11 @@ export type AppBudgetStore = {
     inputTokens: number;
     outputTokens: number;
   }): Promise<AppBudgetReserveResult>;
+  begin(input: { requestId: string; personId: string }): Promise<AppGenerationReservation>;
   finish(input: {
     requestId: string;
     personId: string;
-    status: Exclude<AppGenerationCallStatus, 'reserved'>;
+    status: Exclude<AppGenerationCallStatus, 'reserved' | 'started'>;
     usedInput?: number | null;
     usedOutput?: number | null;
   }): Promise<AppGenerationReservation>;
@@ -67,7 +71,7 @@ export function asAppGenerationReservation(row: unknown): AppGenerationReservati
   const personId = String(record.person_id ?? record.personId ?? '');
   const status = String(record.status ?? '');
   if (!requestId || !runId || !personId) return null;
-  if (!['reserved', 'completed', 'failed', 'uncertain', 'cancelled'].includes(status)) return null;
+  if (!['reserved', 'started', 'completed', 'failed', 'uncertain', 'cancelled'].includes(status)) return null;
   return {
     requestId,
     runId,
@@ -94,9 +98,58 @@ function withLock<T>(fn: () => T | Promise<T>) {
   return run;
 }
 
+export function appGenerationInstructions() {
+  return `You are Aethelios in Architect Apps. ${sharedCharacter}
+Return only a validated React/TypeScript/Vite application under src/. You cannot install packages, edit sealed toolchain files, invent servers, authentication, payments or publishing. Preserve unchanged files. Update and delete operations must bind the exact base hashes supplied in context.files. Additive collection schema only. Persist only through the host bridge ${APP_DATA_BRIDGE_CONTRACT.schema}. Follow context.bridge.replay for operation identity. Use only approved direction colors, typography, layout and assets; context.direction.unsupported is out of scope. Paths and character counts are not a revision base.`;
+}
+
+export function assertApprovedAppGenerationModel(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
+  const configured = env.AURELIUS_AI_MODEL?.trim();
+  if (configured && configured !== APP_ACCEPTANCE_MODEL)
+    throw new Error(
+      `Architect Apps paid generation is bound to ${APP_ACCEPTANCE_MODEL}. AURELIUS_AI_MODEL=${configured} is not an approved override.`,
+    );
+}
+
+/** Character-length / 4 is not a hard cap. This bound counts the serialized provider request at 2 chars/token plus schema overhead. */
+export function boundAppGenerationInputTokens(context: AppGenerationContext) {
+  const prompt = JSON.stringify({
+    instruction: context.instruction,
+    kind: context.kind,
+    files: context.files,
+    collections: context.collections,
+    bridge: context.bridge,
+    brief: context.brief ?? null,
+    direction: context.direction ?? null,
+  });
+  const schemaBound = JSON.stringify({
+    type: 'object',
+    required: ['summary', 'files', 'collections', 'behaviors', 'notes'],
+    properties: {
+      summary: { maxLength: 2000 },
+      files: { maxItems: 40, contentMax: 80000 },
+      operations: { maxItems: 40 },
+      collections: { maxItems: 4 },
+      behaviors: ['navigation', 'forms', 'validation', 'filtering', 'calculations', 'persistence'],
+      notes: { maxLength: 2000 },
+    },
+  });
+  const chars = appGenerationInstructions().length + prompt.length + schemaBound.length;
+  return Math.max(1, Math.ceil(chars / 2) + 512);
+}
+
 export function estimateAppGenerationTokens(payload: unknown) {
-  const chars = JSON.stringify(payload ?? '').length;
-  return Math.max(1, Math.ceil(chars / 4));
+  return boundAppGenerationInputTokens(
+    payload && typeof payload === 'object' && 'files' in payload
+      ? (payload as AppGenerationContext)
+      : {
+          instruction: JSON.stringify(payload ?? ''),
+          kind: 'create',
+          files: [],
+          collections: [],
+          bridge: APP_DATA_BRIDGE_CONTRACT,
+        },
+  );
 }
 
 export function reservedCallMicros(inputTokens: number, outputTokens: number) {
@@ -149,26 +202,53 @@ export function memoryAppBudgetStore(): AppBudgetStore {
         return { created: true, reservation: reserved };
       });
     },
+    async begin(input) {
+      return withLock(() => {
+        const existing = memory.get(input.requestId);
+        if (!existing || existing.personId !== input.personId)
+          throw new Error('Generation reservation is unavailable.');
+        if (existing.status === 'started' || existing.status === 'uncertain' || existing.status === 'completed' || existing.status === 'failed')
+          return existing;
+        if (existing.status !== 'reserved') throw new Error('This generation request cannot start a model call.');
+        const next: AppGenerationReservation = { ...existing, status: 'started' };
+        memory.set(input.requestId, next);
+        return next;
+      });
+    },
     async finish(input) {
       return withLock(() => {
         const existing = memory.get(input.requestId);
         if (!existing || existing.personId !== input.personId)
           throw new Error('Generation reservation is unavailable.');
-        if (existing.status !== 'reserved' && existing.status !== 'uncertain') return existing;
+        if (existing.status === 'completed' || existing.status === 'failed' || existing.status === 'cancelled')
+          return existing;
+        if (input.status === 'cancelled') {
+          if (existing.status !== 'reserved')
+            throw new Error('In-flight or uncertain generation cannot be cancelled to zero.');
+          const cancelled: AppGenerationReservation = {
+            ...existing,
+            status: 'cancelled',
+            usedInput: 0,
+            usedOutput: 0,
+            usedMicros: 0,
+          };
+          memory.set(input.requestId, cancelled);
+          return cancelled;
+        }
         const usedInput =
-          input.status === 'cancelled'
-            ? 0
-            : Math.max(input.usedInput ?? existing.reservedInput, input.status === 'uncertain' ? existing.reservedInput : 0);
+          input.status === 'uncertain'
+            ? existing.reservedInput
+            : Math.max(input.usedInput ?? existing.reservedInput, existing.reservedInput);
         const usedOutput =
-          input.status === 'cancelled'
-            ? 0
-            : Math.max(input.usedOutput ?? existing.reservedOutput, input.status === 'uncertain' ? existing.reservedOutput : 0);
+          input.status === 'uncertain'
+            ? existing.reservedOutput
+            : Math.max(input.usedOutput ?? existing.reservedOutput, existing.reservedOutput);
         const next: AppGenerationReservation = {
           ...existing,
           status: input.status,
-          usedInput: input.status === 'cancelled' ? 0 : usedInput,
-          usedOutput: input.status === 'cancelled' ? 0 : usedOutput,
-          usedMicros: input.status === 'cancelled' ? 0 : reservedCallMicros(usedInput, usedOutput),
+          usedInput,
+          usedOutput,
+          usedMicros: reservedCallMicros(usedInput, usedOutput),
         };
         memory.set(input.requestId, next);
         return next;
@@ -195,12 +275,22 @@ export function databaseAppBudgetStore(client: AppBudgetClient): AppBudgetStore 
         p_run: input.runId,
         p_input: input.inputTokens,
         p_output: input.outputTokens,
+        p_model: APP_ACCEPTANCE_MODEL,
       });
       if (saved.error) throw new Error(saved.error.message);
       const payload = saved.data && typeof saved.data === 'object' ? (saved.data as Record<string, unknown>) : null;
       const reservation = asAppGenerationReservation(payload);
       if (!reservation) throw new Error('Generation reservation is unavailable.');
       return { created: payload?.created === true, reservation };
+    },
+    async begin(input) {
+      const saved = await client.rpc('architect_apps_begin_generation', {
+        p_request: input.requestId,
+      });
+      if (saved.error) throw new Error(saved.error.message);
+      const reservation = asAppGenerationReservation(saved.data);
+      if (!reservation) throw new Error('Generation reservation is unavailable.');
+      return reservation;
     },
     async finish(input) {
       const saved = await client.rpc('architect_apps_finish_generation', {

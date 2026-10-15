@@ -1,4 +1,4 @@
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 const owner = '00000000-0000-4000-8000-000000000001';
 const projectId = '00000000-0000-4000-8000-000000000003';
@@ -34,10 +34,13 @@ vi.mock('@/domains/intelligence/service', () => ({
     },
   }),
 }));
+import { APP_DATA_BRIDGE_CONTRACT } from '@/domains/architect-apps/context';
 import {
   APP_ACCEPTANCE_BUDGET,
   APP_ACCEPTANCE_MODEL,
   APP_ACCEPTANCE_PRICING,
+  assertApprovedAppGenerationModel,
+  boundAppGenerationInputTokens,
   memoryAppBudgetStore,
   reservedCallMicros,
   resetAppBudgetMemory,
@@ -53,6 +56,10 @@ import {
 import { mockedSupportedAppProposal } from '@/domains/architect-apps/provider';
 import { processAppBuildOnce } from '@/domains/architect-apps/worker';
 import { MemoryAppStore } from '@/domains/architect-apps/store';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const digest = `sha256:${'ab'.repeat(32)}`;
 const readyRuntime = {
@@ -180,6 +187,73 @@ it('reserves two calls atomically and treats uncertain usage as spent', async ()
   });
   const listed = await store.list(runId, personId);
   expect(listed.find((row) => row.requestId.endsWith('812'))?.usedMicros).toBeGreaterThan(0);
+});
+
+it('rejects an unsupported model override before a paid reservation', async () => {
+  resetAppBudgetMemory();
+  Object.entries({
+    ...founderPilotEnv,
+    AURELIUS_AI_MODEL: 'gpt-4o',
+    ARCHITECT_APPS_STORE: 'memory',
+    ARCHITECT_APPS_PREVIEW_SECRET: 'service-preview-secret-key',
+  }).forEach(([key, value]) => vi.stubEnv(key, value));
+  let called = 0;
+  await expect(
+    proposeArchitectApp(
+      {
+        action: 'propose',
+        projectId,
+        requestId: '00000000-0000-4000-8000-000000000931',
+        expected: 1,
+        instruction: 'Create field notes.',
+        kind: 'create',
+        demo: 'none',
+      },
+      async () => {
+        called += 1;
+        return mockedSupportedAppProposal({ kind: 'create', files: [] });
+      },
+      { verifyFounder: async () => true, runtime: readyRuntime, budget: memoryAppBudgetStore() },
+    ),
+  ).rejects.toThrow(/not an approved override/i);
+  expect(called).toBe(0);
+});
+
+it('settles a delayed provider failure as uncertain instead of cancelling to zero', async () => {
+  resetAppBudgetMemory();
+  Object.entries({
+    APP_ENV: 'local',
+    ARCHITECT_ORIGIN_ENABLED: 'true',
+    ARCHITECT_APPS_ENABLED: 'true',
+    ARCHITECT_APPS_STORE: 'memory',
+    ARCHITECT_APPS_AI_ENABLED: 'true',
+    OPENAI_API_KEY: 'sk-test',
+    ARCHITECT_APPS_IMAGE_DIGEST: digest,
+    ARCHITECT_APPS_PREVIEW_SECRET: 'service-preview-secret-key',
+  }).forEach(([key, value]) => vi.stubEnv(key, value));
+  const budget = memoryAppBudgetStore();
+  const requestId = '00000000-0000-4000-8000-000000000932';
+  await expect(
+    proposeArchitectApp(
+      {
+        action: 'propose',
+        projectId,
+        requestId,
+        expected: 1,
+        instruction: 'Create field notes.',
+        kind: 'create',
+        demo: 'none',
+      },
+      async () => {
+        throw new Error('Simulated provider timeout. This is not a paid OpenAI call.');
+      },
+      { verifyFounder: async () => true, runtime: readyRuntime, budget },
+    ),
+  ).rejects.toThrow(/simulated provider timeout/i);
+  const listed = await budget.list(projectId, owner);
+  expect(listed).toHaveLength(1);
+  expect(listed[0]?.status).toBe('uncertain');
+  expect(listed[0]?.usedMicros).toBeGreaterThan(0);
 });
 
 it('does not send a second provider call for the same reserved request', async () => {
@@ -321,4 +395,86 @@ it('cancels an unused reservation and does not invent a completed compile', asyn
     status: 'cancelled',
   });
   expect(cancelled.usedMicros).toBe(0);
+});
+
+it('binds paid generation to gpt-6-astra and a conservative full-request bound', () => {
+  expect(() => assertApprovedAppGenerationModel({ AURELIUS_AI_MODEL: 'gpt-5.5' })).toThrow(/not an approved override/i);
+  expect(() => assertApprovedAppGenerationModel({ AURELIUS_AI_MODEL: 'gpt-6-astra' })).not.toThrow();
+  expect(() => assertApprovedAppGenerationModel({})).not.toThrow();
+  const context = {
+    instruction: 'Create field notes I can save.',
+    kind: 'create' as const,
+    files: [],
+    collections: [],
+    bridge: APP_DATA_BRIDGE_CONTRACT,
+  };
+  const naiveCharsOverFour = Math.ceil(JSON.stringify({ instruction: context.instruction, kind: context.kind }).length / 4);
+  expect(boundAppGenerationInputTokens(context)).toBeGreaterThan(naiveCharsOverFour);
+  expect(boundAppGenerationInputTokens(context)).toBeLessThanOrEqual(APP_ACCEPTANCE_BUDGET.maxInputTokens);
+});
+
+it('refuses client cancel or reduction after the provider-start boundary', async () => {
+  resetAppBudgetMemory();
+  const store = memoryAppBudgetStore();
+  const requestId = '00000000-0000-4000-8000-000000000841';
+  const runId = '00000000-0000-4000-8000-000000000842';
+  const personId = '00000000-0000-4000-8000-000000000001';
+  const reserved = await store.reserve({
+    requestId,
+    runId,
+    personId,
+    inputTokens: 1200,
+    outputTokens: 4000,
+  });
+  const started = await store.begin({ requestId, personId });
+  expect(started.status).toBe('started');
+  expect((await store.begin({ requestId, personId })).status).toBe('started');
+  await expect(store.finish({ requestId, personId, status: 'cancelled' })).rejects.toThrow(/cannot be cancelled to zero/i);
+  const completed = await store.finish({
+    requestId,
+    personId,
+    status: 'completed',
+    usedInput: 1,
+    usedOutput: 1,
+  });
+  expect(completed.usedInput).toBe(reserved.reservation.reservedInput);
+  expect(completed.usedOutput).toBe(reserved.reservation.reservedOutput);
+  expect(completed.usedMicros).toBe(reserved.reservation.reservedMicros);
+  expect((await store.finish({ requestId, personId, status: 'cancelled' })).status).toBe('completed');
+});
+
+it('keeps uncertain usage reserved and does not reopen a third call', async () => {
+  resetAppBudgetMemory();
+  const store = memoryAppBudgetStore();
+  const runId = '00000000-0000-4000-8000-000000000851';
+  const personId = '00000000-0000-4000-8000-000000000001';
+  const first = await store.reserve({
+    requestId: '00000000-0000-4000-8000-000000000852',
+    runId,
+    personId,
+    inputTokens: 16000,
+    outputTokens: 4000,
+  });
+  await store.begin({ requestId: first.reservation.requestId, personId });
+  await store.finish({ requestId: first.reservation.requestId, personId, status: 'uncertain', usedInput: 0, usedOutput: 0 });
+  const second = await store.reserve({
+    requestId: '00000000-0000-4000-8000-000000000853',
+    runId,
+    personId,
+    inputTokens: 16000,
+    outputTokens: 4000,
+  });
+  await store.begin({ requestId: second.reservation.requestId, personId });
+  await store.finish({ requestId: second.reservation.requestId, personId, status: 'failed', usedInput: 2, usedOutput: 2 });
+  await expect(
+    store.reserve({
+      requestId: '00000000-0000-4000-8000-000000000854',
+      runId,
+      personId,
+      inputTokens: 1,
+      outputTokens: 1,
+    }),
+  ).rejects.toThrow(/two model calls/i);
+  const listed = await store.list(runId, personId);
+  expect(listed.every((row) => (row.usedMicros ?? 0) >= row.reservedMicros)).toBe(true);
 });

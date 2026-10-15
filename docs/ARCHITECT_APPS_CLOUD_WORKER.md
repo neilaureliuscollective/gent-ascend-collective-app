@@ -178,6 +178,7 @@ Migrations, in order, local-only until founder-approved hosted application:
 4. `20261015155000_architect_apps_retain_verified.sql`
 5. `20261015156000_architect_apps_preview_sessions.sql`
 6. `20261015156500_architect_apps_pilot_budget.sql`
+7. `20261015156600_architect_apps_execution_gate.sql`
 
 A merge of this PR into `main` is **not** a GitHub-only operation. The connected Vercel project deploys Production from `main`. Merging would publish the web plane without a commissioned worker, without hosted Apps migrations, and without preview-cluster secrets. Do not merge until those hosted steps are separately approved. Vercel never runs the worker. An HTTP 200 from the Next.js server is not worker readiness.
 
@@ -185,7 +186,7 @@ Readiness (`--health` / `--preflight`) reports isolation, schema contracts, work
 
 Deployment sequence after approval:
 
-1. Apply the ordered Apps migrations to the existing Gent Ascend database (not from a founder laptop checklist; use the authorized hosted SQL path). Shared Talk/Apps names apply once. `156500` is an Architect-only forward file. Recorded migration history is not the same as a verified physical schema — confirm the physical tables/RPCs, including generation runs and worker presence, before enabling flags.
+1. Apply the ordered Apps migrations to the existing Gent Ascend database (not from a founder laptop checklist; use the authorized hosted SQL path). Shared Talk/Apps names apply once. `156500` and `156600` are Architect-only forward files. Recorded migration history is not the same as a verified physical schema — confirm the physical tables/RPCs, including generation runs, worker presence, and execution policy, before enabling flags.
 2. Build both images on the Droplet from this repository SHA (`node scripts/architect-apps-prepare-runtime.mjs`).
 3. `node scripts/architect-apps-packaged-worker.mjs --prove-write`
 4. `node scripts/architect-apps-packaged-worker.mjs --prove-compile`

@@ -9,6 +9,7 @@ export const requiredAppsSchemaContracts = {
     architect_app_preview_sessions: ['nonce'],
     architect_app_generation_runs: ['request_id'],
     architect_app_worker_presence: ['worker_id'],
+    architect_apps_execution_policy: ['founder_pilot'],
   },
   rpcs: [
     'architect_apps_approve',
@@ -24,9 +25,12 @@ export const requiredAppsSchemaContracts = {
     'architect_apps_preview_current',
     'architect_apps_preview_revoke',
     'architect_apps_reserve_generation',
+    'architect_apps_begin_generation',
     'architect_apps_finish_generation',
     'architect_apps_report_worker_presence',
     'architect_apps_worker_readiness',
+    'architect_apps_set_execution_policy',
+    'architect_apps_require_execution',
   ],
 } as const;
 
