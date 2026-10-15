@@ -83,6 +83,7 @@ export function ArchitectAppPanel({
   const knownInspectIds = useRef<string[]>([]);
   const seenInspectNonces = useRef<Set<string>>(new Set());
   const refineButton = useRef<HTMLButtonElement>(null);
+  const detailsButton = useRef<HTMLButtonElement>(null);
   const requestField = useRef<HTMLTextAreaElement>(null);
   const scroll = useRef(0);
   const plane = useRef<HTMLDivElement>(null);
@@ -540,6 +541,7 @@ export function ArchitectAppPanel({
             </button>
             <button
               type="button"
+              ref={detailsButton}
               aria-pressed={appSheet === 'side'}
               onClick={() => {
                 setAppSheet(appSheet === 'side' ? 'stage' : 'side');
@@ -659,6 +661,7 @@ export function ArchitectAppPanel({
         ) : null}
       </div>
       <aside className="architect-app-side" aria-label="Application details">
+        {appSheet === 'side' && <button type="button" onClick={() => { setAppSheet('stage'); detailsButton.current?.focus(); }}>Close details</button>}
         <div className="architect-app-tabs">
           {panels.map((tab) => (
             <button
@@ -711,6 +714,9 @@ export function ArchitectAppPanel({
           </div>
         )}
         {panel === 'Changes' && (
+          <section aria-label="Revision comparison">
+          <h4>Revision comparison</h4>
+          <p>{proposal ? `Revision ${displayed?.revision ?? 'none'} → proposed revision` : `Previous saved files → revision ${displayed?.revision ?? 'none'}`}</p>
           <ol>
             {fileDiffs.map((change) => (
               <li key={change.path}>
@@ -718,15 +724,16 @@ export function ArchitectAppPanel({
                   {change.kind} <code>{change.path}</code>
                 </p>
                 {'before' in change && (change.kind === 'update' || change.kind === 'delete') ? (
-                  <pre className="architect-app-diff-before">{String(change.before)}</pre>
+                  <div><p>Before</p><pre className="architect-app-diff-before">{String(change.before)}</pre></div>
                 ) : null}
                 {'after' in change && (change.kind === 'update' || change.kind === 'create') ? (
-                  <pre className="architect-app-diff-after">{String(change.after)}</pre>
+                  <div><p>After</p><pre className="architect-app-diff-after">{String(change.after)}</pre></div>
                 ) : null}
               </li>
             ))}
             {!fileDiffs.length && <li>No pending revision. Request a change to preview the file operations.</li>}
           </ol>
+          </section>
         )}
         {panel === 'Records' && (
           <ol>

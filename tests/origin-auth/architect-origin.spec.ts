@@ -72,6 +72,7 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
     .getByLabel('Selected document')
     .selectOption({ label: `${name} — Business plan · approved` });
   await expect(page.getByLabel('Editable Markdown')).toContainText('conservative launch budget');
+  await documentLibrary.locator('summary').click();
   for (const width of [390, 720, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

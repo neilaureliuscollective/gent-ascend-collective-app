@@ -4,6 +4,8 @@ import { execFileSync } from 'node:child_process';
 
 const root = 'test-results/architect-apps-connected';
 const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const verifyRoot = process.argv[2];
+if (verifyRoot) process.chdir(verifyRoot);
 const receipt = JSON.parse(readFileSync('docs/evidence/architect-apps/connected-journey.json', 'utf8'));
 if (receipt.commit !== commit || receipt.kind !== 'connected-local-acceptance')
   throw new Error('Connected receipt must belong to this tested commit.');
@@ -14,6 +16,8 @@ for (const phase of ['arrival', 'selected-path', 'shaping', 'compiled', 'precise
     const bytes = readFileSync(path);
     if (bytes.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' || bytes.length < 1000)
       throw new Error(`Invalid screenshot: ${path}`);
+    if (!bytes.equals(readFileSync(`docs/evidence/architect-apps/workbench-${phase}-${viewport}.png`)))
+      throw new Error(`Screenshot copies differ: ${path}`);
     files.push({ path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
   }
 }
@@ -26,5 +30,11 @@ for (const name of ['connected-journey.webm', 'reopened-journey.webm']) {
   files.push({ path, bytes: bytes.length, duration: Number(probe.format.duration), sha256: createHash('sha256').update(bytes).digest('hex') });
 }
 const manifest = { commit, kind: receipt.kind, generation: receipt.generation, files };
-writeFileSync(`${root}/evidence-manifest.json`, `${JSON.stringify(manifest, null, 2)}\n`);
+if (verifyRoot) {
+  const packaged = JSON.parse(readFileSync(`${root}/evidence-manifest.json`, 'utf8'));
+  if (JSON.stringify(packaged) !== JSON.stringify(manifest)) throw new Error('Uploaded artifact bytes do not match its manifest.');
+  console.log('Downloaded GitHub artifact matches every manifest entry.');
+} else {
+  writeFileSync(`${root}/evidence-manifest.json`, `${JSON.stringify(manifest, null, 2)}\n`);
+}
 console.log(JSON.stringify(manifest, null, 2));

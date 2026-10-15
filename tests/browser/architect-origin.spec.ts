@@ -181,6 +181,7 @@ test('complete synthetic journey: vision, reviewed research, useful document, fo
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 4');
   expect(state.getProject()!.content.documents[0]!.status).toBe('approved');
+  await page.locator('.origin-document-library > summary').click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export Markdown', exact: true }).click();
   const file = await download;
@@ -212,10 +213,12 @@ test('complete synthetic journey: vision, reviewed research, useful document, fo
   await page.getByRole('button', { name: 'Restore as a new draft' }).click();
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 6');
+  await page.locator('.origin-project-switcher > summary').click();
   await page.getByRole('button', { name: 'Archive project', exact: true }).click();
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 7');
   await page.reload();
+  await page.locator('.origin-project-switcher > summary').click();
   await expect(page.getByRole('button', { name: 'Resume project', exact: true })).toBeVisible();
   expect(state.versions).toHaveLength(7);
 });
@@ -667,6 +670,7 @@ test('HTML document preview is sandboxed and keeps the prior artifact when Const
   await page.getByLabel('Editable Markdown').fill(html);
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  if (!(await page.getByRole('button', { name: 'Artifact preview' }).isVisible())) await page.locator('.origin-project-switcher > summary').click();
   await page.getByRole('button', { name: 'Artifact preview' }).click();
   const frame = page.frameLocator('iframe[title="Isolated artifact preview"]');
   await expect(frame.getByRole('heading', { name: 'Owned artifact' })).toBeVisible();
@@ -791,6 +795,7 @@ test('unsaved document preview is not labelled as a saved revision', async ({ pa
   await page.getByRole('button', { name: 'Save & confirm revision' }).click();
   await expect(page.getByRole('status')).toContainText('Saved revision 2');
   await page.getByLabel('Editable Markdown').fill('# Unsaved rewrite\n\nStill a draft.');
+  if (!(await page.getByRole('button', { name: 'Artifact preview' }).isVisible())) await page.locator('.origin-project-switcher > summary').click();
   await page.getByRole('button', { name: 'Artifact preview' }).click();
   await expect(page.getByText('Unsaved draft preview', { exact: false })).toBeVisible();
   await expect(page.getByText('Actual saved document', { exact: false })).toHaveCount(0);
@@ -1510,6 +1515,7 @@ test('keeps last success and drafts when worker, connections and provider are un
   await expect(page.getByText(/A funded OpenAI account does not supply/)).toBeVisible();
   await expect(page.getByText(/Latest run queued/)).toBeVisible();
   await expect(page.getByText(/Isolated worker is not running/)).toBeVisible();
+  if (!(await page.getByRole('button', { name: 'Artifact preview' }).isVisible())) await page.locator('.origin-project-switcher > summary').click();
   await page.getByRole('button', { name: 'Artifact preview' }).click();
   await expect(page.frameLocator('iframe[title="Isolated artifact preview"]').getByText('Kept success')).toBeVisible();
   await expect(page.locator('.origin-artifact-caption')).toContainText(/Isolated static preview|Last successful Construct/);
@@ -1676,6 +1682,7 @@ test('repair journey keeps the original attempt after enqueue and restores durab
   await expect(page.getByRole('button', { name: 'Propose repair' })).toBeDisabled();
   await expect(page.getByText(/Latest run queued/)).toBeVisible();
   await expect(page.getByText(/Repair result queued/)).toBeVisible();
+  if (!(await page.getByRole('button', { name: 'Artifact preview' }).isVisible())) await page.locator('.origin-project-switcher > summary').click();
   await page.getByRole('button', { name: 'Artifact preview' }).click();
   await expect(page.frameLocator('iframe[title="Isolated artifact preview"]').getByText('Kept success')).toBeVisible();
 });
@@ -1968,8 +1975,10 @@ test('quantity-and-cost estimator can be created, saved, reopened and invoked', 
   await expect(page.locator('.origin-tool-result h4')).toContainText('392.15');
   await expect(page.getByRole('button', { name: 'Agent fixture invoke' })).toHaveCount(0);
   await expect(page.locator('.origin-savebar')).toContainText('Unsaved tool draft');
+  await page.locator('.origin-project-switcher > summary').click();
   page.once('dialog', (dialog) => dialog.dismiss());
   await page.getByRole('link', { name: 'Open project Talk ↗' }).click();
+  await page.locator('.origin-project-switcher > summary').click();
   await expect(page).toHaveURL(/\/app\/architect/);
   await expect(page.getByRole('heading', { name: 'Quantity and cost estimator' })).toBeVisible();
   await page.getByRole('button', { name: 'Save tool revision' }).click();
@@ -2250,6 +2259,9 @@ test('UI fixture: app workbench reviews files, recovers approved start after rel
   await expect(page.getByText(/Build was not queued|Synthetic lost start/)).toBeVisible();
   await page.getByRole('button', { name: 'Start approved build' }).click();
   await expect(page.getByTitle('Private generated application preview')).toBeVisible();
+  await page.locator('.origin-plane').evaluate((node) => node.scrollTo(0, 0));
+  const previewBox = await page.getByTitle('Private generated application preview').boundingBox();
+  expect(Math.min(previewBox!.y + previewBox!.height, 900) - Math.max(previewBox!.y, 0)).toBeGreaterThan(450);
   await page.screenshot({ path: 'test-results/architect-apps-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Phone' })).toBeVisible();
@@ -2438,16 +2450,18 @@ test('welcome arrival explains paths and saved Deliverables fill the phone canva
     [1440, 900],
   ] as const) {
     await page.setViewportSize({ width, height });
-    await expect(page.getByRole('heading', { name: 'Deliverables' })).toBeVisible();
+    await expect(page.getByLabel('Editable Markdown')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const plane = page.locator('.origin-workbench .origin-plane');
     const box = await plane.boundingBox();
     const minShare = width <= 600 ? 0.82 : 0.42;
     expect(box?.width ?? 0, `${width}x${height} Deliverables plane`).toBeGreaterThan(width * minShare);
-    const save = page.getByRole('button', { name: 'Save & confirm revision' });
-    await expect(save).toBeVisible();
-    await save.scrollIntoViewIfNeeded();
-    await expect(save).toBeInViewport();
+    const editor = page.getByLabel('Editable Markdown');
+    const editorBox = await editor.boundingBox();
+    const dockBox = await page.locator('.origin-fold-dock').boundingBox();
+    const visibleHeight = Math.min(editorBox!.y + editorBox!.height, dockBox?.y ?? height) - Math.max(0, editorBox!.y);
+    expect(visibleHeight, `${width}x${height} default editor working area`).toBeGreaterThan(height <= 520 ? 120 : 250);
+    await expect(page.locator('.origin-savebar')).toBeHidden();
     await page.screenshot({
       path: `test-results/architect-deliverables-workspace-${width}x${height}.png`,
       fullPage: false,

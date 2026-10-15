@@ -1,6 +1,6 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
 
 test.use({
   viewport: { width: 1440, height: 900 },
@@ -188,14 +188,23 @@ function evidenceDir() {
 
 async function captureWorkbench(target: Page, name: string) {
   const dirs = evidenceDir();
+  await target.evaluate(() => {
+    document.querySelectorAll('.origin-workspace, .origin-plane, .architect-app-side').forEach((node) => node.scrollTo(0, 0));
+  });
   await target.screenshot({ path: `${dirs.docs}/${name}.png`, fullPage: true });
-  await target.screenshot({ path: `${dirs.connected}/${name}.png`, fullPage: true });
+  copyFileSync(`${dirs.docs}/${name}.png`, `${dirs.connected}/${name}.png`);
 }
 
 async function capturePhase(page: Page, phase: string) {
   for (const [label, width, height] of [['desktop', 1440, 900], ['fold', 720, 900], ['phone', 390, 844]] as const) {
     await page.setViewportSize({ width, height });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (phase === 'compiled') {
+      await page.locator('.origin-plane').evaluate((node) => node.scrollTo(0, 0));
+      const box = await page.getByTitle('Private generated application preview').boundingBox();
+      expect(Math.min(box!.y + box!.height, height) - Math.max(box!.y, 0)).toBeGreaterThan(height * (label === 'desktop' ? 0.5 : 0.3));
+    }
+    if (phase === 'comparison') await expect(page.getByRole('heading', { name: 'Revision comparison', exact: true })).toBeInViewport();
     await captureWorkbench(page, `workbench-${phase}-${label}`);
   }
   await page.setViewportSize({ width: 1440, height: 900 });

@@ -176,7 +176,7 @@ export function ArchitectOrigin({
   const constructGeneration = useRef(0);
   const heldPreviewRef = useRef<PreviewDecision | null>(null);
   const abort = useRef<AbortController | null>(null);
-  const projectTitle = useRef<HTMLHeadingElement | null>(null);
+  const projectTitle = useRef<HTMLElement | null>(null);
   const planeRef = useRef<HTMLElement | null>(null);
   const planeScroll = useRef<Record<string, number>>({});
   const dirty = !!draft && !!selected && JSON.stringify(draft) !== JSON.stringify(selected.content);
@@ -921,8 +921,48 @@ export function ArchitectOrigin({
       )}
       {selected ? (
         <details className="origin-project-switcher">
-          <summary>Projects / switch creation</summary>
+          <summary ref={projectTitle}>Projects / switch creation · {selected.content.name}</summary>
           {libraryNavigation}
+          {draft && (surface === 'App' || surface === 'Deliverables') && (
+            <WorkbenchHeader
+              project={selected}
+              draft={draft}
+              view={workbenchView}
+              connectionLabel={
+                connectionChip()
+              }
+              onView={openWorkbenchView}
+            />
+          )}
+          {draft && (
+            <header className="origin-project-heading">
+              <div>
+                <p className="eyebrow">
+                  {draft.discipline} / {draft.status} / REVISION {selected.revision}
+                </p>
+                <h2>
+                  {selected.content.name}
+                </h2>
+              </div>
+              <div className="origin-links">
+                <button
+                  disabled={locked}
+                  onClick={() =>
+                    change({
+                      ...draft,
+                      status: draft.status === 'archived' ? 'active' : 'archived',
+                    })
+                  }
+                >
+                  {draft.status === 'archived' ? 'Resume project' : 'Archive project'}
+                </button>
+                <button onClick={() => download(draft.name + '-blueprint', projectMarkdown(draft))}>
+                  Export {dirty ? 'draft' : 'blueprint'}
+                </button>
+                <Link href={`/app/aethelios?conversation=${selected.id}`}>Open project Talk ↗</Link>
+              </div>
+            </header>
+          )}
         </details>
       ) : null}
       {!selected ? (
@@ -1030,33 +1070,7 @@ export function ArchitectOrigin({
       ) : (
         draft && (
           <>
-            <header className="origin-project-heading">
-              <div>
-                <p className="eyebrow">
-                  {draft.discipline} / {draft.status} / REVISION {selected.revision}
-                </p>
-                <h2 ref={projectTitle} tabIndex={-1}>
-                  {selected.content.name}
-                </h2>
-              </div>
-              <div className="origin-links">
-                <button
-                  disabled={locked}
-                  onClick={() =>
-                    change({
-                      ...draft,
-                      status: draft.status === 'archived' ? 'active' : 'archived',
-                    })
-                  }
-                >
-                  {draft.status === 'archived' ? 'Resume project' : 'Archive project'}
-                </button>
-                <button onClick={() => download(draft.name + '-blueprint', projectMarkdown(draft))}>
-                  Export {dirty ? 'draft' : 'blueprint'}
-                </button>
-                <Link href={`/app/aethelios?conversation=${selected.id}`}>Open project Talk ↗</Link>
-              </div>
-            </header>
+            {surface !== 'App' && surface !== 'Deliverables' && (
             <WorkbenchHeader
               project={selected}
               draft={draft}
@@ -1066,6 +1080,7 @@ export function ArchitectOrigin({
               }
               onView={openWorkbenchView}
             />
+            )}
             <nav className="origin-surfaces" aria-label="Project surfaces">
               {surfaces.map((tab) => (
                 <button
@@ -1092,7 +1107,8 @@ export function ArchitectOrigin({
               surface !== 'History' &&
               surface !== 'Construct' &&
               surface !== 'Tool' &&
-              surface !== 'App' && (
+              surface !== 'App' &&
+              surface !== 'Deliverables' && (
               <div className="origin-canvas-tools">
                 <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
                   {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
@@ -1470,9 +1486,8 @@ export function ArchitectOrigin({
                 )}
                 {surface === 'Deliverables' && workbenchView !== 'preview' && (
                   <>
-                    <h3 className="origin-deliverables-title">Deliverables</h3>
                     <details className="origin-document-library" key={activeDoc?.id ?? 'new'} open={!activeDoc}>
-                      <summary>Documents &amp; context{activeDoc ? ` · ${activeDoc.title}` : ''}</summary>
+                      <summary>Documents &amp; context</summary>
                     <p>
                       Editable documents, with saved versions in project history. Model drafts and
                       compiled Blueprint drafts require your review.
@@ -1495,6 +1510,35 @@ export function ArchitectOrigin({
                         ))}
                       </select>
                     </label>
+                    {activeDoc && (<>
+                        <div className="origin-editor-heading">
+                          <span>
+                            {activeDoc.status} · Blueprint basis v{activeDoc.basis}
+                          </span>
+                          <button onClick={() => download(activeDoc.title, activeDoc.content)}>
+                            Export Markdown {dirty ? 'draft' : ''}
+                          </button>
+                          <button onClick={() => window.print()}>Print / PDF</button>
+                        </div>
+                            <label>
+                              Document title
+                              <input
+                                value={activeDoc.title}
+                                maxLength={120}
+                                disabled={locked}
+                                onChange={(e) =>
+                                  change({
+                                    ...draft,
+                                    documents: draft.documents.map((d) =>
+                                      d.id === activeDoc.id
+                                        ? { ...d, title: e.target.value, status: 'draft' }
+                                        : d,
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                    </>)}
                     </details>
                     {!activeDoc && (
                       <>
@@ -1534,15 +1578,6 @@ export function ArchitectOrigin({
                     )}
                     {activeDoc && (
                       <>
-                        <div className="origin-editor-heading">
-                          <span>
-                            {activeDoc.status} · Blueprint basis v{activeDoc.basis}
-                          </span>
-                          <button onClick={() => download(activeDoc.title, activeDoc.content)}>
-                            Export Markdown {dirty ? 'draft' : ''}
-                          </button>
-                          <button onClick={() => window.print()}>Print / PDF</button>
-                        </div>
                         <div
                           className="origin-view-controls"
                           role="group"
@@ -1559,6 +1594,9 @@ export function ArchitectOrigin({
                               {view}
                             </button>
                           ))}
+                          <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
+                            {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
+                          </button>
                         </div>
                         <div
                           className={`origin-document-canvas origin-view-${documentView.toLowerCase()}`}
@@ -1567,24 +1605,6 @@ export function ArchitectOrigin({
                             className="origin-document-writing"
                             hidden={documentView === 'Preview'}
                           >
-                            <label>
-                              Document title
-                              <input
-                                value={activeDoc.title}
-                                maxLength={120}
-                                disabled={locked}
-                                onChange={(e) =>
-                                  change({
-                                    ...draft,
-                                    documents: draft.documents.map((d) =>
-                                      d.id === activeDoc.id
-                                        ? { ...d, title: e.target.value, status: 'draft' }
-                                        : d,
-                                    ),
-                                  })
-                                }
-                              />
-                            </label>
                             <label>
                               Editable Markdown
                               <textarea

@@ -25,3 +25,11 @@ No global navigation/shell files, Talk, Motion, Studio, Knowledge, hosted config
 Finish exact-head CI and inspect its connected screenshots/video first. Founder review and separate authorization for hosted schema/configuration/execution/spend remain necessary. CI is not launch approval. No dedicated illustration plates or purchased assets were needed for this code-native direction.
 
 Released-main reconciliation: main `e2f6283` is included in the PR branch. The only conflicts were independent additions to `docs/STATUS.md` and `docs/DECISIONS.md`; both histories were retained. Released Knowledge and Human Ascendance logo changes remain intact. No merge into main or production action was performed.
+
+## Independent review corrections
+
+The initial exact-head connected artifact had mismatched screenshot hashes because publication copied a second capture over the manifest's input. Capture now writes once and copies the same bytes; manifest generation follows all copy operations. CI downloads the uploaded artifact and checks every recorded byte count/hash, matching screenshot copies and finalized videos against the saved manifest. Comparison captures require the actual comparison heading in view.
+
+The workspace now puts project management and older static-artifact controls inside the project disclosure, with a visible project name. App and Deliverables omit the duplicate workbench bar. Document title and export tools live in document context; idle saved-document controls recede. New assertions measure default visible editor height and desktop preview area, rather than width alone. Explicit mobile details/refine sheets retain drafts and return focus on close.
+
+Quality on `297b011` completed 608 browser tests with one failure: `commerce-sharing.spec.ts:74` expects no `og:title` on an unavailable product, but released root metadata now supplies the brand title. Root layout/shop files have no Architect diff; that shared-metadata assertion has not been weakened or changed here. The latest head's CI and evidence are recorded in PR #130.

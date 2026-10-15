@@ -79,8 +79,6 @@ jobs:
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
         run: npx playwright test --config playwright.origin-auth.config.ts
-      - name: Verify exact-head screenshots and finalized videos
-        run: node scripts/architect-apps-verify-evidence.mjs
       - name: Publish connected-journey evidence
         if: always()
         run: |
@@ -92,6 +90,8 @@ jobs:
               cp "$shot" test-results/architect-apps-connected/
             fi
           done
+      - name: Verify final exact-head screenshots and finalized videos
+        run: node scripts/architect-apps-verify-evidence.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -114,5 +114,12 @@ jobs:
             docs/evidence/architect-apps/connected-journey.webm
             test-results/architect-apps-connected
           if-no-files-found: ignore
+      - name: Download the published connected artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: architect-apps-connected-journey
+          path: /tmp/architect-published-evidence
+      - name: Verify published artifact bytes against its manifest
+        run: node scripts/architect-apps-verify-evidence.mjs /tmp/architect-published-evidence
       - if: always()
         run: npx supabase stop --no-backup
