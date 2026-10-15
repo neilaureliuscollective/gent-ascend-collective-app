@@ -49,6 +49,7 @@ export function useReadingAnchor(
     };
     const observer = new ResizeObserver(restore);
     const observeContent = () => {
+      observer.disconnect();
       observer.observe(node);
       node.querySelectorAll<HTMLElement>('[data-turn-id]').forEach((row) => observer.observe(row));
       restore();

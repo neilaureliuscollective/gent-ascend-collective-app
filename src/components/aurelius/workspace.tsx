@@ -699,7 +699,15 @@ export function AureliusWorkspace({
       stopImageWatch();
       creationScope.current = idleCreationScope();
     };
-  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
+  }, [
+    initialConversation,
+    homeDraft,
+    initialDraft,
+    compact,
+    loadCreations,
+    recoverPendingSaves,
+    stopImageWatch,
+  ]);
   async function sendMessage(
     messageText: string,
     replace?: { sourceTurnId: string; revisionKind: 'retry' | 'regenerate' | 'edit' } | null,

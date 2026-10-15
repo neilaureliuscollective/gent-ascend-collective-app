@@ -120,7 +120,7 @@ export function TalkInput({
     const previousScroll = field.scrollTop;
     field.style.height = `${Math.max(44, Math.min(field.scrollHeight, limit))}px`;
     // Preserve a reader’s caret position; a cleared accepted draft must collapse fully.
-    field.scrollTop = field.value ? previousScroll : 0;
+    field.scrollTop = !field.value ? 0 : document.activeElement === field && field.selectionEnd === field.value.length ? field.scrollHeight : previousScroll;
   }, [inputRef]);
   useLayoutEffect(resize, [value, resize]);
   useEffect(() => {

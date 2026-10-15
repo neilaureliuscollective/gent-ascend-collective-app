@@ -22,8 +22,16 @@ export function DirectionCanvas({
     direction.tokens.colors.map((color) => [`--board-${color.role}`, color.hex]),
   ) as React.CSSProperties;
   Object.assign(variables, {
-    '--board-display-font': direction.tokens.typography.display === 'Editorial' ? 'Georgia, serif' : direction.tokens.typography.display === 'Inter' ? "'Campaign Inter', sans-serif" : "'Campaign Sora', sans-serif",
-    '--board-body-font': direction.tokens.typography.body === 'Sora' ? "'Campaign Sora', sans-serif" : "'Campaign Inter', sans-serif",
+    '--board-display-font':
+      direction.tokens.typography.display === 'Editorial'
+        ? 'Georgia, serif'
+        : direction.tokens.typography.display === 'Inter'
+          ? "'Campaign Inter', sans-serif"
+          : "'Campaign Sora', sans-serif",
+    '--board-body-font':
+      direction.tokens.typography.body === 'Sora'
+        ? "'Campaign Sora', sans-serif"
+        : "'Campaign Inter', sans-serif",
   });
   const emblem = direction.assets.find(
     (asset) => asset.source === 'official-crest' && designAssetSource(asset),
@@ -48,9 +56,7 @@ export function DirectionCanvas({
         <p className="talk-campaign-kicker">{direction.copy.subhead || direction.name}</p>
         <h4>{direction.demo.headline}</h4>
         <p>{direction.demo.supporting}</p>
-        <span className="talk-design-cta">
-          {direction.demo.cta} <span aria-hidden="true">↗</span>
-        </span>
+        <span className="talk-design-cta">{direction.demo.cta}</span>
       </div>
       <figure className="talk-campaign-art">
         {image ? (
@@ -72,7 +78,9 @@ export function DirectionCanvas({
         ) : (
           <div className="talk-campaign-missing">Asset not supplied</div>
         )}
-        <figcaption>{image ? direction.demo.productLabel : 'Product photography not supplied'}</figcaption>
+        <figcaption>
+          {image ? direction.demo.productLabel : 'Product photography not supplied'}
+        </figcaption>
       </figure>
       <footer className="talk-campaign-footer">
         <span>{direction.copy.proof}</span>
@@ -176,74 +184,77 @@ export function DesignBoardView({
       >
         <DirectionCanvas direction={current} product={draft.product} />
       </div>
-      <ul className="talk-design-swatches">
-        {current.tokens.colors.map((color) => (
-          <li key={color.role}>
-            <label>
-              <span
-                className="talk-design-swatch"
-                style={{ background: color.hex }}
-                title={`${color.name} ${color.hex}`}
-              />
-              <strong>{color.name}</strong>
-              <code>{color.hex}</code>
-              {editable ? (
-                <input
-                  type="color"
-                  aria-label={`${color.name} swatch`}
-                  value={color.hex}
-                  onChange={(event) =>
-                    update(
-                      adjustDesignSwatch(draft, {
-                        directionId: current.id,
-                        role: color.role,
-                        hex: event.target.value,
-                      }),
-                    )
-                  }
+      <details className="talk-design-details">
+        <summary>{editable ? 'Edit colors & design details' : 'Design details'}</summary>
+        <ul className="talk-design-swatches">
+          {current.tokens.colors.map((color) => (
+            <li key={color.role}>
+              <label>
+                <span
+                  className="talk-design-swatch"
+                  style={{ background: color.hex }}
+                  title={`${color.name} ${color.hex}`}
                 />
-              ) : null}
-            </label>
-          </li>
-        ))}
-      </ul>
-      {expanded ? (
-        <>
-          <dl className="talk-design-meta">
-            <div>
-              <dt>Type</dt>
-              <dd>
-                {current.tokens.typography.display} / {current.tokens.typography.body} ·{' '}
-                {current.tokens.typography.scale}
-              </dd>
-            </div>
-            <div>
-              <dt>Space / shape</dt>
-              <dd>
-                {current.tokens.spacing} · {current.tokens.shape}
-              </dd>
-            </div>
-            <div>
-              <dt>Material</dt>
-              <dd>{current.tokens.material}</dd>
-            </div>
-          </dl>
-          <blockquote>
-            <p>{current.copy.headline}</p>
-            <p>{current.copy.subhead}</p>
-            <p>{current.copy.proof}</p>
-            <p className="talk-creation-status">{current.copy.disclaimer}</p>
-          </blockquote>
-          <ul className="talk-design-assets">
-            {current.assets.map((asset) => (
-              <li key={asset.id}>
-                {asset.label} · {asset.kind} · {asset.provenance}
-                {asset.referenced ? ' · referenced' : ''}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
+                <strong>{color.name}</strong>
+                <code>{color.hex}</code>
+                {editable ? (
+                  <input
+                    type="color"
+                    aria-label={`${color.name} swatch`}
+                    value={color.hex}
+                    onChange={(event) =>
+                      update(
+                        adjustDesignSwatch(draft, {
+                          directionId: current.id,
+                          role: color.role,
+                          hex: event.target.value,
+                        }),
+                      )
+                    }
+                  />
+                ) : null}
+              </label>
+            </li>
+          ))}
+        </ul>
+        {expanded ? (
+          <>
+            <dl className="talk-design-meta">
+              <div>
+                <dt>Type</dt>
+                <dd>
+                  {current.tokens.typography.display} / {current.tokens.typography.body} ·{' '}
+                  {current.tokens.typography.scale}
+                </dd>
+              </div>
+              <div>
+                <dt>Space / shape</dt>
+                <dd>
+                  {current.tokens.spacing} · {current.tokens.shape}
+                </dd>
+              </div>
+              <div>
+                <dt>Material</dt>
+                <dd>{current.tokens.material}</dd>
+              </div>
+            </dl>
+            <blockquote>
+              <p>{current.copy.headline}</p>
+              <p>{current.copy.subhead}</p>
+              <p>{current.copy.proof}</p>
+              <p className="talk-creation-status">{current.copy.disclaimer}</p>
+            </blockquote>
+            <ul className="talk-design-assets">
+              {current.assets.map((asset) => (
+                <li key={asset.id}>
+                  {asset.label} · {asset.kind} · {asset.provenance}
+                  {asset.referenced ? ' · referenced' : ''}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </details>
       {editable && onCommit && (
         <div className="talk-creation-actions">
           <button type="button" className="button" onClick={() => onCommit(draft)}>
