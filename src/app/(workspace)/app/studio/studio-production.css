@@ -552,6 +552,9 @@ html[data-motion='still'] .app-shell.imperial-workspace .studio-room-console but
 .studio-film-layer {
   position: absolute;
 }
+.studio-film-layer[data-selected='true'] {
+  box-shadow: 0 0 0 2px #c4912f;
+}
 .studio-film-layer img,
 .studio-film-layer video {
   display: block;
@@ -581,6 +584,9 @@ html[data-motion='still'] .app-shell.imperial-workspace .studio-room-console but
   gap: 10px;
   align-items: center;
   padding: 10px 0;
+}
+.studio-film-transport button {
+  min-height: 44px;
 }
 .studio-film-transport input[type='range'] {
   flex: 1;

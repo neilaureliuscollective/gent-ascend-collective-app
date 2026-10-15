@@ -41,10 +41,11 @@ export const designPageSchema = z
       });
     const edges = ['top', 'right', 'bottom', 'left'] as const;
     for (const edge of edges) {
-      if (page.bleed[edge] + page.safe[edge] >= (edge === 'left' || edge === 'right' ? page.width : page.height) / 2)
+      const span = edge === 'left' || edge === 'right' ? page.width : page.height;
+      if (page.safe[edge] >= span / 2)
         ctx.addIssue({
           code: 'custom',
-          message: 'Bleed and safe area leave no usable trim.',
+          message: 'Safe area leaves no usable trim.',
         });
     }
   });

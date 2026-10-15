@@ -1,13 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import fontkit, { type Font } from '@pdf-lib/fontkit';
 const createFont = (fontkit as unknown as { create: (bytes: Uint8Array) => Font }).create;
-import { designFontPath, type DesignFontId } from './fonts';
+import { designFontPath, fontSupportsWeight, type DesignFontId, type DesignFontWeight } from './fonts';
 import type { TextLayer } from './document';
 import { toInches } from './units';
 
 const cache = new Map<DesignFontId, Font>();
 
-export async function loadDesignFont(id: DesignFontId): Promise<Font> {
+export async function loadDesignFont(id: DesignFontId, weight: DesignFontWeight = 400): Promise<Font> {
+  if (!fontSupportsWeight(id, weight))
+    throw new Error(`${id} does not include a real ${weight} instance. Studio will not substitute another face.`);
   const hit = cache.get(id);
   if (hit) return hit;
   const bytes = await readFile(designFontPath(id));
@@ -78,7 +80,7 @@ export async function measureTextLayer(
   unit: 'mm' | 'in' | 'px',
   ppi: number,
 ) {
-  const font = await loadDesignFont(layer.fontId);
+  const font = await loadDesignFont(layer.fontId, layer.fontWeight);
   const missing: string[] = [];
   for (const char of layer.content) {
     if (char === '\n' || char === ' ') continue;

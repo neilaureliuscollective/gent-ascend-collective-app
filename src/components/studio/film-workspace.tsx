@@ -9,6 +9,12 @@ import {
 } from '@/domains/studio/composition/model';
 import { compositionPlaybackMs } from '@/domains/studio/composition/timing';
 import { FilmPreview } from './film-preview';
+import { acknowledgedSave } from '@/domains/studio/design/save-ack';
+import {
+  createSerialLock,
+  interpretLocalDraft,
+  rebaseDraftForExplicitKeep,
+} from '@/domains/studio/design/local-draft';
 
 type SavedComposition = {
   id: string;
@@ -37,6 +43,35 @@ async function json<T>(response: Response): Promise<T> {
   return value as T;
 }
 
+function filmDraftKey(id: string) {
+  return `studio-film-draft:${id}`;
+}
+
+function readStoredFilm(row: SavedComposition | undefined) {
+  if (!row || typeof sessionStorage === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(filmDraftKey(row.id));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      document: CompositionDocument;
+      revision: number;
+      updatedAt?: string | null;
+    };
+    const recovered = interpretLocalDraft(parsed, { document: row.document, revision: row.revision });
+    if (!recovered) return null;
+    return {
+      id: row.id,
+      document: parseComposition(recovered.document),
+      revision: recovered.baseRevision,
+      updatedAt: recovered.updatedAt,
+      kind: recovered.kind,
+    };
+  } catch {
+    sessionStorage.removeItem(filmDraftKey(row.id));
+    return null;
+  }
+}
+
 export function FilmWorkspace({
   projectId,
   compositions,
@@ -63,7 +98,17 @@ export function FilmWorkspace({
     document: CompositionDocument;
     revision: number;
     updatedAt: string | null;
-  } | null>(null);
+  } | null>(() => {
+    const recovered = readStoredFilm(compositions[0]);
+    return recovered
+      ? {
+          id: recovered.id,
+          document: recovered.document,
+          revision: recovered.revision,
+          updatedAt: recovered.updatedAt,
+        }
+      : null;
+  });
   const live = useMemo(() => {
     if (draft && saved && draft.id === saved.id) return draft;
     if (!saved) return null;
@@ -80,63 +125,179 @@ export function FilmWorkspace({
   const [active, setActive] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [saveState, setSaveState] = useState<'idle' | 'pending' | 'saved' | 'local-draft' | 'conflict' | 'error'>(
+    () => {
+      const recovered = readStoredFilm(compositions[0]);
+      if (!recovered) return 'idle';
+      return recovered.kind === 'reconcile' ? 'conflict' : 'local-draft';
+    },
+  );
   const [sheet, setSheet] = useState<'none' | 'assets' | 'inspect'>('none');
   const liveRef = useRef(live);
+  const persistGen = useRef(0);
+  const dirty = useRef(readStoredFilm(compositions[0])?.kind === 'unsaved');
+  const pauseAutosave = useRef(readStoredFilm(compositions[0])?.kind === 'reconcile');
+  const serial = useRef(createSerialLock());
   const renderKeys = useRef(new Map<string, { jobId: string; key: string }>());
   useEffect(() => {
     liveRef.current = live;
   });
   function setDocument(next: CompositionDocument | null) {
+    persistGen.current += 1;
+    dirty.current = true;
     if (!next) {
+      liveRef.current = null;
       setDraft(null);
       return;
     }
-    setDraft({
+    const row = {
       id: next.id,
       document: next,
-      revision: live?.id === next.id ? revision : 0,
-      updatedAt: live?.id === next.id ? updatedAt : null,
-    });
+      revision: liveRef.current?.id === next.id ? liveRef.current.revision : live?.id === next.id ? revision : 0,
+      updatedAt: liveRef.current?.id === next.id ? liveRef.current.updatedAt : live?.id === next.id ? updatedAt : null,
+    };
+    liveRef.current = row;
+    setDraft(row);
+    setSaveState((current) => (current === 'conflict' ? current : 'local-draft'));
   }
 
   const scene = document?.scenes[active] ?? document?.scenes[0];
   const duration = document ? compositionDuration(document) : 0;
   const playback = document ? compositionPlaybackMs(document) : 0;
 
-  async function persist(next = document, freeze = false) {
-    if (!next) return;
-    const snapshot = liveRef.current;
-    const savedRow = await json<{ id: string; revision: number; updated_at: string }>(
-      await fetch('/api/studio/film', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: next.id,
-          projectId,
-          title: next.title,
-          document: next,
-          updatedAt: snapshot && snapshot.id === next.id ? snapshot.updatedAt : null,
-          revision: snapshot && snapshot.id === next.id ? snapshot.revision : 0,
-        }),
-      }),
-    );
-    setCurrentId(savedRow.id);
-    setDraft({
-      id: savedRow.id,
-      document: next,
-      revision: savedRow.revision,
-      updatedAt: savedRow.updated_at,
+  async function persist(kind: 'autosave' | 'explicit' = 'autosave', freeze = false) {
+    if (pauseAutosave.current && kind === 'autosave') return;
+    return serial.current(async () => {
+      const snapshot = liveRef.current;
+      if (!snapshot) return;
+      if (pauseAutosave.current && kind === 'autosave') return;
+      dirty.current = false;
+      const seq = ++persistGen.current;
+      const sent = snapshot.document;
+      setSaveState('pending');
+      setError('');
+      try {
+        const savedRow = await json<{ id: string; revision: number; updated_at: string }>(
+          await fetch('/api/studio/film', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: sent.id,
+              projectId,
+              title: sent.title,
+              document: sent,
+              updatedAt: snapshot.updatedAt,
+              revision: snapshot.revision,
+            }),
+          }),
+        );
+        const current = liveRef.current;
+        const ack = acknowledgedSave({
+          requestSeq: seq,
+          latestSeq: persistGen.current,
+          requestId: sent.id,
+          currentId: current?.id ?? null,
+          serverRevision: savedRow.revision,
+          serverUpdatedAt: savedRow.updated_at,
+        });
+        if (!ack.apply) {
+          setSaveState('idle');
+          return savedRow;
+        }
+        if (ack.keepLocalEdits && current && current.id === sent.id) {
+          const kept = { ...current, revision: ack.revision, updatedAt: ack.updatedAt };
+          liveRef.current = kept;
+          setDraft(kept);
+          setSaveState('local-draft');
+          setStatus('Newer film edits kept locally. The earlier snapshot was not applied.');
+          sessionStorage.setItem(
+            filmDraftKey(sent.id),
+            JSON.stringify({ document: kept.document, revision: kept.revision, updatedAt: kept.updatedAt }),
+          );
+          return savedRow;
+        }
+        const applied = {
+          id: savedRow.id,
+          document: current && current.id === sent.id ? current.document : sent,
+          revision: ack.revision,
+          updatedAt: ack.updatedAt,
+        };
+        liveRef.current = applied;
+        setCurrentId(savedRow.id);
+        setDraft(applied);
+        setSaveState('saved');
+        sessionStorage.removeItem(filmDraftKey(sent.id));
+        setStatus(kind === 'explicit' ? 'Revision saved on the server.' : 'Saved.');
+        if (freeze) {
+          const frozen = await json<{ revisionId: string }>(
+            await fetch('/api/studio/film/revision', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ compositionId: sent.id }),
+            }),
+          );
+          onChanged();
+          return frozen;
+        }
+        onChanged();
+        return savedRow;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Film could not be saved.';
+        setSaveState(message.includes('changed elsewhere') ? 'conflict' : 'error');
+        setError(message);
+        sessionStorage.setItem(
+          filmDraftKey(snapshot.id),
+          JSON.stringify({
+            document: snapshot.document,
+            revision: snapshot.revision,
+            updatedAt: snapshot.updatedAt,
+          }),
+        );
+        throw err;
+      }
     });
-    if (freeze)
-      return json<{ revisionId: string }>(
-        await fetch('/api/studio/film/revision', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ compositionId: next.id }),
-        }),
+  }
+
+  const documentJson = live ? JSON.stringify(live.document) : '';
+  useEffect(() => {
+    if (!live || pauseAutosave.current) return;
+    sessionStorage.setItem(
+      filmDraftKey(live.id),
+      JSON.stringify({ document: live.document, revision: live.revision, updatedAt: live.updatedAt }),
+    );
+    if (!dirty.current) return;
+    const timer = window.setTimeout(() => void persist('autosave').catch(() => undefined), 900);
+    return () => window.clearTimeout(timer);
+    // persist reads liveRef; documentJson is the dirty signal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentJson]);
+
+  function recoverLocalFilm(row: SavedComposition) {
+    const recovered = readStoredFilm(row);
+    if (!recovered) {
+      pauseAutosave.current = false;
+      return;
+    }
+    const next = {
+      id: recovered.id,
+      document: recovered.document,
+      revision: recovered.revision,
+      updatedAt: recovered.updatedAt,
+    };
+    liveRef.current = next;
+    setDraft(next);
+    if (recovered.kind === 'reconcile') {
+      pauseAutosave.current = true;
+      setSaveState('conflict');
+      setStatus(
+        `Recovered a local film draft based on revision ${recovered.revision}; the server is at revision ${row.revision}. Reconcile before saving so this cannot overwrite newer work.`,
       );
-    onChanged();
-    return savedRow;
+      return;
+    }
+    pauseAutosave.current = false;
+    dirty.current = true;
+    setSaveState('local-draft');
+    setStatus('Recovered a local film draft. It is not server-durable until save is acknowledged.');
   }
 
   function addScene(assetId: string, kind: CompositionScene['kind'], assetKind: CompositionScene['assetKind']) {
@@ -158,7 +319,7 @@ export function FilmWorkspace({
       const next = { ...document, scenes: [...document.scenes, scene] };
       setDocument(next);
       setActive(next.scenes.length - 1);
-      void persist(next);
+      void persist('explicit').catch(() => undefined);
       return;
     }
     const created = emptyComposition({
@@ -177,13 +338,13 @@ export function FilmWorkspace({
     ];
     setDocument(created);
     setCurrentId(created.id);
-    void persist(created);
+    void persist('explicit').catch(() => undefined);
   }
 
   async function renderFilm() {
     if (!document) return;
     setError('');
-    const frozen = await persist(document, true);
+    const frozen = await persist('explicit', true);
     const revisionId = frozen && 'revisionId' in frozen ? frozen.revisionId : null;
     if (!revisionId) throw new Error('The film revision could not be frozen.');
     const slot = `${document.id}:${revisionId}`;
@@ -215,7 +376,26 @@ export function FilmWorkspace({
       <div className="studio-workbench-toolbar imperial-control-surface">
         <label>
           Production
-          <select value={currentId ?? ''} onChange={(event) => setCurrentId(event.target.value || null)}>
+          <select
+            value={currentId ?? ''}
+            onChange={(event) => {
+              const nextId = event.target.value || null;
+              persistGen.current += 1;
+              void (async () => {
+                if (live && live.id !== nextId && (dirty.current || saveState === 'pending' || saveState === 'local-draft')) {
+                  try {
+                    await persist('autosave');
+                  } catch {
+                    setStatus('Unsaved film work stays in this browser until save is acknowledged.');
+                  }
+                }
+                setDraft(null);
+                setCurrentId(nextId);
+                const row = compositions.find((item) => item.id === nextId);
+                if (row) recoverLocalFilm(row);
+              })();
+            }}
+          >
             {compositions.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.title} · r{item.revision}
@@ -238,10 +418,20 @@ export function FilmWorkspace({
             <option value="square">Square 1:1</option>
           </select>
         </label>
-        <button type="button" className="button" onClick={() => void persist(document)} disabled={!document}>
+        <button
+          type="button"
+          className="button"
+          onClick={() => void persist('explicit').catch(() => undefined)}
+          disabled={!document || saveState === 'conflict'}
+        >
           Save
         </button>
-        <button type="button" className="button" onClick={() => void renderFilm().catch((err) => setError(err.message))} disabled={!document}>
+        <button
+          type="button"
+          className="button"
+          onClick={() => void renderFilm().catch((err) => setError(err.message))}
+          disabled={!document || saveState === 'conflict'}
+        >
           Render film
         </button>
         <button
@@ -285,7 +475,59 @@ export function FilmWorkspace({
           {error}
         </p>
       )}
-      {status && <p className="studio-workbench-status">{status}</p>}
+      {(status || saveState !== 'idle') && (
+        <p className="studio-workbench-status" data-save-state={saveState} role="status">
+          {saveState === 'pending'
+            ? 'Saving…'
+            : saveState === 'conflict'
+              ? status || 'Conflict — this recovered film draft is not the current server revision.'
+              : saveState === 'local-draft'
+                ? status || 'Local film draft — not server-durable until acknowledged.'
+                : saveState === 'saved'
+                  ? status || 'Saved.'
+                  : saveState === 'error'
+                    ? status || error || 'Save failed.'
+                    : status}
+        </p>
+      )}
+      {saveState === 'conflict' && live && saved && (
+        <div className="studio-export-actions">
+          <button
+            type="button"
+            onClick={() => {
+              pauseAutosave.current = false;
+              const rebased = {
+                ...live,
+                ...rebaseDraftForExplicitKeep({
+                  document: live.document,
+                  updatedAt: live.updatedAt,
+                  serverRevision: saved.revision,
+                  serverUpdatedAt: saved.updated_at,
+                }),
+              };
+              liveRef.current = rebased;
+              setDraft(rebased);
+              setSaveState('local-draft');
+              setStatus('Keeping this film draft against the current server revision.');
+              void persist('explicit').catch(() => undefined);
+            }}
+          >
+            Keep this draft
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.removeItem(filmDraftKey(live.id));
+              pauseAutosave.current = false;
+              setDraft(null);
+              setSaveState('idle');
+              setStatus('Loaded the server film revision. The recovered draft was discarded.');
+            }}
+          >
+            Load server revision
+          </button>
+        </div>
+      )}
       <div className="studio-workbench-grid">
         <aside className={`studio-asset-rail ${sheet === 'assets' ? 'is-open' : ''}`}>
           <h3>Owned media</h3>
@@ -306,7 +548,7 @@ export function FilmWorkspace({
         </aside>
         <div className="studio-canvas-column">
           {document ? (
-            <FilmPreview document={document} />
+            <FilmPreview document={document} selectedSceneId={scene?.id ?? null} />
           ) : (
             <div className="studio-film-preview">
               <p>Choose an owned still or clip to start a film.</p>

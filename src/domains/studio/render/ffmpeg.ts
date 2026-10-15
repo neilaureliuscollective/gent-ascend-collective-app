@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, writeFile, rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { compositionVtt } from '../composition/captions';
+import { compositionAss, compositionVtt } from '../composition/captions';
 import {
   compileCoverArgs,
   compileRender,
@@ -106,10 +106,12 @@ export async function renderComposition(
     const film = path.join(dir, 'film.mp4');
     const cover = path.join(dir, 'cover.png');
     const vtt = path.join(dir, 'captions.vtt');
+    const ass = path.join(dir, 'overlay.ass');
     await mkdir(dir, { recursive: true });
     await writeFile(vtt, compositionVtt(document));
+    await writeFile(ass, compositionAss(document));
     const probed = await probeAssets(binary, assets);
-    const plan = compileRender(document, probed, { film, cover, captions: vtt });
+    const plan = compileRender(document, probed, { film, cover, captions: ass });
     await run(binary, plan.args, options.timeoutMs ?? 90_000, options.signal);
     await run(binary, compileCoverArgs(film, cover), 15_000, options.signal);
     const filmBytes = new Uint8Array(await readFile(film));

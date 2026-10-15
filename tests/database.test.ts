@@ -2134,6 +2134,35 @@ describe('Studio footage owner, quote and spending boundary', () => {
         )
       ).rows[0],
     ).toMatchObject({ status: 'queued' });
+    const winnerToken = 'a1000000-0000-4000-8000-000000000019';
+    const staleToken = expiredToken;
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_claim('${expired}','${winnerToken}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    const winnerFilm = `${founder}/${project}/${expired}/${winnerToken}/film.mp4`;
+    expect(
+      (
+        await asUser<{ ok: boolean }>(
+          founder,
+          `select public.ai_studio_render_finish('${expired}','${winnerToken}','${winnerFilm}','${founder}/${project}/${expired}/${winnerToken}/cover.png','${founder}/${project}/${expired}/${winnerToken}/captions.vtt',1920,1080,3000) as ok`,
+        )
+      ).rows[0]!.ok,
+    ).toBe(true);
+    await expect(
+      asUser(
+        founder,
+        `select public.ai_studio_render_finish('${expired}','${staleToken}','${founder}/${project}/${expired}/${staleToken}/film.mp4','${founder}/${project}/${expired}/${staleToken}/cover.png','${founder}/${project}/${expired}/${staleToken}/captions.vtt',1920,1080,3000)`,
+      ),
+    ).rejects.toThrow(/lease lost/i);
+    expect(
+      (
+        await asUser<{ film: string; status: string }>(
+          founder,
+          `select status, storage_film as film from public.ai_studio_render_jobs where id='${expired}'`,
+        )
+      ).rows[0],
+    ).toMatchObject({ status: 'complete', film: winnerFilm });
   });
 });
 

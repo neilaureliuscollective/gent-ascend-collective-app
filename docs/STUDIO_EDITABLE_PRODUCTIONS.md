@@ -34,7 +34,7 @@ Open Talk #131 (`cursor/talk-creative-conversation-5b08`) and Architect #130 (`c
 Do **not** paste secret values into chat or Git. Configuration should only switch on already-implemented flows. This assignment does not apply hosted migrations, create grants or make paid calls.
 
 1. Merge review of this Studio PR onto the intended environment after founder approval. Do not deploy from this assignment.
-2. Apply `supabase/migrations/20261016010000_studio_editable_productions.sql` to the existing Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions`, `ai_studio_render_jobs` and the two private buckets exist. Do not reapply older narration/footage migrations. Do not apply this hosted from this assignment.
+2. Apply `supabase/migrations/20261016010000_studio_editable_productions.sql` and `supabase/migrations/20261017010000_studio_attempt_storage.sql` to the existing Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions`, `ai_studio_render_jobs` and the two private buckets exist. Do not reapply older narration/footage migrations. Do not apply this hosted from this assignment.
 3. Editing, save/reopen, PNG/SVG/PDF export and local FFmpeg film render do **not** require OpenAI or Runway. Verify them on an ordinary owner login first with permitted local or synthetic media.
 4. Leave `STUDIO_NARRATION_ENABLED` and `STUDIO_FOOTAGE_ENABLED` unset. Paid narration/Runway stay default-off.
 5. Leave `RUNWAYML_API_SECRET` and `STUDIO_FOOTAGE_SIGNING_KEY` unset until a later footage activation. A signing key must be ≥32 characters and independent of the Runway secret.
@@ -47,6 +47,8 @@ Do **not** paste secret values into chat or Git. Configuration should only switc
 Apply `supabase/migrations/20261016010000_studio_editable_productions.sql` to the **local** Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions` and `ai_studio_render_jobs` exist. Do not apply this on hosted environments from this assignment. OpenAI/Runway keys are not required for Design editing, save/reopen, PNG/SVG/PDF export or local FFmpeg film render with permitted media.
 
 ## Remaining gaps
+
+**Implemented in the runtime polish pass:** recovered Design and Film drafts keep their original base revision and require explicit Keep/Load reconciliation; Keep rebases the expected revision onto the current server row. Every save path is serialized; groups use world bounds and baked transforms; SVG viewBox is preserved; Inter/Sora 400/600/700 are real variable instances; PDF rotation/trim/bleed match canvas (bleed is outward); PNG fails instead of returning a degraded fallback; render object keys are attempt-specific; idle recovery runs while the worker waits; uncertain finish reconciles durable state before delete; preview and FFmpeg share cover scaling, placement-bound slow zoom, audio gain/seek and distinct title/caption styles.
 
 **Implemented in this completion pass:** revision-aware autosave; Fabric init/stacking/group transforms; sanitizer on parse/save/export; unit conversion; faithful PNG/SVG/PDF geometry; real local worker; composed preview matching compile; lease/idempotency/recovery roles; schema gating for existing Studio.
 

@@ -3,9 +3,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { PNG } from 'pngjs';
-import { decode as decodeJpeg } from 'jpeg-js';
-import { pagePixels, toPixels } from './units';
-import { visibleOrder, type DesignDocument } from './document';
+import { mediaPixels } from './units';
+import type { DesignDocument } from './document';
 import { exportSvg } from './svg-export';
 import type { AssetBytes } from './assets';
 
@@ -27,13 +26,13 @@ export async function exportPng(
   assets: AssetBytes[],
   ffmpegPath = process.env.STUDIO_FFMPEG_PATH || 'ffmpeg',
 ) {
-  const svg = await exportSvg(document, assets, 'outline');
+  const svg = await exportSvg(document, assets, 'embed');
   const dir = await mkdtemp(path.join(tmpdir(), 'studio-png-'));
   try {
     const svgPath = path.join(dir, 'design.svg');
     const pngPath = path.join(dir, 'design.png');
     await writeFile(svgPath, svg);
-    const size = pagePixels(document.page);
+    const size = mediaPixels(document.page);
     await run(ffmpegPath, [
       '-hide_banner',
       '-loglevel',
@@ -53,105 +52,19 @@ export async function exportPng(
     const png = PNG.sync.read(bytes);
     if (png.width !== size.width || png.height !== size.height)
       throw new Error(
-        `PNG dimensions were ${png.width}×${png.height}, expected ${size.width}×${size.height} at ${document.page.ppi} PPI.`,
+        `PNG dimensions were ${png.width}×${png.height}, expected ${size.width}×${size.height} at ${document.page.ppi} PPI (trim plus outward bleed).`,
       );
     return new Uint8Array(bytes);
   } catch (error) {
-    return softwarePng(document, assets, error);
+    const reason = error instanceof Error ? error.message : String(error);
+    const missing = /ENOENT|spawn ffmpeg/i.test(reason) || /not found/i.test(reason);
+    throw new Error(
+      missing
+        ? `PNG export requires FFmpeg to rasterize the outlined SVG. Install a trusted FFmpeg build and set STUDIO_FFMPEG_PATH if it is not on PATH. Studio will not return a degraded rectangle fallback. ${reason}`
+        : `PNG export failed and will not return a silently degraded substitute. ${reason}`,
+    );
   } finally {
     await rm(dir, { recursive: true, force: true });
-  }
-}
-
-async function softwarePng(document: DesignDocument, assets: AssetBytes[], cause: unknown) {
-  const size = pagePixels(document.page);
-  const png = new PNG({ width: size.width, height: size.height, fill: true });
-  fillRect(png, 0, 0, size.width, size.height, hex(document.page.background));
-  const lookup = new Map(assets.map((asset) => [`${asset.kind}:${asset.id}`, asset]));
-  for (const layer of visibleOrder(document)) {
-    const x = Math.round(toPixels(layer.x, document.page.unit, document.page.ppi));
-    const y = Math.round(toPixels(layer.y, document.page.unit, document.page.ppi));
-    const w = Math.round(toPixels(layer.width, document.page.unit, document.page.ppi));
-    const h = Math.round(toPixels(layer.height, document.page.unit, document.page.ppi));
-    if (layer.type === 'rect' || layer.type === 'ellipse')
-      fillRect(png, x, y, w, h, hex(layer.fill), layer.opacity);
-    if (layer.type === 'image') {
-      const asset = lookup.get(`${layer.assetKind}:${layer.assetId}`);
-      if (!asset) throw new Error(`Missing asset for layer ${layer.name}.`);
-      blit(png, x, y, w, h, decodeImage(asset), layer.opacity);
-    }
-    if (layer.type === 'text')
-      throw new Error(
-        `PNG software fallback cannot draw “${layer.name}”. FFmpeg must rasterize outlined SVG type. ${cause instanceof Error ? cause.message : ''}`,
-      );
-  }
-  void cause;
-  return PNG.sync.write(png);
-}
-
-function hex(value: string) {
-  return [
-    Number.parseInt(value.slice(1, 3), 16),
-    Number.parseInt(value.slice(3, 5), 16),
-    Number.parseInt(value.slice(5, 7), 16),
-    255,
-  ] as const;
-}
-
-function fillRect(
-  png: PNG,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  color: readonly [number, number, number, number],
-  opacity = 1,
-) {
-  for (let row = Math.max(0, y); row < Math.min(png.height, y + h); row++) {
-    for (let col = Math.max(0, x); col < Math.min(png.width, x + w); col++) {
-      const i = (png.width * row + col) << 2;
-      const a = color[3] * opacity;
-      png.data[i] = color[0]!;
-      png.data[i + 1] = color[1]!;
-      png.data[i + 2] = color[2]!;
-      png.data[i + 3] = a;
-    }
-  }
-}
-
-function decodeImage(asset: AssetBytes) {
-  if (asset.mediaType === 'image/jpeg') {
-    const decoded = decodeJpeg(Buffer.from(asset.bytes), { useTArray: true });
-    return { width: decoded.width, height: decoded.height, data: decoded.data };
-  }
-  const png = PNG.sync.read(Buffer.from(asset.bytes));
-  return { width: png.width, height: png.height, data: png.data };
-}
-
-function blit(
-  png: PNG,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  source: { width: number; height: number; data: Uint8Array },
-  opacity: number,
-) {
-  for (let row = 0; row < h; row++) {
-    const dy = y + row;
-    if (dy < 0 || dy >= png.height) continue;
-    const sy = Math.min(source.height - 1, Math.floor((row / h) * source.height));
-    for (let col = 0; col < w; col++) {
-      const dx = x + col;
-      if (dx < 0 || dx >= png.width) continue;
-      const sx = Math.min(source.width - 1, Math.floor((col / w) * source.width));
-      const si = (source.width * sy + sx) << 2;
-      const di = (png.width * dy + dx) << 2;
-      png.data[di] = source.data[si]!;
-      png.data[di + 1] = source.data[si + 1]!;
-      png.data[di + 2] = source.data[si + 2]!;
-      png.data[di + 3] = (source.data[si + 3] ?? 255) * opacity;
-    }
   }
 }
 

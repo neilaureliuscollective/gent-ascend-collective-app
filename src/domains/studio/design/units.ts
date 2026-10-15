@@ -86,3 +86,44 @@ export function pagePoints(page: {
     height: toPoints(page.height, page.unit, page.ppi),
   };
 }
+
+type PageBox = {
+  width: number;
+  height: number;
+  unit: DesignUnit;
+  ppi: number;
+  bleed?: { top: number; right: number; bottom: number; left: number };
+};
+
+/** Finished trim size is page width/height. Bleed extends media bounds outward. */
+export function mediaPixels(page: PageBox) {
+  const bleed = page.bleed ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  return {
+    width: toPixels(page.width + bleed.left + bleed.right, page.unit, page.ppi),
+    height: toPixels(page.height + bleed.top + bleed.bottom, page.unit, page.ppi),
+    offsetX: toPixels(bleed.left, page.unit, page.ppi),
+    offsetY: toPixels(bleed.top, page.unit, page.ppi),
+  };
+}
+
+export function mediaPoints(page: PageBox) {
+  const bleed = page.bleed ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  return {
+    width: toPoints(page.width + bleed.left + bleed.right, page.unit, page.ppi),
+    height: toPoints(page.height + bleed.top + bleed.bottom, page.unit, page.ppi),
+    trimWidth: toPoints(page.width, page.unit, page.ppi),
+    trimHeight: toPoints(page.height, page.unit, page.ppi),
+    left: toPoints(bleed.left, page.unit, page.ppi),
+    right: toPoints(bleed.right, page.unit, page.ppi),
+    top: toPoints(bleed.top, page.unit, page.ppi),
+    bottom: toPoints(bleed.bottom, page.unit, page.ppi),
+  };
+}
+
+export function mediaInches(page: PageBox) {
+  const bleed = page.bleed ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  return {
+    width: toInches(page.width + bleed.left + bleed.right, page.unit, page.ppi),
+    height: toInches(page.height + bleed.top + bleed.bottom, page.unit, page.ppi),
+  };
+}

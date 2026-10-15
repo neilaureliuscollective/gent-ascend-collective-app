@@ -297,7 +297,7 @@ describe('Studio design exports', () => {
           strokeWidth: 0.6,
           cornerRadius: 2,
         },
-        textLayer({ content: 'Aethelios Studio', x: 8, y: 16, width: 70, height: 18 }),
+        textLayer({ content: 'Aethelios Studio', x: 8, y: 16, width: 70, height: 18, fontWeight: 400 }),
       ],
     });
   }

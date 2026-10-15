@@ -5,6 +5,13 @@ import path from 'node:path';
 import { parseComposition } from '../composition/model';
 import { materializeCompositionAssets } from './materialize';
 import { inspectFfmpeg, renderComposition } from './ffmpeg';
+import {
+  IDLE_POLL_MS,
+  attemptObjectKeys,
+  publishOrReconcileAttempt,
+  queueErrorBackoffMs,
+  shouldRecoverWhileIdle,
+} from './attempt-storage';
 
 const IMAGE_BUCKET = 'aethelios-studio';
 const RENDER_BUCKET = 'aethelios-studio-renders';
@@ -46,20 +53,38 @@ async function main() {
     `Studio render worker ready. FFmpeg ${ffmpeg.version}. Hosted rendering remains unavailable until this process is separately authorized.`,
   );
   const db = client();
-  await db.rpc('ai_studio_render_recover');
-  await db.rpc('ai_studio_render_requeue');
+  await recoverAndRequeue(db);
+  let idleTicks = 0;
+  let queueFailures = 0;
   do {
     if (stopping) break;
-    const job = await nextJob(db);
-    if (!job) {
-      if (!supervised) break;
-      await sleep(2000);
-      continue;
+    try {
+      const job = await nextJob(db);
+      queueFailures = 0;
+      if (!job) {
+        if (!supervised) break;
+        idleTicks += 1;
+        if (shouldRecoverWhileIdle(idleTicks)) await recoverAndRequeue(db);
+        await sleep(IDLE_POLL_MS);
+        continue;
+      }
+      idleTicks = 0;
+      await processJob(db, job);
+      await recoverAndRequeue(db);
+    } catch (error) {
+      queueFailures += 1;
+      console.error(`Studio render queue error: ${error instanceof Error ? error.message : 'unknown'}`);
+      if (!supervised) throw error;
+      await sleep(queueErrorBackoffMs(queueFailures));
     }
-    await processJob(db, job);
-    await db.rpc('ai_studio_render_recover');
-    await db.rpc('ai_studio_render_requeue');
   } while (supervised && !stopping);
+}
+
+async function recoverAndRequeue(db: ReturnType<typeof client>) {
+  const recovered = await db.rpc('ai_studio_render_recover');
+  if (recovered.error) throw new Error(recovered.error.message || 'Studio render recover failed.');
+  const requeued = await db.rpc('ai_studio_render_requeue');
+  if (requeued.error) throw new Error(requeued.error.message || 'Studio render requeue failed.');
 }
 
 function shutdown() {
@@ -75,6 +100,7 @@ async function nextJob(db: ReturnType<typeof client>): Promise<Job | null> {
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
+  if (queued.error) throw new Error(queued.error.message || 'Studio render queue could not be read.');
   return queued.data as Job | null;
 }
 
@@ -116,37 +142,49 @@ async function processJob(db: ReturnType<typeof client>, job: Job) {
     if (abort.signal.aborted) throw new Error('Studio render was cancelled.');
     const rendered = await renderComposition(document, assets, { signal: abort.signal });
     if (abort.signal.aborted) throw new Error('Studio render was cancelled.');
-    const prefix = `${uid}/${job.project_id}/${job.id}`;
-    const filmKey = `${prefix}/film.mp4`;
-    const coverKey = `${prefix}/cover.png`;
-    const captionKey = `${prefix}/captions.vtt`;
+    const keys = attemptObjectKeys({ uid, projectId: job.project_id, jobId: job.id, token });
     const bucket = db.storage.from(RENDER_BUCKET);
+    const remove = async (paths: string[]) => {
+      if (paths.length) await bucket.remove(paths);
+    };
     const uploads = await Promise.all([
-      bucket.upload(filmKey, rendered.film, { contentType: 'video/mp4', upsert: true }),
-      bucket.upload(coverKey, rendered.cover, { contentType: 'image/png', upsert: true }),
-      bucket.upload(captionKey, rendered.captions, { contentType: 'text/vtt', upsert: true }),
+      bucket.upload(keys.film, rendered.film, { contentType: 'video/mp4', upsert: false }),
+      bucket.upload(keys.cover, rendered.cover, { contentType: 'image/png', upsert: false }),
+      bucket.upload(keys.captions, rendered.captions, { contentType: 'text/vtt', upsert: false }),
     ]);
-    uploaded.push(filmKey, coverKey, captionKey);
+    uploaded.push(keys.film, keys.cover, keys.captions);
     if (uploads.some((item) => item.error)) throw new Error('The film could not be stored privately.');
-    const still = await db.from('ai_studio_render_jobs').select('status,lease_token').eq('id', job.id).maybeSingle();
+    const still = await db.from('ai_studio_render_jobs').select('status,lease_token,storage_film,storage_cover,storage_captions').eq('id', job.id).maybeSingle();
     if (still.data?.status === 'cancelled' || still.data?.lease_token !== token) {
-      await Promise.all(uploaded.map((key) => bucket.remove([key])));
+      await remove(uploaded);
       throw new Error('Studio render was cancelled.');
     }
-    const finished = await db.rpc('ai_studio_render_finish', {
-      p_id: job.id,
-      p_token: token,
-      p_film: filmKey,
-      p_cover: coverKey,
-      p_captions: captionKey,
-      p_width: rendered.width,
-      p_height: rendered.height,
-      p_duration: rendered.durationMs,
+    const outcome = await publishOrReconcileAttempt({
+      finish: async () =>
+        await db.rpc('ai_studio_render_finish', {
+          p_id: job.id,
+          p_token: token,
+          p_film: keys.film,
+          p_cover: keys.cover,
+          p_captions: keys.captions,
+          p_width: rendered.width,
+          p_height: rendered.height,
+          p_duration: rendered.durationMs,
+        }),
+      readJob: async () => {
+        const row = await db
+          .from('ai_studio_render_jobs')
+          .select('status,lease_token,storage_film,storage_cover,storage_captions')
+          .eq('id', job.id)
+          .maybeSingle();
+        return row.data;
+      },
+      uploaded,
+      remove,
+      token,
     });
-    if (finished.error || !finished.data) {
-      await Promise.all(uploaded.map((key) => bucket.remove([key])));
+    if (!outcome.published)
       throw new Error('Completion receipt was rejected; late output was not published.');
-    }
     console.error(`Studio render ${job.id} complete (${rendered.durationMs}ms).`);
   } catch (error) {
     await db.rpc('ai_studio_render_fail', {

@@ -14,6 +14,9 @@ import { designFontIds } from '@/domains/studio/design/fonts';
 import { DEFAULT_PPI } from '@/domains/studio/design/units';
 import { sanitizeSvg } from '@/domains/studio/design/sanitize';
 import { acknowledgedSave } from '@/domains/studio/design/save-ack';
+import { createSerialLock, interpretLocalDraft, rebaseDraftForExplicitKeep } from '@/domains/studio/design/local-draft';
+import { applyLayerPatches, createGroupLayer } from '@/domains/studio/design/geometry';
+import { fontSupportsWeight } from '@/domains/studio/design/fonts';
 
 const DesignCanvas = dynamic(() => import('./design-canvas').then((module) => module.DesignCanvas), {
   ssr: false,
@@ -36,19 +39,21 @@ async function json<T>(response: Response): Promise<T> {
   return value as T;
 }
 
-function readLocalDraft(row: SavedDesign | undefined) {
+function readStoredDraft(row: SavedDesign | undefined) {
   if (!row || typeof sessionStorage === 'undefined') return null;
   try {
     const raw = sessionStorage.getItem(`studio-design-draft:${row.id}`);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { document: DesignDocument; revision: number };
-    if (parsed.revision > row.revision) return null;
+    const parsed = JSON.parse(raw) as { document: DesignDocument; revision: number; updatedAt?: string | null };
+    const recovered = interpretLocalDraft(parsed, { document: row.document, revision: row.revision });
+    if (!recovered) return null;
     return {
       id: row.id,
-      document: parseDesignDocument(parsed.document),
-      revision: row.revision,
-      updatedAt: row.updated_at,
+      document: parseDesignDocument(recovered.document),
+      revision: recovered.baseRevision,
+      updatedAt: recovered.updatedAt,
       history: emptyHistory(),
+      kind: recovered.kind,
     };
   } catch {
     sessionStorage.removeItem(`studio-design-draft:${row.id}`);
@@ -77,7 +82,10 @@ export function DesignWorkspace({
     revision: number;
     updatedAt: string | null;
     history: ReturnType<typeof emptyHistory>;
-  } | null>(() => readLocalDraft(designs[0]));
+  } | null>(() => {
+    const recovered = readStoredDraft(designs[0]);
+    return recovered ? { id: recovered.id, document: recovered.document, revision: recovered.revision, updatedAt: recovered.updatedAt, history: recovered.history } : null;
+  });
   const live = useMemo(() => {
     if (draft && saved && draft.id === saved.id) return draft;
     if (!saved) return null;
@@ -97,11 +105,16 @@ export function DesignWorkspace({
   const [error, setError] = useState('');
   const [saveState, setSaveState] = useState<
     'idle' | 'pending' | 'saved' | 'conflict' | 'error' | 'local-draft'
-  >(() => (readLocalDraft(designs[0]) ? 'local-draft' : 'idle'));
+  >(() => {
+    const recovered = readStoredDraft(designs[0]);
+    if (!recovered) return 'idle';
+    return recovered.kind === 'reconcile' ? 'conflict' : 'local-draft';
+  });
   const [sheet, setSheet] = useState<'none' | 'assets' | 'inspect' | 'export'>('none');
   const persistGen = useRef(0);
-  const inFlight = useRef(false);
   const dirty = useRef(false);
+  const pauseAutosave = useRef(readStoredDraft(designs[0])?.kind === 'reconcile');
+  const serial = useRef(createSerialLock());
   const liveRef = useRef(live);
   const selected = document?.layers.find((layer) => layer.id === selectedId) ?? null;
   const alignedIds = markedIds.length > 1 ? markedIds : selectedId ? [selectedId] : [];
@@ -132,14 +145,12 @@ export function DesignWorkspace({
     liveRef.current = live;
   });
 
-  async function persist(kind: 'autosave' | 'explicit' = 'autosave') {
+  async function persist(kind: 'autosave' | 'explicit' = 'autosave', freeze = false) {
+    if (pauseAutosave.current && kind === 'autosave') return { ack: { apply: false as const } };
+    return serial.current(async () => {
       const snapshot = liveRef.current;
-      if (!snapshot) return;
-      if (inFlight.current && kind === 'autosave') {
-        dirty.current = true;
-        return;
-      }
-      inFlight.current = true;
+      if (!snapshot) return { ack: { apply: false as const } };
+      if (pauseAutosave.current && kind === 'autosave') return { ack: { apply: false as const } };
       dirty.current = false;
       const seq = ++persistGen.current;
       setSaveState('pending');
@@ -168,35 +179,44 @@ export function DesignWorkspace({
           serverRevision: savedRow.revision,
           serverUpdatedAt: savedRow.updated_at,
         });
-        if (!ack.apply || !current) return savedRow;
-        const next = { ...current, revision: ack.revision, updatedAt: ack.updatedAt };
-        liveRef.current = next;
+        if (!ack.apply || !current) {
+          setSaveState('idle');
+          return { savedRow, ack, frozen: false as const };
+        }
         if (ack.keepLocalEdits) {
           setDraft((existing) =>
             existing && existing.id === snapshot.id
               ? { ...existing, revision: ack.revision, updatedAt: ack.updatedAt }
               : existing,
           );
+          const kept = liveRef.current;
+          if (kept && kept.id === snapshot.id) {
+            liveRef.current = { ...kept, revision: ack.revision, updatedAt: ack.updatedAt };
+          }
           setSaveState('local-draft');
           setStatus('Newer edits kept locally. The earlier revision is not this draft.');
-        } else {
-          setLive(next);
-          setSaveState('saved');
-          sessionStorage.removeItem(`studio-design-draft:${snapshot.id}`);
-          setStatus(kind === 'explicit' ? 'Revision saved on the server.' : 'Saved.');
+          return { savedRow, ack, frozen: false as const };
         }
+        const next = { ...current, revision: ack.revision, updatedAt: ack.updatedAt };
+        liveRef.current = next;
+        setLive(next);
+        setSaveState('saved');
+        sessionStorage.removeItem(`studio-design-draft:${snapshot.id}`);
+        setStatus(kind === 'explicit' ? 'Revision saved on the server.' : 'Saved.');
         setCurrentId(savedRow.id);
-        if (kind === 'explicit' && seq === persistGen.current && !ack.keepLocalEdits) {
-          await json(
+        let revisionId: string | undefined;
+        if (freeze) {
+          const frozen = await json<{ revisionId: string }>(
             await fetch('/api/studio/design/revision', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ designId: snapshot.id }),
             }),
           );
+          revisionId = frozen.revisionId;
         }
-        if (!ack.keepLocalEdits) onChanged();
-        return savedRow;
+        onChanged();
+        return { savedRow, ack, pinned: true as const, revisionId };
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Design could not be saved.';
         setSaveState(message.includes('changed elsewhere') ? 'conflict' : 'error');
@@ -207,19 +227,16 @@ export function DesignWorkspace({
             document: snapshot.document,
             revision: snapshot.revision,
             updatedAt: snapshot.updatedAt,
-            recovered: false,
           }),
         );
         throw err;
-      } finally {
-        inFlight.current = false;
-        if (dirty.current) void persist('autosave');
       }
+    });
   }
 
   const documentJson = live ? JSON.stringify(live.document) : '';
   useEffect(() => {
-    if (!live) return;
+    if (!live || pauseAutosave.current) return;
     dirty.current = true;
     persistGen.current += 1;
     sessionStorage.setItem(
@@ -244,23 +261,29 @@ export function DesignWorkspace({
   }, [saveState]);
 
   function recoverLocalDraft(row: SavedDesign) {
-    try {
-      const raw = sessionStorage.getItem(`studio-design-draft:${row.id}`);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { document: DesignDocument; revision: number };
-      if (parsed.revision > row.revision) return;
-      setDraft({
-        id: row.id,
-        document: parseDesignDocument(parsed.document),
-        revision: row.revision,
-        updatedAt: row.updated_at,
-        history: emptyHistory(),
-      });
-      setSaveState('local-draft');
-      setStatus('Recovered a local draft. It is not server-durable until save is acknowledged.');
-    } catch {
-      sessionStorage.removeItem(`studio-design-draft:${row.id}`);
+    const recovered = readStoredDraft(row);
+    if (!recovered) {
+      pauseAutosave.current = false;
+      return;
     }
+    setDraft({
+      id: recovered.id,
+      document: recovered.document,
+      revision: recovered.revision,
+      updatedAt: recovered.updatedAt,
+      history: recovered.history,
+    });
+    if (recovered.kind === 'reconcile') {
+      pauseAutosave.current = true;
+      setSaveState('conflict');
+      setStatus(
+        `Recovered a local draft based on revision ${recovered.revision}; the server is at revision ${row.revision}. Reconcile before saving so this cannot overwrite newer work.`,
+      );
+      return;
+    }
+    pauseAutosave.current = false;
+    setSaveState('local-draft');
+    setStatus('Recovered a local draft. It is not server-durable until save is acknowledged.');
   }
 
   async function createFrom(presetId: string) {
@@ -361,14 +384,10 @@ export function DesignWorkspace({
   async function exportFormat(format: 'png' | 'svg' | 'pdf') {
     if (!document) return;
     setError('');
-    await persist('explicit');
-    const revisionRow = await json<{ revisionId: string }>(
-      await fetch('/api/studio/design/revision', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ designId: document.id }),
-      }),
-    );
+    const result = await persist('explicit', true);
+    if (!result || !('pinned' in result) || !result.pinned || !result.revisionId)
+      throw new Error('Export needs an acknowledged immutable revision. Reconcile or wait for save first.');
+    const revisionRow = { revisionId: result.revisionId };
     const exported = await json<{
       id: string;
       width: number;
@@ -502,7 +521,7 @@ export function DesignWorkspace({
         >
           Redo
         </button>
-        <button type="button" className="button" onClick={() => void persist('explicit').catch(() => undefined)} disabled={!document}>
+        <button type="button" className="button" onClick={() => void persist('explicit', true).catch(() => undefined)} disabled={!document}>
           Save revision
         </button>
         <button type="button" className="studio-sheet-toggle" onClick={() => setSheet('assets')}>
@@ -525,18 +544,59 @@ export function DesignWorkspace({
           {error}
         </p>
       )}
-      {status && (
+      {(status || saveState !== 'idle') && (
         <p className="studio-workbench-status" data-save-state={saveState} role="status">
           {saveState === 'pending'
             ? 'Saving…'
             : saveState === 'conflict'
-              ? 'Conflict — refresh or keep this local draft.'
+              ? status || 'Conflict — this recovered draft is not the current server revision.'
               : saveState === 'local-draft'
                 ? 'Local draft — not server-durable until acknowledged.'
                 : saveState === 'saved'
                   ? status || 'Saved.'
-                  : status}
+                  : saveState === 'error'
+                    ? status || error || 'Save failed.'
+                    : status}
         </p>
+      )}
+      {saveState === 'conflict' && live && saved && (
+        <div className="studio-export-actions">
+          <button
+            type="button"
+            onClick={() => {
+              if (!live || !saved) return;
+              pauseAutosave.current = false;
+              const rebased = {
+                ...live,
+                ...rebaseDraftForExplicitKeep({
+                  document: live.document,
+                  updatedAt: live.updatedAt,
+                  serverRevision: saved.revision,
+                  serverUpdatedAt: saved.updated_at,
+                }),
+              };
+              liveRef.current = rebased;
+              setDraft(rebased);
+              setSaveState('local-draft');
+              setStatus('Keeping this draft against the current server revision.');
+              void persist('explicit').catch(() => undefined);
+            }}
+          >
+            Keep this draft
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.removeItem(`studio-design-draft:${live.id}`);
+              pauseAutosave.current = false;
+              setDraft(null);
+              setSaveState('idle');
+              setStatus('Loaded the server revision. The recovered draft was discarded.');
+            }}
+          >
+            Load server revision
+          </button>
+        </div>
       )}
       {!document ? (
         <div className="studio-empty">
@@ -580,22 +640,8 @@ export function DesignWorkspace({
                 document={document}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
-                onChangeLayer={(id, patch) => {
-                  const next = cloneDocument(document);
-                  const layer = next.layers.find((item) => item.id === id);
-                  if (!layer || layer.locked) return;
-                  Object.assign(layer, patch);
-                  apply(next);
-                }}
-                onChangeLayers={(patches) => {
-                  const next = cloneDocument(document);
-                  for (const [id, patch] of Object.entries(patches)) {
-                    const layer = next.layers.find((item) => item.id === id);
-                    if (!layer || layer.locked) continue;
-                    Object.assign(layer, patch);
-                  }
-                  apply(next);
-                }}
+                onChangeLayer={(id, patch) => apply(applyLayerPatches(document, { [id]: patch }))}
+                onChangeLayers={(patches) => apply(applyLayerPatches(document, patches))}
                 imageUrl={imageUrl}
               />
             )}
@@ -662,9 +708,34 @@ export function DesignWorkspace({
                     }
                   />
                 </label>
-                <p className="muted">{document.page.dimensionNote}</p>
-              </div>
-            )}
+                    <p className="muted">{document.page.dimensionNote}</p>
+                    {(['bleed', 'safe'] as const).map((box) => (
+                      <fieldset key={box}>
+                        <legend>{box === 'bleed' ? 'Bleed (outward from trim)' : 'Safe area (inset from trim)'}</legend>
+                        {(['top', 'right', 'bottom', 'left'] as const).map((edge) => (
+                          <label key={edge}>
+                            {box} {edge} ({document.page.unit})
+                            <input
+                              type="number"
+                              min={0}
+                              step={document.page.unit === 'mm' ? 0.1 : 0.01}
+                              value={document.page[box][edge]}
+                              onChange={(event) =>
+                                apply({
+                                  ...document,
+                                  page: {
+                                    ...document.page,
+                                    [box]: { ...document.page[box], [edge]: Number(event.target.value) || 0 },
+                                  },
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
+                      </fieldset>
+                    ))}
+                  </div>
+                )}
             {selected?.type === 'text' && document && (
               <div className="studio-inspector-fields">
                 <label>
@@ -705,14 +776,24 @@ export function DesignWorkspace({
                     onChange={(event) => {
                       const next = cloneDocument(document);
                       const layer = next.layers.find((item) => item.id === selected.id);
-                      if (layer && layer.type === 'text')
-                        layer.fontWeight = Number(event.target.value) as 400 | 600 | 700;
+                      const weight = Number(event.target.value) as 400 | 600 | 700;
+                      if (layer && layer.type === 'text') {
+                        if (!fontSupportsWeight(layer.fontId, weight)) {
+                          setError(`${layer.fontId} does not include weight ${weight}. Studio will not simulate bold.`);
+                          return;
+                        }
+                        layer.fontWeight = weight;
+                      }
                       apply(next);
                     }}
                   >
-                    <option value={400}>Regular</option>
-                    <option value={600}>Semibold</option>
-                    <option value={700}>Bold</option>
+                    {([400, 600, 700] as const)
+                      .filter((weight) => fontSupportsWeight(selected.fontId, weight))
+                      .map((weight) => (
+                        <option key={weight} value={weight}>
+                          {weight === 400 ? 'Regular' : weight === 600 ? 'Semibold' : 'Bold'}
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <label>
@@ -813,20 +894,7 @@ export function DesignWorkspace({
                   type="button"
                   disabled={markedIds.length < 2}
                   onClick={() => {
-                    const group = {
-                      id: crypto.randomUUID(),
-                      type: 'group' as const,
-                      name: 'Group',
-                      parentId: null,
-                      visible: true,
-                      locked: false,
-                      opacity: 1,
-                      x: 0,
-                      y: 0,
-                      width: document.page.width,
-                      height: document.page.height,
-                      rotation: 0,
-                    };
+                    const group = createGroupLayer(document, markedIds, crypto.randomUUID());
                     const next = cloneDocument(document);
                     for (const id of markedIds) {
                       const layer = next.layers.find((item) => item.id === id);

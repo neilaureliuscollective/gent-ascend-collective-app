@@ -52,7 +52,19 @@ function applyCommand(document: DesignDocument, command: DesignCommand): DesignD
   }
   if (command.type === 'group') {
     for (const id of command.ids) layerById(next, id).parentId = command.group.id;
-    next.layers.push(command.group);
+    const members = next.layers.filter((layer) => command.ids.includes(layer.id));
+    const left = Math.min(...members.map((layer) => layer.x));
+    const top = Math.min(...members.map((layer) => layer.y));
+    const right = Math.max(...members.map((layer) => layer.x + layer.width));
+    const bottom = Math.max(...members.map((layer) => layer.y + layer.height));
+    next.layers.push({
+      ...command.group,
+      x: left,
+      y: top,
+      width: Math.max(0.01, right - left),
+      height: Math.max(0.01, bottom - top),
+      rotation: 0,
+    });
     return parseDesignDocument(next);
   }
   for (const layer of next.layers) if (layer.parentId === command.groupId) layer.parentId = null;

@@ -280,7 +280,7 @@ describe('Studio export evidence', () => {
     ];
     const inches = convertDocumentUnits(document, 'in');
     expect(inches.page.width).toBeCloseTo(85.6 / 25.4, 3);
-    const svg = await exportSvg(document, assets, 'outline');
+    const svg = await exportSvg(document, assets, 'embed');
     const pdf = await exportPdf(document, assets);
     const png = await exportPng(document, assets);
     await writeFile(path.join(out, 'label-complete.svg'), svg);

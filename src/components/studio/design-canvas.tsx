@@ -27,6 +27,11 @@ function structureKey(document: DesignDocument) {
         layer.id,
         layer.type,
         layer.parentId,
+        layer.x,
+        layer.y,
+        layer.width,
+        layer.height,
+        layer.rotation,
         layer.visible,
         layer.locked,
         layer.name,
@@ -185,9 +190,11 @@ function readPatches(fabric: FabricModule, document: DesignDocument, target: Fab
       typeof object.getCenterPoint === 'function'
         ? object.getCenterPoint()
         : { x: decomposed.translateX, y: decomposed.translateY };
+    const bleedX = toPixels(page.bleed.left, page.unit, page.ppi);
+    const bleedY = toPixels(page.bleed.top, page.unit, page.ppi);
     patches[layerId] = {
-      x: snapValue(fromPx(center.x - width / 2, page.unit, page.ppi), grid),
-      y: snapValue(fromPx(center.y - height / 2, page.unit, page.ppi), grid),
+      x: snapValue(fromPx(center.x - width / 2 - bleedX, page.unit, page.ppi), grid),
+      y: snapValue(fromPx(center.y - height / 2 - bleedY, page.unit, page.ppi), grid),
       width: snapValue(fromPx(width, page.unit, page.ppi), grid),
       height: snapValue(fromPx(height, page.unit, page.ppi), grid),
       rotation: decomposed.angle,
@@ -204,20 +211,31 @@ function readPatches(fabric: FabricModule, document: DesignDocument, target: Fab
 
 function syncGeometry(canvas: InstanceType<FabricModule['Canvas']>, document: DesignDocument) {
   const px = (value: number) => toPixels(value, document.page.unit, document.page.ppi);
+  const bleedX = px(document.page.bleed.left);
+  const bleedY = px(document.page.bleed.top);
   for (const object of canvas.getObjects()) {
     const id = (object as FabricObject).layerId;
     if (!id) continue;
     const layer = document.layers.find((item) => item.id === id);
     if (!layer) continue;
+    const width = px(layer.width);
+    const height = px(layer.height);
     object.set({
-      left: px(layer.x),
-      top: px(layer.y),
+      left: bleedX + px(layer.x),
+      top: bleedY + px(layer.y),
       angle: layer.rotation,
       opacity: layer.opacity,
       selectable: !ancestorsLocked(document, layer.id),
       evented: !ancestorsLocked(document, layer.id),
       visible: ancestorsVisible(document, layer.id),
     });
+    if ('rx' in object && 'ry' in object && layer.type === 'ellipse') {
+      object.set({ rx: width / 2, ry: height / 2, scaleX: 1, scaleY: 1 });
+    } else {
+      const intrinsicW = Math.max(0.01, object.width || 1);
+      const intrinsicH = Math.max(0.01, object.height || 1);
+      object.set({ scaleX: width / intrinsicW, scaleY: height / intrinsicH });
+    }
     object.setCoords();
   }
 }
@@ -231,15 +249,19 @@ async function paintDocument(
   generation: { current: number },
   host: HTMLCanvasElement | null,
 ) {
-  const width = toPixels(document.page.width, document.page.unit, document.page.ppi);
-  const height = toPixels(document.page.height, document.page.unit, document.page.ppi);
+  const px = (value: number) => toPixels(value, document.page.unit, document.page.ppi);
+  const trimW = px(document.page.width);
+  const trimH = px(document.page.height);
+  const bleedX = px(document.page.bleed.left);
+  const bleedY = px(document.page.bleed.top);
+  const width = trimW + bleedX + px(document.page.bleed.right);
+  const height = trimH + bleedY + px(document.page.bleed.bottom);
   const max = Math.min(host?.parentElement?.clientWidth || 720, 900);
   const zoom = Math.min(1, max / Math.max(width, 1));
   canvas.setDimensions({ width: Math.round(width * zoom), height: Math.round(height * zoom) });
   canvas.setZoom(zoom);
   canvas.backgroundColor = document.page.background;
   canvas.clear();
-  const px = (value: number) => toPixels(value, document.page.unit, document.page.ppi);
   const made = new Map<string, FabricObject>();
   for (const layer of document.layers) {
     if (gen !== generation.current) return;
@@ -258,8 +280,10 @@ async function paintDocument(
         .map((item) => made.get(item.id)!);
       if (!children.length || !ancestorsVisible(document, layer.id)) continue;
       const group = new fabric.Group(children, {
-        left: px(layer.x),
-        top: px(layer.y),
+        originX: 'left',
+        originY: 'top',
+        left: bleedX + px(layer.x),
+        top: bleedY + px(layer.y),
         angle: layer.rotation,
         opacity: layer.opacity,
         selectable: !ancestorsLocked(document, layer.id),
@@ -275,8 +299,8 @@ async function paintDocument(
     if (!object || layer.parentId || added.has(layer.id)) continue;
     canvas.add(object);
   }
-  const widthPx = px(document.page.width);
-  const heightPx = px(document.page.height);
+  const widthPx = trimW;
+  const heightPx = trimH;
   const guide = (left: number, top: number, w: number, h: number, stroke: string) =>
     new fabric.Rect({
       left,
@@ -290,19 +314,11 @@ async function paintDocument(
       evented: false,
       excludeFromExport: true,
     });
+  canvas.add(guide(bleedX, bleedY, widthPx, heightPx, '#C4912F'));
   canvas.add(
     guide(
-      px(document.page.bleed.left),
-      px(document.page.bleed.top),
-      widthPx - px(document.page.bleed.left) - px(document.page.bleed.right),
-      heightPx - px(document.page.bleed.top) - px(document.page.bleed.bottom),
-      '#C4912F',
-    ),
-  );
-  canvas.add(
-    guide(
-      px(document.page.safe.left),
-      px(document.page.safe.top),
+      bleedX + px(document.page.safe.left),
+      bleedY + px(document.page.safe.top),
       widthPx - px(document.page.safe.left) - px(document.page.safe.right),
       heightPx - px(document.page.safe.top) - px(document.page.safe.bottom),
       '#7BE0C2',
@@ -318,9 +334,11 @@ async function makeObject(
   px: (value: number) => number,
 ): Promise<FabricObject | null> {
   const locked = ancestorsLocked(document, layer.id);
+  const bleedX = px(document.page.bleed.left);
+  const bleedY = px(document.page.bleed.top);
   const common = {
-    left: px(layer.x),
-    top: px(layer.y),
+    left: bleedX + px(layer.x),
+    top: bleedY + px(layer.y),
     angle: layer.rotation,
     opacity: layer.opacity,
     selectable: !locked,

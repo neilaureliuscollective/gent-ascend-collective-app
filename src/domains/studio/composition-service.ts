@@ -10,6 +10,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { compositionVtt, compositionSrt } from './composition/captions';
 import { materializeCompositionAssets } from './render/materialize';
+import { attemptObjectKeys, publishOrReconcileAttempt } from './render/attempt-storage';
 
 export const compositionSaveInput = z
   .object({
@@ -173,41 +174,57 @@ export async function executeRender(jobId: string, document: CompositionDocument
     if (abort.signal.aborted) throw new IntelligenceError('Studio render was cancelled.', 409);
     const user = (await client.auth.getUser()).data.user;
     if (!user) throw new IntelligenceError('Sign in to store a film.', 401);
-    const prefix = `${user.id}/${projectId}/${jobId}`;
-    const filmKey = `${prefix}/film.mp4`;
-    const coverKey = `${prefix}/cover.png`;
-    const captionKey = `${prefix}/captions.vtt`;
+    const keys = attemptObjectKeys({ uid: user.id, projectId, jobId, token });
     const bucket = client.storage.from('aethelios-studio-renders');
+    const remove = async (paths: string[]) => {
+      if (paths.length) await bucket.remove(paths);
+    };
     const uploads = await Promise.all([
-      bucket.upload(filmKey, rendered.film, { contentType: 'video/mp4', upsert: true }),
-      bucket.upload(coverKey, rendered.cover, { contentType: 'image/png', upsert: true }),
-      bucket.upload(captionKey, rendered.captions, { contentType: 'text/vtt', upsert: true }),
+      bucket.upload(keys.film, rendered.film, { contentType: 'video/mp4', upsert: false }),
+      bucket.upload(keys.cover, rendered.cover, { contentType: 'image/png', upsert: false }),
+      bucket.upload(keys.captions, rendered.captions, { contentType: 'text/vtt', upsert: false }),
     ]);
-    uploaded.push(filmKey, coverKey, captionKey);
+    uploaded.push(keys.film, keys.cover, keys.captions);
     if (uploads.some((item) => item.error))
       throw new IntelligenceError('The film could not be stored privately.', 503);
-    const still = await client.from('ai_studio_render_jobs').select('status,lease_token').eq('id', jobId).maybeSingle();
+    const still = await client
+      .from('ai_studio_render_jobs')
+      .select('status,lease_token,storage_film,storage_cover,storage_captions')
+      .eq('id', jobId)
+      .maybeSingle();
     if (still.data?.status === 'cancelled' || still.data?.lease_token !== token) {
-      await Promise.all(uploaded.map((key) => bucket.remove([key])));
+      await remove(uploaded);
       throw new IntelligenceError('Studio render was cancelled.', 409);
     }
-    const finished = await client.rpc('ai_studio_render_finish', {
-      p_id: jobId,
-      p_token: token,
-      p_film: filmKey,
-      p_cover: coverKey,
-      p_captions: captionKey,
-      p_width: rendered.width,
-      p_height: rendered.height,
-      p_duration: rendered.durationMs,
+    const outcome = await publishOrReconcileAttempt({
+      finish: async () =>
+        await client.rpc('ai_studio_render_finish', {
+          p_id: jobId,
+          p_token: token,
+          p_film: keys.film,
+          p_cover: keys.cover,
+          p_captions: keys.captions,
+          p_width: rendered.width,
+          p_height: rendered.height,
+          p_duration: rendered.durationMs,
+        }),
+      readJob: async () => {
+        const row = await client
+          .from('ai_studio_render_jobs')
+          .select('status,lease_token,storage_film,storage_cover,storage_captions')
+          .eq('id', jobId)
+          .maybeSingle();
+        return row.data;
+      },
+      uploaded,
+      remove,
+      token,
     });
-    if (finished.error || !finished.data) {
-      await Promise.all(uploaded.map((key) => bucket.remove([key])));
+    if (!outcome.published)
       throw new IntelligenceError(
         'The film was stored but the completion receipt could not be confirmed. Refresh before starting another render.',
         409,
       );
-    }
     return {
       id: jobId,
       status: 'complete' as const,

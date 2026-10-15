@@ -6,6 +6,7 @@ import {
   sceneFrames,
   scenePlaybackStartMs,
 } from './timing';
+import { dbToRatio } from './audio';
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'wav';
 export type LocalAsset = {
@@ -45,14 +46,20 @@ function filterPath(file: string) {
   return file.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "\\'");
 }
 
+export function coverScaleFilter(placeW: number, placeH: number) {
+  return `scale=${placeW}:${placeH}:force_original_aspect_ratio=increase:flags=lanczos,crop=${placeW}:${placeH}`;
+}
+
 function cropPlace(scene: CompositionScene, frame: { width: number; height: number }) {
   const placeW = Math.max(2, Math.round(frame.width * scene.placement.width) & ~1);
   const placeH = Math.max(2, Math.round(frame.height * scene.placement.height) & ~1);
   const placeX = Math.max(0, Math.round(frame.width * scene.placement.x) & ~1);
   const placeY = Math.max(0, Math.round(frame.height * scene.placement.y) & ~1);
   return {
+    placeW,
+    placeH,
     crop: `crop=iw*${n(scene.crop.width)}:ih*${n(scene.crop.height)}:iw*${n(scene.crop.x)}:ih*${n(scene.crop.y)}`,
-    scale: `scale=${placeW}:${placeH}:flags=lanczos`,
+    scale: coverScaleFilter(placeW, placeH),
     pad: `pad=${frame.width}:${frame.height}:${placeX}:${placeY}:black`,
   };
 }
@@ -86,8 +93,9 @@ export function compileRender(
     if (scene.kind === 'image') {
       inputs.push('-framerate', String(COMPOSITION_FPS), '-i', asset.path);
       if (scene.stillMotion === 'slow-zoom') {
+        const zoomFrames = Math.max(1, sceneFrames(scene.durationMs));
         filters.push(
-          `[${index}:v]${layout.crop},${layout.scale},zoompan=z='min(zoom+0.0012,1.08)':d=${frames}:s=${frame.width}x${frame.height}:fps=${COMPOSITION_FPS},setsar=1,trim=end_frame=${frames},setpts=PTS-STARTPTS[v${index}]`,
+          `[${index}:v]${layout.crop},${layout.scale},zoompan=z='min(1+on/${zoomFrames}*0.08,1.08)':d=${frames}:s=${layout.placeW}x${layout.placeH}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=${COMPOSITION_FPS},${layout.pad},setsar=1,trim=end_frame=${frames},setpts=PTS-STARTPTS[v${index}]`,
         );
       } else {
         filters.push(
@@ -123,8 +131,7 @@ export function compileRender(
     }
     video = `[${last}]`;
   }
-  const overlay = [...document.titles, ...document.captions];
-  if (overlay.length && output.captions) {
+  if ((document.titles.length || document.captions.length) && output.captions) {
     assertSafePath(output.captions);
     filters.push(`${video}subtitles=${filterPath(output.captions)}[vsub]`);
     video = '[vsub]';
@@ -198,10 +205,6 @@ export function compileRender(
     fps: COMPOSITION_FPS,
     filter: filters.join(';'),
   };
-}
-
-function dbToRatio(db: number) {
-  return Math.round(10 ** (db / 20) * 1000) / 1000;
 }
 
 export function compileCoverArgs(film: string, cover: string) {

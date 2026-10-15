@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { designFont, designFontPath } from './fonts';
 import { escapeXml, sanitizeSvg } from './sanitize';
 import { loadDesignFont, wrapText } from './measure';
-import { glyphScale, pagePixels, pointsToPixels, toInches, toPixels } from './units';
+import { glyphScale, mediaInches, mediaPixels, pointsToPixels, toPixels } from './units';
 import { visibleOrder, type DesignDocument, type DesignLayer } from './document';
 import type { AssetBytes } from './assets';
 
@@ -12,9 +12,9 @@ function px(value: number, document: DesignDocument) {
   return toPixels(value, document.page.unit, document.page.ppi);
 }
 
-function transform(layer: DesignLayer, document: DesignDocument) {
-  const x = px(layer.x, document);
-  const y = px(layer.y, document);
+function transform(layer: DesignLayer, document: DesignDocument, offsetX = 0, offsetY = 0) {
+  const x = px(layer.x, document) + offsetX;
+  const y = px(layer.y, document) + offsetY;
   const w = px(layer.width, document);
   const h = px(layer.height, document);
   const rotate = layer.rotation ? `rotate(${layer.rotation} ${x + w / 2} ${y + h / 2})` : '';
@@ -29,9 +29,12 @@ function transform(layer: DesignLayer, document: DesignDocument) {
   };
 }
 
-function nestedSvg(markup: string, width: number, height: number) {
+export function nestedSvg(markup: string, width: number, height: number) {
   const sanitized = sanitizeSvg(markup);
-  return sanitized.replace(/<svg\b[^>]*>/i, `<svg width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet">`);
+  const viewBox = sanitized.match(/\bviewBox\s*=\s*"([^"]+)"/i)?.[1];
+  const ratio = sanitized.match(/\bpreserveAspectRatio\s*=\s*"([^"]+)"/i)?.[1] ?? 'xMidYMid meet';
+  const opening = `<svg width="${width}" height="${height}"${viewBox ? ` viewBox="${viewBox}"` : ''} preserveAspectRatio="${ratio}">`;
+  return sanitized.replace(/<svg\b[^>]*>/i, opening);
 }
 
 export async function exportSvg(
@@ -39,11 +42,8 @@ export async function exportSvg(
   assets: AssetBytes[],
   fontMode: SvgFontMode = 'embed',
 ) {
-  const { width, height } = pagePixels(document.page);
-  const inches = {
-    width: toInches(document.page.width, document.page.unit, document.page.ppi),
-    height: toInches(document.page.height, document.page.unit, document.page.ppi),
-  };
+  const { width, height, offsetX, offsetY } = mediaPixels(document.page);
+  const inches = mediaInches(document.page);
   const fonts = [
     ...new Set(document.layers.filter((layer) => layer.type === 'text').map((layer) => layer.fontId)),
   ];
@@ -54,7 +54,7 @@ export async function exportSvg(
       const bytes = await readFile(designFontPath(id));
       const mime = spec.file.endsWith('.woff2') ? 'font/woff2' : 'font/ttf';
       faces.push(
-        `@font-face{font-family:${JSON.stringify(spec.family)};src:url("data:${mime};base64,${Buffer.from(bytes).toString('base64')}") format("${mime === 'font/woff2' ? 'woff2' : 'truetype'}");font-weight:400 700;}`,
+        `@font-face{font-family:${JSON.stringify(spec.family)};src:url("data:${mime};base64,${Buffer.from(bytes).toString('base64')}") format("${mime === 'font/woff2' ? 'woff2' : 'truetype'}");font-weight:100 900;}`,
       );
     }
   }
@@ -70,7 +70,7 @@ export async function exportSvg(
   let clip = 0;
   for (const layer of visibleOrder(document)) {
     if (layer.opacity <= 0 || layer.type === 'group') continue;
-    const t = transform(layer, document);
+    const t = transform(layer, document, offsetX, offsetY);
     const opacity = layer.opacity < 1 ? ` opacity="${layer.opacity}"` : '';
     if (layer.type === 'rect') {
       parts.push(
@@ -98,11 +98,15 @@ export async function exportSvg(
         `<g transform="${t.group}"${opacity}>${nestedSvg(layer.markup, t.w, t.h)}</g>`,
       );
     } else if (layer.type === 'text') {
-      const font = await loadDesignFont(layer.fontId);
+      const font = await loadDesignFont(layer.fontId, layer.fontWeight);
       const spec = designFont(layer.fontId);
       const wrapped = wrapText(layer, font, t.w / document.page.ppi);
       const ppi = document.page.ppi;
       if (fontMode === 'outline') {
+        if (layer.fontWeight !== 400)
+          throw new Error(
+            `Outline SVG cannot instantiate WOFF2 ${layer.fontId} weight ${layer.fontWeight}. Export embed SVG or PNG, which apply the real variable weight. Studio will not simulate bold.`,
+          );
         const scale = glyphScale(layer.fontSize, ppi, font.unitsPerEm);
         const tracking = pointsToPixels(layer.letterSpacing, ppi);
         if (t.attr) parts.push(`<g${t.attr}${opacity}>`);

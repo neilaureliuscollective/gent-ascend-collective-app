@@ -119,6 +119,7 @@ describe('Studio compositions', () => {
     expect(plan.filter).toContain('d=24');
     expect(plan.filter.match(/zoompan/g)?.length).toBe(1);
     expect(plan.filter).toContain('crop=iw*0.8:ih*0.8:iw*0.1:ih*0.1');
+    expect(plan.filter).toContain('force_original_aspect_ratio=increase');
     expect(plan.filter).toContain('subtitles=/tmp/studio-captions.vtt');
     expect(plan.filter).toContain('concat=');
     expect(plan.args.join(' ')).not.toMatch(/-loop 1 -t /);
