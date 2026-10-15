@@ -4,121 +4,190 @@ import type { ProjectContent } from '@/domains/architect-origin/schema';
 export function ChoiceArtwork({
   discipline,
   compact = false,
+  featured = false,
 }: {
   discipline: ProjectContent['discipline'];
   compact?: boolean;
+  featured?: boolean;
 }) {
-  const className = compact ? 'origin-choice-art origin-choice-art-compact' : 'origin-choice-art';
-  if (discipline === 'business') return <BusinessChamber className={className} />;
-  if (discipline === 'application') return <ApplicationWindow className={className} />;
-  if (discipline === 'product') return <ProductCube className={className} />;
-  return <OpenInfinity className={className} />;
+  const className = [
+    'origin-choice-art',
+    compact ? 'origin-choice-art-compact' : '',
+    featured ? 'origin-choice-art-featured' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const uid = featured ? 'feat' : compact ? 'compact' : 'card';
+  if (discipline === 'business') return <BusinessChamber className={className} uid={uid} />;
+  if (discipline === 'application') return <ApplicationWindow className={className} uid={uid} />;
+  if (discipline === 'product') return <ProductCube className={className} uid={uid} />;
+  return <OpenInfinity className={className} uid={uid} />;
 }
 
-function BusinessChamber({ className }: { className: string }) {
+function Slab({ prefix }: { prefix: string }) {
+  return (
+    <g>
+      <ellipse cx="160" cy="184" rx="108" ry="12" fill="#000" opacity=".55" />
+      <path d="M52 168 L268 168 L252 186 L68 186 Z" fill={`url(#${prefix}-slab)`} stroke="#c4912f" strokeOpacity=".35" />
+      <path d="M68 186 L252 186 L246 194 L74 194 Z" fill="#0a0c0b" />
+      <path d="M60 170 L260 170 L256 174 L64 174 Z" fill="#f0e2b4" opacity=".18" />
+    </g>
+  );
+}
+
+function BusinessChamber({ className, uid }: { className: string; uid: string }) {
+  const prefix = `origin-biz-${uid}`;
   return (
     <svg viewBox="0 0 320 200" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="origin-biz-glass" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#3d5c52" />
-          <stop offset="40%" stopColor="#1a2420" />
-          <stop offset="100%" stopColor="#0b0e0d" />
+        <linearGradient id={`${prefix}-slab`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3a3c38" />
+          <stop offset="55%" stopColor="#1c1e1c" />
+          <stop offset="100%" stopColor="#101210" />
         </linearGradient>
-        <linearGradient id="origin-biz-gold" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%" stopColor="#6b4a16" />
-          <stop offset="100%" stopColor="#c4912f" />
+        <linearGradient id={`${prefix}-glass`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#7ea394" />
+          <stop offset="35%" stopColor="#2d4a40" />
+          <stop offset="100%" stopColor="#14221c" />
         </linearGradient>
-        <linearGradient id="origin-biz-light" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#e8e4d4" stopOpacity=".35" />
-          <stop offset="100%" stopColor="#c4912f" stopOpacity="0" />
+        <linearGradient id={`${prefix}-roof`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f3e6b8" />
+          <stop offset="40%" stopColor="#c4912f" />
+          <stop offset="100%" stopColor="#245b48" />
+        </linearGradient>
+        <linearGradient id={`${prefix}-gold`} x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor="#8a6420" />
+          <stop offset="100%" stopColor="#e0b85a" />
         </linearGradient>
       </defs>
-      <ellipse cx="160" cy="180" rx="78" ry="8" fill="#000" opacity=".5" />
-      <path d="M96 168 L96 92 L160 58 L224 92 L224 168 Z" fill="url(#origin-biz-glass)" stroke="#c4912f" strokeWidth="1.1" />
-      <path d="M96 92 L160 58 L224 92 L160 118 Z" fill="url(#origin-biz-light)" />
-      <g fill="url(#origin-biz-gold)" opacity=".85">
-        <rect x="118" y="108" width="10" height="12" rx="1" />
-        <rect x="136" y="108" width="10" height="12" rx="1" />
-        <rect x="174" y="108" width="10" height="12" rx="1" />
-        <rect x="192" y="108" width="10" height="12" rx="1" />
-        <rect x="118" y="132" width="10" height="12" rx="1" />
-        <rect x="192" y="132" width="10" height="12" rx="1" />
+      <Slab prefix={prefix} />
+      <path d="M78 166 L78 88 L160 36 L242 88 L242 166 Z" fill={`url(#${prefix}-glass)`} stroke="#e0b85a" strokeWidth="1.6" />
+      <path d="M78 88 L160 36 L242 88 L160 118 Z" fill={`url(#${prefix}-roof)`} opacity=".9" />
+      <path d="M160 36 L160 166" stroke="#e0b85a" strokeOpacity=".35" />
+      <g fill={`url(#${prefix}-gold)`}>
+        <rect x="96" y="100" width="18" height="20" rx="2" />
+        <rect x="122" y="100" width="18" height="20" rx="2" />
+        <rect x="180" y="100" width="18" height="20" rx="2" />
+        <rect x="206" y="100" width="18" height="20" rx="2" />
+        <rect x="96" y="128" width="18" height="20" rx="2" />
+        <rect x="206" y="128" width="18" height="20" rx="2" />
       </g>
-      <rect x="148" y="140" width="24" height="28" fill="#0b0e0d" stroke="#c4912f" />
+      <rect x="142" y="128" width="36" height="38" fill="#0d1210" stroke="#e0b85a" />
+      <circle cx="102" cy="78" r="4" fill="#f3e6b8" />
+      <circle cx="218" cy="78" r="4" fill="#f3e6b8" opacity=".75" />
     </svg>
   );
 }
 
-function ApplicationWindow({ className }: { className: string }) {
+function ApplicationWindow({ className, uid }: { className: string; uid: string }) {
+  const prefix = `origin-app-${uid}`;
   return (
     <svg viewBox="0 0 320 200" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="origin-app-chrome" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2a2e2c" />
-          <stop offset="100%" stopColor="#121412" />
+        <linearGradient id={`${prefix}-slab`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3a3c38" />
+          <stop offset="100%" stopColor="#101210" />
         </linearGradient>
-        <linearGradient id="origin-app-scene" x1="0" y1="0" x2=".8" y2="1">
-          <stop offset="0%" stopColor="#245b48" />
-          <stop offset="70%" stopColor="#111814" />
-          <stop offset="100%" stopColor="#c4912f" stopOpacity=".28" />
+        <linearGradient id={`${prefix}-chrome`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4a524c" />
+          <stop offset="100%" stopColor="#1a1e1c" />
+        </linearGradient>
+        <linearGradient id={`${prefix}-scene`} x1="0" y1="0" x2=".85" y2="1">
+          <stop offset="0%" stopColor="#6d9a88" />
+          <stop offset="42%" stopColor="#245b48" />
+          <stop offset="100%" stopColor="#d7a84a" />
         </linearGradient>
       </defs>
-      <ellipse cx="168" cy="180" rx="92" ry="8" fill="#000" opacity=".45" />
-      <g transform="translate(48,36)">
-        <rect width="224" height="132" rx="12" fill="url(#origin-app-chrome)" stroke="#c4912f" strokeWidth="1.3" />
-        <rect x="10" y="10" width="48" height="112" rx="6" fill="#0c0f0e" />
-        <rect x="18" y="22" width="28" height="4" rx="2" fill="#3a3a3a" />
-        <rect x="18" y="34" width="22" height="3" rx="1" fill="#2a2a2a" />
-        <rect x="68" y="18" width="144" height="96" rx="8" fill="url(#origin-app-scene)" />
-        <circle cx="86" cy="36" r="5" fill="#e8e9e2" opacity=".28" />
+      <Slab prefix={prefix} />
+      <g transform="translate(28,22)">
+        <rect x="10" y="12" width="244" height="140" rx="16" fill="#000" opacity=".35" />
+        <rect width="248" height="136" rx="16" fill={`url(#${prefix}-chrome)`} stroke="#e0b85a" strokeWidth="1.6" />
+        <rect x="12" y="12" width="58" height="112" rx="10" fill="#121614" />
+        <rect x="22" y="26" width="38" height="7" rx="3" fill="#8a8e88" />
+        <rect x="22" y="42" width="30" height="5" rx="2" fill="#4a4e4a" />
+        <rect x="22" y="54" width="34" height="5" rx="2" fill="#4a4e4a" />
+        <rect x="22" y="66" width="26" height="5" rx="2" fill="#4a4e4a" />
+        <rect x="80" y="16" width="154" height="104" rx="10" fill={`url(#${prefix}-scene)`} />
+        <path d="M80 78 C118 54 164 96 234 62 L234 120 L80 120 Z" fill="#0b0e0d" opacity=".28" />
+        <circle cx="104" cy="36" r="8" fill="#f6f1de" opacity=".45" />
       </g>
     </svg>
   );
 }
 
-function ProductCube({ className }: { className: string }) {
+function ProductCube({ className, uid }: { className: string; uid: string }) {
+  const prefix = `origin-cube-${uid}`;
   return (
     <svg viewBox="0 0 320 200" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="origin-cube-top" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#3d6a5c" />
+        <linearGradient id={`${prefix}-slab`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3a3c38" />
+          <stop offset="100%" stopColor="#101210" />
+        </linearGradient>
+        <linearGradient id={`${prefix}-top`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#8fbfac" />
+          <stop offset="50%" stopColor="#2f6b56" />
           <stop offset="100%" stopColor="#163028" />
         </linearGradient>
-        <linearGradient id="origin-cube-left" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#1b2a24" />
-          <stop offset="100%" stopColor="#0a100e" />
+        <linearGradient id={`${prefix}-left`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#2a3c34" />
+          <stop offset="100%" stopColor="#101614" />
         </linearGradient>
-        <linearGradient id="origin-cube-right" x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#c4912f" stopOpacity=".45" />
-          <stop offset="100%" stopColor="#141414" />
+        <linearGradient id={`${prefix}-right`} x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f0d27a" />
+          <stop offset="45%" stopColor="#c4912f" />
+          <stop offset="100%" stopColor="#2a2414" />
         </linearGradient>
       </defs>
-      <ellipse cx="160" cy="178" rx="70" ry="8" fill="#000" opacity=".5" />
-      <path d="M160 44 L226 78 L160 112 L94 78 Z" fill="url(#origin-cube-top)" stroke="#c4912f" />
-      <path d="M94 78 L160 112 L160 168 L94 134 Z" fill="url(#origin-cube-left)" stroke="#565856" />
-      <path d="M226 78 L160 112 L160 168 L226 134 Z" fill="url(#origin-cube-right)" stroke="#c4912f" />
+      <Slab prefix={prefix} />
+      <path d="M160 28 L242 72 L160 116 L78 72 Z" fill={`url(#${prefix}-top)`} stroke="#e0b85a" strokeWidth="1.4" />
+      <path d="M78 72 L160 116 L160 172 L78 128 Z" fill={`url(#${prefix}-left)`} stroke="#8a9088" />
+      <path d="M242 72 L160 116 L160 172 L242 128 Z" fill={`url(#${prefix}-right)`} stroke="#e0b85a" />
+      <path d="M160 28 L182 40 L160 52 L138 40 Z" fill="#fff6d6" opacity=".28" />
     </svg>
   );
 }
 
-function OpenInfinity({ className }: { className: string }) {
+function OpenInfinity({ className, uid }: { className: string; uid: string }) {
+  const prefix = `origin-inf-${uid}`;
   return (
     <svg viewBox="0 0 320 200" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="origin-inf-glass" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#d7ddd8" />
-          <stop offset="35%" stopColor="#8aa39a" />
-          <stop offset="70%" stopColor="#245b48" />
-          <stop offset="100%" stopColor="#c4912f" />
+        <linearGradient id={`${prefix}-slab`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3a3c38" />
+          <stop offset="100%" stopColor="#101210" />
+        </linearGradient>
+        <linearGradient id={`${prefix}-glass`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff8e8" />
+          <stop offset="22%" stopColor="#c5d4cc" />
+          <stop offset="58%" stopColor="#3d7a64" />
+          <stop offset="100%" stopColor="#e0b85a" />
         </linearGradient>
       </defs>
-      <ellipse cx="160" cy="178" rx="86" ry="8" fill="#000" opacity=".45" />
+      <Slab prefix={prefix} />
       <path
-        d="M92 108 C92 72 132 72 160 108 C188 144 228 144 228 108 C228 72 188 72 160 108 C132 144 92 144 92 108 Z"
+        d="M74 98 C74 52 128 52 160 98 C192 144 246 144 246 98 C246 52 192 52 160 98 C128 144 74 144 74 98 Z"
         fill="none"
-        stroke="url(#origin-inf-glass)"
-        strokeWidth="16"
+        stroke="#000"
+        strokeWidth="26"
         strokeLinecap="round"
+        opacity=".3"
+        transform="translate(0 8)"
+      />
+      <path
+        d="M74 98 C74 52 128 52 160 98 C192 144 246 144 246 98 C246 52 192 52 160 98 C128 144 74 144 74 98 Z"
+        fill="none"
+        stroke={`url(#${prefix}-glass)`}
+        strokeWidth="20"
+        strokeLinecap="round"
+      />
+      <path
+        d="M74 98 C74 52 128 52 160 98 C192 144 246 144 246 98"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="4"
+        strokeLinecap="round"
+        opacity=".35"
       />
     </svg>
   );

@@ -37,21 +37,37 @@
 
 .environment-main .origin-studio {
   background:
-    radial-gradient(ellipse 70% 46% at 18% -8%, #c4912f22, transparent 42%),
-    radial-gradient(ellipse 80% 50% at 78% 0%, #245b4826, transparent 48%),
-    linear-gradient(180deg, #141816 0%, #0b0e0d 38%, #080d0d 100%);
+    radial-gradient(ellipse 88% 52% at 10% -12%, #f0e2b428, transparent 44%),
+    radial-gradient(ellipse 70% 46% at 18% -8%, #c4912f2e, transparent 42%),
+    radial-gradient(ellipse 80% 50% at 82% 0%, #245b4836, transparent 50%),
+    linear-gradient(180deg, #1c1e1a 0%, #101210 36%, #080a0a 100%);
   isolation: isolate;
 }
 .origin-studio::before {
   content: '';
   position: absolute;
   inset: 0 auto auto 0;
-  width: min(52vw, 640px);
-  height: 280px;
-  background: radial-gradient(ellipse at 0 0, #e8e4d41c, transparent 70%);
+  width: min(72vw, 920px);
+  height: 420px;
+  background: radial-gradient(ellipse at 8% 0, #f6edd628, transparent 68%);
   pointer-events: none;
+  z-index: 0;
 }
-.origin-studio.origin-returning::before {
+.origin-studio::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 28%;
+  background: linear-gradient(180deg, transparent, #0007);
+  pointer-events: none;
+  z-index: 0;
+}
+.origin-studio > * {
+  position: relative;
+  z-index: 1;
+}
+.origin-studio.origin-returning::before,
+.origin-studio.origin-returning::after {
   display: none;
 }
 
@@ -184,11 +200,12 @@
 
 .origin-choice-stage {
   display: block;
-  height: 148px;
+  height: 188px;
   border-radius: 12px;
   background:
+    radial-gradient(ellipse 70% 42% at 50% 100%, #c4912f18, transparent 72%),
     radial-gradient(ellipse at 50% 80%, #0008, transparent 70%),
-    linear-gradient(180deg, #1c1c1c, #111);
+    linear-gradient(180deg, #262824, #101210);
   overflow: hidden;
   margin-bottom: 12px;
 }
@@ -237,10 +254,12 @@
 
 .origin-composer textarea#origin-idea {
   min-height: 64px !important;
+  width: 100%;
   background: transparent;
   border: 0;
   padding: 8px 0 16px;
   font-size: 1.15rem;
+  color: var(--studio-text);
 }
 
 .origin-composer-tools {
@@ -279,8 +298,17 @@
 .origin-brief-steps button[aria-current='step'] {
   color: var(--studio-gold);
 }
-.origin-studio .origin-starter-context {
+.origin-studio .origin-starter-context,
+.origin-entry .origin-question {
   display: none;
+}
+.origin-active .origin-workbench.origin-app {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-areas: 'canvas' !important;
+}
+.origin-active .origin-workbench.origin-app .origin-rail,
+.origin-active .origin-workbench.origin-app .origin-refine {
+  display: none !important;
 }
 
 .origin-entry-lower {
@@ -531,6 +559,11 @@
   border-top: 1px solid var(--studio-edge);
 }
 
+.origin-workbench.origin-app .architect-app,
+.origin-workbench.origin-app .architect-app-stage,
+.origin-workbench.origin-app .architect-app-frame {
+  min-height: min(64vh, 680px);
+}
 @media (max-width: 1100px) {
   .origin-studio.origin-active .origin-project-heading,
   .origin-studio .origin-revisions {
@@ -600,7 +633,7 @@
     padding: 8px !important;
   }
   .origin-studio:not(.origin-active) .origin-choice-stage {
-    height: 52px;
+    height: 88px;
     margin-bottom: 4px;
     display: block !important;
   }
@@ -712,8 +745,8 @@
 }
 
 .architect-app-toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   border-bottom: 1px solid color-mix(in srgb, #c4912f 24%, #2a2d2a);
 }
@@ -894,6 +927,22 @@
       'side'
       'refine';
   }
+  .architect-app-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .architect-app-viewports {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .architect-app-frame,
+  .architect-app-frame iframe,
+  .architect-app-empty {
+    min-height: min(58vh, 520px);
+  }
+  .architect-app[data-focus-room='true'] .architect-app-side,
+  .architect-app[data-focus-room='true'] .architect-app-refine {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 600px) {
@@ -934,7 +983,7 @@
   gap: 10px !important;
 }
 .origin-choices-compact .origin-choice-stage {
-  height: 72px;
+  height: 84px;
 }
 .origin-path-stage,
 .origin-model,
@@ -949,6 +998,26 @@
   padding: 16px 18px;
   margin: 0 0 16px;
 }
+.origin-path-hero {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.origin-path-object {
+  display: block;
+  height: 132px;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 100%, #c4912f18, transparent 72%),
+    linear-gradient(180deg, #262824, #101210);
+  overflow: hidden;
+}
+.origin-choice-art-featured {
+  width: 100%;
+  height: 100%;
+}
 .origin-path-facets,
 .origin-model-nodes {
   display: grid;
@@ -961,10 +1030,27 @@
 .origin-model-nodes li,
 .origin-directions article,
 .origin-first-visit label {
+  display: grid;
+  gap: 6px;
   border: 1px solid var(--studio-edge);
   border-radius: 12px;
   padding: 12px;
   background: #0c0f0e;
+}
+.origin-path-facets strong,
+.origin-model-nodes strong,
+.origin-first-visit strong,
+.origin-directions article strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.origin-path-facets span,
+.origin-model-nodes span,
+.origin-first-visit span {
+  display: block;
+  color: var(--studio-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 .origin-path-limit,
 .origin-path-outputs,
@@ -1005,9 +1091,57 @@
   display: grid;
   gap: 4px;
 }
+.origin-entry[data-world-state='arrival'] .origin-question,
+.origin-entry[data-world-state='arrival'] .origin-emerging,
+.origin-entry[data-world-state='arrival'] .origin-directions,
+.origin-entry[data-world-state='arrival'] .origin-model,
+.origin-entry[data-world-state='arrival'] .origin-entry-lower,
+.origin-entry[data-world-state='arrival'] .origin-guide:not(:has([aria-expanded='true'])) {
+  display: none;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 760px;
+  margin: 4px auto 0;
+  border-radius: 999px !important;
+  padding: 6px 8px 6px 22px !important;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer > :not(textarea):not(.origin-composer-tools):not(label[for='origin-idea']) {
+  display: none;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer-tools > :not(.origin-shape) {
+  display: none;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer textarea#origin-idea {
+  flex: 1;
+  min-height: 44px !important;
+  padding: 10px 0;
+  font-size: 1rem;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer-tools {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer-tools .origin-shape.button {
+  margin-left: 0;
+  border-radius: 999px;
+  min-width: 48px;
+}
+.architect-app[data-focus-room='true'] {
+  grid-template-columns: minmax(0, 2.3fr) minmax(200px, 0.3fr);
+}
 .architect-app[data-focus-room='true'] .architect-app-side,
 .architect-app[data-focus-room='true'] .architect-app-refine {
-  opacity: 0.92;
+  opacity: 0.7;
+}
+.architect-app[data-focus-room='true'] .architect-app-stage {
+  min-height: 72vh;
+}
+.architect-app[data-focus-room='true'] .architect-app-frame,
+.architect-app[data-focus-room='true'] .architect-app-frame iframe {
+  min-height: 560px;
 }
 .architect-app-inspect {
   margin-top: 12px;
@@ -1049,6 +1183,9 @@
   .origin-model-nodes {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
+  .origin-path-hero {
+    grid-template-columns: minmax(96px, 140px) minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 600px) {
@@ -1058,12 +1195,31 @@
   .origin-model-nodes {
     grid-template-columns: 1fr !important;
   }
-  .origin-guide,
-  .origin-directions,
-  .origin-model {
+  .origin-path-hero {
+    grid-template-columns: 1fr;
+  }
+  .origin-path-object {
+    height: 108px;
+  }
+  .origin-guide {
     position: sticky;
     bottom: 0;
     z-index: 2;
+  }
+  .origin-entry[data-world-state='arrival'] .origin-composer {
+    flex-wrap: wrap;
+    border-radius: 18px !important;
+    padding: 10px 12px !important;
+  }
+  .origin-entry[data-world-state='arrival'] .origin-composer textarea#origin-idea {
+    min-width: 0;
+    width: 100%;
+  }
+  .origin-entry[data-world-state='arrival'] .origin-composer-tools {
+    width: 100%;
+  }
+  .origin-entry[data-world-state='arrival'] .origin-composer-tools .origin-shape.button {
+    width: 100%;
   }
 }
 

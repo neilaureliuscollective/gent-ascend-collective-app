@@ -9,6 +9,7 @@ import {
   type CreationPath,
 } from '@/domains/architect-origin/creation-journey';
 import type { OriginProject, ProjectContent } from '@/domains/architect-origin/schema';
+import { ChoiceArtwork } from './choice-artwork';
 import { ChoiceCard, creationChoices } from './choice-card';
 import { CreationGuide } from './creation-guide';
 
@@ -114,7 +115,7 @@ export function CreationEntry({
           <ChoiceCard
             key={choice.discipline}
             {...choice}
-            selected={discipline === choice.discipline}
+            selected={pathOpened && discipline === choice.discipline}
             disabled={locked}
             onSelect={() => onDiscipline(choice.discipline)}
           />
@@ -122,7 +123,16 @@ export function CreationEntry({
       </div>
       {pathOpened ? (
         <section className="origin-path-stage" aria-label={`${profile.title} working stage`}>
-          <p className="origin-kicker">{profile.title}</p>
+          <div className="origin-path-hero">
+            <span className="origin-path-object" aria-hidden="true">
+              <ChoiceArtwork discipline={discipline} featured />
+            </span>
+            <div>
+              <p className="origin-kicker">{profile.title}</p>
+              <p className="origin-path-limit">{profile.limit}</p>
+              <p className="origin-path-outputs">Expected: {profile.outputs.join(' · ')}</p>
+            </div>
+          </div>
           <ol className="origin-path-facets">
             {profile.facets.map((facet) => (
               <li key={facet.id}>
@@ -131,8 +141,6 @@ export function CreationEntry({
               </li>
             ))}
           </ol>
-          <p className="origin-path-limit">{profile.limit}</p>
-          <p className="origin-path-outputs">Expected: {profile.outputs.join(' · ')}</p>
         </section>
       ) : null}
       <p className="origin-entry-links">

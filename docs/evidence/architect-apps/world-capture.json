@@ -1,0 +1,26 @@
+{
+  "schema": "architect-world-capture/v1",
+  "capturedAt": "2026-10-15T09:08:06.873Z",
+  "label": "Local Vite fixture evidence. Not a commissioned or paid build.",
+  "timings": [
+    {
+      "name": "arrival-heading",
+      "ms": 1488
+    },
+    {
+      "name": "idea-input",
+      "ms": 29
+    },
+    {
+      "name": "path-open",
+      "ms": 71
+    }
+  ],
+  "overflow": {
+    "320": true,
+    "344": true,
+    "390": true,
+    "720": true,
+    "1440": true
+  }
+}
