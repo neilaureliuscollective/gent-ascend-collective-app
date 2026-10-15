@@ -279,18 +279,21 @@ const version = requirePsql();
 recreateDatabase();
 bootstrap();
 
-const conflict = run('psql', [
-  ...psqlArgs(database),
-  '-c',
-  "load 'plpgsql'",
-  '-c',
-  'show plpgsql.variable_conflict',
-])
-  .trim()
-  .split('\n')
-  .filter((line) => line && line !== 'LOAD')
-  .at(-1);
-expectEq('plpgsql.variable_conflict stays error', conflict, 'error');
+function readVariableConflict() {
+  try {
+    const value = sql('show plpgsql.variable_conflict').trim();
+    if (value) return value;
+  } catch {
+    // Supabase PostgreSQL 17 forbids LOAD 'plpgsql'; SHOW may still work.
+  }
+  try {
+    const value = sql("select current_setting('plpgsql.variable_conflict', true);").trim();
+    if (value) return value;
+  } catch {
+    // The historical-ambiguity probe is the proof that the default remains error.
+  }
+  return null;
+}
 
 const probe = expectThrows(
   'default PL/pgSQL substitution is ambiguous',
@@ -306,6 +309,8 @@ const probe = expectThrows(
     `),
   /column reference "save_id" is ambiguous/i,
 );
+const conflict = readVariableConflict() ?? (/ambiguous/i.test(probe) ? 'error' : '');
+expectEq('plpgsql.variable_conflict stays error', conflict, 'error');
 
 saveCreation(briefId, 'brief', brief);
 saveCreation(handoffId, 'handoff', briefOnly);
