@@ -28,9 +28,14 @@ vi.mock('@/domains/intelligence/service', () => ({
 vi.mock('@/domains/intelligence/prompt', () => ({
   aureliusInstructions: 'Synthetic instructions',
   sharedCharacter: 'Synthetic character',
+  voiceDelivery: 'VOICE DELIVERY: Begin with one useful thought.',
   buildMessages: (turns: unknown[], _text: string, context: unknown) => [
     { role: 'user', content: JSON.stringify({ turns, context }) },
   ],
+}));
+vi.mock('@/domains/commerce/shopify', () => ({ getProduct: async () => null }));
+vi.mock('@/domains/commerce/lifestyle-catalog', () => ({
+  readLifestyleCatalog: async () => ({ products: [], status: 'unconfigured' }),
 }));
 vi.mock('@/domains/artifacts/service', () => ({
   readArtifacts: async () => ({ artifacts: [], selectedId: null, projects: [] }),
@@ -57,8 +62,8 @@ vi.mock('@/domains/talk-creation/service', () => ({
     attachmentProjectId: null,
   }),
 }));
-vi.mock('@/domains/talk-creation/live-adapter', () => ({
-  talkLiveCreationTools: [],
+vi.mock('@/domains/talk-creation/live-adapter', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/domains/talk-creation/live-adapter')>()),
   runTalkLiveOffer: vi.fn(),
   runTalkLiveRefine: vi.fn(),
 }));
@@ -206,13 +211,27 @@ it('posts official string FormData fields instead of Blob file parts', async () 
   expect(fields.sdpKind).toBe('string');
   expect(fields.sessionKind).toBe('string');
   expect(fields.sdp).toBe(input.sdp);
-  expect(JSON.parse(fields.session ?? '').type).toBe('realtime');
+  const session = JSON.parse(fields.session ?? '');
+  expect(session.type).toBe('realtime');
+  expect(session.tools.map((tool: { name: string }) => tool.name)).toEqual([
+    'offer_text_work',
+    'refine_selected_direction',
+    'lookup_lifestyle_catalog',
+  ]);
+  expect(session.instructions).toContain('VOICE DELIVERY');
+  expect(session.instructions).toContain('Cached catalog figures are not live stock');
+  expect(session.instructions).toContain('Refine the selected design-board direction only');
 });
 it('reports a sanitized provider rejection instead of one generic connection message', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(
     new Response(
       JSON.stringify({
-        error: { code: 'invalid_request_error', type: 'invalid_request_error', param: 'sdp', message: 'raw' },
+        error: {
+          code: 'invalid_request_error',
+          type: 'invalid_request_error',
+          param: 'sdp',
+          message: 'raw',
+        },
         request_id: 'req_test1',
       }),
       { status: 400, headers: { 'content-type': 'application/json' } },

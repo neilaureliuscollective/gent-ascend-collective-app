@@ -120,6 +120,30 @@ describe('GPT-Live evaluation contract', () => {
     );
     expect(config.client.data_channel.allowed_client_events).not.toContain('response.create');
     expect(config.input[0]?.role).toBe('user');
+    expect(config.instructions).toContain('Aethelios — The Human Ascendance');
+    expect(config.instructions).toContain('without a real receipt');
+    expect(config.instructions).toContain('Begin with one useful thought');
+    expect(config.instructions).toContain('Cached catalog figures are not live stock');
+  });
+  it('pins application context ahead of a trimmed GPT-Live history', () => {
+    const config = liveStartup({
+      voice: 'marin',
+      application: [
+        {
+          role: 'user',
+          text: 'Application context: Human Ascendance published knowledge. Cached catalog is not live stock.',
+        },
+      ],
+      history: Array.from({ length: 30 }, (_, index) => ({
+        role: index % 2 ? ('assistant' as const) : ('user' as const),
+        text: `Older company-building copy ${index + 1}`,
+      })),
+    });
+    expect(config.input[0]?.content[0]?.text).toContain('Human Ascendance published knowledge');
+    expect(
+      config.input.some((item) => item.content[0]?.text === 'Older company-building copy 1'),
+    ).toBe(false);
+    expect(config.input.at(-1)?.content[0]?.text).toBe('Older company-building copy 30');
   });
   it('uses JSON Live session creation and preserves the provider session ID unchanged', async () => {
     const request = vi.fn().mockResolvedValue(

@@ -5,7 +5,7 @@ import {
   type ModelMessage,
   type LanguageModelMiddleware,
 } from 'ai';
-import { aureliusInstructions, sharedCharacter, founderConduct } from './prompt';
+import { aureliusInstructions, sharedCharacter, founderConduct, behaviorContract } from './prompt';
 import type { ModelChunk, ActivityReporter } from './stream';
 import { researchTools, researchPolicy, sourceFooter, type ResearchSource } from './research';
 import {
@@ -63,6 +63,7 @@ export async function* streamAurelius(
     instructions: [
       aureliusInstructions,
       sharedCharacter,
+      behaviorContract,
       researchPolicy,
       creation ? talkCreationPolicy() : '',
       founder

@@ -1,17 +1,37 @@
-import { expect, it } from 'vitest';
-import { streamTalkCreationFixture, talkCreationFixtureEnabled } from '@/domains/talk-creation/fixture-stream';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import {
+  streamTalkCreationFixture,
+  talkCreationFixtureEnabled,
+} from '@/domains/talk-creation/fixture-stream';
 import { legacyReserveBoard } from '@/domains/talk-creation/design-board';
 
-it('recognizes labelled Talk fixtures', () => {
-  const previous = process.env.AETHELIOS_TALK_CREATION_FIXTURE;
-  delete process.env.AETHELIOS_TALK_CREATION_FIXTURE;
+beforeEach(() => {
+  vi.stubEnv('NODE_ENV', 'development');
+  vi.stubEnv('APP_ENV', 'local');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:54321');
+  vi.stubEnv('VERCEL', undefined);
+  vi.stubEnv('VERCEL_ENV', undefined);
+  vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', 'legacy-reserve');
+});
+afterEach(() => vi.unstubAllEnvs());
+it('allows the labelled fixture only with explicit local development and loopback persistence', () => {
+  expect(talkCreationFixtureEnabled()).toBe(true);
+  vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', 'lifestyle-launch');
+  expect(talkCreationFixtureEnabled()).toBe(true);
+  vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', undefined);
   expect(talkCreationFixtureEnabled()).toBe(false);
-  process.env.AETHELIOS_TALK_CREATION_FIXTURE = 'legacy-reserve';
-  expect(talkCreationFixtureEnabled()).toBe(true);
-  process.env.AETHELIOS_TALK_CREATION_FIXTURE = 'lifestyle-launch';
-  expect(talkCreationFixtureEnabled()).toBe(true);
-  if (previous === undefined) delete process.env.AETHELIOS_TALK_CREATION_FIXTURE;
-  else process.env.AETHELIOS_TALK_CREATION_FIXTURE = previous;
+});
+it.each([
+  ['NODE_ENV', 'production'],
+  ['APP_ENV', 'preview'],
+  ['APP_ENV', 'production'],
+  ['VERCEL', '1'],
+  ['VERCEL_ENV', 'preview'],
+  ['NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co'],
+  ['NEXT_PUBLIC_SUPABASE_URL', 'invalid'],
+])('denies the fixture with %s=%s', (name, value) => {
+  vi.stubEnv(name, value);
+  expect(talkCreationFixtureEnabled()).toBe(false);
 });
 
 it('offers the labelled Legacy Reserve board through the Talk creation session', async () => {
@@ -28,9 +48,12 @@ it('offers the labelled Legacy Reserve board through the Talk creation session',
   const chunks = [];
   for await (const chunk of streamTalkCreationFixture(creation)) chunks.push(chunk);
   expect(creation.offered[0]?.board).toEqual(legacyReserveBoard());
-  expect(chunks.some((chunk) => chunk.type === 'text' && chunk.text.includes('Labelled deterministic Talk fixture'))).toBe(
-    true,
-  );
+  expect(
+    chunks.some(
+      (chunk) =>
+        chunk.type === 'text' && chunk.text.includes('Labelled deterministic Talk fixture'),
+    ),
+  ).toBe(true);
 });
 
 it('offers a warmer selected direction for a refine request', async () => {
@@ -49,5 +72,7 @@ it('offers a warmer selected direction for a refine request', async () => {
   expect(chunks.some((chunk) => chunk.type === 'text')).toBe(true);
   const board = creation.offered[0]?.board;
   expect(board?.selectedDirectionId).toBe('direction-c');
-  expect(board?.directions.find((item) => item.id === 'direction-a')?.name).toBe('Graphite Chamber');
+  expect(board?.directions.find((item) => item.id === 'direction-a')?.name).toBe(
+    'Graphite Chamber',
+  );
 });

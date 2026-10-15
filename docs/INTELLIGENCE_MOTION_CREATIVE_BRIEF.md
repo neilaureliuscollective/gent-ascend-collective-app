@@ -14,7 +14,7 @@ The ribbon uses the palette but lacks a defensible connection to the architectur
 
 ## Brand construction
 
-Authoritative references: `src/platform/brand.ts`, `src/platform/visual/aether-palette.json`, the official `public/brand/aethelios-aether-20261007.webp`, `docs/IMPERIAL_EMERALD_OBSIDIAN.md`, and the current flowing sphere direction in `docs/COMMAND_IMMERSIVE.md`. Earlier identity documents are historical where superseded; their obsolete claims about voice availability are not current capability guidance.
+Authoritative references: `src/platform/brand.ts`, `src/platform/visual/aether-palette.json`, the official Human Ascendance lockup in `public/brand/aethelios-human-ascendance-20261015-lockup.webp`, `docs/IMPERIAL_EMERALD_OBSIDIAN.md`, and the current flowing sphere direction in `docs/COMMAND_IMMERSIVE.md`. Earlier identity documents are historical where superseded; their obsolete claims about voice availability are not current capability guidance.
 
 | Existing identity cue         | Proposed translation into motion                                                                                                    |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |

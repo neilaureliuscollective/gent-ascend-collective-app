@@ -181,6 +181,17 @@
     0 18px 35px #0009;
   z-index: 5;
 }
+.imperial-presence-mark {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  width: min(78%, 420px);
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  filter: drop-shadow(0 18px 42px #000a);
+}
 .imperial-presence-caption {
   display: flex;
   justify-content: space-between;
@@ -301,9 +312,9 @@
   border-top: 1px solid var(--imperial-metal-edge);
 }
 .public-world[data-material='imperial-steel'] .footer-crest {
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
+  width: 220px;
+  height: auto;
+  border-radius: 0;
 }
 .public-world[data-material='imperial-steel'] .world-motion-control {
   background: var(--imperial-carbon);
