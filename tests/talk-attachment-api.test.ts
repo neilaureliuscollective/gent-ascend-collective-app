@@ -7,6 +7,7 @@ vi.mock('@/domains/talk-creation/service', () => ({
 }));
 vi.mock('@/domains/studio/reference-selection', () => ({ selectStudioReference: mock.select }));
 import { POST } from '@/app/api/aurelius/attachments/route';
+import { studioInput } from '@/domains/studio/service';
 function request(body: unknown) {
   return new Request('https://app.test/api/aurelius/attachments', {
     method: 'POST',
@@ -15,6 +16,21 @@ function request(body: unknown) {
   });
 }
 beforeEach(() => vi.clearAllMocks());
+it('rejects ambiguous Studio sources while accepting a version, reference or new-image request', () => {
+  const input = {
+    id: '10000000-0000-4000-8000-000000000001',
+    projectId: '10000000-0000-4000-8000-000000000002',
+    parentId: '10000000-0000-4000-8000-000000000003',
+    referenceId: '10000000-0000-4000-8000-000000000004',
+    prompt: 'Develop the selected source',
+    mode: 'fast',
+    size: '1024x1024',
+  };
+  expect(studioInput.safeParse(input).success).toBe(false);
+  expect(studioInput.safeParse({ ...input, referenceId: null }).success).toBe(true);
+  expect(studioInput.safeParse({ ...input, parentId: null }).success).toBe(true);
+  expect(studioInput.safeParse({ ...input, parentId: null, referenceId: null }).success).toBe(true);
+});
 it('rejects unsupported uploads and oversize requests before preparing storage', async () => {
   for (const body of [
     { action: 'prepare', mediaType: 'video/mp4', byteSize: 128 },

@@ -1,5 +1,6 @@
 Base: 0c4a59c884dbc133fbe8e9aa153c453f10846e89
 Branch: feat/talk-image-studio-reference
+PR #152 review correction: exclusive Studio source and compact, pointer-accessible Talk attachment.
 All evidence uses synthetic records, intercepted storage/provider traffic, and public original logo bytes. No paid or hosted acceptance.
 
 Lint
@@ -16,33 +17,36 @@ Strict types
 Generating route types...
 ✓ Types generated successfully
 
-Focused attachment + existing brand ownership tests
+Focused attachment + brand ownership + exclusive source input
 
  RUN  v5.0.1 /workspace/gent-ascend-collective-app
 
 
  Test Files  4 passed (4)
-      Tests  18 passed (18)
-   Start at  20:41:52
-   Duration  907ms (transform 56%, import 37%, tests 6%, worker 1%)
+      Tests  19 passed (19)
+   Start at  20:49:30
+   Duration  696ms (transform 50%, import 41%, tests 7%, worker 1%)
 
 
-Browser fixtures
-[WebServer] (node:36964) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+Complete attachment browser regressions (stable source)
+[WebServer] (node:54910) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
 
-Running 6 tests using 1 worker
+Running 9 tests using 1 worker
 
-(node:36995) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:54929) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  1 tests/browser/talk-image.spec.ts:210:3 › Talk image analysis and durable Studio reference preserve original at 390px (6.5s)
-  ✓  2 tests/browser/talk-image.spec.ts:210:3 › Talk image analysis and durable Studio reference preserve original at 768px (16.7s)
-  ✓  3 tests/browser/talk-image.spec.ts:268:1 › uncertain upload completion retries the original reference without another transfer (5.2s)
-  ✓  4 tests/browser/talk-image.spec.ts:282:1 › Remove fences a late preparation; unsupported files never upload (4.1s)
-  ✓  5 tests/browser/talk-image.spec.ts:301:1 › starting a new conversation fences the previous pending image upload (2.9s)
-  ✓  6 tests/browser/talk-image.spec.ts:314:1 › a stale Studio handoff never silently selects another reference or starts generation (5.8s)
+  ✓  1 tests/browser/talk-image.spec.ts:251:3 › Talk image analysis and durable Studio reference preserve original at 390px (6.3s)
+  ✓  2 tests/browser/talk-image.spec.ts:251:3 › Talk image analysis and durable Studio reference preserve original at 768px (6.0s)
+  ✓  3 tests/browser/talk-image.spec.ts:309:1 › uncertain upload completion retries the original reference without another transfer (1.7s)
+  ✓  4 tests/browser/talk-image.spec.ts:323:1 › Remove fences a late preparation; unsupported files never upload (1.3s)
+  ✓  5 tests/browser/talk-image.spec.ts:342:1 › starting a new conversation fences the previous pending image upload (1.3s)
+  ✓  6 tests/browser/talk-image.spec.ts:355:1 › a stale Studio handoff never silently selects another reference or starts generation (1.9s)
+  ✓  7 tests/browser/talk-image.spec.ts:372:1 › saved-version deep links override persisted references and every submitted source matches the preview (5.6s)
+  ✓  8 tests/browser/talk-image.spec.ts:430:3 › attachment leaves a readable transcript and pointer-reachable controls at 390px, including keyboard height (2.7s)
+  ✓  9 tests/browser/talk-image.spec.ts:430:3 › attachment leaves a readable transcript and pointer-reachable controls at 768px, including keyboard height (2.8s)
 
-  6 passed (43.2s)
+  9 passed (31.2s)
 
 Migration ledger (read-only snapshot)
 
@@ -53,14 +57,14 @@ Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger
 
 Application production build: npx next build
 ▲ Next.js 16.3.5 (Turbopack)
-✓ Running next.config.ts took 364ms
+✓ Running next.config.ts took 162ms
 - Experiments (use with caution):
   ⨯ useTypeScriptCli
 
   Creating an optimized production build ...
-✓ Compiled successfully in 7.2s
+✓ Compiled successfully in 3.4s
   Running TypeScript ...
-  Finished TypeScript in 54s ...
+  Finished TypeScript in 31.3s ...
   Collecting page data using 4 workers ...
   Generating static pages using 4 workers (0/126) ...
   Generating static pages using 4 workers (31/126) 
@@ -68,7 +72,7 @@ Application production build: npx next build
   Generating static pages using 4 workers (62/126) 
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
   Generating static pages using 4 workers (94/126) 
-✓ Generating static pages using 4 workers (126/126) in 484ms
+✓ Generating static pages using 4 workers (126/126) in 586ms
   Finalizing page optimization ...
 
 
@@ -87,8 +91,8 @@ Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
  FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > renders owned moving footage, title cards and non-tone audio
 Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
  Test Files  3 failed | 226 passed | 1 skipped (230)
-      Tests  5 failed | 1354 passed | 1 skipped (1360)
-   Duration  91.76s (tests 75%, import 18%, transform 7%, worker 1%)
+      Tests  5 failed | 1355 passed | 1 skipped (1361)
+   Duration  77.78s (tests 79%, import 15%, transform 6%, worker 1%)
 
 Untouched base: the same five environment failures
 {"image":"aethelios-architect-apps-worker:2026-10-15.1","action":"missing","reason":"Worker image build failed."}
@@ -108,6 +112,9 @@ Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
       Tests  5 failed | 3 passed (8)
    Duration  8.85s (tests 77%, transform 13%, import 9%)
 
-Standard npm run build: existing Mirror prebuild blocked by EAI_AGAIN storage.googleapis.com. Separate application build above passed.
+Standard npm run build: existing Mirror prebuild blocked by EAI_AGAIN storage.googleapis.com on the initial PR check. Prebuild unchanged; final separate application build above passed.
 No SQL/migrations changed. git diff --check passed.
-Native component viewport screenshots: Talk and Studio at 390x844 and 768x712, saved full-page. Simulated Chromium phone/Fold widths, not hardware testing. Existing Studio room-navigation wrapping is visible and remains owned by the separate shared-style work.
+Native component viewport screenshots: Talk and Studio at 390x844 and 768x712; keyboard-reduced Talk at 390x460 and 768x420. Browser fixtures, not hardware tests.
+Layout regression assertions: transcript >=180px normally and >=96px at keyboard heights before/after details; composer <280px; latest saved reply in viewport; input/Send/Remove/Use in Studio have unobstructed pointer centers and actual clicks succeed. Details <=16dvh.
+Source regression assertions: persisted reference A + saved-version B deep link (also after reload) submits only parentId B; reference selection submits only referenceId A; switching back submits only parentId B; explicit reference+version handoff wins and reload submits only A. All generation POSTs are intercepted synthetic failures.
+PR150 shared-style files inspected: no overlapping shared CSS changes, only scoped attachment styles using existing tokens. Existing Studio room-navigation wrapping remains visible and separate.

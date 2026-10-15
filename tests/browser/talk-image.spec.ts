@@ -2,6 +2,7 @@ import { test, expect, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 const project = '10000000-0000-4000-8000-000000000001';
 const reference = '10000000-0000-4000-8000-000000000002';
+const version = '10000000-0000-4000-8000-000000000003';
 const owner = '60000000-0000-4000-8000-000000000001';
 const brief = {
   purpose: '',
@@ -20,7 +21,15 @@ const brief = {
     logoReferenceId: null as string | null,
   },
 };
-async function setup(page: Page, options: { uncertain?: boolean; holdPrepare?: boolean } = {}) {
+async function setup(
+  page: Page,
+  options: {
+    uncertain?: boolean;
+    holdPrepare?: boolean;
+    generation?: boolean;
+    history?: boolean;
+  } = {},
+) {
   const original = await readFile('public/brand/gent-ascend-master.png');
   const state = {
     prepare: 0,
@@ -28,11 +37,29 @@ async function setup(page: Page, options: { uncertain?: boolean; holdPrepare?: b
     uploads: 0,
     handoffs: 0,
     generations: 0,
+    generationRequests: [] as Record<string, unknown>[],
     uploaded: null as Buffer | null,
     brief: structuredClone(brief),
     chats: [] as Record<string, unknown>[],
     turns: [] as Record<string, unknown>[],
   };
+  if (options.history) {
+    for (let index = 0; index < 8; index++)
+      state.turns.push({
+        id: `synthetic-turn-${index}`,
+        person_id: owner,
+        conversation_id: project,
+        user_text: `Review image direction ${index + 1}`,
+        assistant_text: `Saved conversation response ${index + 1}: keep the original logo and review the direction.`,
+        status: 'complete',
+        model: 'synthetic-model',
+        context_included: false,
+        prompt_version: 'fixture',
+        feedback: null,
+        created_at: '2026-10-15T12:00:00Z',
+        finished_at: '2026-10-15T12:00:01Z',
+      });
+  }
   let release!: () => void;
   const gate = new Promise<void>((resolve) => {
     release = resolve;
@@ -152,7 +179,7 @@ async function setup(page: Page, options: { uncertain?: boolean; holdPrepare?: b
   await page.route('**/api/studio**', async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname === '/api/studio/image') {
-      expect(url.searchParams.get('id')).toBe(reference);
+      expect([reference, version]).toContain(url.searchParams.get('id'));
       return route.fulfill({ contentType: 'image/png', body: original });
     }
     if (route.request().method() === 'PATCH') {
@@ -166,6 +193,7 @@ async function setup(page: Page, options: { uncertain?: boolean; holdPrepare?: b
         return route.fulfill({ json: { projectId: project, referenceId: body.id } });
       }
       state.generations++;
+      state.generationRequests.push(body);
       return route.fulfill({ status: 400, json: { error: 'No automatic generation allowed' } });
     }
     return route.fulfill({
@@ -188,7 +216,20 @@ async function setup(page: Page, options: { uncertain?: boolean; holdPrepare?: b
             storage_key: `synthetic/${project}/${reference}.png`,
           },
         ],
-        versions: [],
+        versions: options.generation
+          ? [
+              {
+                id: version,
+                parent_id: null,
+                reference_id: null,
+                prompt: 'Synthetic saved version B',
+                status: 'complete',
+                model: 'synthetic-model',
+                image_size: '1024x1024',
+                created_at: '2026-10-15T12:00:00Z',
+              },
+            ]
+          : [],
         scenes: [],
         finishes: [],
         designs: [],
@@ -197,8 +238,8 @@ async function setup(page: Page, options: { uncertain?: boolean; holdPrepare?: b
         designExports: [],
         narrations: [],
         footage: [],
-        configured: false,
-        canCreate: false,
+        configured: Boolean(options.generation),
+        canCreate: Boolean(options.generation),
       },
     });
   });
@@ -222,9 +263,7 @@ for (const width of [390, 768])
       .getByLabel('Message Aethelios', { exact: true })
       .fill('Analyze this image; do not generate anything');
     await page.getByRole('button', { name: 'Send', exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Analyze with next message', exact: true }),
-    ).toBeVisible();
+    await expect(page.getByLabel('Image saved · details', { exact: true })).toBeVisible();
     expect(state.chats[0]).toMatchObject({ attachmentId: reference });
     await page
       .getByLabel('Message Aethelios', { exact: true })
@@ -234,12 +273,14 @@ for (const width of [390, 768])
     expect(state.chats[1]?.attachmentId).toBeUndefined();
     await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toBeEnabled();
     await page.getByRole('button', { name: 'Use in Studio', exact: true }).click();
+    await page.getByLabel('Image saved · details', { exact: true }).click();
     await expect(
       page.getByRole('link', { name: 'Open selected Studio reference' }),
     ).toHaveAttribute('href', `/app/studio?project=${project}&reference=${reference}`);
     expect(state.brief.referenceId).toBe(reference);
     expect(state.brief.brand.logoReferenceId).toBeNull();
     expect(state.uploaded).toEqual(original);
+    await page.getByLabel('Image saved · details', { exact: true }).click();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
@@ -327,3 +368,143 @@ test('a stale Studio handoff never silently selects another reference or starts 
   await expect(page.getByText('Using this reference', { exact: true })).toHaveCount(0);
   expect(state.generations).toBe(0);
 });
+
+test('saved-version deep links override persisted references and every submitted source matches the preview', async ({
+  page,
+}) => {
+  const { state } = await setup(page, { generation: true });
+  state.brief.referenceId = reference;
+  const studio = `http://127.0.0.1:3102/app/studio?mode=studio-reference&project=${project}`;
+  await page.goto(`${studio}&version=${version}`);
+  const source = page.getByAltText('Selected source');
+  for (let reload = 0; reload < 2; reload++) {
+    if (reload) await page.reload();
+    await expect(page.getByText('Developing this saved version', { exact: true })).toBeVisible();
+    await expect(source).toHaveAttribute('src', `/api/studio/image?id=${version}&kind=version`);
+    await page
+      .getByLabel('Describe what you want to see', { exact: true })
+      .fill('Refine the displayed saved version only');
+    await page.getByRole('button', { name: 'Create image', exact: true }).click();
+    await expect.poll(() => state.generationRequests.length).toBe(reload + 1);
+    expect(state.generationRequests.at(-1)).toMatchObject({ parentId: version, referenceId: null });
+    await expect(page.getByRole('button', { name: 'Create image', exact: true })).toBeEnabled();
+  }
+  await page.getByRole('button', { name: 'Library', exact: true }).click();
+  await page.getByRole('button', { name: /Use reference/ }).click();
+  await expect(page.getByText('Using this reference', { exact: true })).toBeVisible();
+  await expect(source).toHaveAttribute('src', `/api/studio/image?id=${reference}&kind=reference`);
+  await page
+    .getByLabel('Describe what you want to see', { exact: true })
+    .fill('Use the displayed reference only');
+  await page.getByRole('button', { name: 'Create image', exact: true }).click();
+  await expect.poll(() => state.generationRequests.length).toBe(3);
+  expect(state.generationRequests.at(-1)).toMatchObject({ parentId: null, referenceId: reference });
+  await expect(page.getByRole('button', { name: 'Create image', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Library', exact: true }).click();
+  await page.getByRole('button', { name: /Refine this/ }).click();
+  await expect(source).toHaveAttribute('src', `/api/studio/image?id=${version}&kind=version`);
+  await page
+    .getByLabel('Describe what you want to see', { exact: true })
+    .fill('Switch back to the saved version');
+  await page.getByRole('button', { name: 'Create image', exact: true }).click();
+  await expect.poll(() => state.generationRequests.length).toBe(4);
+  expect(state.generationRequests.at(-1)).toMatchObject({ parentId: version, referenceId: null });
+  // A dedicated handoff takes precedence even when a version query is also present.
+  await page.goto(`${studio}&version=${version}&reference=${reference}`);
+  await expect(page.getByText('Using this reference', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(source).toHaveAttribute('src', `/api/studio/image?id=${reference}&kind=reference`);
+  await page
+    .getByLabel('Describe what you want to see', { exact: true })
+    .fill('Keep the explicit handoff source');
+  await page.getByRole('button', { name: 'Create image', exact: true }).click();
+  await expect.poll(() => state.generationRequests.length).toBe(5);
+  expect(state.generationRequests.at(-1)).toMatchObject({ parentId: null, referenceId: reference });
+  // These POSTs are intercepted synthetic rejections, never provider calls.
+});
+
+for (const viewport of [
+  { width: 390, height: 844, keyboard: 460 },
+  { width: 768, height: 712, keyboard: 420 },
+]) {
+  test(`attachment leaves a readable transcript and pointer-reachable controls at ${viewport.width}px, including keyboard height`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const { original, state } = await setup(page, { history: true });
+    const input = page.getByLabel('Message Aethelios', { exact: true });
+    const choose = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Add image', exact: true }).click();
+    await (
+      await choose
+    ).setFiles({ name: 'original-logo.png', mimeType: 'image/png', buffer: original });
+    await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toBeEnabled();
+    const transcript = page.locator('.conversation-scroll');
+    const composer = page.locator('.aurelius-composer');
+    const details = page.getByLabel('Image attached · details', { exact: true });
+    async function usable(minTranscript: number) {
+      await expect
+        .poll(async () => (await transcript.boundingBox())?.height ?? 0)
+        .toBeGreaterThanOrEqual(minTranscript);
+      expect((await composer.boundingBox())!.height).toBeLessThan(280);
+      expect(await transcript.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
+      for (const control of [
+        input,
+        page.getByRole('button', { name: 'Send', exact: true }),
+        page.getByRole('button', { name: 'Remove image', exact: true }),
+        page.getByRole('button', { name: 'Use in Studio', exact: true }),
+      ]) {
+        const box = (await control.boundingBox())!;
+        expect(box.y).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+        await expect
+          .poll(() =>
+            control.evaluate((node) => {
+              const box = node.getBoundingClientRect();
+              const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+              return `${node.getAttribute('aria-label') || node.textContent || node.tagName}|${hit?.tagName}:${hit?.className}|${hit === node || node.contains(hit)}`;
+            }),
+          )
+          .toMatch(/\|true$/);
+      }
+    }
+    await usable(180);
+    await input.fill('Keep this conversation readable while an image is attached');
+    await page.setViewportSize({ width: viewport.width, height: viewport.keyboard });
+    await expect(page.locator('[data-keyboard="open"]')).toBeVisible();
+    await page.screenshot({
+      path: `test-results/talk-image-keyboard-${viewport.width}.png`,
+      fullPage: true,
+    });
+    await usable(96);
+    await details.click();
+    await expect(
+      page.getByText('Inline Talk generation does not use this image or logo.', { exact: false }),
+    ).toBeVisible();
+    expect(
+      (await page.locator('.talk-image-explanation').boundingBox())!.height,
+    ).toBeLessThanOrEqual(viewport.keyboard * 0.16 + 1);
+    await details.click();
+    await usable(96);
+    const latestReply = page.getByText(
+      'Saved conversation response 8: keep the original logo and review the direction.',
+      { exact: true },
+    );
+    await latestReply.scrollIntoViewIfNeeded();
+    await expect(latestReply).toBeInViewport({ ratio: 0.5 });
+    await usable(96);
+    await page.screenshot({
+      path: `test-results/talk-image-keyboard-${viewport.width}.png`,
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect.poll(() => state.chats.length).toBe(1);
+    expect(state.chats[0]).toMatchObject({ attachmentId: reference });
+    await expect(page.getByLabel('Image saved · details', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Use in Studio', exact: true }).click();
+    await expect.poll(() => state.handoffs).toBe(1);
+    await page.getByRole('button', { name: 'Remove image', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toHaveCount(0);
+    expect(state.generations).toBe(0);
+  });
+}

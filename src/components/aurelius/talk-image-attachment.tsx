@@ -132,45 +132,109 @@ export function TalkImageAttachment({
         <button
           type="button"
           className="text-button"
+          title="PNG, JPEG or WebP up to 10 MiB; videos and general files unsupported"
           disabled={disabled}
           onClick={() => input.current?.click()}
         >
           Add image
         </button>
+        {preview && !value && (
+          <div className="talk-image-preview">
+            <Image
+              unoptimized
+              width={32}
+              height={32}
+              src={preview}
+              alt={`Image attachment: ${file?.name || 'selected image'}`}
+            />
+            <span title={file?.name}>{file?.name}</span>
+          </div>
+        )}
+        {value && (
+          <details className="talk-image-details">
+            <summary
+              aria-label={
+                value.analysisPending === false
+                  ? 'Image saved · details'
+                  : 'Image attached · details'
+              }
+            >
+              <span className="talk-image-preview">
+                <Image
+                  unoptimized
+                  width={32}
+                  height={32}
+                  src={preview || `/api/studio/image?kind=reference&id=${value.id}`}
+                  alt={`Image attachment: ${value.name}`}
+                />
+                <span title={value.name}>{value.name}</span>
+              </span>
+            </summary>
+            <div className="talk-image-explanation">
+              <p>
+                {value.analysisPending === false
+                  ? 'Saved for Studio; not attached to your next message.'
+                  : 'Attached for analysis with your next text message.'}{' '}
+                Inline Talk generation does not use this image or logo.
+              </p>
+              {value.analysisPending === false && (
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={disabled || Boolean(progress)}
+                  onClick={() => onChange({ ...value, analysisPending: true })}
+                >
+                  Analyze with next message
+                </button>
+              )}
+              {studio && (
+                <Link href={studio} prefetch={false}>
+                  Open selected Studio reference
+                </Link>
+              )}
+              <p>
+                Studio reference guidance may change generated pixels. Exact logo placement requires
+                the original in the project brand kit and Finish. Design can place it as an image
+                layer. Handoff starts no generation.
+              </p>
+              <small>
+                PNG, JPEG or WebP · up to 10 MiB. Videos and general files are unsupported.
+              </small>
+            </div>
+          </details>
+        )}
         {(preview || value || progress) && (
           <button
             type="button"
             className="text-button"
+            aria-label="Remove image"
             onClick={() => {
               generation.current++;
               onRemove();
             }}
           >
-            Remove image
+            Remove
+          </button>
+        )}
+        {value && (
+          <button
+            type="button"
+            className="text-button"
+            disabled={Boolean(progress) || disabled}
+            onClick={() => void handoff()}
+          >
+            Use in Studio
           </button>
         )}
       </div>
-      <small>PNG, JPEG or WebP · up to 10 MiB. Videos and general files are unsupported.</small>
-      {(preview || value) && (
-        <div className="talk-image-preview">
-          <Image
-            unoptimized
-            width={88}
-            height={88}
-            src={preview || `/api/studio/image?kind=reference&id=${value!.id}`}
-            alt={`Image attachment: ${value?.name || file?.name || 'selected image'}`}
-          />
-          <span>{value?.name || file?.name}</span>
-        </div>
-      )}
       {progress && (
-        <div role="status">
+        <div className="talk-image-status" role="status">
           <progress aria-label="Image upload and verification" /> {progress}
         </div>
       )}
       {error && (
-        <p role="alert">
-          {error}{' '}
+        <div className="talk-image-error" role="alert">
+          <span>{error}</span>
           {!value && file && (
             <button
               type="button"
@@ -181,45 +245,7 @@ export function TalkImageAttachment({
               Retry image upload
             </button>
           )}
-        </p>
-      )}
-      {value && (
-        <>
-          <p className="quiet-label">
-            {value.analysisPending === false
-              ? 'Original saved for Studio; not attached to the next message.'
-              : 'Attached for analysis with the next text message.'}{' '}
-            Inline Talk generation does not use this image or logo.
-          </p>
-          <button
-            type="button"
-            className="text-button"
-            disabled={Boolean(progress) || disabled}
-            onClick={() => void handoff()}
-          >
-            Use in Studio
-          </button>
-          {value.analysisPending === false && (
-            <button
-              type="button"
-              className="text-button"
-              disabled={disabled || Boolean(progress)}
-              onClick={() => onChange({ ...value, analysisPending: true })}
-            >
-              Analyze with next message
-            </button>
-          )}
-          {studio && (
-            <Link href={studio} prefetch={false}>
-              Open selected Studio reference
-            </Link>
-          )}
-          <small>
-            Studio reference guidance may change a generated image. For exact logo placement, select
-            this original in the project brand kit and use Finish to place its original pixels.
-            Design can also place a saved reference as an image layer. Handoff starts no generation.
-          </small>
-        </>
+        </div>
       )}
     </div>
   );

@@ -250,8 +250,20 @@ export function StudioWorkspace({
   const [draft, setDraft] = useState('');
   const [mode, setMode] = useState<'fast' | 'precise'>('fast');
   const [size, setSize] = useState<'1024x1024' | '1536x1024' | '1024x1536'>('1024x1024');
-  const [parent, setParent] = useState<string | null>(null);
-  const [reference, setReference] = useState<string | null>(null);
+  // Preview and request IDs derive from one mutually exclusive selection.
+  const [source, setSource] = useState<{ kind: 'version' | 'reference'; id: string } | null>(null);
+  const parent = source?.kind === 'version' ? source.id : null;
+  const reference = source?.kind === 'reference' ? source.id : null;
+  const setParent = useCallback((id: string | null) => {
+    setSource((current) =>
+      id ? { kind: 'version', id } : current?.kind === 'version' ? null : current,
+    );
+  }, []);
+  const setReference = useCallback((id: string | null) => {
+    setSource((current) =>
+      id ? { kind: 'reference', id } : current?.kind === 'reference' ? null : current,
+    );
+  }, []);
   const [forScene, setForScene] = useState<string | null>(null);
   const [finishVersion, setFinishVersion] = useState<string | null>(null);
   const project = data.projects.find((item) => item.id === selected);
@@ -304,7 +316,7 @@ export function StudioWorkspace({
         setError('');
       setLoading(false);
     },
-    [handoff],
+    [handoff, setParent, setReference],
   );
   const load = useCallback(
     async (projectId?: string | null) => {
@@ -337,6 +349,8 @@ export function StudioWorkspace({
       .then((next) => {
         if (active && read === readGeneration.current) {
           accept(next);
+          // An explicit reference handoff wins over a version query; a version wins over
+          // the project's saved reference. Never silently submit two different sources.
           if (initialReference) {
             const current = next.projects.find((item) => item.id === next.projectId);
             if (
@@ -352,8 +366,7 @@ export function StudioWorkspace({
                 'This reference handoff is stale or unavailable. Choose a project reference again.',
               );
             }
-          }
-          if (
+          } else if (
             initialVersion &&
             next.versions.some(
               (version) => version.id === initialVersion && version.status === 'complete',
@@ -373,7 +386,7 @@ export function StudioWorkspace({
     return () => {
       active = false;
     };
-  }, [accept, initialProject, initialVersion, initialReference]);
+  }, [accept, initialProject, initialVersion, initialReference, setParent, setReference]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
@@ -527,10 +540,13 @@ export function StudioWorkspace({
       acknowledged = true;
       setOperation(observedOperation(motionId, 'complete', 'confirmed'));
       if (activeProject.current !== selected) return;
-      await jsonResponse(await fetch('/api/studio/reference', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'select', projectId: selected, id: saved.id }),
-      }));
+      await jsonResponse(
+        await fetch('/api/studio/reference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'select', projectId: selected, id: saved.id }),
+        }),
+      );
       if (activeProject.current !== selected) return;
       setReference(saved.id);
       await load(selected);

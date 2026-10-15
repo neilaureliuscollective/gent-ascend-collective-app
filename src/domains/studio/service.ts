@@ -15,7 +15,11 @@ export const studioInput = z
     mode: z.enum(['fast', 'precise']),
     size: z.enum(['1024x1024', '1536x1024', '1024x1536']),
   })
-  .strict();
+  .strict()
+  .refine((input) => !(input.parentId && input.referenceId), {
+    message: 'Choose one image source: a saved version or a reference.',
+    path: ['referenceId'],
+  });
 export const creativeType = z.enum(['open', 'brand', 'campaign', 'product', 'personal']);
 export const projectBrief = z
   .object({

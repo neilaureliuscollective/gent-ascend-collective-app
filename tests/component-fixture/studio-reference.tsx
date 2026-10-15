@@ -7,6 +7,7 @@ export function StudioReferenceFixture() {
     <StudioWorkspace
       initialProject={params.get('project') ?? undefined}
       initialReference={params.get('reference') ?? undefined}
+      initialVersion={params.get('version') ?? undefined}
     />
   );
 }

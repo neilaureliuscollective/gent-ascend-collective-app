@@ -2239,7 +2239,7 @@ export function AureliusWorkspace({
               }}
             >
               {!compact && <BplusMaterial radius={19} />}
-              {capability && !councilSelection && (
+              {capability && !councilSelection && !attachment && (
                 <div className="revision-notice" aria-live="polite">
                   <span>
                     Aethelios is routing this through <strong>{capability.label}</strong>{' '}
