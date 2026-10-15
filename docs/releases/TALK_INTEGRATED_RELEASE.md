@@ -156,6 +156,13 @@ select jsonb_build_object(
 
 Until query 2 is authorized and returned, Talk SQL is **unverified**, not missing and not applied.
 
+## Isolated validation (this environment)
+
+- `npm run db:ledger`: 37 recorded snapshot files unchanged; source versions unique (`15180000` Talk, `15181000` Health, `15190000` Talk).
+- PGlite `tests/health-database.test.ts` applies every `supabase/migrations/*.sql` in filename order, including Talk observe → Health workspace → intended-turn bind, then asserts both Health `workspaces` and the 5-arg observe/`intended_turn_id` exist.
+- PGlite `tests/talk-creation-database.test.ts` and `tests/talk-origin-import-database.test.ts` still pass (not Supabase Auth).
+- Isolated `supabase db reset` unrun: Docker/Podman are not available here.
+
 ## Environment (names only)
 
 Hosted fixtures must stay unset: `AETHELIOS_TALK_CREATION_FIXTURE`.
