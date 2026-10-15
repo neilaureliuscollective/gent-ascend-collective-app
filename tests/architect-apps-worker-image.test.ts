@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { mkdtempSync as fsMkdtemp, rmSync } from 'node:fs';
+import { mkdtempSync as fsMkdtemp, readFileSync, rmSync } from 'node:fs';
 import os, { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -7,6 +7,13 @@ import {
   executeWorkerImageBuild,
   workerImageBuildArgs,
 } from '../scripts/architect-apps-worker-image.mjs';
+
+it('reuses the node image user instead of creating a colliding uid 1000', () => {
+  const dockerfile = readFileSync('deploy/architect-apps/worker/Dockerfile', 'utf8');
+  expect(dockerfile).toMatch(/^USER node$/m);
+  expect(dockerfile).toMatch(/chown -R node:node/);
+  expect(dockerfile).not.toMatch(/adduser|appsworker/);
+});
 
 it('creates the worker image stage with the Node filesystem API and executes the image-build command', () => {
   expect('mkdtempSync' in os).toBe(false);
