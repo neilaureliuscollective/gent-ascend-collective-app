@@ -1,6 +1,16 @@
 import { BplusMaterial } from '@/components/visual/bplus-material';
-import { ChoiceCard, creationChoices } from './choice-card';
+import {
+  applicationFirstVisit,
+  creationPathProfile,
+  illustrativeApplicationModel,
+  labeledDirectionOptions,
+  pathSwitchNote,
+  teachFor,
+  type CreationPath,
+} from '@/domains/architect-origin/creation-journey';
 import type { OriginProject, ProjectContent } from '@/domains/architect-origin/schema';
+import { ChoiceCard, creationChoices } from './choice-card';
+import { CreationGuide } from './creation-guide';
 
 export type BriefStage = 'idea' | 'audience' | 'outcome';
 
@@ -17,6 +27,10 @@ export function CreationEntry({
   pendingReferences,
   projects,
   selectedId,
+  firstVisit,
+  guided = true,
+  helpOpen = false,
+  pathOpened = false,
   onDiscipline,
   onIdea,
   onName,
@@ -24,6 +38,9 @@ export function CreationEntry({
   onConstraints,
   onOutcome,
   onStage,
+  onFirstVisit,
+  onSkipGuided,
+  onToggleHelp,
   onAddReference,
   onOpenProject,
   onSubmit,
@@ -41,6 +58,10 @@ export function CreationEntry({
   pendingReferences: number;
   projects: OriginProject[];
   selectedId: string | null;
+  firstVisit?: string;
+  guided?: boolean;
+  helpOpen?: boolean;
+  pathOpened?: boolean;
   onDiscipline: (discipline: ProjectContent['discipline']) => void;
   onIdea: (value: string) => void;
   onName: (value: string) => void;
@@ -48,18 +69,47 @@ export function CreationEntry({
   onConstraints: (value: string) => void;
   onOutcome: (value: string) => void;
   onStage: (stage: BriefStage) => void;
+  onFirstVisit?: (value: string) => void;
+  onSkipGuided?: () => void;
+  onToggleHelp?: () => void;
   onAddReference: () => void;
   onOpenProject: (project: OriginProject) => void;
   onSubmit: () => void;
   onCreateTool: () => void;
 }) {
-  const starter = creationChoices.find((choice) => choice.discipline === discipline);
+  const profile = creationPathProfile(discipline);
+  const currentQuestion =
+    stage === 'idea'
+      ? { id: 'idea', field: 'idea' as const, prompt: 'Describe what you want to create' }
+      : profile.questions.find((row) => (stage === 'audience' ? row.field !== 'outcome' : row.field === 'outcome')) ??
+        profile.questions[0]!;
+  const model =
+    discipline === 'application'
+      ? illustrativeApplicationModel({ idea, firstVisit, audience })
+      : null;
+  const directions = labeledDirectionOptions(discipline);
+  const questionValue =
+    currentQuestion.field === 'idea' ? idea : currentQuestion.field === 'audience' ? audience : currentQuestion.field === 'outcome' ? outcome : constraints;
+  const setQuestionValue =
+    currentQuestion.field === 'idea'
+      ? onIdea
+      : currentQuestion.field === 'audience'
+        ? onAudience
+        : currentQuestion.field === 'outcome'
+          ? onOutcome
+          : onConstraints;
+  const world = projects.length ? 'return' : pathOpened ? (idea.trim().length >= 3 ? 'shape' : 'path') : 'arrival';
+
   return (
-    <div className="origin-entry origin-studio-entry">
+    <div
+      className="origin-entry origin-studio-entry"
+      data-world-state={world}
+      data-returning={projects.length > 0 ? 'true' : 'false'}
+    >
       <header className="origin-question">
         <p>Choose a path, then describe the idea. The brief below only uses what you type.</p>
       </header>
-      <div className="origin-starters origin-choices">
+      <div className={`origin-starters origin-choices${pathOpened ? ' origin-choices-compact' : ''}`}>
         {creationChoices.map((choice) => (
           <ChoiceCard
             key={choice.discipline}
@@ -70,6 +120,36 @@ export function CreationEntry({
           />
         ))}
       </div>
+      {pathOpened ? (
+        <section className="origin-path-stage" aria-label={`${profile.title} working stage`}>
+          <p className="origin-kicker">{profile.title}</p>
+          <ol className="origin-path-facets">
+            {profile.facets.map((facet) => (
+              <li key={facet.id}>
+                <strong>{facet.title}</strong>
+                <span>{facet.detail}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="origin-path-limit">{profile.limit}</p>
+          <p className="origin-path-outputs">Expected: {profile.outputs.join(' · ')}</p>
+        </section>
+      ) : null}
+      <p className="origin-entry-links">
+        <button
+          type="button"
+          disabled={locked}
+          onClick={() => {
+            const example = profile.examples[0];
+            if (example) onIdea(example.idea);
+          }}
+        >
+          Explore an example
+        </button>
+        <button type="button" disabled={locked} onClick={onToggleHelp}>
+          Show me how
+        </button>
+      </p>
       <form
         className="origin-intake origin-composer"
         onSubmit={(event) => {
@@ -77,12 +157,12 @@ export function CreationEntry({
           onSubmit();
         }}
       >
-        <p className="origin-starter-context">{starter?.detail}</p>
+        <p className="origin-starter-context">{profile.detail}</p>
         <p className="origin-kicker">Your idea</p>
         <label htmlFor="origin-idea">Tell Aethelios what you want to create</label>
         <textarea
           id="origin-idea"
-          placeholder="A focused planning app for independent design studios."
+          placeholder="Describe what you want to create"
           maxLength={2000}
           minLength={3}
           required
@@ -90,6 +170,53 @@ export function CreationEntry({
           onChange={(event) => onIdea(event.target.value)}
           disabled={locked}
         />
+        {guided && pathOpened ? (
+          <div className="origin-guided">
+            <label htmlFor="origin-guided-field">{currentQuestion.prompt}</label>
+            {currentQuestion.field !== 'idea' ? (
+              <textarea
+                id="origin-guided-field"
+                maxLength={3000}
+                value={questionValue}
+                onChange={(event) => setQuestionValue(event.target.value)}
+                disabled={locked}
+              />
+            ) : null}
+            {discipline === 'application' && onFirstVisit ? (
+              <fieldset className="origin-first-visit">
+                <legend>What should someone finish on the first visit?</legend>
+                {applicationFirstVisit.map((option) => (
+                  <label key={option.id}>
+                    <input
+                      type="radio"
+                      name="origin-first-visit"
+                      checked={firstVisit === option.id}
+                      disabled={locked}
+                      onChange={() => onFirstVisit(option.id)}
+                    />
+                    <strong>{option.title}</strong>
+                    <span>{option.detail}</span>
+                  </label>
+                ))}
+              </fieldset>
+            ) : null}
+            <div className="origin-guided-nav">
+              <button type="button" disabled={locked || stage === 'idea'} onClick={() => onStage('idea')}>
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={locked || idea.trim().length < 3}
+                onClick={() => onStage(stage === 'idea' ? 'audience' : 'outcome')}
+              >
+                Next question
+              </button>
+              <button type="button" disabled={locked} onClick={onSkipGuided}>
+                Skip guided questions
+              </button>
+            </div>
+          </div>
+        ) : null}
         <p className="origin-tool-entry">
           After this project exists you can save a quantity-and-cost estimator and invoke that exact
           revision. This is a creator-owned tool, not a construction or engineering product.
@@ -118,7 +245,7 @@ export function CreationEntry({
             disabled={!enabled || locked || idea.trim().length < 3}
           >
             <BplusMaterial radius={8} />
-            Shape the brief →
+            Shape this direction →
           </button>
         </div>
         <ol className="origin-brief-steps">
@@ -141,7 +268,7 @@ export function CreationEntry({
             </li>
           ))}
         </ol>
-        {stage === 'audience' && (
+        {stage === 'audience' && !guided && (
           <div className="origin-brief-extra">
             <label htmlFor="origin-audience">Audience (optional)</label>
             <textarea
@@ -163,7 +290,7 @@ export function CreationEntry({
             />
           </div>
         )}
-        {stage === 'outcome' && (
+        {stage === 'outcome' && !guided && (
           <div className="origin-brief-extra">
             <label htmlFor="origin-outcome">First outcome (optional)</label>
             <textarea
@@ -186,10 +313,55 @@ export function CreationEntry({
           placeholder="Name it later"
         />
       </form>
+      {model ? (
+        <section className="origin-model" aria-label="Illustrative model">
+          <p className="origin-kicker">Give your idea a shape</p>
+          <p>{model.label}</p>
+          <ol className="origin-model-nodes">
+            {model.nodes.map((node) => (
+              <li key={node.id} data-kind={node.kind}>
+                <strong>{node.title}</strong>
+                <span>{node.detail}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : (
+        <EmergingBrief
+          disciplineTitle={profile.title}
+          idea={idea}
+          audience={audience}
+          constraints={constraints}
+          outcome={outcome}
+        />
+      )}
+      <section className="origin-directions" aria-label="Supported directions">
+        <p className="origin-kicker">Compare a labelled example</p>
+        {directions.map((option) => (
+          <article key={option.id}>
+            <p>
+              <strong>{option.title}</strong> <span>Example</span>
+            </p>
+            <p>{option.summary}</p>
+            <p>{option.tradeoff}</p>
+            <button
+              type="button"
+              disabled={locked}
+              onClick={() => {
+                onIdea(option.summary);
+              }}
+            >
+              Use this example
+            </button>
+          </article>
+        ))}
+        <p>Unselected directions stay available. These are labelled examples, not generated alternatives or confidence scores.</p>
+      </section>
+      <CreationGuide teach={teachFor(discipline)} open={helpOpen} onToggle={() => onToggleHelp?.()} />
       <div className="origin-entry-lower">
         {projects.length > 0 ? (
           <section className="origin-library-panel" aria-labelledby="origin-library-title">
-            <h3 id="origin-library-title">Project library</h3>
+            <h3 id="origin-library-title">Project shelf</h3>
             <ul>
               {projects.map((project) => (
                 <li key={project.id}>
@@ -205,7 +377,7 @@ export function CreationEntry({
                         {project.content.status} · v{project.revision}
                       </small>
                     </span>
-                    Open preview →
+                    Resume →
                   </button>
                 </li>
               ))}
@@ -216,13 +388,6 @@ export function CreationEntry({
             No saved projects yet. Shaping a brief creates the first revision.
           </p>
         )}
-        <EmergingBrief
-          disciplineTitle={starter?.title ?? 'Start without limits'}
-          idea={idea}
-          audience={audience}
-          constraints={constraints}
-          outcome={outcome}
-        />
       </div>
     </div>
   );
@@ -268,4 +433,8 @@ export function EmergingBrief({
       </p>
     </aside>
   );
+}
+
+export function switchPathNote(from: CreationPath, to: CreationPath, idea: string) {
+  return pathSwitchNote(from, to, idea);
 }

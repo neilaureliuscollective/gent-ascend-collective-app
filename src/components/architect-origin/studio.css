@@ -17,6 +17,7 @@
   border-color: color-mix(in srgb, var(--aether-smoke-light, #e6e7e2) 16%, transparent);
 }
 .origin-studio {
+  position: relative;
   --studio-base: var(--aether-smoke-canvas, #111111);
   --studio-chrome: var(--aether-smoke-panel, #1a1a1a);
   --studio-raised: var(--aether-smoke-raised, #242424);
@@ -36,7 +37,22 @@
 
 .environment-main .origin-studio {
   background:
-    radial-gradient(ellipse 80% 40% at 50% -10%, #245b4814, transparent 70%), var(--studio-base);
+    radial-gradient(ellipse 70% 46% at 18% -8%, #c4912f22, transparent 42%),
+    radial-gradient(ellipse 80% 50% at 78% 0%, #245b4826, transparent 48%),
+    linear-gradient(180deg, #141816 0%, #0b0e0d 38%, #080d0d 100%);
+  isolation: isolate;
+}
+.origin-studio::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: min(52vw, 640px);
+  height: 280px;
+  background: radial-gradient(ellipse at 0 0, #e8e4d41c, transparent 70%);
+  pointer-events: none;
+}
+.origin-studio.origin-returning::before {
+  display: none;
 }
 
 .origin-studio .origin-hero {
@@ -913,10 +929,161 @@
   }
 }
 
+.origin-choices-compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px !important;
+}
+.origin-choices-compact .origin-choice-stage {
+  height: 72px;
+}
+.origin-path-stage,
+.origin-model,
+.origin-directions,
+.origin-guide,
+.origin-first-visit,
+.origin-guided {
+  border: 1px solid var(--studio-edge);
+  border-radius: 16px;
+  background: var(--studio-glass);
+  box-shadow: var(--studio-bevel);
+  padding: 16px 18px;
+  margin: 0 0 16px;
+}
+.origin-path-facets,
+.origin-model-nodes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+.origin-path-facets li,
+.origin-model-nodes li,
+.origin-directions article,
+.origin-first-visit label {
+  border: 1px solid var(--studio-edge);
+  border-radius: 12px;
+  padding: 12px;
+  background: #0c0f0e;
+}
+.origin-path-limit,
+.origin-path-outputs,
+.origin-model > p,
+.origin-directions > p:last-child {
+  color: var(--studio-muted);
+  font-size: 0.86rem;
+}
+.origin-entry-links {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin: 0 0 16px;
+}
+.origin-entry-links button,
+.origin-guide > button,
+.origin-guided-nav button,
+.origin-directions button,
+.architect-app-inspect-actions button {
+  min-height: 44px;
+  background: transparent;
+  color: var(--studio-text);
+  border: 1px solid var(--studio-edge);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+.origin-guide dt {
+  color: var(--studio-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.origin-first-visit {
+  display: grid;
+  gap: 8px;
+}
+.origin-first-visit label {
+  display: grid;
+  gap: 4px;
+}
+.architect-app[data-focus-room='true'] .architect-app-side,
+.architect-app[data-focus-room='true'] .architect-app-refine {
+  opacity: 0.92;
+}
+.architect-app-inspect {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--studio-edge);
+  border-radius: 12px;
+}
+.architect-app-inspect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.architect-app-frame[data-interaction='inspect'] {
+  outline: 1px solid color-mix(in srgb, var(--studio-gold) 45%, transparent);
+}
+.architect-app-empty[data-schematic='true'] {
+  background:
+    linear-gradient(180deg, #16302866, #0b0e0d),
+    repeating-linear-gradient(90deg, #245b4814 0 1px, transparent 1px 48px);
+}
+.architect-app-side li[data-revision-kind='current'] {
+  border-left: 3px solid var(--studio-gold);
+}
+.architect-app-side li[data-revision-kind='previous'] {
+  border-left: 3px solid #8a8e8a;
+}
+.architect-app-side li[data-revision-kind='proposed'] {
+  border-left: 3px solid #236a52;
+}
+.architect-app-side li[data-revision-kind='failed'] {
+  border-left: 3px solid #8a3a32;
+}
+
+@media (max-width: 900px) {
+  .origin-choices,
+  .origin-choices-compact,
+  .origin-path-facets,
+  .origin-model-nodes {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .origin-choices,
+  .origin-choices-compact,
+  .origin-path-facets,
+  .origin-model-nodes {
+    grid-template-columns: 1fr !important;
+  }
+  .origin-guide,
+  .origin-directions,
+  .origin-model {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .origin-studio::before,
+  .origin-path-stage,
+  .origin-model,
+  .origin-guide {
+    transition: none;
+    animation: none;
+  }
+}
+
 @media (forced-colors: active) {
   .origin-choice,
   .origin-composer,
-  .origin-artifact {
+  .origin-artifact,
+  .origin-path-stage,
+  .origin-model,
+  .origin-directions {
     border: 1px solid CanvasText;
   }
 }

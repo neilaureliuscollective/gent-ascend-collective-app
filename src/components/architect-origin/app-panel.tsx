@@ -4,6 +4,7 @@ import { BplusMaterial } from '@/components/visual/bplus-material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { describeAppFailure } from '@/domains/architect-apps/generation-policy';
 import { appWorkbenchStage } from '@/domains/architect-apps/stage';
+import { applicationPlan, revisionKind } from '@/domains/architect-origin/creation-journey';
 import {
   approveArchitectApp,
   cancelArchitectApp,
@@ -15,7 +16,7 @@ import {
   type AppLibrary,
 } from './app-lifecycle';
 
-const panels = ['Files', 'Changes', 'Records', 'Revisions'] as const;
+const panels = ['Plan', 'Files', 'Changes', 'Records', 'Revisions'] as const;
 
 export function ArchitectAppPanel({
   ownerId,
@@ -38,6 +39,8 @@ export function ArchitectAppPanel({
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'conflict' | 'failed'>('idle');
   const [panel, setPanel] = useState<(typeof panels)[number]>('Files');
   const [refineOpen, setRefineOpen] = useState(false);
+  const [interaction, setInteraction] = useState<'use' | 'inspect'>('use');
+  const [inspectAction, setInspectAction] = useState<'explain' | 'change' | 'compare' | null>(null);
   const [draft, setDraft] = useState(briefText.trim() || 'Create field notes I can save.');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -140,9 +143,18 @@ export function ArchitectAppPanel({
     function onMessage(event: MessageEvent) {
       if (event.source !== frame.current?.contentWindow) return;
       if (event.origin !== 'null' && event.origin !== window.location.origin) return;
-      const data = event.data as { schema?: string; session?: string; requestId?: string; operation?: string };
-      if (!data || data.schema !== 'architect-apps-data/v1' || !data.session) return;
+      const data = event.data as {
+        schema?: string;
+        session?: string;
+        requestId?: string;
+        operation?: string;
+        projectId?: string;
+        revisionId?: string;
+      };
       const snapshot = { ...boundPreview.current };
+      if (!data || typeof data !== 'object' || data.schema !== 'architect-apps-data/v1' || !data.session) return;
+      if (data.projectId && data.projectId !== projectId) return;
+      if (data.revisionId && snapshot.revisionId && data.revisionId !== snapshot.revisionId) return;
       if (!snapshot.revisionId || data.session !== snapshot.session) return;
       const mutating = data.operation === 'create' || data.operation === 'update';
       if (mutating) setSaveState('saving');
@@ -326,7 +338,12 @@ export function ArchitectAppPanel({
   }
 
   return (
-    <section className="architect-app" aria-label="Generated application workbench">
+    <section
+      className="architect-app"
+      aria-label="Generated application workbench"
+      data-focus-room={preview ? 'true' : 'false'}
+      data-interaction={interaction}
+    >
       <div className="architect-app-stage">
         <header className="architect-app-toolbar">
           <div>
@@ -371,6 +388,12 @@ export function ArchitectAppPanel({
             </ul>
           </div>
           <div className="architect-app-viewports">
+            <button type="button" aria-pressed={interaction === 'use'} onClick={() => setInteraction('use')}>
+              Use
+            </button>
+            <button type="button" aria-pressed={interaction === 'inspect'} onClick={() => setInteraction('inspect')}>
+              Inspect
+            </button>
             <button type="button" aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')}>
               Desktop
             </button>
@@ -382,21 +405,63 @@ export function ArchitectAppPanel({
             </button>
           </div>
         </header>
-        <div className={`architect-app-frame architect-app-frame-${viewport}`} ref={plane}>
+        <div className={`architect-app-frame architect-app-frame-${viewport}`} ref={plane} data-interaction={interaction}>
           {preview ? (
             <iframe
               ref={frame}
               title="Private generated application preview"
               sandbox={preview.sandbox}
               srcDoc={preview.srcDoc}
+              style={interaction === 'inspect' ? { pointerEvents: 'none' } : undefined}
             />
           ) : (
-            <div className="architect-app-empty">
-              <p>The compiled application will occupy this canvas after an explicit approved build.</p>
+            <div className="architect-app-empty" data-schematic="true">
+              <p>Labeled schematic — waiting for an approved isolated build. This is not a compiled preview.</p>
               <p>{library?.preview ? '' : 'Static document preview remains script-disabled on other surfaces.'}</p>
+              <p>{briefText || 'No brief yet.'}</p>
             </div>
           )}
         </div>
+        {interaction === 'inspect' ? (
+          <div className="architect-app-inspect">
+            <p>
+              Inspect maps host files and records for this project and revision. Appearance alone is
+              not evidence of behavior. Arbitrary iframe messages are ignored.
+            </p>
+            <div className="architect-app-inspect-actions">
+              <button type="button" onClick={() => setInspectAction('explain')}>
+                Explain
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setInspectAction('change');
+                  setRefineOpen(true);
+                  if (selectedSource) setDraft(`Change ${selectedSource.path} without overwriting the working revision.`);
+                }}
+              >
+                Change
+              </button>
+              <button type="button" onClick={() => setInspectAction('compare')}>
+                Compare
+              </button>
+            </div>
+            {inspectAction === 'explain' ? (
+              <p>
+                {selectedSource
+                  ? `${selectedSource.path} is a saved generated file for revision ${displayed?.revision ?? 'none'}. This explanation uses the saved file list, not the painted preview.`
+                  : 'Select a file or record on the host side. This preview does not expose a mapped inspector.'}
+              </p>
+            ) : null}
+            {inspectAction === 'compare' ? (
+              <p>
+                {parentFiles.length
+                  ? `Previous revision files are available for comparison. Viewing them does not restore that revision.`
+                  : 'No previous revision is available to compare.'}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <p className="architect-app-checks">
           Typecheck {latestJob?.result?.typecheck.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Bundle{' '}
           {latestJob?.result?.bundle.ok ? 'passed' : latestJob ? 'pending or failed' : 'not run'} · Isolation{' '}
@@ -420,6 +485,32 @@ export function ArchitectAppPanel({
             </button>
           ))}
         </div>
+        {panel === 'Plan' && (
+          <div className="architect-app-plan">
+            {(() => {
+              const plan = applicationPlan({
+                idea: briefText,
+                collections: displayedCollections ? displayedCollections.split(', ') : [],
+              });
+              return (
+                <>
+                  <p>{plan.label}</p>
+                  <p>
+                    <strong>Screens</strong> {plan.screens.join(', ')}
+                  </p>
+                  <p>
+                    <strong>Actions</strong> {plan.actions.join(', ')}
+                  </p>
+                  <p>
+                    <strong>Data</strong> {plan.data.join(', ')}
+                  </p>
+                  <p>{plan.relationships}</p>
+                  <p>Review, accept, start and publish stay distinct. Unsupported requirements stay listed before a commit.</p>
+                </>
+              );
+            })()}
+          </div>
+        )}
         {panel === 'Files' && (
           <div className="architect-app-source">
             <ol>
@@ -467,18 +558,32 @@ export function ArchitectAppPanel({
         )}
         {panel === 'Revisions' && (
           <ol>
-            {library?.revisions.map((row) => (
-              <li key={row.id}>
-                Revision {row.revision} · {row.status}
-                {row.working ? ' · last working' : ''}
-                {displayed?.revision === row.revision ? ' · showing' : ''}
-                {row.working ? (
-                  <button type="button" disabled={busy || locked} onClick={() => void reopen(row.revision)}>
-                    Reopen
-                  </button>
-                ) : null}
-              </li>
-            ))}
+            {library?.revisions.map((row) => {
+              const kind = revisionKind({
+                status: row.status,
+                working: row.working,
+                current: current?.revision === row.revision,
+                selected: displayed?.revision === row.revision,
+                proposed: Boolean(proposal) && current?.revision === row.revision,
+                failed: row.status === 'failed' || (latestJob?.status === 'failed' && latestJob.revision_id === row.id),
+              });
+              return (
+                <li key={row.id} data-revision-kind={kind}>
+                  {kind} · Revision {row.revision} · {row.status}
+                  {row.working ? ' · last working' : ''}
+                  {displayed?.revision === row.revision ? ' · showing' : ''}
+                  {row.working ? (
+                    <button type="button" disabled={busy || locked} onClick={() => void reopen(row.revision)}>
+                      Reopen
+                    </button>
+                  ) : (
+                    <button type="button" disabled={busy || locked} onClick={() => void reopen(row.revision)}>
+                      View without restoring
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ol>
         )}
         <div className="architect-app-actions">

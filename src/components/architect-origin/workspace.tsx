@@ -12,6 +12,7 @@ import { ArchitectToolPanel } from './tool-panel';
 import type { ToolWorkspaceState } from './tool-session';
 import { ArtifactCanvas } from './artifact-canvas';
 import { CreationEntry, type BriefStage } from './creation-entry';
+import { applicationFirstVisit, pathSwitchNote } from '@/domains/architect-origin/creation-journey';
 import { ReadinessNotice } from './readiness-notice';
 import {
   FoldDock,
@@ -142,6 +143,10 @@ export function ArchitectOrigin({
   const [constraints, setConstraints] = useState('');
   const [outcome, setOutcome] = useState('');
   const [briefStage, setBriefStage] = useState<BriefStage>('idea');
+  const [firstVisit, setFirstVisit] = useState('project');
+  const [guidedBrief, setGuidedBrief] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [pathOpened, setPathOpened] = useState(false);
   const [studioTab, setStudioTab] = useState<'origin' | 'projects'>('origin');
   const [workbenchView, setWorkbenchView] = useState<WorkbenchView>('preview');
   const [foldPanel, setFoldPanel] = useState<FoldPanel>('canvas');
@@ -419,6 +424,10 @@ export function ArchitectOrigin({
     if (audience.trim()) content.blueprint.audience = audience.trim();
     if (constraints.trim()) content.blueprint.requirements = constraints.trim();
     if (outcome.trim()) content.blueprint.next = outcome.trim();
+    else if (discipline === 'application') {
+      const visit = applicationFirstVisit.find((row) => row.id === firstVisit);
+      if (visit) content.blueprint.next = visit.detail;
+    }
     if (pendingReferences.length) content.sources = pendingReferences;
     return content;
   }
@@ -815,9 +824,10 @@ export function ArchitectOrigin({
   );
   return (
     <section
-      className={`origin origin-studio${selected ? ' origin-active' : ''}${foldPanel !== 'canvas' ? ` origin-panel-${foldPanel}` : ''}`}
+      className={`origin origin-studio${selected ? ' origin-active' : ''}${foldPanel !== 'canvas' ? ` origin-panel-${foldPanel}` : ''}${library.projects.length ? ' origin-returning' : ''}`}
       data-bplus="architect"
       data-fold-panel={foldPanel}
+      data-returning={library.projects.length ? 'true' : 'false'}
       aria-labelledby="origin-title"
       aria-busy={busy}
     >
@@ -910,13 +920,27 @@ export function ArchitectOrigin({
             pendingReferences={pendingReferences.length}
             projects={library.projects}
             selectedId={null}
-            onDiscipline={setDiscipline}
+            firstVisit={firstVisit}
+            guided={guidedBrief}
+            helpOpen={helpOpen}
+            pathOpened={pathOpened}
+            onDiscipline={(next) => {
+              if (next !== discipline) setMessage(pathSwitchNote(discipline, next, idea));
+              setDiscipline(next);
+              setPathOpened(true);
+            }}
             onIdea={setIdea}
             onName={setName}
             onAudience={setAudience}
             onConstraints={setConstraints}
             onOutcome={setOutcome}
             onStage={setBriefStage}
+            onFirstVisit={setFirstVisit}
+            onSkipGuided={() => {
+              setGuidedBrief(false);
+              setBriefStage('outcome');
+            }}
+            onToggleHelp={() => setHelpOpen((open) => !open)}
             onAddReference={() => setAddingReference((open) => !open)}
             onOpenProject={(project) => void open(project)}
             onSubmit={() => {
