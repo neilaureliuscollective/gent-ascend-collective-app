@@ -384,6 +384,12 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
     textarea:not(.talk-input):focus-visible {
     outline-color: Highlight;
   }
+  .app-shell.imperial-workspace:has(.talk-page)
+    :is(.aurelius-composer, .talk-composer):focus-within,
+  .app-shell.imperial-workspace [data-bplus='talk']
+    :is(.aurelius-composer, .talk-composer):focus-within {
+    outline-color: Highlight;
+  }
 }
 
 html[data-material='solid']

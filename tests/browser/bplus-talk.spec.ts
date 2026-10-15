@@ -126,13 +126,15 @@ test('solid, forced colors and keyboard focus stay complete at runtime', async (
   }
   const talk = field(page);
   await talk.focus();
-  await expect(talk).toHaveCSS('outline-width', '2px');
+  await expect(talk).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('.talk-page .aurelius-composer')).toHaveCSS('outline-width', '2px');
   await expect(page.locator('.navigation a[aria-current=page]')).toHaveAttribute(
     'href',
     '/app/aethelios',
   );
   await page.emulateMedia({ forcedColors: 'active' });
-  await expect(talk).toHaveCSS('outline-width', '2px');
+  await expect(talk).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('.talk-page .aurelius-composer')).toHaveCSS('outline-width', '2px');
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   await expect(field(page)).toHaveValue('Keep this draft across material preferences');
 });
