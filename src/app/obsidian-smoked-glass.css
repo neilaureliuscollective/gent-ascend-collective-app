@@ -199,8 +199,16 @@
   outline: none;
 }
 .app-shell.imperial-workspace:has(.talk-page)
+  [data-bplus='talk']
   :is(.aurelius-composer, .talk-composer):focus-within,
 .app-shell.imperial-workspace [data-bplus='talk']
+  :is(.aurelius-composer, .talk-composer):focus-within {
+  outline: 2px solid var(--io-gold, #c4912f);
+  outline-offset: 3px;
+}
+html[data-material='solid']
+  .app-shell.imperial-workspace:has(.talk-page)
+  [data-bplus='talk']
   :is(.aurelius-composer, .talk-composer):focus-within {
   outline: 2px solid var(--io-gold, #c4912f);
   outline-offset: 3px;
@@ -385,10 +393,12 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
     outline-color: Highlight;
   }
   .app-shell.imperial-workspace:has(.talk-page)
+    [data-bplus='talk']
     :is(.aurelius-composer, .talk-composer):focus-within,
   .app-shell.imperial-workspace [data-bplus='talk']
     :is(.aurelius-composer, .talk-composer):focus-within {
-    outline-color: Highlight;
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
   }
 }
 

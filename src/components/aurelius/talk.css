@@ -543,7 +543,9 @@ body .app-shell .aethelios-page.talk-page {
   outline: none;
 }
 .talk-page .aurelius-composer:focus-within,
-.talk-page .talk-composer:focus-within {
+.talk-page .talk-composer:focus-within,
+html[data-material='solid'] .talk-page .aurelius-composer:focus-within,
+html[data-material='solid'] .talk-page .talk-composer:focus-within {
   outline: 2px solid var(--io-gold, #c4912f);
   outline-offset: 3px;
 }
