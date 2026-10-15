@@ -283,21 +283,24 @@ it('maps isolated work onto a shared host path and keeps generated containers of
 it('proves the packaged worker can see host-shared work through a sibling container', async () => {
   const required = process.env.ARCHITECT_APPS_REQUIRE_ISOLATION === 'true';
   const probe = await probeAppsDockerIsolation({ PATH: process.env.PATH });
-  if (!probe.available) {
-    if (required) throw new Error(`Required packaged-worker topology unavailable: ${probe.reason}`);
+  if (!required) {
+    if (!probe.available) expect(probe.code).toMatch(/not-installed|daemon-unavailable|timeout|error|empty-version/);
     return;
   }
+  if (!probe.available) throw new Error(`Required packaged-worker topology unavailable: ${probe.reason}`);
   const { executeWorkerImageBuild, defaultWorkerImage } = await import('../scripts/architect-apps-worker-image.mjs');
   const inspect = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', defaultWorkerImage], {
     encoding: 'utf8',
   });
   if (inspect.status !== 0) {
     const built = executeWorkerImageBuild({ inherit: false });
-    if (built.action !== 'built') {
-      if (required) throw new Error(built.reason);
-      return;
-    }
+    if (built.action !== 'built') throw new Error(built.reason);
   }
+  const toolchain = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', defaultAppsImage], {
+    encoding: 'utf8',
+  });
+  if (toolchain.status !== 0)
+    throw new Error('Required packaged-worker topology needs the pinned toolchain image on this runner.');
   const receipt = provePackagedWorkerTopology();
   expect(receipt.ok, receipt.output || receipt.reason).toBe(true);
 }, 240000);
