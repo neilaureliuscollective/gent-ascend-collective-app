@@ -132,7 +132,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await form.locator('input').nth(1).fill('2');
   await form.getByRole('button', { name: /save record/i }).click();
   await expect(frame.getByText(/The host did not confirm/i)).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText(/Retry keeps the same record|The last edit is still in the form/)).toBeVisible();
+  await expect(page.locator('[data-stage="failed"]')).toContainText('The last edit is still in the form');
+  await expect(page.locator('[data-flag="uncertain"]')).toHaveText('Retry keeps the same record');
   await form.getByRole('button', { name: /retry save/i }).click();
   await expect(frame.getByText(/2h logged/i)).toBeVisible({ timeout: 15000 });
   await form.locator('input').first().fill('Site visit edited');
@@ -147,7 +148,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(frame.getByRole('button', { name: /site visit b/i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Records' })).toBeVisible();
   await page.getByRole('button', { name: 'Records' }).click();
-  await expect(page.getByText(/Site visit B/)).toBeVisible();
+  await expect(page.locator('.architect-app-side').getByText(/Site visit B/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Refine' }).click();
   await page.getByLabel('Request').fill('Add an optional tag for office or field notes.');
@@ -163,7 +164,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Reload receipts' }).click();
   await expect(page.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 180000 });
   await page.getByRole('button', { name: 'Records' }).click();
-  await expect(page.getByText(/Site visit B/)).toBeVisible();
+  await expect(page.locator('.architect-app-side').getByText(/Site visit B/)).toBeVisible();
 
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
