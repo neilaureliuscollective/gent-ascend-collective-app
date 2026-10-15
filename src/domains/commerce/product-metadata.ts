@@ -17,8 +17,15 @@ export async function productMetadata(handle: string): Promise<Metadata> {
     return {
       title: 'Product unavailable — Aethelios Lifestyle',
       robots: { index: false, follow: false },
-      openGraph: null,
-      twitter: null,
+      openGraph: {
+        title: 'Product unavailable — Aethelios Lifestyle',
+        description: 'This product listing could not be verified.',
+      },
+      twitter: {
+        card: 'summary',
+        title: 'Product unavailable — Aethelios Lifestyle',
+        description: 'This product listing could not be verified.',
+      },
     };
   const title = `${product.title} — Aethelios Lifestyle`;
   const description = productDescription(product);
