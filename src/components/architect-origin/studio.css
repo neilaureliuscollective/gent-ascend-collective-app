@@ -1623,3 +1623,17 @@
 }
 
 .origin-studio:is([data-surface='App'], [data-surface='Deliverables']) .origin-project-switcher .origin-workbench-bar { display: grid !important; }
+
+/* The verified artifact keeps a compact, always-visible revision/status row. */
+.origin-studio .architect-app[data-focus-room='true'] .architect-app-kicker { display: none; }
+.origin-studio .architect-app[data-focus-room='true'] .architect-app-toolbar > div:first-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 12px;
+}
+.origin-studio .architect-app[data-focus-room='true'] .architect-app-status { min-height: 0; }
+.origin-studio .architect-app[data-focus-room='true'] .architect-app-status-details { grid-column: 1 / -1; }
+.origin-studio .architect-app-toolbar { display: flex; flex-wrap: wrap; }
+.origin-studio .architect-app-toolbar > div:first-child { flex: 1 1 200px; min-width: 0; }
+.origin-studio .architect-app-toolbar > .architect-app-viewports { flex: 2 1 460px; min-width: 0; align-content: start; }
