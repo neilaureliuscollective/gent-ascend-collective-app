@@ -1,3 +1,21 @@
+# Aethelios conversational knowledge reliability — 2026-10-15
+
+Current user product and variant selections outrank older mentions. Variant identity requires a unique match across normalized option dimensions. Voice can look up the same read-only catalog after admission through `lookup_lifestyle_catalog` (function_call_output, no instruction rewrite, no speech interrupt). Playbooks follow current intent. Multi-turn deterministic scenarios are separate from unpaid model eval and human voice-naturalness review. Talk #131 `budgetLiveSeed` and creation tools stay unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios conversational character and trustworthy context — 2026-10-15
+
+Keep edition `2026-10-15.human-ascendance.1`. Add a concise shared `behaviorContract` on text and voice composition paths, load at most two relevant domain playbooks per turn, and adapt delivery (short spoken open vs structured text) without changing Talk transport or Motion. Failed product-detail fetches stay `stale-catalog-fallback` with unknown catalog age beyond 300s; variant price/id/availability stay bound together. Voice Live copies Talk #131 `budgetLiveSeed` identically rather than merging Talk creation. Forgetting is a deleted owner row, not a changed retrieval query. Optional model-quality eval is local and unpaid unless approved. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md) and [evals/aethelios-behavior.md](../evals/aethelios-behavior.md).
+
+# Aethelios current knowledge — 2026-10-15
+
+Replace the hardcoded 2026-10-06 company-platform identity with a typed published-knowledge contract (stable IDs, scope, source, dates, status, supersedes). Current facts describe AETHELIOS — The Human Ascendance; planned Agency/pricing stay labeled planned; superseded company-building / separate-Legacy-Reserve / Ascend Architects rows remain as history and are not injected. Composition is shared through `buildMessages` for Talk, Live and council. Health does not import this graph. Product intelligence reuses existing Storefront readers only. Founder authority remains `founder_access`. No billing, Shopify Admin, hosted migration or production merge. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios Human Ascendance in-app logo — 2026-10-15
+
+Place the founder-supplied Human Ascendance lockup in the application. Keep the 2026-10-15 gold-A install/PWA/Apple/browser icon. Compact chrome uses a lettering-free crest; identity moments use the full lockup with AETHELIOS / THE HUMAN ASCENDANCE. No circular crop. Open Graph uses the same artwork. Evidence: [HUMAN_ASCENDANCE_LOGO.md](HUMAN_ASCENDANCE_LOGO.md).
+
+Official references checked 2026-10-15: installed Next 16.3.5 App Router `Image` and `opengraph-image` file conventions; W3C C39 reduced-motion (no new motion added).
+
 # Aethelios Studio renderer/editor pipeline — 2026-10-15
 
 Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).

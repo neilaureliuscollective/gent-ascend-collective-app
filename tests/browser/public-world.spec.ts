@@ -17,6 +17,9 @@ for (const width of [344, 768, 1440]) {
         .locator('.world-wordmark img')
         .evaluate((img) => (img as HTMLImageElement).naturalWidth),
     ).toBeGreaterThan(0);
+    expect(
+      await page.locator('.world-wordmark img').evaluate((img) => (img as HTMLImageElement).src),
+    ).toContain('aethelios-human-ascendance-20261015-crest');
     await expect(page.getByRole('link', { name: 'Open Aethelios ↗', exact: true })).toHaveAttribute(
       'href',
       '/enter',

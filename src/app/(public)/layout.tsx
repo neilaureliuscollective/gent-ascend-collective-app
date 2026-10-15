@@ -29,18 +29,15 @@ export default async function PublicLayout({ children }: { children: React.React
       {children}
       <footer className="world-footer">
         <div>
-          <Link href="/" className="footer-brand">
+          <Link href="/" className="footer-brand" aria-label="Aethelios — The Human Ascendance">
             <Image
               className="footer-crest"
-              src={brand.crest}
-              alt={brand.crestAlt}
-              width={180}
-              height={180}
-              sizes="180px"
+              src={brand.lockup}
+              alt=""
+              width={1254}
+              height={1254}
+              sizes="220px"
             />
-            <span>
-              AETHELIOS<small>PERSONAL INTELLIGENCE OS</small>
-            </span>
           </Link>
           <p>
             Rooted in Louisiana.

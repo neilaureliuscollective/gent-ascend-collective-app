@@ -10,6 +10,14 @@
   background: var(--io-illumination), var(--io-material);
   box-shadow: var(--io-elevation);
 }
+.io-ecosystem-lockup {
+  display: block;
+  width: min(180px, 42vw);
+  height: auto;
+  margin: 0 0 18px;
+  position: relative;
+  z-index: 1;
+}
 .io-ecosystem-hero h1 {
   margin: 20px 0;
   font-size: clamp(2.4rem, 5vw, 4.5rem);

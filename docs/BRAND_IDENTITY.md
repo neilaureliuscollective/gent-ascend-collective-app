@@ -8,9 +8,18 @@ Founder-authorized migration, 2026-09-22. This supersedes all earlier purple/Aur
 
 - **Gent Ascend Collective**: master brand and men's advancement ecosystem; **Gent Ascend** is the compact display name.
 - **Aethelios**: Digital Co-Founder, AI intelligence and scalable extension of the human founder's mission. The former public AI identity is retired. See AETHELIOS_IDENTITY.md for personality, portrait, capabilities and implementation. The human founder remains the source of mission, culture and lived experience.
-- **Legacy Reserve**: separate grooming/wellness product and commerce brand. Do not rename it to Gent Ascend.
+- **Lifestyle**: Aethelios Lifestyle / Aethelios Human Ascendance is the current customer-facing product brand. **Legacy Reserve** is retired as a current brand name; keep the Shopify handle and historical records. Do not revive it as the live product brand.
 
 Purpose: help men become more capable across presentation, wellbeing, performance, discipline, character, work, relationships, community and legacy. Confident and grounded; no macho slogans or mythology inside ordinary product controls.
+
+## Current in-app identity — 2026-10-15
+
+The founder-supplied Aethelios Human Ascendance lockup is the in-app and website mark: metallic ascending A, celestial star, Earth, **AETHELIOS** and **THE HUMAN ASCENDANCE**. Compact headers use the lettering-free crest beside the readable wordmark. Identity moments (homepage hero, enter, arrival, account, footer, about, ecosystem) use the full lockup. Square artwork is not circular-cropped.
+
+- `public/brand/aethelios-human-ascendance-20261015-master.png`: untouched supplied original.
+- `public/brand/aethelios-human-ascendance-20261015-lockup.webp` / `…-crest.webp`: UI renditions from `src/platform/brand.ts`.
+
+The installable application icon is independent and remains the 2026-10-15 gold-A files without wording. See [HUMAN_ASCENDANCE_LOGO.md](HUMAN_ASCENDANCE_LOGO.md) and [AETHELIOS_OFFICIAL_INSTALL_ICON.md](AETHELIOS_OFFICIAL_INSTALL_ICON.md). The circular petrol emblem is retired from the UI.
 
 ## Official full crest — 2026-10-03
 

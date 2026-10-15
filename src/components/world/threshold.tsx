@@ -191,12 +191,12 @@ export function Threshold({ replay = false }: { replay?: boolean }) {
       </div>
       <div className="gw-arrival-glow" aria-hidden="true" />
       <div className="gw-crest-flight" aria-hidden="true">
-        <Image src={brand.crest} alt="" width={260} height={260} preload />
+        <Image src={brand.lockup} alt="" width={320} height={320} preload />
         <span className="gw-arrival-sweep" />
       </div>
       <div className="gw-arrival-name" aria-hidden="true">
-        <span>GENT ASCEND</span>
-        <small>COLLECTIVE</small>
+        <span>AETHELIOS</span>
+        <small>THE HUMAN ASCENDANCE</small>
         <p>Your world is opening.</p>
       </div>
       <div className="gw-cinematic-arrival" aria-hidden="true">

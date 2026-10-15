@@ -1,11 +1,21 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import { Chapter } from '@/components/public/editorial';
+import { brand } from '@/platform/brand';
 export const metadata: Metadata = { title: 'Our story' };
 export default function About() {
   return (
     <main id="world-main">
       <header className="world-page-intro">
+        <Image
+          className="story-lockup"
+          src={brand.lockup}
+          alt={brand.lockupAlt}
+          width={1254}
+          height={1254}
+          sizes="(max-width: 600px) 180px, 240px"
+        />
         <span className="world-kicker">Gent Ascend Collective / Founded by Neil Stutes</span>
         <h1>
           Rooted here.
