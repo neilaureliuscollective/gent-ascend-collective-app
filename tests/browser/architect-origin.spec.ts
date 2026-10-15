@@ -2259,7 +2259,7 @@ test('UI fixture: app workbench reviews files, recovers approved start after rel
   await expect(page.getByText(/Build was not queued|Synthetic lost start/)).toBeVisible();
   await page.getByRole('button', { name: 'Start approved build' }).click();
   await expect(page.getByTitle('Private generated application preview')).toBeVisible();
-  await page.locator('.origin-plane').evaluate((node) => node.scrollTo(0, 0));
+  await page.locator('.origin-workspace, .origin-plane').evaluateAll((nodes) => nodes.forEach((node) => node.scrollTo(0, 0)));
   const previewBox = await page.getByTitle('Private generated application preview').boundingBox();
   expect(Math.min(previewBox!.y + previewBox!.height, 900) - Math.max(previewBox!.y, 0)).toBeGreaterThan(450);
   await page.screenshot({ path: 'test-results/architect-apps-desktop.png', fullPage: true });

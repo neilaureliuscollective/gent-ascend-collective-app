@@ -200,7 +200,7 @@ async function capturePhase(page: Page, phase: string) {
     await page.setViewportSize({ width, height });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (phase === 'compiled') {
-      await page.locator('.origin-plane').evaluate((node) => node.scrollTo(0, 0));
+      await page.locator('.origin-workspace, .origin-plane').evaluateAll((nodes) => nodes.forEach((node) => node.scrollTo(0, 0)));
       const box = await page.getByTitle('Private generated application preview').boundingBox();
       expect(Math.min(box!.y + box!.height, height) - Math.max(box!.y, 0)).toBeGreaterThan(height * (label === 'desktop' ? 0.5 : 0.3));
     }
