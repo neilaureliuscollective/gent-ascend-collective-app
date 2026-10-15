@@ -251,3 +251,101 @@ test('Talk keeps a brief Purpose target when a design board is also selected', a
   await page.getByRole('button', { name: 'New', exact: true }).click();
   await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toHaveCount(0);
 });
+
+test('Talk drops a brief field target when the opened conversation changes', async ({ page }) => {
+  const other = '30000000-0000-4000-8000-000000000446';
+  const briefId = '50000000-0000-4000-8000-000000000446';
+  const creations: TalkCreationWorkspace = {
+    creations: [
+      {
+        id: briefId,
+        person_id: 'synthetic',
+        conversation_id: conversation,
+        source_turn_id: turn.id,
+        lineage_id: briefId,
+        version: 2,
+        kind: 'brief',
+        content: {
+          title: 'Aethelios Lifestyle launch',
+          purpose: 'Introduce the line.',
+          audience: 'Founders',
+          visualDirection: 'Obsidian and emerald',
+          requirements: ['Phone-first'],
+          unresolved: [],
+        },
+        predecessor_id: null,
+        superseded_by: null,
+        created_at: '2026-10-15T03:00:02.000Z',
+      },
+    ],
+    selected: { brief: briefId },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  const otherTurn: Turn = {
+    ...turn,
+    id: '40000000-0000-4000-8000-000000000446',
+    conversation_id: other,
+    user_text: 'Other work.',
+    assistant_text: 'Labelled deterministic Talk fixture. This is a separate conversation.',
+  };
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) return route.abort();
+    if (url.pathname === '/api/aurelius/creations') {
+      return route.fulfill({
+        json: url.searchParams.get('conversationId') === conversation ? creations : {
+          creations: [],
+          selected: {},
+          images: [],
+          selectedImageId: null,
+          canCreateImages: false,
+          imageAccess: 'unavailable',
+          attachmentProjectId: null,
+        },
+      });
+    }
+    if (url.pathname === '/api/aurelius') {
+      const id = url.searchParams.get('conversationId');
+      const current = id === other ? otherTurn : turn;
+      return route.fulfill({
+        json: {
+          ...workspace(),
+          conversations: [
+            ...workspace().conversations,
+            {
+              id: other,
+              person_id: 'synthetic',
+              title: 'Other work',
+              created_at: otherTurn.created_at,
+              updated_at: otherTurn.created_at,
+            },
+          ],
+          currentConversation: {
+            id: current.conversation_id,
+            person_id: 'synthetic',
+            title: current.conversation_id === other ? 'Other work' : 'Aethelios Lifestyle launch',
+            created_at: current.created_at,
+            updated_at: current.created_at,
+          },
+          turns: [current],
+        },
+      });
+    }
+    if (url.pathname.startsWith('/api/')) return route.fulfill({ json: {} });
+    return route.continue();
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await page.getByRole('button', { name: 'Change Purpose' }).click();
+  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
+  await page.getByRole('button', { name: 'Conversations', exact: true }).click();
+  await page.locator('.conversation-list > li > button').filter({ hasText: 'Other work' }).click();
+  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toHaveCount(0);
+  await expect(page.locator('.talk-title').getByText('Other work')).toBeVisible();
+});

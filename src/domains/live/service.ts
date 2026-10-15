@@ -780,7 +780,13 @@ export async function admitLive(input: LiveAdmission) {
                   response: turn.providerResponseId ?? null,
                   turnId: id,
                 });
-                if (!observed.trusted) return;
+                if (!observed.trusted) {
+                  throw new Error(
+                    observed.observed
+                      ? 'Voice turn observation was not trusted'
+                      : 'Voice trusted observation is unavailable',
+                  );
+                }
                 const bound = await client.rpc('ai_live_bind_finished_turn', {
                   p_session: input.sessionId,
                   p_conversation: input.conversationId,

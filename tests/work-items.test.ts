@@ -162,6 +162,91 @@ it('keeps a brief Purpose target when a design board is also selected', () => {
   expect(describeSelectedWork(workspace, null, brief.id)?.kind).toBe('brief');
 });
 
+it('treats a field target from another conversation as stale instead of rewriting local work', () => {
+  const brief: TalkCreation = {
+    id: '50000000-0000-4000-8000-000000000406',
+    person_id: '00000000-0000-4000-8000-000000000001',
+    conversation_id: '30000000-0000-4000-8000-000000000406',
+    source_turn_id: null,
+    lineage_id: '50000000-0000-4000-8000-000000000406',
+    version: 1,
+    kind: 'brief',
+    content: {
+      title: 'Aethelios Lifestyle launch',
+      purpose: 'Introduce the line.',
+      audience: 'Founders',
+      visualDirection: 'Obsidian and emerald',
+      requirements: [],
+      unresolved: [],
+    },
+    predecessor_id: null,
+    superseded_by: null,
+    created_at: '2026-10-15T03:00:00Z',
+  };
+  const workspace: TalkCreationWorkspace = {
+    creations: [brief],
+    selected: { brief: brief.id },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  const resolved = resolveWorkTarget(
+    workspace,
+    { creationId: brief.id, field: 'purpose' },
+    brief.id,
+    '30000000-0000-4000-8000-000000000499',
+  );
+  expect(resolved.status).toBe('stale');
+  expect(resolved.target).toBeNull();
+  expect(resolved.reason).toMatch(/no longer current/);
+});
+
+it('rebinds a field target onto the current same-lineage version', () => {
+  const prior: TalkCreation = {
+    id: '50000000-0000-4000-8000-000000000407',
+    person_id: '00000000-0000-4000-8000-000000000001',
+    conversation_id: '30000000-0000-4000-8000-000000000407',
+    source_turn_id: null,
+    lineage_id: '50000000-0000-4000-8000-000000000407',
+    version: 1,
+    kind: 'brief',
+    content: {
+      title: 'Aethelios Lifestyle launch',
+      purpose: 'Introduce the line.',
+      audience: 'Founders',
+      visualDirection: 'Obsidian and emerald',
+      requirements: [],
+      unresolved: [],
+    },
+    predecessor_id: null,
+    superseded_by: '50000000-0000-4000-8000-000000000408',
+    created_at: '2026-10-15T03:00:00Z',
+  };
+  const current: TalkCreation = {
+    ...prior,
+    id: '50000000-0000-4000-8000-000000000408',
+    version: 2,
+    predecessor_id: prior.id,
+    superseded_by: null,
+    content: { ...prior.content, purpose: 'Introduce the line with Emerald Glass.' },
+  };
+  const workspace: TalkCreationWorkspace = {
+    creations: [prior, current],
+    selected: { brief: current.id },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  const resolved = resolveWorkTarget(workspace, { creationId: prior.id, field: 'purpose' });
+  expect(resolved.status).toBe('active');
+  expect(resolved.target).toEqual({ creationId: current.id, field: 'purpose' });
+  expect(selectionChipLabel(resolved.item!)).toBe('Aethelios Lifestyle launch · v2 · Purpose');
+});
+
 it('describes a bound Architect direction handoff without claiming unsupported work', () => {
   expect(
     describeTalkDestination({
