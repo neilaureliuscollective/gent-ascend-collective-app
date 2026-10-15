@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 
 const env = Object.fromEntries(
@@ -71,8 +71,37 @@ async function runAppsWorkerUntilSucceeded() {
   return last;
 }
 
+function appsServerEnv(): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    ...env,
+    PATH: process.env.PATH,
+    NODE_ENV: 'development',
+    APP_ENV: 'local',
+    ARCHITECT_ORIGIN_ENABLED: 'true',
+    ARCHITECT_ORIGIN_AI_ENABLED: 'false',
+    ARCHITECT_APPS_ENABLED: 'true',
+    ARCHITECT_APPS_AI_MOCK: 'true',
+    ARCHITECT_APPS_PREVIEW_SECRET: env.ARCHITECT_APPS_PREVIEW_SECRET || 'origin-apps-preview-secret-key',
+  } as NodeJS.ProcessEnv;
+}
+
+async function waitForUrl(url: string, child: ChildProcess, timeoutMs = 60000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (child.exitCode != null) throw new Error(`Replacement application server exited ${child.exitCode}.`);
+    try {
+      const response = await fetch(url, { redirect: 'manual' });
+      if (response.status > 0) return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+  }
+  throw new Error(`Replacement application server did not start at ${url}.`);
+}
+
 test('connected Architect Apps journey uses Auth, worker, Docker and the compiled iframe', async ({ page, browser }) => {
-  test.setTimeout(240000);
+  test.setTimeout(300000);
   await page.goto('/enter');
   await page.getByLabel('Email').fill('founder@aurelius.test');
   await page.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
@@ -110,15 +139,26 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   const frame = page.frameLocator('iframe[title="Private generated application preview"]');
   await expect(frame.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
 
-  let dropCreate = true;
+  let dropCreateAck = true;
+  const capturedCreate: { body?: Record<string, unknown> } = {};
   await page.route('**/api/architect-apps/data', async (route) => {
     if (route.request().method() !== 'POST') {
       await route.continue();
       return;
     }
-    const body = route.request().postDataJSON() as { operation?: string };
-    if (dropCreate && body?.operation === 'create') {
-      dropCreate = false;
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    if (dropCreateAck && body?.operation === 'create') {
+      dropCreateAck = false;
+      capturedCreate.body = body;
+      const response = await route.fetch();
+      if (!response.ok()) {
+        await route.fulfill({
+          status: response.status(),
+          headers: response.headers(),
+          body: await response.text(),
+        });
+        return;
+      }
       await route.abort('connectionreset');
       return;
     }
@@ -127,7 +167,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
 
   await frame.getByRole('button', { name: /new note/i }).click();
   const form = frame.locator('form');
-  await form.locator('input').first().fill('Site visit');
+  await form.locator('input').first().fill('Site visit A');
   await form.locator('textarea').fill('North wall');
   await form.locator('input').nth(1).fill('2');
   await form.getByRole('button', { name: /save record/i }).click();
@@ -136,19 +176,34 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('[data-flag="uncertain"]')).toHaveText('Retry keeps the same record');
   await form.getByRole('button', { name: /retry save/i }).click();
   await expect(frame.getByText(/2h logged/i)).toBeVisible({ timeout: 15000 });
-  await form.locator('input').first().fill('Site visit edited');
+  if (!capturedCreate.body || typeof capturedCreate.body.idempotencyKey !== 'string') {
+    throw new Error('Committed create did not keep an operation identity.');
+  }
+  const changedIdentity = await page.request.post('/api/architect-apps/data', {
+    data: {
+      ...capturedCreate.body,
+      requestId: crypto.randomUUID(),
+      payload: { ...(capturedCreate.body.payload as Record<string, unknown>), title: 'Should not revert' },
+    },
+  });
+  expect(changedIdentity.status(), await changedIdentity.text()).toBe(409);
+  await form.locator('input').first().fill('Site visit A edited');
   await form.locator('input').nth(1).fill('3');
   await form.getByRole('button', { name: /save record/i }).click();
   await expect(frame.getByText(/3h logged/i)).toBeVisible({ timeout: 15000 });
+  await frame.getByRole('button', { name: /new note/i }).click();
   await form.locator('input').first().fill('Site visit B');
+  await form.locator('textarea').fill('South gate');
   await form.locator('input').nth(1).fill('4');
   await form.getByRole('button', { name: /save record/i }).click();
-  await expect(frame.getByText(/4h logged/i)).toBeVisible({ timeout: 15000 });
+  await expect(frame.getByText(/7h logged/i)).toBeVisible({ timeout: 15000 });
   await frame.getByRole('button', { name: /^notes$/i }).click();
+  await expect(frame.getByRole('button', { name: /site visit a edited/i })).toBeVisible();
   await expect(frame.getByRole('button', { name: /site visit b/i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Records' })).toBeVisible();
   await page.getByRole('button', { name: 'Records' }).click();
-  await expect(page.locator('.architect-app-side').getByText(/Site visit B/)).toBeVisible();
+  await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
   await page.getByRole('button', { name: 'Refine' }).click();
   await page.getByLabel('Request').fill('Add an optional tag for office or field notes.');
@@ -164,7 +219,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Reload receipts' }).click();
   await expect(page.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 180000 });
   await page.getByRole('button', { name: 'Records' }).click();
-  await expect(page.locator('.architect-app-side').getByText(/Site visit B/)).toBeVisible();
+  await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
@@ -174,21 +230,33 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Phone' }).click();
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-phone.png', fullPage: true });
 
-  const restarted = await browser.newContext();
-  const next = await restarted.newPage();
-  await next.goto('/enter');
-  await next.getByLabel('Email').fill('founder@aurelius.test');
-  await next.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
-  await next.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
-  await expect(next).toHaveURL(/\/app\/founder$/);
-  await next.goto(projectUrl);
-  await next.getByRole('button', { name: 'App', exact: true }).click();
-  await expect(next.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 30000 });
-  const reopened = next.frameLocator('iframe[title="Private generated application preview"]');
-  await expect(reopened.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
-  await expect(reopened.getByRole('button', { name: /site visit b/i })).toBeVisible();
-  await next.screenshot({ path: 'docs/evidence/architect-apps/workbench-reopen.png', fullPage: true });
-  await restarted.close();
+  const replacement = spawn('npm', ['run', 'dev', '--', '--port', '3108'], {
+    env: appsServerEnv(),
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  try {
+    await waitForUrl('http://127.0.0.1:3108/enter', replacement);
+    const restarted = await browser.newContext({ baseURL: 'http://127.0.0.1:3108' });
+    const next = await restarted.newPage();
+    await next.goto('/enter');
+    await next.getByLabel('Email').fill('founder@aurelius.test');
+    await next.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
+    await next.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
+    await expect(next).toHaveURL(/\/app\/founder$/);
+    await next.goto(projectUrl);
+    await next.getByRole('button', { name: 'App', exact: true }).click();
+    await expect(next.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 30000 });
+    const reopened = next.frameLocator('iframe[title="Private generated application preview"]');
+    await expect(reopened.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
+    await expect(reopened.getByRole('button', { name: /site visit a edited/i })).toBeVisible();
+    await expect(reopened.getByRole('button', { name: /site visit b/i })).toBeVisible();
+    await next.getByRole('button', { name: 'Records' }).click();
+    await expect(next.locator('[data-record-title="Site visit B"]')).toBeVisible({ timeout: 15000 });
+    await next.screenshot({ path: 'docs/evidence/architect-apps/workbench-reopen.png', fullPage: true });
+    await restarted.close();
+  } finally {
+    replacement.kill('SIGTERM');
+  }
 
   mkdirSync('docs/evidence/architect-apps', { recursive: true });
   writeFileSync(
@@ -199,7 +267,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
         projectUrl,
         name,
         worker: { first: first.out.slice(-800), second: second.out.slice(-800) },
-        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. Playwright did not kill the Next.js webServer; browser context and worker processes were restarted. A new Supabase client or srcdoc replacement is not claimed as a restart.',
+        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity. A replacement Next.js process on :3108 reopened the app; Playwright did not kill its own webServer. Preview sessions are in-process and were reissued on the replacement server.',
       },
       null,
       2,

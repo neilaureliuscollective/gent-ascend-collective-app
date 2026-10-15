@@ -1,7 +1,7 @@
 'use client';
 
 import { BplusMaterial } from '@/components/visual/bplus-material';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { appWorkbenchStage } from '@/domains/architect-apps/stage';
 import {
   approveArchitectApp,
@@ -72,6 +72,23 @@ export function ArchitectAppPanel({
     return next;
   }
 
+  const refreshHostState = useCallback(async () => {
+    const next = await readArchitectApps(projectId, selectedRevision ?? undefined);
+    setLibrary((current) => {
+      if (!current) return next;
+      const keepPreview =
+        Boolean(current.preview?.srcDoc) &&
+        current.preview?.revisionId === next.preview?.revisionId &&
+        current.preview?.revision === next.preview?.revision;
+      return {
+        ...next,
+        preview: keepPreview ? current.preview : next.preview,
+        previewSession: keepPreview ? current.previewSession : next.previewSession,
+      };
+    });
+    return next;
+  }, [projectId, selectedRevision]);
+
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -139,9 +156,9 @@ export function ArchitectAppPanel({
             return;
           if (mutating) {
             const detail = typeof result.error === 'string' ? result.error : '';
-            setSaveState(
-              /conflict|changed|identity/i.test(detail) ? 'conflict' : result.ok === false || detail ? 'failed' : 'saved',
-            );
+            const failed = result.ok === false || Boolean(detail);
+            setSaveState(/conflict|changed|identity/i.test(detail) ? 'conflict' : failed ? 'failed' : 'saved');
+            if (!failed) void refreshHostState();
           }
           frame.current?.contentWindow?.postMessage({ schema: 'architect-apps-data/v1', ...result }, event.origin === 'null' ? '*' : event.origin);
         })
@@ -168,7 +185,7 @@ export function ArchitectAppPanel({
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [projectId]);
+  }, [projectId, refreshHostState]);
 
   const files = useMemo(() => {
     const row = library?.revisions.find((item) => item.revision === displayed?.revision) ?? library?.revisions.find((item) => item.id === current?.id);
@@ -385,7 +402,15 @@ export function ArchitectAppPanel({
       <aside className="architect-app-side" aria-label="Application details">
         <div className="architect-app-tabs">
           {panels.map((tab) => (
-            <button key={tab} type="button" aria-current={panel === tab ? 'page' : undefined} onClick={() => setPanel(tab)}>
+            <button
+              key={tab}
+              type="button"
+              aria-current={panel === tab ? 'page' : undefined}
+              onClick={() => {
+                setPanel(tab);
+                if (tab === 'Records') void refreshHostState();
+              }}
+            >
               {tab}
             </button>
           ))}
@@ -427,7 +452,7 @@ export function ArchitectAppPanel({
           <ol>
             {Object.entries(library?.records ?? {}).flatMap(([collection, rows]) =>
               rows.map((row) => (
-                <li key={`${collection}:${String(row.id)}`}>
+                <li key={`${collection}:${String(row.id)}`} data-record-title={String(row.title ?? row.id)}>
                   {collection}: {String(row.title ?? row.id)}
                 </li>
               )),
