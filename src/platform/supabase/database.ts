@@ -656,22 +656,6 @@ export interface Database {
         never,
         never
       >;
-      architect_design_directions: Table<
-        {
-          request_id: string;
-          person_id: string;
-          project_id: string;
-          revision: number;
-          digest: string;
-          receipt: unknown;
-          started: false;
-          source_kind: 'text-import' | 'talk-authorized' | 'pending';
-          verified: boolean;
-          created_at: string;
-        },
-        never,
-        never
-      >;
       ai_live_observed_items: Table<
         {
           person_id: string;
