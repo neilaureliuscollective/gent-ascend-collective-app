@@ -1,0 +1,30 @@
+Focused test-only correction from 47fad9da35854af2334960ca1fdae41cbf24e1da
+Remote branch and PR head verified before editing.
+
+No runtime, provider, visuals, schema, migration, timeout or expected-version changes.
+Matching request text + conversation -> request ID -> same operation complete/confirmed -> authenticated completed-turn read -> version 3/new ID/source/supersession/content -> reload same ID/version/source/content.
+
+Targeted ESLint
+
+Strict TypeScript
+
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+Existing stream/design unit tests
+
+ RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+
+ Test Files  5 passed (5)
+      Tests  14 passed (14)
+   Start at  22:22:28
+   Duration  536ms (import 42%, transform 38%, tests 15%, worker 4%)
+
+
+Local authenticated attempt: isolated worktree /tmp/pr152-auth-acceptance, unchanged normal Auth test command with deterministic local provider fixture. Cold Supabase image pulls hit Docker image capacity: failed to register layer: no space left on device. Minimal database/Auth/REST-only setup also fails on the PostgreSQL image. No fixture environment/password file created, no hosted calls. The test cannot start without disposable local Auth; not a runtime save failure and not acceptance evidence.
+
+Existing Quality gates database job will run the corrected authenticated design-board test on this draft push. Exact-head hosted results and any remaining failure are recorded in PR #152; do not infer eventual-save success from unit checks.

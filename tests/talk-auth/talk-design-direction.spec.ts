@@ -75,6 +75,7 @@ async function sendComposer(page: Page, text: string) {
 
 type BoardRow = {
   id: string;
+  source_turn_id: string | null;
   version: number;
   superseded_by: string | null;
   content: {
@@ -116,16 +117,54 @@ test('authenticated design-board selection, refinement, reload and Architect tra
       return false;
     })
     .toBe(true);
-  await sendComposer(page, 'Make the selected direction warmer.');
+  const refinementText = 'Make the selected direction warmer.';
+  const refinementResponse = page.waitForResponse((response) => {
+    const request = response.request();
+    return (
+      request.method() === 'POST' &&
+      new URL(request.url()).pathname === '/api/aurelius/chat' &&
+      request.postDataJSON().text === refinementText &&
+      request.postDataJSON().conversationId === conversation
+    );
+  });
+  await sendComposer(page, refinementText);
   await expect(page.getByText(/selected direction is warmer/i)).toBeVisible({ timeout: 60000 });
+  const response = await refinementResponse;
+  expect(response.ok()).toBe(true);
+  const requestId = response.request().postDataJSON().requestId as string;
+  expect(requestId).toMatch(/^[0-9a-f-]{36}$/i);
+  // This operation becomes complete/confirmed only when its saved event is consumed.
+  const completed = page.locator(
+    `[data-turn-id="${requestId}"] .im-response[data-operation="${requestId}"]`,
+  );
+  await expect(completed).toHaveAttribute('data-phase', 'complete');
+  await expect(completed.locator('[data-persistence]')).toHaveAttribute(
+    'data-persistence',
+    'confirmed',
+  );
+  const savedTurn = await owner
+    .from('ai_turns')
+    .select('id,conversation_id,user_text,status')
+    .eq('id', requestId)
+    .eq('conversation_id', conversation)
+    .single();
+  expect(savedTurn.error).toBeNull();
+  expect(savedTurn.data).toMatchObject({
+    id: requestId,
+    conversation_id: conversation,
+    user_text: refinementText,
+    status: 'complete',
+  });
   const workspace = await api<{ creations: BoardRow[] }>(
     page,
     `/api/aurelius/creations?conversationId=${conversation}`,
   );
   const current = workspace.body.creations.find((item) => !item.superseded_by);
+  expect(workspace.status).toBe(200);
   expect(current?.content.selectedDirectionId).toBe('direction-c');
   expect(current?.version).toBe(3);
   expect(current?.id).not.toBe(versionTwoId);
+  expect(current?.source_turn_id).toBe(requestId);
   expect(current?.content.directions.find((item) => item.id === 'direction-a')?.name).toBe(
     'Graphite Chamber',
   );
@@ -147,6 +186,16 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   const refinedId = current!.id;
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('tab', { name: /Emerald Glass/ })).toBeVisible();
+  const reloaded = await api<{ creations: BoardRow[] }>(
+    page,
+    `/api/aurelius/creations?conversationId=${conversation}`,
+  );
+  expect(reloaded.status).toBe(200);
+  const reloadedCurrent = reloaded.body.creations.find((item) => !item.superseded_by);
+  expect(reloadedCurrent).toMatchObject({
+    id: refinedId, version: 3, superseded_by: null, source_turn_id: requestId,
+  });
+  expect(reloadedCurrent?.content).toEqual(current!.content);
   await page.locator('[data-kind="board"]').getByRole('button', { name: 'Open', exact: true }).click();
   const reviewPanel = page.getByLabel('Reviewed work');
   await reviewPanel.getByRole('button', { name: 'Review design transfer' }).click();
