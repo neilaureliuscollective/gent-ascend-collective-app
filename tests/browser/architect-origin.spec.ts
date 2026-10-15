@@ -199,6 +199,10 @@ test('complete synthetic journey: vision, reviewed research, useful document, fo
   await page.reload();
   await expect(page.getByRole('status')).toContainText('Resumed revision 5');
   await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  const documentLibrary = page.locator('.origin-document-library');
+  if (!(await documentLibrary.evaluate((node) => (node as HTMLDetailsElement).open))) {
+    await documentLibrary.locator('summary').click();
+  }
   await page
     .getByLabel('Selected document')
     .selectOption(state.getProject()!.content.documents[0]!.id);

@@ -1470,7 +1470,9 @@ export function ArchitectOrigin({
                 )}
                 {surface === 'Deliverables' && workbenchView !== 'preview' && (
                   <>
-                    <h3>Deliverables</h3>
+                    <h3 className="origin-deliverables-title">Deliverables</h3>
+                    <details className="origin-document-library" key={activeDoc?.id ?? 'new'} open={!activeDoc}>
+                      <summary>Documents &amp; context{activeDoc ? ` · ${activeDoc.title}` : ''}</summary>
                     <p>
                       Editable documents, with saved versions in project history. Model drafts and
                       compiled Blueprint drafts require your review.
@@ -1493,6 +1495,7 @@ export function ArchitectOrigin({
                         ))}
                       </select>
                     </label>
+                    </details>
                     {!activeDoc && (
                       <>
                         <label>
@@ -1849,7 +1852,7 @@ export function ArchitectOrigin({
               </article>
             )}
             <FoldDock panel={foldPanel} onPanel={setFoldPanel} />
-            <footer className="origin-savebar">
+            <footer className="origin-savebar" data-unsaved={Boolean(dirty || pending || toolState?.dirty || toolState?.pending)}>
               <p>
                 {surface === 'Tool'
                   ? toolState?.pending

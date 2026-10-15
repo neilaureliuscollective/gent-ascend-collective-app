@@ -1553,3 +1553,27 @@
   .origin-studio-entry:has(.origin-path-stage) > .origin-path-stage .origin-path-object { height: 200px; }
   .origin-studio-entry:has(.origin-path-stage) > .origin-entry-lower { grid-column: 1 / -1; }
 }
+
+/* Saved documents keep content ahead of secondary management on a phone. */
+.origin-document-library summary { min-height: 44px; cursor: pointer; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .origin-studio[data-surface='Deliverables'] .origin-workbench-bar { display: none !important; }
+  .origin-studio .origin-deliverables:not(.origin-view-preview) .origin-plane {
+    display: flex;
+    flex-direction: column;
+  }
+  .origin-deliverables-title { order: -4; margin: 4px 0; }
+  .origin-document-library { order: -3; margin: 0; }
+  .origin-document-library summary { padding: 8px 0; }
+  .origin-deliverables .origin-view-controls { order: -2; margin: 4px 0; }
+  .origin-deliverables .origin-document-canvas { order: -1; }
+  .origin-deliverables .origin-editor-heading { flex-wrap: wrap; margin-top: 12px; }
+  .origin-deliverables .origin-document-writing > label { margin: 4px 0; }
+}
+
+@media (max-width: 600px) {
+  .origin-studio .architect-app-toolbar h3 { font-size: 1rem; margin: 0; }
+  .origin-studio .architect-app-status-details { padding: 0; margin: 0; border: 0; }
+  .origin-studio .architect-app-status-details summary { min-height: 44px; padding: 8px 0; }
+  .origin-studio[data-surface='App'] .origin-savebar[data-unsaved='false'] { display: none; }
+}

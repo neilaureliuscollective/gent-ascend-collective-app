@@ -64,6 +64,10 @@ test('real Auth creation journey: persist Blueprint and editable document, revis
   await page.goto(projectUrl);
   await expect(page.getByRole('status')).toContainText('Resumed revision 4');
   await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  const documentLibrary = page.locator('.origin-document-library');
+  if (!(await documentLibrary.evaluate((node) => (node as HTMLDetailsElement).open))) {
+    await documentLibrary.locator('summary').click();
+  }
   await page
     .getByLabel('Selected document')
     .selectOption({ label: `${name} — Business plan · approved` });
