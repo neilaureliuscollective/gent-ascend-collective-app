@@ -112,7 +112,21 @@ jobs:
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
           ARCHITECT_APPS_PREVIEW_SECRET: isolate-preview-secret-key
           APP_ENV: local
-        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts --reporter=dot
+        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts --reporter=dot
+      - name: Record worker bundle and fail-closed commissioned preflight
+        env:
+          ARCHITECT_APPS_DEPLOYMENT_MODE: commissioned
+          APP_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: hosted-publishable-key
+        run: |
+          node scripts/architect-apps-worker.mjs --bundle-out=/tmp/apps-worker.mjs
+          if node scripts/architect-apps-worker-preflight.mjs; then
+            echo 'Commissioned preflight must fail closed without worker secrets, isolation and digest.'
+            exit 1
+          fi
+      - name: Build the isolated Apps worker image
+        run: node scripts/architect-apps-worker-image.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -120,5 +134,6 @@ jobs:
           path: |
             test-results/architect-apps-compiled-preview.html
             docs/evidence/architect-apps/compiled-preview.html
+            docs/evidence/architect-apps/worker-image-receipt.json
           if-no-files-found: ignore
 

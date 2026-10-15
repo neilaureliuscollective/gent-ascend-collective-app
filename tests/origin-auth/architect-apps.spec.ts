@@ -23,7 +23,7 @@ function localControlPlane() {
   return { url: status.API_URL, serviceRoleKey: status.SERVICE_ROLE_KEY };
 }
 
-function workerEnv(): NodeJS.ProcessEnv {
+function workerEnv(workerId = 'apps-connected'): NodeJS.ProcessEnv {
   const plane = localControlPlane();
   const next = { ...process.env, ...env };
   delete next.VERCEL;
@@ -40,13 +40,14 @@ function workerEnv(): NodeJS.ProcessEnv {
     ARCHITECT_APPS_ENABLED: 'true',
     ARCHITECT_CONSTRUCT_STORE: 'database',
     ARCHITECT_CONSTRUCT_WORKER_TOKEN: env.ARCHITECT_CONSTRUCT_WORKER_TOKEN || 'x'.repeat(32),
-    ARCHITECT_CONSTRUCT_WORKER_ID: 'apps-connected',
+    ARCHITECT_CONSTRUCT_WORKER_ID: workerId,
+    ARCHITECT_APPS_WORKER_ID: workerId,
   } as NodeJS.ProcessEnv;
 }
 
-async function runAppsWorkerTick() {
+async function runAppsWorkerTick(workerId?: string) {
   const child = spawn('node', ['scripts/architect-construct-worker.mjs'], {
-    env: workerEnv(),
+    env: workerEnv(workerId),
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let out = '';
@@ -71,7 +72,18 @@ async function runAppsWorkerUntilSucceeded() {
   return last;
 }
 
-function appsServerEnv(): NodeJS.ProcessEnv {
+async function runAppsWorkerUntilFailed() {
+  let last = { code: 1, out: '' };
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    last = await runAppsWorkerTick();
+    if (last.code === 0 && /"appStatus":"failed"/.test(last.out) && !/"appStatus":"succeeded"/.test(last.out)) {
+      return last;
+    }
+  }
+  return last;
+}
+
+function appsServerEnv(processId: string): NodeJS.ProcessEnv {
   return {
     ...process.env,
     ...env,
@@ -83,7 +95,22 @@ function appsServerEnv(): NodeJS.ProcessEnv {
     ARCHITECT_APPS_ENABLED: 'true',
     ARCHITECT_APPS_AI_MOCK: 'true',
     ARCHITECT_APPS_PREVIEW_SECRET: env.ARCHITECT_APPS_PREVIEW_SECRET || 'origin-apps-preview-secret-key',
+    ARCHITECT_APPS_PROCESS_ID: processId,
   } as NodeJS.ProcessEnv;
+}
+
+async function readAppRuntime(target: import('@playwright/test').Page) {
+  const projectId = new URL(target.url()).searchParams.get('project');
+  if (!projectId) throw new Error('Project identity missing from the Architect URL.');
+  return target.evaluate(async (id) => {
+    const response = await fetch(`/api/architect-apps?project=${id}`, { credentials: 'same-origin' });
+    const body = (await response.json()) as { runtime?: { processId?: string } };
+    return {
+      status: response.status,
+      processId: body.runtime?.processId ?? null,
+      origin: window.location.origin,
+    };
+  }, projectId);
 }
 
 async function waitForUrl(url: string, child: ChildProcess, timeoutMs = 60000) {
@@ -179,14 +206,20 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   if (!capturedCreate.body || typeof capturedCreate.body.idempotencyKey !== 'string') {
     throw new Error('Committed create did not keep an operation identity.');
   }
-  const changedIdentity = await page.request.post('/api/architect-apps/data', {
-    data: {
-      ...capturedCreate.body,
-      requestId: crypto.randomUUID(),
-      payload: { ...(capturedCreate.body.payload as Record<string, unknown>), title: 'Should not revert' },
-    },
+  const changedIdentity = await page.evaluate(async (body) => {
+    const response = await fetch('/api/architect-apps/data', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return { status: response.status, text: await response.text() };
+  }, {
+    ...capturedCreate.body,
+    requestId: crypto.randomUUID(),
+    payload: { ...(capturedCreate.body.payload as Record<string, unknown>), title: 'Should not revert' },
   });
-  expect(changedIdentity.status(), await changedIdentity.text()).toBe(409);
+  expect(changedIdentity.status, changedIdentity.text).toBe(409);
   await form.locator('input').first().fill('Site visit A edited');
   await form.locator('input').nth(1).fill('3');
   await form.getByRole('button', { name: /save record/i }).click();
@@ -222,6 +255,28 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
+  if (!(await page.getByLabel('Request').isVisible())) {
+    await page.getByRole('button', { name: 'Refine' }).click();
+  }
+  await page.getByLabel('Request').fill('Break the isolated typecheck so the last good preview stays.');
+  await page.getByRole('button', { name: 'Review proposed files' }).click();
+  await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
+  await page.getByRole('button', { name: 'Accept revision' }).click();
+  await expect(page.getByText(/Revision 3 accepted/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start approved build' }).click();
+  const failed = await runAppsWorkerUntilFailed();
+  expect(failed.code, failed.out).toBe(0);
+  expect(failed.out, failed.out).toMatch(/"appStatus":"failed"/);
+  expect(failed.out).not.toMatch(/"appStatus":"succeeded"/);
+  await page.getByRole('button', { name: 'Reload receipts' }).click();
+  await expect(page.locator('[data-flag="retained"]')).toHaveText('Last good preview kept');
+  await expect(page.locator('[data-stage]')).toHaveAttribute('data-stage', 'failed');
+  await expect(frame.getByRole('heading', { name: /field notes/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /site visit a edited/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /site visit b/i })).toBeVisible();
+  await page.getByRole('button', { name: 'Records' }).click();
+  await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible({ timeout: 15000 });
+
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.getByRole('button', { name: 'Fold' }).click();
@@ -230,12 +285,26 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Phone' }).click();
   await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-phone.png', fullPage: true });
 
+  const originalOrigin = new URL(page.url()).origin;
+  const projectPath = `${new URL(page.url()).pathname}${new URL(page.url()).search}`;
+  expect(originalOrigin).toBe('http://127.0.0.1:3103');
+  expect(new URL(projectUrl).origin).toBe(originalOrigin);
+  const originalRuntime = await readAppRuntime(page);
+  expect(originalRuntime.status).toBe(200);
+  expect(originalRuntime.processId).toBe('origin-apps-3103');
+  const replacementId = `replacement-apps-3108-${Date.now()}`;
+  const restartedWorkerId = `apps-restarted-${Date.now()}`;
   const replacement = spawn('npm', ['run', 'dev', '--', '--port', '3108'], {
-    env: appsServerEnv(),
+    env: appsServerEnv(replacementId),
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   try {
     await waitForUrl('http://127.0.0.1:3108/enter', replacement);
+    const stillOriginal = await readAppRuntime(page);
+    expect(stillOriginal.origin).toBe(originalOrigin);
+    expect(stillOriginal.processId).toBe(originalRuntime.processId);
+    const restartedWorker = await runAppsWorkerTick(restartedWorkerId);
+    expect(restartedWorker.code, restartedWorker.out).toBe(0);
     const restarted = await browser.newContext({ baseURL: 'http://127.0.0.1:3108' });
     const next = await restarted.newPage();
     await next.goto('/enter');
@@ -243,15 +312,25 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
     await next.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
     await next.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
     await expect(next).toHaveURL(/\/app\/founder$/);
-    await next.goto(projectUrl);
+    await next.goto(projectPath);
+    expect(new URL(next.url()).origin).toBe('http://127.0.0.1:3108');
+    expect(new URL(next.url()).origin).not.toBe(originalOrigin);
+    expect(new URL(next.url()).origin).not.toBe(new URL(projectUrl).origin);
+    const replacementRuntime = await readAppRuntime(next);
+    expect(replacementRuntime.status).toBe(200);
+    expect(replacementRuntime.origin).toBe('http://127.0.0.1:3108');
+    expect(replacementRuntime.processId).toBe(replacementId);
+    expect(replacementRuntime.processId).not.toBe(originalRuntime.processId);
     await next.getByRole('button', { name: 'App', exact: true }).click();
-    await expect(next.locator('[data-stage]')).toHaveAttribute('data-stage', 'preview-ready', { timeout: 30000 });
+    await expect(next.locator('[data-stage]')).toHaveAttribute('data-stage', 'failed', { timeout: 30000 });
+    await expect(next.locator('[data-flag="retained"]')).toHaveText('Last good preview kept');
     const reopened = next.frameLocator('iframe[title="Private generated application preview"]');
     await expect(reopened.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
     await expect(reopened.getByRole('button', { name: /site visit a edited/i })).toBeVisible();
     await expect(reopened.getByRole('button', { name: /site visit b/i })).toBeVisible();
     await next.getByRole('button', { name: 'Records' }).click();
-    await expect(next.locator('[data-record-title="Site visit B"]')).toBeVisible({ timeout: 15000 });
+    await expect(next.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
+    await expect(next.locator('[data-record-title="Site visit B"]')).toBeVisible();
     await next.screenshot({ path: 'docs/evidence/architect-apps/workbench-reopen.png', fullPage: true });
     await restarted.close();
   } finally {
@@ -266,8 +345,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
         schema: 'architect-apps-connected-journey/v1',
         projectUrl,
         name,
-        worker: { first: first.out.slice(-800), second: second.out.slice(-800) },
-        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity. A replacement Next.js process on :3108 reopened the app; Playwright did not kill its own webServer. Preview sessions are in-process and were reissued on the replacement server.',
+        worker: { first: first.out.slice(-800), second: second.out.slice(-800), failed: failed.out.slice(-800) },
+        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity through page fetch so verifyOrigin still ran. A labelled compile-failure revision kept the last good preview. A replacement Next.js process on :3108 reopened that revision and records; the captured :3103 URL could not satisfy the replacement identity check. Playwright did not kill its own webServer. Preview sessions are in-process and were reissued on the replacement server.',
       },
       null,
       2,

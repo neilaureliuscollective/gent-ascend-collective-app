@@ -1,5 +1,6 @@
 import { parseEnvironment } from '@/platform/environment';
 import { supabaseConnection } from '@/platform/supabase/connection';
+import { appsDeploymentMode, appsWorkerAuthorized as commissionedOrLocalWorkerAuthorized } from './commission';
 
 type Env = NodeJS.ProcessEnv | Record<string, string | undefined>;
 
@@ -43,19 +44,15 @@ export function memoryAppStoreAllowed(env: Env = process.env) {
 }
 
 export function appsWorkerAuthorized(env: Env = process.env) {
-  const token = env.ARCHITECT_CONSTRUCT_WORKER_TOKEN;
-  if (!token || token.trim().length < 32) return false;
-  try {
-    if (parseEnvironment(env).mode === 'production') return false;
-  } catch {
-    return false;
-  }
-  if (env.VERCEL || env.VERCEL_ENV) return false;
-  return appsReady(env);
+  return commissionedOrLocalWorkerAuthorized(env);
 }
 
 export function appsControlPlaneReady(env: Env = process.env) {
-  return Boolean(supabaseConnection(env) && env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+  try {
+    return Boolean(supabaseConnection(env) && env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+  } catch {
+    return false;
+  }
 }
 
 export function founderAppModelRunBlockers(env: Env = process.env) {
@@ -72,7 +69,11 @@ export function founderAppModelRunBlockers(env: Env = process.env) {
     blockers.push('APP_ENV is missing or unsafe.');
   }
   if (!appsWorkerAuthorized(env))
-    blockers.push('Local worker token, Origin/Apps flags, and a non-hosted plane are required to execute.');
+    blockers.push(
+      appsDeploymentMode(env) === 'closed'
+        ? 'Production compilation stays closed until ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned and the isolated worker host is complete. Vercel is not that host.'
+        : 'Worker token, Origin/Apps flags, matching database names, and a non-Vercel plane are required to execute.',
+    );
   if (env.VERCEL || env.VERCEL_ENV) blockers.push('Hosted Vercel cannot run the isolated app-build worker.');
   blockers.push('Additive Architect Apps migrations are unapplied on hosted projects until founder-approved.');
   blockers.push(

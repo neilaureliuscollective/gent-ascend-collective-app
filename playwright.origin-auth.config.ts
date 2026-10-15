@@ -7,7 +7,7 @@ export default defineConfig({
   timeout: 300000,
   webServer: {
     command:
-      'ARCHITECT_ORIGIN_ENABLED=true ARCHITECT_ORIGIN_AI_ENABLED=false ARCHITECT_APPS_ENABLED=true ARCHITECT_APPS_AI_MOCK=true ARCHITECT_APPS_PREVIEW_SECRET=origin-apps-preview-secret-key APP_ENV=local npm run dev -- --port 3103',
+      'ARCHITECT_ORIGIN_ENABLED=true ARCHITECT_ORIGIN_AI_ENABLED=false ARCHITECT_APPS_ENABLED=true ARCHITECT_APPS_AI_MOCK=true ARCHITECT_APPS_PREVIEW_SECRET=origin-apps-preview-secret-key ARCHITECT_APPS_PROCESS_ID=origin-apps-3103 APP_ENV=local npm run dev -- --port 3103',
     url: 'http://127.0.0.1:3103',
     reuseExistingServer: false,
     timeout: 60000,

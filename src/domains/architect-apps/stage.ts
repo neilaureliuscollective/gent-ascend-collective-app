@@ -27,7 +27,6 @@ export function appWorkbenchStage(input: {
   saveState?: 'idle' | 'saving' | 'saved' | 'conflict' | 'failed';
 }): { stage: AppWorkbenchStage; label: string } {
   if (input.saveState === 'saving') return { stage: 'saving', label: 'Saving the record through the host collection.' };
-  if (input.saveState === 'saved') return { stage: 'saved', label: 'Record saved.' };
   if (input.saveState === 'conflict') return { stage: 'conflict', label: 'This edit conflicts with a later save. Reload the record before trying again.' };
   if (input.saveState === 'failed')
     return { stage: 'failed', label: 'The last edit is still in the form. The host collection did not confirm the save.' };
@@ -46,5 +45,6 @@ export function appWorkbenchStage(input: {
     return { stage: 'building', label: 'Isolated build is running.' };
   }
   if (input.preview?.srcDoc) return { stage: 'preview-ready', label: 'Compiled preview is ready.' };
+  if (input.saveState === 'saved') return { stage: 'saved', label: 'Record saved.' };
   return { stage: 'idle', label: 'Describe a useful app, then review files before approval.' };
 }

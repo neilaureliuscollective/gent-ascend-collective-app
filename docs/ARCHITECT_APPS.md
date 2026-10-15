@@ -7,7 +7,7 @@ Dedicated `architect-apps` domain for one supported profile: React + TypeScript 
 - Generalized generation adapter. The labelled tracker fixture stays `demo=tracker`. Supported apps and revisions use the same production adapter with mocked or authorized OpenAI transport bound to the user brief, selected design, existing collection schemas, the host data-bridge contract, and exact source contents plus hashes. Paths and character counts are not a revision base.
 - Durable owner-scoped store for apps, immutable source revisions, compiled artifacts, jobs, records and design-direction receipts. Writes go through SECURITY DEFINER RPCs. `person_id` is `persons.id`; authenticated identity is `persons.auth_user_id = auth.uid()`.
 - Isolated Docker build adapter: pinned image, nobody `65534:65534`, `--network none`, no Docker socket or host secrets, versioned toolchain check, fenced results, active cancellation, and confirmed named-container teardown. The emitted `apps-runner.mjs` is an ES module and walks artifacts with `readdirSync`. Host-fixture compilation is labelled local evidence for the tracker fixture only and cannot mark a mock or model-generated app as isolated success.
-- Worker entry supplies the durable Apps store. Optional supervisor hook is no longer the only wiring.
+- Dedicated Apps worker (`npm run architect:apps-worker`) is separate from the Vercel web application. Local ticks still reuse the Construct worker entry. Production compilation stays closed unless `ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned` on a non-Vercel host. See [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
 - Versioned `architect-apps-data/v1` bridge. Compact `v1.nonce.exp.mac` preview sessions require `ARCHITECT_APPS_PREVIEW_SECRET`, expire, and revoke on replacement. Ready or last-working revisions only. Parent→API payloads are allowlisted; iframe fields never overwrite owner, project or revision. Async bridge replies bind to the original document/session/generation and are dropped after replacement.
 - Sealed Vite single-bundle contract (`assets/app.js`, `inlineDynamicImports`). Preview assembly inserts that IIFE by literal splice so `$&` / `$n` patterns survive. Extra JavaScript chunks are refused. Direct preview GET applies `Content-Security-Policy: sandbox allow-scripts allow-forms` without `allow-same-origin`. The iframe sandbox matches; `allow-forms` is required for native submit and does not grant parent storage.
 - Each user mutation has a distinct stable request identity bound to an immutable payload snapshot. Retries reuse that identity only for the same payload after an uncertain result. A changed payload with the same key is rejected. Concurrent edits use integer `version`. `record.id` is not an idempotency key.
@@ -41,6 +41,10 @@ Architect owns `talk-architect-direction/v1` and the published shared contract `
 | `ARCHITECT_APPS_ALLOW_HOST_FIXTURE` | false | Permit host-fixture compilation for the labelled tracker only |
 | `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-15.1` | Pinned isolated build image |
 | `ARCHITECT_APPS_PREVIEW_SECRET` | required | Preview session HMAC. Fallback signing secrets are not permitted. |
+| `ARCHITECT_APPS_DEPLOYMENT_MODE` | inferred | `local` / `preview` / `commissioned` / `closed`. Production infers `closed` unless commissioned. |
+| `ARCHITECT_APPS_REQUIRE_ISOLATION` | false | Required true for commissioned compiles |
+| `ARCHITECT_APPS_IMAGE_DIGEST` | unset | `sha256:` pin; must match `docker image inspect` |
+| `ARCHITECT_APPS_PREVIEW_CLUSTER` | false | Accept unexpired HMAC after process restart on production/preview web planes |
 
 Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql` and `20261015155000_architect_apps_retain_verified.sql` are local-only until founder-approved hosted application. The 15155000 prefix stays before Talk #131 `f357385` retain/provenance files so those later migrations remain the merge-winning contract.
 
@@ -54,4 +58,4 @@ Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_archite
 
 ## First founder action
 
-On the founder workstation: install Docker, run `node scripts/architect-apps-image.mjs`, set `ARCHITECT_APPS_PREVIEW_SECRET`, apply the three local Apps migrations, enable `ARCHITECT_ORIGIN_ENABLED` and `ARCHITECT_APPS_ENABLED`, keep `ARCHITECT_APPS_AI_MOCK=true` until a paid model run is authorized, and start the existing local Construct/Apps worker with a 32-character token. OpenAI credit alone does not provide the worker, database, permissions or isolated image.
+A founder phone/laptop does not need Docker. Architect CI already builds the pinned toolchain image and can build the worker image. Persistent production compilation still needs a commissioned non-Vercel host (recommended DigitalOcean Docker Droplet, $12/mo) plus founder-approved hosted Apps migrations. OpenAI credit alone does not provide the worker, database, permissions or isolated image. See [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).

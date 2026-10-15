@@ -16,7 +16,7 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 | Emitted `apps-runner.mjs` is ESM (`readdirSync`, no `require`) and walks real artifacts | Pass |
 | Named-container `docker rm -f` plus inspect confirmation | Pass |
 | Host-fixture cannot mark mock generation isolated | Pass |
-| Create → edit A → same-payload retry → edit B; changed payload on the same key rejected | Pass (MemoryAppStore, PGlite, Auth smoke) |
+| Create → edit A → same-payload retry → edit B; changed payload on the same key rejected | Pass (MemoryAppStore, PGlite). Connected UI now uses page `fetch` so the 409 is not an Origin 403 |
 | Uncertain create retains record ID + operation key; lost-ack retry stays one record | Pass in compiled Field Notes fixture; connected UI journey required in Origin local-auth |
 | Concurrent edit with stale `expectedVersion` rejected | Pass |
 | Memory and SQL owner/app/collection isolation | Pass |

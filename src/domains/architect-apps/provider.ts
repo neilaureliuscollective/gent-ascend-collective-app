@@ -11,20 +11,43 @@ import {
   type AppGenerationContext,
 } from './context';
 import { labeledAppSource } from './hash';
-import { notesProposal, notesTagCollections, notesTagOperations } from './notes-fixture';
+import {
+  notesBrokenTypecheckOperations,
+  notesProposal,
+  notesTagCollections,
+  notesTagOperations,
+} from './notes-fixture';
 import { appsAiMockReady, appsAiReady } from './readiness';
 import { appProposalSchema, type AppFile, type AppProposal } from './schema';
 import { applyFileOperations, overlaySealedFiles } from './tree';
 import type { AppGenerationTransport } from './generation';
+
+export function isBrokenTypecheckInstruction(instruction?: string) {
+  return Boolean(instruction && /break the isolated typecheck/i.test(instruction));
+}
 
 export function mockedSupportedAppProposal(
   input: {
     kind: 'create' | 'revise';
     files: Array<{ path: string; content: string; hash?: string }>;
     collections?: AppGenerationContext['collections'];
+    instruction?: string;
   },
 ): AppProposal {
   const files: AppFile[] = input.files.map((file) => ({ path: file.path, content: file.content }));
+  if (input.kind === 'revise' && isBrokenTypecheckInstruction(input.instruction)) {
+    const base = overlaySealedFiles(files.length ? files : notesProposal().files);
+    const operations = notesBrokenTypecheckOperations(base);
+    const applied = applyFileOperations(base, operations);
+    return appProposalSchema.parse({
+      summary: 'Labelled compile-failure revision that keeps the last working application.',
+      files: applied.files.filter((file) => isGeneratedAppPath(file.path)),
+      operations,
+      collections: input.collections?.length ? input.collections : notesProposal().collections,
+      behaviors: notesProposal().behaviors,
+      notes: 'Labelled mocked compile-failure fixture. This is not a paid OpenAI call.',
+    });
+  }
   if (input.kind === 'revise') {
     const base = overlaySealedFiles(files.length ? files : notesProposal().files);
     const operations = notesTagOperations(base);
@@ -76,7 +99,14 @@ export function defaultAppGenerationTransport(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
   signal?: AbortSignal,
 ): AppGenerationTransport | undefined {
-  if (appsAiMockReady(env)) return async (input) => mockedSupportedAppProposal(input);
+  if (appsAiMockReady(env))
+    return async (input) =>
+      mockedSupportedAppProposal({
+        kind: input.kind,
+        files: input.files,
+        collections: input.collections,
+        instruction: input.instruction,
+      });
   if (appsAiReady(env)) return (input) => openaiAppTransport(input, signal);
   return undefined;
 }

@@ -14,7 +14,7 @@ Implemented on PR #130. This is not a production authorization and not a claim t
 | Prerequisite | Current | Smallest action |
 | --- | --- | --- |
 | Hosted Apps migrations | Unapplied | Founder-authorized hosted apply of the four local files above, after Talk #131 retain/provenance order is decided |
-| Worker host | Local-only Construct/Apps worker | Dedicated non-Vercel loopback/private host with `SUPABASE_SERVICE_ROLE_KEY`, `ARCHITECT_CONSTRUCT_WORKER_TOKEN` ≥32, Origin/Apps flags, no `VERCEL`/`VERCEL_ENV` |
+| Worker host | Code-complete commissioned path; no persistent host | Founder-approved DigitalOcean Docker Droplet (Basic 2 GiB, $12/mo) or equivalent daemon host. Set `ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned`. Vercel and Fly Machines are not that host |
 | Isolated image | Built in CI and local Docker | Same pinned tag available to the worker host; no unsandboxed fallback |
 | `ARCHITECT_APPS_PREVIEW_SECRET` | Required; in-process session map | Hosted secret ≥16 chars. After process restart, library GET issues a new session. Do not weaken verification |
 | Feature flags | Default false | Hosted `ARCHITECT_ORIGIN_ENABLED` + `ARCHITECT_APPS_ENABLED`. Keep `ARCHITECT_APPS_AI_MOCK=true` until a paid model run is authorized |

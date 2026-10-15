@@ -9,6 +9,9 @@ import { artifactManifestHash } from './hash';
 import { assertSingleBundleArtifacts } from './bundle';
 import type { AppFile, AppJobResult } from './schema';
 import { overlaySealedFiles } from './tree';
+import { parseAppsImageDigest } from './commission';
+
+export { parseAppsImageDigest };
 
 const execFileAsync = promisify(execFile);
 
@@ -42,6 +45,21 @@ export type AppsIsolationProbe =
 
 export function appsImage(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
   return env[appsImageName] || defaultAppsImage;
+}
+
+export async function inspectAppsImageDigest(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+  exec: AppsDockerExec = (file, args, options) => execFileAsync(file, args, options),
+) {
+  try {
+    const { stdout } = await exec('docker', ['image', 'inspect', '--format', '{{.Id}}', appsImage(env)], {
+      timeout: 4000,
+      env: { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,
+    });
+    return parseAppsImageDigest(stdout.trim());
+  } catch {
+    return null;
+  }
 }
 
 export function appsDockerInvocation(

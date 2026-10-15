@@ -11,6 +11,7 @@ import {
   defaultAppsImage,
   isolatedArtifactCollectorModule,
   parseAppsContainerResult,
+  parseAppsImageDigest,
   parseAppsToolchainVersions,
   probeAppsDockerIsolation,
   removeNamedAppsContainer,
@@ -25,6 +26,8 @@ it('builds a non-root isolated Docker invocation without host credentials or soc
     jobFile: '/tmp/apps-job.json',
     name: 'apps-unit',
   });
+  expect(parseAppsImageDigest(`sha256:${'ab'.repeat(32)}`)).toMatch(/^sha256:[a-f0-9]{64}$/);
+  expect(parseAppsImageDigest('latest')).toBeNull();
   expect(invocation.command).toBe('docker');
   expect(invocation.args).toContain('--network');
   expect(invocation.args[invocation.args.indexOf('--network') + 1]).toBe('none');

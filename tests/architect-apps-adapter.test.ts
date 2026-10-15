@@ -2,11 +2,11 @@ import { expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 import { generateAppProposal } from '@/domains/architect-apps/generation';
 import { defaultAppGenerationTransport, mockedSupportedAppProposal } from '@/domains/architect-apps/provider';
-import { notesCollections, notesProposal, notesSourceFiles } from '@/domains/architect-apps/notes-fixture';
+import { notesBrokenTypecheckOperations, notesCollections, notesProposal, notesSourceFiles } from '@/domains/architect-apps/notes-fixture';
 import { applyFileOperations, overlaySealedFiles } from '@/domains/architect-apps/tree';
 import { isGeneratedAppPath, isSealedAppPath } from '@/domains/architect-apps/catalog';
 import { allowlistedAppDataPayload } from '@/domains/architect-apps/allowlist';
-import { signPreviewSession, verifyPreviewSession, resetPreviewSessions, previewCsp } from '@/domains/architect-apps/preview';
+import { signPreviewSession, verifyPreviewSession, resetPreviewSessions, previewCsp, previewClusterAllowed } from '@/domains/architect-apps/preview';
 import { PREVIEW_SESSION_MAX } from '@/domains/architect-apps/schema';
 import { buildAppGenerationContext, APP_DATA_BRIDGE_CONTRACT } from '@/domains/architect-apps/context';
 import { fileHash } from '@/domains/architect-apps/hash';
@@ -155,4 +155,52 @@ it('derives compact preview sessions and allowlists iframe payloads', () => {
   expect(allowlisted.projectId).toBe(trusted.projectId);
   expect(allowlisted.revisionId).toBe(trusted.revisionId);
   expect(allowlisted.action).toBe('data');
+});
+
+it('labels a compile-failure revision and accepts HMAC preview sessions after restart when cluster mode is on', async () => {
+  const created = mockedSupportedAppProposal({ kind: 'create', files: [] });
+  const broken = mockedSupportedAppProposal({
+    kind: 'revise',
+    files: created.files,
+    instruction: 'Break the isolated typecheck so the last good preview stays.',
+  });
+  expect(broken.notes).toMatch(/compile-failure fixture/i);
+  expect(broken.files.find((file) => file.path === 'src/App.tsx')?.content).toMatch(/not-a-number/);
+  expect(notesBrokenTypecheckOperations(created.files)[0]?.path).toBe('src/App.tsx');
+  resetPreviewSessions();
+  const session = signPreviewSession({
+    personId: '00000000-0000-4000-8000-000000000001',
+    projectId: '00000000-0000-4000-8000-000000000003',
+    revisionId: '00000000-0000-4000-8000-000000000009',
+    secret: 'unit-preview-secret-key',
+  });
+  resetPreviewSessions();
+  expect(
+    verifyPreviewSession(
+      session,
+      {
+        personId: '00000000-0000-4000-8000-000000000001',
+        projectId: '00000000-0000-4000-8000-000000000003',
+        revisionId: '00000000-0000-4000-8000-000000000009',
+      },
+      'unit-preview-secret-key',
+    ),
+  ).toBe(false);
+  vi.stubEnv('ARCHITECT_APPS_PREVIEW_CLUSTER', 'true');
+  vi.stubEnv('ARCHITECT_APPS_PREVIEW_SECRET', 'unit-preview-secret-key');
+  vi.stubEnv('APP_ENV', 'production');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'hosted-publishable-key');
+  expect(previewClusterAllowed()).toBe(true);
+  expect(
+    verifyPreviewSession(
+      session,
+      {
+        personId: '00000000-0000-4000-8000-000000000001',
+        projectId: '00000000-0000-4000-8000-000000000003',
+        revisionId: '00000000-0000-4000-8000-000000000009',
+      },
+      'unit-preview-secret-key',
+    ),
+  ).toBe(true);
 });

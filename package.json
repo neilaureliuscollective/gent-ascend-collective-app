@@ -30,7 +30,11 @@
     "test:health": "vitest run tests/health.test.ts tests/health-database.test.ts tests/health-pdf.test.ts tests/health-api.test.ts tests/health-export.test.ts tests/health-owner.test.ts",
     "test:health:bundle": "node scripts/build-health-fixture.mjs",
     "architect:worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs",
-    "architect:worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs --supervised"
+    "architect:worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs --supervised",
+    "architect:apps-worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker.mjs",
+    "architect:apps-worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker.mjs --supervised",
+    "architect:apps-worker:preflight": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker-preflight.mjs",
+    "architect:apps-worker:health": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker-health.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "4.0.72",

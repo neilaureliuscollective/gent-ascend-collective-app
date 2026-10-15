@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { parseEnvironment } from '@/platform/environment';
 import { APP_PROFILE_VERSION } from './catalog';
 import { resolveCompiledBundle } from './bundle';
 import { APP_DATA_SCHEMA, PREVIEW_SESSION_MAX } from './schema';
@@ -36,6 +37,18 @@ export function previewDocumentHeaders(csp = previewCsp()) {
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Referrer-Policy': 'no-referrer',
   };
+}
+
+export function previewClusterAllowed(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
+  if (env.ARCHITECT_APPS_PREVIEW_CLUSTER !== 'true') return false;
+  if (env.ARCHITECT_APPS_STORE === 'memory') return false;
+  try {
+    requirePreviewSecret(env.ARCHITECT_APPS_PREVIEW_SECRET);
+    const mode = parseEnvironment(env).mode;
+    return mode === 'production' || mode === 'preview';
+  } catch {
+    return false;
+  }
 }
 
 export function requirePreviewSecret(secret?: string) {
@@ -141,15 +154,18 @@ export function verifyPreviewSession(
   const exp = Number.parseInt(expHex, 16);
   if (!Number.isFinite(exp) || exp * 1000 <= Date.now()) return false;
   const record = issued.get(nonce);
-  if (!record || record.revisionId !== expected.revisionId) return false;
-  if (currentByRevision.get(expected.revisionId) !== nonce) return false;
   const body = `${expected.personId}|${expected.projectId}|${expected.revisionId}|${nonce}|${exp}|${APP_PROFILE_VERSION}`;
   const check = mac(body, resolvedSecret);
+  let authentic = false;
   try {
-    return timingSafeEqual(Buffer.from(check, 'utf8'), Buffer.from(digest, 'utf8'));
+    authentic = timingSafeEqual(Buffer.from(check, 'utf8'), Buffer.from(digest, 'utf8'));
   } catch {
-    return false;
+    authentic = false;
   }
+  if (!authentic) return false;
+  if (record && record.revisionId === expected.revisionId && currentByRevision.get(expected.revisionId) === nonce)
+    return true;
+  return !record && previewClusterAllowed();
 }
 
 export function validateArtifactPath(path: string) {

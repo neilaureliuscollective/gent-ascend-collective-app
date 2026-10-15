@@ -1,5 +1,5 @@
 const secretPattern =
-  /(OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY|ARCHITECT_CONSTRUCT_WORKER_TOKEN|CRON_SECRET|AURELIUS_DEV_TOKEN|AWS_SECRET_ACCESS_KEY|sk-[A-Za-z0-9_-]{8,}|Bearer\s+[A-Za-z0-9._~+/-]+=*)/gi;
+  /(OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY|ARCHITECT_CONSTRUCT_WORKER_TOKEN|ARCHITECT_APPS_PREVIEW_SECRET|CRON_SECRET|AURELIUS_DEV_TOKEN|AWS_SECRET_ACCESS_KEY|sk-[A-Za-z0-9_-]{8,}|Bearer\s+[A-Za-z0-9._~+/-]+=*)/gi;
 
 export function sanitizeLog(value: string, extra: string[] = [], max = 16384) {
   let text = value.replace(secretPattern, '[redacted]');
@@ -27,6 +27,7 @@ export function assertNoHostSecrets(env: NodeJS.ProcessEnv) {
     'OPENAI_API_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
     'ARCHITECT_CONSTRUCT_WORKER_TOKEN',
+    'ARCHITECT_APPS_PREVIEW_SECRET',
     'CRON_SECRET',
     'AURELIUS_DEV_TOKEN',
     'AWS_SECRET_ACCESS_KEY',

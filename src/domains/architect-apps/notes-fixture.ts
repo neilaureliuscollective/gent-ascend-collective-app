@@ -289,6 +289,19 @@ export function validateNote(input: Partial<Note>): string[] {
   ];
 }
 
+export function notesBrokenTypecheckOperations(base: AppFile[]): FileOperation[] {
+  const app = base.find((file) => file.path === 'src/App.tsx');
+  if (!app) throw new Error('Notes revision is missing required source files.');
+  return [
+    {
+      op: 'update',
+      path: 'src/App.tsx',
+      baseHash: fileHash(app.content),
+      content: `const broken: number = 'not-a-number';\n${app.content}`,
+    },
+  ];
+}
+
 export function notesTagCollections(): AppCollection[] {
   return [
     {

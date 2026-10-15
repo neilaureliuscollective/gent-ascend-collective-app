@@ -14,6 +14,7 @@ import {
   verifyPreviewSession,
 } from './preview';
 import { defaultAppGenerationTransport } from './provider';
+import { appsProcessIdentity } from './commission';
 import { appsReady, memoryAppStoreAllowed } from './readiness';
 import {
   approveAppCommand,
@@ -177,6 +178,7 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
       pendingStart,
       records,
       provider: appProviderStatus(),
+      runtime: appsProcessIdentity(),
       profile: { id: APP_PROFILE, version: APP_PROFILE_VERSION, toolchain: APP_TOOLCHAIN_VERSION },
       capabilities: current?.behaviors ?? {
         navigation: false,

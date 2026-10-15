@@ -119,11 +119,23 @@ it('derives workbench stages from real job, preview and save acknowledgments', (
   );
   expect(appWorkbenchStage({ saveState: 'saving' }).stage).toBe('saving');
   expect(appWorkbenchStage({ saveState: 'saved' }).stage).toBe('saved');
+  expect(
+    appWorkbenchStage({
+      saveState: 'saved',
+      preview: { srcDoc: '<html></html>', revision: 1 },
+    }).stage,
+  ).toBe('preview-ready');
+  expect(
+    appWorkbenchStage({
+      saveState: 'saved',
+      job: { status: 'failed', result: { ok: false, blocker: 'Typecheck failed.' } },
+      preview: { srcDoc: '<html></html>', revision: 2 },
+    }).stage,
+  ).toBe('failed');
   expect(appWorkbenchStage({ saveState: 'conflict' }).stage).toBe('conflict');
   expect(appWorkbenchStage({ saveState: 'failed' }).stage).toBe('failed');
   expect(appWorkbenchStage({ job: { status: 'failed', result: { ok: false, blocker: 'Typecheck failed.' } } }).label).toMatch(
     /Typecheck failed/,
   );
   expect(appWorkbenchStage({ job: { status: 'cancelled' } }).stage).toBe('cancelled');
-}
-)
+});
