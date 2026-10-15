@@ -1,9 +1,11 @@
 -- Read-only Talk release diagnostic for Gent Ascend App (volpzkfsnmtztrovexcw).
--- Inspects schema, function signatures/definitions, ACLs, policies and constraints.
+-- Inspects catalog metadata only: function signatures/definitions, privileges,
+-- ownership/RLS policies, constraints and required columns.
 -- Does not read conversations, turns, creations or any user content.
--- Does not write. Missing functions must not abort: resolve OIDs first.
--- Object existence is not migration equivalence. Replacing migrations can leave
--- an older function under the same name.
+-- Does not write. Missing objects must not abort: resolve OIDs first.
+-- Object existence, matching names or body fragments are not equivalence.
+-- This file never reports verified equivalent. Highest contract label is
+-- equivalent-candidate after founder review of the returned catalog.
 
 with
 roles(name) as (
@@ -117,9 +119,69 @@ retain as (
 ),
 derived as (
   select * from fn_probe where sig = 'public.ai_talk_derived_design_receipt(uuid,uuid,uuid,integer)'
+),
+policy_probe as (
+  select
+    t.name as table_name,
+    p.polname,
+    p.polcmd,
+    p.polpermissive,
+    coalesce((
+      select array_agg(coalesce(r.rolname, role_oid::text) order by coalesce(r.rolname, role_oid::text))
+      from unnest(p.polroles) as role_oid
+      left join pg_roles r on r.oid = role_oid
+    ), '{}'::text[]) as roles
+  from tbl_probe t
+  join pg_policy p on p.polrelid = t.oid
+),
+constraint_probe as (
+  select
+    t.name as table_name,
+    k.conname,
+    k.contype,
+    pg_get_constraintdef(k.oid) as definition
+  from tbl_probe t
+  join pg_constraint k on k.conrelid = t.oid
+),
+required_policy(name, table_name) as (
+  values
+    ('talk_creations_owner', 'public.ai_talk_creations'),
+    ('talk_selection_owner', 'public.ai_talk_selection'),
+    ('talk_origin_imports_owner', 'public.ai_talk_origin_imports'),
+    ('ai_talk_direction_transfers_owner', 'public.ai_talk_direction_transfers'),
+    ('ai_live_observed_items_owner', 'public.ai_live_observed_items'),
+    ('ai_live_turn_bindings_owner', 'public.ai_live_turn_bindings')
+),
+required_constraint(name, table_name) as (
+  values
+    ('ai_talk_origin_imports_mapping_version', 'public.ai_talk_origin_imports'),
+    ('ai_talk_creations_kind_check', 'public.ai_talk_creations'),
+    ('ai_talk_selection_kind_check', 'public.ai_talk_selection')
+),
+required_policy_state as (
+  select
+    r.name,
+    exists (
+      select 1 from policy_probe p
+      where p.polname = r.name
+        and p.table_name = r.table_name
+        and p.polcmd in ('r', '*')
+    ) as present
+  from required_policy r
+),
+required_constraint_state as (
+  select
+    r.name,
+    exists (
+      select 1 from constraint_probe c
+      where c.conname = r.name
+        and c.table_name = r.table_name
+    ) as present
+  from required_constraint r
 )
 select jsonb_build_object(
   'readsUserContent', false,
+  'classificationCeiling', 'equivalent-candidate',
   'rolesPresent', (select ok from role_ok),
   'tables', (
     select coalesce(jsonb_object_agg(name, jsonb_build_object(
@@ -151,6 +213,33 @@ select jsonb_build_object(
     )), '{}'::jsonb)
     from fn_probe
   ),
+  'policies', (
+    select coalesce(jsonb_agg(jsonb_build_object(
+      'table', table_name,
+      'name', polname,
+      'command', polcmd,
+      'permissive', polpermissive,
+      'roles', to_jsonb(roles)
+    ) order by table_name, polname), '[]'::jsonb)
+    from policy_probe
+  ),
+  'constraints', (
+    select coalesce(jsonb_agg(jsonb_build_object(
+      'table', table_name,
+      'name', conname,
+      'type', contype,
+      'definition', definition
+    ) order by table_name, conname), '[]'::jsonb)
+    from constraint_probe
+  ),
+  'requiredPolicies', (
+    select coalesce(jsonb_object_agg(name, present), '{}'::jsonb)
+    from required_policy_state
+  ),
+  'requiredConstraints', (
+    select coalesce(jsonb_object_agg(name, present), '{}'::jsonb)
+    from required_constraint_state
+  ),
   'contracts', jsonb_build_object(
     'intendedTurn', case
       when (select oid from observe5) is null
@@ -168,6 +257,9 @@ select jsonb_build_object(
         and (select service_role_execute from observe5) is true
         and (select authenticated_execute from observe5) is false
         and (select authenticated_execute from bind) is true
+        and exists (select 1 from tbl_probe where name = 'public.ai_live_observed_items' and rls is true)
+        and exists (select 1 from required_policy_state where name = 'ai_live_observed_items_owner' and present)
+        and exists (select 1 from required_policy_state where name = 'ai_live_turn_bindings_owner' and present)
         then 'equivalent-candidate'
       when (select oid from observe4) is not null and (select oid from observe5) is null
         then 'older'
@@ -189,6 +281,12 @@ select jsonb_build_object(
         and exists (select 1 from col where table_name = 'ai_talk_origin_imports' and column_name = 'save_id')
         and exists (select 1 from col where table_name = 'ai_talk_origin_imports' and column_name = 'mapping_version')
         and (select authenticated_execute from import) is true
+        and exists (select 1 from required_policy_state where name = 'talk_origin_imports_owner' and present)
+        and exists (
+          select 1 from constraint_probe
+          where conname = 'ai_talk_origin_imports_mapping_version'
+            and definition like '%talk-origin-import/v1%'
+        )
         then 'equivalent-candidate'
       when (select oid from import) is null
         and ((select oid from ack5) is not null or (select oid from ack7) is not null)

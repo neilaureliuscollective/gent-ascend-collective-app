@@ -8,14 +8,15 @@ The next action is **permission for the read-only schema diagnostic**, not a mer
 
 | Workstream | PR | Branch | Current head role |
 |---|---|---|---|
-| Foundation | #131 | `cursor/talk-creative-conversation-5b08` | Talk + current main `544c156` (icon, Lifestyle, Health `20261015181000`) |
+| Foundation | #131 | `cursor/talk-creative-conversation-5b08` | Talk + live main `804c877` (Studio #132, icon, Lifestyle, Health `20261015181000`) |
 | Elevation | #135 | `cursor/talk-elevation-5b08` | Stacks on #131. Dock, documents, selected-work, mid-call spoken target |
-| Current main | — | `main` `544c15603e0c14069c7ebd469a294f0f4406b335` | Already contains icon, Lifestyle, Health #136 |
+| Current main / production | — | `main` `804c8770754aced1837e82dffa4a416c24baa595` | Studio production `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` on https://www.gentascend.com |
 | Health | #136 | merged on main | Published as `20261015181000_health_workspace.sql`. Do not absorb or rewrite |
+| Studio | #132 | merged on main | FFmpeg Quality setup, Fabric/package changes, Design/Film types. Keep on rollback. |
 
 Integration order: merge #131 onto current main, then #135 onto that SHA. Do not force-push.
 
-An intermediate #131 production deploy ships Talk foundation **code** on the already-released Health/Lifestyle/icon main. It does **not** ship elevation, document editing, or the shared dock. It is schema-compatible with current main **filenames** (Talk `15180000` / `15190000` sit beside Health `15181000`). It is **not** compatible with a hosted database that still lacks the Talk objects those routes call. Ordinary existing chat can survive that gap; Talk save/reopen of briefs, boards, Origin import, and voice bind cannot.
+An intermediate #131 production deploy ships Talk foundation **code** on the already-released Studio/Health/Lifestyle/icon main. It does **not** ship elevation, document editing, or the shared dock. It is schema-compatible with current main **filenames** (Talk `15180000` / `15190000` sit beside Health `15181000`). It is **not** compatible with a hosted database that still lacks the Talk objects those routes call. Ordinary existing chat can survive that gap; Talk save/reopen of briefs, boards, Origin import, and voice bind cannot. Released Studio must remain on any rollback.
 
 ## What each PR releases
 
@@ -45,7 +46,8 @@ Classification states used after the diagnostic:
 
 | State | Meaning | Action |
 |---|---|---|
-| verified equivalent | Final signature, definition markers, ACLs, policies and required constraints match | Do not replay |
+| equivalent-candidate | SQL ceiling: listed signatures, definition markers, ACLs, owner SELECT policies and named constraints match. Not a hosted proof by itself | Founder reviews the catalog JSON before promoting to verified equivalent |
+| verified equivalent | Founder judgment after reviewing the diagnostic JSON. The SQL file never emits this label | Do not replay |
 | missing | Final and older signatures/tables absent | Candidate to apply, in order, after review |
 | older | Obsolete signature or definition present; final contract absent | Stop for review; apply only the replacing file if safe |
 | partial | Some objects exist; final definition/ACL/column set incomplete | Stop for explicit review |
@@ -64,7 +66,7 @@ None of the 18 files is classified missing, older, partial, equivalent or confli
 
 ### Final contracts the diagnostic compares
 
-Object presence alone cannot satisfy these. The diagnostic reports `equivalent-candidate` only when signature, definition markers and ACLs match. Founder review of that report is what can promote a row to verified equivalent.
+Object presence alone cannot satisfy these. The diagnostic now also lists ownership/RLS policies and constraints. It reports `equivalent-candidate` only when the listed signatures, definition markers, ACLs, owner SELECT policies and named constraints match. Founder review of that JSON is what can promote a row to verified equivalent. The SQL never emits `verified equivalent`.
 
 | File | Final contract this release requires |
 |---|---|
@@ -107,7 +109,7 @@ Run this file only after explicit founder permission, in the SQL editor for **Ge
 
 `docs/releases/TALK_RELEASE_DIAGNOSTIC.sql`
 
-It inspects catalog, function definitions, privileges, policies and constraints. It does **not** read conversations, turns, creations or other user content. It does not write.
+It inspects catalog metadata only: function definitions, privileges, ownership/RLS policies, constraints and required columns. It does **not** read conversations, turns, creations or other user content. It does not write. Highest contract label is `equivalent-candidate`.
 
 Optional ledger refresh (names only; already read once):
 
@@ -148,7 +150,7 @@ Until the diagnostic is authorized and returned, Talk SQL is **unverified**, not
 - PGlite `tests/health-database.test.ts` applies every `supabase/migrations/*.sql` in filename order, including Talk observe → Health workspace → intended-turn bind, then asserts both Health `workspaces` and the 5-arg observe/`intended_turn_id` exist.
 - PGlite `tests/talk-creation-database.test.ts` and `tests/talk-origin-import-database.test.ts` still pass (not Supabase Auth).
 - Isolated `supabase db reset` unrun: Docker/Podman are not available here.
-- `tests/talk-release-diagnostic.test.ts`: missing schema reports `missing` without aborting (text-signature `has_function_privilege` still throws); 4-arg observe / pre-intended-turn bind is `older`; final 5-arg observe + `intended_turn_id` authority is `equivalent-candidate`.
+- `tests/talk-release-diagnostic.test.ts`: missing schema reports `missing` without aborting (text-signature `has_function_privilege` still throws); 4-arg observe / pre-intended-turn bind is `older`; final 5-arg observe + `intended_turn_id` + owner SELECT policies is `equivalent-candidate`; dropping the observe owner policy downgrades that contract to `partial`.
 
 ## Environment (names only)
 
@@ -191,29 +193,42 @@ Ordinary text must stay usable if voice remains blocked.
 
 ## Production target and rollback
 
-- Vercel project `gent-ascend-collective-app` has **production branch `main`** (`docs/VERCEL_SETUP.md`). `vercel.json` does not disable Git deployments. A merge of #131 onto `main` is therefore expected to **auto-create a Production deployment** of foundation Talk code (not #135). This is not a GitHub-only step.
+- Vercel project: `stutes-legacy/gent-ascend-collective-app` (`docs/VERCEL_SETUP.md`, Studio release evidence). Production URL https://www.gentascend.com.
+- Current production: main `804c8770754aced1837e82dffa4a416c24baa595` / deployment `dpl_8YH8qk6gcsga7HFBhdYwaYzWFrTo` (Studio #132). Git-linked Production deploys from `main`. `vercel.json` does not disable Git deployments.
+- A merge of #131 onto `main` is therefore expected to **auto-create a Production deployment** of foundation Talk code on top of released Studio (not #135). This is not a GitHub-only step.
 - #135 stays stacked and does not deploy until it is merged to `main` after #131.
-- Compatibility: #131 code on current main is filename-compatible with Health `15181000`. It is not schema-compatible if Talk objects are missing or older. Ordinary existing chat can survive; Talk save/import/bind cannot.
-- Rollback: revert the Talk merge commit(s) on `main` (Vercel will rebuild Production from `544c156`) or redeploy that SHA. Do not roll back hosted SQL. If an apply stops mid-sequence, leave applied versions in place and resume only after re-running the diagnostic. Never rename an existing hosted row.
+- Compatibility: #131 code on current main is filename-compatible with Health `15181000` and includes Studio FFmpeg/package/database types. It is not schema-compatible if Talk objects are missing or older. Ordinary existing chat can survive; Talk save/import/bind cannot.
+- Rollback: revert the Talk merge commit(s) on `main` (Vercel will rebuild Production from **`804c877`**) or redeploy that SHA. Do **not** roll back to Health-only `544c156` — that silently undoes Studio. Do not roll back hosted SQL. If an apply stops mid-sequence, leave applied versions in place and resume only after re-running the diagnostic. Never rename an existing hosted row.
+
+## Ordered integration and activation
+
+Keep these separately identified. None of 2–5 is authorized by a green Quality run.
+
+1. **Source release (Git):** exact-head Quality green on reconciled #131, then #135 stacked on that SHA. Merge #131 to `main` (auto Production), then #135.
+2. **Database readiness:** founder-authorized read-only diagnostic on `volpzkfsnmtztrovexcw`. Classify `contracts.*` plus `requiredPolicies` / `requiredConstraints`. Apply only `missing` files in repository order. Stop `older` / `partial` / `conflict`. No apply plan is generated from unknown schema.
+3. **Provider configuration (names only):** Production `OPENAI_API_KEY` on the Vercel project; Auth public URL/key matching Gent; hosted `AETHELIOS_TALK_CREATION_FIXTURE` unset. Voice additionally needs `AETHELIOS_LIVE_ENABLED`, founder-pilot flags, service-role observe, Realtime model access. Do not paste values.
+4. **Text functional acceptance (after 1–3, separately authorized):** one authenticated production message, streamed reply, saved conversation, reopen the same conversation. Proposed cap: one chat completion, well under $1.
+5. **Voice functional acceptance (independent, separately authorized):** microphone permission, connection, audible two-way conversation, interruption, minimize/restore, return to the same conversation. A handshake is not a conversation. Proposed cap: one 30–60s Realtime call; stop if admission is not 2xx. Keep text usable if voice is unavailable.
 
 ## Bounded live verification (after deploy, authorized separately)
 
 Text-first (proposed cap: one chat completion, well under $1):
 
 1. Sign in as the founder on `www.gentascend.com/app/aethelios`.
-2. Send one new message. Confirm a streamed reply, saved turn, and the same turn after reload.
+2. Send one new message. Confirm a streamed reply, a saved turn, and the same turn after reload. That is the text acceptance bar. A composer handshake is not enough.
 3. If Talk SQL is verified present: open a brief, change Purpose, send, save, reopen. Unrelated fields stay unchanged. If Talk SQL is still unverified, stop after step 2.
 
 Voice (proposed cap: one 30–60s Realtime call, stop if admission is not 2xx):
 
-1. Same conversation, start Live.
+1. Same conversation, grant microphone permission, start Live.
 2. If admission is not 2xx, record sanitized stage/category/providerStatus and stop. Do not retry-spend.
-3. If admitted and #135 is deployed: speak a Purpose edit, switch field to Audience while the call is up, speak a second edit, return to text, save and reopen. Only intended fields change.
+3. If admitted: confirm audible two-way speech, interrupt once, minimize and restore the dock, and return to the same conversation. If #135 is deployed, speak a Purpose edit, switch field to Audience while the call is up, speak a second edit, return to text, save and reopen. Only intended fields change.
 
 ## Smallest next authorization
 
-1. **Now:** permission to run `docs/releases/TALK_RELEASE_DIAGNOSTIC.sql` (read-only) on `volpzkfsnmtztrovexcw`.
-2. **After that report:** exact apply/skip list from missing vs older/partial/conflict vs equivalent-candidate. No apply is authorized yet.
-3. **Then, separately:** merge/deploy order. #131 merge onto `main` **will production-deploy**. #135 after that. Bounded text, then optional voice.
+1. **Now (unblocked by this pass):** permission to run `docs/releases/TALK_RELEASE_DIAGNOSTIC.sql` (read-only catalog metadata) on `volpzkfsnmtztrovexcw`. No user-content read. Not a merge, apply, deploy or paid call.
+2. **After that report (still blocked):** exact apply/skip list from missing vs older/partial/conflict vs equivalent-candidate. No apply is authorized yet.
+3. **Then, separately (blocked until 1–2 and exact-head Quality):** merge #131 onto `main`. That **will production-deploy** Talk foundation onto released Studio. Rollback target is `804c877`.
+4. **Then, separately:** merge #135. Then bounded text (under $1). Voice only after a second explicit approval (30–60s cap).
 
-Do not merge first to “get it on main” while schema is unverified. Approval for step 1 is the only blocker for the next real action.
+Do not merge first to “get it on main” while schema is unverified. Approval for step 1 is the only source-complete next action. Merge/deploy/apply/paid calls remain blocked.

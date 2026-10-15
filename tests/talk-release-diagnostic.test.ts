@@ -12,6 +12,7 @@ const unsafeGrantSql = `select has_function_privilege(
 
 type Diagnostic = {
   readsUserContent: boolean;
+  classificationCeiling: string;
   rolesPresent: boolean;
   contracts: {
     intendedTurn: string;
@@ -29,6 +30,9 @@ type Diagnostic = {
     }
   >;
   columns: { table: string; column: string }[];
+  policies: { table: string; name: string; command: string }[];
+  requiredPolicies: Record<string, boolean>;
+  requiredConstraints: Record<string, boolean>;
 };
 
 async function bootstrap(db: PGlite) {
@@ -80,9 +84,13 @@ describe('Talk release diagnostic (PGlite; not hosted schema)', () => {
     await expect(db.query(unsafeGrantSql)).rejects.toThrow();
     const report = await diagnose(db);
     expect(report.readsUserContent).toBe(false);
+    expect(report.classificationCeiling).toBe('equivalent-candidate');
     expect(report.contracts.intendedTurn).toBe('missing');
     expect(report.contracts.originImport).toBe('missing');
     expect(report.contracts.retainProvenance).toBe('missing');
+    expect(report.policies).toEqual([]);
+    expect(report.requiredPolicies.ai_live_observed_items_owner).toBe(false);
+    expect(report.requiredConstraints.ai_talk_origin_imports_mapping_version).toBe(false);
     expect(
       report.functions['public.ai_live_observe_trusted_item(uuid,uuid,text,text,uuid)']?.present,
     ).toBe(false);
@@ -151,6 +159,30 @@ describe('Talk release diagnostic (PGlite; not hosted schema)', () => {
       hasIntendedTurnAuthority: true,
     });
     expect(report.columns.some((column) => column.column === 'intended_turn_id')).toBe(true);
+    expect(report.requiredPolicies.ai_live_observed_items_owner).toBe(true);
+    expect(report.requiredPolicies.ai_live_turn_bindings_owner).toBe(true);
+    expect(
+      report.policies.some(
+        (policy) => policy.name === 'ai_live_observed_items_owner' && policy.command === 'r',
+      ),
+    ).toBe(true);
+    await db.close();
+  });
+
+  it('downgrades intended-turn to partial when owner RLS policy is absent', async () => {
+    const db = new PGlite({ extensions: { pgcrypto } });
+    await bootstrap(db);
+    await apply(db, [
+      ...observeThroughAuthority,
+      '20261015170000_architect_apps_retain_provenance.sql',
+      '20261015180000_talk_live_trusted_observe.sql',
+      '20261015190000_talk_live_bind_intended_turn.sql',
+    ]);
+    await db.exec('drop policy ai_live_observed_items_owner on public.ai_live_observed_items');
+    const report = await diagnose(db);
+    expect(report.contracts.intendedTurn).toBe('partial');
+    expect(report.requiredPolicies.ai_live_observed_items_owner).toBe(false);
+    expect(report.classificationCeiling).toBe('equivalent-candidate');
     await db.close();
   });
 });
