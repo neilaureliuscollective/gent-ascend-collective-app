@@ -1,0 +1,84 @@
+@font-face {
+  font-family: Inter;
+  src: url('/@fs/workspace/gent-ascend-collective-app/src/assets/fonts/inter-400.ttf');
+}
+@font-face {
+  font-family: Sora;
+  src: url('/@fs/workspace/gent-ascend-collective-app/src/assets/fonts/sora-600.ttf');
+  font-weight: 600;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #080d0d;
+  color: #dce9d6;
+  font:
+    15px Inter,
+    sans-serif;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  background: #17382b;
+  color: #e8c980;
+  border: 1px solid #506557;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+h1,
+h2,
+h3 {
+  font-family: Sora, sans-serif;
+}
+h1 {
+  font-size: clamp(28px, 5vw, 48px);
+}
+h1 span {
+  color: #c4912f;
+}
+.fixture-notice {
+  padding: 12px;
+  background: #251f12;
+  color: #efd6a6;
+  font-size: 12px;
+}
+label {
+  color: #dce9d6;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+  color: #dce9d6;
+  background: #080d0d;
+  border: 1px solid #506557;
+  padding: 8px;
+}
+a {
+  color: #e8c980;
+}
+summary {
+  cursor: pointer;
+}
+canvas {
+  max-width: 100%;
+}
+.eyebrow {
+  color: #e8c980;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+}
+.muted {
+  color: #aec2ad;
+}

@@ -47,7 +47,14 @@ function withRotation(page: PDFPage, cx: number, cy: number, angle: number, draw
   const sin = Math.sin(r);
   page.pushOperators(
     pushGraphicsState(),
-    concatTransformationMatrix(cos, sin, -sin, cos, cx - cos * cx + sin * cy, cy - sin * cx - cos * cy),
+    concatTransformationMatrix(
+      cos,
+      sin,
+      -sin,
+      cos,
+      cx - cos * cx + sin * cy,
+      cy - sin * cx - cos * cy,
+    ),
   );
   draw();
   page.pushOperators(popGraphicsState());
@@ -97,7 +104,9 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
     if (fonts.has(key)) continue;
     fonts.set(
       key,
-      await pdf.embedFont(await readFile(designFontPath(layer.fontId, layer.fontWeight)), { subset: true }),
+      await pdf.embedFont(await readFile(designFontPath(layer.fontId, layer.fontWeight)), {
+        subset: true,
+      }),
     );
   }
   const lookup = new Map(assets.map((asset) => [`${asset.kind}:${asset.id}`, asset]));
@@ -199,10 +208,16 @@ async function drawLayer(
   if (layer.type === 'svg') {
     const markup = sanitizeSvg(layer.markup);
     if (document.label) {
-      withRotation(page, cx, cy, layer.rotation, () => drawVectorSvg(page, markup, { x, y, width, height, opacity }));
+      withRotation(page, cx, cy, layer.rotation, () =>
+        drawVectorSvg(page, markup, { x, y, width, height, opacity }),
+      );
       return;
     }
-    const png = await rasterizeSvgMarkup(markup, Math.max(1, Math.round(width * (document.page.ppi / 72))), Math.max(1, Math.round(height * (document.page.ppi / 72))));
+    const png = await rasterizeSvgMarkup(
+      markup,
+      Math.max(1, Math.round(width * (document.page.ppi / 72))),
+      Math.max(1, Math.round(height * (document.page.ppi / 72))),
+    );
     const image = await pdf.embedPng(png);
     withRotation(page, cx, cy, layer.rotation, () => {
       page.drawImage(image, { x, y, width, height, opacity });
@@ -215,7 +230,9 @@ async function drawLayer(
   }
   const fontKey = `${layer.fontId}:${layer.fontWeight}`;
   if (!document.label && !fonts.get(fontKey))
-    throw new Error(`Missing font: ${layer.fontId} ${layer.fontWeight}. Studio does not substitute another typeface.`);
+    throw new Error(
+      `Missing font: ${layer.fontId} ${layer.fontWeight}. Studio does not substitute another typeface.`,
+    );
   const kit = await loadDesignFont(layer.fontId, layer.fontWeight);
   const wrapped = wrapText(layer, kit, width / 72);
   withRotation(page, cx, cy, layer.rotation, () => {
@@ -257,7 +274,10 @@ function drawGlyphRun(
     const path = glyph.path.toSVG();
     if (path) {
       // Font paths are y-up. drawSvgPath also flips SVG y-down, so pre-flip to keep glyphs upright.
-      page.pushOperators(pushGraphicsState(), concatTransformationMatrix(scale, 0, 0, -scale, cursor, input.y));
+      page.pushOperators(
+        pushGraphicsState(),
+        concatTransformationMatrix(scale, 0, 0, -scale, cursor, input.y),
+      );
       page.drawSvgPath(path, { x: 0, y: 0, color: input.color, opacity: input.opacity });
       page.pushOperators(popGraphicsState());
     }

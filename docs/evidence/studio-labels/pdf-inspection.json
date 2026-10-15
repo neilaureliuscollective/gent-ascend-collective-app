@@ -1,0 +1,86 @@
+[
+  {
+    "file": "synthetic-label.pdf",
+    "sha256": "6ad7f68d1851a171c4b3f8312fa5da69779f72729714284c153ba3b82ed0f021",
+    "bytes": 18647,
+    "mediaPoints": {
+      "x": 0,
+      "y": 0,
+      "width": 351.496062992126,
+      "height": 181.41732283464566
+    },
+    "trimPoints": {
+      "x": 5.669291338582677,
+      "y": 5.669291338582677,
+      "width": 340.15748031496065,
+      "height": 170.07874015748033
+    },
+    "bleedPoints": {
+      "x": 0,
+      "y": 0,
+      "width": 351.496062992126,
+      "height": 181.41732283464566
+    },
+    "text": "outlined glyph paths; no PDF font objects",
+    "logo": "vector paths; no raster image XObjects",
+    "color": "RGB operators",
+    "supplierApproval": false,
+    "fixture": true
+  },
+  {
+    "file": "desktop-download.pdf",
+    "sha256": "9caf54051373fce494ec0ce77dd7b1b5629c30eb5aeff7899800ea4c277525a8",
+    "bytes": 17984,
+    "mediaPoints": {
+      "x": 0,
+      "y": 0,
+      "width": 351.496062992126,
+      "height": 181.41732283464566
+    },
+    "trimPoints": {
+      "x": 5.669291338582677,
+      "y": 5.669291338582677,
+      "width": 340.15748031496065,
+      "height": 170.07874015748033
+    },
+    "bleedPoints": {
+      "x": 0,
+      "y": 0,
+      "width": 351.496062992126,
+      "height": 181.41732283464566
+    },
+    "text": "outlined glyph paths; no PDF font objects",
+    "logo": "vector paths; no raster image XObjects",
+    "color": "RGB operators",
+    "supplierApproval": false,
+    "fixture": true
+  },
+  {
+    "file": "fold-download.pdf",
+    "sha256": "9edbebca789e0b0a7a610047a09a05e8568617d9caf24ab5f22b7d1b7d196b30",
+    "bytes": 17984,
+    "mediaPoints": {
+      "x": 0,
+      "y": 0,
+      "width": 351.496062992126,
+      "height": 181.41732283464566
+    },
+    "trimPoints": {
+      "x": 5.669291338582677,
+      "y": 5.669291338582677,
+      "width": 340.15748031496065,
+      "height": 170.07874015748033
+    },
+    "bleedPoints": {
+      "x": 0,
+      "y": 0,
+      "width": 351.496062992126,
+      "height": 181.41732283464566
+    },
+    "text": "outlined glyph paths; no PDF font objects",
+    "logo": "vector paths; no raster image XObjects",
+    "color": "RGB operators",
+    "supplierApproval": false,
+    "fixture": true
+  }
+]

@@ -1,6 +1,6 @@
 # Studio supplier labels
 
-Implementation branch: `codex/studio-supplier-labels`, based on main `f8887d3976ae8f328583a21923fe289d7ef6e9b0`. Work in progress; acceptance receipt below will be updated before review.
+Implementation branch: `codex/studio-supplier-labels`, based on main `f8887d3976ae8f328583a21923fe289d7ef6e9b0`. Draft review implementation; acceptance and infrastructure limits are recorded below.
 
 ## Ownership audit (2026-10-15)
 
@@ -32,3 +32,27 @@ SVG import now parses XML with bounded `saxes` and rejects scripts, events, refe
 - https://help.supliful.com/en/articles/8727396-label-content-requirements-for-dietary-supplements and https://help.supliful.com/en/articles/8727371-label-content-requirements-for-personal-care-and-beauty-products — category-specific content must come from approved supplier facts.
 
 Technical preflight is distinct from supplier approval. This is RGB artwork, not CMYK/PDF-X/foil. Marketing mockups stay separate. Exact source/profile review, supplier approval, real model quality and hosted Auth/Storage/worker acceptance remain separate gates.
+
+## Acceptance receipt
+
+Implemented and locally verified; not activated for hosted manufacturing use.
+
+- `npm run lint`, `npm run typecheck`, `npx next build`, `npm run db:ledger`, `git diff --check`: passed.
+- Targeted Design/label/runtime tests: 47 passed, including mocked model acceptance/rejection, owner denial before provider calls, explicit consent, protected edits, undo/redo, preflight, XML security, vector PDF and database trigger behavior.
+- Full units: 1,044 passed, three existing host-dependent failures. Architect's disposable container cannot read `/opt/construct-runner.mjs`; two existing Film tests fail FFmpeg `xfade` with frame rate `1/0`. These are not suppressed or labeled green. The earlier three `/opt/cursor` output-path failures were rerun using the existing `STUDIO_EVIDENCE_DIR` override.
+- Desktop 1440×1000 and Fold 344×882: both full synthetic browser journeys passed. Capture includes import → create → edit → undo/redo → save → reload → preflight → download → protected copy. [Evidence](evidence/studio-labels/README.md).
+- Existing built-route Design/Film browser regressions: 3 passed at phone, Fold and desktop widths.
+- Three PDFs independently inspected by `node scripts/inspect-studio-labels.mjs`: exact boxes, RGB, outlined glyphs, vector-logo paths, no raster image/font objects, <10 MB. Downloaded PDF raster proof visually inspected; matrix reservation is blank in output. Canvas guides are preview-only.
+- Built `/api/studio/label` unauthenticated preflight request returns 401. This is anonymous route protection, not authenticated acceptance.
+- Standard `npm run build` remains blocked in its existing Mirror prebuild download: Google Storage DNS failure with Node, HTTP 403 through curl. Separate optimized compilation passed; the missing Mirror model is not fabricated or bypassed in the standard build.
+- Local Supabase CLI startup tried its configured ECR and GHCR image sources. ECR returned Forbidden; GHCR downloaded images but the Postgres layer failed with `no space left on device`. Real local Auth/PostgREST/Storage acceptance was therefore not run. No hosted environment was substituted.
+
+## Remaining activation and review
+
+1. Review the draft PR and actual SKU profile against the current supplier template. No exact supplier SKU, required product text, or approved uploaded SVG has been supplied. Profiles are designer-prepared mappings; native AI/PDF template interpretation is not implemented. Supported SVG is deliberately bounded; expand unsupported art explicitly. The repository's approved raster master is preserved and not replaced by the fixture logo.
+2. In an authorized environment, apply the existing pending Studio migrations through `20261019010000` plus `20261020010000_studio_label_protection.sql`. The latter was created with `supabase migration new` then ordered after existing future-dated Studio files. Verify ordinary owner login, cross-account denial, save/reopen, freeze/export and worker restart against real Auth/Storage.
+3. Accept the existing model connection with explicitly authorized calls and representative briefs. Mocked structured responses prove contracts only; no model-quality claim is made. Deterministic creation requires no provider call.
+4. Commission the existing render/storage path separately where needed. This branch changes no hosted flags or credentials and performs no manufacturing upload, main merge or deployment.
+5. Check physical Fold/desktop keyboard/pointer behavior, supplier proof and actual print color. Technical preflight never means Supliful approval.
+
+Talk #131/#135/#139 and combined compatibility `4ca97578deaccf20a135a67a1dbb1e2efbb68758` remain owned by their completed reconciliation. Preserve their optional conversationId/creationIds draft contract when integrating; it does not supply label production metadata. This branch adds only the explicit versioned file receiver in Studio.

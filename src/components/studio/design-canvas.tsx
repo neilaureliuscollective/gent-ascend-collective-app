@@ -36,9 +36,14 @@ function structureKey(document: DesignDocument) {
         layer.visible,
         layer.locked,
         layer.name,
-        layer.type === 'text' ? `${layer.content}:${layer.fontId}:${layer.fontWeight}:${layer.align}:${layer.fontSize}` : '',
-        layer.type === 'svg' ? layer.markup.length : '',
-        layer.type === 'image' ? `${layer.assetId}:${layer.crop.x}:${layer.crop.y}:${layer.crop.width}:${layer.crop.height}` : '',
+        layer.type === 'text'
+          ? `${layer.content}:${layer.fontId}:${layer.fontWeight}:${layer.align}:${layer.fontSize}`
+          : '',
+        layer.type === 'svg' ? layer.markup : '',
+        'fill' in layer ? layer.fill : '',
+        layer.type === 'image'
+          ? `${layer.assetId}:${layer.crop.x}:${layer.crop.y}:${layer.crop.width}:${layer.crop.height}`
+          : '',
       ].join(':'),
     ),
   ].join('|');
@@ -68,6 +73,7 @@ export function DesignCanvas({
   const pageRef = useRef(document.page);
   const documentRef = useRef(document);
   const onSelectRef = useRef(onSelect);
+  const selectedRef = useRef(selectedId);
   const onChangeRef = useRef(onChangeLayer);
   const onChangesRef = useRef(onChangeLayers);
   const [ready, setReady] = useState(0);
@@ -76,9 +82,24 @@ export function DesignCanvas({
     pageRef.current = document.page;
     documentRef.current = document;
     onSelectRef.current = onSelect;
+    selectedRef.current = selectedId;
     onChangeRef.current = onChangeLayer;
     onChangesRef.current = onChangeLayers;
   });
+
+  useEffect(() => {
+    const container = host.current?.closest('.studio-canvas-column');
+    if (!container) return;
+    let width = container.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (container.clientWidth === width) return;
+      width = container.clientWidth;
+      painted.current = '';
+      setReady((value) => value + 1);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,10 +125,14 @@ export function DesignCanvas({
         cornerStrokeColor: '#050706',
       });
       const selected = () =>
-        onSelectRef.current(((canvas.getActiveObject() as { layerId?: string } | undefined)?.layerId) ?? null);
+        onSelectRef.current(
+          (canvas.getActiveObject() as { layerId?: string } | undefined)?.layerId ?? null,
+        );
       canvas.on('selection:created', selected);
       canvas.on('selection:updated', selected);
-      canvas.on('selection:cleared', () => onSelectRef.current(null));
+      canvas.on('selection:cleared', () => {
+        if (!skip.current) onSelectRef.current(null);
+      });
       canvas.on('object:modified', () => {
         if (skip.current) return;
         const target = canvas.getActiveObject() as FabricObject | undefined;
@@ -140,18 +165,26 @@ export function DesignCanvas({
     }
     const gen = ++generation.current;
     skip.current = true;
-    void paintDocument(canvas, fabric, document, imageUrl, gen, generation, host.current).then(() => {
-      if (gen !== generation.current) return;
-      painted.current = key;
-      skip.current = false;
-      canvas.requestRenderAll();
-    });
+    void paintDocument(canvas, fabric, document, imageUrl, gen, generation, host.current).then(
+      () => {
+        if (gen !== generation.current) return;
+        painted.current = key;
+        const selected = canvas
+          .getObjects()
+          .find((object) => (object as FabricObject).layerId === selectedRef.current);
+        if (selected) canvas.setActiveObject(selected);
+        skip.current = false;
+        canvas.requestRenderAll();
+      },
+    );
   }, [document, imageUrl, ready]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || skip.current) return;
-    const match = canvas.getObjects().find((object) => (object as FabricObject).layerId === selectedId);
+    const match = canvas
+      .getObjects()
+      .find((object) => (object as FabricObject).layerId === selectedId);
     if (selectedId && match && canvas.getActiveObject() !== match) {
       skip.current = true;
       canvas.setActiveObject(match);
@@ -260,12 +293,12 @@ async function paintDocument(
   const bleedY = px(document.page.bleed.top);
   const width = trimW + bleedX + px(document.page.bleed.right);
   const height = trimH + bleedY + px(document.page.bleed.bottom);
-  const max = Math.min(host?.parentElement?.clientWidth || 720, 900);
+  const max = Math.min((host?.closest('.studio-canvas-column')?.clientWidth ?? 744) - 24, 900);
   const zoom = Math.min(1, max / Math.max(width, 1));
   canvas.setDimensions({ width: Math.round(width * zoom), height: Math.round(height * zoom) });
   canvas.setZoom(zoom);
-  canvas.backgroundColor = document.page.background;
   canvas.clear();
+  canvas.backgroundColor = document.page.background;
   const made = new Map<string, FabricObject>();
   for (const layer of document.layers) {
     if (gen !== generation.current) return;
@@ -299,10 +332,44 @@ async function paintDocument(
     if (!object || layer.parentId || added.has(layer.id)) continue;
     canvas.add(object);
   }
+  if (document.label) {
+    const region = document.label.profile.matrix;
+    canvas.add(
+      new fabric.Rect({
+        originX: 'left',
+        originY: 'top',
+        left: bleedX + px(region.x),
+        top: bleedY + px(region.y),
+        width: px(region.width),
+        height: px(region.height),
+        fill: 'transparent',
+        stroke: '#AA4444',
+        strokeDashArray: [5, 4],
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      }),
+    );
+    canvas.add(
+      new fabric.Text('Reserved', {
+        originX: 'left',
+        originY: 'top',
+        left: bleedX + px(region.x),
+        top: bleedY + px(region.y),
+        fontSize: Math.max(8, px(region.width) / 5),
+        fill: '#AA4444',
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      }),
+    );
+  }
   const widthPx = trimW;
   const heightPx = trimH;
   const guide = (left: number, top: number, w: number, h: number, stroke: string) =>
     new fabric.Rect({
+      originX: 'left',
+      originY: 'top',
       left,
       top,
       width: Math.max(1, w),
@@ -388,7 +455,9 @@ async function makeObject(
   if (layer.type === 'svg') {
     try {
       const parsed = await fabric.loadSVGFromString(sanitizeSvg(layer.markup));
-      const objects = (parsed.objects ?? []).filter((object): object is NonNullable<typeof object> => Boolean(object));
+      const objects = (parsed.objects ?? []).filter(
+        (object): object is NonNullable<typeof object> => Boolean(object),
+      );
       const grouped = fabric.util.groupSVGElements(objects, parsed.options) as FabricObject;
       grouped.set({
         ...common,

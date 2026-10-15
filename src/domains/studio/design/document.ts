@@ -1,13 +1,6 @@
 import { z } from 'zod';
 import { labelMetadataSchema } from '../label/contract';
-import {
-  DEFAULT_PPI,
-  MAX_PPI,
-  MIN_PPI,
-  convertLength,
-  roundUnit,
-  type DesignUnit,
-} from './units';
+import { DEFAULT_PPI, MAX_PPI, MIN_PPI, convertLength, roundUnit, type DesignUnit } from './units';
 import { designFontIds, type DesignFontId } from './fonts';
 import { sanitizeSvg } from './sanitize';
 
@@ -147,16 +140,25 @@ export const designDocumentSchema = z
   .superRefine((document, ctx) => {
     const ids = new Set<string>();
     for (const layer of document.layers) {
-      if (ids.has(layer.id))
-        ctx.addIssue({ code: 'custom', message: 'Layer IDs must be unique.' });
+      if (ids.has(layer.id)) ctx.addIssue({ code: 'custom', message: 'Layer IDs must be unique.' });
       ids.add(layer.id);
-      if (layer.parentId && !document.layers.some((item) => item.id === layer.parentId && item.type === 'group'))
-        ctx.addIssue({ code: 'custom', message: `Layer ${layer.name} points at an unknown group.` });
+      if (
+        layer.parentId &&
+        !document.layers.some((item) => item.id === layer.parentId && item.type === 'group')
+      )
+        ctx.addIssue({
+          code: 'custom',
+          message: `Layer ${layer.name} points at an unknown group.`,
+        });
       const visited = new Set([layer.id]);
       let parent = layer.parentId;
       while (parent) {
-        if (visited.has(parent)) { ctx.addIssue({code:'custom',message:'Layer groups cannot form cycles.'}); break; }
-        visited.add(parent); parent = document.layers.find(item => item.id === parent)?.parentId ?? null;
+        if (visited.has(parent)) {
+          ctx.addIssue({ code: 'custom', message: 'Layer groups cannot form cycles.' });
+          break;
+        }
+        visited.add(parent);
+        parent = document.layers.find((item) => item.id === parent)?.parentId ?? null;
       }
       if (layer.parentId === layer.id)
         ctx.addIssue({ code: 'custom', message: 'A layer cannot parent itself.' });
