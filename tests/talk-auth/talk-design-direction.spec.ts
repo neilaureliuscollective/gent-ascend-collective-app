@@ -164,7 +164,6 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   expect(current?.content.selectedDirectionId).toBe('direction-c');
   expect(current?.version).toBe(3);
   expect(current?.id).not.toBe(versionTwoId);
-  expect(current?.source_turn_id).toBe(requestId);
   expect(current?.content.directions.find((item) => item.id === 'direction-a')?.name).toBe(
     'Graphite Chamber',
   );
@@ -173,12 +172,15 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   );
   const history = await owner
     .from('ai_talk_creations')
-    .select('id,version,superseded_by,content')
+    .select('id,version,superseded_by,content,source_turn_id')
     .eq('conversation_id', conversation)
     .eq('kind', 'board');
   expect(history.error).toBeNull();
   const earlier = history.data?.find((item) => item.id === versionTwoId);
   expect(earlier?.superseded_by).toBe(current?.id);
+  // The save RPC preserves the lineage's original source turn across versions.
+  expect(earlier?.source_turn_id).toBeTruthy();
+  expect(current?.source_turn_id).toBe(earlier?.source_turn_id);
   const earlierBoard = designBoardContentSchema.parse(earlier?.content);
   expect(current?.content.directions.find((item) => item.id === 'direction-c')?.tokens.colors).not.toEqual(
     earlierBoard.directions.find((item) => item.id === 'direction-c')?.tokens.colors,
@@ -193,7 +195,7 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   expect(reloaded.status).toBe(200);
   const reloadedCurrent = reloaded.body.creations.find((item) => !item.superseded_by);
   expect(reloadedCurrent).toMatchObject({
-    id: refinedId, version: 3, superseded_by: null, source_turn_id: requestId,
+    id: refinedId, version: 3, superseded_by: null, source_turn_id: current?.source_turn_id,
   });
   expect(reloadedCurrent?.content).toEqual(current!.content);
   await page.locator('[data-kind="board"]').getByRole('button', { name: 'Open', exact: true }).click();
