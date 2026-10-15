@@ -1,5 +1,8 @@
 -- Additive Health workspace persistence. Does not activate ingestion or Health AI.
 -- Architect Apps compilation is not shipped here; this stores owner workspace state only.
+-- Timestamp 20261015181000 avoids colliding with Talk's unmerged 20261015180000_talk_live_trusted_observe.sql.
+-- This file was never applied on main or hosted projects. Local checkouts of the first Health commit
+-- that applied 20261015180000 should reset the isolated database rather than rewrite hosted history.
 create table health_private.workspaces (
   id uuid primary key,
   person_id uuid not null references public.persons(id),
@@ -28,6 +31,7 @@ create table health_private.workspace_revisions (
   revision integer not null,
   settings jsonb not null,
   progress jsonb,
+  architect jsonb,
   created_at timestamptz not null default now(),
   unique(person_id,workspace_id,revision),
   foreign key(person_id,workspace_id) references health_private.workspaces(person_id,id) on delete cascade
@@ -80,7 +84,14 @@ create or replace function public.health_export_history() returns jsonb language
  'quotaReservations',coalesce((select jsonb_agg(to_jsonb(u)-'person_id') from health_private.usage u),'[]'),
  'processing',coalesce((select jsonb_agg(jsonb_build_object('request',request,'kind',kind,'created_at',created_at)) from health_private.receipts),'[]'),
  'workspaces',coalesce((select jsonb_agg(to_jsonb(w)-'person_id'-'architect') from health_private.workspaces w),'[]'),
- 'workspaceRevisions',coalesce((select jsonb_agg(jsonb_build_object('workspace_id',workspace_id,'revision',revision,'created_at',created_at)) from health_private.workspace_revisions),'[]'))
+ 'workspaceRevisions',coalesce((select jsonb_agg(jsonb_build_object(
+   'workspace_id',workspace_id,
+   'revision',revision,
+   'settings',settings,
+   'progress',progress,
+   'architect',architect,
+   'created_at',created_at
+ ) order by created_at) from health_private.workspace_revisions),'[]'))
  where auth.uid() is not null
 $$;
 
@@ -128,8 +139,8 @@ begin
         (p->>'id')::uuid, own, p->>'foundation', p->>'title', coalesce((p->>'sample')::boolean,false),
         p->'settings', nullif(p->'progress','null'::jsonb), nullif(p->'architect','null'::jsonb), now()
       ) returning * into w;
-      insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress)
-      values(own,w.id,1,w.settings,w.progress);
+      insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress,architect)
+      values(own,w.id,1,w.settings,w.progress,w.architect);
     else
       if w.version<>(p->>'expected')::integer then raise exception 'Health workspace changed' using errcode='40001'; end if;
       if w.foundation is distinct from p->>'foundation' then raise exception 'Health workspace foundation cannot change' using errcode='40001'; end if;
@@ -140,13 +151,11 @@ begin
         progress=nullif(p->'progress','null'::jsonb),
         architect=coalesce(nullif(p->'architect','null'::jsonb),architect),
         version=version+1,
-        working_revision=coalesce((p->'architect'->>'workingRevision')::integer, working_revision),
-        last_working_revision=greatest(last_working_revision, coalesce((p->'architect'->>'workingRevision')::integer, last_working_revision)),
         last_opened_at=case when coalesce((p->>'open')::boolean,false) then now() else last_opened_at end,
         updated_at=now()
       where id=w.id and person_id=own returning * into w;
-      insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress)
-      values(own,w.id,w.version,w.settings,w.progress);
+      insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress,architect)
+      values(own,w.id,w.version,w.settings,w.progress,w.architect);
       if (select count(*) from health_private.workspace_revisions where person_id=own and workspace_id=w.id)>20 then
         delete from health_private.workspace_revisions
         where id in (
@@ -165,12 +174,17 @@ begin
     if (select count(*) from health_private.workspaces where person_id=own and status='active')>=40 then
       raise exception 'Health workspace limit';
     end if;
-    insert into health_private.workspaces(id,person_id,foundation,title,sample,settings,progress)
-    values((p->>'id')::uuid,own,w.foundation,p->>'title',w.sample,w.settings,w.progress)
+    insert into health_private.workspaces(id,person_id,foundation,title,sample,settings,progress,architect)
+    values(
+      (p->>'id')::uuid,own,w.foundation,p->>'title',w.sample,
+      coalesce(p->'settings', w.settings),
+      coalesce(nullif(p->'progress','null'::jsonb), w.progress),
+      coalesce(nullif(p->'architect','null'::jsonb), w.architect)
+    )
     returning * into w;
-    insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress)
-    values(own,w.id,1,w.settings,w.progress);
-    result:=jsonb_build_object('id',w.id,'version',1);
+    insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress,architect)
+    values(own,w.id,1,w.settings,w.progress,w.architect);
+    result:=jsonb_build_object('id',w.id,'version',1,'includeDraft',coalesce((p->>'includeDraft')::boolean,false));
   elsif p_kind='workspace_restore' then
     select * into w from health_private.workspaces where id=(p->>'id')::uuid and person_id=own for update;
     if not found or w.version<>(p->>'expected')::integer then raise exception 'Health workspace changed' using errcode='40001'; end if;
@@ -180,13 +194,50 @@ begin
     update health_private.workspaces set
       settings=previous.settings,
       progress=previous.progress,
+      architect=previous.architect,
       version=version+1,
       last_working_revision=greatest(last_working_revision,previous.revision),
       updated_at=now()
     where id=w.id returning * into w;
-    insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress)
-    values(own,w.id,w.version,w.settings,w.progress);
+    insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress,architect)
+    values(own,w.id,w.version,w.settings,w.progress,w.architect);
     result:=jsonb_build_object('id',w.id,'version',w.version,'restored',previous.revision);
+  elsif p_kind='workspace_architect' then
+    select * into w from health_private.workspaces where id=(p->>'id')::uuid and person_id=own for update;
+    if not found or w.version<>(p->>'expected')::integer then raise exception 'Health workspace changed' using errcode='40001'; end if;
+    if p->>'action'='compile' then
+      if jsonb_typeof(p->'architect') is distinct from 'object' then raise exception 'Invalid Architect attempt'; end if;
+      update health_private.workspaces set
+        architect=p->'architect',
+        updated_at=now()
+      where id=w.id returning * into w;
+      result:=jsonb_build_object('id',w.id,'version',w.version,'workingRevision',w.working_revision,'status',w.architect->>'status');
+    elsif p->>'action'='accept' then
+      if w.architect is null
+        or w.architect->>'status' is distinct from 'ready'
+        or w.architect->>'isolation' is distinct from 'docker'
+        or coalesce((w.architect->>'previewOk')::boolean,false) is not true
+        or coalesce(w.architect->>'sourceHash','') !~ '^[0-9a-f]{64}$'
+        or coalesce(w.architect->>'artifactHash','') !~ '^[0-9a-f]{64}$'
+      then
+        raise exception 'There is no verified customization to accept' using errcode='40001';
+      end if;
+      update health_private.workspaces set
+        architect=jsonb_set(jsonb_set(w.architect,'{status}','"accepted"'),'{verified}','true'),
+        working_revision=greatest(working_revision, coalesce((w.architect->>'attemptedRevision')::integer, working_revision)),
+        last_working_revision=greatest(last_working_revision, coalesce((w.architect->>'attemptedRevision')::integer, last_working_revision)),
+        version=version+1,
+        updated_at=now()
+      where id=w.id returning * into w;
+      insert into health_private.workspace_revisions(person_id,workspace_id,revision,settings,progress,architect)
+      values(own,w.id,w.version,w.settings,w.progress,w.architect);
+      result:=jsonb_build_object('id',w.id,'version',w.version,'workingRevision',w.working_revision,'verified',true);
+    elsif p->>'action'='reopen' then
+      update health_private.workspaces set last_opened_at=now() where id=w.id returning * into w;
+      result:=jsonb_build_object('id',w.id,'version',w.version,'workingRevision',w.working_revision);
+    else
+      raise exception 'Unsupported Health operation';
+    end if;
   elsif p_kind='workspace_bridge' then
     select * into w from health_private.workspaces where id=(p->>'id')::uuid and person_id=own for update;
     if not found or w.version<>(p->>'expected')::integer then raise exception 'Health workspace changed' using errcode='40001'; end if;

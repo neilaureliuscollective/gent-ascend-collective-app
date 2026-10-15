@@ -314,6 +314,11 @@ export function formatTimer(ms: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+export function nextRoutineStep(progress: RoutineProgress) {
+  const plan = progress.pending ?? progress.accepted;
+  return plan.steps.find((step) => step.included && !progress.completed.includes(step.id)) ?? null;
+}
+
 function clampMinutes(value: number) {
   if (!Number.isFinite(value)) return 20;
   return Math.min(90, Math.max(4, Math.round(value)));

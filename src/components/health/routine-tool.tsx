@@ -4,6 +4,7 @@ import {
   completeRoutineStep,
   eveningCatalog,
   formatTimer,
+  nextRoutineStep,
   pauseRoutineTimer,
   proposeConstraintChange,
   resumeRoutineTimer,
@@ -28,18 +29,59 @@ export function RoutineTool({
   onSelect: (next: SelectedElement) => void;
 }) {
   const plan = progress.pending ?? progress.accepted;
+  const next = nextRoutineStep(progress);
+  const nextTimer = next && progress.timer?.stepId === next.id ? progress.timer : null;
   return (
     <div className="health-tool" data-tool="evening-routine">
-      <header className="health-tool-header">
-        <p className="health-kicker">Everyday sequence</p>
-        <h2>Finish at {progress.constraint.finishAt}, then cook with a real time limit.</h2>
+      <section className="health-next" aria-label="Current evening action">
+        <p className="health-kicker">Tonight</p>
+        <h2>{next ? next.title : 'Evening sequence complete'}</h2>
         <p>
-          {plan.explanation} Timers run in this workspace. Calendar, purchases, messages and devices
-          stay unavailable until a real connection exists.
+          Finish at {progress.constraint.finishAt} · {plan.usedMinutes} of{' '}
+          {progress.constraint.availableMinutes} minutes packed.
         </p>
-      </header>
-      <fieldset className="health-constraints" disabled={blocked}>
-        <legend>Time constraints</legend>
+        {next?.kind === 'timer' && (
+          <p className="health-next-timer" aria-live="polite">
+            {nextTimer ? formatTimer(nextTimer.remainingMs) : `${next.scheduledMinutes}:00`}
+          </p>
+        )}
+        {next && (
+          <div className="health-next-actions">
+            {next.kind === 'timer' && (
+              <button
+                disabled={blocked || progress.completed.includes(next.id)}
+                onClick={() => {
+                  onSelect({ kind: 'timer', id: next.id });
+                  if (!nextTimer)
+                    onChange({
+                      ...progress,
+                      activeStepId: next.id,
+                      timer: startRoutineTimer(next.id, next.scheduledMinutes),
+                    });
+                  else if (nextTimer.running)
+                    onChange({ ...progress, timer: pauseRoutineTimer(nextTimer) });
+                  else onChange({ ...progress, timer: resumeRoutineTimer(nextTimer) });
+                }}
+              >
+                {!nextTimer
+                  ? 'Start timer'
+                  : nextTimer.running
+                    ? `Pause ${formatTimer(nextTimer.remainingMs)}`
+                    : nextTimer.remainingMs <= 0
+                      ? 'Timer finished'
+                      : `Resume ${formatTimer(nextTimer.remainingMs)}`}
+              </button>
+            )}
+            <button
+              disabled={blocked || progress.completed.includes(next.id)}
+              onClick={() => onChange(completeRoutineStep(progress, next.id))}
+            >
+              Mark done
+            </button>
+          </div>
+        )}
+      </section>
+      <div className="health-constraint-bar">
         <label>
           Available minutes
           <input
@@ -48,6 +90,7 @@ export function RoutineTool({
             max={90}
             value={progress.constraint.availableMinutes}
             aria-label="Available minutes"
+            disabled={blocked}
             onChange={(e) =>
               onChange(
                 proposeConstraintChange(progress, { availableMinutes: Number(e.target.value) }),
@@ -62,16 +105,17 @@ export function RoutineTool({
             type="time"
             value={progress.constraint.finishAt}
             aria-label="Finish time"
+            disabled={blocked}
             onChange={(e) =>
               onChange(proposeConstraintChange(progress, { finishAt: e.target.value }))
             }
             onFocus={() => onSelect({ kind: 'constraint', id: 'finish' })}
           />
         </label>
-      </fieldset>
+      </div>
       {progress.pending && (
         <div className="health-proposal" role="status">
-          <p>Proposed change. Nothing is applied until you accept.</p>
+          <p>Proposed sequence. The current order stays until you accept.</p>
           <ul>
             {progress.pending.dropped.map((item) => (
               <li key={item.id}>
@@ -111,7 +155,12 @@ export function RoutineTool({
           const active = selected?.id === step.id;
           const timer = progress.timer?.stepId === step.id ? progress.timer : null;
           return (
-            <li key={step.id} data-included={step.included} data-selected={active}>
+            <li
+              key={step.id}
+              data-included={step.included}
+              data-selected={active}
+              data-next={next?.id === step.id}
+            >
               <button
                 type="button"
                 className="health-step"
@@ -125,7 +174,7 @@ export function RoutineTool({
                   {done ? ' · done' : ''}
                 </small>
               </button>
-              {step.included && (
+              {step.included && next?.id !== step.id && (
                 <div className="health-step-actions">
                   {step.kind === 'timer' && (
                     <button
@@ -160,41 +209,38 @@ export function RoutineTool({
                   </button>
                 </div>
               )}
-              {active && (
-                <label>
-                  Preparation note
-                  <textarea
-                    maxLength={400}
-                    value={progress.notes[step.id] ?? step.note}
-                    disabled={blocked}
-                    onChange={(e) =>
-                      onChange({
-                        ...progress,
-                        notes: { ...progress.notes, [step.id]: e.target.value },
-                      })
-                    }
-                  />
-                </label>
-              )}
             </li>
           );
         })}
       </ol>
-      <aside className="health-unavailable" aria-label="Unavailable external actions">
-        <p className="health-kicker">Not connected</p>
-        {unavailableExternalActions.map((item) => (
-          <p key={item.id}>
-            <button type="button" disabled>
-              {item.label}
-            </button>
-            <small>{item.reason}</small>
-          </p>
-        ))}
-      </aside>
+      {selected?.kind === 'step' && (
+        <label className="health-note">
+          Preparation note
+          <textarea
+            maxLength={400}
+            value={
+              progress.notes[selected.id as EveningStepId] ??
+              eveningCatalog.find((step) => step.id === selected.id)?.note ??
+              ''
+            }
+            disabled={blocked}
+            onChange={(e) =>
+              onChange({
+                ...progress,
+                notes: { ...progress.notes, [selected.id]: e.target.value },
+              })
+            }
+          />
+        </label>
+      )}
     </div>
   );
 }
 
 export function eveningStepTitle(id: EveningStepId) {
   return eveningCatalog.find((step) => step.id === id)?.title ?? id;
+}
+
+export function unavailableCopy() {
+  return unavailableExternalActions;
 }

@@ -299,5 +299,56 @@ describe('Health private schema (SQL emulation, not live Auth/Storage)', () => {
     await expect(asUser(founder, `select public.health_bridge_read('${token}')`)).rejects.toThrow(
       /unavailable/,
     );
+    const copyId = 'a3000000-0000-4000-8000-000000000021';
+    await asUser(
+      founder,
+      call('workspace_copy', {
+        id: copyId,
+        sourceId: id,
+        title: 'Evenings copy',
+        includeDraft: true,
+        settings: {
+          presentation: {
+            density: 'compact',
+            arrangement: 'sequence',
+            dateRange: false,
+            comparisonDrawer: false,
+            accent: 'quiet',
+          },
+        },
+      }),
+    );
+    const copied = (
+      await asUser(founder, `select settings from health_private.workspaces where id='${copyId}'`)
+    ).rows[0] as { settings: { presentation: { density: string } } };
+    expect(copied.settings.presentation.density).toBe('compact');
+    await asUser(
+      founder,
+      call('workspace_architect', {
+        id,
+        expected: 1,
+        action: 'compile',
+        architect: {
+          status: 'blocked',
+          isolation: 'unavailable',
+          previewOk: false,
+          verified: false,
+        },
+      }),
+    );
+    const afterCompile = (
+      await asUser(
+        founder,
+        `select working_revision from health_private.workspaces where id='${id}'`,
+      )
+    ).rows[0] as { working_revision: number };
+    expect(afterCompile.working_revision).toBe(1);
+    await expect(
+      asUser(founder, call('workspace_architect', { id, expected: 1, action: 'accept' })),
+    ).rejects.toThrow(/verified customization/);
+    const exported = (await asUser(founder, 'select public.health_export_history()')).rows[0] as {
+      health_export_history: { workspaceRevisions: { settings: unknown; progress: unknown }[] };
+    };
+    expect(exported.health_export_history.workspaceRevisions[0]?.settings).toBeTruthy();
   });
 });

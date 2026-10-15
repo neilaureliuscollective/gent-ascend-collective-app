@@ -1,10 +1,15 @@
 import { z } from 'zod';
-import type { ArchitectAttempt } from './architect-adapter';
-import { ARCHITECT_APPS_DEPENDENCY } from './architect-adapter';
+import {
+  architectAttemptSchema,
+  architectUnavailableMessage,
+  ARCHITECT_APPS_DEPENDENCY,
+  type ArchitectAttempt,
+} from './architect-adapter';
 import type { HealthWorkspaceRecord } from './workspace-model';
 import { bloodworkSettingsSchema, workspaceSettingsSchema } from './workspace-model';
 import { routineProgressSchema } from './workspace-model';
 import { healthFoundations } from './foundations';
+import type { HealthSendResult } from './save-receipts';
 
 export const purposes = ['wellness', 'records', 'ai'] as const;
 export type Purpose = (typeof purposes)[number];
@@ -149,7 +154,7 @@ export const mutationSchema = z.discriminatedUnion('kind', [
       sample: z.boolean(),
       settings: workspaceSettingsSchema,
       progress: routineProgressSchema.nullable(),
-      architect: z.unknown().nullable(),
+      architect: architectAttemptSchema.nullable(),
       open: z.boolean().optional(),
     })
     .strict(),
@@ -160,6 +165,10 @@ export const mutationSchema = z.discriminatedUnion('kind', [
       id: z.uuid(),
       sourceId: z.uuid(),
       title: z.string().trim().min(1).max(120),
+      includeDraft: z.boolean(),
+      settings: workspaceSettingsSchema.optional(),
+      progress: routineProgressSchema.nullable().optional(),
+      architect: architectAttemptSchema.nullable().optional(),
     })
     .strict(),
   z
@@ -181,6 +190,16 @@ export const mutationSchema = z.discriminatedUnion('kind', [
       fields: z.array(z.string().min(1).max(40)).max(12).optional(),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal('workspace_architect'),
+      request: z.uuid(),
+      id: z.uuid(),
+      expected: z.number().int().positive(),
+      action: z.enum(['compile', 'accept', 'reopen']),
+      instruction: z.string().trim().max(2000).optional(),
+    })
+    .strict(),
 ]);
 export type Mutation = z.infer<typeof mutationSchema>;
 export function emptyHealth(mode: HealthData['mode'] = 'signed-out'): HealthData {
@@ -198,7 +217,7 @@ export function emptyHealth(mode: HealthData['mode'] = 'signed-out'): HealthData
     workspaces: [],
     architect: {
       status: 'blocked',
-      blocker: `Dynamic compilation is blocked until Architect Apps PR #${ARCHITECT_APPS_DEPENDENCY.pr} is merged.`,
+      blocker: architectUnavailableMessage(),
       dependency: ARCHITECT_APPS_DEPENDENCY,
     },
     asOf: new Date().toISOString(),
@@ -206,5 +225,5 @@ export function emptyHealth(mode: HealthData['mode'] = 'signed-out'): HealthData
 }
 
 export type ArchitectSnapshot = HealthData['architect'];
-export type { ArchitectAttempt, HealthWorkspaceRecord };
+export type { ArchitectAttempt, HealthWorkspaceRecord, HealthSendResult };
 export { bloodworkSettingsSchema };

@@ -834,10 +834,94 @@ html[data-material='solid'] .health-orbit {
   border-left: 1px solid #2a2d2a;
 }
 .health-tool-header h2,
-.health-empty-surface h2 {
+.health-empty-surface h2,
+.health-next h2 {
   font-size: clamp(24px, 3vw, 34px);
   font-weight: 500;
   margin: 6px 0 12px;
+}
+.health-next {
+  background:
+    radial-gradient(ellipse at 0% 0%, #2f6a5522, transparent 55%),
+    linear-gradient(160deg, #16241e, #101412);
+  border: 1px solid #2f6a5566;
+  border-radius: 18px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.health-next-timer {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(36px, 5vw, 56px);
+  color: #e8c980;
+  margin: 8px 0 16px;
+  letter-spacing: -0.04em;
+}
+.health-next-actions,
+.health-constraint-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+.health-constraint-bar {
+  margin: 0 0 16px;
+}
+.health-constraint-bar label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--health-muted);
+}
+.health-note {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.health-toolbar-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.health-atelier .health-toolbar-compact fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 0;
+}
+.health-dates {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+.health-dates label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.health-empty-selection {
+  padding: 24px 8px;
+  max-width: 520px;
+}
+.health-chart-label {
+  fill: var(--health-muted);
+  font-size: 11px;
+  stroke: none;
+}
+.health-chart-line {
+  stroke: #8fceab;
+  stroke-width: 2;
+}
+.health-sequence li[data-next='true'] {
+  border-color: #c4912f66;
+}
+.health-architect details {
+  margin-top: 16px;
+  color: var(--health-muted);
+  font-size: 12px;
 }
 .health-constraints,
 .health-toolbar fieldset,
@@ -1001,6 +1085,25 @@ html[data-material='solid'] .health-orbit {
     overflow: visible;
     flex: none;
   }
+  .health-context {
+    padding: 10px 12px 8px;
+  }
+  .health-context h1 {
+    font-size: 22px;
+    margin: 2px 0 6px;
+  }
+  .health-context-actions button {
+    padding: 8px 10px;
+    min-height: 40px;
+    font-size: 12px;
+  }
+  .health-next {
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .health-next h2 {
+    font-size: 22px;
+  }
   .health-rail {
     border-right: 0;
     border-bottom: 1px solid #2a2d2a;
@@ -1027,8 +1130,12 @@ html[data-material='solid'] .health-orbit {
   .health-context {
     flex-direction: column;
   }
-  .health-constraints {
+  .health-constraints,
+  .health-constraint-bar,
+  .health-dates {
     grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
   .health-dock {
     grid-template-columns: 1fr;

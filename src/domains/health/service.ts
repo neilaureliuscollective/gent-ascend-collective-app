@@ -12,8 +12,14 @@ import {
   type Mutation,
   type SavedObservation,
 } from './schema';
-import { architectBlockedMessage, ARCHITECT_APPS_DEPENDENCY } from './architect-adapter';
-import { hostControlledValue } from './bloodwork';
+import {
+  acceptArchitectAttempt,
+  architectAttemptSchema,
+  architectUnavailableMessage,
+  ARCHITECT_APPS_DEPENDENCY,
+  requestArchitectRevision,
+} from './architect-adapter';
+import { projectBridgeObservations } from './bloodwork';
 import { sampleBloodwork, sampleProjection } from './sample';
 import { originalMime, parseLabImport } from './imports';
 import { weightKg } from './trends';
@@ -67,7 +73,7 @@ export async function readHealth(): Promise<HealthData> {
     workspaces: Array.isArray(data.workspaces) ? data.workspaces : [],
     architect: {
       status: 'blocked',
-      blocker: architectBlockedMessage(),
+      blocker: architectUnavailableMessage(),
       dependency: ARCHITECT_APPS_DEPENDENCY,
     },
     ingestionEnabled: process.env.HEALTH_INGESTION_ENABLED === 'true' && data.activation.ingestion,
@@ -363,6 +369,8 @@ export async function mutateHealth(input: Mutation) {
   } else if (input.kind === 'ask') {
     const { askHealth } = await import('./conversation');
     await askHealth(input);
+  } else if (input.kind === 'workspace_architect') {
+    await compileHealthArchitect(input);
   } else if (
     input.kind === 'workspace_save' ||
     input.kind === 'workspace_copy' ||
@@ -374,10 +382,88 @@ export async function mutateHealth(input: Mutation) {
   return readHealth();
 }
 
+function storedArchitect(value: unknown) {
+  const parsed = architectAttemptSchema.safeParse(value);
+  if (!parsed.success) return null;
+  return {
+    ...parsed.data,
+    verified: false,
+    status: parsed.data.status === 'accepted' ? ('failed' as const) : parsed.data.status,
+  };
+}
+
 function workspacePayload(input: Extract<Mutation, { kind: `workspace_${string}` }>) {
+  if (input.kind === 'workspace_save') {
+    return {
+      id: input.id,
+      expected: input.expected,
+      foundation: input.foundation,
+      title: input.title,
+      sample: input.sample,
+      settings: input.settings,
+      progress: input.progress,
+      architect: storedArchitect(input.architect),
+      open: input.open ?? false,
+    };
+  }
+  if (input.kind === 'workspace_copy') {
+    return {
+      id: input.id,
+      sourceId: input.sourceId,
+      title: input.title,
+      includeDraft: input.includeDraft,
+      settings: input.includeDraft ? input.settings : undefined,
+      progress: input.includeDraft ? input.progress : undefined,
+      architect: input.includeDraft ? storedArchitect(input.architect) : undefined,
+    };
+  }
   return Object.fromEntries(
     Object.entries(input).filter(([key]) => key !== 'kind' && key !== 'request'),
   );
+}
+
+async function compileHealthArchitect(input: Extract<Mutation, { kind: 'workspace_architect' }>) {
+  const snapshot = await readHealth();
+  const workspace = snapshot.workspaces.find((row) => row.id === input.id);
+  if (!workspace) throw new IntelligenceError('Health workspace not found.', 404);
+  if (workspace.version !== input.expected)
+    throw new IntelligenceError('This record or request changed. Reload before continuing.', 409);
+  if (input.action === 'compile') {
+    const attempt = await requestArchitectRevision({
+      workspaceId: workspace.id,
+      workingRevision: workspace.workingRevision,
+      instruction: input.instruction || '',
+      presentation: workspace.settings.presentation,
+      runtime: null,
+    });
+    await healthRpc('workspace_architect', input.request, {
+      id: input.id,
+      expected: input.expected,
+      action: 'compile',
+      architect: { ...attempt, verified: false },
+    });
+    return;
+  }
+  if (input.action === 'accept') {
+    const parsed = architectAttemptSchema.safeParse(workspace.architect);
+    if (!parsed.success || parsed.data.status !== 'ready')
+      throw new IntelligenceError('There is no verified customization to accept.', 409);
+    const accepted = acceptArchitectAttempt(parsed.data);
+    if (!accepted.verified)
+      throw new IntelligenceError('There is no verified customization to accept.', 409);
+    await healthRpc('workspace_architect', input.request, {
+      id: input.id,
+      expected: input.expected,
+      action: 'accept',
+      architect: accepted,
+    });
+    return;
+  }
+  await healthRpc('workspace_architect', input.request, {
+    id: input.id,
+    expected: input.expected,
+    action: 'reopen',
+  });
 }
 
 export async function readHealthBridge(token: string) {
@@ -409,16 +495,10 @@ export async function readHealthBridge(token: string) {
       ? session.fields
       : ['name', 'value', 'unit', 'date', 'range', 'specimen', 'method', 'flag'],
   );
-  const rows = (
-    session.sample
-      ? sampleBloodwork
-      : snapshot.observations.filter((row) => row.status === 'active')
-  ).map((row) => {
-    const hosted = hostControlledValue(row);
-    return Object.fromEntries(
-      Object.entries(hosted).filter(([key]) => key === 'id' || key === 'host' || allowed.has(key)),
-    );
-  });
+  const source = session.sample
+    ? sampleBloodwork
+    : snapshot.observations.filter((row) => row.status === 'active');
+  const rows = projectBridgeObservations(source, workspace.settings.bloodwork, allowed);
   return {
     sample: session.sample,
     workspaceId: workspace.id,

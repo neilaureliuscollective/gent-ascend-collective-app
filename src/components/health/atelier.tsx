@@ -3,18 +3,21 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ContextSheet } from '@/components/interaction/context-sheet';
 import { interpretHealthAssist } from '@/domains/health/assist';
-import type { TrustedPresentation } from '@/domains/health/architect-adapter';
 import {
-  ARCHITECT_APPS_DEPENDENCY,
-  type ArchitectAttempt,
+  architectDiagnostics,
+  architectUnavailableMessage,
+  type TrustedPresentation,
 } from '@/domains/health/architect-adapter';
+import { initialBloodworkSettings, selectMarkersByName } from '@/domains/health/bloodwork';
 import { foundationLibrary, type HealthFoundationId } from '@/domains/health/foundations';
 import {
   proposeConstraintChange,
   tickRoutineTimer,
   type RoutineProgress,
 } from '@/domains/health/routine';
-import type { HealthData, Mutation } from '@/domains/health/schema';
+import { sampleBloodwork } from '@/domains/health/sample';
+import type { HealthData, HealthSendResult, Mutation } from '@/domains/health/schema';
+import { shouldClearDraft } from '@/domains/health/save-receipts';
 import {
   createWorkspaceDraft,
   defaultBloodworkSettings,
@@ -23,7 +26,7 @@ import {
 } from '@/domains/health/workspace-model';
 import { ArchitectWorkbench } from './architect-workbench';
 import { BloodworkTool } from './bloodwork-tool';
-import { eveningStepTitle, RoutineTool } from './routine-tool';
+import { eveningStepTitle, RoutineTool, unavailableCopy } from './routine-tool';
 
 const archive: [string, string][] = [
   ['/app/health/history', 'History'],
@@ -33,6 +36,11 @@ const archive: [string, string][] = [
   ['/app/health/privacy', 'Privacy'],
 ];
 
+type PendingNav =
+  | { kind: 'saved'; id: string }
+  | { kind: 'foundation'; id: HealthFoundationId; sample?: boolean }
+  | { kind: 'restore' };
+
 export function HealthAtelier({
   data,
   send,
@@ -41,7 +49,7 @@ export function HealthAtelier({
   recovery,
 }: {
   data: HealthData;
-  send: (body?: Mutation | FormData, endpoint?: string) => Promise<void>;
+  send: (body?: Mutation | FormData, endpoint?: string) => Promise<HealthSendResult | void>;
   busy: boolean;
   blocked: boolean;
   recovery: ReactNode;
@@ -54,8 +62,14 @@ export function HealthAtelier({
   const [architect, setArchitect] = useState(false);
   const [assist, setAssist] = useState('');
   const [assistNote, setAssistNote] = useState('');
+  const [receipt, setReceipt] = useState<HealthSendResult | null>(null);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState<PendingNav | null>(null);
   const surface = useRef<HTMLElement>(null);
   const scroll = useRef(0);
+  const ownerRef = useRef(data.owner);
+  ownerRef.current = data.owner;
+  const generation = useRef(0);
   const signedIn = data.mode === 'personal';
   const lock = busy || (signedIn && blocked);
   const saved = useMemo(
@@ -65,22 +79,36 @@ export function HealthAtelier({
       ),
     [data.workspaces],
   );
-  const current = draft ?? saved.find((row) => row.id === selectedId) ?? saved[0] ?? null;
+  const stored = saved.find((row) => row.id === (draft?.id ?? selectedId)) ?? saved[0] ?? null;
+  const current = draft
+    ? stored && stored.id === draft.id
+      ? {
+          ...draft,
+          version: stored.version,
+          architect: stored.architect,
+          workingRevision: stored.workingRevision,
+          lastWorkingRevision: stored.lastWorkingRevision,
+        }
+      : draft
+    : stored;
   const dirty = Boolean(draft);
+  const savedArchitect = current ? saved.find((row) => row.id === current.id) : null;
 
   useEffect(() => {
     if (!current?.progress?.timer?.running) return;
-    const baseline = current;
+    const fenceOwner = data.owner;
+    const fenceId = current.id;
+    const fenceGeneration = generation.current;
     const id = window.setInterval(() => {
+      if (ownerRef.current !== fenceOwner || generation.current !== fenceGeneration) return;
       setDraft((workspace) => {
-        const base = workspace ?? baseline;
-        if (!base.progress?.timer) return workspace;
-        const timer = tickRoutineTimer(base.progress.timer);
-        return { ...base, progress: { ...base.progress, timer } };
+        if (!workspace || workspace.id !== fenceId || !workspace.progress?.timer) return workspace;
+        const timer = tickRoutineTimer(workspace.progress.timer);
+        return { ...workspace, progress: { ...workspace.progress, timer } };
       });
     }, 250);
     return () => window.clearInterval(id);
-  }, [current]);
+  }, [current?.id, current?.progress?.timer?.running, data.owner]);
 
   useEffect(() => {
     const node = surface.current;
@@ -100,17 +128,22 @@ export function HealthAtelier({
   }, [current?.id]);
 
   function replace(next: HealthWorkspaceRecord) {
+    generation.current += 1;
     setSelectedId(next.id);
     setDraft(next);
+  }
+
+  function openSaved(id: string) {
+    setSelectedId(id);
+    setDraft(null);
+    setArchitect(false);
+    setSection('workspace');
   }
 
   function openFoundation(foundation: HealthFoundationId, sample = false) {
     const existing = saved.find((row) => row.foundation === foundation && row.sample === sample);
     if (existing) {
-      setSelectedId(existing.id);
-      setDraft(null);
-      setArchitect(false);
-      setSection('workspace');
+      openSaved(existing.id);
       return;
     }
     const created = createWorkspaceDraft(foundation, {
@@ -119,28 +152,79 @@ export function HealthAtelier({
         (foundation === 'bloodwork-tracker' &&
           !data.observations.some((row) => row.status === 'active')),
     });
+    if (created.foundation === 'bloodwork-tracker') {
+      created.settings.bloodwork = initialBloodworkSettings(
+        created.sample ? sampleBloodwork : data.observations,
+      );
+    }
     setSelectedId(created.id);
     setDraft(created);
     setArchitect(false);
     setSection('workspace');
   }
 
+  function requestLeave(next: PendingNav) {
+    if (!dirty) {
+      applyNav(next);
+      return;
+    }
+    setPendingNav(next);
+    setLeaveOpen(true);
+  }
+
+  function applyNav(next: PendingNav) {
+    setLeaveOpen(false);
+    setPendingNav(null);
+    if (next.kind === 'saved') openSaved(next.id);
+    if (next.kind === 'foundation') openFoundation(next.id, next.sample);
+    if (next.kind === 'restore') void restoreLast(true);
+  }
+
+  async function finishSend(
+    workspace: HealthWorkspaceRecord,
+    sentGeneration: number,
+    result: HealthSendResult | void,
+  ) {
+    const outcome: HealthSendResult = result ?? {
+      status: 'uncertain',
+      message: 'The last request may have reached the server.',
+    };
+    setReceipt(outcome);
+    setDraft((currentDraft) =>
+      shouldClearDraft(currentDraft, workspace.id, sentGeneration, generation.current, outcome)
+        ? null
+        : currentDraft,
+    );
+  }
+
   async function saveWorkspace(workspace = current, asCopy = false) {
     if (!workspace || !signedIn) return;
     const request = crypto.randomUUID();
+    const sentGeneration = generation.current;
     if (asCopy) {
-      await send({
+      if (!saved.some((row) => row.id === workspace.id)) {
+        await saveWorkspace(
+          { ...workspace, id: crypto.randomUUID(), title: `${workspace.title} copy` },
+          false,
+        );
+        return;
+      }
+      const result = await send({
         kind: 'workspace_copy',
         request,
         id: crypto.randomUUID(),
         sourceId: workspace.id,
         title: `${workspace.title} copy`,
+        includeDraft: dirty,
+        settings: dirty ? workspace.settings : undefined,
+        progress: dirty ? workspace.progress : undefined,
+        architect: dirty ? workspace.architect : undefined,
       });
-      setDraft(null);
+      await finishSend(workspace, sentGeneration, result);
       return;
     }
     const expected = saved.some((row) => row.id === workspace.id) ? workspace.version : 1;
-    await send({
+    const result = await send({
       kind: 'workspace_save',
       request,
       id: workspace.id,
@@ -163,25 +247,30 @@ export function HealthAtelier({
       architect: workspace.architect,
       open: true,
     });
-    setDraft(null);
+    await finishSend(workspace, sentGeneration, result);
   }
 
-  async function restoreLast() {
+  async function restoreLast(confirmed = false) {
     if (!current || !signedIn) return;
-    await send({
+    if (dirty && !confirmed) {
+      requestLeave({ kind: 'restore' });
+      return;
+    }
+    const sentGeneration = generation.current;
+    const result = await send({
       kind: 'workspace_restore',
       request: crypto.randomUUID(),
       id: current.id,
       expected: current.version,
       revision: Math.max(1, current.version - 1),
     });
-    setDraft(null);
+    await finishSend(current, sentGeneration, result);
   }
 
   function applyAssist(text: string) {
     const action = interpretHealthAssist(text);
     setAssistNote(action.reason);
-    if (action.kind === 'open') openFoundation(action.foundation);
+    if (action.kind === 'open') requestLeave({ kind: 'foundation', id: action.foundation });
     if (action.kind === 'minutes' && current?.progress)
       replace({
         ...current,
@@ -193,21 +282,25 @@ export function HealthAtelier({
         progress: proposeConstraintChange(current.progress, { finishAt: action.finishAt }),
       });
     if (action.kind === 'markers' && current?.foundation === 'bloodwork-tracker') {
+      const source = current.sample ? sampleBloodwork : data.observations;
+      const markerKeys = selectMarkersByName(source, action.names);
       replace({
         ...current,
         settings: {
           ...current.settings,
           bloodwork: {
             ...(current.settings.bloodwork ?? defaultBloodworkSettings()),
-            markerKeys: [],
+            markerKeys,
+            focusKey: markerKeys[0] ?? null,
           },
         },
       });
     }
   }
 
-  const inspector = current && selected ? inspectorCopy(current, selected) : null;
-  const sampleBloodwork = !data.observations.some((row) => row.status === 'active');
+  const inspector = current ? inspectorCopy(current, selected) : null;
+  const sampleBloodworkNeeded = !data.observations.some((row) => row.status === 'active');
+  const diagnostics = architectDiagnostics();
 
   return (
     <div className="health-atelier" data-section={section} data-architect={architect}>
@@ -242,12 +335,7 @@ export function HealthAtelier({
                 type="button"
                 className="health-rail-item"
                 aria-current={current?.id === row.id ? 'page' : undefined}
-                onClick={() => {
-                  setSelectedId(row.id);
-                  setDraft(null);
-                  setArchitect(false);
-                  setSection('workspace');
-                }}
+                onClick={() => requestLeave({ kind: 'saved', id: row.id })}
               >
                 {row.title}
                 <small>
@@ -268,7 +356,11 @@ export function HealthAtelier({
               type="button"
               className="health-rail-item"
               onClick={() =>
-                openFoundation(item.id, item.id === 'bloodwork-tracker' && sampleBloodwork)
+                requestLeave({
+                  kind: 'foundation',
+                  id: item.id,
+                  sample: item.id === 'bloodwork-tracker' && sampleBloodworkNeeded,
+                })
               }
             >
               {item.title}
@@ -305,8 +397,11 @@ export function HealthAtelier({
                   Save
                 </button>
                 <button
-                  disabled={lock || !signedIn || !saved.some((row) => row.id === current.id)}
+                  disabled={
+                    lock || !signedIn || (!dirty && !saved.some((row) => row.id === current.id))
+                  }
                   onClick={() => void saveWorkspace(current, true)}
+                  title="Copies the current working surface, including unsaved edits."
                 >
                   Save as copy
                 </button>
@@ -321,15 +416,13 @@ export function HealthAtelier({
                 </button>
               </>
             )}
-            {selected && (
-              <button
-                type="button"
-                className="health-mobile-inspect"
-                onClick={() => setInspect(true)}
-              >
-                Inspect
-              </button>
-            )}
+            <button
+              type="button"
+              className="health-mobile-inspect"
+              onClick={() => setInspect(true)}
+            >
+              Inspect
+            </button>
           </div>
         </div>
         {data.mode === 'signed-out' && (
@@ -339,6 +432,15 @@ export function HealthAtelier({
               draft.
             </p>
             <Link href="/enter">Sign in</Link>
+          </div>
+        )}
+        {receipt && receipt.status !== 'confirmed' && receipt.status !== 'ignored' && (
+          <div className="health-notice" role="status" data-save-receipt={receipt.status}>
+            <p>
+              {receipt.status === 'failed'
+                ? `Save failed. Your edits are still here. ${receipt.message}`
+                : `Save is uncertain. Your edits are still here. ${receipt.message}`}
+            </p>
           </div>
         )}
         {recovery}
@@ -373,14 +475,34 @@ export function HealthAtelier({
                   },
                 })
               }
-              onAttempt={(attempt: ArchitectAttempt) =>
-                replace({
-                  ...current,
-                  architect: attempt,
-                  workingRevision: attempt.workingRevision,
-                  lastWorkingRevision: current.lastWorkingRevision,
-                })
-              }
+              onCompile={(instruction) => {
+                if (!signedIn) return;
+                if (!savedArchitect) {
+                  setReceipt({
+                    status: 'failed',
+                    message: 'Save this workspace before compiling a customization.',
+                  });
+                  return;
+                }
+                void send({
+                  kind: 'workspace_architect',
+                  request: crypto.randomUUID(),
+                  id: current.id,
+                  expected: current.version,
+                  action: 'compile',
+                  instruction,
+                });
+              }}
+              onAccept={() => {
+                if (!signedIn) return;
+                void send({
+                  kind: 'workspace_architect',
+                  request: crypto.randomUUID(),
+                  id: current.id,
+                  expected: current.version,
+                  action: 'accept',
+                });
+              }}
               onClose={() => setArchitect(false)}
             />
           ) : current?.foundation === 'evening-routine' && current.progress ? (
@@ -413,7 +535,7 @@ export function HealthAtelier({
               </button>
               <button
                 type="button"
-                onClick={() => openFoundation('bloodwork-tracker', sampleBloodwork)}
+                onClick={() => openFoundation('bloodwork-tracker', sampleBloodworkNeeded)}
               >
                 Open Bloodwork Tracker
               </button>
@@ -433,7 +555,7 @@ export function HealthAtelier({
             <input
               value={assist}
               maxLength={300}
-              placeholder="Change to ten minutes, or open bloodwork"
+              placeholder="Change to ten minutes, or show LDL"
               onChange={(e) => setAssist(e.target.value)}
             />
           </label>
@@ -448,17 +570,27 @@ export function HealthAtelier({
             <h2>{inspector.title}</h2>
             <p>{inspector.body}</p>
             <p className="health-footnote">{inspector.source}</p>
+            {current?.foundation === 'evening-routine' && (
+              <div className="health-unavailable" aria-label="Unavailable external actions">
+                <p className="health-kicker">Not connected</p>
+                {unavailableCopy().map((item) => (
+                  <p key={item.id}>
+                    <button type="button" disabled>
+                      {item.label}
+                    </button>
+                    <small>{item.reason}</small>
+                  </p>
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <>
             <p className="health-kicker">Inspector</p>
             <p>
-              Select a step, marker or constraint to see settings, sources and allowed behavior.
+              Select a step, marker or time limit to see settings, sources and allowed behavior.
             </p>
-            <p className="health-footnote">
-              Architect Apps {ARCHITECT_APPS_DEPENDENCY.commit.slice(0, 7)} remains unmerged.
-              Trusted controls still work.
-            </p>
+            <p className="health-footnote">{architectUnavailableMessage()}</p>
           </>
         )}
       </aside>
@@ -473,11 +605,53 @@ export function HealthAtelier({
           <p>Nothing is selected.</p>
         )}
       </ContextSheet>
+      <ContextSheet
+        open={leaveOpen}
+        title="Keep these edits?"
+        onClose={() => {
+          setLeaveOpen(false);
+          setPendingNav(null);
+        }}
+      >
+        <div className="health-dialog">
+          <p>The current workspace has unsaved changes.</p>
+          <button type="button" onClick={() => pendingNav && applyNav(pendingNav)}>
+            Discard changes
+          </button>
+          <button
+            type="button"
+            disabled={lock || !signedIn}
+            onClick={() => {
+              void saveWorkspace().then(() => pendingNav && applyNav(pendingNav));
+            }}
+          >
+            Save and continue
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLeaveOpen(false);
+              setPendingNav(null);
+            }}
+          >
+            Keep editing
+          </button>
+        </div>
+      </ContextSheet>
+      <p hidden data-health-diagnostics="atelier-dependency">
+        {diagnostics.commit}
+      </p>
     </div>
   );
 }
 
-function inspectorCopy(workspace: HealthWorkspaceRecord, selected: SelectedElement) {
+function inspectorCopy(workspace: HealthWorkspaceRecord, selected: SelectedElement | null) {
+  if (!selected)
+    return {
+      title: workspace.title,
+      body: 'The working surface stays in the center. Time, markers and sources open here when selected.',
+      source: workspace.sample ? 'Synthetic sample workspace' : 'Private Health workspace',
+    };
   if (selected.kind === 'constraint')
     return {
       title: selected.id === 'minutes' ? 'Available minutes' : 'Finish time',

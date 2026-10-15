@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { healthApprovedSource, healthSyntheticExample } from './architect-source';
 
 /** Exact unmerged Architect Apps runtime this Health phase depends on. Do not silently vendor the engine. */
 export const ARCHITECT_APPS_DEPENDENCY = {
   pr: 130,
   branch: 'cursor/architect-create-apps-501f',
-  commit: '9f858d1b5af4df710c4a01dd43668db7366f6626',
+  commit: '97b9a645d88a7498f5661d69d3259ad7239d853b',
   inspectedAt: '2026-10-15',
 } as const;
 
@@ -42,6 +43,7 @@ export const healthArchitectContract = {
 };
 
 export type ArchitectRuntimeStatus = 'available' | 'blocked';
+export type ArchitectIsolation = 'docker' | 'host-fixture' | 'unavailable';
 
 export type ArchitectJobStage = {
   kind: 'proposed' | 'compiled' | 'preview' | 'accepted' | 'failed' | 'blocked' | 'restored';
@@ -59,7 +61,65 @@ export type ArchitectAttempt = {
   diff: { path: string; before: string; after: string }[];
   stages: ArchitectJobStage[];
   blocker: string | null;
+  isolation: ArchitectIsolation | null;
+  sourceHash: string | null;
+  artifactHash: string | null;
+  previewOk: boolean;
+  verified: boolean;
 };
+
+export const architectAttemptSchema = z
+  .object({
+    id: z.uuid(),
+    workspaceId: z.uuid(),
+    instruction: z.string().max(2000),
+    status: z.enum(['blocked', 'failed', 'ready', 'accepted']),
+    workingRevision: z.number().int().min(1).max(5000),
+    attemptedRevision: z.number().int().min(1).max(5000),
+    diff: z
+      .array(
+        z
+          .object({
+            path: z.string().min(1).max(200),
+            before: z.string().max(4000),
+            after: z.string().max(4000),
+          })
+          .strict(),
+      )
+      .max(40),
+    stages: z
+      .array(
+        z
+          .object({
+            kind: z.enum([
+              'proposed',
+              'compiled',
+              'preview',
+              'accepted',
+              'failed',
+              'blocked',
+              'restored',
+            ]),
+            at: z.string().min(1).max(80),
+            detail: z.string().max(2000),
+          })
+          .strict(),
+      )
+      .max(24),
+    blocker: z.string().max(2000).nullable(),
+    isolation: z.enum(['docker', 'host-fixture', 'unavailable']).nullable(),
+    sourceHash: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/)
+      .nullable(),
+    artifactHash: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/)
+      .nullable(),
+    previewOk: z.boolean(),
+    verified: z.boolean(),
+  })
+  .strict();
 
 export type ArchitectAppsRuntime = {
   propose(input: {
@@ -76,34 +136,120 @@ export type ArchitectAppsRuntime = {
   compile(proposal: { files: { path: string; content: string }[] }): Promise<{
     ok: boolean;
     log: string;
-    isolation: 'docker' | 'unavailable';
+    isolation: ArchitectIsolation;
+    receipt?: string;
   }>;
   preview(compiled: {
     files: { path: string; content: string }[];
   }): Promise<{ html: string } | null>;
 };
 
-const labLike =
-  /\b(\d+(\.\d+)?\s*(mg\/dL|mmol\/L|mIU\/L|ng\/mL|pg\/mL)|LDL|HDL|TSH|glucose|hemoglobin)\b/gi;
+export type ArchitectRequestClass =
+  | {
+      kind: 'presentation';
+      instruction: string;
+      intent: 'date-range' | 'comparison-drawer' | 'density' | 'arrangement' | 'layout';
+    }
+  | { kind: 'sensitive'; reason: string }
+  | { kind: 'empty'; reason: string };
+
+const presentationIntents = [
+  { intent: 'date-range' as const, pattern: /\bdate[- ]?range\b/i },
+  { intent: 'comparison-drawer' as const, pattern: /\bcomparison|drawer\b/i },
+  { intent: 'density' as const, pattern: /\bdensity|compact|comfortable\b/i },
+  { intent: 'arrangement' as const, pattern: /\barrangement|timeline|markers|sequence\b/i },
+  { intent: 'layout' as const, pattern: /\blayout|typography|spacing|appearance\b/i },
+];
+
+const sensitiveSignals = [
+  /\b(ldl|hdl|tsh|glucose|hemoglobin|a1c|creatinine|cholesterol)\b/i,
+  /\b(diagnos|treat|dos(e|ing)|prescrib|therap|patholog)\b/i,
+  /\b(mg\/dl|mmol\/l|miu\/l|ng\/ml|pg\/ml)\b/i,
+  /\b(ssn|mrn|patient|medical record|my (blood|lab|result|record)s?)\b/i,
+  /\b\d+(\.\d+)?\s*(mg|mmol|iu|ng|pg)\b/i,
+];
+
+export function classifyArchitectRequest(instruction: string): ArchitectRequestClass {
+  const value = instruction.trim();
+  if (!value)
+    return { kind: 'empty', reason: 'Write what should change about layout or appearance.' };
+  if (sensitiveSignals.some((pattern) => pattern.test(value)))
+    return {
+      kind: 'sensitive',
+      reason:
+        'This request includes personal or clinical content. Health keeps that on the trusted host and does not send it to Architect.',
+    };
+  const matched = presentationIntents.find((item) => item.pattern.test(value));
+  if (!matched)
+    return {
+      kind: 'sensitive',
+      reason:
+        'Only presentation and layout changes can be compiled. Clinical rules, records and values stay in Health.',
+    };
+  return { kind: 'presentation', instruction: value.slice(0, 2000), intent: matched.intent };
+}
 
 export function sanitizeArchitectBrief(input: {
   instruction: string;
   title?: string;
   notes?: string;
 }) {
-  const instruction = input.instruction.replace(labLike, '[redacted]').slice(0, 2000);
+  const classified = classifyArchitectRequest(input.instruction);
   return {
     contract: healthArchitectContract,
-    instruction,
+    instruction: classified.kind === 'presentation' ? classified.instruction : '',
+    classified: classified.kind,
     titleIncluded: false,
     notesIncluded: false,
     personalRecordsIncluded: false,
     syntheticExampleOnly: true,
+    source: [
+      ...healthApprovedSource.map((file) => ({ path: file.path, content: file.content })),
+      {
+        path: 'src/contract.json',
+        content: `${JSON.stringify(healthArchitectContract, null, 2)}\n`,
+      },
+    ],
+    syntheticExample: healthSyntheticExample,
+    reason: classified.kind === 'presentation' ? null : classified.reason,
   };
 }
 
+export function architectUnavailableMessage() {
+  return 'Customization compile is not available in this environment. Appearance and layout controls still work. A preview that did not compile in isolation is not a working customization.';
+}
+
+export function architectDiagnostics() {
+  return {
+    pr: ARCHITECT_APPS_DEPENDENCY.pr,
+    branch: ARCHITECT_APPS_DEPENDENCY.branch,
+    commit: ARCHITECT_APPS_DEPENDENCY.commit,
+    inspectedAt: ARCHITECT_APPS_DEPENDENCY.inspectedAt,
+    requires: [
+      'Architect Apps HTTP routes',
+      'ARCHITECT_ORIGIN_ENABLED and ARCHITECT_APPS_ENABLED',
+      'Isolated Docker compile (host-fixture is not success)',
+      'A usable preview document',
+      'Server-bound source, artifact and isolation receipt',
+    ],
+  };
+}
+
+/** Development diagnostics only. Do not place this on ordinary member surfaces. */
 export function architectBlockedMessage() {
-  return `Dynamic compilation is blocked until Architect Apps PR #${ARCHITECT_APPS_DEPENDENCY.pr} (${ARCHITECT_APPS_DEPENDENCY.commit}) is merged and enabled locally. Trusted appearance and workflow controls remain available. A mocked compile is not a running preview.`;
+  const info = architectDiagnostics();
+  return `${architectUnavailableMessage()} Dependency: Architect Apps PR #${info.pr} ${info.commit}.`;
+}
+
+export function attemptIsVerified(attempt: ArchitectAttempt) {
+  return (
+    (attempt.status === 'ready' || attempt.status === 'accepted') &&
+    attempt.isolation === 'docker' &&
+    attempt.previewOk &&
+    Boolean(attempt.sourceHash) &&
+    Boolean(attempt.artifactHash) &&
+    attempt.verified
+  );
 }
 
 export async function probeArchitectAppsRuntime(
@@ -116,16 +262,16 @@ export async function probeArchitectAppsRuntime(
       signal: AbortSignal.timeout(4000),
     });
     if (response.status === 404)
-      return { status: 'blocked', blocker: architectBlockedMessage(), httpStatus: 404 };
+      return { status: 'blocked', blocker: architectUnavailableMessage(), httpStatus: 404 };
     if (response.status === 401 || response.status === 200 || response.status === 503)
       return { status: 'available', blocker: null, httpStatus: response.status };
     return {
       status: 'blocked',
-      blocker: architectBlockedMessage(),
+      blocker: architectUnavailableMessage(),
       httpStatus: response.status,
     };
   } catch {
-    return { status: 'blocked', blocker: architectBlockedMessage() };
+    return { status: 'blocked', blocker: architectUnavailableMessage() };
   }
 }
 
@@ -165,6 +311,15 @@ export function exampleArchitectDiff(presentation: TrustedPresentation): Archite
   ];
 }
 
+function hashPayload(value: string) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0').repeat(8);
+}
+
 export async function requestArchitectRevision(input: {
   workspaceId: string;
   workingRevision: number;
@@ -172,14 +327,16 @@ export async function requestArchitectRevision(input: {
   presentation: TrustedPresentation;
   runtime?: ArchitectAppsRuntime | null;
   now?: string;
+  id?: string;
 }): Promise<ArchitectAttempt> {
   const at = input.now ?? new Date().toISOString();
   const attemptedRevision = input.workingRevision + 1;
+  const classified = classifyArchitectRequest(input.instruction);
   const sanitized = sanitizeArchitectBrief({ instruction: input.instruction });
   const base: ArchitectAttempt = {
-    id: crypto.randomUUID(),
+    id: input.id ?? crypto.randomUUID(),
     workspaceId: input.workspaceId,
-    instruction: sanitized.instruction,
+    instruction: sanitized.instruction || input.instruction.slice(0, 2000),
     status: 'blocked',
     workingRevision: input.workingRevision,
     attemptedRevision,
@@ -188,52 +345,89 @@ export async function requestArchitectRevision(input: {
       {
         kind: 'proposed',
         at,
-        detail: 'Sanitized Health contract prepared. Personal records were not attached.',
+        detail: 'Structured Health contract prepared. Personal records were not attached.',
       },
     ],
     blocker: null,
+    isolation: null,
+    sourceHash: hashPayload(JSON.stringify(sanitized.source)),
+    artifactHash: null,
+    previewOk: false,
+    verified: false,
   };
+  if (classified.kind !== 'presentation') {
+    return {
+      ...base,
+      status: 'failed',
+      blocker: classified.reason,
+      stages: [...base.stages, { kind: 'failed', at, detail: classified.reason }],
+    };
+  }
   if (!input.runtime) {
     return {
       ...base,
       status: 'blocked',
-      blocker: architectBlockedMessage(),
-      stages: [...base.stages, { kind: 'blocked', at, detail: architectBlockedMessage() }],
+      isolation: 'unavailable',
+      blocker: architectUnavailableMessage(),
+      stages: [...base.stages, { kind: 'blocked', at, detail: architectUnavailableMessage() }],
     };
   }
   try {
     const proposal = await input.runtime.propose({
       workspaceId: input.workspaceId,
-      instruction: sanitized.instruction,
+      instruction: classified.instruction,
       contract: healthArchitectContract,
-      source: base.diff.map((row) => ({ path: row.path, content: row.after })),
-      syntheticExample: { foundation: 'bloodwork-tracker', sample: true },
+      source: sanitized.source,
+      syntheticExample: healthSyntheticExample,
     });
     const compiled = await input.runtime.compile({ files: proposal.files });
-    if (!compiled.ok) {
+    if (!compiled.ok || compiled.isolation !== 'docker') {
+      const detail =
+        compiled.isolation !== 'docker'
+          ? 'Isolation was unavailable. Host compilation cannot mark a Health customization as ready.'
+          : compiled.log || 'Compilation failed. The last working version remains in use.';
       return {
         ...base,
         status: 'failed',
+        isolation: compiled.isolation,
         diff: proposal.diff,
-        blocker: compiled.log,
+        blocker: detail,
+        stages: [...base.stages, { kind: 'failed', at, detail }],
+      };
+    }
+    const preview = await input.runtime.preview({ files: proposal.files });
+    if (!preview?.html?.trim()) {
+      return {
+        ...base,
+        status: 'failed',
+        isolation: compiled.isolation,
+        diff: proposal.diff,
+        blocker: 'Compile produced no usable preview. The last working version remains in use.',
         stages: [
           ...base.stages,
           {
             kind: 'failed',
             at,
-            detail: compiled.log || 'Compilation failed. The last working version remains in use.',
+            detail: 'Compile produced no usable preview. The last working version remains in use.',
           },
         ],
       };
     }
-    await input.runtime.preview({ files: proposal.files });
     return {
       ...base,
       status: 'ready',
+      isolation: 'docker',
+      previewOk: true,
+      verified: false,
+      artifactHash: hashPayload(JSON.stringify(proposal.files)),
       diff: proposal.diff,
       stages: [
         ...base.stages,
-        { kind: 'compiled', at, detail: `Isolated ${compiled.isolation} compile succeeded.` },
+        {
+          kind: 'compiled',
+          at,
+          detail: compiled.receipt || 'Isolated Docker compile succeeded.',
+        },
         {
           kind: 'preview',
           at,
@@ -245,6 +439,7 @@ export async function requestArchitectRevision(input: {
     return {
       ...base,
       status: 'failed',
+      isolation: 'unavailable',
       blocker: error instanceof Error ? error.message : 'Architect request failed.',
       stages: [
         ...base.stages,
@@ -259,11 +454,13 @@ export async function requestArchitectRevision(input: {
 }
 
 export function acceptArchitectAttempt(attempt: ArchitectAttempt): ArchitectAttempt {
-  if (attempt.status !== 'ready') return attempt;
+  if (attempt.status !== 'ready' || attempt.isolation !== 'docker' || !attempt.previewOk)
+    return { ...attempt, verified: false };
   return {
     ...attempt,
     status: 'accepted',
     workingRevision: attempt.attemptedRevision,
+    verified: true,
     stages: [
       ...attempt.stages,
       {
@@ -280,6 +477,7 @@ export function restoreWorkingAttempt(attempt: ArchitectAttempt): ArchitectAttem
     ...attempt,
     status: attempt.status === 'accepted' ? 'accepted' : 'failed',
     workingRevision: attempt.workingRevision,
+    verified: attempt.status === 'accepted' && attempt.verified,
     stages: [
       ...attempt.stages,
       {
@@ -289,4 +487,9 @@ export function restoreWorkingAttempt(attempt: ArchitectAttempt): ArchitectAttem
       },
     ],
   };
+}
+
+export function clientAttemptIsNotVerified(attempt: ArchitectAttempt | null) {
+  if (!attempt) return true;
+  return !attempt.verified || attempt.status !== 'accepted' || attempt.isolation !== 'docker';
 }

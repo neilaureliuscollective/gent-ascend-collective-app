@@ -6,6 +6,7 @@ import { biomarkerSeries } from '@/domains/health/trends';
 import {
   emptyHealth,
   type HealthData,
+  type HealthSendResult,
   type Mutation,
   type Observation,
   type Purpose,
@@ -123,11 +124,18 @@ export function HealthWorkspace({
       window.removeEventListener('online', refresh);
     };
   }, [reload]);
-  async function send(body?: Mutation | FormData, endpoint = '/api/health') {
-    if (busy || (!body && !pending.current)) return;
+  async function send(
+    body?: Mutation | FormData,
+    endpoint = '/api/health',
+  ): Promise<HealthSendResult> {
+    if (busy || (!body && !pending.current))
+      return { status: 'ignored', message: 'Health is already finishing a request.' };
     if (body && uncertain) {
       setNotice('Resolve the previous request before starting another.');
-      return;
+      return {
+        status: 'ignored',
+        message: 'Resolve the previous request before starting another.',
+      };
     }
     const requestOwner = owner.current;
     const request = body ? { body, endpoint } : pending.current!;
@@ -148,21 +156,36 @@ export function HealthWorkspace({
       });
       const result = await response.json();
       if (!response.ok) {
-        // HTTP failures can occur after a durable write. Preserve the exact request for recovery.
+        const message = result.error || 'Health could not complete the request.';
         if ([400, 401, 403, 413, 415].includes(response.status)) {
           pending.current = null;
           setUncertain(false);
-        } else setUncertain(true);
-        throw new Error(result.error || 'Health could not complete the request.');
+          setNotice(message);
+          return { status: 'failed', message };
+        }
+        setUncertain(true);
+        setNotice(message);
+        return { status: 'uncertain', message };
       }
       if (
         !mounted.current ||
         document.visibilityState !== 'visible' ||
         owner.current !== requestOwner
-      )
-        return;
+      ) {
+        setUncertain(true);
+        return {
+          status: 'uncertain',
+          message:
+            'The last request may have reached the server. Inspect saved status before retrying.',
+        };
+      }
       await reload();
-      if (owner.current !== requestOwner) return;
+      if (owner.current !== requestOwner) {
+        return {
+          status: 'uncertain',
+          message: 'Your session changed. Reopen Health after signing in.',
+        };
+      }
       if (request.endpoint.endsWith('/export')) {
         const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob),
@@ -181,15 +204,17 @@ export function HealthWorkspace({
       setDeletion(null);
       if (uploadInput.current) uploadInput.current.value = '';
       setNotice('Saved to your private Health environment.');
+      return { status: 'confirmed' };
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Connection interrupted. Inspect the saved status before retrying.';
       if (mounted.current) {
         if (pending.current) setUncertain(true);
-        setNotice(
-          error instanceof Error
-            ? error.message
-            : 'Connection interrupted. Inspect the saved status before retrying.',
-        );
+        setNotice(message);
       }
+      return pending.current ? { status: 'uncertain', message } : { status: 'failed', message };
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -327,6 +352,7 @@ export function HealthWorkspace({
       )}
       {view === 'command' ? (
         <HealthAtelier
+          key={`${data.owner ?? 'none'}:${data.mode}`}
           data={data}
           send={send}
           busy={busy}

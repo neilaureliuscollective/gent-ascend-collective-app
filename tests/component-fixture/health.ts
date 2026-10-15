@@ -1,4 +1,7 @@
-import { ARCHITECT_APPS_DEPENDENCY } from '@/domains/health/architect-adapter';
+import {
+  architectUnavailableMessage,
+  ARCHITECT_APPS_DEPENDENCY,
+} from '@/domains/health/architect-adapter';
 import type { HealthData } from '@/domains/health/schema';
 export const healthFixture: HealthData = {
   owner: '20000000-0000-4000-8000-000000000001',
@@ -65,7 +68,7 @@ export const healthFixture: HealthData = {
   workspaces: [],
   architect: {
     status: 'blocked',
-    blocker: `Dynamic compilation is blocked until Architect Apps PR #${ARCHITECT_APPS_DEPENDENCY.pr} is merged.`,
+    blocker: architectUnavailableMessage(),
     dependency: ARCHITECT_APPS_DEPENDENCY,
   },
 };

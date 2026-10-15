@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  architectAttemptSchema,
   defaultPresentation,
   trustedPresentationSchema,
   type ArchitectAttempt,
@@ -15,6 +16,7 @@ export const bloodworkArrangement = z.enum(['timeline', 'markers']);
 export const bloodworkSettingsSchema = z
   .object({
     markerKeys: z.array(z.string().min(1).max(240)).max(24),
+    focusKey: z.string().min(1).max(240).nullable().default(null),
     dateFrom: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -33,6 +35,7 @@ export type BloodworkSettings = z.infer<typeof bloodworkSettingsSchema>;
 
 export const defaultBloodworkSettings = (): BloodworkSettings => ({
   markerKeys: [],
+  focusKey: null,
   dateFrom: null,
   dateTo: null,
   density: 'comfortable',
@@ -40,6 +43,69 @@ export const defaultBloodworkSettings = (): BloodworkSettings => ({
   comparisonDrawer: true,
   dateRange: true,
 });
+
+export const plannedStepSchema = z
+  .object({
+    id: z.enum(eveningStepIds),
+    title: z.string().min(1).max(120),
+    minutes: z.number().int().min(1).max(90),
+    kind: z.enum(['timer', 'action']),
+    note: z.string().max(400),
+    optional: z.boolean(),
+    scheduledMinutes: z.number().int().min(0).max(90),
+    included: z.boolean(),
+  })
+  .strict();
+
+export const routinePlanSchema = z
+  .object({
+    availableMinutes: z.number().int().min(4).max(90),
+    usedMinutes: z.number().int().min(0).max(90),
+    remainingMinutes: z.number().int().min(0).max(90),
+    steps: z.array(plannedStepSchema).max(8),
+    dropped: z
+      .array(
+        z
+          .object({
+            id: z.enum(eveningStepIds),
+            title: z.string().min(1).max(120),
+            reason: z.string().max(240),
+          })
+          .strict(),
+      )
+      .max(8),
+    shortened: z
+      .array(
+        z
+          .object({
+            id: z.enum(eveningStepIds),
+            from: z.number().int().min(1).max(90),
+            to: z.number().int().min(1).max(90),
+          })
+          .strict(),
+      )
+      .max(8),
+    explanation: z.string().max(400),
+  })
+  .strict();
+
+export const routineTimerSchema = z
+  .object({
+    stepId: z.enum(eveningStepIds),
+    durationMs: z
+      .number()
+      .int()
+      .positive()
+      .max(90 * 60_000),
+    remainingMs: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(90 * 60_000),
+    running: z.boolean(),
+    startedAt: z.string().nullable(),
+  })
+  .strict();
 
 export const routineProgressSchema = z
   .object({
@@ -50,25 +116,9 @@ export const routineProgressSchema = z
         selected: z.array(z.enum(eveningStepIds)).min(1).max(8),
       })
       .strict(),
-    accepted: z.unknown(),
-    pending: z.unknown().nullable(),
-    timer: z
-      .object({
-        stepId: z.enum(eveningStepIds),
-        durationMs: z
-          .number()
-          .int()
-          .positive()
-          .max(90 * 60_000),
-        remainingMs: z
-          .number()
-          .int()
-          .nonnegative()
-          .max(90 * 60_000),
-        running: z.boolean(),
-        startedAt: z.string().nullable(),
-      })
-      .nullable(),
+    accepted: routinePlanSchema,
+    pending: routinePlanSchema.nullable(),
+    timer: routineTimerSchema.nullable(),
     completed: z.array(z.enum(eveningStepIds)).max(8),
     notes: z.record(z.string(), z.string().max(400)).default({}),
     activeStepId: z.enum(eveningStepIds).nullable(),
@@ -104,6 +154,7 @@ export type HealthWorkspaceRevision = {
   revision: number;
   settings: WorkspaceSettings;
   progress: RoutineProgress | null;
+  architect: ArchitectAttempt | null;
   created_at: string;
 };
 
@@ -145,7 +196,8 @@ export function workspaceFromRow(row: HealthWorkspaceRecord): HealthWorkspaceRec
     row.foundation === 'evening-routine'
       ? (routineProgressSchema.parse(row.progress ?? defaultEveningProgress()) as RoutineProgress)
       : null;
-  return { ...row, settings, progress };
+  const architect = row.architect ? architectAttemptSchema.parse(row.architect) : null;
+  return { ...row, settings, progress, architect };
 }
 
 export const selectedElementSchema = z

@@ -4,31 +4,35 @@ Branch: `cursor/health-transformation-36d4`. Destination remains Health. No rena
 
 ## What changed
 
-Health Command is no longer a six-section landing with a decorative hero. `/app/health` is a composed workspace inside the existing Aethelios shell:
+`/app/health` is a composed personal workspace. This phase keeps the two foundations and makes the working surface the center:
 
-- Slim rail: saved workspaces and the two ready foundations.
-- Central working surface: the selected evening sequence or Bloodwork Tracker.
-- Context strip: title, saved/unsaved state, version.
-- Inspector: settings, sources and allowed behavior for the selected element.
-- Compact assist dock: bounded time/foundation commands. Text and touch are complete without voice.
+- Evening sequence: current/next action, in-app timer, compact time controls, proposed packing that must be accepted, notes on the selected step. Calendar, purchases, messages and devices stay unavailable.
+- Bloodwork Tracker: one selected marker trend, compact marker/date controls, original units and laboratory ranges, source inspection. Empty marker selection stays empty. Assist “show LDL” selects LDL.
+- Inspector and mobile sections hold settings, library and records. In-progress work is kept across layout changes and confirmed before switching foundations.
+- Member-facing copy does not include PR numbers or commit hashes. Technical dependency details stay in collapsed diagnostics.
 
-Records, history, labs, connections and privacy remain as secondary routes. They are not the primary experience.
+## Private state and saves
 
-## Foundations
+HealthAtelier follows the parent owner/session/visibility lifecycle. Account change, signed-out refresh and hidden documents clear draft, assist text, inspector and Architect panels. Timers are fenced to the current owner, workspace and generation.
 
-1. **Evenings, made usable.** Structured sequence with editable minutes and finish time, proposed packing, explicit accept, notes, in-app timers and completion. Calendar, purchases, messages and device control stay visibly unavailable.
-2. **Bloodwork Tracker.** Chronological reviewed evidence using existing compatibility rules. Original units, collection dates, laboratory ranges and source inspection. Layout, density, markers and comparison drawer persist. When the owner has no reviewed records (or ingestion is off), an isolated **sample** workspace is used and labelled. Sample values are never written into personal records and never bypass activation gates.
+Saves return confirmed, failed or uncertain receipts. The draft is cleared only when the exact generation that was sent is acknowledged. Failed and uncertain saves keep the visible edits. “Save as copy” sends the current working surface when it is dirty (`includeDraft`). Switching foundations or saved workspaces with unsaved edits asks to keep editing, discard, or save first.
 
 ## Architect
 
-Trusted presentation/workflow controls work immediately. Genuine source generation, isolated compile and running preview require Architect Apps PR **#130** at `9f858d1b5af4df710c4a01dd43668db7366f6626` (`cursor/architect-create-apps-501f`). This branch does **not** vendor that engine. The Health adapter records the exact dependency, sanitizes briefs (no personal labs, titles or notes), and reports dynamic compilation as blocked. A mocked model response is not treated as a running preview. Failed or blocked compiles keep the last working revision.
+Trusted presentation controls work immediately. Genuine compile uses a Health-owned adapter: the person enters a customization request; Health classifies it as presentation-only or sensitive; approved Health source, the versioned contract and a synthetic example are the only builder inputs. Personal values, documents and clinical instructions are not sent.
 
-## Persistence and privacy
+A compile is ready only after isolated Docker compilation and a usable preview. Host-fixture or missing preview is failed, not ready. Client `workingRevision` metadata cannot verify a build. Accept binds source hash, artifact hash, isolation and revision in `health_private.workspaces` only when the stored attempt is already ready with Docker isolation.
 
-Additive migration `20261015180000_health_workspace.sql` stores owner-scoped workspaces, revisions, and a read-only record bridge. Exact request receipts prevent duplicate creates. Newer saves use expected versions, so an older failed request cannot overwrite a newer one. Full Health deletion removes workspaces. Export includes workspace artifacts without bridge tokens. The coding path never receives personal lab values. Generated presentation cannot replace host-controlled evidence. Bridge access rechecks owner, consent, revision and session; another account, a forged owner header, or revoked records consent cannot read it.
+Inspected Architect Apps dependency: PR **#130** `cursor/architect-create-apps-501f` @ `97b9a645d88a7498f5661d69d3259ad7239d853b` (2026-10-15). That runtime is not on this branch (`src/domains/architect-apps/service.ts` is absent; `/api/architect-apps` is 404). This phase therefore reports customization compile unavailable and does not present a fake preview. Runtime access, when later enabled, stays on the Health-owned bridge, filtered to selected markers, date window and fields.
+
+## Persistence
+
+Additive migration `20261015181000_health_workspace.sql` stores owner-scoped workspaces, full revision settings/progress/architect, and a read-only record bridge. The 181000 timestamp avoids colliding with Talk’s unmerged `20261015180000_talk_live_trusted_observe.sql`. Neither file is on main or hosted projects. Exact request receipts prevent duplicate creates. Workspace save does not take working revision from the client. Export includes reconstructable revision payloads, not labels only.
 
 Apply the migration only on local/synthetic databases. Do not apply it to hosted projects from this phase.
 
 ## Verification notes
 
-Browser fixture journeys cover evening constraint/timer/save/resume, labelled sample bloodwork, blocked Architect compile, and exact save retry. SQL emulation covers owner isolation and bridge denial. These are not a live Auth/Storage/Docker Apps result. Medical ingestion and Health AI remain off.
+Local this phase: Health unit/SQL tests, migration ledger uniqueness, and Playwright fixture journeys (emulated 344 / 390 / 768 / 1440). Screenshots in `docs/evidence/health-transformation/` are labelled fixture renders, not live Auth.
+
+Unrun: signed-in Next.js `/app/health` against isolated Supabase Auth/Storage; hosted migration; Docker Architect Apps compile. Medical ingestion and Health AI remain off.

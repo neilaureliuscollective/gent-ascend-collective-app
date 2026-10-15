@@ -1,12 +1,17 @@
 'use client';
-import { bloodworkWorkspace, toggleMarker } from '@/domains/health/bloodwork';
+import {
+  bloodworkWorkspace,
+  formatMeasuredNumber,
+  formatReportedValue,
+  toggleMarker,
+} from '@/domains/health/bloodwork';
 import {
   sampleBloodwork,
   sampleBloodworkRecord,
   sampleWorkspaceNotice,
 } from '@/domains/health/sample';
 import type { HealthRecord, SavedObservation } from '@/domains/health/schema';
-import { comparisonKey } from '@/domains/health/trends';
+import { numeric } from '@/domains/health/trends';
 import type { BloodworkSettings, SelectedElement } from '@/domains/health/workspace-model';
 
 export function BloodworkTool({
@@ -30,12 +35,16 @@ export function BloodworkTool({
 }) {
   const source = sample ? sampleBloodwork : observations;
   const view = bloodworkWorkspace(source, settings, sample);
-  const dates = view.visible.map((row) => Date.parse(`${row.date}T12:00:00Z`));
-  const values = view.visible.map((row) => Number(row.value)).filter((n) => Number.isFinite(n));
-  const min = Math.min(...values, 0);
-  const max = Math.max(...values, 1);
-  const first = dates.length ? Math.min(...dates) : 0;
-  const last = dates.length ? Math.max(...dates) : 1;
+  const chart = view.chartRows.map((row) => ({
+    row,
+    value: numeric(row.value)!,
+    at: Date.parse(`${row.date}T12:00:00Z`),
+  }));
+  const first = chart.length ? Math.min(...chart.map((item) => item.at)) : 0;
+  const last = chart.length ? Math.max(...chart.map((item) => item.at)) : 1;
+  const min = chart.length ? Math.min(...chart.map((item) => item.value)) : 0;
+  const max = chart.length ? Math.max(...chart.map((item) => item.value)) : 1;
+  const latest = view.focus?.latest ?? null;
   return (
     <div
       className="health-tool"
@@ -43,43 +52,55 @@ export function BloodworkTool({
       data-sample={sample}
       data-density={settings.density}
     >
-      <header className="health-tool-header">
+      <section className="health-next" aria-label="Selected bloodwork trend">
         <p className="health-kicker">{sample ? 'Sample evidence' : 'Reviewed evidence'}</p>
-        <h2>Bloodwork Tracker</h2>
-        <p>
-          {sample
-            ? sampleWorkspaceNotice
-            : 'Reviewed observations with original units, collection dates and laboratory ranges.'}
-        </p>
-      </header>
-      <div className="health-toolbar">
+        {view.emptySelection ? (
+          <>
+            <h2>Select a marker</h2>
+            <p>Nothing is shown until a marker is chosen. Deselecting all markers stays empty.</p>
+          </>
+        ) : (
+          <>
+            <h2>{view.focus?.name ?? 'Bloodwork Tracker'}</h2>
+            <p>
+              {sample
+                ? sampleWorkspaceNotice
+                : 'Original units, collection dates and laboratory ranges.'}
+              {latest
+                ? ` Latest ${formatReportedValue(latest.value)} ${latest.unit} on ${latest.date}.`
+                : ''}
+            </p>
+          </>
+        )}
+      </section>
+      <div className="health-toolbar health-toolbar-compact">
         <fieldset disabled={blocked}>
-          <legend>Visible markers</legend>
+          <legend>Markers</legend>
           {view.markers.map((marker) => (
             <label key={marker.key} className="health-chip">
               <input
                 type="checkbox"
-                checked={
-                  settings.markerKeys.length === 0 || settings.markerKeys.includes(marker.key)
-                }
-                onChange={() =>
-                  onSettings(
-                    toggleMarker(
-                      settings.markerKeys.length
-                        ? settings
-                        : { ...settings, markerKeys: view.markers.map((item) => item.key) },
-                      marker.key,
-                    ),
-                  )
-                }
+                checked={settings.markerKeys.includes(marker.key)}
+                onChange={() => onSettings(toggleMarker(settings, marker.key))}
               />
               {marker.name}
             </label>
           ))}
         </fieldset>
+        <label className="health-chip">
+          <input
+            type="checkbox"
+            checked={settings.density === 'compact'}
+            disabled={blocked}
+            onChange={(e) =>
+              onSettings({ ...settings, density: e.target.checked ? 'compact' : 'comfortable' })
+            }
+          />
+          Compact density
+        </label>
         {settings.dateRange && (
-          <fieldset disabled={blocked}>
-            <legend>Date range</legend>
+          <fieldset disabled={blocked} className="health-dates">
+            <legend>Dates</legend>
             <label>
               From
               <input
@@ -101,146 +122,139 @@ export function BloodworkTool({
             </label>
           </fieldset>
         )}
-        <fieldset disabled={blocked}>
-          <legend>Arrangement</legend>
-          <label>
-            <input
-              type="radio"
-              name="bloodwork-arrangement"
-              checked={settings.arrangement === 'timeline'}
-              onChange={() => onSettings({ ...settings, arrangement: 'timeline' })}
-            />
-            Timeline
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="bloodwork-arrangement"
-              checked={settings.arrangement === 'markers'}
-              onChange={() => onSettings({ ...settings, arrangement: 'markers' })}
-            />
-            Markers
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.density === 'compact'}
-              onChange={(e) =>
-                onSettings({ ...settings, density: e.target.checked ? 'compact' : 'comfortable' })
-              }
-            />
-            Compact density
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.comparisonDrawer}
-              onChange={(e) => onSettings({ ...settings, comparisonDrawer: e.target.checked })}
-            />
-            Comparison drawer
-          </label>
-        </fieldset>
       </div>
-      <div className="health-evidence-layout" data-arrangement={settings.arrangement}>
-        <svg
-          className="health-chart"
-          viewBox="0 0 560 180"
-          role="img"
-          aria-label="Reviewed marker values over collection dates"
-        >
-          {view.visible.map((row, index) => {
-            const x = 24 + (last === first ? 0.5 : (dates[index]! - first) / (last - first)) * 512;
-            const numeric = Number(row.value);
-            const y =
-              150 -
-              (max === min || !Number.isFinite(numeric)
-                ? 60
-                : ((numeric - min) / (max - min)) * 120);
-            return (
-              <g key={row.id}>
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={selected?.id === row.id ? 6 : 4}
-                  className={selected?.id === row.id ? 'is-selected' : undefined}
+      {view.emptySelection ? (
+        <p className="health-empty-selection">Choose one marker to open its trend and source.</p>
+      ) : (
+        <div className="health-evidence-layout" data-arrangement={settings.arrangement}>
+          {chart.length ? (
+            <svg
+              className="health-chart"
+              viewBox="0 0 560 220"
+              role="img"
+              aria-label={`${view.focus?.name ?? 'Marker'} in ${view.focus?.latest.unit ?? ''} over collection dates`}
+            >
+              <text x="16" y="28" className="health-chart-label">
+                {view.focus?.latest.unit}
+              </text>
+              <text x="16" y="48" className="health-chart-label">
+                {formatMeasuredNumber(max)}
+              </text>
+              <text x="16" y="188" className="health-chart-label">
+                {formatMeasuredNumber(min)}
+              </text>
+              {chart.length > 1 && (
+                <polyline
+                  className="health-chart-line"
+                  fill="none"
+                  points={chart
+                    .map((item) => {
+                      const x =
+                        72 + (last === first ? 0.5 : (item.at - first) / (last - first)) * 460;
+                      const y = 40 + (max === min ? 70 : ((max - item.value) / (max - min)) * 130);
+                      return `${x},${y}`;
+                    })
+                    .join(' ')}
                 />
-                <foreignObject x={x - 18} y={y - 18} width="36" height="36">
-                  <button
-                    type="button"
-                    className="health-chart-hit"
-                    aria-label={`${row.name} ${row.value} ${row.unit} on ${row.date}`}
-                    onClick={() => onSelect({ kind: 'marker', id: row.id })}
-                  />
-                </foreignObject>
-              </g>
-            );
-          })}
-        </svg>
-        <div className="health-table-scroll">
-          <table>
-            <caption>
-              {sample ? 'Synthetic sample observations' : 'Reviewed observations'} · original
-              reported units
-            </caption>
-            <thead>
-              <tr>
-                <th>Collected</th>
-                <th>Marker</th>
-                <th>Value</th>
-                <th>Range</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {view.visible.map((row) => {
-                const record = sample
-                  ? sampleBloodworkRecord
-                  : records.find((item) => item.id === row.record_id);
+              )}
+              {chart.map((item) => {
+                const x = 72 + (last === first ? 0.5 : (item.at - first) / (last - first)) * 460;
+                const y = 40 + (max === min ? 70 : ((max - item.value) / (max - min)) * 130);
                 return (
-                  <tr
-                    key={row.id}
-                    data-selected={selected?.id === row.id}
-                    onClick={() => onSelect({ kind: 'marker', id: row.id })}
-                  >
-                    <td>{row.date}</td>
-                    <td>{row.name}</td>
-                    <td>
-                      {row.value} {row.unit}
-                      {row.flag ? ` · reported ${row.flag}` : ''}
-                    </td>
-                    <td>{row.range || 'Not supplied'}</td>
-                    <td>
-                      {record?.title || 'Original'}
-                      <small>
-                        {row.specimen || 'Unknown specimen'} · {row.method || 'Unknown method'} · v
-                        {row.version}
-                      </small>
-                    </td>
-                  </tr>
+                  <g key={item.row.id}>
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={selected?.id === item.row.id ? 6 : 4}
+                      className={selected?.id === item.row.id ? 'is-selected' : undefined}
+                    />
+                    <text x={x} y="208" textAnchor="middle" className="health-chart-label">
+                      {item.row.date.slice(5)}
+                    </text>
+                    <foreignObject x={x - 18} y={y - 18} width="36" height="36">
+                      <button
+                        type="button"
+                        className="health-chart-hit"
+                        aria-label={`${item.row.name} ${formatReportedValue(item.row.value)} ${item.row.unit} on ${item.row.date}`}
+                        onClick={() => onSelect({ kind: 'marker', id: item.row.id })}
+                      />
+                    </foreignObject>
+                  </g>
                 );
               })}
-            </tbody>
-          </table>
+            </svg>
+          ) : (
+            <p className="health-empty-selection">
+              {view.qualitative.length
+                ? 'This marker has reported results without a numeric scale, so they are listed rather than plotted.'
+                : 'No dated numeric results are in this window.'}
+            </p>
+          )}
+          <div className="health-table-scroll">
+            <table>
+              <caption>
+                {sample ? 'Synthetic sample observations' : 'Reviewed observations'} · original
+                reported units · {view.focus?.name}
+              </caption>
+              <thead>
+                <tr>
+                  <th>Collected</th>
+                  <th>Marker</th>
+                  <th>Value</th>
+                  <th>Range</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.visible.map((row) => {
+                  const record = sample
+                    ? sampleBloodworkRecord
+                    : records.find((item) => item.id === row.record_id);
+                  return (
+                    <tr
+                      key={row.id}
+                      data-selected={selected?.id === row.id}
+                      onClick={() => onSelect({ kind: 'marker', id: row.id })}
+                    >
+                      <td>{row.date}</td>
+                      <td>{row.name}</td>
+                      <td>
+                        {formatReportedValue(row.value)} {row.unit}
+                        {row.flag ? ` · reported ${row.flag}` : ''}
+                        {numeric(row.value) === null ? ' · qualitative' : ''}
+                      </td>
+                      <td>{row.range || 'Not supplied'}</td>
+                      <td>
+                        {record?.title || 'Original'}
+                        <small>
+                          {row.specimen || 'Unknown specimen'} · {row.method || 'Unknown method'} ·
+                          v{row.version}
+                        </small>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {settings.comparisonDrawer && (
+            <aside className="health-comparison" aria-label="Compatible comparisons">
+              <p className="health-kicker">Comparable difference</p>
+              {view.comparable.length ? (
+                view.comparable.map((item) => (
+                  <p key={item.key}>
+                    {item.name}: {item.difference! > 0 ? '+' : ''}
+                    {formatMeasuredNumber(item.difference!)} {item.latest.unit} since{' '}
+                    {item.previous!.date}. {item.limitation}
+                  </p>
+                ))
+              ) : (
+                <p>No compatible dated pair is available. Units and methods stay separate.</p>
+              )}
+            </aside>
+          )}
         </div>
-        {settings.comparisonDrawer && (
-          <aside className="health-comparison" aria-label="Compatible comparisons">
-            <p className="health-kicker">Comparable differences</p>
-            {view.comparable.length ? (
-              view.comparable.map((item) => (
-                <p key={item.key}>
-                  {item.name}: {item.difference! > 0 ? '+' : ''}
-                  {new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(
-                    item.difference!,
-                  )}{' '}
-                  {item.latest.unit} since {item.previous!.date}. {item.limitation}
-                </p>
-              ))
-            ) : (
-              <p>No compatible dated pair is available. Units and methods stay separate.</p>
-            )}
-          </aside>
-        )}
-      </div>
+      )}
       {selected?.kind === 'marker' && (
         <SourceInspect
           observation={source.find((row) => row.id === selected.id) ?? null}
@@ -273,7 +287,7 @@ function SourceInspect({
         <div>
           <dt>Reported value</dt>
           <dd>
-            {observation.value} {observation.unit}
+            {formatReportedValue(observation.value)} {observation.unit}
           </dd>
         </div>
         <div>
@@ -295,8 +309,8 @@ function SourceInspect({
           <dd>{recordTitle || 'Unavailable'}</dd>
         </div>
         <div>
-          <dt>Comparison key</dt>
-          <dd>{comparisonKey(observation)}</dd>
+          <dt>Comparable with</dt>
+          <dd>The same reported name or code, unit, specimen and method.</dd>
         </div>
       </dl>
     </section>
