@@ -606,6 +606,34 @@ export interface Database {
         never,
         never
       >;
+      architect_design_directions: Table<
+        {
+          request_id: string;
+          person_id: string;
+          project_id: string;
+          revision: number;
+          digest: string;
+          receipt: unknown;
+          started: false;
+          source_kind: 'text-import' | 'talk-authorized' | 'pending';
+          verified: boolean;
+          created_at: string;
+        },
+        never,
+        never
+      >;
+      ai_live_observed_items: Table<
+        {
+          person_id: string;
+          session_id: string;
+          conversation_id: string;
+          provider_item_id: string;
+          provider_response_id: string | null;
+          created_at: string;
+        },
+        never,
+        never
+      >;
       ai_talk_direction_transfers: Table<
         {
           id: string;
@@ -1541,6 +1569,26 @@ export interface Database {
       ai_talk_select_creation: {
         Args: { p_conversation: string; p_creation: string };
         Returns: boolean;
+      };
+      ai_live_observe_item: {
+        Args: {
+          p_session: string;
+          p_conversation: string;
+          p_item: string;
+          p_response: string | null;
+        };
+        Returns: { providerItemId: string; observed: boolean };
+      };
+      architect_apps_retain_design: {
+        Args: {
+          p_request: string;
+          p_project: string;
+          p_digest: string;
+          p_receipt: unknown;
+          p_source_kind: string;
+          p_verified: boolean;
+        };
+        Returns: string;
       };
       ai_live_bind_turn: {
         Args: {

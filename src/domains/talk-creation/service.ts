@@ -694,6 +694,10 @@ export async function reviewDesignDirection(boardId: string) {
     imported: Boolean(existing.data?.imported && existing.data.digest === receipt.digest),
     projectId: existing.data?.imported ? existing.data.project_id : null,
     originReady: originReady(),
+    digest: receipt.digest,
+    boardVersion: creation.version,
+    selectedDirectionId: selectedDirection(board).id,
+    selectedDirectionName: selectedDirection(board).name,
   };
 }
 
@@ -712,12 +716,30 @@ export async function transferDesignDirection(input: unknown) {
     version: creation.version,
     board,
   });
+  if (receipt.digest !== parsed.data.reviewedDigest)
+    throw new IntelligenceError('This design changed. Review it again before transfer.', 409);
   const projectId = directionProjectIdentity(
     person.id,
     creation.id,
     creation.version,
     selectedDirection(board).id,
   );
+  const retained = await receiveDesignDirection({
+    action: 'receive',
+    requestId: parsed.data.id,
+    projectId,
+    receipt,
+  });
+  if (
+    retained.digest !== receipt.digest ||
+    retained.project_id !== projectId ||
+    retained.request_id !== parsed.data.id ||
+    !retained.verified
+  )
+    throw new IntelligenceError(
+      'Architect did not acknowledge this exact reviewed design direction.',
+      409,
+    );
   const existing = await client
     .from('ai_talk_direction_transfers')
     .select('*')
@@ -730,30 +752,20 @@ export async function transferDesignDirection(input: unknown) {
       existing.data.conversation_id !== creation.conversation_id ||
       existing.data.board_id !== creation.id ||
       existing.data.board_version !== creation.version ||
-      existing.data.digest !== receipt.digest
+      existing.data.digest !== receipt.digest ||
+      existing.data.project_id !== retained.project_id
     )
       throw new IntelligenceError('This transfer request was already used with a different design.', 409);
     return {
       id: existing.data.id,
       projectId: existing.data.project_id,
       digest: existing.data.digest,
-      imported: Boolean(existing.data.imported),
+      imported: Boolean(existing.data.imported) && retained.verified && retained.digest === receipt.digest,
       recovered: true,
       receipt,
       started: false,
     };
   }
-  const retained = await receiveDesignDirection({
-    action: 'receive',
-    requestId: parsed.data.id,
-    projectId,
-    receipt,
-  });
-  if (retained.digest !== receipt.digest || retained.project_id !== projectId)
-    throw new IntelligenceError(
-      'Architect did not acknowledge this exact reviewed design direction.',
-      409,
-    );
   const recorded = await client.rpc('ai_talk_record_direction_transfer', {
     p_id: parsed.data.id,
     p_conversation: creation.conversation_id,
@@ -777,7 +789,7 @@ export async function transferDesignDirection(input: unknown) {
     id: saved.id,
     projectId: saved.projectId,
     digest: saved.digest,
-    imported: true as const,
+    imported: Boolean(saved.imported) && retained.verified,
     recovered: Boolean(saved.recovered),
     receipt,
     started: false as const,

@@ -68,6 +68,10 @@ export function CreationDetail({
     imported: boolean;
     projectId: string | null;
     requestId: string | null;
+    digest?: string;
+    boardVersion?: number;
+    selectedDirectionId?: string;
+    selectedDirectionName?: string;
     error?: string;
   } | null>(null);
   const [directionRequestId] = useState(() => crypto.randomUUID());
@@ -272,7 +276,7 @@ export function CreationDetail({
             <p className="talk-creation-status" data-adapter="talk-architect-direction">
               {directionReview?.imported
                 ? 'Imported. Architect acknowledged this exact reviewed direction.'
-                : 'Review the shared talk-architect-direction/v1 manifest, then transfer. v1 text import stays for brief, plan and palette only.'}
+                : 'Review the shared talk-architect-direction/v1 manifest, then confirm transfer. v1 text import stays for brief, plan and palette only.'}
             </p>
             {directionReview?.unsupported?.map((item) => (
               <p key={item} className="talk-creation-status">
@@ -282,12 +286,29 @@ export function CreationDetail({
             {directionReview?.receipt && (
               <dl className="talk-origin-preview">
                 <div>
-                  <dt>Direction</dt>
-                  <dd>{directionReview.receipt.content.name}</dd>
+                  <dt>Selected direction</dt>
+                  <dd>
+                    {directionReview.selectedDirectionName ?? directionReview.receipt.content.name} · v
+                    {directionReview.boardVersion ?? creation?.version}
+                  </dd>
                 </div>
                 <div>
-                  <dt>Summary</dt>
-                  <dd>{directionReview.receipt.content.summary}</dd>
+                  <dt>Destination</dt>
+                  <dd>Private Architect project for this exact reviewed version</dd>
+                </div>
+                <div>
+                  <dt>Transfers</dt>
+                  <dd>
+                    Mapped color roles, display/body tokens, layout tokens, approved copy and labelled
+                    asset references.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Stays in Talk</dt>
+                  <dd>
+                    Hero-product demonstration, typeface names and scale, shape, material, surface and
+                    border roles, and placeholder packaging pixels.
+                  </dd>
                 </div>
                 <div>
                   <dt>Digest</dt>
@@ -315,6 +336,10 @@ export function CreationDetail({
                     imported?: boolean;
                     projectId?: string | null;
                     requestId?: string | null;
+                    digest?: string;
+                    boardVersion?: number;
+                    selectedDirectionId?: string;
+                    selectedDirectionName?: string;
                     error?: string;
                   };
                   if (!reviewed.ok || !body.receipt) {
@@ -332,48 +357,69 @@ export function CreationDetail({
                     unsupported: body.unsupported ?? [],
                     imported: Boolean(body.imported),
                     projectId: body.projectId ?? null,
-                    requestId: body.requestId ?? null,
+                    requestId: body.requestId ?? directionRequestId,
+                    digest: body.digest ?? body.receipt.digest,
+                    boardVersion: body.boardVersion,
+                    selectedDirectionId: body.selectedDirectionId,
+                    selectedDirectionName: body.selectedDirectionName,
                   });
-                  if (body.imported) return;
-                  const requestId = body.requestId ?? directionRequestId;
-                  const transferred = await fetch('/api/aurelius/creations', {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json' },
-                    body: JSON.stringify({
-                      action: 'transfer-direction',
-                      id: requestId,
-                      conversationId: creation.conversation_id,
-                      boardId: creation.id,
-                    }),
-                  });
-                  const result = (await transferred.json()) as {
-                    imported?: boolean;
-                    projectId?: string;
-                    digest?: string;
-                    error?: string;
-                  };
-                  if (!transferred.ok || !result.imported)
-                    setDirectionReview({
-                      receipt: body.receipt,
-                      unsupported: body.unsupported ?? [],
-                      imported: false,
-                      projectId: null,
-                      requestId,
-                      error: result.error ?? 'Architect did not acknowledge this direction.',
-                    });
-                  else
-                    setDirectionReview({
-                      receipt: body.receipt,
-                      unsupported: body.unsupported ?? [],
-                      imported: true,
-                      projectId: result.projectId ?? null,
-                      requestId,
-                    });
                 })();
               }}
             >
-              {directionReview?.imported ? 'Imported' : 'Review and transfer'}
+              {directionReview?.imported ? 'Imported' : 'Review design transfer'}
             </button>
+            {directionReview?.receipt && !directionReview.imported && (
+              <button
+                type="button"
+                className="button"
+                disabled={busy || !creation || !directionReview.digest}
+                onClick={() => {
+                  if (!creation || !directionReview.digest) return;
+                  void (async () => {
+                    const requestId = directionReview.requestId ?? directionRequestId;
+                    const transferred = await fetch('/api/aurelius/creations', {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'transfer-direction',
+                        id: requestId,
+                        conversationId: creation.conversation_id,
+                        boardId: creation.id,
+                        reviewedDigest: directionReview.digest,
+                      }),
+                    });
+                    const result = (await transferred.json()) as {
+                      imported?: boolean;
+                      projectId?: string;
+                      digest?: string;
+                      error?: string;
+                    };
+                    if (!transferred.ok || !result.imported)
+                      setDirectionReview({
+                        ...directionReview,
+                        imported: false,
+                        projectId: null,
+                        requestId,
+                        error:
+                          result.error ??
+                          (/changed|review/i.test(result.error ?? '')
+                            ? 'This design changed. Review it again before transfer.'
+                            : 'Architect did not acknowledge this direction.'),
+                      });
+                    else
+                      setDirectionReview({
+                        ...directionReview,
+                        imported: true,
+                        projectId: result.projectId ?? null,
+                        requestId,
+                        error: undefined,
+                      });
+                  })();
+                }}
+              >
+                Confirm transfer
+              </button>
+            )}
             {directionReview?.imported && directionReview.projectId && (
               <a className="button" href={`/app/architect?project=${directionReview.projectId}`}>
                 Open in Architect

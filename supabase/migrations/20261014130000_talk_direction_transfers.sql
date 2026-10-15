@@ -1,4 +1,5 @@
 -- Talk-owned durable receipts for Architect design-direction transfer. Hosted apply requires founder authorization.
+-- Authenticated INSERT is revoked. imported=true requires a matching Architect destination acknowledgment.
 create table public.ai_talk_direction_transfers (
   id uuid primary key,
   person_id uuid not null,
@@ -17,9 +18,9 @@ create table public.ai_talk_direction_transfers (
 create index ai_talk_direction_transfers_board on public.ai_talk_direction_transfers (person_id, conversation_id, board_id);
 alter table public.ai_talk_direction_transfers enable row level security;
 create policy ai_talk_direction_transfers_owner on public.ai_talk_direction_transfers
-  for all using (person_id = (select id from public.persons where auth_user_id = auth.uid()))
-  with check (person_id = (select id from public.persons where auth_user_id = auth.uid()));
-grant select, insert on public.ai_talk_direction_transfers to authenticated;
+  for select using (person_id = (select id from public.persons where auth_user_id = auth.uid()));
+revoke all on public.ai_talk_direction_transfers from public, anon, authenticated;
+grant select on public.ai_talk_direction_transfers to authenticated;
 
 create or replace function public.ai_talk_record_direction_transfer(
   p_id uuid,
@@ -36,6 +37,8 @@ language plpgsql security definer set search_path = '' as $$
 declare
   owner_id uuid;
   existing public.ai_talk_direction_transfers%rowtype;
+  board public.ai_talk_creations%rowtype;
+  acknowledged boolean := false;
 begin
   select id into owner_id from public.persons where auth_user_id = auth.uid();
   if owner_id is null then raise exception 'unavailable'; end if;
@@ -53,6 +56,22 @@ begin
   ) then
     raise exception 'unavailable';
   end if;
+  select * into board from public.ai_talk_creations
+  where id = p_board and person_id = owner_id and conversation_id = p_conversation
+    and kind = 'board' and version = p_version and not candidate;
+  if not found then raise exception 'unavailable'; end if;
+  if coalesce(board.content->>'selectedDirectionId', '') <> p_direction then
+    raise exception 'unavailable';
+  end if;
+  if to_regclass('public.architect_design_directions') is not null then
+    execute
+      'select true from public.architect_design_directions
+        where request_id = $1 and person_id = $2 and project_id = $3
+          and digest = $4 and verified'
+      into acknowledged
+      using p_id, owner_id, p_project, p_digest;
+  end if;
+  if not acknowledged then raise exception 'Architect acknowledgment missing'; end if;
   select * into existing from public.ai_talk_direction_transfers
   where id = p_id and person_id = owner_id;
   if found then

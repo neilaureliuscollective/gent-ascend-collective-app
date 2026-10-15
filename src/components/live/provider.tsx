@@ -77,6 +77,7 @@ const idleSnapshot: LiveState = {
   responsePending: false,
   persistence: 'idle',
   persistenceEpoch: 0,
+  artifactConversationId: null,
 };
 const noopSubscribe = () => () => {};
 const getIdle = () => idleSnapshot;

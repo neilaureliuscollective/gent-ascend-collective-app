@@ -38,7 +38,13 @@ beforeAll(async () => {
  create table public.ai_conversations(id uuid primary key, person_id uuid not null, title text, company_id uuid, archived_at timestamptz, unique(person_id,id));
  insert into public.ai_conversations(id,person_id,title) values('${conversation}','${owner}','Talk');
  create table public.ai_turns(id uuid primary key, person_id uuid, conversation_id uuid);
- insert into public.ai_turns values('${turn}','${owner}','${conversation}');`);
+ insert into public.ai_turns values('${turn}','${owner}','${conversation}');
+ create table public.ai_live_sessions(id uuid primary key, person_id uuid not null, conversation_id uuid);
+ create table public.architect_design_directions(
+   request_id uuid primary key, person_id uuid not null, project_id uuid not null,
+   digest text not null, verified boolean not null default false
+ );
+ grant select, insert on public.ai_live_sessions, public.architect_design_directions to authenticated;`);
   await db.exec(await readFile('supabase/migrations/20261013240000_talk_creation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
@@ -399,6 +405,15 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
     expect(selected.selected).toBe('direction-c');
     const digest = 'a'.repeat(64);
     const receipt = { schema: 'talk-architect-direction/v1', digest };
+    await asUser(
+      owner,
+      `insert into public.architect_design_directions(request_id,person_id,project_id,digest,verified)
+       values('${requestId}','${owner}','${projectId}','${digest}',true)`,
+    );
+    await expect(
+      asUser(owner, `insert into public.ai_talk_direction_transfers(id,person_id,conversation_id,board_id,board_version,direction_id,direction_uuid,project_id,digest,receipt,imported)
+        values('${crypto.randomUUID()}','${owner}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)},true)`),
+    ).rejects.toThrow();
     const first = await asUser(
       owner,
       `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)}) as receipt`,
@@ -430,8 +445,45 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
     const turnA = '00000000-0000-4000-8000-000000000082';
     const turnB = '00000000-0000-4000-8000-000000000083';
     await db.exec(
-      `insert into public.ai_turns values('${turnA}','${owner}','${conversation}'),('${turnB}','${owner}','${conversation}')`,
+      `insert into public.ai_turns values('${turnA}','${owner}','${conversation}'),('${turnB}','${owner}','${conversation}');
+       insert into public.ai_live_sessions(id,person_id,conversation_id) values('${session}','${owner}','${conversation}')`,
     );
+    await asUser(
+      owner,
+      `select public.ai_live_observe_item('${session}','${conversation}','item-same','resp-1')`,
+    );
+    await asUser(
+      owner,
+      `select public.ai_live_observe_item('${session}','${conversation}','item-same-again','resp-2')`,
+    );
+    await expect(
+      asUser(owner, `insert into public.ai_live_turn_bindings(person_id,conversation_id,session_id,provider_item_id,turn_id)
+        values('${owner}','${conversation}','${session}','forged','${turnA}')`),
+    ).rejects.toThrow();
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_turn('${crypto.randomUUID()}','${conversation}','item-same','resp-1','${turnA}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_turn('${session}','${conversation}','never-observed','resp-1','${turnA}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    const otherConversation = '00000000-0000-4000-8000-000000000084';
+    const wrongTurn = '00000000-0000-4000-8000-000000000085';
+    await db.exec(
+      `insert into public.ai_conversations(id,person_id,title) values('${otherConversation}','${owner}','Other');
+       insert into public.ai_turns values('${wrongTurn}','${owner}','${otherConversation}')`,
+    );
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${wrongTurn}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
     await asUser(
       owner,
       `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,

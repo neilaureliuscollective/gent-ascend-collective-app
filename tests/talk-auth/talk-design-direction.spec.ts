@@ -32,18 +32,35 @@ async function signIn(page: Page, email: string) {
   await expect(page).toHaveURL(/\/app(?:\/|$|\?)/);
 }
 
-async function api<T>(page: Page, path: string, method = 'GET', body?: unknown) {
+async function api<T>(
+  page: Page,
+  path: string,
+  method = 'GET',
+  body?: unknown,
+  allowAbort = false,
+) {
   return page.evaluate(
-    async ({ path: url, method: verb, body: payload }) => {
-      const response = await fetch(url, {
-        method: verb,
-        headers: payload ? { 'content-type': 'application/json' } : undefined,
-        body: payload ? JSON.stringify(payload) : undefined,
-        cache: 'no-store',
-      });
-      return { status: response.status, body: (await response.json()) as T };
+    async ({ path: url, method: verb, body: payload, allowAbort: tolerateAbort }) => {
+      try {
+        const response = await fetch(url, {
+          method: verb,
+          headers: payload ? { 'content-type': 'application/json' } : undefined,
+          body: payload ? JSON.stringify(payload) : undefined,
+          cache: 'no-store',
+        });
+        return {
+          status: response.status,
+          aborted: false,
+          body: (await response.json()) as T,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (tolerateAbort && /Failed to fetch|network/i.test(message))
+          return { status: 0, aborted: true, body: { error: message } as T };
+        throw error;
+      }
     },
-    { path, method, body },
+    { path, method, body, allowAbort },
   );
 }
 
@@ -154,56 +171,123 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   const reviewed = await api<{
     receipt: { digest: string; identity: { directionId: string } };
     imported: boolean;
+    digest: string;
+    boardVersion: number;
+    selectedDirectionId: string;
   }>(page, `/api/aurelius/creations?direction=${refinedId}`);
   expect(reviewed.status).toBe(200);
-  expect(reviewed.body.receipt.digest).toMatch(/^[0-9a-f]{64}$/);
+  expect(reviewed.body.imported).toBe(false);
+  expect(reviewed.body.digest).toMatch(/^[0-9a-f]{64}$/);
+  expect(reviewed.body.selectedDirectionId).toBe('direction-c');
   const transferId = crypto.randomUUID();
+  const transferBody = {
+    action: 'transfer-direction' as const,
+    id: transferId,
+    conversationId: conversation,
+    boardId: refinedId,
+    reviewedDigest: reviewed.body.digest,
+  };
   await page.route('**/api/aurelius/creations', async (route: Route) => {
     if (route.request().method() === 'POST') {
       const payload = route.request().postDataJSON() as Record<string, unknown>;
       if (payload.action === 'transfer-direction' && payload.id === transferId) {
         const response = await route.fetch();
         expect(response.ok()).toBeTruthy();
+        const committed = await owner
+          .from('architect_design_directions')
+          .select('request_id,digest,verified')
+          .eq('request_id', transferId)
+          .maybeSingle();
+        expect(committed.error).toBeNull();
+        expect(committed.data).toMatchObject({
+          request_id: transferId,
+          digest: reviewed.body.digest,
+          verified: true,
+        });
         await route.abort('failed');
         return;
       }
     }
     return route.continue();
   });
-  const lost = await api(page, '/api/aurelius/creations', 'POST', {
-    action: 'transfer-direction',
-    id: transferId,
-    conversationId: conversation,
-    boardId: refinedId,
-  });
+  const lost = await api(page, '/api/aurelius/creations', 'POST', transferBody, true);
+  expect(lost.aborted).toBe(true);
   expect(lost.status).toBe(0);
   await page.unroute('**/api/aurelius/creations');
-  const retry = await api<{ imported: boolean; projectId: string; digest: string }>(
+  const retry = await api<{ imported: boolean; projectId: string; digest: string; recovered?: boolean }>(
     page,
     '/api/aurelius/creations',
     'POST',
-    {
-      action: 'transfer-direction',
-      id: transferId,
-      conversationId: conversation,
-      boardId: refinedId,
-    },
+    transferBody,
   );
   expect(retry.status).toBe(201);
   expect(retry.body.imported).toBe(true);
-  expect(retry.body.digest).toBe(reviewed.body.receipt.digest);
+  expect(retry.body.digest).toBe(reviewed.body.digest);
+  const destinations = await owner
+    .from('architect_design_directions')
+    .select('request_id,project_id,digest')
+    .eq('request_id', transferId);
+  expect(destinations.data).toHaveLength(1);
+  expect(destinations.data?.[0]?.digest).toBe(reviewed.body.digest);
+  const receipts = await owner.from('ai_talk_direction_transfers').select('id,imported').eq('id', transferId);
+  expect(receipts.data).toHaveLength(1);
+  expect(receipts.data?.[0]?.imported).toBe(true);
   const again = await api<{ imported: boolean; projectId: string; recovered?: boolean }>(
     page,
     '/api/aurelius/creations',
     'POST',
-    {
-      action: 'transfer-direction',
-      id: transferId,
-      conversationId: conversation,
-      boardId: refinedId,
-    },
+    transferBody,
   );
   expect(again.body.projectId).toBe(retry.body.projectId);
+  expect(again.body.recovered).toBe(true);
+  expect(
+    (
+      await api(page, '/api/aurelius/creations', 'POST', {
+        ...transferBody,
+        reviewedDigest: 'b'.repeat(64),
+      })
+    ).status,
+  ).toBeGreaterThanOrEqual(400);
+  expect(
+    (
+      await owner.from('ai_talk_direction_transfers').insert({
+        id: crypto.randomUUID(),
+        person_id: (await owner.auth.getUser()).data.user?.id,
+        conversation_id: conversation,
+        board_id: refinedId,
+        board_version: 3,
+        direction_id: 'direction-c',
+        direction_uuid: reviewed.body.receipt.identity.directionId,
+        project_id: retry.body.projectId,
+        digest: reviewed.body.digest,
+        receipt: { schema: 'talk-architect-direction/v1' },
+        imported: true,
+      })
+    ).error,
+  ).toBeTruthy();
+  expect(
+    (
+      await owner.rpc('ai_talk_record_direction_transfer', {
+        p_id: crypto.randomUUID(),
+        p_conversation: conversation,
+        p_board: refinedId,
+        p_version: 3,
+        p_direction: 'direction-c',
+        p_direction_uuid: reviewed.body.receipt.identity.directionId,
+        p_project: crypto.randomUUID(),
+        p_digest: reviewed.body.digest,
+        p_receipt: { schema: 'talk-architect-direction/v1' },
+      })
+    ).error,
+  ).toBeTruthy();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('tab', { name: /Emerald Glass/ })).toBeVisible();
+  const reopened = await api<{ imported: boolean; digest: string; projectId: string | null }>(
+    page,
+    `/api/aurelius/creations?direction=${refinedId}`,
+  );
+  expect(reopened.body.imported).toBe(true);
+  expect(reopened.body.digest).toBe(reviewed.body.digest);
   const other = await browser.newContext();
   const foreignPage = await other.newPage();
   await signIn(foreignPage, 'member@aurelius.test');
@@ -213,10 +297,8 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   expect(
     (
       await api(foreignPage, '/api/aurelius/creations', 'POST', {
-        action: 'transfer-direction',
+        ...transferBody,
         id: crypto.randomUUID(),
-        conversationId: conversation,
-        boardId: refinedId,
       })
     ).status,
   ).toBeGreaterThanOrEqual(400);

@@ -28,6 +28,7 @@ export type LiveState = {
   responsePending: boolean;
   persistence: 'idle' | 'pending' | 'acknowledged' | 'uncertain';
   persistenceEpoch: number;
+  artifactConversationId: string | null;
 };
 /** One transport per workspace. Presentation changes never create a transport. */
 export class LiveController {
@@ -52,6 +53,7 @@ export class LiveController {
     responsePending: false,
     persistence: 'idle',
     persistenceEpoch: 0,
+    artifactConversationId: null,
   };
   private artifactConversationId: string | null = null;
   private listeners = new Set<() => void>();
@@ -188,6 +190,7 @@ export class LiveController {
       persistence: 'idle',
       persistenceEpoch: this.state.persistenceEpoch + 1,
       playbackBlocked: false,
+      artifactConversationId: conversationId,
     });
     this.artifactConversationId = conversationId;
     try {
@@ -434,14 +437,36 @@ export class LiveController {
       persistenceEpoch: this.state.persistenceEpoch + 1,
     });
   }
-  markPersistence(persistence: LiveState['persistence']) {
+  voiceIdentity(ownerId: string) {
+    if (!this.state.conversationId || !this.state.sessionId) return null;
+    return {
+      ownerId,
+      conversationId: this.state.conversationId,
+      sessionId: this.state.sessionId,
+      epoch: this.state.persistenceEpoch,
+    };
+  }
+  private matchesPersistence(identity?: { sessionId: string; epoch: number } | null) {
+    return Boolean(
+      identity &&
+        this.state.sessionId === identity.sessionId &&
+        this.state.persistenceEpoch === identity.epoch,
+    );
+  }
+  markPersistence(
+    persistence: LiveState['persistence'],
+    identity?: { sessionId: string; epoch: number } | null,
+  ) {
+    if (!this.matchesPersistence(identity)) return;
     this.update({ persistence });
   }
-  markSavedItems(ids: string[]) {
+  markSavedItems(ids: string[], identity?: { sessionId: string; epoch: number } | null) {
+    if (!this.matchesPersistence(identity)) return;
     this.update({ savedItemIds: [...new Set([...this.state.savedItemIds, ...ids])] });
   }
-  acknowledgePersistence(sessionId?: string | null) {
+  acknowledgePersistence(sessionId?: string | null, epoch?: number) {
     if (sessionId && this.state.sessionId && sessionId !== this.state.sessionId) return;
+    if (epoch !== undefined && this.state.persistenceEpoch !== epoch) return;
     this.update({ persistence: 'acknowledged', transcript: [], savedItemIds: [] });
   }
   private send(value: unknown) {
@@ -591,6 +616,7 @@ export class LiveController {
     if (this.artifactConversationId === conversationId) return;
     this.artifactConversationId = conversationId;
     this.update({
+      artifactConversationId: conversationId,
       artifactWorkspace: { artifacts: [], selectedId: null, projects: [] },
       reviewedAction: null,
     });

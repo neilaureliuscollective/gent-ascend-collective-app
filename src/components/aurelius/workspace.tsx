@@ -56,7 +56,12 @@ import {
 import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
 import { liveComposerLimit, liveTextRejection } from '@/domains/live/limits';
-import { voiceItemsAcknowledged, type VoicePersistenceReceipt } from '@/domains/live/receipt';
+import {
+  matchesVoiceReconcile,
+  voiceItemsAcknowledged,
+  type VoicePersistenceReceipt,
+  type VoiceReconcileIdentity,
+} from '@/domains/live/receipt';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
   let parent = turn.parent_turn_id;
@@ -943,50 +948,52 @@ export function AureliusWorkspace({
   }, [compact, selected, liveBusy, liveState.conversationId, liveController, load]);
   const previousLivePhase = useRef(liveState.phase);
   const ownerId = data?.ownerId;
+  useEffect(() => {
+    voiceReconcile.current += 1;
+  }, [ownerId, liveState.conversationId, liveState.sessionId, liveState.persistenceEpoch]);
   const reconcileVoiceHistory = useCallback(
-    async (input: {
-      ownerId: string;
-      conversationId: string;
-      sessionId: string;
-      epoch: number;
-      itemIds: string[];
-    }) => {
+    async (input: VoiceReconcileIdentity & { itemIds: string[] }) => {
       const token = ++voiceReconcile.current;
-      liveController?.markPersistence('pending');
+      const stillCurrent = () =>
+        token === voiceReconcile.current &&
+        matchesVoiceReconcile(ownerId && liveController ? liveController.voiceIdentity(ownerId) : null, input);
+      if (!stillCurrent()) return;
+      liveController?.markPersistence('pending', input);
       setNotice('Saving the voice turns…');
       for (let attempt = 0; attempt < 8; attempt++) {
-        if (token !== voiceReconcile.current) return;
-        if (liveState.sessionId && liveState.sessionId !== input.sessionId) return;
-        if (liveState.persistenceEpoch !== input.epoch) return;
+        if (!stillCurrent()) return;
         try {
           const response = await fetch(
             `/api/aethelios/live/receipt?conversationId=${input.conversationId}&sessionId=${input.sessionId}`,
             { cache: 'no-store' },
           );
-          if (token !== voiceReconcile.current) return;
+          if (!stillCurrent()) return;
           if (response.ok) {
             const receipt = (await response.json()) as VoicePersistenceReceipt;
+            if (!stillCurrent()) return;
             if (
               receipt.ownerId !== input.ownerId ||
               receipt.conversationId !== input.conversationId ||
               receipt.sessionId !== input.sessionId
             )
               return;
-            liveController?.markSavedItems(receipt.bindings.map((item) => item.providerItemId));
+            liveController?.markSavedItems(
+              receipt.bindings.map((item) => item.providerItemId),
+              input,
+            );
             if (voiceItemsAcknowledged(input.itemIds, receipt.bindings)) {
-              if (token !== voiceReconcile.current) return;
-              if (liveState.sessionId && liveState.sessionId !== input.sessionId) return;
-              liveController?.acknowledgePersistence(input.sessionId);
+              if (!stillCurrent()) return;
+              liveController?.acknowledgePersistence(input.sessionId, input.epoch);
               setNotice('');
               if (selected === input.conversationId && ownerId === input.ownerId) {
                 const workspace = await fetch(
                   `/api/aurelius?conversationId=${input.conversationId}`,
                   { cache: 'no-store' },
                 );
-                if (token !== voiceReconcile.current) return;
+                if (!stillCurrent()) return;
                 if (workspace.ok) {
                   const next = (await workspace.json()) as WorkspaceData;
-                  if (next.ownerId === input.ownerId)
+                  if (next.ownerId === input.ownerId && selected === input.conversationId)
                     setData((current) =>
                       current && selected === input.conversationId
                         ? { ...current, turns: next.turns, conversations: next.conversations }
@@ -1002,12 +1009,11 @@ export function AureliusWorkspace({
         }
         await new Promise((resolve) => setTimeout(resolve, 750));
       }
-      if (token !== voiceReconcile.current) return;
-      if (liveState.sessionId && liveState.sessionId !== input.sessionId) return;
-      liveController?.markPersistence('uncertain');
+      if (!stillCurrent()) return;
+      liveController?.markPersistence('uncertain', input);
       setNotice('Voice ended. Some turns may still be saving. Reload if they appear later.');
     },
-    [liveController, liveState.persistenceEpoch, liveState.sessionId, ownerId, selected],
+    [liveController, ownerId, selected],
   );
   useEffect(() => {
     const wasActive = ['connecting', 'listening', 'speaking'].includes(previousLivePhase.current);

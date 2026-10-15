@@ -252,6 +252,7 @@ export const transferDirectionInput = z
     id: z.uuid(),
     conversationId: z.uuid(),
     boardId: z.uuid(),
+    reviewedDigest: z.string().regex(/^[0-9a-f]{64}$/),
   })
   .strict();
 

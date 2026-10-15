@@ -52,7 +52,7 @@ Production voice flags, Construct, Connections, Architect worker/runtime, and ex
 
 ## Remaining dependencies
 
-- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql`, `20261014040000_talk_origin_import_consistency.sql`, `20261014100000_talk_design_board.sql`, `20261014120000_talk_live_bindings.sql` and `20261014130000_talk_direction_transfers.sql` requires founder authorization. None of these files broaden production access until applied.
+- Hosted apply of `20261013240000_talk_creation.sql`, `20261013250000_talk_image_entitlement.sql`, `20261013260000_talk_creation_candidates.sql`, `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql`, `20261014040000_talk_origin_import_consistency.sql`, `20261014100000_talk_design_board.sql`, `20261014120000_talk_live_bindings.sql`, `20261014130000_talk_direction_transfers.sql`, `20261015080000_architect_apps.sql` and `20261015120000_architect_apps_durable.sql` requires founder authorization. Architect Apps SQL is copied unchanged from Architect `2da0b6d`. Talk does not add a second receiver or store. None of these files broaden production access until applied.
 - Additive `20261014010000_talk_origin_import.sql`, `20261014020000_talk_origin_import_bind.sql`, `20261014030000_talk_origin_import_atomic.sql` and `20261014040000_talk_origin_import_consistency.sql` are local/reviewable. Hosted apply of the Talk files, including the receipt table, save bind, atomic import and consistency helpers, requires founder authorization. Do not edit the already-applied Origin migration record.
 - Paid image generation still needs Studio entitlement, OpenAI image access and the existing quota/RPC pilot checks.
 - Physical Fold/Safari and live-provider acceptance remain separate gates.
@@ -63,12 +63,12 @@ Recorded on this creative-conversation branch before push. Browser evidence incl
 
 - lint: pass
 - typecheck: pass
-- vitest: 990 passed (includes session-scoped voice receipts, provider-item bindings, inline board bind, typed `offer_text_work` persist, v1 board-refusal, `talk-architect-direction/v1` producer/receiver retry)
-- db ledger: pass (Talk, import, design-board, live-binding and direction-transfer SQL remain unapplied on hosted; Origin production record unchanged)
-- production build: pass (`/api/aethelios/live/receipt`, `/api/architect-design-direction`)
-- Playwright (mocked providers): retained UI fixtures; not counted as the saved/refined/imported journey
-- Persistence used: PGlite with pgcrypto for ownership/idempotent transfer SQL; authenticated talk-auth journey wired to CI disposable Supabase (`/app` landing, inline C, refinement, transfer retry, owner denial)
-- Unrun in this checkout: talk-auth (no local `.env.development.local` / Docker Auth), Quality `database`, Architect Origin `local-auth`, physical Fold/Safari two-way audio, paid OpenAI image/voice calls, hosted migration apply. Production HTTP 400 remains unverified.
+- vitest: 994 passed (includes replacement-session fencing, observe-then-bind denials, Architect-ack receipts, typed persist, v1 board-refusal)
+- db ledger: pass (Talk, import, design-board, live-binding, direction-transfer and copied Architect Apps SQL remain unapplied on hosted; Origin production record unchanged)
+- production build: pass
+- Playwright (mocked providers): Live artifact fixtures now use artifact conversation identity; not counted as the saved/refined/imported journey
+- Persistence used: PGlite for SQL relationship checks; authenticated talk-auth/talk-receipt smoke wired to CI disposable Supabase without `ARCHITECT_APPS_STORE=memory`
+- Unrun in this checkout: talk-auth and receipt smoke (no local Docker Auth), physical Fold/Safari two-way audio, paid OpenAI image/voice calls, hosted migration apply. Production HTTP 400 remains unverified.
 
 ## Capability matrix
 
