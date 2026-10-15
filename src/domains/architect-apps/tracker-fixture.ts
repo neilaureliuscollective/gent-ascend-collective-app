@@ -325,7 +325,7 @@ export function Compose({
   onSave: (item: TrackerItem, mutationId: string) => Promise<void>;
   onCancel: () => void;
 }) {
-  const [intent, setIntent] = useState<{ id: string; snapshot: string } | null>(null);
+  const [pending, setPending] = useState<{ recordId: string; operationId: string; snapshot: string } | null>(null);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<Status>('open');
@@ -335,14 +335,14 @@ export function Compose({
   const [held, setHeld] = useState<TrackerItem | null>(null);
   const [saveError, setSaveError] = useState('');
   function snapshotOf(item: TrackerItem) {
-    return JSON.stringify({ title: item.title, notes: item.notes, status: item.status, hours: item.hours });
+    return JSON.stringify({ id: item.id, title: item.title, notes: item.notes, status: item.status, hours: item.hours });
   }
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
         const item: TrackerItem = {
-          id: crypto.randomUUID(),
+          id: pending?.recordId ?? crypto.randomUUID(),
           title,
           notes,
           status,
@@ -354,13 +354,13 @@ export function Compose({
         if (next.length) return;
         if (busy) { setHeld(item); return; }
         const snapshot = snapshotOf(item);
-        const operation = intent && intent.snapshot === snapshot ? intent : { id: crypto.randomUUID(), snapshot };
-        setIntent(operation);
+        const operationId = pending && pending.recordId === item.id && pending.snapshot === snapshot ? pending.operationId : crypto.randomUUID();
+        setPending({ recordId: item.id, operationId, snapshot });
         setBusy(true);
         setSaveError('');
-        void onSave(item, operation.id)
+        void onSave(item, operationId)
           .then(() => {
-            setIntent(null);
+            setPending(null);
             if (held && snapshotOf(held) !== snapshot) {
               setTitle(held.title);
               setNotes(held.notes);
@@ -370,7 +370,7 @@ export function Compose({
             setHeld(null);
           })
           .catch((reason: unknown) => {
-            setSaveError(reason instanceof Error ? reason.message : 'Save failed. Your edit is still here.');
+            setSaveError(reason instanceof Error ? reason.message : 'The host did not confirm. Retry keeps this same record.');
           })
           .finally(() => setBusy(false));
       }}
@@ -403,9 +403,9 @@ export function Compose({
           ))}
         </ul>
       ) : null}
-      {saveError ? <p className="issues">{saveError}</p> : null}
-      <button type="submit" className="primary">{busy ? 'Saving' : 'Save record'}</button>
-      <button type="button" onClick={onCancel}>Cancel</button>
+      {saveError ? <p className="issues" data-save-state="uncertain">{saveError}</p> : null}
+      <button type="submit" className="primary">{busy ? 'Saving' : saveError ? 'Retry save' : 'Save record'}</button>
+      <button type="button" onClick={() => { setPending(null); onCancel(); }}>Cancel</button>
     </form>
   );
 }

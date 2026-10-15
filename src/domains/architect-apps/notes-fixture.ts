@@ -105,6 +105,9 @@ body { margin: 0; } .shell { padding: 20px; } .eyebrow { color: #c4912f; letter-
 button, input, textarea { font: inherit; color: inherit; background: #111412; border: 1px solid #2a2d2a; border-radius: 8px; padding: 10px 14px; min-height: 44px; }
 button { min-width: 44px; }
 .card { display: block; width: 100%; text-align: left; margin-bottom: 8px; }
+[data-save-state="saving"] { color: #c4912f; }
+[data-save-state="saved"] { color: #7dcea0; }
+[data-save-state="uncertain"], [data-save-state="conflict"] { color: #c47a6a; }
 `,
     },
     {
@@ -124,6 +127,7 @@ import { requestNotes } from './bridge';
 import { filterNotes, hoursLogged } from './calc';
 import { validateNote } from './validate';
 import type { Note, Route } from './types';
+type Pending = { recordId: string; operationId: string; snapshot: string; persisted: boolean; version?: number };
 export function App() {
   const [route, setRoute] = useState<Route>({ name: 'list' });
   const [notes, setNotes] = useState<Note[]>([]);
@@ -132,14 +136,15 @@ export function App() {
   const [body, setBody] = useState('');
   const [hours, setHours] = useState('1');
   const [issues, setIssues] = useState<string[]>([]);
-  const [intent, setIntent] = useState<{ id: string; snapshot: string } | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const [held, setHeld] = useState<Note | null>(null);
   const [saveError, setSaveError] = useState('');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'uncertain' | 'conflict'>('idle');
   const visible = useMemo(() => filterNotes(notes, query), [notes, query]);
   const total = useMemo(() => hoursLogged(notes), [notes]);
   const selected = route.name === 'note' ? notes.find((note) => note.id === route.id) ?? null : null;
-  function snapshotOf(note: Note) { return JSON.stringify({ id: note.id, title: note.title, body: note.body, hours: note.hours }); }
+  function snapshotOf(note: Pick<Note, 'id' | 'title' | 'body' | 'hours'>) { return JSON.stringify({ id: note.id, title: note.title, body: note.body, hours: note.hours }); }
   async function refresh() { setNotes(await requestNotes('list')); }
   useEffect(() => { void refresh().catch(() => setNotes([])); }, []);
   useEffect(() => {
@@ -148,29 +153,49 @@ export function App() {
     setBody(selected.body);
     setHours(String(selected.hours));
   }, [selected?.id]);
-  async function save(note: Note) {
+  function beginNewNote() {
+    setPending(null);
+    setHeld(null);
+    setSaveError('');
+    setSaveState('idle');
+    setTitle('');
+    setBody('');
+    setHours('1');
+    setRoute({ name: 'compose' });
+  }
+  async function save() {
+    const recordId = selected?.id ?? pending?.recordId ?? crypto.randomUUID();
+    const persisted = Boolean(selected) || Boolean(pending?.persisted);
+    const version = selected?.version ?? pending?.version;
+    const note: Note = { id: recordId, title, body, hours: Number(hours), persisted, version };
     const next = validateNote(note);
     setIssues(next);
     if (next.length) return;
     if (busy) { setHeld(note); return; }
     const snapshot = snapshotOf(note);
-    const operation = intent && intent.snapshot === snapshot ? intent : { id: crypto.randomUUID(), snapshot };
-    setIntent(operation);
+    const operationId = pending && pending.recordId === recordId && pending.snapshot === snapshot ? pending.operationId : crypto.randomUUID();
+    setPending({ recordId, operationId, snapshot, persisted, version });
     setBusy(true);
+    setSaveState('saving');
     setSaveError('');
     try {
-      await requestNotes(note.persisted ? 'update' : 'create', note, operation.id, note.persisted ? note.version : undefined);
-      setIntent(null);
+      await requestNotes(note.persisted ? 'update' : 'create', note, operationId, note.persisted ? note.version : undefined);
+      setPending(null);
+      setSaveState('saved');
       await refresh();
       setRoute({ name: 'note', id: note.id });
       if (held && snapshotOf(held) !== snapshot) {
         setTitle(held.title);
         setBody(held.body);
         setHours(String(held.hours));
+        setSaveState('idle');
       }
       setHeld(null);
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Save failed. Your edit is still here.');
+      const detail = error instanceof Error ? error.message : 'Save failed. Your edit is still here.';
+      const conflict = /conflict|changed|identity/i.test(detail);
+      setSaveError(conflict ? 'This edit conflicts with a later save. Reload the record before trying again.' : 'The host did not confirm. Retry keeps this same record.');
+      setSaveState(conflict ? 'conflict' : 'uncertain');
     } finally {
       setBusy(false);
     }
@@ -182,13 +207,13 @@ export function App() {
       <p>{total}h logged</p>
       <nav>
         <button type="button" onClick={() => setRoute({ name: 'list' })}>Notes</button>
-        <button type="button" onClick={() => { setIntent(null); setTitle(''); setBody(''); setHours('1'); setRoute({ name: 'compose' }); }}>New note</button>
+        <button type="button" onClick={beginNewNote}>New note</button>
       </nav>
       {route.name === 'list' ? (
         <section>
           <input value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="Filter" />
           {visible.map((note) => (
-            <button key={note.id} type="button" className="card" onClick={() => { setIntent(null); setRoute({ name: 'note', id: note.id }); }}>
+            <button key={note.id} type="button" className="card" onClick={() => { setPending(null); setRoute({ name: 'note', id: note.id }); }}>
               <strong>{note.title}</strong>
               <p>{note.hours}h</p>
             </button>
@@ -196,13 +221,13 @@ export function App() {
         </section>
       ) : null}
       {route.name === 'compose' || selected ? (
-        <form onSubmit={(event) => { event.preventDefault(); void save({ id: selected?.id ?? crypto.randomUUID(), title, body, hours: Number(hours), persisted: Boolean(selected), version: selected?.version }); }}>
+        <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
           <input value={title} onChange={(event) => setTitle(event.currentTarget.value)} maxLength={80} required />
           <textarea value={body} onChange={(event) => setBody(event.currentTarget.value)} maxLength={800} />
           <input value={hours} onChange={(event) => setHours(event.currentTarget.value)} />
           {issues.map((issue) => <p key={issue}>{issue}</p>)}
-          {saveError ? <p>{saveError}</p> : null}
-          <button type="submit">{busy ? 'Saving' : 'Save record'}</button>
+          <p data-save-state={saveState}>{busy ? 'Saving' : saveError || (saveState === 'saved' ? 'Saved' : held ? 'A later edit is held until this save finishes.' : '')}</p>
+          <button type="submit">{busy ? 'Saving' : saveState === 'uncertain' || saveState === 'conflict' ? 'Retry save' : 'Save record'}</button>
         </form>
       ) : null}
     </div>
@@ -256,7 +281,10 @@ export function validateNote(input: Partial<Note>): string[] {
       op: 'update',
       path: 'src/App.tsx',
       baseHash: fileHash(app.content),
-      content: app.content.replace('hours: Number(hours), persisted', "hours: Number(hours), tag: 'field', persisted"),
+      content: app.content.replace(
+        'hours: Number(hours), persisted, version',
+        "hours: Number(hours), tag: 'field' as const, persisted, version",
+      ),
     },
   ];
 }

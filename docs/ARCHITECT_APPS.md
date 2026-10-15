@@ -27,7 +27,7 @@ Generated project code does not execute in the credentialed host process for the
 
 ## Talk contract
 
-Architect owns `talk-architect-direction/v1` and the published shared contract `talk.architect.source.resolve` (`2026-10-14.1`). Talk registers `createTalkAuthorizedSourceAdapter` against immutable Talk server records. A client-computed content digest is not source authorization. Talk #131 head `ae37393d191207d83ff548801ec3682a82a1a56f` implements that registration on the Talk checkout (`src/domains/talk-creation/architect-source.ts`). This Architect branch does not copy those files and still reports the adapter as pending. Durable receipts stay. See [ARCHITECT_DESIGN_DIRECTION.md](ARCHITECT_DESIGN_DIRECTION.md).
+Architect owns `talk-architect-direction/v1` and the published shared contract `talk.architect.source.resolve` (`2026-10-14.1`). Talk registers `createTalkAuthorizedSourceAdapter` against immutable Talk server records. A client-computed content digest is not source authorization. Talk #131 head `bf47627d46632fa153d37d27c2a8cc638e8895ac` implements that registration on the Talk checkout (`src/domains/talk-creation/architect-source.ts`). This Architect branch does not copy those files and still reports the adapter as pending. Durable receipts stay. `architect_apps_retain_design` keeps the Talk-compatible six-argument signature; `p_verified` is ignored and `verified` is derived from owner-authorized `source_kind`. See [ARCHITECT_DESIGN_DIRECTION.md](ARCHITECT_DESIGN_DIRECTION.md).
 
 ## Flags
 
@@ -42,7 +42,7 @@ Architect owns `talk-architect-direction/v1` and the published shared contract `
 | `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-14.1` | Pinned isolated build image |
 | `ARCHITECT_APPS_PREVIEW_SECRET` | required | Preview session HMAC. Fallback signing secrets are not permitted. |
 
-Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql` and `20261015140000_architect_apps_mutation.sql` are local-only until founder-approved hosted application.
+Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql` and `20261015160000_architect_apps_retain_verified.sql` are local-only until founder-approved hosted application.
 
 ## Evidence classes
 

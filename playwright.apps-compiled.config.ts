@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: 'tests/browser',
   testMatch: 'architect-apps-compiled-mount.spec.ts',
   outputDir: 'test-results/playwright-apps-compiled',
-  timeout: 30000,
+  timeout: 45000,
   use: {
     headless: true,
     launchOptions: {

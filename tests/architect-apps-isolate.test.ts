@@ -135,6 +135,7 @@ it('runs the production isolated adapter through deterministic injected transpor
 it('emits an ES-module runner that walks artifacts without require', async () => {
   expect(trustedAppsContainerRunner).not.toMatch(/\brequire\s*\(/);
   expect(trustedAppsContainerRunner).toMatch(/readdirSync\(dir\)/);
+  expect(trustedAppsContainerRunner).toMatch(/for \(const name of readdirSync\(toolchainRoot\)\)/);
   expect(trustedAppsContainerRunner).toMatch(/symlinkSync\(source, destination\)/);
   const work = await mkdtemp(join(tmpdir(), 'apps-walk-'));
   await writeFile(join(work, 'index.html'), '<!doctype html><html><body><div id="root"></div></body></html>');
@@ -218,4 +219,19 @@ it('builds the pinned image and runs the isolated Field Notes compile when isola
   expect(cancelled.result.ok).toBe(false);
   expect(cancelled.result.blocker).toMatch(/cancelled/i);
   expect(cancelled.artifacts).toEqual([]);
+  const timed = await buildIsolatedGeneratedApp(notesSourceFiles(), {
+    timeoutMs: 80,
+    name: 'apps-required-timeout',
+  });
+  expect(timed.result.ok).toBe(false);
+  expect(timed.artifacts).toEqual([]);
+  const leftover = spawnSync('docker', ['inspect', 'apps-required-timeout'], { encoding: 'utf8' });
+  expect(leftover.status !== 0 || /no such container/i.test(`${leftover.stderr}${leftover.stdout}`)).toBe(true);
 }, 360000);
+
+it('Field Notes create retains the pending record identity across retries', () => {
+  const app = notesSourceFiles().find((file) => file.path === 'src/App.tsx')?.content ?? '';
+  expect(app).toMatch(/pending\?\.recordId/);
+  expect(app).toMatch(/Retry keeps this same record/);
+  expect(app).not.toMatch(/selected\?\.id \?\? crypto\.randomUUID\(\)/);
+});

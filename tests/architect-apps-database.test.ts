@@ -57,6 +57,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015080000_architect_apps.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015120000_architect_apps_durable.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015140000_architect_apps_mutation.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015160000_architect_apps_retain_verified.sql', 'utf8'));
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
 
@@ -219,5 +220,27 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
     );
     const lost = await asWorker(`select public.architect_apps_timeout() as n`);
     expect(Number((lost.rows[0] as { n?: number }).n ?? 0)).toBe(1);
+  });
+
+  it('derives retain_design verified from source kind and ignores caller p_verified', async () => {
+    const digest = 'c'.repeat(64);
+    const pendingRequest = '00000000-0000-4000-8000-000000000091';
+    const importRequest = '00000000-0000-4000-8000-000000000092';
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_retain_design('${pendingRequest}','${project}','${digest}','{"schema":"talk-architect-direction/v1"}'::jsonb,'pending',true)`,
+    );
+    expect(
+      (await asUser(ownerAuth, `select verified, source_kind from public.architect_design_directions where request_id='${pendingRequest}'`))
+        .rows,
+    ).toEqual([{ verified: false, source_kind: 'pending' }]);
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_retain_design('${importRequest}','${project}','${'d'.repeat(64)}','{"schema":"talk-architect-handoff/v1"}'::jsonb,'text-import',false)`,
+    );
+    expect(
+      (await asUser(ownerAuth, `select verified, source_kind from public.architect_design_directions where request_id='${importRequest}'`))
+        .rows,
+    ).toEqual([{ verified: true, source_kind: 'text-import' }]);
   });
 });

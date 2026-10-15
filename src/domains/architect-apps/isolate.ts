@@ -301,10 +301,14 @@ for (const file of job.files) {
   writeFileSync(to, readFileSync(join('/src', file.path)));
 }
 mkdirSync(join(work, 'node_modules'), { recursive: true });
-for (const name of ['react', 'react-dom', 'scheduler', 'vite', 'typescript']) {
-  const source = join(toolchainRoot, name);
-  const destination = join(work, 'node_modules', name);
-  if (existsSync(source) && !existsSync(destination)) symlinkSync(source, destination);
+if (existsSync(toolchainRoot)) {
+  for (const name of readdirSync(toolchainRoot)) {
+    const source = join(toolchainRoot, name);
+    const destination = join(work, 'node_modules', name);
+    if (!existsSync(destination)) {
+      try { symlinkSync(source, destination); } catch { /* already linked */ }
+    }
+  }
 }
 function run(bin, args, timeout) {
   const ran = spawnSync(process.execPath, [bin, ...args], {

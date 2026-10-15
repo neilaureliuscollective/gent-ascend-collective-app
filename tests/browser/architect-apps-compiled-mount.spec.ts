@@ -33,7 +33,9 @@ test('compiled Field Notes bundle mounts in a sandboxed iframe and cannot read p
     sessionStorage.setItem('aethelios-parent-session', 'parent-only');
     const records: Array<Record<string, unknown>> = [];
     const replay = new Map<string, Array<Record<string, unknown>>>();
-    (window as unknown as { __APP_RECORDS__: typeof records }).__APP_RECORDS__ = records;
+    const host = window as unknown as { __APP_RECORDS__: typeof records; __DROP_CREATE_ACK__: boolean };
+    host.__APP_RECORDS__ = records;
+    host.__DROP_CREATE_ACK__ = true;
     window.addEventListener('message', (event) => {
       const data = event.data as {
         schema?: string;
@@ -58,10 +60,15 @@ test('compiled Field Notes bundle mounts in a sandboxed iframe and cannot read p
         return;
       }
       if (data.operation === 'create') {
-        const record = { ...data.payload, persisted: true };
-        records.push(record);
-        const stored = [record];
+        const record = { ...data.payload, persisted: true } as Record<string, unknown>;
+        const already = records.find((row) => row.id === record.id);
+        if (!already) records.push(record);
+        const stored = [already ?? record];
         if (data.idempotencyKey) replay.set(data.idempotencyKey, stored);
+        if (host.__DROP_CREATE_ACK__) {
+          host.__DROP_CREATE_ACK__ = false;
+          return;
+        }
         reply(stored);
         return;
       }
@@ -94,7 +101,11 @@ test('compiled Field Notes bundle mounts in a sandboxed iframe and cannot read p
   await form.locator('textarea').fill('North wall');
   await form.locator('input').nth(1).fill('2');
   await form.getByRole('button', { name: /save record/i }).click();
+  await expect(frame.getByText(/The host did not confirm/i)).toBeVisible({ timeout: 12000 });
+  await expect(frame.locator('[data-save-state="uncertain"]')).toBeVisible();
+  await form.getByRole('button', { name: /retry save/i }).click();
   await expect(frame.getByText(/2h logged/i)).toBeVisible({ timeout: 10000 });
+  await expect(frame.locator('[data-save-state="saved"]')).toBeVisible();
 
   await form.locator('input').first().fill('Site visit edited');
   await form.locator('input').nth(1).fill('3');

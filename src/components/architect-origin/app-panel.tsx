@@ -312,7 +312,7 @@ export function ArchitectAppPanel({
               {selectedRevision && current && selectedRevision !== current.revision ? ` · selected, current ${current.revision}` : ''}
               {working && working.revision !== displayed?.revision ? ` · last working ${working.revision}` : ''}
             </h3>
-            <p data-stage={workbench.stage}>
+            <p className="architect-app-status" data-stage={workbench.stage} aria-live="polite">
               {workbench.label}
               {displayed ? ` Running revision ${displayed.revision}.` : ''}
               {displayedCollections ? ` Data: ${displayedCollections}.` : ''}
@@ -324,6 +324,17 @@ export function ArchitectAppPanel({
                 : ''}
               {recovered && workbench.stage === 'idle' ? ` Approved revision ${recovered.revision} recovered. Start remains explicit.` : ''}
             </p>
+            <ul className="architect-app-flags">
+              {latestJob && (latestJob.status === 'queued' || latestJob.status === 'running') ? (
+                <li data-flag="build">Background build {latestJob.status}</li>
+              ) : null}
+              {saveState === 'saving' ? <li data-flag="saving">Host save pending</li> : null}
+              {saveState === 'saved' ? <li data-flag="saved">Record saved</li> : null}
+              {saveState === 'conflict' ? <li data-flag="conflict">Reload before retry</li> : null}
+              {saveState === 'failed' ? <li data-flag="uncertain">Retry keeps the same record</li> : null}
+              {latestJob?.status === 'failed' && preview ? <li data-flag="retained">Last good preview kept</li> : null}
+              {latestJob?.status === 'cancelled' && preview ? <li data-flag="retained">Last good preview kept</li> : null}
+            </ul>
           </div>
           <div className="architect-app-viewports">
             <button type="button" aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')}>

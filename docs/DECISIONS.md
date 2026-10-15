@@ -1,6 +1,6 @@
 # Architect generated applications runtime — 2026-10-15
 
-A successful save closes that mutation identity. The next distinct edit mints a new key bound to a new payload snapshot. Replay is allowed only for the same key and same payload after an uncertain result. Concurrent edits require the current integer version. Isolated success still requires the pinned image built from `deploy/architect-apps/Dockerfile` and is a required CI job, not a skipped probe. Talk #131 `ae37393` is the identified integration candidate; Architect does not invent a second manifest. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+A successful save closes that mutation identity. The next distinct edit mints a new key bound to a new payload snapshot. Replay is allowed only for the same key and same payload after an uncertain result. Concurrent edits require the current integer version. An uncertain create keeps the same record ID, payload snapshot and operation key until the outcome is resolved. Isolated success still requires the pinned image built from `deploy/architect-apps/Dockerfile` and is a required CI job, not a skipped probe. `architect_apps_retain_design` accepts `p_verified` for Talk #131 `bf47627` signature compatibility and ignores it; verified is derived from `source_kind`. Talk #131 `bf47627d46632fa153d37d27c2a8cc638e8895ac` is the identified integration candidate; Architect does not invent a second manifest. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
 
 # Architect generated applications compiled journey — 2026-10-14
 

@@ -17,6 +17,7 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 | Named-container `docker rm -f` plus inspect confirmation | Pass |
 | Host-fixture cannot mark mock generation isolated | Pass |
 | Create → edit A → same-payload retry → edit B; changed payload on the same key rejected | Pass (MemoryAppStore, PGlite, Auth smoke) |
+| Uncertain create retains record ID + operation key; lost-ack retry stays one record | Pass in compiled Field Notes fixture; connected UI journey required in Origin local-auth |
 | Concurrent edit with stale `expectedVersion` rejected | Pass |
 | Memory and SQL owner/app/collection isolation | Pass |
 | Compiled Field Notes host-fixture bundle satisfies `assets/app.js` single-bundle contract | Pass when toolchain present |
@@ -24,7 +25,7 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 | Required CI `apps-isolate` builds `deploy/architect-apps/Dockerfile` and runs isolated compile | Implemented; runs on GitHub-hosted Ubuntu |
 | Sandboxed iframe mounts Field Notes and cannot read parent storage | Pass when toolchain present; parent-page records remain a mount unit test |
 | Direct preview CSP includes `sandbox allow-scripts allow-forms` and omits `allow-same-origin` | Pass |
-| Talk `talk.architect.source.resolve` pending on this checkout; Talk #131 `ae37393` is the integration candidate | Documented, not merged |
+| Talk `talk.architect.source.resolve` pending on this checkout; Talk #131 `bf47627` is the integration candidate | Documented, not merged |
 | Intercepted browser `Working tracker` HTML | UI fixture only |
 
 ## Unavailable in this workspace

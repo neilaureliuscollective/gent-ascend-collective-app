@@ -105,7 +105,8 @@ async function retainDurably(
     p_digest: input.digest,
     p_receipt: input.receipt,
     p_source_kind: input.sourceKind,
-    p_verified: input.verified,
+    // Signature kept for Talk #131 bf47627. The RPC ignores this flag and derives verified from source_kind.
+    p_verified: false,
   });
   if (saved.error) throw new DesignDirectionStoreError(saved.error.message);
   return {

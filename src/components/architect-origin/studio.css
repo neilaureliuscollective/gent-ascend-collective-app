@@ -761,6 +761,73 @@
   min-height: 72px;
 }
 
+.architect-app-status {
+  min-height: 2.75rem;
+  margin: 0;
+}
+
+.architect-app-status[data-stage='preparing'],
+.architect-app-status[data-stage='building'],
+.architect-app-status[data-stage='checking'] {
+  color: #8fbc8f;
+}
+
+.architect-app-status[data-stage='preview-ready'],
+.architect-app-status[data-stage='saved'] {
+  color: #7dcea0;
+}
+
+.architect-app-status[data-stage='saving'],
+.architect-app-status[data-stage='conflict'] {
+  color: #c4912f;
+}
+
+.architect-app-status[data-stage='failed'] {
+  color: #c47a6a;
+}
+
+.architect-app-status[data-stage='cancelled'],
+.architect-app-status[data-stage='idle'] {
+  color: #9aa39a;
+}
+
+.architect-app-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.architect-app-flags li {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #2a2d2a;
+  background: color-mix(in srgb, #111412 80%, #0b3b32);
+  color: #e8e4dc;
+}
+
+.architect-app-flags [data-flag='saving'],
+.architect-app-flags [data-flag='conflict'] {
+  border-color: color-mix(in srgb, #c4912f 50%, #2a2d2a);
+  color: #c4912f;
+}
+
+.architect-app-flags [data-flag='saved'],
+.architect-app-flags [data-flag='retained'] {
+  border-color: color-mix(in srgb, #0b3b32 60%, #2a2d2a);
+  color: #7dcea0;
+}
+
+.architect-app-flags [data-flag='uncertain'] {
+  border-color: color-mix(in srgb, #c47a6a 50%, #2a2d2a);
+  color: #c47a6a;
+}
+
 .architect-app-checks,
 .architect-app-empty,
 .architect-app-side li {
