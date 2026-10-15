@@ -4,7 +4,15 @@ import { BplusMaterial } from '@/components/visual/bplus-material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { describeAppFailure } from '@/domains/architect-apps/generation-policy';
 import { appWorkbenchStage } from '@/domains/architect-apps/stage';
-import { applicationPlan, revisionKind } from '@/domains/architect-origin/creation-journey';
+import {
+  acceptInspectMessage,
+  applicationPlan,
+  changeScopeForTarget,
+  explainInspectTarget,
+  inspectTargets,
+  revisionKind,
+  type CreationBrief,
+} from '@/domains/architect-origin/creation-journey';
 import {
   approveArchitectApp,
   cancelArchitectApp,
@@ -24,6 +32,7 @@ export function ArchitectAppPanel({
   revision,
   enabled,
   locked,
+  brief,
   briefText = '',
 }: {
   ownerId: string;
@@ -31,8 +40,20 @@ export function ArchitectAppPanel({
   revision: number;
   enabled: boolean;
   locked: boolean;
+  brief?: CreationBrief;
   briefText?: string;
 }) {
+  const resolvedBrief = useMemo<CreationBrief>(
+    () =>
+      brief ?? {
+        path: 'application',
+        idea: briefText,
+        audience: '',
+        constraints: '',
+        outcome: '',
+      },
+    [brief, briefText],
+  );
   const [library, setLibrary] = useState<AppLibrary | null>(null);
   const [proposal, setProposal] = useState<Record<string, unknown> | null>(null);
   const [viewport, setViewport] = useState<'desktop' | 'fold' | 'phone'>('desktop');
@@ -41,6 +62,8 @@ export function ArchitectAppPanel({
   const [refineOpen, setRefineOpen] = useState(false);
   const [interaction, setInteraction] = useState<'use' | 'inspect'>('use');
   const [inspectAction, setInspectAction] = useState<'explain' | 'change' | 'compare' | null>(null);
+  const [inspectId, setInspectId] = useState<string | null>(null);
+  const [appSheet, setAppSheet] = useState<'stage' | 'side' | 'refine'>('stage');
   const [draft, setDraft] = useState(briefText.trim() || 'Create field notes I can save.');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -48,6 +71,7 @@ export function ArchitectAppPanel({
   const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
+  const knownInspectIds = useRef<string[]>([]);
   const scroll = useRef(0);
   const plane = useRef<HTMLDivElement>(null);
   const boundPreview = useRef({ session: '', generation: 0, revisionId: '', document: 0 });
@@ -152,6 +176,19 @@ export function ArchitectAppPanel({
         revisionId?: string;
       };
       const snapshot = { ...boundPreview.current };
+      const inspectIdAccepted = acceptInspectMessage(
+        data,
+        {
+          session: snapshot.session,
+          projectId,
+          revisionId: snapshot.revisionId,
+        },
+        knownInspectIds.current,
+      );
+      if (data && typeof data === 'object' && (data as { schema?: string }).schema === 'architect-apps-inspect/v1') {
+        if (inspectIdAccepted) setInspectId(inspectIdAccepted);
+        return;
+      }
       if (!data || typeof data !== 'object' || data.schema !== 'architect-apps-data/v1' || !data.session) return;
       if (data.projectId && data.projectId !== projectId) return;
       if (data.revisionId && snapshot.revisionId && data.revisionId !== snapshot.revisionId) return;
@@ -209,6 +246,33 @@ export function ArchitectAppPanel({
     const row = library?.revisions.find((item) => item.revision === (displayed?.revision ?? 0) - 1);
     return row?.files ?? [];
   }, [library, displayed]);
+  const plan = useMemo(
+    () =>
+      applicationPlan({
+        idea: resolvedBrief.idea || briefText,
+        firstVisit: resolvedBrief.firstVisit,
+        audience: resolvedBrief.audience,
+        constraints: resolvedBrief.constraints,
+        outcome: resolvedBrief.outcome,
+        path: resolvedBrief.path,
+        collections: displayedCollections ? displayedCollections.split(', ') : [],
+      }),
+    [resolvedBrief, briefText, displayedCollections],
+  );
+  const targets = useMemo(
+    () =>
+      inspectTargets({
+        files,
+        records: library?.records ?? {},
+        plan,
+        revision: displayed?.revision,
+      }),
+    [files, library?.records, plan, displayed?.revision],
+  );
+  const selectedTarget = targets.find((row) => row.id === inspectId) ?? targets[0] ?? null;
+  useEffect(() => {
+    knownInspectIds.current = targets.map((row) => row.id);
+  }, [targets]);
   const fileDiffs = useMemo(() => {
     const pending = (proposal?.changes as { path: string; kind: string }[] | undefined) ?? [];
     if (pending.length) return pending.filter((row) => row.kind !== 'unchanged');
@@ -343,6 +407,7 @@ export function ArchitectAppPanel({
       aria-label="Generated application workbench"
       data-focus-room={preview ? 'true' : 'false'}
       data-interaction={interaction}
+      data-app-sheet={appSheet}
     >
       <div className="architect-app-stage">
         <header className="architect-app-toolbar">
@@ -403,6 +468,12 @@ export function ArchitectAppPanel({
             <button type="button" aria-pressed={viewport === 'phone'} onClick={() => setViewport('phone')}>
               Phone
             </button>
+            <button type="button" aria-pressed={appSheet === 'side'} onClick={() => setAppSheet(appSheet === 'side' ? 'stage' : 'side')}>
+              Details
+            </button>
+            <button type="button" aria-pressed={appSheet === 'refine'} onClick={() => setAppSheet(appSheet === 'refine' ? 'stage' : 'refine')}>
+              Refine
+            </button>
           </div>
         </header>
         <div className={`architect-app-frame architect-app-frame-${viewport}`} ref={plane} data-interaction={interaction}>
@@ -425,9 +496,24 @@ export function ArchitectAppPanel({
         {interaction === 'inspect' ? (
           <div className="architect-app-inspect">
             <p>
-              Inspect maps host files and records for this project and revision. Appearance alone is
-              not evidence of behavior. Arbitrary iframe messages are ignored.
+              Inspect identifies a host-supported target for this project and revision. Appearance
+              alone is not evidence of behavior. Arbitrary iframe messages are ignored unless they
+              match the inspect schema, session and project/revision identity.
             </p>
+            <ol className="architect-app-targets">
+              {targets.map((target) => (
+                <li key={target.id}>
+                  <button
+                    type="button"
+                    aria-current={selectedTarget?.id === target.id ? 'true' : undefined}
+                    onClick={() => setInspectId(target.id)}
+                  >
+                    {target.title}
+                    <small>{target.kind}</small>
+                  </button>
+                </li>
+              ))}
+            </ol>
             <div className="architect-app-inspect-actions">
               <button type="button" onClick={() => setInspectAction('explain')}>
                 Explain
@@ -437,28 +523,41 @@ export function ArchitectAppPanel({
                 onClick={() => {
                   setInspectAction('change');
                   setRefineOpen(true);
-                  if (selectedSource) setDraft(`Change ${selectedSource.path} without overwriting the working revision.`);
+                  setAppSheet('refine');
+                  if (selectedTarget) setDraft(changeScopeForTarget(selectedTarget, displayed?.revision));
                 }}
               >
                 Change
               </button>
-              <button type="button" onClick={() => setInspectAction('compare')}>
+              <button
+                type="button"
+                onClick={() => {
+                  setInspectAction('compare');
+                  setPanel('Changes');
+                  setAppSheet('side');
+                }}
+              >
                 Compare
               </button>
             </div>
-            {inspectAction === 'explain' ? (
-              <p>
-                {selectedSource
-                  ? `${selectedSource.path} is a saved generated file for revision ${displayed?.revision ?? 'none'}. This explanation uses the saved file list, not the painted preview.`
-                  : 'Select a file or record on the host side. This preview does not expose a mapped inspector.'}
-              </p>
-            ) : null}
+            {inspectAction === 'explain' && selectedTarget ? <p>{explainInspectTarget(selectedTarget)}</p> : null}
             {inspectAction === 'compare' ? (
-              <p>
-                {parentFiles.length
-                  ? `Previous revision files are available for comparison. Viewing them does not restore that revision.`
-                  : 'No previous revision is available to compare.'}
-              </p>
+              fileDiffs.length ? (
+                <ol className="architect-app-inspect-diff">
+                  {fileDiffs.slice(0, 4).map((change) => (
+                    <li key={change.path}>
+                      <p>
+                        {change.kind} <code>{change.path}</code>
+                      </p>
+                      {'before' in change ? <pre className="architect-app-diff-before">{String(change.before).slice(0, 400)}</pre> : null}
+                      {'after' in change ? <pre className="architect-app-diff-after">{String(change.after).slice(0, 400)}</pre> : null}
+                    </li>
+                  ))}
+                  <p>Comparing does not restore the previous revision.</p>
+                </ol>
+              ) : (
+                <p>No current/previous file difference is available to compare.</p>
+              )
             ) : null}
           </div>
         ) : null}
@@ -487,28 +586,23 @@ export function ArchitectAppPanel({
         </div>
         {panel === 'Plan' && (
           <div className="architect-app-plan">
-            {(() => {
-              const plan = applicationPlan({
-                idea: briefText,
-                collections: displayedCollections ? displayedCollections.split(', ') : [],
-              });
-              return (
-                <>
-                  <p>{plan.label}</p>
-                  <p>
-                    <strong>Screens</strong> {plan.screens.join(', ')}
-                  </p>
-                  <p>
-                    <strong>Actions</strong> {plan.actions.join(', ')}
-                  </p>
-                  <p>
-                    <strong>Data</strong> {plan.data.join(', ')}
-                  </p>
-                  <p>{plan.relationships}</p>
-                  <p>Review, accept, start and publish stay distinct. Unsupported requirements stay listed before a commit.</p>
-                </>
-              );
-            })()}
+            <p>{plan.label}</p>
+            {plan.firstVisit ? <p>First visit: {plan.firstVisit}</p> : null}
+            {plan.audience ? <p>Audience: {plan.audience}</p> : null}
+            <p>
+              <strong>Screens</strong> {plan.screens.join(', ')}
+            </p>
+            <p>
+              <strong>Actions</strong> {plan.actions.join(', ')}
+            </p>
+            <p>
+              <strong>Data</strong> {plan.data.join(', ')}
+            </p>
+            <p>{plan.relationships}</p>
+            {plan.unsupported.map((row) => (
+              <p key={row}>{row}</p>
+            ))}
+            <p>Review, accept, start and publish stay distinct. Unsupported requirements stay listed before a commit.</p>
           </div>
         )}
         {panel === 'Files' && (

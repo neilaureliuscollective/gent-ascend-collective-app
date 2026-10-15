@@ -2238,3 +2238,43 @@ test('UI fixture: app workbench reviews files, recovers approved start after rel
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.screenshot({ path: 'test-results/architect-apps-fold.png', fullPage: true });
 });
+
+test('first-visit client review produces a different app plan than project creation', async ({ page }) => {
+  await fixture(page);
+  await page.route('**/api/architect-apps**', async (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        json: {
+          app: null,
+          revisions: [],
+          jobs: [],
+          events: [],
+          current: null,
+          working: null,
+          selected: null,
+          preview: null,
+          previewSession: null,
+          pendingStart: null,
+          records: {},
+          provider: { enabled: true, mode: 'fixture', reason: null },
+          profile: { id: 'notes', version: 'fixture', toolchain: 'host-fixture' },
+          capabilities: {},
+        },
+      });
+    }
+    return route.fulfill({ json: {} });
+  });
+  await page.goto('http://127.0.0.1:3102/app/architect?mode=architect-origin&apps=adapter');
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await page.getByLabel('Tell Aethelios what you want to create').fill('A planning app for independent studios.');
+  await page.getByRole('radio', { name: /Invite a client/i }).check();
+  await page.getByLabel('Project name (optional)').fill('Studio planner');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await page.getByLabel('Application details').getByRole('button', { name: 'Plan' }).click();
+  await expect(page.getByLabel('Application details')).toContainText('Clients');
+  await expect(page.getByLabel('Application details')).toContainText('Add a client');
+  await expect(page.getByLabel('Application details')).toContainText('First visit: client');
+  await expect(page.getByLabel('Application details')).not.toContainText('Add the first milestone');
+});

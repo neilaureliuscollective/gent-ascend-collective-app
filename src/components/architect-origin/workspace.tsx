@@ -12,7 +12,12 @@ import { ArchitectToolPanel } from './tool-panel';
 import type { ToolWorkspaceState } from './tool-session';
 import { ArtifactCanvas } from './artifact-canvas';
 import { CreationEntry, type BriefStage } from './creation-entry';
-import { applicationFirstVisit, pathSwitchNote } from '@/domains/architect-origin/creation-journey';
+import {
+  applicationFirstVisit,
+  mergeCreationDecision,
+  pathSwitchNote,
+  readCreationBrief,
+} from '@/domains/architect-origin/creation-journey';
 import { ReadinessNotice } from './readiness-notice';
 import {
   FoldDock,
@@ -234,6 +239,10 @@ export function ArchitectOrigin({
             setWorkbenchView(studio);
           setSelected(restored?.base ?? project);
           setDraft(structuredClone(content));
+          const resumed = readCreationBrief(content);
+          setFirstVisit(resumed.firstVisit ?? 'project');
+          setAudience(resumed.audience);
+          setConstraints(resumed.constraints);
           setPending(restored?.pending ?? null);
           setUncertainRun(restored?.uncertainRun ?? false);
           setMessage(
@@ -428,6 +437,7 @@ export function ArchitectOrigin({
       const visit = applicationFirstVisit.find((row) => row.id === firstVisit);
       if (visit) content.blueprint.next = visit.detail;
     }
+    content.blueprint.decisions = mergeCreationDecision(content.blueprint.decisions, discipline === 'application' ? firstVisit : undefined);
     if (pendingReferences.length) content.sources = pendingReferences;
     return content;
   }
@@ -547,6 +557,10 @@ export function ArchitectOrigin({
       setLibrary(data);
       setSelected(fresh);
       setDraft(structuredClone(fresh.content));
+      const brief = readCreationBrief(fresh.content);
+      setFirstVisit(brief.firstVisit ?? 'project');
+      setAudience(brief.audience);
+      setConstraints(brief.constraints);
       setDocumentId(null);
       setHistory(null);
       setCompareId(null);
@@ -1632,6 +1646,7 @@ export function ArchitectOrigin({
                     revision={selected.revision}
                     enabled={appsEnabled}
                     locked={locked}
+                    brief={readCreationBrief(selected.content)}
                     briefText={selected.content.blueprint.vision || selected.content.description}
                   />
                 )}

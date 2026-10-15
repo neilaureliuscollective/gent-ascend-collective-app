@@ -244,19 +244,205 @@ export function illustrativeApplicationModel(input: {
   };
 }
 
-export function applicationPlan(input: { idea: string; firstVisit?: string; collections?: string[] }) {
-  const visit = applicationFirstVisit.find((row) => row.id === input.firstVisit);
+export const FIRST_VISIT_IDS = ['project', 'client', 'milestone'] as const;
+export type FirstVisitId = (typeof FIRST_VISIT_IDS)[number];
+
+export type CreationBrief = {
+  path: CreationPath;
+  firstVisit?: FirstVisitId;
+  audience: string;
+  constraints: string;
+  outcome: string;
+  idea: string;
+};
+
+const CREATION_DECISION = /^creation\.v1(?:\s+firstVisit=(project|client|milestone))?(?:\s|$)/m;
+
+export function encodeCreationDecision(firstVisit?: string) {
+  const visit = FIRST_VISIT_IDS.find((id) => id === firstVisit);
+  return visit ? `creation.v1 firstVisit=${visit}` : 'creation.v1';
+}
+
+export function readFirstVisit(decisions: string): FirstVisitId | undefined {
+  const match = decisions.match(CREATION_DECISION);
+  return match?.[1] as FirstVisitId | undefined;
+}
+
+export function mergeCreationDecision(existing: string, firstVisit?: string) {
+  const line = encodeCreationDecision(firstVisit);
+  const rest = existing.replace(/^creation\.v1[^\n]*\n?/, '').trim();
+  return rest ? `${line}\n${rest}` : line;
+}
+
+export function readCreationBrief(content: {
+  discipline?: CreationPath;
+  description?: string;
+  blueprint?: Partial<ProjectContent['blueprint']>;
+}): CreationBrief {
   return {
-    screens: ['Overview', visit?.id === 'client' ? 'Clients' : 'Projects'],
-    actions: visit ? [visit.title] : ['Create a project'],
+    path: content.discipline ?? 'custom',
+    firstVisit: readFirstVisit(content.blueprint?.decisions ?? ''),
+    audience: content.blueprint?.audience ?? '',
+    constraints: content.blueprint?.requirements ?? '',
+    outcome: content.blueprint?.next ?? '',
+    idea: content.blueprint?.vision || content.description || '',
+  };
+}
+
+export function creationBriefForGeneration(content: {
+  discipline?: CreationPath;
+  description?: string;
+  blueprint?: Partial<ProjectContent['blueprint']>;
+}) {
+  const brief = readCreationBrief(content);
+  return [
+    brief.idea,
+    `Path: ${brief.path}`,
+    brief.firstVisit ? `First visit: ${brief.firstVisit}` : '',
+    brief.audience.trim() ? `Audience: ${brief.audience.trim()}` : '',
+    brief.constraints.trim() ? `Constraints: ${brief.constraints.trim()}` : '',
+    brief.outcome.trim() ? `Outcome: ${brief.outcome.trim()}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+export function applicationPlan(input: {
+  idea: string;
+  firstVisit?: string;
+  audience?: string;
+  constraints?: string;
+  outcome?: string;
+  path?: CreationPath;
+  collections?: string[];
+}) {
+  const visit = applicationFirstVisit.find((row) => row.id === input.firstVisit);
+  const idea = input.idea.trim() || 'No idea yet.';
+  const unsupported = [
+    ...(input.constraints?.match(/payment|publish|server|account/i) ? ['Payments, accounts, servers and publishing stay out of generated applications.'] : []),
+  ];
+  if (visit?.id === 'client') {
+    return {
+      screens: ['Overview', 'Clients', 'Invitation'],
+      actions: ['Add a client', 'Send an invitation'],
+      data: input.collections?.length ? input.collections : ['clients', 'projects'],
+      relationships: 'A client can be named before a project exists. Invitation sending is a planned host action, not a live mailer.',
+      idea,
+      audience: input.audience?.trim() || '',
+      firstVisit: visit.id,
+      unsupported,
+      label: 'Plan from your brief and first-visit choice. Technical files stay available on demand.',
+    };
+  }
+  if (visit?.id === 'milestone') {
+    return {
+      screens: ['Overview', 'Projects', 'Milestones'],
+      actions: ['Create a project', 'Add the first milestone'],
+      data: input.collections?.length ? input.collections : ['projects', 'milestones'],
+      relationships: 'A project holds milestones. Changing a milestone does not silently restore an older revision.',
+      idea,
+      audience: input.audience?.trim() || '',
+      firstVisit: visit.id,
+      unsupported,
+      label: 'Plan from your brief and first-visit choice. Technical files stay available on demand.',
+    };
+  }
+  return {
+    screens: ['Overview', 'Projects'],
+    actions: ['Create a project'],
     data: input.collections?.length ? input.collections : ['projects'],
-    relationships:
-      visit?.id === 'milestone'
-        ? 'A project holds milestones. Changing a milestone does not silently restore an older revision.'
-        : 'A project is the saved record. Preview and execution stay separate from this plan.',
-    idea: input.idea.trim() || 'No idea yet.',
+    relationships: 'A project is the saved record. Preview and execution stay separate from this plan.',
+    idea,
+    audience: input.audience?.trim() || '',
+    firstVisit: visit?.id ?? 'project',
+    unsupported,
     label: 'Plan from your brief and first-visit choice. Technical files stay available on demand.',
   };
+}
+
+export type InspectTarget = {
+  id: string;
+  kind: 'file' | 'record' | 'plan' | 'unsupported';
+  title: string;
+  detail: string;
+  evidence: string;
+  path?: string;
+  collection?: string;
+};
+
+export function inspectTargets(input: {
+  files: { path: string; content: string }[];
+  records: Record<string, Record<string, unknown>[]>;
+  plan: ReturnType<typeof applicationPlan>;
+  revision?: number;
+}): InspectTarget[] {
+  const files = input.files.map((file) => ({
+    id: `file:${file.path}`,
+    kind: 'file' as const,
+    title: file.path,
+    path: file.path,
+    detail: `Saved generated file for revision ${input.revision ?? 'unknown'}.`,
+    evidence: file.content.slice(0, 280) || 'The saved file is empty.',
+  }));
+  const records = Object.entries(input.records).flatMap(([collection, rows]) =>
+    rows.map((row) => ({
+      id: `record:${collection}:${String(row.id ?? row.title)}`,
+      kind: 'record' as const,
+      title: String(row.title ?? row.id ?? collection),
+      collection,
+      detail: `Host record in ${collection}. Records persist independently of the preview session.`,
+      evidence: JSON.stringify(row).slice(0, 280),
+    })),
+  );
+  const plan = input.plan.screens.map((screen) => ({
+    id: `plan:${screen}`,
+    kind: 'plan' as const,
+    title: screen,
+    detail: `Planned screen from the persisted brief${input.plan.firstVisit ? ` and first-visit ${input.plan.firstVisit}` : ''}.`,
+    evidence: `${input.plan.relationships} Actions: ${input.plan.actions.join(', ')}.`,
+  }));
+  const targets = [...files, ...records, ...plan];
+  if (!targets.length) {
+    return [
+      {
+        id: 'unsupported:none',
+        kind: 'unsupported',
+        title: 'No mapped target',
+        detail: 'This preview does not expose a painted inspector. Use host Files, Records or Plan.',
+        evidence: 'Appearance alone is not evidence of behavior.',
+      },
+    ];
+  }
+  return targets;
+}
+
+export function explainInspectTarget(target: InspectTarget) {
+  if (target.kind === 'unsupported') return `${target.detail} ${target.evidence}`;
+  if (target.kind === 'file')
+    return `${target.path} is a saved generated file. Evidence from the host file list, not the painted preview: ${target.evidence}`;
+  if (target.kind === 'record')
+    return `${target.title} is a host ${target.collection} record. Evidence: ${target.evidence}`;
+  return `${target.title}: ${target.detail} ${target.evidence}`;
+}
+
+export function changeScopeForTarget(target: InspectTarget, revision?: number) {
+  const scope = target.path ?? target.collection ?? target.title;
+  return `Change ${scope} in revision ${revision ?? 'current'} without overwriting the working revision. Keep the last working preview available until this proposal is reviewed and accepted.`;
+}
+
+export function acceptInspectMessage(
+  data: unknown,
+  bound: { session: string; projectId: string; revisionId: string },
+  knownIds: string[],
+) {
+  if (!data || typeof data !== 'object') return null;
+  const row = data as Record<string, unknown>;
+  if (row.schema !== 'architect-apps-inspect/v1') return null;
+  if (typeof row.session !== 'string' || row.session !== bound.session) return null;
+  if (row.projectId && row.projectId !== bound.projectId) return null;
+  if (row.revisionId && row.revisionId !== bound.revisionId) return null;
+  if (typeof row.targetId !== 'string' || !knownIds.includes(row.targetId)) return null;
+  return row.targetId;
 }
 
 export function revisionKind(input: {

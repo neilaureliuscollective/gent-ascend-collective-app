@@ -181,7 +181,7 @@ export function CreationEntry({
         {guided && pathOpened ? (
           <div className="origin-guided">
             <label htmlFor="origin-guided-field">{currentQuestion.prompt}</label>
-            {currentQuestion.field !== 'idea' ? (
+            {currentQuestion.field !== 'idea' && currentQuestion.field !== 'outcome' && stage !== 'audience' ? (
               <textarea
                 id="origin-guided-field"
                 maxLength={3000}
@@ -189,6 +189,28 @@ export function CreationEntry({
                 onChange={(event) => setQuestionValue(event.target.value)}
                 disabled={locked}
               />
+            ) : null}
+            {stage === 'audience' ? (
+              <div className="origin-brief-extra">
+                <label htmlFor="origin-guided-audience">Audience (optional)</label>
+                <textarea
+                  id="origin-guided-audience"
+                  maxLength={3000}
+                  value={audience}
+                  onChange={(event) => onAudience(event.target.value)}
+                  disabled={locked}
+                  placeholder="Who this is for."
+                />
+                <label htmlFor="origin-guided-constraints">Constraints (optional)</label>
+                <textarea
+                  id="origin-guided-constraints"
+                  maxLength={3000}
+                  value={constraints}
+                  onChange={(event) => onConstraints(event.target.value)}
+                  disabled={locked}
+                  placeholder="Limits, materials, platforms or non-goals."
+                />
+              </div>
             ) : null}
             {discipline === 'application' && onFirstVisit ? (
               <fieldset className="origin-first-visit">
@@ -253,7 +275,7 @@ export function CreationEntry({
             disabled={!enabled || locked || idea.trim().length < 3}
           >
             <BplusMaterial radius={8} />
-            Shape this direction →
+            {pathOpened ? 'Save this brief →' : 'Shape this direction →'}
           </button>
         </div>
         <ol className="origin-brief-steps">

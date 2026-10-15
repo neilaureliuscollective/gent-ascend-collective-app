@@ -1,6 +1,7 @@
 import 'server-only';
 import { currentFounderAccess } from '@/domains/access/founder';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
+import { creationBriefForGeneration } from '@/domains/architect-origin/creation-journey';
 import { readRetainedDirection } from '@/domains/architect-design-direction/receiver';
 import { APP_PROFILE, APP_PROFILE_VERSION, APP_TOOLCHAIN_VERSION } from './catalog';
 import { DatabaseAppStore, type AppPersistenceClient } from './database-store';
@@ -133,7 +134,12 @@ async function requireOwnedProject(projectId: string, expected?: number) {
       id: string;
       person_id: string;
       revision: number;
-      content: { name?: string; blueprint?: { vision?: string } };
+      content: {
+        name?: string;
+        description?: string;
+        discipline?: import('@/domains/architect-origin/schema').ProjectContent['discipline'];
+        blueprint?: Partial<import('@/domains/architect-origin/schema').ProjectContent['blueprint']>;
+      };
     },
   };
 }
@@ -290,7 +296,7 @@ export async function proposeArchitectApp(
       demo: parsed.data.demo,
       baseFiles: base?.files ?? [],
       collections: base?.collections ?? [],
-      brief: project.content.blueprint?.vision,
+      brief: creationBriefForGeneration(project.content),
       direction: direction
         ? {
             schema: direction.receipt.schema,
@@ -318,7 +324,7 @@ export async function proposeArchitectApp(
         kind: parsed.data.kind,
         files: base?.files ?? [],
         collections: base?.collections ?? [],
-        brief: project.content.blueprint?.vision,
+        brief: creationBriefForGeneration(project.content),
         direction: generationInput.direction,
       }),
     );
