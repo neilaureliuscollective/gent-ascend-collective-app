@@ -4,7 +4,15 @@ Local, versioned scenarios. Deterministic context/tool/privacy tests live in Vit
 
 **Do not run paid model calls without founder approval.** Set `AETHELIOS_BEHAVIOR_EVAL=1` only when that approval exists. No hosted fine-tuning or new evaluation service.
 
-Prompt version under test: `aethelios-2026-10-15.human-ascendance.2`. Knowledge edition remains `2026-10-15.human-ascendance.1`.
+Prompt version under test: `aethelios-2026-10-15.human-ascendance.3`. Knowledge edition remains `2026-10-15.human-ascendance.1`.
+
+Three layers, kept separate:
+
+1. **Deterministic integration** — Vitest. Context ranking, variant uniqueness, voice lookup states, privacy, forgetting. Mocked provider success is not speaking quality.
+2. **Optional model-quality** — `npm run eval:behavior`. Prints the scenario pack. Paid calls require `AETHELIOS_BEHAVIOR_EVAL=1` and founder approval; this repository does not send them by default.
+3. **Human voice-naturalness review** — not automated. Score conversational pacing separately from tool correctness.
+
+OpenAI evaluation guidance and voice-agent evaluation both argue for complete conversations plus a separate naturalness pass. Scenarios in `src/domains/intelligence/behavior-eval.ts` include preceding turns, tool results, expected state and prohibited claims.
 
 ## Rubric (score 1–5 each)
 

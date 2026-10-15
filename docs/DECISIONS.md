@@ -1,3 +1,7 @@
+# Aethelios conversational knowledge reliability — 2026-10-15
+
+Current user product and variant selections outrank older mentions. Variant identity requires a unique match across normalized option dimensions. Voice can look up the same read-only catalog after admission through `lookup_lifestyle_catalog` (function_call_output, no instruction rewrite, no speech interrupt). Playbooks follow current intent. Multi-turn deterministic scenarios are separate from unpaid model eval and human voice-naturalness review. Talk #131 `budgetLiveSeed` and creation tools stay unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
 # Aethelios conversational character and trustworthy context — 2026-10-15
 
 Keep edition `2026-10-15.human-ascendance.1`. Add a concise shared `behaviorContract` on text and voice composition paths, load at most two relevant domain playbooks per turn, and adapt delivery (short spoken open vs structured text) without changing Talk transport or Motion. Failed product-detail fetches stay `stale-catalog-fallback` with unknown catalog age beyond 300s; variant price/id/availability stay bound together. Voice Live copies Talk #131 `budgetLiveSeed` identically rather than merging Talk creation. Forgetting is a deleted owner row, not a changed retrieval query. Optional model-quality eval is local and unpaid unless approved. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md) and [evals/aethelios-behavior.md](../evals/aethelios-behavior.md).
