@@ -26,7 +26,9 @@ it('inspects the host isolation runtime and reports pass, fail, or unavailable h
     sourceTreeHash: source.tree_hash,
   });
   const probe = await probeDockerIsolation();
-  const image = probe.available ? await ensureConstructImage(probe.image) : { ready: false, reason: probe.reason, pulled: false };
+  const image = probe.available
+    ? await ensureConstructImage(probe.image)
+    : { ready: false, reason: probe.reason, pulled: false };
   let outcome: 'passed' | 'failed' | 'unavailable' = 'unavailable';
   let execution: Awaited<ReturnType<typeof executeConstruct>> | null = null;
   if (probe.available && image.ready) {
@@ -75,12 +77,14 @@ it('inspects the host isolation runtime and reports pass, fail, or unavailable h
     expect(execution?.sandbox).toBe(true);
     expect(execution?.isolation).toBe('docker');
     expect(execution?.preview.body).toContain('<h1>After</h1>');
-    expect(execution?.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:'))).toBe(true);
+    expect(
+      execution?.artifacts.some((item) => String(item.ref).startsWith('cleanup-removed:')),
+    ).toBe(true);
   }
   if (outcome === 'failed') {
     expect(execution?.sandbox, execution?.blocker ?? 'isolated container failed').toBe(true);
   }
-});
+}, 120000);
 
 it('cancels only after the named container is observed running, then confirms removal', async () => {
   const probe = await probeDockerIsolation();
@@ -154,8 +158,13 @@ it('cancels only after the named container is observed running, then confirms re
   const gone =
     observed.after?.status === 'absent' ||
     (observed.name ? await removeNamedContainer(observed.name) : false);
-  const confirmed =
-    Boolean(probe.available && image.ready && observed.running && gone && observed.durable?.status === 'cancelled');
+  const confirmed = Boolean(
+    probe.available &&
+    image.ready &&
+    observed.running &&
+    gone &&
+    observed.durable?.status === 'cancelled',
+  );
   const receipt = {
     label: 'Host running-container cancel — not a model-generated Aethelios feature.',
     proof: confirmed ? ('confirmed' as const) : ('unavailable' as const),
@@ -173,8 +182,9 @@ it('cancels only after the named container is observed running, then confirms re
     durable_status: observed.durable?.status ?? null,
     durable_blocker: observed.durable?.result?.blocker ?? null,
     teardown_confirmed:
-      observed.durable?.result?.artifacts.some((item) => item.ref === 'teardown-confirmed') ?? false,
-    reason: probe.available && image.ready ? null : image.reason ?? probe.reason,
+      observed.durable?.result?.artifacts.some((item) => item.ref === 'teardown-confirmed') ??
+      false,
+    reason: probe.available && image.ready ? null : (image.reason ?? probe.reason),
   };
   await mkdir('docs/evidence/architect-construct', { recursive: true });
   await writeFile(
@@ -195,7 +205,7 @@ it('cancels only after the named container is observed running, then confirms re
   expect(gone).toBe(true);
   expect(observed.durable?.status).toBe('cancelled');
   expect(observed.durable?.result?.sandbox).toBe(false);
-  expect(observed.durable?.result?.artifacts.some((item) => item.ref === 'teardown-confirmed')).toBe(
-    true,
-  );
-});
+  expect(
+    observed.durable?.result?.artifacts.some((item) => item.ref === 'teardown-confirmed'),
+  ).toBe(true);
+}, 120000);

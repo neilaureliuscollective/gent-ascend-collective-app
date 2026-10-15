@@ -77,7 +77,13 @@ for (const width of [390, 690])
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(composer).toHaveValue('');
     await expect(page.getByText(text, { exact: true })).toHaveCount(1);
-    await page.getByRole('button', { name: 'New', exact: true }).click();
+    const newButton = page.getByRole('button', { name: 'New', exact: true });
+    if (await newButton.isVisible()) await newButton.click();
+    else {
+      await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+      await page.getByRole('button', { name: 'New conversation', exact: true }).click();
+      await page.keyboard.press('Escape');
+    }
     await page.goto(`/app/aethelios?conversation=${conversation}`);
     await expect(page.getByText(text, { exact: true })).toHaveCount(1);
     expect(await rows()).toHaveLength(2);
