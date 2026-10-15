@@ -1,11 +1,16 @@
 import type { ProductSummary } from './shopify';
 
-export const lifestyleBrands = [
+/** Shopify collection handle. Not customer-facing brand copy. */
+export const LIFESTYLE_BRAND_COLLECTION_HANDLE = 'legacy-reserve';
+
+export const lifestyleBrandAliases = [
   {
     slug: 'legacy-reserve',
-    name: 'Legacy Reserve',
-    description: 'Premium grooming and personal care. A considered standard for the everyday.',
-    collectionHandle: 'legacy-reserve',
+    collectionHandle: LIFESTYLE_BRAND_COLLECTION_HANDLE,
+    publicPath: '/lifestyle/legacy-reserve',
+    memberPath: '/app/lifestyle/legacy-reserve',
+    currentPublic: '/shop',
+    currentMember: '/app/collection',
   },
 ] as const;
 
@@ -21,7 +26,7 @@ export function brandProducts<T extends Pick<ProductSummary, 'collections'>>(
 }
 
 export function lifestyleCollectionHandle(value?: string) {
-  const handle = value?.trim() || lifestyleBrands[0].collectionHandle;
+  const handle = value?.trim() || LIFESTYLE_BRAND_COLLECTION_HANDLE;
   if (!/^[a-z0-9][a-z0-9-]{0,99}$/.test(handle))
     throw new Error('Invalid Lifestyle collection configuration');
   return handle;
@@ -36,7 +41,7 @@ export function memberCommerceBenefit() {
   return { active: false, priceSource: 'shopify', discount: null } as const;
 }
 
-/** A whole-store restriction is opt-in, separate from the Legacy Reserve brand. */
+/** A whole-store restriction is opt-in, separate from the default brand collection handle. */
 export function lifestyleAssortmentHandle(value?: string): string | null {
   if (!value?.trim()) return null;
   return lifestyleCollectionHandle(value);

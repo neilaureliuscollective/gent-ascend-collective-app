@@ -29,7 +29,7 @@ for (const width of [360, 768, 1440]) {
 test('Cabinet signed-out route and world entry are accessible', async ({ page }) => {
   await page.goto('/app/collection/cabinet');
   await expect(page.getByRole('heading', { name: 'Your Cabinet.' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Sign in →' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
   await page.goto('/app/collection');
   await expect(page.getByRole('link', { name: 'Your Cabinet', exact: true })).toHaveAttribute(
     'href',

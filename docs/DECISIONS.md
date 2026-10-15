@@ -1,3 +1,7 @@
+# Architect generated applications runtime images and work-root — 2026-10-15
+
+Quality `application` stays independent of live Docker images. Jobs that prove packaged-worker acceptance (`apps-isolate`, Origin `local-auth`) must build both `aethelios-architect-apps:2026-10-15.1` and `aethelios-architect-apps-worker:2026-10-15.1` on that runner, then prepare `ARCHITECT_APPS_WORK_ROOT` as uid 1000 mode 0755. The worker creates workspaces, launches sibling compiles as 65534:65534 with daemon-host paths, and cleans up. Topology may read a host marker; write/compile proofs must not. Privileged containers, worker-as-root and chmod 777 are refused. Evidence: [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
+
 # Architect generated applications packaged-worker finish — 2026-10-15
 
 A path inside the worker container is not a Docker-host path. Isolated source/output must live under `ARCHITECT_APPS_WORK_ROOT`, mounted at the same absolute path in the worker and on the host. The worker may use the Docker socket; generated compile containers stay `--network none`, `65534:65534`, no socket, no secrets. Preview cluster must not accept HMAC-only tokens when the session map is empty: revocation and replacement are stored in `architect_app_preview_sessions`. `architect_app_artifacts` is keyed by `revision_id`, not `id`. Image staging uses `fs.mkdtempSync`, not `os.mkdtempSync`. Evidence: [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
@@ -53,6 +57,10 @@ Record estimator invocations only through a session-authenticated function that 
 # Architect quantity-and-cost estimator — 2026-10-14
 
 Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
+# Health transformation workspace — 2026-10-15
+
+Health stays named Health. The previous TRT/HRT clinic structure is not the product. Command becomes a personal workspace with two built-in foundations (evening sequence and Bloodwork Tracker) rather than a six-tab dashboard. Authoritative records, units, provenance, comparison rules, consent and deletion remain in trusted Health code. Architect customization of presentation/behavior uses a narrow adapter: structured presentation requests only; personal labs, original documents and Health history are refused rather than regex-redacted into a prompt. Dynamic compilation depends on unmerged Architect Apps PR #130 with isolated Docker compile and a usable preview. Host-fixture is not success. Client workingRevision metadata cannot establish a verified build. This Health branch does not vendor the Apps engine. Talk’s unmerged migration `20261015180000_talk_live_trusted_observe.sql` forced Health’s unapplied workspace migration to `20261015181000`. No generated diagnosis, dosing, treatment, readiness score or device control. Evidence: [HEALTH_TRANSFORMATION.md](HEALTH_TRANSFORMATION.md).
 
 # Official Aethelios install icon — 2026-10-15
 

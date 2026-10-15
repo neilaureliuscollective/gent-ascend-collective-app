@@ -50,7 +50,8 @@ jobs:
       - name: Live policy and current commerce regressions
         run: >-
           npx playwright test tests/browser/ascend-mirror.spec.ts
-          tests/browser/collection-world.spec.ts tests/browser/commerce-discovery.spec.ts --workers=2
+          tests/browser/collection-world.spec.ts tests/browser/commerce-discovery.spec.ts
+          tests/browser/member-lifestyle.spec.ts --workers=2
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()

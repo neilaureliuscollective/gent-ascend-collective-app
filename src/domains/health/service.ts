@@ -8,9 +8,19 @@ import {
   observationSchema,
   type HealthData,
   type HealthRecord,
+  type HealthWorkspaceRecord,
   type Mutation,
   type SavedObservation,
 } from './schema';
+import {
+  acceptArchitectAttempt,
+  architectAttemptSchema,
+  architectUnavailableMessage,
+  ARCHITECT_APPS_DEPENDENCY,
+  requestArchitectRevision,
+} from './architect-adapter';
+import { projectBridgeObservations } from './bloodwork';
+import { sampleBloodwork, sampleProjection } from './sample';
 import { originalMime, parseLabImport } from './imports';
 import { weightKg } from './trends';
 import { localDay } from '@/domains/daily/model';
@@ -52,11 +62,20 @@ export async function readHealth(): Promise<HealthData> {
   const data = snapshot.data as Pick<
     HealthData,
     'records' | 'observations' | 'consents' | 'jobs' | 'turns'
-  > & { activation: { ingestion: boolean; ai: boolean } };
+  > & {
+    activation: { ingestion: boolean; ai: boolean };
+    workspaces?: HealthWorkspaceRecord[];
+  };
   const result: HealthData = {
     ...emptyHealth('personal'),
     ...data,
     owner: person.id,
+    workspaces: Array.isArray(data.workspaces) ? data.workspaces : [],
+    architect: {
+      status: 'blocked',
+      blocker: architectUnavailableMessage(),
+      dependency: ARCHITECT_APPS_DEPENDENCY,
+    },
     ingestionEnabled: process.env.HEALTH_INGESTION_ENABLED === 'true' && data.activation.ingestion,
     aiEnabled: process.env.HEALTH_AI_ENABLED === 'true' && data.activation.ai,
   };
@@ -273,6 +292,7 @@ export async function exportHealth(request: string) {
     consents: data.consents,
     conversations: data.turns,
     wellness: data.wellness,
+    workspaces: data.workspaces,
     history: audit.data,
   };
   return (async function* streamExport() {
@@ -349,7 +369,145 @@ export async function mutateHealth(input: Mutation) {
   } else if (input.kind === 'ask') {
     const { askHealth } = await import('./conversation');
     await askHealth(input);
+  } else if (input.kind === 'workspace_architect') {
+    await compileHealthArchitect(input);
+  } else if (
+    input.kind === 'workspace_save' ||
+    input.kind === 'workspace_copy' ||
+    input.kind === 'workspace_restore' ||
+    input.kind === 'workspace_bridge'
+  ) {
+    await healthRpc(input.kind, input.request, workspacePayload(input));
   }
   return readHealth();
+}
+
+function storedArchitect(value: unknown) {
+  const parsed = architectAttemptSchema.safeParse(value);
+  if (!parsed.success) return null;
+  return {
+    ...parsed.data,
+    verified: false,
+    status: parsed.data.status === 'accepted' ? ('failed' as const) : parsed.data.status,
+  };
+}
+
+function workspacePayload(input: Extract<Mutation, { kind: `workspace_${string}` }>) {
+  if (input.kind === 'workspace_save') {
+    return {
+      id: input.id,
+      expected: input.expected,
+      foundation: input.foundation,
+      title: input.title,
+      sample: input.sample,
+      settings: input.settings,
+      progress: input.progress,
+      architect: storedArchitect(input.architect),
+      open: input.open ?? false,
+    };
+  }
+  if (input.kind === 'workspace_copy') {
+    return {
+      id: input.id,
+      sourceId: input.sourceId,
+      title: input.title,
+      includeDraft: input.includeDraft,
+      settings: input.includeDraft ? input.settings : undefined,
+      progress: input.includeDraft ? input.progress : undefined,
+      architect: input.includeDraft ? storedArchitect(input.architect) : undefined,
+    };
+  }
+  return Object.fromEntries(
+    Object.entries(input).filter(([key]) => key !== 'kind' && key !== 'request'),
+  );
+}
+
+async function compileHealthArchitect(input: Extract<Mutation, { kind: 'workspace_architect' }>) {
+  const snapshot = await readHealth();
+  const workspace = snapshot.workspaces.find((row) => row.id === input.id);
+  if (!workspace) throw new IntelligenceError('Health workspace not found.', 404);
+  if (workspace.version !== input.expected)
+    throw new IntelligenceError('This record or request changed. Reload before continuing.', 409);
+  if (input.action === 'compile') {
+    const attempt = await requestArchitectRevision({
+      workspaceId: workspace.id,
+      workingRevision: workspace.workingRevision,
+      instruction: input.instruction || '',
+      presentation: workspace.settings.presentation,
+      runtime: null,
+    });
+    await healthRpc('workspace_architect', input.request, {
+      id: input.id,
+      expected: input.expected,
+      action: 'compile',
+      architect: { ...attempt, verified: false },
+    });
+    return;
+  }
+  if (input.action === 'accept') {
+    const parsed = architectAttemptSchema.safeParse(workspace.architect);
+    if (!parsed.success || parsed.data.status !== 'ready')
+      throw new IntelligenceError('There is no verified customization to accept.', 409);
+    const accepted = acceptArchitectAttempt(parsed.data);
+    if (!accepted.verified)
+      throw new IntelligenceError('There is no verified customization to accept.', 409);
+    await healthRpc('workspace_architect', input.request, {
+      id: input.id,
+      expected: input.expected,
+      action: 'accept',
+      architect: accepted,
+    });
+    return;
+  }
+  await healthRpc('workspace_architect', input.request, {
+    id: input.id,
+    expected: input.expected,
+    action: 'reopen',
+  });
+}
+
+export async function readHealthBridge(token: string) {
+  const { client, person } = await healthSession();
+  const result = await (
+    client as unknown as {
+      rpc: (
+        fn: string,
+        args: { p_token: string },
+      ) => Promise<{ error: { message: string } | null; data: unknown }>;
+    }
+  ).rpc('health_bridge_read', { p_token: token });
+  if (result.error || !result.data) throw new IntelligenceError('Health bridge unavailable.', 403);
+  const session = result.data as {
+    owner: string;
+    workspaceId: string;
+    revision: number;
+    sample: boolean;
+    fields: string[];
+    hostControlled: boolean;
+  };
+  if (session.owner !== person.id) throw new IntelligenceError('Health bridge unavailable.', 403);
+  const snapshot = await readHealth();
+  const workspace = snapshot.workspaces.find((row) => row.id === session.workspaceId);
+  if (!workspace || workspace.version !== session.revision)
+    throw new IntelligenceError('Health bridge unavailable.', 403);
+  const allowed = new Set(
+    session.fields.length
+      ? session.fields
+      : ['name', 'value', 'unit', 'date', 'range', 'specimen', 'method', 'flag'],
+  );
+  const source = session.sample
+    ? sampleBloodwork
+    : snapshot.observations.filter((row) => row.status === 'active');
+  const rows = projectBridgeObservations(source, workspace.settings.bloodwork, allowed);
+  return {
+    sample: session.sample,
+    workspaceId: workspace.id,
+    revision: session.revision,
+    hostControlled: true,
+    notice: session.sample
+      ? sampleProjection().notice
+      : 'Host-controlled reviewed observations. Generated tools cannot replace these values.',
+    observations: rows,
+  };
 }
 export type HealthEvidence = SavedObservation;

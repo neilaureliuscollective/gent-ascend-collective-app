@@ -2,16 +2,17 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ContextSheet } from '@/components/interaction/context-sheet';
-import { biomarkerSeries, summarize } from '@/domains/health/trends';
+import { biomarkerSeries } from '@/domains/health/trends';
 import {
   emptyHealth,
   type HealthData,
+  type HealthSendResult,
   type Mutation,
   type Observation,
   type Purpose,
   type SavedObservation,
-  type WellnessPoint,
 } from '@/domains/health/schema';
+import { HealthAtelier } from './atelier';
 import './health.css';
 
 export type HealthView = 'command' | 'history' | 'records' | 'labs' | 'connections' | 'privacy';
@@ -36,94 +37,6 @@ const fieldLabels = {
 };
 const format = (n: number) =>
   new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(n);
-function Trend({ title, unit, points }: { title: string; unit: string; points: WellnessPoint[] }) {
-  const summary = summarize(points),
-    values = points.map((p) => p.value),
-    min = Math.min(...values),
-    max = Math.max(...values),
-    dates = points.map((p) => Date.parse(`${p.date}T12:00:00Z`)),
-    firstDate = Math.min(...dates),
-    lastDate = Math.max(...dates);
-  return (
-    <article className="health-signal">
-      <p className="health-kicker">{title}</p>
-      <div className="health-reading">
-        {summary.latest ? (
-          <>
-            {format(summary.latest.value)} <small>{unit}</small>
-          </>
-        ) : (
-          <span className="health-unknown">Not recorded</span>
-        )}
-      </div>
-      <p>
-        {summary.latest
-          ? `${summary.latest.date} · ${summary.latest.source}`
-          : 'Your actual records will appear here.'}
-      </p>
-      {points.length > 1 && (
-        <svg
-          className="health-sparkline"
-          viewBox="0 0 280 52"
-          role="img"
-          aria-label={`${title}: ${points.length} recorded observations. Exact values below.`}
-        >
-          {points.map((p, i) => (
-            <circle
-              key={`${p.date}-${i}`}
-              cx={
-                12 +
-                (lastDate === firstDate ? 0.5 : (dates[i]! - firstDate) / (lastDate - firstDate)) *
-                  256
-              }
-              cy={42 - (max === min ? 0.5 : (p.value - min) / (max - min)) * 32}
-              r="3"
-            />
-          ))}
-        </svg>
-      )}
-      <details>
-        <summary>Inspect source & values</summary>
-        {points.length ? (
-          <table>
-            <caption>{title} · recorded observations in the last 28 days</caption>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Value</th>
-                <th>Saved</th>
-              </tr>
-            </thead>
-            <tbody>
-              {points.map((p, i) => (
-                <tr key={`${p.date}-${i}`}>
-                  <td>{p.date}</td>
-                  <td>
-                    {format(p.value)} {unit}
-                    {p.originalValue !== undefined && (
-                      <small>
-                        Reported: {p.originalValue} {p.originalUnit}
-                      </small>
-                    )}
-                  </td>
-                  <td>
-                    {p.updatedAt ? new Date(p.updatedAt).toLocaleString() : 'Unknown'} · v
-                    {p.version}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No observation exists. Missing is not zero.</p>
-        )}
-      </details>
-      <p className="health-footnote">
-        {points.length} observations · gaps are retained · no readiness score
-      </p>
-    </article>
-  );
-}
 export function HealthWorkspace({
   initial,
   view = 'command',
@@ -211,11 +124,18 @@ export function HealthWorkspace({
       window.removeEventListener('online', refresh);
     };
   }, [reload]);
-  async function send(body?: Mutation | FormData, endpoint = '/api/health') {
-    if (busy || (!body && !pending.current)) return;
+  async function send(
+    body?: Mutation | FormData,
+    endpoint = '/api/health',
+  ): Promise<HealthSendResult> {
+    if (busy || (!body && !pending.current))
+      return { status: 'ignored', message: 'Health is already finishing a request.' };
     if (body && uncertain) {
       setNotice('Resolve the previous request before starting another.');
-      return;
+      return {
+        status: 'ignored',
+        message: 'Resolve the previous request before starting another.',
+      };
     }
     const requestOwner = owner.current;
     const request = body ? { body, endpoint } : pending.current!;
@@ -236,21 +156,36 @@ export function HealthWorkspace({
       });
       const result = await response.json();
       if (!response.ok) {
-        // HTTP failures can occur after a durable write. Preserve the exact request for recovery.
+        const message = result.error || 'Health could not complete the request.';
         if ([400, 401, 403, 413, 415].includes(response.status)) {
           pending.current = null;
           setUncertain(false);
-        } else setUncertain(true);
-        throw new Error(result.error || 'Health could not complete the request.');
+          setNotice(message);
+          return { status: 'failed', message };
+        }
+        setUncertain(true);
+        setNotice(message);
+        return { status: 'uncertain', message };
       }
       if (
         !mounted.current ||
         document.visibilityState !== 'visible' ||
         owner.current !== requestOwner
-      )
-        return;
+      ) {
+        setUncertain(true);
+        return {
+          status: 'uncertain',
+          message:
+            'The last request may have reached the server. Inspect saved status before retrying.',
+        };
+      }
       await reload();
-      if (owner.current !== requestOwner) return;
+      if (owner.current !== requestOwner) {
+        return {
+          status: 'uncertain',
+          message: 'Your session changed. Reopen Health after signing in.',
+        };
+      }
       if (request.endpoint.endsWith('/export')) {
         const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob),
@@ -269,23 +204,23 @@ export function HealthWorkspace({
       setDeletion(null);
       if (uploadInput.current) uploadInput.current.value = '';
       setNotice('Saved to your private Health environment.');
+      return { status: 'confirmed' };
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Connection interrupted. Inspect the saved status before retrying.';
       if (mounted.current) {
         if (pending.current) setUncertain(true);
-        setNotice(
-          error instanceof Error
-            ? error.message
-            : 'Connection interrupted. Inspect the saved status before retrying.',
-        );
+        setNotice(message);
       }
+      return pending.current ? { status: 'uncertain', message } : { status: 'failed', message };
     } finally {
       if (mounted.current) setBusy(false);
     }
   }
   const blocked = busy || uncertain || data.mode !== 'personal';
-  const series = biomarkerSeries(data.observations),
-    active = data.observations.filter((o) => o.status === 'active');
-  const pendingReviews = data.records.filter((r) => r.status === 'review_required');
+  const series = biomarkerSeries(data.observations);
   function consent(purpose: Purpose, granted: boolean) {
     void send({ kind: 'consent', request: crypto.randomUUID(), purpose, granted, adult });
   }
@@ -367,42 +302,34 @@ export function HealthWorkspace({
     </div>
   );
   return (
-    <div className="health-environment" aria-busy={busy}>
-      <header className="health-hero">
-        <div className="health-orbit" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="health-hero-copy">
-          <p className="health-kicker">AETHELIOS / HEALTH INTELLIGENCE</p>
-          <h1>{titles[view][0]}</h1>
-          <p className="health-lead">{titles[view][1]}</p>
-          <div className="health-hero-actions">
-            <button onClick={() => setTalk(true)}>
-              Understand with Aethelios <span aria-hidden="true">↗</span>
-            </button>
-            <Link href="/app/health/privacy" prefetch={false}>
-              Privacy & access
-            </Link>
-          </div>
-          <p className="health-footnote">
-            Private by purpose · source-led understanding · no clinical service
-          </p>
-        </div>
-      </header>
-      <nav className="health-navigation" aria-label="Health navigation">
-        {destinations.map(([key, href, label]) => (
-          <Link
-            key={key}
-            href={href}
-            prefetch={false}
-            aria-current={key === view ? 'page' : undefined}
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
+    <div className="health-environment" data-view={view} aria-busy={busy}>
+      {view !== 'command' && (
+        <>
+          <header className="health-compact-header">
+            <p className="health-kicker">Aethelios / Health</p>
+            <h1>{titles[view][0]}</h1>
+            <p className="health-lead">{titles[view][1]}</p>
+            <div className="health-hero-actions">
+              <Link href="/app/health" prefetch={false}>
+                Workspace
+              </Link>
+              <button onClick={() => setTalk(true)}>Understand with Aethelios</button>
+            </div>
+          </header>
+          <nav className="health-navigation" aria-label="Health navigation">
+            {destinations.map(([key, href, label]) => (
+              <Link
+                key={key}
+                href={href}
+                prefetch={false}
+                aria-current={key === view ? 'page' : undefined}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </>
+      )}
       {data.mode === 'signed-out' && (
         <section className="health-notice">
           <h2>Begin with your own information.</h2>
@@ -423,124 +350,17 @@ export function HealthWorkspace({
           <Link href="/app/performance">Open Performance →</Link>
         </section>
       )}
-      {!reviewId && !editing && !deletion && !talk && recovery}
-      {view === 'command' && (
-        <>
-          <section className="health-section">
-            <div className="health-section-heading">
-              <div>
-                <p className="health-kicker">YOUR RECENT SIGNALS</p>
-                <h2>What your records show.</h2>
-              </div>
-              <Link href="/app/health/connections">Manage sources ↗</Link>
-            </div>
-            {!has('wellness') && (
-              <div className="health-permission">
-                <p>
-                  Bring your existing sleep, body and movement records into this private view.
-                  Nothing is copied or sent to a model.
-                </p>
-                <Link href="/app/health/connections">Choose existing data →</Link>
-              </div>
-            )}
-            <div className="health-signals">
-              <Trend title="Sleep duration" unit="h" points={data.wellness.sleep} />
-              <Trend title="Body weight" unit="kg" points={data.wellness.weight} />
-              <Trend title="Movement" unit="min" points={data.wellness.movement} />
-            </div>
-            {data.wellness.unavailable.length > 0 && (
-              <p role="status">
-                Unavailable: {data.wellness.unavailable.join(', ')}. Other sections remain
-                accessible.
-              </p>
-            )}
-          </section>
-          <section className="health-section">
-            <p className="health-kicker">RECOVERY & DAILY CONTEXT</p>
-            <h2>How you reported feeling.</h2>
-            {data.wellness.recovery.length ? (
-              <div className="health-table-scroll">
-                <table>
-                  <caption>Your dated self-reports · not measured readiness</caption>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Energy</th>
-                      <th>Soreness</th>
-                      <th>Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.wellness.recovery.map((r) => (
-                      <tr key={r.date}>
-                        <td>{r.date}</td>
-                        <td>
-                          {r.energy === null ? 'Not recorded' : `${r.energy}/5 · self-report`}
-                        </td>
-                        <td>{r.soreness || 'Not recorded'}</td>
-                        <td>
-                          Performance · v{r.version} · saved{' '}
-                          {new Date(r.updatedAt).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p>No recovery self-reports are available in this view.</p>
-            )}
-            <div className="health-hero-actions">
-              <Link href="/app/performance?space=restore" prefetch={false}>
-                Recovery & sleep →
-              </Link>
-              <Link href="/app/performance?space=fuel" prefetch={false}>
-                Fuel & body →
-              </Link>
-              <Link href="/app/performance" prefetch={false}>
-                Training & movement →
-              </Link>
-            </div>
-          </section>
-          <section className="health-command-grid">
-            <article className="health-panel">
-              <p className="health-kicker">IN YOUR VAULT</p>
-              <h2>
-                {data.records.length
-                  ? `${data.records.length} private records.`
-                  : 'Your history begins with one record.'}
-              </h2>
-              <p>
-                {pendingReviews.length
-                  ? `${pendingReviews.length} imports need your review before their values appear in Labs.`
-                  : 'Keep originals, collection dates and context together. No repeated intake forms.'}
-              </p>
-              <Link href="/app/health/records">Open records →</Link>
-            </article>
-            <article className="health-panel health-panel-illuminated">
-              <p className="health-kicker">LABS & BIOMARKERS</p>
-              <h2>
-                {active.length
-                  ? `${active.length} reviewed results.`
-                  : 'Clarity before conclusions.'}
-              </h2>
-              <p>
-                Reported values, laboratory ranges and comparable history. Uncertainty stays
-                visible.
-              </p>
-              <Link href="/app/health/labs">Explore labs →</Link>
-            </article>
-          </section>
-          <section className="health-section health-purpose">
-            <p className="health-kicker">THE HUMAN ASCENDANCE</p>
-            <h2>
-              More understanding.
-              <br />
-              Less to manage.
-            </h2>
-            <p>Health brings your information into context. Your choices stay yours.</p>
-          </section>
-        </>
+      {view === 'command' ? (
+        <HealthAtelier
+          key={`${data.owner ?? 'none'}:${data.mode}`}
+          data={data}
+          send={send}
+          busy={busy}
+          blocked={blocked}
+          recovery={!reviewId && !editing && !deletion && !talk ? recovery : null}
+        />
+      ) : (
+        !reviewId && !editing && !deletion && !talk && recovery
       )}
       {view === 'records' && (
         <section className="health-section">
@@ -1000,14 +820,16 @@ export function HealthWorkspace({
           )}
         </section>
       )}
-      <footer className="health-footer">
-        <span>AETHELIOS — THE HUMAN ASCENDANCE</span>
-        <p>
-          Informational understanding, not diagnosis or treatment. Health is not an emergency
-          monitoring service.
-        </p>
-        <small>View prepared {new Date(data.asOf).toLocaleString()}</small>
-      </footer>
+      {view !== 'command' && (
+        <footer className="health-footer">
+          <span>AETHELIOS — THE HUMAN ASCENDANCE</span>
+          <p>
+            Informational understanding, not diagnosis or treatment. Health is not an emergency
+            monitoring service.
+          </p>
+          <small>View prepared {new Date(data.asOf).toLocaleString()}</small>
+        </footer>
+      )}
       <ContextSheet
         open={Boolean(reviewId)}
         title="Review imported results"
@@ -1206,22 +1028,24 @@ export function HealthWorkspace({
           >
             <fieldset>
               <legend>Results to include · choose up to 12</legend>
-              {active.length ? (
-                active.map((o) => (
-                  <label key={o.id}>
-                    <input
-                      type="checkbox"
-                      checked={evidence.includes(o.id)}
-                      disabled={!evidence.includes(o.id) && evidence.length >= 12}
-                      onChange={(e) =>
-                        setEvidence((ids) =>
-                          e.target.checked ? [...ids, o.id] : ids.filter((id) => id !== o.id),
-                        )
-                      }
-                    />
-                    {o.name} · {o.value} {o.unit} · {o.date}
-                  </label>
-                ))
+              {data.observations.filter((o) => o.status === 'active').length ? (
+                data.observations
+                  .filter((o) => o.status === 'active')
+                  .map((o) => (
+                    <label key={o.id}>
+                      <input
+                        type="checkbox"
+                        checked={evidence.includes(o.id)}
+                        disabled={!evidence.includes(o.id) && evidence.length >= 12}
+                        onChange={(e) =>
+                          setEvidence((ids) =>
+                            e.target.checked ? [...ids, o.id] : ids.filter((id) => id !== o.id),
+                          )
+                        }
+                      />
+                      {o.name} · {o.value} {o.unit} · {o.date}
+                    </label>
+                  ))
               ) : (
                 <p>No reviewed results selected.</p>
               )}

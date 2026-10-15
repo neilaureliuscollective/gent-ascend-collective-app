@@ -171,7 +171,7 @@ export function ProductAtelier({ stageOnly = false }: { stageOnly?: boolean }) {
       {!stageOnly && (
         <div className="atelier-story">
           <OrbitSignature />
-          <span className="world-kicker">Legacy Reserve / Vitalis</span>
+          <span className="world-kicker">Aethelios Lifestyle / Vitalis</span>
           <h2>
             The ritual.
             <br />

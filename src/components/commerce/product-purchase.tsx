@@ -132,7 +132,7 @@ export function ProductPurchase({
           : busy
             ? 'Adding…'
             : variant?.availableForSale
-              ? 'Add to cart ↗'
+              ? 'Add to cart'
               : 'Currently unavailable'}
       </button>
       {open && variant && (
@@ -155,7 +155,7 @@ export function ProductPurchase({
             onClick={add}
             disabled={busy || uncertain || !variant.availableForSale}
           >
-            {busy ? 'Adding…' : variant.availableForSale ? 'Add to cart ↗' : 'Unavailable'}
+            {busy ? 'Adding…' : variant.availableForSale ? 'Add to cart' : 'Unavailable'}
           </button>
         </div>
       )}
@@ -165,7 +165,7 @@ export function ProductPurchase({
       {uncertain && (
         <p className="commerce-status" role="status">
           The result could not be confirmed. Review your cart before adding this item again.
-          <Link href={`${basePath}/cart`}>Review cart →</Link>
+          <Link href={`${basePath}/cart`}>Review cart</Link>
         </p>
       )}
     </div>
