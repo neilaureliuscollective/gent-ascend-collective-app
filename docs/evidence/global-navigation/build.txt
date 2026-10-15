@@ -10,10 +10,10 @@
   Collecting page data using 4 workers ...
   Generating static pages using 4 workers (0/117) ...
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-  Generating static pages using 4 workers (29/117) 
-  Generating static pages using 4 workers (58/117) 
+  Generating static pages using 4 workers (29/117)
+  Generating static pages using 4 workers (58/117)
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-  Generating static pages using 4 workers (87/117) 
+  Generating static pages using 4 workers (87/117)
 ✓ Generating static pages using 4 workers (117/117) in 494ms
   Finalizing page optimization ...
 
@@ -201,4 +201,3 @@ Route (app)                            Revalidate  Expire
 
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand
-
