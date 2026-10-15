@@ -239,7 +239,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByLabel('Email').fill('founder@aurelius.test');
   await page.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
   await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
-  await expect(page).toHaveURL(/\/app\/founder$/);
+  await expect(page).toHaveURL(/\/app\/founder$/, { timeout: 30000 });
   await page.goto('/app/architect');
   await capturePhase(page, 'arrival');
   await page.getByRole('button', { name: 'Design an Application' }).click();
@@ -501,13 +501,13 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
     expect(stillOriginal.processId).toBe(originalRuntime.processId);
     const restartedWorker = await runAppsWorkerTick(restartedWorkerId);
     expect(restartedWorker.code, restartedWorker.out).toBe(0);
-    const restarted = await browser.newContext({ baseURL: 'http://127.0.0.1:3108' });
+    const restarted = await browser.newContext({ baseURL: 'http://127.0.0.1:3108', recordVideo: { dir: 'test-results/architect-apps-connected', size: { width: 1440, height: 900 } } });
     const next = await restarted.newPage();
     await next.goto('/enter');
     await next.getByLabel('Email').fill('founder@aurelius.test');
     await next.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
     await next.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
-    await expect(next).toHaveURL(/\/app\/founder$/);
+    await expect(next).toHaveURL(/\/app\/founder$/, { timeout: 30000 });
     await next.goto(projectPath);
     expect(new URL(next.url()).origin).toBe('http://127.0.0.1:3108');
     expect(new URL(next.url()).origin).not.toBe(originalOrigin);
@@ -533,7 +533,10 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
     await expect(next.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
     await expect(next.locator('[data-record-title="Site visit B"]')).toBeVisible();
     await captureWorkbench(next, 'workbench-reopen');
+    const reopenedVideo = next.video();
     await restarted.close();
+    if (!reopenedVideo) throw new Error('Reopened journey video was not recorded.');
+    await reopenedVideo.saveAs('test-results/architect-apps-connected/reopened-journey.webm');
   } finally {
     replacement.kill('SIGTERM');
   }

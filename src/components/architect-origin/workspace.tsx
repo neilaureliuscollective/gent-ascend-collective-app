@@ -6,7 +6,7 @@ import { compileDocument } from '@/domains/architect-origin/documents';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
-import { ArchitectAppPanel } from './app-panel';
+import { ArchitectAppPanel, type AppEditorDraft } from './app-panel';
 import { ArchitectConstructPanel } from './construct-panel';
 import { ArchitectToolPanel } from './tool-panel';
 import type { ToolWorkspaceState } from './tool-session';
@@ -123,6 +123,11 @@ export function ArchitectOrigin({
 }) {
   const [library, setLibrary] = useState<Library>({ projects: [], versions: [], runs: [] });
   const [selected, setSelected] = useState<OriginProject | null>(null);
+  // Session-only editor state; persisted projects and revisions remain domain-owned.
+  const [appEditorDrafts, setAppEditorDrafts] = useState<Record<string, AppEditorDraft>>({});
+  const rememberAppEditorDraft = useCallback((owner: string, project: string, snapshot: AppEditorDraft) => {
+    setAppEditorDrafts((previous) => ({ ...previous, [`${owner}:${project}`]: snapshot }));
+  }, []);
   const [draft, setDraft] = useState<ProjectContent | null>(null);
   const [surface, setSurface] = useState<Surface>('Conversation');
   const [documentView, setDocumentView] = useState<DocumentView>('Split');
@@ -1646,6 +1651,8 @@ export function ArchitectOrigin({
                     projectId={selected.id}
                     revision={selected.revision}
                     enabled={appsEnabled}
+                    editorDraft={appEditorDrafts[`${selected.person_id}:${selected.id}`]}
+                    onEditorDraft={rememberAppEditorDraft}
                     locked={locked}
                     brief={readCreationBrief(selected.content)}
                     briefText={selected.content.blueprint.vision || selected.content.description}

@@ -25,6 +25,8 @@ import {
   type AppLibrary,
 } from './app-lifecycle';
 
+export type AppEditorDraft = { text: string; edited: boolean; binding: { revision: number | null; target: string | null } | null };
+
 const panels = ['Plan', 'Files', 'Changes', 'Records', 'Revisions'] as const;
 
 export function ArchitectAppPanel({
@@ -35,6 +37,8 @@ export function ArchitectAppPanel({
   locked,
   brief,
   briefText = '',
+  editorDraft,
+  onEditorDraft,
 }: {
   ownerId: string;
   projectId: string;
@@ -43,6 +47,8 @@ export function ArchitectAppPanel({
   locked: boolean;
   brief?: CreationBrief;
   briefText?: string;
+  editorDraft?: AppEditorDraft;
+  onEditorDraft?: (owner: string, project: string, snapshot: AppEditorDraft) => void;
 }) {
   const resolvedBrief = useMemo<CreationBrief>(
     () =>
@@ -65,7 +71,9 @@ export function ArchitectAppPanel({
   const [inspectAction, setInspectAction] = useState<'explain' | 'change' | 'compare' | null>(null);
   const [inspectId, setInspectId] = useState<string | null>(null);
   const [appSheet, setAppSheet] = useState<'stage' | 'side' | 'refine'>('stage');
-  const [draft, setDraft] = useState(briefText.trim() || 'Create field notes I can save.');
+  const [draft, setDraft] = useState(editorDraft?.text ?? (briefText.trim() || 'Create field notes I can save.'));
+  const [draftBinding, setDraftBinding] = useState<{ revision: number | null; target: string | null } | null>(editorDraft?.binding ?? null);
+  const [draftEdited, setDraftEdited] = useState(editorDraft?.edited ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -79,6 +87,10 @@ export function ArchitectAppPanel({
   const scroll = useRef(0);
   const plane = useRef<HTMLDivElement>(null);
   const boundPreview = useRef({ session: '', generation: 0, revisionId: '', document: 0 });
+
+  useEffect(() => {
+    onEditorDraft?.(ownerId, projectId, { text: draft, edited: draftEdited, binding: draftBinding });
+  }, [draft, draftEdited, draftBinding, onEditorDraft, ownerId, projectId]);
 
   const recovered = library?.pendingStart ?? null;
   const current = library?.current ?? null;
@@ -131,7 +143,7 @@ export function ArchitectAppPanel({
       .then(async (response) => {
         const data = (await response.json()) as AppLibrary & { error?: string };
         if (!response.ok) throw new Error(data.error || 'Application library unavailable.');
-        setLibrary(data);
+        if (!controller.signal.aborted) setLibrary(data);
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
@@ -341,10 +353,11 @@ export function ArchitectAppPanel({
         expected: revision,
         instruction: draft.trim(),
         kind: library?.app ? 'revise' : 'create',
-        baseRevision: displayed?.revision ?? library?.app?.current_revision,
+        baseRevision: draftBinding?.revision ?? displayed?.revision ?? library?.app?.current_revision,
         demo: library?.provider.mode === 'fixture' ? 'tracker' : 'none',
       });
       setProposal(next);
+      setDraftEdited(false);
       setPanel('Changes');
       setRefineOpen(false);
       setAppSheet('side');
@@ -595,7 +608,12 @@ export function ArchitectAppPanel({
                 onClick={() => {
                   setInspectAction('change');
                   setChangeRequest(true);
-                  if (selectedTarget && !refineOpen) setDraft(changeScopeForTarget(selectedTarget, displayed?.revision));
+                  if (selectedTarget && !draftEdited) {
+                    setDraft(changeScopeForTarget(selectedTarget, displayed?.revision));
+                    setDraftBinding({ revision: displayed?.revision ?? null, target: selectedTarget.title });
+                  } else if (draftEdited) {
+                    setMessage('Your unsent request and its revision are kept. Finish or clear it before choosing another target.');
+                  }
                 }}
               >
                 Change
@@ -801,11 +819,15 @@ export function ArchitectAppPanel({
             id="architect-app-change-draft"
             ref={requestField}
             value={draft}
-            onChange={(event) => setDraft(event.currentTarget.value)}
+            onChange={(event) => {
+              setDraft(event.currentTarget.value);
+              setDraftEdited(Boolean(event.currentTarget.value.trim()));
+              if (!draftEdited) setDraftBinding({ revision: displayed?.revision ?? null, target: selectedTarget?.title ?? null });
+            }}
             maxLength={2000}
             disabled={busy || locked || latestJob?.status === 'running'}
           />
-          <p>{displayed ? `Editing revision ${displayed.revision}. ` : 'Creating from your saved brief. '}Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
+          <p>{draftBinding?.revision ?? displayed?.revision ? `Editing revision ${draftBinding?.revision ?? displayed?.revision}. ` : 'Creating from your saved brief. '}{draftBinding?.target ? `Target: ${draftBinding.target}. ` : ''}Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
           <button
             className="button"
             disabled={busy || locked || !library || !draft.trim() || library.provider.enabled === false}

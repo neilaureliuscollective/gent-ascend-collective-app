@@ -39,6 +39,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: 24, cache: npm}
+      - uses: ./.github/actions/install-ffmpeg
       - run: npm ci
       - name: Start local Supabase
         run: |
@@ -74,6 +75,8 @@ jobs:
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
         run: npx playwright test --config playwright.origin-auth.config.ts
+      - name: Verify exact-head screenshots and finalized videos
+        run: node scripts/architect-apps-verify-evidence.mjs
       - name: Publish connected-journey evidence
         if: always()
         run: |

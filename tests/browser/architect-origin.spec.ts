@@ -2252,6 +2252,19 @@ test('UI fixture: app workbench reviews files, recovers approved start after rel
   await page.screenshot({ path: 'test-results/architect-apps-phone.png', fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.screenshot({ path: 'test-results/architect-apps-fold.png', fullPage: true });
+  await page.getByRole('button', { name: 'Inspect', exact: true }).click();
+  const inspector = page.getByRole('region', { name: 'Selected application target', exact: true });
+  await inspector.getByRole('button', { name: 'Change', exact: true }).click();
+  await changeDraft.getByRole('textbox', { name: 'Request', exact: true }).fill('Keep my carefully scoped unsent request.');
+  await changeDraft.getByRole('button', { name: 'Close change draft', exact: true }).click();
+  await inspector.getByRole('button', { name: 'Change', exact: true }).click();
+  await expect(changeDraft.getByRole('textbox', { name: 'Request', exact: true })).toHaveValue('Keep my carefully scoped unsent request.');
+  await expect(changeDraft).toContainText('Editing revision 1.');
+  await page.getByRole('button', { name: 'Blueprint', exact: true }).click();
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await page.getByRole('button', { name: 'Request a change', exact: true }).click();
+  await expect(changeDraft.getByRole('textbox', { name: 'Request', exact: true })).toHaveValue('Keep my carefully scoped unsent request.');
+  await expect(changeDraft).toContainText('Editing revision 1.');
 });
 
 test('first-visit client review produces a different app plan than project creation', async ({ page }) => {
