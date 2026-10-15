@@ -43,20 +43,18 @@ for (const viewport of [
         route,
       ).toBe(true);
       if (route.startsWith('/app/')) {
-        const compactTalk = route === '/app/aethelios';
-        if (compactTalk)
-          await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+        await page.getByRole('button', { name: 'Menu', exact: true }).click();
         const navigation = page.getByRole('navigation', {
-          name: compactTalk ? 'Aethelios destinations' : 'Main navigation',
+          name: 'Global navigation',
         });
-        await expect(navigation.getByRole('link')).toHaveCount(compactTalk ? 11 : 7);
+        await expect(navigation.getByRole('link')).toHaveCount(14);
         await expect(navigation.getByRole('link', { name: 'Health', exact: true })).toHaveAttribute(
           'href',
           '/app/health',
         );
         await expect(
           navigation.getByRole('link', { name: 'Lifestyle', exact: true }),
-        ).toHaveAttribute('href', '/app/lifestyle');
+        ).toHaveAttribute('href', '/lifestyle');
         // A semantic-token cycle previously made inherited backgrounds transparent.
         const surface = await page.locator('.imperial-workspace').evaluate((el) => ({
           background: getComputedStyle(el).backgroundColor,
@@ -69,7 +67,7 @@ for (const viewport of [
           const box = await link.boundingBox();
           expect(box!.height).toBeGreaterThanOrEqual(44);
         }
-        if (compactTalk) await page.keyboard.press('Escape');
+        await page.keyboard.press('Escape');
       }
       await page.screenshot({
         path: `test-results/obsidian-${route.replaceAll('/', '-') || 'home'}-${viewport.width}.png`,
@@ -108,9 +106,9 @@ test('public to workspace navigation keeps one shell and isolated public card st
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await navigation.getByRole('link', { name: 'Talk', exact: true }).click();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeInViewport();
-  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await page
-    .getByRole('navigation', { name: 'Aethelios destinations' })
+    .getByRole('navigation', { name: 'Global navigation' })
     .getByRole('link', { name: 'Studio', exact: true })
     .click();
   await expect(page.getByRole('heading', { name: 'Make the vision visible.' })).toBeVisible();

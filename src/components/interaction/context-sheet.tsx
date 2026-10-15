@@ -6,6 +6,7 @@ export function ContextSheet({
   title,
   busy = false,
   fullScreen = false,
+  dismissOnBackdrop = false,
   onClose,
   children,
 }: {
@@ -13,6 +14,7 @@ export function ContextSheet({
   title: string;
   busy?: boolean;
   fullScreen?: boolean;
+  dismissOnBackdrop?: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -51,6 +53,11 @@ export function ContextSheet({
       className={`context-sheet${fullScreen ? ' context-sheet-full' : ''}`}
       ref={ref}
       aria-labelledby={id}
+      onClick={(event) => {
+        if (dismissOnBackdrop && !busy && event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
       onCancel={(e) => {
         e.preventDefault();
         if (!busy) onClose();

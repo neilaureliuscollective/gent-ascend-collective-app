@@ -1,0 +1,148 @@
+.global-navigation {
+  visibility: visible;
+  flex-shrink: 0;
+}
+.global-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 12px;
+  border: 1px solid #c4912f66;
+  border-radius: 8px;
+  background: #102b26;
+  color: #e8eee8;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.global-navigation .context-sheet {
+  visibility: visible;
+  color: #e8eee8;
+}
+.global-navigation .context-sheet-surface {
+  background: #101817;
+  width: min(420px, 100%);
+}
+.global-navigation .context-sheet-body {
+  padding: 12px 16px 24px;
+}
+.global-navigation nav section + section {
+  border-top: 1px solid #c4912f44;
+  margin-top: 12px;
+  padding-top: 8px;
+}
+.global-navigation h3 {
+  color: #c7d3cb;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  margin: 10px 12px;
+}
+.global-navigation nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #e8eee8;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.global-navigation nav a[aria-current='page'] {
+  background: #174438;
+  box-shadow: inset 3px 0 #c4912f;
+}
+.global-navigation :focus-visible {
+  outline: 2px solid #e0bb6a;
+  outline-offset: 2px;
+}
+.global-navigation .ui-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .app-shell .topbar-actions > .appearance-controls {
+    display: none;
+  }
+}
+@media (forced-colors: active) {
+  .global-menu-trigger,
+  .global-navigation nav a[aria-current='page'] {
+    border: 1px solid ButtonText;
+  }
+}
+
+.app-shell:has(.talk-page) .topbar .global-navigation {
+  display: none;
+}
+.global-navigation .context-sheet[open] {
+  justify-content: flex-end;
+  align-items: stretch;
+}
+.global-navigation .context-sheet-surface {
+  max-height: 100%;
+  border-radius: 12px 0 0 12px;
+}
+.global-navigation .context-sheet-body {
+  overscroll-behavior: contain;
+}
+.talk-page .bplus-tools .global-menu-trigger {
+  font-size: 0.75rem;
+}
+.topbar-actions > .global-navigation {
+  order: 99;
+}
+.aurelius-unavailable > .global-navigation {
+  align-self: flex-end;
+}
+.app-shell.imperial-workspace .talk-toolbar:has(.global-navigation) {
+  flex-wrap: wrap;
+}
+.app-shell.imperial-workspace .talk-toolbar:has(.global-navigation) .bplus-tools {
+  margin-left: auto;
+}
+/* Keep the global surface identical even inside route-specific material scopes. */
+body .app-shell.imperial-workspace .global-navigation .context-sheet .context-sheet-surface,
+body .global-navigation .context-sheet .context-sheet-surface {
+  background: #101817;
+  color: #e8eee8;
+  border-color: #c4912f66;
+}
+@media (forced-colors: active) {
+  body .app-shell.imperial-workspace .global-navigation .context-sheet .context-sheet-surface,
+body .global-navigation .context-sheet .context-sheet-surface {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+  }
+}
+.world-header:has(.global-navigation) {
+  gap: 12px;
+}
+.world-header:has(.global-navigation) .world-wordmark {
+  min-width: 0;
+}
+.world-header:has(.global-navigation) .world-wordmark > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 380px) {
+  .world-header:has(.global-navigation) .world-wordmark small {
+    display: none;
+  }
+}
+.world-header:has(.global-navigation) .world-wordmark {
+  flex-shrink: 1;
+}
+@media (max-width: 600px) {
+  .app-shell .topbar .mobile-brand .brand-type {
+    display: none;
+  }
+}
+.app-shell.imperial-workspace .talk-toolbar:has(.global-navigation) .talk-title {
+  min-width: 80px;
+}

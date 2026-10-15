@@ -8,14 +8,8 @@ for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/app/world');
-    const nav = page.getByRole('navigation', { name: 'Main navigation' });
-    await nav.getByRole('link', { name: 'Lifestyle', exact: true }).click();
+    await page.goto('/app/lifestyle');
     await expect(page.getByRole('heading', { name: 'Your collection.' })).toBeVisible();
-    await expect(nav.getByRole('link', { name: 'Lifestyle', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    await expect(nav.getByRole('link')).toHaveCount(7);
     await page.getByRole('link', { name: 'Explore the collection', exact: true }).click();
     await expect(page).toHaveURL('/app/collection');
     await expect(page.getByRole('heading', { name: 'The Collection.' })).toBeVisible();
@@ -35,10 +29,13 @@ for (const width of [360, 768, 1440]) {
     await expect(
       page.getByRole('heading', { name: 'Product availability could not be verified.' }),
     ).toBeVisible();
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    const nav = page.getByRole('navigation', { name: 'Global navigation' });
     await expect(nav.getByRole('link', { name: 'Lifestyle', exact: true })).toHaveAttribute(
       'aria-current',
       'page',
     );
+    await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: /Add to cart|checkout/ })).toHaveCount(0);
     await page.getByRole('link', { name: 'Return to the collection', exact: true }).click();
     await expect(page).toHaveURL('/app/collection');
@@ -58,4 +55,3 @@ for (const width of [360, 768, 1440]) {
     expect(errors).toEqual([]);
   });
 }
-

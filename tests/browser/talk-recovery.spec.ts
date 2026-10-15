@@ -153,9 +153,9 @@ test('drafts survive refresh and Back, separate conversations, and never cross v
   await field(page).fill('Unsent private draft');
   await page.reload();
   await expect(field(page)).toHaveValue('Unsent private draft');
-  await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await page
-    .getByRole('navigation', { name: 'Aethelios destinations' })
+    .getByRole('navigation', { name: 'Global navigation' })
     .getByRole('link', { name: 'Work', exact: true })
     .click();
   await expect(page).toHaveURL(/\/app\/work$/);

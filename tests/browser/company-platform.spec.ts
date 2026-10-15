@@ -5,22 +5,25 @@ for (const width of [360, 768, 1440]) {
     await page.goto('/app/aethelios');
     await expect(page).toHaveURL('/app/aethelios');
     await expect(page.getByRole('heading', { name: 'Aethelios', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
-    const tools = page.getByRole('dialog', { name: 'Tools & context', exact: true });
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    const tools = page.getByRole('dialog', { name: 'Aethelios menu', exact: true });
     await expect(
-      tools.getByRole('navigation', { name: 'Aethelios destinations' }).getByRole('link'),
+      tools.getByRole('navigation', { name: 'Global navigation' }).getByRole('link'),
     ).toHaveText([
       'Home',
+      'Talk',
       'Work',
       'Architect',
       'Studio',
-      'Missions',
-      'Council',
       'Health',
       'Lifestyle',
       'Ecosystem',
-      'Your account',
+      'Missions',
+      'Council',
+      'Membership',
+      'Account & settings',
       'Meet Aethelios',
+      'Support',
     ]);
     const work = tools.getByRole('link', { name: 'Work', exact: true });
     await expect(work).toHaveAttribute('href', '/app/work');
@@ -50,9 +53,10 @@ test('public arrival and unconnected Lifestyle keep commerce state honest', asyn
 }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /Bring the ambition/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await expect(
     page
-      .getByRole('navigation', { name: 'Public navigation' })
+      .getByRole('navigation', { name: 'Global navigation' })
       .getByRole('link', { name: 'Lifestyle', exact: true }),
   ).toHaveAttribute('href', '/lifestyle');
   for (const route of ['/shop', '/app/collection']) {

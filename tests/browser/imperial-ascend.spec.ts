@@ -23,10 +23,10 @@ for (const width of [360, 768, 1440]) {
       '/enter',
     );
     if (width < 1100) {
-      await page.getByRole('button', { name: 'Explore', exact: false }).first().click();
-      await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeVisible();
+      await page.getByRole('button', { name: 'Menu', exact: false }).first().click();
+      await expect(page.getByRole('navigation', { name: 'Global navigation' })).toBeVisible();
       await page.keyboard.press('Escape');
-      await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeHidden();
+      await expect(page.getByRole('navigation', { name: 'Global navigation' })).toBeHidden();
     }
     await page.goto('/support');
     await expect(page.locator('.public-world')).not.toHaveAttribute('data-imperial', 'editorial');

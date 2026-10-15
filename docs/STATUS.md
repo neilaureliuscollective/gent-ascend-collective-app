@@ -1230,3 +1230,7 @@ Architect workspace refinement: #112 was released to canonical main 26bf465 duri
 ## Fluid Intelligence — review candidate (2026-10-12)
 
 Current-main source verified against tree `6f78d395807819ec99ae7308f51d07630b0ea5d8`. Implements accepted-draft clearing with next-draft preservation, immediate local pending messages, stable bounded shared composer resizing, shared streaming decoder/cleanup, deferred auxiliary titles, development-only timing, and same-admission Live recovery/observed speech states. No production release, hosted schema/provider configuration change or new dependency. Audit, architecture, measured/unavailable metrics, test evidence and physical-device gates: [FLUID_INTELLIGENCE.md](FLUID_INTELLIGENCE.md). Build/browser/Auth infrastructure limits remain explicit; this is not a ChatGPT-parity claim.
+
+## Shared global navigation repair — 2026-10-15
+
+Review branch `fix/consistent-global-navigation` centralizes destination names/routes/icons and server-supplied presentation visibility; adds one recognizable Menu sheet across shell, Talk, Architect and public headers; keeps four primary shortcuts including Architect. Talk New remains separate from visible Tools and History. No feature internals, SQL, provider or entitlement change. See [GLOBAL_NAVIGATION.md](GLOBAL_NAVIGATION.md) for scope, overlap adapters, labeled evidence and remaining authenticated/voice/release gates. Not merged or deployed.

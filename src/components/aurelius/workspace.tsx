@@ -1,4 +1,5 @@
 'use client';
+import { GlobalNavigation } from '../global-navigation';
 import { Icon } from '@/components/visual/icon';
 import { ConversationArtifacts } from '@/components/live/artifacts';
 import { LiveVoiceEntry, useLiveBusy, useLiveSession } from '@/components/live/provider';
@@ -731,6 +732,7 @@ export function AureliusWorkspace({
   if (!data)
     return (
       <div className="aurelius-unavailable">
+        {!compact && <GlobalNavigation />}
         <span className="orb large" aria-hidden="true" />
         <h3>A clearer perspective.</h3>
         {error ? (
@@ -778,7 +780,7 @@ export function AureliusWorkspace({
             }
           />
           {!compact && (
-            <TalkDrawer label="Conversations" triggerContent={<span aria-hidden="true">☰</span>}>
+            <TalkDrawer label="Conversations" triggerContent={<span>History</span>}>
               {(close) => (
                 <>
                   <ConversationLibrary
@@ -841,27 +843,8 @@ export function AureliusWorkspace({
             </button>
             <TalkDrawer
               label="Tools & context"
-              triggerContent={<span aria-hidden="true">•••</span>}
+              triggerContent={<span>Tools</span>}
             >
-              <nav className="talk-destinations" aria-label="Aethelios destinations">
-                {[
-                  ['/app', 'Home'],
-                  ['/app/work', 'Work'],
-                  ['/app/architect', 'Architect'],
-                  ['/app/studio', 'Studio'],
-                  ['/app/missions', 'Missions'],
-                  ['/app/entities', 'Council'],
-                  ['/app/health', 'Health'],
-                  ['/app/lifestyle', 'Lifestyle'],
-                  ['/app/ecosystem', 'Ecosystem'],
-                  ['/app/you', 'Your account'],
-                  ['/app/aethelios/meet', 'Meet Aethelios'],
-                ].map(([href, label]) => (
-                  <Link key={href} href={href!} prefetch={false}>
-                    {label}
-                  </Link>
-                ))}
-              </nav>
               <ConversationArtifacts conversationId={selected} />
               <AppearanceControls />
               {!preview && (
@@ -1049,6 +1032,7 @@ export function AureliusWorkspace({
                 </p>
               </details>
             </TalkDrawer>
+            {!compact && <GlobalNavigation />}
           </BplusTalkTools>
         </div>
         {!preview && (

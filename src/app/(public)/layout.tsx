@@ -1,3 +1,5 @@
+import { currentIdentity } from '@/domains/identity/current';
+import { currentFounderAccess } from '@/domains/access/founder';
 import Link from 'next/link';
 import Image from 'next/image';
 import { brand } from '@/platform/brand';
@@ -14,14 +16,16 @@ export const metadata: Metadata = {
   robots: { index: process.env.VERCEL_ENV === 'production', follow: true },
   description: 'Aethelios helps founders and operators build, grow and operate companies.',
 };
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const signedIn = Boolean(await currentIdentity());
+  const founderOffice = signedIn && (await currentFounderAccess().catch(() => false));
   return (
     <CinematicWorld>
       <AppRuntime />
       <a className="skip" href="#world-main">
         Skip to content
       </a>
-      <WorldHeader />
+      <WorldHeader access={{ signedIn, founderOffice }} />
       {children}
       <footer className="world-footer">
         <div>
