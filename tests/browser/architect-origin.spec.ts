@@ -2223,7 +2223,7 @@ test('UI fixture: app workbench reviews files, recovers approved start after rel
   await page.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.getByText('src/App.tsx')).toBeVisible();
   await page.getByRole('button', { name: 'Accept revision' }).click();
-  await expect(page.getByText(/Start remains explicit/)).toBeVisible();
+  await expect(page.getByText(/Revision 1 accepted\. Start remains explicit/)).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'App', exact: true }).click();
   await expect(page.getByText(/Approved revision 1 recovered/)).toBeVisible();
