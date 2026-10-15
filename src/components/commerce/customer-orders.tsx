@@ -26,7 +26,7 @@ export function CustomerOrders({
         </p>
         <nav aria-label="Order destinations">
           <LifestyleAction href="/app/collection">The collection</LifestyleAction>
-          <LifestyleAction href="/app/collection/cabinet">Cabinet</LifestyleAction>
+          <LifestyleAction href="/app/collection/cabinet">My Cabinet</LifestyleAction>
           <LifestyleAction href="/app/lifestyle">Lifestyle</LifestyleAction>
         </nav>
       </header>

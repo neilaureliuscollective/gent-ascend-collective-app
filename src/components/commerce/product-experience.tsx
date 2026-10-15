@@ -155,7 +155,6 @@ export function ProductExperience({
             </div>
           )}
           <CollectionSave basePath={basePath} handle={handle} />
-          {basePath === '/app/collection' ? null : cabinetControl}
           <ProductShare handle={handle} title={title} />
         </div>
       </section>

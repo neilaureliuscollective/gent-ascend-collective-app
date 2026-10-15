@@ -11,6 +11,10 @@ async function fixtureImages(page: import('@playwright/test').Page) {
   );
 }
 
+function mainNav(page: import('@playwright/test').Page) {
+  return page.getByRole('navigation', { name: 'Main navigation' });
+}
+
 for (const width of [344, 720, 1440]) {
   test(`member Lifestyle home composition at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -19,7 +23,13 @@ for (const width of [344, 720, 1440]) {
     await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member');
     await expect(page.getByText('Synthetic commerce fixture', { exact: false })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Your collection.' })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Talk' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Work' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Studio' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Health' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Lifestyle' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Ecosystem' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Explore the collection' })).toHaveAttribute(
       'href',
       '/app/collection',
@@ -44,15 +54,24 @@ for (const width of [344, 720, 1440]) {
     ).toHaveAttribute('href', '/app/collection/orders');
     await expect(page.getByText('Nothing is saved yet.', { exact: false })).toBeVisible();
     await expect(page.getByText('No ritual is recorded yet.', { exact: false })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Legacy Reserve', exact: true })).toHaveAttribute(
-      'href',
-      '/app/lifestyle/legacy-reserve',
-    );
+    await expect(page.getByRole('link', { name: 'Legacy Reserve', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('img', { name: /Vitalis hair and beard oil/ })).toBeVisible();
+    await expect(page.getByText('Aethelios Human Ascendance', { exact: false })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Synthetic front image' }).first()).toBeVisible();
     expect(await page.locator('body').innerText()).not.toMatch(/↗|→|←/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    if (width === 1440) {
+      const focal = await page.locator('.member-lifestyle-focal').first().boundingBox();
+      expect(focal?.height ?? 9999).toBeGreaterThanOrEqual(280);
+      expect(focal?.height ?? 9999).toBeLessThan(360);
+    }
+    await page.screenshot({
+      path: `docs/evidence/lifestyle/member-home-${width}-fold.png`,
+      fullPage: false,
+      animations: 'disabled',
+    });
     await page.screenshot({
       path: `docs/evidence/lifestyle/member-home-${width}.png`,
       fullPage: true,
@@ -66,7 +85,7 @@ test('empty catalog and returning Cabinet stay honest', async ({ page }) => {
   await expect(page.getByText('The collection is being prepared.')).toBeVisible();
   await expect(page.getByText('recommended for you', { exact: false })).toHaveCount(0);
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member&unconfigured=1');
-  await expect(page.getByText('Live products are not connected yet.')).toBeVisible();
+  await expect(page.getByText('Live product availability is not connected yet.')).toBeVisible();
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member&error=1');
   await expect(page.getByText('The collection could not refresh.')).toBeVisible();
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member&cabinet=1');
@@ -76,6 +95,7 @@ test('empty catalog and returning Cabinet stay honest', async ({ page }) => {
     '/app/collection/fixture-oil',
   );
   await expect(page.getByText('1 active ritual')).toBeVisible();
+  await expect(page.getByText('5 products marked as kept')).toBeVisible();
   await page.screenshot({
     path: 'docs/evidence/lifestyle/member-cabinet-return-1440.png',
     fullPage: true,
@@ -91,9 +111,15 @@ for (const width of [344, 1440]) {
     await page.goto('http://127.0.0.1:3102/?mode=lifestyle-list');
     await expect(page.getByRole('heading', { name: 'The Collection.' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Your Cabinet' })).toBeVisible();
+    await expect(mainNav(page).getByRole('link', { name: 'Lifestyle' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.screenshot({
+      path: `docs/evidence/lifestyle/member-collection-${width}-fold.png`,
+      fullPage: false,
+      animations: 'disabled',
+    });
     await page.screenshot({
       path: `docs/evidence/lifestyle/member-collection-${width}.png`,
       fullPage: true,
@@ -102,6 +128,12 @@ for (const width of [344, 1440]) {
     await page.goto('http://127.0.0.1:3102/?mode=lifestyle-product');
     await expect(page.getByRole('heading', { name: /Fixture Vitalis/ })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Cabinet and Grooming' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Cabinet and Grooming' })).toHaveCount(1);
+    await page.screenshot({
+      path: `docs/evidence/lifestyle/member-product-${width}-fold.png`,
+      fullPage: false,
+      animations: 'disabled',
+    });
     await page.screenshot({
       path: `docs/evidence/lifestyle/member-product-${width}.png`,
       fullPage: true,
@@ -115,7 +147,11 @@ test('product decision area keeps Cabinet distinct from purchasing', async ({ pa
   await page.addInitScript(() => {
     sessionStorage.setItem(
       'aethelios-catalog-return',
-      JSON.stringify({ href: '/app/collection?q=oil&chapter=grooming', scroll: 180 }),
+      JSON.stringify({
+        href: '/app/collection?q=oil&chapter=grooming',
+        scroll: 180,
+        context: 'member',
+      }),
     );
   });
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-product');
@@ -133,5 +169,19 @@ test('product decision area keeps Cabinet distinct from purchasing', async ({ pa
   await expect(decision.getByRole('link', { name: 'Open Grooming' })).toHaveAttribute(
     'href',
     '/app/grooming',
+  );
+});
+
+test('stale public catalog return does not restore a member product', async ({ page }) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem(
+      'aethelios-catalog-return',
+      JSON.stringify({ href: '/shop?q=oil', scroll: 90, context: 'public' }),
+    );
+  });
+  await page.goto('http://127.0.0.1:3102/?mode=lifestyle-product');
+  await expect(page.getByRole('link', { name: 'The collection' })).toHaveAttribute(
+    'href',
+    '/app/collection',
   );
 });

@@ -28,6 +28,9 @@ import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
 import { MemberLifestyleHome } from '@/components/commerce/member-lifestyle-home';
 import { CollectionWorld } from '@/components/commerce/collection-world';
 import { CartPanel } from '@/components/commerce/cart-panel';
+import { MemberCartLauncher } from '@/components/commerce/member-cart-launcher';
+import { Navigation } from '@/components/navigation';
+import { Brand } from '@/components/visual/brand';
 import '@/app/(workspace)/app/collection/collection-world.css';
 import '@/app/(workspace)/app/lifestyle/lifestyle.css';
 import { syntheticWork } from './company-work-data';
@@ -137,6 +140,38 @@ const lifecycle: FormAction = async (_previous, form) => ({
       ? 'Goal completed. Your progress is saved.'
       : 'Goal archived. It remains in your history.',
 });
+function MemberLifestyleFixtureShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="app-shell imperial-workspace">
+      <aside className="sidebar">
+        <a className="wordmark" href="/app" aria-label="Aethelios home">
+          <Brand />
+        </a>
+        <p className="navigation-label">AETHELIOS</p>
+        <Navigation />
+      </aside>
+      <div className="workspace">
+        <header className="topbar">
+          <a href="/app" className="mobile-brand" aria-label="Aethelios home">
+            <Brand compact />
+          </a>
+          <span className="topbar-context">
+            AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
+          </span>
+        </header>
+        <main id="main">
+          <div className="member-collection public-world imperial-obsidian">
+            <p className="preview-notice">
+              Synthetic commerce fixture · no live merchandise, orders or payments.
+            </p>
+            {children}
+            <MemberCartLauncher basePath="/app/collection" />
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
 createRoot(document.getElementById('root')!).render(
   mode.startsWith('health') ? (
     <div className="imperial-workspace" style={{ background: '#07130F', minHeight: '100vh' }}>
@@ -372,130 +407,119 @@ createRoot(document.getElementById('root')!).render(
       />
     </div>
   ) : mode.startsWith('lifestyle-member') ? (
-    <div className="app-shell imperial-workspace">
-      <header className="topbar">
-        <nav className="navigation" aria-label="Main navigation">
-          <a href="/app">Home</a>
-          <a href="/app/talk">Talk</a>
-          <a href="/app/lifestyle" aria-current="page">
-            Lifestyle
-          </a>
-        </nav>
-      </header>
-      <main>
-        <div className="member-collection public-world imperial-obsidian">
-          <p className="preview-notice">
-            Synthetic commerce fixture · no live merchandise, orders or payments.
-          </p>
-          <MemberLifestyleHome
-            entries={params.get('empty') === '1' ? [] : memberLifestyleFixture}
-            status={
-              params.get('error') === '1'
-                ? 'error'
-                : params.get('unconfigured') === '1'
-                  ? 'unconfigured'
-                  : params.get('empty') === '1'
-                    ? 'empty'
-                    : 'ready'
-            }
-            cabinet={
-              params.get('cabinet') === 'unavailable'
-                ? { available: false, records: [], ritualCount: 0 }
-                : params.get('cabinet') === '1'
-                  ? {
-                      available: true,
-                      ritualCount: 1,
-                      records: [
-                        {
-                          id: 'ce000000-0000-4000-8000-000000000001',
-                          name: 'Synthetic Cabinet oil',
-                          relation: 'owned',
-                          shopify_handle: 'fixture-oil',
-                        },
-                      ],
-                    }
-                  : { available: true, records: [], ritualCount: 0 }
-            }
-          />
-        </div>
-      </main>
-    </div>
-  ) : mode.startsWith('lifestyle') ? (
-    <div className="member-collection public-world imperial-obsidian">
-      <p className="preview-notice">
-        Synthetic commerce fixture · no live merchandise, orders or payments.
-      </p>
-      {mode === 'lifestyle-home' ? (
-        <LifestyleLanding entries={relatedFixture} status="ready" />
-      ) : mode === 'lifestyle-brand' || mode === 'lifestyle-list' ? (
-        <CollectionWorld
-          entries={params.get('empty') ? [] : relatedFixture}
-          failed={params.get('error') === '1'}
-          brand={mode === 'lifestyle-brand' ? 'Legacy Reserve' : undefined}
-        />
-      ) : mode === 'lifestyle-cart' ? (
-        <CartPanel fullPage basePath="/app/collection" />
-      ) : mode === 'lifestyle-film' ? (
-        <ProductExperience
-          basePath="/app/collection"
-          product={{
-            ...commerceFixture,
-            story: {
-              value: JSON.stringify({
-                version: 1,
-                status: 'approved',
-                mediaApproved: params.get('approved') !== 'false',
-                videoTranscript: 'Synthetic film transcript. No product claims.',
-                videoCaptions: {
-                  url: 'https://cdn.shopify.com/fixture/captions.vtt',
-                  language: 'en',
-                  label: 'English',
-                },
-              }),
-            },
-            media: {
-              nodes: [
-                {
-                  mediaContentType: 'VIDEO',
-                  videoSources: [
+    <MemberLifestyleFixtureShell>
+      <MemberLifestyleHome
+        entries={params.get('empty') === '1' ? [] : memberLifestyleFixture}
+        status={
+          params.get('error') === '1'
+            ? 'error'
+            : params.get('unconfigured') === '1'
+              ? 'unconfigured'
+              : params.get('empty') === '1'
+                ? 'empty'
+                : 'ready'
+        }
+        cabinet={
+          params.get('cabinet') === 'unavailable'
+            ? { available: false, records: [], ritualCount: 0, keptCount: 0 }
+            : params.get('cabinet') === '1'
+              ? {
+                  available: true,
+                  ritualCount: 1,
+                  keptCount: 5,
+                  records: [
                     {
-                      url: 'https://cdn.shopify.com/fixture/film.mp4',
-                      format: 'mp4',
-                      mimeType: 'video/mp4',
-                      width: 1280,
-                      height: 720,
+                      id: 'ce000000-0000-4000-8000-000000000001',
+                      name: 'Synthetic Cabinet oil',
+                      relation: 'owned',
+                      shopify_handle: 'fixture-oil',
                     },
                   ],
-                },
-              ],
-            },
-          }}
-        />
-      ) : (
-        <ProductExperience
-          product={
-            params.get('story') === 'missing'
-              ? {
-                  ...commerceFixture,
-                  story: null,
-                  ingredients: null,
-                  directions: null,
-                  description:
-                    'Published synthetic description. Ingredients and directions are supplied in this text, not separate fields.',
                 }
-              : commerceFixture
-          }
-          basePath="/app/collection"
-          cabinetControl={
-            <section className="reserve-save" aria-label="Cabinet and Grooming">
-              <p>Synthetic Cabinet fixture. Saving does not order this product.</p>
-              <Link href="/app/collection/cabinet">Open Cabinet</Link>
-              <Link href="/app/grooming">Open Grooming</Link>
-            </section>
-          }
-        />
-      )}
-    </div>
+              : { available: true, records: [], ritualCount: 0, keptCount: 0 }
+        }
+      />
+    </MemberLifestyleFixtureShell>
+  ) : mode.startsWith('lifestyle') ? (
+    mode === 'lifestyle-home' ? (
+      <div className="member-collection public-world imperial-obsidian">
+        <p className="preview-notice">
+          Synthetic commerce fixture · no live merchandise, orders or payments.
+        </p>
+        <LifestyleLanding entries={relatedFixture} status="ready" />
+      </div>
+    ) : (
+      <MemberLifestyleFixtureShell>
+        {mode === 'lifestyle-brand' || mode === 'lifestyle-list' ? (
+          <CollectionWorld
+            entries={params.get('empty') ? [] : relatedFixture}
+            failed={params.get('error') === '1'}
+            brand={mode === 'lifestyle-brand' ? 'Aethelios Lifestyle' : undefined}
+          />
+        ) : mode === 'lifestyle-cart' ? (
+          <CartPanel fullPage basePath="/app/collection" />
+        ) : mode === 'lifestyle-film' ? (
+          <ProductExperience
+            basePath="/app/collection"
+            product={{
+              ...commerceFixture,
+              story: {
+                value: JSON.stringify({
+                  version: 1,
+                  status: 'approved',
+                  mediaApproved: params.get('approved') !== 'false',
+                  videoTranscript: 'Synthetic film transcript. No product claims.',
+                  videoCaptions: {
+                    url: 'https://cdn.shopify.com/fixture/captions.vtt',
+                    language: 'en',
+                    label: 'English',
+                  },
+                }),
+              },
+              media: {
+                nodes: [
+                  {
+                    mediaContentType: 'VIDEO',
+                    videoSources: [
+                      {
+                        url: 'https://cdn.shopify.com/fixture/film.mp4',
+                        format: 'mp4',
+                        mimeType: 'video/mp4',
+                        width: 1280,
+                        height: 720,
+                      },
+                    ],
+                  },
+                ],
+              },
+            }}
+          />
+        ) : (
+          <ProductExperience
+            product={
+              params.get('story') === 'missing'
+                ? {
+                    ...commerceFixture,
+                    story: null,
+                    ingredients: null,
+                    directions: null,
+                    description:
+                      'Published synthetic description. Ingredients and directions are supplied in this text, not separate fields.',
+                  }
+                : commerceFixture
+            }
+            basePath="/app/collection"
+            cabinetControl={
+              <section className="reserve-save" aria-label="Cabinet and Grooming">
+                <p>Synthetic Cabinet fixture. Saving does not order this product.</p>
+                <Link href="/app/collection/cabinet">Open Cabinet</Link>
+                <Link href="/app/grooming">Open Grooming</Link>
+              </section>
+            }
+          />
+        )}
+      </MemberLifestyleFixtureShell>
+    )
   ) : mode === 'mission' ? (
     <MissionHandoffFixture />
   ) : mode === 'company-room' || mode === 'company-job' || mode === 'founder-job' ? (

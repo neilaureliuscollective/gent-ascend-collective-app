@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState } from 'react';
 import { useCatalogNavigation } from './catalog-navigation';
 import type { CollectionEntry } from '@/domains/commerce/collection';
@@ -10,7 +9,7 @@ import { CollectionDiscovery } from './collection-discovery';
 import { useSavedCollection, removeSavedCollection } from './saved-selection-store';
 import { LifestyleAction } from './lifestyle-action';
 import { CatalogScrollRestore } from './catalog-scroll-restore';
-import { rememberCatalogReturn } from '@/domains/commerce/catalog-return';
+import { LifestyleProductStage } from './lifestyle-product-stage';
 
 const chapters = [
   ['all', 'All essentials'],
@@ -77,7 +76,6 @@ export function CollectionWorld({
     update({ query: '', readyOnly: false, chapter: 'all', brandFilter: 'all', sort: 'featured' });
   }
   const member = basePath === '/app/collection';
-  const pictured = entries.filter((entry) => entry.image).slice(0, 3);
   return (
     <div
       className={`reserve-commerce collection-world${member ? ' member-lifestyle-collection' : ''}`}
@@ -104,7 +102,7 @@ export function CollectionWorld({
           </h1>
           <p>
             {member ? (
-              'Search, filter and inspect authentic products. Cabinet and Grooming stay in reach; cart and orders stay utilities.'
+              'Search and filter the catalog. Cabinet and Grooming stay in reach; cart and orders stay utilities.'
             ) : (
               <>
                 Grooming. Personal care. Daily ritual.
@@ -137,33 +135,22 @@ export function CollectionWorld({
                 </LifestyleAction>
               </>
             ) : (
-              <Link className="world-text-link" href={`${basePath}/cart`}>
-                Your cart
-              </Link>
+              <>
+                <Link className="world-text-link" href={`${basePath}/cart`}>
+                  Your cart
+                </Link>
+                <Link className="world-text-link" href="/app/collection/cabinet">
+                  Your Cabinet
+                </Link>
+                <Link className="world-text-link" href="/app/collection/orders" prefetch={false}>
+                  Your orders
+                </Link>
+              </>
             )}
           </div>
         </div>
         {member ? (
-          pictured.length > 0 ? (
-            <div className="collection-chamber-products">
-              {pictured.map((entry) => (
-                <Link
-                  key={entry.handle}
-                  href={`${basePath}/${entry.handle}`}
-                  onClick={rememberCatalogReturn}
-                >
-                  <Image
-                    src={entry.image!.url}
-                    alt={entry.image!.altText ?? entry.title}
-                    width={entry.image!.width ?? 400}
-                    height={entry.image!.height ?? 500}
-                    sizes="(max-width: 700px) 80vw, 18vw"
-                  />
-                  <small>{entry.title}</small>
-                </Link>
-              ))}
-            </div>
-          ) : null
+          <LifestyleProductStage compact />
         ) : (
           <div className="collection-chamber-caption" aria-hidden="true">
             <span>CARE / DISCIPLINE / RITUAL</span>
@@ -326,13 +313,7 @@ export function CollectionWorld({
               index={index}
               basePath={basePath}
               review={chapter === 'saved'}
-              prominence={
-                member && index === 0 && entry.image
-                  ? 'featured'
-                  : member && index < 3
-                    ? 'editorial'
-                    : 'standard'
-              }
+              prominence="standard"
             />
           ))}
         </div>
@@ -395,9 +376,14 @@ export function CollectionWorld({
               </LifestyleAction>
             </>
           ) : (
-            <Link href="/app/membership" className="world-text-link">
-              Your membership
-            </Link>
+            <>
+              <Link href="/app/collection/cabinet" className="world-text-link">
+                Your Cabinet
+              </Link>
+              <Link href="/app/membership" className="world-text-link">
+                Your membership
+              </Link>
+            </>
           )}
         </div>
       </footer>
