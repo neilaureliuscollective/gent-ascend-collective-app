@@ -158,10 +158,16 @@ export function preparePackagedWorkRoot(workRoot, spawn = spawnSync) {
   mkdirSync(workRoot, { recursive: true });
   const owned = spawn('stat', ['-c', '%u %g %a', workRoot], { encoding: 'utf8' });
   const [uid, gid, mode] = (owned.stdout ?? '').trim().split(/\s+/);
-  if (uid === '1000' && mode !== '777' && mode !== '0777') return { ok: true, uid, gid, mode, workRoot };
-  const installed = spawn('sudo', ['-n', 'install', '-d', '-o', '1000', '-g', '1000', '-m', '0755', workRoot], {
-    encoding: 'utf8',
-  });
+  const dockerGid = dockerSocketGid('/var/run/docker.sock', spawn);
+  const sharedGid = dockerGid ? String(dockerGid) : '1000';
+  const sharedMode = dockerGid ? '2775' : '0755';
+  if (uid === '1000' && (mode === '775' || mode === '2775' || (!dockerGid && mode !== '777' && mode !== '0777')))
+    return { ok: true, uid, gid, mode, workRoot, sharedGid };
+  const installed = spawn(
+    'sudo',
+    ['-n', 'install', '-d', '-o', '1000', '-g', sharedGid, '-m', sharedMode, workRoot],
+    { encoding: 'utf8' },
+  );
   if (installed.status !== 0) {
     return {
       ok: false,
@@ -169,10 +175,11 @@ export function preparePackagedWorkRoot(workRoot, spawn = spawnSync) {
       gid,
       mode,
       workRoot,
-      reason: `Shared work root must be uid 1000 mode 0755. Prepare with: sudo install -d -o 1000 -g 1000 -m 0755 ${workRoot}`,
+      sharedGid,
+      reason: `Shared work root must be uid 1000 mode 0755, or 2775 with Docker group ${sharedGid} so the host launcher and worker can both write. Prepare with: sudo install -d -o 1000 -g ${sharedGid} -m ${sharedMode} ${workRoot}. Do not chmod 777.`,
     };
   }
-  return { ok: true, uid: '1000', gid: '1000', mode: '755', workRoot };
+  return { ok: true, uid: '1000', gid: sharedGid, mode: dockerGid ? '775' : '755', workRoot, sharedGid };
 }
 
 function passEnv() {

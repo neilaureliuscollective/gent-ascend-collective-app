@@ -29,6 +29,7 @@ export const appsWorkUser = {
   uid: 1000,
   gid: 1000,
   mode: 0o0755,
+  sharedMode: 0o2775,
 } as const;
 
 export type AppsWorkRootClassification =
@@ -48,7 +49,7 @@ export function classifyAppsWorkRoot(
     return {
       ok: false,
       code: 'world-writable',
-      reason: `Shared work root mode ${mode} is world-writable. Use 0755 owned by uid ${expected.uid}. Do not chmod 777.`,
+      reason: `Shared work root mode ${mode} is world-writable. Use 0755 owned by uid ${expected.uid}, or 2775 with the Docker socket group. Do not chmod 777.`,
       uid: stat.uid,
       gid: stat.gid,
       mode,
@@ -83,7 +84,7 @@ export function inspectAppsWorkRoot(path: string, expected = appsWorkUser): Apps
       return {
         ok: false,
         code: 'missing',
-        reason: `Shared work root ${path} does not exist. Create it as uid ${expected.uid} mode 0755 before accepting jobs.`,
+        reason: `Shared work root ${path} does not exist. Create it as uid ${expected.uid} mode 0755, or 2775 with the Docker socket group, before accepting jobs.`,
       };
     return {
       ok: false,
@@ -93,28 +94,36 @@ export function inspectAppsWorkRoot(path: string, expected = appsWorkUser): Apps
   }
 }
 
-function tryChown(path: string, uid: number, gid: number) {
+function tryChown(path: string, uid: number, gid: number, mode: number = appsWorkUser.mode) {
   try {
     chownSync(path, uid, gid);
-    chmodSync(path, appsWorkUser.mode);
+    chmodSync(path, mode);
     return true;
   } catch {
-    const installed = spawnSync('sudo', ['-n', 'install', '-d', '-o', String(uid), '-g', String(gid), '-m', '0755', path], {
-      encoding: 'utf8',
-    });
+    const installed = spawnSync(
+      'sudo',
+      ['-n', 'install', '-d', '-o', String(uid), '-g', String(gid), '-m', (mode & 0o7777).toString(8).padStart(4, '0'), path],
+      { encoding: 'utf8' },
+    );
     return installed.status === 0;
   }
 }
 
-export function prepareAppsWorkRoot(path: string, expected = appsWorkUser) {
+export function prepareAppsWorkRoot(
+  path: string,
+  expected = appsWorkUser,
+  sharedGid?: number,
+) {
   if (!path.startsWith('/') || path.includes('..') || path.includes('docker.sock'))
     throw new Error('ARCHITECT_APPS_WORK_ROOT must be an absolute shared host path without privileged mounts.');
   mkdirSync(path, { recursive: true });
+  const gid = sharedGid && sharedGid > 0 ? sharedGid : expected.gid;
+  const mode = gid !== expected.gid ? expected.sharedMode : expected.mode;
   const current = inspectAppsWorkRoot(path, expected);
   if (!current.ok) {
-    if (!tryChown(path, expected.uid, expected.gid))
+    if (!tryChown(path, expected.uid, gid, mode))
       throw new Error(
-        `${current.reason} Prepare with: sudo install -d -o ${expected.uid} -g ${expected.gid} -m 0755 ${path}`,
+        `${current.reason} Prepare with: sudo install -d -o ${expected.uid} -g ${gid} -m ${(mode & 0o777).toString(8)} ${path}`,
       );
   }
   const ready = inspectAppsWorkRoot(path, expected);

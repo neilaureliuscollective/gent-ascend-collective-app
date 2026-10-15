@@ -120,10 +120,11 @@ async function readAppRuntime(target: import('@playwright/test').Page) {
   }, projectId);
 }
 
-async function waitForUrl(url: string, child: ChildProcess, timeoutMs = 60000) {
+async function waitForUrl(url: string, child: ChildProcess, timeoutMs = 60000, logs?: { text: string }) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
-    if (child.exitCode != null) throw new Error(`Replacement application server exited ${child.exitCode}.`);
+    if (child.exitCode != null)
+      throw new Error(`Replacement application server exited ${child.exitCode}. ${(logs?.text ?? '').slice(-1200)}`);
     try {
       const response = await fetch(url, { redirect: 'manual' });
       if (response.status > 0) return;
@@ -301,12 +302,19 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   expect(originalRuntime.processId).toBe('origin-apps-3103');
   const replacementId = `replacement-apps-3108-${Date.now()}`;
   const restartedWorkerId = `apps-restarted-${Date.now()}`;
+  const replacementLogs = { text: '' };
   const replacement = spawn('npm', ['run', 'dev', '--', '--port', '3108'], {
-    env: appsServerEnv(replacementId),
+    env: { ...appsServerEnv(replacementId), NEXT_DIST_DIR: '.next-apps-3108' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  replacement.stdout.on('data', (chunk: Buffer) => {
+    replacementLogs.text += chunk.toString('utf8');
+  });
+  replacement.stderr.on('data', (chunk: Buffer) => {
+    replacementLogs.text += chunk.toString('utf8');
+  });
   try {
-    await waitForUrl('http://127.0.0.1:3108/enter', replacement);
+    await waitForUrl('http://127.0.0.1:3108/enter', replacement, 60000, replacementLogs);
     const stillOriginal = await readAppRuntime(page);
     expect(stillOriginal.origin).toBe(originalOrigin);
     expect(stillOriginal.processId).toBe(originalRuntime.processId);

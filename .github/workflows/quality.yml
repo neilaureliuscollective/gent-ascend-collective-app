@@ -117,7 +117,7 @@ jobs:
           ARCHITECT_APPS_PREVIEW_SECRET: isolate-preview-secret-key
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
           APP_ENV: local
-        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts tests/architect-apps-worker-image.test.ts tests/architect-apps-preview-sessions.test.ts --reporter=dot
+        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-work-root.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts tests/architect-apps-worker-image.test.ts tests/architect-apps-preview-sessions.test.ts --reporter=dot
       - name: Prove the packaged worker can write, compile and map host paths
         env:
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'

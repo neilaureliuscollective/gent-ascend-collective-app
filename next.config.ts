@@ -1,8 +1,12 @@
 import type { NextConfig } from 'next';
 import { parseEnvironment } from './src/platform/environment';
 parseEnvironment(process.env);
+const replacementDistDir = process.env.NEXT_DIST_DIR?.trim();
 const config: NextConfig = {
   poweredByHeader: false,
+  ...(replacementDistDir && /^\.next-[A-Za-z0-9._-]+$/.test(replacementDistDir)
+    ? { distDir: replacementDistDir }
+    : {}),
   outputFileTracingIncludes: { '/api/health': ['./scripts/health-pdf-worker.mjs', './node_modules/pdf-lib/**/*', './node_modules/@pdf-lib/**/*', './node_modules/pako/**/*', './node_modules/tslib/**/*'] },
   // TypeScript 6 exposes the compiler API; avoid detached CLI subprocesses in managed runners.
   experimental: { useTypeScriptCli: false },

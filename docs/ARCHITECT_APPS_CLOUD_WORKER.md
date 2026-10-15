@@ -64,7 +64,7 @@ That helper:
 2. Builds `aethelios-architect-apps:2026-10-15.1` from `deploy/architect-apps/Dockerfile`.
 3. Builds `aethelios-architect-apps-worker:2026-10-15.1` via `fs.mkdtempSync` + `docker build`.
 4. Inspects both image IDs (`sha256:`).
-5. Prepares `ARCHITECT_APPS_WORK_ROOT` as uid 1000 / gid 1000 / mode 0755.
+5. Prepares `ARCHITECT_APPS_WORK_ROOT` as uid 1000. Mode is 2775 with the Docker socket group so the host launcher and worker can both write, or 0755 when no socket group exists. Never 777.
 6. Writes `docs/evidence/architect-apps/runtime-receipt.json`.
 
 Job split:
@@ -86,8 +86,8 @@ Ownership contract (least privilege; not 777, not root, not privileged):
 
 | Actor | UID:GID | May write | Docker socket |
 | --- | --- | --- | --- |
-| Host launcher | runner user | Creates the path, then `sudo install -d -o 1000 -g 1000 -m 0755` | Host daemon only |
-| Packaged worker | `1000:1000` (`USER node`) plus `--group-add` docker gid | Shared work root 0755 | Yes, sibling compiles only |
+| Host launcher | runner user | Creates the path, then `sudo install -d -o 1000 -g <docker-gid> -m 2775` when a socket group exists, otherwise 0755 | Host daemon only |
+| Packaged worker | `1000:1000` (`USER node`) plus `--group-add` docker gid | Shared work root 0755 or group-shared 2775 | Yes, sibling compiles only |
 | Generated compile | `65534:65534` | tmpfs `/work` `/tmp` `/out` | No |
 
 `--group-add` must stay a separate flag. Splicing it between `--user` and `1000:1000` turns the image name into a numeric tag.

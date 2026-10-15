@@ -22,6 +22,11 @@ it('accepts a uid-1000 0755 work root and refuses world-writable or host-owned d
     ok: false,
     code: 'world-writable',
   });
+  expect(classifyAppsWorkRoot({ uid: 1000, gid: 118, mode: 0o42775 }, appsWorkUser)).toMatchObject({
+    ok: true,
+    code: 'ready',
+    mode: '775',
+  });
   expect(classifyAppsWorkRoot({ uid: 1000, gid: 1000, mode: 0o40555 }, appsWorkUser)).toMatchObject({
     ok: false,
     code: 'not-writable',
@@ -50,8 +55,8 @@ it('proves a worker-owned workspace file and refuses chmod 777 as a preparation 
       return { status: 1, stdout: '', stderr: `${file} ${args.join(' ')}` };
     });
     expect(prepared.ok).toBe(false);
-    expect(prepared.reason).toMatch(/uid 1000 mode 0755/i);
-    expect(prepared.reason).not.toMatch(/chmod 777/);
+    expect(prepared.reason).toMatch(/uid 1000 mode 0755|2775/i);
+    expect(prepared.reason).toMatch(/do not chmod 777/i);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
