@@ -139,6 +139,44 @@ it('sends the exact Changing this target with typed voice text', async () => {
   expect(admission.sdp).toMatch(/^v=0/);
   await controller.end();
 });
+it('replaces the spoken field target mid-call without starting a reply', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false, 'cedar', false, {
+    creationId: '50000000-0000-4000-8000-000000000409',
+    field: 'purpose',
+  });
+  fetchMock.mockClear();
+  fetchMock.mockResolvedValue(
+    Response.json({
+      status: 'active',
+      target: { creationId: '50000000-0000-4000-8000-000000000409', field: 'audience' },
+      context:
+        'Application selected-work target changed; replaces the previous Talk field target. Exact target: audience',
+    }),
+  );
+  const sent = await controller.setSpokenTarget({
+    creationId: '50000000-0000-4000-8000-000000000409',
+    field: 'audience',
+  });
+  expect(sent).toEqual({ accepted: true });
+  expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/api/aethelios/live/target');
+  const events = FakePC.instances
+    .at(-1)!
+    .channel.send.mock.calls.map((call) => JSON.parse(call[0] as string));
+  expect(events.some((event) => event.type === 'response.create')).toBe(false);
+  expect(
+    events.find((event) => event.type === 'conversation.item.create')?.item.content[0].text,
+  ).toContain('Exact target: audience');
+  fetchMock.mockClear();
+  await expect(
+    controller.setSpokenTarget({
+      creationId: '50000000-0000-4000-8000-000000000409',
+      field: 'audience',
+    }),
+  ).resolves.toEqual({ accepted: true, reason: 'unchanged' });
+  expect(fetchMock).not.toHaveBeenCalled();
+  await controller.end();
+});
 it('rejects over-limit typed voice text and keeps it unsent', async () => {
   const controller = new LiveController();
   await controller.start(conversation, false);

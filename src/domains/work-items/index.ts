@@ -5,6 +5,7 @@ export {
   rebindWorkTarget,
   resolveWorkTarget,
   selectionChipLabel,
+  spokenWorkTargetUpdate,
   workTargetVoicePrefix,
   workTargetVoiceText,
   type ResolvedWorkTarget,

@@ -7,6 +7,7 @@ import {
   exportTalkDocument,
   resolveWorkTarget,
   selectionChipLabel,
+  spokenWorkTargetUpdate,
   workTargetVoiceText,
 } from '@/domains/work-items';
 import { lifestyleLaunchBoard, selectDesignDirection } from '@/domains/talk-creation/design-board';
@@ -245,6 +246,50 @@ it('rebinds a field target onto the current same-lineage version', () => {
   expect(resolved.status).toBe('active');
   expect(resolved.target).toEqual({ creationId: current.id, field: 'purpose' });
   expect(selectionChipLabel(resolved.item!)).toBe('Aethelios Lifestyle launch · v2 · Purpose');
+});
+
+it('replaces a spoken field target instead of leaving the previous field in force', () => {
+  const brief: TalkCreation = {
+    id: '50000000-0000-4000-8000-000000000409',
+    person_id: '00000000-0000-4000-8000-000000000001',
+    conversation_id: '30000000-0000-4000-8000-000000000409',
+    source_turn_id: null,
+    lineage_id: '50000000-0000-4000-8000-000000000409',
+    version: 2,
+    kind: 'brief',
+    content: {
+      title: 'Aethelios Lifestyle launch',
+      purpose: 'Introduce the line.',
+      audience: 'Founders',
+      visualDirection: 'Obsidian and emerald',
+      requirements: [],
+      unresolved: [],
+    },
+    predecessor_id: null,
+    superseded_by: null,
+    created_at: '2026-10-15T03:00:00Z',
+  };
+  const workspace: TalkCreationWorkspace = {
+    creations: [brief],
+    selected: { brief: brief.id },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  const purpose = spokenWorkTargetUpdate(
+    resolveWorkTarget(workspace, { creationId: brief.id, field: 'purpose' }),
+  );
+  const audience = spokenWorkTargetUpdate(
+    resolveWorkTarget(workspace, { creationId: brief.id, field: 'audience' }),
+  );
+  expect(purpose.status).toBe('active');
+  expect(purpose.context).toContain('Exact target: purpose');
+  expect(purpose.context).not.toContain('Exact target: audience');
+  expect(audience.context).toContain('Exact target: audience');
+  expect(audience.context).not.toContain('Exact target: purpose');
+  expect(spokenWorkTargetUpdate(resolveWorkTarget(workspace, { creationId: '50000000-0000-4000-8000-000000000499', field: 'purpose' })).context).toMatch(/Ask which field/);
 });
 
 it('describes a bound Architect direction handoff without claiming unsupported work', () => {

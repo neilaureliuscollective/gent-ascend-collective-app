@@ -80,6 +80,7 @@ export class LiveController {
   private artifactReading = false;
   private artifactWriting = false;
   private interruptedItems = new Set<string>();
+  private spokenTargetKey = '';
   async audioLevels() {
     const epoch = this.epoch;
     const stats = await this.pc?.getStats();
@@ -195,6 +196,7 @@ export class LiveController {
       artifactConversationId: conversationId,
     });
     this.artifactConversationId = conversationId;
+    this.spokenTargetKey = workTarget ? `${workTarget.creationId}:${workTarget.field}` : 'clear';
     try {
       if (
         !window.isSecureContext ||
@@ -364,6 +366,7 @@ export class LiveController {
   async end(message = '') {
     if (this.state.phase === 'idle' && !this.id) return;
     ++this.epoch;
+    this.spokenTargetKey = '';
     this.diagnostics.end(performance.now());
     this.release();
     this.update({
@@ -430,6 +433,40 @@ export class LiveController {
     if (pending) this.pendingCreate = true;
     else this.send({ type: 'response.create' });
     return { accepted: true };
+  }
+  async setSpokenTarget(target: WorkTarget | null) {
+    if (!this.id || !['listening', 'speaking'].includes(this.state.phase))
+      return { accepted: false as const, reason: 'inactive' as const };
+    const nextKey = target ? `${target.creationId}:${target.field}` : 'clear';
+    if (this.spokenTargetKey === nextKey) return { accepted: true as const, reason: 'unchanged' as const };
+    const response = await fetch('/api/aethelios/live/target', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: this.id, workTarget: target }),
+    });
+    const result = (await response.json()) as {
+      context?: string;
+      target?: WorkTarget | null;
+    };
+    const context =
+      result.context ||
+      'Application selected-work target expired; replaces the previous Talk field target. Ask which field to change. Do not guess another item, field or version.';
+    if (this.channel?.readyState !== 'open')
+      return { accepted: false as const, reason: 'channel' as const };
+    this.spokenTargetKey = response.ok && result.target
+      ? `${result.target.creationId}:${result.target.field}`
+      : result.context
+        ? nextKey
+        : 'stale';
+    this.send({
+      type: 'conversation.item.create',
+      item: {
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: context }],
+      },
+    });
+    return { accepted: true as const };
   }
   invalidateTranscript() {
     if (['connecting', 'listening', 'speaking'].includes(this.state.phase)) return;

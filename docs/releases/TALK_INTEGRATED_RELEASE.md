@@ -2,72 +2,123 @@
 
 Development publication only. No main merge, hosted migration, production deploy, credential creation or paid provider call without founder approval.
 
-## Published heads
+## Combined release tree
 
-| Workstream | PR | Branch | SHA |
+| Workstream | PR | Branch | Role |
 |---|---|---|---|
-| Foundation | #131 | `cursor/talk-creative-conversation-5b08` | `ddfd4978a3ccd0930123c2cd561eb70bc6f74505` |
-| Elevation + selection fix | #135 | `cursor/talk-elevation-5b08` | (this branch head) |
-| Current main | — | `main` | `b4d9f0496eee09ce92dfbf1c842205604c51efd0` (Lifestyle production promote; official icon via `c1c7fe4`) |
-| Health (collision only) | #136 | `cursor/health-transformation-36d4` | do not absorb |
+| Foundation | #131 | `cursor/talk-creative-conversation-5b08` | Talk + current main (`b4d9f04`), official icon `c1c7fe4`, member Lifestyle |
+| Elevation | #135 | `cursor/talk-elevation-5b08` | Stacks on #131. Dock, documents, selected-work, mid-call spoken target |
+| Current main | — | `main` `b4d9f0496eee09ce92dfbf1c842205604c51efd0` | Already contains icon + Lifestyle |
+| Health | #136 | do not absorb | Must renumber `20261015180000_health_workspace.sql` before its own merge |
 
-Dependency: #135 stacks on #131. Merge #131 to current main first, then #135. Do not force-push either history.
+Integration order: merge #131 onto current main, apply missing hosted SQL, deploy that SHA, prove one live text send, then merge #135. Do not force-push.
 
-## Migrations (Talk)
+Conflicts against main were resolved on #131 (`quality.yml` keeps both member-lifestyle and Talk-auth steps; DECISIONS/STATUS keep icon, Lifestyle and Talk notes).
 
-Apply only after founder authorization, in this order, on an isolated then hosted database:
+## Hosted ledger (read-only snapshot — not a live query)
 
-1. Existing Talk/Architect stack already on #131 through `20261015170000_architect_apps_retain_provenance.sql`
-2. `20261015180000_talk_live_trusted_observe.sql`
-3. `20261015190000_talk_live_bind_intended_turn.sql`
+`scripts/check-migration-ledger.mjs` last records Gent-owned hosted files through `20261012095801_studio_footage.sql` (Live through `20261012041646`, Studio narration/footage on 2026-10-12). This environment could not open hosted `schema_migrations` on `volpzkfsnmtztrovexcw`.
 
-Do not rename these Talk files. They are published on #131 and may already be applied locally.
+First hosted action, before any apply: in the Supabase SQL editor for **Gent Ascend App** (`volpzkfsnmtztrovexcw`), run a read-only:
 
-### Known collision (unmerged Health)
+```sql
+select version, name from supabase_migrations.schema_migrations order by version;
+```
 
-Health #136 also uses `20261015180000_health_workspace.sql`. That file is **not** on main and is **not** applied by this Talk stack. Health must choose a later unused version before it merges. Talk does not absorb that branch.
+Apply only versions that are absent. Never rename a row that is already present.
+
+### Already on current main, missing from the 2026-10-12 snapshot
+
+These may already be applied by later production work. Confirm against `schema_migrations` before re-applying:
+
+1. `20261002141618_ascend_daily_command.sql`
+2. `20261002165518_account_claim.sql`
+3. `20261004180000_member_product_cabinet.sql`
+4. `20261004222000_grooming_daily_intelligence.sql`
+5. `20261005122500_proactive_signal_receipts.sql`
+6. `20261006034533_company_workspaces.sql`
+7. `20261006042134_connected_company_work.sql`
+8. `20261006103930_public_intelligence_missions.sql`
+9. `20261012065807_health_foundation.sql`
+10. `20261012230000_architect_origin.sql`
+11. `20261013160000_architect_construct.sql`
+12. `20261013180000_architect_construct_worker_plane.sql`
+13. `20261013183000_service_connections.sql`
+14. `20261013193000_architect_construct_isolation.sql`
+15. `20261013194500_connection_trusted_writes.sql`
+16. `20261013203000_connection_broker_role.sql`
+17. `20261013220000_architect_construct_lease_freshness.sql`
+18. `20261013230000_architect_construct_finish_event.sql`
+
+### Talk/Architect predecessors not on main (required for this release)
+
+Apply in this exact order after the confirmed main/hosted baseline. Do not stop at `15180000`/`15190000`.
+
+1. `20261013240000_talk_creation.sql`
+2. `20261013250000_talk_image_entitlement.sql`
+3. `20261013260000_talk_creation_candidates.sql`
+4. `20261014010000_talk_origin_import.sql`
+5. `20261014020000_talk_origin_import_bind.sql`
+6. `20261014030000_talk_origin_import_atomic.sql`
+7. `20261014040000_talk_origin_import_consistency.sql`
+8. `20261014100000_talk_design_board.sql`
+9. `20261014120000_talk_live_bindings.sql`
+10. `20261014130000_talk_direction_transfers.sql`
+11. `20261014140000_talk_live_bind_authority.sql`
+12. `20261015080000_architect_apps.sql`
+13. `20261015120000_architect_apps_durable.sql`
+14. `20261015140000_architect_apps_mutation.sql`
+15. `20261015160000_architect_apps_retain_authority.sql`
+16. `20261015170000_architect_apps_retain_provenance.sql`
+17. `20261015180000_talk_live_trusted_observe.sql`
+18. `20261015190000_talk_live_bind_intended_turn.sql`
+
+Do not rename these files. They are published on #131. Isolated local `db:ledger` still matches the 2026-10-12 snapshot hashes; it does not prove hosted apply.
+
+Health #136’s `20261015180000_health_workspace.sql` is not on this tree. If hosted ever applied a different `20261015180000`, stop and reconcile by applied history. Talk does not absorb Health.
 
 ## Environment (names only)
 
 Hosted fixtures must stay unset: `AETHELIOS_TALK_CREATION_FIXTURE`.
 
-Text:
+Text (independently releasable):
 
-- `OPENAI_API_KEY` present on the deployed project that should serve Talk
-- `AURELIUS_AI_MODEL` (defaults in code if unset)
-- Auth/session against the same Supabase project as RLS
+- Deployed Vercel project `gent-ascend-collective-app` / production `www.gentascend.com`
+- `OPENAI_API_KEY` on that project, belonging to the funded OpenAI project with chat model access
+- Optional `AURELIUS_AI_MODEL` (code default if unset)
+- Auth against the same Supabase project as RLS (`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` matching `volpzkfsnmtztrovexcw`)
 
-Voice, independently:
+Voice (independent blocker):
 
-- `AETHELIOS_LIVE_ENABLED=true` only when the founder authorizes Live
-- `SUPABASE_SERVICE_ROLE_KEY` server-only for trusted observe
-- Realtime project/model access on the same OpenAI project as the key
-- Browser secure context + microphone permission
+- `AETHELIOS_LIVE_ENABLED=true` only after founder authorization
+- `AETHELIOS_LIVE_FOUNDER_PILOT` / `AETHELIOS_LIVE_CANONICAL_PILOT` as already used for the founder pilot
+- Server-only `SUPABASE_SERVICE_ROLE_KEY` for `ai_live_observe_trusted_item`
+- Realtime model/project access on the same OpenAI project
+- Browser secure context + microphone
 
-Key presence does not prove the funded project or model access. Production HTTP 400 and paid audio remain unconfirmed until a founder-authorized live call.
+Key presence or personal OpenAI usage does not prove the deployed key, project or model. Production HTTP 400 remains unconfirmed until one authorized admission on the deployed configuration.
 
-## Merge conflicts to resolve on #131 → current main
+Enter any missing values in Vercel Project Settings → Environment Variables (Production) and Supabase Project Settings → API. Do not paste values into chat.
 
-Inspected with `git merge-tree` against `origin/main` `b4d9f04`. Three files changed in both; do not drop icon or Lifestyle:
+## Production target and rollback
 
-- `.github/workflows/quality.yml`
-- `docs/DECISIONS.md`
-- `docs/STATUS.md`
+- Merge target: GitHub `main` → existing Vercel production for `gent-ascend-collective-app`.
+- Rollback: revert the Talk merge commit(s) on `main` and redeploy the previous production SHA (`b4d9f04` before #131). Do not roll back hosted SQL; new Talk tables/RPCs are additive. If a Talk apply must be stopped mid-sequence, leave applied versions in place and resume from the next missing version.
 
-Keep Lifestyle/icon commits from main (`c1c7fe4`, `b280f8d`, `f4d76a0`, `b4d9f04`). Keep Talk Quality/status notes from #131. Do not absorb Health #136.
+## Bounded live verification (after deploy, authorized separately)
 
-## Smallest production step
+Text-first (proposed cap: one chat completion, well under $1):
 
-1. Founder approves merge of #131 onto current `main` at `b4d9f04` (resolve the three doc/workflow files above; do not drop `c1c7fe4` icon work).
-2. Apply Talk migrations `15180000` then `15190000` on hosted Supabase.
-3. Deploy that main SHA.
-4. Send one authenticated text message on the deployed app, reload, confirm the saved turn. That is the first live-text proof. A preview marked READY is not that proof.
-5. Merge #135 after #131 is on main.
-6. Voice stays unavailable in UI until Live env + observe RPC + a confirmed non-400 admission on the funded project.
+1. Sign in as the founder on `www.gentascend.com/app/aethelios`.
+2. Send one new message. Confirm a streamed reply, saved turn, and the same turn after reload.
+3. Open a brief, change Purpose, send, save, reopen. Unrelated fields stay unchanged.
 
-## Conclusions
+Voice (proposed cap: one 30–60s Realtime call, stop if admission is not 2xx):
 
-- **Text:** code-ready once the deployed `OPENAI_API_KEY` belongs to the funded project with model access, Auth matches that Supabase project, and the Talk route is enabled. Fixture answers are not live-model proof. Voice cleanup no longer blocks ordinary send.
-- **Voice:** not release-ready. Production HTTP 400, paid audio, physical-device capture and hosted trusted-observe remain unrun. Missing `SUPABASE_SERVICE_ROLE_KEY` now fails observation instead of pretending a saved turn is bound.
-- **Database:** Talk sequence is unique on this stack. Health #136 must renumber `20261015180000_health_workspace.sql` before its merge. Do not rename already-published Talk files.
-- **Approval needed:** main merge, hosted SQL apply, production deploy, any paid provider call. Owner: founder.
+1. Same conversation, start Live.
+2. If admission is not 2xx, record sanitized stage/category/providerStatus and stop. Do not retry-spend.
+3. If admitted: speak a Purpose edit, switch field to Audience while the call is up, speak a second edit, return to text, save and reopen. Only intended fields change.
+
+## Smallest next authorization
+
+Approve merge of #131 onto current `main` `b4d9f04`. That is the only action requested now. Hosted SQL, production deploy and paid calls stay unauthorized until that merge SHA exists.

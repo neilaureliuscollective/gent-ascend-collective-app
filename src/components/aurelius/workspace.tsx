@@ -1114,6 +1114,20 @@ export function AureliusWorkspace({
       voiceReconcile.current += 1;
     };
   }, []);
+  useEffect(() => {
+    if (!liveController || !['listening', 'speaking'].includes(liveState.phase)) return;
+    const resolved = resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected);
+    void liveController.setSpokenTarget(
+      resolved.status === 'stale' ? workTarget : resolved.target,
+    );
+  }, [
+    liveController,
+    liveState.phase,
+    creationWorkspace,
+    workTarget,
+    openWorkId,
+    selected,
+  ]);
   function newConversation() {
     voiceReconcile.current += 1;
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
