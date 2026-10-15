@@ -1,0 +1,75 @@
+[WebServer] (node:12991) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:13037) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 11:38:03 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:06 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:08 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:10 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:12 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:13 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:15 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:17 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:18 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:19 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:21 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  1 tests/browser/global-navigation.spec.ts:35:3 › local shell fixture parity and interaction at 320 (23.5s)
+[WebServer] 11:38:25 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:27 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:28 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:30 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:31 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:32 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:33 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:35 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:36 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:37 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:38 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  2 tests/browser/global-navigation.spec.ts:35:3 › local shell fixture parity and interaction at 344 (16.4s)
+[WebServer] 11:38:41 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:43 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:44 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:45 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:46 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:47 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:48 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:50 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:51 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:52 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:53 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  3 tests/browser/global-navigation.spec.ts:35:3 › local shell fixture parity and interaction at 390 (14.7s)
+[WebServer] 11:38:57 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:38:58 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:00 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:01 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:02 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:03 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:04 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:05 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:05 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:06 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:07 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  4 tests/browser/global-navigation.spec.ts:35:3 › local shell fixture parity and interaction at 720 (13.4s)
+[WebServer] 11:39:09 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:10 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:11 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:12 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:14 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:16 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:16 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:17 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:18 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:19 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:19 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  5 tests/browser/global-navigation.spec.ts:35:3 › local shell fixture parity and interaction at 1440 (12.2s)
+[WebServer] 11:39:21 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:22 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 11:39:23 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  6 tests/browser/global-navigation.spec.ts:79:1 › anonymous/member/founder boundaries, draft/scroll, backdrop and resized sheet (3.1s)
+[WebServer] 11:39:24 AM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  7 tests/browser/global-navigation.spec.ts:107:1 › Talk keeps New and local Tools separate and retains its real composer draft (1.2s)
+
+  7 passed (1.5m)

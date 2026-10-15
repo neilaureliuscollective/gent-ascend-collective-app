@@ -11,8 +11,19 @@ export default defineConfig({
   timeout: 60000,
   use: {
     baseURL: 'http://127.0.0.1:3100',
-    serviceWorkers: 'block',
     launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH },
   },
+  webServer: [
+    {
+      command: 'npm run start -- --port 3100',
+      url: 'http://127.0.0.1:3100',
+      reuseExistingServer: false,
+    },
+    {
+      command: 'node scripts/component-test-server.mjs',
+      url: 'http://127.0.0.1:3102',
+      reuseExistingServer: false,
+    },
+  ],
   reporter: 'list',
 });

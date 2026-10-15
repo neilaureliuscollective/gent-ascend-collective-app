@@ -1,6 +1,6 @@
 # Consistent global navigation
 
-Bounded repair from `main` `804c8770754aced1837e82dffa4a416c24baa595`, isolated worktree `/workspace/global-navigation`, branch `fix/consistent-global-navigation`. Remote branches and open PRs were inspected; no exact navigation-unification workstream was found. This is not a landing redesign or Agency release.
+Bounded repair from `main` `804c8770754aced1837e82dffa4a416c24baa595`, isolated worktree `/workspace/global-navigation`, branch `fix/consistent-global-navigation`. Remote branches and open PRs were inspected; no exact navigation-unification workstream was found. Main advanced during verification. The already-merged main `bbda46f5159efd0bfe725874b230b506e52b971c` (Human Ascendance logo and Knowledge) was merged into this branch without conflicts; no pending PR was merged. Final before/after evidence uses that baseline. This is not a landing redesign or Agency release.
 
 ## Behavior and ownership
 
@@ -17,7 +17,7 @@ The existing native `ContextSheet` retains focus trapping/restoration, viewport-
 - Architect #130: no `architect-origin/*`, Architect route, application builder, worker or SQL edits. Shared frame replacement only. The separately owned Architect elevation must preserve the supplied `globalMenu` slot.
 - Talk #131/#135 and Motion #139: reconcile only the global import, visible History/Tools labels, removal of `talk-destinations`, and GlobalNavigation placements in the toolbar and unavailable state. Keep their complete conversation/creation/voice logic. Do not take this branch's entire workspace file over their newer version.
 - Ecosystem #140: public layout/header overlap. Preserve its content changes while passing server navigation access into WorldHeader and retaining the shared menu.
-- Knowledge #141: no product-knowledge, prompt or service edits.
+- Knowledge #141: subsequently released on main; inherited verbatim by the main reconciliation. No navigation changes to product-knowledge, prompt or services.
 - Historical browser assertions naming Explore, Aethelios destinations, seven shortcuts or the Architect-specific menu are migrated to the new contract. Their unrelated historical content expectations may still be stale; the dedicated navigation suite is the current bounded acceptance suite.
 
 ## Verification and limits
@@ -31,3 +31,17 @@ The dedicated browser suite checks 12 route compositions at 320/344/390/720/1440
 Full unit run: 989 passed, four failed outside navigation (three Studio export tests attempted `/opt/cursor`; Architect host-isolation test timed out). Generated Studio/Architect evidence from that run was restored, not included. Standard `npm run build` failed in the existing Mirror asset prebuild download (`storage.googleapis.com`, EAI_AGAIN). Direct `next build` is recorded separately and does not prove the asset preparation gate.
 
 Remaining release checks: authenticated member/founder sessions, real active voice continuity, physical Fold/phone orientation/keyboard behavior, upstream integration and full release gates. No hosted SQL, production deployment, main merge, paid model call, credential or entitlement change was made. Founder approval remains required for release.
+
+### Final scoped results after current-main reconciliation
+
+- Full repository ESLint: passed; changed server layout and capture/runner files additionally linted after final edits.
+- Strict types: passed as part of final optimized Next build.
+- Direct `next build`: passed, including TypeScript and route generation. Standard prebuild failure remains separately recorded.
+- Destination registry: 3/3 tests passed.
+- Navigation fixture suite: 7/7 passed (five viewport matrices, visibility/dismissal/resize check, real Talk draft check).
+- Existing browser regression subset: 37/37 passed (Talk controls, shell, company navigation, direction sheets, public/entrance, legacy deep links and offline cache). The initial custom-runner failures were resolved by starting its fixture server and allowing the service worker for the offline test; no application tests were disabled.
+- Actual anonymous built-route interaction receipt: 11/11 HTTP 200 routes exposed and opened the shared menu.
+- Migration ledger: passed; no SQL changes or hosted checks performed.
+- Before/after screenshots inspected at phone, Fold and desktop widths. Narrow Talk wraps its toolbar; global sheet material remains consistent across route styling scopes.
+
+The broad 989-pass/four-failure unit run above was before current-main reconciliation; it is not claimed as a full post-reconciliation unit run. Exact logs and screenshot index: [navigation evidence](evidence/global-navigation/README.md). A real active voice session and authenticated founder/member browser flows remain unrun; neither screenshots nor synthetic props substitute for those gates.

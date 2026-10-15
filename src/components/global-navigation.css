@@ -114,7 +114,7 @@ body .global-navigation .context-sheet .context-sheet-surface {
 }
 @media (forced-colors: active) {
   body .app-shell.imperial-workspace .global-navigation .context-sheet .context-sheet-surface,
-body .global-navigation .context-sheet .context-sheet-surface {
+  body .global-navigation .context-sheet .context-sheet-surface {
     background: Canvas;
     color: CanvasText;
     border: 1px solid CanvasText;
