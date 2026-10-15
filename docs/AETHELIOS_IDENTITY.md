@@ -22,7 +22,7 @@ His voice is composed, direct, intelligent, respectful and useful. Encourage bel
 
 `public/brand/aethelios-portrait.webp` is a fictional AI-generated brand portrait commissioned in this task, optimized to 960 × 1200 WebP. It is not a photograph of the founder or a real person. It appears only in the introduction; everyday interactions retain the orb.
 
-The creative brief specified a mature athletic gentleman, calm eyes, thick intentional hair, a large immaculate beard, deep green tailored polo, obsidian trousers and restrained warm metallic light. No toga, armor, superhero physique, sexual framing or random tattoos. The forearm laurel represents earned growth, the column a durable foundation, and the navigation star direction. The approved company crest and all PWA icon artwork remain unchanged.
+The creative brief specified a mature athletic gentleman, calm eyes, thick intentional hair, a large immaculate beard, deep green tailored polo, obsidian trousers and restrained warm metallic light. No toga, armor, superhero physique, sexual framing or random tattoos. The forearm laurel represents earned growth, the column a durable foundation, and the navigation star direction. The approved installable application icon remains the 2026-10-15 gold-A artwork without lettering. In-app identity uses the Human Ascendance lockup and compact crest.
 
 ## Compatibility
 

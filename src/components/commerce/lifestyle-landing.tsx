@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CollectionEntry } from '@/domains/commerce/collection';
+import { brand } from '@/platform/brand';
 import { CollectionCard } from './collection-card';
 
 export function LifestyleLanding({
@@ -22,6 +23,14 @@ export function LifestyleLanding({
           <div className="lifestyle-coordinate" aria-hidden="true">
             A / L — 01
           </div>
+          <Image
+            className="lifestyle-lockup"
+            src={brand.crest}
+            alt=""
+            width={96}
+            height={96}
+            sizes="96px"
+          />
           <span className="world-kicker">AETHELIOS / THE HUMAN ASCENDANCE</span>
           <h1>
             The art of

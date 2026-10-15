@@ -1,3 +1,9 @@
+# Aethelios Human Ascendance in-app logo — 2026-10-15
+
+Place the founder-supplied Human Ascendance lockup in the application. Keep the 2026-10-15 gold-A install/PWA/Apple/browser icon. Compact chrome uses a lettering-free crest; identity moments use the full lockup with AETHELIOS / THE HUMAN ASCENDANCE. No circular crop. Open Graph uses the same artwork. Evidence: [HUMAN_ASCENDANCE_LOGO.md](HUMAN_ASCENDANCE_LOGO.md).
+
+Official references checked 2026-10-15: installed Next 16.3.5 App Router `Image` and `opengraph-image` file conventions; W3C C39 reduced-motion (no new motion added).
+
 # Aethelios Studio renderer/editor pipeline — 2026-10-15
 
 Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
