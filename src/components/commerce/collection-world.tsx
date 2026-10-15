@@ -7,6 +7,9 @@ import { filterCatalog } from '@/domains/commerce/catalog-filter';
 import { CollectionCard } from './collection-card';
 import { CollectionDiscovery } from './collection-discovery';
 import { useSavedCollection, removeSavedCollection } from './saved-selection-store';
+import { LifestyleAction } from './lifestyle-action';
+import { CatalogScrollRestore } from './catalog-scroll-restore';
+import { LifestyleProductStage } from './lifestyle-product-stage';
 
 const chapters = [
   ['all', 'All essentials'],
@@ -72,11 +75,19 @@ export function CollectionWorld({
   function reset() {
     update({ query: '', readyOnly: false, chapter: 'all', brandFilter: 'all', sort: 'featured' });
   }
+  const member = basePath === '/app/collection';
   return (
-    <div className="reserve-commerce collection-world">
+    <div
+      className={`reserve-commerce collection-world${member ? ' member-lifestyle-collection' : ''}`}
+    >
+      {member ? <CatalogScrollRestore /> : null}
       <header className="collection-chamber">
         <div className="collection-chamber-copy">
-          <span className="world-kicker">AETHELIOS LIFESTYLE / Your daily standard</span>
+          <span className="world-kicker">
+            {member
+              ? 'Aethelios Lifestyle / Collection'
+              : 'AETHELIOS LIFESTYLE / Your daily standard'}
+          </span>
           <h1>
             {brand ? (
               <>
@@ -90,29 +101,62 @@ export function CollectionWorld({
             )}
           </h1>
           <p>
-            Grooming. Personal care. Daily ritual.
-            <br />
-            Find what earns a place in your day.
+            {member ? (
+              'Search and filter the catalog. Cabinet and Grooming stay in reach; cart and orders stay utilities.'
+            ) : (
+              <>
+                Grooming. Personal care. Daily ritual.
+                <br />
+                Find what earns a place in your day.
+              </>
+            )}
           </p>
           <div className="collection-entry-actions">
             <a className="world-button" href="#collection">
               Explore essentials
             </a>
-            <Link className="world-text-link" href={`${basePath}/cart`}>
-              Your cart
-            </Link>
-            <Link className="world-text-link" href={'/app/collection/cabinet'}>
-              Your Cabinet
-            </Link>
-            <Link className="world-text-link" href={'/app/collection/orders'} prefetch={false}>
-              Your orders
-            </Link>
+            {member ? (
+              <>
+                <LifestyleAction className="world-text-link" href="/app/collection/cabinet">
+                  Your Cabinet
+                </LifestyleAction>
+                <LifestyleAction className="world-text-link" href="/app/grooming">
+                  Grooming
+                </LifestyleAction>
+                <LifestyleAction className="world-text-link" href={`${basePath}/cart`}>
+                  Cart
+                </LifestyleAction>
+                <LifestyleAction
+                  className="world-text-link"
+                  href="/app/collection/orders"
+                  prefetch={false}
+                >
+                  Orders
+                </LifestyleAction>
+              </>
+            ) : (
+              <>
+                <Link className="world-text-link" href={`${basePath}/cart`}>
+                  Your cart
+                </Link>
+                <Link className="world-text-link" href="/app/collection/cabinet">
+                  Your Cabinet
+                </Link>
+                <Link className="world-text-link" href="/app/collection/orders" prefetch={false}>
+                  Your orders
+                </Link>
+              </>
+            )}
           </div>
         </div>
-        <div className="collection-chamber-caption" aria-hidden="true">
-          <span>CARE / DISCIPLINE / RITUAL</span>
-          <span>THE HUMAN ASCENDANCE</span>
-        </div>
+        {member ? (
+          <LifestyleProductStage compact />
+        ) : (
+          <div className="collection-chamber-caption" aria-hidden="true">
+            <span>CARE / DISCIPLINE / RITUAL</span>
+            <span>THE HUMAN ASCENDANCE</span>
+          </div>
+        )}
       </header>
       <section id="collection" className="collection-browse" aria-labelledby="collection-heading">
         <div className="collection-browse-heading">
@@ -122,9 +166,15 @@ export function CollectionWorld({
               Choose your <em>standard.</em>
             </h2>
           </div>
-          <Link href="/app/grooming" className="world-text-link">
-            Your grooming routine
-          </Link>
+          {member ? (
+            <LifestyleAction href="/app/grooming" className="world-text-link">
+              Your grooming routine
+            </LifestyleAction>
+          ) : (
+            <Link href="/app/grooming" className="world-text-link">
+              Your grooming routine
+            </Link>
+          )}
         </div>
         {failed && (
           <p className="preview-notice" role="status">
@@ -228,7 +278,13 @@ export function CollectionWorld({
         {chapter === 'saved' && (
           <p className="collection-save-note">
             Your selection is saved on this browser. It does not reserve stock or place an order.{' '}
-            <Link href={'/app/collection/cabinet'}>Review it for your synced Cabinet →</Link>
+            {member ? (
+              <LifestyleAction href="/app/collection/cabinet" className="world-text-link">
+                Review it for your synced Cabinet
+              </LifestyleAction>
+            ) : (
+              <Link href={'/app/collection/cabinet'}>Review it for your synced Cabinet →</Link>
+            )}
           </p>
         )}
         {missing.map((handle) => (
@@ -257,6 +313,7 @@ export function CollectionWorld({
               index={index}
               basePath={basePath}
               review={chapter === 'saved'}
+              prominence="standard"
             />
           ))}
         </div>
@@ -281,9 +338,9 @@ export function CollectionWorld({
                 Explore all essentials
               </button>
             ) : brand ? (
-              <Link className="world-button" href={basePath}>
-                Explore Aethelios Lifestyle →
-              </Link>
+              <LifestyleAction className="world-button" href={basePath}>
+                Explore Aethelios Lifestyle
+              </LifestyleAction>
             ) : null}
           </div>
         )}
@@ -303,15 +360,31 @@ export function CollectionWorld({
           purchases do not require a paid membership.
         </p>
         <div className="collection-entry-actions">
-          <Link
+          <LifestyleAction
             href={basePath === '/shop' ? '/lifestyle' : '/app/lifestyle'}
             className="world-button"
           >
             Aethelios Lifestyle
-          </Link>
-          <Link href="/app/membership" className="world-text-link">
-            Your membership
-          </Link>
+          </LifestyleAction>
+          {member ? (
+            <>
+              <LifestyleAction className="world-text-link" href="/app/collection/cabinet">
+                Cabinet
+              </LifestyleAction>
+              <LifestyleAction className="world-text-link" href={`${basePath}/cart`}>
+                Cart
+              </LifestyleAction>
+            </>
+          ) : (
+            <>
+              <Link href="/app/collection/cabinet" className="world-text-link">
+                Your Cabinet
+              </Link>
+              <Link href="/app/membership" className="world-text-link">
+                Your membership
+              </Link>
+            </>
+          )}
         </div>
       </footer>
     </div>

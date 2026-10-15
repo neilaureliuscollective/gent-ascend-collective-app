@@ -10,11 +10,14 @@ import {
   removeCabinetProduct,
   reviewCabinetImport,
   importCabinetSelection,
+  cabinetLifestylePreview,
 } from '../src/domains/commerce/cabinet';
 import { cabinetUpdateInput } from '../src/domains/commerce/cabinet-model';
 const id = 'ce000000-0000-4000-8000-000000000001',
   person = 'ce000000-0000-4000-8000-000000000002';
-let filters: unknown[], writes: unknown[], responses: { data: unknown; error: null }[];
+let filters: unknown[],
+  writes: unknown[],
+  responses: { data: unknown; error: null; count?: number }[];
 beforeEach(() => {
   filters = [];
   writes = [];
@@ -23,6 +26,8 @@ beforeEach(() => {
   getProduct.mockReset();
   const chain = {
     select: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     in: vi.fn((...args: unknown[]) => {
       filters.push(args);
@@ -237,5 +242,22 @@ describe('reviewed browser selection import', () => {
       }),
     ).toBe(0);
     expect(writes).toEqual([]);
+  });
+  it('counts kept Cabinet products separately from the preview page', async () => {
+    responses.push(
+      {
+        data: [{ id, name: 'Synthetic Cabinet oil', relation: 'owned', shopify_handle: 'vitalis' }],
+        error: null,
+      },
+      { data: null, error: null, count: 1 },
+      { data: null, error: null, count: 5 },
+    );
+    await expect(cabinetLifestylePreview()).resolves.toEqual({
+      records: [
+        { id, name: 'Synthetic Cabinet oil', relation: 'owned', shopify_handle: 'vitalis' },
+      ],
+      ritualCount: 1,
+      keptCount: 5,
+    });
   });
 });
