@@ -517,6 +517,7 @@ export function inspectPlaybookSelection(
   const direction = [
     options.approvedDirection,
     options.workingState?.approvedDirection,
+    options.workingState?.selectedDirection,
     ...(options.workingState?.constraints ?? []),
   ]
     .filter(Boolean)

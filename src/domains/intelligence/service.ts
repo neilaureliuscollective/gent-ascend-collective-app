@@ -25,7 +25,7 @@ import {
   recentUserTextsFromTurns,
 } from './product-knowledge';
 import { playbooksForTurn } from './playbooks';
-import { deriveWorkingState } from './working-state';
+import { artifactHint, workingStateFromTurns } from './working-state';
 import { getProduct } from '@/domains/commerce/shopify';
 import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 export class IntelligenceError extends Error {
@@ -688,6 +688,14 @@ export async function prepareReply(
   let artifactContext = '';
   let selectedPredecessors: Partial<Record<'brief' | 'plan' | 'palette' | 'board', string>> = {};
   let selectedImageId: string | null = null;
+  let selectedImage: {
+    id: string;
+    status: string;
+    version_id: string | null;
+    project_id: string | null;
+    prompt: string;
+    visual?: unknown;
+  } | null = null;
   let completeImageCount = 0;
   let productKnowledge: Awaited<ReturnType<typeof loadProductKnowledge>> = null;
   let recentUserTexts: string[] = [];
@@ -744,6 +752,10 @@ export async function prepareReply(
       artifactContext = [imageContext, talkContext].filter(Boolean).join('\n');
       selectedPredecessors = predecessors;
       selectedImageId = artifacts?.selectedId ?? null;
+      selectedImage =
+        artifacts?.artifacts.find(
+          (item) => item.id === artifacts.selectedId && item.status === 'complete',
+        ) ?? null;
       completeImageCount =
         artifacts?.artifacts.filter((item) => item.status === 'complete').length ?? 0;
     } catch {
@@ -754,22 +766,10 @@ export async function prepareReply(
   const visibleHistory = history.filter(
     (turn) => !history.some((newer) => newer.parent_turn_id === turn.id),
   );
-  const selectedArtifact = selectedImageId
-    ? { kind: 'image' as const, title: null, prompt: null }
-    : selectedPredecessors.board
-      ? { kind: 'board' as const, title: null, prompt: null }
-      : selectedPredecessors.brief
-        ? { kind: 'brief' as const, title: null, prompt: null }
-        : null;
+  const selectedArtifact = artifactHint(selectedImage, selectedPredecessors);
   const workingState = company
     ? null
-    : deriveWorkingState({
-        currentText: input.text,
-        userTexts: recentUserTexts,
-        assistantTexts: visibleHistory.map((turn) => turn.assistant_text),
-        threadSummary,
-        selectedArtifact,
-      });
+    : workingStateFromTurns(visibleHistory, input.text, selectedArtifact, threadSummary);
   const selectedPlaybooks = company
     ? { playbooks: [], playbookSelection: null }
     : playbooksForTurn(input.text, capabilityContext(input.text)?.id, {

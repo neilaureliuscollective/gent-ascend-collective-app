@@ -85,6 +85,7 @@ describe('deterministic scenario fixtures', () => {
         'foreign-memory-isolation',
         'voice-concise-text-depth',
         'application-looking-user-message',
+        'generated-second-direction',
       ]),
     );
     expect(

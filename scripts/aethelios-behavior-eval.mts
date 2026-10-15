@@ -8,7 +8,8 @@
  *
  * Cost controls: AETHELIOS_BEHAVIOR_EVAL_MODEL, AETHELIOS_BEHAVIOR_EVAL_BUDGET_USD (default 1),
  * AETHELIOS_BEHAVIOR_EVAL_MAX_REQUESTS (default 24), AETHELIOS_BEHAVIOR_EVAL_MAX_OUTPUT_TOKENS (default 800),
- * AETHELIOS_BEHAVIOR_EVAL_COMPARE=1 for baseline vs current.
+ * AETHELIOS_BEHAVIOR_EVAL_COMPARE=1 for ablation vs current (not a historical baseline).
+ * AETHELIOS_BEHAVIOR_EVAL_SET=core|held-out|all.
  *
  * Official references: OpenAI prompt engineering and evaluation best practices.
  * Do not run paid calls without founder approval.

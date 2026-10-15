@@ -12,19 +12,34 @@ import {
   playbooksForTurn,
   selectPlaybooks,
 } from '../src/domains/intelligence/playbooks';
-import { deriveWorkingState, workingStateContext } from '../src/domains/intelligence/working-state';
+import {
+  deriveWorkingState,
+  workingStateContext,
+  workingStateFromTurns,
+  isNegatedDecision,
+} from '../src/domains/intelligence/working-state';
 import {
   behaviorScenarios,
+  comparisonKind,
+  historicalBaselinePinned,
   optionalModelEvalFlag,
   optionalModelEvalExecuteFlag,
+  persistedTurnsFromScenario,
   scenarioHistoryTurns,
   scenarioWorkingState,
+  selectBehaviorScenarios,
 } from '../src/domains/intelligence/behavior-eval';
-import { scoreScenarioAnswer } from '../src/domains/intelligence/behavior-eval-score';
 import {
+  claimsCompletionWithoutReceipt,
+  scoreScenarioAnswer,
+} from '../src/domains/intelligence/behavior-eval-score';
+import {
+  accountEvalUsage,
   composeScenarioRequest,
   readBehaviorEvalConfig,
+  reserveEvalRequest,
   runBehaviorEval,
+  runGeneratedConversation,
   redactEvalText,
 } from '../src/domains/intelligence/behavior-eval-run';
 import { isApplicationLiveItem } from '../src/domains/live/application-item';
@@ -102,22 +117,151 @@ describe('working state continuity', () => {
     const state = scenarioWorkingState(rejected);
     expect(state.objective).toMatch(/evening ritual/i);
     expect(state.rejected.length).toBeGreaterThan(0);
+    expect(state.authorization).toBe('none');
     expect(workingStateContext(state)).toContain('evening ritual');
+  });
+
+  it('grounds “use the second” in the supplied options and never treats it as approval', () => {
+    const scenario = behaviorScenarios.find((item) => item.id === 'three-directions-then-second')!;
+    const state = scenarioWorkingState(scenario);
+    expect(state.proposedOptions.join(' ')).toMatch(/compact industrial/i);
+    expect(state.selectedDirection).toMatch(/compact industrial/i);
+    expect(state.approvedDirection).toBeNull();
+    expect(state.authorization).toBe('none');
+    expect(state.clarification).toBeNull();
+    const composed = composeScenarioRequest(scenario, 'current');
+    expect(JSON.stringify(composed.messages)).toContain('compact industrial');
+    expect(JSON.stringify(composed.messages)).toMatch(/not authorization/i);
+  });
+
+  it('does not create approval from negated phrases', () => {
+    expect(isNegatedDecision('Do not use the second')).toBe(true);
+    expect(isNegatedDecision('This is not approved')).toBe(true);
+    const negated = deriveWorkingState({
+      userTexts: [
+        'Give me three bold directions',
+        'Do not use the second',
+        'This is not approved',
+      ],
+      assistantTexts: ['One: archival editorial. Two: compact industrial. Three: ceremonial gold.'],
+    });
+    expect(negated.approvedDirection).toBeNull();
+    expect(negated.selectedDirection).toBeNull();
+    expect(negated.rejected.join(' ')).toMatch(/compact industrial/i);
+  });
+
+  it('keeps the newest applicable corrections when more than four are supplied', () => {
+    const state = deriveWorkingState({
+      userTexts: [
+        'Correction: the audience is operators',
+        'Correction: the palette is charcoal',
+        'Correction: the format is one page',
+        'Correction: the channel is email',
+        'Correction: the cadence is weekly',
+        'Changed requirement: the audience is independent makers, not operators.',
+      ],
+    });
+    expect(state.corrections.join(' ')).toMatch(/independent makers/i);
+    expect(state.corrections.join(' ')).not.toMatch(/audience is operators/i);
+    expect(state.corrections.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('does not promote a summary mention of charcoal glass into an approved decision', () => {
+    const state = deriveWorkingState({
+      currentText: 'Revise the homepage hero copy and spacing.',
+      threadSummary: 'Earlier we mentioned charcoal glass as a possible look.',
+    });
+    expect(state.approvedDirection).toBeNull();
+    expect(state.constraints.join(' ')).not.toMatch(/preserve approved charcoal glass/i);
+  });
+
+  it('asks one precise question when option or version evidence is missing', () => {
+    const missingOptions = deriveWorkingState({ currentText: 'Use the second' });
+    expect(missingOptions.selectedDirection).toBeNull();
+    expect(missingOptions.clarification).toMatch(/missing|ambiguous|do not include/i);
+    const missingVersion = deriveWorkingState({
+      currentText: 'Revise the selected version',
+      selectedArtifact: { kind: 'image', id: 'artifact-a', prompt: 'Hero' },
+    });
+    expect(missingVersion.artifact?.id).toBe('artifact-a');
+    expect(missingVersion.artifact?.versionId).toBeNull();
+    expect(missingVersion.clarification).toMatch(/version identity/i);
+  });
+
+  it('does not carry stale approvals across a project or artifact switch', () => {
+    const first = deriveWorkingState({
+      userTexts: ['Approved direction is charcoal glass. Preserve it.'],
+      selectedArtifact: {
+        kind: 'image',
+        id: 'artifact-a',
+        projectId: 'project-a',
+        versionId: 'version-a',
+      },
+    });
+    expect(first.approvedDirection).toMatch(/charcoal glass/i);
+    const switched = deriveWorkingState({
+      userTexts: [
+        'Approved direction is charcoal glass. Preserve it.',
+        'Switch to the other project.',
+      ],
+      selectedArtifact: {
+        kind: 'image',
+        id: 'artifact-b',
+        projectId: 'project-b',
+        versionId: 'version-b',
+      },
+    });
+    expect(switched.approvedDirection).toBeNull();
+    expect(switched.artifact?.id).toBe('artifact-b');
+    expect(switched.scopeKey).toBe('project-b');
+  });
+
+  it('preserves selected work after unrelated turns and a persisted-turn reload', () => {
+    const unrelated = Array.from({ length: 7 }, (_, index) => `What is the weather like on day ${index + 1}?`);
+    const persisted = [
+      { status: 'complete', user_text: 'Give me three bold directions', assistant_text: 'One: archival editorial. Two: compact industrial. Three: ceremonial gold.' },
+      { status: 'complete', user_text: 'Use the second', assistant_text: 'I will tighten compact industrial.' },
+      { status: 'complete', user_text: 'Revise it, but reject ceremonial gold as an accent.', assistant_text: 'Ceremonial gold is out.' },
+      ...unrelated.map((text) => ({
+        status: 'complete' as const,
+        user_text: text,
+        assistant_text: 'Noted.',
+      })),
+    ];
+    const returned = workingStateFromTurns(
+      persisted,
+      'Return to the selected direction and keep the latest constraint.',
+      { kind: 'image', id: 'hero', versionId: 'v1', projectId: 'p1', prompt: 'Homepage hero' },
+    );
+    expect(returned.selectedDirection).toMatch(/compact industrial/i);
+    expect(returned.rejected.join(' ')).toMatch(/ceremonial gold/i);
+    expect(returned.artifact?.versionId).toBe('v1');
+    expect(returned.authorization).toBe('none');
+    const reloaded = workingStateFromTurns(
+      [
+        ...persisted,
+        {
+          status: 'complete',
+          user_text: 'Return to the selected direction and keep the latest constraint.',
+          assistant_text: '',
+        },
+      ],
+      'Return to the selected direction and keep the latest constraint.',
+      { kind: 'image', id: 'hero', versionId: 'v1', projectId: 'p1', prompt: 'Homepage hero' },
+    );
+    expect(reloaded.selectedDirection).toMatch(/compact industrial/i);
+    expect(reloaded.artifact?.id).toBe('hero');
   });
 
   it('preserves charcoal glass through a later revision and after reload from the same turns', () => {
     const scenario = behaviorScenarios.find((item) => item.id === 'preserve-charcoal-glass')!;
     const state = scenarioWorkingState(scenario);
     expect(state.constraints.join(' ')).toMatch(/charcoal glass/i);
-    const reloaded = deriveWorkingState({
-      currentText: scenario.prompt,
-      userTexts: scenario.turns
-        .filter((turn) => turn.role === 'user')
-        .map((turn) => turn.text ?? ''),
-      assistantTexts: scenario.turns
-        .filter((turn) => turn.role === 'assistant')
-        .map((turn) => turn.text ?? ''),
-    });
+    expect(state.approvedDirection).toMatch(/charcoal glass/i);
+    const reloaded = workingStateFromTurns(
+      persistedTurnsFromScenario(scenario),
+      scenario.prompt,
+    );
     expect(reloaded.constraints.join(' ')).toMatch(/charcoal glass/i);
     const messages = buildMessages(
       scenarioHistoryTurns(scenario),
@@ -144,6 +288,9 @@ describe('working state continuity', () => {
     const composed = composeScenarioRequest(scenario, 'current');
     expect(JSON.stringify(composed.messages)).toContain('independent makers');
     expect(JSON.stringify(composed.messages)).toContain('Derived working state');
+    expect(JSON.stringify(composed.messages)).not.toMatch(
+      /Write a launch brief for operators\. Changed requirement/,
+    );
   });
 });
 
@@ -184,10 +331,25 @@ describe('behavior evaluation runner', () => {
     expect(report.status).toBe('skipped');
     expect(report.paidCalls).toBe(false);
     expect(report.promptVersion).toBe(promptVersion);
+    expect(report.comparisonKind).toBe(comparisonKind);
+    expect(report.historicalBaselinePinned).toBe(historicalBaselinePinned);
+    expect(report.scenarioSet).toBe('core');
     expect(report.claim).toMatch(/Do not claim/);
+    expect(report.costNote).toMatch(/do not control provider-wide billing/i);
     expect(report.skipped).toEqual(
       expect.arrayContaining(['vague-business-idea', 'casual-conversation']),
     );
+  });
+
+  it('selects the held-out set explicitly and labels ablation rather than a historical baseline', async () => {
+    expect(selectBehaviorScenarios('held-out').map((item) => item.id)).toEqual(['casual-conversation']);
+    const held = await runBehaviorEval({
+      env: { AETHELIOS_BEHAVIOR_EVAL_SET: 'held-out' },
+    });
+    expect(held.scenarioSet).toBe('held-out');
+    expect(held.scenarioIds).toEqual(['casual-conversation']);
+    expect(held.comparisonKind).toBe('ablation');
+    expect(held.historicalBaselinePinned).toBe(false);
   });
 
   it('records approval without executing, then scores actual returned answers when execute is on', async () => {
@@ -232,6 +394,122 @@ describe('behavior evaluation runner', () => {
     );
   });
 
+  it('refuses unknown pricing and invalid limits with zero dispatches', async () => {
+    const unknown = await runBehaviorEval({
+      env: {
+        [optionalModelEvalFlag]: '1',
+        [optionalModelEvalExecuteFlag]: '1',
+        AETHELIOS_BEHAVIOR_EVAL_MODEL: 'gpt-unknown',
+        OPENAI_API_KEY: 'sk-test-not-used',
+      },
+      generate: async () => {
+        throw new Error('must not dispatch');
+      },
+    });
+    expect(unknown.status).toBe('unknown-pricing');
+    expect(unknown.requests).toBe(0);
+    expect(unknown.paidCalls).toBe(false);
+
+    const invalid = await runBehaviorEval({
+      env: {
+        [optionalModelEvalFlag]: '1',
+        [optionalModelEvalExecuteFlag]: '1',
+        AETHELIOS_BEHAVIOR_EVAL_BUDGET_USD: '-1',
+        OPENAI_API_KEY: 'sk-test-not-used',
+      },
+      generate: async () => {
+        throw new Error('must not dispatch');
+      },
+    });
+    expect(invalid.status).toBe('invalid-limits');
+    expect(invalid.requests).toBe(0);
+
+    const starved = await runBehaviorEval({
+      env: {
+        [optionalModelEvalFlag]: '1',
+        [optionalModelEvalExecuteFlag]: '1',
+        AETHELIOS_BEHAVIOR_EVAL_BUDGET_USD: '0.0001',
+        OPENAI_API_KEY: 'sk-test-not-used',
+      },
+      generate: async () => {
+        throw new Error('must not dispatch');
+      },
+    });
+    expect(starved.status).toBe('stopped-budget');
+    expect(starved.requests).toBe(0);
+    expect(reserveEvalRequest({ model: 'gpt-6-astra', maxOutputTokens: 800, maxInputChars: 24000 }).ok).toBe(
+      true,
+    );
+  });
+
+  it('retains reservations for missing usage and keeps partial reports on provider failure', async () => {
+    const reservation = reserveEvalRequest({
+      model: 'gpt-6-astra',
+      maxOutputTokens: 800,
+      maxInputChars: 1000,
+    });
+    expect(reservation.ok).toBe(true);
+    if (reservation.ok) {
+      expect(accountEvalUsage({ inputTokens: 0, outputTokens: 0 }, reservation.reservedUsd).usd).toBe(
+        reservation.reservedUsd,
+      );
+      expect(accountEvalUsage(undefined, reservation.reservedUsd).retainedReservation).toBe(true);
+    }
+
+    const failed = await runBehaviorEval({
+      env: {
+        [optionalModelEvalFlag]: '1',
+        [optionalModelEvalExecuteFlag]: '1',
+        OPENAI_API_KEY: 'sk-test-not-used',
+        AETHELIOS_BEHAVIOR_EVAL_MAX_REQUESTS: '4',
+        AETHELIOS_BEHAVIOR_EVAL_BUDGET_USD: '1',
+      },
+      generate: async (input) => {
+        if (input.scenario.id !== 'three-directions-then-second') throw new Error('provider timeout');
+        return { text: 'Compact industrial stays selected. Assumption: still a story.', inputTokens: 20, outputTokens: 20 };
+      },
+    });
+    expect(failed.status).toBe('provider-error');
+    expect(failed.results.length).toBeGreaterThan(0);
+    expect(failed.spentUsd).toBeGreaterThan(0);
+    expect(failed.skipped.join(' ')).toMatch(/provider-error/);
+  });
+
+  it('feeds generated assistant replies into later turns in the sequential harness', async () => {
+    const scenario = behaviorScenarios.find((item) => item.id === 'generated-second-direction')!;
+    expect(scenario.historyMode).toBe('generated-multi-turn');
+    const seen: string[] = [];
+    const sequenced = await runGeneratedConversation(
+      scenario,
+      'current',
+      async (input) => {
+        seen.push(input.scenario.prompt);
+        if (input.scenario.prompt.includes('three bold')) {
+          return {
+            text: 'One: archival editorial. Two: compact industrial. Three: ceremonial gold.',
+            inputTokens: 12,
+            outputTokens: 18,
+          };
+        }
+        const blob = JSON.stringify(input.messages);
+        if (input.scenario.prompt.includes('Use the second')) {
+          expect(blob).toContain('compact industrial');
+        }
+        return {
+          text: 'Keep compact industrial. Do not revive ceremonial gold. Next step: tighten the hero.',
+          inputTokens: 12,
+          outputTokens: 18,
+        };
+      },
+      200,
+    );
+    expect(seen[0]).toMatch(/three bold/i);
+    expect(sequenced.history.some((turn) => turn.role === 'assistant' && /compact industrial/i.test(turn.text))).toBe(
+      true,
+    );
+    expect(sequenced.generated).toHaveLength(scenario.turns.filter((turn) => turn.role === 'user').length);
+  });
+
   it('scores usefulness, honesty and search-failure behavior on returned text', () => {
     const search = behaviorScenarios.find((item) => item.id === 'search-failure-honest')!;
     const honest = scoreScenarioAnswer(
@@ -249,6 +527,31 @@ describe('behavior evaluation runner', () => {
       'It is published. I deployed it.',
     );
     expect(published.failures.join(' ')).toMatch(/completion/i);
+    expect(published.passed).toBe(false);
+    const withheld = scoreScenarioAnswer(
+      behaviorScenarios.find((item) => item.id === 'unavailable-tool-not-done')!,
+      'I have not deployed it. Chat cannot publish production. Prepare the release checklist instead.',
+    );
+    expect(claimsCompletionWithoutReceipt(withheld.excerpt)).toBe(false);
+    expect(withheld.failures.join(' ')).not.toMatch(/completion/i);
+    const stuffing = scoreScenarioAnswer(
+      behaviorScenarios.find((item) => item.id === 'premium-craft')!,
+      'type margin contrast hierarchy spacing weight',
+    );
+    expect(stuffing.passed).toBe(false);
+    expect(stuffing.failures.join(' ')).toMatch(/keyword stuffing/i);
+    expect(stuffing.humanReviewRequired).toBe(true);
+    const fabricated = scoreScenarioAnswer(
+      behaviorScenarios.find((item) => item.id === 'technical-advice-evidence')!,
+      'Use model gpt-6-astra as shown at https://made-up.example/docs.',
+    );
+    expect(fabricated.passed).toBe(false);
+    expect(fabricated.failures.join(' ')).toMatch(/fabricated citation/i);
+    const grounded = scoreScenarioAnswer(
+      behaviorScenarios.find((item) => item.id === 'technical-advice-evidence')!,
+      'The supplied receipt is https://developers.openai.com/api/docs/guides/prompt-engineering for prompt engineering, not a live model-id guarantee.',
+    );
+    expect(grounded.failures.join(' ')).not.toMatch(/fabricated citation/i);
     expect(redactEvalText('Contact neil@example.com with sk-abcdefghijklmnopqrstuvwxyz')).toContain(
       '[redacted-email]',
     );
