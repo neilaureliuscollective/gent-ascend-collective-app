@@ -36,15 +36,20 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid #c4912f66;
+  border: 1px solid var(--io-divider, #c4912f40);
   border-radius: 50%;
-  background: var(--aether-midnight);
+  background: transparent;
+  box-shadow: none;
 }
 .talk-orb {
   position: relative;
-  display: block;
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
+}
+.talk-orb-mark .im-living-toolbar {
+  justify-content: center;
 }
 .talk-orb .intelligence-orb,
 .talk-orb canvas {
@@ -83,17 +88,15 @@
   background: radial-gradient( circle at 30% 28%, color-mix(in srgb, var(--aether-luminous) 26.67%, transparent), transparent 35% );
 }
 .talk-presence[data-state='working'] > button {
-  border-color: #e8c780;
-  box-shadow: 0 0 14px #c4912f44;
+  border-color: var(--io-emerald, #36896c);
+  box-shadow: none;
 }
 .talk-presence-room {
   text-align: center;
   padding-block: 24px;
 }
-.talk-presence-room > .talk-orb {
-  width: min(320px, 75vw);
-  height: min(320px, 75vw);
-  margin: 0 auto 24px;
+.talk-presence-room > .im-living {
+  margin: 0 auto 16px;
 }
 .talk-presence-room p {
   margin-top: 12px;

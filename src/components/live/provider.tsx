@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { LiveController, type LiveState } from '@/domains/live/controller';
 import './live.css';
 import {
+  ConversationAnnouncer,
   IntelligencePresence,
   IntelligenceStatus,
   IntelligenceActivity,
@@ -329,51 +330,60 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     }, 1500);
     return () => clearInterval(timer);
   }, [controller, visible, state.sessionId, active]);
+  const canMute = active && state.phase !== 'connecting';
+  const canStopPlayback = state.phase === 'speaking' && !state.playbackBlocked;
+  const canEnd = active || state.cleanupPending;
   const controls = (
-    <div className="live-controls">
-      <button
-        type="button"
-        disabled={!active || state.phase === 'connecting'}
-        aria-pressed={state.muted}
-        onClick={() => controller.mute()}
-      >
-        {state.muted ? 'Unmute microphone' : 'Mute microphone'}
-      </button>
-      <button type="button" disabled={!active} onClick={() => controller.interrupt()}>
-        Stop speaking
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          void controller.end();
-        }}
-      >
-        End{state.cleanupPending ? ' / retry cleanup' : ''}
-      </button>
-      <button
-        type="button"
-        onClick={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
-      >
-        {state.mode === 'immersive' ? 'Minimize' : 'Fullscreen'}
-      </button>
-      {!active && !state.cleanupPending && (
-        <button type="button" onClick={() => controller.dismiss()}>
-          Close
+    <div className="live-controls live-controls-compact">
+      <div className="live-control-session">
+        {canMute && (
+          <button type="button" aria-pressed={state.muted} onClick={() => controller.mute()}>
+            {state.muted ? 'Unmute microphone' : 'Mute microphone'}
+          </button>
+        )}
+        {canStopPlayback && (
+          <button type="button" onClick={() => controller.interrupt()}>
+            Stop playback
+          </button>
+        )}
+        {canEnd && (
+          <button
+            type="button"
+            onClick={() => {
+              void controller.end();
+            }}
+          >
+            {state.cleanupPending ? 'Retry end session' : 'End session'}
+          </button>
+        )}
+      </div>
+      <div className="live-control-layout">
+        <button
+          type="button"
+          onClick={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
+        >
+          {state.mode === 'immersive' ? 'Compact' : 'Expand'}
         </button>
-      )}
-      <button
-        type="button"
-        aria-pressed={transcript}
-        onClick={() => setTranscript((value) => !value)}
-      >
-        Transcript
-      </button>
+        <button
+          type="button"
+          aria-pressed={transcript}
+          onClick={() => setTranscript((value) => !value)}
+        >
+          Transcript
+        </button>
+        {!active && !state.cleanupPending && (
+          <button type="button" onClick={() => controller.dismiss()}>
+            Close
+          </button>
+        )}
+      </div>
     </div>
   );
   const content = (
     <>
       <p className="live-brand">AETHELIOS LIVE</p>
-      <IntelligenceStatus operation={operation} />
+      <ConversationAnnouncer operation={operation} />
+      <IntelligenceStatus operation={operation} announce={false} />
       {state.error && <p role="alert">{state.error}</p>}
       {state.playbackBlocked && (
         <button

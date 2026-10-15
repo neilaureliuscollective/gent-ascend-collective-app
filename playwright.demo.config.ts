@@ -6,6 +6,6 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:3102',
     headless: true,
-    video: { mode: 'on', size: { width: 390, height: 844 } },
+    video: { mode: 'on', size: { width: 768, height: 900 } },
   },
 });

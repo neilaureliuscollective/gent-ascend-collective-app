@@ -5,6 +5,10 @@ import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
 import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
 import type { StreamCreation } from '@/domains/intelligence/types';
+import {
+  conversationArtifactReady,
+  conversationArtifactTerminal,
+} from '@/platform/visual/conversation-motion';
 import './creation.css';
 
 const kindLabel = (kind: StreamCreation['kind']) =>
@@ -20,28 +24,53 @@ const kindLabel = (kind: StreamCreation['kind']) =>
             ? 'Image'
             : 'Architect package';
 
+function inFlightEyebrow(artifact: StreamCreation): string {
+  if (artifact.status === 'approval') return 'needs approval';
+  if (artifact.status === 'stopped') return 'stopped';
+  if (artifact.status === 'failed') return 'failed';
+  if (artifact.status === 'uncertain') return 'unconfirmed';
+  if (conversationArtifactReady(artifact)) return 'ready';
+  return 'in progress';
+}
+
+function inFlightBody(artifact: StreamCreation): string {
+  const kind = kindLabel(artifact.kind);
+  if (artifact.kind === 'image') {
+    if (artifact.status === 'approval')
+      return 'Queued for your approval. It is not a saved image yet.';
+    if (artifact.status === 'running' || artifact.status === 'generating') return 'Creating an image';
+    if (artifact.status === 'stopped') return 'Image stopped.';
+    if (artifact.status === 'failed') return 'Image could not be completed.';
+    if (artifact.status === 'uncertain') return 'Image completion is unconfirmed.';
+    if (conversationArtifactReady(artifact)) return 'Image is ready.';
+    return 'Image proposal received.';
+  }
+  if (artifact.status === 'stopped') return `${kind} stopped.`;
+  if (artifact.status === 'failed') return `${kind} could not be completed.`;
+  if (artifact.status === 'uncertain') return `${kind} completion is unconfirmed.`;
+  if (conversationArtifactReady(artifact)) return `${kind} is ready.`;
+  return `${kind} is being prepared.`;
+}
+
 export function InFlightCreationCard({ artifact }: { artifact: StreamCreation }) {
   const title = artifact.title?.trim() || kindLabel(artifact.kind);
+  const ready = conversationArtifactReady(artifact);
+  const terminal = conversationArtifactTerminal(artifact.status);
   return (
     <article
-      className="talk-creation-card is-active"
+      className={`talk-creation-card${ready || terminal ? '' : ' is-active'}`}
       data-kind={artifact.kind}
       data-in-flight=""
-      data-ready={artifact.status === 'complete' || artifact.status === 'saved' || undefined}
+      data-status={artifact.status || 'proposed'}
+      data-ready={ready || undefined}
     >
       <header>
         <p className="eyebrow">
-          {kindLabel(artifact.kind)} · {artifact.status === 'approval' ? 'needs approval' : 'in progress'}
+          {kindLabel(artifact.kind)} · {inFlightEyebrow(artifact)}
         </p>
       </header>
       <h3>{title}</h3>
-      <p className="talk-creation-status">
-        {artifact.kind === 'image'
-          ? artifact.status === 'approval'
-            ? 'Queued for your approval. It is not a saved image yet.'
-            : 'Creating an image'
-          : `${kindLabel(artifact.kind)} is being prepared.`}
-      </p>
+      <p className="talk-creation-status">{inFlightBody(artifact)}</p>
     </article>
   );
 }

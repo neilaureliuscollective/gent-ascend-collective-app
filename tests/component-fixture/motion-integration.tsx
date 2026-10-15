@@ -173,6 +173,9 @@ function Review() {
     'listening',
   );
   const [voiceLevel, setVoiceLevel] = useState(0);
+  const [voiceOutput, setVoiceOutput] = useState(0);
+  const [voiceMuted, setVoiceMuted] = useState(false);
+  const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const { moving } = useAppearance();
   const finish = () => {
     if (turn && stream) {
@@ -226,12 +229,42 @@ function Review() {
                   id: 'fixture-image',
                   kind: 'image',
                   title: 'Synthetic image title',
+                  status: 'approval',
+                },
+              })
+            }
+          >
+            Emit image approval
+          </button>
+          <button
+            onClick={() =>
+              emit({
+                type: 'creation',
+                item: {
+                  id: 'fixture-image',
+                  kind: 'image',
+                  title: 'Synthetic image title',
                   status: 'running',
                 },
               })
             }
           >
             Emit image artifact
+          </button>
+          <button
+            onClick={() =>
+              emit({
+                type: 'creation',
+                item: {
+                  id: 'fixture-image-ready',
+                  kind: 'image',
+                  title: 'Completed synthetic image',
+                  status: 'complete',
+                },
+              })
+            }
+          >
+            Emit completed image
           </button>
           <button
             onClick={() =>
@@ -269,7 +302,11 @@ function Review() {
         ) : (
           <section
             className="review-voice"
-            style={{ '--live-audio-level': voiceLevel } as CSSProperties}
+            style={
+              {
+                '--live-audio-level': voice === 'speaking' ? voiceOutput : voiceLevel,
+              } as CSSProperties
+            }
           >
             <p>Structural adapter preview only · no voice controller mounted.</p>
             <p>Synthetic measured envelope · not a live microphone or paid session.</p>
@@ -283,6 +320,22 @@ function Review() {
               ))}
             </select>
             <label>
+              <input
+                type="checkbox"
+                checked={voiceMuted}
+                onChange={(event) => setVoiceMuted(event.target.checked)}
+              />
+              Mute input
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={playbackBlocked}
+                onChange={(event) => setPlaybackBlocked(event.target.checked)}
+              />
+              Block playback
+            </label>
+            <label>
               Synthetic audio level
               <input
                 type="range"
@@ -293,6 +346,18 @@ function Review() {
                 onChange={(event) => setVoiceLevel(Number(event.target.value))}
               />
             </label>
+            <label>
+              Synthetic output level
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                aria-label="Synthetic output level"
+                value={voiceOutput}
+                onChange={(event) => setVoiceOutput(Number(event.target.value))}
+              />
+            </label>
             <LivingSignal
               still={!moving}
               surface="voice-compact"
@@ -301,10 +366,10 @@ function Review() {
                   {
                     sessionId: 'preview',
                     phase: voice,
-                    muted: false,
-                    playbackBlocked: false,
+                    muted: voiceMuted,
+                    playbackBlocked,
                   },
-                  { input: voiceLevel, output: voiceLevel },
+                  { input: voiceLevel, output: voiceOutput },
                 ),
                 basis: 'preview',
               }}
@@ -315,10 +380,10 @@ function Review() {
                   {
                     sessionId: 'preview',
                     phase: voice,
-                    muted: false,
-                    playbackBlocked: false,
+                    muted: voiceMuted,
+                    playbackBlocked,
                   },
-                  { input: voiceLevel, output: voiceLevel },
+                  { input: voiceLevel, output: voiceOutput },
                 ),
                 basis: 'preview',
               }}

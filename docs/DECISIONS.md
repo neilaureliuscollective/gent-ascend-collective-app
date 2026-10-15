@@ -1,6 +1,6 @@
 # Conversation motion on Talk Elevation — 2026-10-15
 
-Talk #131/#135 remain unmerged. Motion work stacks on elevation `948a9b95` rather than silently omitting Talk features or merging those branches. Conversation identity uses the approved official gold-A 192px file at 24 CSS px because no production-quality 24px conversation crop is in the tree. Activity copy and motion come only from observed request/voice/creation events. Live audio remains a CSS custom-property envelope, not a React-per-frame waveform. References: Apple HIG Motion, Material motion, WCAG status messages and pause-stop-hide, web.dev animations, MDN Web Audio visualizations. No production merge.
+Talk #131/#135 remain unmerged. Motion work stacks on elevation `948a9b95` rather than silently omitting Talk features or merging those branches. Conversation identity uses the approved official gold-A 192px file at 24 CSS px because no production-quality 24px conversation crop is in the tree. Activity copy and motion come only from observed request/voice/creation events. Image `approval` is waiting, not creating. In-progress stream artifacts terminalize on Stop/error; completed artifacts stay. One polite announcer covers operational transitions. Live audio remains a CSS custom-property envelope, not a React-per-frame waveform. References: Apple HIG Motion, Material motion, WCAG status messages and pause-stop-hide, web.dev animations, MDN Web Audio visualizations. No production merge.
 
 # Talk integrated release — 2026-10-15
 

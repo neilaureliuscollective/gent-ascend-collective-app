@@ -184,8 +184,15 @@
   outline: 2px solid var(--io-text);
   outline-offset: 2px;
 }
-.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer > textarea:focus-visible {
-  outline-offset: -2px;
+.app-shell.imperial-workspace [data-bplus='talk']
+  :is(.aurelius-composer, .talk-composer)
+  > textarea:focus-visible {
+  outline: none;
+}
+.app-shell.imperial-workspace [data-bplus='talk']
+  :is(.aurelius-composer, .talk-composer):focus-within {
+  outline: 2px solid var(--io-gold, #c4912f);
+  outline-offset: 3px;
 }
 
 /* Existing B+ control specificity owns the composer; preserve that scope. */

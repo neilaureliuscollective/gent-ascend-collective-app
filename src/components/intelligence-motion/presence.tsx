@@ -13,6 +13,7 @@ import { GuidingPresence } from './guiding-presence';
 import { LivingSignal } from './living-signal';
 import {
   conversationActivityLabel,
+  conversationAnnounceText,
   conversationStatusVisible,
   type ConversationArtifactHint,
 } from '@/platform/visual/conversation-motion';
@@ -140,6 +141,30 @@ export function IntelligenceStatus({
     </span>
   );
 }
+
+/** One persistent polite region for operational transitions. Never tokens or amplitude. */
+export function ConversationAnnouncer({
+  operation,
+  artifacts = [],
+  notice = '',
+}: {
+  operation: IntelligenceOperation;
+  artifacts?: ConversationArtifactHint[];
+  notice?: string;
+}) {
+  const operational = conversationAnnounceText(operation, artifacts);
+  const text = notice.trim() || operational;
+  return (
+    <span
+      className="sr-only conversation-announcer"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {text}
+    </span>
+  );
+}
 export function IntelligenceActivity({ operation }: { operation: IntelligenceOperation }) {
   return (
     <div className="im-activity">
@@ -167,7 +192,12 @@ export function IntelligenceResponse({
       data-mode={operation.phase}
       data-operation={operation.id}
     >
-      <LivingSignal operation={operation} still={!moving} surface="conversation" />
+      <LivingSignal
+        operation={operation}
+        still={!moving}
+        surface="conversation"
+        artifacts={artifacts}
+      />
       <div className="im-response-copy">
         <span className="im-response-name">{name}</span>
         {conversationStatusVisible(operation) && (

@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { readCompanyTalk } from '@/domains/companies/service';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import { nextObservedOperation } from '@/platform/visual/conversation-motion';
-import { IntelligenceStatus, IntelligenceResponse } from '../intelligence-motion/presence';
+import {
+  ConversationAnnouncer,
+  IntelligenceStatus,
+  IntelligenceResponse,
+} from '../intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import { companyJobs } from '@/domains/company-work/starters';
 import {
@@ -689,7 +693,10 @@ export function CompanyRoom({
                 <Markdown skipHtml>{partial || 'Preparing the response…'}</Markdown>
               </article>
             )}
-            {!sent && operation.phase !== 'ready' && <IntelligenceStatus operation={operation} />}
+            <ConversationAnnouncer operation={operation} />
+            {!sent && operation.phase !== 'ready' && (
+              <IntelligenceStatus operation={operation} announce={false} />
+            )}
             {error && <p role="alert">{error}</p>}
           </div>
           {away && !showWork && (

@@ -36,7 +36,7 @@
 }
 .app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer):focus-within {
   border-color: var(--io-highlight);
-  box-shadow: 0 0 0 1px var(--io-highlight), inset 0 1px var(--io-reflection);
+  box-shadow: inset 0 1px var(--io-reflection);
 }
 .app-shell.imperial-workspace :is(.button, .secondary-button, .talk-tool):disabled {
   opacity: 0.55;

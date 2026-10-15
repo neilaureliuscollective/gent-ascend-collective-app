@@ -4,23 +4,33 @@ import {
   measuredAudioLevel,
   type IntelligenceOperation,
 } from '@/platform/visual/intelligence-motion';
-import { conversationMotionMode } from '@/platform/visual/conversation-motion';
+import {
+  conversationMotionMode,
+  type ConversationArtifactHint,
+} from '@/platform/visual/conversation-motion';
 import { motionPresentationPhase } from '@/platform/visual/motion-presentation';
 import Image from 'next/image';
 import { brand } from '@/platform/brand';
 import './living-signal.css';
 
-export type LivingSignalSurface = 'conversation' | 'welcome' | 'voice-compact' | 'task';
+export type LivingSignalSurface =
+  | 'conversation'
+  | 'welcome'
+  | 'voice-compact'
+  | 'task'
+  | 'toolbar';
 
 /** Compact official mark plus a real-work filament. Never invents activity. */
 export function LivingSignal({
   operation,
   still,
   surface = 'conversation',
+  artifacts = [],
 }: {
   operation: IntelligenceOperation;
   still: boolean;
   surface?: LivingSignalSurface;
+  artifacts?: ConversationArtifactHint[];
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(true);
@@ -40,7 +50,7 @@ export function LivingSignal({
     };
   }, []);
   const phase = motionPresentationPhase(operation);
-  const mode = conversationMotionMode(operation);
+  const mode = conversationMotionMode(operation, artifacts);
   const measured = still ? 0 : measuredAudioLevel(operation);
   return (
     <span

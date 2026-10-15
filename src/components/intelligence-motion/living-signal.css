@@ -25,6 +25,14 @@
   --im-track: 64px;
   min-height: 36px;
 }
+.im-living-toolbar {
+  --im-track: 0px;
+  min-height: 24px;
+  gap: 0;
+}
+.im-living-toolbar .im-signal-track {
+  display: none;
+}
 .im-living.identity-presence.im-presence > .im-emblem,
 .im-living.identity-presence.im-presence > .im-signal-track {
   position: relative;

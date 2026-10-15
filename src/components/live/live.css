@@ -36,6 +36,23 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+.live-controls-compact {
+  display: grid;
+  gap: 0.45rem;
+}
+.live-control-session,
+.live-control-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.live-compact .live-controls-compact button {
+  min-height: 40px;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: #101413;
+  border-color: #c4912f40;
+}
 .live-controls button,
 .live-consent button {
   min-height: 44px;
@@ -103,7 +120,7 @@
 .talk-toolbar .live-entry-short {
   display: none;
 }
-@media (max-width: 380px) {
+@media (max-width: 600px) {
   .talk-toolbar .live-entry .talk-tool {
     padding-inline: 8px;
     font-size: 12px;

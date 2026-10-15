@@ -155,18 +155,74 @@ test('long replies keep the primary motion visible as the text grows', async ({ 
   await page.screenshot({ path: 'test-results/visible-response-long-768.png', fullPage: true });
 });
 
-test('image artifact events move activity onto a placeholder that is not Ready', async ({
-  page,
-}) => {
+test('image approval waits and running generation creates', async ({ page }) => {
   await page.goto('http://127.0.0.1:3102/motion-integration.html');
   await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic image request');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await page.getByRole('button', { name: 'Emit image artifact' }).click();
+  await page.getByRole('button', { name: 'Emit image approval' }).click();
   const card = page.locator('.talk-creation-card[data-in-flight][data-kind="image"]');
   await expect(card).toBeVisible();
+  await expect(card).toContainText('Queued for your approval');
+  await expect(page.locator('.assistant-message .im-status')).toHaveText(
+    'Waiting for your approval',
+  );
+  await expect(page.locator('.conversation-announcer')).toHaveText('Waiting for your approval');
+  await page.getByRole('button', { name: 'Emit image artifact' }).click();
   await expect(card).toContainText('Creating an image');
   await expect(card).not.toHaveAttribute('data-ready', '');
   await expect(page.locator('.assistant-message .im-status')).toHaveText('Creating an image');
+});
+
+test('Stop terminalizes in-progress artifacts and keeps completed ones', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic cancel artifacts');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit completed image' }).click();
+  await page.getByRole('button', { name: 'Emit image approval' }).click();
+  const ready = page.locator('.talk-creation-card[data-in-flight][data-status="complete"]');
+  const pending = page.locator('.talk-creation-card[data-in-flight][data-status="approval"]');
+  await expect(ready).toBeVisible();
+  await expect(pending).toBeVisible();
+  await page.getByRole('button', { name: 'Stop reply' }).click();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="complete"]')).toBeVisible();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="stopped"]')).toBeVisible();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="complete"]')).toContainText(
+    'Image is ready',
+  );
+  await page.getByRole('button', { name: 'Emit image artifact' }).click();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="stopped"]')).toBeVisible();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="running"]')).toHaveCount(0);
+});
+
+test('failure marks unfinished artifacts uncertain and does not revive them', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic fail artifacts');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit image artifact' }).click();
+  await page.getByRole('button', { name: 'Emit failure' }).click();
+  await expect(page.locator('.talk-creation-card[data-in-flight]')).toHaveAttribute(
+    'data-status',
+    'uncertain',
+  );
+  await expect(page.locator('.talk-creation-card[data-in-flight]')).toContainText(
+    'Image completion is unconfirmed',
+  );
+  await expect(page.locator('.conversation-announcer')).toContainText('Save unconfirmed');
+});
+
+test('one polite announcer follows operational transitions without duplicating inline status', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic announce');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Preparing a reply');
+  await expect(page.locator('.assistant-message .im-status')).toHaveAttribute('aria-live', 'off');
+  await expect(page.locator('.conversation-announcer')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Responding');
+  await page.getByRole('button', { name: 'Emit search event' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Searching the web');
 });
 
 test('confirmed Saved settles to the compact author mark and late search cannot revive it', async ({

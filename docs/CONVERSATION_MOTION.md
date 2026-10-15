@@ -9,7 +9,7 @@ October 15, 2026. Dedicated motion workstream on Talk Elevation. Review branch o
 | Production main | Studio #132 | `804c8770754aced1837e82dffa4a416c24baa595` |
 | Talk foundation | PR #131 `cursor/talk-creative-conversation-5b08` | `ae406d6d0e913cfaf2104958bb508ebf9fe0f944` |
 | Talk Elevation | PR #135 `cursor/talk-elevation-5b08` | `948a9b95f179e7719fb7a3c11904666c33fdfb6d` |
-| This workstream | `cursor/aethelios-conversation-motion-0a11` · PR #139 | `c8493ec2ffd36a2936153ebf78f2bde26e04f524` |
+| This workstream | `cursor/aethelios-conversation-motion-0a11` · PR #139 | continuation after `9c399440cfd8563c6db560926226f3eb00531562` |
 
 Talk remains unmerged. This branch documents the stack and keeps inline voice dock, single transcript, conversation continuity, artifact targeting and release-diagnostic repairs from #131/#135. It does not merge those branches and does not duplicate their implementation.
 
@@ -37,7 +37,8 @@ Gather → articulate → settle, interruptible, scoped by request/operation id.
 - Sending: transport pending only.
 - Preparing a reply / Working: accepted, no richer event yet.
 - Searching the web: real `web_search` activity only.
-- Creating an image: real creation/image event only.
+- Waiting for your approval: image proposal / `approval` only. Generation has not started.
+- Creating an image: image `running` / `generating` only.
 - Responding: first real text replaces waiting copy; the answer is the focus.
 - Saving / Saved / Save unconfirmed remain distinct.
 - Stopping then Stopped. Late events cannot revive a finished or stopping request.
@@ -48,18 +49,31 @@ No fabricated research stages, private reasoning, percentages, typewriter backlo
 
 Conversation and welcome use the compact emblem + recessed graphite track + emerald filament. Expanded Live keeps the existing large guiding presence. Compact voice uses the same filament language at 88–120px. Work/Studio task strips keep the compact guiding mark.
 
-The composer owns Send/Stop. Duplicate waiting banners and footer activity copy are removed. Artifact placeholders receive the emerald edge when their operation starts; Ready only when the object is accessible.
+The composer owns Send/Stop. Duplicate waiting banners and footer activity copy are removed. Artifact placeholders receive the emerald edge when their operation starts; Ready only when the object is accessible. Stop, failure and unconfirmed save terminalize in-progress placeholders as stopped / failed / uncertain and leave completed artifacts alone. Late events from an older or already-terminal request cannot restart them.
 
-## Verification (this workstream)
+One `ConversationAnnouncer` (`role=status`, polite) speaks operational transitions. Inline response status stays `aria-live=off`. Company Room no longer drops its announcer while a sent request is active. Tokens, amplitude samples and animation frames are not announced.
+
+Header identity uses the same official gold-A at 24 CSS px (`LivingSignal` toolbar). There is still no dedicated 24px conversation crop; the 192px official file remains the honest fallback. The application icon is unchanged. Narrow Talk hides the conversation subtitle before the Aethelios title. Composer focus is on the rounded shell, not a white inner textarea rectangle. Compact Live controls are shown from microphone / playback / session state.
+
+## Continuation (after `9c39944`)
+
+Keeps the compact 24px A, filament, removed sticky banner, audio CSS wiring, Still/reduced-motion and offscreen pause. Fixes three verified gaps: artifact terminalization, approval ≠ creating, and one polite announcer. Visual cohesion uses the official A in the Talk header, quieter outlines, shell-owned composer focus, and state-derived voice controls.
+
+## Verification (this continuation)
 
 - `tsc --noEmit` pass
 - eslint on touched TS/TSX pass
-- `vitest run` 1089 pass
-- `playwright.motion.config.ts` 26/26 pass
-- Fixture `fluid-conversation` cases 15/15 pass. The VisualViewport `/app/aethelios` case needs the Next app server and was not run here.
-- Production `next build`, hosted Auth, physical Fold and paid Live were not run.
+- `vitest run` conversation/motion units 18/18
+- `playwright.motion.config.ts` integration including approval, cancel/partial, failure, announcer 19/19 after the announcer assertion was aligned with sticky search
+- Labeled fixture demo clips (VP8 webm, ffprobe playable):
+  - `motion-text-tool-activity.webm` 5.4s
+  - `motion-artifact-approval-cancellation.webm` 5.2s
+  - `motion-voice-states.webm` 7.5s
+  - `motion-keyboard-fold-layout.webm` 5.3s
+- Actual Next `/app/aethelios` 200 on local `:3100` (signed-out / disconnected workspace). Header uses the official 24px A; 390px keeps the full Aethelios title by shortening Live first; composer focus is the rounded shell. No local Auth session, so send/stream was not exercised on this route.
+- Production `next build`, hosted Auth, physical Fold, paid Live and live microphone were not run.
 
-Synthetic acknowledgement-render 10.6ms and first-render 85ms on the local fixture. No animation delay on submit. Labeled demo clips: `playwright.demo.config.ts`.
+Synthetic fixture sequences are labeled and are not live provider proof.
 
 ## Limits
 
