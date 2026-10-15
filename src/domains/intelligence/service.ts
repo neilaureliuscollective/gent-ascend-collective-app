@@ -16,7 +16,12 @@ import { resolveNextMove } from '@/domains/command/next-move';
 import { capabilityContext } from './capabilities';
 import { selectedArtifactContext } from '@/domains/artifacts/context-service';
 import { selectConfirmedMemories } from './memory-retrieval';
-import { catalogConnectionRequirement, loadProductKnowledge } from './product-knowledge';
+import {
+  catalogConnectionRequirement,
+  conversationCueText,
+  loadProductKnowledge,
+} from './product-knowledge';
+import { selectPlaybooks } from './playbooks';
 import { getProduct } from '@/domains/commerce/shopify';
 import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 export class IntelligenceError extends Error {
@@ -665,15 +670,24 @@ export async function prepareReply(
   let artifactContext = '';
   let productKnowledge: Awaited<ReturnType<typeof loadProductKnowledge>> = null;
   try {
-    [history, context, productKnowledge] = await Promise.all([
-      conversationTurns(input.conversationId, undefined, company?.id),
+    history = await conversationTurns(input.conversationId, undefined, company?.id);
+    const priorText = conversationCueText(history);
+    [context, productKnowledge] = await Promise.all([
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
-      loadProductKnowledge(input.text, {
-        catalog: readLifestyleCatalog,
-        detail: getProduct,
-      }).catch(() => ({
+      loadProductKnowledge(
+        input.text,
+        {
+          catalog: readLifestyleCatalog,
+          detail: getProduct,
+        },
+        { priorText },
+      ).catch(() => ({
         retrievedAt: new Date().toISOString(),
         status: 'error' as const,
+        freshness: 'unknown' as const,
+        mode: 'detail' as const,
+        catalogMaxAgeSeconds: 300 as const,
+        catalogFetchedAt: null,
         connectionRequirement: catalogConnectionRequirement('error'),
         records: [],
       })),
@@ -704,7 +718,11 @@ export async function prepareReply(
     threadSummary,
     company ? null : capabilityContext(input.text),
     company,
-    { productKnowledge },
+    {
+      productKnowledge,
+      playbooks: company ? [] : selectPlaybooks(input.text, capabilityContext(input.text)?.id),
+      channel: 'text',
+    },
   );
   if (artifactContext)
     messages.splice(Math.max(0, messages.length - 1), 0, {

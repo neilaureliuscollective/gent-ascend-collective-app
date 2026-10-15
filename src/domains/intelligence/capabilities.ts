@@ -56,9 +56,9 @@ const routes: CapabilityRoute[] = [
     label: 'Lifestyle',
     href: '/app/lifestyle',
     description:
-      'Aethelios Lifestyle products. Price and availability come from the live catalog when connected.',
+      'Aethelios Lifestyle products. Price and availability come from request-time catalog records when connected; cached list figures are not freshly verified stock.',
     instruction:
-      'Treat this as a Lifestyle product question. Use only supplied catalog records with source IDs, URL, retrieval time and missing-data status. Never infer formula, dosage, efficacy, size, stock or manufacturing from a name, image or vendor string. Missing facts stay unknown. This is not a sales pitch unless the person asked about products.',
+      'Treat this as a Lifestyle product question. Use only supplied catalog records with source IDs, URL, freshness, retrieval time and missing-data status. Bind price, currency, id and availability to the same variant. Cached catalog summaries are not live stock. Never infer formula, dosage, efficacy, size, stock or manufacturing from a name, image or vendor string. Missing facts stay unknown. This is not a sales pitch unless the person asked about products.',
   },
   {
     id: 'health',
