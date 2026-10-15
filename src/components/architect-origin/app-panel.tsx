@@ -282,6 +282,8 @@ export function ArchitectAppPanel({
     stage: workbench.stage,
     retained: retainedPreview,
     uncertain: saveState === 'failed' || saveState === 'conflict',
+    recovered: Boolean(recovered && workbench.stage === 'idle'),
+    recoveredRevision: recovered?.revision,
   });
   useEffect(() => {
     knownInspectIds.current = targets.map((row) => row.id);
@@ -341,6 +343,8 @@ export function ArchitectAppPanel({
       });
       setProposal(next);
       setPanel('Changes');
+      setRefineOpen(false);
+      setAppSheet('side');
       setMessage('Reviewed files are shown before approval. Accepting a revision is not publishing.');
     } catch (reason) {
       setError(describeAppFailure(reason));
@@ -519,9 +523,8 @@ export function ArchitectAppPanel({
               type="button"
               aria-pressed={appSheet === 'side'}
               onClick={() => {
-                const next = appSheet === 'side' ? 'stage' : 'side';
-                setAppSheet(next);
-                if (next !== 'refine') setRefineOpen(false);
+                setAppSheet(appSheet === 'side' ? 'stage' : 'side');
+                setRefineOpen(false);
               }}
             >
               Details
@@ -772,10 +775,10 @@ export function ArchitectAppPanel({
         className={`architect-app-refine${refineOpen ? ' is-open' : ''}`}
         hidden={!refineOpen}
         role="region"
-        aria-label="Application change request"
+        aria-label="Application change draft"
       >
         <button type="button" className="architect-app-refine-toggle" onClick={() => setChangeRequest(false)}>
-          Close change request
+          Close change draft
         </button>
         <form
           onSubmit={(event) => {
@@ -783,16 +786,15 @@ export function ArchitectAppPanel({
             void propose();
           }}
         >
-          <label>
-            Request
-            <textarea
-              ref={requestField}
-              value={draft}
-              onChange={(event) => setDraft(event.currentTarget.value)}
-              maxLength={2000}
-              disabled={busy || locked || latestJob?.status === 'running'}
-            />
-          </label>
+          <label htmlFor="architect-app-change-draft">Request</label>
+          <textarea
+            id="architect-app-change-draft"
+            ref={requestField}
+            value={draft}
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            maxLength={2000}
+            disabled={busy || locked || latestJob?.status === 'running'}
+          />
           <p>Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
           <button
             className="button"

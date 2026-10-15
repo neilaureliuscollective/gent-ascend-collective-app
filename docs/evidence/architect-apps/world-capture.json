@@ -1,21 +1,22 @@
 {
   "schema": "architect-world-capture/v1",
-  "capturedAt": "2026-10-15T10:00:42.613Z",
+  "capturedAt": "2026-10-15T10:15:45.513Z",
   "kind": "labelled-compiled-fixture",
-  "compiledRequired": true,
-  "label": "Compiled-evidence run from docs/evidence/architect-apps/compiled-preview.html. Local fixture, not hosted production.",
+  "compiledRequired": false,
+  "compiledArtifactPresent": true,
+  "label": "Local Vite fixture using compiled-preview.html. Not a commissioned or paid build.",
   "timings": [
     {
       "name": "arrival-heading",
-      "ms": 1269
+      "ms": 1195
     },
     {
       "name": "idea-input",
-      "ms": 29
+      "ms": 20
     },
     {
       "name": "path-open",
-      "ms": 73
+      "ms": 64
     }
   ],
   "overflow": {

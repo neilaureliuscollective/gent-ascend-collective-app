@@ -144,4 +144,7 @@ it('derives workbench stages from real job, preview and save acknowledgments', (
   expect(compactAppStatus({ stage: 'cancelled', retained: true })).toBe('Cancelled · last good preview kept');
   expect(compactAppStatus({ stage: 'conflict' })).toBe('Uncertain');
   expect(compactAppStatus({ stage: 'preview-ready' })).toBe('Preview ready');
+  expect(compactAppStatus({ stage: 'idle', recovered: true, recoveredRevision: 1 })).toBe(
+    'Approved revision 1 recovered',
+  );
 });

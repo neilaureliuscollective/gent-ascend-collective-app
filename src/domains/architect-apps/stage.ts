@@ -53,6 +53,8 @@ export function compactAppStatus(input: {
   stage: AppWorkbenchStage;
   retained?: boolean;
   uncertain?: boolean;
+  recovered?: boolean;
+  recoveredRevision?: number;
 }) {
   if (input.stage === 'preparing' || input.stage === 'building' || input.stage === 'checking') return 'Building';
   if (input.stage === 'saving') return 'Saving';
@@ -63,5 +65,9 @@ export function compactAppStatus(input: {
   if (input.stage === 'cancelled') return 'Cancelled';
   if (input.stage === 'preview-ready') return 'Preview ready';
   if (input.stage === 'saved') return 'Saved';
+  if (input.recovered)
+    return input.recoveredRevision
+      ? `Approved revision ${input.recoveredRevision} recovered`
+      : 'Approved revision recovered';
   return 'Waiting';
 }

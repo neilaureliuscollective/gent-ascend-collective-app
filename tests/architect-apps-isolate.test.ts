@@ -10,6 +10,7 @@ import {
   assertSafeAppsDockerArgs,
   buildIsolatedGeneratedApp,
   collectArtifactTree,
+  confirmNamedAppsContainerGone,
   defaultAppsImage,
   isolatedArtifactCollectorModule,
   parseAppsContainerResult,
@@ -40,6 +41,7 @@ it('builds a non-root isolated Docker invocation without host credentials or soc
   expect(invocation.args).toContain('--network');
   expect(invocation.args[invocation.args.indexOf('--network') + 1]).toBe('none');
   expect(invocation.args[invocation.args.indexOf('--user') + 1]).toBe(appsNobody);
+  expect(invocation.args).toContain('--rm');
   expect(invocation.args.join(' ')).not.toMatch(/docker\.sock|privileged|OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY/);
   expect(() => assertSafeAppsDockerArgs(invocation.args)).not.toThrow();
   expect(() =>
@@ -173,6 +175,23 @@ it('confirms named container teardown after cancel', async () => {
   expect(closed.confirmed).toBe(true);
   expect(commands[0]?.[0]).toBe('rm');
   expect(commands[1]?.[0]).toBe('inspect');
+});
+
+it('retries late-created timeout leftovers until inspect confirms the named container is gone', async () => {
+  let inspectCount = 0;
+  const closed = await confirmNamedAppsContainerGone(
+    'apps-required-timeout',
+    async (_file, args) => {
+      if (args[0] === 'rm') return { stdout: '' };
+      inspectCount += 1;
+      if (inspectCount < 3) return { stdout: '/apps-required-timeout false' };
+      throw new Error('Error: No such container: apps-required-timeout');
+    },
+    { PATH: '/usr/bin' },
+    { attempts: 4, delayMs: 1 },
+  );
+  expect(closed.confirmed).toBe(true);
+  expect(inspectCount).toBeGreaterThanOrEqual(3);
 });
 
 it('builds the pinned image and runs the isolated Field Notes compile when isolation is required', async () => {

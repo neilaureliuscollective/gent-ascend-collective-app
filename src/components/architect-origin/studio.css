@@ -44,19 +44,22 @@
   isolation: isolate;
 }
 .environment-main .origin-studio:not(.origin-active) {
+  background-color: #080a09;
   background-image:
-    linear-gradient(180deg, #080a0980 0%, #080a09c2 52%, #050706 100%),
-    url('/media/world/threshold-chamber.webp');
+    linear-gradient(180deg, #080a0926 0%, #080a0966 46%, #050706d6 100%),
+    radial-gradient(ellipse 70% 46% at 16% 0%, #c4912f2e, transparent 46%),
+    radial-gradient(ellipse 80% 50% at 86% 8%, #245b4833, transparent 52%),
+    image-set(url('/media/world/threshold-chamber.webp') type('image/webp'));
   background-size: cover;
-  background-position: 46% 18%;
+  background-position: 46% 22%;
 }
 @media (max-width: 720px) {
   .environment-main .origin-studio:not(.origin-active) {
     background-image:
-      linear-gradient(180deg, #080a09b3 0%, #080a09e0 50%, #050706 100%),
-      url('/media/world/threshold-chamber-mobile.webp');
+      linear-gradient(180deg, #080a0933 0%, #080a0980 48%, #050706e6 100%),
+      image-set(url('/media/world/threshold-chamber-mobile.webp') type('image/webp'));
     background-size: cover;
-    background-position: 50% 20%;
+    background-position: 50% 22%;
   }
 }
 .origin-studio::before {
@@ -230,6 +233,34 @@
   overflow: hidden;
   margin-bottom: 12px;
   box-shadow: inset 0 1px 0 #fff3, inset 0 -18px 28px #0008;
+}
+.origin-choice[data-discipline='business'] .origin-choice-stage {
+  background-image:
+    linear-gradient(180deg, #080a0926, #05070673),
+    image-set(url('/media/world/reserve-consultation.webp') type('image/webp'));
+  background-size: cover;
+  background-position: 50% 28%;
+}
+.origin-choice[data-discipline='application'] .origin-choice-stage {
+  background-image:
+    linear-gradient(180deg, #080a0926, #05070673),
+    image-set(url('/media/world/observatory.webp') type('image/webp'));
+  background-size: cover;
+  background-position: 50% 36%;
+}
+.origin-choice[data-discipline='product'] .origin-choice-stage {
+  background-image:
+    linear-gradient(180deg, #080a0926, #05070673),
+    image-set(url('/media/world/gallery.webp') type('image/webp'));
+  background-size: cover;
+  background-position: 50% 40%;
+}
+.origin-choice[data-discipline='custom'] .origin-choice-stage {
+  background-image:
+    linear-gradient(180deg, #080a0926, #05070673),
+    image-set(url('/media/world/obsidian-wash.webp') type('image/webp'));
+  background-size: cover;
+  background-position: 50% 30%;
 }
 
 .origin-choice-art {
@@ -884,6 +915,10 @@
   color: var(--studio-muted, #b9bebb);
 }
 
+.architect-app-refine form {
+  display: grid;
+  gap: 8px;
+}
 .architect-app-refine textarea {
   width: 100%;
   min-height: 72px;
@@ -1242,6 +1277,15 @@
 }
 .origin-entry[data-world-state='arrival'] .origin-composer > :not(textarea):not(.origin-composer-tools):not(label[for='origin-idea']) {
   display: none;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) {
+  flex-wrap: wrap;
+  border-radius: 18px !important;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) > label[for='origin-name'],
+.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) > #origin-name {
+  display: block;
+  width: 100%;
 }
 .origin-entry[data-world-state='arrival'] .origin-composer-tools > :not(.origin-shape) {
   display: none;

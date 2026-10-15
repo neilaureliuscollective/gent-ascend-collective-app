@@ -168,9 +168,19 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   const projectUrl = page.url();
   await page.getByRole('button', { name: 'App', exact: true }).click();
   await expect(page.getByRole('heading', { name: /No application yet|Revision/ })).toBeVisible();
-  await page.getByLabel('Request').fill('Create field notes I can save.');
-  await expect(page.getByRole('button', { name: 'Review proposed files' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Review proposed files' }).click();
+  const changeDraft = page.getByRole('region', { name: 'Application change draft' });
+  const requestField = changeDraft.getByRole('textbox', { name: 'Request', exact: true });
+  await page.getByRole('button', { name: 'Request a change' }).click();
+  await expect(changeDraft).toBeVisible();
+  await expect(requestField).toHaveCount(1);
+  await expect(requestField).toBeFocused();
+  await requestField.fill('Create field notes I can save.');
+  await changeDraft.getByRole('button', { name: 'Close change draft' }).click();
+  await expect(page.getByRole('button', { name: 'Request a change' })).toBeFocused();
+  await page.getByRole('button', { name: 'Request a change' }).click();
+  await expect(requestField).toHaveValue('Create field notes I can save.');
+  await expect(changeDraft.getByRole('button', { name: 'Review proposed files' })).toBeEnabled();
+  await changeDraft.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await expect(page.locator('code', { hasText: 'src/pages/Board.tsx' })).toHaveCount(0);
   await expect(page.getByText('Reviewed files are shown before approval.')).toBeVisible();
@@ -264,12 +274,11 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
-  const changeRequest = page.getByRole('region', { name: 'Application change request' });
   await page.getByRole('button', { name: 'Request a change' }).click();
-  await expect(changeRequest).toBeVisible();
-  await expect(changeRequest.getByLabel('Request')).toBeFocused();
-  await changeRequest.getByLabel('Request').fill('Add an optional tag for office or field notes.');
-  await changeRequest.getByRole('button', { name: 'Review proposed files' }).click();
+  await expect(changeDraft).toBeVisible();
+  await expect(requestField).toBeFocused();
+  await requestField.fill('Add an optional tag for office or field notes.');
+  await changeDraft.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 2 accepted/)).toBeVisible();
@@ -284,12 +293,11 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible();
 
-  if (!(await changeRequest.getByLabel('Request').isVisible())) {
-    await page.getByRole('button', { name: 'Request a change' }).click();
-  }
-  await expect(changeRequest).toBeVisible();
-  await changeRequest.getByLabel('Request').fill('Break the isolated typecheck so the last good preview stays.');
-  await changeRequest.getByRole('button', { name: 'Review proposed files' }).click();
+  await page.getByRole('button', { name: 'Request a change' }).click();
+  await expect(changeDraft).toBeVisible();
+  await expect(requestField).toBeFocused();
+  await requestField.fill('Break the isolated typecheck so the last good preview stays.');
+  await changeDraft.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 3 accepted/)).toBeVisible();

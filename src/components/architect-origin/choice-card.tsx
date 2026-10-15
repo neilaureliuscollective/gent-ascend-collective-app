@@ -44,6 +44,7 @@ export function ChoiceCard({
     <button
       type="button"
       className="origin-choice"
+      data-discipline={discipline}
       aria-pressed={selected}
       data-bplus-surface={selected ? 'selection' : undefined}
       onClick={onSelect}

@@ -110,6 +110,7 @@ export function appsDockerInvocation(
   ];
   if (mounts.jobFile) args.push('-v', `${mounts.jobFile}:/opt/apps-job.json:ro`);
   if (mounts.outDir) args.push('-v', `${mounts.outDir}:/out:rw`);
+  args.push('--rm');
   if (mounts.name) args.push('--name', mounts.name);
   args.push('-w', '/work', image, 'node', '/opt/apps-runner.mjs');
   return { command: 'docker', args };
@@ -271,6 +272,29 @@ export async function removeNamedAppsContainer(
     const gone = /no such container|not found/i.test(message) || (error as NodeJS.ErrnoException).code === 'ENOENT';
     return { removed: true, confirmed: gone, inspect: message };
   }
+}
+
+export async function confirmNamedAppsContainerGone(
+  name: string,
+  exec: AppsDockerExec = (file, args, options) => execFileAsync(file, args, options),
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+  options: { attempts?: number; delayMs?: number } = {},
+): Promise<{ removed: boolean; confirmed: boolean; inspect: string }> {
+  const attempts = options.attempts ?? 8;
+  const delayMs = options.delayMs ?? 100;
+  let last = { removed: false, confirmed: false, inspect: '' };
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    last = await removeNamedAppsContainer(name, exec, env);
+    if (last.confirmed) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      const again = await removeNamedAppsContainer(name, exec, env);
+      if (again.confirmed) return again;
+      last = again;
+      continue;
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  return last;
 }
 
 export const trustedAppsContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -443,7 +467,7 @@ export async function buildIsolatedGeneratedApp(
     const invocation = appsDockerInvocation(join(work, 'src-tree'), runnerFile, image, { jobFile, name });
     assertSafeAppsDockerArgs(invocation.args);
     const exec = options.exec ?? ((file, args, execOptions) => execFileAsync(file, args, execOptions));
-    const teardown = async () => removeNamedAppsContainer(name, exec, env);
+    const teardown = async () => confirmNamedAppsContainerGone(name, exec, env);
     let stdout = '';
     let stderr = '';
     try {
@@ -502,8 +526,9 @@ export async function buildIsolatedGeneratedApp(
           });
           const timer = setTimeout(() => {
             child.kill('SIGKILL');
-            void teardown();
-            finish({ stdout, stderr: `${stderr}\nIsolated build timed out.`, code: 1 });
+            void teardown().finally(() => {
+              finish({ stdout, stderr: `${stderr}\nIsolated build timed out.`, code: 1 });
+            });
           }, timeoutMs);
           child.on('error', (error: Error) => {
             clearTimeout(timer);

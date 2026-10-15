@@ -290,16 +290,18 @@ await reducedPage.getByRole('heading', { name: 'What will you create?' }).waitFo
 await shot(reducedPage, 'world-arrival-1440-reduced');
 await reduced.close();
 
+const usedCompiled = compiledEvidence || existsSync('docs/evidence/architect-apps/compiled-preview.html');
 const receipt = {
   schema: 'architect-world-capture/v1',
   capturedAt: new Date().toISOString(),
-  kind: compiledEvidence || existsSync('docs/evidence/architect-apps/compiled-preview.html')
-    ? 'labelled-compiled-fixture'
-    : 'labelled-visual-fixture',
+  kind: usedCompiled ? 'labelled-compiled-fixture' : 'labelled-visual-fixture',
   compiledRequired: compiledEvidence,
+  compiledArtifactPresent: existsSync('docs/evidence/architect-apps/compiled-preview.html'),
   label: compiledEvidence
     ? 'Compiled-evidence run from docs/evidence/architect-apps/compiled-preview.html. Local fixture, not hosted production.'
-    : 'Local Vite fixture evidence. Not a commissioned or paid build.',
+    : usedCompiled
+      ? 'Local Vite fixture using compiled-preview.html. Not a commissioned or paid build.'
+      : 'Local Vite fixture evidence. Not a commissioned or paid build.',
   timings,
   overflow,
   previewHeights,
