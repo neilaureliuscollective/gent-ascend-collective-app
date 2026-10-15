@@ -970,6 +970,15 @@ describe('Aethelios private records and generation limits', () => {
         )
       ).rows[0]?.ai_delete_memory,
     ).toBe(true);
+    expect((await asUser(founder, 'select * from public.ai_memories')).rows).toHaveLength(0);
+    expect(
+      (
+        await asUser(
+          founder,
+          "select * from public.ai_memories where content ilike '%Prefer%' or content ilike '%direct%'",
+        )
+      ).rows,
+    ).toHaveLength(0);
   });
   it('expires abandoned requests and prevents old completion from overwriting', async () => {
     const abandoned = '40000000-0000-4000-8000-000000000010';

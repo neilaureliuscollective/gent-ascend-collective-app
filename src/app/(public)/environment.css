@@ -217,7 +217,7 @@
 }
 .world-wordmark img,
 .brand-seal {
-  border-radius: 50%;
+  border-radius: 0;
 }
 @media (min-width: 601px) and (max-width: 1100px) {
   .estate-intelligence .estate-scene-copy {

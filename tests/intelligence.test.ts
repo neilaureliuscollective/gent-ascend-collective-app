@@ -33,24 +33,23 @@ const turn = { id: 'request', assistant_text: 'Hello', status: 'complete' } as T
 const consume = (stream: ReadableStream<Uint8Array>) => new Response(stream).text();
 describe('Aethelios context boundaries', () => {
   it('supplies only reviewed public facts independently of optional personal context', () => {
-    expect(publishedKnowledge.schemaVersion).toBe(1);
-    expect(publishedKnowledge.facts.map((fact) => fact.id)).toEqual([
-      'brand.identity',
-      'brand.intelligence',
-      'brand.legacy-reserve',
-    ]);
+    expect(publishedKnowledge.schemaVersion).toBe(2);
+    expect(publishedKnowledge.facts.map((fact) => fact.id)).toContain('identity.platform');
+    expect(publishedKnowledge.facts.map((fact) => fact.id)).toContain('brand.identity');
     const publicOnly = buildMessages([], 'Who is Aethelios?', null);
     expect(publicOnly[0]?.content).toContain(publishedKnowledgeContext());
     expect(JSON.stringify(publicOnly)).not.toContain(context.memories[0]?.content);
     expect(publishedKnowledgeContext()).not.toMatch(/github|repository|secret|medical history/i);
   });
-  it('establishes company intelligence without impersonating the human founder', () => {
-    expect(aureliusInstructions).toContain('You are Aethelios — company-building intelligence');
+  it('establishes Human Ascendance intelligence without impersonating the human founder', () => {
+    expect(aureliusInstructions).toContain(
+      'You are Aethelios — the unified technology and lifestyle intelligence',
+    );
     expect(aureliusInstructions).toContain('You are AI, not a human founder');
     expect(aureliusInstructions).toContain('Never invent the founder');
     expect(aureliusInstructions).toContain('never dependency on you');
     expect(aureliusInstructions).toContain(
-      'Legacy Reserve is the separate physical-world and consumer-commerce company',
+      'Legacy Reserve is retired as the current customer-facing product brand',
     );
     expect(aureliusInstructions).not.toMatch(/aurelius|aethelos/i);
   });

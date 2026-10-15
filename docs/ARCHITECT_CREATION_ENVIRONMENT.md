@@ -23,3 +23,5 @@ No global navigation/shell files, Talk, Motion, Studio, Knowledge, hosted config
 ## Remaining activation boundary
 
 Finish exact-head CI and inspect its connected screenshots/video first. Founder review and separate authorization for hosted schema/configuration/execution/spend remain necessary. CI is not launch approval. No dedicated illustration plates or purchased assets were needed for this code-native direction.
+
+Released-main reconciliation: main `e2f6283` is included in the PR branch. The only conflicts were independent additions to `docs/STATUS.md` and `docs/DECISIONS.md`; both histories were retained. Released Knowledge and Human Ascendance logo changes remain intact. No merge into main or production action was performed.

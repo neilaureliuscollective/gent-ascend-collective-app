@@ -73,6 +73,27 @@ Record estimator invocations only through a session-authenticated function that 
 # Architect quantity-and-cost estimator — 2026-10-14
 
 Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+# Aethelios current knowledge production — 2026-10-15
+
+Founder authorized merge of PR #141 onto main and deploy through the existing Vercel Git production pipeline. Merge `bbda46f` (parents `af29723` Human Ascendance logo + `5488060` knowledge). Production `dpl_Dq6DwWY2sPfbtxLsr2CnY6qAZ7oR` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify write or paid model call. Talk #131 creation remains unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios conversational knowledge reliability — 2026-10-15
+
+Current user product and variant selections outrank older mentions. Variant identity requires a unique match across normalized option dimensions. Voice can look up the same read-only catalog after admission through `lookup_lifestyle_catalog` (function_call_output, no instruction rewrite, no speech interrupt). Playbooks follow current intent. Multi-turn deterministic scenarios are separate from unpaid model eval and human voice-naturalness review. Talk #131 `budgetLiveSeed` and creation tools stay unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios conversational character and trustworthy context — 2026-10-15
+
+Keep edition `2026-10-15.human-ascendance.1`. Add a concise shared `behaviorContract` on text and voice composition paths, load at most two relevant domain playbooks per turn, and adapt delivery (short spoken open vs structured text) without changing Talk transport or Motion. Failed product-detail fetches stay `stale-catalog-fallback` with unknown catalog age beyond 300s; variant price/id/availability stay bound together. Voice Live copies Talk #131 `budgetLiveSeed` identically rather than merging Talk creation. Forgetting is a deleted owner row, not a changed retrieval query. Optional model-quality eval is local and unpaid unless approved. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md) and [evals/aethelios-behavior.md](../evals/aethelios-behavior.md).
+
+# Aethelios current knowledge — 2026-10-15
+
+Replace the hardcoded 2026-10-06 company-platform identity with a typed published-knowledge contract (stable IDs, scope, source, dates, status, supersedes). Current facts describe AETHELIOS — The Human Ascendance; planned Agency/pricing stay labeled planned; superseded company-building / separate-Legacy-Reserve / Ascend Architects rows remain as history and are not injected. Composition is shared through `buildMessages` for Talk, Live and council. Health does not import this graph. Product intelligence reuses existing Storefront readers only. Founder authority remains `founder_access`. No billing, Shopify Admin, hosted migration or production merge. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios Human Ascendance in-app logo — 2026-10-15
+
+Place the founder-supplied Human Ascendance lockup in the application. Keep the 2026-10-15 gold-A install/PWA/Apple/browser icon. Compact chrome uses a lettering-free crest; identity moments use the full lockup with AETHELIOS / THE HUMAN ASCENDANCE. No circular crop. Open Graph uses the same artwork. Evidence: [HUMAN_ASCENDANCE_LOGO.md](HUMAN_ASCENDANCE_LOGO.md).
+
+Official references checked 2026-10-15: installed Next 16.3.5 App Router `Image` and `opengraph-image` file conventions; W3C C39 reduced-motion (no new motion added).
 
 # Aethelios Studio renderer/editor pipeline — 2026-10-15
 

@@ -50,8 +50,8 @@ export function PersonalCommand({
         <div className="hero-emblem">
           <div className="emblem-halo" />
           <Image
-            src={brand.crest}
-            alt={brand.crestAlt}
+            src={brand.lockup}
+            alt={brand.lockupAlt}
             width={1254}
             height={1254}
             sizes="(max-width: 600px) 160px, (max-width: 1100px) 260px, 370px"

@@ -28,9 +28,14 @@ vi.mock('@/domains/intelligence/service', () => ({
 vi.mock('@/domains/intelligence/prompt', () => ({
   aureliusInstructions: 'Synthetic instructions',
   sharedCharacter: 'Synthetic character',
+  voiceDelivery: 'VOICE DELIVERY: Begin with one useful thought.',
   buildMessages: (turns: unknown[], _text: string, context: unknown) => [
     { role: 'user', content: JSON.stringify({ turns, context }) },
   ],
+}));
+vi.mock('@/domains/commerce/shopify', () => ({ getProduct: async () => null }));
+vi.mock('@/domains/commerce/lifestyle-catalog', () => ({
+  readLifestyleCatalog: async () => ({ products: [], status: 'unconfigured' }),
 }));
 vi.mock('@/domains/artifacts/service', () => ({
   readArtifacts: async () => ({ artifacts: [], selectedId: null, projects: [] }),

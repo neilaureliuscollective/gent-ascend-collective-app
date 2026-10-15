@@ -207,8 +207,9 @@
 }
 .gw-crest-flight {
   position: absolute;
-  left: calc(50% - 130px);
-  top: calc(50% - 130px);
+  left: calc(50% - 160px);
+  top: calc(50% - 160px);
+  width: 320px;
   pointer-events: none;
   opacity: 0;
   z-index: 2;
@@ -866,7 +867,7 @@ html:has(.gent-world) {
   background: radial-gradient( ellipse, #c4912f35 0%, color-mix(in srgb, var(--aether-silver) 37.65%, transparent) 22%, color-mix(in srgb, var(--aether-petrol) 37.65%, transparent) 45%, transparent 70% );
 }
 .gw-arrival-sweep {
-  mask-image: url('/brand/gent-ascend-full-20261003.webp');
+  mask-image: url('/brand/aethelios-human-ascendance-20261015-lockup.webp');
   mask-mode: alpha;
   mask-size: 100% 100%;
   position: absolute;
@@ -877,7 +878,7 @@ html:has(.gent-world) {
 }
 .gw-arrival-name {
   position: absolute;
-  top: calc(50% + 140px);
+  top: calc(50% + 176px);
   left: 16px;
   right: 16px;
   z-index: 2;
@@ -906,7 +907,7 @@ html:has(.gent-world) {
 }
 @media (max-height: 620px) {
   .gw-arrival-name {
-    top: calc(50% + 115px);
+    top: calc(50% + 150px);
   }
   .gw-arrival-name p {
     display: none;

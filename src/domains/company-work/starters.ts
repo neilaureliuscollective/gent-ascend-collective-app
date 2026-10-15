@@ -40,7 +40,7 @@ export const companyJobs = [
     title: 'Scope a client engagement',
     detail: 'Define what the client receives and what success means.',
     draft:
-      'Help me scope an Ascend Architects engagement delivered using Aethelios. Ask for the client company, problem, desired outcome, budget range, constraints and available evidence. Prepare a discovery brief, bounded scope, deliverables, exclusions, timeline assumptions, revision allowance, acceptance criteria and proposed payment milestones. Keep internal delivery costs and margins in a separate internal section; do not put them in client-facing copy. No proposal is sent, engagement created or price finalized through this draft.',
+      'Help me scope a software-assisted client engagement using Aethelios. This is planning inside Aethelios, not a human-service Partnership and not a promise that Neil will personally build a website. Ask for the client company, problem, desired outcome, budget range, constraints and available evidence. Prepare a discovery brief, bounded scope, deliverables, exclusions, timeline assumptions, revision allowance, acceptance criteria and proposed payment milestones. Keep internal delivery costs and margins in a separate internal section; do not put them in client-facing copy. No proposal is sent, engagement created or price finalized through this draft.',
   },
   {
     id: 'investor-deck',
