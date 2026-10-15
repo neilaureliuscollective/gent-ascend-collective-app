@@ -33,7 +33,7 @@ async function reportWorkerPresence(
   evidence: Awaited<ReturnType<typeof gatherEvidence>>,
 ) {
   try {
-    const connection = supabaseConnection();
+    const connection = supabaseConnection(process.env);
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
     const digest = evidence.observedDigest ?? parseAppsImageDigest(process.env.ARCHITECT_APPS_IMAGE_DIGEST);
     if (!connection || !serviceKey || !digest || !health.workerId) return false;
