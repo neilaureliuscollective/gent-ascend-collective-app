@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 # Talk integrated release — 2026-10-15
 
 One selected-work resolver owns the composer chip, opened artifact, text `workTarget` and voice prefix. Conversation change, New, account change and opening another item clear or rebind the field; stale/foreign targets ask instead of rewriting another item. Ordinary text uses `talkComposerSendRoute`: only listening/speaking go through voice; connecting holds the draft; ended/error/cleanup stay text. Untrusted `ai_live_observe_trusted_item` stops the session; a saved turn row is not a bind receipt. Talk keeps published `20261015180000_talk_live_trusted_observe.sql` / `20261015190000_talk_live_bind_intended_turn.sql`. Health #136 must renumber its colliding `20261015180000_health_workspace.sql`. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` stays unset. No main merge, hosted apply or paid provider call.
+=======
+# Official Aethelios install icon — 2026-10-15
+
+Founder supplied the approved gold-A / star / Earth application icon and authorized production installation replacement. Keep the existing Next App Router metadata files, stable manifest `id` `/`, `scope` `/` and `start_url` `/app`. Version the new PNG URLs, redirect previous install paths, and bump only the static fallback cache. Standard and maskable assets stay distinct; maskable gold art stays inside the W3C 80% safe circle. No in-app crest, account, entitlement or routing change.
+
+Official references checked 2026-10-15: [W3C icon masks](https://www.w3.org/TR/appmanifest/#icon-masks), [Chrome web app updates](https://developer.chrome.com/blog/improvements-to-web-app-updates), installed Next 16.3.5 app-icons/manifest file conventions.
+>>>>>>> cursor/talk-creative-conversation-5b08
 
 # Talk creative conversation — 2026-10-14
 

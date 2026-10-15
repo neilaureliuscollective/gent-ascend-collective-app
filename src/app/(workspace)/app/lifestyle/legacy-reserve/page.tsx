@@ -1,15 +1,8 @@
-import { readLegacyReserveCatalog } from '@/domains/commerce/lifestyle-catalog';
-import { collectionEntries } from '@/domains/commerce/collection';
-import { CollectionWorld } from '@/components/commerce/collection-world';
-export const metadata = { title: 'Legacy Reserve — Aethelios Lifestyle' };
-export default async function LegacyReservePage() {
-  const catalog = await readLegacyReserveCatalog();
-  return (
-    <CollectionWorld
-      entries={collectionEntries(catalog.products)}
-      failed={catalog.status === 'error'}
-      brand="Legacy Reserve"
-      catalogStatus={catalog.status}
-    />
-  );
+import { redirect } from 'next/navigation';
+
+export const metadata = { title: 'Aethelios Lifestyle' };
+
+/** Retired brand URL. Keep as a safe alias to the current member collection. */
+export default function LegacyReserveAlias() {
+  redirect('/app/collection');
 }

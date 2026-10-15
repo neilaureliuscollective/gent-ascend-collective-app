@@ -9,7 +9,7 @@ const config: NextConfig = {
   images: { remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }] },
   async redirects() {
     return [
-      // Retained installation URLs resolve to the founder-approved text-free crest.
+      // Retained installation URLs resolve to the founder-approved official gold-A icon.
       ...[192, 512].flatMap((size) =>
         [
           `/brand/icon-${size}.png`,
@@ -18,9 +18,10 @@ const config: NextConfig = {
           `/brand/deep-green-20261006-${size}.png`,
           `/brand/aethelios-official-20261008-${size}.png`,
           `/brand/aethelios-imperial-steel-20261009-${size}.png`,
+          `/brand/aethelios-imperial-obsidian-20261010-${size}.png`,
         ].map((source) => ({
           source,
-          destination: `/brand/aethelios-imperial-obsidian-20261010-${size}.png`,
+          destination: `/brand/aethelios-official-20261015-${size}.png`,
           permanent: false,
         })),
       ),
@@ -29,9 +30,10 @@ const config: NextConfig = {
         'deep-green-20261006',
         'aethelios-official-20261008',
         'aethelios-imperial-steel-20261009',
+        'aethelios-imperial-obsidian-20261010',
       ].map((version) => ({
         source: `/brand/${version}-maskable-512.png`,
-        destination: '/brand/aethelios-imperial-obsidian-20261010-maskable-512.png',
+        destination: '/brand/aethelios-official-20261015-maskable-512.png',
         permanent: false,
       })),
       ...['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'].map((source) => ({

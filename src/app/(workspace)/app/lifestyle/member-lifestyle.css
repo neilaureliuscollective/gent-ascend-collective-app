@@ -1,0 +1,579 @@
+/* Member Lifestyle adopts smoked-glass tokens without changing public worlds. */
+.member-collection {
+  --io-environment: var(--aether-smoke-canvas);
+  --io-navigation: var(--aether-smoke-panel);
+  --io-raised: var(--aether-smoke-raised);
+  --io-text: var(--aether-smoke-text);
+  --io-secondary: var(--aether-smoke-secondary);
+  --io-muted: var(--aether-smoke-secondary);
+  --io-divider: color-mix(in srgb, var(--aether-smoke-light) 17%, transparent);
+  --io-reflection: color-mix(in srgb, var(--aether-smoke-light) 13%, transparent);
+  --io-glass:
+    linear-gradient(145deg, #ffffff09, transparent 34%),
+    linear-gradient(165deg, #242424ed, #1a1a1af5 72%);
+  --io-chamber: var(--io-glass);
+  --io-hero-material:
+    radial-gradient(ellipse 240px 150px at 82% 12%, #245b4829, transparent 72%), var(--io-glass);
+  --io-selected: linear-gradient(145deg, #245b483d, #242424 76%);
+  --io-selected-edge: var(--aether-emerald);
+  --io-elevation:
+    inset 0 1px 0 var(--io-reflection), inset 1px 0 0 #ffffff05, inset 0 -2px 0 #0008,
+    0 8px 20px -8px #0009;
+  --io-gold: var(--aether-gold);
+  --world-gold: var(--aether-gold);
+  --world-ink: var(--aether-smoke-text);
+  --reserve-muted: var(--aether-smoke-secondary);
+  --reserve-gold: var(--aether-gold-light);
+  --reserve-edge: var(--io-divider);
+  color: var(--io-text);
+  background: var(--aether-smoke-undercut);
+}
+
+.member-collection .action-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  margin-inline: 0.35em 0;
+}
+.member-collection .lifestyle-icon-back {
+  transform: scaleX(-1);
+  margin-inline: 0 0.35em;
+}
+
+.member-collection .reserve-commerce,
+.member-collection.customer-orders,
+.member-collection:where(section) {
+  color: var(--io-text);
+  background:
+    radial-gradient(ellipse 320px 200px at 12% 0, #163f352e, transparent 70%),
+    var(--aether-smoke-undercut);
+}
+
+.member-collection .world-kicker {
+  color: var(--aether-gold-light);
+  letter-spacing: 0.16em;
+}
+.member-collection .world-text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--aether-gold-light);
+}
+.member-collection .world-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 44px;
+  background: var(--io-gold);
+  color: var(--aether-smoke-undercut);
+  border-color: var(--io-gold);
+  box-shadow:
+    inset 0 1px #ffffff38,
+    inset 0 -1px #0005,
+    0 3px 8px #0004;
+}
+.member-collection .world-button:hover {
+  color: var(--aether-smoke-undercut);
+}
+.member-collection :is(a, button, input, select, summary, textarea):focus-visible {
+  outline: 2px solid var(--io-text);
+  outline-offset: 3px;
+}
+
+.member-lifestyle-home {
+  min-width: 0;
+}
+.member-lifestyle-masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px 32px;
+  padding: 20px 6% 16px;
+  background: var(--aether-smoke-undercut);
+  border-bottom: 1px solid color-mix(in srgb, var(--aether-gold) 28%, transparent);
+}
+.member-lifestyle-copy h1 {
+  font-size: clamp(1.85rem, 3.4vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin: 8px 0 8px;
+  color: var(--io-text);
+}
+.member-lifestyle-copy p {
+  max-width: 46ch;
+  margin: 0;
+  line-height: 1.5;
+  color: var(--io-secondary);
+}
+.member-lifestyle-utilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  justify-content: flex-end;
+}
+
+.member-lifestyle-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(14px, 2vw, 24px);
+  align-items: stretch;
+  padding: 14px 6% 16px;
+  background:
+    radial-gradient(ellipse 46% 80% at 18% 80%, #245b4866, transparent 68%),
+    linear-gradient(180deg, #0a0a0a, #111111 72%);
+}
+.member-lifestyle-focal {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  min-height: 0;
+  height: 320px;
+  max-height: 340px;
+  overflow: hidden;
+  padding: 12px 16px 14px;
+  color: inherit;
+  text-decoration: none;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 110%, #36896c55, transparent 62%),
+    linear-gradient(165deg, #163f35, #08110e 78%);
+  box-shadow:
+    inset 0 1px #ffffff24,
+    0 18px 36px #0007;
+}
+.member-lifestyle-focal img,
+.member-lifestyle-companion img {
+  justify-self: center;
+  align-self: center;
+  width: auto;
+  max-width: 78%;
+  height: 86%;
+  object-fit: contain;
+}
+.member-lifestyle-focal span,
+.member-lifestyle-companion span {
+  display: grid;
+  gap: 2px;
+}
+.member-lifestyle-focal strong,
+.member-lifestyle-companion strong {
+  color: var(--io-text);
+}
+.member-lifestyle-focal small,
+.member-lifestyle-companion small,
+.member-lifestyle-stage-status {
+  color: var(--io-secondary);
+}
+.member-lifestyle-stage-aside {
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.member-lifestyle-companions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+.member-lifestyle-companion {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  height: 176px;
+  min-width: 0;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--io-navigation);
+  box-shadow: inset 0 1px var(--io-reflection);
+}
+.member-lifestyle-companion img {
+  height: 118px;
+  max-width: 90%;
+}
+.member-lifestyle-stage-status {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.member-lifestyle-stage--compact {
+  padding: 0;
+  background: transparent;
+  height: 300px;
+}
+.member-lifestyle-stage--compact .member-lifestyle-focal {
+  height: 300px;
+}
+.member-lifestyle-stage--compact .member-lifestyle-companions {
+  grid-template-columns: 1fr;
+  height: 300px;
+}
+.member-lifestyle-stage--compact .member-lifestyle-companion {
+  height: 144px;
+}
+.member-lifestyle-retry {
+  padding: 0 6% 8px;
+}
+
+.member-lifestyle-section-heading {
+  margin-bottom: 16px;
+}
+.member-lifestyle-section-heading h2,
+.member-lifestyle-home h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  line-height: 1.15;
+  margin: 6px 0 0;
+  color: var(--io-text);
+}
+.member-lifestyle-continuity,
+.member-lifestyle-destinations,
+.member-lifestyle-browse {
+  padding: clamp(22px, 3vw, 36px) 6%;
+  border-top: 1px solid var(--io-divider);
+}
+.member-lifestyle-continuity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.member-lifestyle-panel {
+  min-width: 0;
+  padding: 18px 20px;
+  background: var(--io-navigation);
+}
+.member-lifestyle-panel h3 {
+  font-size: 1.25rem;
+  margin: 8px 0 10px;
+}
+.member-lifestyle-panel p {
+  color: var(--io-secondary);
+  line-height: 1.55;
+}
+.member-lifestyle-kept {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: grid;
+  gap: 8px;
+}
+.member-lifestyle-kept li {
+  display: grid;
+  gap: 2px;
+}
+.member-lifestyle-kept span {
+  color: var(--aether-gold-light);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.member-lifestyle-destination-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.member-lifestyle-destination {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  color: var(--io-text);
+  background: var(--io-raised);
+  text-decoration: none;
+}
+.member-lifestyle-destination:hover,
+.member-lifestyle-destination[aria-current='page'] {
+  background: var(--io-selected);
+  box-shadow: inset 0 -2px 0 var(--io-selected-edge);
+}
+
+.member-collection .collection-empty {
+  text-align: left;
+  padding: 22px;
+  background: var(--io-navigation);
+}
+.member-collection .collection-empty h2,
+.member-collection .collection-empty h3 {
+  color: var(--io-text);
+}
+.member-collection .collection-opening {
+  padding: 32px 6%;
+  min-height: 0;
+  background: var(--io-hero-material);
+}
+.member-collection .collection-opening h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+.member-collection .collection-chamber {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: clamp(16px, 3vw, 36px);
+  align-items: center;
+  padding: 22px 6% 20px;
+  background:
+    radial-gradient(ellipse 50% 90% at 88% 80%, #245b4833, transparent 70%),
+    var(--aether-smoke-undercut);
+  border-bottom: 1px solid color-mix(in srgb, var(--aether-gold) 22%, transparent);
+}
+.member-collection .collection-chamber:not(:has(.member-lifestyle-stage)) {
+  grid-template-columns: 1fr;
+}
+.member-collection .collection-chamber::after {
+  display: none;
+}
+.member-collection .collection-chamber h1 {
+  font-size: clamp(1.9rem, 4vw, 3.1rem);
+  margin: 10px 0 10px;
+  color: var(--io-text);
+}
+.member-collection .collection-chamber p {
+  color: var(--io-secondary);
+}
+.member-collection .collection-chamber-caption {
+  position: static;
+  color: var(--io-secondary);
+  letter-spacing: 0.12em;
+}
+.member-collection .collection-search-row input[type='search'],
+.member-collection .collection-search-row select,
+.member-collection .cabinet-form :is(input, select, textarea),
+.member-collection .atelier-gallery-navigation button,
+.member-collection .reserve-zoom .atelier-zoom-toolbar button {
+  color: var(--io-text);
+  background: var(--io-raised);
+  border: 1px solid var(--aether-smoke-edge);
+}
+.member-collection .collection-chapters button {
+  color: var(--io-secondary);
+  background: var(--io-navigation);
+  border-color: transparent;
+}
+.member-collection .collection-chapters button[aria-pressed='true'] {
+  color: var(--io-text);
+  background: var(--io-selected);
+  box-shadow: inset 0 -2px 0 var(--io-selected-edge);
+}
+.member-collection .reserve-collection-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 20px;
+}
+.member-collection .reserve-collection-object,
+.member-collection .reserve-collection-object:nth-child(n) {
+  grid-column: span 1;
+}
+.member-collection .reserve-card-stage {
+  min-height: 220px;
+  padding: 18px 12px 16px;
+  background: var(--io-navigation);
+  box-shadow: none;
+  border: 0;
+}
+.member-collection .reserve-card-stage .reserve-photo-frame {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.member-collection .reserve-photo-aura,
+.member-collection .reserve-photo-corners,
+.member-collection .reserve-photo-window::after {
+  display: none;
+}
+.member-collection .reserve-card-copy h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--io-text);
+}
+.member-collection .reserve-card-copy p,
+.member-collection .collection-results,
+.member-collection .collection-save-note {
+  color: var(--io-secondary);
+}
+.member-collection .world-footer,
+.member-collection .collection-world-footer {
+  background: var(--io-navigation);
+  border-top: 1px solid var(--io-divider);
+}
+.member-collection .collection-world-footer h2 {
+  color: var(--io-text);
+}
+
+.member-collection .reserve-product-intro {
+  padding: clamp(20px, 3vw, 36px) 6% 18px;
+}
+.member-collection .reserve-product-visual,
+.member-collection .product-atelier-stage,
+.member-collection .product-image-stage,
+.member-collection .reserve-product-stage {
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4848, transparent 70%),
+    linear-gradient(180deg, #163f35, #111111 74%);
+  border: 0;
+  box-shadow: inset 0 1px #ffffff1f;
+}
+.member-collection .reserve-photo-frame {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.member-collection .product-purchase,
+.member-collection .reserve-save,
+.member-collection .cart-summary,
+.member-collection .cabinet-record,
+.member-collection .cabinet-import {
+  background: var(--io-navigation);
+  border: 0;
+  box-shadow: none;
+}
+.member-collection .reserve-save {
+  padding: 18px;
+  margin-top: 18px;
+  box-shadow: inset 3px 0 0 var(--aether-gold);
+}
+.member-collection .reserve-membership-bridge {
+  margin: 0 6%;
+  padding: 24px;
+  background: var(--io-navigation);
+}
+.member-collection .reserve-sticky-purchase {
+  background: var(--aether-smoke-panel);
+  border-top: 1px solid var(--io-divider);
+}
+.member-collection .cabinet-hero h1 em {
+  color: var(--aether-gold-light);
+  font-style: italic;
+}
+.member-collection .cabinet-image {
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4838, transparent 70%),
+    var(--io-navigation);
+}
+.member-collection .cabinet-shelf article,
+.member-collection .customer-order-list li {
+  background: var(--io-navigation);
+  padding: 18px;
+}
+
+html[data-material='solid']
+  .member-collection
+  :is(
+    .reserve-commerce,
+    .member-lifestyle-stage,
+    .member-lifestyle-focal,
+    .member-lifestyle-panel,
+    .collection-chamber,
+    .collection-empty,
+    .product-purchase,
+    .cart-summary,
+    .reserve-card-stage,
+    .cabinet-record
+  ) {
+  background: var(--io-navigation);
+  box-shadow: none;
+}
+
+@media (max-width: 1100px) {
+  .member-lifestyle-masthead,
+  .member-collection .collection-chamber {
+    grid-template-columns: 1fr;
+  }
+  .member-lifestyle-masthead {
+    display: grid;
+    align-items: start;
+  }
+  .member-lifestyle-utilities {
+    justify-content: flex-start;
+  }
+  .member-lifestyle-focal,
+  .member-lifestyle-stage--compact,
+  .member-lifestyle-stage--compact .member-lifestyle-focal,
+  .member-lifestyle-stage--compact .member-lifestyle-companions {
+    height: auto;
+  }
+  .member-lifestyle-focal {
+    min-height: 280px;
+    height: 320px;
+  }
+  .member-collection .reserve-collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .member-lifestyle-stage--compact .member-lifestyle-companions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .member-lifestyle-stage,
+  .member-collection .collection-chamber:has(.member-lifestyle-stage) {
+    grid-template-columns: 1fr;
+  }
+  .member-lifestyle-masthead,
+  .member-lifestyle-stage,
+  .member-lifestyle-continuity,
+  .member-lifestyle-destinations,
+  .member-lifestyle-browse,
+  .member-lifestyle-retry,
+  .member-collection .collection-chamber {
+    padding-inline: 5%;
+  }
+  .member-lifestyle-copy h1,
+  .member-collection .collection-chamber h1 {
+    font-size: clamp(1.7rem, 8vw, 2.4rem);
+    max-width: none;
+  }
+  .member-lifestyle-companions,
+  .member-lifestyle-continuity-grid,
+  .member-lifestyle-stage--compact .member-lifestyle-companions {
+    grid-template-columns: 1fr;
+  }
+  .member-collection .reserve-collection-grid {
+    grid-template-columns: 1fr;
+  }
+  .member-lifestyle-focal {
+    height: 260px;
+  }
+  .member-lifestyle-companion {
+    height: 150px;
+  }
+}
+
+@media (forced-colors: active) {
+  .member-collection
+    :is(
+      .member-lifestyle-panel,
+      .member-lifestyle-focal,
+      .member-lifestyle-companion,
+      .member-lifestyle-destination,
+      .collection-empty,
+      .reserve-card-stage,
+      .product-purchase,
+      .cabinet-record
+    ) {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+  .member-collection .world-button {
+    background: ButtonFace;
+    color: ButtonText;
+    border-color: ButtonText;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-collection * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

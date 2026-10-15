@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import type { CustomerOrdersView } from '@/domains/commerce/customer-account';
+import { LifestyleAction } from './lifestyle-action';
 const status = (raw: string | null) =>
   raw ? raw.toLowerCase().replaceAll('_', ' ') : 'Not reported';
 export function CustomerOrders({
@@ -14,7 +14,7 @@ export function CustomerOrders({
   return (
     <section className="member-collection customer-orders" aria-label="Your Shopify orders">
       <header className="cabinet-hero">
-        <p className="eyebrow">GENT ASCEND / THE COLLECTION</p>
+        <p className="eyebrow">Aethelios Lifestyle / Orders</p>
         <h1>
           Your orders.
           <br />
@@ -22,17 +22,18 @@ export function CustomerOrders({
         </h1>
         <p>
           Read the orders belonging to the Shopify account you explicitly connect. Cabinet notes and
-          saved interests stay separate.
+          saved interests stay separate. This is not a public storefront introduction.
         </p>
         <nav aria-label="Order destinations">
-          <Link href="/app/collection">The Collection →</Link>
-          <Link href="/app/collection/cabinet">My Cabinet →</Link>
+          <LifestyleAction href="/app/collection">The collection</LifestyleAction>
+          <LifestyleAction href="/app/collection/cabinet">My Cabinet</LifestyleAction>
+          <LifestyleAction href="/app/lifestyle">Lifestyle</LifestyleAction>
         </nav>
       </header>
       {view.state === 'signed-out' ? (
         <>
           <p>Sign in to your Gent Ascend account before connecting Shopify.</p>
-          <Link href="/enter">Sign in →</Link>
+          <LifestyleAction href="/enter">Sign in</LifestyleAction>
         </>
       ) : view.state === 'unconfigured' ? (
         <p>
@@ -74,7 +75,7 @@ export function CustomerOrders({
                 </form>
               )}
               {view.state === 'unavailable' && (
-                <Link href="/app/collection/orders">Retry order history →</Link>
+                <LifestyleAction href="/app/collection/orders">Retry order history</LifestyleAction>
               )}
             </div>
           )}

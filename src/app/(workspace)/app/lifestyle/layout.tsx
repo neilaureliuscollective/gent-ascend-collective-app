@@ -2,6 +2,7 @@ import '../collection/collection-world.css';
 import '../../../(public)/world.css';
 import '../../../(public)/commerce-experience.css';
 import './lifestyle.css';
+import './member-lifestyle.css';
 import { MemberCartLauncher } from '@/components/commerce/member-cart-launcher';
 export default function LifestyleLayout({ children }: { children: React.ReactNode }) {
   return (

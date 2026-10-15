@@ -132,7 +132,7 @@ export function InstallGuide() {
         <summary>Refresh an older app icon</summary>
         <p>
           Open Gent Ascend while connected. If Chrome offers “Review app update” in its menu, accept
-          the new crest. If your Home Screen keeps the older icon, remove the app and install again
+          the new icon. If your Home Screen keeps the older icon, remove the app and install again
           from this browser. Removing the app does not delete records saved to your account; sync
           any offline training drafts first.
         </p>
