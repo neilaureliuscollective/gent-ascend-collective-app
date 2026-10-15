@@ -11,4 +11,6 @@ export const brand = {
   lockup: '/brand/aethelios-aether-20261007.webp',
   crestAlt:
     'Aethelios gold circular emblem with architectural A, guiding star and laurels on deep Aether Petrol',
+  conversationEmblem: '/brand/aethelios-official-20261015-192.png',
+  conversationEmblemAlt: 'Aethelios official gold A emblem',
 } as const;

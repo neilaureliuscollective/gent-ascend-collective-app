@@ -1,11 +1,12 @@
 // Isolated browser-fixture only. Synthetic responses never enter application routes.
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
 import { CompanyRoom } from '@/components/companies/company-room';
-import { AppearanceControls } from '@/components/visual/appearance';
+import { AppearanceControls, useAppearance } from '@/components/visual/appearance';
 import { IntelligenceActivity } from '@/components/intelligence-motion/presence';
+import { LivingSignal } from '@/components/intelligence-motion/living-signal';
 import { liveMotionOperation } from '@/platform/visual/operation-adapters';
 import type { WorkspaceData, StreamEvent, Turn } from '@/domains/intelligence/types';
 import '@/app/globals.css';
@@ -171,6 +172,8 @@ function Review() {
   const [voice, setVoice] = useState<'connecting' | 'listening' | 'speaking' | 'ended' | 'error'>(
     'listening',
   );
+  const [voiceLevel, setVoiceLevel] = useState(0);
+  const { moving } = useAppearance();
   const finish = () => {
     if (turn && stream) {
       base.turns = [turn];
@@ -211,8 +214,24 @@ function Review() {
         </label>
         <AppearanceControls />
         <div>
+          <p className="review-sim-label">Labeled synthetic sequences · not a live provider.</p>
           <button onClick={() => emit({ type: 'activity', phase: 'searching' })}>
             Emit search event
+          </button>
+          <button
+            onClick={() =>
+              emit({
+                type: 'creation',
+                item: {
+                  id: 'fixture-image',
+                  kind: 'image',
+                  title: 'Synthetic image title',
+                  status: 'running',
+                },
+              })
+            }
+          >
+            Emit image artifact
           </button>
           <button
             onClick={() =>
@@ -248,8 +267,12 @@ function Review() {
         ) : surface === 'work' ? (
           <CompanyRoom initial={room} />
         ) : (
-          <section>
+          <section
+            className="review-voice"
+            style={{ '--live-audio-level': voiceLevel } as CSSProperties}
+          >
             <p>Structural adapter preview only · no voice controller mounted.</p>
+            <p>Synthetic measured envelope · not a live microphone or paid session.</p>
             <select
               aria-label="Voice phase"
               value={voice}
@@ -259,14 +282,44 @@ function Review() {
                 <option key={value}>{value}</option>
               ))}
             </select>
+            <label>
+              Synthetic audio level
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={voiceLevel}
+                onChange={(event) => setVoiceLevel(Number(event.target.value))}
+              />
+            </label>
+            <LivingSignal
+              still={!moving}
+              surface="voice-compact"
+              operation={{
+                ...liveMotionOperation(
+                  {
+                    sessionId: 'preview',
+                    phase: voice,
+                    muted: false,
+                    playbackBlocked: false,
+                  },
+                  { input: voiceLevel, output: voiceLevel },
+                ),
+                basis: 'preview',
+              }}
+            />
             <IntelligenceActivity
               operation={{
-                ...liveMotionOperation({
-                  sessionId: 'preview',
-                  phase: voice,
-                  muted: false,
-                  playbackBlocked: false,
-                }),
+                ...liveMotionOperation(
+                  {
+                    sessionId: 'preview',
+                    phase: voice,
+                    muted: false,
+                    playbackBlocked: false,
+                  },
+                  { input: voiceLevel, output: voiceLevel },
+                ),
                 basis: 'preview',
               }}
             />

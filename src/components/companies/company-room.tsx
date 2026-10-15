@@ -4,6 +4,7 @@ import Markdown from 'react-markdown';
 import { useEffect, useRef, useState } from 'react';
 import type { readCompanyTalk } from '@/domains/companies/service';
 import { observedOperation } from '@/platform/visual/operation-adapters';
+import { nextObservedOperation } from '@/platform/visual/conversation-motion';
 import { IntelligenceStatus, IntelligenceResponse } from '../intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import { companyJobs } from '@/domains/company-work/starters';
@@ -235,7 +236,7 @@ export function CompanyRoom({
         : null;
     if (outputRequest) setGeneration(outputRequest);
     const motionId = outputRequest?.requestId ?? crypto.randomUUID();
-    setOperation(observedOperation(motionId, 'waiting', 'pending'));
+    setOperation(observedOperation(motionId, 'sending', 'pending'));
     let saved = false;
     const painted = frameText(setPartial);
     let accepted = false;
@@ -295,22 +296,29 @@ export function CompanyRoom({
       setConversation(id);
       remember(id);
       setDraft((current) => (current.trim() === text ? '' : current));
+      setOperation((previous) =>
+        nextObservedOperation(previous, observedOperation(motionId, 'waiting', 'pending')),
+      );
       for await (const event of readConversationStream(response.body)) {
         if (event.type === 'activity') {
           if (event.phase === 'saving') painted.finish(true);
-          setOperation(observedOperation(motionId, event.phase, 'pending'));
+          setOperation((previous) =>
+            nextObservedOperation(previous, observedOperation(motionId, event.phase, 'pending')),
+          );
         } else if (event.type === 'delta') {
           setOperation((previous) =>
-            previous.id === motionId && ['searching', 'generating'].includes(previous.phase)
+            previous.id === motionId && ['searching', 'generating', 'stopping'].includes(previous.phase)
               ? previous
-              : observedOperation(motionId, 'generating', 'pending'),
+              : nextObservedOperation(previous, observedOperation(motionId, 'generating', 'pending')),
           );
           painted.append(event.text);
         } else if (event.type === 'error') throw new Error(event.message);
         else if (event.type === 'saved') {
           painted.finish();
           saved = true;
-          setOperation(observedOperation(motionId, 'complete', 'confirmed'));
+          setOperation((previous) =>
+            nextObservedOperation(previous, observedOperation(motionId, 'complete', 'confirmed')),
+          );
           setData((previous) => ({ ...previous, turns: [...previous.turns, event.turn] }));
         }
       }
@@ -321,11 +329,14 @@ export function CompanyRoom({
       setData(await read(id));
     } catch (error) {
       if (accepted && !saved) setDraft((current) => current || text);
-      setOperation(
-        observedOperation(
-          motionId,
-          saved ? 'complete' : controller.signal.aborted ? 'cancelled' : 'failed',
-          saved ? 'confirmed' : accepted || outputRequest ? 'uncertain' : 'not-applicable',
+      setOperation((previous) =>
+        nextObservedOperation(
+          previous,
+          observedOperation(
+            motionId,
+            saved ? 'complete' : controller.signal.aborted ? 'cancelled' : 'failed',
+            saved ? 'confirmed' : accepted || outputRequest ? 'uncertain' : 'not-applicable',
+          ),
         ),
       );
       if ((accepted || outputRequest) && !saved) setNeedsReload(true);
@@ -678,7 +689,7 @@ export function CompanyRoom({
                 <Markdown skipHtml>{partial || 'Preparing the response…'}</Markdown>
               </article>
             )}
-            {operation.phase !== 'ready' && <IntelligenceStatus operation={operation} />}
+            {!sent && operation.phase !== 'ready' && <IntelligenceStatus operation={operation} />}
             {error && <p role="alert">{error}</p>}
           </div>
           {away && !showWork && (
@@ -742,7 +753,15 @@ export function CompanyRoom({
                 <button
                   type="button"
                   onPointerDown={(event) => retainComposerFocus(event, composer.current)}
-                  onClick={() => requestRef.current?.abort()}
+                  onClick={() => {
+                    setOperation((previous) =>
+                      nextObservedOperation(
+                        previous,
+                        observedOperation(previous.id, 'stopping', previous.persistence ?? 'pending'),
+                      ),
+                    );
+                    requestRef.current?.abort();
+                  }}
                 >
                   Stop
                 </button>

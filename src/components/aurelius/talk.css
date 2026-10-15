@@ -545,6 +545,18 @@ body .app-shell .aethelios-page.talk-page {
   .talk-page .conversation-scroll {
     padding-block: 8px;
   }
+  .talk-page .im-response {
+    min-height: 32px;
+    margin-block: 0 4px;
+  }
+}
+.talk-page[data-keyboard='open'] .im-response,
+.aethelios-page[data-keyboard='open'] .im-response {
+  min-height: 32px;
+  margin-block: 0 4px;
+}
+.talk-page[data-keyboard='open'] .talk-welcome-presence {
+  display: none;
 }
 
 .app-shell.imperial-workspace

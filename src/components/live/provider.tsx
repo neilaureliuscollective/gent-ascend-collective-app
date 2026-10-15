@@ -9,6 +9,7 @@ import {
   IntelligenceStatus,
   IntelligenceActivity,
 } from '@/components/intelligence-motion/presence';
+import { LivingSignal } from '@/components/intelligence-motion/living-signal';
 import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/operation-adapters';
 import { measuredAudioLevel } from '@/platform/visual/intelligence-motion';
 import { useAppearance } from '@/components/visual/appearance';
@@ -521,7 +522,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
               className={`live-compact${docked ? ' is-docked' : ''}`}
               aria-label="Persistent Aethelios voice controls"
             >
-              <IntelligencePresence operation={operation} variant="signal" />
+              <LivingSignal operation={operation} still={!moving} surface="voice-compact" />
               {content}
             </section>
           );

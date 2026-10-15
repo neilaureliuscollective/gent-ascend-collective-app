@@ -510,18 +510,25 @@
   height: 100%;
 }
 
-.live-compact > .im-presence .im-artwork {
-  transform: scale(calc(1 + var(--live-audio-level, 0) * 0.08));
+.live-compact > .im-presence .identity-envelope,
+.live-compact > .im-presence .im-filament {
+  transform: scaleX(calc(0.18 + var(--live-audio-level, 0) * 0.82));
   transition: transform 120ms ease-out;
 }
+.live-compact > .im-living .im-signal-track {
+  opacity: 1;
+  transform: scaleX(1);
+}
 @media (prefers-reduced-motion: reduce) {
-  .live-compact > .im-presence .im-artwork {
+  .live-compact > .im-presence .identity-envelope,
+  .live-compact > .im-presence .im-filament {
     transform: none;
     transition: none;
   }
 }
 html[data-motion='still'] .live-orb,
-html[data-motion='still'] .live-compact > .im-presence .im-artwork {
+html[data-motion='still'] .live-compact > .im-presence .identity-envelope,
+html[data-motion='still'] .live-compact > .im-presence .im-filament {
   transform: none;
   transition: none;
 }

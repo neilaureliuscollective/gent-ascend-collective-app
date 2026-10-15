@@ -6,6 +6,8 @@
   --angle: 0deg;
   --spread: 1;
   --focus: 0.7;
+  --level: var(--live-audio-level, 0);
+  --im-level: var(--level);
 }
 .identity-compact {
   width: 48px;

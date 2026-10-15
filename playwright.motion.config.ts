@@ -10,6 +10,6 @@ export default defineConfig({
   webServer: {
     command: 'node scripts/component-test-server.mjs',
     url: 'http://127.0.0.1:3102',
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
   },
 });

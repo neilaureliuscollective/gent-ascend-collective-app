@@ -9,8 +9,9 @@ import type { ActionProposal } from '@/domains/intelligence/types';
 import { ActionReview } from './action-review';
 import { IntelligenceResponse } from '@/components/intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
+import type { StreamCreation } from '@/domains/intelligence/types';
 import type { TalkCreation, TalkImageJob } from '@/domains/talk-creation/schema';
-import { CreationCard, TalkImageCard } from './creation-card';
+import { CreationCard, TalkImageCard, InFlightCreationCard } from './creation-card';
 import { stripCreationFences } from '@/domains/talk-creation/intent';
 
 // Stable saved answers do not reparse Markdown when the composer or active turn updates.
@@ -41,6 +42,7 @@ export const ConversationTurn = memo(function ConversationTurn({
   onRevise,
   companyWork = false,
   operation,
+  artifacts,
   creations,
   images,
   selectedCreationId,
@@ -54,6 +56,7 @@ export const ConversationTurn = memo(function ConversationTurn({
 }: {
   turn: Turn;
   operation?: IntelligenceOperation;
+  artifacts?: StreamCreation[];
   companyWork?: boolean;
   onFeedback?: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
@@ -85,6 +88,7 @@ export const ConversationTurn = memo(function ConversationTurn({
           <IntelligenceResponse
             operation={operation}
             name={councilLabel(councilFromVersion(turn.prompt_version))}
+            artifacts={artifacts}
           />
         ) : (
           <span className="message-author">
@@ -103,6 +107,15 @@ export const ConversationTurn = memo(function ConversationTurn({
             }
           />
         </div>
+        {artifacts
+          ?.filter(
+            (artifact) =>
+              !creations?.some((creation) => creation.id === artifact.id) &&
+              !images?.some((image) => image.id === artifact.id),
+          )
+          .map((artifact) => (
+            <InFlightCreationCard key={`${artifact.kind}-${artifact.id}`} artifact={artifact} />
+          ))}
         {creations?.map((creation) => (
           <CreationCard
             key={creation.id}

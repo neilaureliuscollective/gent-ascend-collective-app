@@ -4,7 +4,47 @@ import type { TalkCreation, TalkImageJob } from '@/domains/talk-creation/schema'
 import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
 import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
+import type { StreamCreation } from '@/domains/intelligence/types';
 import './creation.css';
+
+const kindLabel = (kind: StreamCreation['kind']) =>
+  kind === 'brief'
+    ? 'Brief'
+    : kind === 'plan'
+      ? 'Plan'
+      : kind === 'palette'
+        ? 'Palette'
+        : kind === 'board'
+          ? 'Design board'
+          : kind === 'image'
+            ? 'Image'
+            : 'Architect package';
+
+export function InFlightCreationCard({ artifact }: { artifact: StreamCreation }) {
+  const title = artifact.title?.trim() || kindLabel(artifact.kind);
+  return (
+    <article
+      className="talk-creation-card is-active"
+      data-kind={artifact.kind}
+      data-in-flight=""
+      data-ready={artifact.status === 'complete' || artifact.status === 'saved' || undefined}
+    >
+      <header>
+        <p className="eyebrow">
+          {kindLabel(artifact.kind)} · {artifact.status === 'approval' ? 'needs approval' : 'in progress'}
+        </p>
+      </header>
+      <h3>{title}</h3>
+      <p className="talk-creation-status">
+        {artifact.kind === 'image'
+          ? artifact.status === 'approval'
+            ? 'Queued for your approval. It is not a saved image yet.'
+            : 'Creating an image'
+          : `${kindLabel(artifact.kind)} is being prepared.`}
+      </p>
+    </article>
+  );
+}
 
 export function CreationCard({
   creation,
@@ -105,7 +145,12 @@ export function TalkImageCard({
   onSelect: (id: string) => void;
 }) {
   return (
-    <article className="talk-creation-card" data-kind="image" data-selected={selected || undefined}>
+    <article
+      className={`talk-creation-card${image.status === 'running' || image.status === 'approval' ? ' is-active' : ''}`}
+      data-kind="image"
+      data-selected={selected || undefined}
+      data-ready={image.status === 'complete' && image.version_id ? '' : undefined}
+    >
       <header>
         <p className="eyebrow">
           Image · {image.operation === 'image.edit' ? 'edit' : 'create'} · {image.status}

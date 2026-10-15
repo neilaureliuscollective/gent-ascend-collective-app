@@ -20,6 +20,10 @@ describe('Intelligence motion truth boundaries', () => {
     expect(intelligenceStatus(operation({ persistence: 'uncertain' }))).toBe('Save unconfirmed');
     expect(intelligenceBusy(operation({ phase: 'cancelled' }))).toBe(false);
     expect(intelligenceBusy(operation({ phase: 'failed' }))).toBe(false);
+    expect(intelligenceBusy(operation({ phase: 'sending', persistence: 'pending' }))).toBe(true);
+    expect(intelligenceBusy(operation({ phase: 'stopping', persistence: 'pending' }))).toBe(true);
+    expect(intelligenceStatus(operation({ phase: 'waiting' }))).toBe('Preparing a reply');
+    expect(intelligenceStatus(operation({ phase: 'cancelled' }))).toBe('Stopped');
   });
   it('does not invent audio activity, including non-audio and invalid measurements', () => {
     expect(measuredAudioLevel(operation({ phase: 'listening' }))).toBe(0);
