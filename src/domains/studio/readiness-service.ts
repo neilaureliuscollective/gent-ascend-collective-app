@@ -2,6 +2,8 @@ import 'server-only';
 import { currentFounderAccess } from '@/domains/access/founder';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { studioConfiguration, type StudioSetupCheck } from './readiness';
+import { missingStudioSchema } from './schema-absence';
+import { renderReadiness } from './composition-service';
 export async function studioReadiness() {
   if (!(await currentFounderAccess())) throw new IntelligenceError('Founder access required.', 403);
   const { client, person } = await intelligenceSession();
@@ -14,6 +16,10 @@ export async function studioReadiness() {
     ['Narration allowance', 'ai_studio_narration_usage', 'id,created_at'],
     ['Footage records', 'ai_studio_footage', 'id,status,quote_signature,provider_signature'],
     ['Footage allowance', 'ai_studio_footage_usage', 'id,estimate'],
+    ['Design documents', 'ai_studio_designs', 'id,revision,document'],
+    ['Film compositions', 'ai_studio_compositions', 'id,revision,document'],
+    ['Film renders', 'ai_studio_render_jobs', 'id,status,revision_id'],
+    ['Design exports', 'ai_studio_design_export_jobs', 'id,status,revision_id'],
   ] as const;
   const schemas = await Promise.all(
     tables.map(async ([name, table, columns]): Promise<StudioSetupCheck> => {
@@ -22,7 +28,7 @@ export async function studioReadiness() {
         return {
           name,
           status: result.error
-            ? ['42P01', '42703', 'PGRST205', 'PGRST204'].includes(result.error.code)
+            ? missingStudioSchema(result.error)
               ? 'missing'
               : 'unavailable'
             : 'detected',
@@ -43,5 +49,6 @@ export async function studioReadiness() {
     liveAccepted: false,
     configuration: studioConfiguration(process.env),
     schemas,
+    renderer: await renderReadiness(),
   };
 }

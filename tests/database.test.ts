@@ -1951,5 +1951,287 @@ describe('Studio footage owner, quote and spending boundary', () => {
       await db.exec('reset role');
     }
   });
+  it('isolates editable design documents and film render leases between owners', async () => {
+    const project = 'a1000000-0000-4000-8000-000000000001';
+    const design = 'a1000000-0000-4000-8000-000000000002';
+    const composition = 'a1000000-0000-4000-8000-000000000003';
+    const scene = 'a1000000-0000-4000-8000-000000000004';
+    const asset = 'a1000000-0000-4000-8000-000000000005';
+    const job = 'a1000000-0000-4000-8000-000000000006';
+    const key = 'a1000000-0000-4000-8000-000000000007';
+    const token = 'a1000000-0000-4000-8000-000000000008';
+    const own = `(select id from public.persons where auth_user_id='${founder}')`;
+    await asUser(
+      founder,
+      `insert into public.ai_studio_projects(id,person_id,title) values('${project}',${own},'Design film')`,
+    );
+    const document = JSON.stringify({
+      schema: 'studio-design/v1',
+      id: design,
+      title: 'Label',
+      page: {
+        width: 100,
+        height: 70,
+        unit: 'mm',
+        ppi: 300,
+        bleed: { top: 0, right: 0, bottom: 0, left: 0 },
+        safe: { top: 0, right: 0, bottom: 0, left: 0 },
+        dimensionSource: 'supplied',
+        dimensionNote: 'Supplier die',
+        background: '#080A0B',
+      },
+      layers: [],
+      guides: { trim: true, bleed: true, safe: true },
+    }).replace(/'/g, "''");
+    const saved = await asUser<{ id: string; revision: number; revision_id: string; updated_at: string }>(
+      founder,
+      `select id,revision,revision_id,updated_at from public.ai_studio_design_save('${design}','${project}','Label','${document}'::jsonb,null,0,true)`,
+    );
+    expect(saved.rows[0]).toMatchObject({ id: design, revision: 1 });
+    expect(saved.rows[0]!.revision_id).toMatch(/^[0-9a-f-]{36}$/i);
+    const frozenA = saved.rows[0]!.revision_id;
+    const documentB = document.replace('"title":"Label"', '"title":"Tab B"');
+    const savedAt = new Date(saved.rows[0]!.updated_at).toISOString();
+    const later = await asUser<{ revision: number; revision_id: string }>(
+      founder,
+      `select revision,revision_id from public.ai_studio_design_save('${design}','${project}','Tab B','${documentB}'::jsonb,'${savedAt}'::timestamptz,1,false)`,
+    );
+    expect(later.rows[0]!.revision).toBe(2);
+    expect(later.rows[0]!.revision_id).not.toBe(frozenA);
+    const pinned = await asUser<{ title: string; kind: string }>(
+      founder,
+      `select document->>'title' as title, kind from public.ai_studio_design_revisions where id='${frozenA}'`,
+    );
+    expect(pinned.rows[0]).toMatchObject({ title: 'Label', kind: 'explicit' });
+    const liveTitle = await asUser<{ title: string }>(
+      founder,
+      `select document->>'title' as title from public.ai_studio_designs where id='${design}'`,
+    );
+    expect(liveTitle.rows[0]!.title).toBe('Tab B');
+    await expect(asUser(founder, `select public.ai_studio_design_freeze('${design}', 1)`)).resolves.toBeTruthy();
+    await expect(asUser(founder, `select public.ai_studio_design_freeze('${design}', 99)`)).rejects.toThrow(
+      /STALE_DESIGN_REVISION/i,
+    );
+    expect((await asUser(member, 'select id from public.ai_studio_designs')).rows).toHaveLength(0);
+    await expect(
+      asUser(
+        member,
+        `select public.ai_studio_design_save('${design}','${project}','Intrusion','${document}'::jsonb,null,0)`,
+      ),
+    ).rejects.toThrow();
+    const film = JSON.stringify({
+      schema: 'studio-composition/v1',
+      id: composition,
+      title: 'Short film',
+      aspect: 'landscape',
+      fps: 24,
+      scenes: [
+        {
+          id: scene,
+          kind: 'image',
+          assetId: asset,
+          assetKind: 'version',
+          name: 'Open',
+          inMs: 0,
+          outMs: 3000,
+          durationMs: 3000,
+          crop: { x: 0, y: 0, width: 1, height: 1 },
+          placement: { x: 0, y: 0, width: 1, height: 1 },
+          transition: 'cut',
+          stillMotion: 'none',
+        },
+      ],
+      titles: [],
+      captions: [],
+      narration: null,
+      music: null,
+    }).replace(/'/g, "''");
+    await asUser(
+      founder,
+      `select public.ai_studio_composition_save('${composition}','${project}','Short film','${film}'::jsonb,null,0)`,
+    );
+    const revision = (
+      await asUser<{ id: string }>(
+        founder,
+        `select id from public.ai_studio_composition_revisions where composition_id='${composition}'`,
+      )
+    ).rows[0]!.id;
+    expect(
+      (
+        await asUser<{ id: string; status: string; created: boolean }>(
+          founder,
+          `select * from public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}')`,
+        )
+      ).rows[0],
+    ).toMatchObject({ id: job, status: 'queued', created: true });
+    const other = 'a1000000-0000-4000-8000-000000000009';
+    expect(
+      (
+        await asUser<{ id: string; status: string; created: boolean }>(
+          founder,
+          `select * from public.ai_studio_render_begin('${other}','${project}','${composition}','${revision}','${key}')`,
+        )
+      ).rows[0],
+    ).toMatchObject({ id: job, created: false });
+    await expect(
+      asUser(founder, `select public.ai_studio_render_recover()`),
+    ).rejects.toThrow(/denied|permission/i);
+    expect(
+      (await asUser<{ ok: boolean }>(member, `select public.ai_studio_render_claim('${job}','${token}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(false);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_claim('${job}','${token}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_cancel('${job}') as ok`)).rows[0]!
+        .ok,
+    ).toBe(true);
+    expect(
+      (
+        await asUser<{ status: string }>(
+          founder,
+          `select status from public.ai_studio_render_jobs where id='${job}'`,
+        )
+      ).rows[0]!.status,
+    ).toBe('cancelled');
+    expect((await asUser(member, 'select id from public.ai_studio_render_jobs')).rows).toHaveLength(0);
+    const compositionB = 'a1000000-0000-4000-8000-000000000013';
+    const sceneB = 'a1000000-0000-4000-8000-000000000014';
+    const filmB = film.replace(composition, compositionB).replace(scene, sceneB);
+    await asUser(
+      founder,
+      `select public.ai_studio_composition_save('${compositionB}','${project}','Other film','${filmB}'::jsonb,null,0)`,
+    );
+    const revisionB = (
+      await asUser<{ id: string }>(
+        founder,
+        `select id from public.ai_studio_composition_revisions where composition_id='${compositionB}'`,
+      )
+    ).rows[0]!.id;
+    await expect(
+      asUser(
+        founder,
+        `select * from public.ai_studio_render_begin('a1000000-0000-4000-8000-000000000015','${project}','${compositionB}','${revisionB}','${key}')`,
+      ),
+    ).rejects.toThrow(/INPUT_CHANGED/i);
+    await expect(
+      asUser(
+        member,
+        `select * from public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    const expired = 'a1000000-0000-4000-8000-000000000016';
+    const expiredKey = 'a1000000-0000-4000-8000-000000000017';
+    const expiredToken = 'a1000000-0000-4000-8000-000000000018';
+    expect(
+      (
+        await asUser<{ created: boolean }>(
+          founder,
+          `select created from public.ai_studio_render_begin('${expired}','${project}','${composition}','${revision}','${expiredKey}')`,
+        )
+      ).rows[0]!.created,
+    ).toBe(true);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_claim('${expired}','${expiredToken}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    await db.exec(
+      `update public.ai_studio_render_jobs set lease_until=now()-interval '1 minute' where id='${expired}'`,
+    );
+    await expect(
+      asUser(
+        founder,
+        `select public.ai_studio_render_finish('${expired}','${expiredToken}','${founder}/${project}/${expired}/film.mp4','${founder}/${project}/${expired}/cover.png','${founder}/${project}/${expired}/captions.vtt',1920,1080,3000)`,
+      ),
+    ).rejects.toThrow(/lease lost/i);
+    await db.exec(`select set_config('request.jwt.claim.role','service_role',false)`);
+    expect((await db.query<{ n: number }>('select public.ai_studio_render_recover() as n')).rows[0]!.n).toBeGreaterThan(0);
+    expect((await db.query<{ n: number }>('select public.ai_studio_render_requeue() as n')).rows[0]!.n).toBeGreaterThan(0);
+    await db.exec(`select set_config('request.jwt.claim.role','',false)`);
+    expect(
+      (
+        await asUser<{ status: string; retry: number }>(
+          founder,
+          `select status, retry_count as retry from public.ai_studio_render_jobs where id='${expired}'`,
+        )
+      ).rows[0],
+    ).toMatchObject({ status: 'queued' });
+    const winnerToken = 'a1000000-0000-4000-8000-000000000019';
+    const staleToken = expiredToken;
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_claim('${expired}','${winnerToken}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    const winnerFilm = `${founder}/${project}/${expired}/${winnerToken}/film.mp4`;
+    expect(
+      (
+        await asUser<{ ok: boolean }>(
+          founder,
+          `select public.ai_studio_render_finish('${expired}','${winnerToken}','${winnerFilm}','${founder}/${project}/${expired}/${winnerToken}/cover.png','${founder}/${project}/${expired}/${winnerToken}/captions.vtt',1920,1080,3000) as ok`,
+        )
+      ).rows[0]!.ok,
+    ).toBe(true);
+    await expect(
+      asUser(
+        founder,
+        `select public.ai_studio_render_finish('${expired}','${staleToken}','${founder}/${project}/${expired}/${staleToken}/film.mp4','${founder}/${project}/${expired}/${staleToken}/cover.png','${founder}/${project}/${expired}/${staleToken}/captions.vtt',1920,1080,3000)`,
+      ),
+    ).rejects.toThrow(/lease lost/i);
+    expect(
+      (
+        await asUser<{ film: string; status: string }>(
+          founder,
+          `select status, storage_film as film from public.ai_studio_render_jobs where id='${expired}'`,
+        )
+      ).rows[0],
+    ).toMatchObject({ status: 'complete', film: winnerFilm });
+    const exportJob = 'a1000000-0000-4000-8000-000000000021';
+    const exportKey = 'a1000000-0000-4000-8000-000000000022';
+    const exportToken = 'a1000000-0000-4000-8000-000000000023';
+    expect(
+      (
+        await asUser<{ id: string; status: string; created: boolean }>(
+          founder,
+          `select * from public.ai_studio_design_export_begin('${exportJob}','${project}','${design}','${frozenA}','svg','embed','${exportKey}')`,
+        )
+      ).rows[0],
+    ).toMatchObject({ id: exportJob, status: 'queued', created: true });
+    await expect(
+      asUser(
+        member,
+        `select * from public.ai_studio_design_export_begin('a1000000-0000-4000-8000-000000000024','${project}','${design}','${frozenA}','svg','embed','a1000000-0000-4000-8000-000000000025')`,
+      ),
+    ).rejects.toThrow();
+    const laterRevision = (
+      await asUser<{ id: string }>(founder, `select id from public.ai_studio_design_revisions where design_id='${design}' and revision=2`)
+    ).rows[0]!.id;
+    await expect(
+      asUser(
+        founder,
+        `select * from public.ai_studio_design_export_begin('${exportJob}','${project}','${design}','${laterRevision}','svg','embed','${exportKey}')`,
+      ),
+    ).rejects.toThrow(/DESIGN_EXPORT_INPUT_CHANGED/i);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_design_export_claim('${exportJob}','${exportToken}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    const exportObject = `${founder}/${project}/${exportJob}/${exportToken}/design.svg`;
+    const exportId = (
+      await asUser<{ id: string }>(
+        founder,
+        `select public.ai_studio_design_export_finish('${exportJob}','${exportToken}','${exportObject}',1011,638,300) as id`,
+      )
+    ).rows[0]!.id;
+    expect(exportId).toMatch(/^[0-9a-f-]{36}$/i);
+    expect((await asUser(member, 'select id from public.ai_studio_design_export_jobs')).rows).toHaveLength(0);
+    expect((await asUser(member, 'select id from public.ai_studio_design_exports')).rows).toHaveLength(0);
+    const stored = await asUser<{ revision: string; format: string }>(
+      founder,
+      `select revision_id as revision, format from public.ai_studio_design_exports where id='${exportId}'`,
+    );
+    expect(stored.rows[0]).toMatchObject({ revision: frozenA, format: 'svg' });
+  });
 });
 

@@ -1,6 +1,18 @@
 'use client';
 export const studioRooms = [
   {
+    id: 'design',
+    label: 'Design',
+    note: 'Editable documents',
+    path: 'M4 4h16v16H4zM8 8h8M8 12h8M8 16h5',
+  },
+  {
+    id: 'film',
+    label: 'Film',
+    note: 'Mixed-media production',
+    path: 'M3 6h12v12H3zM15 10l6-4v12l-6-4',
+  },
+  {
     id: 'create',
     label: 'Create',
     note: 'Image atelier',

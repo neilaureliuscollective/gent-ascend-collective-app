@@ -42,6 +42,7 @@ test('Stop preserves the draft and reports cancellation independently of failure
 test('Studio uses waiting until its synchronous endpoint confirms the save', async ({ page }) => {
   await page.goto('http://127.0.0.1:3102/motion-integration.html');
   await page.getByLabel('Surface', { exact: true }).selectOption('studio');
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await page.getByLabel('Describe what you want to see').fill('Synthetic visual direction');
   await page.getByRole('button', { name: 'Create image' }).click();
   await expect(page.locator('.studio-main .im-status')).toHaveText('Waiting for response');
