@@ -231,3 +231,151 @@ it('latches interruption before response.done, waits for usage, and ignores dupl
   ]);
   expect(ledger.inputTokens).toBe(7);
 });
+
+const compactContextId = 'c' + '0'.repeat(25);
+function internalEvent(id: string, type = 'conversation.item.added') {
+  return { type, item: { id, role: 'user', content: [{ text: 'Synthetic application context' }] } };
+}
+async function replyEvents(
+  ledger: VoiceLedger,
+  save: (turn: RecordedVoiceTurn) => Promise<void>,
+  id = 'reply',
+  interrupted = false,
+) {
+  await ledger.accept({ type: 'response.created', response: { id } }, save);
+  await ledger.accept(
+    {
+      type: 'response.done',
+      response: {
+        id,
+        status: 'completed',
+        output: [{ id: id + '-output', content: [{ transcript: 'Synthetic answer' }] }],
+      },
+    },
+    save,
+  );
+  await ledger.accept(
+    {
+      type: interrupted ? 'output_audio_buffer.cleared' : 'output_audio_buffer.stopped',
+      response_id: id,
+    },
+    save,
+  );
+}
+for (const id of [compactContextId, 'ctx_legacy']) {
+  it(`never persists internal context or a context-only notification reply (${id.slice(0, 4)})`, async () => {
+    const ledger = new VoiceLedger();
+    const saved: RecordedVoiceTurn[] = [];
+    const save = async (turn: RecordedVoiceTurn) => {
+      saved.push(turn);
+    };
+    for (const type of [
+      'conversation.item.added',
+      'conversation.item.created',
+      'conversation.item.done',
+    ])
+      await ledger.accept(internalEvent(id, type), save);
+    await replyEvents(ledger, save);
+    expect(saved).toEqual([]);
+  });
+  it(`keeps pending real audio through delayed internal acknowledgements and late ASR (${id.slice(0, 4)})`, async () => {
+    const ledger = new VoiceLedger();
+    const saved: RecordedVoiceTurn[] = [];
+    const save = async (turn: RecordedVoiceTurn) => {
+      saved.push(turn);
+    };
+    await ledger.accept(internalEvent(id), save);
+    await ledger.accept({ type: 'input_audio_buffer.committed', item_id: 'item_real' }, save);
+    await ledger.accept(internalEvent(id, 'conversation.item.done'), save);
+    await ledger.accept(internalEvent(id, 'conversation.item.created'), save);
+    await replyEvents(ledger, save);
+    expect(saved).toEqual([]);
+    await ledger.accept(
+      {
+        type: 'conversation.item.input_audio_transcription.completed',
+        item_id: 'item_real',
+        transcript: 'Application context is what I want to discuss',
+      },
+      save,
+    );
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({
+      providerItemId: 'item_real',
+      user: 'Application context is what I want to discuss',
+      assistant: 'Synthetic answer',
+    });
+    // A duplicate real item and later system-triggered reply cannot reuse an already paired human input.
+    await ledger.accept(
+      {
+        type: 'conversation.item.added',
+        item: {
+          id: 'item_real',
+          role: 'user',
+          content: [{ text: 'Application context is what I want to discuss' }],
+        },
+      },
+      save,
+    );
+    await ledger.accept(internalEvent(id), save);
+    await replyEvents(ledger, save, 'internal-notification');
+    expect(saved).toHaveLength(1);
+  });
+}
+it('preserves real typed context-like wording, interruptions, and the next genuine audio turn', async () => {
+  const ledger = new VoiceLedger();
+  const saved: RecordedVoiceTurn[] = [];
+  const save = async (turn: RecordedVoiceTurn) => {
+    saved.push(turn);
+  };
+  await ledger.accept(
+    {
+      type: 'conversation.item.added',
+      item: {
+        id: 'conversation-real-typed',
+        role: 'user',
+        content: [{ text: 'Application context: these are my actual words' }],
+      },
+    },
+    save,
+  );
+  await ledger.accept(internalEvent(compactContextId), save);
+  await replyEvents(ledger, save, 'interrupted-reply', true);
+  expect(saved[0]).toMatchObject({
+    providerItemId: 'conversation-real-typed',
+    status: 'cancelled',
+    assistant: '',
+  });
+  await ledger.accept(internalEvent(compactContextId), save);
+  await ledger.accept({ type: 'input_audio_buffer.committed', item_id: 'item_real_next' }, save);
+  await ledger.accept(
+    {
+      type: 'conversation.item.input_audio_transcription.completed',
+      item_id: 'item_real_next',
+      transcript: 'Actual next speech',
+    },
+    save,
+  );
+  await replyEvents(ledger, save, 'next-reply');
+  expect(saved).toHaveLength(2);
+  expect(saved[1]).toMatchObject({ user: 'Actual next speech', assistant: 'Synthetic answer' });
+});
+
+it('does not globally discard genuine audio events even when their provider ID resembles the reserved namespace', async () => {
+  const ledger = new VoiceLedger();
+  const saved: RecordedVoiceTurn[] = [];
+  const save = async (turn: RecordedVoiceTurn) => {
+    saved.push(turn);
+  };
+  await ledger.accept({ type: 'input_audio_buffer.committed', item_id: compactContextId }, save);
+  await ledger.accept(
+    {
+      type: 'conversation.item.input_audio_transcription.completed',
+      item_id: compactContextId,
+      transcript: 'Actual audio with context-like wording',
+    },
+    save,
+  );
+  await replyEvents(ledger, save);
+  expect(saved).toHaveLength(1);
+  expect(saved[0]?.user).toBe('Actual audio with context-like wording');
+});

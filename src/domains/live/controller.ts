@@ -5,6 +5,7 @@ import type {
 } from '@/domains/artifacts/daily-action';
 import { readLiveEvent, type LiveJob } from './contract';
 import { recoverableLiveError } from './provider-errors';
+import { isApplicationLiveItem, formatApplicationLiveItem } from './application-item';
 import { VoiceDiagnostics, rtcHealth } from './diagnostics';
 import { LIVE_TEXT_LIMIT, type LiveTextSend } from './limits';
 import type { WorkTarget } from '@/domains/work-items';
@@ -438,7 +439,8 @@ export class LiveController {
     if (!this.id || !['listening', 'speaking'].includes(this.state.phase))
       return { accepted: false as const, reason: 'inactive' as const };
     const nextKey = target ? `${target.creationId}:${target.field}` : 'clear';
-    if (this.spokenTargetKey === nextKey) return { accepted: true as const, reason: 'unchanged' as const };
+    if (this.spokenTargetKey === nextKey)
+      return { accepted: true as const, reason: 'unchanged' as const };
     const response = await fetch('/api/aethelios/live/target', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -453,14 +455,16 @@ export class LiveController {
       'Application selected-work target expired; replaces the previous Talk field target. Ask which field to change. Do not guess another item, field or version.';
     if (this.channel?.readyState !== 'open')
       return { accepted: false as const, reason: 'channel' as const };
-    this.spokenTargetKey = response.ok && result.target
-      ? `${result.target.creationId}:${result.target.field}`
-      : result.context
-        ? nextKey
-        : 'stale';
+    this.spokenTargetKey =
+      response.ok && result.target
+        ? `${result.target.creationId}:${result.target.field}`
+        : result.context
+          ? nextKey
+          : 'stale';
     this.send({
       type: 'conversation.item.create',
       item: {
+        id: formatApplicationLiveItem(crypto.getRandomValues(new Uint8Array(16))),
         type: 'message',
         role: 'user',
         content: [{ type: 'input_text', text: context }],
@@ -632,7 +636,7 @@ export class LiveController {
       ['conversation.item.added', 'conversation.item.created'].includes(event.type) &&
       event.item?.role === 'user'
     ) {
-      if (event.item.id?.startsWith('ctx_')) return;
+      if (isApplicationLiveItem(event.item.id)) return;
       const text = event.item.content?.map((part) => part.text ?? '').join('');
       if (!this.state.transcript.some((line) => line.id === event.item?.id) || text)
         this.line(event.item.id ?? 'typed', 'user', text || '', false);
