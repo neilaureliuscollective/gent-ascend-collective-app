@@ -950,6 +950,10 @@
   min-height: 72px;
 }
 
+.architect-app-status-region {
+  margin: 0;
+}
+
 .architect-app-status {
   min-height: 2.75rem;
   margin: 0;
@@ -1304,16 +1308,16 @@
 .origin-entry[data-world-state='arrival'] .origin-composer > :not(textarea):not(.origin-composer-tools):not(label[for='origin-idea']) {
   display: none;
 }
-.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) {
+.origin-entry[data-world-state='arrival'] .origin-composer[data-idea-filled='true'] {
   flex-wrap: wrap;
   border-radius: 18px !important;
 }
-.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) > label[for='origin-name'],
-.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) > #origin-name {
+.origin-entry[data-world-state='arrival'] .origin-composer[data-idea-filled='true'] > label[for='origin-name'],
+.origin-entry[data-world-state='arrival'] .origin-composer[data-idea-filled='true'] > #origin-name {
   display: block;
   width: 100%;
 }
-.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) .origin-composer-tools > button {
+.origin-entry[data-world-state='arrival'] .origin-composer[data-idea-filled='true'] .origin-composer-tools > button {
   display: inline-flex;
 }
 .origin-entry[data-world-state='arrival'] .origin-composer-tools > :not(.origin-shape) {

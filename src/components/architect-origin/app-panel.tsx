@@ -457,9 +457,11 @@ export function ArchitectAppPanel({
               {selectedRevision && current && selectedRevision !== current.revision ? ` · selected, current ${current.revision}` : ''}
               {working && working.revision !== displayed?.revision ? ` · last working ${working.revision}` : ''}
             </h3>
-            <p className="architect-app-status" data-stage={workbench.stage} aria-live="polite">
-              {compactStatus}
-            </p>
+            <section className="architect-app-status-region" aria-label="Application status">
+              <p className="architect-app-status" data-stage={workbench.stage} aria-live="polite">
+                {compactStatus}
+              </p>
+            </section>
             <details className="architect-app-status-details" aria-label="Build diagnostics">
               <summary>Build details</summary>
               <p>

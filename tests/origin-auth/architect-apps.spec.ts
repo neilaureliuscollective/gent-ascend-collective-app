@@ -4,7 +4,6 @@ import { copyFileSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 
 test.use({
   viewport: { width: 1440, height: 900 },
-  recordVideo: { dir: 'test-results/architect-apps-connected', size: { width: 1440, height: 900 } },
 });
 
 const env = Object.fromEntries(
@@ -141,16 +140,16 @@ async function waitForUrl(url: string, child: ChildProcess, timeoutMs = 60000, l
 }
 
 function primaryStatus(target: Page) {
-  return target.locator('.architect-app-status');
+  return target.getByRole('region', { name: 'Application status', exact: true }).locator('.architect-app-status');
 }
 
 function buildDiagnostics(target: Page) {
-  return target.locator('details.architect-app-status-details');
+  return target.getByLabel('Build diagnostics', { exact: true });
 }
 
 async function openBuildDiagnostics(target: Page) {
   const details = buildDiagnostics(target);
-  const toggle = details.getByRole('button', { name: 'Build details' });
+  const toggle = details.getByText('Build details', { exact: true });
   await expect(toggle).toBeVisible();
   if (!(await details.evaluate((node) => node instanceof HTMLDetailsElement && node.open))) {
     await toggle.click();
@@ -160,10 +159,26 @@ async function openBuildDiagnostics(target: Page) {
 
 async function closeBuildDiagnostics(target: Page) {
   const details = buildDiagnostics(target);
+  const toggle = details.getByText('Build details', { exact: true });
   if (await details.evaluate((node) => node instanceof HTMLDetailsElement && node.open)) {
-    await details.getByRole('button', { name: 'Build details' }).click();
+    await toggle.click();
   }
   await expect(details).toHaveJSProperty('open', false);
+}
+
+function evidenceDir() {
+  mkdirSync('test-results/architect-apps-connected', { recursive: true });
+  mkdirSync('docs/evidence/architect-apps', { recursive: true });
+  return {
+    docs: 'docs/evidence/architect-apps',
+    connected: 'test-results/architect-apps-connected',
+  };
+}
+
+async function captureWorkbench(target: Page, name: string) {
+  const dirs = evidenceDir();
+  await target.screenshot({ path: `${dirs.docs}/${name}.png`, fullPage: true });
+  await target.screenshot({ path: `${dirs.connected}/${name}.png`, fullPage: true });
 }
 
 async function fillNote(form: Locator, input: { title: string; note: string; hours: string }) {
@@ -223,6 +238,11 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.getByText('Reviewed files are shown before approval.')).toBeVisible();
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 1 accepted\. Start remains explicit/)).toBeVisible();
+  await expect(primaryStatus(page)).toHaveText('Approved revision 1 recovered');
+  await expect(buildDiagnostics(page)).toHaveJSProperty('open', false);
+  await openBuildDiagnostics(page);
+  await expect(buildDiagnostics(page)).toContainText('Approved revision 1 recovered. Start remains explicit.');
+  await closeBuildDiagnostics(page);
   await page.getByRole('button', { name: 'Start approved build' }).click();
   await expect(primaryStatus(page)).toHaveAttribute('data-stage', /preparing|building|checking/);
   await expect(primaryStatus(page)).toHaveText('Building');
@@ -236,6 +256,8 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
 
   await expect(primaryStatus(page)).toHaveAttribute('data-stage', 'preview-ready', { timeout: 180000 });
   await expect(primaryStatus(page)).toHaveText('Preview ready');
+  await expect(buildDiagnostics(page)).toHaveJSProperty('open', false);
+  await expect(primaryStatus(page)).not.toContainText('Compiled preview is ready');
   await openBuildDiagnostics(page);
   await expect(buildDiagnostics(page)).toContainText('Compiled preview is ready');
   await expect(buildDiagnostics(page)).toContainText('Labelled development generation is in use');
@@ -346,6 +368,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 2 accepted/)).toBeVisible();
+  await expect(primaryStatus(page)).toHaveText('Preview ready');
   await page.getByRole('button', { name: 'Start approved build' }).click();
   const second = await runAppsWorkerUntilSucceeded();
   expect(second.code, second.out).toBe(0);
@@ -369,6 +392,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 3 accepted/)).toBeVisible();
+  await expect(primaryStatus(page)).toHaveText('Preview ready');
   await page.getByRole('button', { name: 'Start approved build' }).click();
   const failed = await runAppsWorkerUntilFailed();
   expect(failed.code, failed.out).toBe(0);
@@ -386,30 +410,26 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await page.getByRole('button', { name: 'Records' }).click();
   await expect(page.locator('[data-record-title="Site visit B"]')).toBeVisible({ timeout: 15000 });
 
-  mkdirSync('test-results', { recursive: true });
-  mkdirSync('docs/evidence/architect-apps', { recursive: true });
+  evidenceDir();
   await expect(primaryStatus(page)).toHaveText('Failed · last good preview kept');
   await page.waitForTimeout(600);
-  await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-desktop.png', fullPage: true });
-  await page.screenshot({ path: 'test-results/architect-apps-workbench-desktop.png', fullPage: true });
+  await captureWorkbench(page, 'workbench-desktop');
   await page.setViewportSize({ width: 720, height: 900 });
   await page.getByRole('button', { name: 'Fold' }).click();
   await expect(primaryStatus(page)).toBeVisible();
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-fold.png', fullPage: true });
-  await page.screenshot({ path: 'test-results/architect-apps-workbench-fold.png', fullPage: true });
+  await captureWorkbench(page, 'workbench-fold');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Phone' }).click();
   await expect(primaryStatus(page)).toHaveText('Failed · last good preview kept');
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-phone.png', fullPage: true });
-  await page.screenshot({ path: 'test-results/architect-apps-workbench-phone.png', fullPage: true });
+  await captureWorkbench(page, 'workbench-phone');
   await page.setViewportSize({ width: 344, height: 882 });
   await expect(primaryStatus(page)).toBeVisible();
-  await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-phone-344.png', fullPage: true });
+  await captureWorkbench(page, 'workbench-phone-344');
   await page.setViewportSize({ width: 390, height: 520 });
   await expect(primaryStatus(page)).toBeInViewport();
-  await page.screenshot({ path: 'docs/evidence/architect-apps/workbench-phone-keyboard.png', fullPage: true });
+  await captureWorkbench(page, 'workbench-phone-keyboard');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Desktop' }).click();
 
@@ -469,39 +489,38 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
     await next.getByRole('button', { name: 'Records' }).click();
     await expect(next.locator('[data-record-title="Site visit A edited"]')).toBeVisible({ timeout: 15000 });
     await expect(next.locator('[data-record-title="Site visit B"]')).toBeVisible();
-    await next.screenshot({ path: 'docs/evidence/architect-apps/workbench-reopen.png', fullPage: true });
-    await next.screenshot({ path: 'test-results/architect-apps-workbench-reopen.png', fullPage: true });
+    await captureWorkbench(next, 'workbench-reopen');
     await restarted.close();
   } finally {
     replacement.kill('SIGTERM');
   }
 
-  mkdirSync('docs/evidence/architect-apps', { recursive: true });
+  const dirs = evidenceDir();
   const video = page.video();
   const videoPath = video ? await video.path() : null;
   if (videoPath) {
     try {
-      copyFileSync(videoPath, 'docs/evidence/architect-apps/connected-journey.webm');
+      copyFileSync(videoPath, `${dirs.docs}/connected-journey.webm`);
+      copyFileSync(videoPath, `${dirs.connected}/connected-journey.webm`);
     } catch {
-      /* Playwright finalizes the webm when the context closes; CI uploads test-results as well. */
+      /* Playwright finalizes the webm when the context closes; CI copies test-results/*.webm afterward. */
     }
   }
-  writeFileSync(
-    'docs/evidence/architect-apps/connected-journey.json',
-    JSON.stringify(
-      {
-        schema: 'architect-apps-connected-journey/v1',
-        kind: 'connected-local-acceptance',
-        not: ['labelled-visual-fixture', 'hosted-production-proof'],
-        generation: 'ARCHITECT_APPS_AI_MOCK=true labelled mocked model transport',
-        execution: 'real local Auth, APIs, durable records, packaged worker, isolated Docker compile',
-        projectUrl,
-        name,
-        worker: { first: first.out.slice(-800), second: second.out.slice(-800), failed: failed.out.slice(-800) },
-        note: 'Signed-in UI journey used real Auth, application APIs, durable records, the packaged Apps worker image for each tick, Docker compile and the compiled iframe. Model transport is labelled mock. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity through page fetch so verifyOrigin still ran. A labelled compile-failure revision kept the last good preview. A replacement Next.js process on :3108 reopened that revision and records; the captured :3103 URL could not satisfy the replacement identity check. Playwright did not kill its own webServer. Preview revocation uses shared database sessions, so missing local process state is not authorization.',
-      },
-      null,
-      2,
-    ),
+  const receipt = JSON.stringify(
+    {
+      schema: 'architect-apps-connected-journey/v1',
+      kind: 'connected-local-acceptance',
+      not: ['labelled-visual-fixture', 'hosted-production-proof'],
+      generation: 'ARCHITECT_APPS_AI_MOCK=true labelled mocked model transport',
+      execution: 'real local Auth, APIs, durable records, packaged worker, isolated Docker compile',
+      projectUrl,
+      name,
+      worker: { first: first.out.slice(-800), second: second.out.slice(-800), failed: failed.out.slice(-800) },
+      note: 'Signed-in UI journey used real Auth, application APIs, durable records, the packaged Apps worker image for each tick, Docker compile and the compiled iframe. Model transport is labelled mock. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity through page fetch so verifyOrigin still ran. A labelled compile-failure revision kept the last good preview. A replacement Next.js process on :3108 reopened that revision and records; the captured :3103 URL could not satisfy the replacement identity check. Playwright did not kill its own webServer. Preview revocation uses shared database sessions, so missing local process state is not authorization.',
+    },
+    null,
+    2,
   );
+  writeFileSync(`${dirs.docs}/connected-journey.json`, receipt);
+  writeFileSync(`${dirs.connected}/connected-journey.json`, receipt);
 });

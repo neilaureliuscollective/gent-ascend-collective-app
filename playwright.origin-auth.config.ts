@@ -5,6 +5,11 @@ export default defineConfig({
   testDir: 'tests/origin-auth',
   testMatch: /architect-(origin|apps)\.spec\.ts/,
   timeout: 300000,
+  use: {
+    ...base.use,
+    viewport: { width: 1440, height: 900 },
+    video: { mode: 'on', size: { width: 1440, height: 900 } },
+  },
   webServer: {
     command:
       'ARCHITECT_ORIGIN_ENABLED=true ARCHITECT_ORIGIN_AI_ENABLED=false ARCHITECT_APPS_ENABLED=true ARCHITECT_APPS_AI_MOCK=true ARCHITECT_APPS_PREVIEW_SECRET=origin-apps-preview-secret-key ARCHITECT_APPS_PROCESS_ID=origin-apps-3103 APP_ENV=local npm run dev -- --port 3103',

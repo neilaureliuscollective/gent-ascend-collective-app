@@ -74,6 +74,20 @@ jobs:
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
         run: npx playwright test --config playwright.origin-auth.config.ts
+      - name: Publish connected-journey evidence
+        if: always()
+        run: |
+          mkdir -p docs/evidence/architect-apps test-results/architect-apps-connected
+          video="$(find test-results -name '*.webm' -not -path '*/architect-apps-connected/*' | head -n 1 || true)"
+          if [ -n "$video" ]; then
+            cp "$video" docs/evidence/architect-apps/connected-journey.webm
+            cp "$video" test-results/architect-apps-connected/connected-journey.webm
+          fi
+          for shot in docs/evidence/architect-apps/workbench-*.png docs/evidence/architect-apps/connected-journey.json; do
+            if [ -f "$shot" ]; then
+              cp "$shot" test-results/architect-apps-connected/
+            fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -85,6 +99,16 @@ jobs:
             docs/evidence/architect-apps/connected-journey.json
             docs/evidence/architect-apps/connected-journey.webm
             docs/evidence/architect-apps/runtime-receipt.json
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architect-apps-connected-journey
+          path: |
+            docs/evidence/architect-apps/workbench-*.png
+            docs/evidence/architect-apps/connected-journey.json
+            docs/evidence/architect-apps/connected-journey.webm
+            test-results/architect-apps-connected
           if-no-files-found: ignore
       - if: always()
         run: npx supabase stop --no-backup

@@ -160,6 +160,7 @@ export function CreationEntry({
       </p>
       <form
         className="origin-intake origin-composer"
+        data-idea-filled={idea.trim().length > 0 ? 'true' : 'false'}
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();

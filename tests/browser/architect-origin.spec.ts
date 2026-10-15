@@ -2232,7 +2232,9 @@ test('UI fixture: app workbench reviews files, recovers approved start after rel
   await expect(page.getByText(/Revision 1 accepted\. Start remains explicit/)).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'App', exact: true }).click();
-  await expect(page.locator('.architect-app-status')).toHaveText('Approved revision 1 recovered');
+  await expect(page.getByRole('region', { name: 'Application status', exact: true })).toHaveText(
+    'Approved revision 1 recovered',
+  );
   await page.getByRole('button', { name: 'Start approved build' }).click();
   await expect(page.getByText(/Build was not queued|Synthetic lost start/)).toBeVisible();
   await page.getByRole('button', { name: 'Start approved build' }).click();
