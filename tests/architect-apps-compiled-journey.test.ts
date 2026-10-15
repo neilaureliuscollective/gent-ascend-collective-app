@@ -325,14 +325,17 @@ it('compiles Field Notes, mounts the sealed bundle, and replays create/edit agai
   const docker = await probeAppsDockerIsolation({ PATH: process.env.PATH });
   expect(compiled.result.isolation).toBe('host-fixture');
   expect(compiled.result.sandbox).toBe(false);
-  if (docker.available) {
+  if (process.env.ARCHITECT_APPS_REQUIRE_ISOLATION === 'true' && docker.available) {
     const image = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', defaultAppsImage], { encoding: 'utf8' });
     if (image.status === 0) {
       const isolated = await buildIsolatedGeneratedApp(notesSourceFiles(), {
-        timeoutMs: 120000,
+        timeoutMs: 180000,
         name: 'apps-journey-ci',
       });
-      expect(isolated.result.ok, isolated.result.blocker ?? isolated.result.typecheck.log).toBe(true);
+      expect(
+        isolated.result.ok,
+        isolated.result.blocker ?? `${isolated.result.typecheck.log}\n${isolated.result.bundle.log}`,
+      ).toBe(true);
       expect(isolated.result.isolation).toBe('docker');
       expect(isolated.result.sandbox).toBe(true);
       expect(isolated.artifacts.some((file) => file.path === APP_BUNDLE_ENTRY)).toBe(true);

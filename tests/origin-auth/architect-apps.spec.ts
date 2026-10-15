@@ -15,7 +15,7 @@ if (new URL(env.NEXT_PUBLIC_SUPABASE_URL!).hostname !== '127.0.0.1')
 
 test('authenticated Architect Apps workbench uses the real API and truthful stages', async ({ page }) => {
   await page.goto('/enter');
-  await page.getByLabel('Email').fill('member@aurelius.test');
+  await page.getByLabel('Email').fill('founder@aurelius.test');
   await page.getByLabel('Password').fill(env.AURELIUS_FOUNDER_PASSWORD!);
   await page.getByRole('button', { name: 'Enter Aethelios', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/founder$/);

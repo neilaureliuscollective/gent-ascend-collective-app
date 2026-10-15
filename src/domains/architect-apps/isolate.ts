@@ -253,7 +253,7 @@ export async function removeNamedAppsContainer(
   }
 }
 
-export const trustedAppsContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+export const trustedAppsContainerRunner = `import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 function can(path, mode) { try { accessSync(path, mode); return true; } catch { return false; } }
@@ -299,6 +299,12 @@ for (const file of job.files) {
   const to = join(work, file.path);
   mkdirSync(dirname(to), { recursive: true });
   writeFileSync(to, readFileSync(join('/src', file.path)));
+}
+mkdirSync(join(work, 'node_modules'), { recursive: true });
+for (const name of ['react', 'react-dom', 'scheduler', 'vite', 'typescript']) {
+  const source = join(toolchainRoot, name);
+  const destination = join(work, 'node_modules', name);
+  if (existsSync(source) && !existsSync(destination)) symlinkSync(source, destination);
 }
 function run(bin, args, timeout) {
   const ran = spawnSync(process.execPath, [bin, ...args], {

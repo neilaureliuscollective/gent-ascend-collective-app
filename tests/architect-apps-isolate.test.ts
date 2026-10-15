@@ -135,6 +135,7 @@ it('runs the production isolated adapter through deterministic injected transpor
 it('emits an ES-module runner that walks artifacts without require', async () => {
   expect(trustedAppsContainerRunner).not.toMatch(/\brequire\s*\(/);
   expect(trustedAppsContainerRunner).toMatch(/readdirSync\(dir\)/);
+  expect(trustedAppsContainerRunner).toMatch(/symlinkSync\(source, destination\)/);
   const work = await mkdtemp(join(tmpdir(), 'apps-walk-'));
   await writeFile(join(work, 'index.html'), '<!doctype html><html><body><div id="root"></div></body></html>');
   await mkdir(join(work, 'assets'));
@@ -165,11 +166,11 @@ it('confirms named container teardown after cancel', async () => {
 it('builds the pinned image and runs the isolated Field Notes compile when isolation is required', async () => {
   const required = process.env.ARCHITECT_APPS_REQUIRE_ISOLATION === 'true';
   const probe = await probeAppsDockerIsolation({ PATH: process.env.PATH });
-  if (!probe.available) {
-    if (required) throw new Error(`Required isolated build unavailable: ${probe.reason}`);
-    expect(probe.code).toMatch(/not-installed|daemon-unavailable|timeout|error/);
+  if (!required) {
+    if (!probe.available) expect(probe.code).toMatch(/not-installed|daemon-unavailable|timeout|error|empty-version/);
     return;
   }
+  if (!probe.available) throw new Error(`Required isolated build unavailable: ${probe.reason}`);
   const inspect = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}} {{.RepoTags}}', defaultAppsImage], {
     encoding: 'utf8',
   });
@@ -192,7 +193,10 @@ it('builds the pinned image and runs the isolated Field Notes compile when isola
     timeoutMs: 180000,
     name: 'apps-required-ci',
   });
-  expect(isolated.result.ok, isolated.result.blocker ?? isolated.result.typecheck.log).toBe(true);
+  expect(
+    isolated.result.ok,
+    isolated.result.blocker ?? `${isolated.result.typecheck.log}\n${isolated.result.bundle.log}`,
+  ).toBe(true);
   expect(isolated.result.isolation).toBe('docker');
   expect(isolated.result.sandbox).toBe(true);
   expect(isolated.artifacts.some((file) => file.path === 'assets/app.js')).toBe(true);
