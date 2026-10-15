@@ -13,6 +13,7 @@ on:
       - 'tests/browser/intelligence-motion*'
       - 'tests/component-fixture/identity-studies*'
       - 'scripts/intelligence-motion-review.mjs'
+      - 'docs/evidence/conversation-motion/review-clips/**'
       - '.github/workflows/intelligence-motion.yml'
 permissions:
   contents: read
@@ -57,3 +58,9 @@ jobs:
           name: intelligence-motion-rendered-evidence
           path: test-results
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: conversation-motion-review-clips
+          path: docs/evidence/conversation-motion/review-clips/*.mp4
+          if-no-files-found: error

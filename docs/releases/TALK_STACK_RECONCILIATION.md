@@ -47,6 +47,10 @@ Recommended order after review: current main → #131 → #135 → #139; coordin
 
 #135 incorporates #131 `9be1eb9` by merge. Its two conflicts were the fixture selector and tests: retain both `legacy-reserve` and `lifestyle-launch`, editable briefs, and the new local-development/loopback boundary and interruptible transport. All workspace/provider/elevation state remains from #135. No migration changes.
 
+## Motion restack
+
+#139 incorporates #135 `fe858b2` by merge. Two conflicts: `brand.ts` keeps the released Human Ascendance crest/lockup and Motion's official compact gold-A conversation emblem; `build-motion-gallery.mjs` embeds both current crest and conversation emblem for offline review. Compact truthful status, cancellation, Still/reduced motion and workspace state are preserved.
+
 CI on the first elevation reconciliation found three cold-Docker test timeouts (20 seconds) while the runner allows a 60-second image pull before execution. The two existing host-integration test files now allow 120 seconds per case; all isolation, bypass and observed-cancellation assertions are unchanged. This is an explicit cold-runtime deadline, not a skipped gate. Text lifecycle navigation supports Motion's existing narrow Tools/New disclosure.
 
 Saved-work recovery repair: a failed creation read (including a 503 while schema is unavailable) now displays an explicit retry, preserves the current conversation/draft and same-scope saved work, and fences responses again after JSON parsing. A new synthetic browser case in `talk-creation-recovery.spec.ts` verifies recovery without a reload or lost draft. Changing conversation/owner clears the error and old work.

@@ -1,6 +1,8 @@
 'use client';
 import { TalkDrawer } from './talk-controls';
-import { IntelligencePresence, IntelligenceStatus } from '../intelligence-motion/presence';
+import { IntelligenceStatus } from '../intelligence-motion/presence';
+import { LivingSignal } from '../intelligence-motion/living-signal';
+import { useAppearance } from '../visual/appearance';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import { observedOperation } from '@/platform/visual/operation-adapters';
 import type { PresenceState } from '@/platform/visual/presence-state';
@@ -13,6 +15,7 @@ export function TalkPresence({
   state: PresenceState;
   operation?: IntelligenceOperation;
 }) {
+  const { moving } = useAppearance();
   const snapshot =
     operation ??
     observedOperation(
@@ -31,20 +34,18 @@ export function TalkPresence({
       <TalkDrawer
         label="Aethelios presence"
         triggerContent={
-          <span className="talk-orb">
-            <IntelligencePresence operation={snapshot} variant="signal" />
+          <span className="talk-orb talk-orb-mark">
+            <LivingSignal operation={snapshot} still={!moving} surface="toolbar" />
           </span>
         }
       >
         <div className="talk-presence-room">
-          <span className="talk-orb">
-            <IntelligencePresence operation={snapshot} size="large" variant="signal" />
-          </span>
+          <LivingSignal operation={snapshot} still={!moving} surface="conversation" />
           <h3>Aethelios</h3>
           {snapshot.phase === 'ready' ? (
             <p>{state === 'disconnected' ? 'Connect to begin' : 'Ready when you are'}</p>
           ) : (
-            <IntelligenceStatus operation={snapshot} />
+            <IntelligenceStatus operation={snapshot} announce={false} />
           )}
           <p className="quiet-label">Your conversation stays in place. Microphone off.</p>
         </div>

@@ -3,6 +3,7 @@ export type IntelligencePhase =
   | 'ready'
   | 'loading'
   | 'connecting'
+  | 'sending'
   | 'waiting'
   | 'thinking'
   | 'searching'
@@ -12,6 +13,7 @@ export type IntelligencePhase =
   | 'listening'
   | 'speaking'
   | 'saving'
+  | 'stopping'
   | 'complete'
   | 'failed'
   | 'cancelled';
@@ -37,6 +39,7 @@ export const intelligencePhases: readonly IntelligencePhase[] = [
   'ready',
   'loading',
   'connecting',
+  'sending',
   'waiting',
   'thinking',
   'searching',
@@ -46,6 +49,7 @@ export const intelligencePhases: readonly IntelligencePhase[] = [
   'listening',
   'speaking',
   'saving',
+  'stopping',
   'complete',
   'failed',
   'cancelled',
@@ -54,22 +58,25 @@ const labels: Record<IntelligencePhase, string> = {
   ready: 'Ready',
   loading: 'Loading',
   connecting: 'Connecting',
-  waiting: 'Waiting for response',
-  thinking: 'Thinking',
-  searching: 'Searching',
+  sending: 'Sending',
+  waiting: 'Preparing a reply',
+  thinking: 'Working',
+  searching: 'Searching the web',
   researching: 'Researching',
-  generating: 'Generating',
+  generating: 'Responding',
   processing: 'Processing',
   listening: 'Listening',
   speaking: 'Speaking',
   saving: 'Saving',
+  stopping: 'Stopping',
   complete: 'Complete',
   failed: 'Operation failed',
-  cancelled: 'Operation cancelled',
+  cancelled: 'Stopped',
 };
 export function intelligenceStatus(operation: IntelligenceOperation): string {
   if (operation.persistence === 'uncertain') {
-    if (operation.phase === 'cancelled') return 'Operation cancelled · Save unconfirmed';
+    if (operation.phase === 'stopping') return 'Stopping · Save unconfirmed';
+    if (operation.phase === 'cancelled') return 'Stopped · Save unconfirmed';
     if (operation.phase === 'failed') return 'Operation failed · Save unconfirmed';
     return 'Save unconfirmed';
   }

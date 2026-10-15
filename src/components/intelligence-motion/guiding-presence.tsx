@@ -46,7 +46,11 @@ export function GuidingPresence({
       data-phase={phase}
       data-still={still}
       data-operation={operation.id}
-      style={{ '--level': level, '--im-level': level } as CSSProperties}
+      style={
+        {
+          ...(level > 0 ? { '--level': level, '--im-level': level } : {}),
+        } as CSSProperties
+      }
       aria-hidden="true"
     >
       <svg viewBox="0 0 240 240" focusable="false">

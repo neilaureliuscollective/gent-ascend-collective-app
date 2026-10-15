@@ -8,6 +8,12 @@
     var(--aether-carbon, #101413);
   color: var(--aether-text);
 }
+.talk-creation-card.is-active {
+  box-shadow: inset 2px 0 0 #36896c;
+}
+.talk-creation-card[data-ready] {
+  box-shadow: inset 2px 0 0 #c4912f;
+}
 .talk-creation-card header {
   display: flex;
   align-items: baseline;

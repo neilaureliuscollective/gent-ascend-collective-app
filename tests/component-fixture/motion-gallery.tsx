@@ -3,6 +3,7 @@ import Image from './image';
 import { createRoot } from 'react-dom/client';
 import {
   IntelligencePresence,
+  IntelligenceResponse,
   IntelligenceStatus,
   IntelligenceTaskCard,
 } from '@/components/intelligence-motion/presence';
@@ -87,6 +88,14 @@ function Gallery() {
             </p>
           </IntelligenceTaskCard>
         ))}
+      </section>
+      <section className="gallery-conversation" aria-label="Conversation composition preview">
+        <h2>Conversation mark</h2>
+        <p>
+          Official 192px A emblem at 24 CSS px plus a recessed emerald filament. Synthetic preview
+          only.
+        </p>
+        <IntelligenceResponse operation={operation} name="Aethelios" />
       </section>
       <section className="gallery-grid" aria-label="Concurrent operation preview">
         <IntelligenceTaskCard

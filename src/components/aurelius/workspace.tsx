@@ -15,7 +15,7 @@ import {
   specialistStarters,
   type CouncilSelection,
 } from '@/domains/intelligence/council';
-import type { Turn, WorkspaceData } from '@/domains/intelligence/types';
+import type { StreamCreation, Turn, WorkspaceData } from '@/domains/intelligence/types';
 import { MemoryEditor, jsonRequest } from './memory-editor';
 import { ConversationTurn } from './message';
 import { frameText } from './frame-text';
@@ -26,11 +26,14 @@ import { readTalkDraft, writeTalkDraft, clearTalkDrafts } from '@/platform/conve
 import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
 import { BplusMaterial, BplusTalkTools } from '../visual/bplus-material';
 import { observedOperation } from '@/platform/visual/operation-adapters';
+import { type IntelligenceOperation } from '@/platform/visual/intelligence-motion';
 import {
-  intelligenceStatus,
-  type IntelligenceOperation,
-} from '@/platform/visual/intelligence-motion';
+  applyStreamArtifact,
+  nextObservedOperation,
+  terminalizeConversationArtifacts,
+} from '@/platform/visual/conversation-motion';
 import {
+  ConversationAnnouncer,
   IntelligenceActivity,
   IntelligenceResponse,
   IntelligencePresence,
@@ -150,6 +153,8 @@ export function AureliusWorkspace({
   const [operation, setOperation] = useState<IntelligenceOperation>(
     observedOperation('talk-idle', 'ready'),
   );
+  const [streamArtifacts, setStreamArtifacts] = useState<StreamCreation[]>([]);
+  const streamScope = useRef({ requestId: '', terminal: false });
   const streamTiming = useRef<ReturnType<typeof conversationTiming> | null>(null);
   useLayoutEffect(() => {
     const turn = data?.turns.find((item) => item.id === operation.id);
@@ -740,13 +745,11 @@ export function AureliusWorkspace({
     const controller = new AbortController();
     generation.current = controller;
     setBusy(true);
-    setOperation(observedOperation(requestId, 'waiting', 'pending'));
+    streamScope.current = { requestId, terminal: false };
+    setStreamArtifacts([]);
+    setOperation(observedOperation(requestId, 'sending', 'pending'));
     setError('');
-    setNotice(
-      requestedCouncil?.kind === 'table'
-        ? 'Waiting for the selected Entities…'
-        : `Waiting for ${councilLabel(requestedCouncil)}…`,
-    );
+    setNotice('');
     follow.current = true;
     timing.mark('acknowledged');
     let accepted = false;
@@ -754,7 +757,11 @@ export function AureliusWorkspace({
     cancelReply.current = () => {
       // Read the request's acknowledgement directly, even before React commits it.
       if (saved) return;
-      setOperation(observedOperation(requestId, 'cancelled', 'uncertain'));
+      streamScope.current.terminal = true;
+      setStreamArtifacts((previous) => terminalizeConversationArtifacts(previous, 'stopped'));
+      setOperation((previous) =>
+        nextObservedOperation(previous, observedOperation(requestId, 'stopping', 'pending')),
+      );
       controller.abort();
     };
     const painted = frameText((reply) => {
@@ -832,6 +839,9 @@ export function AureliusWorkspace({
       if (draftSnapshot.current.text === messageText) memoryOnlyDraft.current = false;
       if (!compact && data.ownerId) writeTalkDraft(data.ownerId, selected, '');
       timing.mark('accepted');
+      setOperation((previous) =>
+        nextObservedOperation(previous, observedOperation(requestId, 'waiting', 'pending')),
+      );
       setDraft((current) => (current === messageText ? '' : current));
       selectedRef.current = id;
       setSelected(id);
@@ -847,16 +857,22 @@ export function AureliusWorkspace({
             );
         } else if (item.type === 'activity') {
           if (item.phase === 'saving') painted.finish(true);
-          setOperation(observedOperation(requestId, item.phase, 'pending'));
-          setNotice(`${intelligenceStatus(observedOperation(requestId, item.phase))}…`);
-        } else if (item.type === 'creation') {
-          setNotice('Preparing reviewed work…');
-        } else if (item.type === 'delta') {
-          setNotice('Aethelios is responding…');
           setOperation((previous) =>
-            previous.id === requestId && ['searching', 'generating'].includes(previous.phase)
+            nextObservedOperation(previous, observedOperation(requestId, item.phase, 'pending')),
+          );
+        } else if (item.type === 'creation') {
+          setStreamArtifacts((previous) =>
+            applyStreamArtifact(previous, item.item, {
+              eventRequestId: requestId,
+              activeRequestId: streamScope.current.requestId,
+              requestTerminal: streamScope.current.terminal,
+            }),
+          );
+        } else if (item.type === 'delta') {
+          setOperation((previous) =>
+            previous.id === requestId && ['searching', 'generating', 'stopping', 'cancelled', 'failed'].includes(previous.phase)
               ? previous
-              : observedOperation(requestId, 'generating', 'pending'),
+              : nextObservedOperation(previous, observedOperation(requestId, 'generating', 'pending')),
           );
           timing.mark('first-text');
           painted.append(item.text);
@@ -864,7 +880,11 @@ export function AureliusWorkspace({
           painted.finish();
           saved = true;
           timing.mark('saved');
-          setOperation(observedOperation(requestId, 'complete', 'confirmed'));
+          streamScope.current.terminal = true;
+          setOperation((previous) =>
+            nextObservedOperation(previous, observedOperation(requestId, 'complete', 'confirmed')),
+          );
+          setStreamArtifacts([]);
           setData((previous) =>
             previous
               ? {
@@ -899,11 +919,26 @@ export function AureliusWorkspace({
             ? { ...previous, turns: previous.turns.filter((turn) => turn.id !== requestId) }
             : previous,
         );
-      setOperation(
-        observedOperation(
-          requestId,
-          saved ? 'complete' : controller.signal.aborted ? 'cancelled' : 'failed',
-          saved ? 'confirmed' : 'uncertain',
+      streamScope.current.terminal = true;
+      const artifactReason = saved
+        ? null
+        : controller.signal.aborted
+          ? 'stopped'
+          : accepted
+            ? 'uncertain'
+            : 'failed';
+      if (artifactReason)
+        setStreamArtifacts((previous) =>
+          terminalizeConversationArtifacts(previous, artifactReason),
+        );
+      setOperation((previous) =>
+        nextObservedOperation(
+          previous,
+          observedOperation(
+            requestId,
+            saved ? 'complete' : controller.signal.aborted ? 'cancelled' : 'failed',
+            saved ? 'confirmed' : 'uncertain',
+          ),
         ),
       );
       setError(
@@ -1156,6 +1191,8 @@ export function AureliusWorkspace({
     memoryOnlyDraft.current = false;
     if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
+    streamScope.current = { requestId: '', terminal: true };
+    setStreamArtifacts([]);
     setSelected(null);
     selectedRef.current = null;
     setCouncilSelection(null);
@@ -1648,7 +1685,7 @@ export function AureliusWorkspace({
           <BplusTalkTools enabled={!compact}>
             <button
               type="button"
-              className="talk-tool"
+              className="talk-tool talk-new-tool"
               disabled={blocked}
               onClick={() => {
                 if (
@@ -1664,6 +1701,20 @@ export function AureliusWorkspace({
               label="Tools & context"
               triggerContent={<span aria-hidden="true">•••</span>}
             >
+              <button
+                type="button"
+                className="text-button talk-new-in-menu"
+                disabled={blocked}
+                onClick={() => {
+                  if (
+                    !draft.trim() ||
+                    confirm('Discard the unsent draft and start a new conversation?')
+                  )
+                    newConversation();
+                }}
+              >
+                New conversation
+              </button>
               <nav className="talk-destinations" aria-label="Aethelios destinations">
                 {[
                   ['/app', 'Home'],
@@ -1986,7 +2037,7 @@ export function AureliusWorkspace({
                     >
                       <IntelligencePresence
                         variant="signal"
-                        size="large"
+                        size="conversation"
                         operation={observedOperation('talk-welcome', 'ready')}
                       />
                     </div>
@@ -2053,6 +2104,7 @@ export function AureliusWorkspace({
                     key={turn.id}
                     turn={turn}
                     operation={turn.id === operation.id ? operation : undefined}
+                    artifacts={turn.id === operation.id ? streamArtifacts : undefined}
                     onFeedback={(id, value) => void feedback(id, value)}
                     disabled={blocked}
                     versions={priorVersions(turn, data.turns)}
@@ -2354,7 +2406,12 @@ export function AureliusWorkspace({
             </form>
           </div>
         </>
-        <p className="aurelius-notice" role="status">
+        <ConversationAnnouncer
+          operation={operation}
+          artifacts={streamArtifacts}
+          notice={notice}
+        />
+        <p className="aurelius-notice">
           {notice}
           {creationNotice && !(openWorkId && (openCreation || openImage))
             ? ` ${creationNotice}`

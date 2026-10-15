@@ -12,4 +12,6 @@ export const brand = {
   crestAlt: 'Aethelios gold ascending A, celestial star and Earth',
   lockupAlt:
     'Aethelios — The Human Ascendance. Gold ascending A, celestial star and Earth above the wordmark.',
+  conversationEmblem: '/brand/aethelios-official-20261015-192.png',
+  conversationEmblemAlt: 'Aethelios official gold A emblem',
 } as const;

@@ -101,7 +101,7 @@ function workspace(turns: Turn[] = [], conversationId: string | null = null): Wo
 
 async function openTalkVoice(page: Page) {
   await page.goto('http://127.0.0.1:3102/app/aethelios?mode=talk-live');
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
@@ -193,7 +193,7 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     created_at: '2026-10-14T18:24:00Z',
     finished_at: '2026-10-14T18:24:01Z',
   });
-  await page.getByRole('button', { name: 'End', exact: true }).click();
+  await page.getByRole('button', { name: 'End session', exact: true }).click();
   await expect(page.locator('.user-message')).toContainText('Spoken in Talk');
   await expect(page.locator('.live-provisional')).toHaveCount(0);
 });
@@ -345,10 +345,10 @@ test('a delayed workspace body cannot rewrite the current conversation after swi
   });
   await expect(page.locator('.live-provisional')).toContainText('Spoken in Talk');
   holdNextWorkspace = true;
-  await page.getByRole('button', { name: 'End', exact: true }).click();
+  await page.getByRole('button', { name: 'End session', exact: true }).click();
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
   await page.getByRole('button', { name: 'Start a conversation' }).click();
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.locator('.talk-title')).toContainText('New conversation');
   releaseHeldWorkspace();
   await expect(page.locator('.user-message')).toHaveCount(0);
   await expect(page.getByText('Stale spoken turn')).toHaveCount(0);

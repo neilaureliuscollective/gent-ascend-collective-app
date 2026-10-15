@@ -45,7 +45,7 @@ test('Studio uses waiting until its synchronous endpoint confirms the save', asy
   await page.getByRole('button', { name: 'Create', exact: true }).click();
   await page.getByLabel('Describe what you want to see').fill('Synthetic visual direction');
   await page.getByRole('button', { name: 'Create image' }).click();
-  await expect(page.locator('.studio-main .im-status')).toHaveText('Waiting for response');
+  await expect(page.locator('.studio-main .im-status')).toHaveText('Preparing a reply');
   await page.screenshot({ path: 'test-results/guiding-studio.png', fullPage: true });
   await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
   await expect(page.locator('.studio-main .im-status')).toHaveText('Saved');
@@ -63,17 +63,22 @@ for (const width of [344, 768, 1440]) {
     const response = page.locator('.assistant-message .im-response');
     await expect(response).toBeInViewport({ ratio: 0.9 });
     await expect(response).toHaveAttribute('data-phase', 'waiting');
-    await expect(response.locator('.im-status')).toHaveText('Waiting for response');
-    const ribbon = response.locator('.identity-light');
+    await expect(response.locator('.im-status')).toHaveText('Preparing a reply');
+    const filament = response.locator('.im-filament');
     await expect(response.locator('.im-presence')).toHaveAttribute('data-animate', 'true');
-    await expect(ribbon).toHaveCSS('animation-name', 'identity-gather');
+    await expect(filament).toHaveCSS('animation-name', 'im-gather');
     const bounds = await response.locator('.im-presence').boundingBox();
-    expect(bounds!.width).toBeGreaterThanOrEqual(100);
-    expect(bounds!.height).toBeGreaterThanOrEqual(70);
-    await expect(ribbon).toBeVisible();
-    const initial = await ribbon.evaluate((node) => getComputedStyle(node).transform);
+    expect(bounds!.width).toBeGreaterThanOrEqual(88);
+    expect(bounds!.width).toBeLessThanOrEqual(140);
+    expect(bounds!.height).toBeGreaterThanOrEqual(32);
+    expect(bounds!.height).toBeLessThanOrEqual(52);
+    const emblem = await response.locator('.im-emblem').boundingBox();
+    expect(emblem!.width).toBeGreaterThanOrEqual(22);
+    expect(emblem!.width).toBeLessThanOrEqual(28);
+    await expect(filament).toBeVisible();
+    const initial = await filament.evaluate((node) => getComputedStyle(node).transform);
     await expect
-      .poll(() => ribbon.evaluate((node) => getComputedStyle(node).transform))
+      .poll(() => filament.evaluate((node) => getComputedStyle(node).transform))
       .not.toBe(initial);
     await page.screenshot({
       path: `test-results/visible-response-waiting-${width}.png`,
@@ -86,7 +91,7 @@ for (const width of [344, 768, 1440]) {
     await expect(response.locator('.im-status')).toHaveText('Saving');
     await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
     await expect(response.locator('.im-status')).toHaveText('Saved');
-    await expect(ribbon).toHaveCSS('animation-name', 'none');
+    await expect(filament).toHaveCSS('animation-name', 'none');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -100,9 +105,9 @@ test('response feedback stays visible and readable with reduced motion', async (
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   const response = page.locator('.assistant-message .im-response');
   await expect(response).toBeInViewport();
-  await expect(response.locator('.im-status')).toHaveText('Waiting for response');
-  await expect(response.locator('.identity-light')).toHaveCSS('animation-name', 'none');
-  await expect(response.locator('.identity-light')).toBeVisible();
+  await expect(response.locator('.im-status')).toHaveText('Preparing a reply');
+  await expect(response.locator('.im-filament')).toHaveCSS('animation-name', 'none');
+  await expect(response.locator('.im-emblem')).toBeVisible();
 });
 
 test('feedback appears before response headers and never requires opening the orb', async ({
@@ -113,6 +118,11 @@ test('feedback appears before response headers and never requires opening the or
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.locator('.conversation-scroll .im-response')).toBeInViewport({ timeout: 1000 });
   // Local pending submission is visible before acceptance; neither text nor save is invented.
+  await expect(page.locator('.assistant-message .im-response')).toHaveAttribute(
+    'data-phase',
+    'sending',
+  );
+  await expect(page.locator('.assistant-message .im-status')).toHaveText('Sending');
   await expect(page.locator('.conversation-turn')).toHaveCount(1);
   await expect(page.locator('.user-message')).toContainText('Synthetic delayed admission');
   await expect(page.locator('.message-markdown')).toBeEmpty();
@@ -138,6 +148,227 @@ test('long replies keep the primary motion visible as the text grows', async ({ 
     node.scrollTop = node.scrollHeight;
   });
   await expect.poll(() => scroll.evaluate((node) => node.scrollTop)).toBeGreaterThan(500);
-  await expect(page.locator('.assistant-message .im-response')).toBeInViewport({ ratio: 0.9 });
+  const responseBox = await page.locator('.assistant-message .im-response').boundingBox();
+  expect(responseBox!.height).toBeLessThan(56);
+  await expect(page.locator('.message-markdown')).toContainText('Synthetic long response');
+  await expect(page.getByRole('button', { name: 'Stop reply' })).toBeVisible();
   await page.screenshot({ path: 'test-results/visible-response-long-768.png', fullPage: true });
+});
+
+test('image approval waits and running generation creates', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic image request');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit image approval' }).click();
+  const card = page.locator('.talk-creation-card[data-in-flight][data-kind="image"]');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('Queued for your approval');
+  await expect(page.locator('.assistant-message .im-status')).toHaveText(
+    'Waiting for your approval',
+  );
+  await expect(page.locator('.conversation-announcer')).toHaveText('Waiting for your approval');
+  await page.getByRole('button', { name: 'Emit image artifact' }).click();
+  await expect(card).toContainText('Creating an image');
+  await expect(card).not.toHaveAttribute('data-ready', '');
+  await expect(page.locator('.assistant-message .im-status')).toHaveText('Creating an image');
+});
+
+test('Stop terminalizes in-progress artifacts and keeps completed ones', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic cancel artifacts');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit completed image' }).click();
+  await page.getByRole('button', { name: 'Emit image approval' }).click();
+  const ready = page.locator('.talk-creation-card[data-in-flight][data-status="complete"]');
+  const pending = page.locator('.talk-creation-card[data-in-flight][data-status="approval"]');
+  await expect(ready).toBeVisible();
+  await expect(pending).toBeVisible();
+  await page.getByRole('button', { name: 'Stop reply' }).click();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="complete"]')).toBeVisible();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="stopped"]')).toBeVisible();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="complete"]')).toContainText(
+    'Image is ready',
+  );
+  await page.getByRole('button', { name: 'Emit image artifact' }).click();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="stopped"]')).toBeVisible();
+  await expect(page.locator('.talk-creation-card[data-in-flight][data-status="running"]')).toHaveCount(0);
+});
+
+test('failure marks unfinished artifacts uncertain and does not revive them', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic fail artifacts');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit image artifact' }).click();
+  await page.getByRole('button', { name: 'Emit failure' }).click();
+  await expect(page.locator('.talk-creation-card[data-in-flight]')).toHaveAttribute(
+    'data-status',
+    'uncertain',
+  );
+  await expect(page.locator('.talk-creation-card[data-in-flight]')).toContainText(
+    'Image completion is unconfirmed',
+  );
+  await expect(page.locator('.conversation-announcer')).toContainText('Save unconfirmed');
+});
+
+test('one polite announcer follows operational transitions without duplicating inline status', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic announce');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Preparing a reply');
+  await expect(page.locator('.assistant-message .im-status')).toHaveAttribute('aria-live', 'off');
+  await expect(page.locator('.conversation-announcer')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Responding');
+  await page.getByRole('button', { name: 'Emit search event' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Searching the web');
+});
+
+test('confirmed Saved settles to the compact author mark and late search cannot revive it', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic settle');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await page.getByRole('button', { name: 'Emit saving event' }).click();
+  await expect(page.locator('.assistant-message .im-status')).toHaveText('Saving');
+  await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+  const response = page.locator('.assistant-message .im-response');
+  await expect(response).toHaveAttribute('data-phase', 'complete');
+  await expect(response.locator('.im-status')).toHaveText('Saved');
+  await expect(response.locator('.im-living')).toHaveAttribute('data-mode', 'rest');
+  const box = await response.boundingBox();
+  expect(box!.height).toBeLessThan(56);
+  await page.getByRole('button', { name: 'Emit search event' }).click();
+  await expect(response).toHaveAttribute('data-phase', 'complete');
+});
+
+test('Stop shows Stopping then Stopped without clearing the draft', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Keep stopping draft');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Stop reply' }).click();
+  await expect(page.locator('.talk-presence')).toHaveAttribute('data-phase', 'cancelled');
+  await expect(page.locator('.assistant-message .im-status')).toHaveText(
+    'Stopped · Save unconfirmed',
+  );
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue(
+    'Keep stopping draft',
+  );
+});
+
+test('synthetic voice envelope follows measured CSS level, not a waveform', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Surface', { exact: true }).selectOption('voice');
+  await page.getByLabel('Voice phase', { exact: true }).selectOption('listening');
+  const filament = page.locator('.im-living-voice-compact .im-filament');
+  await expect(filament).toBeVisible();
+  const silent = await filament.evaluate((node) => getComputedStyle(node).transform);
+  await page.getByLabel('Synthetic audio level', { exact: true }).fill('0.8');
+  await expect
+    .poll(() => filament.evaluate((node) => getComputedStyle(node).transform))
+    .not.toBe(silent);
+});
+
+test('Fold-like keyboard height keeps composer, Stop and compact status usable', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 690, height: 420 });
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Synthetic fold keyboard');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Stop reply' })).toBeVisible();
+  await expect(page.locator('.assistant-message .im-response')).toBeVisible();
+  const response = await page.locator('.assistant-message .im-response').boundingBox();
+  const composer = await page.locator('.aurelius-composer').boundingBox();
+  expect(response!.height).toBeLessThan(56);
+  expect(composer!.y + composer!.height).toBeLessThanOrEqual(421);
+});
+
+async function assertHeaderFits(page: import('@playwright/test').Page) {
+  const width = page.viewportSize()!.width;
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+    true,
+  );
+  const buttons = page.locator('.talk-toolbar button:visible');
+  const count = await buttons.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    const box = await buttons.nth(index).boundingBox();
+    expect(box, `header control ${index} should paint`).toBeTruthy();
+    expect(box!.x).toBeGreaterThanOrEqual(-1);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width + 1);
+    expect(box!.width).toBeGreaterThanOrEqual(40);
+    await buttons.nth(index).click({ trial: true });
+  }
+}
+
+for (const width of [320, 344, 390, 690]) {
+  test(`narrow Talk header controls stay inside ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 690 ? 420 : 844 });
+    await page.goto('http://127.0.0.1:3102/motion-integration.html');
+    await expect(page.locator('.talk-page .talk-toolbar')).toBeVisible();
+    await assertHeaderFits(page);
+    await page.getByLabel('Message Aethelios', { exact: true }).click();
+    await assertHeaderFits(page);
+    if (width <= 360) {
+      await expect(page.locator('.talk-toolbar .talk-new-tool')).toBeHidden();
+      await page.getByRole('button', { name: 'Tools & context' }).click();
+      await expect(page.getByRole('button', { name: 'New conversation' })).toBeVisible();
+      await page.keyboard.press('Escape');
+    } else {
+      await expect(page.locator('.talk-toolbar .talk-new-tool')).toBeVisible();
+    }
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '24px';
+    });
+    await assertHeaderFits(page);
+  });
+}
+
+test('persistent image-unavailable notice does not mask a later request', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html?imageAccess=unavailable');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('First synthetic turn');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText(
+    'Image generation is unavailable; text work remains available.',
+  );
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Second synthetic turn');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Preparing a reply');
+  await expect(page.locator('.conversation-announcer')).not.toContainText(
+    'Image generation is unavailable',
+  );
+  await page.getByRole('button', { name: 'Emit saving event' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Saving');
+  await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText(
+    'Image generation is unavailable; text work remains available.',
+  );
+});
+
+test('fixture Talk composer focus uses the shell ring, not an inner white box', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await expect(page.locator('.talk-page .aurelius-composer')).toBeVisible();
+  const composer = page.getByLabel('Message Aethelios', { exact: true });
+  await composer.click();
+  await expect(composer).toBeFocused();
+  const inner = await composer.evaluate((node) => getComputedStyle(node).outlineStyle);
+  expect(inner === 'none' || inner === '').toBe(true);
+  const shell = await page.locator('.talk-page .aurelius-composer').evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { style: style.outlineStyle, color: style.outlineColor, width: style.outlineWidth };
+  });
+  expect(shell.style).toBe('solid');
+  expect(shell.width).toBe('2px');
+  expect(shell.color).toBe('rgb(196, 145, 47)');
 });
