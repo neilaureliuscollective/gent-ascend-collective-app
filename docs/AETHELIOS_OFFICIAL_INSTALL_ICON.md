@@ -1,6 +1,6 @@
 # Official Aethelios install icon — 2026-10-15
 
-Founder-approved gold-A application icon: metallic ascending A, central celestial compass star, Earth horizon, and obsidian/emerald atmosphere. No wording or substitute artwork. This supersedes the 2026-10-10 Imperial Obsidian crest for installation, Apple touch, and browser icons. In-app crest, lockup, routing, authentication and application identity are unchanged.
+Founder-approved gold-A application icon: metallic ascending A, central celestial compass star, Earth horizon, and obsidian/emerald atmosphere. No wording or substitute artwork. This supersedes the 2026-10-10 Imperial Obsidian crest for installation, Apple touch, and browser icons. Routing, authentication and installed-app metadata are unchanged. In-app crest and lockup are the Human Ascendance artwork; see [HUMAN_ASCENDANCE_LOGO.md](HUMAN_ASCENDANCE_LOGO.md).
 
 ## Asset contract
 

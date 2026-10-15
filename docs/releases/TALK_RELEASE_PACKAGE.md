@@ -1,3 +1,5 @@
+> Superseded integration checkpoint: see [TALK_STACK_RECONCILIATION.md](TALK_STACK_RECONCILIATION.md). Hosted SQL remains PAUSED after step 6; cancelled verification is not resumed. The old pins and apply sequence below are historical.
+
 # Talk release package — 2026-10-15
 
 Pinned handoff. No new Talk feature. No hosted SQL, credential change, paid call, merge or production deploy is authorized by this document.

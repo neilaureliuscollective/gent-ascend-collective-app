@@ -13,6 +13,27 @@ Quality application on #131 `b42f2ff` failed only `Grooming world and guest ritu
 # Talk foundation reconciliation — 2026-10-15
 
 #131 previously included main `544c156` so Health’s published `20261015181000_health_workspace.sql` and Talk’s `20261015180000` / `20261015190000` coexist by filename. That Health-only base is superseded by the Studio-live reconciliation above. Do not rename hosted `schema_migrations` rows. Architect Origin is already a hosted name-equivalent (`20261014010638` / `20261012230000_architect_origin`). The 18 Talk/Architect-apps files were not listed by name on the current hosted ledger read; objects remain unverified because the physical-schema query was cancelled. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` stays unset. No main merge, hosted apply or paid provider call.
+# Aethelios current knowledge production — 2026-10-15
+
+Founder authorized merge of PR #141 onto main and deploy through the existing Vercel Git production pipeline. Merge `bbda46f` (parents `af29723` Human Ascendance logo + `5488060` knowledge). Production `dpl_Dq6DwWY2sPfbtxLsr2CnY6qAZ7oR` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify write or paid model call. Talk #131 creation remains unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios conversational knowledge reliability — 2026-10-15
+
+Current user product and variant selections outrank older mentions. Variant identity requires a unique match across normalized option dimensions. Voice can look up the same read-only catalog after admission through `lookup_lifestyle_catalog` (function_call_output, no instruction rewrite, no speech interrupt). Playbooks follow current intent. Multi-turn deterministic scenarios are separate from unpaid model eval and human voice-naturalness review. Talk #131 `budgetLiveSeed` and creation tools stay unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios conversational character and trustworthy context — 2026-10-15
+
+Keep edition `2026-10-15.human-ascendance.1`. Add a concise shared `behaviorContract` on text and voice composition paths, load at most two relevant domain playbooks per turn, and adapt delivery (short spoken open vs structured text) without changing Talk transport or Motion. Failed product-detail fetches stay `stale-catalog-fallback` with unknown catalog age beyond 300s; variant price/id/availability stay bound together. Voice Live copies Talk #131 `budgetLiveSeed` identically rather than merging Talk creation. Forgetting is a deleted owner row, not a changed retrieval query. Optional model-quality eval is local and unpaid unless approved. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md) and [evals/aethelios-behavior.md](../evals/aethelios-behavior.md).
+
+# Aethelios current knowledge — 2026-10-15
+
+Replace the hardcoded 2026-10-06 company-platform identity with a typed published-knowledge contract (stable IDs, scope, source, dates, status, supersedes). Current facts describe AETHELIOS — The Human Ascendance; planned Agency/pricing stay labeled planned; superseded company-building / separate-Legacy-Reserve / Ascend Architects rows remain as history and are not injected. Composition is shared through `buildMessages` for Talk, Live and council. Health does not import this graph. Product intelligence reuses existing Storefront readers only. Founder authority remains `founder_access`. No billing, Shopify Admin, hosted migration or production merge. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).
+
+# Aethelios Human Ascendance in-app logo — 2026-10-15
+
+Place the founder-supplied Human Ascendance lockup in the application. Keep the 2026-10-15 gold-A install/PWA/Apple/browser icon. Compact chrome uses a lettering-free crest; identity moments use the full lockup with AETHELIOS / THE HUMAN ASCENDANCE. No circular crop. Open Graph uses the same artwork. Evidence: [HUMAN_ASCENDANCE_LOGO.md](HUMAN_ASCENDANCE_LOGO.md).
+
+Official references checked 2026-10-15: installed Next 16.3.5 App Router `Image` and `opengraph-image` file conventions; W3C C39 reduced-motion (no new motion added).
 
 # Aethelios Studio renderer/editor pipeline — 2026-10-15
 

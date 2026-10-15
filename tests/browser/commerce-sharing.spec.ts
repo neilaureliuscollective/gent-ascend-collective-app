@@ -71,7 +71,8 @@ test('cancelling native share is quiet and product metadata preserves the launch
   await expect(
     page.getByRole('heading', { name: 'Product availability could not be verified.' }),
   ).toBeVisible();
-  await expect(page.locator('meta[property="og:title"]')).toHaveCount(0);
+  const ogTitle = page.locator('meta[property="og:title"]');
+  if ((await ogTitle.count()) > 0) await expect(ogTitle).not.toHaveAttribute('content', /Vitalis/i);
   await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
 });

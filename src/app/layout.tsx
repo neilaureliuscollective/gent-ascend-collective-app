@@ -26,6 +26,12 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: brand.shortName, statusBarStyle: 'black-translucent' },
   description: brand.description,
   robots: { index: false, follow: false },
+  openGraph: {
+    title: brand.name,
+    description: brand.description,
+    siteName: brand.name,
+  },
+  twitter: { card: 'summary_large_image', title: brand.name, description: brand.description },
 };
 export const viewport: Viewport = {
   themeColor: brand.themeColor,

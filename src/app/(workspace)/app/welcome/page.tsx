@@ -53,7 +53,7 @@ export default async function Welcome({
       ) : (
         <>
           <section className="pilot-entry" aria-label="Your Aethelios space">
-            <Image src={brand.crest} alt="" width={90} height={90} preload />
+            <Image src={brand.lockup} alt="" width={1254} height={1254} sizes="120px" preload />
             <div>
               <p className="eyebrow">YOUR DIRECTION. YOUR WORLD.</p>
               <h2>Begin with one clear move.</h2>

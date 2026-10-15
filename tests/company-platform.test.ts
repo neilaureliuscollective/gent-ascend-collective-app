@@ -30,6 +30,8 @@ describe('company platform boundaries', () => {
   it('unknown jobs do not stage an unintended engagement and briefs do not claim execution', () => {
     expect(companyJob('unknown')).toBeUndefined();
     expect(companyJob('client-engagement')?.draft).toContain('No proposal is sent');
+    expect(companyJob('client-engagement')?.draft).not.toContain('Ascend Architects');
+    expect(companyJob('client-engagement')?.draft).toContain('not a human-service Partnership');
     expect(companyJob('company-brief')?.draft).toContain(
       'Do not claim to create a saved company workspace',
     );

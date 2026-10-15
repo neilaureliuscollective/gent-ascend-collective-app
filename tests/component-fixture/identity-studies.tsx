@@ -221,7 +221,7 @@ function App() {
     <main data-monochrome={mono}>
       <header>
         <Image
-          src="/brand/aethelios-aether-20261007.webp"
+          src="/brand/aethelios-human-ascendance-20261015-crest.webp"
           width="64"
           height="64"
           alt="Official Aethelios crest"
