@@ -116,7 +116,9 @@ async function retainDurably(
     p_digest: input.digest,
     p_receipt: input.receipt,
     p_source_kind: input.sourceKind,
-    p_verified: input.verified,
+    // Signature kept for Talk #131 f357385. The RPC ignores p_verified and
+    // cannot take talk-authorized verification from the caller.
+    p_verified: false,
   });
   if (saved.error) throw new DesignDirectionStoreError(saved.error.message);
   const stored = await client
@@ -131,6 +133,7 @@ async function retainDurably(
     verified: Boolean(stored.data.verified),
     source_kind: stored.data.source_kind,
     receipt: stored.data.receipt ?? input.receipt,
+    started: false,
   };
 }
 
@@ -159,7 +162,7 @@ export async function receiveDesignDirection(input: unknown): Promise<RetainedDi
       digest: authorized.digest,
       receipt: authorized.receipt,
       sourceKind: authorized.kind,
-      verified: authorized.kind === 'talk-authorized' || authorized.kind === 'text-import',
+      verified: authorized.kind === 'talk-authorized',
     };
     if (memoryAppStoreAllowed() || process.env.ARCHITECT_APPS_STORE === 'memory') {
       return await designDirectionStore().retain(payload);

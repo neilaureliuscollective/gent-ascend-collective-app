@@ -27,6 +27,7 @@ export type ConstructLibraryEnvelope = {
     source_tree_hash?: string;
     source_kind?: string;
     status?: string;
+    parent_run_id?: string | null;
     result?: {
       source_hash?: string;
       result_hash?: string | null;

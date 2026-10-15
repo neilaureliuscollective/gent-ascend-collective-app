@@ -3,20 +3,31 @@ import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/s
 import { approvalHash, labeledSource, treeHash } from './hash';
 import { fixtureScope, importedFixtureSource } from './fixture';
 import { constructReady } from './readiness';
+import { acceptanceChecksFromPlan, persistableCheckPlan, planCheckCoverage } from './check-coverage';
+import { validateExistingFilePatches } from './patch-contract';
+import { effectiveProtectedPaths } from './path-protection';
 import {
   type ConstructBrief,
   type ConstructEvent,
   type SourceSnapshot,
   approveChangeCommand,
+  approveRepairCommand,
   briefScopeSchema,
   cancelCommand,
   defaultLimits,
-  defaultProtectedPaths,
   proposeCommand,
+  proposeRepairCommand,
   startCommand,
   startFixtureCommand,
 } from './schema';
-import { constructProviderStatus, proposeConstructChange } from './provider';
+import { constructProviderStatus, proposeConstructChange, proposeConstructRepair } from './provider';
+import { applyWholeFilePatch, combineRepairPatch } from './combine-patch';
+import {
+  persistableGeneration,
+  repairExecutionRequestId,
+  sanitizeRepairEvidence,
+} from './repair-evidence';
+import { repairEligible, selectPendingRepair } from './repair-eligibility';
 import { DatabaseConstructStore, memoryConstructStoreAllowed, type ConstructPersistenceClient } from './database-store';
 import { ConstructStoreError, type ConstructStore, MemoryConstructStore } from './store';
 import { verifyConstructGitPin } from './connections-source';
@@ -88,6 +99,9 @@ export async function readConstruct(projectId: string) {
   const events: Record<string, ConstructEvent[]> = {};
   const briefs: ConstructBrief[] = [];
   const sources: SourceSnapshot[] = [];
+  for (const brief of await store.listProjectBriefs(person.id, projectId)) {
+    if (!briefs.some((row) => row.id === brief.id)) briefs.push(brief);
+  }
   for (const run of runs) {
     events[run.id] = await store.listEvents(person.id, run.id);
     const brief = await store.readBrief(person.id, run.brief_id);
@@ -95,12 +109,31 @@ export async function readConstruct(projectId: string) {
     const source = await store.readSource(person.id, run.source_id);
     if (source && !sources.some((row) => row.id === source.id)) sources.push(source);
   }
+  for (const brief of briefs) {
+    const source = await store.readSource(person.id, brief.scope.source_id);
+    if (source && !sources.some((row) => row.id === source.id)) sources.push(source);
+  }
+  const pending = selectPendingRepair(briefs, runs);
   return {
     project: { id: project.id, revision: project.revision, name: project.content.name },
     runs,
     events,
     briefs,
     sources,
+    pendingRepair: pending
+      ? {
+          briefId: pending.id,
+          requestId: repairExecutionRequestId(pending.id),
+          parentRunId: pending.scope.repair!.parent_run_id,
+          approvalHash: pending.approval_hash,
+          status: pending.status,
+          invalidationReason: pending.invalidation_reason,
+          projectRevision: pending.scope.project_revision,
+          generation: persistableGeneration(pending.scope.repair?.generation),
+          patch: pending.scope.patch,
+          intendedChange: pending.scope.intended_change,
+        }
+      : null,
     proposal: constructProviderStatus(),
   };
 }
@@ -119,6 +152,19 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
       );
     if (brief.approval_hash !== input.approvalHash)
       throw new IntelligenceError('Approval digest does not match the reviewed brief.', 409);
+    if (brief.scope.repair && input.requestId !== repairExecutionRequestId(brief.id))
+      throw new IntelligenceError(
+        'Repair enqueue retries must reuse the approved brief identity. A new request is not created.',
+        409,
+      );
+    const alreadyStarted = brief.scope.repair
+      ? (await store.listRuns(person.id, project.id)).find((run) => run.brief_id === brief.id)
+      : null;
+    if (alreadyStarted) {
+      if (alreadyStarted.approval_hash !== brief.approval_hash)
+        throw new IntelligenceError('The queued repair no longer matches this approval digest.', 409);
+      return alreadyStarted;
+    }
     if (
       brief.scope.project_id !== project.id ||
       brief.scope.project_revision !== project.revision ||
@@ -133,6 +179,26 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
         'Source base or project revision changed. The previous execution approval is invalid.',
         409,
       );
+    }
+    if (brief.scope.repair) {
+      const parent = await store.readRun(person.id, brief.scope.repair.parent_run_id);
+      if (!parent || parent.project_id !== project.id)
+        throw new IntelligenceError('Repair parent unavailable.', 404);
+      if (parent.parent_run_id)
+        throw new IntelligenceError(
+          'This run is already a repair. Only one repair is allowed per original journey.',
+          409,
+        );
+      if (parent.project_revision !== project.revision)
+        throw new IntelligenceError(
+          `This failed run is bound to project revision ${parent.project_revision}. The project is now revision ${project.revision}. A repair cannot silently follow the newer revision.`,
+          409,
+        );
+      if (brief.scope.project_revision !== parent.project_revision)
+        throw new IntelligenceError(
+          'Repair cannot take a newer project revision than its parent evidence.',
+          409,
+        );
     }
     const source = await store.readSource(person.id, brief.scope.source_id);
     if (!source)
@@ -154,6 +220,7 @@ export async function startConstruct(input: ReturnType<typeof startCommand.parse
       sourceTreeHash: source.tree_hash,
       approvalHash: brief.approval_hash,
       sourceId: source.id,
+      parentRunId: brief.scope.repair?.parent_run_id ?? null,
     });
   } catch (error) {
     asIntelligence(error);
@@ -239,6 +306,16 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
         /* Imported files stay owner-supplied when a pin cannot be verified. */
       }
     }
+    const protectedPaths = effectiveProtectedPaths(input.protectedPaths);
+    const validated = validateExistingFilePatches({
+      files,
+      patch: input.patch,
+      allowedPaths: input.allowedPaths,
+      protectedPaths,
+      editablePaths: files.map((file) => file.path),
+    });
+    if (!validated.ok) throw new IntelligenceError(`${validated.message} ${validated.actionable}`, 409);
+    const coverage = planCheckCoverage(files);
     const source = await store.importSource({
       id: input.sourceId,
       person_id: person.id,
@@ -258,11 +335,12 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
       source_commit: commit,
       source_tree_hash: source.tree_hash,
       allowed_paths: input.allowedPaths,
-      protected_paths: input.protectedPaths ?? defaultProtectedPaths(),
+      protected_paths: protectedPaths,
       intended_change: input.intendedChange,
-      acceptance_checks: input.acceptanceChecks,
+      acceptance_checks: acceptanceChecksFromPlan(coverage),
+      check_plan: persistableCheckPlan(coverage),
       resource_limits: defaultLimits,
-      patch: input.patch,
+      patch: validated.patch,
     });
     await store.invalidateProjectBriefs(
       person.id,
@@ -276,22 +354,240 @@ export async function approveConstructChange(input: ReturnType<typeof approveCha
   }
 }
 
+function validateRepairAgainstFailedSnapshot(
+  sourceFiles: { path: string; content: string }[],
+  originalPatch: ConstructBrief['scope']['patch'],
+  repairPatch: ConstructBrief['scope']['patch'],
+  allowedPaths: string[],
+  protectedPaths: string[],
+) {
+  let failed: { path: string; content: string }[];
+  try {
+    failed = applyWholeFilePatch(sourceFiles, originalPatch);
+  } catch (error) {
+    throw new IntelligenceError(
+      error instanceof Error
+        ? error.message
+        : 'The original approved patch no longer applies to the pinned source.',
+      409,
+    );
+  }
+  const validated = validateExistingFilePatches({
+    files: failed,
+    patch: repairPatch,
+    allowedPaths,
+    protectedPaths,
+    editablePaths: failed.map((file) => file.path),
+  });
+  if (!validated.ok) throw new IntelligenceError(`${validated.message} ${validated.actionable}`, 409);
+  return { failed, repairPatch: validated.patch };
+}
+
+async function requireEligibleRepair(
+  store: ConstructStore,
+  personId: string,
+  projectId: string,
+  parentRunId: string,
+  projectRevision: number,
+) {
+  const parent = await store.readRun(personId, parentRunId);
+  if (!parent || parent.project_id !== projectId) throw new IntelligenceError('Parent run unavailable.', 404);
+  const brief = await store.readBrief(personId, parent.brief_id);
+  const source = await store.readSource(personId, parent.source_id);
+  const runs = await store.listRuns(personId, projectId);
+  const briefs: ConstructBrief[] = [];
+  for (const brief of await store.listProjectBriefs(personId, projectId)) {
+    if (!briefs.some((row) => row.id === brief.id)) briefs.push(brief);
+  }
+  for (const run of runs) {
+    const item = await store.readBrief(personId, run.brief_id);
+    if (item && !briefs.some((row) => row.id === item.id)) briefs.push(item);
+  }
+  const eligibility = repairEligible({
+    parent,
+    brief,
+    sourceTreeHash: source?.tree_hash,
+    projectRevision,
+    runs,
+    briefs,
+  });
+  if (!eligibility.ok) throw new IntelligenceError(eligibility.message, 409);
+  if (!brief || !source) throw new IntelligenceError('Parent source or brief unavailable.', 404);
+  return { parent, brief, source, eligibility, runs, briefs };
+}
+
+export async function proposeRepairConstruct(
+  input: ReturnType<typeof proposeRepairCommand.parse>,
+  signal: AbortSignal,
+) {
+  requireReady();
+  try {
+    const { person, project, client } = await requireOwnedProject(input.projectId);
+    const store = constructStore({ client, plane: 'owner' });
+    const { parent, brief, source, eligibility } = await requireEligibleRepair(
+      store,
+      person.id,
+      input.projectId,
+      input.parentRunId,
+      project.revision,
+    );
+    const proposal = await proposeConstructRepair(
+      input.instruction ??
+        `Repair only the introduced failures from run ${parent.id}: ${eligibility.targets.join(', ')}.`,
+      {
+        sourceFiles: source.files,
+        originalPatch: brief.scope.patch,
+        scope: {
+          allowed_paths: brief.scope.allowed_paths,
+          protected_paths: brief.scope.protected_paths,
+          intended_change: brief.scope.intended_change,
+        },
+        targets: eligibility.targets,
+        evidence: sanitizeRepairEvidence({
+          targets: eligibility.targets,
+          blocker: parent.result?.blocker,
+          checks: parent.result?.checks,
+        }),
+      },
+      signal,
+    );
+    const validated = validateRepairAgainstFailedSnapshot(
+      source.files,
+      brief.scope.patch,
+      proposal.patch,
+      brief.scope.allowed_paths,
+      brief.scope.protected_paths,
+    );
+    const combined = combineRepairPatch({
+      sourceFiles: source.files,
+      originalPatch: brief.scope.patch,
+      repairPatch: validated.repairPatch,
+      allowedPaths: brief.scope.allowed_paths,
+      protectedPaths: brief.scope.protected_paths,
+    });
+    if (!combined.ok) throw new IntelligenceError(`${combined.message} ${combined.actionable}`, 409);
+    return {
+      mocked: constructProviderStatus().mode === 'mock',
+      parentRunId: parent.id,
+      targets: eligibility.targets,
+      coverageNote: eligibility.coverageNote,
+      proposal: {
+        summary: proposal.summary,
+        patch: proposal.patch,
+        notes: proposal.notes,
+      },
+      combined: combined.patch,
+      context: proposal.context,
+      coverage: persistableCheckPlan(planCheckCoverage(source.files)),
+    };
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
+export async function approveRepairConstruct(input: ReturnType<typeof approveRepairCommand.parse>) {
+  requireReady();
+  try {
+    const { person, project, client } = await requireOwnedProject(input.projectId, input.expected);
+    const store = constructStore({ client, plane: 'owner' });
+    const { parent, brief, source, eligibility } = await requireEligibleRepair(
+      store,
+      person.id,
+      input.projectId,
+      input.parentRunId,
+      project.revision,
+    );
+    if (parent.approval_hash === undefined)
+      throw new IntelligenceError('Parent approval digest is missing.', 409);
+    const validated = validateRepairAgainstFailedSnapshot(
+      source.files,
+      brief.scope.patch,
+      input.patch,
+      brief.scope.allowed_paths,
+      brief.scope.protected_paths,
+    );
+    const combined = combineRepairPatch({
+      sourceFiles: source.files,
+      originalPatch: brief.scope.patch,
+      repairPatch: validated.repairPatch,
+      allowedPaths: brief.scope.allowed_paths,
+      protectedPaths: brief.scope.protected_paths,
+    });
+    if (!combined.ok) throw new IntelligenceError(`${combined.message} ${combined.actionable}`, 409);
+    const generation = persistableGeneration(input.generation);
+    const digest = approvalHash({
+      ...brief.scope,
+      patch: combined.patch,
+      intended_change: `Repair of run ${parent.id}: ${eligibility.targets.join(', ')}`,
+      repair: {
+        kind: 'check-driven',
+        parent_run_id: parent.id,
+        parent_approval_hash: parent.approval_hash,
+        targets: eligibility.targets,
+        generation,
+      },
+    });
+    if (digest === parent.approval_hash)
+      throw new IntelligenceError('Repair must use a fresh approval digest. The original approval cannot be reused.', 409);
+    const scope = briefScopeSchema.parse({
+      project_id: project.id,
+      project_revision: parent.project_revision,
+      source_id: source.id,
+      repository: source.repository,
+      source_commit: source.commit,
+      source_tree_hash: source.tree_hash,
+      allowed_paths: brief.scope.allowed_paths,
+      protected_paths: brief.scope.protected_paths,
+      intended_change: `Repair of run ${parent.id}: ${eligibility.targets.join(', ')}`,
+      acceptance_checks: brief.scope.acceptance_checks,
+      check_plan: brief.scope.check_plan,
+      resource_limits: brief.scope.resource_limits,
+      patch: combined.patch,
+      repair: {
+        kind: 'check-driven',
+        parent_run_id: parent.id,
+        parent_approval_hash: parent.approval_hash,
+        targets: eligibility.targets,
+        generation,
+      },
+    });
+    await store.invalidateProjectBriefs(
+      person.id,
+      project.id,
+      'A reviewed repair replaced earlier execution approval for this project revision.',
+    );
+    const approved = await store.approveBrief(person.id, input.briefId, scope);
+    if (approved.approval_hash === parent.approval_hash)
+      throw new IntelligenceError('Repair must use a fresh approval digest. The original approval cannot be reused.', 409);
+    return { source, brief: approved, combined: combined.patch, parentRunId: parent.id };
+  } catch (error) {
+    asIntelligence(error);
+  }
+}
+
 export async function proposeConstruct(input: ReturnType<typeof proposeCommand.parse>, signal: AbortSignal) {
   requireReady();
   try {
     await requireOwnedProject(input.projectId);
+    const proposal = await proposeConstructChange(
+      input.instruction,
+      {
+        allowed_paths: input.allowedPaths,
+        protected_paths: effectiveProtectedPaths(input.protectedPaths),
+        intended_change: input.intendedChange,
+      },
+      input.excerpts,
+      signal,
+    );
     return {
       mocked: constructProviderStatus().mode === 'mock',
-      proposal: await proposeConstructChange(
-        input.instruction,
-        {
-          allowed_paths: input.allowedPaths,
-          protected_paths: input.protectedPaths,
-          intended_change: input.intendedChange,
-        },
-        input.excerpts,
-        signal,
-      ),
+      proposal: {
+        summary: proposal.summary,
+        patch: proposal.patch,
+        notes: proposal.notes,
+      },
+      context: proposal.context,
+      coverage: persistableCheckPlan(planCheckCoverage(input.excerpts)),
     };
   } catch (error) {
     asIntelligence(error);

@@ -1,0 +1,33 @@
+{
+  "schema": "architect-apps-compiled-journey/v1",
+  "date": "2026-10-14",
+  "label": "Deterministic host-fixture + mocked-provider evidence. Not a paid OpenAI call and not isolated Docker success.",
+  "app": "Field Notes",
+  "generation": { "mode": "mock", "notes": "Labelled mocked provider. Not a paid OpenAI call." },
+  "bundle": {
+    "entry": "assets/app.js",
+    "format": "iife",
+    "isolation": "host-fixture",
+    "sandbox": false,
+    "dollarAmpersandPreserved": true
+  },
+  "iframe": {
+    "sandbox": "allow-scripts allow-forms",
+    "allowSameOrigin": false,
+    "mounted": true,
+    "createEditRetryReload": true,
+    "parentStorageReadable": false
+  },
+  "docker": {
+    "workstation": "not-installed",
+    "ciEngine": "present on GitHub Actions ubuntu-latest",
+    "pinnedImage": "aethelios-architect-apps:2026-10-15.1",
+    "imageLoaded": false,
+    "reason": "Isolated success requires the pinned image. The journey inspects that image without pulling and does not treat a host Docker engine as isolated success."
+  },
+  "talk": {
+    "contract": "talk.architect.source.resolve",
+    "version": "2026-10-14.1",
+    "registered": false
+  }
+}

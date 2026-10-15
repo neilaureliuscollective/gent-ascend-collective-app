@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "action": "prepared",
+  "toolchain": {
+    "image": "aethelios-architect-apps:2026-10-15.1",
+    "id": "sha256:2a1c24b4c1a72a97a6c035b8e79d6a641721b578b60f5b507262feb1d232ac1f"
+  },
+  "worker": {
+    "image": "aethelios-architect-apps-worker:2026-10-15.1",
+    "id": "sha256:f151ee4e65291441c3973499e0f8e7fcc114ab88afc28418211033f1dbc95ece"
+  },
+  "workRoot": {
+    "ok": true,
+    "uid": "1000",
+    "gid": "118",
+    "mode": "775",
+    "workRoot": "/tmp/architect-apps-work",
+    "sharedGid": "118"
+  }
+}

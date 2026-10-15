@@ -103,6 +103,62 @@ jobs:
       - run: npm run test:founder
       - name: Talk Architect authenticated import
         run: npx playwright test --config playwright.talk-auth.config.ts
+      - name: Architect Apps Auth/PostgREST mutation smoke
+        run: node scripts/architect-apps-auth-smoke.mjs
       - if: always()
         run: npx supabase stop --no-backup
+  apps-isolate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Prepare pinned toolchain, worker image and uid-1000 work root
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+        run: node scripts/architect-apps-prepare-runtime.mjs
+      - name: Required isolated compile, packaged worker topology and compiled journey
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_PREVIEW_SECRET: isolate-preview-secret-key
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+          APP_ENV: local
+        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-work-root.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts tests/architect-apps-worker-image.test.ts tests/architect-apps-preview-sessions.test.ts --reporter=dot
+      - name: Prove the packaged worker can write, compile and map host paths
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+          ARCHITECT_APPS_IMAGE: aethelios-architect-apps:2026-10-15.1
+        run: |
+          node scripts/architect-apps-packaged-worker.mjs --prove-write
+          node scripts/architect-apps-packaged-worker.mjs --prove-compile
+          node scripts/architect-apps-packaged-worker.mjs --prove-topology
+      - name: Record worker bundle and fail-closed commissioned preflight
+        env:
+          ARCHITECT_APPS_DEPLOYMENT_MODE: commissioned
+          APP_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: hosted-publishable-key
+        run: |
+          node scripts/architect-apps-worker.mjs --bundle-out=/tmp/apps-worker.mjs
+          if node scripts/architect-apps-worker-preflight.mjs; then
+            echo 'Commissioned preflight must fail closed without worker secrets, isolation and digest.'
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architect-apps-isolate-evidence
+          path: |
+            test-results/architect-apps-compiled-preview.html
+            docs/evidence/architect-apps/compiled-preview.html
+            docs/evidence/architect-apps/worker-image-receipt.json
+            docs/evidence/architect-apps/packaged-worker-topology.json
+            docs/evidence/architect-apps/runtime-receipt.json
+          if-no-files-found: ignore
 
