@@ -235,4 +235,120 @@ describe('Health private schema (SQL emulation, not live Auth/Storage)', () => {
     expect((await asUser(founder, 'select * from health_private.revisions')).rows).toHaveLength(0);
     expect((await asUser(founder, 'select * from health_private.turns')).rows).toHaveLength(0);
   });
+  it('persists owner workspaces, rejects exact-request payload changes, and hides them from another account', async () => {
+    const id = 'a3000000-0000-4000-8000-000000000001';
+    const request = 'a3000000-0000-4000-8000-000000000002';
+    const settings = {
+      presentation: {
+        density: 'comfortable',
+        arrangement: 'sequence',
+        dateRange: false,
+        comparisonDrawer: false,
+        accent: 'quiet',
+      },
+    };
+    const payload = {
+      id,
+      expected: 1,
+      foundation: 'evening-routine',
+      title: 'Evenings, made usable',
+      sample: false,
+      settings,
+      progress: {
+        constraint: { availableMinutes: 20, finishAt: '18:00', selected: ['cook-main'] },
+        accepted: {},
+        pending: null,
+        timer: null,
+        completed: [],
+        notes: {},
+        activeStepId: null,
+      },
+      architect: null,
+      open: true,
+    };
+    await asUser(founder, call('workspace_save', payload, request));
+    await asUser(founder, call('workspace_save', payload, request));
+    await expect(
+      asUser(founder, call('workspace_save', { ...payload, title: 'Changed' }, request)),
+    ).rejects.toThrow(/request changed/);
+    expect((await asUser(member, 'select * from health_private.workspaces')).rows).toHaveLength(0);
+    const read = (await asUser(member, 'select public.health_read()')).rows[0] as {
+      health_read: { workspaces: unknown[] };
+    };
+    expect(read.health_read.workspaces).toEqual([]);
+    await expect(
+      asUser(
+        member,
+        call('workspace_save', { ...payload, id: 'a3000000-0000-4000-8000-000000000009' }),
+      ),
+    ).resolves.toBeTruthy();
+    const bridge = crypto.randomUUID();
+    const issued = await asUser(
+      founder,
+      call(
+        'workspace_bridge',
+        { id, expected: 1, action: 'issue', fields: ['name', 'value'] },
+        bridge,
+      ),
+    );
+    const token = (issued.rows[0] as { health_mutate: { token: string } }).health_mutate.token;
+    await expect(asUser(member, `select public.health_bridge_read('${token}')`)).rejects.toThrow(
+      /unavailable/,
+    );
+    await asUser(founder, call('workspace_bridge', { id, expected: 1, action: 'revoke' }));
+    await expect(asUser(founder, `select public.health_bridge_read('${token}')`)).rejects.toThrow(
+      /unavailable/,
+    );
+    const copyId = 'a3000000-0000-4000-8000-000000000021';
+    await asUser(
+      founder,
+      call('workspace_copy', {
+        id: copyId,
+        sourceId: id,
+        title: 'Evenings copy',
+        includeDraft: true,
+        settings: {
+          presentation: {
+            density: 'compact',
+            arrangement: 'sequence',
+            dateRange: false,
+            comparisonDrawer: false,
+            accent: 'quiet',
+          },
+        },
+      }),
+    );
+    const copied = (
+      await asUser(founder, `select settings from health_private.workspaces where id='${copyId}'`)
+    ).rows[0] as { settings: { presentation: { density: string } } };
+    expect(copied.settings.presentation.density).toBe('compact');
+    await asUser(
+      founder,
+      call('workspace_architect', {
+        id,
+        expected: 1,
+        action: 'compile',
+        architect: {
+          status: 'blocked',
+          isolation: 'unavailable',
+          previewOk: false,
+          verified: false,
+        },
+      }),
+    );
+    const afterCompile = (
+      await asUser(
+        founder,
+        `select working_revision from health_private.workspaces where id='${id}'`,
+      )
+    ).rows[0] as { working_revision: number };
+    expect(afterCompile.working_revision).toBe(1);
+    await expect(
+      asUser(founder, call('workspace_architect', { id, expected: 1, action: 'accept' })),
+    ).rejects.toThrow(/verified customization/);
+    const exported = (await asUser(founder, 'select public.health_export_history()')).rows[0] as {
+      health_export_history: { workspaceRevisions: { settings: unknown; progress: unknown }[] };
+    };
+    expect(exported.health_export_history.workspaceRevisions[0]?.settings).toBeTruthy();
+  });
 });

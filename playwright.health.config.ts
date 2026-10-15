@@ -9,16 +9,23 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:3100',
     headless: true,
     launchOptions: {
-      executablePath: '/usr/bin/chromium',
+      ...(process.env.PLAYWRIGHT_CHROMIUM_PATH
+        ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
+        : {}),
       args: [
         '--no-sandbox',
         '--disable-dev-shm-usage',
         '--no-zygote',
-        '--single-process',
+        ...(process.env.PLAYWRIGHT_SINGLE_PROCESS === '1' ? ['--single-process'] : []),
         '--use-gl=angle',
         '--use-angle=swiftshader',
       ],
     },
   },
   reporter: 'list',
+  webServer: {
+    command: 'node scripts/component-test-server.mjs',
+    url: 'http://127.0.0.1:3102',
+    reuseExistingServer: true,
+  },
 });

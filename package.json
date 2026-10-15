@@ -27,7 +27,7 @@
     "test:ai:live": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local node_modules/vitest/vitest.mjs run --config vitest.ai.config.ts",
     "prebuild": "node scripts/prepare-mirror.mjs",
     "pretest:e2e": "node scripts/prepare-mirror.mjs",
-    "test:health": "vitest run tests/health.test.ts tests/health-database.test.ts tests/health-pdf.test.ts tests/health-api.test.ts tests/health-export.test.ts tests/health-owner.test.ts",
+    "test:health": "vitest run tests/health.test.ts tests/health-workspace.test.ts tests/health-bridge.test.ts tests/health-database.test.ts tests/health-pdf.test.ts tests/health-api.test.ts tests/health-export.test.ts tests/health-owner.test.ts",
     "test:health:bundle": "node scripts/build-health-fixture.mjs",
     "architect:worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs",
     "architect:worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-construct-worker.mjs --supervised"
