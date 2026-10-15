@@ -1,6 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { admitLiveSeed } from '@/domains/live/seed';
 import { budgetLiveSeed } from '@/domains/live/context-budget';
+vi.mock('server-only', () => ({}));
+import { createLiveItemId } from '@/domains/live/item-id';
 import { buildMessages } from '@/domains/intelligence/prompt';
 class Socket extends EventTarget {
   sent: {
@@ -38,7 +40,7 @@ function fixture() {
     { channel: 'voice' },
   );
   const seed = budgetLiveSeed([built[0]!], built.slice(1), 12).map((message, index) => ({
-    id: `ctx_test${index}`,
+    id: createLiveItemId(),
     eventId: `seed_test${index}`,
     message,
   }));
@@ -152,3 +154,81 @@ it('handles an empty seed and synchronous send failure without leaving a timeout
   ).rejects.toMatchObject({ category: 'unavailable' });
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it('admits a realistic 8,626-character first user seed only after its compact ID is acknowledged', async () => {
+  const built = buildMessages(
+    [],
+    '',
+    null,
+    new Date('2026-10-15T18:21:53Z'),
+    null,
+    'Synthetic summary',
+    null,
+    null,
+    { channel: 'voice' },
+  );
+  const application = String(built[0]!.content);
+  // Synthetic historical-length fixture, not a reconstruction of private production context.
+  const text = application.slice(0, 8626).padEnd(8626, ' ');
+  const id = createLiveItemId();
+  const socket = new Socket();
+  const pending = admitLiveSeed(socket as unknown as WebSocket, [
+    { id, eventId: 'seed_realistic', message: { role: 'user', content: text } },
+  ]);
+  expect(socket.sent[0]).toMatchObject({
+    event_id: 'seed_realistic',
+    item: { id, role: 'user', content: [{ type: 'input_text', text }] },
+  });
+  expect(id).toMatch(/^c[0-9a-z]{25}$/);
+  let admitted = false;
+  void pending.then(() => {
+    admitted = true;
+  });
+  socket.event({ type: 'conversation.item.added', item: { id: 'ctx_old_unrelated' } });
+  await Promise.resolve();
+  expect(admitted).toBe(false);
+  socket.event({ type: 'conversation.item.added', item: { id } });
+  await pending;
+});
+for (const code of [
+  'invalid_request_error',
+  'string_above_max_length',
+  'string_too_long',
+  'string_pattern_mismatch',
+  'invalid_format',
+])
+  it(`retains allowlisted item.id validation code ${code} without unrestricted error text`, async () => {
+    const socket = new Socket();
+    const pending = admitLiveSeed(socket as unknown as WebSocket, [
+      {
+        id: createLiveItemId(),
+        eventId: 'seed_id_validation',
+        message: { role: 'user', content: 'x'.repeat(8626) },
+      },
+    ]);
+    socket.event({
+      type: 'error',
+      error: {
+        code,
+        type: 'invalid_request_error',
+        param: 'item.id',
+        event_id: 'seed_id_validation',
+        message: 'PRIVATE SDP CONTEXT SECRET',
+      },
+    });
+    await expect(pending).rejects.toMatchObject({
+      category: 'rejected',
+      detail: {
+        providerCode: code,
+        providerParam: 'item.id',
+        seedEventId: 'seed_id_validation',
+        seedIndex: 0,
+        seedRole: 'user',
+        seedLength: 8626,
+        pendingCount: 1,
+      },
+    });
+    await pending.catch((error) =>
+      expect(JSON.stringify(error)).not.toMatch(/PRIVATE|SDP|CONTEXT|SECRET/),
+    );
+  });

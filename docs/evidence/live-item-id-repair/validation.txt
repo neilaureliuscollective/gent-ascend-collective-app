@@ -1,0 +1,105 @@
+Base f3703dcbbc2cb91b28aefc60feb6aee4697fce58; tests run on the committed code, with subsequent documentation only. Browser uses /usr/bin/chromium and the isolated component fixture. No paid provider/Auth acceptance.
+
+npx vitest run tests/live-*.test.ts tests/gpt-live-protocol.test.ts
+RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+
+ Test Files  24 passed (24)
+      Tests  169 passed (169)
+   Start at  18:27:51
+   Duration  3.24s (tests 57%, import 24%, transform 17%, worker 2%)
+
+    Isolate  24 workers spawned · ~122ms startup each (spawn + environment, per file)
+             at least ~852ms faster with isolate: false — reuses workers across files instead of one per file
+
+npm run lint
+> aurelius-collective-app@0.1.0 lint
+> eslint . --max-warnings 0
+
+npm run typecheck
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+npx next build
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 432ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 13.0s
+  Running TypeScript ...
+  Finished TypeScript in 67s ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/126) ...
+  Generating static pages using 4 workers (31/126)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (62/126)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (94/126)
+✓ Generating static pages using 4 workers (126/126) in 502ms
+  Finalizing page optimization ...
+
+npm run db:ledger
+> aurelius-collective-app@0.1.0 db:ledger
+> node scripts/check-migration-ledger.mjs
+
+Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.
+
+npx playwright test --config /tmp/live-repair-playwright.config.mjs
+[WebServer] (node:16078) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 9 tests using 1 worker
+
+(node:16216) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 390px (11.9s)
+  ✓  2 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 1440px (5.2s)
+  ✓  3 tests/browser/live-voice.spec.ts:135:1 › voice diagnostic download excludes transcript and record IDs (5.1s)
+  ✓  4 tests/browser/live-voice.spec.ts:191:1 › cancelling during slow SDP admission revokes the late call without restoring audio (4.7s)
+  ✓  5 tests/browser/live-voice.spec.ts:236:1 › late ASR stays ordered and uncertain cleanup prevents another voice session (5.1s)
+  ✓  6 tests/browser/live-voice.spec.ts:296:1 › connection failure stays compact with a usable retry and does not force fullscreen (4.8s)
+  ✓  7 tests/browser/live-voice.spec.ts:323:1 › simulated phone and unfolded-Fold consent stays scrollable with reachable Start (7.4s)
+  ✓  8 tests/browser/live-voice.spec.ts:350:1 › unavailable Live remains visible in Talk with an understandable reason (3.5s)
+  ✓  9 tests/browser/live-voice.spec.ts:362:1 › acknowledged voice retries in one tap without optional consent or automatic admission (8.5s)
+
+  9 passed (1.0m)
+
+npm test
+Test Files  3 failed | 222 passed | 1 skipped (226)
+      Tests  5 failed | 1327 passed | 1 skipped (1333)
+   Start at  18:27:58
+   Duration  107.15s (tests 79%, import 15%, transform 5%, worker 1%)
+
+    Isolate  226 workers spawned · ~184ms startup each (spawn + environment, per file)
+             at least ~13.69s faster with isolate: false — reuses workers across files instead of one per file
+
+Untouched f3703dc baseline: three environment-failure suites
+Test Files  3 failed (3)
+      Tests  5 failed | 3 passed (8)
+   Start at  18:29:00
+   Duration  9.48s (tests 73%, transform 15%, import 12%, worker 1%)
+
+npm run build (standard Mirror prebuild)
+> aurelius-collective-app@0.1.0 prebuild
+> node scripts/prepare-mirror.mjs
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+[TypeError: fetch failed] {
+  [cause]: Error: getaddrinfo EAI_AGAIN storage.googleapis.com
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3001,
+    code: 'EAI_AGAIN',
+    syscall: 'getaddrinfo',
+    hostname: 'storage.googleapis.com'
+  }
+}
+
+Node.js v24.19.0
