@@ -458,7 +458,7 @@
 .origin-workbench-identity h2 {
   margin: 0;
   font-size: 1rem;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .origin-workbench-views {
@@ -664,14 +664,11 @@
   .origin-studio[data-fold-panel='revisions'] .origin-revisions {
     display: flex !important;
   }
-  .origin-studio.origin-active .origin-workbench.origin-workspace {
+  .origin-studio.origin-active .origin-workbench.origin-workspace,
+  .origin-studio.origin-active .origin-workbench.origin-workspace:not(.origin-app) {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-areas: 'canvas' !important;
     min-height: 360px;
-  }
-  .origin-studio.origin-active .origin-workbench.origin-workspace:not(.origin-app) {
-    grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.4fr) !important;
-    grid-template-areas: 'canvas refine' !important;
   }
   .origin-workbench .origin-plane {
     min-height: 280px;
@@ -703,6 +700,12 @@
     border-top: 1px solid var(--studio-edge);
     background: var(--studio-chrome);
     padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+@media (max-width: 1100px) and (min-width: 601px) {
+  .origin-studio.origin-active .origin-workbench.origin-workspace:not(.origin-app) {
+    grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.4fr) !important;
+    grid-template-areas: 'canvas refine' !important;
   }
 }
 
@@ -738,6 +741,9 @@
   .origin-studio:not(.origin-active) .origin-choice > span:last-of-type {
     display: none !important;
   }
+  .origin-studio:not(.origin-active) .origin-choice[aria-pressed='true'] > span:last-of-type {
+    display: block !important;
+  }
   .origin-studio:not(.origin-active) .origin-choice strong {
     font-size: 0.82rem !important;
     margin: 0 !important;
@@ -762,7 +768,8 @@
     font-size: 1rem;
     padding: 4px 0;
   }
-  .origin-studio.origin-active .origin-workbench.origin-workspace {
+  .origin-studio.origin-active .origin-workbench.origin-workspace,
+  .origin-studio.origin-active .origin-workbench.origin-workspace:not(.origin-app) {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-areas: 'canvas' !important;
   }
@@ -776,7 +783,7 @@
   .origin-artifact-frame {
     display: block;
     width: 100%;
-    min-width: 280px;
+    min-width: 0;
     min-height: 220px;
     height: 220px;
   }
@@ -784,6 +791,10 @@
   .origin-studio .origin-rail,
   .origin-studio .origin-revisions {
     display: none !important;
+  }
+  .origin-canvas-tools {
+    justify-content: flex-start;
+    padding: 4px 8px 0;
   }
   .origin-studio .origin-workbench-bar {
     display: grid !important;

@@ -1,6 +1,6 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { copyFileSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 
 test.use({
   viewport: { width: 1440, height: 900 },
@@ -147,19 +147,30 @@ function buildDiagnostics(target: Page) {
   return target.getByLabel('Build diagnostics', { exact: true });
 }
 
-async function openBuildDiagnostics(target: Page) {
+function buildDetailsSummary(target: Page) {
+  return buildDiagnostics(target).locator('summary');
+}
+
+async function openBuildDiagnostics(target: Page, method: 'pointer' | 'keyboard' = 'pointer') {
   const details = buildDiagnostics(target);
-  const toggle = details.getByText('Build details', { exact: true });
+  const toggle = buildDetailsSummary(target);
+  await expect(toggle).toHaveText('Build details');
   await expect(toggle).toBeVisible();
   if (!(await details.evaluate((node) => node instanceof HTMLDetailsElement && node.open))) {
-    await toggle.click();
+    if (method === 'keyboard') {
+      await toggle.focus();
+      await expect(toggle).toBeFocused();
+      await toggle.press('Enter');
+    } else {
+      await toggle.click();
+    }
   }
   await expect(details).toHaveJSProperty('open', true);
 }
 
 async function closeBuildDiagnostics(target: Page) {
   const details = buildDiagnostics(target);
-  const toggle = details.getByText('Build details', { exact: true });
+  const toggle = buildDetailsSummary(target);
   if (await details.evaluate((node) => node instanceof HTMLDetailsElement && node.open)) {
     await toggle.click();
   }
@@ -203,6 +214,15 @@ async function enableAppsExecutionPolicy() {
   }
 }
 
+test.afterEach(async ({ page }) => {
+  const video = page.video();
+  if (!video) return;
+  const dirs = evidenceDir();
+  await page.close();
+  await video.saveAs(`${dirs.docs}/connected-journey.webm`);
+  await video.saveAs(`${dirs.connected}/connected-journey.webm`);
+});
+
 test('connected Architect Apps journey uses Auth, worker, Docker and the compiled iframe', async ({ page, browser }) => {
   test.setTimeout(300000);
   await enableAppsExecutionPolicy();
@@ -240,7 +260,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   await expect(page.getByText(/Revision 1 accepted\. Start remains explicit/)).toBeVisible();
   await expect(primaryStatus(page)).toHaveText('Approved revision 1 recovered');
   await expect(buildDiagnostics(page)).toHaveJSProperty('open', false);
-  await openBuildDiagnostics(page);
+  await openBuildDiagnostics(page, 'keyboard');
   await expect(buildDiagnostics(page)).toContainText('Approved revision 1 recovered. Start remains explicit.');
   await closeBuildDiagnostics(page);
   await page.getByRole('button', { name: 'Start approved build' }).click();
@@ -496,16 +516,6 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   }
 
   const dirs = evidenceDir();
-  const video = page.video();
-  const videoPath = video ? await video.path() : null;
-  if (videoPath) {
-    try {
-      copyFileSync(videoPath, `${dirs.docs}/connected-journey.webm`);
-      copyFileSync(videoPath, `${dirs.connected}/connected-journey.webm`);
-    } catch {
-      /* Playwright finalizes the webm when the context closes; CI copies test-results/*.webm afterward. */
-    }
-  }
   const receipt = JSON.stringify(
     {
       schema: 'architect-apps-connected-journey/v1',

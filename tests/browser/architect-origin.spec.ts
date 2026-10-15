@@ -113,6 +113,12 @@ for (const width of [320, 344, 390, 720, 768, 1440, 1920])
     );
     if (width <= 600)
       await expect(page.getByLabel('Tell Aethelios what you want to create')).toBeInViewport();
+    await page.getByRole('button', { name: 'Design an Application' }).click();
+    await expect(page.getByRole('button', { name: 'Design an Application' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByText('Create intelligent, beautiful software experiences.')).toBeVisible();
     await page.screenshot({
       path: `test-results/architect-immersive-entry-${width}.png`,
       fullPage: true,
@@ -2365,5 +2371,63 @@ test('App focus at Fold hides unused dock and keeps the preview usable', async (
     await page.setViewportSize({ width, height: 520 });
     await expect(page.getByText('Preview ready', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const preview = page.getByTitle('Private generated application preview');
+    const box = await preview.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(width * 0.72);
+  }
+});
+
+test('welcome arrival explains paths and saved Deliverables fill the phone canvas', async ({ page }) => {
+  await fixture(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(base);
+  await expect(page.getByRole('heading', { name: 'What will you create?' })).toBeVisible();
+  await expect(page.getByLabel('Tell Aethelios what you want to create')).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-arrival-desktop.png', fullPage: true });
+  await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await expect(page.getByRole('button', { name: 'Design an Application' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('Create intelligent, beautiful software experiences.')).toBeVisible();
+  await expect(page.getByLabel('Design an Application working stage')).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-arrival-application.png', fullPage: true });
+  await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-application.png', fullPage: true });
+  await page.getByLabel('Tell Aethelios what you want to create').fill('A field-notes app for studio visits.');
+  await expect(page.getByLabel('Project name (optional)')).toBeVisible();
+  await page.screenshot({ path: 'test-results/architect-arrival-shaping.png', fullPage: true });
+  await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-shaping.png', fullPage: true });
+  await page.getByLabel('Project name (optional)').fill('Field notes studio');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
+  await page.getByRole('button', { name: 'Create from approved Blueprint' }).click();
+  await expect(page.getByLabel('Editable Markdown')).toBeVisible();
+  await page.getByRole('button', { name: 'Save & confirm revision' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 2');
+  await page.screenshot({ path: 'test-results/architect-arrival-saved-desktop.png', fullPage: true });
+  await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-saved-desktop.png', fullPage: true });
+
+  for (const [width, height] of [
+    [320, 720],
+    [344, 882],
+    [390, 844],
+    [390, 520],
+    [720, 900],
+    [1440, 900],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(page.getByRole('heading', { name: 'Deliverables' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const plane = page.locator('.origin-workbench .origin-plane');
+    const box = await plane.boundingBox();
+    const minShare = width <= 600 ? 0.82 : 0.42;
+    expect(box?.width ?? 0, `${width}x${height} Deliverables plane`).toBeGreaterThan(width * minShare);
+    const save = page.getByRole('button', { name: 'Save & confirm revision' });
+    await expect(save).toBeVisible();
+    await save.scrollIntoViewIfNeeded();
+    await expect(save).toBeInViewport();
+    await page.screenshot({
+      path: `test-results/architect-deliverables-workspace-${width}x${height}.png`,
+      fullPage: false,
+    });
   }
 });

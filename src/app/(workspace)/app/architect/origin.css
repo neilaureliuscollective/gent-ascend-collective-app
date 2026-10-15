@@ -787,6 +787,11 @@
     flex: auto;
     min-height: 300px;
   }
+  .origin-active .origin-savebar {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+  }
 }
 @media print {
   .app-shell.environment-immersive,
