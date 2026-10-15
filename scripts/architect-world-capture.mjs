@@ -1,5 +1,5 @@
 // Local fixture evidence for Architect arrival / shape / focus. Not a commissioned or paid build.
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const base = 'http://127.0.0.1:3102/app/architect?mode=architect-origin&apps=adapter';
@@ -36,48 +36,72 @@ const plannerPreview = `<!doctype html><html lang="en"><head><meta charset="utf-
 </ol>
 </body></html>`;
 
+function compiledPreview() {
+  if (!existsSync('docs/evidence/architect-apps/compiled-preview.html')) return plannerPreview;
+  return readFileSync('docs/evidence/architect-apps/compiled-preview.html', 'utf8')
+    .replaceAll('http://127.0.0.1:3100', 'http://127.0.0.1:3102')
+    .replace('Field notes', 'Field notes · labelled local compile');
+}
+
 function appsLibrary() {
+  const srcDoc = compiledPreview();
   return {
-    app: { id: 'app-1', current_revision: 1, last_working_revision: 1, name: 'Studio planner' },
+    app: { id: 'app-1', current_revision: 2, last_working_revision: 2, name: 'Field notes' },
     revisions: [
       {
         id: 'rev-1',
         revision: 1,
         status: 'ready',
+        working: false,
+        approval_hash: 'hash1',
+        generation: { mode: 'fixture', notes: 'Labelled local compile of Field Notes.' },
+        files: [{ path: 'src/App.tsx', content: 'export function App(){return <main>Notes</main>}' }],
+        collections: [{ name: 'notes' }],
+      },
+      {
+        id: 'rev-2',
+        revision: 2,
+        status: 'ready',
         working: true,
-        approval_hash: 'hash',
-        generation: { mode: 'fixture', notes: 'Labelled fixture preview' },
-        files: [{ path: 'src/App.tsx', content: 'export function App(){return null}' }],
-        collections: [{ name: 'projects' }],
+        approval_hash: 'hash2',
+        generation: { mode: 'fixture', notes: 'Labelled local compile of Field Notes.' },
+        files: [
+          {
+            path: 'src/App.tsx',
+            content:
+              'export function App(){return <main><h1>Field notes</h1><form><input name="title"/></form></main>}',
+          },
+        ],
+        collections: [{ name: 'notes' }],
       },
     ],
     jobs: [
       {
-        id: 'job-1',
-        revision_id: 'rev-1',
+        id: 'job-2',
+        revision_id: 'rev-2',
         status: 'complete',
         cancel_requested: false,
-        result: { ok: true, isolation: 'none', typecheck: { ok: true }, bundle: { ok: true } },
+        result: { ok: true, isolation: 'host-fixture', typecheck: { ok: true }, bundle: { ok: true } },
       },
     ],
-    events: [{ kind: 'preview-ready', detail: 'Labelled fixture preview mounted', created_at: new Date().toISOString() }],
-    current: { id: 'rev-1', revision: 1, status: 'ready', working: true, approval_hash: 'hash' },
-    working: { id: 'rev-1', revision: 1 },
-    selected: { id: 'rev-1', revision: 1, status: 'ready', working: true },
+    events: [{ kind: 'preview-ready', detail: 'Labelled local compiled Field Notes mounted', created_at: new Date().toISOString() }],
+    current: { id: 'rev-2', revision: 2, status: 'ready', working: true, approval_hash: 'hash2' },
+    working: { id: 'rev-2', revision: 2 },
+    selected: { id: 'rev-2', revision: 2, status: 'ready', working: true },
     preview: {
-      srcDoc: plannerPreview,
+      srcDoc,
       sandbox: 'allow-scripts allow-forms',
-      label: 'Labelled fixture preview',
-      revision: 1,
-      revisionId: 'rev-1',
+      label: 'Labelled local compiled Field Notes. Not a paid generation.',
+      revision: 2,
+      revisionId: 'rev-2',
       generation: 1,
     },
     previewSession: 'fixture-session',
     pendingStart: null,
-    records: { projects: [{ id: 'p1', title: 'Riverside Brand' }] },
+    records: { notes: [{ id: 'n1', title: 'Site walk', hours: 2 }] },
     provider: { enabled: true, mode: 'fixture', reason: null },
     profile: { id: 'notes', version: 'fixture', toolchain: 'host-fixture' },
-    capabilities: {},
+    capabilities: { navigation: true, forms: true, persistence: true },
   };
 }
 
@@ -122,6 +146,29 @@ async function shot(page, name) {
   await page.screenshot({ path: `test-results/${name}.png`, animations: 'disabled' });
 }
 
+async function shotStage(page, name) {
+  const stage = page.locator('.architect-app-stage');
+  await stage.waitFor({ timeout: 8000 });
+  await page.waitForTimeout(200);
+  await stage.screenshot({ path: `${evidence}/${name}.png`, animations: 'disabled' });
+  await stage.screenshot({ path: `test-results/${name}.png`, animations: 'disabled' });
+}
+
+async function openApp(page, state, firstVisit) {
+  state.project = null;
+  state.versions.length = 0;
+  await page.goto(base, { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: 'What will you create?' }).waitFor();
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await page.getByLabel('Tell Aethelios what you want to create').fill('A planning app for independent studios.');
+  if (firstVisit) await page.getByRole('radio', { name: firstVisit }).check();
+  await page.getByLabel('Project name (optional)').fill('Studio planner');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await page.getByRole('status').waitFor();
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await page.getByTitle('Private generated application preview').waitFor({ timeout: 8000 });
+}
+
 const timings = [];
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({
@@ -146,7 +193,9 @@ const pathStart = Date.now();
 await page.getByRole('button', { name: 'Design an Application' }).click();
 await page.getByLabel('Design an Application working stage').waitFor();
 timings.push({ name: 'path-open', ms: Date.now() - pathStart });
-await page.getByRole('radio', { name: /Create a project/i }).check();
+await page.getByRole('radio', { name: /Invite a client/i }).check();
+await page.getByRole('button', { name: '02 Audience' }).click();
+await page.getByLabel('Audience (optional)').fill('Independent studios.');
 await page.getByLabel('Tell Aethelios what you want to create').scrollIntoViewIfNeeded();
 await shot(page, 'world-shape-1440');
 
@@ -155,7 +204,21 @@ await page.getByRole('button', { name: 'Create & save project' }).click();
 await page.getByRole('status').waitFor();
 await page.getByRole('button', { name: 'App', exact: true }).click();
 await page.getByTitle('Private generated application preview').waitFor({ timeout: 8000 });
+await page.getByLabel('Application details').getByRole('button', { name: 'Plan' }).click();
 await shot(page, 'world-focus-1440');
+await shotStage(page, 'world-preview-1440');
+await page.getByRole('button', { name: 'Inspect' }).click();
+await page.getByRole('button', { name: 'Explain' }).click();
+await page.getByRole('button', { name: 'Compare' }).click();
+await shot(page, 'world-inspect-1440');
+
+await page.setViewportSize({ width: 720, height: 900 });
+await openApp(page, state, /Create a project/i);
+await shot(page, 'world-focus-720');
+await shotStage(page, 'world-preview-720');
+await page.setViewportSize({ width: 344, height: 882 });
+await shot(page, 'world-focus-344');
+await shotStage(page, 'world-preview-344');
 
 state.project = null;
 state.versions.length = 0;
@@ -168,12 +231,6 @@ await page.getByLabel('Tell Aethelios what you want to create').fill('A planning
 await page.getByRole('radio', { name: /Create a project/i }).check();
 await page.getByLabel('Tell Aethelios what you want to create').scrollIntoViewIfNeeded();
 await shot(page, 'world-shape-720');
-await page.getByLabel('Project name (optional)').fill('Studio planner');
-await page.getByRole('button', { name: 'Create & save project' }).click();
-await page.getByRole('status').waitFor();
-await page.getByRole('button', { name: 'App', exact: true }).click();
-await page.getByTitle('Private generated application preview').waitFor({ timeout: 8000 });
-await shot(page, 'world-focus-720');
 
 state.project = null;
 state.versions.length = 0;
@@ -183,17 +240,49 @@ await page.getByRole('heading', { name: 'What will you create?' }).waitFor();
 await shot(page, 'world-arrival-390');
 await page.getByRole('button', { name: 'Design an Application' }).click();
 await page.getByLabel('Tell Aethelios what you want to create').fill('A planning app for independent studios.');
+const audienceStep = page.getByRole('button', { name: '02 Audience' });
+if (await audienceStep.isVisible().catch(() => false)) await audienceStep.click();
+else {
+  await page.getByRole('button', { name: 'Show me how' }).click();
+  await page.getByRole('button', { name: '02 Audience' }).click();
+}
+await page.getByLabel('Audience (optional)').fill('Independent studios.');
+await page.getByLabel('Audience (optional)').click();
+await page.setViewportSize({ width: 390, height: 520 });
+await page.getByLabel('Audience (optional)').scrollIntoViewIfNeeded();
+await shot(page, 'world-shape-390-keyboard');
+await page.setViewportSize({ width: 390, height: 844 });
 await page.getByLabel('Tell Aethelios what you want to create').scrollIntoViewIfNeeded();
 await shot(page, 'world-shape-390');
+await page.getByLabel('Project name (optional)').fill('Studio planner');
+await page.getByRole('button', { name: 'Create & save project' }).click();
+await page.getByRole('status').waitFor();
+await page.getByRole('button', { name: 'App', exact: true }).click();
+await page.getByTitle('Private generated application preview').waitFor({ timeout: 8000 });
+await shot(page, 'world-focus-390');
+await shotStage(page, 'world-preview-390');
 
 const overflow = {};
+const previewHeights = {};
 for (const width of [320, 344, 390, 720, 1440]) {
   await page.setViewportSize({ width, height: 900 });
-  state.project = null;
-  state.versions.length = 0;
-  await page.goto(base, { waitUntil: 'networkidle' });
+  await openApp(page, state, /Invite a client/i);
   overflow[width] = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+  previewHeights[width] = await page.getByTitle('Private generated application preview').evaluate((node) =>
+    Math.round(node.getBoundingClientRect().height),
+  );
 }
+
+const reduced = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+  reducedMotion: 'reduce',
+});
+const reducedPage = await reduced.newPage();
+attachRoutes(reducedPage);
+await reducedPage.goto(base, { waitUntil: 'networkidle' });
+await reducedPage.getByRole('heading', { name: 'What will you create?' }).waitFor();
+await shot(reducedPage, 'world-arrival-1440-reduced');
+await reduced.close();
 
 const receipt = {
   schema: 'architect-world-capture/v1',
@@ -201,6 +290,7 @@ const receipt = {
   label: 'Local Vite fixture evidence. Not a commissioned or paid build.',
   timings,
   overflow,
+  previewHeights,
 };
 writeFileSync(`${evidence}/world-capture.json`, `${JSON.stringify(receipt, null, 2)}\n`);
 writeFileSync('test-results/architect-world-capture.json', `${JSON.stringify(receipt, null, 2)}\n`);
@@ -210,6 +300,7 @@ await context.close();
 if (video) {
   const path = await video.path();
   writeFileSync(`${evidence}/world-video-path.txt`, `${path}\n`);
+  copyFileSync(path, `${evidence}/world-journey.webm`);
 }
 await browser.close();
 console.log(JSON.stringify(receipt, null, 2));

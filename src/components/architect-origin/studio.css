@@ -180,13 +180,16 @@
   align-items: stretch;
   text-align: left;
   padding: 12px !important;
-  border: 1px solid color-mix(in srgb, var(--studio-gold) 28%, var(--studio-edge)) !important;
-  border-right: 1px solid color-mix(in srgb, var(--studio-gold) 28%, var(--studio-edge)) !important;
+  border: 1px solid color-mix(in srgb, var(--studio-gold) 42%, #2a2c28) !important;
+  border-right: 1px solid color-mix(in srgb, var(--studio-gold) 42%, #2a2c28) !important;
   border-radius: 16px !important;
   background:
-    linear-gradient(180deg, #ffffff14, transparent 26%),
-    var(--studio-glass) !important;
-  box-shadow: var(--studio-bevel);
+    radial-gradient(ellipse 90% 52% at 14% -8%, #f6edd632, transparent 48%),
+    linear-gradient(168deg, #2e302a 0%, #161814 40%, #0a0c0b 100%) !important;
+  box-shadow:
+    inset 0 1px 0 #fff4,
+    inset 0 -14px 28px #0007,
+    0 22px 44px -20px #000d;
   min-height: 0;
   color: var(--studio-text);
   transition:
@@ -202,16 +205,15 @@
 
 .origin-choice-stage {
   display: block;
-  height: 204px;
+  height: 220px;
   border-radius: 12px;
   background:
-    radial-gradient(ellipse 80% 50% at 18% 0%, #f3e6b822, transparent 55%),
-    radial-gradient(ellipse 70% 42% at 50% 100%, #c4912f22, transparent 72%),
-    radial-gradient(ellipse at 50% 80%, #0008, transparent 70%),
-    linear-gradient(180deg, #2c302a, #121412);
+    radial-gradient(ellipse 70% 42% at 16% 0%, #f6e7bc2e, transparent 56%),
+    radial-gradient(ellipse 80% 46% at 50% 100%, #c4912f1f, transparent 70%),
+    linear-gradient(180deg, #3a3c34, #141612 68%, #080a09);
   overflow: hidden;
   margin-bottom: 12px;
-  box-shadow: inset 0 1px 0 #fff2;
+  box-shadow: inset 0 1px 0 #fff3, inset 0 -18px 28px #0008;
 }
 
 .origin-choice-art {
@@ -568,6 +570,45 @@
 .origin-workbench.origin-app .architect-app-frame {
   min-height: min(64vh, 680px);
 }
+
+.origin-studio[data-surface='App']::before,
+.origin-studio[data-surface='App']::after {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .origin-studio[data-surface='App'] .origin-fold-dock,
+  .origin-studio[data-surface='App'] .origin-revisions {
+    display: none !important;
+  }
+  .origin-studio[data-surface='App'] .origin-workbench-bar {
+    display: none !important;
+  }
+  .origin-studio[data-surface='App'] .origin-workbench.origin-app {
+    height: 100%;
+    min-height: 0 !important;
+  }
+  .origin-studio[data-surface='App'] .origin-workbench .origin-plane {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 8px !important;
+    overflow: hidden;
+  }
+  .origin-studio[data-surface='App'] .architect-app,
+  .origin-studio[data-surface='App'] .architect-app-stage,
+  .origin-studio[data-surface='App'] .architect-app-frame {
+    flex: 1;
+    min-height: min(48vh, 420px);
+    height: 100%;
+  }
+  .origin-studio[data-surface='App'] .architect-app-frame iframe,
+  .origin-studio[data-surface='App'] .architect-app-empty {
+    min-height: min(48vh, 420px);
+    height: 100%;
+  }
+}
 @media (max-width: 1100px) {
   .origin-studio.origin-active .origin-project-heading,
   .origin-studio .origin-revisions {
@@ -629,8 +670,10 @@
   .origin-studio:not(.origin-active) .origin-hero > p:last-of-type,
   .origin-studio:not(.origin-active) .origin-question,
   .origin-studio:not(.origin-active) .origin-starter-context,
-  .origin-studio:not(.origin-active) .origin-brief-steps,
   .origin-studio:not(.origin-active) .origin-emerging {
+    display: none;
+  }
+  .origin-entry[data-world-state='arrival'] .origin-brief-steps {
     display: none;
   }
   .origin-studio:not(.origin-active) .origin-choices {
@@ -940,6 +983,7 @@
       'stage'
       'side'
       'refine';
+    min-height: 0;
   }
   .architect-app-side,
   .architect-app-refine {
@@ -948,24 +992,25 @@
   .architect-app[data-app-sheet='side'] .architect-app-side,
   .architect-app[data-app-sheet='refine'] .architect-app-refine {
     display: block;
-    position: sticky;
-    bottom: 0;
+    position: static;
     z-index: 3;
-    max-height: 42vh;
+    max-height: 38vh;
     overflow: auto;
     background: var(--studio-chrome, #1a1a1a);
   }
   .architect-app-toolbar {
     grid-template-columns: 1fr;
+    padding: 8px 10px;
   }
   .architect-app-viewports {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .architect-app-frame,
-  .architect-app-frame iframe,
-  .architect-app-empty {
-    min-height: min(58vh, 520px);
+  .origin-studio[data-surface='App'] .architect-app-frame,
+  .origin-studio[data-surface='App'] .architect-app-frame iframe,
+  .origin-studio[data-surface='App'] .architect-app-empty {
+    min-height: min(48vh, 420px);
+    height: 100%;
   }
   .architect-app[data-focus-room='true'] .architect-app-side,
   .architect-app[data-focus-room='true'] .architect-app-refine {
@@ -981,7 +1026,13 @@
       'side'
       'refine';
   }
-  .architect-app-side {
+  .architect-app-side,
+  .architect-app-refine,
+  .architect-app-refine.is-open {
+    display: none;
+  }
+  .architect-app[data-app-sheet='side'] .architect-app-side,
+  .architect-app[data-app-sheet='refine'] .architect-app-refine {
     display: block;
   }
   .architect-app-source-view,
@@ -989,9 +1040,13 @@
   .architect-app-diff-after {
     max-height: 140px;
   }
-  .architect-app-refine.is-open,
-  .architect-app-refine {
-    display: block;
+  .architect-app-toolbar .architect-app-status,
+  .architect-app-toolbar .architect-app-flags,
+  .architect-app-toolbar .architect-app-checks {
+    display: none;
+  }
+  .architect-app-viewports button[aria-pressed='false']:is([aria-pressed]) {
+    min-width: 40px;
   }
 }
 
@@ -1191,6 +1246,29 @@
 .architect-app[data-focus-room='true'] .architect-app-frame,
 .architect-app[data-focus-room='true'] .architect-app-frame iframe {
   min-height: 560px;
+}
+@media (max-width: 1100px) {
+  .origin-studio[data-surface='App'] .architect-app[data-focus-room='true'] .architect-app-stage,
+  .origin-studio[data-surface='App'] .architect-app[data-focus-room='true'] .architect-app-frame,
+  .origin-studio[data-surface='App'] .architect-app[data-focus-room='true'] .architect-app-frame iframe {
+    min-height: min(48vh, 420px);
+  }
+  .origin-studio[data-surface='App'] .origin-savebar {
+    padding: 6px 12px;
+    gap: 8px;
+  }
+  .origin-studio[data-surface='App'] .origin-surfaces button {
+    padding: 8px 10px;
+  }
+}
+.origin-entry[data-world-state='path'] .origin-choices-compact,
+.origin-entry[data-world-state='shape'] .origin-choices-compact {
+  opacity: 0.78;
+}
+.origin-entry[data-world-state='shape'] .origin-path-stage {
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 18px 36px -22px #000c;
 }
 .architect-app-inspect {
   margin-top: 12px;

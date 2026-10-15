@@ -731,6 +731,16 @@
     padding-inline: 0;
   }
 }
+@media (max-width: 1100px) {
+  .origin-studio[data-surface='App'] .origin-surfaces {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .origin-studio[data-surface='App'] .origin-savebar p {
+    font-size: 0.75rem;
+  }
+}
+
 @media (max-width: 800px) {
   .origin-active .origin-project-heading {
     display: block;

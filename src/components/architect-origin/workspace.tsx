@@ -841,6 +841,7 @@ export function ArchitectOrigin({
       className={`origin origin-studio${selected ? ' origin-active' : ''}${foldPanel !== 'canvas' ? ` origin-panel-${foldPanel}` : ''}${library.projects.length ? ' origin-returning' : ''}`}
       data-bplus="architect"
       data-fold-panel={foldPanel}
+      data-surface={selected ? surface : 'arrival'}
       data-returning={library.projects.length ? 'true' : 'false'}
       aria-labelledby="origin-title"
       aria-busy={busy}

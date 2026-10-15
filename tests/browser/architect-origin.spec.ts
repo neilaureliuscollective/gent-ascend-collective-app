@@ -2278,3 +2278,68 @@ test('first-visit client review produces a different app plan than project creat
   await expect(page.getByLabel('Application details')).toContainText('First visit: client');
   await expect(page.getByLabel('Application details')).not.toContainText('Add the first milestone');
 });
+
+test('App focus at Fold hides unused dock and keeps the preview usable', async ({ page }) => {
+  await fixture(page);
+  await page.route('**/api/architect-apps**', async (route) => {
+    return route.fulfill({
+      json: {
+        app: { id: 'app-1', current_revision: 2, last_working_revision: 2, name: 'Field notes' },
+        revisions: [
+          {
+            id: 'rev-2',
+            revision: 2,
+            status: 'ready',
+            working: true,
+            approval_hash: 'hash2',
+            generation: { mode: 'fixture', notes: 'Labelled local compile of Field Notes.' },
+            files: [{ path: 'src/App.tsx', content: 'export function App(){return <main><h1>Field notes</h1></main>}' }],
+            collections: [{ name: 'notes' }],
+          },
+        ],
+        jobs: [
+          {
+            id: 'job-2',
+            revision_id: 'rev-2',
+            status: 'complete',
+            cancel_requested: false,
+            result: { ok: true, isolation: 'host-fixture', typecheck: { ok: true }, bundle: { ok: true } },
+          },
+        ],
+        events: [],
+        current: { id: 'rev-2', revision: 2, status: 'ready', working: true, approval_hash: 'hash2' },
+        working: { id: 'rev-2', revision: 2 },
+        selected: { id: 'rev-2', revision: 2, status: 'ready', working: true },
+        preview: {
+          srcDoc: '<!doctype html><title>Field notes</title><h1>Field notes</h1>',
+          sandbox: 'allow-scripts allow-forms',
+          label: 'Labelled local compiled Field Notes. Not a paid generation.',
+          revision: 2,
+          revisionId: 'rev-2',
+          generation: 1,
+        },
+        previewSession: 'fixture-session',
+        pendingStart: null,
+        records: { notes: [{ id: 'n1', title: 'Site walk', hours: 2 }] },
+        provider: { enabled: true, mode: 'fixture', reason: null },
+        profile: { id: 'notes', version: 'fixture', toolchain: 'host-fixture' },
+        capabilities: { navigation: true, forms: true, persistence: true },
+      },
+    });
+  });
+  await page.setViewportSize({ width: 720, height: 900 });
+  await page.goto('http://127.0.0.1:3102/app/architect?mode=architect-origin&apps=adapter');
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await page.getByLabel('Tell Aethelios what you want to create').fill('A planning app for independent studios.');
+  await page.getByLabel('Project name (optional)').fill('Studio planner');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await expect(page.getByTitle('Private generated application preview')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Workbench panels' })).toHaveCount(0);
+  const preview = page.getByTitle('Private generated application preview');
+  const box = await preview.boundingBox();
+  expect(box?.height ?? 0).toBeGreaterThan(240);
+  await page.getByRole('button', { name: 'Details' }).click();
+  await expect(page.getByLabel('Application details')).toBeVisible();
+});
