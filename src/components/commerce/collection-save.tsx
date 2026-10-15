@@ -54,7 +54,7 @@ export function CollectionSave({
         {saved ? '◆ In your collection' : '◇ Save to my collection'}
       </button>
       <p role="status">{message || 'Your saved selection stays on this browser.'}</p>
-      {saved && !compact && <Link href={`${basePath}?saved=1`}>View your saved selection ↗</Link>}
+      {saved && !compact && <Link href={`${basePath}?saved=1`}>View your saved selection</Link>}
     </div>
   );
 }

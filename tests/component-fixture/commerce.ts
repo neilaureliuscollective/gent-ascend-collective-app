@@ -84,6 +84,57 @@ export const commerceFixture: Product = {
   },
 };
 
+export const memberLifestyleFixture: CollectionEntry[] = [
+  {
+    handle: 'fixture-oil',
+    title: 'Fixture Oil',
+    kind: 'Hair oil',
+    brand: 'Legacy Reserve',
+    summary: 'Synthetic product, not merchandise.',
+    price: 'From $42.00',
+    status: 'Available',
+    categories: ['grooming', 'daily-ritual'],
+    orderable: true,
+    image: {
+      url: 'https://cdn.shopify.com/fixture/front.png',
+      altText: 'Synthetic front image',
+      width: 800,
+      height: 1000,
+    },
+  },
+  {
+    handle: 'fixture-balm',
+    title: 'Fixture Balm',
+    kind: 'Beard balm',
+    brand: 'Legacy Reserve',
+    summary: 'Synthetic product, not merchandise.',
+    price: 'From $28.00',
+    status: 'Available',
+    categories: ['grooming'],
+    discovery: ['beard'],
+    orderable: true,
+    image: {
+      url: 'https://cdn.shopify.com/fixture/back.png',
+      altText: 'Synthetic rear label',
+      width: 800,
+      height: 1000,
+    },
+  },
+  {
+    handle: 'fixture-wash',
+    title: 'Fixture Wash',
+    kind: 'Body wash',
+    brand: 'Legacy Reserve',
+    summary: 'Synthetic preview, not merchandise.',
+    price: 'Pricing at release',
+    status: 'Collection preview',
+    categories: ['grooming'],
+    discovery: ['body'],
+    orderable: false,
+    preview: true,
+  },
+];
+
 export const relatedFixture: CollectionEntry[] = [
   {
     handle: 'fixture-balm',

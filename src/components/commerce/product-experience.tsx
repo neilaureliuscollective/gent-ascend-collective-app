@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { Product } from '@/domains/commerce/shopify';
 import { launchPurchaseAllowed, launchState, launchLabel } from '@/domains/commerce/launch-policy';
@@ -19,6 +18,9 @@ import { ProductView } from './product-view';
 import { ProductShare } from './product-share';
 import { productExcerpt } from '@/domains/commerce/product-copy';
 import type { PurchasePolicy } from './purchase-terms';
+import { CollectionReturnLink } from './collection-return-link';
+import { LifestyleAction } from './lifestyle-action';
+import { Icon } from '@/components/visual/icon';
 
 type Preview = NonNullable<ReturnType<typeof previewProduct>>;
 export function ProductExperience({
@@ -78,9 +80,7 @@ export function ProductExperience({
           />
         </div>
         <div className="reserve-product-copy">
-          <Link href={basePath} className="world-text-link">
-            ← The collection
-          </Link>
+          <CollectionReturnLink fallback={basePath}>The collection</CollectionReturnLink>
           <span className="world-kicker">
             {brand} / {kind}
           </span>
@@ -110,6 +110,7 @@ export function ProductExperience({
           {product ? (
             <>
               <ProductPurchase product={product} basePath={basePath} />
+              {cabinetControl}
               <PurchaseTerms story={story} policies={policies} />
               {(story?.texture || story?.scent.length || story?.highlights.length) && (
                 <details className="atelier-glance">
@@ -154,7 +155,7 @@ export function ProductExperience({
             </div>
           )}
           <CollectionSave basePath={basePath} handle={handle} />
-          {cabinetControl}
+          {basePath === '/app/collection' ? null : cabinetControl}
           <ProductShare handle={handle} title={title} />
         </div>
       </section>
@@ -196,7 +197,8 @@ export function ProductExperience({
                 target="_blank"
                 rel="noreferrer"
               >
-                Beard-care guidance · American Academy of Dermatology ↗
+                Beard-care guidance · American Academy of Dermatology{' '}
+                <Icon name="arrow-up-right" className="action-icon" />
               </a>
               <small>General care education; not a claim about this product.</small>
             </div>
@@ -296,7 +298,7 @@ export function ProductExperience({
               </p>
               {product?.description && (
                 <a className="world-text-link" href="#product-description">
-                  Review product description →
+                  Review product description <Icon name="arrow" className="action-icon" />
                 </a>
               )}
             </div>
@@ -376,9 +378,9 @@ export function ProductExperience({
           Keep saved interests in your Cabinet and connect products to a routine you choose. Saving
           is separate from purchasing.
         </p>
-        <Link href="/app/collection/cabinet" className="world-text-link">
-          Open your Cabinet →
-        </Link>
+        <LifestyleAction href="/app/collection/cabinet" className="world-text-link">
+          Open your Cabinet
+        </LifestyleAction>
         <small>
           Sign in to save across devices. Product purchases do not require a paid membership.
         </small>

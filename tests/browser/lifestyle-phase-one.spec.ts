@@ -95,7 +95,7 @@ test('purchase confidence keeps incomplete content honest and uncertain addition
   page,
 }) => {
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-brand&empty=1');
-  await expect(page.getByRole('link', { name: 'Explore Aethelios Lifestyle →' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Explore Aethelios Lifestyle' })).toHaveAttribute(
     'href',
     '/app/collection',
   );
@@ -110,7 +110,7 @@ test('purchase confidence keeps incomplete content honest and uncertain addition
   );
   await page.locator('.commerce-add').click();
   await expect(page.locator('.commerce-add')).toBeDisabled();
-  await expect(page.getByRole('link', { name: 'Review cart →' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Review cart' })).toHaveAttribute(
     'href',
     '/app/collection/cart',
   );

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { EnvironmentFrame } from '@/components/environment-frame';
 import { ArchitectOrigin } from '@/components/architect-origin/workspace';
 import '@/app/(workspace)/app/architect/origin.css';
@@ -24,6 +25,7 @@ import '@/app/imperial-emerald-ii.css';
 import '@/app/obsidian-smoked-glass.css';
 
 import { LifestyleLanding } from '@/components/commerce/lifestyle-landing';
+import { MemberLifestyleHome } from '@/components/commerce/member-lifestyle-home';
 import { CollectionWorld } from '@/components/commerce/collection-world';
 import { CartPanel } from '@/components/commerce/cart-panel';
 import '@/app/(workspace)/app/collection/collection-world.css';
@@ -78,10 +80,11 @@ import { collectionEntries } from '@/domains/commerce/collection';
 import { ProductExperience } from '@/components/commerce/product-experience';
 import { resolveRelated } from '@/domains/commerce/discovery';
 import { readProductStory } from '@/domains/commerce/product-story';
-import { commerceFixture, relatedFixture } from './commerce';
+import { commerceFixture, memberLifestyleFixture, relatedFixture } from './commerce';
 import '@/app/(public)/world.css';
 import '@/app/(public)/cinematic.css';
 import '@/app/(public)/commerce-experience.css';
+import '@/app/(workspace)/app/lifestyle/member-lifestyle.css';
 import { MembershipControls } from '@/components/membership-controls';
 import '@/app/(workspace)/app/membership/membership.css';
 const params = new URLSearchParams(location.search);
@@ -204,11 +207,7 @@ createRoot(document.getElementById('root')!).render(
       }
       controls={<p>Synthetic Origin fixture · no real account or model.</p>}
     >
-      <ArchitectOrigin
-        enabled
-        aiEnabled
-        constructEnabled={params.get('construct') === 'adapter'}
-      />
+      <ArchitectOrigin enabled aiEnabled constructEnabled={params.get('construct') === 'adapter'} />
     </EnvironmentFrame>
   ) : mode === 'founder-office' ? (
     <div className="aethelios-aether imperial-workspace">
@@ -256,7 +255,8 @@ createRoot(document.getElementById('root')!).render(
             setupRequired: false,
             configured: true,
             accountLogin: 'synthetic-founder',
-            summary: 'Authorization is in progress. Complete the provider prompt, then return here.',
+            summary:
+              'Authorization is in progress. Complete the provider prompt, then return here.',
             resources: [
               {
                 id: '1',
@@ -271,9 +271,14 @@ createRoot(document.getElementById('root')!).render(
             setupRequired: false,
             configured: true,
             accountLogin: 'synthetic-team',
-            summary: 'Authorization is in progress. Complete the provider prompt, then return here.',
+            summary:
+              'Authorization is in progress. Complete the provider prompt, then return here.',
             resources: [
-              { id: 'prj_synthetic', name: 'gent-ascend-collective-app', detail: 'Selected project' },
+              {
+                id: 'prj_synthetic',
+                name: 'gent-ascend-collective-app',
+                detail: 'Selected project',
+              },
             ],
           },
         }}
@@ -348,7 +353,8 @@ createRoot(document.getElementById('root')!).render(
               'Read repository contents and metadata for the selected repository only.',
               'No administration, secrets, workflows, branch-protection bypass or repository write access.',
             ],
-            summary: 'Connected and verified for neilaureliuscollective/gent-ascend-collective-app.',
+            summary:
+              'Connected and verified for neilaureliuscollective/gent-ascend-collective-app.',
           },
           vercel: {
             ...founderOfficeFixture.connections.vercel,
@@ -364,6 +370,55 @@ createRoot(document.getElementById('root')!).render(
           },
         }}
       />
+    </div>
+  ) : mode.startsWith('lifestyle-member') ? (
+    <div className="app-shell imperial-workspace">
+      <header className="topbar">
+        <nav className="navigation" aria-label="Main navigation">
+          <a href="/app">Home</a>
+          <a href="/app/talk">Talk</a>
+          <a href="/app/lifestyle" aria-current="page">
+            Lifestyle
+          </a>
+        </nav>
+      </header>
+      <main>
+        <div className="member-collection public-world imperial-obsidian">
+          <p className="preview-notice">
+            Synthetic commerce fixture · no live merchandise, orders or payments.
+          </p>
+          <MemberLifestyleHome
+            entries={params.get('empty') === '1' ? [] : memberLifestyleFixture}
+            status={
+              params.get('error') === '1'
+                ? 'error'
+                : params.get('unconfigured') === '1'
+                  ? 'unconfigured'
+                  : params.get('empty') === '1'
+                    ? 'empty'
+                    : 'ready'
+            }
+            cabinet={
+              params.get('cabinet') === 'unavailable'
+                ? { available: false, records: [], ritualCount: 0 }
+                : params.get('cabinet') === '1'
+                  ? {
+                      available: true,
+                      ritualCount: 1,
+                      records: [
+                        {
+                          id: 'ce000000-0000-4000-8000-000000000001',
+                          name: 'Synthetic Cabinet oil',
+                          relation: 'owned',
+                          shopify_handle: 'fixture-oil',
+                        },
+                      ],
+                    }
+                  : { available: true, records: [], ritualCount: 0 }
+            }
+          />
+        </div>
+      </main>
     </div>
   ) : mode.startsWith('lifestyle') ? (
     <div className="member-collection public-world imperial-obsidian">
@@ -431,6 +486,13 @@ createRoot(document.getElementById('root')!).render(
               : commerceFixture
           }
           basePath="/app/collection"
+          cabinetControl={
+            <section className="reserve-save" aria-label="Cabinet and Grooming">
+              <p>Synthetic Cabinet fixture. Saving does not order this product.</p>
+              <Link href="/app/collection/cabinet">Open Cabinet</Link>
+              <Link href="/app/grooming">Open Grooming</Link>
+            </section>
+          }
         />
       )}
     </div>
