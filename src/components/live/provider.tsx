@@ -1,19 +1,23 @@
 'use client';
 import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { LiveController, type LiveState } from '@/domains/live/controller';
 import './live.css';
 import {
+  ConversationAnnouncer,
   IntelligencePresence,
   IntelligenceStatus,
   IntelligenceActivity,
 } from '@/components/intelligence-motion/presence';
+import { LivingSignal } from '@/components/intelligence-motion/living-signal';
 import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/operation-adapters';
 import { measuredAudioLevel } from '@/platform/visual/intelligence-motion';
 import { useAppearance } from '@/components/visual/appearance';
 import { ArtifactSurface } from './artifacts';
 import { LiveAvailabilityContext, LiveContext } from './context';
 import { LiveDiagnostics } from './diagnostics';
+import { getTalkVoiceDock, getTalkVoiceDockSnapshot, subscribeTalkVoiceDock } from './voice-dock';
 export function LiveConversationProvider({
   children,
   enabled = false,
@@ -69,11 +73,15 @@ const idleSnapshot: LiveState = {
   reviewedAction: null,
   expiresAt: null,
   transcript: [],
+  savedItemIds: [],
   playbackBlocked: false,
   cleanupPending: false,
   recovering: false,
   speechDetected: false,
   responsePending: false,
+  persistence: 'idle',
+  persistenceEpoch: 0,
+  artifactConversationId: null,
 };
 const noopSubscribe = () => () => {};
 const getIdle = () => idleSnapshot;
@@ -105,11 +113,13 @@ export function LiveVoiceEntry({
   includeContext,
   disabled = false,
   onAdoptConversation,
+  workTarget = null,
 }: {
   conversationId: string | null;
   includeContext: boolean;
   disabled?: boolean;
   onAdoptConversation?: (conversationId: string) => void;
+  workTarget?: { creationId: string; field: string } | null;
 }) {
   const controller = useContext(LiveContext);
   const unavailable = useContext(LiveAvailabilityContext);
@@ -219,7 +229,13 @@ export function LiveVoiceEntry({
                 onAdoptConversation?.(id);
                 setConsent(false);
                 setApproved(false);
-                void controller.start(id, includeContext && contextApproved, voice, backgroundWork);
+                void controller.start(
+                  id,
+                  includeContext && contextApproved,
+                  voice,
+                  backgroundWork,
+                  workTarget,
+                );
                 setContextApproved(false);
                 setBackgroundWork(false);
               }}
@@ -256,8 +272,10 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const compact = useRef<HTMLElement>(null);
   const [transcript, setTranscript] = useState(true);
   const [draft, setDraft] = useState('');
+  const dock = useSyncExternalStore(subscribeTalkVoiceDock, getTalkVoiceDock, getTalkVoiceDockSnapshot);
   const visible = state.phase !== 'idle';
   const active = ['connecting', 'listening', 'speaking'].includes(state.phase);
+  const docked = Boolean(dock);
   useEffect(() => {
     const node = dialog.current;
     if (!node) return;
@@ -265,10 +283,10 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     else if (node.open) node.close();
   }, [visible, state.mode]);
   useEffect(() => {
-    if (!visible || state.mode !== 'compact') return;
+    if (!visible || state.mode !== 'compact' || docked) return;
     const frame = requestAnimationFrame(() => compact.current?.querySelector('button')?.focus());
     return () => cancelAnimationFrame(frame);
-  }, [visible, state.mode]);
+  }, [visible, state.mode, docked]);
   useEffect(() => {
     orb.current?.style.setProperty('--live-audio-level', '0');
     compact.current?.style.setProperty('--live-audio-level', '0');
@@ -312,51 +330,60 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     }, 1500);
     return () => clearInterval(timer);
   }, [controller, visible, state.sessionId, active]);
+  const canMute = active && state.phase !== 'connecting';
+  const canStopPlayback = state.phase === 'speaking' && !state.playbackBlocked;
+  const canEnd = active || state.cleanupPending;
   const controls = (
-    <div className="live-controls">
-      <button
-        type="button"
-        disabled={!active || state.phase === 'connecting'}
-        aria-pressed={state.muted}
-        onClick={() => controller.mute()}
-      >
-        {state.muted ? 'Unmute microphone' : 'Mute microphone'}
-      </button>
-      <button type="button" disabled={!active} onClick={() => controller.interrupt()}>
-        Stop speaking
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          void controller.end();
-        }}
-      >
-        End{state.cleanupPending ? ' / retry cleanup' : ''}
-      </button>
-      <button
-        type="button"
-        onClick={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
-      >
-        {state.mode === 'immersive' ? 'Minimize' : 'Fullscreen'}
-      </button>
-      {!active && !state.cleanupPending && (
-        <button type="button" onClick={() => controller.dismiss()}>
-          Close
+    <div className="live-controls live-controls-compact">
+      <div className="live-control-session">
+        {canMute && (
+          <button type="button" aria-pressed={state.muted} onClick={() => controller.mute()}>
+            {state.muted ? 'Unmute microphone' : 'Mute microphone'}
+          </button>
+        )}
+        {canStopPlayback && (
+          <button type="button" onClick={() => controller.interrupt()}>
+            Stop playback
+          </button>
+        )}
+        {canEnd && (
+          <button
+            type="button"
+            onClick={() => {
+              void controller.end();
+            }}
+          >
+            {state.cleanupPending ? 'Retry end session' : 'End session'}
+          </button>
+        )}
+      </div>
+      <div className="live-control-layout">
+        <button
+          type="button"
+          onClick={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
+        >
+          {state.mode === 'immersive' ? 'Compact' : 'Expand'}
         </button>
-      )}
-      <button
-        type="button"
-        aria-pressed={transcript}
-        onClick={() => setTranscript((value) => !value)}
-      >
-        Transcript
-      </button>
+        <button
+          type="button"
+          aria-pressed={transcript}
+          onClick={() => setTranscript((value) => !value)}
+        >
+          Transcript
+        </button>
+        {!active && !state.cleanupPending && (
+          <button type="button" onClick={() => controller.dismiss()}>
+            Close
+          </button>
+        )}
+      </div>
     </div>
   );
   const content = (
     <>
       <p className="live-brand">AETHELIOS LIVE</p>
-      <IntelligenceStatus operation={operation} />
+      <ConversationAnnouncer operation={operation} />
+      <IntelligenceStatus operation={operation} announce={false} />
       {state.error && <p role="alert">{state.error}</p>}
       {state.playbackBlocked && (
         <button
@@ -376,7 +403,12 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           <ArtifactSurface controller={controller} />
         </details>
       )}
-      {transcript && (
+      {transcript && docked && (
+        <p className="live-privacy">
+          Provisional speech stays in the Talk timeline. Saving is confirmed there.
+        </p>
+      )}
+      {transcript && !docked && (
         <div
           className="live-transcript"
           role="log"
@@ -448,8 +480,8 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            controller.text(draft);
-            setDraft('');
+            const sent = controller.text(draft);
+            if (sent.accepted) setDraft('');
           }}
         >
           <label>
@@ -492,16 +524,20 @@ function LiveSurface({ controller }: { controller: LiveController }) {
       </dialog>
       {visible &&
         state.mode === 'compact' &&
-        (active || state.cleanupPending || (state.phase === 'ended' && !state.error)) && (
-        <section
-          ref={compact}
-          className="live-compact"
-          aria-label="Persistent Aethelios voice controls"
-        >
-          <IntelligencePresence operation={operation} variant="signal" />
-          {content}
-        </section>
-      )}
+        (active || state.cleanupPending || (state.phase === 'ended' && !state.error)) &&
+        (() => {
+          const compactChrome = (
+            <section
+              ref={compact}
+              className={`live-compact${docked ? ' is-docked' : ''}`}
+              aria-label="Persistent Aethelios voice controls"
+            >
+              <LivingSignal operation={operation} still={!moving} surface="voice-compact" />
+              {content}
+            </section>
+          );
+          return dock ? createPortal(compactChrome, dock) : compactChrome;
+        })()}
     </>
   );
 }

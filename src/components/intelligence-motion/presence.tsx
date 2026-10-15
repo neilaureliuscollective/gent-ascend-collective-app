@@ -10,6 +10,13 @@ import {
 import palette from '@/platform/visual/aether-palette.json';
 import './motion.css';
 import { GuidingPresence } from './guiding-presence';
+import { LivingSignal } from './living-signal';
+import {
+  conversationActivityLabel,
+  conversationAnnouncerText,
+  conversationStatusVisible,
+  type ConversationArtifactHint,
+} from '@/platform/visual/conversation-motion';
 
 /** Lightweight signature. No provider, timer, microphone, progress estimation or WebGL. */
 function LegacyPresence({
@@ -90,15 +97,29 @@ function LegacyPresence({
 /** Preserve existing artwork surfaces; response/task signals use the authored identity. */
 export function IntelligencePresence(props: {
   operation: IntelligenceOperation;
-  size?: 'compact' | 'large';
+  size?: 'compact' | 'large' | 'conversation';
   artwork?: ReactNode;
   variant?: 'orb' | 'signal';
 }) {
   const { moving } = useAppearance();
+  if (props.size === 'conversation') {
+    return (
+      <LivingSignal
+        operation={props.operation}
+        still={!moving}
+        surface="conversation"
+      />
+    );
+  }
   return props.variant === 'signal' && !props.artwork ? (
     <GuidingPresence operation={props.operation} still={!moving} compact={props.size !== 'large'} />
   ) : (
-    <LegacyPresence {...props} />
+    <LegacyPresence
+      operation={props.operation}
+      size={props.size === 'large' ? 'large' : 'compact'}
+      artwork={props.artwork}
+      variant={props.variant}
+    />
   );
 }
 export function IntelligenceStatus({
@@ -120,6 +141,29 @@ export function IntelligenceStatus({
     </span>
   );
 }
+
+/** One persistent polite region for operational transitions. Never tokens or amplitude. */
+export function ConversationAnnouncer({
+  operation,
+  artifacts = [],
+  notice = '',
+}: {
+  operation: IntelligenceOperation;
+  artifacts?: ConversationArtifactHint[];
+  notice?: string;
+}) {
+  const text = conversationAnnouncerText(operation, artifacts, notice);
+  return (
+    <span
+      className="sr-only conversation-announcer"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {text}
+    </span>
+  );
+}
 export function IntelligenceActivity({ operation }: { operation: IntelligenceOperation }) {
   return (
     <div className="im-activity">
@@ -132,16 +176,35 @@ export function IntelligenceActivity({ operation }: { operation: IntelligenceOpe
 export function IntelligenceResponse({
   operation,
   name = 'Aethelios',
+  artifacts = [],
 }: {
   operation: IntelligenceOperation;
   name?: string;
+  artifacts?: ConversationArtifactHint[];
 }) {
+  const { moving } = useAppearance();
+  const status = conversationActivityLabel(operation, artifacts);
   return (
-    <div className="im-response" data-phase={operation.phase} data-operation={operation.id}>
-      <IntelligencePresence operation={operation} variant="signal" size="large" />
+    <div
+      className="im-response"
+      data-phase={operation.phase}
+      data-mode={operation.phase}
+      data-operation={operation.id}
+    >
+      <LivingSignal
+        operation={operation}
+        still={!moving}
+        surface="conversation"
+        artifacts={artifacts}
+      />
       <div className="im-response-copy">
         <span className="im-response-name">{name}</span>
-        <IntelligenceStatus operation={operation} announce={false} />
+        {conversationStatusVisible(operation) && (
+          <span className="im-status" aria-live="off">
+            {operation.basis === 'preview' ? 'Preview · ' : ''}
+            {status}
+          </span>
+        )}
       </div>
     </div>
   );

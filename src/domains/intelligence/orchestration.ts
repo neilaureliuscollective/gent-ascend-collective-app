@@ -48,6 +48,8 @@ const studioDraftSchema = z.object({
 export const orchestrationInput = z.object({
   target: z.enum(['performance','studio','presence']),
   text: z.string().trim().min(3).max(6000),
+  conversationId: z.uuid().optional(),
+  creationIds: z.array(z.uuid()).max(6).optional(),
 }).strict();
 
 function model() {
@@ -99,11 +101,20 @@ export async function prepareCapabilityDraft(input:z.infer<typeof orchestrationI
     return {target:'presence' as const,ownerId:person.id,presence:result.output};
   }
 
+  let reviewed = '';
+  if (input.conversationId && input.creationIds?.length) {
+    const { exportCreationText, readTalkCreations } = await import('@/domains/talk-creation/service');
+    const workspace = await readTalkCreations(input.conversationId);
+    reviewed = workspace.creations
+      .filter((item) => input.creationIds?.includes(item.id))
+      .map((item) => exportCreationText(item))
+      .join('\n\n');
+  }
   const result=await generateText({
     model:model(),
     output:Output.object({schema:studioDraftSchema,name:'studio_brief',description:'A reviewable creative brief for Aethelios Studio.'}),
-    instructions:'Turn the member request into a concise Studio project seed. Preserve their intent and do not invent brand facts, audiences, claims, logos, people or visual constraints they did not provide. Leave fields blank when unknown. The prompt should be useful for the first creative generation but remain editable. Return only the structured draft.',
-    prompt:input.text,
+    instructions:'Turn the member request and any reviewed Talk brief/plan/palette into a concise Studio project seed. Preserve their intent and do not invent brand facts, audiences, claims, logos, people or visual constraints they did not provide. Prefer the reviewed selections over a single latest sentence. Leave fields blank when unknown. The prompt should be useful for the first creative generation but remain editable. Return only the structured draft.',
+    prompt: JSON.stringify({ request: input.text, reviewedWork: reviewed || undefined }),
     maxOutputTokens:1000,maxRetries:1,timeout:{totalMs:18000},providerOptions:{openai:{store:false}},
   });
   return {target:'studio' as const,ownerId:person.id,studio:result.output};

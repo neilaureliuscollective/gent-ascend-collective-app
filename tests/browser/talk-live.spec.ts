@@ -101,7 +101,7 @@ function workspace(turns: Turn[] = [], conversationId: string | null = null): Wo
 
 async function openTalkVoice(page: Page) {
   await page.goto('http://127.0.0.1:3102/app/aethelios?mode=talk-live');
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
@@ -122,6 +122,22 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     }
     const id = url.searchParams.get('conversationId');
     return route.fulfill({ json: workspace(saved, id) });
+  });
+  await page.route('**/api/aethelios/live/receipt**', async (route) => {
+    const url = new URL(route.request().url());
+    return route.fulfill({
+      json: {
+        ownerId: owner,
+        conversationId: url.searchParams.get('conversationId'),
+        sessionId: url.searchParams.get('sessionId'),
+        bindings: [
+          { providerItemId: 'spoken-1', providerResponseId: null, turnId: 'spoken-1' },
+        ],
+        turns: [
+          { id: 'spoken-1', user_text: 'Spoken in Talk', created_at: '2026-10-14T18:24:00Z' },
+        ],
+      },
+    });
   });
   await page.route('**/api/aethelios/live', async (route) => {
     if (route.request().method() === 'GET') return route.fulfill({ json: { jobs: [] } });
@@ -177,7 +193,7 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     created_at: '2026-10-14T18:24:00Z',
     finished_at: '2026-10-14T18:24:01Z',
   });
-  await page.getByRole('button', { name: 'End', exact: true }).click();
+  await page.getByRole('button', { name: 'End session', exact: true }).click();
   await expect(page.locator('.user-message')).toContainText('Spoken in Talk');
   await expect(page.locator('.live-provisional')).toHaveCount(0);
 });
@@ -244,4 +260,98 @@ test('connection failure stays in Talk with retry and leaves the composer usable
     path: 'test-results/talk-live-failure-phone-390.png',
     fullPage: true,
   });
+});
+
+test('a delayed workspace body cannot rewrite the current conversation after switch', async ({
+  page,
+}) => {
+  await fakeTransport(page);
+  let selected: string | null = null;
+  const saved: Turn[] = [];
+  let releaseHeldWorkspace = () => {};
+  const held = new Promise<void>((resolve) => {
+    releaseHeldWorkspace = resolve;
+  });
+  let holdNextWorkspace = false;
+  await page.route('**/api/aurelius**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/chat')) {
+      return route.fulfill({ contentType: 'application/x-ndjson', body: '' });
+    }
+    const id = url.searchParams.get('conversationId');
+    if (holdNextWorkspace && id === selected && url.pathname === '/api/aurelius') {
+      holdNextWorkspace = false;
+      await held;
+      return route.fulfill({
+        json: workspace(
+          [
+            {
+              id: 'stale-1',
+              person_id: owner,
+              conversation_id: selected!,
+              user_text: 'Stale spoken turn',
+              assistant_text: 'Stale saved reply',
+              status: 'complete',
+              model: 'gpt-realtime',
+              context_included: false,
+              prompt_version: 'fixture',
+              feedback: null,
+              created_at: '2026-10-14T18:24:00Z',
+              finished_at: '2026-10-14T18:24:01Z',
+            },
+          ],
+          selected,
+        ),
+      });
+    }
+    return route.fulfill({ json: workspace(saved, id) });
+  });
+  await page.route('**/api/aethelios/live/receipt**', async (route) => {
+    const url = new URL(route.request().url());
+    return route.fulfill({
+      json: {
+        ownerId: owner,
+        conversationId: url.searchParams.get('conversationId'),
+        sessionId: url.searchParams.get('sessionId'),
+        bindings: [{ providerItemId: 'spoken-1', providerResponseId: null, turnId: 'spoken-1' }],
+        turns: [{ id: 'spoken-1', user_text: 'Spoken in Talk', created_at: '2026-10-14T18:24:00Z' }],
+      },
+    });
+  });
+  await page.route('**/api/aethelios/live', async (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { jobs: [] } });
+    if (route.request().method() === 'DELETE') return route.fulfill({ json: { ended: true } });
+    const body = route.request().postDataJSON() as { conversationId?: string };
+    selected = body.conversationId ?? null;
+    return route.fulfill({
+      json: {
+        answer: 'v=0\r\na=synthetic-answer',
+        expiresAt: new Date(Date.now() + 120000).toISOString(),
+      },
+    });
+  });
+  await openTalkVoice(page);
+  await expect.poll(() => selected).toBeTruthy();
+  await page.evaluate(() => {
+    (
+      window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }
+    ).voiceChannel.onmessage({
+      data: JSON.stringify({
+        type: 'conversation.item.input_audio_transcription.completed',
+        item_id: 'spoken-1',
+        transcript: 'Spoken in Talk',
+      }),
+    });
+  });
+  await expect(page.locator('.live-provisional')).toContainText('Spoken in Talk');
+  holdNextWorkspace = true;
+  await page.getByRole('button', { name: 'End session', exact: true }).click();
+  await page.getByRole('button', { name: 'Conversations', exact: true }).click();
+  await page.getByRole('button', { name: 'Start a conversation' }).click();
+  await expect(page.locator('.talk-title')).toContainText('New conversation');
+  releaseHeldWorkspace();
+  await expect(page.locator('.user-message')).toHaveCount(0);
+  await expect(page.getByText('Stale spoken turn')).toHaveCount(0);
+  await expect(page.getByText('Stale saved reply')).toHaveCount(0);
+  await expect(page.getByLabel('Message Aethelios')).toHaveValue('');
 });

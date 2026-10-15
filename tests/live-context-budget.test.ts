@@ -46,3 +46,19 @@ it('keeps current published knowledge when a long voice history is trimmed', () 
   expect(seed.filter((item) => String(item.content).startsWith('Older question'))).toHaveLength(6);
   expect(liveApplicationFromBuilt(built)[0]?.text).toContain(publishedKnowledgeContext());
 });
+
+// Integration regression: Knowledge's ninth argument and Talk's image attachment
+// must coexist; neither may silently replace the other's request context.
+it('composes current knowledge, delivery and image analysis in one Talk request', () => {
+  const bytes = new Uint8Array([1, 2, 3]);
+  const built = buildMessages([], 'Describe this image', null, new Date(), null, null, null, null, {
+    channel: 'text',
+    attachment: { bytes, mediaType: 'image/png' },
+  });
+  expect(String(built[0]?.content)).toContain(publishedKnowledgeContext());
+  expect(String(built[0]?.content)).toContain('Personal context disabled');
+  expect(built.at(-1)?.content).toEqual([
+    { type: 'text', text: expect.stringContaining('for analysis of these pixels only') },
+    { type: 'image', image: bytes, mediaType: 'image/png' },
+  ]);
+});

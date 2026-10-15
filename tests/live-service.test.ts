@@ -47,7 +47,32 @@ vi.mock('@/domains/artifacts/service', () => ({
   coworkerWorkTool: {},
 }));
 vi.mock('@/domains/live/background', () => ({ backgroundTool: {}, runBackgroundTask: vi.fn() }));
+vi.mock('@/domains/talk-creation/context', () => ({
+  selectedTalkContext: async () => '',
+  selectedTalkPredecessors: async () => ({}),
+}));
+vi.mock('@/domains/talk-creation/service', () => ({
+  readTalkCreations: async () => ({
+    creations: [],
+    selected: {},
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  }),
+}));
+vi.mock('@/domains/talk-creation/live-adapter', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/domains/talk-creation/live-adapter')>()),
+  runTalkLiveOffer: vi.fn(),
+  runTalkLiveRefine: vi.fn(),
+}));
+vi.mock('@/domains/live/trusted-observe', () => ({
+  observeTrustedVoiceItem: vi.fn(async () => ({ observed: true, trusted: true })),
+}));
 import { admitLive } from '@/domains/live/service';
+import { liveAdmissionFieldKinds } from '@/domains/live/admission-request';
+import { observeTrustedVoiceItem } from '@/domains/live/trusted-observe';
 class Socket extends EventTarget {
   static OPEN = 1;
   static last: Socket;
@@ -179,15 +204,49 @@ it('opens the official server sideband with an Authorization header rather than 
     headers: { Authorization: 'Bearer synthetic-provider' },
   });
 });
+it('posts official string FormData fields instead of Blob file parts', async () => {
+  await admitLive(input);
+  const [, init] = vi.mocked(fetch).mock.calls[0] as [string, { body: FormData }];
+  const fields = liveAdmissionFieldKinds(init.body);
+  expect(fields.sdpKind).toBe('string');
+  expect(fields.sessionKind).toBe('string');
+  expect(fields.sdp).toBe(input.sdp);
+  const session = JSON.parse(fields.session ?? '');
+  expect(session.type).toBe('realtime');
+  expect(session.tools.map((tool: { name: string }) => tool.name)).toEqual([
+    'offer_text_work',
+    'refine_selected_direction',
+    'lookup_lifestyle_catalog',
+  ]);
+  expect(session.instructions).toContain('VOICE DELIVERY');
+  expect(session.instructions).toContain('Cached catalog figures are not live stock');
+  expect(session.instructions).toContain('Refine the selected design-board direction only');
+});
 it('reports a sanitized provider rejection instead of one generic connection message', async () => {
-  vi.mocked(fetch).mockResolvedValueOnce(new Response('no', { status: 401 }));
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        error: {
+          code: 'invalid_request_error',
+          type: 'invalid_request_error',
+          param: 'sdp',
+          message: 'raw',
+        },
+        request_id: 'req_test1',
+      }),
+      { status: 400, headers: { 'content-type': 'application/json' } },
+    ),
+  );
   await expect(admitLive(input)).rejects.toMatchObject({
     status: 503,
     message: expect.stringMatching(/provider did not complete admission/),
     safeDetail: expect.objectContaining({
       stage: 'provider',
       category: 'rejected',
-      providerStatus: 401,
+      providerStatus: 400,
+      providerCode: 'invalid_request_error',
+      providerParam: 'sdp',
+      providerRequestId: 'req_test1',
     }),
   });
   expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));
@@ -242,6 +301,40 @@ it('seeds saved typed history before admitting audio, omits private context with
     expect.objectContaining({ redirect: 'error' }),
   );
 });
+it('stops the voice session when trusted observation is unavailable instead of treating a saved turn as bound', async () => {
+  vi.mocked(observeTrustedVoiceItem).mockResolvedValue({ observed: false, trusted: false });
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const monitor = admission.monitor();
+  for (const event of [
+    {
+      type: 'conversation.item.added',
+      item: { id: 'typed', role: 'user', content: [{ text: 'Typed in Live' }] },
+    },
+    { type: 'response.created', response: { id: 'reply' } },
+    {
+      type: 'response.done',
+      response: {
+        id: 'reply',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Spoken answer' }] }],
+        usage: { input_tokens: 2, output_tokens: 3 },
+      },
+    },
+    { type: 'output_audio_buffer.stopped', response_id: 'reply' },
+  ])
+    socket.event(event);
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_finish_turn',
+      expect.objectContaining({ p_text: 'Spoken answer', p_status: 'complete' }),
+    ),
+  );
+  await vi.waitFor(() => expect(socket.readyState).toBe(3));
+  expect(rpc.mock.calls.some(([name]) => name === 'ai_live_bind_finished_turn')).toBe(false);
+  await monitor;
+});
+
 it('includes explicitly opted-in context and ends when founder authority is revoked even if beta remains', async () => {
   vi.useFakeTimers();
   const admission = await admitLive({ ...input, includeContext: true });

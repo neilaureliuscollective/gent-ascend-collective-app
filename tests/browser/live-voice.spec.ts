@@ -118,13 +118,13 @@ for (const width of [390, 1440])
     );
     await expect(compact.getByRole('status')).toHaveText('Speaking');
     await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'speaking');
-    await compact.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+    await compact.getByRole('button', { name: 'Expand', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(compact).toBeVisible();
     expect(starts).toBe(1);
-    await compact.getByRole('button', { name: 'End', exact: true }).click();
+    await compact.getByRole('button', { name: 'End session', exact: true }).click();
     await expect(compact.getByRole('status')).toHaveText('Session ended');
     await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'cancelled');
     expect(
@@ -186,7 +186,7 @@ test('voice diagnostic download excludes transcript and record IDs', async ({ pa
   const contents = Buffer.concat(chunks).toString('utf8');
   expect(contents).not.toMatch(/DO NOT EXPORT|private-record-id/);
   expect(JSON.parse(contents)).toMatchObject({ evidence: 'browser-events', model: 'gpt-realtime' });
-  await dialog.getByRole('button', { name: 'End', exact: true }).click();
+  await dialog.getByRole('button', { name: 'End session', exact: true }).click();
 });
 test('cancelling during slow SDP admission revokes the late call without restoring audio', async ({
   page,
@@ -224,7 +224,7 @@ test('cancelling during slow SDP admission revokes the late call without restori
   const dialog = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
   await expect(dialog.getByRole('status')).toHaveText('Connecting');
   await expect.poll(() => admissions).toBe(1);
-  await dialog.getByRole('button', { name: 'End', exact: true }).click();
+  await dialog.getByRole('button', { name: 'End session', exact: true }).click();
   release();
   await expect.poll(() => ends).toBe(2);
   await expect(dialog.getByRole('status')).toHaveText('Session ended');
@@ -284,11 +284,11 @@ test('late ASR stays ordered and uncertain cleanup prevents another voice sessio
   await expect(dialog.getByRole('log')).toContainText(
     /Synthetic first question[\s\S]*Synthetic first answer[\s\S]*Synthetic typed followup/,
   );
-  await dialog.getByRole('button', { name: 'End', exact: true }).click();
+  await dialog.getByRole('button', { name: 'End session', exact: true }).click();
   await expect(dialog).toContainText('Server cleanup is pending');
   expect(starts).toBe(1);
   cleanupWorks = true;
-  await dialog.getByRole('button', { name: 'End / retry cleanup', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Retry end session', exact: true }).click();
   await expect(dialog).not.toContainText('Server cleanup is pending');
   expect(starts).toBe(1);
 });

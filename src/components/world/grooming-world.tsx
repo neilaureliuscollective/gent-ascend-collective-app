@@ -148,6 +148,7 @@ export function GroomingWorld({
             fill
             sizes="(max-width: 900px) 100vw, 50vw"
             preload
+            unoptimized
           />
           <div className="gw-mirror-shade" />
           <div className="gw-mirror-orbit" />

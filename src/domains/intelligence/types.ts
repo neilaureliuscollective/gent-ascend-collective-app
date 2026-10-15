@@ -82,9 +82,16 @@ export type OperationActivity = 'waiting' | 'thinking' | 'searching' | 'research
 export type StreamTimingStage =
   | 'provider-first-event' | 'provider-first-text' | 'tool-start' | 'tool-end'
   | 'persistence-start' | 'persistence-end' | 'stream-end';
+export type StreamCreation = {
+  id: string;
+  kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff' | 'image';
+  title?: string;
+  status?: string;
+};
 export type StreamEvent =
   | { type: 'timing'; stage: StreamTimingStage; elapsedMs: number }
   | { type: 'activity'; phase: OperationActivity }
   | { type: 'delta'; text: string }
-  | { type: 'saved'; turn: Turn }
+  | { type: 'creation'; item: StreamCreation }
+  | { type: 'saved'; turn: Turn; creations?: StreamCreation[] }
   | { type: 'error'; message: string };

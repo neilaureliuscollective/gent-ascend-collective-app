@@ -47,7 +47,7 @@ const scentVariants = {
 
 describe('labeled request/context path fixtures', () => {
   it('is a synthetic composition journey, not a hosted browser or live Shopify session', () => {
-    expect(promptVersion).toBe('aethelios-2026-10-15.human-ascendance.3');
+    expect(promptVersion).toBe('aethelios-2026-10-15.human-ascendance.talk.1');
     expect(process.env[optionalModelEvalFlag]).toBeFalsy();
     expect(behaviorScenarios.every((scenario) => scenario.turns.length >= 1)).toBe(true);
   });

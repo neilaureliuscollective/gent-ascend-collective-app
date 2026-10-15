@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import '@/domains/talk-creation/architect-source';
 import { receiveDesignDirectionCommand } from '@/domains/architect-design-direction/contract';
 import { readRetainedDirection, receiveDesignDirection } from '@/domains/architect-design-direction/receiver';
 import { apiError, mutationBody, privateJson } from '@/domains/intelligence/http';

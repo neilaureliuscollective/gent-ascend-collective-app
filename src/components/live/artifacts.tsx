@@ -40,16 +40,17 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
   const busy = localBusy || state.artifactBusy;
   const { artifacts, selectedId, projects } = state.artifactWorkspace;
   const selected = artifacts.find((item) => item.id === selectedId);
+  const scopedConversation = state.artifactConversationId ?? state.conversationId;
   useEffect(() => {
-    if (!state.conversationId) return;
+    if (!scopedConversation) return;
     const refresh = () => {
       void controller.refreshArtifacts().catch(() => {});
     };
     refresh();
     const timer = setInterval(refresh, 3000);
     return () => clearInterval(timer);
-  }, [controller, state.conversationId]);
-  if (!state.conversationId) return null;
+  }, [controller, scopedConversation]);
+  if (!scopedConversation) return null;
   async function mutate(body: unknown, method: 'POST' | 'PATCH') {
     setBusy(true);
     try {
@@ -81,7 +82,7 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
               ? () => {
                   void mutate(
                     {
-                      conversationId: state.conversationId,
+                      conversationId: scopedConversation,
                       artifactId:
                         selected.visual!.kind === 'review'
                           ? selected.visual!.sourceArtifactId
@@ -98,7 +99,7 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
           onScenario={(percent) => {
             void mutate(
               {
-                conversationId: state.conversationId,
+                conversationId: scopedConversation,
                 artifactId: selected.id,
                 scenarioPercent: percent,
               },
@@ -107,7 +108,7 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
           }}
           onSelect={(partId) => {
             void mutate(
-              { conversationId: state.conversationId, artifactId: selected.id, partId },
+              { conversationId: scopedConversation, artifactId: selected.id, partId },
               'PATCH',
             );
           }}
@@ -167,7 +168,7 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
               aria-pressed={item.id === selectedId}
               disabled={busy}
               onClick={() => {
-                void mutate({ conversationId: state.conversationId, artifactId: item.id }, 'PATCH');
+                void mutate({ conversationId: scopedConversation, artifactId: item.id }, 'PATCH');
               }}
             >
               Select{' '}
@@ -187,7 +188,7 @@ export function ArtifactSurface({ controller }: { controller: LiveController }) 
           void mutate(
             {
               id: crypto.randomUUID(),
-              conversationId: state.conversationId,
+              conversationId: scopedConversation,
               operation,
               prompt,
               ...(operation === 'visual.review' ? { coworker, contextScope } : {}),

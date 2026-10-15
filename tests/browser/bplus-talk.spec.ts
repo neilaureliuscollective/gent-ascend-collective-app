@@ -63,10 +63,15 @@ for (const width of [320, 344, 390, 412, 720, 768, 960, 1100, 1101, 1440, 2560])
         ...document.querySelectorAll(
           '.bplus-tools > button, .composer-controls > button, .talk-expand',
         ),
-      ].map((el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.x, right: r.right, width: r.width, height: r.height };
-      }),
+      ]
+        .filter((el) => {
+          const style = getComputedStyle(el);
+          return style.display !== 'none' && style.visibility !== 'hidden';
+        })
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x, right: r.right, width: r.width, height: r.height };
+        }),
       editor: document.querySelector('.talk-input')!.getBoundingClientRect().height,
       composer: document.querySelector('.aurelius-composer')!.getBoundingClientRect().width,
     }));
@@ -121,13 +126,15 @@ test('solid, forced colors and keyboard focus stay complete at runtime', async (
   }
   const talk = field(page);
   await talk.focus();
-  await expect(talk).toHaveCSS('outline-width', '2px');
+  await expect(talk).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('.talk-page .aurelius-composer')).toHaveCSS('outline-width', '2px');
   await expect(page.locator('.navigation a[aria-current=page]')).toHaveAttribute(
     'href',
     '/app/aethelios',
   );
   await page.emulateMedia({ forcedColors: 'active' });
-  await expect(talk).toHaveCSS('outline-width', '2px');
+  await expect(talk).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('.talk-page .aurelius-composer')).toHaveCSS('outline-width', '2px');
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   await expect(field(page)).toHaveValue('Keep this draft across material preferences');
 });

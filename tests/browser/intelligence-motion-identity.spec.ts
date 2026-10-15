@@ -8,7 +8,7 @@ for (const width of [344, 390, 768, 1440]) {
         exact: false,
       }),
     ).toBeVisible();
-    await expect(page.locator('.pose-board article')).toHaveCount(15);
+    await expect(page.locator('.pose-board article')).toHaveCount(17);
     for (const surface of ['Talk', 'Live', 'Work', 'Studio']) {
       await page.getByLabel('Preview layout').selectOption(surface);
       await expect(page.getByRole('region', { name: `${surface} layout study` })).toBeVisible();

@@ -40,6 +40,7 @@ export async function POST(request: Request) {
                 prepared.founder,
                 undefined,
                 onActivity,
+                prepared.creation,
               ),
         prepared.finish,
         request.signal,
