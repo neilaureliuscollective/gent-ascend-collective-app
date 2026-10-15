@@ -120,11 +120,11 @@ test('offline fallback caches no personal responses', async ({ page, context }) 
     .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
     .toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('gent-ascend-fallback-v7');
+    const cache = await caches.open('gent-ascend-fallback-v8');
     return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
   });
   expect(cached).toEqual([
-    '/brand/aethelios-imperial-obsidian-20261010-192.png',
+    '/brand/aethelios-official-20261015-192.png',
     '/offline.html',
     '/performance-offline.css',
     '/performance-offline.html',
