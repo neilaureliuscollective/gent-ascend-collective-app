@@ -4,7 +4,9 @@ Date: 2026-10-15. PR #130 continuation. This is a reviewable production path and
 
 ## Exact head and compatibility
 
-Previous verified green head was `5e6fc0092227b7268fe2b017d37a737e824adcfe`. This continuation closes direct RPC execution, client settlement, and model-bind gaps. Next-layer founder checks and worker-readiness-before-spend stay as shipped. Current `origin/main` at refresh: `804c877`. Merge-tree against that main was clean. Terminal Quality/Origin checks for the published head of this pass are the publish gate.
+Reviewed Architect source: PR #130 `bf25662ae7fa6e92711523ffab7eb04df9d14d51`. This follow-on does not modify that branch. Main and Talk compatibility heads are pinned in the [commissioning manifest](../scripts/architect-apps-release-manifest.json), inspected 2026-10-15. Those are source pins, not a release candidate or transferable green-check evidence. Supply the exact candidate and fresh evidence to the [offline release report](ARCHITECT_APPS_RELEASE_REPORT.md). Any branch movement requires explicit pin review and refreshed evidence.
+
+**Hosted Talk SQL remains PAUSED after step 6.** The plan below is nonexecuted documentation. No batch or recovery file may be resumed by this checker.
 
 The founder-production capability is **off** until every name below is deliberately set. Default production remains production. Mock output cannot be presented as live AI generation.
 
@@ -23,42 +25,13 @@ Identity is the existing person-bound `founder_access` row. Email, membership, u
 
 ## Required schema
 
-Talk #131 head inspected `ae406d6` publishes this **18-name Talk/Architect package**:
+The [commissioning manifest](../scripts/architect-apps-release-manifest.json) is the single ordered dependency list, with exact SQL checksums and source pins. Print its nonexecuted plan with `npm run architect:release-report -- --plan talk-integrated` (or `architect-only`). This emits filenames and checksums, never SQL commands.
 
-1. `20261013240000_talk_creation.sql`
-2. `20261013250000_talk_image_entitlement.sql`
-3. `20261013260000_talk_creation_candidates.sql`
-4. `20261014010000_talk_origin_import.sql`
-5. `20261014020000_talk_origin_import_bind.sql`
-6. `20261014030000_talk_origin_import_atomic.sql`
-7. `20261014040000_talk_origin_import_consistency.sql`
-8. `20261014100000_talk_design_board.sql`
-9. `20261014120000_talk_live_bindings.sql`
-10. `20261014130000_talk_direction_transfers.sql`
-11. `20261014140000_talk_live_bind_authority.sql`
-12. `20261015080000_architect_apps.sql`
-13. `20261015120000_architect_apps_durable.sql`
-14. `20261015140000_architect_apps_mutation.sql`
-15. `20261015160000_architect_apps_retain_authority.sql`
-16. `20261015170000_architect_apps_retain_provenance.sql`
-17. `20261015180000_talk_live_trusted_observe.sql`
-18. `20261015190000_talk_live_bind_intended_turn.sql`
+Both profiles require physical verification of the pinned main baseline first. The manifest includes pending Origin dependencies as well as Apps dependencies. The integrated profile includes the Talk chain and its later import-recovery file; it does not authorize applying or replaying either. Already-applied files need verified physical/checksum evidence, not another execution.
 
-Shared with #130 (apply once): `20261015080000`, `20261015120000`, `20261015140000`.
+The standalone profile places interim retain `20261015155000` before preview sessions `20261015156000`. The Talk profile excludes interim retain, preserves Talk's winning retain contracts, and places budget lock `20261015156700` after execution gate `20261015156600` and before Talk retain `20261015160000` / `20261015170000`. The omitted budget-lock step is mandatory in both profiles.
 
-**Additional #130 dependencies** for the current worker / preview-session / schema-probe contracts:
-
-| File | Why | Order |
-| --- | --- | --- |
-| `20261015155000_architect_apps_retain_verified.sql` | Interim retain contract on this branch | After `140000`, before `156000`. **Skip** if Talk `160000`/`170000` are applied in the same commissioning — Talk remains the merge-winning retain contract. |
-| `20261015156000_architect_apps_preview_sessions.sql` | `architect_app_preview_sessions` plus `architect_apps_preview_issue` / `read` / `current` / `revoke`. Talk’s 18-name package does **not** include this. | After the shared Apps three (and after `155000` only when that file is used). |
-| `20261015156500_architect_apps_pilot_budget.sql` | `architect_app_generation_runs`, `architect_app_worker_presence`, reserve/finish/presence/readiness RPCs, and the replaced schema probe. Talk’s 18-name package does **not** include this. | After `156000`, before Talk `160000`/`170000`. Unique forward file; do not replay Talk’s batch. |
-| `20261015156600_architect_apps_execution_gate.sql` | `architect_apps_execution_policy` (default `founder_pilot=false`), `architect_apps_require_execution`, service-role `architect_apps_set_execution_policy`, approve/start gate, `started` settlement, `begin_generation`, approved-model reserve. Talk’s 18-name package does **not** include this. | After `156500`, before Talk `160000`/`170000`. Unique forward file; do not replay Talk’s batch or any later Talk recovery file. |
-| `20261015156700_architect_apps_budget_lock.sql` | `architect_app_generation_budgets` person+run lock so concurrent distinct request IDs cannot both pass the two-call / $1.00 reserved allowance. Talk’s 18-name package does **not** include this. | After `156600`, before Talk `160000`/`170000`. |
-
-Probe contracts that must exist after apply: tables `architect_apps`, `architect_app_revisions`, `architect_app_artifacts.revision_id`, `architect_app_jobs`, `architect_app_events`, `architect_app_records`, `architect_app_preview_sessions.nonce`, `architect_app_generation_runs.request_id`, `architect_app_worker_presence.worker_id`, `architect_apps_execution_policy.founder_pilot`; RPCs `architect_apps_approve`, `_start`, `_claim`, `_heartbeat`, `_finish`, `_write_record`, `_timeout`, `_schema_probe`, `_preview_issue`, `_preview_read`, `_preview_current`, `_preview_revoke`, `_reserve_generation`, `_begin_generation`, `_finish_generation`, `_report_worker_presence`, `_worker_readiness`, `_set_execution_policy`, `_require_execution`.
-
-This branch also carries Origin tool/repair files that are not on current main (`20261014080000`, `190000`, `203000`, `220000`, `224500`). They are not Apps worker contracts. Do not assume hosted Talk apply creates them.
+Physical table/column/RPC requirements come directly from [schema-probe.ts](../src/domains/architect-apps/schema-probe.ts), including `architect_app_generation_budgets` and `architect_apps_lock_generation_budget`. Recorded migration history alone is insufficient. Existing worker preflight remains the runtime authority; the offline report validates its supplied receipt without starting it.
 
 Do not execute hosted SQL from this workstream. Shared names must be applied once.
 
@@ -143,9 +116,9 @@ Through Supabase (not this agent):
 
 Do not merge `main` until the founder separately approves the automatic Vercel Production deploy that merge causes.
 
-1. **Schema.** Apply shared Apps `080000` / `120000` / `140000` once (skip if Talk already applied those exact names). Apply `156000`, then `156500`, then `156600` from this branch. Apply `155000` only when Talk retain `160000`/`170000` will not be applied. Apply Talk’s remaining files on the Talk release, not twice. Do not replay the original 18-name batch or any later Talk recovery file.
+1. **Schema (paused, not executed).** Review the selected manifest profile and its complete order using the offline report above, including budget lock. Reconcile physical baseline and completed steps with the Talk owner before any separately authorized continuation. Do not replay the original 18-name batch or later recovery file.
 2. **Worker host.** Create the $12 Docker Droplet. Install nothing extra if `docker version` already works. Clone this SHA. `node scripts/architect-apps-prepare-runtime.mjs`.
-3. **Proofs.** `--prove-write`, `--prove-compile`, `--prove-topology`. Then `--preflight` must be `ok` / `idle` with work-root `ready` and generation `permitted`.
+3. **Proofs.** `--prove-write`, `--prove-compile`, `--prove-topology`. Then the existing `--preflight` receipt must be `ok` / `idle` with work-root `ready` and generation `permitted`. Normal preflight can write worker presence; it is not the offline release checker.
 4. **Denied proof.** A disposable local env with production + `ARCHITECT_APPS_AI_MOCK=true` must report generation `refused` and fail health. Do not use that env for hosting.
 5. **Supervise.** Start the packaged worker. Jobs stay `queued` if it stops; the UI must not invent a preview.
 6. **Web flags.** Set Origin/Apps + preview cluster on Vercel. Generation names stay **off**.

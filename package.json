@@ -7,6 +7,8 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "architect:release-report": "node scripts/architect-apps-release-report.mjs",
+    "test:architect:release": "node --test scripts/architect-apps-release-report.test.mjs",
     "live:report": "node --experimental-strip-types scripts/live-acceptance.mts",
     "dev": "next dev --hostname 127.0.0.1",
     "dev:setup": "node scripts/dev-setup.mjs",

@@ -1,3 +1,7 @@
+## Architect release-readiness follow-on — 2026-10-15
+
+Isolated from reviewed #130 (`bf25662ae7fa6e92711523ffab7eb04df9d14d51`): repaired the omitted budget-lock commissioning dependency and stale Talk source references. One checksummed manifest now feeds a read-only release evidence checker and the existing preflight wrapper's offline mode. Local fixture tests cover ordering, omission, branch/check freshness, physical schema, worker and provider failures. See [release report](ARCHITECT_APPS_RELEASE_REPORT.md). Hosted Talk SQL remains paused after six steps; no database access, flags, credentials, paid calls, merge or deployment. This is not hosted acceptance.
+
 > Quality application (2026-10-15): Same PR #130 after Knowledge/logo merge `297b011`. Unverified `/shop/[handle]` now sets `openGraph: null` and `twitter: null` so the root brand card cannot satisfy the launch indexing gate. Origin `local-auth` on that head already published `architect-apps-connected-journey`. Work → Agency stays reserved. No merge, hosted SQL, Droplet, credentials or paid model call.
 
 ## Architect creation environment — verification in progress (2026-10-15)
