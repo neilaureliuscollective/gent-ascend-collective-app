@@ -8,9 +8,26 @@ export function budgetLiveSeed(
   const pinned = application.filter(
     (message) => typeof message.content === 'string' && message.content,
   );
-  const recent = history
+  // Application context is never silently truncated. Fail before paid admission if it is too large.
+  const pinnedLength = pinned.reduce((size, message) => size + String(message.content).length, 0);
+  if (
+    pinned.length > 8 ||
+    pinnedLength > 48000 ||
+    pinned.some((message) => String(message.content).length > 32000)
+  )
+    throw new RangeError('Live application context exceeds the seed budget');
+  const recent: SeedMessage[] = [];
+  let length = pinnedLength;
+  const count = Math.max(0, Math.floor(historyLimit));
+  for (const message of (count ? history : [])
     .filter((message) => typeof message.content === 'string' && message.content)
-    .slice(-historyLimit);
+    .slice(-count)
+    .reverse()) {
+    const size = String(message.content).length;
+    if (size > 32000 || length + size > 64000) break;
+    recent.unshift(message);
+    length += size;
+  }
   return [...pinned, ...recent];
 }
 

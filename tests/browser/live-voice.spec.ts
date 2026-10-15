@@ -304,7 +304,8 @@ test('connection failure stays compact with a usable retry and does not force fu
     return route.fulfill({
       status: 503,
       json: {
-        error: 'The voice provider did not complete admission. Your text workspace remains available.',
+        error:
+          'The voice provider did not complete admission. Your text workspace remains available.',
         detail: { stage: 'provider', category: 'rejected', providerStatus: 401 },
       },
     });
@@ -314,9 +315,9 @@ test('connection failure stays compact with a usable retry and does not force fu
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Persistent Aethelios voice controls' })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole('region', { name: 'Persistent Aethelios voice controls' }),
+  ).toHaveCount(0);
 });
 
 test('simulated phone and unfolded-Fold consent stays scrollable with reachable Start', async ({
@@ -356,4 +357,52 @@ test('unavailable Live remains visible in Talk with an understandable reason', a
     'Aethelios Live is not enabled on this deployment.',
   );
   await expect(page.getByRole('button', { name: 'Start voice' })).toHaveCount(0);
+});
+
+test('acknowledged voice retries in one tap without optional consent or automatic admission', async ({
+  page,
+}) => {
+  await fakeTransport(page);
+  const starts: { includeContext: boolean; backgroundWork: boolean }[] = [];
+  await page.route('**/api/aethelios/live', async (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { jobs: [] } });
+    if (route.request().method() === 'DELETE') return route.fulfill({ json: { ended: true } });
+    starts.push(route.request().postDataJSON());
+    return route.fulfill({ status: 503, json: { error: 'Synthetic rejection' } });
+  });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+  const entry = page.getByRole('button', { name: 'Aethelios Live', exact: true });
+  await entry.click();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await entry.click();
+  await expect(page.getByRole('checkbox', { name: /I consent/ })).not.toBeChecked();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('checkbox', { name: /Include my selected personal/ }).check();
+  await page.getByRole('checkbox', { name: /Allow proposals/ }).check();
+  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  await expect.poll(() => starts.length).toBe(1);
+  expect(starts[0]).toMatchObject({ includeContext: true, backgroundWork: true });
+  // Wait for controller cleanup before the next explicit gesture.
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { micStopped: boolean }).micStopped))
+    .toBe(true);
+  await page.reload();
+  await expect(entry).toBeVisible();
+  expect(starts).toHaveLength(1);
+  await entry.click();
+  await expect.poll(() => starts.length).toBe(2);
+  expect(starts[1]).toMatchObject({ includeContext: false, backgroundWork: false });
+  await expect(page.getByRole('group', { name: 'Voice pilot consent' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Voice options', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: /I consent/ })).toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: /Include my selected personal/ }),
+  ).not.toBeChecked();
+  await expect(page.getByRole('checkbox', { name: /Allow proposals/ })).not.toBeChecked();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Switch synthetic user', exact: true }).click();
+  await entry.click();
+  await expect(page.getByRole('checkbox', { name: /I consent/ })).not.toBeChecked();
+  expect(starts).toHaveLength(2);
 });

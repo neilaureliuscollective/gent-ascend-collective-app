@@ -62,3 +62,34 @@ it('composes current knowledge, delivery and image analysis in one Talk request'
     { type: 'image', image: bytes, mediaType: 'image/png' },
   ]);
 });
+
+it('rejects oversized pinned context instead of silently truncating application data', () => {
+  expect(() => budgetLiveSeed([{ role: 'user', content: 'x'.repeat(32001) }], [], 12)).toThrow(
+    RangeError,
+  );
+  expect(() =>
+    budgetLiveSeed(
+      Array.from({ length: 3 }, () => ({ role: 'user', content: 'x'.repeat(20000) })),
+      [],
+      12,
+    ),
+  ).toThrow(RangeError);
+});
+it('bounds combined context and keeps the newest history tail', () => {
+  const seed = budgetLiveSeed(
+    [{ role: 'user', content: 'x'.repeat(32000) }],
+    [
+      { role: 'user', content: 'old'.repeat(10000) },
+      { role: 'assistant', content: 'y'.repeat(20000) },
+      { role: 'user', content: '' },
+      { role: 'user', content: [{ type: 'text', text: 'unsupported attachment' }] },
+      { role: 'user', content: 'latest' },
+    ],
+    12,
+  );
+  expect(seed).toHaveLength(3);
+  expect(seed.at(-1)?.content).toBe('latest');
+  expect(seed.reduce((size, item) => size + String(item.content).length, 0)).toBeLessThanOrEqual(
+    64000,
+  );
+});

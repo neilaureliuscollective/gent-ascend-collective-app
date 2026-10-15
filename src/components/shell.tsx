@@ -15,15 +15,21 @@ import { liveShellAvailability } from '@/domains/live/admission-policy';
 export function Shell({
   children,
   founder = false,
+  authUserId = null,
   founderOffice = false,
 }: {
   children: React.ReactNode;
   founder?: boolean;
+  authUserId?: string | null;
   founderOffice?: boolean;
 }) {
   const live = liveShellAvailability(process.env, founderOffice);
   return (
-    <SensitiveLiveProvider enabled={live.enabled} unavailableReason={live.reason}>
+    <SensitiveLiveProvider
+      authUserId={authUserId}
+      enabled={live.enabled}
+      unavailableReason={live.reason}
+    >
       <ConversationDraftProvider>
         <OriginDraftProvider>
           <ShellWorkspace
