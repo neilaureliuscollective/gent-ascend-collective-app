@@ -7,6 +7,9 @@ on:
       - 'src/app/**'
       - 'src/platform/visual/**'
       - 'tests/browser/**'
+      - 'tests/materials/**'
+      - 'tests/fixtures/creation-materials.ts'
+      - 'playwright.materials.config.ts'
       - '.github/workflows/obsidian-visual.yml'
 concurrency:
   group: obsidian-${{ github.head_ref || github.ref_name }}
@@ -47,6 +50,8 @@ jobs:
           tests/browser/company-room.spec.ts
           tests/browser/missions.spec.ts
           --workers=2
+      - name: Verify creation glass and document width with labelled API fixtures
+        run: npx playwright test --config playwright.materials.config.ts --output=test-results/creation-materials
       - name: Export compact rendered review excerpts
         if: always()
         run: node scripts/imperial-emerald-review.mjs

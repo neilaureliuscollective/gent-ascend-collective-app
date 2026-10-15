@@ -1,9 +1,9 @@
 /* Founder-approved smoked glass, 2026-10-13. Reuse the io material and B+ optics
    contracts. Talk, Studio, Home continuity and member Lifestyle share the shell
-   tokens. Public worlds, Work and Architect retain their existing material
-   identity. No geometry or motion ownership here. */
+   tokens. Talk, Studio and Architect use the shared creation materials; public worlds
+   and Work retain their existing material identity. No geometry or motion ownership here. */
 .app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
+    :is(.talk-page:not(:has([data-bplus='talk'])), .command-continuity, .member-collection)
   ) {
   --io-environment: var(--aether-smoke-canvas);
   --io-navigation: var(--aether-smoke-panel);
@@ -63,8 +63,9 @@
   background: radial-gradient(ellipse 190px 130px at 50% 12%, #245b4826, transparent 85%);
 }
 .app-shell.imperial-workspace .talk-page .user-message {
-  background: var(--io-raised);
+  background: var(--io-glass);
   border-color: var(--io-divider);
+  box-shadow: var(--io-elevation);
 }
 .app-shell.imperial-workspace .talk-page .conversation-starters button {
   background: var(--io-glass);
@@ -102,9 +103,9 @@
 /* Recolor existing optical geometry rather than adding another renderer. Emerald
    remains in the inner rim / right return; the broad face and slab become neutral. */
 .app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
+    :is(.talk-page:not(:has([data-bplus='talk'])), .command-continuity, .member-collection)
   )
-  :is([data-bplus='talk'], .navigation) {
+  .navigation {
   --aether-optical-substrate: var(--aether-smoke-panel);
   --aether-optical-outer-stroke: var(--aether-smoke-edge);
   --aether-optical-inner-stroke: var(--aether-emerald-active);
@@ -144,9 +145,6 @@
 }
 .app-shell.imperial-workspace:has(.studio-page) .studio-world-heading {
   background: var(--io-living);
-}
-.app-shell.imperial-workspace:has(.studio-page) .studio-direction {
-  --io-secondary: var(--aether-smoke-secondary);
 }
 .app-shell.imperial-workspace:has(.studio-page)
   :is(.studio-projects nav button.selected, .studio-view-tabs button[aria-pressed='true']) {
@@ -227,7 +225,7 @@ html[data-material='solid']
 .app-shell.imperial-workspace:has(.studio-page) .studio-page :is(input, textarea, select) {
   background: var(--io-environment);
   color: var(--io-text);
-  border-color: var(--aether-smoke-edge);
+  border-color: var(--io-divider);
 }
 .app-shell.imperial-workspace:has(.studio-page) .studio-room-copy :is(strong, small) {
   color: var(--io-secondary);

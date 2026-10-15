@@ -1,0 +1,72 @@
+{
+  "deployment": "dpl_2iuuEAW1FgidRuiMc2UXCiP4Wffz",
+  "commit": "58a59df9cb1d56694f13c71c8f36d85d7b321daf",
+  "talk": {
+    "url": "https://www.gentascend.com/app/aethelios",
+    "styles": [
+      "/_next/static/immutable/chunks/35towaos4ohg8.css",
+      "/_next/static/immutable/chunks/1ki0z-yayzveg.css",
+      "/_next/static/immutable/chunks/0k12gf8vlprgg.css",
+      "/_next/static/immutable/chunks/3voym9j43kmwm.css",
+      "/_next/static/immutable/chunks/19hgm7g6inc1w.css",
+      "/_next/static/immutable/chunks/2wcj1p5e8popt.css",
+      "/_next/static/immutable/chunks/0ecndddxwankw.css",
+      "/_next/static/immutable/chunks/0o3em-7lp7qod.css",
+      "/_next/static/immutable/chunks/2w5sj030w_p_0.css",
+      "/_next/static/immutable/chunks/1eushhaofj30q.css"
+    ]
+  },
+  "architect": {
+    "url": "https://www.gentascend.com/app/architect",
+    "styles": [
+      "/_next/static/immutable/chunks/35towaos4ohg8.css",
+      "/_next/static/immutable/chunks/1ki0z-yayzveg.css",
+      "/_next/static/immutable/chunks/0k12gf8vlprgg.css",
+      "/_next/static/immutable/chunks/3voym9j43kmwm.css",
+      "/_next/static/immutable/chunks/19hgm7g6inc1w.css",
+      "/_next/static/immutable/chunks/2wcj1p5e8popt.css",
+      "/_next/static/immutable/chunks/0ecndddxwankw.css",
+      "/_next/static/immutable/chunks/0o3em-7lp7qod.css",
+      "/_next/static/immutable/chunks/1iee2d01l-dxd.css",
+      "/_next/static/immutable/chunks/0wmc6f3f1hs5a.css"
+    ]
+  },
+  "fetchedAt": "2026-10-15",
+  "httpStatus": 200,
+  "baselineComparison": {
+    "commit": "06dfb332",
+    "talkStylesheetsIdentical": 9,
+    "talkStylesheetsTotal": 10,
+    "difference": "Root generated utility rules; no shared Talk material change."
+  },
+  "sha256": {
+    "baseline-root.css": "8e3726e33967bf047fb9b32b140f47f83c72d8a5026ab877feaffb06251a3ae6",
+    "0wmc6f3f1hs5a.css": "0579f0620f2c62aab81c282b4410772b1397aa074c0d04608bcabb2dd72e9a48",
+    "1iee2d01l-dxd.css": "97fc117de3f293ac8c0ca3f3270c41bd33c949b56982df77219894fcdec95243",
+    "1eushhaofj30q.css": "e0ff98c7c34ae71b1ab3502df3db6eae1ff217702ff3851aab6699419fb28381",
+    "2w5sj030w_p_0.css": "a1f8befe43c47856e93bed23e8712973dcf91e8591e13865d12ba6db74e057d1",
+    "0o3em-7lp7qod.css": "a487bc78ea7b0f627851340ccc7317601dac870d6ca3031b2702fd3029dbd9b9",
+    "0ecndddxwankw.css": "ce3b4b30e825fcba8bfb070ecb43c6c70e47413e9cf1bf15a826a3414a0b2f9f",
+    "2wcj1p5e8popt.css": "7c7c57e7d537f59e2e520ffb6bc9c6930fb35911807d2a2c38eb4c9e2c9cd245",
+    "19hgm7g6inc1w.css": "f980fb191fc79a67bad4bceff3e14c4f6a4b7dfaf3f0b1f578b4cf469ab172b4",
+    "3voym9j43kmwm.css": "d98d1aa832d4158ccae14ea2e799e43bec9f1c55b9642dd05880f23e59c99041",
+    "0k12gf8vlprgg.css": "d36b06441a1c7068161e5f98422425e4cde2df68a08c3827e172080a31183743",
+    "1ki0z-yayzveg.css": "4c523827994120802bb8c37b63c4e56824d5015450997ab1c77453a70d28c65e",
+    "35towaos4ohg8.css": "78af1158192bc54c72b05ba29a5943960e6dd785610c2b06b04c4110e5b956f0",
+    "1iszx8bth6uvk.css": "cb6b59a40368bd05602df3b4c9aff39a27ee8c49c2bc9ab4f93e761cafa1dc71"
+  },
+  "studio": {
+    "url": "https://www.gentascend.com/app/studio",
+    "styles": [
+      "/_next/static/immutable/chunks/35towaos4ohg8.css",
+      "/_next/static/immutable/chunks/1ki0z-yayzveg.css",
+      "/_next/static/immutable/chunks/0k12gf8vlprgg.css",
+      "/_next/static/immutable/chunks/3voym9j43kmwm.css",
+      "/_next/static/immutable/chunks/19hgm7g6inc1w.css",
+      "/_next/static/immutable/chunks/2wcj1p5e8popt.css",
+      "/_next/static/immutable/chunks/0ecndddxwankw.css",
+      "/_next/static/immutable/chunks/0o3em-7lp7qod.css",
+      "/_next/static/immutable/chunks/1iszx8bth6uvk.css"
+    ]
+  }
+}
