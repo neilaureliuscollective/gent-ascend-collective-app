@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
 import { CommandTalkContext } from '@/components/command-home/talk-context';
 import { companyJob } from '@/domains/company-work/starters';
+import { ecosystemTalkStarters } from '@/domains/ecosystem/example-intents';
 import '../command-home.css';
 export default async function AetheliosPage({
   searchParams,
@@ -31,6 +32,7 @@ export default async function AetheliosPage({
     'grooming-event': presenceStarter,
     grooming: presenceStarter,
     perspective: 'Help me think clearly about a decision I am facing.',
+    ...ecosystemTalkStarters,
   };
   const command = params.starter === 'command' ? await readCommand().catch(() => null) : null;
   const priority =

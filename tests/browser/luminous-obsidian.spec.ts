@@ -49,7 +49,7 @@ test('Solid and forced-color modes remove atmospheric hero decoration', async ({
   await expect(page.locator('.io-horizon')).toBeHidden();
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.io-hero')).toHaveCSS('background-image', 'none');
-  await expect(page.getByRole('link', { name: 'Your membership' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Your membership ↗', exact: true })).toBeVisible();
 });
 
 test('Compact welcome suggestions stage the existing draft without sending', async ({ page }) => {
