@@ -277,12 +277,94 @@ export function legacyReserveBoard(): DesignBoardContent {
   });
 }
 
+/** Labelled Aethelios Lifestyle launch board. Not Legacy Reserve. */
+export function lifestyleLaunchBoard(): DesignBoardContent {
+  return designBoardContentSchema.parse({
+    schema: 'talk-design-board/v1',
+    title: 'Aethelios Lifestyle launch directions',
+    product: 'Aethelios Lifestyle',
+    notes:
+      'Labelled deterministic Lifestyle launch board. Demonstration packaging and proposed copy are labelled. Approved product claims are not invented.',
+    selectedDirectionId: 'direction-b',
+    directions: [
+      direction(
+        'direction-a',
+        'Graphite Chamber',
+        {
+          colors: [
+            { role: 'background', name: 'Obsidian', hex: '#050706' },
+            { role: 'surface', name: 'Carbon', hex: '#121416' },
+            { role: 'text', name: 'Ivory', hex: '#F4EFE6' },
+            { role: 'accent', name: 'Steel', hex: '#8B9198' },
+            { role: 'highlight', name: 'Reserve Gold', hex: '#C4912F' },
+            { role: 'muted', name: 'Ash', hex: '#9AA0A6' },
+            { role: 'border', name: 'Graphite', hex: '#2A2E32' },
+          ],
+          typography: { display: 'Sora', body: 'Inter', scale: 'tight' },
+          spacing: 'compact',
+          shape: 'sharp',
+          material: 'carbon',
+        },
+        'A graphite chamber for the launch.',
+        'Carbon, ivory and gold.',
+        'Confirmed: Aethelios Lifestyle is the product line. This is labelled demonstration copy.',
+      ),
+      direction(
+        'direction-b',
+        'Warm Reserve',
+        {
+          colors: [
+            { role: 'background', name: 'Obsidian', hex: '#080D0D' },
+            { role: 'surface', name: 'Stone', hex: '#1A1914' },
+            { role: 'text', name: 'Ivory', hex: '#F4EFE6' },
+            { role: 'accent', name: 'Champagne', hex: '#E0BB6A' },
+            { role: 'highlight', name: 'Reserve Gold', hex: '#C4912F' },
+            { role: 'muted', name: 'Sand', hex: '#B7A48A' },
+            { role: 'border', name: 'Bronze', hex: '#6A5430' },
+          ],
+          typography: { display: 'Sora', body: 'Inter', scale: 'measured' },
+          spacing: 'balanced',
+          shape: 'soft',
+          material: 'stone',
+        },
+        'A warmer reading of the launch.',
+        'Stone, champagne and gold.',
+        'Confirmed: Aethelios Lifestyle is the product line. This is labelled demonstration copy.',
+      ),
+      direction(
+        'direction-c',
+        'Emerald Glass',
+        {
+          colors: [
+            { role: 'background', name: 'Green-black', hex: '#07140F' },
+            { role: 'surface', name: 'Glass', hex: '#0B3B32' },
+            { role: 'text', name: 'Ivory', hex: '#F4EFE6' },
+            { role: 'accent', name: 'Mineral Green', hex: '#205443' },
+            { role: 'highlight', name: 'Champagne', hex: '#E4BD70' },
+            { role: 'muted', name: 'Sage', hex: '#8A9A8C' },
+            { role: 'border', name: 'Emerald', hex: '#145246' },
+          ],
+          typography: { display: 'Sora', body: 'Inter', scale: 'open' },
+          spacing: 'generous',
+          shape: 'pill',
+          material: 'emerald-glass',
+        },
+        'An emerald glass reading of the launch.',
+        'Restrained emerald, no empty theatre.',
+        'Confirmed: Aethelios Lifestyle is the product line. This is labelled demonstration copy.',
+      ),
+    ],
+  });
+}
+
 function direction(
   id: string,
   name: string,
   tokens: DesignDirection['tokens'],
   headline: string,
   supporting: string,
+  proof =
+    'Confirmed brand fact: Legacy Reserve is the separate product brand of Gent Ascend Collective.',
 ): DesignDirection {
   return {
     id,
@@ -305,7 +387,7 @@ function direction(
     copy: {
       headline,
       subhead: supporting,
-      proof: 'Confirmed brand fact: Legacy Reserve is the separate product brand of Gent Ascend Collective.',
+      proof,
       disclaimer: 'Proposed copy. Not an approved claim or live merchandising offer.',
     },
     assets: [

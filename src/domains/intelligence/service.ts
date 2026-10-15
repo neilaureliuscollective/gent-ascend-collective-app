@@ -518,6 +518,7 @@ export async function prepareReply(
     revisionKind?: 'retry' | 'regenerate' | 'edit';
     council?: CouncilSelection;
     attachmentId?: string;
+    workTarget?: { creationId: string; field: string };
   },
   measured: (
     stage:
@@ -735,7 +736,7 @@ export async function prepareReply(
       const { readArtifacts } = await import('@/domains/artifacts/service');
       const [imageContext, talkContext, predecessors, artifacts] = await Promise.all([
         selectedArtifactContext(client, person.id, input.conversationId),
-        selectedTalkContext(client, person.id, input.conversationId),
+        selectedTalkContext(client, person.id, input.conversationId, input.workTarget),
         selectedTalkPredecessors(client, person.id, input.conversationId),
         readArtifacts(input.conversationId, { client, person }).catch(() => null),
       ]);

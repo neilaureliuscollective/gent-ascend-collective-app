@@ -35,6 +35,16 @@ export const chatInput = z
     sourceTurnId: z.uuid().optional(),
     revisionKind: z.enum(['retry', 'regenerate', 'edit']).optional(),
     attachmentId: z.uuid().optional(),
+    workTarget: z
+      .object({
+        creationId: z.uuid(),
+        field: z
+          .string()
+          .trim()
+          .regex(/^[a-z][a-zA-Z0-9-]{0,47}$/),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine((v) => Boolean(v.sourceTurnId) === Boolean(v.revisionKind));

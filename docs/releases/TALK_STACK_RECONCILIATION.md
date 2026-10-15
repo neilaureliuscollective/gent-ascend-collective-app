@@ -43,6 +43,10 @@ Hosted Talk SQL is **PAUSED after step 6**; later verification was cancelled. No
 
 Recommended order after review: current main → #131 → #135 → #139; coordinate #130 and #144 using their adapters and integration proof. Any merge into main may trigger production deployment and requires the separate release process. Isolated deterministic acceptance is not hosted launch acceptance.
 
+## Elevation restack
+
+#135 incorporates #131 `9be1eb9` by merge. Its two conflicts were the fixture selector and tests: retain both `legacy-reserve` and `lifestyle-launch`, editable briefs, and the new local-development/loopback boundary and interruptible transport. All workspace/provider/elevation state remains from #135. No migration changes.
+
 CI on the first elevation reconciliation found three cold-Docker test timeouts (20 seconds) while the runner allows a 60-second image pull before execution. The two existing host-integration test files now allow 120 seconds per case; all isolation, bypass and observed-cancellation assertions are unchanged. This is an explicit cold-runtime deadline, not a skipped gate. Text lifecycle navigation supports Motion's existing narrow Tools/New disclosure.
 
 Saved-work recovery repair: a failed creation read (including a 503 while schema is unavailable) now displays an explicit retry, preserves the current conversation/draft and same-scope saved work, and fences responses again after JSON parsing. A new synthetic browser case in `talk-creation-recovery.spec.ts` verifies recovery without a reload or lost draft. Changing conversation/owner clears the error and old work.

@@ -72,6 +72,7 @@ vi.mock('@/domains/live/trusted-observe', () => ({
 }));
 import { admitLive } from '@/domains/live/service';
 import { liveAdmissionFieldKinds } from '@/domains/live/admission-request';
+import { observeTrustedVoiceItem } from '@/domains/live/trusted-observe';
 class Socket extends EventTarget {
   static OPEN = 1;
   static last: Socket;
@@ -300,6 +301,40 @@ it('seeds saved typed history before admitting audio, omits private context with
     expect.objectContaining({ redirect: 'error' }),
   );
 });
+it('stops the voice session when trusted observation is unavailable instead of treating a saved turn as bound', async () => {
+  vi.mocked(observeTrustedVoiceItem).mockResolvedValue({ observed: false, trusted: false });
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const monitor = admission.monitor();
+  for (const event of [
+    {
+      type: 'conversation.item.added',
+      item: { id: 'typed', role: 'user', content: [{ text: 'Typed in Live' }] },
+    },
+    { type: 'response.created', response: { id: 'reply' } },
+    {
+      type: 'response.done',
+      response: {
+        id: 'reply',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Spoken answer' }] }],
+        usage: { input_tokens: 2, output_tokens: 3 },
+      },
+    },
+    { type: 'output_audio_buffer.stopped', response_id: 'reply' },
+  ])
+    socket.event(event);
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_finish_turn',
+      expect.objectContaining({ p_text: 'Spoken answer', p_status: 'complete' }),
+    ),
+  );
+  await vi.waitFor(() => expect(socket.readyState).toBe(3));
+  expect(rpc.mock.calls.some(([name]) => name === 'ai_live_bind_finished_turn')).toBe(false);
+  await monitor;
+});
+
 it('includes explicitly opted-in context and ends when founder authority is revoked even if beta remains', async () => {
   vi.useFakeTimers();
   const admission = await admitLive({ ...input, includeContext: true });

@@ -145,7 +145,12 @@ export async function admitLive(input: LiveAdmission) {
       },
     );
     const application: { role: string; content: unknown }[] = built[0] ? [built[0]] : [];
-    const talkContext = await selectedTalkContext(client, person.id, input.conversationId);
+    const talkContext = await selectedTalkContext(
+      client,
+      person.id,
+      input.conversationId,
+      input.workTarget,
+    );
     if (talkContext) application.push({ role: 'user', content: talkContext });
     const workspace = await readArtifacts(input.conversationId, session);
     const activeImage = workspace.artifacts.find((item) => item.id === workspace.selectedId);
@@ -842,7 +847,13 @@ export async function admitLive(input: LiveAdmission) {
                   response: turn.providerResponseId ?? null,
                   turnId: id,
                 });
-                if (!observed.trusted) return;
+                if (!observed.trusted) {
+                  throw new Error(
+                    observed.observed
+                      ? 'Voice turn observation was not trusted'
+                      : 'Voice trusted observation is unavailable',
+                  );
+                }
                 const bound = await client.rpc('ai_live_bind_finished_turn', {
                   p_session: input.sessionId,
                   p_conversation: input.conversationId,

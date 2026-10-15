@@ -16,6 +16,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 it('allows the labelled fixture only with explicit local development and loopback persistence', () => {
   expect(talkCreationFixtureEnabled()).toBe(true);
+  vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', 'lifestyle-launch');
+  expect(talkCreationFixtureEnabled()).toBe(true);
   vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', undefined);
   expect(talkCreationFixtureEnabled()).toBe(false);
 });

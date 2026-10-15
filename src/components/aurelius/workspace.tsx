@@ -48,6 +48,13 @@ import {
   type TalkCreationWorkspace,
 } from '@/domains/talk-creation/schema';
 import {
+  rebindWorkTarget,
+  resolveWorkTarget,
+  selectionChipLabel,
+  workTargetVoicePrefix,
+} from '@/domains/work-items';
+import { attachTalkVoiceDock } from '@/components/live/voice-dock';
+import {
   bindTalkSave,
   clearTalkSave,
   matchesTalkSave,
@@ -55,7 +62,7 @@ import {
 } from '@/domains/talk-creation/pending';
 import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
-import { liveComposerLimit, liveTextRejection } from '@/domains/live/limits';
+import { liveComposerLimit, liveTextRejection, talkComposerSendRoute } from '@/domains/live/limits';
 import {
   matchesVoiceReconcile,
   voiceWorkspaceApplyAllowed,
@@ -91,6 +98,7 @@ export function AureliusWorkspace({
   const tableReview = useRef<{ open: (asTable?: boolean) => void }>(null);
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [selected, setSelected] = useState<string | null>(initialConversation);
+  const selectedRef = useRef(selected);
   const handoff = useConversationDraft();
   const [homeDraft] = useState(() =>
     !compact &&
@@ -191,6 +199,7 @@ export function AureliusWorkspace({
     [],
   );
   const [widePanel, setWidePanel] = useState(false);
+  const [workTarget, setWorkTarget] = useState<{ creationId: string; field: string } | null>(null);
   const [attachment, setAttachment] = useState<{
     id: string;
     name: string;
@@ -420,6 +429,9 @@ export function AureliusWorkspace({
           setData(disconnectedWorkspace);
           setSelected(null);
           setDraft('');
+          setWorkTarget(null);
+          setOpenWorkId(null);
+          selectedRef.current = null;
           setNeedsReload(false);
           void loadCreations(null);
           return null;
@@ -442,6 +454,11 @@ export function AureliusWorkspace({
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
+        if (id !== selectedRef.current) {
+          setWorkTarget(null);
+          setOpenWorkId(null);
+        }
+        selectedRef.current = id;
         setSelected(id);
         const boundRecover = recoverGeneration.current;
         void loadCreations(id).then(() => {
@@ -643,7 +660,10 @@ export function AureliusWorkspace({
           }
         }
         setPreview(result === null);
-        if (result === null) setSelected(null);
+        if (result === null) {
+          selectedRef.current = null;
+          setSelected(null);
+        }
         setData(result ?? disconnectedWorkspace);
         setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version ?? ''));
         const conversation = result && initialConversation ? initialConversation : null;
@@ -694,16 +714,21 @@ export function AureliusWorkspace({
       data.currentConversation?.archived_at
     )
       return;
-    if (liveBusy && liveController) {
-      if (['listening', 'speaking'].includes(liveState.phase)) {
-        const sent = liveController.text(messageText);
-        if (sent.accepted) setDraft('');
-        else setError(liveTextRejection(sent.reason));
-        return;
-      }
-      if (liveState.phase === 'connecting') {
-        setError('Voice is still connecting. Your draft is unchanged.');
-      }
+    const sendRoute = talkComposerSendRoute(liveState.phase);
+    if (liveController && sendRoute === 'voice') {
+      const resolved = resolveWorkTarget(
+        creationWorkspace,
+        workTarget,
+        openWorkId,
+        selected,
+      );
+      const sent = liveController.text(messageText, workTargetVoicePrefix(resolved) || null);
+      if (sent.accepted) setDraft('');
+      else setError(liveTextRejection(sent.reason));
+      return;
+    }
+    if (liveController && sendRoute === 'hold') {
+      setError('Voice is still connecting. Your draft is unchanged.');
       return;
     }
     reading.current?.abort();
@@ -781,6 +806,21 @@ export function AureliusWorkspace({
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
           ...(attachment ? { attachmentId: attachment.id } : {}),
+          ...(() => {
+            const resolved = resolveWorkTarget(
+              creationWorkspace,
+              workTarget,
+              openWorkId,
+              selected ?? id,
+            );
+            const next =
+              resolved.status === 'active'
+                ? resolved.target
+                : resolved.status === 'stale'
+                  ? workTarget
+                  : null;
+            return next ? { workTarget: next } : {};
+          })(),
         }),
         signal: controller.signal,
       });
@@ -793,6 +833,7 @@ export function AureliusWorkspace({
       if (!compact && data.ownerId) writeTalkDraft(data.ownerId, selected, '');
       timing.mark('accepted');
       setDraft((current) => (current === messageText ? '' : current));
+      selectedRef.current = id;
       setSelected(id);
       rememberConversation(id);
       for await (const item of readConversationStream(response.body)) {
@@ -921,6 +962,11 @@ export function AureliusWorkspace({
     }
   }
   function adoptLiveConversation(id: string) {
+    if (id !== selectedRef.current) {
+      setWorkTarget(null);
+      setOpenWorkId(null);
+    }
+    selectedRef.current = id;
     setSelected(id);
     rememberConversation(id);
   }
@@ -1084,6 +1130,20 @@ export function AureliusWorkspace({
       voiceReconcile.current += 1;
     };
   }, []);
+  useEffect(() => {
+    if (!liveController || !['listening', 'speaking'].includes(liveState.phase)) return;
+    const resolved = resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected);
+    void liveController.setSpokenTarget(
+      resolved.status === 'stale' ? workTarget : resolved.target,
+    );
+  }, [
+    liveController,
+    liveState.phase,
+    creationWorkspace,
+    workTarget,
+    openWorkId,
+    selected,
+  ]);
   function newConversation() {
     voiceReconcile.current += 1;
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
@@ -1097,6 +1157,7 @@ export function AureliusWorkspace({
     if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
     setSelected(null);
+    selectedRef.current = null;
     setCouncilSelection(null);
     rememberConversation(null);
     setAwayFromLatest(false);
@@ -1112,12 +1173,14 @@ export function AureliusWorkspace({
     setRevision(null);
     void loadCreations(null);
     setOpenWorkId(null);
+    setWorkTarget(null);
     setAttachment(null);
     follow.current = true;
     composer.current?.focus();
   }
   async function openWork(id: string) {
     setOpenWorkId(id);
+    setWorkTarget((current) => (current?.creationId === id ? current : null));
     setCreationError('');
     setCreationNotice('');
   }
@@ -1149,6 +1212,7 @@ export function AureliusWorkspace({
       if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
         clearTalkSave(data.ownerId, selected, 'revision');
       setOpenWorkId(saved.id);
+      setWorkTarget((current) => rebindWorkTarget(current, openWorkId, saved.id));
       setCreationNotice('New version saved.');
       await loadCreations(selected);
     } catch (error) {
@@ -1187,6 +1251,7 @@ export function AureliusWorkspace({
       if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
         clearTalkSave(data.ownerId, selected, 'revision');
       setInlineBoardStatus({ id: saved.id, state: 'saved' });
+      setWorkTarget((currentTarget) => rebindWorkTarget(currentTarget, creationId, saved.id));
       await loadCreations(selected);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
@@ -1232,6 +1297,11 @@ export function AureliusWorkspace({
       if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
         clearTalkSave(data.ownerId, selected, 'revision');
       setOpenWorkId(saved.id);
+      setWorkTarget((currentTarget) => {
+        const fromProposal = rebindWorkTarget(currentTarget, id, saved.id);
+        if (fromProposal !== currentTarget) return fromProposal;
+        return rebindWorkTarget(currentTarget, current.id, saved.id);
+      });
       setCreationNotice('Proposal kept as a new version.');
       await loadCreations(selected);
     } catch (error) {
@@ -1245,6 +1315,7 @@ export function AureliusWorkspace({
   async function selectOpenCreation(id = openWorkId) {
     if (!selected || !id) return;
     setOpenWorkId(id);
+    setWorkTarget((current) => (current?.creationId === id ? current : null));
     setCreationBusy(true);
     try {
       const image = creationWorkspace?.images.find((item) => item.id === id);
@@ -1509,6 +1580,9 @@ export function AureliusWorkspace({
             includeContext={includeContext}
             disabled={busy || preview || !data.canChat}
             onAdoptConversation={adoptLiveConversation}
+            workTarget={
+              resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected).target
+            }
           />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
@@ -1542,6 +1616,8 @@ export function AureliusWorkspace({
                       memoryOnlyDraft.current = false;
                       if (data.ownerId) writeTalkDraft(data.ownerId, selected, '');
                       setDraft('');
+                      setWorkTarget(null);
+                      setOpenWorkId(null);
                       follow.current = true;
                       void reload(id).catch(() => {});
                     }}
@@ -2082,6 +2158,12 @@ export function AureliusWorkspace({
                 onImport={(id) => void importArchitectPackage(id)}
                 onOpenVersion={(id) => setOpenWorkId(id)}
                 onHistory={rememberHistory}
+                targetField={
+                  workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null
+                }
+                onTargetField={(field) =>
+                  setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
+                }
               />
             </aside>
           )}
@@ -2202,6 +2284,25 @@ export function AureliusWorkspace({
                   </button>
                 </div>
               )}
+              {(() => {
+                const resolved = resolveWorkTarget(
+                  creationWorkspace,
+                  workTarget,
+                  openWorkId,
+                  selected,
+                );
+                const selectedWork = resolved.item;
+                return selectedWork || resolved.reason ? (
+                  <p className="talk-selection-chip" aria-live="polite">
+                    {resolved.reason
+                      ? resolved.reason
+                      : selectedWork
+                        ? `Changing this: ${selectionChipLabel(selectedWork)}`
+                        : null}
+                  </p>
+                ) : null;
+              })()}
+              <div id="talk-voice-dock" className="talk-voice-dock" ref={attachTalkVoiceDock} />
               <TalkInput
                 id="aurelius-message"
                 label="Message Aethelios"
@@ -2304,6 +2405,10 @@ export function AureliusWorkspace({
               onImport={(id) => void importArchitectPackage(id)}
               onOpenVersion={(id) => setOpenWorkId(id)}
               onHistory={rememberHistory}
+              targetField={workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null}
+              onTargetField={(field) =>
+                setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
+              }
             />
           )}
         </dialog>

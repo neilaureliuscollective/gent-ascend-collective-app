@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { ProjectContent } from '@/domains/architect-origin/schema';
 import type { HandoffTransfer } from '@/domains/talk-creation/origin-import';
 import type {
@@ -10,11 +10,57 @@ import type {
   TalkCreation,
   TalkImageJob,
 } from '@/domains/talk-creation/schema';
+import { creationTitle } from '@/domains/talk-creation/schema';
 import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
 import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
+import {
+  compileTalkDocument,
+  compareTalkRevisions,
+  describeTalkDestination,
+  exportTalkDocument,
+  talkDocumentViews,
+} from '@/domains/work-items';
 import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
 import './creation.css';
+
+function FieldTarget({
+  field,
+  label,
+  targetField,
+  onTargetField,
+}: {
+  field: string;
+  label: string;
+  targetField?: string | null;
+  onTargetField?: (field: string | null) => void;
+}) {
+  return (
+    <span className="talk-field-heading">
+      {label}
+      {onTargetField ? (
+        <button
+          type="button"
+          className="text-button"
+          aria-pressed={targetField === field}
+          onClick={() => onTargetField(targetField === field ? null : field)}
+        >
+          Change {label}
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
+const markdownGuards = {
+  img: () => null,
+  a: ({ href, children }: { href?: string; children?: ReactNode }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  ),
+};
 
 export function CreationDetail({
   creation,
@@ -33,6 +79,8 @@ export function CreationDetail({
   onImport,
   onOpenVersion,
   onHistory,
+  targetField = null,
+  onTargetField,
 }: {
   creation?: TalkCreation | null;
   image?: TalkImageJob | null;
@@ -50,6 +98,8 @@ export function CreationDetail({
   onImport?: (handoffId: string) => void;
   onOpenVersion?: (id: string) => void;
   onHistory?: (versions: TalkCreation[]) => void;
+  targetField?: string | null;
+  onTargetField?: (field: string | null) => void;
 }) {
   const brief = creation?.kind === 'brief' ? (creation.content as BriefContent) : null;
   const plan = creation?.kind === 'plan' ? (creation.content as PlanContent) : null;
@@ -77,6 +127,8 @@ export function CreationDetail({
   } | null>(null);
   const [directionBusy, setDirectionBusy] = useState<'review' | 'transfer' | null>(null);
   const [directionRequestId] = useState(() => crypto.randomUUID());
+  const [documentView, setDocumentView] = useState<(typeof talkDocumentViews)[number]>('Edit');
+  const [compareId, setCompareId] = useState<string | null>(null);
   const [review, setReview] = useState<{
     imported: boolean;
     projectId: string | null;
@@ -92,6 +144,10 @@ export function CreationDetail({
     if (image) return image.prompt;
     return JSON.stringify(draft ?? creation?.content ?? {}, null, 2);
   }, [creation, draft, image]);
+  const documentExport = useMemo(
+    () => (creation ? exportTalkDocument(creation.kind, draft ?? creation.content) : null),
+    [creation, draft],
+  );
   useEffect(() => {
     const lineage = creation?.lineage_id;
     if (!lineage) return;
@@ -180,7 +236,26 @@ export function CreationDetail({
           Close
         </button>
       </header>
-      {brief && draft && 'purpose' in draft && (
+      {(brief || plan) && (
+        <div className="talk-document-views" role="group" aria-label="Document view">
+          {talkDocumentViews.map((view) => (
+            <button
+              key={view}
+              type="button"
+              className="text-button"
+              aria-pressed={documentView === view}
+              onClick={() => setDocumentView(view)}
+            >
+              {view}
+            </button>
+          ))}
+        </div>
+      )}
+      <div
+        className="talk-document-split"
+        data-view={(brief || plan) ? documentView.toLowerCase() : undefined}
+      >
+      {brief && draft && 'purpose' in draft && documentView !== 'Preview' && (
         <div className="field">
           {(
             [
@@ -190,38 +265,56 @@ export function CreationDetail({
               ['visualDirection', 'Visual direction'],
             ] as const
           ).map(([key, label]) => (
-            <label key={key}>
-              {label}
+            <div key={key} className="field">
+              <FieldTarget
+                field={key}
+                label={label}
+                targetField={targetField}
+                onTargetField={onTargetField}
+              />
               <textarea
+                aria-label={label}
                 value={String(draft[key] ?? '')}
                 disabled={!canEdit || busy}
                 onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}
               />
-            </label>
+            </div>
           ))}
-          <label>
-            Requirements
+          <div className="field">
+            <FieldTarget
+              field="requirements"
+              label="Requirements"
+              targetField={targetField}
+              onTargetField={onTargetField}
+            />
             <textarea
+              aria-label="Requirements"
               value={draft.requirements.join('\n')}
               disabled={!canEdit || busy}
               onChange={(event) =>
                 setDraft({ ...draft, requirements: event.target.value.split('\n').filter(Boolean) })
               }
             />
-          </label>
-          <label>
-            Unresolved decisions
+          </div>
+          <div className="field">
+            <FieldTarget
+              field="unresolved"
+              label="Unresolved decisions"
+              targetField={targetField}
+              onTargetField={onTargetField}
+            />
             <textarea
+              aria-label="Unresolved decisions"
               value={draft.unresolved.join('\n')}
               disabled={!canEdit || busy}
               onChange={(event) =>
                 setDraft({ ...draft, unresolved: event.target.value.split('\n').filter(Boolean) })
               }
             />
-          </label>
+          </div>
         </div>
       )}
-      {plan && draft && 'steps' in draft && (
+      {plan && draft && 'steps' in draft && documentView !== 'Preview' && (
         <div className="field">
           <label>
             Title
@@ -257,6 +350,14 @@ export function CreationDetail({
           ))}
         </div>
       )}
+      {(brief || plan) && creation && documentView !== 'Edit' && (
+        <article className="talk-document-preview" aria-label="Document preview">
+          <ReactMarkdown components={markdownGuards}>
+            {compileTalkDocument(creation.kind, draft ?? creation.content) ?? ''}
+          </ReactMarkdown>
+        </article>
+      )}
+      </div>
       {palette && draft && 'swatches' in draft && (
         <PaletteSwatches
           palette={draft}
@@ -276,6 +377,25 @@ export function CreationDetail({
           />
           <div className="talk-origin-review">
             <p className="talk-creation-status" data-adapter="talk-architect-direction">
+              {creation
+                ? describeTalkDestination({
+                    kind: 'architect-direction',
+                    sourceId: creation.id,
+                    sourceKind: 'board',
+                    sourceVersion: directionReview?.boardVersion ?? creation.version,
+                    sourceTitle: directionReview?.selectedDirectionName ?? creationTitle(creation),
+                    destination: 'Private Architect project',
+                    unsupported: directionReview?.unsupported ?? [],
+                    status: directionReview?.imported
+                      ? 'ready'
+                      : directionReview?.receipt
+                        ? 'reviewable'
+                        : 'unavailable',
+                    snapshotBound: Boolean(directionReview?.imported || directionReview?.digest),
+                  })
+                : null}
+            </p>
+            <p className="talk-creation-status">
               {directionBusy === 'review'
                 ? 'Reviewing the selected direction. Chat stays usable.'
                 : directionBusy === 'transfer'
@@ -595,6 +715,43 @@ export function CreationDetail({
               </li>
             ))}
           </ol>
+          {creation && (
+            <div className="talk-revision-compare">
+              <label>
+                Compare with
+                <select
+                  value={compareId ?? ''}
+                  onChange={(event) => setCompareId(event.target.value || null)}
+                >
+                  <option value="">Choose a saved version</option>
+                  {versions
+                    .filter((version) => version.id !== creation.id)
+                    .map((version) => (
+                      <option key={version.id} value={version.id}>
+                        v{version.version}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              {compareId
+                ? compareTalkRevisions(
+                    versions.find((version) => version.id === compareId)?.content,
+                    draft ?? creation.content,
+                  ).map((change) => (
+                    <p key={change.field} className="talk-revision-change">
+                      {change.field}: “{change.from || 'empty'}” → “{change.to || 'empty'}”
+                    </p>
+                  ))
+                : null}
+              {compareId &&
+              !compareTalkRevisions(
+                versions.find((version) => version.id === compareId)?.content,
+                draft ?? creation.content,
+              ).length ? (
+                <p className="quiet-label">These versions match.</p>
+              ) : null}
+            </div>
+          )}
         </details>
       )}
       {error && <p role="alert">{error}</p>}
@@ -622,8 +779,25 @@ export function CreationDetail({
           </>
         )}
         <button type="button" className="text-button" onClick={() => onCopy(exportText)}>
-          Copy
+          Copy JSON
         </button>
+        {documentExport && (
+          <a
+            className="text-button"
+            href={`data:${documentExport.mime};charset=utf-8,${encodeURIComponent(documentExport.body)}`}
+            download={documentExport.filename}
+          >
+            {documentExport.label}
+          </a>
+        )}
+        <button type="button" className="text-button" onClick={() => window.print()}>
+          Print / PDF
+        </button>
+        {image?.status === 'complete' && image.version_id && (
+          <a className="text-button" href={`/api/studio/image?id=${image.version_id}&kind=version`} download>
+            Download image
+          </a>
+        )}
       </div>
       {creation && creation.kind !== 'handoff' && !creation.candidate && (
         <div className="field">

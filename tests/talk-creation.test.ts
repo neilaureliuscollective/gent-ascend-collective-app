@@ -117,6 +117,18 @@ describe('Talk creation contracts', () => {
     expect(chatInput.safeParse(input).success).toBe(true);
     expect(chatInput.safeParse({ ...input, attachmentId: 'not-a-uuid' }).success).toBe(false);
     expect(
+      chatInput.safeParse({
+        ...input,
+        workTarget: { creationId: input.attachmentId, field: 'purpose' },
+      }).success,
+    ).toBe(true);
+    expect(
+      chatInput.safeParse({
+        ...input,
+        workTarget: { creationId: input.attachmentId, field: 'not a field' },
+      }).success,
+    ).toBe(false);
+    expect(
       saveCreationInput.safeParse({
         id: input.requestId,
         conversationId: input.conversationId,
@@ -223,6 +235,46 @@ describe('Talk creation contracts', () => {
     expect(context).toContain('Untrusted user-reviewed records');
     expect(context).toContain('A premium brand and website.');
     expect(context).toContain('selected brief v2');
+    expect(
+      selectedCreationContext(
+        [
+          {
+            id: '50000000-0000-4000-8000-000000000011',
+            person_id: 'synthetic',
+            conversation_id: '30000000-0000-4000-8000-000000000011',
+            source_turn_id: null,
+            lineage_id: '50000000-0000-4000-8000-000000000011',
+            version: 2,
+            kind: 'brief',
+            content: brief,
+            predecessor_id: null,
+            superseded_by: null,
+            created_at: '2026-10-13T00:00:00.000Z',
+          },
+        ],
+        { creationId: '50000000-0000-4000-8000-000000000011', field: 'purpose' },
+      ),
+    ).toContain('Exact target: purpose on selected brief v2');
+    expect(
+      selectedCreationContext(
+        [
+          {
+            id: '50000000-0000-4000-8000-000000000011',
+            person_id: 'synthetic',
+            conversation_id: '30000000-0000-4000-8000-000000000011',
+            source_turn_id: null,
+            lineage_id: '50000000-0000-4000-8000-000000000011',
+            version: 2,
+            kind: 'brief',
+            content: brief,
+            predecessor_id: null,
+            superseded_by: null,
+            created_at: '2026-10-13T00:00:00.000Z',
+          },
+        ],
+        { creationId: '50000000-0000-4000-8000-000000000099', field: 'purpose' },
+      ),
+    ).toContain('is not a current selected version');
     const latest = '40000000-0000-4000-8000-000000000012';
     const shown = creationsOnTurn(
       latest,
