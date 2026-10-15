@@ -269,7 +269,10 @@ export function CreationEntry({
                 type="button"
                 aria-current={stage === key ? 'step' : undefined}
                 disabled={locked || (key !== 'idea' && idea.trim().length < 3)}
-                onClick={() => onStage(key)}
+                onClick={() => {
+                  onSkipGuided?.();
+                  onStage(key);
+                }}
               >
                 {index} {label}
               </button>
