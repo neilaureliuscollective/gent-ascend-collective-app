@@ -1,13 +1,14 @@
 'use client';
-import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Brand } from './visual/brand';
 import './environment-frame.css';
+import { GlobalNavigation } from './global-navigation';
 
 /** Route presentation only. Identity, access and operation providers stay in Shell. */
 export function EnvironmentFrame({
   immersive,
+  globalMenu,
   navigation,
   controls,
   ambience,
@@ -15,11 +16,11 @@ export function EnvironmentFrame({
 }: {
   ambience?: React.ReactNode;
   immersive: boolean;
+  globalMenu?: React.ReactNode;
   navigation: React.ReactNode;
   controls: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const menu = useRef<HTMLDialogElement>(null);
   return (
     <div
       className={`app-shell aethelios-aether imperial-workspace${immersive ? ' environment-immersive' : ''}`}
@@ -37,27 +38,8 @@ export function EnvironmentFrame({
             <span className="environment-name">
               ARCHITECT <span>/ CREATION ENVIRONMENT</span>
             </span>
-            <button
-              className="environment-menu-button"
-              aria-haspopup="dialog"
-              onClick={() => menu.current?.showModal()}
-            >
-              Aethelios menu
-            </button>
+            {globalMenu ?? <GlobalNavigation />}
           </header>
-          <dialog ref={menu} className="environment-menu" aria-labelledby="environment-menu-title">
-            <div className="environment-menu-heading">
-              <h2 id="environment-menu-title">Your Aethelios environments</h2>
-              <button autoFocus onClick={() => menu.current?.close()}>
-                Close menu
-              </button>
-            </div>
-            {navigation}
-            <Link href="/app/entities" prefetch={false} className="environment-council">
-              Council ↗
-            </Link>
-            {controls}
-          </dialog>
           <main id="main" tabIndex={-1} className="environment-main">
             {children}
           </main>

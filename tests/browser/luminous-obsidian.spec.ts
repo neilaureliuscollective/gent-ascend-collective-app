@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalMenu } from '../support/global-navigation';
 import { expect, test } from './fixtures';
 
 for (const width of [320, 390, 720, 1024, 1440, 1920]) {
@@ -45,7 +46,9 @@ test('Talk keeps its draft and compact composer through appearance changes', asy
 
 test('Solid and forced-color modes remove atmospheric hero decoration', async ({ page }) => {
   await page.goto('/app/ecosystem');
-  await page.getByRole('button', { name: 'Use solid surfaces' }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Use solid surfaces', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.io-hero')).toHaveCSS('background-image', 'none');
   await expect(page.locator('.io-horizon')).toBeHidden();
   await page.emulateMedia({ forcedColors: 'active' });

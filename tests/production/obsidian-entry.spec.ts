@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations } from '../support/global-navigation';
 import { test, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 
@@ -52,42 +53,18 @@ test('the verified production application serves Obsidian and preserves public e
           'background-color',
           ['/app/aethelios', '/app/studio'].includes(route) ? 'rgb(17, 17, 17)' : 'rgb(7, 11, 10)',
         );
-        // Talk's approved compact shell exposes destinations inside Tools.
-        // Other workspaces retain the six-link primary navigation.
-        if (route === '/app/aethelios') {
-          await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
-          const destinations = page.getByRole('navigation', { name: 'Aethelios destinations' });
-          for (const [name, href] of [
-            ['Work', '/app/work'],
-            ['Architect', '/app/architect'],
-            ['Studio', '/app/studio'],
-            ['Health', '/app/health'],
-            ['Lifestyle', '/app/lifestyle'],
-            ['Ecosystem', '/app/ecosystem'],
-          ] as const) {
-            await expect(destinations.getByRole('link', { name, exact: true })).toHaveAttribute(
-              'href',
-              href,
-            );
-          }
-          await page.keyboard.press('Escape');
-        } else {
-          const navigation = page.getByRole('navigation', { name: 'Main navigation' });
-          await expect(navigation.getByRole('link')).toHaveCount(7);
-          for (const [name, href] of [
-            ['Home', '/app'],
-            ['Talk', '/app/aethelios'],
-            ['Health', '/app/health'],
-            ['Work', '/app/work'],
-            ['Studio', '/app/studio'],
-            ['Lifestyle', '/app/lifestyle'],
-            ['Ecosystem', '/app/ecosystem'],
-          ] as const) {
-            await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute(
-              'href',
-              href,
-            );
-          }
+        await openGlobalMenu(page);
+        const destinations = globalDestinations(page);
+        for (const [name, href] of [
+          ['Talk', '/app/aethelios'], ['Work', '/app/work'], ['Architect', '/app/architect'],
+          ['Studio', '/app/studio'], ['Health', '/app/health'], ['Lifestyle', '/lifestyle'],
+          ['Ecosystem', '/app/ecosystem'],
+        ] as const) {
+          await expect(destinations.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
+        }
+        await page.keyboard.press('Escape');
+        if (route !== '/app/aethelios') {
+          await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveText(['Home', 'Talk', 'Work', 'Architect']);
         }
       }
       await page.screenshot({

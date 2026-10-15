@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations } from '../support/global-navigation';
 // Required real-Supabase gate. Run against a fresh synthetic local reset only.
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
@@ -38,7 +39,9 @@ test('founder can save a profile and goal without paid membership, then retain c
     await page.goto(entry);
     await expect(page).toHaveURL('http://127.0.0.1:3103/app');
     await expect(page.getByRole('heading', { name: 'Command', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Founder Office' }).first()).toBeVisible();
+    await openGlobalMenu(page);
+    await expect(globalDestinations(page).getByRole('link', { name: 'Founder Office', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
     await page.goto('/app/ongoing');
     await expect(page.locator('.command-presence')).toBeVisible();
     await page.locator('.home-compose summary').click();

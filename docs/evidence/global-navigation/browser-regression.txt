@@ -1,0 +1,51 @@
+[WebServer] (node:13933) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:13962) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 37 tests using 2 workers
+
+(node:13984) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13985) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3100". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  ✓   1 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 320px (3.5s)
+  ✓   2 tests/browser/company-platform.spec.ts:3:3 › company work opens reviewable briefs at 360px (4.9s)
+  ✓   3 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 344px (5.0s)
+  ✓   4 tests/browser/company-platform.spec.ts:3:3 › company work opens reviewable briefs at 768px (6.3s)
+  ✓   5 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 390px (4.2s)
+  ✓   7 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 412px (3.1s)
+  ✓   6 tests/browser/company-platform.spec.ts:3:3 › company work opens reviewable briefs at 1440px (5.6s)
+  ✓   8 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 720px (4.4s)
+  ✓   9 tests/browser/company-platform.spec.ts:50:1 › public arrival and unconnected Lifestyle keep commerce state honest (5.1s)
+  ✓  10 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 768px (2.9s)
+  ✓  12 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 960px (3.4s)
+  ✓  11 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 360 and retains edits (4.3s)
+  ✓  13 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 1100px (2.1s)
+  ✓  14 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 375 and retains edits (2.2s)
+  ✓  15 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 1101px (2.6s)
+  ✓  16 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 390 and retains edits (4.1s)
+  ✓  17 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 1440px (3.2s)
+  ✓  18 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 412 and retains edits (2.8s)
+  ✓  19 tests/browser/bplus-talk.spec.ts:52:3 › B+ controls, multiline growth and resize remain usable at 2560px (4.0s)
+  ✓  20 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 430 and retains edits (2.8s)
+  ✓  21 tests/browser/bplus-talk.spec.ts:107:1 › solid, forced colors and keyboard focus stay complete at runtime (1.9s)
+  ✓  22 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 768 and retains edits (1.9s)
+  ✓  23 tests/browser/bplus-talk.spec.ts:134:1 › Talk and Work retain distinct explicit material adoption (1.4s)
+  ✓  24 tests/browser/interaction-migration.spec.ts:4:3 › direction sheet fits 1440 and retains edits (3.7s)
+  ✓  25 tests/browser/public-world.spec.ts:4:3 › current public arrival, honest Lifestyle and member entrance at 344px (8.1s)
+  ✓  26 tests/browser/interaction-migration.spec.ts:25:1 › keeping the existing direction performs no write (6.3s)
+  ✓  28 tests/browser/interaction-migration.spec.ts:36:1 › world directory includes both deep worlds and compact global navigation (3.0s)
+  ✓  27 tests/browser/public-world.spec.ts:4:3 › current public arrival, honest Lifestyle and member entrance at 768px (7.4s)
+  ✓  29 tests/browser/shell.spec.ts:3:3 › current workspace navigation and Aethelios presence at 360px (5.2s)
+  ✓  30 tests/browser/public-world.spec.ts:4:3 › current public arrival, honest Lifestyle and member entrance at 1440px (5.3s)
+  ✓  32 tests/browser/public-world.spec.ts:60:1 › member entrance keeps its story and exits in reduced motion (647ms)
+  ✓  33 tests/browser/public-world.spec.ts:73:1 › legacy routes retain destinations and the installed app opens Command (107ms)
+  ✓  31 tests/browser/shell.spec.ts:3:3 › current workspace navigation and Aethelios presence at 768px (4.8s)
+  ✓  34 tests/browser/public-world.spec.ts:100:1 › install guide and reduced motion remain usable on a short phone screen (1.5s)
+  ✓  36 tests/browser/public-world.spec.ts:116:1 › offline fallback caches no personal responses (4.4s)
+  ✓  35 tests/browser/shell.spec.ts:3:3 › current workspace navigation and Aethelios presence at 1440px (7.7s)
+  ✓  37 tests/browser/shell.spec.ts:57:1 › production runtime denies developer routes and query bypass (2.5s)
+
+  37 passed (1.3m)

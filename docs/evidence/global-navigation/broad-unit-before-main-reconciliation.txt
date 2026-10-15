@@ -1,0 +1,80 @@
+
+> aurelius-collective-app@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.1 /workspace/global-navigation
+
+ ❯ tests/studio-export-evidence.test.ts (3 tests | 3 failed) 25ms
+   ❯ Studio export evidence (3)
+     × writes inspected PNG, SVG, vector PDF and H.264 film artifacts 9ms
+     × exports a physical label with type, SVG mark and rotation, and a 32s mixed still film 12ms
+     × renders owned moving footage, title cards and non-tone audio 1ms
+ ❯ tests/architect-construct-host.test.ts (2 tests | 1 failed) 23235ms
+   × inspects the host isolation runtime and reports pass, fail, or unavailable honestly 20033ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/architect-construct-host.test.ts > inspects the host isolation runtime and reports pass, fail, or unavailable honestly
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/architect-construct-host.test.ts:20:1
+     18| const project = '00000000-0000-4000-8000-000000000003';
+     19|
+     20| it('inspects the host isolation runtime and reports pass, fail, or una…
+       | ^
+     21|   const source = fixtureSource(owner, '00000000-0000-4000-8000-0000000…
+     22|   const scope = fixtureScope({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > writes inspected PNG, SVG, vector PDF and H.264 film artifacts
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:25:5
+     23| describe('Studio export evidence', () => {
+     24|   it('writes inspected PNG, SVG, vector PDF and H.264 film artifacts',…
+     25|     await mkdir(out, { recursive: true });
+       |     ^
+     26|     const id = '10000000-0000-4000-8000-000000000001';
+     27|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > exports a physical label with type, SVG mark and rotation, and a 32s mixed still film
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:161:5
+    159|
+    160|   it('exports a physical label with type, SVG mark and rotation, and a…
+    161|     await mkdir(out, { recursive: true });
+       |     ^
+    162|     const id = '10000000-0000-4000-8000-000000000031';
+    163|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > renders owned moving footage, title cards and non-tone audio
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:443:5
+    441|
+    442|   it('renders owned moving footage, title cards and non-tone audio', a…
+    443|     await mkdir(out, { recursive: true });
+       |     ^
+    444|     const dir = await mkdtemp(path.join(tmpdir(), 'studio-moving-'));
+    445|     const run = (args: string[]) =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 164 passed (166)
+      Tests  4 failed | 989 passed (993)
+   Start at  11:24:35
+   Duration  101.20s (tests 72%, import 18%, transform 10%, worker 1%)
+
+    Isolate  166 workers spawned · ~242ms startup each (spawn + environment, per file)
+             at least ~13.16s faster with isolate: false — reuses workers across files instead of one per file
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

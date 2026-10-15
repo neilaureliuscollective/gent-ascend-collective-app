@@ -1,3 +1,4 @@
+import { GlobalNavigation } from '@/components/global-navigation';
 import Link from 'next/link';
 import { EnvironmentFrame } from '@/components/environment-frame';
 import { ArchitectOrigin } from '@/components/architect-origin/workspace';
@@ -158,6 +159,7 @@ function MemberLifestyleFixtureShell({ children }: { children: React.ReactNode }
           <span className="topbar-context">
             AETHELIOS <span>/</span> PERSONAL INTELLIGENCE OS
           </span>
+          <GlobalNavigation access={{ signedIn: true }} />
         </header>
         <main id="main">
           <div className="member-collection public-world imperial-obsidian">

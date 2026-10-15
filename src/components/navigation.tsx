@@ -2,17 +2,12 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { Icon, type IconName } from './visual/icon';
+import { Icon } from './visual/icon';
 import { BplusMaterial } from './visual/bplus-material';
-const destinations: [string, string, IconName][] = [
-  ['/app', 'Home', 'command'],
-  ['/app/aethelios', 'Talk', 'spark'],
-  ['/app/work', 'Work', 'command'],
-  ['/app/studio', 'Studio', 'collection'],
-  ['/app/health', 'Health', 'person'],
-  ['/app/lifestyle', 'Lifestyle', 'collection'],
-  ['/app/ecosystem', 'Ecosystem', 'world'],
-];
+import { visibleDestinations, destinationIsCurrent } from './destinations';
+const destinations = visibleDestinations({ signedIn: true })
+  .filter((d) => d.primary)
+  .map((d) => [d.href, d.label, d.icon] as const);
 export function Navigation() {
   const path = usePathname();
   const ref = useRef<HTMLElement>(null);
@@ -51,18 +46,7 @@ export function Navigation() {
           }
           href={href === '/app/aethelios' && path.startsWith('/app/companies/') ? path : href}
           prefetch={href === '/app/health' ? false : undefined}
-          aria-current={
-            href === '/app'
-              ? path === '/app'
-                ? 'page'
-                : undefined
-              : path === href ||
-                  path.startsWith(href + '/') ||
-                  (href === '/app/aethelios' && path.startsWith('/app/companies/')) ||
-                  (href === '/app/lifestyle' && path.startsWith('/app/collection'))
-                ? 'page'
-                : undefined
-          }
+          aria-current={destinationIsCurrent(href, path) ? 'page' : undefined}
         >
           {(href === '/app/aethelios' || href === '/app/work') && path === href && (
             <BplusMaterial radius={10} />

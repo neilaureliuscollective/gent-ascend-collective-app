@@ -1,4 +1,5 @@
 'use client';
+import { GlobalNavigation } from '../global-navigation';
 import { Icon } from '@/components/visual/icon';
 import { ConversationArtifacts } from '@/components/live/artifacts';
 import { LiveVoiceEntry, useLiveBusy, useLiveSession } from '@/components/live/provider';
@@ -63,7 +64,12 @@ import {
   matchesTalkSave,
   readTalkSave,
 } from '@/domains/talk-creation/pending';
-import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
+import {
+  idleCreationScope,
+  shouldApplyCreation,
+  shouldContinueWatch,
+  shouldRecoverPending,
+} from '@/domains/talk-creation/scope';
 import { CreationDetail } from './creation-detail';
 import { liveComposerLimit, liveTextRejection, talkComposerSendRoute } from '@/domains/live/limits';
 import {
@@ -248,10 +254,9 @@ export function AureliusWorkspace({
         )
           return;
         try {
-          const response = await fetch(
-            `/api/aurelius/creations?conversationId=${conversationId}`,
-            { cache: 'no-store' },
-          );
+          const response = await fetch(`/api/aurelius/creations?conversationId=${conversationId}`, {
+            cache: 'no-store',
+          });
           if (
             !shouldContinueWatch(
               imageWatch.current,
@@ -317,7 +322,9 @@ export function AureliusWorkspace({
         const workspace = readTalkCreationWorkspace(await response.json());
         applyCreationWorkspace(conversationId, owner, workspace);
         if (
-          workspace?.images.some((item) => ['approval', 'running', 'uncertain'].includes(item.status))
+          workspace?.images.some((item) =>
+            ['approval', 'running', 'uncertain'].includes(item.status),
+          )
         )
           watchImages(conversationId, owner);
         else stopImageWatch();
@@ -683,7 +690,15 @@ export function AureliusWorkspace({
       stopImageWatch();
       creationScope.current = idleCreationScope();
     };
-  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
+  }, [
+    initialConversation,
+    homeDraft,
+    initialDraft,
+    compact,
+    loadCreations,
+    recoverPendingSaves,
+    stopImageWatch,
+  ]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
@@ -705,12 +720,7 @@ export function AureliusWorkspace({
       return;
     const sendRoute = talkComposerSendRoute(liveState.phase);
     if (liveController && sendRoute === 'voice') {
-      const resolved = resolveWorkTarget(
-        creationWorkspace,
-        workTarget,
-        openWorkId,
-        selected,
-      );
+      const resolved = resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected);
       const sent = liveController.text(messageText, workTargetVoicePrefix(resolved) || null);
       if (sent.accepted) setDraft('');
       else setError(liveTextRejection(sent.reason));
@@ -854,9 +864,13 @@ export function AureliusWorkspace({
           );
         } else if (item.type === 'delta') {
           setOperation((previous) =>
-            previous.id === requestId && ['searching', 'generating', 'stopping', 'cancelled', 'failed'].includes(previous.phase)
+            previous.id === requestId &&
+            ['searching', 'generating', 'stopping', 'cancelled', 'failed'].includes(previous.phase)
               ? previous
-              : nextObservedOperation(previous, observedOperation(requestId, 'generating', 'pending')),
+              : nextObservedOperation(
+                  previous,
+                  observedOperation(requestId, 'generating', 'pending'),
+                ),
           );
           timing.mark('first-text');
           painted.append(item.text);
@@ -1038,7 +1052,10 @@ export function AureliusWorkspace({
       const token = ++voiceReconcile.current;
       const stillCurrent = () =>
         token === voiceReconcile.current &&
-        matchesVoiceReconcile(ownerId && liveController ? liveController.voiceIdentity(ownerId) : null, input);
+        matchesVoiceReconcile(
+          ownerId && liveController ? liveController.voiceIdentity(ownerId) : null,
+          input,
+        );
       if (!stillCurrent()) return;
       liveController?.markPersistence('pending', input);
       setNotice('Saving the voice turns…');
@@ -1152,17 +1169,8 @@ export function AureliusWorkspace({
   useEffect(() => {
     if (!liveController || !['listening', 'speaking'].includes(liveState.phase)) return;
     const resolved = resolveWorkTarget(creationWorkspace, workTarget, openWorkId, selected);
-    void liveController.setSpokenTarget(
-      resolved.status === 'stale' ? workTarget : resolved.target,
-    );
-  }, [
-    liveController,
-    liveState.phase,
-    creationWorkspace,
-    workTarget,
-    openWorkId,
-    selected,
-  ]);
+    void liveController.setSpokenTarget(resolved.status === 'stale' ? workTarget : resolved.target);
+  }, [liveController, liveState.phase, creationWorkspace, workTarget, openWorkId, selected]);
   function newConversation() {
     voiceReconcile.current += 1;
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
@@ -1205,7 +1213,10 @@ export function AureliusWorkspace({
     setCreationError('');
     setCreationNotice('');
   }
-  async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff', content: unknown) {
+  async function saveOpenCreation(
+    kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff',
+    content: unknown,
+  ) {
     if (!selected || !openWorkId || !data?.ownerId) return;
     const current = creationWorkspace?.creations.find(
       (item) =>
@@ -1248,7 +1259,8 @@ export function AureliusWorkspace({
   ) {
     if (!selected || !data?.ownerId) return;
     const current = creationWorkspace?.creations.find(
-      (item) => item.id === creationId && item.kind === 'board' && !item.superseded_by && !item.candidate,
+      (item) =>
+        item.id === creationId && item.kind === 'board' && !item.superseded_by && !item.candidate,
     );
     if (!current) {
       setInlineBoardStatus({ id: creationId, state: 'failed' });
@@ -1327,7 +1339,9 @@ export function AureliusWorkspace({
       await loadCreations(selected);
     } catch (error) {
       setCreationError(
-        error instanceof Error ? error.message : 'This proposal could not be applied to the current version.',
+        error instanceof Error
+          ? error.message
+          : 'This proposal could not be applied to the current version.',
       );
     } finally {
       setCreationBusy(false);
@@ -1431,7 +1445,9 @@ export function AureliusWorkspace({
       });
       await loadCreations(selected);
     } catch (error) {
-      setCreationError(error instanceof Error ? error.message : 'The Architect package could not be saved.');
+      setCreationError(
+        error instanceof Error ? error.message : 'The Architect package could not be saved.',
+      );
     } finally {
       setCreationBusy(false);
     }
@@ -1568,6 +1584,7 @@ export function AureliusWorkspace({
   if (!data)
     return (
       <div className="aurelius-unavailable">
+        {!compact && <GlobalNavigation />}
         <span className="orb large" aria-hidden="true" />
         <h3>A clearer perspective.</h3>
         {error ? (
@@ -1618,7 +1635,7 @@ export function AureliusWorkspace({
             }
           />
           {!compact && (
-            <TalkDrawer label="Conversations" triggerContent={<span aria-hidden="true">☰</span>}>
+            <TalkDrawer label="Conversations" triggerContent={<span>History</span>}>
               {(close) => (
                 <>
                   <ConversationLibrary
@@ -1681,10 +1698,7 @@ export function AureliusWorkspace({
             >
               New
             </button>
-            <TalkDrawer
-              label="Tools & context"
-              triggerContent={<span aria-hidden="true">•••</span>}
-            >
+            <TalkDrawer label="Tools & context" triggerContent={<span>Tools</span>}>
               <button
                 type="button"
                 className="text-button talk-new-in-menu"
@@ -1699,25 +1713,6 @@ export function AureliusWorkspace({
               >
                 New conversation
               </button>
-              <nav className="talk-destinations" aria-label="Aethelios destinations">
-                {[
-                  ['/app', 'Home'],
-                  ['/app/work', 'Work'],
-                  ['/app/architect', 'Architect'],
-                  ['/app/studio', 'Studio'],
-                  ['/app/missions', 'Missions'],
-                  ['/app/entities', 'Council'],
-                  ['/app/health', 'Health'],
-                  ['/app/lifestyle', 'Lifestyle'],
-                  ['/app/ecosystem', 'Ecosystem'],
-                  ['/app/you', 'Your account'],
-                  ['/app/aethelios/meet', 'Meet Aethelios'],
-                ].map(([href, label]) => (
-                  <Link key={href} href={href!} prefetch={false}>
-                    {label}
-                  </Link>
-                ))}
-              </nav>
               <ConversationArtifacts conversationId={selected} />
               <div className="talk-attachment-tools">
                 <input
@@ -1930,6 +1925,7 @@ export function AureliusWorkspace({
                 </p>
               </details>
             </TalkDrawer>
+            {!compact && <GlobalNavigation />}
           </BplusTalkTools>
         </div>
         {!preview && (
@@ -1980,229 +1976,241 @@ export function AureliusWorkspace({
         )}
         <>
           <div className="talk-creation-stage">
-          <div
-            className="conversation-scroll"
-            ref={scroll}
-            onScroll={() => {
-              const el = scroll.current;
-              if (el) {
-                follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-                setAwayFromLatest(!follow.current);
-                rememberReadingPosition();
-              }
-            }}
-            aria-label="Conversation messages"
-            aria-busy={busy}
-          >
-            {data.hasOlderTurns && (
-              <button
-                type="button"
-                className="secondary-button older-messages"
-                disabled={loadingOlder}
-                onClick={() => void loadOlder()}
-              >
-                {loadingOlder ? 'Loading…' : 'Load older messages'}
-              </button>
-            )}
-            {!data.turns.length && !busy ? (
-              <div className="aurelius-welcome">
-                <div className="welcome-heading">
-                  {compact ? (
-                    <AureliusPresence
-                      state={
-                        busy ? 'working' : preview || !data.configured ? 'disconnected' : 'ready'
-                      }
-                    />
-                  ) : (
-                    <div
-                      className="talk-welcome-presence"
-                      data-state={preview || !data.configured ? 'disconnected' : 'ready'}
-                      aria-hidden="true"
-                    >
-                      <IntelligencePresence
-                        variant="signal"
-                        size="conversation"
-                        operation={observedOperation('talk-welcome', 'ready')}
+            <div
+              className="conversation-scroll"
+              ref={scroll}
+              onScroll={() => {
+                const el = scroll.current;
+                if (el) {
+                  follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+                  setAwayFromLatest(!follow.current);
+                  rememberReadingPosition();
+                }
+              }}
+              aria-label="Conversation messages"
+              aria-busy={busy}
+            >
+              {data.hasOlderTurns && (
+                <button
+                  type="button"
+                  className="secondary-button older-messages"
+                  disabled={loadingOlder}
+                  onClick={() => void loadOlder()}
+                >
+                  {loadingOlder ? 'Loading…' : 'Load older messages'}
+                </button>
+              )}
+              {!data.turns.length && !busy ? (
+                <div className="aurelius-welcome">
+                  <div className="welcome-heading">
+                    {compact ? (
+                      <AureliusPresence
+                        state={
+                          busy ? 'working' : preview || !data.configured ? 'disconnected' : 'ready'
+                        }
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div
+                        className="talk-welcome-presence"
+                        data-state={preview || !data.configured ? 'disconnected' : 'ready'}
+                        aria-hidden="true"
+                      >
+                        <IntelligencePresence
+                          variant="signal"
+                          size="conversation"
+                          operation={observedOperation('talk-welcome', 'ready')}
+                        />
+                      </div>
+                    )}
 
-                  <div>
-                    <p className="eyebrow">Aethelios · Your central intelligence</p>
-                    <h2>What would you like to move forward?</h2>
-                    <Link
-                      className="text-link aethelios-meet-link"
-                      href="/app/aethelios/meet"
-                      onClick={(event) => {
-                        if (compact) event.currentTarget.closest('dialog')?.close();
-                      }}
-                    >
-                      Meet Aethelios →
-                    </Link>
+                    <div>
+                      <p className="eyebrow">Aethelios · Your central intelligence</p>
+                      <h2>What would you like to move forward?</h2>
+                      <Link
+                        className="text-link aethelios-meet-link"
+                        href="/app/aethelios/meet"
+                        onClick={(event) => {
+                          if (compact) event.currentTarget.closest('dialog')?.close();
+                        }}
+                      >
+                        Meet Aethelios →
+                      </Link>
+                    </div>
+                  </div>
+                  <p>
+                    Share an idea, a question or the work ahead. We’ll find the next useful step.
+                  </p>
+                  <div className="conversation-starters">
+                    {[
+                      {
+                        label: 'Pressure-test an idea',
+                        draft:
+                          'I have an idea to pressure-test. Help me turn it into a clear decision.',
+                      },
+                      {
+                        label: 'Shape a creative brief',
+                        draft:
+                          'I need to create something. Help me shape the brief and a useful first draft.',
+                      },
+                      {
+                        label: 'Move a project forward',
+                        draft:
+                          'I have a project to move forward. Help me identify the next concrete action.',
+                      },
+                      {
+                        label: 'Develop a brand',
+                        draft: 'Help me develop a premium brand and website.',
+                      },
+                    ].map((suggestion) => (
+                      <button
+                        key={suggestion.label}
+                        onClick={() => {
+                          setDraft(suggestion.draft);
+                          composer.current?.focus();
+                        }}
+                        disabled={blocked}
+                      >
+                        {suggestion.label}
+                        <span aria-hidden="true">
+                          <Icon name="arrow-up-right" className="action-icon" />
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <p>Share an idea, a question or the work ahead. We’ll find the next useful step.</p>
-                <div className="conversation-starters">
-                  {[
-                    {
-                      label: 'Pressure-test an idea',
-                      draft:
-                        'I have an idea to pressure-test. Help me turn it into a clear decision.',
-                    },
-                    {
-                      label: 'Shape a creative brief',
-                      draft:
-                        'I need to create something. Help me shape the brief and a useful first draft.',
-                    },
-                    {
-                      label: 'Move a project forward',
-                      draft:
-                        'I have a project to move forward. Help me identify the next concrete action.',
-                    },
-                    {
-                      label: 'Develop a brand',
-                      draft: 'Help me develop a premium brand and website.',
-                    },
-                  ].map((suggestion) => (
-                    <button
-                      key={suggestion.label}
-                      onClick={() => {
-                        setDraft(suggestion.draft);
-                        composer.current?.focus();
-                      }}
+              ) : (
+                data.turns
+                  .filter((turn) => !data.turns.some((newer) => newer.parent_turn_id === turn.id))
+                  .map((turn) => (
+                    <ConversationTurn
+                      key={turn.id}
+                      turn={turn}
+                      operation={turn.id === operation.id ? operation : undefined}
+                      artifacts={turn.id === operation.id ? streamArtifacts : undefined}
+                      onFeedback={(id, value) => void feedback(id, value)}
                       disabled={blocked}
-                    >
-                      {suggestion.label}
-                      <span aria-hidden="true">
-                        <Icon name="arrow-up-right" className="action-icon" />
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              data.turns
-                .filter((turn) => !data.turns.some((newer) => newer.parent_turn_id === turn.id))
-                .map((turn) => (
-                  <ConversationTurn
-                    key={turn.id}
-                    turn={turn}
-                    operation={turn.id === operation.id ? operation : undefined}
-                    artifacts={turn.id === operation.id ? streamArtifacts : undefined}
-                    onFeedback={(id, value) => void feedback(id, value)}
-                    disabled={blocked}
-                    versions={priorVersions(turn, data.turns)}
-                    onCopy={() => void navigator.clipboard.writeText(turn.assistant_text)}
-                    onRevise={
-                      turn.id === data.turns.at(-1)?.id && !data.currentConversation?.archived_at
-                        ? (kind) => {
-                            if (kind === 'edit') {
-                              setDraft(turn.user_text);
-                              setRevision({ sourceTurnId: turn.id, revisionKind: 'edit' });
-                              composer.current?.focus();
-                            } else
-                              void sendMessage(
-                                turn.user_text,
-                                { sourceTurnId: turn.id, revisionKind: kind },
-                                councilFromVersion(turn.prompt_version),
-                              );
-                          }
-                        : undefined
-                    }
-                    action={
-                      turn.id ===
-                        data.turns.filter((item) => item.status === 'complete').at(-1)?.id &&
-                      data.canChat
-                        ? {
-                            proposal: data.actionProposals?.find(
-                              (item) => item.source_turn_id === turn.id,
-                            ),
-                            onChanged: () => reload(selected),
-                          }
-                        : undefined
-                    }
-                    creations={creationsOnTurn(
-                      turn.id,
-                      data.turns
-                        .filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id))
-                        .at(-1)?.id,
-                      creationWorkspace?.creations,
-                      data.turns.map((item) => item.id),
-                    )}
-                    images={
-                      turn.id ===
-                      data.turns.filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id)).at(-1)?.id
-                        ? creationWorkspace?.images
-                        : undefined
-                    }
-                    selectedCreationId={
-                      creationWorkspace?.selected.brief ||
-                      creationWorkspace?.selected.plan ||
-                      creationWorkspace?.selected.palette ||
-                      creationWorkspace?.selected.board
-                    }
-                    onBoardCommit={(id, board) => void commitInlineBoard(id, board)}
-                    boardStatus={inlineBoardStatus ?? undefined}
-                    selectedImageId={creationWorkspace?.selectedImageId}
-                    canApproveImages={creationWorkspace?.canCreateImages}
-                    onOpenCreation={(id) => void openWork(id)}
-                    onApproveImage={(id, approve) => void approveTalkImage(id, approve)}
-                    onSelectImage={(id) => void selectOpenCreation(id)}
-                  />
-                ))
-            )}
-            {liveState.conversationId === selected
-              ? liveState.transcript
-                  .filter(
-                    (line) =>
-                      line.text &&
-                      !liveState.savedItemIds.includes(line.id) &&
-                      !data.turns.some((turn) => turn.id === line.id),
-                  )
-                  .map((line) => (
-                    <p
-                      key={line.id}
-                      className="live-provisional"
-                      data-live-status="provisional"
-                      data-conversation={liveState.conversationId ?? undefined}
-                    >
-                      <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
-                    </p>
+                      versions={priorVersions(turn, data.turns)}
+                      onCopy={() => void navigator.clipboard.writeText(turn.assistant_text)}
+                      onRevise={
+                        turn.id === data.turns.at(-1)?.id && !data.currentConversation?.archived_at
+                          ? (kind) => {
+                              if (kind === 'edit') {
+                                setDraft(turn.user_text);
+                                setRevision({ sourceTurnId: turn.id, revisionKind: 'edit' });
+                                composer.current?.focus();
+                              } else
+                                void sendMessage(
+                                  turn.user_text,
+                                  { sourceTurnId: turn.id, revisionKind: kind },
+                                  councilFromVersion(turn.prompt_version),
+                                );
+                            }
+                          : undefined
+                      }
+                      action={
+                        turn.id ===
+                          data.turns.filter((item) => item.status === 'complete').at(-1)?.id &&
+                        data.canChat
+                          ? {
+                              proposal: data.actionProposals?.find(
+                                (item) => item.source_turn_id === turn.id,
+                              ),
+                              onChanged: () => reload(selected),
+                            }
+                          : undefined
+                      }
+                      creations={creationsOnTurn(
+                        turn.id,
+                        data.turns
+                          .filter(
+                            (item) => !data.turns.some((newer) => newer.parent_turn_id === item.id),
+                          )
+                          .at(-1)?.id,
+                        creationWorkspace?.creations,
+                        data.turns.map((item) => item.id),
+                      )}
+                      images={
+                        turn.id ===
+                        data.turns
+                          .filter(
+                            (item) => !data.turns.some((newer) => newer.parent_turn_id === item.id),
+                          )
+                          .at(-1)?.id
+                          ? creationWorkspace?.images
+                          : undefined
+                      }
+                      selectedCreationId={
+                        creationWorkspace?.selected.brief ||
+                        creationWorkspace?.selected.plan ||
+                        creationWorkspace?.selected.palette ||
+                        creationWorkspace?.selected.board
+                      }
+                      onBoardCommit={(id, board) => void commitInlineBoard(id, board)}
+                      boardStatus={inlineBoardStatus ?? undefined}
+                      selectedImageId={creationWorkspace?.selectedImageId}
+                      canApproveImages={creationWorkspace?.canCreateImages}
+                      onOpenCreation={(id) => void openWork(id)}
+                      onApproveImage={(id, approve) => void approveTalkImage(id, approve)}
+                      onSelectImage={(id) => void selectOpenCreation(id)}
+                    />
                   ))
-              : null}
-            {busy && !data.turns.some((turn) => turn.id === operation.id) && (
-              <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
+              )}
+              {liveState.conversationId === selected
+                ? liveState.transcript
+                    .filter(
+                      (line) =>
+                        line.text &&
+                        !liveState.savedItemIds.includes(line.id) &&
+                        !data.turns.some((turn) => turn.id === line.id),
+                    )
+                    .map((line) => (
+                      <p
+                        key={line.id}
+                        className="live-provisional"
+                        data-live-status="provisional"
+                        data-conversation={liveState.conversationId ?? undefined}
+                      >
+                        <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
+                      </p>
+                    ))
+                : null}
+              {busy && !data.turns.some((turn) => turn.id === operation.id) && (
+                <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
+              )}
+            </div>
+            {widePanel && openWorkId && (openCreation || openImage) && (
+              <aside className="talk-creation-panel" aria-label="Reviewed work">
+                <CreationDetail
+                  key={openWorkId ?? 'panel'}
+                  creation={openCreation}
+                  image={openImage}
+                  images={creationWorkspace?.images ?? []}
+                  canEdit={!preview && data.canChat}
+                  busy={creationBusy}
+                  error={creationError}
+                  notice={creationNotice}
+                  onClose={() => setOpenWorkId(null)}
+                  onSave={(kind, content) => void saveOpenCreation(kind, content)}
+                  onCopy={(text) => void navigator.clipboard.writeText(text)}
+                  onSelect={() => void selectOpenCreation()}
+                  onKeepProposal={() => void keepProposal()}
+                  onHandoff={(input) => void prepareArchitectPackage(input)}
+                  onImport={(id) => void importArchitectPackage(id)}
+                  onOpenVersion={(id) => setOpenWorkId(id)}
+                  onHistory={rememberHistory}
+                  targetField={
+                    workTarget && workTarget.creationId === openCreation?.id
+                      ? workTarget.field
+                      : null
+                  }
+                  onTargetField={(field) =>
+                    setWorkTarget(
+                      openCreation && field ? { creationId: openCreation.id, field } : null,
+                    )
+                  }
+                />
+              </aside>
             )}
-          </div>
-          {widePanel && openWorkId && (openCreation || openImage) && (
-            <aside className="talk-creation-panel" aria-label="Reviewed work">
-              <CreationDetail
-                key={openWorkId ?? 'panel'}
-                creation={openCreation}
-                image={openImage}
-                images={creationWorkspace?.images ?? []}
-                canEdit={!preview && data.canChat}
-                busy={creationBusy}
-                error={creationError}
-                notice={creationNotice}
-                onClose={() => setOpenWorkId(null)}
-                onSave={(kind, content) => void saveOpenCreation(kind, content)}
-                onCopy={(text) => void navigator.clipboard.writeText(text)}
-                onSelect={() => void selectOpenCreation()}
-                onKeepProposal={() => void keepProposal()}
-                onHandoff={(input) => void prepareArchitectPackage(input)}
-                onImport={(id) => void importArchitectPackage(id)}
-                onOpenVersion={(id) => setOpenWorkId(id)}
-                onHistory={rememberHistory}
-                targetField={
-                  workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null
-                }
-                onTargetField={(field) =>
-                  setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
-                }
-              />
-            </aside>
-          )}
           </div>
           {!preview && (!data.configured || !data.canChat) && (
             <p className="connection-note">
@@ -2390,11 +2398,7 @@ export function AureliusWorkspace({
             </form>
           </div>
         </>
-        <ConversationAnnouncer
-          operation={operation}
-          artifacts={streamArtifacts}
-          notice={notice}
-        />
+        <ConversationAnnouncer operation={operation} artifacts={streamArtifacts} notice={notice} />
         <p className="aurelius-notice">
           {notice}
           {creationNotice && !(openWorkId && (openCreation || openImage))
@@ -2434,7 +2438,9 @@ export function AureliusWorkspace({
               onImport={(id) => void importArchitectPackage(id)}
               onOpenVersion={(id) => setOpenWorkId(id)}
               onHistory={rememberHistory}
-              targetField={workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null}
+              targetField={
+                workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null
+              }
               onTargetField={(field) =>
                 setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
               }

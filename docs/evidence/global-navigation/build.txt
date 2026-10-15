@@ -1,0 +1,203 @@
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 215ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.9s
+  Running TypeScript ...
+  Finished TypeScript in 28.4s ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/117) ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (29/117)
+  Generating static pages using 4 workers (58/117)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (87/117)
+✓ Generating static pages using 4 workers (117/117) in 494ms
+  Finalizing page optimization ...
+
+Route (app)                            Revalidate  Expire
+┌ ○ /
+├ ○ /_not-found
+├ ○ /about
+├ ○ /aethelios
+├ ƒ /api/account/auth
+├ ƒ /api/account/claim
+├ ƒ /api/account/events
+├ ƒ /api/aethelios-link/callback
+├ ƒ /api/aethelios-link/disconnect
+├ ƒ /api/aethelios-link/start
+├ ƒ /api/aethelios/artifacts
+├ ƒ /api/aethelios/artifacts/preview
+├ ƒ /api/aethelios/live
+├ ƒ /api/aethelios/live/preflight
+├ ƒ /api/aethelios/reviewed-action
+├ ƒ /api/architect-construct
+├ ƒ /api/architect-construct/source
+├ ƒ /api/architect-origin
+├ ƒ /api/ascend-profile
+├ ƒ /api/ascend-profile/propose
+├ ƒ /api/aurelius
+├ ƒ /api/aurelius/actions
+├ ƒ /api/aurelius/ahead
+├ ƒ /api/aurelius/chat
+├ ƒ /api/aurelius/feedback
+├ ƒ /api/aurelius/memory
+├ ƒ /api/aurelius/orchestrate
+├ ƒ /api/billing
+├ ƒ /api/billing/readiness
+├ ƒ /api/billing/webhook
+├ ƒ /api/capture
+├ ƒ /api/capture/action
+├ ƒ /api/capture/interpret
+├ ƒ /api/command
+├ ƒ /api/command-home
+├ ƒ /api/commerce/cart
+├ ƒ /api/commerce/customer
+├ ƒ /api/commerce/customer/callback
+├ ƒ /api/commerce/customer/disconnect
+├ ƒ /api/companies
+├ ƒ /api/company-talk
+├ ƒ /api/company-talk/chat
+├ ƒ /api/company-work
+├ ƒ /api/company-work/visual
+├ ƒ /api/connections
+├ ƒ /api/connections/disconnect
+├ ƒ /api/connections/github/callback
+├ ƒ /api/connections/github/setup
+├ ƒ /api/connections/github/start
+├ ƒ /api/connections/select
+├ ƒ /api/connections/vercel/callback
+├ ƒ /api/connections/vercel/start
+├ ƒ /api/connections/verify
+├ ƒ /api/connections/webhooks/github
+├ ƒ /api/connections/webhooks/vercel
+├ ƒ /api/daily
+├ ƒ /api/daily-command
+├ ƒ /api/daily/complete
+├ ƒ /api/daily/review
+├ ƒ /api/founder-office
+├ ƒ /api/founder-office/approvals
+├ ƒ /api/founder-office/briefing
+├ ƒ /api/founder-office/platform
+├ ƒ /api/founder-office/tasks
+├ ƒ /api/grooming/feedback
+├ ƒ /api/grooming/image
+├ ƒ /api/grooming/look
+├ ƒ /api/grooming/ritual
+├ ƒ /api/grooming/scan
+├ ƒ /api/health
+├ ƒ /api/health/bridge
+├ ƒ /api/health/export
+├ ƒ /api/health/records/[id]
+├ ƒ /api/internal/architect-construct
+├ ƒ /api/internal/live-expiry
+├ ƒ /api/membership/registration
+├ ƒ /api/missions
+├ ƒ /api/monitoring/performance
+├ ƒ /api/performance
+├ ƒ /api/performance/machine-scout
+├ ƒ /api/studio
+├ ƒ /api/studio/design
+├ ƒ /api/studio/design/export
+├ ƒ /api/studio/design/file
+├ ƒ /api/studio/design/revision
+├ ƒ /api/studio/film
+├ ƒ /api/studio/film/file
+├ ƒ /api/studio/film/render
+├ ƒ /api/studio/film/revision
+├ ƒ /api/studio/finish
+├ ƒ /api/studio/footage
+├ ƒ /api/studio/footage/video
+├ ƒ /api/studio/image
+├ ƒ /api/studio/narration
+├ ƒ /api/studio/narration/audio
+├ ƒ /api/studio/readiness
+├ ƒ /api/studio/reference
+├ ƒ /api/studio/scenes
+├ ƒ /api/world/grooming
+├ ƒ /api/world/priority
+├ ƒ /app
+├ ƒ /app/aethelios
+├ ƒ /app/aethelios/meet
+├ ƒ /app/architect
+├ ƒ /app/arrival
+├ ƒ /app/ascend
+├ ƒ /app/ascend-profile
+├ ƒ /app/aurelius
+├ ƒ /app/captures
+├ ƒ /app/collection
+├ ƒ /app/collection/[handle]
+├ ƒ /app/collection/cabinet
+├ ƒ /app/collection/cart
+├ ƒ /app/collection/orders
+├ ƒ /app/companies/[id]
+├ ƒ /app/companies/[id]/work/[jobId]
+├ ƒ /app/daily
+├ ƒ /app/ecosystem
+├ ƒ /app/founder
+├ ƒ /app/founder/connections
+├ ƒ /app/founder/launch
+├ ƒ /app/founder/pilot
+├ ƒ /app/founder/studio
+├ ƒ /app/goals
+├ ƒ /app/grooming
+├ ƒ /app/grooming/brief
+├ ƒ /app/grooming/look
+├ ƒ /app/grooming/look/[id]/brief
+├ ƒ /app/grooming/professional
+├ ƒ /app/grooming/scan
+├ ƒ /app/health
+├ ƒ /app/health/connections
+├ ƒ /app/health/history
+├ ƒ /app/health/labs
+├ ƒ /app/health/privacy
+├ ƒ /app/health/records
+├ ƒ /app/install
+├ ƒ /app/lifestyle
+├ ƒ /app/lifestyle/legacy-reserve
+├ ƒ /app/membership
+├ ƒ /app/missions
+├ ƒ /app/ongoing
+├ ƒ /app/performance
+├ ƒ /app/presence
+├ ƒ /app/progress
+├ ƒ /app/studio
+├ ƒ /app/welcome
+├ ƒ /app/work
+├ ƒ /app/world
+├ ƒ /app/you
+├ ○ /apple-icon.png
+├ ƒ /auth/confirm
+├ ○ /auth/continue
+├ ƒ /checkout
+├ ○ /dev
+├ ƒ /enter
+├ ƒ /experience
+├ ƒ /experience/aethelios
+├ ƒ /experience/grooming
+├ ○ /experience/performance
+├ ƒ /experience/performance/practice
+├ ƒ /experience/world
+├ ○ /gent-ascend
+├ ○ /icon.png
+├ ƒ /join
+├ ○ /launch                                    5m      1y
+├ ƒ /lifestyle
+├ ƒ /lifestyle/legacy-reserve
+├ ○ /manifest.webmanifest
+├ ƒ /membership
+├ ○ /opengraph-image.png
+├ ○ /reserve
+├ ƒ /shop
+├ ƒ /shop/[handle]
+├ ƒ /shop/cart
+├ ƒ /shop/world/[handle]
+└ ƒ /support
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

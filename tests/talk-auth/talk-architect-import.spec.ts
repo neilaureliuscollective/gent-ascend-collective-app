@@ -50,7 +50,7 @@ async function signIn(page: Page, email: string) {
 }
 
 async function openArchitectMenu(page: Page) {
-  await page.getByRole('button', { name: 'Aethelios menu', exact: true }).click();
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
 }
 
 async function api<T>(page: Page, path: string, method = 'GET', body?: unknown) {
@@ -154,7 +154,10 @@ test('authenticated Talk recovery and Architect import through real routes', asy
 
   page.once('dialog', (dialog) => dialog.dismiss());
   await openArchitectMenu(page);
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Talk' }).click();
+  await page
+    .getByRole('dialog', { name: 'Menu', exact: true })
+    .getByRole('link', { name: 'Talk', exact: true })
+    .click();
   await expect(page).toHaveURL(draftUrl);
   await expect(page.getByLabel('Project vision')).toHaveValue(unsentVision);
   await page.keyboard.press('Escape');
@@ -195,7 +198,11 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     page,
     (payload) => payload.id === lost && payload.kind === 'palette',
     async () => {
-      const row = await owner.from('ai_talk_creations').select('id,version').eq('id', lost).maybeSingle();
+      const row = await owner
+        .from('ai_talk_creations')
+        .select('id,version')
+        .eq('id', lost)
+        .maybeSingle();
       expect(row.data?.id).toBe(lost);
       expect(row.data?.version).toBe(1);
     },
@@ -241,7 +248,11 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     ).data?.creation_id,
   ).toBe(briefV2);
 
-  const paletteRow = await owner.from('ai_talk_creations').select('id').eq('id', lost).maybeSingle();
+  const paletteRow = await owner
+    .from('ai_talk_creations')
+    .select('id')
+    .eq('id', lost)
+    .maybeSingle();
   const extraBrief = await api<{ id: string }>(page, '/api/aurelius/creations', 'POST', {
     id: crypto.randomUUID(),
     conversationId: conversation,
@@ -264,20 +275,28 @@ test('authenticated Talk recovery and Architect import through real routes', asy
       })
     ).status,
   ).toBe(409);
-  const prepared = await api<{ imported?: boolean; id: string }>(page, '/api/aurelius/creations', 'POST', {
-    id: handoffId,
-    conversationId: conversation,
-    discipline: 'business',
-    idea: 'A premium brand and website.',
-    decisions: 'Keep emerald restrained.',
-    creationIds: [briefV2, paletteRow.data?.id ?? lost],
-    imageIds: [],
-    preparedAt: '2026-10-14T00:00:00.000Z',
-  });
+  const prepared = await api<{ imported?: boolean; id: string }>(
+    page,
+    '/api/aurelius/creations',
+    'POST',
+    {
+      id: handoffId,
+      conversationId: conversation,
+      discipline: 'business',
+      idea: 'A premium brand and website.',
+      decisions: 'Keep emerald restrained.',
+      creationIds: [briefV2, paletteRow.data?.id ?? lost],
+      imageIds: [],
+      preparedAt: '2026-10-14T00:00:00.000Z',
+    },
+  );
   expect(prepared.status).toBe(201);
   expect(prepared.body.imported).toBe(false);
   const review = await api<{
-    project?: Record<string, unknown> & { name: string; blueprint?: { deliverables?: string; state?: string } };
+    project?: Record<string, unknown> & {
+      name: string;
+      blueprint?: { deliverables?: string; state?: string };
+    };
     originReady?: boolean;
     mappingVersion?: string;
     transfer?: {
@@ -298,12 +317,16 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(review.body.transfer?.paletteRolesCopied).toBe(false);
   expect(review.body.project?.blueprint?.deliverables ?? '').not.toMatch(/background|accent/i);
   expect(review.body.project?.blueprint?.state).toMatch(/Referenced and retained in Talk only/);
-  expect(review.body.transfer?.referenced?.some((item) => item.kind === 'brief' && item.versionId === briefV2)).toBe(
-    true,
-  );
-  expect(review.body.transfer?.referenced?.some((item) => item.kind === 'palette' && item.versionId === lost)).toBe(
-    true,
-  );
+  expect(
+    review.body.transfer?.referenced?.some(
+      (item) => item.kind === 'brief' && item.versionId === briefV2,
+    ),
+  ).toBe(true);
+  expect(
+    review.body.transfer?.referenced?.some(
+      (item) => item.kind === 'palette' && item.versionId === lost,
+    ),
+  ).toBe(true);
   expect(review.body.images).toEqual([]);
 
   const occupiedBrief = await api<{ id: string }>(page, '/api/aurelius/creations', 'POST', {
@@ -353,10 +376,16 @@ test('authenticated Talk recovery and Architect import through real routes', asy
     .maybeSingle();
   expect(occupied.data?.note).toBe('Imported from Talk');
   expect((occupied.data?.content as { name?: string } | null)?.name).toBe('Wrong valid content');
-  expect((await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', wrongHandoffId)).data).toEqual(
-    [],
-  );
-  expect((await owner.rpc('ai_talk_scoped_identity', { p_seed: `talk-origin-project:${person.data!.id}:${handoffId}` })).error).toBeTruthy();
+  expect(
+    (await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', wrongHandoffId)).data,
+  ).toEqual([]);
+  expect(
+    (
+      await owner.rpc('ai_talk_scoped_identity', {
+        p_seed: `talk-origin-project:${person.data!.id}:${handoffId}`,
+      })
+    ).error,
+  ).toBeTruthy();
   expect(
     (
       await owner.rpc('ai_talk_record_origin_import', {
@@ -395,10 +424,12 @@ test('authenticated Talk recovery and Architect import through real routes', asy
         note: 'Imported from Talk',
       });
       expect(version.data?.content).toEqual(review.body.project);
-      expect((version.data?.content as { name?: string } | null)?.name).toBe(review.body.project?.name);
-      expect((version.data?.content as { blueprint?: { state?: string } } | null)?.blueprint?.state).toBe(
-        review.body.project?.blueprint?.state,
+      expect((version.data?.content as { name?: string } | null)?.name).toBe(
+        review.body.project?.name,
       );
+      expect(
+        (version.data?.content as { blueprint?: { state?: string } } | null)?.blueprint?.state,
+      ).toBe(review.body.project?.blueprint?.state);
     },
   );
   const lostImport = await api<{ imported?: boolean }>(page, '/api/aurelius/creations', 'POST', {
@@ -442,7 +473,10 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(two.body.project).toEqual(review.body.project);
   expect(one.body.projectId).toBe(expectedProject);
   expect(one.body.saveId).toBe(expectedSave);
-  expect((await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', handoffId)).data?.length).toBe(1);
+  expect(
+    (await owner.from('ai_talk_origin_imports').select('id').eq('handoff_id', handoffId)).data
+      ?.length,
+  ).toBe(1);
   expect(
     (
       await api(page, '/api/aurelius/creations', 'POST', {
@@ -470,7 +504,9 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   expect(opened.body.projects?.some((item) => item.id === one.body.projectId)).toBe(true);
   const importedProject = opened.body.projects?.find((item) => item.id === one.body.projectId);
   expect(importedProject?.content?.blueprint?.vision).not.toBe(unsentVision);
-  expect(importedProject?.content?.blueprint?.state).toMatch(/Referenced and retained in Talk only/);
+  expect(importedProject?.content?.blueprint?.state).toMatch(
+    /Referenced and retained in Talk only/,
+  );
 
   await expect(page).toHaveURL(draftUrl);
   await expect(page.getByLabel('Project vision')).toHaveValue(unsentVision);
@@ -478,7 +514,9 @@ test('authenticated Talk recovery and Architect import through real routes', asy
   const other = await browser.newContext();
   const foreignPage = await other.newPage();
   await signIn(foreignPage, 'member@aurelius.test');
-  expect((await api(foreignPage, `/api/aurelius/creations?handoff=${handoffId}`)).status).toBeGreaterThanOrEqual(400);
+  expect(
+    (await api(foreignPage, `/api/aurelius/creations?handoff=${handoffId}`)).status,
+  ).toBeGreaterThanOrEqual(400);
   expect(
     (
       await api(foreignPage, '/api/aurelius/creations', 'POST', {
@@ -489,14 +527,17 @@ test('authenticated Talk recovery and Architect import through real routes', asy
       })
     ).status,
   ).toBeGreaterThanOrEqual(400);
-  expect((await api(foreignPage, `/api/architect-origin?project=${one.body.projectId}`)).status).toBeGreaterThanOrEqual(
-    400,
-  );
+  expect(
+    (await api(foreignPage, `/api/architect-origin?project=${one.body.projectId}`)).status,
+  ).toBeGreaterThanOrEqual(400);
   await other.close();
 
   page.once('dialog', (dialog) => dialog.accept());
   await openArchitectMenu(page);
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Talk' }).click();
+  await page
+    .getByRole('dialog', { name: 'Menu', exact: true })
+    .getByRole('link', { name: 'Talk', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/app\/aethelios/);
   await page.goBack();
   await expect(page).toHaveURL(draftUrl);

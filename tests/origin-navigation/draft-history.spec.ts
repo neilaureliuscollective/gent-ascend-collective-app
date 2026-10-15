@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalDestinations } from '../support/global-navigation';
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProject,
@@ -131,9 +132,8 @@ for (const width of [390, 720, 1440]) {
     await fixture(page);
     await editor(page).fill('Cancel must retain');
     page.once('dialog', (d) => d.dismiss());
-    await page.getByRole('button', { name: 'Aethelios menu', exact: true }).click();
-    await page
-      .getByRole('navigation', { name: 'Main navigation' })
+    await openGlobalMenu(page);
+    await globalDestinations(page)
       .getByRole('link', { name: 'Work', exact: true })
       .click();
     await expect(editor(page)).toHaveValue('Cancel must retain');
@@ -147,9 +147,8 @@ for (const width of [390, 720, 1440]) {
     await expect(editor(page)).toHaveValue('Saved document One');
     await editor(page).fill('Explicit leave discards');
     page.once('dialog', (d) => d.accept());
-    await page.getByRole('button', { name: 'Aethelios menu', exact: true }).click();
-    await page
-      .getByRole('navigation', { name: 'Main navigation' })
+    await openGlobalMenu(page);
+    await globalDestinations(page)
       .getByRole('link', { name: 'Work', exact: true })
       .click();
     await expect(page).toHaveURL(/\/app\/work$/);
@@ -320,9 +319,8 @@ test('discard after recovery returns to the freshly read saved revision', async 
 
 test('Forward away from a dirty history entry also restores on Back', async ({ page }) => {
   await fixture(page);
-  await page.getByRole('button', { name: 'Aethelios menu', exact: true }).click();
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
+  await openGlobalMenu(page);
+  await globalDestinations(page)
     .getByRole('link', { name: 'Work', exact: true })
     .click();
   await expect(page).toHaveURL(/\/app\/work$/);
