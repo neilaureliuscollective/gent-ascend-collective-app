@@ -12,6 +12,7 @@ on:
       - 'playwright.materials.config.ts'
       - 'playwright.charcoal.config.ts'
       - 'scripts/capture-charcoal-routes.mjs'
+      - 'scripts/charcoal-coverage-report.mjs'
       - '.github/workflows/obsidian-visual.yml'
 concurrency:
   group: obsidian-${{ github.head_ref || github.ref_name }}
@@ -44,6 +45,7 @@ jobs:
           tests/browser/luminous-obsidian.spec.ts
           tests/browser/imperial-tools.spec.ts
           tests/browser/talk-layout.spec.ts
+          tests/browser/live-consent-layout.spec.ts
           tests/browser/shell.spec.ts
           tests/browser/imperial-obsidian.spec.ts
           tests/browser/imperial-steel.spec.ts
