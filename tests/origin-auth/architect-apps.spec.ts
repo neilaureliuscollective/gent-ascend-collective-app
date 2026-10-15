@@ -46,8 +46,15 @@ function workerEnv(workerId = 'apps-connected'): NodeJS.ProcessEnv {
 }
 
 async function runAppsWorkerTick(workerId?: string) {
-  const child = spawn('node', ['scripts/architect-construct-worker.mjs'], {
-    env: workerEnv(workerId),
+  const workRoot = process.env.ARCHITECT_APPS_WORK_ROOT || '/tmp/architect-apps-work';
+  mkdirSync(workRoot, { recursive: true });
+  const child = spawn('node', ['scripts/architect-apps-packaged-worker.mjs', '--once'], {
+    env: {
+      ...workerEnv(workerId),
+      ARCHITECT_APPS_WORK_ROOT: workRoot,
+      ARCHITECT_APPS_REQUIRE_ISOLATION: 'true',
+      ARCHITECT_APPS_IMAGE: process.env.ARCHITECT_APPS_IMAGE || 'aethelios-architect-apps:2026-10-15.1',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let out = '';
@@ -346,7 +353,7 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
         projectUrl,
         name,
         worker: { first: first.out.slice(-800), second: second.out.slice(-800), failed: failed.out.slice(-800) },
-        note: 'Signed-in UI journey used real Auth, application APIs, durable records, a new worker process per build, Docker compile and the compiled iframe. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity through page fetch so verifyOrigin still ran. A labelled compile-failure revision kept the last good preview. A replacement Next.js process on :3108 reopened that revision and records; the captured :3103 URL could not satisfy the replacement identity check. Playwright did not kill its own webServer. Preview sessions are in-process and were reissued on the replacement server.',
+        note: 'Signed-in UI journey used real Auth, application APIs, durable records, the packaged Apps worker image for each tick, Docker compile and the compiled iframe. The first create committed, then only the HTTP acknowledgment was dropped and retried with the same operation identity through page fetch so verifyOrigin still ran. A labelled compile-failure revision kept the last good preview. A replacement Next.js process on :3108 reopened that revision and records; the captured :3103 URL could not satisfy the replacement identity check. Playwright did not kill its own webServer. Preview revocation uses shared database sessions, so missing local process state is not authorization.',
       },
       null,
       2,

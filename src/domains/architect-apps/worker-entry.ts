@@ -11,7 +11,7 @@ import {
   classifyAppsWorkerHealth,
   commissionedAppsWorkerReady,
   hostedWorkerPlaneForbidden,
-  requiredAppsSchemaNames,
+  probeAppsSchemaFromClient,
 } from './commission';
 import { createWorkerAppStore } from './database-store';
 import { inspectAppsImageDigest, parseAppsImageDigest, probeAppsDockerIsolation } from './isolate';
@@ -34,21 +34,23 @@ async function gatherEvidence(env: NodeJS.ProcessEnv = process.env) {
   }
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   let schemaCompatible = false;
+  let schemaClassification: 'ok' | 'unavailable' | 'denied' | 'misconfigured' | 'skipped' = 'skipped';
+  let schemaMissing: string[] = [];
   if (connection && serviceKey) {
     const client = createClient(connection.url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    const missing: string[] = [];
-    for (const table of requiredAppsSchemaNames.tables) {
-      const { error } = await client.from(table).select('id').limit(0);
-      if (error) missing.push(table);
-    }
-    schemaCompatible = missing.length === 0;
+    const probe = await probeAppsSchemaFromClient(client);
+    schemaCompatible = probe.ok;
+    schemaClassification = probe.classification;
+    schemaMissing = probe.missing;
   }
   return {
     isolationAvailable: isolation.available,
     observedDigest,
     schemaCompatible,
+    schemaClassification,
+    schemaMissing,
     isolation,
   };
 }
@@ -80,6 +82,7 @@ if (healthOnly) {
     worker: health.workerId,
     processId: health.processId,
     missing: health.missing,
+    schema: evidence.schemaClassification,
   });
   process.exit(health.ready ? 0 : 2);
 }
@@ -104,6 +107,8 @@ if (
     processId: identity.processId,
     digest: parseAppsImageDigest(process.env.ARCHITECT_APPS_IMAGE_DIGEST) ? 'present' : 'missing',
     observedDigest: evidence.observedDigest ? 'present' : 'missing',
+    schema: evidence.schemaClassification,
+    schemaMissing: evidence.schemaMissing,
   });
   process.exit(2);
 }
@@ -119,6 +124,7 @@ if (preflight) {
     processId: identity.processId,
     digest: 'matched',
     missing: [],
+    schema: evidence.schemaClassification,
   });
   process.exit(0);
 }

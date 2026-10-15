@@ -1,4 +1,4 @@
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 import { generateAppProposal } from '@/domains/architect-apps/generation';
 import { defaultAppGenerationTransport, mockedSupportedAppProposal } from '@/domains/architect-apps/provider';
@@ -10,6 +10,11 @@ import { signPreviewSession, verifyPreviewSession, resetPreviewSessions, preview
 import { PREVIEW_SESSION_MAX } from '@/domains/architect-apps/schema';
 import { buildAppGenerationContext, APP_DATA_BRIDGE_CONTRACT } from '@/domains/architect-apps/context';
 import { fileHash } from '@/domains/architect-apps/hash';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  resetPreviewSessions();
+});
 
 it('uses the production adapter with deterministic transport for a non-tracker app and a non-prewritten revision', async () => {
   const created = mockedSupportedAppProposal({ kind: 'create', files: [] });
@@ -94,9 +99,9 @@ it('supplies authoritative source contents, hashes, collections and the host bri
   expect(context.direction?.unsupported?.length).toBeGreaterThan(0);
 });
 
-it('derives compact preview sessions and allowlists iframe payloads', () => {
+it('derives compact preview sessions and allowlists iframe payloads', async () => {
   resetPreviewSessions();
-  const session = signPreviewSession({
+  const session = await signPreviewSession({
     personId: '00000000-0000-4000-8000-000000000001',
     projectId: '00000000-0000-4000-8000-000000000003',
     revisionId: '00000000-0000-4000-8000-000000000009',
@@ -107,13 +112,13 @@ it('derives compact preview sessions and allowlists iframe payloads', () => {
   expect(previewCsp()).not.toMatch(/allow-same-origin/);
   expect(session.length).toBeLessThanOrEqual(PREVIEW_SESSION_MAX);
   expect(
-    verifyPreviewSession(session, {
+    await verifyPreviewSession(session, {
       personId: '00000000-0000-4000-8000-000000000001',
       projectId: '00000000-0000-4000-8000-000000000003',
       revisionId: '00000000-0000-4000-8000-000000000009',
     }, 'unit-preview-secret-key'),
   ).toBe(true);
-  const replaced = signPreviewSession({
+  const replaced = await signPreviewSession({
     personId: '00000000-0000-4000-8000-000000000001',
     projectId: '00000000-0000-4000-8000-000000000003',
     revisionId: '00000000-0000-4000-8000-000000000009',
@@ -121,14 +126,14 @@ it('derives compact preview sessions and allowlists iframe payloads', () => {
     replace: true,
   });
   expect(
-    verifyPreviewSession(session, {
+    await verifyPreviewSession(session, {
       personId: '00000000-0000-4000-8000-000000000001',
       projectId: '00000000-0000-4000-8000-000000000003',
       revisionId: '00000000-0000-4000-8000-000000000009',
     }, 'unit-preview-secret-key'),
   ).toBe(false);
   expect(
-    verifyPreviewSession(replaced, {
+    await verifyPreviewSession(replaced, {
       personId: '00000000-0000-4000-8000-000000000001',
       projectId: '00000000-0000-4000-8000-000000000003',
       revisionId: '00000000-0000-4000-8000-000000000009',
@@ -157,7 +162,7 @@ it('derives compact preview sessions and allowlists iframe payloads', () => {
   expect(allowlisted.action).toBe('data');
 });
 
-it('labels a compile-failure revision and accepts HMAC preview sessions after restart when cluster mode is on', async () => {
+it('labels a compile-failure revision and refuses HMAC-only preview after restart even when cluster mode is on', async () => {
   const created = mockedSupportedAppProposal({ kind: 'create', files: [] });
   const broken = mockedSupportedAppProposal({
     kind: 'revise',
@@ -168,7 +173,7 @@ it('labels a compile-failure revision and accepts HMAC preview sessions after re
   expect(broken.files.find((file) => file.path === 'src/App.tsx')?.content).toMatch(/not-a-number/);
   expect(notesBrokenTypecheckOperations(created.files)[0]?.path).toBe('src/App.tsx');
   resetPreviewSessions();
-  const session = signPreviewSession({
+  const session = await signPreviewSession({
     personId: '00000000-0000-4000-8000-000000000001',
     projectId: '00000000-0000-4000-8000-000000000003',
     revisionId: '00000000-0000-4000-8000-000000000009',
@@ -176,7 +181,7 @@ it('labels a compile-failure revision and accepts HMAC preview sessions after re
   });
   resetPreviewSessions();
   expect(
-    verifyPreviewSession(
+    await verifyPreviewSession(
       session,
       {
         personId: '00000000-0000-4000-8000-000000000001',
@@ -193,7 +198,7 @@ it('labels a compile-failure revision and accepts HMAC preview sessions after re
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'hosted-publishable-key');
   expect(previewClusterAllowed()).toBe(true);
   expect(
-    verifyPreviewSession(
+    await verifyPreviewSession(
       session,
       {
         personId: '00000000-0000-4000-8000-000000000001',
@@ -202,5 +207,5 @@ it('labels a compile-failure revision and accepts HMAC preview sessions after re
       },
       'unit-preview-secret-key',
     ),
-  ).toBe(true);
+  ).toBe(false);
 });

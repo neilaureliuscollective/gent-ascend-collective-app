@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
   appsDockerInvocation,
+  appsWorkRoot,
+  assertHostVisibleWorkPath,
   assertSafeAppsDockerArgs,
   buildIsolatedGeneratedApp,
   collectArtifactTree,
@@ -18,6 +20,11 @@ import {
   trustedAppsContainerRunner,
   appsNobody,
 } from '@/domains/architect-apps/isolate';
+import {
+  assertPackagedWorkerIsolation,
+  packagedWorkerInvocation,
+  provePackagedWorkerTopology,
+} from '../scripts/architect-apps-packaged-worker.mjs';
 import { acceptAppBuildSuccess, resolveAppExecutionKind } from '@/domains/architect-apps/worker';
 import { notesSourceFiles } from '@/domains/architect-apps/notes-fixture';
 
@@ -231,6 +238,55 @@ it('builds the pinned image and runs the isolated Field Notes compile when isola
   const leftover = spawnSync('docker', ['inspect', 'apps-required-timeout'], { encoding: 'utf8' });
   expect(leftover.status !== 0 || /no such container/i.test(`${leftover.stderr}${leftover.stdout}`)).toBe(true);
 }, 360000);
+
+it('maps isolated work onto a shared host path and keeps generated containers off the Docker socket', () => {
+  const root = '/tmp/architect-apps-work';
+  expect(appsWorkRoot({ ARCHITECT_APPS_WORK_ROOT: root })).toBe(root);
+  expect(assertHostVisibleWorkPath(`${root}/architect-apps-iso-abc`, { ARCHITECT_APPS_WORK_ROOT: root })).toBe(
+    `${root}/architect-apps-iso-abc`,
+  );
+  expect(() => assertHostVisibleWorkPath('/tmp/other/iso', { ARCHITECT_APPS_WORK_ROOT: root })).toThrow(
+    /shared host work root/i,
+  );
+  expect(() => appsWorkRoot({ ARCHITECT_APPS_WORK_ROOT: '/var/run/docker.sock/work' })).toThrow(/privileged/i);
+  const generated = appsDockerInvocation(`${root}/src`, `${root}/runner.mjs`, defaultAppsImage, {
+    jobFile: `${root}/job.json`,
+    name: 'apps-shared',
+  });
+  expect(generated.args.join(' ')).not.toMatch(/docker\.sock/);
+  const packaged = packagedWorkerInvocation({
+    workRoot: root,
+    dockerGid: 999,
+    once: true,
+    env: { APP_ENV: 'local', ARCHITECT_APPS_ENABLED: 'true' },
+  });
+  expect(() => assertPackagedWorkerIsolation(packaged.args)).not.toThrow();
+  expect(packaged.args.join(' ')).toMatch(/docker\.sock/);
+  expect(packaged.args).toContain(`${root}:${root}`);
+  expect(packaged.args.join(' ')).not.toMatch(/OPENAI_API_KEY|privileged/);
+});
+
+it('proves the packaged worker can see host-shared work through a sibling container', async () => {
+  const required = process.env.ARCHITECT_APPS_REQUIRE_ISOLATION === 'true';
+  const probe = await probeAppsDockerIsolation({ PATH: process.env.PATH });
+  if (!probe.available) {
+    if (required) throw new Error(`Required packaged-worker topology unavailable: ${probe.reason}`);
+    return;
+  }
+  const { executeWorkerImageBuild, defaultWorkerImage } = await import('../scripts/architect-apps-worker-image.mjs');
+  const inspect = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', defaultWorkerImage], {
+    encoding: 'utf8',
+  });
+  if (inspect.status !== 0) {
+    const built = executeWorkerImageBuild({ inherit: false });
+    if (built.action !== 'built') {
+      if (required) throw new Error(built.reason);
+      return;
+    }
+  }
+  const receipt = provePackagedWorkerTopology();
+  expect(receipt.ok, receipt.output || receipt.reason).toBe(true);
+}, 240000);
 
 it('pins React type declarations in the isolated image', async () => {
   const dockerfile = await readFile('deploy/architect-apps/Dockerfile', 'utf8');

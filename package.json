@@ -34,7 +34,10 @@
     "architect:apps-worker": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker.mjs",
     "architect:apps-worker:supervised": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker.mjs --supervised",
     "architect:apps-worker:preflight": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker-preflight.mjs",
-    "architect:apps-worker:health": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker-health.mjs"
+    "architect:apps-worker:health": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-worker-health.mjs",
+    "architect:apps-worker:image": "node scripts/architect-apps-worker-image.mjs",
+    "architect:apps-worker:packaged": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.development.local scripts/architect-apps-packaged-worker.mjs",
+    "architect:apps-worker:topology": "node scripts/architect-apps-packaged-worker.mjs --prove-topology"
   },
   "dependencies": {
     "@ai-sdk/openai": "4.0.72",

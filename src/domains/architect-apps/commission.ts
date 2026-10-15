@@ -1,5 +1,18 @@
 import { parseEnvironment } from '@/platform/environment';
 import { supabaseConnection } from '@/platform/supabase/connection';
+import {
+  probeAppsSchemaCompatibility as probeSchemaContracts,
+  requiredAppsSchemaContracts,
+} from './schema-probe';
+
+export {
+  classifySchemaProbeError,
+  probeAppsSchemaCompatibility,
+  probeAppsSchemaFromClient,
+  requiredAppsSchemaContracts,
+  tableKeyColumn,
+} from './schema-probe';
+export type { AppsSchemaProbe, AppsSchemaProbeClassification } from './schema-probe';
 
 export function parseAppsImageDigest(value?: string | null) {
   const trimmed = value?.trim() ?? '';
@@ -26,23 +39,8 @@ export const APPS_WORKER_HEALTH_STATES = ['idle', 'working', 'unavailable', 'mis
 export type AppsWorkerHealthState = (typeof APPS_WORKER_HEALTH_STATES)[number];
 
 export const requiredAppsSchemaNames = {
-  tables: [
-    'architect_apps',
-    'architect_app_revisions',
-    'architect_app_artifacts',
-    'architect_app_jobs',
-    'architect_app_events',
-    'architect_app_records',
-  ],
-  rpcs: [
-    'architect_apps_approve',
-    'architect_apps_start',
-    'architect_apps_claim',
-    'architect_apps_heartbeat',
-    'architect_apps_finish',
-    'architect_apps_write_record',
-    'architect_apps_timeout',
-  ],
+  tables: Object.keys(requiredAppsSchemaContracts.tables),
+  rpcs: [...requiredAppsSchemaContracts.rpcs],
 } as const;
 
 const processBootId = `${process.pid.toString(16)}-${Date.now().toString(16)}`;
@@ -229,15 +227,8 @@ export function expectedAppsSchemaNames() {
   return requiredAppsSchemaNames;
 }
 
-export async function probeAppsSchemaCompatibility(
-  lookup: (kind: 'table' | 'rpc', name: string) => Promise<boolean>,
+export async function probeRequiredAppsSchema(
+  lookup: (kind: 'table' | 'rpc', name: string, column?: string) => Promise<boolean>,
 ) {
-  const missing: string[] = [];
-  for (const table of requiredAppsSchemaNames.tables) {
-    if (!(await lookup('table', table))) missing.push(table);
-  }
-  for (const rpc of requiredAppsSchemaNames.rpcs) {
-    if (!(await lookup('rpc', rpc))) missing.push(rpc);
-  }
-  return { ok: missing.length === 0, missing };
+  return probeSchemaContracts(lookup);
 }

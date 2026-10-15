@@ -58,6 +58,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015120000_architect_apps_durable.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015140000_architect_apps_mutation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015155000_architect_apps_retain_verified.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015156000_architect_apps_preview_sessions.sql', 'utf8'));
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
 
@@ -251,5 +252,56 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
       (await asUser(ownerAuth, `select verified, source_kind from public.architect_design_directions where request_id='${talkRequest}'`))
         .rows,
     ).toEqual([{ verified: false, source_kind: 'pending' }]);
+  });
+
+  it('probes the real artifact contract and keeps preview revocation fail-closed', async () => {
+    await expect(db.query('select id from public.architect_app_artifacts limit 0')).rejects.toThrow(/column .*id|does not exist/i);
+    expect((await db.query('select revision_id from public.architect_app_artifacts limit 0')).rows).toEqual([]);
+    const probe = await asWorker(`select public.architect_apps_schema_probe() as report`);
+    const report = (probe.rows[0] as { report: { ok: boolean; missing: string[]; contracts: { architect_app_artifacts: string } } })
+      .report;
+    expect(report.ok).toBe(true);
+    expect(report.missing).toEqual([]);
+    expect(report.contracts.architect_app_artifacts).toBe('revision_id');
+    await expect(asUser(ownerAuth, `select public.architect_apps_schema_probe()`)).rejects.toThrow(
+      /permission denied|Worker authorization required/i,
+    );
+    const issued = await asUser(
+      ownerAuth,
+      `select public.architect_apps_preview_issue('${revision}','aaaaaaaaaaaaaaaa','v1.aaaaaaaaaaaaaaaa.7fffffff.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',${Math.floor(Date.now() / 1000) + 1800},false) as session`,
+    );
+    const token = (issued.rows[0] as { session: { token: string; nonce: string } }).session;
+    expect(token.nonce).toBe('aaaaaaaaaaaaaaaa');
+    await asUser(ownerAuth, `select public.architect_apps_preview_revoke('${revision}')`);
+    expect(
+      (await asUser(ownerAuth, `select public.architect_apps_preview_read('aaaaaaaaaaaaaaaa') as session`)).rows[0],
+    ).toMatchObject({ session: expect.objectContaining({ revoked: true }) });
+    expect((await asUser(ownerAuth, `select public.architect_apps_preview_current('${revision}') as session`)).rows[0]).toEqual({
+      session: null,
+    });
+    await expect(
+      asUser(
+        foreignAuth,
+        `select public.architect_apps_preview_issue('${revision}','bbbbbbbbbbbbbbbb','v1.bbbbbbbbbbbbbbbb.7fffffff.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',${Math.floor(Date.now() / 1000) + 1800},true)`,
+      ),
+    ).rejects.toThrow(/Revision unavailable|Sign in required/i);
+  });
+});
+
+describe('Apps schema probe against genuinely missing prerequisites (PGlite; not Supabase Auth)', () => {
+  it('fails clearly when required tables are absent', async () => {
+    const empty = new PGlite();
+    await empty.exec(
+      `create function public.architect_apps_worker_ok() returns boolean language sql stable as $$select true$$;`,
+    );
+    const sql = await readFile('supabase/migrations/20261015156000_architect_apps_preview_sessions.sql', 'utf8');
+    const start = sql.indexOf('create or replace function public.architect_apps_schema_probe');
+    const end = sql.indexOf('create or replace function public.architect_apps_preview_issue');
+    await empty.exec(sql.slice(start, end));
+    const probe = await empty.query(`select public.architect_apps_schema_probe() as report`);
+    const report = (probe.rows[0] as { report: { ok: boolean; missing: string[] } }).report;
+    expect(report.ok).toBe(false);
+    expect(report.missing).toEqual(expect.arrayContaining(['architect_apps', 'architect_app_jobs', 'architect_apps_claim']));
+    await empty.close();
   });
 });

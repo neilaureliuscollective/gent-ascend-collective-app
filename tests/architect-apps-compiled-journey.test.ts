@@ -168,7 +168,7 @@ it('compiles Field Notes, mounts the sealed bundle, and replays create/edit agai
   expect(ready.preview?.srcDoc).toMatch(/createRoot|Field notes/i);
   expect(ready.preview?.csp).toMatch(/sandbox allow-scripts/);
   expect(ready.preview?.csp).not.toMatch(/allow-same-origin/);
-  const session = signPreviewSession({
+  const session = await signPreviewSession({
     personId: state.owner,
     projectId: state.projectId,
     revisionId: approved.revision.id,

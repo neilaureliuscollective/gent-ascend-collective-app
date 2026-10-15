@@ -5,11 +5,13 @@ import {
   appsWorkerConcurrency,
   appsWorkerMissingNames,
   classifyAppsWorkerHealth,
+  classifySchemaProbeError,
   commissionedAppsWorkerReady,
   expectedAppsSchemaNames,
   hostedWorkerPlaneForbidden,
   localAppsWorkerReady,
   probeAppsSchemaCompatibility,
+  requiredAppsSchemaContracts,
 } from '@/domains/architect-apps/commission';
 import { parseAppsImageDigest } from '@/domains/architect-apps/commission';
 import { founderAppModelRunBlockers } from '@/domains/architect-apps/readiness';
@@ -117,7 +119,16 @@ it('keeps paid generation closed and lists required schema names', async () => {
   expect(blockers.ready).toBe(false);
   expect(blockers.blockers.join(' ')).toMatch(/commissioned|Vercel/i);
   expect(expectedAppsSchemaNames().tables).toContain('architect_app_jobs');
+  expect(requiredAppsSchemaContracts.tables.architect_app_artifacts).toEqual(['revision_id']);
+  expect(requiredAppsSchemaContracts.tables.architect_app_artifacts).not.toContain('id');
+  expect(classifySchemaProbeError({ code: '42703', message: 'column id does not exist' })).toBe('misconfigured');
+  expect(classifySchemaProbeError({ code: '42P01', message: 'relation architect_app_jobs does not exist' })).toBe(
+    'unavailable',
+  );
+  expect(classifySchemaProbeError({ code: '42501', message: 'permission denied' })).toBe('denied');
   const probe = await probeAppsSchemaCompatibility(async (kind, name) => kind === 'table' && name === 'architect_apps');
   expect(probe.ok).toBe(false);
   expect(probe.missing).toContain('architect_apps_claim');
+  expect(probe.missing).toContain('architect_app_artifacts');
+  expect(probe.classification).toBe('unavailable');
 });

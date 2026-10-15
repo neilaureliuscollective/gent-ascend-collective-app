@@ -154,7 +154,7 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
   expect(ready.preview?.revision).toBe(1);
   expect(ready.jobs[0]?.result?.isolation).toBe('docker');
   expect(ready.jobs[0]?.result?.sandbox).toBe(true);
-  const session = signPreviewSession({
+  const session = await signPreviewSession({
     personId: state.owner,
     projectId: state.projectId,
     revisionId: approved.revision.id,
@@ -309,7 +309,7 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
   const stillListed = await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
-    session: signPreviewSession({
+    session: await signPreviewSession({
       personId: state.owner,
       projectId: state.projectId,
       revisionId: approved.revision.id,

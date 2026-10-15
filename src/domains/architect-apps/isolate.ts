@@ -47,6 +47,28 @@ export function appsImage(env: NodeJS.ProcessEnv | Record<string, string | undef
   return env[appsImageName] || defaultAppsImage;
 }
 
+export function appsWorkRoot(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
+  const root = env.ARCHITECT_APPS_WORK_ROOT?.trim();
+  if (!root) return tmpdir();
+  if (!root.startsWith('/') || root.includes('..') || root.includes('docker.sock') || root.includes('\\'))
+    throw new Error('ARCHITECT_APPS_WORK_ROOT must be an absolute shared host path without privileged mounts.');
+  return root;
+}
+
+export function assertHostVisibleWorkPath(
+  path: string,
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+) {
+  const root = env.ARCHITECT_APPS_WORK_ROOT?.trim();
+  if (!root) return path;
+  const prefix = root.endsWith('/') ? root : `${root}/`;
+  if (path !== root && !path.startsWith(prefix))
+    throw new Error(
+      'Isolated work path is not under the shared host work root. Sibling Docker mounts the host path, not a path that exists only inside the worker container.',
+    );
+  return path;
+}
+
 export async function inspectAppsImageDigest(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
   exec: AppsDockerExec = (file, args, options) => execFileAsync(file, args, options),
@@ -421,7 +443,10 @@ export async function buildIsolatedGeneratedApp(
     await record('failed', probe.reason);
     return isolatedBuildUnavailable(probe.reason);
   }
-  const work = await mkdtemp(join(tmpdir(), 'architect-apps-iso-'));
+  const root = appsWorkRoot(env);
+  await mkdir(root, { recursive: true });
+  const work = await mkdtemp(join(root, 'architect-apps-iso-'));
+  assertHostVisibleWorkPath(work, env);
   const name = options.name ?? `apps-${Date.now().toString(36)}`;
   try {
     const tree = overlaySealedFiles(files);

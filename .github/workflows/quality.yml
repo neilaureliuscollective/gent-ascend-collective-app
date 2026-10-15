@@ -107,12 +107,20 @@ jobs:
       - run: npm ci
       - name: Build or inspect the pinned Architect Apps image
         run: node scripts/architect-apps-image.mjs
-      - name: Required isolated compile, failure cleanup and compiled journey
+      - name: Build the isolated Apps worker image
+        run: node scripts/architect-apps-worker-image.mjs
+      - name: Required isolated compile, packaged worker topology and compiled journey
         env:
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
           ARCHITECT_APPS_PREVIEW_SECRET: isolate-preview-secret-key
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
           APP_ENV: local
-        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts --reporter=dot
+        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts tests/architect-apps-worker-image.test.ts tests/architect-apps-preview-sessions.test.ts --reporter=dot
+      - name: Prove the packaged worker shared-path topology
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+        run: node scripts/architect-apps-packaged-worker.mjs --prove-topology
       - name: Record worker bundle and fail-closed commissioned preflight
         env:
           ARCHITECT_APPS_DEPLOYMENT_MODE: commissioned
@@ -125,8 +133,6 @@ jobs:
             echo 'Commissioned preflight must fail closed without worker secrets, isolation and digest.'
             exit 1
           fi
-      - name: Build the isolated Apps worker image
-        run: node scripts/architect-apps-worker-image.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -135,5 +141,6 @@ jobs:
             test-results/architect-apps-compiled-preview.html
             docs/evidence/architect-apps/compiled-preview.html
             docs/evidence/architect-apps/worker-image-receipt.json
+            docs/evidence/architect-apps/packaged-worker-topology.json
           if-no-files-found: ignore
 

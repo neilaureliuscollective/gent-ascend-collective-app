@@ -321,7 +321,7 @@ it('cancels a queued job and stores host records against the app, not the previe
       manifestHash: 'c'.repeat(64),
     }),
   });
-  const session = signPreviewSession({
+  const session = await signPreviewSession({
     personId: state.owner,
     projectId: state.projectId,
     revisionId: approved.revision.id,

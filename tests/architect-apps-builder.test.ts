@@ -108,7 +108,7 @@ it('compiles Field Notes with the labelled host-fixture runner and does not clai
   expect(built.result.isolation).toBe('host-fixture');
   expect(built.result.sandbox).toBe(false);
   resetPreviewSessions();
-  const session = signPreviewSession({
+  const session = await signPreviewSession({
     personId: '00000000-0000-4000-8000-000000000001',
     projectId: '00000000-0000-4000-8000-000000000003',
     revisionId: '00000000-0000-4000-8000-000000000009',

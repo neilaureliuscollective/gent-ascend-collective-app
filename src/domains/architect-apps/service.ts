@@ -7,11 +7,14 @@ import { assertAdditiveSchema, assertDataRate, recordToItem, validateCollectionP
 import { appGenerationProvenance, appProviderStatus, generateAppProposal, type AppGenerationTransport } from './generation';
 import { appApprovalHash, treeHash } from './hash';
 import {
+  DatabasePreviewSessionStore,
   assemblePreviewDocument,
+  defaultPreviewSessionStore,
   previewSessionGeneration,
   revisionAllowsPreview,
   signPreviewSession,
   verifyPreviewSession,
+  type PreviewSessionStore,
 } from './preview';
 import { defaultAppGenerationTransport } from './provider';
 import { appsProcessIdentity } from './commission';
@@ -40,6 +43,11 @@ export function appStore(options?: { client?: AppPersistenceClient; plane?: 'own
       'unavailable',
     );
   return new DatabaseAppStore(options.client, options.plane ?? 'owner');
+}
+
+function previewStoreFor(client?: AppPersistenceClient): PreviewSessionStore {
+  if (memoryAppStoreAllowed() || !client) return defaultPreviewSessionStore();
+  return new DatabasePreviewSessionStore(client);
 }
 
 function requireReady() {
@@ -128,9 +136,10 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
       selected && (selected.status === 'ready' || selected.working) && selectedArtifact ? selected : working;
     const previewArtifact =
       previewRevision?.id === selected?.id && selectedArtifact ? selectedArtifact : workingArtifact;
+    const sessions = previewStoreFor(client);
     const session =
       previewRevision && previewArtifact && revisionAllowsPreview(previewRevision)
-        ? signPreviewSession({ personId: person.id, projectId, revisionId: previewRevision.id })
+        ? await signPreviewSession({ personId: person.id, projectId, revisionId: previewRevision.id, store: sessions })
         : null;
     const preview =
       previewRevision && previewArtifact && session && revisionAllowsPreview(previewRevision)
@@ -141,7 +150,7 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
             title: app?.name,
             revision: previewRevision.revision,
             revisionId: previewRevision.id,
-            generation: previewSessionGeneration(previewRevision.id),
+            generation: await previewSessionGeneration(previewRevision.id, sessions),
           })
         : null;
     const pendingStart =
@@ -356,11 +365,13 @@ export async function reopenArchitectApp(input: unknown) {
       throw new IntelligenceError('Only a saved working application can be reopened.', 409);
     const artifact = await store.readArtifact(person.id, revision.id);
     if (!artifact) throw new IntelligenceError('Compiled artifacts for that revision are unavailable.', 404);
-    const session = signPreviewSession({
+    const sessions = previewStoreFor(client);
+    const session = await signPreviewSession({
       personId: person.id,
       projectId: parsed.data.projectId,
       revisionId: revision.id,
       replace: true,
+      store: sessions,
     });
     return {
       revision,
@@ -371,7 +382,7 @@ export async function reopenArchitectApp(input: unknown) {
         title: revision.generation.notes,
         revision: revision.revision,
         revisionId: revision.id,
-        generation: previewSessionGeneration(revision.id),
+        generation: await previewSessionGeneration(revision.id, sessions),
       }),
       session,
       selectedRevision: revision.revision,
@@ -395,7 +406,14 @@ export async function operateArchitectAppData(input: {
   requireReady();
   try {
     const { person, client } = await requireOwnedProject(input.projectId);
-    if (!verifyPreviewSession(input.session, { personId: person.id, projectId: input.projectId, revisionId: input.revisionId }))
+    if (
+      !(await verifyPreviewSession(
+        input.session,
+        { personId: person.id, projectId: input.projectId, revisionId: input.revisionId },
+        process.env.ARCHITECT_APPS_PREVIEW_SECRET,
+        previewStoreFor(client),
+      ))
+    )
       throw new IntelligenceError('Preview session is expired, revoked, or not bound to this application revision.', 403);
     assertDataRate(person.id);
     const store = appStore({ client, plane: 'owner' });
