@@ -118,6 +118,32 @@ const ordinaryDenied = await foreign.rpc('architect_apps_approve', {
 });
 assert.match(ordinaryDenied.error?.message ?? '', /founder pilot|not enabled for this account|executable work stays off/i);
 
+const budgetRun = crypto.randomUUID();
+const concurrent = await Promise.all(
+  [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()].map((requestId) =>
+    owner.rpc('architect_apps_reserve_generation', {
+      p_request: requestId,
+      p_run: budgetRun,
+      p_input: 16000,
+      p_output: 4000,
+      p_model: 'gpt-6-astra',
+    }),
+  ),
+);
+const createdReserves = concurrent.filter((row) => row.data?.created === true);
+const refusedReserves = concurrent.filter((row) => row.error);
+assert.equal(createdReserves.length, 2);
+assert.ok(refusedReserves.length >= 1);
+assert.match(refusedReserves[0]?.error?.message ?? '', /two model calls|reserved allowance/i);
+const replayReserve = await owner.rpc('architect_apps_reserve_generation', {
+  p_request: createdReserves[0]?.data?.request_id ?? createdReserves[0]?.data?.requestId,
+  p_run: budgetRun,
+  p_input: 16000,
+  p_output: 4000,
+  p_model: 'gpt-6-astra',
+});
+assert.equal(replayReserve.data?.created, false);
+
 const files = [{ path: 'src/App.tsx', content: 'export function App() { return null; }' }];
 const collections = [
   {

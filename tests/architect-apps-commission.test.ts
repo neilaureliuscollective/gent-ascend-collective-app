@@ -123,6 +123,8 @@ it('keeps paid generation closed and lists required schema names', async () => {
   expect(expectedAppsSchemaNames().tables).toContain('architect_app_generation_runs');
   expect(expectedAppsSchemaNames().tables).toContain('architect_app_worker_presence');
   expect(expectedAppsSchemaNames().tables).toContain('architect_apps_execution_policy');
+  expect(expectedAppsSchemaNames().tables).toContain('architect_app_generation_budgets');
+  expect(expectedAppsSchemaNames().rpcs).toContain('architect_apps_lock_generation_budget');
   expect(expectedAppsSchemaNames().rpcs).toContain('architect_apps_reserve_generation');
   expect(expectedAppsSchemaNames().rpcs).toContain('architect_apps_begin_generation');
   expect(expectedAppsSchemaNames().rpcs).toContain('architect_apps_set_execution_policy');

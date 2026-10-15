@@ -10,6 +10,7 @@ export const requiredAppsSchemaContracts = {
     architect_app_generation_runs: ['request_id'],
     architect_app_worker_presence: ['worker_id'],
     architect_apps_execution_policy: ['founder_pilot'],
+    architect_app_generation_budgets: ['run_id'],
   },
   rpcs: [
     'architect_apps_approve',
@@ -31,6 +32,7 @@ export const requiredAppsSchemaContracts = {
     'architect_apps_worker_readiness',
     'architect_apps_set_execution_policy',
     'architect_apps_require_execution',
+    'architect_apps_lock_generation_budget',
   ],
 } as const;
 

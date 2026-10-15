@@ -63,6 +63,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015156000_architect_apps_preview_sessions.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156500_architect_apps_pilot_budget.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156600_architect_apps_execution_gate.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015156700_architect_apps_budget_lock.sql', 'utf8'));
   await asWorker(`select public.architect_apps_set_execution_policy(true)`);
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
@@ -268,7 +269,11 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
         report: {
           ok: boolean;
           missing: string[];
-          contracts: { architect_app_artifacts: string; architect_apps_execution_policy: string };
+          contracts: {
+            architect_app_artifacts: string;
+            architect_apps_execution_policy: string;
+            architect_app_generation_budgets: string;
+          };
         };
       }
     ).report;
@@ -276,6 +281,7 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
     expect(report.missing).toEqual([]);
     expect(report.contracts.architect_app_artifacts).toBe('revision_id');
     expect(report.contracts.architect_apps_execution_policy).toBe('founder_pilot');
+    expect(report.contracts.architect_app_generation_budgets).toBe('run_id');
     await expect(asUser(ownerAuth, `select public.architect_apps_schema_probe()`)).rejects.toThrow(
       /permission denied|Worker authorization required/i,
     );
@@ -479,6 +485,35 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
     await expect(
       asUser(ownerAuth, `select public.architect_apps_finish_generation('${reducedRequest}','cancelled',0,0)`),
     ).rejects.toThrow(/cannot be cancelled to zero/i);
+  });
+
+  it('serializes distinct request IDs against the shared person+run allowance', async () => {
+    const run = '00000000-0000-4000-8000-000000000861';
+    const first = '00000000-0000-4000-8000-000000000862';
+    const second = '00000000-0000-4000-8000-000000000863';
+    const third = '00000000-0000-4000-8000-000000000864';
+    const replay = '00000000-0000-4000-8000-000000000862';
+    const [a, b] = await Promise.all([
+      asUser(ownerAuth, `select public.architect_apps_reserve_generation('${first}','${run}',16000,4000) as receipt`),
+      asUser(ownerAuth, `select public.architect_apps_reserve_generation('${second}','${run}',16000,4000) as receipt`),
+    ]);
+    expect((a.rows[0] as { receipt: { created: boolean } }).receipt.created).toBe(true);
+    expect((b.rows[0] as { receipt: { created: boolean } }).receipt.created).toBe(true);
+    await expect(
+      asUser(ownerAuth, `select public.architect_apps_reserve_generation('${third}','${run}',16000,4000)`),
+    ).rejects.toThrow(/two model calls/i);
+    const same = await asUser(
+      ownerAuth,
+      `select public.architect_apps_reserve_generation('${replay}','${run}',16000,4000) as receipt`,
+    );
+    expect((same.rows[0] as { receipt: { created: boolean } }).receipt.created).toBe(false);
+    expect(
+      (await asUser(ownerAuth, `select count(*)::int as count from public.architect_app_generation_runs where run_id='${run}'`))
+        .rows,
+    ).toEqual([{ count: 2 }]);
+    expect(
+      (await db.query(`select count(*)::int as count from public.architect_app_generation_budgets where run_id='${run}'`)).rows,
+    ).toEqual([{ count: 1 }]);
   });
 });
 

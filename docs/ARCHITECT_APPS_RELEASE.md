@@ -6,7 +6,7 @@ Implemented on PR #130. This is not a production authorization and not a claim t
 
 - Owner APIs, durable Apps RPCs, isolated Docker compile, compiled iframe, host collections, mutation identity, and the Origin workbench.
 - Explicit founder-pilot generation policy: `ARCHITECT_APPS_FOUNDER_PILOT`. Production stays identified as production. Mock generation is refused in production.
-- Local additive migrations: `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql`, `20261015155000_architect_apps_retain_verified.sql`, `20261015156000_architect_apps_preview_sessions.sql`, `20261015156500_architect_apps_pilot_budget.sql`, `20261015156600_architect_apps_execution_gate.sql`.
+- Local additive migrations: `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql`, `20261015155000_architect_apps_retain_verified.sql`, `20261015156000_architect_apps_preview_sessions.sql`, `20261015156500_architect_apps_pilot_budget.sql`, `20261015156600_architect_apps_execution_gate.sql`, `20261015156700_architect_apps_budget_lock.sql`.
 - Pinned images `aethelios-architect-apps:2026-10-15.1` and `aethelios-architect-apps-worker:2026-10-15.1`. Prepare both with `node scripts/architect-apps-prepare-runtime.mjs` on the host that will compile.
 - Labelled mocked provider (`ARCHITECT_APPS_AI_MOCK`) for local/test Field Notes only. Do not set it on hosted production.
 

@@ -185,7 +185,7 @@ export function memoryAppBudgetStore(): AppBudgetStore {
           throw new Error('The founder-pilot acceptance run already reserved its two model calls.');
         const used = counted.reduce((sum, row) => sum + (row.usedMicros ?? row.reservedMicros), 0);
         if (used + micros > APP_ACCEPTANCE_BUDGET.maxMicros)
-          throw new Error('The founder-pilot acceptance run would exceed its $1.00 reserved budget.');
+          throw new Error('The founder-pilot acceptance run would exceed its $1.00 reserved allowance.');
         const reserved: AppGenerationReservation = {
           requestId: input.requestId,
           runId: input.runId,
