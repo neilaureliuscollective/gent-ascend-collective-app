@@ -1,6 +1,6 @@
 # Member Lifestyle experience
 
-Development branch only. No production merge, hosted migration, provider activation, purchase or catalog mutation. Shopify catalog/media work remains paused.
+Founder authorized production merge of PR #133 on 2026-10-15. No hosted migration, provider activation, purchase or catalog mutation. Shopify catalog/media work remains paused.
 
 ## Direction
 

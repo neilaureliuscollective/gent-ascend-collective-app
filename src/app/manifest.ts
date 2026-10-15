@@ -18,19 +18,25 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: brand.themeColor,
     icons: [
       {
-        src: '/brand/aethelios-imperial-obsidian-20261010-192.png',
+        src: '/brand/aethelios-official-20261015-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/aethelios-imperial-obsidian-20261010-512.png',
+        src: '/brand/aethelios-official-20261015-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/brand/aethelios-imperial-obsidian-20261010-maskable-512.png',
+        src: '/brand/aethelios-official-20261015-maskable-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+      {
+        src: '/brand/aethelios-official-20261015-maskable-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
