@@ -93,11 +93,53 @@
 }
 .talk-creation-panel {
   flex: none;
-  width: min(360px, 38vw);
+  width: min(420px, 42vw);
+  min-width: 280px;
+  max-width: min(640px, 52vw);
+  resize: horizontal;
   padding: 16px 14px 20px;
   border-left: 1px solid color-mix(in srgb, var(--aether-gold, #c4912f) 22%, transparent);
   background: color-mix(in srgb, #102b26 55%, #080d0d);
   overflow: auto;
+}
+.talk-document-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.talk-document-views button {
+  min-height: 44px;
+}
+.talk-document-split {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .talk-document-split[data-view='split'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+.talk-document-preview {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--aether-gold, #c4912f) 22%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, #080d0d 88%, #0b3b32);
+}
+.talk-field-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.talk-revision-compare {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.talk-revision-change {
+  margin: 0;
+  color: var(--aether-silver, #d5d6d0);
 }
 .talk-creation-detail {
   display: grid;

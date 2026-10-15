@@ -1,6 +1,7 @@
 import type { BriefContent, PlanContent, PaletteContent } from '@/domains/talk-creation/schema';
 import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
 import type { WorkItemKind } from './kinds';
+import { compileTalkDocument } from './document';
 
 export type WorkItemExport = {
   filename: string;
@@ -9,57 +10,22 @@ export type WorkItemExport = {
   label: string;
 };
 
+const exportNote = '_Talk Markdown export. Browser Print/PDF is a separate control. Native DOCX/PPTX/XLSX and stored-file PDF are not implemented._';
+
 export function exportTalkDocument(kind: WorkItemKind, content: unknown): WorkItemExport | null {
-  if (kind === 'brief') {
-    const brief = content as BriefContent;
+  const compiled = compileTalkDocument(kind, content);
+  if (compiled) {
+    const title =
+      kind === 'brief'
+        ? (content as BriefContent).title
+        : kind === 'plan'
+          ? (content as PlanContent).title
+          : (content as PaletteContent).title;
     return {
-      filename: `${slug(brief.title)}.md`,
+      filename: `${slug(title)}.md`,
       mime: 'text/markdown',
       label: 'Download Markdown',
-      body: [
-        `# ${brief.title}`,
-        '',
-        brief.purpose,
-        '',
-        brief.audience ? `Audience: ${brief.audience}` : '',
-        brief.visualDirection ? `Visual direction: ${brief.visualDirection}` : '',
-        '',
-        ...(brief.requirements.length ? ['## Requirements', ...brief.requirements.map((item) => `- ${item}`)] : []),
-        ...(brief.unresolved.length ? ['', '## Unresolved', ...brief.unresolved.map((item) => `- ${item}`)] : []),
-        '',
-        '_Talk Markdown export. Browser Print/PDF is a separate control._',
-      ]
-        .filter((line) => line !== undefined)
-        .join('\n'),
-    };
-  }
-  if (kind === 'plan') {
-    const plan = content as PlanContent;
-    return {
-      filename: `${slug(plan.title)}.md`,
-      mime: 'text/markdown',
-      label: 'Download Markdown',
-      body: [
-        `# ${plan.title}`,
-        '',
-        plan.summary,
-        '',
-        '## Steps',
-        ...plan.steps.map((step) => `- **${step.title}**: ${step.detail}`),
-        '',
-        '_Talk Markdown export. Browser Print/PDF is a separate control._',
-      ].join('\n'),
-    };
-  }
-  if (kind === 'palette') {
-    const palette = content as PaletteContent;
-    return {
-      filename: `${slug(palette.title)}.md`,
-      mime: 'text/markdown',
-      label: 'Download Markdown',
-      body: [`# ${palette.title}`, '', ...palette.swatches.map((swatch) => `- ${swatch.name} ${swatch.hex} (${swatch.role})`)].join(
-        '\n',
-      ),
+      body: `${compiled}\n\n${exportNote}\n`,
     };
   }
   if (kind === 'board') {

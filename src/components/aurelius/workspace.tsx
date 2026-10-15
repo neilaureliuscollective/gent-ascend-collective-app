@@ -48,6 +48,7 @@ import {
   type TalkCreationWorkspace,
 } from '@/domains/talk-creation/schema';
 import { describeSelectedWork, selectionChipLabel } from '@/domains/work-items';
+import { attachTalkVoiceDock } from '@/components/live/voice-dock';
 import {
   bindTalkSave,
   clearTalkSave,
@@ -191,6 +192,7 @@ export function AureliusWorkspace({
     [],
   );
   const [widePanel, setWidePanel] = useState(false);
+  const [workTarget, setWorkTarget] = useState<{ creationId: string; field: string } | null>(null);
   const [attachment, setAttachment] = useState<{
     id: string;
     name: string;
@@ -766,6 +768,7 @@ export function AureliusWorkspace({
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
           ...(attachment ? { attachmentId: attachment.id } : {}),
+          ...(workTarget ? { workTarget } : {}),
         }),
         signal: controller.signal,
       });
@@ -2067,6 +2070,12 @@ export function AureliusWorkspace({
                 onImport={(id) => void importArchitectPackage(id)}
                 onOpenVersion={(id) => setOpenWorkId(id)}
                 onHistory={rememberHistory}
+                targetField={
+                  workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null
+                }
+                onTargetField={(field) =>
+                  setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
+                }
               />
             </aside>
           )}
@@ -2188,14 +2197,14 @@ export function AureliusWorkspace({
                 </div>
               )}
               {(() => {
-                const selectedWork = describeSelectedWork(creationWorkspace);
+                const selectedWork = describeSelectedWork(creationWorkspace, workTarget);
                 return selectedWork ? (
                   <p className="talk-selection-chip" aria-live="polite">
                     Changing this: {selectionChipLabel(selectedWork)}
                   </p>
                 ) : null;
               })()}
-              <div id="talk-voice-dock" className="talk-voice-dock" />
+              <div id="talk-voice-dock" className="talk-voice-dock" ref={attachTalkVoiceDock} />
               <TalkInput
                 id="aurelius-message"
                 label="Message Aethelios"
@@ -2286,6 +2295,10 @@ export function AureliusWorkspace({
               onImport={(id) => void importArchitectPackage(id)}
               onOpenVersion={(id) => setOpenWorkId(id)}
               onHistory={rememberHistory}
+              targetField={workTarget && workTarget.creationId === openCreation?.id ? workTarget.field : null}
+              onTargetField={(field) =>
+                setWorkTarget(openCreation && field ? { creationId: openCreation.id, field } : null)
+              }
             />
           )}
         </dialog>

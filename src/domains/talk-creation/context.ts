@@ -6,6 +6,7 @@ export async function selectedTalkContext(
   client: SupabaseClient<Database>,
   personId: string,
   conversationId: string,
+  target?: { creationId: string; field: string } | null,
 ) {
   const selected = await client
     .from('ai_talk_selection')
@@ -33,7 +34,7 @@ export async function selectedTalkContext(
       /* Invalid stored rows are omitted from model context. */
     }
   }
-  return selectedCreationContext(creations);
+  return selectedCreationContext(creations, target);
 }
 
 export async function selectedTalkPredecessors(

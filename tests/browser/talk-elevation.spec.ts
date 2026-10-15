@@ -106,3 +106,82 @@ test('Talk elevation names the selected Lifestyle direction above the shared com
     });
   }
 });
+
+test('Talk elevation opens a Lifestyle brief as an editable document with honest export', async ({
+  page,
+}, testInfo) => {
+  const brief = {
+    title: 'Aethelios Lifestyle launch',
+    purpose: 'Introduce the line with a precise visual direction.',
+    audience: 'Founders reviewing Aethelios Lifestyle.',
+    visualDirection: 'Obsidian, emerald glass and restrained gold.',
+    requirements: ['Phone-first reading'],
+    unresolved: ['Final merchandising copy'],
+  };
+  const current = {
+    id: '50000000-0000-4000-8000-000000000442',
+    person_id: 'synthetic',
+    conversation_id: conversation,
+    source_turn_id: turn.id,
+    lineage_id: '50000000-0000-4000-8000-000000000442',
+    version: 2,
+    kind: 'brief' as const,
+    content: brief,
+    predecessor_id: '50000000-0000-4000-8000-000000000443',
+    superseded_by: null,
+    created_at: '2026-10-15T03:00:02.000Z',
+  };
+  const previous = {
+    ...current,
+    id: '50000000-0000-4000-8000-000000000443',
+    version: 1,
+    predecessor_id: null,
+    superseded_by: current.id,
+    content: { ...brief, purpose: 'Introduce the line.' },
+    created_at: '2026-10-15T03:00:01.000Z',
+  };
+  const creations: TalkCreationWorkspace = {
+    creations: [current],
+    selected: { brief: current.id },
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  };
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) return route.abort();
+    if (url.pathname === '/api/aurelius/creations') {
+      if (url.searchParams.get('lineage') === current.lineage_id)
+        return route.fulfill({ json: { versions: [current, previous] } });
+      return route.fulfill({ json: creations });
+    }
+    if (url.pathname === '/api/aurelius') return route.fulfill({ json: workspace() });
+    if (url.pathname.startsWith('/api/')) return route.fulfill({ json: {} });
+    return route.continue();
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/app/aethelios?conversation=${conversation}`);
+  await expect(page.getByText(/Changing this: Aethelios Lifestyle launch · v2/)).toBeVisible();
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Document view' })).toBeVisible();
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(page.getByRole('article', { name: 'Document preview' })).toContainText(
+    'Introduce the line with a precise visual direction.',
+  );
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.getByRole('button', { name: 'Change Purpose' }).click();
+  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
+  await page.getByText('Saved versions').click();
+  await page.getByLabel('Compare with').selectOption(previous.id);
+  await expect(page.getByText(/Purpose: “Introduce the line.” →/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download Markdown' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Print / PDF' })).toBeVisible();
+  await expect(page.getByText('Legacy Reserve')).toHaveCount(0);
+  await page.screenshot({
+    path: testInfo.outputPath('talk-elevation-document.png'),
+    animations: 'disabled',
+  });
+});

@@ -15,6 +15,7 @@ import { useAppearance } from '@/components/visual/appearance';
 import { ArtifactSurface } from './artifacts';
 import { LiveAvailabilityContext, LiveContext } from './context';
 import { LiveDiagnostics } from './diagnostics';
+import { getTalkVoiceDock, getTalkVoiceDockSnapshot, subscribeTalkVoiceDock } from './voice-dock';
 export function LiveConversationProvider({
   children,
   enabled = false,
@@ -261,13 +262,10 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const compact = useRef<HTMLElement>(null);
   const [transcript, setTranscript] = useState(true);
   const [draft, setDraft] = useState('');
-  const [dock, setDock] = useState<HTMLElement | null>(null);
+  const dock = useSyncExternalStore(subscribeTalkVoiceDock, getTalkVoiceDock, getTalkVoiceDockSnapshot);
   const visible = state.phase !== 'idle';
   const active = ['connecting', 'listening', 'speaking'].includes(state.phase);
   const docked = Boolean(dock);
-  useEffect(() => {
-    setDock(document.getElementById('talk-voice-dock'));
-  }, [visible, state.mode]);
   useEffect(() => {
     const node = dialog.current;
     if (!node) return;
