@@ -1,0 +1,216 @@
+Integration source: f26bdd2c9c12c5936771fc69ea4c4c62f654105f (parents e614ad743b05e2e04f28baf89fbbd89a7eb6fc4d and 58a59df9cb1d56694f13c71c8f36d85d7b321daf). Final receipt commit changes documentation only.
+
+npm run lint
+> aurelius-collective-app@0.1.0 lint
+> eslint . --max-warnings 0
+
+npm run typecheck
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+npx next build
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 393ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.2s
+  Running TypeScript ...
+  Finished TypeScript in 29.8s ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/126) ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (31/126)
+  Generating static pages using 4 workers (62/126)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (94/126)
+✓ Generating static pages using 4 workers (126/126) in 486ms
+  Finalizing page optimization ...
+
+npm run db:ledger
+> aurelius-collective-app@0.1.0 db:ledger
+> node scripts/check-migration-ledger.mjs
+
+Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.
+
+npx playwright test --config /tmp/live-repair-playwright.config.mjs (Live component fixture, system Chromium)
+[WebServer] (node:9842) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 9 tests using 1 worker
+
+(node:9874) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 390px (6.4s)
+  ✓  2 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 1440px (5.4s)
+  ✓  3 tests/browser/live-voice.spec.ts:135:1 › voice diagnostic download excludes transcript and record IDs (3.7s)
+  ✓  4 tests/browser/live-voice.spec.ts:191:1 › cancelling during slow SDP admission revokes the late call without restoring audio (7.3s)
+  ✓  5 tests/browser/live-voice.spec.ts:236:1 › late ASR stays ordered and uncertain cleanup prevents another voice session (4.3s)
+  ✓  6 tests/browser/live-voice.spec.ts:296:1 › connection failure stays compact with a usable retry and does not force fullscreen (4.5s)
+  ✓  7 tests/browser/live-voice.spec.ts:323:1 › simulated phone and unfolded-Fold consent stays scrollable with reachable Start (6.7s)
+  ✓  8 tests/browser/live-voice.spec.ts:350:1 › unavailable Live remains visible in Talk with an understandable reason (3.1s)
+  ✓  9 tests/browser/live-voice.spec.ts:362:1 › acknowledged voice retries in one tap without optional consent or automatic admission (7.8s)
+
+  9 passed (53.9s)
+
+npm test
+Test Files  3 failed | 221 passed | 1 skipped (225)
+      Tests  5 failed | 1315 passed | 1 skipped (1321)
+   Start at  17:52:11
+   Duration  97.08s (tests 72%, import 20%, transform 7%, worker 1%)
+
+    Isolate  225 workers spawned · ~215ms startup each (spawn + environment, per file)
+             at least ~15.89s faster with isolate: false — reuses workers across files instead of one per file
+
+Untouched 58a59df: Studio export and Architect host suites
+RUN  v5.0.1 /tmp/live-integration-base58
+
+ ❯ tests/studio-export-evidence.test.ts (3 tests | 3 failed) 38ms
+   ❯ Studio export evidence (3)
+     × writes inspected PNG, SVG, vector PDF and H.264 film artifacts 17ms
+     × exports a physical label with type, SVG mark and rotation, and a 32s mixed still film 10ms
+     × renders owned moving footage, title cards and non-tone audio 9ms
+ ❯ tests/architect-construct-host.test.ts (2 tests | 1 failed) 5872ms
+   × inspects the host isolation runtime and reports pass, fail, or unavailable honestly 3032ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/architect-construct-host.test.ts > inspects the host isolation runtime and reports pass, fail, or unavailable honestly
+AssertionError: node:fs:621
+  return binding.open(
+                 ^
+
+Error: EACCES: permission denied, open '/opt/construct-runner.mjs'
+    at Object.openSync (node:fs:621:18)
+    at Object.readFileSync (node:fs:487:35)
+    at getSourceSync (node:internal/modules/esm/load:41:17)
+    at defaultLoadSync (node:internal/modules/esm/load:156:34)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:806:12)
+    at #loadSync (node:internal/modules/esm/loader:838:53)
+    at ModuleLoader.load (node:internal/modules/esm/loader:787:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:498:31)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:564:36)
+    at afterResolve (node:internal/modules/esm/loader:611:52) {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'open',
+  path: '/opt/construct-runner.mjs'
+}
+
+Node.js v24.22.0
+ Disposable container did not return a verified result (exit 1). A reachable Docker engine is not a sandbox.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/architect-construct-host.test.ts:85:83
+     83|   }
+     84|   if (outcome === 'failed') {
+     85|     expect(execution?.sandbox, execution?.blocker ?? 'isolated contain…
+       |                                                                                   ^
+     86|   }
+     87| }, 120000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > writes inspected PNG, SVG, vector PDF and H.264 film artifacts
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:25:5
+     23| describe('Studio export evidence', () => {
+     24|   it('writes inspected PNG, SVG, vector PDF and H.264 film artifacts',…
+     25|     await mkdir(out, { recursive: true });
+       |     ^
+     26|     const id = '10000000-0000-4000-8000-000000000001';
+     27|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > exports a physical label with type, SVG mark and rotation, and a 32s mixed still film
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:161:5
+    159|
+    160|   it('exports a physical label with type, SVG mark and rotation, and a…
+    161|     await mkdir(out, { recursive: true });
+       |     ^
+    162|     const id = '10000000-0000-4000-8000-000000000031';
+    163|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > renders owned moving footage, title cards and non-tone audio
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:443:5
+    441|
+    442|   it('renders owned moving footage, title cards and non-tone audio', a…
+    443|     await mkdir(out, { recursive: true });
+       |     ^
+    444|     const dir = await mkdtemp(path.join(tmpdir(), 'studio-moving-'));
+    445|     const run = (args: string[]) =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 1 passed (5)
+   Start at  17:53:25
+   Duration  6.82s (tests 78%, transform 11%, import 10%)
+
+Untouched 58a59df: Architect worker image suite
+RUN  v5.0.1 /tmp/live-integration-base58
+
+stderr | tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
+{"image":"aethelios-architect-apps-worker:2026-10-15.1","action":"missing","reason":"Worker image build failed."}
+
+ ❯ tests/architect-apps-worker-image.test.ts (3 tests | 1 failed) 392ms
+   × builds the packaged worker image when Docker is available 386ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
+AssertionError: Worker image build failed.: expected 'missing' to be 'built' // Object.is equality
+
+Expected: "built"
+Received: "missing"
+
+ ❯ tests/architect-apps-worker-image.test.ts:56:42
+     54|     return;
+     55|   }
+     56|   expect(receipt.action, receipt.reason).toBe('built');
+       |                                          ^
+     57|   expect(receipt.id).toMatch(/^sha256:/);
+     58| }, 180000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:53:54
+   Duration  633ms (tests 84%, transform 12%, import 3%, worker 1%)
+
+npm run build (standard prebuild)
+> aurelius-collective-app@0.1.0 prebuild
+> node scripts/prepare-mirror.mjs
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+[TypeError: fetch failed] {
+  [cause]: Error: getaddrinfo EAI_AGAIN storage.googleapis.com
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3001,
+    code: 'EAI_AGAIN',
+    syscall: 'getaddrinfo',
+    hostname: 'storage.googleapis.com'
+  }
+}
+
+Node.js v24.19.0

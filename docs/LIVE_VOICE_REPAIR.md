@@ -38,3 +38,11 @@ Service tests now use the actual buildMessages implementation and complete user_
 - Full units: 1,152 passed, one skipped, four failed in two existing environment-dependent suites. All four failures reproduced on untouched base `06dfb332`: three Studio export tests cannot mkdir `/opt/cursor`; one Architect host isolation test gets EACCES opening `/opt/construct-runner.mjs`. Test-generated unrelated evidence was restored.
 
 [Compact validation receipts](evidence/live-voice-repair/validation.txt). Production provider acceptance and the exact cause of the historical rejection remain unverified. No paid calls, hosted SQL/configuration/credentials, merge or deployment occurred.
+
+## Integration retest after Architect #130
+
+Main `58a59df9cb1d56694f13c71c8f36d85d7b321daf` was merged into this existing branch. Only STATUS conflicted; both the Live summary and all Architect status entries were preserved. Live source is byte-for-byte unchanged from `e614ad7`; no visual styling or asset changes were made. Test-generated Architect/Studio evidence was restored.
+
+On the merged source: lint, strict types, optimized `npx next build`, all nine Live Chromium fixture tests and the migration ledger passed. The full suite ran 1,321 tests: 1,315 passed, one skipped, five failed in three environment-dependent suites. All five failures were reproduced on untouched `58a59df`: three Studio export tests cannot create `/opt/cursor`; Architect host isolation gets EACCES for `/opt/construct-runner.mjs`; the Architect packaged-worker Docker image test reports `Worker image build failed`. Standard build again failed in the unchanged Mirror prebuild download with `EAI_AGAIN storage.googleapis.com`.
+
+See [integration validation receipt](evidence/live-voice-repair/integration-validation.txt) for commands and results. No hosted SQL/settings/credentials, paid calls, production merge or deployment action occurred in this integration task.

@@ -53,11 +53,11 @@ Final optimized build (prebuild excluded)
   Finished TypeScript in 24.6s ...
   Collecting page data using 4 workers ...
   Generating static pages using 4 workers (0/122) ...
-  Generating static pages using 4 workers (30/122) 
+  Generating static pages using 4 workers (30/122)
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-  Generating static pages using 4 workers (60/122) 
+  Generating static pages using 4 workers (60/122)
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-  Generating static pages using 4 workers (91/122) 
+  Generating static pages using 4 workers (91/122)
 ✓ Generating static pages using 4 workers (122/122) in 451ms
   Finalizing page optimization ...
 
