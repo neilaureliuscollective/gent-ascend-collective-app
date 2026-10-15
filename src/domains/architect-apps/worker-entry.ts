@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { createClient } from '@supabase/supabase-js';
 import { sanitizeLog } from '@/domains/architect-construct/sanitize';
@@ -14,10 +16,12 @@ import {
   probeAppsSchemaFromClient,
 } from './commission';
 import { createWorkerAppStore } from './database-store';
-import { inspectAppsImageDigest, parseAppsImageDigest, probeAppsDockerIsolation } from './isolate';
+import { buildIsolatedGeneratedApp, inspectAppsImageDigest, parseAppsImageDigest, probeAppsDockerIsolation } from './isolate';
+import { notesSourceFiles } from './notes-fixture';
 import { appsControlPlaneReady } from './readiness';
 import { superviseAppsWorker } from './supervisor';
 import { processAppBuildOnce } from './worker';
+import { appsWorkRoot, inspectAppsWorkRoot, proveWorkerOwnedWorkspace } from './work-root';
 
 function report(payload: Record<string, unknown>) {
   console.log(JSON.stringify(payload));
@@ -45,6 +49,8 @@ async function gatherEvidence(env: NodeJS.ProcessEnv = process.env) {
     schemaClassification = probe.classification;
     schemaMissing = probe.missing;
   }
+  const workRootPath = env.ARCHITECT_APPS_WORK_ROOT?.trim() ? appsWorkRoot(env) : null;
+  const workRoot = workRootPath ? inspectAppsWorkRoot(workRootPath) : { ok: true, code: 'ready', reason: null };
   return {
     isolationAvailable: isolation.available,
     observedDigest,
@@ -52,9 +58,12 @@ async function gatherEvidence(env: NodeJS.ProcessEnv = process.env) {
     schemaClassification,
     schemaMissing,
     isolation,
+    workRoot,
   };
 }
 
+const proveWrite = process.argv.includes('--prove-write');
+const compileFixture = process.argv.includes('--compile-fixture');
 const preflight = process.argv.includes('--preflight');
 const healthOnly = process.argv.includes('--health');
 const supervised =
@@ -72,6 +81,75 @@ const health = classifyAppsWorkerHealth({
 const missing = appsWorkerMissingNames();
 const identity = appsProcessIdentity();
 
+if (proveWrite) {
+  try {
+    const root = appsWorkRoot();
+    const wrote = proveWorkerOwnedWorkspace(root);
+    report({
+      ok: true,
+      phase: 'prove-write',
+      workRoot: root,
+      uid: wrote.contract.uid,
+      mode: wrote.contract.mode,
+      created: true,
+      cleaned: true,
+    });
+    process.exit(0);
+  } catch (error) {
+    report({
+      ok: false,
+      phase: 'prove-write',
+      reason: error instanceof Error ? error.message : 'Worker could not write the shared work root.',
+    });
+    process.exit(1);
+  }
+}
+
+if (compileFixture) {
+  try {
+    const compiled = await buildIsolatedGeneratedApp(notesSourceFiles(), {
+      timeoutMs: 180000,
+      name: 'apps-packaged-compile',
+    });
+    const broken = notesSourceFiles().map((file) =>
+      file.path === 'src/App.tsx' ? { ...file, content: 'export const broken: number = "no";\n' } : file,
+    );
+    const failed = await buildIsolatedGeneratedApp(broken, { timeoutMs: 120000, name: 'apps-packaged-fail' });
+    const leftoverWork = readdirSync(appsWorkRoot()).filter((name) => name.startsWith('architect-apps-iso-'));
+    const leftoverCompile = spawnSync('docker', ['inspect', 'apps-packaged-compile'], { encoding: 'utf8' });
+    const leftoverFail = spawnSync('docker', ['inspect', 'apps-packaged-fail'], { encoding: 'utf8' });
+    const containersGone =
+      (leftoverCompile.status !== 0 || /no such container/i.test(`${leftoverCompile.stderr}${leftoverCompile.stdout}`)) &&
+      (leftoverFail.status !== 0 || /no such container/i.test(`${leftoverFail.stderr}${leftoverFail.stdout}`));
+    const ok =
+      compiled.result.ok &&
+      compiled.result.isolation === 'docker' &&
+      compiled.artifacts.some((file) => file.path === 'assets/app.js') &&
+      !failed.result.ok &&
+      leftoverWork.length === 0 &&
+      containersGone;
+    report({
+      ok,
+      phase: 'compile-fixture',
+      isolation: compiled.result.isolation,
+      sandbox: compiled.result.sandbox,
+      artifactCount: compiled.artifacts.length,
+      failedCompile: !failed.result.ok,
+      cleanedWork: leftoverWork.length === 0,
+      cleanedContainers: containersGone,
+      blocker: compiled.result.ok ? failed.result.blocker : compiled.result.blocker,
+    });
+    process.exit(ok ? 0 : 1);
+  } catch (error) {
+    report({
+      ok: false,
+      phase: 'compile-fixture',
+      reason: error instanceof Error ? error.message : 'Packaged worker compile fixture failed.',
+    });
+    process.exit(1);
+  }
+}
+
 if (healthOnly) {
   report({
     ok: health.ready,
@@ -83,14 +161,20 @@ if (healthOnly) {
     processId: health.processId,
     missing: health.missing,
     schema: evidence.schemaClassification,
+    workRoot: evidence.workRoot,
   });
   process.exit(health.ready ? 0 : 2);
 }
+
+const workRootBlocked = Boolean(
+  process.env.ARCHITECT_APPS_WORK_ROOT?.trim() && evidence.workRoot && 'ok' in evidence.workRoot && !evidence.workRoot.ok,
+);
 
 if (
   !appsWorkerAuthorized(process.env, evidence) ||
   !appsControlPlaneReady() ||
   hostedWorkerPlaneForbidden() ||
+  workRootBlocked ||
   (appsDeploymentMode() === 'commissioned' && !commissionedAppsWorkerReady(process.env, evidence))
 ) {
   console.error(
@@ -109,6 +193,7 @@ if (
     observedDigest: evidence.observedDigest ? 'present' : 'missing',
     schema: evidence.schemaClassification,
     schemaMissing: evidence.schemaMissing,
+    workRoot: evidence.workRoot,
   });
   process.exit(2);
 }
@@ -125,6 +210,7 @@ if (preflight) {
     digest: 'matched',
     missing: [],
     schema: evidence.schemaClassification,
+    workRoot: evidence.workRoot,
   });
   process.exit(0);
 }

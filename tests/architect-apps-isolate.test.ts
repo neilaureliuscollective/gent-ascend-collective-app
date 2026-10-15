@@ -278,6 +278,16 @@ it('maps isolated work onto a shared host path and keeps generated containers of
   expect(topology).toContain(defaultAppsImage);
   expect(topology).not.toContain('118:latest');
   expect(topology.includes('118') && topology[topology.indexOf('118') - 1] === '--group-add').toBe(true);
+  const writeProof = packagedWorkerInvocation({
+    workRoot: root,
+    dockerGid: 118,
+    proveWrite: true,
+    env: { APP_ENV: 'local' },
+  });
+  expect(writeProof.args).toContain('--prove-write');
+  expect(writeProof.args).toContain('aethelios-architect-apps-worker:2026-10-15.1');
+  expect(writeProof.args[writeProof.args.indexOf('--group-add') + 1]).toBe('118');
+  expect(writeProof.args).not.toContain('118:latest');
 });
 
 it('proves the packaged worker can see host-shared work through a sibling container', async () => {

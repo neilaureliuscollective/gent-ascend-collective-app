@@ -1,7 +1,6 @@
 import { execFile, spawn } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { APP_TOOLCHAIN_VERSION, approvedDependencies } from './catalog';
@@ -10,6 +9,9 @@ import { assertSingleBundleArtifacts } from './bundle';
 import type { AppFile, AppJobResult } from './schema';
 import { overlaySealedFiles } from './tree';
 import { parseAppsImageDigest } from './commission';
+import { appsWorkRoot, assertHostVisibleWorkPath, assertAppsWorkRootContract } from './work-root';
+
+export { appsWorkRoot, assertHostVisibleWorkPath } from './work-root';
 
 export { parseAppsImageDigest };
 
@@ -45,28 +47,6 @@ export type AppsIsolationProbe =
 
 export function appsImage(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
   return env[appsImageName] || defaultAppsImage;
-}
-
-export function appsWorkRoot(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env) {
-  const root = env.ARCHITECT_APPS_WORK_ROOT?.trim();
-  if (!root) return tmpdir();
-  if (!root.startsWith('/') || root.includes('..') || root.includes('docker.sock') || root.includes('\\'))
-    throw new Error('ARCHITECT_APPS_WORK_ROOT must be an absolute shared host path without privileged mounts.');
-  return root;
-}
-
-export function assertHostVisibleWorkPath(
-  path: string,
-  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
-) {
-  const root = env.ARCHITECT_APPS_WORK_ROOT?.trim();
-  if (!root) return path;
-  const prefix = root.endsWith('/') ? root : `${root}/`;
-  if (path !== root && !path.startsWith(prefix))
-    throw new Error(
-      'Isolated work path is not under the shared host work root. Sibling Docker mounts the host path, not a path that exists only inside the worker container.',
-    );
-  return path;
 }
 
 export async function inspectAppsImageDigest(
@@ -444,7 +424,8 @@ export async function buildIsolatedGeneratedApp(
     return isolatedBuildUnavailable(probe.reason);
   }
   const root = appsWorkRoot(env);
-  await mkdir(root, { recursive: true });
+  if (env.ARCHITECT_APPS_WORK_ROOT?.trim()) assertAppsWorkRootContract(root);
+  else await mkdir(root, { recursive: true });
   const work = await mkdtemp(join(root, 'architect-apps-iso-'));
   assertHostVisibleWorkPath(work, env);
   const name = options.name ?? `apps-${Date.now().toString(36)}`;

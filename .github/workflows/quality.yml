@@ -105,10 +105,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Build or inspect the pinned Architect Apps image
-        run: node scripts/architect-apps-image.mjs
-      - name: Build the isolated Apps worker image
-        run: node scripts/architect-apps-worker-image.mjs
+      - name: Prepare pinned toolchain, worker image and uid-1000 work root
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+        run: node scripts/architect-apps-prepare-runtime.mjs
       - name: Required isolated compile, packaged worker topology and compiled journey
         env:
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
@@ -116,11 +117,15 @@ jobs:
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
           APP_ENV: local
         run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts tests/architect-apps-commission.test.ts tests/architect-apps-worker-image.test.ts tests/architect-apps-preview-sessions.test.ts --reporter=dot
-      - name: Prove the packaged worker shared-path topology
+      - name: Prove the packaged worker can write, compile and map host paths
         env:
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
-        run: node scripts/architect-apps-packaged-worker.mjs --prove-topology
+          ARCHITECT_APPS_IMAGE: aethelios-architect-apps:2026-10-15.1
+        run: |
+          node scripts/architect-apps-packaged-worker.mjs --prove-write
+          node scripts/architect-apps-packaged-worker.mjs --prove-compile
+          node scripts/architect-apps-packaged-worker.mjs --prove-topology
       - name: Record worker bundle and fail-closed commissioned preflight
         env:
           ARCHITECT_APPS_DEPLOYMENT_MODE: commissioned
@@ -142,5 +147,6 @@ jobs:
             docs/evidence/architect-apps/compiled-preview.html
             docs/evidence/architect-apps/worker-image-receipt.json
             docs/evidence/architect-apps/packaged-worker-topology.json
+            docs/evidence/architect-apps/runtime-receipt.json
           if-no-files-found: ignore
 

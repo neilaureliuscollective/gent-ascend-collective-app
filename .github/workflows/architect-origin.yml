@@ -47,15 +47,19 @@ jobs:
       - run: node scripts/architect-construct-durable-smoke.mjs
       - run: npx playwright install --with-deps chromium
       - run: node scripts/architect-apps-auth-smoke.mjs
-      - name: Build or inspect the pinned Architect Apps image
-        run: node scripts/architect-apps-image.mjs
-      - name: Build the packaged Apps worker image
-        run: node scripts/architect-apps-worker-image.mjs
-      - name: Prove packaged worker topology
+      - name: Prepare pinned toolchain, worker image and uid-1000 work root
         env:
           ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
           ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
-        run: node scripts/architect-apps-packaged-worker.mjs --prove-topology
+        run: node scripts/architect-apps-prepare-runtime.mjs
+      - name: Prove the packaged worker can write and compile
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+          ARCHITECT_APPS_IMAGE: aethelios-architect-apps:2026-10-15.1
+        run: |
+          node scripts/architect-apps-packaged-worker.mjs --prove-write
+          node scripts/architect-apps-packaged-worker.mjs --prove-compile
       - name: Connected Apps journey through the packaged worker
         env:
           ARCHITECT_APPS_PACKAGED_WORKER: 'true'

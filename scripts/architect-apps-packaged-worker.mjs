@@ -58,11 +58,14 @@ export function packagedWorkerInvocation(input = {}) {
   for (const name of names) {
     if (env[name] != null && env[name] !== '') args.push('-e', `${name}=${env[name]}`);
   }
-  if (input.once || input.preflight || input.health) args.push('--entrypoint', 'node');
+  if (input.once || input.preflight || input.health || input.proveWrite || input.compileFixture)
+    args.push('--entrypoint', 'node');
   args.push(image);
   if (input.once) args.push('/opt/architect-apps-worker/apps-worker.mjs');
   if (input.preflight) args.push('/opt/architect-apps-worker/apps-worker.mjs', '--preflight');
   if (input.health) args.push('/opt/architect-apps-worker/apps-worker.mjs', '--health');
+  if (input.proveWrite) args.push('/opt/architect-apps-worker/apps-worker.mjs', '--prove-write');
+  if (input.compileFixture) args.push('/opt/architect-apps-worker/apps-worker.mjs', '--compile-fixture');
   if (args.some((value) => String(value).includes('OPENAI_API_KEY')))
     throw new Error('Packaged worker must not receive model keys.');
   return { command: 'docker', args, workRoot, image };
@@ -151,6 +154,27 @@ export function provePackagedWorkerTopology(options = {}) {
   return receipt;
 }
 
+export function preparePackagedWorkRoot(workRoot, spawn = spawnSync) {
+  mkdirSync(workRoot, { recursive: true });
+  const owned = spawn('stat', ['-c', '%u %g %a', workRoot], { encoding: 'utf8' });
+  const [uid, gid, mode] = (owned.stdout ?? '').trim().split(/\s+/);
+  if (uid === '1000' && mode !== '777' && mode !== '0777') return { ok: true, uid, gid, mode, workRoot };
+  const installed = spawn('sudo', ['-n', 'install', '-d', '-o', '1000', '-g', '1000', '-m', '0755', workRoot], {
+    encoding: 'utf8',
+  });
+  if (installed.status !== 0) {
+    return {
+      ok: false,
+      uid,
+      gid,
+      mode,
+      workRoot,
+      reason: `Shared work root must be uid 1000 mode 0755. Prepare with: sudo install -d -o 1000 -g 1000 -m 0755 ${workRoot}`,
+    };
+  }
+  return { ok: true, uid: '1000', gid: '1000', mode: '755', workRoot };
+}
+
 function passEnv() {
   const env = {};
   for (const name of [
@@ -184,8 +208,14 @@ if (invoked) {
   const preflight = process.argv.includes('--preflight');
   const health = process.argv.includes('--health');
   const topology = process.argv.includes('--prove-topology');
+  const proveWrite = process.argv.includes('--prove-write');
+  const compileFixture = process.argv.includes('--prove-compile');
   const workRoot = process.env.ARCHITECT_APPS_WORK_ROOT || defaultPackagedWorkRoot;
-  mkdirSync(workRoot, { recursive: true });
+  const prepared = preparePackagedWorkRoot(workRoot);
+  if (!prepared.ok) {
+    console.error(JSON.stringify({ ok: false, action: 'misconfigured', reason: prepared.reason }));
+    process.exit(1);
+  }
   if (topology) {
     const receipt = provePackagedWorkerTopology({ workRoot });
     console.log(JSON.stringify({ ok: receipt.ok, action: receipt.action, workRoot: receipt.workRoot }));
@@ -205,6 +235,8 @@ if (invoked) {
     once,
     preflight,
     health,
+    proveWrite,
+    compileFixture,
   });
   assertPackagedWorkerIsolation(invocation.args);
   const ran = spawnSync(invocation.command, invocation.args, { encoding: 'utf8', stdio: 'inherit' });
