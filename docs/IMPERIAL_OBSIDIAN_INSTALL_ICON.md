@@ -1,5 +1,7 @@
 # Official Imperial Obsidian install icon
 
+Superseded for current installation by [the 2026-10-15 official gold-A icon](AETHELIOS_OFFICIAL_INSTALL_ICON.md). Historical 2026-10-10 assets remain in `public/brand/` and redirect to the current files.
+
 Founder-approved 2026-10-10 adaptation of the supplied official logo: remove AETHELIOS and THE HUMAN ASCENDANCE lettering; retain ascending A, laurels, compass stars, orbital geometry, globe and concentric metallic gold framing. This is a raster interpretation for installation, not a replacement of the in-app master artwork.
 
 ## Asset contract

@@ -1,3 +1,9 @@
+# Official Aethelios install icon — 2026-10-15
+
+Founder supplied the approved gold-A / star / Earth application icon and authorized production installation replacement. Keep the existing Next App Router metadata files, stable manifest `id` `/`, `scope` `/` and `start_url` `/app`. Version the new PNG URLs, redirect previous install paths, and bump only the static fallback cache. Standard and maskable assets stay distinct; maskable gold art stays inside the W3C 80% safe circle. No in-app crest, account, entitlement or routing change.
+
+Official references checked 2026-10-15: [W3C icon masks](https://www.w3.org/TR/appmanifest/#icon-masks), [Chrome web app updates](https://developer.chrome.com/blog/improvements-to-web-app-updates), installed Next 16.3.5 app-icons/manifest file conventions.
+
 # Aethelios Live sideband and Talk unification — 2026-10-14
 
 Official OpenAI server-side Realtime controls authenticate the call-id WebSocket with `Authorization: Bearer`. The previous browser insecure-protocol handshake is not the documented server path and is the evidenced admission failure after consent. Node/undici WebSocket accepts that header object and this runtime sent `Authorization` on a local upgrade handshake; Vercel inbound WebSocket serving is a different feature and was not the required host change. Keep `POST /v1/realtime/calls` plus an outbound sideband continued by `after()` and route `maxDuration` 300. Admission failures keep hangup/end reconciliation and now return a content-free stage receipt. Voice is a mode of the existing Talk conversation: one owner-scoped identity, inline by default, shared composer/timeline, compact failure recovery.
