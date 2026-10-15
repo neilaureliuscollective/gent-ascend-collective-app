@@ -1,6 +1,16 @@
 import { expect, it } from 'vitest';
-import { streamTalkCreationFixture } from '@/domains/talk-creation/fixture-stream';
+import { streamTalkCreationFixture, talkCreationFixtureEnabled } from '@/domains/talk-creation/fixture-stream';
 import { legacyReserveBoard } from '@/domains/talk-creation/design-board';
+
+it('recognizes only the labelled legacy-reserve Talk fixture', () => {
+  const previous = process.env.AETHELIOS_TALK_CREATION_FIXTURE;
+  delete process.env.AETHELIOS_TALK_CREATION_FIXTURE;
+  expect(talkCreationFixtureEnabled()).toBe(false);
+  process.env.AETHELIOS_TALK_CREATION_FIXTURE = 'legacy-reserve';
+  expect(talkCreationFixtureEnabled()).toBe(true);
+  if (previous === undefined) delete process.env.AETHELIOS_TALK_CREATION_FIXTURE;
+  else process.env.AETHELIOS_TALK_CREATION_FIXTURE = previous;
+});
 
 it('offers the labelled Legacy Reserve board through the Talk creation session', async () => {
   const creation = {

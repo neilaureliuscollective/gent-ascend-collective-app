@@ -113,4 +113,17 @@ describe('Talk attachment reservation', () => {
     ).rejects.toThrow(/Attachment unavailable/);
     expect(state.rpcs).toEqual([]);
   });
+
+  it('accepts the labelled Talk fixture without a paid model key', async () => {
+    vi.stubEnv('OPENAI_API_KEY', undefined);
+    vi.stubEnv('AETHELIOS_TALK_CREATION_FIXTURE', 'legacy-reserve');
+    state.attachment.mockResolvedValue({
+      id: input.attachmentId,
+      projectId: '60000000-0000-4000-8000-000000000001',
+      mediaType: 'image/png',
+      bytes: new Uint8Array([1, 2, 3]),
+    });
+    await prepareReply({ ...input, attachmentId: undefined });
+    expect(state.rpcs[0]).toBe('ai_begin_turn');
+  });
 });

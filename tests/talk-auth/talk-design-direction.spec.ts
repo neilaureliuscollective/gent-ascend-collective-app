@@ -65,8 +65,12 @@ async function api<T>(
 }
 
 async function sendComposer(page: Page, text: string) {
-  await page.getByLabel('Message Aethelios', { exact: true }).fill(text);
-  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  const composer = page.getByLabel('Message Aethelios', { exact: true });
+  await expect(composer).toBeEnabled();
+  await composer.fill(text);
+  const send = page.getByRole('button', { name: 'Send', exact: true });
+  await expect(send).toBeEnabled();
+  await send.click();
 }
 
 type BoardRow = {
@@ -89,6 +93,8 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   ).toBeNull();
   await signIn(page, 'founder@aurelius.test');
   await page.goto('/app/aethelios');
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
+  await expect(page.getByText(/waiting for its model connection/i)).toHaveCount(0);
   await sendComposer(page, 'Give me three visual directions for Legacy Reserve.');
   await expect(page.getByRole('tab', { name: /Warm Reserve/ })).toBeVisible({ timeout: 60000 });
   await expect(page.getByText('Labelled deterministic Talk fixture')).toBeVisible();
@@ -131,7 +137,7 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   const refinedId = current!.id;
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('tab', { name: /Emerald Glass/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await page.locator('[data-kind="board"]').getByRole('button', { name: 'Open', exact: true }).click();
   const reviewPanel = page.getByLabel('Reviewed work');
   await reviewPanel.getByRole('button', { name: 'Review design transfer' }).click();
   await expect(reviewPanel.getByText('Emerald Glass')).toBeVisible();

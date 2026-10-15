@@ -16,6 +16,7 @@ import { resolveNextMove } from '@/domains/command/next-move';
 import { capabilityContext } from './capabilities';
 import { selectedArtifactContext } from '@/domains/artifacts/context-service';
 import { selectedTalkContext } from '@/domains/talk-creation/context';
+import { talkCreationFixtureEnabled } from '@/domains/talk-creation/fixture-stream';
 import type { TalkAgentSession } from '@/domains/talk-creation/tools';
 export class IntelligenceError extends Error {
   constructor(
@@ -501,7 +502,7 @@ export async function readWorkspace(
     actionProposals: actionProposals.data ?? [],
     context,
     canChat: access.has('aurelius.context'),
-    configured: Boolean(config.OPENAI_API_KEY),
+    configured: Boolean(config.OPENAI_API_KEY) || talkCreationFixtureEnabled(),
     model: config.AURELIUS_AI_MODEL,
     hasOlderTurns: turns.length > 40,
     nextConversationCursor:
@@ -586,7 +587,7 @@ export async function prepareReply(
       throw new IntelligenceError('Open this conversation in its company room.', 409);
   }
   const config = aiConfigSchema.parse(process.env);
-  if (!config.OPENAI_API_KEY)
+  if (!config.OPENAI_API_KEY && !talkCreationFixtureEnabled())
     throw new IntelligenceError(
       'Aethelios is waiting for its model connection. Your workspace remains available.',
       503,
