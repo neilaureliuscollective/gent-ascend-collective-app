@@ -37,6 +37,13 @@ declare module '*architect-apps-packaged-worker.mjs' {
     name?: string;
   }): { command: string; args: string[]; workRoot: string; image: string };
   export function assertPackagedWorkerIsolation(args: string[]): void;
+  export function packagedWorkerTopologyArgs(input?: {
+    workRoot?: string;
+    image?: string;
+    toolchain?: string;
+    probe?: string;
+    dockerGid?: number | null;
+  }): string[];
   export function provePackagedWorkerTopology(options?: {
     spawn?: (file: string, args: string[]) => { status: number | null; stdout?: string; stderr?: string };
     workRoot?: string;

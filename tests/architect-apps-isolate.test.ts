@@ -23,6 +23,7 @@ import {
 import {
   assertPackagedWorkerIsolation,
   packagedWorkerInvocation,
+  packagedWorkerTopologyArgs,
   provePackagedWorkerTopology,
 } from '../scripts/architect-apps-packaged-worker.mjs';
 import { acceptAppBuildSuccess, resolveAppExecutionKind } from '@/domains/architect-apps/worker';
@@ -264,6 +265,19 @@ it('maps isolated work onto a shared host path and keeps generated containers of
   expect(packaged.args.join(' ')).toMatch(/docker\.sock/);
   expect(packaged.args).toContain(`${root}:${root}`);
   expect(packaged.args.join(' ')).not.toMatch(/OPENAI_API_KEY|privileged/);
+  const topology = packagedWorkerTopologyArgs({
+    workRoot: root,
+    image: 'aethelios-architect-apps-worker:2026-10-15.1',
+    toolchain: defaultAppsImage,
+    probe: `${root}/topology-probe`,
+    dockerGid: 118,
+  });
+  expect(topology[topology.indexOf('--group-add') + 1]).toBe('118');
+  expect(topology[topology.indexOf('--user') + 1]).toBe('1000:1000');
+  expect(topology).toContain('aethelios-architect-apps-worker:2026-10-15.1');
+  expect(topology).toContain(defaultAppsImage);
+  expect(topology).not.toContain('118:latest');
+  expect(topology.includes('118') && topology[topology.indexOf('118') - 1] === '--group-add').toBe(true);
 });
 
 it('proves the packaged worker can see host-shared work through a sibling container', async () => {

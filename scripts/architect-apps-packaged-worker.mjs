@@ -80,33 +80,18 @@ export function assertPackagedWorkerIsolation(args) {
     throw new Error('Packaged worker must mount the shared work root at the identical host path.');
 }
 
-export function provePackagedWorkerTopology(options = {}) {
-  const spawn = options.spawn ?? spawnSync;
-  const workRoot = options.workRoot ?? process.env.ARCHITECT_APPS_WORK_ROOT ?? defaultPackagedWorkRoot;
-  const image = options.image ?? defaultWorkerImage;
-  const toolchain = options.toolchain ?? process.env.ARCHITECT_APPS_IMAGE ?? 'aethelios-architect-apps:2026-10-15.1';
-  mkdirSync(workRoot, { recursive: true });
-  try {
-    statSync(workRoot);
-  } catch {
-    return { ok: false, action: 'unavailable', reason: 'Shared work root could not be created.' };
-  }
-  const probe = join(workRoot, `topology-${Date.now()}`);
-  mkdirSync(probe, { recursive: true });
-  writeFileSync(join(probe, 'marker.txt'), 'host-visible-work-root\n');
-  const gid = dockerSocketGid('/var/run/docker.sock', spawn);
-  const args = [
-    'run',
-    '--rm',
-    '--network',
-    'none',
+export function packagedWorkerTopologyArgs(input = {}) {
+  const workRoot = input.workRoot ?? defaultPackagedWorkRoot;
+  const image = input.image ?? defaultWorkerImage;
+  const toolchain = input.toolchain ?? 'aethelios-architect-apps:2026-10-15.1';
+  const probe = input.probe ?? join(workRoot, 'topology-probe');
+  const args = ['run', '--rm', '--network', 'none'];
+  if (input.dockerGid) args.push('--group-add', String(input.dockerGid));
+  args.push(
     '--user',
     '1000:1000',
     '--entrypoint',
     'docker',
-  ];
-  if (gid) args.splice(5, 0, '--group-add', String(gid));
-  args.push(
     '-v',
     '/var/run/docker.sock:/var/run/docker.sock',
     '-v',
@@ -126,8 +111,30 @@ export function provePackagedWorkerTopology(options = {}) {
     'cat',
     '/probe/marker.txt',
   );
+  const imageIndex = args.indexOf(image);
+  if (imageIndex < 0 || args[imageIndex + 1] !== 'run')
+    throw new Error('Topology proof must invoke the packaged worker image, not a numeric group id.');
   if (args.includes('--privileged') || args.join(' ').includes('OPENAI_API_KEY'))
     throw new Error('Topology proof would expose host authority or secrets.');
+  return args;
+}
+
+export function provePackagedWorkerTopology(options = {}) {
+  const spawn = options.spawn ?? spawnSync;
+  const workRoot = options.workRoot ?? process.env.ARCHITECT_APPS_WORK_ROOT ?? defaultPackagedWorkRoot;
+  const image = options.image ?? defaultWorkerImage;
+  const toolchain = options.toolchain ?? process.env.ARCHITECT_APPS_IMAGE ?? 'aethelios-architect-apps:2026-10-15.1';
+  mkdirSync(workRoot, { recursive: true });
+  try {
+    statSync(workRoot);
+  } catch {
+    return { ok: false, action: 'unavailable', reason: 'Shared work root could not be created.' };
+  }
+  const probe = join(workRoot, `topology-${Date.now()}`);
+  mkdirSync(probe, { recursive: true });
+  writeFileSync(join(probe, 'marker.txt'), 'host-visible-work-root\n');
+  const gid = dockerSocketGid('/var/run/docker.sock', spawn);
+  const args = packagedWorkerTopologyArgs({ workRoot, image, toolchain, probe, dockerGid: gid });
   const ran = spawn('docker', args, { encoding: 'utf8' });
   const output = `${ran.stdout ?? ''}${ran.stderr ?? ''}`;
   const receipt = {
