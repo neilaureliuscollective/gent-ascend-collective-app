@@ -58,6 +58,7 @@ import { CreationDetail } from './creation-detail';
 import { liveComposerLimit, liveTextRejection } from '@/domains/live/limits';
 import {
   matchesVoiceReconcile,
+  voiceWorkspaceApplyAllowed,
   voiceItemsAcknowledged,
   type VoicePersistenceReceipt,
   type VoiceReconcileIdentity,
@@ -993,12 +994,29 @@ export function AureliusWorkspace({
                 if (!stillCurrent()) return;
                 if (workspace.ok) {
                   const next = (await workspace.json()) as WorkspaceData;
-                  if (next.ownerId === input.ownerId && selected === input.conversationId)
-                    setData((current) =>
-                      current && selected === input.conversationId
-                        ? { ...current, turns: next.turns, conversations: next.conversations }
-                        : current,
-                    );
+                  if (!stillCurrent()) return;
+                  if (
+                    !voiceWorkspaceApplyAllowed(
+                      ownerId && liveController ? liveController.voiceIdentity(ownerId) : null,
+                      input,
+                      selected,
+                      next.ownerId,
+                    )
+                  )
+                    return;
+                  setData((current) =>
+                    stillCurrent() &&
+                    voiceWorkspaceApplyAllowed(
+                      ownerId && liveController ? liveController.voiceIdentity(ownerId) : null,
+                      input,
+                      selected,
+                      next.ownerId,
+                    ) &&
+                    current &&
+                    selected === input.conversationId
+                      ? { ...current, turns: next.turns, conversations: next.conversations }
+                      : current,
+                  );
                 }
               }
               return;

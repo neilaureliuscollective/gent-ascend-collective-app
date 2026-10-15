@@ -61,6 +61,17 @@ try {
   );
   assert.ok(
     (
+      await owner.rpc('ai_live_observe_item', {
+        p_session: session,
+        p_conversation: conversation,
+        p_item: 'item-1',
+        p_response: 'resp-1',
+      })
+    ).error,
+    'direct observe must be denied',
+  );
+  assert.ok(
+    (
       await owner.rpc('ai_live_bind_turn', {
         p_session: session,
         p_conversation: conversation,
@@ -69,7 +80,71 @@ try {
         p_turn: turn,
       })
     ).error,
+    'direct bind must be denied',
+  );
+  assert.ok(
+    (
+      await owner.rpc('ai_live_bind_finished_turn', {
+        p_session: session,
+        p_conversation: conversation,
+        p_item: 'item-1',
+        p_response: 'resp-1',
+        p_turn: turn,
+      })
+    ).error,
     'nonexistent session must be denied',
+  );
+  assert.equal((await owner.rpc('ai_finish_turn', { p_request: turn, p_text: 'Saved.', p_status: 'complete' })).error, null);
+  const reserved = await owner.rpc('ai_live_reserve', {
+    p_id: crypto.randomUUID(),
+    p_conversation: conversation,
+    p_model: 'synthetic-no-model-call',
+  });
+  if (!reserved.error && reserved.data) {
+    const liveSession = (
+      await owner.from('ai_live_sessions').select('id').eq('conversation_id', conversation).maybeSingle()
+    ).data?.id;
+    assert.ok(liveSession);
+    assert.ok(
+      (
+        await owner.rpc('ai_live_observe_item', {
+          p_session: liveSession,
+          p_conversation: conversation,
+          p_item: 'spoken-1',
+          p_response: 'resp-1',
+        })
+      ).error,
+      'observe on a real session must be denied',
+    );
+    const bound = await owner.rpc('ai_live_bind_finished_turn', {
+      p_session: liveSession,
+      p_conversation: conversation,
+      p_item: 'spoken-1',
+      p_response: 'resp-1',
+      p_turn: turn,
+    });
+    assert.equal(bound.error, null, 'completed turn on the owner session can be bound');
+    assert.equal(bound.data.turnId, turn);
+  }
+  assert.ok(
+    (
+      await owner.rpc('architect_apps_retain_design', {
+        p_request: crypto.randomUUID(),
+        p_project: crypto.randomUUID(),
+        p_digest: 'a'.repeat(64),
+        p_receipt: {
+          identity: {
+            conversationId: conversation,
+            boardId: crypto.randomUUID(),
+            boardVersion: 1,
+            directionId: crypto.randomUUID(),
+          },
+        },
+        p_source_kind: 'talk-authorized',
+        p_verified: true,
+      })
+    ).error,
+    'caller-asserted verified retain without a Talk board or project must be denied',
   );
   assert.ok(
     (
@@ -107,7 +182,7 @@ try {
   assert.equal((await foreign.from('ai_live_turn_bindings').select('turn_id')).data?.length ?? 0, 0);
   assert.equal((await foreign.from('ai_talk_direction_transfers').select('id')).data?.length ?? 0, 0);
   console.log(
-    'PASS: Talk receipt Auth/PostgREST denies direct inserts, nonexistent sessions, and receipts without Architect acknowledgment.',
+    'PASS: Talk receipt Auth/PostgREST denies observe/bind, forged verified retain, direct inserts, and receipts without Architect acknowledgment.',
   );
 } finally {
   await owner.from('ai_conversations').delete().eq('id', conversation);

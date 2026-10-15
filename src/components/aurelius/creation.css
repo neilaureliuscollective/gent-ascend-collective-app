@@ -173,6 +173,11 @@
 .talk-origin-preview dd {
   margin: 0;
 }
+.talk-direction-digest {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  font-size: 12px;
+}
 .talk-origin-review .button,
 .talk-origin-review a.button {
   display: inline-flex;
@@ -312,6 +317,15 @@
 @media (max-width: 720px) {
   .talk-design-board {
     padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .talk-origin-review {
+    gap: 8px;
+  }
+  .talk-origin-preview {
+    gap: 6px;
+  }
+  .talk-creation-status {
+    font-size: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

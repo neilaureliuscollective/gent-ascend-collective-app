@@ -680,6 +680,19 @@ export async function reviewDesignDirection(boardId: string) {
     .eq('board_version', creation.version)
     .eq('direction_id', selectedDirection(board).id)
     .maybeSingle();
+  const destination = existing.data
+    ? await client
+        .from('architect_design_directions')
+        .select('request_id,project_id,digest,verified')
+        .eq('request_id', existing.data.id)
+        .eq('person_id', person.id)
+        .maybeSingle()
+    : { data: null, error: null };
+  const destinationOk = Boolean(
+    destination.data?.verified &&
+      destination.data.digest === receipt.digest &&
+      destination.data.project_id === existing.data?.project_id,
+  );
   return {
     boardId: creation.id,
     conversationId: creation.conversation_id,
@@ -691,8 +704,9 @@ export async function reviewDesignDirection(boardId: string) {
       'Typeface names, shape, material, surface/border roles and disclaimer stay in Talk.',
     ],
     requestId: existing.data?.id ?? null,
-    imported: Boolean(existing.data?.imported && existing.data.digest === receipt.digest),
-    projectId: existing.data?.imported ? existing.data.project_id : null,
+    imported: Boolean(existing.data?.imported && existing.data.digest === receipt.digest && destinationOk),
+    projectId: destinationOk ? existing.data?.project_id ?? null : null,
+    destinationValid: destinationOk,
     originReady: originReady(),
     digest: receipt.digest,
     boardVersion: creation.version,

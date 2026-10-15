@@ -1579,6 +1579,21 @@ export interface Database {
         };
         Returns: { providerItemId: string; observed: boolean };
       };
+      ai_live_bind_finished_turn: {
+        Args: {
+          p_session: string;
+          p_conversation: string;
+          p_item: string;
+          p_response: string | null;
+          p_turn: string;
+        };
+        Returns: {
+          providerItemId: string;
+          providerResponseId: string | null;
+          turnId: string;
+          recovered?: boolean;
+        };
+      };
       architect_apps_retain_design: {
         Args: {
           p_request: string;

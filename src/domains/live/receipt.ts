@@ -40,3 +40,18 @@ export function matchesVoiceReconcile(
       current.epoch === expected.epoch,
   );
 }
+
+export function voiceWorkspaceApplyAllowed(
+  current: VoiceReconcileIdentity | null | undefined,
+  expected: VoiceReconcileIdentity,
+  selected: string | null | undefined,
+  nextOwnerId: string | null | undefined,
+) {
+  return (
+    matchesVoiceReconcile(current, expected) &&
+    Boolean(selected) &&
+    selected === expected.conversationId &&
+    Boolean(nextOwnerId) &&
+    nextOwnerId === expected.ownerId
+  );
+}

@@ -88,7 +88,18 @@ async function bindOriginProject(
 }
 
 async function retainDurably(
-  client: { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }> },
+  client: {
+    rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+    from: (table: string) => {
+      select: (columns: string) => {
+        eq: (column: string, value: string) => {
+          eq: (column: string, value: string) => {
+            maybeSingle: () => Promise<{ data: RetainedDirection | null; error: { message: string } | null }>;
+          };
+        };
+      };
+    };
+  },
   input: {
     requestId: string;
     personId: string;
@@ -108,17 +119,18 @@ async function retainDurably(
     p_verified: input.verified,
   });
   if (saved.error) throw new DesignDirectionStoreError(saved.error.message);
+  const stored = await client
+    .from('architect_design_directions')
+    .select('*')
+    .eq('request_id', input.requestId)
+    .eq('person_id', input.personId)
+    .maybeSingle();
+  if (stored.error || !stored.data) throw new DesignDirectionStoreError('Design direction was not retained.');
   return {
-    request_id: input.requestId,
-    person_id: input.personId,
-    project_id: input.projectId,
-    revision: 1,
-    digest: input.digest,
-    receipt: input.receipt,
-    started: false,
-    source_kind: input.sourceKind,
-    verified: input.verified,
-    created_at: new Date().toISOString(),
+    ...stored.data,
+    verified: Boolean(stored.data.verified),
+    source_kind: stored.data.source_kind,
+    receipt: stored.data.receipt ?? input.receipt,
   };
 }
 

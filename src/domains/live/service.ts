@@ -767,14 +767,7 @@ export async function admitLive(input: LiveAdmission) {
               if (finished.error || !finished.data)
                 throw new Error('Voice turn persistence failed');
               if (turn.providerItemId) {
-                const observed = await client.rpc('ai_live_observe_item', {
-                  p_session: input.sessionId,
-                  p_conversation: input.conversationId,
-                  p_item: turn.providerItemId,
-                  p_response: turn.providerResponseId ?? null,
-                });
-                if (observed.error || !observed.data) throw new Error('Voice turn observation failed');
-                const bound = await client.rpc('ai_live_bind_turn', {
+                const bound = await client.rpc('ai_live_bind_finished_turn', {
                   p_session: input.sessionId,
                   p_conversation: input.conversationId,
                   p_item: turn.providerItemId,

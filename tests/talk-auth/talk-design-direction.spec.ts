@@ -280,14 +280,82 @@ test('authenticated design-board selection, refinement, reload and Architect tra
       })
     ).error,
   ).toBeTruthy();
+  const forgedRetain = await owner.rpc('architect_apps_retain_design', {
+    p_request: crypto.randomUUID(),
+    p_project: retry.body.projectId,
+    p_digest: 'c'.repeat(64),
+    p_receipt: {
+      identity: {
+        conversationId: conversation,
+        boardId: refinedId,
+        boardVersion: 99,
+        directionId: reviewed.body.receipt.identity.directionId,
+      },
+    },
+    p_source_kind: 'talk-authorized',
+    p_verified: true,
+  });
+  if (!forgedRetain.error) {
+    const forgedRow = await owner
+      .from('architect_design_directions')
+      .select('verified,source_kind')
+      .eq('request_id', forgedRetain.data)
+      .maybeSingle();
+    expect(forgedRow.data?.verified).toBe(false);
+  }
+  expect(
+    (
+      await owner.rpc('ai_talk_record_direction_transfer', {
+        p_id: typeof forgedRetain.data === 'string' ? forgedRetain.data : crypto.randomUUID(),
+        p_conversation: conversation,
+        p_board: refinedId,
+        p_version: 3,
+        p_direction: 'direction-c',
+        p_direction_uuid: reviewed.body.receipt.identity.directionId,
+        p_project: retry.body.projectId,
+        p_digest: 'c'.repeat(64),
+        p_receipt: { schema: 'talk-architect-direction/v1' },
+      })
+    ).error,
+  ).toBeTruthy();
+  expect(
+    (
+      await owner.rpc('ai_live_observe_item', {
+        p_session: crypto.randomUUID(),
+        p_conversation: conversation,
+        p_item: 'spoken-1',
+        p_response: 'resp-1',
+      })
+    ).error,
+  ).toBeTruthy();
+  expect(
+    (
+      await owner.rpc('ai_live_bind_turn', {
+        p_session: crypto.randomUUID(),
+        p_conversation: conversation,
+        p_item: 'spoken-1',
+        p_response: 'resp-1',
+        p_turn: turn,
+      })
+    ).error,
+  ).toBeTruthy();
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('tab', { name: /Emerald Glass/ })).toBeVisible();
-  const reopened = await api<{ imported: boolean; digest: string; projectId: string | null }>(
-    page,
-    `/api/aurelius/creations?direction=${refinedId}`,
-  );
+  const reopened = await api<{
+    imported: boolean;
+    digest: string;
+    projectId: string | null;
+    destinationValid?: boolean;
+  }>(page, `/api/aurelius/creations?direction=${refinedId}`);
   expect(reopened.body.imported).toBe(true);
+  expect(reopened.body.destinationValid).toBe(true);
   expect(reopened.body.digest).toBe(reviewed.body.digest);
+  const persisted = await owner
+    .from('architect_design_directions')
+    .select('request_id,verified,digest')
+    .eq('request_id', transferId)
+    .maybeSingle();
+  expect(persisted.data).toMatchObject({ request_id: transferId, verified: true, digest: reviewed.body.digest });
   const other = await browser.newContext();
   const foreignPage = await other.newPage();
   await signIn(foreignPage, 'member@aurelius.test');

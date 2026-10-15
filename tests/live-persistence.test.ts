@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { matchesVoiceReconcile, voiceItemsAcknowledged } from '@/domains/live/receipt';
+import {
+  matchesVoiceReconcile,
+  voiceItemsAcknowledged,
+  voiceWorkspaceApplyAllowed,
+} from '@/domains/live/receipt';
 
 it('acknowledges persistence only from provider-item bindings, not turn-count growth', () => {
   expect(
@@ -34,4 +38,20 @@ it('rejects a late receipt once owner, conversation, session or epoch changes', 
   expect(matchesVoiceReconcile({ ...first, conversationId: 'conv-b' }, first)).toBe(false);
   expect(matchesVoiceReconcile({ ...first, ownerId: 'owner-b' }, first)).toBe(false);
   expect(matchesVoiceReconcile(null, first)).toBe(false);
+});
+
+it('refuses a delayed workspace body after conversation or session change', () => {
+  const first = {
+    ownerId: 'owner-a',
+    conversationId: 'conv-a',
+    sessionId: 'session-a',
+    epoch: 1,
+  };
+  expect(voiceWorkspaceApplyAllowed(first, first, 'conv-a', 'owner-a')).toBe(true);
+  expect(voiceWorkspaceApplyAllowed({ ...first, conversationId: 'conv-b', epoch: 2 }, first, 'conv-b', 'owner-a')).toBe(
+    false,
+  );
+  expect(voiceWorkspaceApplyAllowed(first, first, 'conv-b', 'owner-a')).toBe(false);
+  expect(voiceWorkspaceApplyAllowed(first, first, 'conv-a', 'owner-b')).toBe(false);
+  expect(voiceWorkspaceApplyAllowed(null, first, 'conv-a', 'owner-a')).toBe(false);
 });

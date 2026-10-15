@@ -37,19 +37,23 @@ beforeAll(async () => {
  grant select on public.persons to authenticated;
  create table public.ai_conversations(id uuid primary key, person_id uuid not null, title text, company_id uuid, archived_at timestamptz, unique(person_id,id));
  insert into public.ai_conversations(id,person_id,title) values('${conversation}','${owner}','Talk');
- create table public.ai_turns(id uuid primary key, person_id uuid, conversation_id uuid);
- insert into public.ai_turns values('${turn}','${owner}','${conversation}');
+ create table public.ai_turns(id uuid primary key, person_id uuid, conversation_id uuid, status text default 'complete', finished_at timestamptz default now());
+ insert into public.ai_turns values('${turn}','${owner}','${conversation}','complete',now());
  create table public.ai_live_sessions(id uuid primary key, person_id uuid not null, conversation_id uuid);
+ create table public.architect_origin_projects(id uuid not null, person_id uuid not null, primary key(id, person_id));
  create table public.architect_design_directions(
    request_id uuid primary key, person_id uuid not null, project_id uuid not null,
-   digest text not null, verified boolean not null default false
+   revision integer default 1, digest text not null, receipt jsonb, started boolean default false,
+   source_kind text not null default 'pending', verified boolean not null default false, created_at timestamptz default now()
  );
- grant select, insert on public.ai_live_sessions, public.architect_design_directions to authenticated;`);
+ grant select, insert on public.ai_live_sessions, public.architect_design_directions, public.architect_origin_projects to authenticated;`);
   await db.exec(await readFile('supabase/migrations/20261013240000_talk_creation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014120000_talk_live_bindings.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014130000_talk_direction_transfers.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014140000_talk_live_bind_authority.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015160000_architect_apps_retain_authority.sql', 'utf8'));
 });
 afterAll(() => db.close());
 
@@ -442,6 +446,32 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
         `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)})`,
       ),
     ).rejects.toThrow(/unavailable/i);
+    const forged = '00000000-0000-4000-8000-000000000075';
+    await db.exec(`insert into public.architect_origin_projects(id,person_id) values('${projectId}','${owner}')`);
+    await asUser(
+      owner,
+      `select public.architect_apps_retain_design('${forged}','${projectId}','${digest}',${literal({
+        identity: {
+          conversationId: conversation,
+          boardId,
+          boardVersion: 99,
+          directionId: directionUuid,
+        },
+      })},'talk-authorized',true)`,
+    );
+    const forgedRow = (
+      await asUser(
+        owner,
+        `select verified, source_kind from public.architect_design_directions where request_id='${forged}'`,
+      )
+    ).rows[0] as { verified: boolean; source_kind: string };
+    expect(forgedRow).toMatchObject({ verified: false, source_kind: 'pending' });
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_record_direction_transfer('${forged}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)})`,
+      ),
+    ).rejects.toThrow(/acknowledgment missing/i);
   });
 });
 
@@ -451,17 +481,21 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
     const turnA = '00000000-0000-4000-8000-000000000082';
     const turnB = '00000000-0000-4000-8000-000000000083';
     await db.exec(
-      `insert into public.ai_turns values('${turnA}','${owner}','${conversation}'),('${turnB}','${owner}','${conversation}');
+      `insert into public.ai_turns values('${turnA}','${owner}','${conversation}','complete',now()),('${turnB}','${owner}','${conversation}','complete',now());
        insert into public.ai_live_sessions(id,person_id,conversation_id) values('${session}','${owner}','${conversation}')`,
     );
-    await asUser(
-      owner,
-      `select public.ai_live_observe_item('${session}','${conversation}','item-same','resp-1')`,
-    );
-    await asUser(
-      owner,
-      `select public.ai_live_observe_item('${session}','${conversation}','item-same-again','resp-2')`,
-    );
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_observe_item('${session}','${conversation}','item-same','resp-1')`,
+      ),
+    ).rejects.toThrow();
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,
+      ),
+    ).rejects.toThrow();
     await expect(
       asUser(owner, `insert into public.ai_live_turn_bindings(person_id,conversation_id,session_id,provider_item_id,turn_id)
         values('${owner}','${conversation}','${session}','forged','${turnA}')`),
@@ -469,38 +503,42 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
     await expect(
       asUser(
         owner,
-        `select public.ai_live_bind_turn('${crypto.randomUUID()}','${conversation}','item-same','resp-1','${turnA}')`,
+        `select public.ai_live_bind_finished_turn('${crypto.randomUUID()}','${conversation}','item-same','resp-1','${turnA}')`,
       ),
     ).rejects.toThrow(/unavailable/i);
+    const pendingTurn = '00000000-0000-4000-8000-000000000086';
+    await db.exec(
+      `insert into public.ai_turns values('${pendingTurn}','${owner}','${conversation}','pending',null)`,
+    );
     await expect(
       asUser(
         owner,
-        `select public.ai_live_bind_turn('${session}','${conversation}','never-observed','resp-1','${turnA}')`,
+        `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${pendingTurn}')`,
       ),
     ).rejects.toThrow(/unavailable/i);
     const otherConversation = '00000000-0000-4000-8000-000000000084';
     const wrongTurn = '00000000-0000-4000-8000-000000000085';
     await db.exec(
       `insert into public.ai_conversations(id,person_id,title) values('${otherConversation}','${owner}','Other');
-       insert into public.ai_turns values('${wrongTurn}','${owner}','${otherConversation}')`,
+       insert into public.ai_turns values('${wrongTurn}','${owner}','${otherConversation}','complete',now())`,
     );
     await expect(
       asUser(
         owner,
-        `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${wrongTurn}')`,
+        `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${wrongTurn}')`,
       ),
     ).rejects.toThrow(/unavailable/i);
     await asUser(
       owner,
-      `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,
+      `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,
     );
     await asUser(
       owner,
-      `select public.ai_live_bind_turn('${session}','${conversation}','item-same-again','resp-2','${turnB}')`,
+      `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same-again','resp-2','${turnB}')`,
     );
     const replay = await asUser(
       owner,
-      `select public.ai_live_bind_turn('${session}','${conversation}','item-same','resp-1','${turnA}') as receipt`,
+      `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnA}') as receipt`,
     );
     expect(replay.rows[0]).toMatchObject({ receipt: { turnId: turnA, recovered: true } });
     const bindings = (

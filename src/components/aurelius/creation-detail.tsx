@@ -72,8 +72,10 @@ export function CreationDetail({
     boardVersion?: number;
     selectedDirectionId?: string;
     selectedDirectionName?: string;
+    destinationValid?: boolean;
     error?: string;
   } | null>(null);
+  const [directionBusy, setDirectionBusy] = useState<'review' | 'transfer' | null>(null);
   const [directionRequestId] = useState(() => crypto.randomUUID());
   const [review, setReview] = useState<{
     imported: boolean;
@@ -274,9 +276,17 @@ export function CreationDetail({
           />
           <div className="talk-origin-review">
             <p className="talk-creation-status" data-adapter="talk-architect-direction">
-              {directionReview?.imported
-                ? 'Imported. Architect acknowledged this exact reviewed direction.'
-                : 'Review the shared talk-architect-direction/v1 manifest, then confirm transfer. v1 text import stays for brief, plan and palette only.'}
+              {directionBusy === 'review'
+                ? 'Reviewing the selected direction. Chat stays usable.'
+                : directionBusy === 'transfer'
+                  ? 'Confirming transfer. Chat stays usable.'
+                  : directionReview?.imported
+                    ? 'Imported. Architect acknowledged this exact reviewed direction.'
+                    : directionReview?.receipt && directionReview.destinationValid === false
+                      ? 'A previous Talk receipt has no matching Architect destination. Review again.'
+                      : directionReview?.receipt
+                        ? 'Reviewed. Confirm only this version and direction. Chat stays usable.'
+                        : 'Review the selected direction first. Confirm writes only after Architect retains it.'}
             </p>
             {directionReview?.unsupported?.map((item) => (
               <p key={item} className="talk-creation-status">
@@ -312,7 +322,7 @@ export function CreationDetail({
                 </div>
                 <div>
                   <dt>Digest</dt>
-                  <dd>{directionReview.receipt.digest}</dd>
+                  <dd className="talk-direction-digest">{directionReview.receipt.digest}</dd>
                 </div>
               </dl>
             )}
@@ -320,104 +330,119 @@ export function CreationDetail({
             <button
               type="button"
               className="button"
-              disabled={busy || !creation}
+              disabled={!creation || directionBusy !== null || Boolean(directionReview?.imported)}
               onClick={() => {
                 if (!creation) return;
+                setDirectionBusy('review');
                 void (async () => {
-                  const reviewed = await fetch(`/api/aurelius/creations?direction=${creation.id}`, {
-                    cache: 'no-store',
-                  });
-                  const body = (await reviewed.json()) as {
-                    receipt?: {
-                      digest: string;
-                      content: { name: string; summary: string; copy: { title: string } };
-                    };
-                    unsupported?: string[];
-                    imported?: boolean;
-                    projectId?: string | null;
-                    requestId?: string | null;
-                    digest?: string;
-                    boardVersion?: number;
-                    selectedDirectionId?: string;
-                    selectedDirectionName?: string;
-                    error?: string;
-                  };
-                  if (!reviewed.ok || !body.receipt) {
-                    setDirectionReview({
-                      unsupported: body.unsupported ?? [],
-                      imported: false,
-                      projectId: null,
-                      requestId: null,
-                      error: body.error ?? 'This design could not be reviewed.',
+                  try {
+                    const reviewed = await fetch(`/api/aurelius/creations?direction=${creation.id}`, {
+                      cache: 'no-store',
                     });
-                    return;
+                    const body = (await reviewed.json()) as {
+                      receipt?: {
+                        digest: string;
+                        content: { name: string; summary: string; copy: { title: string } };
+                      };
+                      unsupported?: string[];
+                      imported?: boolean;
+                      destinationValid?: boolean;
+                      projectId?: string | null;
+                      requestId?: string | null;
+                      digest?: string;
+                      boardVersion?: number;
+                      selectedDirectionId?: string;
+                      selectedDirectionName?: string;
+                      error?: string;
+                    };
+                    if (!reviewed.ok || !body.receipt) {
+                      setDirectionReview({
+                        unsupported: body.unsupported ?? [],
+                        imported: false,
+                        projectId: null,
+                        requestId: null,
+                        destinationValid: false,
+                        error: body.error ?? 'This design could not be reviewed.',
+                      });
+                      return;
+                    }
+                    setDirectionReview({
+                      receipt: body.receipt,
+                      unsupported: body.unsupported ?? [],
+                      imported: Boolean(body.imported),
+                      destinationValid: Boolean(body.destinationValid),
+                      projectId: body.projectId ?? null,
+                      requestId: body.requestId ?? directionRequestId,
+                      digest: body.digest ?? body.receipt.digest,
+                      boardVersion: body.boardVersion,
+                      selectedDirectionId: body.selectedDirectionId,
+                      selectedDirectionName: body.selectedDirectionName,
+                    });
+                  } finally {
+                    setDirectionBusy(null);
                   }
-                  setDirectionReview({
-                    receipt: body.receipt,
-                    unsupported: body.unsupported ?? [],
-                    imported: Boolean(body.imported),
-                    projectId: body.projectId ?? null,
-                    requestId: body.requestId ?? directionRequestId,
-                    digest: body.digest ?? body.receipt.digest,
-                    boardVersion: body.boardVersion,
-                    selectedDirectionId: body.selectedDirectionId,
-                    selectedDirectionName: body.selectedDirectionName,
-                  });
                 })();
               }}
             >
-              {directionReview?.imported ? 'Imported' : 'Review design transfer'}
+              {directionReview?.imported ? 'Imported' : directionBusy === 'review' ? 'Reviewing…' : 'Review design transfer'}
             </button>
             {directionReview?.receipt && !directionReview.imported && (
               <button
                 type="button"
                 className="button"
-                disabled={busy || !creation || !directionReview.digest}
+                disabled={!creation || !directionReview.digest || directionBusy !== null}
                 onClick={() => {
                   if (!creation || !directionReview.digest) return;
+                  setDirectionBusy('transfer');
                   void (async () => {
                     const requestId = directionReview.requestId ?? directionRequestId;
-                    const transferred = await fetch('/api/aurelius/creations', {
-                      method: 'POST',
-                      headers: { 'content-type': 'application/json' },
-                      body: JSON.stringify({
-                        action: 'transfer-direction',
-                        id: requestId,
-                        conversationId: creation.conversation_id,
-                        boardId: creation.id,
-                        reviewedDigest: directionReview.digest,
-                      }),
-                    });
-                    const result = (await transferred.json()) as {
-                      imported?: boolean;
-                      projectId?: string;
-                      digest?: string;
-                      error?: string;
-                    };
-                    if (!transferred.ok || !result.imported)
-                      setDirectionReview({
-                        ...directionReview,
-                        imported: false,
-                        projectId: null,
-                        requestId,
-                        error:
-                          result.error ??
-                          (/changed|review/i.test(result.error ?? '')
-                            ? 'This design changed. Review it again before transfer.'
-                            : 'Architect did not acknowledge this direction.'),
+                    try {
+                      const transferred = await fetch('/api/aurelius/creations', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'transfer-direction',
+                          id: requestId,
+                          conversationId: creation.conversation_id,
+                          boardId: creation.id,
+                          reviewedDigest: directionReview.digest,
+                        }),
                       });
-                    else
-                      setDirectionReview({
-                        ...directionReview,
-                        imported: true,
-                        projectId: result.projectId ?? null,
-                        requestId,
-                        error: undefined,
-                      });
+                      const result = (await transferred.json()) as {
+                        imported?: boolean;
+                        projectId?: string;
+                        digest?: string;
+                        error?: string;
+                      };
+                      if (!transferred.ok || !result.imported)
+                        setDirectionReview({
+                          ...directionReview,
+                          imported: false,
+                          destinationValid: false,
+                          projectId: null,
+                          requestId,
+                          error:
+                            result.error ??
+                            (/changed|review/i.test(result.error ?? '')
+                              ? 'This design changed. Review it again before transfer.'
+                              : 'Architect did not acknowledge this direction.'),
+                        });
+                      else
+                        setDirectionReview({
+                          ...directionReview,
+                          imported: true,
+                          destinationValid: true,
+                          projectId: result.projectId ?? null,
+                          requestId,
+                          error: undefined,
+                        });
+                    } finally {
+                      setDirectionBusy(null);
+                    }
                   })();
                 }}
               >
-                Confirm transfer
+                {directionBusy === 'transfer' ? 'Confirming…' : 'Confirm transfer'}
               </button>
             )}
             {directionReview?.imported && directionReview.projectId && (
