@@ -1,10 +1,26 @@
+# Talk / Studio-live reconciliation — 2026-10-15
+
+#131 now includes live main `804c877` (Studio #132 production) while keeping Health `20261015181000` and Talk `20261015180000` / `20261015190000`. Released Studio FFmpeg setup, package changes and database types stay on this tree. Do not rename hosted `schema_migrations` rows. Architect Origin remains a hosted name-equivalent (`20261014010638` / `20261012230000_architect_origin`). The 18 Talk/Architect-apps files were not listed by name on the earlier hosted ledger read; objects remain unverified because the physical-schema query was cancelled and is not retried here. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` stays unset. No main merge, hosted apply or paid provider call.
+
 # Talk foundation reconciliation — 2026-10-15
 
-#131 includes current main `544c156` so Health’s published `20261015181000_health_workspace.sql` and Talk’s `20261015180000` / `20261015190000` coexist by filename. Do not rename hosted `schema_migrations` rows. Architect Origin is already a hosted name-equivalent (`20261014010638` / `20261012230000_architect_origin`). The 18 Talk/Architect-apps files were not listed by name on the current hosted ledger read; objects remain unverified because the physical-schema query was cancelled. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` stays unset. No main merge, hosted apply or paid provider call.
+#131 previously included main `544c156` so Health’s published `20261015181000_health_workspace.sql` and Talk’s `20261015180000` / `20261015190000` coexist by filename. That Health-only base is superseded by the Studio-live reconciliation above. Do not rename hosted `schema_migrations` rows. Architect Origin is already a hosted name-equivalent (`20261014010638` / `20261012230000_architect_origin`). The 18 Talk/Architect-apps files were not listed by name on the current hosted ledger read; objects remain unverified because the physical-schema query was cancelled. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` stays unset. No main merge, hosted apply or paid provider call.
+
+# Aethelios Studio renderer/editor pipeline — 2026-10-15
+
+Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
+
+# Aethelios Studio editor/export lifecycle — 2026-10-15
+
+Finish the current Design/Film experience on PR #132: protect live drafts during paused reconcile and failed older saves; return the exact accepted revision from atomic save+freeze; inspect real PNG/PDF coordinates including SVG-path Y; treat failed render reads as unknown so completed objects survive a lost finish ack; make preview crop/audio match FFmpeg; package a Fly.io Machine worker without purchasing it. Do not expand Studio with another feature suite. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md) and [ops/studio-render/README.md](../ops/studio-render/README.md).
 
 # Health transformation workspace — 2026-10-15
 
 Health stays named Health. The previous TRT/HRT clinic structure is not the product. Command becomes a personal workspace with two built-in foundations (evening sequence and Bloodwork Tracker) rather than a six-tab dashboard. Authoritative records, units, provenance, comparison rules, consent and deletion remain in trusted Health code. Architect customization of presentation/behavior uses a narrow adapter: structured presentation requests only; personal labs, original documents and Health history are refused rather than regex-redacted into a prompt. Dynamic compilation depends on unmerged Architect Apps PR #130 head `97b9a645d88a7498f5661d69d3259ad7239d853b` with isolated Docker compile and a usable preview. Host-fixture is not success. Client workingRevision metadata cannot establish a verified build. This Health branch does not vendor the Apps engine. Talk’s unmerged migration `20261015180000_talk_live_trusted_observe.sql` forced Health’s unapplied workspace migration to `20261015181000`. No generated diagnosis, dosing, treatment, readiness score or device control. Evidence: [HEALTH_TRANSFORMATION.md](HEALTH_TRANSFORMATION.md).
+
+# Aethelios Studio completion pass — 2026-10-15
+
+Finish PR #132 without renaming Studio or replacing generation. Persist with revision-aware autosave so a delayed save cannot replace newer local edits. Enforce sanitized SVG at parse/save/export. Convert physical units instead of relabeling. Export PNG/SVG/PDF from one geometry/typography contract, including PPI-scaled outlined type, PDF rotation/crop/rounded corners/SVG logos and WebP decoded through FFmpeg to PNG. Compile stills as a single frame plus intended zoompan duration; burn titles/captions from a trusted VTT path; apply crop/placement and dissolve overlap. `scripts/studio-render-worker.mjs` is the trusted claim/dispatch worker. Recover is service_role-only; begin returns the canonical job id; finish requires a matching unexpired lease. Hosted rendering stays unavailable; the worker flag only queues. Missing Design/Film tables must not fail existing Studio history. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
 
 # Official Aethelios install icon — 2026-10-15
 
@@ -15,6 +31,10 @@ Official references checked 2026-10-15: [W3C icon masks](https://www.w3.org/TR/a
 # Talk creative conversation — 2026-10-14
 
 One Talk conversation owns text, voice, selected artifacts and async results. Official Realtime `POST /v1/realtime/calls` uses string FormData `sdp`/`session` fields per the Node sample; Blob file parts remain a documented mismatch with the observed HTTP 400, not a proven sole cause without provider evidence. Provider logs stay allowlisted, including request IDs from allowlisted headers. Live seed pins application/selected-artifact context separately from recent history. Voice persistence is an explicit session-scoped provider-item→turn receipt (`20261014120000_talk_live_bindings.sql`). Design boards persist inline selection and bind typed refinement to the selected direction. Talk produces Architect-owned `talk-architect-direction/v1` (`talk.architect.source.resolve` 2026-10-14.1, Architect head `fb41859` / retain SQL `2da0b6d`) with a documented color/layout mapping; hero-product, typefaces, shape/material and surface/border stay on the Talk board. Voice bindings and design receipts are RPC-only. Additive `20261014100000` / `20261014120000` / `20261014130000` plus Architect `20261015080000` / `20261015120000` from `2da0b6d` are local/reviewable.
+
+# Aethelios Studio editable design and media productions — 2026-10-14
+
+Keep generation, storage, narration, footage, Finish and Delivery. Add a canonical Studio document model with Fabric.js 7.4.0 as the editor adapter (patched SVG-export advisories; MIT notice preserved). Persist designs and short-film compositions as owner-bound revisions. Export PNG/SVG/vector PDF from frozen revisions. Render H.264/AAC locally through compiled FFmpeg operations; hosted rendering stays unavailable without a worker. No commercial editor SDK, no invented bottle-label dies, no CMYK claim, no paid provider calls. Talk #131 and Architect #130 are not merged. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
 
 # Aethelios Live sideband and Talk unification — 2026-10-14
 

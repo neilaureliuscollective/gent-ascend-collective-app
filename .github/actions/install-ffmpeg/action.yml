@@ -1,0 +1,11 @@
+name: Install FFmpeg
+description: Trusted distro FFmpeg for Studio PNG rasterization and film renderer tests
+runs:
+  using: composite
+  steps:
+    - name: Install FFmpeg
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends ffmpeg
+        ffmpeg -hide_banner -version | head -n 6

@@ -222,6 +222,11 @@ for (const width of [344, 720, 1440]) {
     ).toBeVisible();
     await noOverflow(page);
     await expect(page.locator('.studio-world-heading a svg[aria-hidden="true"]')).toBeVisible();
+    const rooms = page.getByRole('group', { name: 'Studio workspace views' });
+    await expect(rooms.getByRole('button')).toHaveCount(10);
+    await expect(rooms.getByRole('button', { name: 'Design', exact: true })).toBeVisible();
+    await expect(rooms.getByRole('button', { name: 'Film', exact: true })).toBeVisible();
+    await rooms.getByRole('button', { name: 'Create', exact: true }).click();
     await expect(page.locator('.studio-paths button svg[aria-hidden="true"]')).toHaveCount(5);
     await expect(page.locator('.studio-page')).not.toContainText('↗');
     await shot(page, `studio-${width}`);

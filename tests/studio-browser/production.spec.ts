@@ -556,8 +556,10 @@ test('premium room controls preserve keyboard navigation and defer inactive room
   });
   await setup(page);
   const controls = page.getByRole('group', { name: 'Studio workspace views' });
-  await expect(controls.getByRole('button')).toHaveCount(8);
-  await expect(controls.getByRole('button', { name: 'Create', exact: true })).toHaveAttribute(
+  await expect(controls.getByRole('button')).toHaveCount(10);
+  await expect(controls.getByRole('button', { name: 'Design', exact: true })).toBeVisible();
+  await expect(controls.getByRole('button', { name: 'Film', exact: true })).toBeVisible();
+  await expect(controls.getByRole('button', { name: 'Design', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -580,6 +582,18 @@ test('premium room controls preserve keyboard navigation and defer inactive room
   );
   await expect(page.getByRole('button', { name: 'Render motion film', exact: true })).toBeVisible();
   expect(specialistReads).toBe(0);
+  await controls.getByRole('button', { name: 'Design', exact: true }).click();
+  await expect(controls.getByRole('button', { name: 'Design', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.screenshot({ path: 'test-results/studio-design-room.png', fullPage: true });
+  await controls.getByRole('button', { name: 'Film', exact: true }).click();
+  await expect(controls.getByRole('button', { name: 'Film', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.screenshot({ path: 'test-results/studio-film-room.png', fullPage: true });
   await controls.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(controls.getByRole('button', { name: 'Create', exact: true })).toHaveAttribute(
     'aria-pressed',
