@@ -35,7 +35,10 @@ test('app-wide charcoal route coverage preserves real access states and reflow',
     expect(row.unavailable, `${row.route} ${row.label}`).toBeUndefined();
     expect(row.errors, `${row.route} ${row.label}`).toEqual([]);
     expect(row.overflow, `${row.route} ${row.label}`).toBe(false);
-    expect(row.tokens?.['--io-environment']?.trim(), row.route).toBe('#111111');
+    const environment = row.tokens?.['--io-environment']
+      ?.trim()
+      .replace(/^#([a-f0-9])([a-f0-9])([a-f0-9])$/i, '#$1$1$2$2$3$3');
+    expect(environment, row.route).toBe('#111111');
     if (row.screenshot)
       expect((await readFile(`${output}/${row.screenshot.path}`)).length).toBeGreaterThan(1000);
   }
