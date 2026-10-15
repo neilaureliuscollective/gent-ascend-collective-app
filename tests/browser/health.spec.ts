@@ -34,7 +34,7 @@ for (const width of [344, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
     await page.goto(fixture);
-    await expect(page.getByRole('heading', { name: 'A personal Health workspace' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Make Health work your way' })).toBeVisible();
     await page.getByRole('button', { name: 'Open evening sequence' }).click();
     await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toBeVisible();
     if (width <= 768) {
@@ -177,7 +177,7 @@ test('Architect compile is blocked on the unmerged Apps dependency and keeps the
   await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
   await page.goto(fixture);
   await page.getByRole('button', { name: 'Open Bloodwork Tracker' }).click();
-  await page.getByRole('button', { name: 'Customize with Architect' }).click();
+  await page.getByRole('button', { name: 'Architect brief' }).click();
   await expect(
     page.getByText('Customization compile is not available', { exact: false }),
   ).toBeVisible();
@@ -360,7 +360,7 @@ test('Assist selects LDL and deselecting every marker stays empty', async ({ pag
   await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
   await page.goto(fixture);
   await page.getByRole('button', { name: 'Open Bloodwork Tracker' }).click();
-  await page.getByPlaceholder('Change to ten minutes, or show LDL').fill('show LDL');
+  await page.getByPlaceholder('Add notes, remove the table, or show LDL').fill('show LDL');
   await page.getByRole('button', { name: 'Apply' }).click();
   await expect(page.getByRole('heading', { name: 'LDL cholesterol' })).toBeVisible();
   const ldl = page.getByRole('checkbox', { name: 'LDL cholesterol' });
@@ -379,10 +379,11 @@ test('Health atelier clears private draft after account change', async ({ page }
   );
   await page.goto(fixture);
   await page.getByRole('button', { name: 'Open evening sequence' }).click();
-  await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toHaveCount(0);
   await expect(page.getByText('Your session changed.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Make Health work your way' })).toBeVisible();
 });
 test('Health clears visible private records after account change', async ({ page }) => {
   await page.route('**/api/health', (route) =>
@@ -394,10 +395,114 @@ test('Health clears visible private records after account change', async ({ page
   await expect(page.getByRole('heading', { name: 'Synthetic laboratory report' })).toHaveCount(0);
   await expect(page.getByText('Your session changed.', { exact: false })).toBeVisible();
 });
+test('failed Save and continue keeps the canvas, edits and pending destination', async ({
+  page,
+}) => {
+  const data = structuredClone(healthFixture);
+  await page.route('**/api/health', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({ status: 400, json: { error: 'Synthetic rejected save.' } });
+      return;
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open evening sequence' }).click();
+  await page.getByLabel('Available minutes').fill('10');
+  await page
+    .getByRole('navigation', { name: 'Health workspace' })
+    .getByRole('button', { name: 'Bloodwork Tracker' })
+    .click();
+  await expect(page.getByRole('dialog', { name: 'Keep these edits?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Save and continue' }).click();
+  await expect(page.getByText('Save failed', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Available minutes')).toHaveValue('10');
+  await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Keep these edits?' })).toBeVisible();
+});
+test('composed creation can add a section, undo, save, leave and reopen', async ({ page }, info) => {
+  const data = structuredClone(healthFixture);
+  await page.route('**/api/health', async (route) => {
+    if (route.request().method() === 'POST') {
+      const input = route.request().postDataJSON() as Mutation;
+      if (input.kind === 'workspace_save') {
+        data.workspaces = [
+          {
+            id: input.id,
+            foundation: input.foundation,
+            title: input.title,
+            sample: input.sample,
+            version: 1,
+            workingRevision: 1,
+            lastWorkingRevision: 1,
+            settings: input.settings,
+            progress: input.progress as never,
+            architect: null,
+            created_at: data.asOf,
+            updated_at: data.asOf,
+            last_opened_at: data.asOf,
+          },
+        ];
+      }
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(fixture);
+  await page.screenshot({ path: info.outputPath('health-creation-home-1440.png'), fullPage: true });
+  await page.getByLabel('What would you like to create?').fill('blank tool');
+  await page.getByRole('button', { name: 'Create this tool' }).click();
+  await expect(page.getByText('This tool has no sections yet.')).toBeVisible();
+  await page.getByRole('button', { name: 'Customize' }).click();
+  await page.getByRole('button', { name: 'Evening sequence' }).click();
+  await expect(page.getByLabel('Available minutes')).toBeVisible();
+  await page.getByLabel('Available minutes').fill('12');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByLabel('Available minutes')).toHaveValue('20');
+  await page.getByRole('button', { name: 'Redo' }).click();
+  await expect(page.getByLabel('Available minutes')).toHaveValue('12');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('button', { name: 'All tools' }).click();
+  await page.getByRole('button', { name: 'Untitled tool' }).click();
+  await expect(page.getByLabel('Available minutes')).toHaveValue('12');
+  await page.screenshot({ path: info.outputPath('health-saved-tool-1440.png'), fullPage: true });
+});
+test('creation home, customize and use states fit phone, Fold and desktop', async ({
+  page,
+}, info) => {
+  await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
+  for (const width of [390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(fixture);
+    await expect(page.getByRole('heading', { name: 'Make Health work your way' })).toBeVisible();
+    await page.screenshot({
+      path: info.outputPath(`health-home-${width}.png`),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Open evening sequence' }).click();
+    await page.getByRole('button', { name: 'Customize' }).click();
+    await expect(page.getByRole('button', { name: 'Customize' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await page.screenshot({
+      path: info.outputPath(`health-customize-${width}.png`),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Use' }).click();
+    await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toBeVisible();
+    await page.screenshot({
+      path: info.outputPath(`health-use-${width}.png`),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'All tools' }).click();
+  }
+});
 test('production Health API rejects signed-out writes and page preserves privacy headers', async ({
   page,
   request,
 }) => {
+  test.skip(process.env.HEALTH_NEXT !== '1', 'Requires the Next application on :3100.');
   const response = await request.get('/api/health');
   expect(response.status()).toBe(401);
   expect(response.headers()['cache-control']).toContain('no-store');

@@ -42,3 +42,7 @@ export function shouldClearDraft(
 export function copyIncludesDraft(dirty: boolean, signedIn: boolean) {
   return dirty && signedIn;
 }
+
+export function canLeaveAfterSave(result: HealthSendResult) {
+  return result.status === 'confirmed';
+}

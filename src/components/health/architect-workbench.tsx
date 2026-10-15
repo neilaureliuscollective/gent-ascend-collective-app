@@ -118,16 +118,24 @@ export function ArchitectWorkbench({
             Accept revision {attempt.attemptedRevision}
           </button>
         )}
-        {attempt && (
-          <ol className="health-diff">
-            {attempt.diff.map((row) => (
-              <li key={row.path}>
-                <code>{row.path}</code>
-                <p>Before: {row.before}</p>
-                <p>After: {row.after}</p>
-              </li>
-            ))}
-          </ol>
+        {attempt?.status === 'ready' &&
+          attempt.isolation === 'docker' &&
+          attempt.previewOk &&
+          attempt.diff.length > 0 && (
+            <ol className="health-diff">
+              {attempt.diff.map((row) => (
+                <li key={row.path}>
+                  <code>{row.path}</code>
+                  <p>Before: {row.before}</p>
+                  <p>After: {row.after}</p>
+                </li>
+              ))}
+            </ol>
+          )}
+        {attempt && attempt.status !== 'ready' && (
+          <p>
+            No verified generated artifact. Illustrative contract text is not a build receipt.
+          </p>
         )}
         <p className="health-footnote">
           Working revision {workspace.lastWorkingRevision}. A failed or blocked compile does not

@@ -125,10 +125,51 @@ export const routineProgressSchema = z
   })
   .strict();
 
+export const toolSectionKind = z.enum([
+  'hero',
+  'sequence',
+  'notes',
+  'trend',
+  'table',
+  'source',
+]);
+export type ToolSectionKind = z.infer<typeof toolSectionKind>;
+
+export const toolDisplay = z.enum([
+  'hero-next',
+  'sequence-list',
+  'notes-panel',
+  'chart',
+  'table',
+  'source-inspect',
+]);
+export type ToolDisplay = z.infer<typeof toolDisplay>;
+
+export const toolSectionSchema = z
+  .object({
+    id: z.uuid(),
+    kind: toolSectionKind,
+    title: z.string().min(1).max(80),
+    display: toolDisplay,
+    visible: z.boolean(),
+  })
+  .strict();
+export type ToolSection = z.infer<typeof toolSectionSchema>;
+
+export const toolCompositionSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    intent: z.string().max(400).optional(),
+    sections: z.array(toolSectionSchema).max(12),
+  })
+  .strict();
+export type ToolComposition = z.infer<typeof toolCompositionSchema>;
+
 export const workspaceSettingsSchema = z
   .object({
     presentation: trustedPresentationSchema,
     bloodwork: bloodworkSettingsSchema.optional(),
+    composition: toolCompositionSchema.optional(),
   })
   .strict();
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
@@ -163,6 +204,7 @@ export function defaultWorkspaceSettings(foundation: HealthFoundationId): Worksp
   return {
     presentation,
     bloodwork: foundation === 'bloodwork-tracker' ? defaultBloodworkSettings() : undefined,
+    composition: undefined,
   };
 }
 
@@ -202,7 +244,7 @@ export function workspaceFromRow(row: HealthWorkspaceRecord): HealthWorkspaceRec
 
 export const selectedElementSchema = z
   .object({
-    kind: z.enum(['step', 'marker', 'document', 'timer', 'constraint', 'chart']),
+    kind: z.enum(['step', 'marker', 'document', 'timer', 'constraint', 'chart', 'section']),
     id: z.string().min(1).max(120),
   })
   .strict();

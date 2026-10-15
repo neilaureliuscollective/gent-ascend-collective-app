@@ -1,38 +1,48 @@
 # Aethelios Health transformation
 
-Branch: `cursor/health-transformation-36d4`. Destination remains Health. No rename of the platform, no revival of Legacy Reserve, no production merge, hosted migration, or activation of medical ingestion / Health AI.
+Branch: `cursor/health-creation-environment-36d4`, from main `544c156`. Destination remains Health. No rename of the platform, no revival of Legacy Reserve, no production merge, hosted migration, or activation of medical ingestion / Health AI.
 
-## What changed
+## What this pass changes
 
-`/app/health` is a composed personal workspace. This phase keeps the two foundations and makes the working surface the center:
+`/app/health` is an immersive creation environment with three connected states:
 
-- Evening sequence: current/next action, in-app timer, compact time controls, proposed packing that must be accepted, notes on the selected step. Calendar, purchases, messages and devices stay unavailable.
-- Bloodwork Tracker: one selected marker trend, compact marker/date controls, original units and laboratory ranges, source inspection. Empty marker selection stays empty. Assist “show LDL” selects LDL.
-- Inspector and mobile sections hold settings, library and records. In-progress work is kept across layout changes and confirmed before switching foundations.
-- Member-facing copy does not include PR numbers or commit hashes. Technical dependency details stay in collapsed diagnostics.
+1. **Creation home** — “Make Health work your way” and “What would you like to create?”. A labelled-sample evening tool sits beside the composer on large screens and below it on phones. Foundations are miniature starting materials. My tools lists real saved work. Records, privacy and connections stay reachable without owning the first viewport.
+2. **Active canvas** — opening or creating a tool shows its name, draft/saved state, Use/Customize, the rendered tool, and “Change your tool…”. Customize keeps the tool visible and puts structural controls beside it (or in a phone sheet).
+3. **Owned personal tool** — a confirmed save keeps the accepted definition, layout and progress. Leave, reopen and refresh restore that tool. It is usable, not a saved brief.
+
+## Real creation
+
+There is no generated-app runtime on this branch. Creation is compositional, not a silent map onto two presets:
+
+- Blank tool, add/remove/reorder/rename supported sections, choose their display, configure evening time limits and bloodwork markers.
+- Supported pieces: next action, evening sequence, preparation notes, marker trend, results table, source inspection.
+- Natural-language edits use bounded commands (`add a trend`, `remove the table`, `rename this tool to …`, time limits, `show LDL`). Unsupported ideas are kept as an Architect brief. Generated-code execution stays unavailable.
+
+Evening sequence and Bloodwork Tracker remain working starting materials: timers, packing, notes, reviewed markers, original units, ranges and source inspection. Custom layout cannot alter source records, provenance, units or comparison rules.
 
 ## Private state and saves
 
-HealthAtelier follows the parent owner/session/visibility lifecycle. Account change, signed-out refresh and hidden documents clear draft, assist text, inspector and Architect panels. Timers are fenced to the current owner, workspace and generation.
+**Save and continue** navigates only after the matching save is `confirmed`. Failed or uncertain acknowledgement keeps the current canvas, edits and pending destination.
 
-Saves return confirmed, failed or uncertain receipts. The draft is cleared only when the exact generation that was sent is acknowledged. Failed and uncertain saves keep the visible edits. “Save as copy” sends the current working surface when it is dirty (`includeDraft`). Switching foundations or saved workspaces with unsaved edits asks to keep editing, discard, or save first.
+Drafts clear only when the exact generation that was sent is confirmed. Copy still includes unsaved edits. Owner/session/hidden-document clearing is unchanged. If Health storage is unavailable, the UI says the draft has not been saved.
 
 ## Architect
 
-Trusted presentation controls work immediately. Genuine compile uses a Health-owned adapter: the person enters a customization request; Health classifies it as presentation-only or sensitive; approved Health source, the versioned contract and a synthetic example are the only builder inputs. Personal values, documents and clinical instructions are not sent.
-
-A compile is ready only after isolated Docker compilation and a usable preview. Host-fixture or missing preview is failed, not ready. Client `workingRevision` metadata cannot verify a build. Accept binds source hash, artifact hash, isolation and revision in `health_private.workspaces` only when the stored attempt is already ready with Docker isolation.
-
-Inspected Architect Apps dependency: PR **#130** `cursor/architect-create-apps-501f` @ `97b9a645d88a7498f5661d69d3259ad7239d853b` (2026-10-15). That runtime is not on this branch (`src/domains/architect-apps/service.ts` is absent; `/api/architect-apps` is 404). This phase therefore reports customization compile unavailable and does not present a fake preview. Runtime access, when later enabled, stays on the Health-owned bridge, filtered to selected markers, date window and fields.
+Trusted presentation still applies immediately. Isolated compile depends on Architect Apps PR **#130** `cursor/architect-create-apps-501f`, inspected 2026-10-15 at `3248e8da6fce8b56af9fd310b7ad66ea02312248` (moved from `97b9a645…`). `/api/architect-apps` remains 404 on this branch. Blocked compile does not present illustrative diffs as verified receipts. Personal records are not sent into general coding context.
 
 ## Persistence
 
-Additive migration `20261015181000_health_workspace.sql` stores owner-scoped workspaces, full revision settings/progress/architect, and a read-only record bridge. The 181000 timestamp avoids colliding with Talk’s unmerged `20261015180000_talk_live_trusted_observe.sql`. Neither file is on main or hosted projects. Exact request receipts prevent duplicate creates. Workspace save does not take working revision from the client. Export includes reconstructable revision payloads, not labels only.
+Additive migration `20261015181000_health_workspace.sql` is unchanged. Tool composition is a versioned `settings.composition` object (`schemaVersion: 1`) inside existing workspace JSONB. Hosted application of 181000 has not been verified and is not applied from this pass.
 
-Apply the migration only on local/synthetic databases. Do not apply it to hosted projects from this phase.
+## Verification
 
-## Verification notes
+Health unit/SQL tests, composition command tests, and Playwright fixture journeys including:
 
-Local this phase: Health unit/SQL tests, migration ledger uniqueness, and Playwright fixture journeys (emulated 344 / 390 / 768 / 1440). Screenshots in `docs/evidence/health-transformation/` are labelled fixture renders, not live Auth.
+- Create a distinct tool, structural change, behavior change, undo/redo, save, leave, reopen.
+- Failed Save and continue retains edits and location.
+- Owner change clears the private canvas.
+- Phone 390, Fold-like 768 and desktop 1440 for home, customize and use.
+
+Screenshots in `docs/evidence/health-creation/` are labelled fixture renders, not live Auth.
 
 Unrun: signed-in Next.js `/app/health` against isolated Supabase Auth/Storage; hosted migration; Docker Architect Apps compile. Medical ingestion and Health AI remain off.

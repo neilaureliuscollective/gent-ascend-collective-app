@@ -14,6 +14,8 @@ import type { HealthRecord, SavedObservation } from '@/domains/health/schema';
 import { numeric } from '@/domains/health/trends';
 import type { BloodworkSettings, SelectedElement } from '@/domains/health/workspace-model';
 
+export type BloodworkPart = 'hero' | 'trend' | 'table' | 'source';
+
 export function BloodworkTool({
   observations,
   records,
@@ -23,6 +25,7 @@ export function BloodworkTool({
   blocked,
   onSettings,
   onSelect,
+  parts = ['hero', 'trend', 'table', 'source'],
 }: {
   observations: SavedObservation[];
   records: HealthRecord[];
@@ -32,6 +35,7 @@ export function BloodworkTool({
   blocked: boolean;
   onSettings: (next: BloodworkSettings) => void;
   onSelect: (next: SelectedElement) => void;
+  parts?: BloodworkPart[];
 }) {
   const source = sample ? sampleBloodwork : observations;
   const view = bloodworkWorkspace(source, settings, sample);
@@ -45,6 +49,7 @@ export function BloodworkTool({
   const min = chart.length ? Math.min(...chart.map((item) => item.value)) : 0;
   const max = chart.length ? Math.max(...chart.map((item) => item.value)) : 1;
   const latest = view.focus?.latest ?? null;
+  const show = (part: BloodworkPart) => parts.includes(part);
   return (
     <div
       className="health-tool"
@@ -52,6 +57,7 @@ export function BloodworkTool({
       data-sample={sample}
       data-density={settings.density}
     >
+      {show('hero') && (
       <section className="health-next" aria-label="Selected bloodwork trend">
         <p className="health-kicker">{sample ? 'Sample evidence' : 'Reviewed evidence'}</p>
         {view.emptySelection ? (
@@ -73,6 +79,8 @@ export function BloodworkTool({
           </>
         )}
       </section>
+      )}
+      {show('trend') && (
       <div className="health-toolbar health-toolbar-compact">
         <fieldset disabled={blocked}>
           <legend>Markers</legend>
@@ -123,11 +131,13 @@ export function BloodworkTool({
           </fieldset>
         )}
       </div>
-      {view.emptySelection ? (
+      )}
+      {(show('trend') || show('table')) &&
+        (view.emptySelection ? (
         <p className="health-empty-selection">Choose one marker to open its trend and source.</p>
       ) : (
         <div className="health-evidence-layout" data-arrangement={settings.arrangement}>
-          {chart.length ? (
+          {show('trend') && chart.length ? (
             <svg
               className="health-chart"
               viewBox="0 0 560 220"
@@ -183,13 +193,14 @@ export function BloodworkTool({
                 );
               })}
             </svg>
-          ) : (
+          ) : show('trend') ? (
             <p className="health-empty-selection">
               {view.qualitative.length
                 ? 'This marker has reported results without a numeric scale, so they are listed rather than plotted.'
                 : 'No dated numeric results are in this window.'}
             </p>
-          )}
+          ) : null}
+          {show('table') && (
           <div className="health-table-scroll">
             <table>
               <caption>
@@ -237,7 +248,8 @@ export function BloodworkTool({
               </tbody>
             </table>
           </div>
-          {settings.comparisonDrawer && (
+          )}
+          {show('table') && settings.comparisonDrawer && (
             <aside className="health-comparison" aria-label="Compatible comparisons">
               <p className="health-kicker">Comparable difference</p>
               {view.comparable.length ? (
@@ -254,8 +266,8 @@ export function BloodworkTool({
             </aside>
           )}
         </div>
-      )}
-      {selected?.kind === 'marker' && (
+      ))}
+      {show('source') && selected?.kind === 'marker' && (
         <SourceInspect
           observation={source.find((row) => row.id === selected.id) ?? null}
           recordTitle={
