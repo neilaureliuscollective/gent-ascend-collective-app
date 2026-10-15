@@ -42,6 +42,27 @@ import { ContextPanel } from './context-panel';
 import { disconnectedWorkspace } from './preview';
 import { AureliusPresence } from '../visual/aurelius-presence';
 import { routeCapability } from '@/domains/intelligence/capabilities';
+import {
+  creationsOnTurn,
+  readTalkCreationWorkspace,
+  type TalkCreationWorkspace,
+} from '@/domains/talk-creation/schema';
+import {
+  bindTalkSave,
+  clearTalkSave,
+  matchesTalkSave,
+  readTalkSave,
+} from '@/domains/talk-creation/pending';
+import { idleCreationScope, shouldApplyCreation, shouldContinueWatch, shouldRecoverPending } from '@/domains/talk-creation/scope';
+import { CreationDetail } from './creation-detail';
+import { liveComposerLimit, liveTextRejection } from '@/domains/live/limits';
+import {
+  matchesVoiceReconcile,
+  voiceWorkspaceApplyAllowed,
+  voiceItemsAcknowledged,
+  type VoicePersistenceReceipt,
+  type VoiceReconcileIdentity,
+} from '@/domains/live/receipt';
 function priorVersions(turn: Turn, turns: Turn[]) {
   const versions: Turn[] = [];
   let parent = turn.parent_turn_id;
@@ -83,6 +104,7 @@ export function AureliusWorkspace({
   // Incoming handoffs are private in-memory drafts unless explicitly staged by Talk.
   const memoryOnlyDraft = useRef(!!homeDraft && homeDraft.recovery !== 'tab');
   const verifiedDraftOwner = useRef('');
+  const voiceReconcile = useRef(0);
   useEffect(() => {
     if (homeDraft && handoff?.peek() === homeDraft) handoff.take(undefined, homeDraft.ownerId);
   }, [homeDraft, handoff]);
@@ -149,6 +171,223 @@ export function AureliusWorkspace({
   const follow = useRef(true);
   const rememberReadingPosition = useReadingAnchor(scroll, follow, data !== null);
   const [awayFromLatest, setAwayFromLatest] = useState(false);
+  const [creationWorkspace, setCreationWorkspace] = useState<TalkCreationWorkspace | null>(null);
+  const [openWorkId, setOpenWorkId] = useState<string | null>(null);
+  const [creationError, setCreationError] = useState('');
+  const [creationLoadError, setCreationLoadError] = useState('');
+  const [creationNotice, setCreationNotice] = useState('');
+  const [creationBusy, setCreationBusy] = useState(false);
+  const [inlineBoardStatus, setInlineBoardStatus] = useState<{
+    id: string;
+    state: 'pending' | 'saved' | 'failed' | 'stale';
+  } | null>(null);
+  const [historyCreations, setHistoryCreations] = useState<
+    import('@/domains/talk-creation/schema').TalkCreation[]
+  >([]);
+  const rememberHistory = useCallback(
+    (versions: import('@/domains/talk-creation/schema').TalkCreation[]) => {
+      setHistoryCreations(versions);
+    },
+    [],
+  );
+  const [widePanel, setWidePanel] = useState(false);
+  const [attachment, setAttachment] = useState<{
+    id: string;
+    name: string;
+    projectId: string;
+  } | null>(null);
+  const detailDialog = useRef<HTMLDialogElement>(null);
+  const attachInput = useRef<HTMLInputElement>(null);
+  const creationRead = useRef<AbortController | null>(null);
+  const creationGeneration = useRef(0);
+  const imageWatch = useRef(0);
+  const imageTimer = useRef<number | null>(null);
+  const recoverGeneration = useRef(0);
+  const creationScope = useRef(idleCreationScope());
+  const stopImageWatch = useCallback(() => {
+    imageWatch.current += 1;
+    if (imageTimer.current) {
+      window.clearTimeout(imageTimer.current);
+      imageTimer.current = null;
+    }
+  }, []);
+  const applyCreationWorkspace = useCallback(
+    (conversationId: string, owner: string, workspace: TalkCreationWorkspace | null) => {
+      if (!shouldApplyCreation(creationScope.current, owner, conversationId)) return;
+      setCreationWorkspace(workspace);
+    },
+    [],
+  );
+  const watchImages = useCallback(
+    (conversationId: string, owner: string) => {
+      stopImageWatch();
+      const generation = imageWatch.current;
+      let delay = 1500;
+      const tick = async () => {
+        if (
+          !shouldContinueWatch(
+            imageWatch.current,
+            generation,
+            creationScope.current,
+            owner,
+            conversationId,
+          )
+        )
+          return;
+        try {
+          const response = await fetch(
+            `/api/aurelius/creations?conversationId=${conversationId}`,
+            { cache: 'no-store' },
+          );
+          if (
+            !shouldContinueWatch(
+              imageWatch.current,
+              generation,
+              creationScope.current,
+              owner,
+              conversationId,
+            )
+          )
+            return;
+          if (!response.ok) return;
+          const workspace = readTalkCreationWorkspace(await response.json());
+          applyCreationWorkspace(conversationId, owner, workspace);
+          const unfinished = (workspace?.images ?? []).filter((item) =>
+            ['approval', 'running', 'uncertain'].includes(item.status),
+          );
+          if (!unfinished.length) return;
+        } catch {
+          /* A missed poll is not a failed job. Resume while this conversation is open. */
+        }
+        if (
+          !shouldContinueWatch(
+            imageWatch.current,
+            generation,
+            creationScope.current,
+            owner,
+            conversationId,
+          )
+        )
+          return;
+        delay = Math.min(delay * 1.4, 8000);
+        imageTimer.current = window.setTimeout(() => void tick(), delay);
+      };
+      void tick();
+    },
+    [applyCreationWorkspace, stopImageWatch],
+  );
+  const loadCreations = useCallback(
+    async (conversationId: string | null) => {
+      const generation = ++creationGeneration.current;
+      const owner = verifiedDraftOwner.current;
+      const sameScope =
+        creationScope.current.owner === owner &&
+        creationScope.current.conversation === conversationId;
+      creationScope.current = { owner, conversation: conversationId };
+      creationRead.current?.abort();
+      const controller = new AbortController();
+      creationRead.current = controller;
+      if (!sameScope || !conversationId) {
+        setCreationWorkspace(null);
+        setCreationLoadError('');
+      }
+      if (!conversationId) {
+        recoverGeneration.current += 1;
+        stopImageWatch();
+        return;
+      }
+      const bound = () =>
+        !controller.signal.aborted &&
+        generation === creationGeneration.current &&
+        (!verifiedDraftOwner.current || verifiedDraftOwner.current === owner);
+      try {
+        const response = await fetch(`/api/aurelius/creations?conversationId=${conversationId}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!bound()) return;
+        if (!response.ok) throw new Error('Saved work unavailable');
+        const workspace = readTalkCreationWorkspace(await response.json());
+        if (!bound()) return;
+        if (!workspace) throw new Error('Saved work unavailable');
+        applyCreationWorkspace(conversationId, owner, workspace);
+        setCreationLoadError('');
+        if (
+          workspace.images.some((item) =>
+            ['approval', 'running', 'uncertain'].includes(item.status),
+          )
+        )
+          watchImages(conversationId, owner);
+        else stopImageWatch();
+      } catch {
+        if (bound()) {
+          stopImageWatch();
+          setCreationLoadError(
+            'Saved work is temporarily unavailable. Your conversation is still available.',
+          );
+        }
+      }
+    },
+    [applyCreationWorkspace, stopImageWatch, watchImages],
+  );
+  const recoverPendingSaves = useCallback(
+    async (conversationId: string, owner: string) => {
+      const generation = ++recoverGeneration.current;
+      const bound = () =>
+        shouldRecoverPending(
+          creationScope.current,
+          owner,
+          conversationId,
+          recoverGeneration.current,
+          generation,
+        ) &&
+        (!verifiedDraftOwner.current || verifiedDraftOwner.current === owner);
+      if (!bound()) return;
+      for (const intent of ['revision', 'handoff', 'import'] as const) {
+        const pending = readTalkSave(owner, conversationId, intent);
+        if (!pending) continue;
+        if (!bound()) return;
+        setCreationNotice(
+          intent === 'import'
+            ? 'Finishing the Architect import…'
+            : intent === 'handoff'
+              ? 'Finishing a prepared Architect package…'
+              : 'Finishing a previous save…',
+        );
+        try {
+          await jsonRequest('/api/aurelius/creations', 'POST', {
+            ...pending.payload,
+            id: pending.id,
+          });
+          if (!bound()) return;
+          if (!matchesTalkSave(owner, conversationId, intent, pending.id)) {
+            if (bound()) await loadCreations(conversationId);
+            continue;
+          }
+          if (!bound()) return;
+          clearTalkSave(owner, conversationId, intent);
+          setCreationNotice(
+            intent === 'import'
+              ? 'Saved in Architect. Open the project when you are ready.'
+              : intent === 'handoff'
+                ? 'Prepared for Architect. Review the package, then create the project.'
+                : 'Recovered the previous save.',
+          );
+          if (!bound()) return;
+          await loadCreations(conversationId);
+        } catch (error) {
+          if (!bound()) return;
+          const message = error instanceof Error ? error.message : '';
+          setCreationNotice(
+            /changed|already used|different content/i.test(message)
+              ? 'A recovered save conflicts with newer work. Open the work to resolve it.'
+              : 'A previous save did not confirm. It is still pending.',
+          );
+        }
+      }
+    },
+    [loadCreations],
+  );
   function rememberConversation(id: string | null) {
     if (compact || !window.location.pathname.endsWith('/aethelios')) return;
     const url = new URL(window.location.href);
@@ -159,6 +398,7 @@ export function AureliusWorkspace({
   }
   const load = useCallback(
     async (id: string | null = null) => {
+      recoverGeneration.current += 1;
       reading.current?.abort();
       const controller = new AbortController();
       reading.current = controller;
@@ -168,9 +408,10 @@ export function AureliusWorkspace({
           signal: controller.signal,
         });
         const result = await response.json();
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) return null;
         setError('');
         if (response.status === 401) {
+          recoverGeneration.current += 1;
           clearTalkDrafts();
           verifiedDraftOwner.current = '';
           memoryOnlyDraft.current = false;
@@ -180,7 +421,8 @@ export function AureliusWorkspace({
           setSelected(null);
           setDraft('');
           setNeedsReload(false);
-          return;
+          void loadCreations(null);
+          return null;
         }
         if (!response.ok) throw new Error(result.error ?? 'Your workspace could not be loaded.');
         setPreview(false);
@@ -201,6 +443,14 @@ export function AureliusWorkspace({
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
         setSelected(id);
+        const boundRecover = recoverGeneration.current;
+        void loadCreations(id).then(() => {
+          if (recoverGeneration.current !== boundRecover) return;
+          if (!id || !owner) return;
+          if (!shouldRecoverPending(creationScope.current, owner, id)) return;
+          if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+          void recoverPendingSaves(id, owner);
+        });
         if (!compact && window.location.pathname.endsWith('/aethelios')) {
           const url = new URL(window.location.href);
           if (id) url.searchParams.set('conversation', id);
@@ -216,17 +466,34 @@ export function AureliusWorkspace({
             'An earlier reply is still unresolved. Reload saved state before sending again.',
           );
         setConfirmDelete(false);
+        return result as WorkspaceData;
       } catch (e) {
         if (!controller.signal.aborted) {
           setError(e instanceof Error ? e.message : 'Your workspace could not be loaded.');
           throw e;
         }
+        return null;
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact, homeDraft],
+    [compact, homeDraft, loadCreations, recoverPendingSaves],
   );
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 900px)');
+    const sync = () => setWidePanel(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+  useEffect(() => {
+    if (!openWorkId || widePanel) {
+      detailDialog.current?.close();
+      return;
+    }
+    if (!detailDialog.current?.open) detailDialog.current?.showModal();
+  }, [openWorkId, widePanel]);
+  useEffect(() => () => stopImageWatch(), [stopImageWatch]);
   async function refreshMetadata(id: string) {
     reading.current?.abort();
     const controller = new AbortController();
@@ -256,7 +523,7 @@ export function AureliusWorkspace({
   function reload(id: string | null = null) {
     setLoading(true);
     setError('');
-    return load(id);
+    return load(id).then(() => undefined);
   }
   async function updateConversation(id: string, title: string | null, archived: boolean | null) {
     try {
@@ -379,6 +646,17 @@ export function AureliusWorkspace({
         if (result === null) setSelected(null);
         setData(result ?? disconnectedWorkspace);
         setCouncilSelection(councilFromVersion(result?.turns.at(-1)?.prompt_version ?? ''));
+        const conversation = result && initialConversation ? initialConversation : null;
+        const owner = result?.ownerId ?? '';
+        const boundRecover = recoverGeneration.current;
+        void loadCreations(conversation).then(() => {
+          if (controller.signal.aborted) return;
+          if (recoverGeneration.current !== boundRecover) return;
+          if (!conversation || !owner) return;
+          if (!shouldRecoverPending(creationScope.current, owner, conversation)) return;
+          if (verifiedDraftOwner.current && verifiedDraftOwner.current !== owner) return;
+          void recoverPendingSaves(conversation, owner);
+        });
         setLoading(false);
       })
       .catch((error) => {
@@ -390,8 +668,13 @@ export function AureliusWorkspace({
     return () => {
       reading.current?.abort();
       generation.current?.abort();
+      creationRead.current?.abort();
+      creationGeneration.current += 1;
+      recoverGeneration.current += 1;
+      stopImageWatch();
+      creationScope.current = idleCreationScope();
     };
-  }, [initialConversation, homeDraft, initialDraft, compact]);
+  }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
   useEffect(() => {
     if (follow.current && scroll.current)
       scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
@@ -413,8 +696,13 @@ export function AureliusWorkspace({
       return;
     if (liveBusy && liveController) {
       if (['listening', 'speaking'].includes(liveState.phase)) {
-        liveController.text(messageText);
-        setDraft('');
+        const sent = liveController.text(messageText);
+        if (sent.accepted) setDraft('');
+        else setError(liveTextRejection(sent.reason));
+        return;
+      }
+      if (liveState.phase === 'connecting') {
+        setError('Voice is still connecting. Your draft is unchanged.');
       }
       return;
     }
@@ -492,6 +780,7 @@ export function AureliusWorkspace({
           includeContext,
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
+          ...(attachment ? { attachmentId: attachment.id } : {}),
         }),
         signal: controller.signal,
       });
@@ -519,6 +808,8 @@ export function AureliusWorkspace({
           if (item.phase === 'saving') painted.finish(true);
           setOperation(observedOperation(requestId, item.phase, 'pending'));
           setNotice(`${intelligenceStatus(observedOperation(requestId, item.phase))}…`);
+        } else if (item.type === 'creation') {
+          setNotice('Preparing reviewed work…');
         } else if (item.type === 'delta') {
           setNotice('Aethelios is responding…');
           setOperation((previous) =>
@@ -541,12 +832,22 @@ export function AureliusWorkspace({
                 }
               : previous,
           );
+          if (item.creations?.some((creation) => creation.status === 'stale'))
+            setCreationNotice(
+              'A newer version was saved while this reply was generating. The proposal was kept for review.',
+            );
+          if (item.creations?.some((creation) => creation.status === 'stale-lost'))
+            setCreationNotice(
+              'A newer version was saved while this reply was generating. The proposal could not be stored.',
+            );
           break; // A durable receipt is terminal; do not wait for transport EOF.
         } else if (item.type === 'error') throw new Error(item.message);
       }
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
       setRevision(null);
       setNotice('Reply saved.');
+      setAttachment(null);
+      void loadCreations(id);
       // The saved receipt owns completion. Metadata refresh cannot hold the next request.
       void refreshMetadata(id);
     } catch (e) {
@@ -627,6 +928,8 @@ export function AureliusWorkspace({
   useEffect(() => {
     if (liveBusy && liveState.conversationId && selected && liveState.conversationId !== selected)
       void liveController?.end('Voice ended because you opened another conversation.');
+    if (liveState.conversationId && selected && liveState.conversationId !== selected)
+      voiceReconcile.current += 1;
   }, [liveBusy, liveState.conversationId, selected, liveController]);
   useEffect(() => {
     if (preview && liveBusy)
@@ -636,8 +939,11 @@ export function AureliusWorkspace({
     const owner = data?.ownerId ?? '';
     const previous = liveOwner.current;
     if (owner) liveOwner.current = owner;
-    if (previous && owner && previous !== owner && liveBusy)
-      void liveController?.end('Voice ended because the signed-in account changed.');
+    if (previous && owner && previous !== owner) {
+      voiceReconcile.current += 1;
+      if (liveBusy) void liveController?.end('Voice ended because the signed-in account changed.');
+      liveController?.invalidateTranscript();
+    }
   }, [data?.ownerId, liveBusy, liveController]);
   useEffect(() => {
     if (compact) return;
@@ -658,14 +964,135 @@ export function AureliusWorkspace({
     return () => window.removeEventListener('popstate', onPop);
   }, [compact, selected, liveBusy, liveState.conversationId, liveController, load]);
   const previousLivePhase = useRef(liveState.phase);
+  const ownerId = data?.ownerId;
+  useEffect(() => {
+    voiceReconcile.current += 1;
+  }, [ownerId, liveState.conversationId, liveState.sessionId, liveState.persistenceEpoch]);
+  const reconcileVoiceHistory = useCallback(
+    async (input: VoiceReconcileIdentity & { itemIds: string[] }) => {
+      const token = ++voiceReconcile.current;
+      const stillCurrent = () =>
+        token === voiceReconcile.current &&
+        matchesVoiceReconcile(ownerId && liveController ? liveController.voiceIdentity(ownerId) : null, input);
+      if (!stillCurrent()) return;
+      liveController?.markPersistence('pending', input);
+      setNotice('Saving the voice turns…');
+      for (let attempt = 0; attempt < 8; attempt++) {
+        if (!stillCurrent()) return;
+        try {
+          const response = await fetch(
+            `/api/aethelios/live/receipt?conversationId=${input.conversationId}&sessionId=${input.sessionId}`,
+            { cache: 'no-store' },
+          );
+          if (!stillCurrent()) return;
+          if (response.ok) {
+            const receipt = (await response.json()) as VoicePersistenceReceipt;
+            if (!stillCurrent()) return;
+            if (
+              receipt.ownerId !== input.ownerId ||
+              receipt.conversationId !== input.conversationId ||
+              receipt.sessionId !== input.sessionId
+            )
+              return;
+            liveController?.markSavedItems(
+              receipt.bindings.map((item) => item.providerItemId),
+              input,
+            );
+            if (voiceItemsAcknowledged(input.itemIds, receipt.bindings)) {
+              if (!stillCurrent()) return;
+              liveController?.acknowledgePersistence(input.sessionId, input.epoch);
+              setNotice('');
+              if (selected === input.conversationId && ownerId === input.ownerId) {
+                const workspace = await fetch(
+                  `/api/aurelius?conversationId=${input.conversationId}`,
+                  { cache: 'no-store' },
+                );
+                if (!stillCurrent()) return;
+                if (workspace.ok) {
+                  const next = (await workspace.json()) as WorkspaceData;
+                  if (!stillCurrent()) return;
+                  if (
+                    !voiceWorkspaceApplyAllowed(
+                      ownerId && liveController ? liveController.voiceIdentity(ownerId) : null,
+                      input,
+                      selected,
+                      next.ownerId,
+                    )
+                  )
+                    return;
+                  setData((current) =>
+                    stillCurrent() &&
+                    voiceWorkspaceApplyAllowed(
+                      ownerId && liveController ? liveController.voiceIdentity(ownerId) : null,
+                      input,
+                      selected,
+                      next.ownerId,
+                    ) &&
+                    current &&
+                    selected === input.conversationId
+                      ? { ...current, turns: next.turns, conversations: next.conversations }
+                      : current,
+                  );
+                }
+              }
+              return;
+            }
+          }
+        } catch {
+          /* Keep polling until the timeout. */
+        }
+        await new Promise((resolve) => setTimeout(resolve, 750));
+      }
+      if (!stillCurrent()) return;
+      liveController?.markPersistence('uncertain', input);
+      setNotice('Voice ended. Some turns may still be saving. Reload if they appear later.');
+    },
+    [liveController, ownerId, selected],
+  );
   useEffect(() => {
     const wasActive = ['connecting', 'listening', 'speaking'].includes(previousLivePhase.current);
     previousLivePhase.current = liveState.phase;
-    if (wasActive && ['ended', 'error', 'idle'].includes(liveState.phase) && selected)
-      void load(selected).catch(() => {});
-  }, [liveState.phase, selected, load]);
+    if (!wasActive || !['ended', 'error', 'idle'].includes(liveState.phase)) return;
+    const conversationId = liveState.conversationId;
+    const sessionId = liveState.sessionId;
+    if (!conversationId || !sessionId || !ownerId) return;
+    const itemIds = liveState.transcript
+      .filter((line) => line.role === 'user' && line.text)
+      .map((line) => line.id);
+    const epoch = liveState.persistenceEpoch;
+    const timer = window.setTimeout(() => {
+      void reconcileVoiceHistory({
+        ownerId,
+        conversationId,
+        sessionId,
+        epoch,
+        itemIds,
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [
+    ownerId,
+    liveState.conversationId,
+    liveState.persistenceEpoch,
+    liveState.phase,
+    liveState.sessionId,
+    liveState.transcript,
+    reconcileVoiceHistory,
+  ]);
+  useEffect(() => {
+    return () => {
+      voiceReconcile.current += 1;
+    };
+  }, []);
   function newConversation() {
+    voiceReconcile.current += 1;
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
+    liveController?.invalidateTranscript();
+    recoverGeneration.current += 1;
+    creationGeneration.current += 1;
+    creationRead.current?.abort();
+    stopImageWatch();
+    creationScope.current = idleCreationScope(verifiedDraftOwner.current);
     memoryOnlyDraft.current = false;
     if (!compact && data?.ownerId) writeTalkDraft(data.ownerId, selected, '');
     setOperation(observedOperation('talk-idle', 'ready'));
@@ -683,10 +1110,323 @@ export function AureliusWorkspace({
     setNotice('');
     setTab('conversation');
     setRevision(null);
+    void loadCreations(null);
+    setOpenWorkId(null);
+    setAttachment(null);
     follow.current = true;
     composer.current?.focus();
   }
-  const blocked = busy || loading || deleting || orchestrating;
+  async function openWork(id: string) {
+    setOpenWorkId(id);
+    setCreationError('');
+    setCreationNotice('');
+  }
+  async function saveOpenCreation(kind: 'brief' | 'plan' | 'palette' | 'board' | 'handoff', content: unknown) {
+    if (!selected || !openWorkId || !data?.ownerId) return;
+    const current = creationWorkspace?.creations.find(
+      (item) =>
+        item.kind === kind &&
+        (item.lineage_id === openCreation?.lineage_id || item.id === openWorkId) &&
+        !item.superseded_by &&
+        !item.candidate,
+    );
+    const payload = {
+      conversationId: selected,
+      kind,
+      predecessorId: current?.id ?? null,
+      sourceTurnId: current?.source_turn_id ?? openCreation?.source_turn_id ?? null,
+      content,
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'revision', payload);
+    recoverGeneration.current += 1;
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { id: string };
+      if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
+        clearTalkSave(data.ownerId, selected, 'revision');
+      setOpenWorkId(saved.id);
+      setCreationNotice('New version saved.');
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(error instanceof Error ? error.message : 'This work could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function commitInlineBoard(
+    creationId: string,
+    content: import('@/domains/talk-creation/design-board').DesignBoardContent,
+  ) {
+    if (!selected || !data?.ownerId) return;
+    const current = creationWorkspace?.creations.find(
+      (item) => item.id === creationId && item.kind === 'board' && !item.superseded_by && !item.candidate,
+    );
+    if (!current) {
+      setInlineBoardStatus({ id: creationId, state: 'failed' });
+      return;
+    }
+    const payload = {
+      conversationId: selected,
+      kind: 'board' as const,
+      predecessorId: current.id,
+      sourceTurnId: current.source_turn_id,
+      content,
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'revision', payload);
+    setInlineBoardStatus({ id: creationId, state: 'pending' });
+    setCreationBusy(true);
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { id: string };
+      if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
+        clearTalkSave(data.ownerId, selected, 'revision');
+      setInlineBoardStatus({ id: saved.id, state: 'saved' });
+      await loadCreations(selected);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setInlineBoardStatus({
+        id: creationId,
+        state: /stale|changed/i.test(message) ? 'stale' : 'failed',
+      });
+      setCreationError(message || 'The selected direction could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function keepProposal(id = openWorkId) {
+    if (!selected || !id || !data?.ownerId) return;
+    const candidate = creationWorkspace?.creations.find((item) => item.id === id && item.candidate);
+    if (!candidate || candidate.kind === 'handoff') {
+      setCreationError('This proposal is no longer available.');
+      return;
+    }
+    const current = creationWorkspace?.creations.find(
+      (item) => item.kind === candidate.kind && !item.superseded_by && !item.candidate,
+    );
+    if (!current) {
+      setCreationError('The current version is no longer available. The proposal was not applied.');
+      return;
+    }
+    const payload = {
+      conversationId: selected,
+      kind: candidate.kind,
+      predecessorId: current.id,
+      sourceTurnId: candidate.source_turn_id,
+      content: candidate.content,
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'revision', payload);
+    recoverGeneration.current += 1;
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { id: string };
+      if (matchesTalkSave(data.ownerId, selected, 'revision', bound.id))
+        clearTalkSave(data.ownerId, selected, 'revision');
+      setOpenWorkId(saved.id);
+      setCreationNotice('Proposal kept as a new version.');
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(
+        error instanceof Error ? error.message : 'This proposal could not be applied to the current version.',
+      );
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function selectOpenCreation(id = openWorkId) {
+    if (!selected || !id) return;
+    setOpenWorkId(id);
+    setCreationBusy(true);
+    try {
+      const image = creationWorkspace?.images.find((item) => item.id === id);
+      if (image) {
+        await jsonRequest('/api/aethelios/artifacts', 'PATCH', {
+          conversationId: selected,
+          artifactId: id,
+        });
+      } else {
+        await jsonRequest('/api/aurelius/creations', 'PATCH', {
+          conversationId: selected,
+          creationId: id,
+        });
+      }
+      setCreationNotice('This version is selected.');
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(error instanceof Error ? error.message : 'Selection could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function approveTalkImage(id: string, approve: boolean) {
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      await jsonRequest('/api/aurelius/creations', 'PATCH', {
+        id,
+        approve,
+        acknowledgeCost: true,
+      });
+      setCreationNotice(
+        approve
+          ? 'Generation reserved. The image is saved only after Studio finishes.'
+          : 'Image request declined.',
+      );
+      await loadCreations(selected);
+      if (approve && selected && data?.ownerId) watchImages(selected, data.ownerId);
+    } catch (error) {
+      setCreationError(error instanceof Error ? error.message : 'Image review could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function prepareArchitectPackage(input: {
+    idea: string;
+    discipline: 'business' | 'application' | 'product' | 'custom';
+    decisions: string;
+  }) {
+    if (!selected || !data?.ownerId) return;
+    const selectedIds = Object.entries(creationWorkspace?.selected ?? {})
+      .filter(([kind, id]) => Boolean(id) && kind !== 'board')
+      .map(([, id]) => id as string);
+    if (!selectedIds.length) {
+      setCreationError(
+        creationWorkspace?.selected.board
+          ? 'Design boards transfer through the Architect design-direction review, not v1 text import.'
+          : 'Select a brief, plan or palette before preparing Architect.',
+      );
+      return;
+    }
+    const payload = {
+      conversationId: selected,
+      discipline: input.discipline,
+      idea: input.idea,
+      decisions: input.decisions,
+      creationIds: selectedIds,
+      imageIds: creationWorkspace?.selectedImageId ? [creationWorkspace.selectedImageId] : [],
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'handoff', payload);
+    recoverGeneration.current += 1;
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { id?: string; content?: { imported?: boolean } };
+      if (matchesTalkSave(data.ownerId, selected, 'handoff', bound.id))
+        clearTalkSave(data.ownerId, selected, 'handoff');
+      setCreationNotice(
+        saved.content?.imported
+          ? 'Saved in Architect. Open the project when you are ready.'
+          : 'Prepared for Architect. Review the package, then create the project.',
+      );
+      handoff?.stage({
+        text: input.idea,
+        ownerId: data.ownerId,
+        target: 'architect',
+        conversationId: selected,
+        payload: saved,
+      });
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(error instanceof Error ? error.message : 'The Architect package could not be saved.');
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function importArchitectPackage(handoffId: string) {
+    if (!selected || !data?.ownerId) return;
+    const payload = {
+      action: 'import-origin' as const,
+      handoffId,
+      conversationId: selected,
+    };
+    const bound = bindTalkSave(data.ownerId, selected, 'import', payload);
+    recoverGeneration.current += 1;
+    setCreationBusy(true);
+    setCreationError('');
+    try {
+      const saved = (await jsonRequest('/api/aurelius/creations', 'POST', {
+        ...bound.payload,
+        id: bound.id,
+      })) as { imported?: boolean; projectId?: string };
+      if (matchesTalkSave(data.ownerId, selected, 'import', bound.id))
+        clearTalkSave(data.ownerId, selected, 'import');
+      setCreationNotice(
+        saved.imported
+          ? 'Saved in Architect. Open the project when you are ready.'
+          : 'The package is still prepared. Architect did not confirm a project.',
+      );
+      await loadCreations(selected);
+    } catch (error) {
+      setCreationError(
+        error instanceof Error ? error.message : 'Architect could not save this project.',
+      );
+    } finally {
+      setCreationBusy(false);
+    }
+  }
+  async function attachImage(file: File) {
+    const mediaType =
+      file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/webp'
+        ? file.type
+        : null;
+    if (!mediaType) {
+      setError('Choose a PNG, JPEG, or WebP image smaller than 10 MB.');
+      return;
+    }
+    try {
+      const prepared = (await jsonRequest('/api/aurelius/attachments', 'POST', {
+        action: 'prepare',
+        mediaType,
+        byteSize: file.size,
+      })) as {
+        id: string;
+        projectId: string;
+        path: string;
+        token: string;
+        url: string;
+        publishableKey: string;
+      };
+      const { createClient } = await import('@supabase/supabase-js');
+      const transferred = await createClient(prepared.url, prepared.publishableKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+        .storage.from('aethelios-studio')
+        .uploadToSignedUrl(prepared.path, prepared.token, file, {
+          contentType: mediaType,
+          upsert: false,
+        });
+      if (transferred.error) throw new Error('The image could not be uploaded.');
+      await jsonRequest('/api/aurelius/attachments', 'POST', {
+        action: 'complete',
+        projectId: prepared.projectId,
+        id: prepared.id,
+        mediaType,
+      });
+      setAttachment({ id: prepared.id, name: file.name, projectId: prepared.projectId });
+      setNotice('Image attached for analysis. Generation still requires an explicit request.');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'The image could not be attached.');
+      setAttachment(null);
+    }
+  }
+  const blocked = busy || loading || deleting || orchestrating || creationBusy;
+  const openCreation =
+    creationWorkspace?.creations.find((item) => item.id === openWorkId) ??
+    historyCreations.find((item) => item.id === openWorkId) ??
+    null;
+  const openImage = creationWorkspace?.images.find((item) => item.id === openWorkId) ?? null;
   const capability = routeCapability(draft.trim() || data?.turns.at(-1)?.user_text || '');
 
   async function prepareCapability() {
@@ -707,7 +1447,12 @@ export function AureliusWorkspace({
       const response = await fetch('/api/aurelius/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target: capability.id, text }),
+        body: JSON.stringify({
+          target: capability.id,
+          text,
+          conversationId: selected ?? undefined,
+          creationIds: Object.values(creationWorkspace?.selected ?? {}).filter(Boolean),
+        }),
         signal: AbortSignal.timeout(30000),
       });
       const result = await response.json();
@@ -863,6 +1608,31 @@ export function AureliusWorkspace({
                 ))}
               </nav>
               <ConversationArtifacts conversationId={selected} />
+              <div className="talk-attachment-tools">
+                <input
+                  ref={attachInput}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = '';
+                    if (file) void attachImage(file);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={blocked || preview || !data.canChat}
+                  onClick={() => attachInput.current?.click()}
+                >
+                  Attach an image for analysis
+                </button>
+                <p className="quiet-label">
+                  PNG, JPEG or WebP under 10 MB. Pixels are sent only with the next message, for
+                  analysis, not automatic generation.
+                </p>
+              </div>
               <AppearanceControls />
               {!preview && (
                 <div className="intelligence-work-access">
@@ -1098,6 +1868,7 @@ export function AureliusWorkspace({
           </div>
         )}
         <>
+          <div className="talk-creation-stage">
           <div
             className="conversation-scroll"
             ref={scroll}
@@ -1177,6 +1948,10 @@ export function AureliusWorkspace({
                       draft:
                         'I have a project to move forward. Help me identify the next concrete action.',
                     },
+                    {
+                      label: 'Develop a brand',
+                      draft: 'Help me develop a premium brand and website.',
+                    },
                   ].map((suggestion) => (
                     <button
                       key={suggestion.label}
@@ -1234,28 +2009,82 @@ export function AureliusWorkspace({
                           }
                         : undefined
                     }
+                    creations={creationsOnTurn(
+                      turn.id,
+                      data.turns
+                        .filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id))
+                        .at(-1)?.id,
+                      creationWorkspace?.creations,
+                      data.turns.map((item) => item.id),
+                    )}
+                    images={
+                      turn.id ===
+                      data.turns.filter((item) => !data.turns.some((newer) => newer.parent_turn_id === item.id)).at(-1)?.id
+                        ? creationWorkspace?.images
+                        : undefined
+                    }
+                    selectedCreationId={
+                      creationWorkspace?.selected.brief ||
+                      creationWorkspace?.selected.plan ||
+                      creationWorkspace?.selected.palette ||
+                      creationWorkspace?.selected.board
+                    }
+                    onBoardCommit={(id, board) => void commitInlineBoard(id, board)}
+                    boardStatus={inlineBoardStatus ?? undefined}
+                    selectedImageId={creationWorkspace?.selectedImageId}
+                    canApproveImages={creationWorkspace?.canCreateImages}
+                    onOpenCreation={(id) => void openWork(id)}
+                    onApproveImage={(id, approve) => void approveTalkImage(id, approve)}
+                    onSelectImage={(id) => void selectOpenCreation(id)}
                   />
                 ))
             )}
-            {liveState.transcript
-              .filter(
-                (line) =>
-                  line.text &&
-                  !data.turns.some(
-                    (turn) =>
-                      turn.id === line.id ||
-                      (line.role === 'user' && turn.user_text === line.text) ||
-                      (line.role === 'assistant' && turn.assistant_text === line.text),
-                  ),
-              )
-              .map((line) => (
-                <p key={line.id} className="live-provisional" data-live-status="provisional">
-                  <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
-                </p>
-              ))}
+            {liveState.conversationId === selected
+              ? liveState.transcript
+                  .filter(
+                    (line) =>
+                      line.text &&
+                      !liveState.savedItemIds.includes(line.id) &&
+                      !data.turns.some((turn) => turn.id === line.id),
+                  )
+                  .map((line) => (
+                    <p
+                      key={line.id}
+                      className="live-provisional"
+                      data-live-status="provisional"
+                      data-conversation={liveState.conversationId ?? undefined}
+                    >
+                      <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
+                    </p>
+                  ))
+              : null}
             {busy && !data.turns.some((turn) => turn.id === operation.id) && (
               <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
             )}
+          </div>
+          {widePanel && openWorkId && (openCreation || openImage) && (
+            <aside className="talk-creation-panel" aria-label="Reviewed work">
+              <CreationDetail
+                key={openWorkId ?? 'panel'}
+                creation={openCreation}
+                image={openImage}
+                images={creationWorkspace?.images ?? []}
+                canEdit={!preview && data.canChat}
+                busy={creationBusy}
+                error={creationError}
+                notice={creationNotice}
+                onClose={() => setOpenWorkId(null)}
+                onSave={(kind, content) => void saveOpenCreation(kind, content)}
+                onCopy={(text) => void navigator.clipboard.writeText(text)}
+                onSelect={() => void selectOpenCreation()}
+                onKeepProposal={() => void keepProposal()}
+                onHandoff={(input) => void prepareArchitectPackage(input)}
+                onImport={(id) => void importArchitectPackage(id)}
+                onOpenVersion={(id) => setOpenWorkId(id)}
+                onHistory={rememberHistory}
+              />
+            </aside>
+          )}
           </div>
           {!preview && (!data.configured || !data.canChat) && (
             <p className="connection-note">
@@ -1365,6 +2194,14 @@ export function AureliusWorkspace({
                   </button>
                 </div>
               )}
+              {attachment && (
+                <div className="talk-attachment-chip">
+                  <span>Attached for analysis: {attachment.name}</span>
+                  <button type="button" className="text-button" onClick={() => setAttachment(null)}>
+                    Remove
+                  </button>
+                </div>
+              )}
               <TalkInput
                 id="aurelius-message"
                 label="Message Aethelios"
@@ -1372,6 +2209,7 @@ export function AureliusWorkspace({
                 value={draft}
                 onChange={setDraft}
                 disabled={loading || deleting || orchestrating}
+                maxLength={liveComposerLimit(liveState.phase)}
                 placeholder={
                   councilSelection?.kind === 'specialist'
                     ? `Message ${councilLabel(councilSelection)}…`
@@ -1417,7 +2255,58 @@ export function AureliusWorkspace({
         </>
         <p className="aurelius-notice" role="status">
           {notice}
+          {creationNotice && !(openWorkId && (openCreation || openImage))
+            ? ` ${creationNotice}`
+            : ''}
+          {creationWorkspace?.imageAccess === 'unavailable' && selected
+            ? ' Image generation is unavailable; text work remains available.'
+            : ''}
         </p>
+        {creationLoadError && selected ? (
+          <div role="alert">
+            <p>{creationLoadError}</p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => void loadCreations(selected)}
+            >
+              Retry loading saved work
+            </button>
+          </div>
+        ) : null}
+        {creationError && !(openWorkId && (openCreation || openImage)) ? (
+          <p role="alert">{creationError}</p>
+        ) : null}
+        <dialog
+          ref={detailDialog}
+          className="talk-drawer talk-creation-dialog"
+          aria-label="Reviewed work"
+          onClose={() => {
+            if (!widePanel) setOpenWorkId(null);
+          }}
+        >
+          {!widePanel && (openCreation || openImage) && (
+            <CreationDetail
+              key={openWorkId ?? 'dialog'}
+              creation={openCreation}
+              image={openImage}
+              images={creationWorkspace?.images ?? []}
+              canEdit={!preview && data.canChat}
+              busy={creationBusy}
+              error={creationError}
+              notice={creationNotice}
+              onClose={() => detailDialog.current?.close()}
+              onSave={(kind, content) => void saveOpenCreation(kind, content)}
+              onCopy={(text) => void navigator.clipboard.writeText(text)}
+              onSelect={() => void selectOpenCreation()}
+              onKeepProposal={() => void keepProposal()}
+              onHandoff={(input) => void prepareArchitectPackage(input)}
+              onImport={(id) => void importArchitectPackage(id)}
+              onOpenVersion={(id) => setOpenWorkId(id)}
+              onHistory={rememberHistory}
+            />
+          )}
+        </dialog>
       </div>
     </div>
   );

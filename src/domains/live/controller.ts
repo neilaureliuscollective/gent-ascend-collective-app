@@ -6,6 +6,7 @@ import type {
 import { readLiveEvent, type LiveJob } from './contract';
 import { recoverableLiveError } from './provider-errors';
 import { VoiceDiagnostics, rtcHealth } from './diagnostics';
+import { LIVE_TEXT_LIMIT, type LiveTextSend } from './limits';
 export type LiveState = {
   phase: 'idle' | 'connecting' | 'listening' | 'speaking' | 'ended' | 'error';
   mode: 'immersive' | 'compact';
@@ -19,11 +20,15 @@ export type LiveState = {
   reviewedAction: ReviewedActionDraft | null;
   expiresAt: string | null;
   transcript: { id: string; role: 'user' | 'assistant'; text: string }[];
+  savedItemIds: string[];
   playbackBlocked: boolean;
   cleanupPending: boolean;
   recovering: boolean;
   speechDetected: boolean;
   responsePending: boolean;
+  persistence: 'idle' | 'pending' | 'acknowledged' | 'uncertain';
+  persistenceEpoch: number;
+  artifactConversationId: string | null;
 };
 /** One transport per workspace. Presentation changes never create a transport. */
 export class LiveController {
@@ -40,12 +45,17 @@ export class LiveController {
     reviewedAction: null,
     expiresAt: null,
     transcript: [],
+    savedItemIds: [],
     playbackBlocked: false,
     cleanupPending: false,
     recovering: false,
     speechDetected: false,
     responsePending: false,
+    persistence: 'idle',
+    persistenceEpoch: 0,
+    artifactConversationId: null,
   };
+  private artifactConversationId: string | null = null;
   private listeners = new Set<() => void>();
   private pc: RTCPeerConnection | null = null;
   private stream: MediaStream | null = null;
@@ -167,17 +177,22 @@ export class LiveController {
       error: '',
       conversationId,
       reviewedAction:
-        this.state.conversationId === conversationId ? this.state.reviewedAction : null,
+        this.scopedConversation() === conversationId ? this.state.reviewedAction : null,
       artifactWorkspace:
-        this.state.conversationId === conversationId
+        this.scopedConversation() === conversationId
           ? this.state.artifactWorkspace
           : { artifacts: [], selectedId: null, projects: [] },
       sessionId: id,
       jobs: [],
       expiresAt: null,
       transcript: [],
+      savedItemIds: [],
+      persistence: 'idle',
+      persistenceEpoch: this.state.persistenceEpoch + 1,
       playbackBlocked: false,
+      artifactConversationId: conversationId,
     });
+    this.artifactConversationId = conversationId;
     try {
       if (
         !window.isSecureContext ||
@@ -357,6 +372,7 @@ export class LiveController {
       expiresAt: null,
       error: message,
       playbackBlocked: false,
+      persistence: this.state.transcript.some((line) => line.text) ? 'pending' : 'idle',
     });
     if (this.id) await this.revoke(this.id);
   }
@@ -395,9 +411,11 @@ export class LiveController {
     this.update({ phase: 'listening', responsePending: false });
     if (cuttingOff) this.diagnostics.cutoff(performance.now() - started, this.currentResponse);
   }
-  text(text: string) {
+  text(text: string): LiveTextSend {
     const value = text.trim();
-    if (!value || value.length > 4000 || this.channel?.readyState !== 'open') return;
+    if (!value) return { accepted: false, reason: 'empty' };
+    if (value.length > LIVE_TEXT_LIMIT) return { accepted: false, reason: 'limit' };
+    if (this.channel?.readyState !== 'open') return { accepted: false, reason: 'channel' };
     const pending = this.generating;
     this.interrupt();
     this.diagnostics.typedTurn(performance.now());
@@ -407,6 +425,49 @@ export class LiveController {
     });
     if (pending) this.pendingCreate = true;
     else this.send({ type: 'response.create' });
+    return { accepted: true };
+  }
+  invalidateTranscript() {
+    if (['connecting', 'listening', 'speaking'].includes(this.state.phase)) return;
+    ++this.epoch;
+    this.update({
+      transcript: [],
+      savedItemIds: [],
+      persistence: 'idle',
+      persistenceEpoch: this.state.persistenceEpoch + 1,
+    });
+  }
+  voiceIdentity(ownerId: string) {
+    if (!this.state.conversationId || !this.state.sessionId) return null;
+    return {
+      ownerId,
+      conversationId: this.state.conversationId,
+      sessionId: this.state.sessionId,
+      epoch: this.state.persistenceEpoch,
+    };
+  }
+  private matchesPersistence(identity?: { sessionId: string; epoch: number } | null) {
+    return Boolean(
+      identity &&
+        this.state.sessionId === identity.sessionId &&
+        this.state.persistenceEpoch === identity.epoch,
+    );
+  }
+  markPersistence(
+    persistence: LiveState['persistence'],
+    identity?: { sessionId: string; epoch: number } | null,
+  ) {
+    if (!this.matchesPersistence(identity)) return;
+    this.update({ persistence });
+  }
+  markSavedItems(ids: string[], identity?: { sessionId: string; epoch: number } | null) {
+    if (!this.matchesPersistence(identity)) return;
+    this.update({ savedItemIds: [...new Set([...this.state.savedItemIds, ...ids])] });
+  }
+  acknowledgePersistence(sessionId?: string | null, epoch?: number) {
+    if (sessionId && this.state.sessionId && sessionId !== this.state.sessionId) return;
+    if (epoch !== undefined && this.state.persistenceEpoch !== epoch) return;
+    this.update({ persistence: 'acknowledged', transcript: [], savedItemIds: [] });
   }
   private send(value: unknown) {
     if (this.channel?.readyState === 'open') this.channel.send(JSON.stringify(value));
@@ -548,20 +609,20 @@ export class LiveController {
     else lines[index] = line;
     this.update({ transcript: lines.slice(-60) });
   }
+  private scopedConversation() {
+    return this.artifactConversationId ?? this.state.conversationId;
+  }
   bindConversation(conversationId: string) {
-    if (
-      ['connecting', 'listening', 'speaking'].includes(this.state.phase) ||
-      this.state.conversationId === conversationId
-    )
-      return;
+    if (this.artifactConversationId === conversationId) return;
+    this.artifactConversationId = conversationId;
     this.update({
-      conversationId,
+      artifactConversationId: conversationId,
       artifactWorkspace: { artifacts: [], selectedId: null, projects: [] },
       reviewedAction: null,
     });
   }
   async refreshArtifacts() {
-    const id = this.state.conversationId;
+    const id = this.scopedConversation();
     if (!id || this.artifactReading) return;
     this.artifactReading = true;
     try {
@@ -571,14 +632,14 @@ export class LiveController {
       );
       if (!response.ok) return;
       const result = (await response.json()) as ArtifactWorkspace;
-      if (this.state.conversationId === id && Array.isArray(result.artifacts))
+      if (this.scopedConversation() === id && Array.isArray(result.artifacts))
         this.update({ artifactWorkspace: result });
     } finally {
       this.artifactReading = false;
     }
   }
   async prepareDailyAction(reviewId: string) {
-    const conversationId = this.state.conversationId;
+    const conversationId = this.scopedConversation();
     if (
       !conversationId ||
       this.state.reviewedAction?.phase === 'saving' ||
@@ -588,7 +649,7 @@ export class LiveController {
     try {
       const prepared = await this.readDailyAction(conversationId, reviewId);
       if (
-        this.state.conversationId !== conversationId ||
+        this.scopedConversation() !== conversationId ||
         ['saving', 'uncertain'].includes(this.state.reviewedAction?.phase ?? '')
       )
         return;
@@ -606,7 +667,7 @@ export class LiveController {
         },
       });
     } catch (error) {
-      if (this.state.conversationId === conversationId)
+      if (this.scopedConversation() === conversationId)
         this.update({
           error: error instanceof Error ? error.message : 'Daily action preparation unavailable.',
         });
@@ -641,7 +702,7 @@ export class LiveController {
     if (!draft || draft.phase === 'saving') return;
     try {
       const saved = await this.readDailyAction(draft.conversationId, draft.reviewId);
-      if (this.state.reviewedAction !== draft || this.state.conversationId !== draft.conversationId)
+      if (this.state.reviewedAction !== draft || this.scopedConversation() !== draft.conversationId)
         return;
       this.update({
         reviewedAction: saved.receipt
@@ -670,7 +731,7 @@ export class LiveController {
       !draft ||
       draft.phase !== 'editing' ||
       !draft.title.trim() ||
-      draft.conversationId !== this.state.conversationId
+      draft.conversationId !== this.scopedConversation()
     )
       return;
     this.update({ reviewedAction: { ...draft, phase: 'saving', error: '' } });
@@ -702,7 +763,7 @@ export class LiveController {
         throw new Error(value.error ?? 'Saved action receipt is unconfirmed.');
       if (
         this.state.reviewedAction?.id === draft.id &&
-        this.state.conversationId === draft.conversationId
+        this.scopedConversation() === draft.conversationId
       )
         this.update({
           reviewedAction: { ...draft, receipt: value.receipt, phase: 'receipt', error: '' },
@@ -710,7 +771,7 @@ export class LiveController {
     } catch (error) {
       if (
         this.state.reviewedAction?.id === draft.id &&
-        this.state.conversationId === draft.conversationId
+        this.scopedConversation() === draft.conversationId
       )
         this.update({
           reviewedAction: {
@@ -779,7 +840,14 @@ export class LiveController {
   }
   dismiss() {
     if (!this.id && !this.starting && !this.state.cleanupPending)
-      this.update({ phase: 'idle', transcript: [], jobs: [], sessionId: null, error: '' });
+      this.update({
+        phase: 'idle',
+        transcript: [],
+        jobs: [],
+        sessionId: null,
+        error: '',
+        persistence: 'idle',
+      });
   }
   dispose() {
     void this.end();

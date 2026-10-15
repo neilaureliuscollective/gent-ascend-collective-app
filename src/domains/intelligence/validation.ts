@@ -34,6 +34,7 @@ export const chatInput = z
     council: councilInput.optional(),
     sourceTurnId: z.uuid().optional(),
     revisionKind: z.enum(['retry', 'regenerate', 'edit']).optional(),
+    attachmentId: z.uuid().optional(),
   })
   .strict()
   .refine((v) => Boolean(v.sourceTurnId) === Boolean(v.revisionKind));

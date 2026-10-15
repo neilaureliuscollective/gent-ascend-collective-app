@@ -30,7 +30,7 @@ export async function runBackgroundTask(task: BackgroundTask, signal: AbortSigna
     if (chunk.type === 'text') {
       text += chunk.text;
       if (text.length > 32000) throw new Error('Background result too long');
-    } else {
+    } else if (chunk.type === 'finish') {
       input = chunk.input ?? 0;
       output = chunk.output ?? 0;
       complete = chunk.reason === 'stop';

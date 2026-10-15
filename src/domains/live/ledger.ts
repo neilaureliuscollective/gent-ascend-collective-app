@@ -5,6 +5,8 @@ export type RecordedVoiceTurn = {
   status: 'complete' | 'cancelled' | 'failed';
   input: number;
   output: number;
+  providerItemId: string;
+  providerResponseId: string;
 };
 type Reply = {
   item: string;
@@ -149,6 +151,8 @@ export class VoiceLedger {
           status: reply.status,
           input: reply.input,
           output: reply.output,
+          providerItemId: reply.item,
+          providerResponseId: id,
         });
         this.replies.delete(id);
         this.users.delete(reply.item);

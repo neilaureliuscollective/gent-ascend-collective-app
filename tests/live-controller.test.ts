@@ -113,9 +113,34 @@ it('does not send typed Talk text until the voice channel is open', async () => 
   const controller = new LiveController();
   await controller.start(conversation, false);
   FakePC.instances.at(-1)!.channel.readyState = 'connecting';
-  controller.text('Typed while connecting');
+  expect(controller.text('Typed while connecting')).toEqual({
+    accepted: false,
+    reason: 'channel',
+  });
   expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
   await controller.end();
+});
+it('rejects over-limit typed voice text and keeps it unsent', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const sent = controller.text('x'.repeat(4001));
+  expect(sent).toEqual({ accepted: false, reason: 'limit' });
+  expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
+  await controller.end();
+});
+it('scopes late transcript invalidation after End without starting another admission', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-1',
+    transcript: 'Yes',
+  });
+  await controller.end();
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  expect(controller.getSnapshot().transcript.some((line) => line.text === 'Yes')).toBe(true);
+  controller.invalidateTranscript();
+  expect(controller.getSnapshot().transcript).toEqual([]);
 });
 it('exports content-free diagnostics with trusted configuration and preserves them after End', async () => {
   fetchMock.mockImplementation(async (_url, init) =>
@@ -250,6 +275,61 @@ it('preserves owned visual selection through minimize/end and clears it for a di
   expect(controller.getSnapshot().artifactWorkspace.selectedPartId).toBe('tools');
   controller.bindConversation('00000000-0000-4000-8000-000000000098');
   expect(controller.getSnapshot().artifactWorkspace.selectedId).toBeNull();
+});
+
+it('does not relabel voice session identity or transcript when artifacts open another conversation', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-1',
+    transcript: 'Same words twice',
+  });
+  await controller.end();
+  const ended = controller.getSnapshot();
+  expect(ended.conversationId).toBe(conversation);
+  expect(ended.transcript[0]?.text).toBe('Same words twice');
+  controller.bindConversation('00000000-0000-4000-8000-000000000098');
+  expect(controller.getSnapshot().conversationId).toBe(conversation);
+  expect(controller.getSnapshot().sessionId).toBe(ended.sessionId);
+  expect(controller.getSnapshot().transcript).toEqual(ended.transcript);
+  controller.acknowledgePersistence('00000000-0000-4000-8000-000000000077');
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  controller.acknowledgePersistence(ended.sessionId);
+  expect(controller.getSnapshot().persistence).toBe('acknowledged');
+});
+
+it('ignores a delayed receipt after a replacement session in the same conversation', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-old',
+    transcript: 'First session',
+  });
+  await controller.end();
+  const first = controller.getSnapshot();
+  expect(first.persistence).toBe('pending');
+  const delayed = { sessionId: first.sessionId!, epoch: first.persistenceEpoch };
+  await controller.start(conversation, false);
+  const second = controller.getSnapshot();
+  expect(second.sessionId).not.toBe(first.sessionId);
+  expect(second.persistenceEpoch).toBeGreaterThan(first.persistenceEpoch);
+  expect(second.transcript).toEqual([]);
+  controller.markSavedItems(['user-old'], delayed);
+  controller.markPersistence('uncertain', delayed);
+  controller.acknowledgePersistence(delayed.sessionId, delayed.epoch);
+  const afterLate = controller.getSnapshot();
+  expect(afterLate.sessionId).toBe(second.sessionId);
+  expect(afterLate.savedItemIds).toEqual([]);
+  expect(afterLate.persistence).toBe('idle');
+  expect(afterLate.transcript).toEqual([]);
+  controller.markPersistence('pending', {
+    sessionId: second.sessionId!,
+    epoch: second.persistenceEpoch,
+  });
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  await controller.end();
 });
 
 it('shows speech detection and processing from real provider events', async () => {
