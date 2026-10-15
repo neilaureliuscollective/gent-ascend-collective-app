@@ -58,11 +58,11 @@ export default async function You({
             )}
             <Image
               className="identity-crest"
-              src={brand.crest}
-              alt={brand.crestAlt}
-              width={160}
-              height={160}
-              sizes="160px"
+              src={brand.lockup}
+              alt={brand.lockupAlt}
+              width={1254}
+              height={1254}
+              sizes="200px"
             />
             <span className="eyebrow">Your personal space</span>
             <h2>
@@ -100,9 +100,9 @@ export default async function You({
           <aside className="account-brand">
             <Image
               src={brand.lockup}
-              alt="Gent Ascend Collective — official crest and wordmark"
-              width={960}
-              height={960}
+              alt={brand.lockupAlt}
+              width={1254}
+              height={1254}
               sizes="(max-width: 600px) 230px, 420px"
               preload
             />

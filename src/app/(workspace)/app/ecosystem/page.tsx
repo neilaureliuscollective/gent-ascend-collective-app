@@ -1,5 +1,7 @@
 import { AmbientHorizon } from '@/components/visual/ambient-horizon';
+import Image from 'next/image';
 import Link from 'next/link';
+import { brand } from '@/platform/brand';
 import { legacyReserveDestination } from '@/platform/ecosystem';
 import './ecosystem.css';
 
@@ -16,6 +18,14 @@ export default function EcosystemPage() {
     <section className="io-ecosystem" aria-labelledby="ecosystem-title">
       <header className="io-ecosystem-hero io-hero">
         <AmbientHorizon />
+        <Image
+          className="io-ecosystem-lockup"
+          src={brand.lockup}
+          alt={brand.lockupAlt}
+          width={1254}
+          height={1254}
+          sizes="180px"
+        />
         <p className="eyebrow">AETHELIOS / THE HUMAN ASCENDANCE</p>
         <h1 id="ecosystem-title">
           One world.
@@ -54,15 +64,17 @@ export default function EcosystemPage() {
           <h2>Aethelios Health</h2>
           <p className="io-division-promise">Know More. Live Better.</p>
           <p>
-            Your private Health Command brings source-led wellness, records and reviewed labs into context.
-            Sensitive ingestion and personalized AI require privacy release acceptance.
+            Your private Health Command brings source-led wellness, records and reviewed labs into
+            context. Sensitive ingestion and personalized AI require privacy release acceptance.
           </p>
           <p className="io-division-boundary">
             Educational and personal planning experiences. No prescribing or clinical care is
             offered here.
           </p>
           <nav className="io-division-links" aria-label="Available health and performance tools">
-            <Link href="/app/health" prefetch={false}>Health Command ↗</Link>
+            <Link href="/app/health" prefetch={false}>
+              Health Command ↗
+            </Link>
             <Link href="/app/daily">Personal check-ins ↗</Link>
             <Link href="/app/performance">Performance ↗</Link>
           </nav>

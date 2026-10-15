@@ -17,8 +17,7 @@ export const metadata: Metadata = {
 
 const errors: Record<string, string> = {
   invalid: 'Enter a valid email and password.',
-  credentials:
-    'That email and password were not accepted. Check the password saved for Aethelios.',
+  credentials: 'That email and password were not accepted. Check the password saved for Aethelios.',
   service:
     'The account service could not complete sign-in. Your account is intact; try again shortly.',
   unavailable: 'The account service is unavailable here. Try again shortly.',
@@ -43,9 +42,9 @@ export default async function Enter({
           <i />
         </div>
         <div className="entrance-copy">
-          <p className="entrance-kicker">AETHELIOS / PERSONAL INTELLIGENCE OS</p>
+          <p className="entrance-kicker">AETHELIOS / THE HUMAN ASCENDANCE</p>
           <div className="entrance-emblem">
-            <Image src={brand.crest} alt="" width={172} height={172} preload />
+            <Image src={brand.lockup} alt="" width={1254} height={1254} sizes="240px" preload />
           </div>
           <h1 id="entrance-title">
             {identity ? (

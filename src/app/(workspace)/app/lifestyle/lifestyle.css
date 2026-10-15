@@ -72,6 +72,12 @@
   letter-spacing: 0.2em;
   margin-bottom: 55px;
 }
+.lifestyle-lockup {
+  display: block;
+  width: 96px;
+  height: auto;
+  margin: 0 0 22px;
+}
 .lifestyle-hero h1 {
   font-size: clamp(3.5rem, 7vw, 7.5rem);
   line-height: 0.98;
