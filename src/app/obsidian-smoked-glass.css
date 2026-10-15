@@ -1,10 +1,7 @@
-/* Founder-approved smoked glass, 2026-10-13. Reuse the io material and B+ optics
-   contracts. Talk, Studio, Home continuity and member Lifestyle share the shell
-   tokens. Talk, Studio and Architect use the shared creation materials; public worlds
-   and Work retain their existing material identity. No geometry or motion ownership here. */
-.app-shell.imperial-workspace:has(
-    :is(.talk-page:not(:has([data-bplus='talk'])), .command-continuity, .member-collection)
-  ) {
+/* Founder-approved charcoal glass, 2026-10-15. Shared io roles supply neutral
+   material bodies; emerald is reflected light and selection, gold is emphasis.
+   Existing geometry, reading/media planes and accessibility keep their ownership. */
+:root {
   --io-environment: var(--aether-smoke-canvas);
   --io-navigation: var(--aether-smoke-panel);
   --io-raised: var(--aether-smoke-raised);
@@ -20,6 +17,7 @@
     linear-gradient(165deg, #242424ed, #1a1a1af5 72%);
   --io-glass: var(--io-satin);
   --io-material: var(--io-satin);
+  --io-metal: var(--io-satin);
   --io-composer: var(--io-satin);
   --io-chamber: var(--io-satin);
   --io-living:
@@ -37,24 +35,18 @@
   --io-raised-contact: inset 0 1px #ffffff12, inset 0 -2px #0009, 0 8px 14px -6px #000b;
 }
 
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(.sidebar, .topbar, .navigation, .aethelios-space-navigation, .talk-toolbar) {
   background: var(--io-glass);
   border-color: var(--io-divider);
   box-shadow: var(--io-elevation);
 }
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(.navigation a, .aethelios-space-navigation a):not([aria-current='page']) {
   color: var(--io-secondary);
   background: transparent;
 }
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(.navigation a, .aethelios-space-navigation a):hover {
   color: var(--io-text);
   background: var(--io-raised);
@@ -76,9 +68,7 @@
     inset 2px 0 var(--io-gold);
   color: var(--io-text);
 }
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(.talk-drawer.talk-drawer, .talk-expanded-editor, .context-sheet-surface, .council-dialog) {
   background: var(--io-glass);
   border-color: var(--aether-smoke-edge);
@@ -163,9 +153,7 @@
   color: var(--io-secondary);
 }
 /* Reserve Gold remains exactly the brand color. Filled actions need dark ink. */
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(.button, .aurelius-send):not(:disabled) {
   background: var(--io-gold);
   color: var(--aether-smoke-canvas);
@@ -175,13 +163,9 @@
     inset 0 -1px #0005,
     0 3px 8px #0004;
 }
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(button, a, input, select):focus-visible,
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   textarea:not(.talk-input):focus-visible {
   outline: 2px solid var(--io-text);
   outline-offset: 2px;
@@ -236,9 +220,7 @@ html[data-material='solid']
 
 /* A narrow reflective perimeter and inset bevel give raised objects thickness.
    The body remains neutral; no broad glow or moving highlight is introduced. */
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(
     .conversation-starters button,
     .studio-project-heading,
@@ -255,9 +237,7 @@ html[data-material='solid']
     var(--io-raised-rim) border-box;
   box-shadow: var(--io-raised-contact);
 }
-.app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+.app-shell.imperial-workspace
   :is(
     .conversation-starters button,
     .studio-project-heading,
@@ -308,9 +288,7 @@ html[data-material='solid']
 /* Existing Still/reduced-motion behavior is retained. No animation or blur is added.
    Solid and contrast preferences replace translucent paint, including native dialogs. */
 html[data-material='solid']
-  .app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  ) {
+  .app-shell.imperial-workspace {
   --io-satin: var(--io-navigation);
   --io-living: var(--io-navigation);
   --io-selected: var(--io-raised);
@@ -401,9 +379,7 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
 }
 
 html[data-material='solid']
-  .app-shell.imperial-workspace:has(
-    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
-  )
+  .app-shell.imperial-workspace
   :is(
     .conversation-starters button,
     .studio-project-heading,
@@ -460,5 +436,49 @@ html[data-material='solid']
       .studio-paths button
     )::after {
     display: none;
+  }
+}
+
+/* Opaque/system palettes preserve user preferences across every route. */
+html[data-material='solid'] {
+  --io-glass: linear-gradient(var(--io-navigation), var(--io-navigation));
+  --io-material: var(--io-glass);
+  --io-composer: var(--io-glass);
+  --io-chamber: var(--io-glass);
+  --io-living: var(--io-glass);
+  --io-hero-material: var(--io-glass);
+  --io-raised-paint: var(--io-glass);
+  --io-elevation: none;
+  --io-raised-contact: none;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root {
+    --io-glass: linear-gradient(var(--io-navigation), var(--io-navigation));
+    --io-material: var(--io-glass);
+    --io-composer: var(--io-glass);
+    --io-chamber: var(--io-glass);
+    --io-living: var(--io-glass);
+    --io-hero-material: var(--io-glass);
+    --io-raised-paint: var(--io-glass);
+    --io-divider: var(--io-secondary);
+    --io-elevation: none;
+    --io-raised-contact: none;
+  }
+}
+@media (forced-colors: active) {
+  :root {
+    --io-environment: Canvas;
+    --io-navigation: Canvas;
+    --io-raised: Canvas;
+    --io-floating: Canvas;
+    --io-text: CanvasText;
+    --io-secondary: CanvasText;
+    --io-muted: CanvasText;
+    --io-divider: CanvasText;
+    --io-selected-edge: Highlight;
+    --io-glass: linear-gradient(Canvas, Canvas);
+    --io-living: var(--io-glass);
+    --io-elevation: none;
+    --io-raised-contact: none;
   }
 }

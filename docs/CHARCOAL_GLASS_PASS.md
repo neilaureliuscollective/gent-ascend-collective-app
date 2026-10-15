@@ -1,0 +1,13 @@
+# App-wide charcoal glass pass — 2026-10-15
+
+Neil approved charcoal glass as the dominant body with emerald and gold accents (19:45 UTC), then expanded the same direction across the app (19:46 UTC). The reference is the clean charcoal Studio image `libfile_e1f0524f250081918ac7c0ad79a91932`. This supersedes the earlier emerald-dominant creation material pass.
+
+Shared `io` materials now use charcoal satin, raised edges/contact shadows, subtle emerald selection/reflection and restrained gold emphasis. Generic Aether surface/depth and optical-face values are neutral; named emerald identity/energy colors, gold, physical-document ink and imagery remain owned by their existing contracts. No universal repaint of images, charts or state indicators was added. Shell navigation/dialogs/forms and existing semantic panels share the same materials. Health's older hardcoded green body/field fills adopt its existing charcoal roles. Architect's repaired grid/focus/Fold behavior and approved photographic entrance cards remain intact.
+
+Main `1adaa7ff7fd2ae8ff89221eeb06b38300b1d3aae` was merged non-destructively. The only overlap was concurrent additions in `docs/STATUS.md`; both were retained. All Live source remains identical to released main. No controller, ledger, internal-item, transcript, auth, entitlement, price, commerce flow, product label or database changes are part of this pass.
+
+The baseline is reconciled PR source `d3dd41c7707bbb76d38cd0df80bf65d1fa3cfca9`, built before the material changes. `before-matrix.json` records 41 routes at 884×690 Fold and 1440×900 desktop (82 visits), with zero page exceptions or horizontal overflow. Before captures use that actual production build, with normal local font loading. Core creation content is labelled GET-only API fixtures; all other routes show their real default access/configuration state. Sample, signed-out, gated and private-data coverage must be distinguished from connected execution proof.
+
+`scripts/capture-charcoal-routes.mjs` repeats the same routes and viewport screenshots after the pass. Pointer state is unfocused at (1,1); document and conversation scroll are 0, except Studio uses 600px on Fold and 120px on desktop for a directly comparable view of its ten rooms. It preserves native accessibility behavior; existing keyboard, solid-material, forced-color and reduced-motion interaction tests remain separate. The coverage matrix and final-head evidence/checks are linked from PR150.
+
+No merge to main, deployment, SQL, credential/configuration change or paid generation is authorized by this work. Hosted personal records, billing, checkout/provider activation and physical-device validation are not proven by fixture screenshots or CI.

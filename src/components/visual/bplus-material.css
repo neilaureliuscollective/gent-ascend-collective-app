@@ -6,7 +6,7 @@
     :is([data-bplus='talk'], [data-bplus='work'], [data-bplus='architect']) [data-bplus-surface],
     .navigation a[data-bplus-surface='navigation']
   ) {
-  --io-optical-substrate: var(--aether-optical-substrate, #06160f);
+  --io-optical-substrate: var(--aether-optical-substrate, #1a1a1a);
   --io-optical-contact: 0 7px 10px -2px
     color-mix(in srgb, var(--aether-optical-shadow, #000) 73%, transparent);
   color-scheme: dark;

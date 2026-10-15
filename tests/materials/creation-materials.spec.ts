@@ -46,7 +46,9 @@ for (const [label, width, height] of views) {
     const card = page.locator('.talk-creation-card');
     const bitmap = PNG.sync.read(await card.screenshot({ animations: 'disabled' }));
     const pixel = (10 * bitmap.width + 10) * 4;
-    expect(bitmap.data[pixel + 1]).toBeGreaterThan(bitmap.data[pixel]! + 3);
+    const face = [...bitmap.data.subarray(pixel, pixel + 3)];
+    expect(Math.max(...face) - Math.min(...face)).toBeLessThan(9);
+    expect(Math.min(...face)).toBeGreaterThan(10);
     expect(bitmap.data[pixel + 1]).toBeLessThan(110);
     const files: { path: string; bytes: number; sha256: string }[] = [];
     async function capture(name: string) {
@@ -147,7 +149,9 @@ for (const [label, width, height] of views) {
         .screenshot({ animations: 'disabled' }),
     );
     const tilePixel = (10 * tileBitmap.width + 10) * 4;
-    expect(tileBitmap.data[tilePixel + 1]).toBeGreaterThan(tileBitmap.data[tilePixel]! + 3);
+    const tileFace = [...tileBitmap.data.subarray(tilePixel, tilePixel + 3)];
+    expect(Math.max(...tileFace) - Math.min(...tileFace)).toBeLessThan(9);
+    expect(Math.min(...tileFace)).toBeGreaterThan(10);
     await rooms.getByRole('button', { name: 'Design', exact: true }).focus();
     await expect(rooms.getByRole('button', { name: 'Design', exact: true })).toHaveCSS(
       'outline-style',
@@ -200,7 +204,7 @@ test('material preferences and missing palette values preserve readable controls
     for (const name of ['--aether-optical-substrate', '--aether-optical-shadow', '--io-text'])
       el.style.setProperty(name, 'initial');
   });
-  await expect(page.locator('.aurelius-composer')).toHaveCSS('background-color', 'rgb(6, 22, 15)');
+  await expect(page.locator('.aurelius-composer')).toHaveCSS('background-color', 'rgb(26, 26, 26)');
   await expect(page.locator('.aurelius-composer')).toHaveCSS('color', 'rgb(232, 233, 226)');
   await page.locator('[data-bplus="talk"]').evaluate((el) => el.removeAttribute('style'));
   await page.evaluate(() => {

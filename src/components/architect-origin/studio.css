@@ -1518,7 +1518,7 @@
 
 /* Creation stage materials; entrance cards retain their original individual artwork. */
 .environment-main .origin-studio {
-  background: radial-gradient(ellipse at 12% 0%, #c4912f20, transparent 55%), #080e0b;
+  background: radial-gradient(ellipse at 12% 0%, #c4912f0a, transparent 55%), var(--studio-base);
 }
 .origin-choices-compact .origin-choice-stage,
 .origin-choices-compact .origin-choice > span:last-child {

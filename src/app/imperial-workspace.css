@@ -68,65 +68,7 @@
     ),
     var(--io-chamber);
 }
-/* Creation surfaces share one material contract. Carbon is the reading plane;
-   emerald carries raised glass, with static edge light rather than a blur layer. */
-.app-shell.imperial-workspace:has(:is([data-bplus='talk'], .origin-studio, .studio-page)) {
-  --io-environment: var(--aether-obsidian, #050706);
-  --io-navigation: #0d211b;
-  --io-raised: #142e24;
-  --io-floating: #10271f;
-  --io-text: var(--aether-text, #e8e9e2);
-  --io-secondary: #bdccc3;
-  --io-muted: #a3b6aa;
-  --io-divider: #6c90713d;
-  --io-reflection: #d9e6d51a;
-  --io-selected-edge: var(--aether-gold, #c4912f);
-  --io-satin:
-    linear-gradient(145deg, #dcebd609, transparent 38%),
-    linear-gradient(165deg, #193b2ff5, #0c201af8 72%);
-  --io-glass: var(--io-satin);
-  --io-material: var(--io-glass);
-  --io-composer: var(--io-glass);
-  --io-chamber: var(--io-glass);
-  --io-living: linear-gradient(135deg, #193b2ff5, #091710 78%);
-  --io-hero-material: var(--io-living);
-  --io-elevation: inset 0 1px var(--io-reflection), inset 0 -1px #0009, 0 10px 24px -12px #000b;
-  --io-selected: linear-gradient(145deg, #24513d, #10291f 76%);
-  --io-raised-paint: var(--io-glass);
-  --io-raised-rim: linear-gradient(135deg, #b8cead70, #668c7040 25%, #0009 68%, #bd9a4b40);
-  --io-raised-contact: inset 0 1px #e7efdd16, inset 0 -2px #0008, 0 7px 14px -8px #000b;
-}
-html[data-material='solid'] .app-shell.imperial-workspace:has(:is([data-bplus='talk'], .origin-studio, .studio-page)) {
-  --io-glass: linear-gradient(var(--io-navigation), var(--io-navigation));
-  --io-raised-paint: var(--io-glass);
-  --io-elevation: none;
-  --io-raised-contact: none;
-}
-@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
-  .app-shell.imperial-workspace:has(:is([data-bplus='talk'], .origin-studio, .studio-page)) {
-    --io-glass: linear-gradient(var(--io-navigation), var(--io-navigation));
-    --io-raised-paint: var(--io-glass);
-    --io-divider: var(--io-secondary);
-    --io-elevation: none;
-    --io-raised-contact: none;
-  }
-}
-@media (forced-colors: active) {
-  .app-shell.imperial-workspace:has(:is([data-bplus='talk'], .origin-studio, .studio-page)) {
-    --io-environment: Canvas;
-    --io-navigation: Canvas;
-    --io-raised: Canvas;
-    --io-floating: Canvas;
-    --io-text: CanvasText;
-    --io-secondary: CanvasText;
-    --io-muted: GrayText;
-    --io-divider: CanvasText;
-    --io-glass: linear-gradient(Canvas, Canvas);
-    --io-raised-paint: var(--io-glass);
-    --io-elevation: none;
-    --io-raised-contact: none;
-  }
-}
+
 .app-shell.imperial-workspace {
   color-scheme: dark;
   --text-primary: var(--io-text);
