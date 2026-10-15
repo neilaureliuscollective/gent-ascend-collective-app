@@ -13,6 +13,7 @@ import type {
 import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
 import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
+import { exportTalkDocument } from '@/domains/work-items';
 import Image from 'next/image';
 import './creation.css';
 
@@ -92,6 +93,10 @@ export function CreationDetail({
     if (image) return image.prompt;
     return JSON.stringify(draft ?? creation?.content ?? {}, null, 2);
   }, [creation, draft, image]);
+  const documentExport = useMemo(
+    () => (creation ? exportTalkDocument(creation.kind, draft ?? creation.content) : null),
+    [creation, draft],
+  );
   useEffect(() => {
     const lineage = creation?.lineage_id;
     if (!lineage) return;
@@ -622,8 +627,25 @@ export function CreationDetail({
           </>
         )}
         <button type="button" className="text-button" onClick={() => onCopy(exportText)}>
-          Copy
+          Copy JSON
         </button>
+        {documentExport && (
+          <a
+            className="text-button"
+            href={`data:${documentExport.mime};charset=utf-8,${encodeURIComponent(documentExport.body)}`}
+            download={documentExport.filename}
+          >
+            {documentExport.label}
+          </a>
+        )}
+        <button type="button" className="text-button" onClick={() => window.print()}>
+          Print / PDF
+        </button>
+        {image?.status === 'complete' && image.version_id && (
+          <a className="text-button" href={`/api/studio/image?id=${image.version_id}&kind=version`} download>
+            Download image
+          </a>
+        )}
       </div>
       {creation && creation.kind !== 'handoff' && !creation.candidate && (
         <div className="field">

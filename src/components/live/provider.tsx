@@ -1,5 +1,6 @@
 'use client';
 import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { LiveController, type LiveState } from '@/domains/live/controller';
 import './live.css';
@@ -260,8 +261,13 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const compact = useRef<HTMLElement>(null);
   const [transcript, setTranscript] = useState(true);
   const [draft, setDraft] = useState('');
+  const [dock, setDock] = useState<HTMLElement | null>(null);
   const visible = state.phase !== 'idle';
   const active = ['connecting', 'listening', 'speaking'].includes(state.phase);
+  const docked = Boolean(dock);
+  useEffect(() => {
+    setDock(document.getElementById('talk-voice-dock'));
+  }, [visible, state.mode]);
   useEffect(() => {
     const node = dialog.current;
     if (!node) return;
@@ -269,10 +275,10 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     else if (node.open) node.close();
   }, [visible, state.mode]);
   useEffect(() => {
-    if (!visible || state.mode !== 'compact') return;
+    if (!visible || state.mode !== 'compact' || docked) return;
     const frame = requestAnimationFrame(() => compact.current?.querySelector('button')?.focus());
     return () => cancelAnimationFrame(frame);
-  }, [visible, state.mode]);
+  }, [visible, state.mode, docked]);
   useEffect(() => {
     orb.current?.style.setProperty('--live-audio-level', '0');
     compact.current?.style.setProperty('--live-audio-level', '0');
@@ -380,7 +386,12 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           <ArtifactSurface controller={controller} />
         </details>
       )}
-      {transcript && (
+      {transcript && docked && (
+        <p className="live-privacy">
+          Provisional speech stays in the Talk timeline. Saving is confirmed there.
+        </p>
+      )}
+      {transcript && !docked && (
         <div
           className="live-transcript"
           role="log"
@@ -496,16 +507,20 @@ function LiveSurface({ controller }: { controller: LiveController }) {
       </dialog>
       {visible &&
         state.mode === 'compact' &&
-        (active || state.cleanupPending || (state.phase === 'ended' && !state.error)) && (
-        <section
-          ref={compact}
-          className="live-compact"
-          aria-label="Persistent Aethelios voice controls"
-        >
-          <IntelligencePresence operation={operation} variant="signal" />
-          {content}
-        </section>
-      )}
+        (active || state.cleanupPending || (state.phase === 'ended' && !state.error)) &&
+        (() => {
+          const compactChrome = (
+            <section
+              ref={compact}
+              className={`live-compact${docked ? ' is-docked' : ''}`}
+              aria-label="Persistent Aethelios voice controls"
+            >
+              <IntelligencePresence operation={operation} variant="signal" />
+              {content}
+            </section>
+          );
+          return dock ? createPortal(compactChrome, dock) : compactChrome;
+        })()}
     </>
   );
 }

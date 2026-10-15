@@ -225,6 +225,21 @@
   width: min(100%, 840px);
   align-self: center;
 }
+.talk-selection-chip {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--io-text, #f4efe6);
+  background: color-mix(in srgb, var(--aether-emerald, #0b3b32) 55%, #080d0d);
+  border: 1px solid color-mix(in srgb, var(--aether-gold, #c4912f) 35%, transparent);
+  border-radius: 12px;
+}
+.talk-voice-dock:empty {
+  display: none;
+}
+.talk-voice-dock:not(:empty) {
+  margin: 0 0 8px;
+}
 .talk-page .latest-message {
   position: absolute;
   bottom: calc(100% + 8px);

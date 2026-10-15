@@ -69,6 +69,16 @@
   border: 1px solid var(--aether-border, #c4912f50);
   border-radius: 1rem;
 }
+.live-compact.is-docked {
+  position: static;
+  z-index: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  max-width: none;
+  max-height: min(28dvh, 14rem);
+  margin: 0;
+}
 .live-creation {
   margin: 0.75rem 0;
 }

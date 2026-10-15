@@ -47,6 +47,7 @@ import {
   readTalkCreationWorkspace,
   type TalkCreationWorkspace,
 } from '@/domains/talk-creation/schema';
+import { describeSelectedWork, selectionChipLabel } from '@/domains/work-items';
 import {
   bindTalkSave,
   clearTalkSave,
@@ -2186,6 +2187,15 @@ export function AureliusWorkspace({
                   </button>
                 </div>
               )}
+              {(() => {
+                const selectedWork = describeSelectedWork(creationWorkspace);
+                return selectedWork ? (
+                  <p className="talk-selection-chip" aria-live="polite">
+                    Changing this: {selectionChipLabel(selectedWork)}
+                  </p>
+                ) : null;
+              })()}
+              <div id="talk-voice-dock" className="talk-voice-dock" />
               <TalkInput
                 id="aurelius-message"
                 label="Message Aethelios"
