@@ -159,6 +159,10 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     .toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   await expect.poll(() => new URL(page.url()).searchParams.get('conversation')).toBe(selected);
   await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toHaveCount(0);
+  // Conversation adoption precedes SDP admission; wait for the attached transport.
+  await expect(
+    page.getByRole('region', { name: 'Persistent Aethelios voice controls' }).getByRole('status'),
+  ).toHaveText('Listening');
   await page.evaluate(() => {
     const channel = (
       window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }
@@ -380,6 +384,9 @@ test('a delayed workspace body cannot rewrite the current conversation after swi
   });
   await openTalkVoice(page);
   await expect.poll(() => selected).toBeTruthy();
+  await expect(
+    page.getByRole('region', { name: 'Persistent Aethelios voice controls' }).getByRole('status'),
+  ).toHaveText('Listening');
   await page.evaluate(() => {
     (
       window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }

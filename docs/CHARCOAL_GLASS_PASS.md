@@ -14,4 +14,8 @@ No merge to main, deployment, SQL, credential/configuration change or paid gener
 
 The final route audit covers 43 routes / 86 visits, including truthful live-only product availability gates. Lifestyle focal/product bodies now use the shared charcoal role; approved product imagery is unchanged. See [the checked/changed/unavailable route matrix](CHARCOAL_ROUTE_COVERAGE.md).
 
-Consent pointer regression: real Talk controls pass at 320×568, 390×844, 390×420, 720×540 and 884×690 using native checkbox, Start actionability and Cancel clicks. No consent/source changes were needed. The synthetic transport suite passes all nine lifecycle tests; two existing Talk transcript fixtures expose channel-readiness races and remain separately owned.
+Consent pointer regression: real Talk controls pass at 320×568, 390×844, 390×420, 720×540 and 884×690 using native checkbox, Start actionability and Cancel clicks. No consent/source changes were needed. All 17 consent, lifecycle and Talk transcript tests pass together. Transcript fixtures now await the existing Listening status after conversation adoption, before injecting synthetic events; no runtime voice source changed.
+
+Native Library review: `libfile_2ae969878f5c81919a11e84695648adc` contains the 28-file identity manifest: seven sections × before/after × Fold/desktop. Baseline is `d3dd41c`; after capture is `678e8f0`. Subsequent readiness/locator fixes change tests/documentation only, with identical application source. Final exact-head CI regenerates its own screenshot/hash matrix and finalized videos.
+
+Legacy navigation fixtures explicitly select a creation path and use native Documents & context disclosures before selecting documents. Arrival text and canvas paint assertions follow the approved charcoal roles; navigation, draft preservation, ownership, cancellation and uncertain-save assertions remain.

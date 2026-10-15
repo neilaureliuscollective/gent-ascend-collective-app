@@ -1,3 +1,4 @@
+import { selectArchitectDocument } from '../fixtures/architect-navigation';
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProject,
@@ -75,9 +76,7 @@ async function fixture(page: Page) {
   await page.getByRole('link', { name: 'Open Architect ↗', exact: true }).click();
   await page.getByRole('button', { name: /Synthetic Alpha/ }).click();
   await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
-  await page
-    .getByLabel('Selected document')
-    .selectOption(state.projects[0]!.content.documents[0]!.id);
+  await selectArchitectDocument(page, state.projects[0]!.content.documents[0]!.id);
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(page.getByLabel('Editable Markdown')).toHaveValue('Saved document One');
   return state;
@@ -96,9 +95,7 @@ for (const width of [390, 720, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const state = await fixture(page);
     await editor(page).fill('Private unsaved One');
-    await page
-      .getByLabel('Selected document')
-      .selectOption(state.projects[0]!.content.documents[1]!.id);
+    await selectArchitectDocument(page, state.projects[0]!.content.documents[1]!.id);
     await expect(editor(page)).toHaveValue('Saved document Two');
     await editor(page).fill('Private unsaved Two');
     for (let i = 0; i < 3; i++) {
@@ -107,9 +104,7 @@ for (const width of [390, 720, 1440]) {
       await expect(page.getByRole('status')).toContainText('Unsaved work restored');
     }
     expect(state.saves).toHaveLength(0);
-    await page
-      .getByLabel('Selected document')
-      .selectOption(state.projects[0]!.content.documents[0]!.id);
+    await selectArchitectDocument(page, state.projects[0]!.content.documents[0]!.id);
     await expect(editor(page)).toHaveValue('Private unsaved One');
     await page.getByRole('button', { name: 'Save & confirm revision' }).click();
     await expect(page.getByRole('status')).toContainText('Saved revision 2');
@@ -174,25 +169,21 @@ test('project switch cancellation preserves, confirmation discards without cross
 }) => {
   const state = await fixture(page);
   await editor(page).fill('Only Alpha owns this edit');
-  await page.getByText('Projects / switch creation', { exact: true }).click();
+  await page.locator('.origin-project-switcher > summary').click();
   page.once('dialog', (d) => d.dismiss());
   await page.getByRole('button', { name: /Synthetic Beta/ }).click();
   await expect(editor(page)).toHaveValue('Only Alpha owns this edit');
   page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: /Synthetic Beta/ }).click();
   await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
-  await page
-    .getByLabel('Selected document')
-    .selectOption(state.projects[1]!.content.documents[0]!.id);
+  await selectArchitectDocument(page, state.projects[1]!.content.documents[0]!.id);
   await expect(editor(page)).toHaveValue('Saved document One');
   await backForward(page);
   await expect(editor(page)).toHaveValue('Saved document One');
-  await page.getByText('Projects / switch creation', { exact: true }).click();
+  await page.locator('.origin-project-switcher > summary').click();
   await page.getByRole('button', { name: /Synthetic Alpha/ }).click();
   await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
-  await page
-    .getByLabel('Selected document')
-    .selectOption(state.projects[0]!.content.documents[0]!.id);
+  await selectArchitectDocument(page, state.projects[0]!.content.documents[0]!.id);
   await expect(editor(page)).toHaveValue('Saved document One');
 });
 for (const denial of ['owner-change', 'read-denied'] as const) {
@@ -293,7 +284,7 @@ test('new unsaved document selection survives history without becoming a saved a
   page,
 }) => {
   const state = await fixture(page);
-  await page.getByLabel('Selected document').selectOption('');
+  await selectArchitectDocument(page, '');
   await page.getByRole('button', { name: 'Create from approved Blueprint', exact: true }).click();
   await editor(page).fill('New unsaved artifact');
   const id = await page.getByLabel('Selected document').inputValue();
@@ -315,7 +306,9 @@ test('discard after recovery returns to the freshly read saved revision', async 
   page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Discard draft', exact: true }).click();
   await expect(editor(page)).toHaveValue('Current saved document');
-  await expect(page.locator('.origin-savebar')).toContainText('All changes saved · revision 2');
+  await expect(page.locator('.origin-savebar')).toContainText(
+    'All project changes saved · revision 2',
+  );
 });
 
 test('Forward away from a dirty history entry also restores on Back', async ({ page }) => {
@@ -349,7 +342,12 @@ test('fresh save receipt resolves a recovered uncertain save without replaying i
   await expect(editor(page)).toHaveValue('Saved but acknowledgement lost');
   await expect(editor(page)).toBeEnabled();
   await expect(page.getByRole('status')).toContainText('Resumed revision 2');
-  await expect(page.getByRole('button', { name: 'Save & confirm revision' })).toBeDisabled();
+  await expect(page.locator('.origin-savebar')).toHaveAttribute('data-unsaved', 'false');
+  await expect(
+    page
+      .locator('.origin-savebar')
+      .getByRole('button', { name: 'Save & confirm revision', includeHidden: true }),
+  ).toBeDisabled();
   expect(state.saves).toHaveLength(1);
 });
 

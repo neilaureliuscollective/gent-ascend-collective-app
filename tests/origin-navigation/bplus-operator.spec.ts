@@ -1,3 +1,4 @@
+import { selectArchitectDocument } from '../fixtures/architect-navigation';
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProject,
@@ -76,6 +77,7 @@ for (const width of [320, 390, 720, 1440]) {
     await expect(work.locator(':scope > .bplus-optics')).toBeVisible();
     await page.getByRole('link', { name: 'Open Architect ↗', exact: true }).click();
     await expect(page.locator('.origin[data-bplus="architect"]')).toBeVisible();
+    await page.getByRole('button', { name: /^Create a Business\b/ }).click();
     await expect(
       page.locator('.origin-starters [aria-pressed="true"] > .bplus-optics'),
     ).toBeVisible();
@@ -84,7 +86,7 @@ for (const width of [320, 390, 720, 1440]) {
     await blueprint.click();
     await expect(blueprint.locator(':scope > .bplus-optics')).toBeVisible();
     await expect(page.locator('.origin-plane > .bplus-optics')).toHaveCount(0);
-    await expect(page.locator('.origin-plane')).toHaveCSS('background-color', 'rgb(7, 11, 10)');
+    await expect(page.locator('.origin-plane')).toHaveCSS('background-color', 'rgb(17, 17, 17)');
     const vision = page.getByLabel('Project vision', { exact: true });
     await vision.fill(`Reviewed direction at ${width}px`);
     const save = page.getByRole('button', { name: 'Save & confirm revision' });
@@ -95,7 +97,7 @@ for (const width of [320, 390, 720, 1440]) {
     await expect(save).toBeDisabled();
     await expect(save.locator(':scope > .bplus-optics')).toBeHidden();
     await page.getByRole('button', { name: 'Deliverables', exact: true }).click();
-    await page.getByLabel('Selected document').selectOption(documentId);
+    await selectArchitectDocument(page, documentId);
     await page.getByRole('button', { name: 'Edit', exact: true }).click();
     const markdown = page.getByLabel('Editable Markdown');
     await markdown.fill('Private material review draft');
