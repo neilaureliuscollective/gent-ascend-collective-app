@@ -15,6 +15,36 @@ async function owner(write = false) {
   if (!session) throw new CabinetError('Sign in to use your Cabinet.');
   return session;
 }
+const KEPT_RELATIONS = ['owned', 'in_use', 'favorite', 'running_low'] as const;
+
+export async function cabinetLifestylePreview() {
+  const { client, person } = await owner();
+  const records = await client
+    .from('grooming_products')
+    .select('id,name,relation,shopify_handle')
+    .eq('person_id', person.id)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(4);
+  const rituals = await client
+    .from('grooming_rituals')
+    .select('id', { count: 'exact', head: true })
+    .eq('person_id', person.id)
+    .eq('active', true);
+  const kept = await client
+    .from('grooming_products')
+    .select('id', { count: 'exact', head: true })
+    .eq('person_id', person.id)
+    .in('relation', [...KEPT_RELATIONS]);
+  if (records.error || rituals.error || kept.error)
+    throw new CabinetError('Your Cabinet is temporarily unavailable.');
+  return {
+    records: records.data ?? [],
+    ritualCount: rituals.count ?? 0,
+    keptCount: kept.count ?? 0,
+  };
+}
+
 export async function cabinetWorkspace(page = 0) {
   const { client, person } = await owner();
   const [records, rituals] = await Promise.all([

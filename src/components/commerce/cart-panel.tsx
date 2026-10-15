@@ -157,7 +157,7 @@ export function CartPanel({
         <div className="cart-empty">
           <p>Your cart is ready when you are.</p>
           <Link href={basePath} onClick={() => setOpen(false)}>
-            Explore the collection ↗
+            Explore the collection
           </Link>
         </div>
       ) : (
@@ -261,14 +261,14 @@ export function CartPanel({
                   else commerceEvent('checkout_start');
                 }}
               >
-                Continue to secure checkout ↗
+                Continue to secure checkout
               </a>
             )}
             <Link href={basePath} onClick={() => setOpen(false)}>
-              Continue exploring ↗
+              Continue exploring
             </Link>
             <Link href={`${basePath}?saved=1`} onClick={() => setOpen(false)}>
-              Review your saved collection ↗
+              Review your saved collection
             </Link>
           </div>
         </>

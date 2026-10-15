@@ -1,9 +1,12 @@
+'use client';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ProductPhotoFrame } from './product-photo-frame';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { ProductMediaPending } from './product-media-pending';
 import { CollectionSave } from './collection-save';
+import { Icon } from '@/components/visual/icon';
+import { rememberCatalogReturn } from '@/domains/commerce/catalog-return';
 
 export function CollectionCard({
   entry,
@@ -11,16 +14,24 @@ export function CollectionCard({
   reason,
   review = false,
   basePath = '/shop',
+  prominence = 'standard',
 }: {
   entry: CollectionEntry;
   index?: number;
   reason?: string;
   review?: boolean;
   basePath?: string;
+  prominence?: 'standard' | 'featured' | 'editorial';
 }) {
   return (
-    <article className="reserve-collection-object">
-      <Link href={`${basePath}/${entry.handle}`} className="reserve-collection-card">
+    <article
+      className={`reserve-collection-object${prominence === 'standard' ? '' : ` is-${prominence}`}`}
+    >
+      <Link
+        href={`${basePath}/${entry.handle}`}
+        className="reserve-collection-card"
+        onClick={rememberCatalogReturn}
+      >
         <div className="reserve-card-stage">
           <span className="reserve-card-number">
             {String(index + 1).padStart(2, '0')} / {entry.brand}
@@ -47,7 +58,7 @@ export function CollectionCard({
           </span>
           <h3>
             {entry.title}
-            <span aria-hidden="true">↗</span>
+            <Icon name="arrow-up-right" className="action-icon" />
           </h3>
           {entry.summary && <p>{entry.summary}</p>}
           <div className="reserve-card-price">
@@ -75,7 +86,8 @@ export function CollectionCard({
             <dt>Before you choose</dt>
             <dd>
               <Link href={`${basePath}/${entry.handle}#formula`}>
-                Review {entry.title} ingredients & cautions ↗
+                Review {entry.title} ingredients & cautions{' '}
+                <Icon name="arrow-up-right" className="action-icon" />
               </Link>
             </dd>
           </div>
