@@ -72,6 +72,7 @@ export type TrackerItem = {
   status: Status;
   hours: number;
   persisted: boolean;
+  version?: number;
 };
 `;
 
@@ -125,6 +126,7 @@ export function requestItems(
   operation: 'list' | 'get' | 'create' | 'update',
   payload?: TrackerItem,
   idempotencyKey?: string,
+  expectedVersion?: number,
 ) {
   return new Promise<TrackerItem[]>((resolve, reject) => {
     const requestId = crypto.randomUUID();
@@ -153,6 +155,7 @@ export function requestItems(
         collection: 'items',
         payload,
         idempotencyKey,
+        expectedVersion,
       },
       parentOrigin(),
     );
@@ -164,7 +167,7 @@ export function listItems() {
 }
 
 export function saveItem(item: TrackerItem, mutationId: string) {
-  return requestItems(item.persisted ? 'update' : 'create', item, mutationId);
+  return requestItems(item.persisted ? 'update' : 'create', item, mutationId, item.persisted ? item.version : undefined);
 }
 `;
 
@@ -322,12 +325,18 @@ export function Compose({
   onSave: (item: TrackerItem, mutationId: string) => Promise<void>;
   onCancel: () => void;
 }) {
-  const [mutationId] = useState(() => crypto.randomUUID());
+  const [intent, setIntent] = useState<{ id: string; snapshot: string } | null>(null);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<Status>('open');
   const [hours, setHours] = useState('1');
   const [issues, setIssues] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [held, setHeld] = useState<TrackerItem | null>(null);
+  const [saveError, setSaveError] = useState('');
+  function snapshotOf(item: TrackerItem) {
+    return JSON.stringify({ title: item.title, notes: item.notes, status: item.status, hours: item.hours });
+  }
   return (
     <form
       onSubmit={(event) => {
@@ -342,7 +351,28 @@ export function Compose({
         };
         const next = validateItem(item);
         setIssues(next);
-        if (!next.length) void onSave(item, mutationId);
+        if (next.length) return;
+        if (busy) { setHeld(item); return; }
+        const snapshot = snapshotOf(item);
+        const operation = intent && intent.snapshot === snapshot ? intent : { id: crypto.randomUUID(), snapshot };
+        setIntent(operation);
+        setBusy(true);
+        setSaveError('');
+        void onSave(item, operation.id)
+          .then(() => {
+            setIntent(null);
+            if (held && snapshotOf(held) !== snapshot) {
+              setTitle(held.title);
+              setNotes(held.notes);
+              setStatus(held.status);
+              setHours(String(held.hours));
+            }
+            setHeld(null);
+          })
+          .catch((reason: unknown) => {
+            setSaveError(reason instanceof Error ? reason.message : 'Save failed. Your edit is still here.');
+          })
+          .finally(() => setBusy(false));
       }}
     >
       <h2>New item</h2>
@@ -373,7 +403,8 @@ export function Compose({
           ))}
         </ul>
       ) : null}
-      <button type="submit" className="primary">Save record</button>
+      {saveError ? <p className="issues">{saveError}</p> : null}
+      <button type="submit" className="primary">{busy ? 'Saving' : 'Save record'}</button>
       <button type="button" onClick={onCancel}>Cancel</button>
     </form>
   );
@@ -393,13 +424,19 @@ export function Item({
   onSave: (item: TrackerItem, mutationId: string) => Promise<void>;
   onBack: () => void;
 }) {
-  const [mutationId] = useState(() => crypto.randomUUID());
+  const [intent, setIntent] = useState<{ id: string; snapshot: string } | null>(null);
   const [title, setTitle] = useState(item?.title ?? '');
   const [notes, setNotes] = useState(item?.notes ?? '');
   const [status, setStatus] = useState<Status>(item?.status ?? 'open');
   const [hours, setHours] = useState(String(item?.hours ?? 0));
   const [issues, setIssues] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [held, setHeld] = useState<TrackerItem | null>(null);
+  const [saveError, setSaveError] = useState('');
   if (!item) return <p>Item unavailable.</p>;
+  function snapshotOf(next: TrackerItem) {
+    return JSON.stringify({ id: next.id, title: next.title, notes: next.notes, status: next.status, hours: next.hours });
+  }
   return (
     <form
       onSubmit={(event) => {
@@ -414,7 +451,28 @@ export function Item({
         };
         const found = validateItem(next);
         setIssues(found);
-        if (!found.length) void onSave(next, mutationId);
+        if (found.length) return;
+        if (busy) { setHeld(next); return; }
+        const snapshot = snapshotOf(next);
+        const operation = intent && intent.snapshot === snapshot ? intent : { id: crypto.randomUUID(), snapshot };
+        setIntent(operation);
+        setBusy(true);
+        setSaveError('');
+        void onSave(next, operation.id)
+          .then(() => {
+            setIntent(null);
+            if (held && snapshotOf(held) !== snapshot) {
+              setTitle(held.title);
+              setNotes(held.notes);
+              setStatus(held.status);
+              setHours(String(held.hours));
+            }
+            setHeld(null);
+          })
+          .catch((reason: unknown) => {
+            setSaveError(reason instanceof Error ? reason.message : 'Save failed. Your edit is still here.');
+          })
+          .finally(() => setBusy(false));
       }}
     >
       <h2>Edit item</h2>
@@ -445,7 +503,8 @@ export function Item({
           ))}
         </ul>
       ) : null}
-      <button type="submit" className="primary">Update record</button>
+      {saveError ? <p className="issues">{saveError}</p> : null}
+      <button type="submit" className="primary">{busy ? 'Saving' : 'Update record'}</button>
       <button type="button" onClick={onBack}>Back to board</button>
     </form>
   );
@@ -497,6 +556,7 @@ export type TrackerItem = {
   status: Status;
   hours: number;
   persisted: boolean;
+  version?: number;
   priority: Priority;
 };
 `;

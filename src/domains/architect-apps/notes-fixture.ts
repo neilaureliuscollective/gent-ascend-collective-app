@@ -49,7 +49,7 @@ function files(): AppFile[] {
     { path: 'src/css.d.ts', content: "declare module '*.css';\n" },
     {
       path: 'src/types.ts',
-      content: `export type Note = { id: string; title: string; body: string; hours: number; persisted: boolean };
+      content: `export type Note = { id: string; title: string; body: string; hours: number; persisted: boolean; version?: number };
 export type Route = { name: 'list' } | { name: 'compose' } | { name: 'note'; id: string };
 `,
     },
@@ -80,7 +80,7 @@ export function filterNotes(notes: Note[], query: string) {
       content: `import type { Note } from './types';
 const SCHEMA = 'architect-apps-data/v1';
 type HostResponse = { schema: string; requestId: string; ok: boolean; records?: Note[]; error?: string };
-export function requestNotes(operation: 'list' | 'create' | 'update', payload?: Note, idempotencyKey?: string) {
+export function requestNotes(operation: 'list' | 'create' | 'update', payload?: Note, idempotencyKey?: string, expectedVersion?: number) {
   return new Promise<Note[]>((resolve, reject) => {
     const requestId = crypto.randomUUID();
     const timer = window.setTimeout(() => { window.removeEventListener('message', onMessage); reject(new Error('Host collection timed out.')); }, 8000);
@@ -93,7 +93,7 @@ export function requestNotes(operation: 'list' | 'create' | 'update', payload?: 
       resolve(data.records ?? []);
     }
     window.addEventListener('message', onMessage);
-    window.parent.postMessage({ schema: SCHEMA, session: window.__AETHELIOS_APP_SESSION__ || '', requestId, operation, collection: 'notes', payload, idempotencyKey }, window.__AETHELIOS_PARENT_ORIGIN__ || '*');
+    window.parent.postMessage({ schema: SCHEMA, session: window.__AETHELIOS_APP_SESSION__ || '', requestId, operation, collection: 'notes', payload, idempotencyKey, expectedVersion }, window.__AETHELIOS_PARENT_ORIGIN__ || '*');
   });
 }
 `,
@@ -102,7 +102,8 @@ export function requestNotes(operation: 'list' | 'create' | 'update', payload?: 
       path: 'src/styles.css',
       content: `:root { color-scheme: dark; background: #050706; color: #e8e4dc; font-family: Georgia, serif; }
 body { margin: 0; } .shell { padding: 20px; } .eyebrow { color: #c4912f; letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; }
-button, input, textarea { font: inherit; color: inherit; background: #111412; border: 1px solid #2a2d2a; border-radius: 8px; padding: 8px 12px; }
+button, input, textarea { font: inherit; color: inherit; background: #111412; border: 1px solid #2a2d2a; border-radius: 8px; padding: 10px 14px; min-height: 44px; }
+button { min-width: 44px; }
 .card { display: block; width: 100%; text-align: left; margin-bottom: 8px; }
 `,
     },
@@ -131,21 +132,49 @@ export function App() {
   const [body, setBody] = useState('');
   const [hours, setHours] = useState('1');
   const [issues, setIssues] = useState<string[]>([]);
-  const [createMutationId, setCreateMutationId] = useState(() => crypto.randomUUID());
-  const [editMutationId, setEditMutationId] = useState(() => crypto.randomUUID());
+  const [intent, setIntent] = useState<{ id: string; snapshot: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [held, setHeld] = useState<Note | null>(null);
+  const [saveError, setSaveError] = useState('');
   const visible = useMemo(() => filterNotes(notes, query), [notes, query]);
   const total = useMemo(() => hoursLogged(notes), [notes]);
+  const selected = route.name === 'note' ? notes.find((note) => note.id === route.id) ?? null : null;
+  function snapshotOf(note: Note) { return JSON.stringify({ id: note.id, title: note.title, body: note.body, hours: note.hours }); }
   async function refresh() { setNotes(await requestNotes('list')); }
   useEffect(() => { void refresh().catch(() => setNotes([])); }, []);
+  useEffect(() => {
+    if (!selected) return;
+    setTitle(selected.title);
+    setBody(selected.body);
+    setHours(String(selected.hours));
+  }, [selected?.id]);
   async function save(note: Note) {
     const next = validateNote(note);
     setIssues(next);
     if (next.length) return;
-    await requestNotes(note.persisted ? 'update' : 'create', note, note.persisted ? editMutationId : createMutationId);
-    await refresh();
-    setRoute({ name: 'note', id: note.id });
+    if (busy) { setHeld(note); return; }
+    const snapshot = snapshotOf(note);
+    const operation = intent && intent.snapshot === snapshot ? intent : { id: crypto.randomUUID(), snapshot };
+    setIntent(operation);
+    setBusy(true);
+    setSaveError('');
+    try {
+      await requestNotes(note.persisted ? 'update' : 'create', note, operation.id, note.persisted ? note.version : undefined);
+      setIntent(null);
+      await refresh();
+      setRoute({ name: 'note', id: note.id });
+      if (held && snapshotOf(held) !== snapshot) {
+        setTitle(held.title);
+        setBody(held.body);
+        setHours(String(held.hours));
+      }
+      setHeld(null);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Save failed. Your edit is still here.');
+    } finally {
+      setBusy(false);
+    }
   }
-  const selected = route.name === 'note' ? notes.find((note) => note.id === route.id) ?? null : null;
   return (
     <div className="shell">
       <p className="eyebrow">Aethelios generated application</p>
@@ -153,13 +182,13 @@ export function App() {
       <p>{total}h logged</p>
       <nav>
         <button type="button" onClick={() => setRoute({ name: 'list' })}>Notes</button>
-        <button type="button" onClick={() => { setCreateMutationId(crypto.randomUUID()); setRoute({ name: 'compose' }); }}>New note</button>
+        <button type="button" onClick={() => { setIntent(null); setTitle(''); setBody(''); setHours('1'); setRoute({ name: 'compose' }); }}>New note</button>
       </nav>
       {route.name === 'list' ? (
         <section>
           <input value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="Filter" />
           {visible.map((note) => (
-            <button key={note.id} type="button" className="card" onClick={() => { setEditMutationId(crypto.randomUUID()); setRoute({ name: 'note', id: note.id }); }}>
+            <button key={note.id} type="button" className="card" onClick={() => { setIntent(null); setRoute({ name: 'note', id: note.id }); }}>
               <strong>{note.title}</strong>
               <p>{note.hours}h</p>
             </button>
@@ -167,12 +196,13 @@ export function App() {
         </section>
       ) : null}
       {route.name === 'compose' || selected ? (
-        <form onSubmit={(event) => { event.preventDefault(); void save({ id: selected?.id ?? crypto.randomUUID(), title, body, hours: Number(hours), persisted: Boolean(selected) }); }}>
+        <form onSubmit={(event) => { event.preventDefault(); void save({ id: selected?.id ?? crypto.randomUUID(), title, body, hours: Number(hours), persisted: Boolean(selected), version: selected?.version }); }}>
           <input value={title} onChange={(event) => setTitle(event.currentTarget.value)} maxLength={80} required />
           <textarea value={body} onChange={(event) => setBody(event.currentTarget.value)} maxLength={800} />
           <input value={hours} onChange={(event) => setHours(event.currentTarget.value)} />
           {issues.map((issue) => <p key={issue}>{issue}</p>)}
-          <button type="submit">Save record</button>
+          {saveError ? <p>{saveError}</p> : null}
+          <button type="submit">{busy ? 'Saving' : 'Save record'}</button>
         </form>
       ) : null}
     </div>
@@ -203,7 +233,7 @@ export function notesTagOperations(base: AppFile[]): FileOperation[] {
       op: 'update',
       path: 'src/types.ts',
       baseHash: fileHash(types.content),
-      content: `export type Note = { id: string; title: string; body: string; hours: number; persisted: boolean; tag: 'field' | 'office' | 'other' };
+      content: `export type Note = { id: string; title: string; body: string; hours: number; persisted: boolean; version?: number; tag: 'field' | 'office' | 'other' };
 export type Route = { name: 'list' } | { name: 'compose' } | { name: 'note'; id: string };
 `,
     },

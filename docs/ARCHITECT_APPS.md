@@ -10,8 +10,10 @@ Dedicated `architect-apps` domain for one supported profile: React + TypeScript 
 - Worker entry supplies the durable Apps store. Optional supervisor hook is no longer the only wiring.
 - Versioned `architect-apps-data/v1` bridge. Compact `v1.nonce.exp.mac` preview sessions require `ARCHITECT_APPS_PREVIEW_SECRET`, expire, and revoke on replacement. Ready or last-working revisions only. Parent→API payloads are allowlisted; iframe fields never overwrite owner, project or revision. Async bridge replies bind to the original document/session/generation and are dropped after replacement.
 - Sealed Vite single-bundle contract (`assets/app.js`, `inlineDynamicImports`). Preview assembly inserts that IIFE by literal splice so `$&` / `$n` patterns survive. Extra JavaScript chunks are refused. Direct preview GET applies `Content-Security-Policy: sandbox allow-scripts allow-forms` without `allow-same-origin`. The iframe sandbox matches; `allow-forms` is required for native submit and does not grant parent storage.
-- Each user mutation has a distinct stable request identity. Retries of that mutation reuse it. `record.id` is not an idempotency key.
-- Workbench shows the selected saved revision, file contents, actual before/after changes, live job status, and keeps the last working preview when a later build fails.
+- Each user mutation has a distinct stable request identity bound to an immutable payload snapshot. Retries reuse that identity only for the same payload after an uncertain result. A changed payload with the same key is rejected. Concurrent edits use integer `version`. `record.id` is not an idempotency key.
+- Generation context includes the complete `architect-apps-data/v1` request/response/replay/error contract, session bootstrap, CRUD examples, and approved direction colors/typography/layout/assets plus an explicit unsupported list.
+- Workbench shows the selected saved revision, file contents, actual before/after changes, host collections in use, and truthful stages derived from jobs/events/save acknowledgments. The last working preview stays when a later build fails.
+- Required isolated path: `deploy/architect-apps/Dockerfile` plus `scripts/architect-apps-image.mjs`. `.github/workflows/quality.yml` `apps-isolate` builds the pinned image and runs isolated compile, failure cleanup and cancellation. Host-fixture remains labelled and cannot mark a mock app isolated.
 - Talk `talk-architect-direction/v1` remains stable. Text-import compatibility is preserved. Talk board verification requires the documented adapter on the Talk workstream.
 
 ## Isolation
@@ -25,7 +27,7 @@ Generated project code does not execute in the credentialed host process for the
 
 ## Talk contract
 
-Architect owns `talk-architect-direction/v1` and the published shared contract `talk.architect.source.resolve` (`2026-10-14.1`). Talk registers `createTalkAuthorizedSourceAdapter` against immutable Talk server records. A client-computed content digest is not source authorization. Until Talk connects that adapter, only compatible `talk-architect-handoff/v1` text import can be retained and the dependency is reported as pending. Durable receipts stay. See [ARCHITECT_DESIGN_DIRECTION.md](ARCHITECT_DESIGN_DIRECTION.md).
+Architect owns `talk-architect-direction/v1` and the published shared contract `talk.architect.source.resolve` (`2026-10-14.1`). Talk registers `createTalkAuthorizedSourceAdapter` against immutable Talk server records. A client-computed content digest is not source authorization. Talk #131 head `ae37393d191207d83ff548801ec3682a82a1a56f` implements that registration on the Talk checkout (`src/domains/talk-creation/architect-source.ts`). This Architect branch does not copy those files and still reports the adapter as pending. Durable receipts stay. See [ARCHITECT_DESIGN_DIRECTION.md](ARCHITECT_DESIGN_DIRECTION.md).
 
 ## Flags
 
@@ -40,7 +42,7 @@ Architect owns `talk-architect-direction/v1` and the published shared contract `
 | `ARCHITECT_APPS_IMAGE` | `aethelios-architect-apps:2026-10-14.1` | Pinned isolated build image |
 | `ARCHITECT_APPS_PREVIEW_SECRET` | required | Preview session HMAC. Fallback signing secrets are not permitted. |
 
-Additive migrations `20261015080000_architect_apps.sql` and `20261015120000_architect_apps_durable.sql` are local-only until founder-approved hosted application.
+Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql` and `20261015140000_architect_apps_mutation.sql` are local-only until founder-approved hosted application.
 
 ## Evidence classes
 
@@ -52,4 +54,4 @@ Additive migrations `20261015080000_architect_apps.sql` and `20261015120000_arch
 
 ## First founder action
 
-Install Docker locally and load or build image `aethelios-architect-apps:2026-10-14.1`. Set `ARCHITECT_APPS_PREVIEW_SECRET`, apply both Apps migrations on the local Supabase instance, and enable Origin/Apps plus a local worker token. Leave `ARCHITECT_APPS_AI_ENABLED` false. That is the remaining blocker for isolated success of a non-fixture app.
+On the founder workstation: install Docker, run `node scripts/architect-apps-image.mjs`, set `ARCHITECT_APPS_PREVIEW_SECRET`, apply the three local Apps migrations, enable `ARCHITECT_ORIGIN_ENABLED` and `ARCHITECT_APPS_ENABLED`, keep `ARCHITECT_APPS_AI_MOCK=true` until a paid model run is authorized, and start the existing local Construct/Apps worker with a 32-character token. OpenAI credit alone does not provide the worker, database, permissions or isolated image.

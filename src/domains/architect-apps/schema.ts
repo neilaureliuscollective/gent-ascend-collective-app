@@ -206,6 +206,7 @@ export type AppRecord = {
   collection: string;
   payload: Record<string, unknown>;
   idempotency_key: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
 };
@@ -294,6 +295,7 @@ export const appDataCommand = z
     collection: z.string().trim().min(1).max(40),
     payload: z.record(z.string(), z.unknown()).optional(),
     idempotencyKey: z.string().min(1).max(80).optional(),
+    expectedVersion: z.number().int().positive().max(100000).optional(),
   })
   .strict();
 

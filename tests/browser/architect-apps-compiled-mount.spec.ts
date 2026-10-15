@@ -24,7 +24,7 @@ test('compiled Field Notes bundle mounts in a sandboxed iframe and cannot read p
     await route.fulfill({
       status: 200,
       contentType: 'text/html',
-      body: '<!doctype html><html><body><p id="host">parent</p><iframe id="app" sandbox="allow-scripts allow-forms" title="Generated application"></iframe></body></html>',
+      body: '<!doctype html><html><body style="margin:0;background:#111"><p id="host">parent</p><iframe id="app" sandbox="allow-scripts allow-forms" title="Generated application" style="width:100%;height:720px;border:0;background:#050706"></iframe></body></html>',
     });
   });
   await page.goto('http://127.0.0.1:3310/parent.html', { waitUntil: 'domcontentloaded' });
@@ -102,20 +102,24 @@ test('compiled Field Notes bundle mounts in a sandboxed iframe and cannot read p
   await expect(frame.getByText(/3h logged/i)).toBeVisible({ timeout: 10000 });
   await form.getByRole('button', { name: /save record/i }).click();
   await expect(frame.getByText(/3h logged/i)).toBeVisible();
+  await form.locator('input').first().fill('Site visit B');
+  await form.locator('input').nth(1).fill('4');
+  await form.getByRole('button', { name: /save record/i }).click();
+  await expect(frame.getByText(/4h logged/i)).toBeVisible({ timeout: 10000 });
   await frame.getByRole('button', { name: /^notes$/i }).click();
-  await expect(frame.getByRole('button', { name: /site visit edited/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /site visit b/i })).toBeVisible();
 
   const afterCreate = await page.evaluate(() => (window as unknown as { __APP_RECORDS__: Array<{ title?: string; hours?: number }> }).__APP_RECORDS__);
   expect(afterCreate).toHaveLength(1);
-  expect(afterCreate[0]?.title).toBe('Site visit edited');
-  expect(afterCreate[0]?.hours).toBe(3);
+  expect(afterCreate[0]?.title).toBe('Site visit B');
+  expect(afterCreate[0]?.hours).toBe(4);
 
   await page.locator('#app').evaluate((frame, documentSource) => {
     (frame as HTMLIFrameElement).srcdoc = documentSource;
   }, srcDoc);
   await expect(frame.getByRole('heading', { name: /field notes/i })).toBeVisible({ timeout: 15000 });
-  await expect(frame.getByText(/3h logged/i)).toBeVisible();
-  await expect(frame.getByRole('button', { name: /site visit edited/i })).toBeVisible();
+  await expect(frame.getByText(/4h logged/i)).toBeVisible();
+  await expect(frame.getByRole('button', { name: /site visit b/i })).toBeVisible();
 
   const isolation = await page.evaluate(() => {
     const iframe = document.getElementById('app') as HTMLIFrameElement;
@@ -143,6 +147,12 @@ test('compiled Field Notes bundle mounts in a sandboxed iframe and cannot read p
   expect(isolation.contentDocument).toBe('unique-origin');
   expect(isolation.childSawParent === 'parent-only').toBe(false);
   expect(isolation.origin === 'null' || isolation.origin === 'SecurityError' || isolation.childSawParent !== 'parent-only').toBe(true);
-  await page.screenshot({ path: 'test-results/architect-apps-compiled-mount.png', fullPage: true });
-  await page.screenshot({ path: 'docs/evidence/architect-apps/compiled-mount.png', fullPage: true });
+  await frame.locator('.shell').screenshot({ path: 'test-results/architect-apps-compiled-mount.png' });
+  await frame.locator('.shell').screenshot({ path: 'docs/evidence/architect-apps/compiled-mount.png' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await frame.locator('.shell').screenshot({ path: 'docs/evidence/architect-apps/compiled-desktop.png' });
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await frame.locator('.shell').screenshot({ path: 'docs/evidence/architect-apps/compiled-fold.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await frame.locator('.shell').screenshot({ path: 'docs/evidence/architect-apps/compiled-phone.png' });
 });

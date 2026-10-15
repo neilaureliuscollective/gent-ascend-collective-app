@@ -2,6 +2,7 @@
 
 import { BplusMaterial } from '@/components/visual/bplus-material';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { appWorkbenchStage } from '@/domains/architect-apps/stage';
 import {
   approveArchitectApp,
   cancelArchitectApp,
@@ -30,7 +31,8 @@ export function ArchitectAppPanel({
 }) {
   const [library, setLibrary] = useState<AppLibrary | null>(null);
   const [proposal, setProposal] = useState<Record<string, unknown> | null>(null);
-  const [viewport, setViewport] = useState<'desktop' | 'phone'>('desktop');
+  const [viewport, setViewport] = useState<'desktop' | 'fold' | 'phone'>('desktop');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'conflict' | 'failed'>('idle');
   const [panel, setPanel] = useState<(typeof panels)[number]>('Files');
   const [refineOpen, setRefineOpen] = useState(false);
   const [draft, setDraft] = useState('Create a project tracker I can use and save records in.');
@@ -51,6 +53,16 @@ export function ArchitectAppPanel({
   const latestJob = library?.jobs[0] ?? null;
   const displayed = selected ?? (current?.status === 'ready' ? current : working);
   const preview = library?.preview ?? null;
+  const displayedCollections =
+    (library?.revisions.find((row) => row.revision === displayed?.revision)?.collections ?? [])
+      .map((collection) => collection.name)
+      .join(', ') || '';
+  const workbench = appWorkbenchStage({
+    job: latestJob,
+    events: library?.events,
+    preview,
+    saveState,
+  });
 
   async function refresh(nextSelected = selectedRevision) {
     const next = await readArchitectApps(projectId, nextSelected ?? undefined);
@@ -108,10 +120,12 @@ export function ArchitectAppPanel({
     function onMessage(event: MessageEvent) {
       if (event.source !== frame.current?.contentWindow) return;
       if (event.origin !== 'null' && event.origin !== window.location.origin) return;
-      const data = event.data as { schema?: string; session?: string; requestId?: string };
+      const data = event.data as { schema?: string; session?: string; requestId?: string; operation?: string };
       if (!data || data.schema !== 'architect-apps-data/v1' || !data.session) return;
       const snapshot = { ...boundPreview.current };
       if (!snapshot.revisionId || data.session !== snapshot.session) return;
+      const mutating = data.operation === 'create' || data.operation === 'update';
+      if (mutating) setSaveState('saving');
       void forwardAppData(data, projectId, snapshot.revisionId)
         .then((result) => {
           if (
@@ -121,6 +135,8 @@ export function ArchitectAppPanel({
             boundPreview.current.generation !== snapshot.generation
           )
             return;
+          if (mutating)
+            setSaveState(typeof result.error === 'string' && /conflict|changed|identity/i.test(result.error) ? 'conflict' : 'saved');
           frame.current?.contentWindow?.postMessage({ schema: 'architect-apps-data/v1', ...result }, event.origin === 'null' ? '*' : event.origin);
         })
         .catch((reason: unknown) => {
@@ -131,12 +147,14 @@ export function ArchitectAppPanel({
             boundPreview.current.generation !== snapshot.generation
           )
             return;
+          const detail = reason instanceof Error ? reason.message : 'Host collection refused the request.';
+          if (mutating) setSaveState(/conflict|changed|identity/i.test(detail) ? 'conflict' : 'failed');
           frame.current?.contentWindow?.postMessage(
             {
               schema: 'architect-apps-data/v1',
               requestId: data.requestId,
               ok: false,
-              error: reason instanceof Error ? reason.message : 'Host collection refused the request.',
+              error: detail,
             },
             event.origin === 'null' ? '*' : event.origin,
           );
@@ -294,17 +312,25 @@ export function ArchitectAppPanel({
               {selectedRevision && current && selectedRevision !== current.revision ? ` · selected, current ${current.revision}` : ''}
               {working && working.revision !== displayed?.revision ? ` · last working ${working.revision}` : ''}
             </h3>
-            <p>
-              {latestJob
-                ? `Build ${latestJob.status}${latestJob.result?.blocker ? ` — ${latestJob.result.blocker}` : ''}`
-                : recovered
-                  ? `Approved revision ${recovered.revision} recovered. Start remains explicit.`
-                  : library?.provider.reason || 'Describe a useful app, then review files before approval.'}
+            <p data-stage={workbench.stage}>
+              {workbench.label}
+              {displayed ? ` Running revision ${displayed.revision}.` : ''}
+              {displayedCollections ? ` Data: ${displayedCollections}.` : ''}
+              {preview?.revision && displayed && preview.revision !== displayed.revision
+                ? ` Preview still shows last working revision ${preview.revision}.`
+                : ''}
+              {latestJob?.status === 'failed' && working
+                ? ' The attempted revision did not replace the last working application.'
+                : ''}
+              {recovered && workbench.stage === 'idle' ? ` Approved revision ${recovered.revision} recovered. Start remains explicit.` : ''}
             </p>
           </div>
           <div className="architect-app-viewports">
             <button type="button" aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')}>
               Desktop
+            </button>
+            <button type="button" aria-pressed={viewport === 'fold'} onClick={() => setViewport('fold')}>
+              Fold
             </button>
             <button type="button" aria-pressed={viewport === 'phone'} onClick={() => setViewport('phone')}>
               Phone

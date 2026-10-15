@@ -13,6 +13,7 @@ export const appDataMessageSchema = z
     collection: z.string().trim().min(1).max(40),
     payload: z.record(z.string(), z.unknown()).optional(),
     idempotencyKey: z.string().min(1).max(80).optional(),
+    expectedVersion: z.number().int().positive().max(100000).optional(),
   })
   .strict();
 
@@ -80,10 +81,11 @@ export function assertAdditiveSchema(previous: AppCollection[], next: AppCollect
   }
 }
 
-export function recordToItem(record: { id: string; payload: Record<string, unknown> }) {
+export function recordToItem(record: { id: string; payload: Record<string, unknown>; version?: number }) {
   return {
     id: record.id,
     persisted: true,
+    version: record.version ?? 1,
     ...record.payload,
   };
 }

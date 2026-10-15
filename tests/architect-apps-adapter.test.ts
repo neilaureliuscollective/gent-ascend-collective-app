@@ -87,8 +87,11 @@ it('supplies authoritative source contents, hashes, collections and the host bri
   expect(context.files[0]?.hash).toMatch(/^[0-9a-f]{64}$/);
   expect(context.collections).toEqual(notesCollections);
   expect(context.bridge).toEqual(APP_DATA_BRIDGE_CONTRACT);
+  expect(context.bridge.replay.changedPayload).toMatch(/mutation identity/i);
+  expect(context.bridge.examples.update.expectedVersion).toBe(1);
   expect(context.brief).toMatch(/field notes/i);
   expect(context.direction?.schema).toBe('talk-architect-direction/v1');
+  expect(context.direction?.unsupported?.length).toBeGreaterThan(0);
 });
 
 it('derives compact preview sessions and allowlists iframe payloads', () => {

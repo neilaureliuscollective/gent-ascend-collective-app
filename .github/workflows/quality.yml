@@ -91,6 +91,34 @@ jobs:
       - name: Real authenticated Founder Office persistence journey
         run: npx playwright test --config playwright.founder.config.ts tests/founder/founder-office.spec.ts
       - run: npm run test:founder
+      - name: Architect Apps Auth/PostgREST mutation smoke
+        run: node scripts/architect-apps-auth-smoke.mjs
       - if: always()
         run: npx supabase stop --no-backup
+  apps-isolate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build or inspect the pinned Architect Apps image
+        run: node scripts/architect-apps-image.mjs
+      - name: Required isolated compile, failure cleanup and compiled journey
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_PREVIEW_SECRET: isolate-preview-secret-key
+          APP_ENV: local
+        run: npx vitest run tests/architect-apps-isolate.test.ts tests/architect-apps-compiled-journey.test.ts --reporter=dot
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architect-apps-isolate-evidence
+          path: |
+            test-results/architect-apps-compiled-preview.html
+            docs/evidence/architect-apps/compiled-preview.html
+          if-no-files-found: ignore
 

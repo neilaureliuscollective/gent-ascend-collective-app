@@ -176,12 +176,24 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     requestId: '00000000-0000-4000-8000-000000000532',
     operation: 'create',
     collection: 'notes',
-    payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Changed', body: 'North wall', hours: 2 },
+    payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Site visit', body: 'North wall', hours: 2 },
     idempotencyKey: '00000000-0000-4000-8000-000000000611',
   });
   expect((created.records[0] as { title?: string }).title).toBe('Site visit');
   expect(replay.records[0]?.id).toBe(created.records[0]?.id);
   expect((replay.records[0] as { title?: string }).title).toBe('Site visit');
+  await expect(
+    operateArchitectAppData({
+      projectId: state.projectId,
+      revisionId: approved.revision.id,
+      session,
+      requestId: '00000000-0000-4000-8000-000000000537',
+      operation: 'create',
+      collection: 'notes',
+      payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Changed', body: 'North wall', hours: 2 },
+      idempotencyKey: '00000000-0000-4000-8000-000000000611',
+    }),
+  ).rejects.toThrow(/mutation identity|different record/i);
   await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
@@ -191,6 +203,7 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     collection: 'notes',
     payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Site visit edited', body: 'North wall', hours: 3 },
     idempotencyKey: '00000000-0000-4000-8000-000000000612',
+    expectedVersion: 1,
   });
   const retryEdit = await operateArchitectAppData({
     projectId: state.projectId,
@@ -199,10 +212,23 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     requestId: '00000000-0000-4000-8000-000000000536',
     operation: 'update',
     collection: 'notes',
-    payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Should not revert', body: 'North wall', hours: 9 },
+    payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Site visit edited', body: 'North wall', hours: 3 },
     idempotencyKey: '00000000-0000-4000-8000-000000000612',
+    expectedVersion: 1,
   });
   expect((retryEdit.records[0] as { title?: string }).title).toBe('Site visit edited');
+  const editB = await operateArchitectAppData({
+    projectId: state.projectId,
+    revisionId: approved.revision.id,
+    session,
+    requestId: '00000000-0000-4000-8000-000000000538',
+    operation: 'update',
+    collection: 'notes',
+    payload: { id: '00000000-0000-4000-8000-000000000541', title: 'Site visit B', body: 'North wall', hours: 4 },
+    idempotencyKey: '00000000-0000-4000-8000-000000000613',
+    expectedVersion: 2,
+  });
+  expect((editB.records[0] as { title?: string }).title).toBe('Site visit B');
   const listed = await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
@@ -211,7 +237,7 @@ it('runs the authenticated notes journey through the real adapter, isolated succ
     operation: 'list',
     collection: 'notes',
   });
-  expect((listed.records[0] as { title?: string }).title).toBe('Site visit edited');
+  expect((listed.records[0] as { title?: string }).title).toBe('Site visit B');
   const revised = await proposeArchitectApp(
     {
       action: 'propose',

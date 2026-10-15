@@ -191,12 +191,24 @@ it('compiles Field Notes, mounts the sealed bundle, and replays create/edit agai
     requestId: '00000000-0000-4000-8000-000000000832',
     operation: 'create',
     collection: 'notes',
-    payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Changed', body: 'North wall', hours: 2 },
+    payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Site visit', body: 'North wall', hours: 2 },
     idempotencyKey: '00000000-0000-4000-8000-000000000851',
   });
   expect((created.records[0] as { title?: string }).title).toBe('Site visit');
   expect((replayCreate.records[0] as { title?: string }).title).toBe('Site visit');
-  await operateArchitectAppData({
+  await expect(
+    operateArchitectAppData({
+      projectId: state.projectId,
+      revisionId: approved.revision.id,
+      session,
+      requestId: '00000000-0000-4000-8000-000000000836',
+      operation: 'create',
+      collection: 'notes',
+      payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Changed', body: 'North wall', hours: 2 },
+      idempotencyKey: '00000000-0000-4000-8000-000000000851',
+    }),
+  ).rejects.toThrow(/mutation identity|different record/i);
+  const edited = await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,
     session,
@@ -205,6 +217,7 @@ it('compiles Field Notes, mounts the sealed bundle, and replays create/edit agai
     collection: 'notes',
     payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Site visit edited', body: 'North wall', hours: 3 },
     idempotencyKey: '00000000-0000-4000-8000-000000000852',
+    expectedVersion: 1,
   });
   const retryEdit = await operateArchitectAppData({
     projectId: state.projectId,
@@ -213,10 +226,24 @@ it('compiles Field Notes, mounts the sealed bundle, and replays create/edit agai
     requestId: '00000000-0000-4000-8000-000000000834',
     operation: 'update',
     collection: 'notes',
-    payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Should not revert', body: 'North wall', hours: 9 },
+    payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Site visit edited', body: 'North wall', hours: 3 },
     idempotencyKey: '00000000-0000-4000-8000-000000000852',
+    expectedVersion: 1,
   });
+  expect((edited.records[0] as { title?: string }).title).toBe('Site visit edited');
   expect((retryEdit.records[0] as { title?: string }).title).toBe('Site visit edited');
+  const editB = await operateArchitectAppData({
+    projectId: state.projectId,
+    revisionId: approved.revision.id,
+    session,
+    requestId: '00000000-0000-4000-8000-000000000837',
+    operation: 'update',
+    collection: 'notes',
+    payload: { id: '00000000-0000-4000-8000-000000000841', title: 'Site visit B', body: 'North wall', hours: 4 },
+    idempotencyKey: '00000000-0000-4000-8000-000000000853',
+    expectedVersion: 2,
+  });
+  expect((editB.records[0] as { title?: string }).title).toBe('Site visit B');
   const listed = await operateArchitectAppData({
     projectId: state.projectId,
     revisionId: approved.revision.id,

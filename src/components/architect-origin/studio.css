@@ -710,6 +710,14 @@
   gap: 8px;
 }
 
+.architect-app-viewports button,
+.architect-app-tabs button,
+.architect-app-actions button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 14px;
+}
+
 .architect-app-frame {
   flex: 1;
   min-height: 280px;
@@ -727,6 +735,11 @@
 
 .architect-app-frame-phone {
   max-width: 390px;
+  margin: 0 auto;
+}
+
+.architect-app-frame-fold {
+  max-width: 768px;
   margin: 0 auto;
 }
 
@@ -801,11 +814,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .origin-choice {
+  .origin-choice,
+  .architect-app-frame,
+  .architect-app-frame iframe,
+  .architect-app-stage,
+  .architect-app-side {
     transition: none;
-  }
-  .architect-app-frame iframe {
-    transition: none;
+    animation: none;
   }
 }
 

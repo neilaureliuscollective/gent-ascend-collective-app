@@ -8,9 +8,11 @@ import {
   assertSafeAppsDockerArgs,
   buildIsolatedGeneratedApp,
   collectArtifactTree,
+  defaultAppsImage,
   isolatedArtifactCollectorModule,
   parseAppsContainerResult,
   parseAppsToolchainVersions,
+  probeAppsDockerIsolation,
   removeNamedAppsContainer,
   trustedAppsContainerRunner,
   appsNobody,
@@ -159,3 +161,57 @@ it('confirms named container teardown after cancel', async () => {
   expect(commands[0]?.[0]).toBe('rm');
   expect(commands[1]?.[0]).toBe('inspect');
 });
+
+it('builds the pinned image and runs the isolated Field Notes compile when isolation is required', async () => {
+  const required = process.env.ARCHITECT_APPS_REQUIRE_ISOLATION === 'true';
+  const probe = await probeAppsDockerIsolation({ PATH: process.env.PATH });
+  if (!probe.available) {
+    if (required) throw new Error(`Required isolated build unavailable: ${probe.reason}`);
+    expect(probe.code).toMatch(/not-installed|daemon-unavailable|timeout|error/);
+    return;
+  }
+  const inspect = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}} {{.RepoTags}}', defaultAppsImage], {
+    encoding: 'utf8',
+  });
+  if (inspect.status !== 0) {
+    const built = spawnSync('docker', ['build', '-t', defaultAppsImage, 'deploy/architect-apps'], {
+      encoding: 'utf8',
+    });
+    if (built.status !== 0) {
+      if (required)
+        throw new Error(built.stderr || built.stdout || 'Pinned Architect Apps image could not be built.');
+      return;
+    }
+  }
+  const image = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', defaultAppsImage], {
+    encoding: 'utf8',
+  });
+  expect(image.status).toBe(0);
+  expect(image.stdout.trim()).toMatch(/^sha256:/);
+  const isolated = await buildIsolatedGeneratedApp(notesSourceFiles(), {
+    timeoutMs: 180000,
+    name: 'apps-required-ci',
+  });
+  expect(isolated.result.ok, isolated.result.blocker ?? isolated.result.typecheck.log).toBe(true);
+  expect(isolated.result.isolation).toBe('docker');
+  expect(isolated.result.sandbox).toBe(true);
+  expect(isolated.artifacts.some((file) => file.path === 'assets/app.js')).toBe(true);
+  const broken = notesSourceFiles().map((file) =>
+    file.path === 'src/App.tsx' ? { ...file, content: 'export const broken: number = "no";\n' } : file,
+  );
+  const failed = await buildIsolatedGeneratedApp(broken, {
+    timeoutMs: 120000,
+    name: 'apps-required-fail',
+  });
+  expect(failed.result.ok).toBe(false);
+  expect(failed.result.sandbox).toBe(false);
+  expect(failed.artifacts).toEqual([]);
+  const cancelled = await buildIsolatedGeneratedApp(notesSourceFiles(), {
+    timeoutMs: 180000,
+    name: 'apps-required-cancel',
+    signal: AbortSignal.abort(),
+  });
+  expect(cancelled.result.ok).toBe(false);
+  expect(cancelled.result.blocker).toMatch(/cancelled/i);
+  expect(cancelled.artifacts).toEqual([]);
+}, 360000);

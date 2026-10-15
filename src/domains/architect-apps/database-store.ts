@@ -74,7 +74,12 @@ function asArtifact(row: unknown): AppArtifact {
 
 function asRecord(row: unknown): AppRecord {
   const record = row as AppRecord;
-  return { ...record, created_at: asIso(record.created_at), updated_at: asIso(record.updated_at) };
+  return {
+    ...record,
+    version: Number(record.version || 1),
+    created_at: asIso(record.created_at),
+    updated_at: asIso(record.updated_at),
+  };
 }
 
 export class DatabaseAppStore implements AppStore {
@@ -373,6 +378,7 @@ export class DatabaseAppStore implements AppStore {
       p_payload: input.payload,
       p_key: input.idempotencyKey ?? null,
       p_id: input.id ?? null,
+      p_expected: input.expectedVersion ?? null,
     });
     if (saved.error) fail(saved.error, 'Record could not be saved.');
     const id = saved.data as string;

@@ -413,24 +413,29 @@ export async function buildIsolatedGeneratedApp(
     let stdout = '';
     let stderr = '';
     try {
+      if (options.signal?.aborted) {
+        const closed = await teardown();
+        await record(
+          'cancelled',
+          closed.confirmed
+            ? 'Owner cancelled the isolated build. Named container teardown confirmed.'
+            : 'Owner cancelled the isolated build.',
+        );
+        return {
+          result: {
+            ok: false,
+            isolation: 'docker',
+            sandbox: false,
+            typecheck: { ok: false, log: '' },
+            bundle: { ok: false, log: '' },
+            blocker: 'Owner cancelled the isolated build.',
+            stages,
+          } satisfies AppJobResult,
+          artifacts: [],
+          manifestHash: null,
+        };
+      }
       if (options.exec) {
-        if (options.signal?.aborted) {
-          await teardown();
-          await record('cancelled', 'Owner cancelled the isolated build.');
-          return {
-            result: {
-              ok: false,
-              isolation: 'docker',
-              sandbox: false,
-              typecheck: { ok: false, log: '' },
-              bundle: { ok: false, log: '' },
-              blocker: 'Owner cancelled the isolated build.',
-              stages,
-            } satisfies AppJobResult,
-            artifacts: [],
-            manifestHash: null,
-          };
-        }
         const ran = await options.exec(invocation.command, invocation.args, {
           timeout: timeoutMs,
           env: { PATH: env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv,

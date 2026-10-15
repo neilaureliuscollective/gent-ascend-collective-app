@@ -52,7 +52,7 @@ export async function openaiAppTransport(input: AppGenerationContext, signal?: A
   const result = await generateText({
     model: openai.responses(config.AURELIUS_AI_MODEL),
     instructions: `You are Aethelios in Architect Apps. ${sharedCharacter}
-Return only a validated React/TypeScript/Vite application under src/. You cannot install packages, edit sealed toolchain files, invent servers, authentication, payments or publishing. Preserve unchanged files. Update and delete operations must bind the exact base hashes supplied in context.files. Additive collection schema only. Persist only through the host bridge ${APP_DATA_BRIDGE_CONTRACT.schema}. Paths and character counts are not a revision base.`,
+Return only a validated React/TypeScript/Vite application under src/. You cannot install packages, edit sealed toolchain files, invent servers, authentication, payments or publishing. Preserve unchanged files. Update and delete operations must bind the exact base hashes supplied in context.files. Additive collection schema only. Persist only through the host bridge ${APP_DATA_BRIDGE_CONTRACT.schema}. Follow context.bridge.replay for operation identity. Use only approved direction colors, typography, layout and assets; context.direction.unsupported is out of scope. Paths and character counts are not a revision base.`,
     prompt: JSON.stringify({
       instruction: context.instruction,
       kind: context.kind,

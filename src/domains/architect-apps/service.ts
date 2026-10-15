@@ -226,6 +226,11 @@ export async function proposeArchitectApp(
               digest: direction.digest,
               verified: direction.verified,
               sourceKind: direction.source_kind,
+              colors: direction.receipt.content.colors,
+              typography: direction.receipt.content.typography,
+              layout: direction.receipt.content.layout,
+              copy: direction.receipt.content.copy,
+              assets: direction.receipt.content.assets,
             }
           : null,
       },
@@ -383,6 +388,7 @@ export async function operateArchitectAppData(input: {
   collection: string;
   payload?: Record<string, unknown>;
   idempotencyKey?: string;
+  expectedVersion?: number;
 }) {
   requireReady();
   try {
@@ -420,6 +426,7 @@ export async function operateArchitectAppData(input: {
       payload,
       idempotencyKey: input.idempotencyKey,
       id: typeof input.payload.id === 'string' ? input.payload.id : undefined,
+      expectedVersion: input.expectedVersion ?? (typeof input.payload.version === 'number' ? input.payload.version : undefined),
     });
     return { requestId: input.requestId, ok: true, records: [recordToItem(saved)] };
   } catch (error) {

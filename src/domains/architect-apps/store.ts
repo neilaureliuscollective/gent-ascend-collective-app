@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { APP_PROFILE, APP_PROFILE_VERSION, APP_TOOLCHAIN_VERSION } from './catalog';
+import { assertExpectedVersion, assertReplayPayload, MutationConflictError } from './mutation';
 import { defaultAppLimits, terminalJobStatuses, type AppArtifact, type AppEvent, type AppJob, type AppJobResult, type AppRecord, type AppRevision, type ArchitectApp, type eventKinds } from './schema';
 
 export class AppStoreError extends Error {
@@ -75,6 +76,7 @@ export type AppStore = {
     payload: Record<string, unknown>;
     idempotencyKey?: string;
     id?: string;
+    expectedVersion?: number;
   }): Promise<AppRecord>;
 };
 
@@ -341,39 +343,49 @@ export class MemoryAppStore implements AppStore {
   }
 
   async writeRecord(input: Parameters<AppStore['writeRecord']>[0]) {
-    if (input.idempotencyKey) {
-      const replay = [...this.records.values()].find(
-        (row) =>
-          row.person_id === input.personId &&
-          row.app_id === input.appId &&
-          row.collection === input.collection &&
-          row.idempotency_key === input.idempotencyKey,
-      );
-      if (replay) return replay;
+    try {
+      if (input.idempotencyKey) {
+        const replay = [...this.records.values()].find(
+          (row) =>
+            row.person_id === input.personId &&
+            row.app_id === input.appId &&
+            row.collection === input.collection &&
+            row.idempotency_key === input.idempotencyKey,
+        );
+        if (replay) {
+          assertReplayPayload(replay.payload, input.payload);
+          return replay;
+        }
+      }
+      const existing = input.id ? this.records.get(input.id) : null;
+      if (
+        existing &&
+        (existing.person_id !== input.personId ||
+          existing.app_id !== input.appId ||
+          existing.collection !== input.collection)
+      )
+        throw new AppStoreError('Record unavailable.', 'not_found');
+      if (existing) assertExpectedVersion(existing.version, input.expectedVersion);
+      const rows = await this.listRecords(input.personId, input.appId, input.collection);
+      if (!existing && rows.length >= defaultAppLimits.max_records)
+        throw new AppStoreError('Collection quota exceeded.');
+      const record: AppRecord = {
+        id: existing?.id ?? input.id ?? randomUUID(),
+        person_id: input.personId,
+        project_id: input.projectId,
+        app_id: input.appId,
+        collection: input.collection,
+        payload: input.payload,
+        idempotency_key: input.idempotencyKey ?? existing?.idempotency_key ?? null,
+        version: existing ? existing.version + 1 : 1,
+        created_at: existing?.created_at ?? at(),
+        updated_at: at(),
+      };
+      this.records.set(record.id, record);
+      return record;
+    } catch (error) {
+      if (error instanceof MutationConflictError) throw new AppStoreError(error.message, 'conflict');
+      throw error;
     }
-    const existing = input.id ? this.records.get(input.id) : null;
-    if (
-      existing &&
-      (existing.person_id !== input.personId ||
-        existing.app_id !== input.appId ||
-        existing.collection !== input.collection)
-    )
-      throw new AppStoreError('Record unavailable.', 'not_found');
-    const rows = await this.listRecords(input.personId, input.appId, input.collection);
-    if (!existing && rows.length >= defaultAppLimits.max_records)
-      throw new AppStoreError('Collection quota exceeded.');
-    const record: AppRecord = {
-      id: existing?.id ?? input.id ?? randomUUID(),
-      person_id: input.personId,
-      project_id: input.projectId,
-      app_id: input.appId,
-      collection: input.collection,
-      payload: input.payload,
-      idempotency_key: input.idempotencyKey ?? existing?.idempotency_key ?? null,
-      created_at: existing?.created_at ?? at(),
-      updated_at: at(),
-    };
-    this.records.set(record.id, record);
-    return record;
   }
 }

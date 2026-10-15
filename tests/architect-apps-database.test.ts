@@ -56,6 +56,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015080000_architect_apps.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015120000_architect_apps_durable.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015140000_architect_apps_mutation.sql', 'utf8'));
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
 
@@ -165,23 +166,46 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
     );
     const replayCreate = await asUser(
       ownerAuth,
-      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Changed' })},'create-1',null) as id`,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit' })},'create-1',null) as id`,
     );
     expect(replayCreate.rows[0]).toEqual(record.rows[0]);
+    await expect(
+      asUser(
+        ownerAuth,
+        `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Changed' })},'create-1',null) as id`,
+      ),
+    ).rejects.toThrow(/different record|mutation identity/i);
     const edited = await asUser(
       ownerAuth,
-      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit edited' })},'edit-1','${(record.rows[0] as { id: string }).id}') as id`,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit edited' })},'edit-1','${(record.rows[0] as { id: string }).id}',1) as id`,
     );
     expect(edited.rows[0]).toEqual(record.rows[0]);
     const retryEdit = await asUser(
       ownerAuth,
-      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Should not revert' })},'edit-1','${(record.rows[0] as { id: string }).id}') as id`,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit edited' })},'edit-1','${(record.rows[0] as { id: string }).id}',1) as id`,
     );
     expect(retryEdit.rows[0]).toEqual(record.rows[0]);
+    await expect(
+      asUser(
+        ownerAuth,
+        `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Should not revert' })},'edit-1','${(record.rows[0] as { id: string }).id}',1) as id`,
+      ),
+    ).rejects.toThrow(/different record|mutation identity/i);
+    const editB = await asUser(
+      ownerAuth,
+      `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Site visit B' })},'edit-2','${(record.rows[0] as { id: string }).id}',2) as id`,
+    );
+    expect(editB.rows[0]).toEqual(record.rows[0]);
+    await expect(
+      asUser(
+        ownerAuth,
+        `select public.architect_apps_write_record('${project}','${project}','notes',${literal({ title: 'Stale' })},'edit-3','${(record.rows[0] as { id: string }).id}',2) as id`,
+      ),
+    ).rejects.toThrow(/Record changed/i);
     expect(
-      (await asUser(ownerAuth, `select payload->>'title' as title from public.architect_app_records where id='${(record.rows[0] as { id: string }).id}'`))
+      (await asUser(ownerAuth, `select payload->>'title' as title, version from public.architect_app_records where id='${(record.rows[0] as { id: string }).id}'`))
         .rows,
-    ).toEqual([{ title: 'Site visit edited' }]);
+    ).toEqual([{ title: 'Site visit B', version: 3 }]);
     expect((await asUser(foreignAuth, `select id from public.architect_app_records`)).rows).toEqual([]);
     expect(
       (

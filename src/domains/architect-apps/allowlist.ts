@@ -20,5 +20,6 @@ export function allowlistedAppDataPayload(
     collection: raw.collection,
     payload: raw.payload,
     idempotencyKey: raw.idempotencyKey,
+    expectedVersion: raw.expectedVersion,
   });
 }

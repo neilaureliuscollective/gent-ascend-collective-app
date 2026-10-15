@@ -1,3 +1,7 @@
+# Architect generated applications runtime — 2026-10-15
+
+A successful save closes that mutation identity. The next distinct edit mints a new key bound to a new payload snapshot. Replay is allowed only for the same key and same payload after an uncertain result. Concurrent edits require the current integer version. Isolated success still requires the pinned image built from `deploy/architect-apps/Dockerfile` and is a required CI job, not a skipped probe. Talk #131 `ae37393` is the identified integration candidate; Architect does not invent a second manifest. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
 # Architect generated applications compiled journey — 2026-10-14
 
 Exact-base revisions require source contents and hashes, not path/byte counts. Each user mutation has its own idempotency key; `record.id` is not that key. Isolated success still requires Docker plus confirmed named-container teardown. Preview signing has no fallback secret; sessions expire and revoke; direct navigation is CSP-sandboxed. Compiled preview mounts only the sealed IIFE, inserted without String.replace interpolation. Talk authorization uses the published shared contract; a client digest is not authority. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).

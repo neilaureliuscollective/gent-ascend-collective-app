@@ -6,7 +6,7 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 
 | Check | Result |
 | --- | --- |
-| Production adapter receives exact source contents, hashes, collections, bridge, brief and design | Pass |
+| Production adapter receives exact source contents, hashes, collections, complete bridge, brief and design tokens | Pass |
 | Additive tag revision binds exact base hashes and preserves untouched `src/calc.ts` | Pass |
 | Tracker remains labelled `fixture` | Pass |
 | Compact `v1.nonce.exp.mac` preview session ≤ 96 characters; replacement revokes the prior session | Pass |
@@ -16,26 +16,28 @@ Deterministic local evidence. Not physical-device acceptance and not a funded Op
 | Emitted `apps-runner.mjs` is ESM (`readdirSync`, no `require`) and walks real artifacts | Pass |
 | Named-container `docker rm -f` plus inspect confirmation | Pass |
 | Host-fixture cannot mark mock generation isolated | Pass |
-| PGlite create → edit → retry with distinct mutation identities | Pass |
+| Create → edit A → same-payload retry → edit B; changed payload on the same key rejected | Pass (MemoryAppStore, PGlite, Auth smoke) |
+| Concurrent edit with stale `expectedVersion` rejected | Pass |
 | Memory and SQL owner/app/collection isolation | Pass |
 | Compiled Field Notes host-fixture bundle satisfies `assets/app.js` single-bundle contract | Pass when toolchain present |
 | Preview assembly preserves compiled `$&` replacement patterns | Pass |
-| Compiled create → edit → retry → reload against durable records; failed later build keeps last good app | Pass when toolchain present |
-| Sandboxed iframe mounts Field Notes, creates/edits/replays records, and cannot read parent storage | Pass when toolchain present |
+| Required CI `apps-isolate` builds `deploy/architect-apps/Dockerfile` and runs isolated compile | Implemented; runs on GitHub-hosted Ubuntu |
+| Sandboxed iframe mounts Field Notes and cannot read parent storage | Pass when toolchain present; parent-page records remain a mount unit test |
 | Direct preview CSP includes `sandbox allow-scripts allow-forms` and omits `allow-same-origin` | Pass |
-| Talk `talk.architect.source.resolve` pending until Talk registers; client digest refused | Pass |
+| Talk `talk.architect.source.resolve` pending on this checkout; Talk #131 `ae37393` is the integration candidate | Documented, not merged |
 | Intercepted browser `Working tracker` HTML | UI fixture only |
 
 ## Unavailable in this workspace
 
-- This workstation has no Docker executable (`docker: command not found`). GitHub Actions has a Docker engine. Isolated success still requires the pinned image `aethelios-architect-apps:2026-10-14.1`; that image is not loaded in CI and there is no Apps image-build job in `.github/workflows/architect-origin.yml`. The compiled journey inspects the image without pulling and only runs isolation when it is present.
+- This workstation has no Docker executable (`docker: command not found`). Isolated compile is implemented and required in `.github/workflows/quality.yml` `apps-isolate`. It is not accepted here.
 - No funded OpenAI call was made.
-- Talk authorized source adapter is implemented on the Architect side and still pending Talk workstream registration.
+- Talk authorized source adapter is implemented on Talk #131 (`src/domains/talk-creation/architect-source.ts`) and remains pending on this Architect checkout. Talk files were not copied.
 - Hosted Apps migrations are unapplied.
+- Preview sessions are in-process. Library GET issues a new session after restart; that is not a srcdoc replacement of parent memory.
 
 ## Screenshots
 
-Simulated viewports of the compiled Field Notes preview document:
+Workbench and compiled Field Notes viewports:
 
 - desktop 1440×900, phone 390×844, Fold 768×1024
 

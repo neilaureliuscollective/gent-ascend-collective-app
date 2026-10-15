@@ -3,7 +3,7 @@ on:
   push:
     branches: ['feat/architect-origin-*', 'feat/architect-immersive-*']
   pull_request:
-    paths: ['src/domains/architect-origin/**', 'src/domains/architect-construct/**', 'src/domains/architect-tools/**', 'src/components/architect-origin/**', 'src/app/**/architect/**', 'src/app/api/architect-origin/**', 'src/app/api/architect-construct/**', 'src/app/api/architect-tools/**', 'src/app/api/internal/architect-construct/**', 'tests/*architect-origin*', 'tests/*architect-construct*', 'tests/*architect-tools*', 'tests/**/architect-origin*', 'supabase/migrations/*architect_origin*.sql', 'supabase/migrations/*architect_construct.sql', '.github/workflows/architect-origin.yml']
+    paths: ['src/domains/architect-origin/**', 'src/domains/architect-construct/**', 'src/domains/architect-tools/**', 'src/domains/architect-apps/**', 'src/components/architect-origin/**', 'src/app/**/architect/**', 'src/app/api/architect-origin/**', 'src/app/api/architect-construct/**', 'src/app/api/architect-tools/**', 'src/app/api/architect-apps/**', 'src/app/api/internal/architect-construct/**', 'tests/*architect-origin*', 'tests/*architect-construct*', 'tests/*architect-tools*', 'tests/*architect-apps*', 'tests/**/architect-origin*', 'tests/**/architect-apps*', 'supabase/migrations/*architect_origin*.sql', 'supabase/migrations/*architect_construct.sql', 'supabase/migrations/*architect_apps*.sql', 'deploy/architect-apps/**', '.github/workflows/architect-origin.yml']
 concurrency:
   group: origin-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -46,6 +46,7 @@ jobs:
       - run: node scripts/architect-construct-auth-smoke.mjs
       - run: node scripts/architect-construct-durable-smoke.mjs
       - run: npx playwright install --with-deps chromium
+      - run: node scripts/architect-apps-auth-smoke.mjs
       - run: npx playwright test --config playwright.origin-auth.config.ts
       - uses: actions/upload-artifact@v4
         if: always()
