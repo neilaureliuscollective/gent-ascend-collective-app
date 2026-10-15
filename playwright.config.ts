@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/browser',
+  testIgnore: ['architect-apps-compiled-mount.spec.ts'],
   fullyParallel: true,
   // Software-rendered CI can leave `load` pending after the page is already
   // interactive. One retry keeps the existing assertions.

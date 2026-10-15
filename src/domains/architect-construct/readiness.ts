@@ -70,6 +70,29 @@ export function constructWorkerMissingNames(env: NodeJS.ProcessEnv = process.env
   return missing;
 }
 
+/** Read-only list of what still blocks a founder model-generated Construct run. */
+export function founderModelGeneratedRunBlockers(env: NodeJS.ProcessEnv = process.env) {
+  const blockers: string[] = [];
+  if (env.ARCHITECT_ORIGIN_ENABLED !== 'true') blockers.push('ARCHITECT_ORIGIN_ENABLED is not true.');
+  if (env.ARCHITECT_CONSTRUCT_ENABLED !== 'true') blockers.push('ARCHITECT_CONSTRUCT_ENABLED is not true.');
+  if (env.ARCHITECT_CONSTRUCT_AI_ENABLED !== 'true')
+    blockers.push('ARCHITECT_CONSTRUCT_AI_ENABLED is not authorized. Paid model proposals stay off.');
+  if (!env.OPENAI_API_KEY) blockers.push('Server-only OPENAI_API_KEY is missing.');
+  try {
+    if (parseEnvironment(env).mode === 'production')
+      blockers.push('Production refuses model-generated Construct proposals.');
+  } catch {
+    blockers.push('APP_ENV is missing or unsafe.');
+  }
+  if (!constructWorkerAuthorized(env))
+    blockers.push('Local worker token, Origin/Construct flags, and a non-hosted plane are required to execute.');
+  if (env.VERCEL || env.VERCEL_ENV) blockers.push('Hosted Vercel cannot run the isolated worker.');
+  blockers.push('Additive Construct migrations are unapplied on hosted projects until founder-approved.');
+  blockers.push('Isolated Docker execution is required for a non-fixture run. Host fallback is closed.');
+  blockers.push('A real imported or git-pinned tree is required. The labelled fixture is not a model-generated change.');
+  return { ready: false, blockers };
+}
+
 export function workerTokenMatches(request: Request, env: NodeJS.ProcessEnv = process.env) {
   const token = env.ARCHITECT_CONSTRUCT_WORKER_TOKEN;
   if (!token || token.length < 32) return false;

@@ -86,6 +86,21 @@ export interface Database {
         never,
         never
       >;
+      architect_origin_tools: Table<
+        import('@/domains/architect-tools/schema').SavedEstimatorTool,
+        never,
+        never
+      >;
+      architect_origin_tool_versions: Table<
+        import('@/domains/architect-tools/schema').SavedEstimatorVersion,
+        never,
+        never
+      >;
+      architect_origin_tool_invocations: Table<
+        import('@/domains/architect-tools/schema').SavedEstimatorInvocation,
+        never,
+        never
+      >;
       architect_construct_sources: Table<
         import('@/domains/architect-construct/schema').SourceSnapshot,
         never,
@@ -107,6 +122,41 @@ export interface Database {
       >;
       architect_construct_events: Table<
         import('@/domains/architect-construct/schema').ConstructEvent,
+        never,
+        never
+      >;
+      architect_apps: Table<
+        import('@/domains/architect-apps/schema').ArchitectApp,
+        never,
+        never
+      >;
+      architect_app_revisions: Table<
+        import('@/domains/architect-apps/schema').AppRevision,
+        never,
+        never
+      >;
+      architect_app_artifacts: Table<
+        import('@/domains/architect-apps/schema').AppArtifact,
+        never,
+        never
+      >;
+      architect_app_jobs: Table<
+        import('@/domains/architect-apps/schema').AppJob,
+        never,
+        never
+      >;
+      architect_app_events: Table<
+        import('@/domains/architect-apps/schema').AppEvent,
+        never,
+        never
+      >;
+      architect_app_records: Table<
+        import('@/domains/architect-apps/schema').AppRecord,
+        never,
+        never
+      >;
+      architect_design_directions: Table<
+        import('@/domains/architect-design-direction/store').RetainedDirection,
         never,
         never
       >;
@@ -602,22 +652,6 @@ export interface Database {
           conversation_id: string;
           kind: 'brief' | 'plan' | 'palette' | 'board';
           creation_id: string;
-        },
-        never,
-        never
-      >;
-      architect_design_directions: Table<
-        {
-          request_id: string;
-          person_id: string;
-          project_id: string;
-          revision: number;
-          digest: string;
-          receipt: unknown;
-          started: false;
-          source_kind: 'text-import' | 'talk-authorized' | 'pending';
-          verified: boolean;
-          created_at: string;
         },
         never,
         never
@@ -1252,6 +1286,40 @@ export interface Database {
         Returns: boolean;
       };
       architect_origin_finish: { Args: { p_request: string; p_output: unknown }; Returns: boolean };
+      architect_origin_tool_save: {
+        Args: {
+          p_tool: string;
+          p_project: string;
+          p_request: string;
+          p_expected: number;
+          p_name: string;
+          p_config: import('@/domains/architect-tools/schema').SaveToolCommand['configuration'];
+          p_note: string;
+        };
+        Returns: number;
+      };
+      architect_origin_tool_record_invocation: {
+        Args: {
+          p_id: string;
+          p_tool: string;
+          p_revision: number;
+          p_inputs: unknown;
+          p_result: unknown;
+          p_source: string;
+        };
+        Returns: boolean;
+      };
+      architect_origin_tool_invoke: {
+        Args: {
+          p_id: string;
+          p_project: string;
+          p_tool: string;
+          p_revision: number;
+          p_inputs: unknown;
+          p_source: string;
+        };
+        Returns: import('@/domains/architect-tools/engine').EstimatorResult;
+      };
       architect_construct_import_source: {
         Args: {
           p_id: string;

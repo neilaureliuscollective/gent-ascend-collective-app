@@ -3,7 +3,7 @@ on:
   push:
     branches: ['feat/architect-origin-*', 'feat/architect-immersive-*']
   pull_request:
-    paths: ['src/domains/architect-origin/**', 'src/domains/architect-construct/**', 'src/domains/talk-creation/**', 'src/components/architect-origin/**', 'src/app/**/architect/**', 'src/app/api/architect-origin/**', 'src/app/api/architect-construct/**', 'src/app/api/internal/architect-construct/**', 'src/app/api/aurelius/creations/**', 'tests/*architect-origin*', 'tests/*architect-construct*', 'tests/**/architect-origin*', 'tests/talk-auth/**', 'supabase/migrations/*architect_origin.sql', 'supabase/migrations/*architect_construct.sql', 'supabase/migrations/*talk_origin_import*', '.github/workflows/architect-origin.yml']
+    paths: ['src/domains/architect-origin/**', 'src/domains/architect-construct/**', 'src/domains/architect-tools/**', 'src/domains/architect-apps/**', 'src/components/architect-origin/**', 'src/app/**/architect/**', 'src/app/api/architect-origin/**', 'src/app/api/architect-construct/**', 'src/app/api/architect-tools/**', 'src/app/api/architect-apps/**', 'src/app/api/internal/architect-construct/**', 'tests/*architect-origin*', 'tests/*architect-construct*', 'tests/*architect-tools*', 'tests/*architect-apps*', 'tests/**/architect-origin*', 'tests/**/architect-apps*', 'supabase/migrations/*architect_origin*.sql', 'supabase/migrations/*architect_construct.sql', 'supabase/migrations/*architect_apps*.sql', 'deploy/architect-apps/**', '.github/workflows/architect-origin.yml', 'next.config.ts', 'src/domains/talk-creation/**', 'src/app/api/aurelius/creations/**', 'tests/talk-auth/**', 'supabase/migrations/*architect_origin.sql', 'supabase/migrations/*talk_origin_import*']
 concurrency:
   group: origin-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with: {node-version: 24, cache: npm}
       - uses: ./.github/actions/install-ffmpeg
@@ -37,10 +39,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with: {node-version: 24, cache: npm}
+      - uses: ./.github/actions/install-ffmpeg
       - run: npm ci
-      - run: npx supabase start
+      - name: Start local Supabase
+        run: |
+          npx supabase start || {
+            echo 'supabase start failed; retrying after stop'
+            npx supabase stop --no-backup || true
+            sleep 8
+            npx supabase start
+          }
       - run: npx supabase db reset --local
       - run: node scripts/dev-setup.mjs --running
       - run: node scripts/architect-origin-auth-smoke.mjs
@@ -48,10 +60,75 @@ jobs:
       - run: node scripts/architect-construct-durable-smoke.mjs
       - run: node scripts/talk-architect-auth-smoke.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --config playwright.origin-auth.config.ts
-      - run: npx playwright test --config playwright.talk-auth.config.ts
+      - run: node scripts/architect-apps-auth-smoke.mjs
+      - name: Prepare pinned toolchain, worker image and uid-1000 work root
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+        run: node scripts/architect-apps-prepare-runtime.mjs
+      - name: Prove the packaged worker can write and compile
+        env:
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+          ARCHITECT_APPS_IMAGE: aethelios-architect-apps:2026-10-15.1
+        run: |
+          node scripts/architect-apps-packaged-worker.mjs --prove-write
+          node scripts/architect-apps-packaged-worker.mjs --prove-compile
+      - name: Connected Apps journey through the packaged worker
+        env:
+          ARCHITECT_APPS_PACKAGED_WORKER: 'true'
+          ARCHITECT_APPS_WORK_ROOT: /tmp/architect-apps-work
+          ARCHITECT_APPS_REQUIRE_ISOLATION: 'true'
+        run: npx playwright test --config playwright.origin-auth.config.ts
+      - name: Authenticated Talk to Architect handoff
+        run: npx playwright test --config playwright.talk-auth.config.ts --output=/tmp/talk-architect-auth-evidence
       - uses: actions/upload-artifact@v4
         if: always()
-        with: {name: architect-origin-auth-evidence, path: test-results, if-no-files-found: ignore}
+        with:
+          name: talk-architect-auth-evidence
+          path: /tmp/talk-architect-auth-evidence
+          if-no-files-found: ignore
+      - name: Publish connected-journey evidence
+        if: always()
+        run: |
+          mkdir -p docs/evidence/architect-apps test-results/architect-apps-connected
+          # The Apps test finalizes its own video after context closure. Never
+          # substitute an unrelated test's first video for connected evidence.
+          for shot in docs/evidence/architect-apps/workbench-*.png docs/evidence/architect-apps/connected-journey.json; do
+            if [ -f "$shot" ]; then
+              cp "$shot" test-results/architect-apps-connected/
+            fi
+          done
+      - name: Verify final exact-head screenshots and finalized videos
+        run: node scripts/architect-apps-verify-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architect-origin-auth-evidence
+          path: |
+            test-results
+            test-results/architect-apps-connected
+            docs/evidence/architect-apps/workbench-*.png
+            docs/evidence/architect-apps/connected-journey.json
+            docs/evidence/architect-apps/connected-journey.webm
+            docs/evidence/architect-apps/runtime-receipt.json
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architect-apps-connected-journey
+          path: |
+            docs/evidence/architect-apps/workbench-*.png
+            docs/evidence/architect-apps/connected-journey.json
+            docs/evidence/architect-apps/connected-journey.webm
+            test-results/architect-apps-connected
+          if-no-files-found: ignore
+      - name: Download the published connected artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: architect-apps-connected-journey
+          path: /tmp/architect-published-evidence
+      - name: Verify published artifact bytes against its manifest
+        run: node scripts/architect-apps-verify-evidence.mjs /tmp/architect-published-evidence
       - if: always()
         run: npx supabase stop --no-backup

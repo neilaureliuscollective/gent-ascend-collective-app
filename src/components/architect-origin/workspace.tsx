@@ -3,12 +3,21 @@ import { BplusMaterial } from '@/components/visual/bplus-material';
 import '@/components/visual/bplus-operator.css';
 import './studio.css';
 import { compileDocument } from '@/domains/architect-origin/documents';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import { ArchitectAppPanel, type AppEditorDraft } from './app-panel';
 import { ArchitectConstructPanel } from './construct-panel';
+import { ArchitectToolPanel } from './tool-panel';
+import type { ToolWorkspaceState } from './tool-session';
 import { ArtifactCanvas } from './artifact-canvas';
 import { CreationEntry, type BriefStage } from './creation-entry';
+import {
+  applicationFirstVisit,
+  mergeCreationDecision,
+  pathSwitchNote,
+  readCreationBrief,
+} from '@/domains/architect-origin/creation-journey';
 import { ReadinessNotice } from './readiness-notice';
 import {
   FoldDock,
@@ -56,7 +65,7 @@ import {
 import type { z } from 'zod';
 const markdownComponents = { img: () => <span>[External image omitted]</span> };
 type Library = { projects: OriginProject[]; versions: OriginVersion[]; runs: OriginRun[] };
-const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Construct', 'History'] as const;
+const surfaces = ['Conversation', 'Blueprint', 'Research', 'Deliverables', 'Tool', 'App', 'Construct', 'History'] as const;
 type Surface = (typeof surfaces)[number];
 type DocumentView = 'Edit' | 'Preview' | 'Split';
 type PendingReference = { url: string; title: string; provenance: 'user' };
@@ -105,13 +114,20 @@ export function ArchitectOrigin({
   enabled = false,
   aiEnabled = false,
   constructEnabled = false,
+  appsEnabled = false,
 }: {
   enabled?: boolean;
   aiEnabled?: boolean;
   constructEnabled?: boolean;
+  appsEnabled?: boolean;
 }) {
   const [library, setLibrary] = useState<Library>({ projects: [], versions: [], runs: [] });
   const [selected, setSelected] = useState<OriginProject | null>(null);
+  // Session-only editor state; persisted projects and revisions remain domain-owned.
+  const [appEditorDrafts, setAppEditorDrafts] = useState<Record<string, AppEditorDraft>>({});
+  const rememberAppEditorDraft = useCallback((owner: string, project: string, snapshot: AppEditorDraft) => {
+    setAppEditorDrafts((previous) => ({ ...previous, [`${owner}:${project}`]: snapshot }));
+  }, []);
   const [draft, setDraft] = useState<ProjectContent | null>(null);
   const [surface, setSurface] = useState<Surface>('Conversation');
   const [documentView, setDocumentView] = useState<DocumentView>('Split');
@@ -137,6 +153,10 @@ export function ArchitectOrigin({
   const [constraints, setConstraints] = useState('');
   const [outcome, setOutcome] = useState('');
   const [briefStage, setBriefStage] = useState<BriefStage>('idea');
+  const [firstVisit, setFirstVisit] = useState('project');
+  const [guidedBrief, setGuidedBrief] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [pathOpened, setPathOpened] = useState(false);
   const [studioTab, setStudioTab] = useState<'origin' | 'projects'>('origin');
   const [workbenchView, setWorkbenchView] = useState<WorkbenchView>('preview');
   const [foldPanel, setFoldPanel] = useState<FoldPanel>('canvas');
@@ -148,10 +168,15 @@ export function ArchitectOrigin({
   const [constructView, setConstructView] = useState<ConstructLifecycleView | null>(null);
   const [constructSource, setConstructSource] = useState<ConstructSourceReadiness | null>(null);
   const constructRequest = useRef<string | null>(null);
+  const openToolAfterSave = useRef(false);
+  const [toolState, setToolState] = useState<ToolWorkspaceState | null>(null);
+  const reportToolState = useCallback((state: ToolWorkspaceState | null) => {
+    setToolState(state);
+  }, []);
   const constructGeneration = useRef(0);
   const heldPreviewRef = useRef<PreviewDecision | null>(null);
   const abort = useRef<AbortController | null>(null);
-  const projectTitle = useRef<HTMLHeadingElement | null>(null);
+  const projectTitle = useRef<HTMLElement | null>(null);
   const planeRef = useRef<HTMLElement | null>(null);
   const planeScroll = useRef<Record<string, number>>({});
   const dirty = !!draft && !!selected && JSON.stringify(draft) !== JSON.stringify(selected.content);
@@ -219,6 +244,10 @@ export function ArchitectOrigin({
             setWorkbenchView(studio);
           setSelected(restored?.base ?? project);
           setDraft(structuredClone(content));
+          const resumed = readCreationBrief(content);
+          setFirstVisit(resumed.firstVisit ?? 'project');
+          setAudience(resumed.audience);
+          setConstraints(resumed.constraints);
           setPending(restored?.pending ?? null);
           setUncertainRun(restored?.uncertainRun ?? false);
           setMessage(
@@ -243,7 +272,7 @@ export function ArchitectOrigin({
   }, [enabled, handoff, loadAttempt]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (dirty || pending || busy) event.preventDefault();
+      if (dirty || pending || busy || toolState?.dirty || toolState?.pending) event.preventDefault();
     };
     const guard = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
@@ -252,7 +281,7 @@ export function ArchitectOrigin({
       const shortcutExit =
         !!target?.closest('button.aurelius-trigger') && matchMedia('(max-width: 1100px)').matches;
       if (
-        !(dirty || pending || busy) ||
+        !(dirty || pending || busy || toolState?.dirty || toolState?.pending) ||
         event.button !== 0 ||
         event.metaKey ||
         event.ctrlKey ||
@@ -285,7 +314,7 @@ export function ArchitectOrigin({
       window.removeEventListener('beforeunload', warn);
       document.removeEventListener('click', guard, true);
     };
-  }, [dirty, pending, busy, handoff]);
+  }, [dirty, pending, busy, toolState?.dirty, toolState?.pending, handoff]);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     if (!loaded || !selected || location.pathname !== '/app/architect') return;
@@ -409,6 +438,11 @@ export function ArchitectOrigin({
     if (audience.trim()) content.blueprint.audience = audience.trim();
     if (constraints.trim()) content.blueprint.requirements = constraints.trim();
     if (outcome.trim()) content.blueprint.next = outcome.trim();
+    else if (discipline === 'application') {
+      const visit = applicationFirstVisit.find((row) => row.id === firstVisit);
+      if (visit) content.blueprint.next = visit.detail;
+    }
+    content.blueprint.decisions = mergeCreationDecision(content.blueprint.decisions, discipline === 'application' ? firstVisit : undefined);
     if (pendingReferences.length) content.sources = pendingReferences;
     return content;
   }
@@ -514,7 +548,11 @@ export function ArchitectOrigin({
     setMessage('Unsaved draft. Approved project is unchanged.');
   }
   async function open(project: OriginProject) {
-    if (locked || (dirty && !window.confirm('Discard unsaved draft and open this project?')))
+    if (
+      locked ||
+      ((dirty || toolState?.dirty || toolState?.pending) &&
+        !window.confirm('Discard unsaved draft and open this project?'))
+    )
       return;
     setBusy(true);
     setError('');
@@ -524,6 +562,10 @@ export function ArchitectOrigin({
       setLibrary(data);
       setSelected(fresh);
       setDraft(structuredClone(fresh.content));
+      const brief = readCreationBrief(fresh.content);
+      setFirstVisit(brief.firstVisit ?? 'project');
+      setAudience(brief.audience);
+      setConstraints(brief.constraints);
       setDocumentId(null);
       setHistory(null);
       setCompareId(null);
@@ -657,6 +699,10 @@ export function ArchitectOrigin({
       }));
       projectLocation(project.id);
       setMessage(`Saved revision ${result.revision}. Confirmed by the server.`);
+      if (openToolAfterSave.current) {
+        setSurface('Tool');
+        openToolAfterSave.current = false;
+      }
       try {
         const data = await request<Library>(`/api/architect-origin?project=${project.id}`);
         setLibrary(data);
@@ -797,9 +843,11 @@ export function ArchitectOrigin({
   );
   return (
     <section
-      className={`origin origin-studio${selected ? ' origin-active' : ''}${foldPanel !== 'canvas' ? ` origin-panel-${foldPanel}` : ''}`}
+      className={`origin origin-studio${selected ? ' origin-active' : ''}${foldPanel !== 'canvas' ? ` origin-panel-${foldPanel}` : ''}${library.projects.length ? ' origin-returning' : ''}`}
       data-bplus="architect"
       data-fold-panel={foldPanel}
+      data-surface={selected ? surface : 'arrival'}
+      data-returning={library.projects.length ? 'true' : 'false'}
       aria-labelledby="origin-title"
       aria-busy={busy}
     >
@@ -812,7 +860,12 @@ export function ArchitectOrigin({
               aria-current={studioTab === 'origin' && !selected ? 'page' : undefined}
               onClick={() => {
                 setStudioTab('origin');
-                if (selected && dirty && !window.confirm('Discard unsaved changes?')) return;
+                if (
+                  selected &&
+                  (dirty || toolState?.dirty || toolState?.pending) &&
+                  !window.confirm('Discard unsaved changes?')
+                )
+                  return;
                 if (selected) {
                   setSelected(null);
                   setDraft(null);
@@ -868,8 +921,48 @@ export function ArchitectOrigin({
       )}
       {selected ? (
         <details className="origin-project-switcher">
-          <summary>Projects / switch creation</summary>
+          <summary ref={projectTitle}>Projects / switch creation · {selected.content.name}</summary>
           {libraryNavigation}
+          {draft && (surface === 'App' || surface === 'Deliverables') && (
+            <WorkbenchHeader
+              project={selected}
+              draft={draft}
+              view={workbenchView}
+              connectionLabel={
+                connectionChip()
+              }
+              onView={openWorkbenchView}
+            />
+          )}
+          {draft && (
+            <header className="origin-project-heading">
+              <div>
+                <p className="eyebrow">
+                  {draft.discipline} / {draft.status} / REVISION {selected.revision}
+                </p>
+                <h2>
+                  {selected.content.name}
+                </h2>
+              </div>
+              <div className="origin-links">
+                <button
+                  disabled={locked}
+                  onClick={() =>
+                    change({
+                      ...draft,
+                      status: draft.status === 'archived' ? 'active' : 'archived',
+                    })
+                  }
+                >
+                  {draft.status === 'archived' ? 'Resume project' : 'Archive project'}
+                </button>
+                <button onClick={() => download(draft.name + '-blueprint', projectMarkdown(draft))}>
+                  Export {dirty ? 'draft' : 'blueprint'}
+                </button>
+                <Link href={`/app/aethelios?conversation=${selected.id}`}>Open project Talk ↗</Link>
+              </div>
+            </header>
+          )}
         </details>
       ) : null}
       {!selected ? (
@@ -887,13 +980,27 @@ export function ArchitectOrigin({
             pendingReferences={pendingReferences.length}
             projects={library.projects}
             selectedId={null}
-            onDiscipline={setDiscipline}
+            firstVisit={firstVisit}
+            guided={guidedBrief}
+            helpOpen={helpOpen}
+            pathOpened={pathOpened}
+            onDiscipline={(next) => {
+              if (next !== discipline) setMessage(pathSwitchNote(discipline, next, idea));
+              setDiscipline(next);
+              setPathOpened(true);
+            }}
             onIdea={setIdea}
             onName={setName}
             onAudience={setAudience}
             onConstraints={setConstraints}
             onOutcome={setOutcome}
             onStage={setBriefStage}
+            onFirstVisit={setFirstVisit}
+            onSkipGuided={() => {
+              setGuidedBrief(false);
+              setBriefStage('outcome');
+            }}
+            onToggleHelp={() => setHelpOpen((open) => !open)}
             onAddReference={() => setAddingReference((open) => !open)}
             onOpenProject={(project) => void open(project)}
             onSubmit={() => {
@@ -904,6 +1011,17 @@ export function ArchitectOrigin({
                 expected: 0,
                 content: shapedContent(),
                 note: 'User created project from their vision',
+              });
+            }}
+            onCreateTool={() => {
+              openToolAfterSave.current = true;
+              void save({
+                action: 'save',
+                projectId: crypto.randomUUID(),
+                requestId: crypto.randomUUID(),
+                expected: 0,
+                content: shapedContent(),
+                note: 'User created project for a quantity-and-cost estimator',
               });
             }}
           />
@@ -952,33 +1070,7 @@ export function ArchitectOrigin({
       ) : (
         draft && (
           <>
-            <header className="origin-project-heading">
-              <div>
-                <p className="eyebrow">
-                  {draft.discipline} / {draft.status} / REVISION {selected.revision}
-                </p>
-                <h2 ref={projectTitle} tabIndex={-1}>
-                  {selected.content.name}
-                </h2>
-              </div>
-              <div className="origin-links">
-                <button
-                  disabled={locked}
-                  onClick={() =>
-                    change({
-                      ...draft,
-                      status: draft.status === 'archived' ? 'active' : 'archived',
-                    })
-                  }
-                >
-                  {draft.status === 'archived' ? 'Resume project' : 'Archive project'}
-                </button>
-                <button onClick={() => download(draft.name + '-blueprint', projectMarkdown(draft))}>
-                  Export {dirty ? 'draft' : 'blueprint'}
-                </button>
-                <Link href={`/app/aethelios?conversation=${selected.id}`}>Open project Talk ↗</Link>
-              </div>
-            </header>
+            {surface !== 'App' && surface !== 'Deliverables' && (
             <WorkbenchHeader
               project={selected}
               draft={draft}
@@ -988,6 +1080,7 @@ export function ArchitectOrigin({
               }
               onView={openWorkbenchView}
             />
+            )}
             <nav className="origin-surfaces" aria-label="Project surfaces">
               {surfaces.map((tab) => (
                 <button
@@ -1001,6 +1094,7 @@ export function ArchitectOrigin({
                     if (tab === 'Conversation') setWorkbenchView('changes');
                     if (tab === 'Deliverables' || tab === 'Research') setWorkbenchView('changes');
                     if (tab === 'History') setWorkbenchView('checks');
+                    if (tab === 'App') setWorkbenchView('preview');
                   }}
                 >
                   {surface === tab && <BplusMaterial radius={8} />}
@@ -1011,7 +1105,10 @@ export function ArchitectOrigin({
             {surface !== 'Conversation' &&
               surface !== 'Blueprint' &&
               surface !== 'History' &&
-              surface !== 'Construct' && (
+              surface !== 'Construct' &&
+              surface !== 'Tool' &&
+              surface !== 'App' &&
+              surface !== 'Deliverables' && (
               <div className="origin-canvas-tools">
                 <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
                   {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
@@ -1019,7 +1116,7 @@ export function ArchitectOrigin({
               </div>
             )}
             <div
-              className={`origin-workspace origin-workbench origin-${surface.toLowerCase()} origin-view-${workbenchView}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' ? ' origin-canvas-focused' : ''}`}
+              className={`origin-workspace origin-workbench origin-${surface.toLowerCase()} origin-view-${workbenchView}${focusCanvas && surface !== 'Conversation' && surface !== 'Construct' && surface !== 'Tool' && surface !== 'App' ? ' origin-canvas-focused' : ''}`}
             >
               <OutlineRail
                 draft={draft}
@@ -1035,7 +1132,7 @@ export function ArchitectOrigin({
               {(surface === 'Conversation' ||
                 surface === 'Research' ||
                 surface === 'Deliverables' ||
-                workbenchView === 'preview') && (
+                (workbenchView === 'preview' && surface !== 'Tool' && surface !== 'Construct' && surface !== 'App')) && (
                 <aside
                   className="origin-conversation origin-refine"
                   hidden={focusCanvas && surface !== 'Conversation'}
@@ -1135,7 +1232,7 @@ export function ArchitectOrigin({
                 </aside>
               )}
               <section className="origin-plane" aria-label={surface} ref={planeRef}>
-                {workbenchView === 'preview' && (
+                {workbenchView === 'preview' && surface !== 'App' && (
                   <ArtifactCanvas
                     decision={originArtifactDecision()}
                     stale={(() => {
@@ -1150,7 +1247,7 @@ export function ArchitectOrigin({
                     title={draft.name}
                   />
                 )}
-                {workbenchView === 'checks' && (
+                {workbenchView === 'checks' && surface !== 'App' && (
                   <aside className="origin-notice origin-checks-pane">
                     <h3>Checks</h3>
                     <p>
@@ -1389,7 +1486,8 @@ export function ArchitectOrigin({
                 )}
                 {surface === 'Deliverables' && workbenchView !== 'preview' && (
                   <>
-                    <h3>Deliverables</h3>
+                    <details className="origin-document-library" key={activeDoc?.id ?? 'new'} open={!activeDoc}>
+                      <summary>Documents &amp; context</summary>
                     <p>
                       Editable documents, with saved versions in project history. Model drafts and
                       compiled Blueprint drafts require your review.
@@ -1412,6 +1510,36 @@ export function ArchitectOrigin({
                         ))}
                       </select>
                     </label>
+                    {activeDoc && (<>
+                        <div className="origin-editor-heading">
+                          <span>
+                            {activeDoc.status} · Blueprint basis v{activeDoc.basis}
+                          </span>
+                          <button onClick={() => download(activeDoc.title, activeDoc.content)}>
+                            Export Markdown {dirty ? 'draft' : ''}
+                          </button>
+                          <button onClick={() => window.print()}>Print / PDF</button>
+                        </div>
+                            <label>
+                              Document title
+                              <input
+                                value={activeDoc.title}
+                                maxLength={120}
+                                disabled={locked}
+                                onChange={(e) =>
+                                  change({
+                                    ...draft,
+                                    documents: draft.documents.map((d) =>
+                                      d.id === activeDoc.id
+                                        ? { ...d, title: e.target.value, status: 'draft' }
+                                        : d,
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                    </>)}
+                    </details>
                     {!activeDoc && (
                       <>
                         <label>
@@ -1450,15 +1578,6 @@ export function ArchitectOrigin({
                     )}
                     {activeDoc && (
                       <>
-                        <div className="origin-editor-heading">
-                          <span>
-                            {activeDoc.status} · Blueprint basis v{activeDoc.basis}
-                          </span>
-                          <button onClick={() => download(activeDoc.title, activeDoc.content)}>
-                            Export Markdown {dirty ? 'draft' : ''}
-                          </button>
-                          <button onClick={() => window.print()}>Print / PDF</button>
-                        </div>
                         <div
                           className="origin-view-controls"
                           role="group"
@@ -1475,6 +1594,9 @@ export function ArchitectOrigin({
                               {view}
                             </button>
                           ))}
+                          <button aria-pressed={focusCanvas} onClick={() => setFocusCanvas(!focusCanvas)}>
+                            {focusCanvas ? 'Show Aethelios tools' : 'Focus canvas'}
+                          </button>
                         </div>
                         <div
                           className={`origin-document-canvas origin-view-${documentView.toLowerCase()}`}
@@ -1483,24 +1605,6 @@ export function ArchitectOrigin({
                             className="origin-document-writing"
                             hidden={documentView === 'Preview'}
                           >
-                            <label>
-                              Document title
-                              <input
-                                value={activeDoc.title}
-                                maxLength={120}
-                                disabled={locked}
-                                onChange={(e) =>
-                                  change({
-                                    ...draft,
-                                    documents: draft.documents.map((d) =>
-                                      d.id === activeDoc.id
-                                        ? { ...d, title: e.target.value, status: 'draft' }
-                                        : d,
-                                    ),
-                                  })
-                                }
-                              />
-                            </label>
                             <label>
                               Editable Markdown
                               <textarea
@@ -1551,6 +1655,31 @@ export function ArchitectOrigin({
                       </>
                     )}
                   </>
+                )}
+                {selected && (
+                  <div hidden={surface !== 'Tool'}>
+                    <ArchitectToolPanel
+                      key={`${selected.person_id}:${selected.id}:tool`}
+                      ownerId={selected.person_id}
+                      projectId={selected.id}
+                      locked={locked}
+                      onState={reportToolState}
+                    />
+                  </div>
+                )}
+                {surface === 'App' && selected && (
+                  <ArchitectAppPanel
+                    key={`${selected.person_id}:${selected.id}:app`}
+                    ownerId={selected.person_id}
+                    projectId={selected.id}
+                    revision={selected.revision}
+                    enabled={appsEnabled}
+                    editorDraft={appEditorDrafts[`${selected.person_id}:${selected.id}`]}
+                    onEditorDraft={rememberAppEditorDraft}
+                    locked={locked}
+                    brief={readCreationBrief(selected.content)}
+                    briefText={selected.content.blueprint.vision || selected.content.description}
+                  />
                 )}
                 {surface === 'Construct' && selected && (
                   <ArchitectConstructPanel
@@ -1743,23 +1872,52 @@ export function ArchitectOrigin({
               </article>
             )}
             <FoldDock panel={foldPanel} onPanel={setFoldPanel} />
-            <footer className="origin-savebar">
+            <footer className="origin-savebar" data-unsaved={Boolean(dirty || pending || toolState?.dirty || toolState?.pending)}>
               <p>
-                {pending
-                  ? 'Save outcome unconfirmed. Exact draft retained.'
-                  : dirty
-                    ? 'Unsaved draft — approved content is unchanged.'
-                    : `All changes saved · revision ${selected.revision}`}
+                {surface === 'Tool'
+                  ? toolState?.pending
+                    ? 'Tool save unconfirmed. Retry uses the submitted snapshot.'
+                    : toolState?.refreshNeeded
+                      ? `Tool revision ${toolState.expected} saved. Library refresh failed — reload receipts. Do not save this revision again.`
+                      : toolState?.dirty
+                        ? 'Unsaved tool draft — this is not a saved tool revision.'
+                        : toolState?.expected
+                          ? `Tool revision ${toolState.expected} saved. Project revision ${selected.revision} is separate.`
+                          : `No tool revision saved yet. Project revision ${selected.revision} is separate.`
+                  : pending
+                    ? 'Save outcome unconfirmed. Exact draft retained.'
+                    : dirty
+                      ? toolState?.dirty
+                        ? 'Unsaved project draft. An unsaved tool draft is also kept in Tool.'
+                        : 'Unsaved draft — approved content is unchanged.'
+                      : toolState?.dirty || toolState?.pending
+                        ? 'Project revision saved. Unsaved tool draft kept — open Tool to save it.'
+                        : `All project changes saved · revision ${selected.revision}`}
               </p>
               <button
                 className="button"
                 data-bplus-surface="action"
-                disabled={busy || (!dirty && !pending)}
-                onClick={() => void save()}
+                disabled={
+                  surface === 'Tool'
+                    ? busy || locked || (!toolState?.dirty && !toolState?.pending)
+                    : busy || (!dirty && !pending)
+                }
+                onClick={() => (surface === 'Tool' ? void toolState?.persist() : void save())}
               >
                 <BplusMaterial radius={8} />
-                {pending ? 'Retry same save' : 'Save & confirm revision'}
+                {surface === 'Tool'
+                  ? toolState?.pending
+                    ? 'Retry exact save'
+                    : 'Save tool revision'
+                  : pending
+                    ? 'Retry same save'
+                    : 'Save & confirm revision'}
               </button>
+              {surface === 'Tool' && toolState?.refreshNeeded && (
+                <button disabled={busy || locked} onClick={() => void toolState.refresh?.()}>
+                  Reload tool receipts
+                </button>
+              )}
               {dirty && !pending && (
                 <button
                   disabled={busy}

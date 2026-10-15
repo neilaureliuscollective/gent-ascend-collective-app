@@ -1,3 +1,4 @@
+import { boundRunResult, persistenceRejectedResult, serializedReceiptBytes } from './receipt-budget';
 import { executeConstruct, teardownConfirmed, type ExecuteOptions } from './runner';
 import { sanitizeLog } from './sanitize';
 import { defaultLimits, type ConstructRun, type RunResult, terminalStatuses } from './schema';
@@ -25,11 +26,25 @@ export async function processConstructOnce(
   if (!claimed) return null;
   const token = claimed.lease_token;
   if (!token) throw new ConstructStoreError('Claim did not issue a lease token.');
-  const finish = (
+  const finish = async (
     status: (typeof terminalStatuses)[number],
     result: RunResult,
     when = new Date(),
-  ) => store.finishRun(workerId, claimed.id, token, status, result, when);
+  ) => {
+    const bounded = boundRunResult(result);
+    try {
+      return await store.finishRun(workerId, claimed.id, token, status, bounded, when);
+    } catch (error) {
+      if (!(error instanceof ConstructStoreError) || error.code !== 'too-large') throw error;
+      const rejected = persistenceRejectedResult(
+        bounded,
+        'Durable store rejected the execution receipt because it exceeded 120000 bytes.',
+      );
+      if (serializedReceiptBytes(rejected) > 120000)
+        throw error;
+      return store.finishRun(workerId, claimed.id, token, 'failed', rejected, when);
+    }
+  };
   if (claimed.cancel_requested) {
     return finish('cancelled', emptyResult(claimed, 'Owner cancelled the run before execution started.'), now);
   }

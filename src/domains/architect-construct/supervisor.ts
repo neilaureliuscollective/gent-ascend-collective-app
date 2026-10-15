@@ -1,3 +1,5 @@
+import { processAppBuildOnce } from '@/domains/architect-apps/worker';
+import type { AppStore } from '@/domains/architect-apps/store';
 import { constructWorkerIdentity, processConstructOnce } from './worker';
 import type { ExecuteOptions } from './runner';
 import type { ConstructRun } from './schema';
@@ -12,6 +14,7 @@ export type SupervisorOptions = {
   now?: () => Date;
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
   execute?: ExecuteOptions;
+  appStore?: AppStore;
   onTick?: (run: ConstructRun | null, workerId: string) => void;
   onError?: (error: unknown) => void;
 };
@@ -58,6 +61,11 @@ export async function superviseConstructWorker(options: SupervisorOptions) {
           ...(options.execute ?? {}),
           shouldAbort: () => options.signal.aborted || Boolean(options.execute?.shouldAbort?.()),
         });
+        if (options.appStore) {
+          await processAppBuildOnce(options.appStore, workerId, now(), {
+            shouldAbort: () => options.signal.aborted,
+          });
+        }
         options.onTick?.(run, workerId);
         ticks += 1;
         failures = 0;

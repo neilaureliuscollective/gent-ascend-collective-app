@@ -168,8 +168,161 @@ try {
     .order('revision');
   assert.equal(history.data.length, 3);
   assert.deepEqual(history.data[1].content.documents, [document]);
+  const tool = crypto.randomUUID();
+  const toolReceipt = crypto.randomUUID();
+  const toolConfig = {
+    kind: 'quantity-cost-estimator',
+    currency: 'USD',
+    rounding: 'half-up-minor',
+    waste_percent: '10',
+    markup_percent: '15',
+    assumptions: 'Sample demonstration — Auth smoke. Not a live supplier quote.',
+    items: [
+      {
+        id: crypto.randomUUID(),
+        name: 'Plywood sheet 8x4',
+        quantity: '12',
+        unit: 'sheet',
+        unit_cost: '24.50',
+      },
+    ],
+  };
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_tool_save', {
+        p_tool: tool,
+        p_project: project,
+        p_request: toolReceipt,
+        p_expected: 0,
+        p_name: 'Auth smoke estimator',
+        p_config: toolConfig,
+        p_note: 'Synthetic tool save',
+      })
+    ).data,
+    1,
+  );
+  assert.equal(
+    (await foreign.from('architect_origin_tools').select('id').eq('id', tool)).data.length,
+    0,
+  );
+  assert.ok(
+    (
+      await foreign.rpc('architect_origin_tool_record_invocation', {
+        p_id: crypto.randomUUID(),
+        p_tool: tool,
+        p_revision: 1,
+        p_inputs: { quantities: {} },
+        p_result: { total: '1.00' },
+        p_source: 'architect',
+      })
+    ).error,
+  );
+  assert.ok(
+    (
+      await owner.rpc('architect_origin_tool_record_invocation', {
+        p_id: crypto.randomUUID(),
+        p_tool: tool,
+        p_revision: 1,
+        p_inputs: { quantities: {} },
+        p_result: { total: '1.00', currency: 'USD' },
+        p_source: 'architect',
+      })
+    ).error,
+    'owner must not persist a forged invocation result',
+  );
+  const invokeId = crypto.randomUUID();
+  const invoked = await owner.rpc('architect_origin_tool_invoke', {
+    p_id: invokeId,
+    p_project: project,
+    p_tool: tool,
+    p_revision: 1,
+    p_inputs: { quantities: {} },
+    p_source: 'architect',
+  });
+  assert.equal(invoked.data.total, '371.91');
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_tool_invoke', {
+        p_id: invokeId,
+        p_project: project,
+        p_tool: tool,
+        p_revision: 1,
+        p_inputs: { quantities: {} },
+        p_source: 'architect',
+      })
+    ).data.total,
+    '371.91',
+  );
+  assert.ok(
+    (
+      await owner.rpc('architect_origin_tool_save', {
+        p_tool: crypto.randomUUID(),
+        p_project: project,
+        p_request: crypto.randomUUID(),
+        p_expected: 0,
+        p_name: 'Invalid zero quantity',
+        p_config: { ...toolConfig, items: [{ ...toolConfig.items[0], quantity: '0' }] },
+        p_note: 'Invalid save',
+      })
+    ).error,
+  );
+  const fineTool = crypto.randomUUID();
+  const fineReceipt = crypto.randomUUID();
+  const fineConfig = {
+    kind: 'quantity-cost-estimator',
+    currency: 'USD',
+    rounding: 'half-up-minor',
+    waste_percent: '50',
+    markup_percent: null,
+    assumptions: 'Fine-cut Auth smoke. Not a live supplier quote.',
+    items: [
+      {
+        id: crypto.randomUUID(),
+        name: 'Fine cut',
+        quantity: '0.0001',
+        unit: 'tonne',
+        unit_cost: '10000',
+      },
+    ],
+  };
+  assert.equal(
+    (
+      await owner.rpc('architect_origin_tool_save', {
+        p_tool: fineTool,
+        p_project: project,
+        p_request: fineReceipt,
+        p_expected: 0,
+        p_name: 'Fine-cut estimator',
+        p_config: fineConfig,
+        p_note: 'Precision tool save',
+      })
+    ).data,
+    1,
+  );
+  const fineInvoked = await owner.rpc('architect_origin_tool_invoke', {
+    p_id: crypto.randomUUID(),
+    p_project: project,
+    p_tool: fineTool,
+    p_revision: 1,
+    p_inputs: { quantities: {} },
+    p_source: 'architect',
+  });
+  assert.equal(fineInvoked.data.total, '1.50');
+  assert.equal(fineInvoked.data.lines[0].waste, '0.50');
+  assert.ok(
+    (
+      await foreign.rpc('architect_origin_tool_invoke', {
+        p_id: crypto.randomUUID(),
+        p_project: project,
+        p_tool: tool,
+        p_revision: 1,
+        p_inputs: { quantities: {} },
+        p_source: 'architect',
+      })
+    ).error,
+  );
   console.log(
-    'PASS: Origin actual local Auth/PostgREST create, exact replay, immutable history, stale writes, foreign/anonymous/direct-write denial, document persistence and archive retention. No provider evaluation.',
+    'PASS: Origin actual local Auth/PostgREST create, exact replay, immutable history, stale writes, foreign/anonymous/direct-write denial, document persistence, archive retention, and authoritative estimator invoke with forged-result denial. No provider evaluation.',
   );
 } finally {
   // Disposable local database retains only synthetic rows until CI stops without backup.
