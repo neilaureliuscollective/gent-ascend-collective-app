@@ -731,7 +731,7 @@
     padding: 8px !important;
   }
   .origin-studio:not(.origin-active) .origin-choice-stage {
-    height: 88px;
+    height: 56px;
     margin-bottom: 4px;
     display: block !important;
   }
@@ -741,6 +741,18 @@
   .origin-studio:not(.origin-active) .origin-choice strong {
     font-size: 0.82rem !important;
     margin: 0 !important;
+  }
+  .origin-entry[data-world-state='arrival'] {
+    display: flex;
+    flex-direction: column;
+  }
+  .origin-entry[data-world-state='arrival'] .origin-composer {
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    padding: 8px 12px !important;
+    background: color-mix(in srgb, #111111 92%, #0b3b32);
   }
   .origin-studio:not(.origin-active) .origin-composer {
     padding: 8px 12px !important;
@@ -753,6 +765,20 @@
   .origin-studio.origin-active .origin-workbench.origin-workspace {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-areas: 'canvas' !important;
+  }
+  .origin-studio.origin-active .origin-workbench .origin-plane,
+  .origin-studio.origin-active .origin-workbench .origin-plane iframe {
+    min-height: 200px;
+  }
+  .origin-artifact {
+    min-height: 240px;
+  }
+  .origin-artifact-frame {
+    display: block;
+    width: 100%;
+    min-width: 280px;
+    min-height: 220px;
+    height: 220px;
   }
   .origin-studio .origin-workbench .origin-refine,
   .origin-studio .origin-rail,
@@ -1286,6 +1312,9 @@
 .origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) > #origin-name {
   display: block;
   width: 100%;
+}
+.origin-entry[data-world-state='arrival'] .origin-composer:has(#origin-idea:not(:placeholder-shown)) .origin-composer-tools > button {
+  display: inline-flex;
 }
 .origin-entry[data-world-state='arrival'] .origin-composer-tools > :not(.origin-shape) {
   display: none;

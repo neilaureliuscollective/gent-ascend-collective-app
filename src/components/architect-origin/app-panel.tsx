@@ -460,7 +460,7 @@ export function ArchitectAppPanel({
             <p className="architect-app-status" data-stage={workbench.stage} aria-live="polite">
               {compactStatus}
             </p>
-            <details className="architect-app-status-details">
+            <details className="architect-app-status-details" aria-label="Build diagnostics">
               <summary>Build details</summary>
               <p>
                 {library?.provider.enabled === false ? `${library.provider.reason} ` : ''}

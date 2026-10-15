@@ -247,9 +247,12 @@ export function App() {
       ) : null}
       {route.name === 'compose' || selected ? (
         <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
-          <input value={title} onChange={(event) => setTitle(event.currentTarget.value)} maxLength={80} required />
-          <textarea value={body} onChange={(event) => setBody(event.currentTarget.value)} maxLength={800} />
-          <input value={hours} onChange={(event) => setHours(event.currentTarget.value)} />
+          <label htmlFor="note-title">Title</label>
+          <input id="note-title" value={title} onChange={(event) => setTitle(event.currentTarget.value)} maxLength={80} required />
+          <label htmlFor="note-body">Note</label>
+          <textarea id="note-body" value={body} onChange={(event) => setBody(event.currentTarget.value)} maxLength={800} />
+          <label htmlFor="note-hours">Hours</label>
+          <input id="note-hours" value={hours} onChange={(event) => setHours(event.currentTarget.value)} />
           {issues.map((issue) => <p key={issue}>{issue}</p>)}
           <p data-save-state={saveState}>{busy ? 'Saving' : saveError || (saveState === 'saved' ? 'Saved' : held ? 'A later edit is held until this save finishes.' : '')}</p>
           <button type="submit">{busy ? 'Saving' : saveState === 'uncertain' || saveState === 'conflict' ? 'Retry save' : 'Save record'}</button>

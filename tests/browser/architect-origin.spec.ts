@@ -748,6 +748,9 @@ for (const width of [320, 390]) {
     await preview.focus();
     await expect(preview).toBeFocused();
     await page.keyboard.press('Enter');
+    const artifact = page.getByTitle('Isolated artifact preview');
+    await expect(artifact).toBeVisible();
+    await artifact.scrollIntoViewIfNeeded();
     const frame = page.frameLocator('iframe[title="Isolated artifact preview"]');
     await expect(frame.getByRole('heading', { name: 'Owned artifact' })).toBeVisible();
     await expect(page.getByText('Actual saved document', { exact: false })).toBeVisible();
