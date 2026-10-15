@@ -90,7 +90,8 @@ it('keeps a failed admission in the same conversation and does not reconnect on 
   fetchMock.mockResolvedValueOnce(
     Response.json(
       {
-        error: 'The voice provider did not complete admission. Your text workspace remains available.',
+        error:
+          'The voice provider did not complete admission. Your text workspace remains available.',
         detail: { stage: 'provider' },
       },
       { status: 503 },
@@ -649,4 +650,102 @@ it('repeats cleanup after a late admission even while the earlier End is still p
   await Promise.all([starting, ending]);
   expect(ends).toBe(2);
   expect(controller.getSnapshot()).toMatchObject({ phase: 'ended', cleanupPending: false });
+});
+
+it('excludes compact and legacy internal items while preserving actual audio, typed text and save receipts', async () => {
+  const { voiceItemsAcknowledged } = await import('@/domains/live/receipt');
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  const internal = (id: string, type = 'conversation.item.added') =>
+    pc.event({
+      type,
+      item: { id, role: 'user', content: [{ text: 'Synthetic internal context' }] },
+    });
+  internal('c' + '0'.repeat(25));
+  internal('ctx_legacy');
+  pc.event({ type: 'input_audio_buffer.committed', item_id: 'item_spoken' });
+  internal('c' + '0'.repeat(25), 'conversation.item.created');
+  pc.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'item_spoken',
+    transcript: 'Application context: actual spoken words',
+  });
+  pc.event({
+    type: 'conversation.item.added',
+    item: {
+      id: 'conversation_real_typed',
+      role: 'user',
+      content: [{ text: 'Application context: actual typed words' }],
+    },
+  });
+  pc.event({
+    type: 'response.output_audio_transcript.done',
+    item_id: 'item_answer',
+    transcript: 'Actual answer',
+  });
+  internal('c' + '1'.repeat(25));
+  expect(controller.getSnapshot().transcript.map((line) => line.text)).toEqual([
+    'Application context: actual spoken words',
+    'Application context: actual typed words',
+    'Actual answer',
+  ]);
+  const ids = controller
+    .getSnapshot()
+    .transcript.filter((line) => line.role === 'user' && line.text)
+    .map((line) => line.id);
+  expect(
+    voiceItemsAcknowledged(ids, [
+      { providerItemId: 'item_spoken', providerResponseId: 'r', turnId: 't' },
+    ]),
+  ).toBe(false);
+  expect(
+    voiceItemsAcknowledged(
+      ids,
+      ids.map((id, index) => ({
+        providerItemId: id,
+        providerResponseId: 'r' + index,
+        turnId: 't' + index,
+      })),
+    ),
+  ).toBe(true);
+  const state = controller.getSnapshot();
+  controller.acknowledgePersistence(state.sessionId, state.persistenceEpoch);
+  expect(controller.getSnapshot().transcript).toEqual([]);
+  await controller.end();
+});
+it('tags selected-target context and stale-target fallback without changing text or creating a reply', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  for (const [field, ok] of [
+    ['audience', true],
+    ['purpose', false],
+  ] as const) {
+    fetchMock.mockResolvedValueOnce(
+      Response.json(
+        ok
+          ? { context: 'Synthetic selected target', target: { creationId: conversation, field } }
+          : { error: 'Synthetic stale target' },
+        { status: ok ? 200 : 409 },
+      ),
+    );
+    await controller.setSpokenTarget({ creationId: conversation, field });
+    const sent = JSON.parse(pc.channel.send.mock.calls.at(-1)![0]);
+    expect(sent).toMatchObject({
+      type: 'conversation.item.create',
+      item: { type: 'message', role: 'user', id: expect.stringMatching(/^c[0-9a-z]{25}$/) },
+    });
+    if (ok)
+      expect(sent.item.content).toEqual([
+        { type: 'input_text', text: 'Synthetic selected target' },
+      ]);
+    else expect(sent.item.content[0].text).toContain('Application selected-work target expired');
+    pc.event({ type: 'conversation.item.added', item: sent.item });
+  }
+  expect(
+    pc.channel.send.mock.calls.every(([raw]) => JSON.parse(raw).type !== 'response.create'),
+  ).toBe(true);
+  expect(controller.getSnapshot().transcript).toEqual([]);
+  await controller.end();
 });

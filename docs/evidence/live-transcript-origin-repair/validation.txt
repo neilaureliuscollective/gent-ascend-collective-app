@@ -1,0 +1,108 @@
+Base 1adaa7ff7fd2ae8ff89221eeb06b38300b1d3aae. Checks use synthetic records/providers. Browser fixtures: system Chromium; Talk consent uses keyboard activation. No paid provider or production database acceptance.
+
+npx vitest run tests/live-*.test.ts tests/gpt-live-protocol.test.ts
+RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+
+ Test Files  25 passed (25)
+      Tests  180 passed (180)
+   Start at  19:45:43
+   Duration  12.20s (tests 51%, import 29%, transform 19%, worker 1%)
+
+    Isolate  25 workers spawned · ~508ms startup each (spawn + environment, per file)
+             at least ~3.73s faster with isolate: false — reuses workers across files instead of one per file
+
+npm run lint
+> aurelius-collective-app@0.1.0 lint
+> eslint . --max-warnings 0
+
+npm run typecheck
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+npx next build
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 160ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.4s
+  Running TypeScript ...
+  Finished TypeScript in 30.1s ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/126) ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (31/126)
+  Generating static pages using 4 workers (62/126)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (94/126)
+✓ Generating static pages using 4 workers (126/126) in 489ms
+  Finalizing page optimization ...
+
+npm run db:ledger
+> aurelius-collective-app@0.1.0 db:ledger
+> node scripts/check-migration-ledger.mjs
+
+Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.
+
+npx playwright test --config /tmp/live-filter-playwright.config.mjs
+[WebServer] (node:33878) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 12 tests using 1 worker
+
+(node:33921) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 390px (2.0s)
+  ✓   2 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 1440px (1.6s)
+  ✓   3 tests/browser/live-voice.spec.ts:135:1 › voice diagnostic download excludes transcript and record IDs (1.3s)
+  ✓   4 tests/browser/live-voice.spec.ts:191:1 › cancelling during slow SDP admission revokes the late call without restoring audio (1.3s)
+  ✓   5 tests/browser/live-voice.spec.ts:236:1 › late ASR stays ordered and uncertain cleanup prevents another voice session (1.3s)
+  ✓   6 tests/browser/live-voice.spec.ts:296:1 › connection failure stays compact with a usable retry and does not force fullscreen (1.1s)
+  ✓   7 tests/browser/live-voice.spec.ts:323:1 › simulated phone and unfolded-Fold consent stays scrollable with reachable Start (1.7s)
+  ✓   8 tests/browser/live-voice.spec.ts:350:1 › unavailable Live remains visible in Talk with an understandable reason (879ms)
+  ✓   9 tests/browser/live-voice.spec.ts:362:1 › acknowledged voice retries in one tap without optional consent or automatic admission (2.3s)
+  ✓  10 tests/browser/talk-live.spec.ts:114:1 › New voice adopts one Talk conversation and shares the composer and timeline (2.5s)
+  ✓  11 tests/browser/talk-live.spec.ts:246:1 › connection failure stays in Talk with retry and leaves the composer usable (1.7s)
+  ✓  12 tests/browser/talk-live.spec.ts:311:1 › a delayed workspace body cannot rewrite the current conversation after switch (1.8s)
+
+  12 passed (21.2s)
+
+npm test
+Test Files  3 failed | 223 passed | 1 skipped (227)
+      Tests  5 failed | 1338 passed | 1 skipped (1344)
+   Start at  19:47:30
+   Duration  81.43s (tests 78%, import 16%, transform 6%, worker 1%)
+
+    Isolate  227 workers spawned · ~150ms startup each (spawn + environment, per file)
+             at least ~11.17s faster with isolate: false — reuses workers across files instead of one per file
+
+Untouched 1adaa7f: existing environment-failure suites
+Test Files  3 failed (3)
+      Tests  5 failed | 3 passed (8)
+   Start at  19:49:16
+   Duration  4.14s (tests 79%, transform 12%, import 9%)
+
+npm run build (standard Mirror prebuild)
+> aurelius-collective-app@0.1.0 prebuild
+> node scripts/prepare-mirror.mjs
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+[TypeError: fetch failed] {
+  [cause]: Error: getaddrinfo EAI_AGAIN storage.googleapis.com
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3001,
+    code: 'EAI_AGAIN',
+    syscall: 'getaddrinfo',
+    hostname: 'storage.googleapis.com'
+  }
+}
+
+Node.js v24.19.0

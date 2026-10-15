@@ -589,3 +589,55 @@ it('uses compact IDs for changed selection and saved artifact messages', async (
   socket.close();
   await monitor;
 });
+
+it('does not persist compact or legacy context notifications, and preserves the next real voice turn', async () => {
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const monitor = admission.monitor();
+  for (const id of ['c' + '0'.repeat(25), 'ctx_legacy']) {
+    socket.event({
+      type: 'conversation.item.added',
+      item: { id, role: 'user', content: [{ text: 'Synthetic internal notification' }] },
+    });
+    socket.event({ type: 'response.created', response: { id: 'response-' + id } });
+    socket.event({
+      type: 'response.done',
+      response: {
+        id: 'response-' + id,
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Synthetic notification answer' }] }],
+      },
+    });
+    socket.event({ type: 'output_audio_buffer.stopped', response_id: 'response-' + id });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(rpc.mock.calls.some(([name]) => name === 'ai_begin_turn')).toBe(false);
+  for (const event of [
+    { type: 'input_audio_buffer.committed', item_id: 'item-real-human' },
+    {
+      type: 'conversation.item.input_audio_transcription.completed',
+      item_id: 'item-real-human',
+      transcript: 'Application context is my actual question',
+    },
+    { type: 'response.created', response: { id: 'real-reply' } },
+    {
+      type: 'response.done',
+      response: {
+        id: 'real-reply',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Actual reply' }] }],
+      },
+    },
+    { type: 'output_audio_buffer.stopped', response_id: 'real-reply' },
+  ])
+    socket.event(event);
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_begin_turn',
+      expect.objectContaining({ p_text: 'Application context is my actual question' }),
+    ),
+  );
+  socket.close();
+  await monitor;
+  expect(rpc.mock.calls.filter(([name]) => name === 'ai_begin_turn')).toHaveLength(1);
+});

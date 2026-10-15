@@ -101,9 +101,13 @@ function workspace(turns: Turn[] = [], conversationId: string | null = null): Wo
 
 async function openTalkVoice(page: Page) {
   await page.goto('http://127.0.0.1:3102/app/aethelios?mode=talk-live');
-  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
-  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  // Keyboard consent keeps this transcript fixture independent of the separately owned phone panel styling.
+  const consent = page.getByRole('checkbox', { name: /I consent/ });
+  await consent.focus();
+  await page.keyboard.press('Space');
+  await expect(consent).toBeChecked();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
 }
 
@@ -130,9 +134,7 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
         ownerId: owner,
         conversationId: url.searchParams.get('conversationId'),
         sessionId: url.searchParams.get('sessionId'),
-        bindings: [
-          { providerItemId: 'spoken-1', providerResponseId: null, turnId: 'spoken-1' },
-        ],
+        bindings: [{ providerItemId: 'spoken-1', providerResponseId: null, turnId: 'spoken-1' }],
         turns: [
           { id: 'spoken-1', user_text: 'Spoken in Talk', created_at: '2026-10-14T18:24:00Z' },
         ],
@@ -152,11 +154,29 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     });
   });
   await openTalkVoice(page);
-  await expect.poll(() => selected).toMatch(
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-  );
+  await expect
+    .poll(() => selected)
+    .toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   await expect.poll(() => new URL(page.url()).searchParams.get('conversation')).toBe(selected);
   await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toHaveCount(0);
+  await page.evaluate(() => {
+    const channel = (
+      window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }
+    ).voiceChannel;
+    for (const id of ['c' + '0'.repeat(25), 'ctx_legacy'])
+      channel.onmessage({
+        data: JSON.stringify({
+          type: 'conversation.item.added',
+          item: {
+            id,
+            role: 'user',
+            content: [{ text: 'SYNTHETIC INTERNAL SEED MUST STAY HIDDEN' }],
+          },
+        }),
+      });
+  });
+  await expect(page.locator('.live-provisional')).toHaveCount(0);
+
   await page.evaluate(() => {
     (
       window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }
@@ -169,6 +189,24 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
     });
   });
   await expect(page.locator('.live-provisional')).toContainText('Spoken in Talk');
+  await page.evaluate(() => {
+    const channel = (
+      window as unknown as { voiceChannel: { onmessage: (event: { data: string }) => void } }
+    ).voiceChannel;
+    for (const type of ['conversation.item.created', 'conversation.item.added'])
+      channel.onmessage({
+        data: JSON.stringify({
+          type,
+          item: {
+            id: 'c' + '1'.repeat(25),
+            role: 'user',
+            content: [{ text: 'SYNTHETIC INTERNAL UPDATE MUST STAY HIDDEN' }],
+          },
+        }),
+      });
+  });
+  await expect(page.locator('.live-provisional')).toHaveCount(1);
+
   await page.getByLabel('Message Aethelios').fill('Typed during voice');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect
@@ -196,6 +234,13 @@ test('New voice adopts one Talk conversation and shares the composer and timelin
   await page.getByRole('button', { name: 'End session', exact: true }).click();
   await expect(page.locator('.user-message')).toContainText('Spoken in Talk');
   await expect(page.locator('.live-provisional')).toHaveCount(0);
+  await expect(page.getByText(/SYNTHETIC INTERNAL/)).toHaveCount(0);
+  await expect(page.locator('.user-message')).toHaveCount(1);
+  await page.reload();
+  await expect(page.locator('.user-message')).toContainText('Spoken in Talk');
+  await expect(page.locator('.user-message')).toHaveCount(1);
+  await expect(page.locator('.live-provisional')).toHaveCount(0);
+  await expect(page.getByText(/SYNTHETIC INTERNAL/)).toHaveCount(0);
 });
 
 test('connection failure stays in Talk with retry and leaves the composer usable', async ({
@@ -240,7 +285,8 @@ test('connection failure stays in Talk with retry and leaves the composer usable
     return route.fulfill({
       status: 503,
       json: {
-        error: 'Voice control could not attach to the provider session. Your text workspace remains available.',
+        error:
+          'Voice control could not attach to the provider session. Your text workspace remains available.',
         detail: { stage: 'sideband', category: 'timeout' },
       },
     });
@@ -249,9 +295,9 @@ test('connection failure stays in Talk with retry and leaves the composer usable
   await expect(page.locator('.connection-note')).toContainText('Voice control could not attach');
   await expect(page.getByRole('button', { name: 'Retry voice', exact: true })).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Persistent Aethelios voice controls' })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole('region', { name: 'Persistent Aethelios voice controls' }),
+  ).toHaveCount(0);
   await page.getByLabel('Message Aethelios').fill('Continue in text');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Reply saved.');
@@ -314,7 +360,9 @@ test('a delayed workspace body cannot rewrite the current conversation after swi
         conversationId: url.searchParams.get('conversationId'),
         sessionId: url.searchParams.get('sessionId'),
         bindings: [{ providerItemId: 'spoken-1', providerResponseId: null, turnId: 'spoken-1' }],
-        turns: [{ id: 'spoken-1', user_text: 'Spoken in Talk', created_at: '2026-10-14T18:24:00Z' }],
+        turns: [
+          { id: 'spoken-1', user_text: 'Spoken in Talk', created_at: '2026-10-14T18:24:00Z' },
+        ],
       },
     });
   });
