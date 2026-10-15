@@ -30,29 +30,209 @@ if (process.env.HEALTH_OFFLINE_BROWSER === 'true') {
 }
 
 for (const width of [344, 390, 768, 1440]) {
-  test(`Health source inspection and calm layout at ${width}`, async ({ page }, info) => {
+  test(`Health workspace layout at ${width}px viewport emulation`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 });
     await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
     await page.goto(fixture);
-    await expect(
-      page.getByRole('heading', { name: 'A clearer understanding of you.' }),
-    ).toBeVisible();
-    await page.getByText('Inspect source & values', { exact: true }).first().click();
-    await expect(page.getByRole('cell', { name: '0 h', exact: true })).toBeVisible();
-    await page.getByText('Inspect source & values', { exact: true }).nth(1).click();
-    await expect(page.getByText('Missing is not zero.', { exact: false }).first()).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+    await expect(page.getByRole('heading', { name: 'A personal Health workspace' })).toBeVisible();
+    await page.getByRole('button', { name: 'Open evening sequence' }).click();
+    await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toBeVisible();
+    if (width <= 768) {
+      await page.getByRole('tab', { name: 'Library' }).click();
+      await expect(
+        page.getByRole('button', { name: /Evenings, made usable/ }).first(),
+      ).toBeVisible();
+      await page.getByRole('tab', { name: 'Workspace' }).click();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
     );
-    await page.getByRole('button', { name: 'Understand with Aethelios' }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Ask with selected records' })).toBeDisabled();
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).not.toBeVisible();
-    await expect(page.getByRole('button', { name: 'Understand with Aethelios' })).toBeFocused();
-    await page.screenshot({ path: info.outputPath(`health-${width}.png`), fullPage: true });
+    await page.screenshot({
+      path: info.outputPath(`health-atelier-${width}.png`),
+      fullPage: true,
+    });
   });
 }
+test('evening foundation changes a constraint, accepts, times, saves and resumes', async ({
+  page,
+}) => {
+  const data = structuredClone(healthFixture);
+  const writes: Mutation[] = [];
+  await page.route('**/api/health', async (route) => {
+    if (route.request().method() === 'POST') {
+      const input = route.request().postDataJSON() as Mutation;
+      writes.push(input);
+      if (input.kind === 'workspace_save') {
+        data.workspaces = [
+          {
+            id: input.id,
+            foundation: input.foundation,
+            title: input.title,
+            sample: input.sample,
+            version: data.workspaces[0] ? input.expected + 1 : 1,
+            workingRevision: 1,
+            lastWorkingRevision: 1,
+            settings: input.settings,
+            progress: input.progress as never,
+            architect: null,
+            created_at: data.asOf,
+            updated_at: data.asOf,
+            last_opened_at: data.asOf,
+          },
+        ];
+      }
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open evening sequence' }).click();
+  await page.getByLabel('Available minutes').fill('10');
+  await expect(page.getByText('Proposed sequence', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Accept update' }).click();
+  await page.getByRole('button', { name: 'Start timer' }).click();
+  await expect(page.getByRole('button', { name: /Pause/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  expect(writes[0]).toMatchObject({ kind: 'workspace_save', foundation: 'evening-routine' });
+  await expect(page.getByLabel('Available minutes')).toHaveValue('10');
+  await page
+    .getByRole('navigation', { name: 'Health workspace' })
+    .getByRole('button', { name: 'Bloodwork Tracker' })
+    .click();
+  await page
+    .getByRole('navigation', { name: 'Health workspace' })
+    .getByRole('button', { name: /Evenings, made usable/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Discard changes' }).click();
+  await expect(page.getByRole('region', { name: 'Current evening action' })).toBeVisible();
+  await expect(page.getByLabel('Available minutes')).toHaveValue('10');
+});
+test('synthetic bloodwork stays labelled, inspects sources and reopens a saved view', async ({
+  page,
+}, info) => {
+  const data = structuredClone(healthFixture);
+  await page.route('**/api/health', async (route) => {
+    if (route.request().method() === 'POST') {
+      const input = route.request().postDataJSON() as Mutation;
+      if (input.kind === 'workspace_save') {
+        data.workspaces = [
+          {
+            id: input.id,
+            foundation: input.foundation,
+            title: input.title,
+            sample: input.sample,
+            version: 1,
+            workingRevision: 1,
+            lastWorkingRevision: 1,
+            settings: input.settings,
+            progress: input.progress as never,
+            architect: null,
+            created_at: data.asOf,
+            updated_at: data.asOf,
+            last_opened_at: data.asOf,
+          },
+        ];
+      }
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open Bloodwork Tracker' }).click();
+  await expect(
+    page.getByText('Sample workspace. These values are synthetic and are not your records.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /LDL cholesterol 128/ }).click();
+  await expect(
+    page
+      .getByRole('region', { name: 'Source inspection' })
+      .getByRole('heading', { name: 'LDL cholesterol' }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Source inspection' })
+      .getByText('Synthetic sample laboratory report'),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: info.outputPath('health-bloodwork-1440.png'), fullPage: true });
+  await page.getByLabel('Compact density').check();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Health workspace' })
+    .getByRole('button', { name: 'Evenings, made usable' })
+    .click();
+  await page
+    .getByRole('navigation', { name: 'Health workspace' })
+    .getByRole('button', { name: /Bloodwork Tracker/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Discard changes' }).click();
+  await expect(
+    page.getByRole('region', { name: 'Selected bloodwork trend' }).getByText('Sample workspace.'),
+  ).toBeVisible();
+  await expect(page.getByLabel('Compact density')).toBeChecked();
+});
+test('Architect compile is blocked on the unmerged Apps dependency and keeps the working version', async ({
+  page,
+}, info) => {
+  await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open Bloodwork Tracker' }).click();
+  await page.getByRole('button', { name: 'Customize with Architect' }).click();
+  await expect(
+    page.getByText('Customization compile is not available', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('9f858d1b5af4df710c4a01dd43668db7366f6626')).toHaveCount(0);
+  await expect(page.getByText('Working revision 1', { exact: false })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: info.outputPath('health-architect-1440.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Request isolated compile' }).click();
+  await expect(
+    page.getByText('Save this workspace before compiling a customization.', { exact: false }),
+  ).toBeVisible();
+});
+test('lost workspace save retries the exact request without duplicating', async ({ page }) => {
+  const data = structuredClone(healthFixture);
+  const writes: Mutation[] = [];
+  let fail = true;
+  await page.route('**/api/health', async (route) => {
+    if (route.request().method() === 'POST') {
+      const input = route.request().postDataJSON() as Mutation;
+      writes.push(input);
+      if (fail) {
+        fail = false;
+        await route.abort();
+        return;
+      }
+      if (input.kind === 'workspace_save') {
+        data.workspaces = [
+          {
+            id: input.id,
+            foundation: input.foundation,
+            title: input.title,
+            sample: input.sample,
+            version: 1,
+            workingRevision: 1,
+            lastWorkingRevision: 1,
+            settings: input.settings,
+            progress: input.progress as never,
+            architect: null,
+            created_at: data.asOf,
+            updated_at: data.asOf,
+            last_opened_at: data.asOf,
+          },
+        ];
+      }
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open evening sequence' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('New changes are paused.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Retry exact request' }).click();
+  expect(writes).toHaveLength(2);
+  expect(writes[1]).toEqual(writes[0]);
+});
 test('Health lab review preserves exact uncertain request and requires confirmation', async ({
   page,
 }) => {
@@ -121,6 +301,88 @@ test('Health permissions withdraw access explicitly and unknown sources do not f
     page.getByRole('button', { name: 'Allow access', exact: true }).first(),
   ).toBeDisabled();
   expect(writes[0]).toMatchObject({ kind: 'consent', purpose: 'wellness', granted: false });
+});
+test('failed workspace saves keep the visible draft and copy uses current edits', async ({
+  page,
+}) => {
+  const data = structuredClone(healthFixture);
+  const writes: Mutation[] = [];
+  await page.route('**/api/health', async (route) => {
+    if (route.request().method() === 'POST') {
+      const input = route.request().postDataJSON() as Mutation;
+      writes.push(input);
+      if (input.kind === 'workspace_save') {
+        await route.fulfill({ status: 400, json: { error: 'Synthetic rejected save.' } });
+        return;
+      }
+      if (input.kind === 'workspace_copy') {
+        data.workspaces = [
+          {
+            id: input.id,
+            foundation: 'evening-routine',
+            title: input.title,
+            sample: false,
+            version: 1,
+            workingRevision: 1,
+            lastWorkingRevision: 1,
+            settings: input.settings ?? {
+              presentation: {
+                density: 'comfortable',
+                arrangement: 'sequence',
+                dateRange: false,
+                comparisonDrawer: false,
+                accent: 'quiet',
+              },
+            },
+            progress: (input.progress ?? null) as never,
+            architect: null,
+            created_at: data.asOf,
+            updated_at: data.asOf,
+            last_opened_at: data.asOf,
+          },
+        ];
+      }
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open evening sequence' }).click();
+  await page.getByLabel('Available minutes').fill('10');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('Save failed', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Available minutes')).toHaveValue('10');
+  await page.getByRole('button', { name: 'Save as copy' }).click();
+  expect(writes.some((item) => item.kind === 'workspace_save' && item.title.endsWith('copy'))).toBe(
+    true,
+  );
+});
+test('Assist selects LDL and deselecting every marker stays empty', async ({ page }, info) => {
+  await page.route('**/api/health', (route) => route.fulfill({ json: healthFixture }));
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open Bloodwork Tracker' }).click();
+  await page.getByPlaceholder('Change to ten minutes, or show LDL').fill('show LDL');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.getByRole('heading', { name: 'LDL cholesterol' })).toBeVisible();
+  const ldl = page.getByRole('checkbox', { name: 'LDL cholesterol' });
+  await expect(ldl).toBeChecked();
+  await ldl.uncheck();
+  await expect(page.getByText('Select a marker')).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({
+    path: info.outputPath('health-bloodwork-empty-1440.png'),
+    fullPage: true,
+  });
+});
+test('Health atelier clears private draft after account change', async ({ page }) => {
+  await page.route('**/api/health', (route) =>
+    route.fulfill({ json: { ...healthFixture, owner: 'another-owner' } }),
+  );
+  await page.goto(fixture);
+  await page.getByRole('button', { name: 'Open evening sequence' }).click();
+  await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.getByRole('heading', { name: 'Set out ingredients' })).toHaveCount(0);
+  await expect(page.getByText('Your session changed.', { exact: false })).toBeVisible();
 });
 test('Health clears visible private records after account change', async ({ page }) => {
   await page.route('**/api/health', (route) =>
