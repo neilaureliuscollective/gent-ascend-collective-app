@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "hostedSql": "paused-after-talk-step-6",
   "sources": {
     "architect": {
       "branch": "cursor/architect-create-apps-501f",
@@ -20,37 +19,44 @@
     {
       "file": "20261013240000_talk_creation.sql",
       "sha256": "b4f89996fee6cc353ca89e28394c3e321c0de8348942ae36a839af6ce2b7018f",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261013250000_talk_image_entitlement.sql",
       "sha256": "272e46c2331e59ccfd1586281d7d4f401eb448e0df1e22fc062c314ba79d8552",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261013260000_talk_creation_candidates.sql",
       "sha256": "dba93df8158baf804f9b92addaf38676ae58500b344ea644de37536de90b54f9",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014010000_talk_origin_import.sql",
       "sha256": "f136fa693594d3fc6fec381f22bba2866c2e390f777a2e2761f4cff7379fda47",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014020000_talk_origin_import_bind.sql",
       "sha256": "b2258b7ad4e129c486b58fcade84d3b90642a31166199f062b75725a71dbc728",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014030000_talk_origin_import_atomic.sql",
       "sha256": "72606379f3602aa43bbaf443d57c690f3dea54ccaa7fb4ca9462bf7adf97b215",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014040000_talk_origin_import_consistency.sql",
       "sha256": "b480865a6bbcb78a93c366341ba644ca04cf8243b22fe8eb878ab20a322c4f72",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014080000_architect_origin_tools.sql",
@@ -60,22 +66,26 @@
     {
       "file": "20261014100000_talk_design_board.sql",
       "sha256": "b296fe76e97285e184781316720800322c62dff2c70d6ed90074328461529e8c",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014120000_talk_live_bindings.sql",
       "sha256": "adc71eaf761cd1b7ff9807a49bdc009c28628a9e75ba9eac567c661798e1cdc7",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014130000_talk_direction_transfers.sql",
       "sha256": "f720b2d78d624aa59b3258bd021c8b8cfe3bd833991ea01fc6c1534b6dd355b5",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014140000_talk_live_bind_authority.sql",
       "sha256": "a4e3e7ade44560e83516809b3a529ab2d2830f38196a9864a474676cb643e46b",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261014190000_architect_origin_tool_authority.sql",
@@ -140,27 +150,38 @@
     {
       "file": "20261015160000_architect_apps_retain_authority.sql",
       "sha256": "f4c4364cd40209ca3f634349ebceedcbd9531a643f4a1296c6558163d828f868",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261015170000_architect_apps_retain_provenance.sql",
       "sha256": "a34373ba806ff969c444bdfd990f0878b3be183cfc368e71a366613777c02d2a",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261015180000_talk_live_trusted_observe.sql",
       "sha256": "af86da72fc9da2ee6a42197aac910c1b7068b5660ca1ef5d71d3f56398bc762e",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261015190000_talk_live_bind_intended_turn.sql",
       "sha256": "0bcfa846a570721bd0ccdcd03803d154e7359ae7b9bfe1d4dcf5a4eafc5fb7f7",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     },
     {
       "file": "20261019120000_talk_origin_import_recovery.sql",
       "sha256": "bcbae79ea9351f17428b986af5a4904556092b7a72e662d1dcff33561a6bd352",
-      "profiles": ["talk-integrated"]
+      "profiles": ["talk-integrated"],
+      "optionalOnArchitectBranch": true
     }
-  ]
+  ],
+  "hostedSqlSnapshot": {
+    "recordedOn": "2026-10-15",
+    "reportedStatus": "paused-after-talk-step-6",
+    "source": "Original Architect release-readiness delegation",
+    "liveStatusVerified": false
+  }
 }

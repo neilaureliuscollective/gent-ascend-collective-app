@@ -125,7 +125,7 @@ export function releaseReport(target, evidence, now = Date.now()) {
     evidenceComplete: blockers.length === 0,
     hostedAccepted: false,
     authorizedToExecute: false,
-    hostedSql: manifest.hostedSql,
+    hostedSqlSnapshot: manifest.hostedSqlSnapshot,
     candidate: target?.commit ?? null,
     blockers,
     note: 'Offline receipt consistency only. Build/fixture success is not hosted acceptance or permission to resume SQL.',
@@ -139,7 +139,7 @@ export function runReleaseReport(args) {
         JSON.stringify(
           {
             executed: false,
-            hostedSql: manifest.hostedSql,
+            hostedSqlSnapshot: manifest.hostedSqlSnapshot,
             manifestSha256,
             migrations: commissioningPlan(args[1]),
           },

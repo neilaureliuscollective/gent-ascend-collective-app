@@ -99,7 +99,10 @@ for (const profile of ['architect-only', 'talk-integrated']) {
     assert.equal(report.evidenceComplete, true);
     assert.equal(report.hostedAccepted, false);
     assert.equal(report.authorizedToExecute, false);
-    assert.equal(report.hostedSql, 'paused-after-talk-step-6');
+    assert.equal(report.hostedSqlSnapshot.reportedStatus, 'paused-after-talk-step-6');
+    assert.equal(report.hostedSqlSnapshot.recordedOn, '2026-10-15');
+    assert.equal(report.hostedSqlSnapshot.liveStatusVerified, false);
+    assert.equal(Object.hasOwn(report, 'hostedSql'), false);
     const names = evidence.schema.migrations.map((x) => x.file);
     const index = (prefix) => names.findIndex((x) => x.startsWith(prefix));
     assert.ok(index('20261015156500') < index('20261015156600'));
@@ -197,17 +200,77 @@ for (const [name, change] of Object.entries(failures))
   });
 test('missing evidence fails closed', () =>
   assert.equal(releaseReport({}, {}, now).evidenceComplete, false));
-test('manifest checksums match available source migrations and budget contract', () => {
-  for (const step of manifest.migrations) {
+// Only an explicitly declared Talk-only dependency may be absent from this Architect checkout.
+// Every other I/O error must fail, including unreadable optional files.
+function verifyMigrationFiles(steps = manifest.migrations, read = readFileSync) {
+  for (const step of steps) {
     let bytes;
     try {
-      bytes = readFileSync(new URL(`../supabase/migrations/${step.file}`, import.meta.url));
-    } catch {
-      continue;
-    } // Talk-only files are intentionally absent from this isolated Architect branch.
+      bytes = read(new URL(`../supabase/migrations/${step.file}`, import.meta.url));
+    } catch (error) {
+      if (
+        error.code === 'ENOENT' &&
+        step.optionalOnArchitectBranch === true &&
+        step.profiles.length === 1 &&
+        step.profiles[0] === 'talk-integrated'
+      )
+        continue;
+      throw error;
+    }
     assert.equal(createHash('sha256').update(bytes).digest('hex'), step.sha256, step.file);
   }
+}
+test('every required Architect migration exists and matches its checksum', () => {
+  verifyMigrationFiles();
+  const budget = manifest.migrations.find((step) => step.file.includes('budget_lock'));
+  assert.ok(budget);
+  assert.notEqual(budget.optionalOnArchitectBranch, true);
   assert.ok(requiredAppsSchemaContracts.rpcs.includes('architect_apps_lock_generation_budget'));
+});
+for (const step of manifest.migrations.filter((step) => step.profiles.includes('architect-only'))) {
+  test(`rejects absent required migration: ${step.file}`, () => {
+    assert.throws(
+      () =>
+        verifyMigrationFiles([step], () => {
+          throw Object.assign(new Error('Synthetic missing file'), { code: 'ENOENT' });
+        }),
+      { code: 'ENOENT' },
+    );
+  });
+}
+for (const code of ['EACCES', 'EISDIR', 'EIO']) {
+  for (const optional of [false, true]) {
+    test(`rejects ${code} for ${optional ? 'optional Talk' : 'required Architect'} file`, () => {
+      const step = manifest.migrations.find(
+        (step) => Boolean(step.optionalOnArchitectBranch) === optional,
+      );
+      assert.throws(
+        () =>
+          verifyMigrationFiles([step], () => {
+            throw Object.assign(new Error('Synthetic read failure'), { code });
+          }),
+        { code },
+      );
+    });
+  }
+}
+test('only explicitly optional Talk-only ENOENT is allowed; present files still hash', () => {
+  const step = manifest.migrations.find((step) => step.optionalOnArchitectBranch === true);
+  const absent = () => {
+    throw Object.assign(new Error('Synthetic absence'), { code: 'ENOENT' });
+  };
+  assert.doesNotThrow(() => verifyMigrationFiles([step], absent));
+  assert.throws(
+    () => verifyMigrationFiles([{ ...step, optionalOnArchitectBranch: false }], absent),
+    { code: 'ENOENT' },
+  );
+  assert.throws(() => verifyMigrationFiles([{ ...step, profiles: ['architect-only'] }], absent), {
+    code: 'ENOENT',
+  });
+  assert.throws(
+    () => verifyMigrationFiles([step], () => Buffer.from('wrong bytes')),
+    /AssertionError/,
+  );
 });
 test('offline preflight dispatch and malformed evidence never invoke worker dependencies', () => {
   const cwd = new URL('..', import.meta.url);

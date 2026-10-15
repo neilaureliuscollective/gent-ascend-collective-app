@@ -6,7 +6,7 @@ Date: 2026-10-15. PR #130 continuation. This is a reviewable production path and
 
 Reviewed Architect source: PR #130 `bf25662ae7fa6e92711523ffab7eb04df9d14d51`. This follow-on does not modify that branch. Main and Talk compatibility heads are pinned in the [commissioning manifest](../scripts/architect-apps-release-manifest.json), inspected 2026-10-15. Those are source pins, not a release candidate or transferable green-check evidence. Supply the exact candidate and fresh evidence to the [offline release report](ARCHITECT_APPS_RELEASE_REPORT.md). Any branch movement requires explicit pin review and refreshed evidence.
 
-**Hosted Talk SQL remains PAUSED after step 6.** The plan below is nonexecuted documentation. No batch or recovery file may be resumed by this checker.
+**Historical snapshot recorded 2026-10-15: hosted Talk SQL was reported PAUSED after step 6. Current hosted status is not verified by this offline tool.** The plan below is nonexecuted documentation. No batch or recovery file may be resumed by this checker.
 
 The founder-production capability is **off** until every name below is deliberately set. Default production remains production. Mock output cannot be presented as live AI generation.
 
@@ -116,7 +116,7 @@ Through Supabase (not this agent):
 
 Do not merge `main` until the founder separately approves the automatic Vercel Production deploy that merge causes.
 
-1. **Schema (paused, not executed).** Review the selected manifest profile and its complete order using the offline report above, including budget lock. Reconcile physical baseline and completed steps with the Talk owner before any separately authorized continuation. Do not replay the original 18-name batch or later recovery file.
+1. **Schema (historical pause recorded 2026-10-15; not executed here).** Review the selected manifest profile and its complete order using the offline report above, including budget lock. Reconcile physical baseline and completed steps with the Talk owner before any separately authorized continuation. Do not replay the original 18-name batch or later recovery file.
 2. **Worker host.** Create the $12 Docker Droplet. Install nothing extra if `docker version` already works. Clone this SHA. `node scripts/architect-apps-prepare-runtime.mjs`.
 3. **Proofs.** `--prove-write`, `--prove-compile`, `--prove-topology`. Then the existing `--preflight` receipt must be `ok` / `idle` with work-root `ready` and generation `permitted`. Normal preflight can write worker presence; it is not the offline release checker.
 4. **Denied proof.** A disposable local env with production + `ARCHITECT_APPS_AI_MOCK=true` must report generation `refused` and fail health. Do not use that env for hosting.

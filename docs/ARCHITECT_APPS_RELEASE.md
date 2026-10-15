@@ -29,7 +29,7 @@ Implemented on PR #130. This is not a production authorization and not a claim t
 
 Merging this PR to `main` typically triggers the existing Vercel Production deploy. That is not authorized here. The web plane would go live without a worker or hosted schema. Generation would still stay off until the founder-pilot names are set.
 
-1. **Hosted SQL remains PAUSED after Talk step 6.** The [offline release report](ARCHITECT_APPS_RELEASE_REPORT.md) prints the selected manifest profile, including budget lock after execution gate and before Talk retain. After separate authorization only, reconcile completed steps and physical baseline with the Talk owner; never replay batches. The report does not apply anything or grant permission.
+1. **Historical snapshot recorded 2026-10-15: hosted SQL was reported PAUSED after Talk step 6; current status is unverified here.** The [offline release report](ARCHITECT_APPS_RELEASE_REPORT.md) prints the selected manifest profile, including budget lock after execution gate and before Talk retain. After separate authorization only, reconcile completed steps and physical baseline with the Talk owner; never replay batches. The report does not apply anything or grant permission.
 2. Provision the approved Docker Droplet. Prepare both images and the uid-1000 work root. Prove write, compile and topology.
 3. Set preview secret and Apps flags on Vercel only after worker preflight is green. Do not enable `ARCHITECT_APPS_AI_MOCK` on production.
 4. Start the supervised packaged worker. Confirm one isolated Field Notes compile before inviting anyone else.
