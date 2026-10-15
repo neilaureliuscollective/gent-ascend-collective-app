@@ -102,7 +102,10 @@ for (const [label, width, height] of [
         await openMaterialArchitect(page);
         await openMaterialDocument(page);
       } else response = await page.goto(route);
-      await expect.poll(() => page.locator('main').count()).toBeGreaterThan(0);
+      const pageRoot = route.endsWith('/vitalis')
+        ? 'main, .collection-opening[role="status"]'
+        : 'main';
+      await expect.poll(() => page.locator(pageRoot).count()).toBeGreaterThan(0);
       await expect(page.locator('.workspace-loading')).toHaveCount(0);
       await expect(
         page.getByRole('heading', { name: 'A moment to reconnect.', exact: true }),
@@ -119,7 +122,10 @@ for (const [label, width, height] of [
       );
       const data = await page.evaluate(() => ({
         url: location.pathname,
-        visibleContent: document.querySelector('main')?.innerText.slice(0, 1500),
+        visibleContent: (
+          document.querySelector('main') ||
+          document.querySelector('.collection-opening[role="status"]')
+        )?.innerText.slice(0, 1500),
         headings: Array.from(document.querySelectorAll('h1,h2'))
           .filter((el) => el.getClientRects().length > 0)
           .map((el) => el.textContent.trim())

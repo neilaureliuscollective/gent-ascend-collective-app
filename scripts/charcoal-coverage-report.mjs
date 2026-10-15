@@ -16,7 +16,7 @@ function availability(route) {
   if (route === '/membership')
     return 'Public plan presentation checked; purchase/provider activation unavailable.';
   if (route === '/shop/vitalis')
-    return 'Labelled existing product preview; live purchasing unavailable.';
+    return 'Live-only product gate; availability cannot be verified without commerce configuration.';
   if (route === '/app/collection/vitalis')
     return 'Live-only product gate; availability cannot be verified without commerce configuration.';
   if (route === '/app/you') return 'Foundation preview; personal profile persistence unavailable.';
