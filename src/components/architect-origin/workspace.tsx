@@ -1608,6 +1608,7 @@ export function ArchitectOrigin({
                     revision={selected.revision}
                     enabled={appsEnabled}
                     locked={locked}
+                    briefText={selected.content.blueprint.vision || selected.content.description}
                   />
                 )}
                 {surface === 'Construct' && selected && (

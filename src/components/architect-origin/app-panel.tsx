@@ -22,12 +22,14 @@ export function ArchitectAppPanel({
   revision,
   enabled,
   locked,
+  briefText = '',
 }: {
   ownerId: string;
   projectId: string;
   revision: number;
   enabled: boolean;
   locked: boolean;
+  briefText?: string;
 }) {
   const [library, setLibrary] = useState<AppLibrary | null>(null);
   const [proposal, setProposal] = useState<Record<string, unknown> | null>(null);
@@ -35,7 +37,7 @@ export function ArchitectAppPanel({
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'conflict' | 'failed'>('idle');
   const [panel, setPanel] = useState<(typeof panels)[number]>('Files');
   const [refineOpen, setRefineOpen] = useState(false);
-  const [draft, setDraft] = useState('Create a project tracker I can use and save records in.');
+  const [draft, setDraft] = useState(briefText.trim() || 'Create field notes I can save.');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -206,7 +208,7 @@ export function ArchitectAppPanel({
         instruction: draft.trim(),
         kind: library?.app ? 'revise' : 'create',
         baseRevision: library?.app?.current_revision,
-        demo: library?.provider.mode === 'mock' || library?.provider.mode === 'openai' ? 'none' : 'tracker',
+        demo: library?.provider.mode === 'fixture' ? 'tracker' : 'none',
       });
       setProposal(next);
       setPanel('Changes');
@@ -492,7 +494,7 @@ export function ArchitectAppPanel({
             />
           </label>
           <p>Unsent refine text is kept while a build runs. A later request does not mutate an already approved execution.</p>
-          <button className="button" disabled={busy || locked || !draft.trim()}>
+          <button className="button" disabled={busy || locked || !library || !draft.trim()}>
             <BplusMaterial radius={8} />
             Review proposed files
           </button>

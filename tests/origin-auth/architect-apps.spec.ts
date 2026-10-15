@@ -87,8 +87,11 @@ test('connected Architect Apps journey uses Auth, worker, Docker and the compile
   const projectUrl = page.url();
   await page.getByRole('button', { name: 'App', exact: true }).click();
   await expect(page.getByRole('heading', { name: /No application yet|Revision/ })).toBeVisible();
+  await page.getByLabel('Request').fill('Create field notes I can save.');
+  await expect(page.getByRole('button', { name: 'Review proposed files' })).toBeEnabled();
   await page.getByRole('button', { name: 'Review proposed files' }).click();
   await expect(page.locator('code', { hasText: 'src/App.tsx' })).toBeVisible({ timeout: 30000 });
+  await expect(page.locator('code', { hasText: 'src/pages/Board.tsx' })).toHaveCount(0);
   await expect(page.getByText('Reviewed files are shown before approval.')).toBeVisible();
   await page.getByRole('button', { name: 'Accept revision' }).click();
   await expect(page.getByText(/Revision 1 accepted\. Start remains explicit/)).toBeVisible();
