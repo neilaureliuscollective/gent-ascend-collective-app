@@ -21,7 +21,15 @@ import {
   loadProductKnowledge,
   recentUserTextsFromTurns,
 } from '@/domains/intelligence/product-knowledge';
-import { selectPlaybooks } from '@/domains/intelligence/playbooks';
+import { playbooksForTurn } from '@/domains/intelligence/playbooks';
+import {
+  artifactHint,
+  liveWorkingStateRefreshText,
+  shouldRefreshLiveWorkingState,
+  workingStateFromTurns,
+  type WorkingState,
+} from '@/domains/intelligence/working-state';
+import { intelligenceEdition } from '@/domains/intelligence/edition';
 import { getProduct } from '@/domains/commerce/shopify';
 import { readLifestyleCatalog } from '@/domains/commerce/lifestyle-catalog';
 import { createProductLookupRuntime, productLookupTool } from './product-lookup';
@@ -55,7 +63,7 @@ import { observeTrustedVoiceItem } from './trusted-observe';
 import { selectedTalkContext, selectedTalkPredecessors } from '@/domains/talk-creation/context';
 import { readTalkCreations } from '@/domains/talk-creation/service';
 const base = 'https://api.openai.com/v1/realtime/calls';
-const promptVersion = 'aethelios-live-pilot.3';
+const promptVersion = intelligenceEdition.livePromptVersion;
 const seedLimit = 12;
 type AdmissionStage =
   'context' | 'provider' | 'call-id' | 'attachment' | 'sideband' | 'seed' | 'cleanup';
@@ -131,6 +139,28 @@ export async function admitLive(input: LiveAdmission) {
       { catalog: readLifestyleCatalog, detail: getProduct },
       { recentUserTexts },
     ).catch(() => null);
+    const talkPredecessors = await selectedTalkPredecessors(
+      client,
+      person.id,
+      input.conversationId,
+    ).catch(() => ({} as Awaited<ReturnType<typeof selectedTalkPredecessors>>));
+    const workspace = await readArtifacts(input.conversationId, session);
+    const activeImage = workspace.artifacts.find((item) => item.id === workspace.selectedId);
+    const selectedArtifact = artifactHint(activeImage ?? null, talkPredecessors);
+    const workingState = workingStateFromTurns(
+      visibleTurns,
+      latestUser,
+      selectedArtifact,
+      thread.data.context_summary,
+    );
+    let lastWorkingState: WorkingState = workingState;
+    const selectedPlaybooks = playbooksForTurn(latestUser, null, {
+      recentUserTexts,
+      selectedArtifact,
+      workingState,
+      approvedDirection: workingState.approvedDirection,
+      recentCorrections: workingState.corrections,
+    });
     const built = buildMessages(
       visibleTurns,
       '',
@@ -142,7 +172,9 @@ export async function admitLive(input: LiveAdmission) {
       null,
       {
         productKnowledge,
-        playbooks: selectPlaybooks(latestUser, null, 2, { recentUserTexts }),
+        playbooks: selectedPlaybooks.playbooks,
+        playbookSelection: selectedPlaybooks.playbookSelection,
+        workingState,
         channel: 'voice',
       },
     );
@@ -154,8 +186,6 @@ export async function admitLive(input: LiveAdmission) {
       input.workTarget,
     );
     if (talkContext) application.push({ role: 'user', content: talkContext });
-    const workspace = await readArtifacts(input.conversationId, session);
-    const activeImage = workspace.artifacts.find((item) => item.id === workspace.selectedId);
     if (activeImage?.visual)
       application.push({
         role: 'user',
@@ -373,6 +403,56 @@ export async function admitLive(input: LiveAdmission) {
         generating = true;
         emit({ type: 'response.create' });
       }
+    };
+    // Trusted-turn refresh only. Applying a correction to the in-flight spoken
+    // reply would require response.cancel + response.create, which would change
+    // VAD/audio behavior and is out of scope. The next provider response can
+    // read this application item; this path never sets notify.
+    const refreshWorkingStateAfterTrustedTurn = async (userText: string, assistantText: string) => {
+      if (workAbort.signal.aborted) return;
+      const turns = await conversationTurns(input.conversationId).catch(() => []);
+      const visible = turns.filter(
+        (turn) => !turns.some((newer) => newer.parent_turn_id === turn.id),
+      );
+      const nextWorkspace = await readArtifacts(input.conversationId, session).catch(
+        () => workspace,
+      );
+      const nextImage = nextWorkspace.artifacts.find((item) => item.id === nextWorkspace.selectedId);
+      const nextTalk = await selectedTalkPredecessors(
+        client,
+        person.id,
+        input.conversationId,
+      ).catch(() => talkPredecessors);
+      const nextState = workingStateFromTurns(
+        [
+          ...visible,
+          {
+            status: 'complete',
+            user_text: userText,
+            assistant_text: assistantText,
+          },
+        ],
+        userText,
+        artifactHint(nextImage ?? null, nextTalk),
+        thread.data.context_summary,
+      );
+      if (!shouldRefreshLiveWorkingState(lastWorkingState, nextState, userText)) return;
+      if (workAbort.signal.aborted || socket?.readyState !== WebSocket.OPEN) return;
+      lastWorkingState = nextState;
+      emit({
+        type: 'conversation.item.create',
+        item: {
+          id: createLiveItemId(),
+          type: 'message',
+          role: 'user',
+          content: [
+            {
+              type: 'input_text',
+              text: liveWorkingStateRefreshText(nextState),
+            },
+          ],
+        },
+      });
     };
     const propose = async (callId: string, raw: string) => {
       if (!input.backgroundWork || toolCalls.has(callId)) return;
@@ -791,6 +871,10 @@ export async function admitLive(input: LiveAdmission) {
                   p_turn: id,
                 });
                 if (bound.error || !bound.data) throw new Error('Voice turn binding failed');
+                if (turn.status === 'complete')
+                  await refreshWorkingStateAfterTrustedTurn(turn.user, turn.assistant).catch(
+                    () => {},
+                  );
               }
             }),
           ),

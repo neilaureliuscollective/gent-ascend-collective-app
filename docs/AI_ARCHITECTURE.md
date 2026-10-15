@@ -32,7 +32,7 @@ Memory is manual, user-confirmed, source=user, kind=fact/preference, timestamped
 
 ## Behavior and feedback
 
-Canonical reasoning and temperament documents are mirrored in docs/doctrine/. Runtime instructions are a reviewed distillation in prompt.ts, tracked by promptVersion on each turn. They establish composure, warmth, concise judgment, respectful challenge, honest uncertainty and proportional depth. They explicitly state the absence of web research, files, voice and external actions, and prohibit claiming such work was performed.
+Canonical reasoning and temperament documents are mirrored in docs/doctrine/. Runtime instructions are a reviewed distillation in prompt.ts, tracked by promptVersion on each turn from `edition.ts`. They establish composure, warmth, concise judgment, respectful challenge, honest uncertainty and proportional depth. Read-only `web_search` exists on text Talk; Live still has no direct web search. Chat cannot write files, save memories or execute external actions without an application receipt. Collaborator expertise modules and the opt-in eval runner: [AETHELIOS_COLLABORATOR.md](AETHELIOS_COLLABORATOR.md).
 
 Helpful/Needs work is explicit per-reply feedback. The local founder console surfaces the most recent ten flagged replies for prompt review. Feedback does not fine-tune weights, automatically update instructions or silently create facts. Changes require evaluation using AURELIUS_EVALUATION.md.
 

@@ -143,6 +143,7 @@ beforeEach(() => {
   mock.founder.mockResolvedValue(true);
   stillFounder = true;
   mock.access.mockResolvedValue(new Set(['voice.use']));
+  vi.mocked(observeTrustedVoiceItem).mockResolvedValue({ observed: true, trusted: true });
   mock.turns.mockResolvedValue([
     {
       id: 'saved-turn',
@@ -586,6 +587,57 @@ it('uses compact IDs for changed selection and saved artifact messages', async (
   for (const message of messages) expect(message.item?.id).toMatch(/^c[0-9a-z]{25}$/);
   expect(messages[0]?.item?.content?.[0]?.text).toContain('Application selection changed');
   expect(messages[1]?.item?.content?.[0]?.text).toContain('Application saved image result');
+  socket.close();
+  await monitor;
+});
+
+it('refreshes working state after a trusted mid-call correction without starting a spoken reply', async () => {
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const createCount = (value: unknown) =>
+    (JSON.stringify(value).match(/"type":"response.create"/g) ?? []).length;
+  const initialCreates = createCount(socket.sent);
+  const monitor = admission.monitor();
+  for (const event of [
+    {
+      type: 'conversation.item.added',
+      item: {
+        id: 'typed-correction',
+        role: 'user',
+        content: [{ text: 'No — the audience is operators, not consumers' }],
+      },
+    },
+    { type: 'response.created', response: { id: 'reply-correction' } },
+    {
+      type: 'response.done',
+      response: {
+        id: 'reply-correction',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'I will write for operators.' }] }],
+        usage: { input_tokens: 2, output_tokens: 3 },
+      },
+    },
+    { type: 'output_audio_buffer.stopped', response_id: 'reply-correction' },
+  ])
+    socket.event(event);
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_finish_turn',
+      expect.objectContaining({ p_text: 'I will write for operators.', p_status: 'complete' }),
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_live_bind_finished_turn',
+      expect.objectContaining({ p_item: 'typed-correction' }),
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(JSON.stringify(socket.sent)).toContain('Application working-state refresh'),
+  );
+  expect(JSON.stringify(socket.sent)).toMatch(/operators/i);
+  expect(createCount(socket.sent)).toBe(initialCreates);
+  expect(JSON.stringify(socket.sent)).toContain('not authorization');
   socket.close();
   await monitor;
 });
