@@ -12,6 +12,10 @@ supabase/.branches/
 .construct-worker-*/
 .apps-worker-*/
 .apps-worker-image-*/
+.next-apps-*/
+.studio-worker-*/
+.studio-preflight-*/
+dist/studio-worker.mjs
 
 # Reproducible, pinned camera guidance assets prepared at build time
 /public/mirror/vision-1.0.1/

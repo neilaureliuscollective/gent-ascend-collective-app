@@ -3,6 +3,7 @@ import { currentAccess } from '@/domains/access/current';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { z } from 'zod';
 import { brandKitSchema, brandDirection } from './brand';
+import { allStudioProductionTablesMissing, missingStudioSchema } from './schema-absence';
 
 export const studioInput = z
   .object({
@@ -75,43 +76,106 @@ export async function studioWorkspace(projectId?: string) {
   const current = projectId ?? projects.data?.[0]?.id;
   if (current && !projects.data?.some((project) => project.id === current))
     throw new IntelligenceError('Project not found.', 404);
-  const [versions, references, scenes, finishes] = current
-    ? await Promise.all([
-        client
-          .from('ai_studio_versions')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .order('created_at', { ascending: false })
-          .limit(100),
-        client
-          .from('ai_studio_references')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .order('created_at', { ascending: false })
-          .limit(30),
-        client
-          .from('ai_studio_scenes')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .order('position', { ascending: true })
-          .limit(8),
-        client
-          .from('ai_studio_finishes')
-          .select('*')
-          .eq('project_id', current)
-          .eq('person_id', person.id)
-          .limit(100),
-      ])
-    : [
-        { data: [], error: null },
-        { data: [], error: null },
-        { data: [], error: null },
-        { data: [], error: null },
-      ];
-  if (versions.error || references.error || scenes.error || finishes.error)
+  const [versions, references, scenes, finishes, designs, compositions, renders, designExports, narrations, footage] =
+    current
+      ? await Promise.all([
+          client
+            .from('ai_studio_versions')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(100),
+          client
+            .from('ai_studio_references')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(30),
+          client
+            .from('ai_studio_scenes')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('position', { ascending: true })
+            .limit(8),
+          client
+            .from('ai_studio_finishes')
+            .select('*')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .limit(100),
+          client
+            .from('ai_studio_designs')
+            .select('id,title,revision,updated_at,document')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('updated_at', { ascending: false })
+            .limit(20),
+          client
+            .from('ai_studio_compositions')
+            .select('id,title,revision,updated_at,document')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('updated_at', { ascending: false })
+            .limit(8),
+          client
+            .from('ai_studio_render_jobs')
+            .select(
+              'id,composition_id,revision_id,status,width,height,duration_ms,created_at,failure_code',
+            )
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(12),
+          client
+            .from('ai_studio_design_export_jobs')
+            .select('id,design_id,revision_id,format,status,export_id,width,height,ppi,failure_code,created_at')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .order('created_at', { ascending: false })
+            .limit(12),
+          client
+            .from('ai_studio_narrations')
+            .select('id,title,status,duration,created_at')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .eq('status', 'complete')
+            .order('created_at', { ascending: false })
+            .limit(20),
+          client
+            .from('ai_studio_footage')
+            .select('id,title,status,duration,ratio,created_at')
+            .eq('project_id', current)
+            .eq('person_id', person.id)
+            .eq('status', 'complete')
+            .order('created_at', { ascending: false })
+            .limit(20),
+        ])
+      : [
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+        ];
+  if (versions.error || references.error || scenes.error || finishes.error || narrations.error || footage.error)
+    throw new IntelligenceError('Studio history could not be loaded.', 503);
+  const editable =
+    !missingStudioSchema(designs.error) &&
+    !missingStudioSchema(compositions.error) &&
+    !missingStudioSchema(renders.error);
+  if (
+    !editable &&
+    (designs.error || compositions.error || renders.error) &&
+    !allStudioProductionTablesMissing(designs.error, compositions.error, renders.error)
+  )
     throw new IntelligenceError('Studio history could not be loaded.', 503);
   return {
     owner: person.id,
@@ -121,10 +185,30 @@ export async function studioWorkspace(projectId?: string) {
     references: references.data ?? [],
     scenes: scenes.data ?? [],
     finishes: finishes.data ?? [],
+    designs: editable ? (designs.data ?? []) : [],
+    compositions: editable ? (compositions.data ?? []) : [],
+    renders: editable ? (renders.data ?? []) : [],
+    designExports: editable ? (designExports.data ?? []) : [],
+    narrations: narrations.data ?? [],
+    footage: footage.data ?? [],
     configured: Boolean(process.env.OPENAI_API_KEY),
     canCreate: (await currentAccess()).has('studio.create'),
+    capabilities: {
+      design: editable,
+      film: editable,
+      setup: editable
+        ? null
+        : 'Design and Film need supabase/migrations/20261016010000_studio_editable_productions.sql applied to this database. Existing Create, Campaign, Footage, Narration, Finish and Delivery continue to work. Hosted migration is not applied from this assignment.',
+    },
+    render: {
+      hosted: 'unavailable',
+      generation: process.env.OPENAI_API_KEY ? 'configuration required' : 'disabled',
+      narration: process.env.STUDIO_NARRATION_ENABLED === 'true' ? 'implemented' : 'disabled',
+      footage: process.env.STUDIO_FOOTAGE_ENABLED === 'true' ? 'implemented' : 'disabled',
+    },
   };
 }
+
 import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';
 export async function renderImage(
   prompt: string,

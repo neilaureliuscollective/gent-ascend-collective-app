@@ -15,6 +15,16 @@ export const deliveryAsset = z.discriminatedUnion('kind', [
       ratio: z.enum(['1280:720', '720:1280']),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal('film'),
+      id: z.uuid(),
+      title: z.string().max(80),
+      durationMs: z.number().int().min(1000).max(60_000),
+      width: z.number().int(),
+      height: z.number().int(),
+    })
+    .strict(),
 ]);
 export type DeliveryAsset = z.infer<typeof deliveryAsset>;
 export function deliverySource(asset: DeliveryAsset) {
@@ -23,7 +33,9 @@ export function deliverySource(asset: DeliveryAsset) {
     ? `/api/studio/image?id=${item.id}&kind=version`
     : item.kind === 'audio'
       ? `/api/studio/narration/audio?id=${item.id}`
-      : `/api/studio/footage/video?id=${item.id}`;
+      : item.kind === 'film'
+        ? `/api/studio/film/file?id=${item.id}&kind=film`
+        : `/api/studio/footage/video?id=${item.id}`;
 }
 async function readAsset(asset: DeliveryAsset, signal: AbortSignal, remaining: number) {
   const response = await fetch(deliverySource(asset), {
@@ -38,7 +50,11 @@ async function readAsset(asset: DeliveryAsset, signal: AbortSignal, remaining: n
     );
   const limit = Math.min(
     remaining,
-    asset.kind === 'video' ? 30_000_000 : asset.kind === 'audio' ? 3_000_000 : 10_000_000,
+    asset.kind === 'video' || asset.kind === 'film'
+      ? 80_000_000
+      : asset.kind === 'audio'
+        ? 3_000_000
+        : 10_000_000,
   );
   const parts: Uint8Array[] = [];
   let size = 0;
@@ -71,6 +87,9 @@ async function readAsset(asset: DeliveryAsset, signal: AbortSignal, remaining: n
   if (asset.kind === 'audio') {
     narrationWave(bytes);
     extension = 'wav';
+  } else if (asset.kind === 'film') {
+    if (bytes.length < 64 || bytes[4] !== 0x66) throw new Error('Finished film is not an MP4.');
+    extension = 'mp4';
   } else if (asset.kind === 'video') {
     footageMp4(bytes, asset.duration, asset.ratio);
     extension = 'mp4';
@@ -130,8 +149,10 @@ export async function deliveryPack(
         asset.kind === 'audio'
           ? 'AI narration'
           : asset.kind === 'video'
-            ? 'AI footage'
-            : 'Saved Studio image; review source provenance',
+            ? 'AI footage original'
+            : asset.kind === 'film'
+              ? 'Finished Studio composition render bound to a frozen revision'
+              : 'Saved Studio image; review source provenance',
     });
     files.push({ name, bytes });
     total += bytes.length;

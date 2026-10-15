@@ -58,15 +58,31 @@ Record estimator invocations only through a session-authenticated function that 
 
 Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
 
+# Aethelios Studio renderer/editor pipeline — 2026-10-15
+
+Continue PR #132 without adding features: connect Design export to the worker via durable jobs on the exact frozen revision; replace PNG-byte font measurement with bundled static Inter/Sora instances; unify canvas centre-origin transforms with exporters; make Film preview crop-then-cover and `amix normalize=0` match FFmpeg; bound worker download/probe/job time, input bytes, temp disk and subprocess trees; make `/health` require recent queue contact and deployment identity. Keep the Fly package uncommissioned. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
+
+# Aethelios Studio editor/export lifecycle — 2026-10-15
+
+Finish the current Design/Film experience on PR #132: protect live drafts during paused reconcile and failed older saves; return the exact accepted revision from atomic save+freeze; inspect real PNG/PDF coordinates including SVG-path Y; treat failed render reads as unknown so completed objects survive a lost finish ack; make preview crop/audio match FFmpeg; package a Fly.io Machine worker without purchasing it. Do not expand Studio with another feature suite. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md) and [ops/studio-render/README.md](../ops/studio-render/README.md).
+
 # Health transformation workspace — 2026-10-15
 
 Health stays named Health. The previous TRT/HRT clinic structure is not the product. Command becomes a personal workspace with two built-in foundations (evening sequence and Bloodwork Tracker) rather than a six-tab dashboard. Authoritative records, units, provenance, comparison rules, consent and deletion remain in trusted Health code. Architect customization of presentation/behavior uses a narrow adapter: structured presentation requests only; personal labs, original documents and Health history are refused rather than regex-redacted into a prompt. Dynamic compilation depends on unmerged Architect Apps PR #130 with isolated Docker compile and a usable preview. Host-fixture is not success. Client workingRevision metadata cannot establish a verified build. This Health branch does not vendor the Apps engine. Talk’s unmerged migration `20261015180000_talk_live_trusted_observe.sql` forced Health’s unapplied workspace migration to `20261015181000`. No generated diagnosis, dosing, treatment, readiness score or device control. Evidence: [HEALTH_TRANSFORMATION.md](HEALTH_TRANSFORMATION.md).
+
+# Aethelios Studio completion pass — 2026-10-15
+
+Finish PR #132 without renaming Studio or replacing generation. Persist with revision-aware autosave so a delayed save cannot replace newer local edits. Enforce sanitized SVG at parse/save/export. Convert physical units instead of relabeling. Export PNG/SVG/PDF from one geometry/typography contract, including PPI-scaled outlined type, PDF rotation/crop/rounded corners/SVG logos and WebP decoded through FFmpeg to PNG. Compile stills as a single frame plus intended zoompan duration; burn titles/captions from a trusted VTT path; apply crop/placement and dissolve overlap. `scripts/studio-render-worker.mjs` is the trusted claim/dispatch worker. Recover is service_role-only; begin returns the canonical job id; finish requires a matching unexpired lease. Hosted rendering stays unavailable; the worker flag only queues. Missing Design/Film tables must not fail existing Studio history. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
 
 # Official Aethelios install icon — 2026-10-15
 
 Founder supplied the approved gold-A / star / Earth application icon and authorized production installation replacement. Keep the existing Next App Router metadata files, stable manifest `id` `/`, `scope` `/` and `start_url` `/app`. Version the new PNG URLs, redirect previous install paths, and bump only the static fallback cache. Standard and maskable assets stay distinct; maskable gold art stays inside the W3C 80% safe circle. No in-app crest, account, entitlement or routing change.
 
 Official references checked 2026-10-15: [W3C icon masks](https://www.w3.org/TR/appmanifest/#icon-masks), [Chrome web app updates](https://developer.chrome.com/blog/improvements-to-web-app-updates), installed Next 16.3.5 app-icons/manifest file conventions.
+
+# Aethelios Studio editable design and media productions — 2026-10-14
+
+Keep generation, storage, narration, footage, Finish and Delivery. Add a canonical Studio document model with Fabric.js 7.4.0 as the editor adapter (patched SVG-export advisories; MIT notice preserved). Persist designs and short-film compositions as owner-bound revisions. Export PNG/SVG/vector PDF from frozen revisions. Render H.264/AAC locally through compiled FFmpeg operations; hosted rendering stays unavailable without a worker. No commercial editor SDK, no invented bottle-label dies, no CMYK claim, no paid provider calls. Talk #131 and Architect #130 are not merged. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
 
 # Aethelios Live sideband and Talk unification — 2026-10-14
 

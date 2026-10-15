@@ -9,7 +9,7 @@ import './studio-production.css';
 export const metadata: Metadata = {
   title: 'Aethelios Studio',
   description:
-    'Aethelios creative production: images, campaigns, voice, footage and reviewed delivery.',
+    'Aethelios Studio: editable designs, mixed-media films, images, campaigns, voice, footage and reviewed delivery.',
 };
 
 export default async function StudioPage({
@@ -29,7 +29,7 @@ export default async function StudioPage({
           <h1>
             Studio<span className="brand-star">✦</span>
           </h1>
-          <p>Your vision, developed with intention.</p>
+          <p>Editable designs and finished films, developed with intention.</p>
         </div>
         <Link className="text-link" href="/app/aethelios">
           Aethelios Chat <Icon name="arrow-up-right" className="action-icon" />

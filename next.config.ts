@@ -7,6 +7,7 @@ const config: NextConfig = {
   ...(replacementDistDir && /^\.next-[A-Za-z0-9._-]+$/.test(replacementDistDir)
     ? { distDir: replacementDistDir }
     : {}),
+  transpilePackages: ['fabric'],
   outputFileTracingIncludes: { '/api/health': ['./scripts/health-pdf-worker.mjs', './node_modules/pdf-lib/**/*', './node_modules/@pdf-lib/**/*', './node_modules/pako/**/*', './node_modules/tslib/**/*'] },
   // TypeScript 6 exposes the compiler API; avoid detached CLI subprocesses in managed runners.
   experimental: { useTypeScriptCli: false },
