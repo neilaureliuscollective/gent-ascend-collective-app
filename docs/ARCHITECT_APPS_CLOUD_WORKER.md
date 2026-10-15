@@ -41,7 +41,7 @@ Commissioned prerequisites (names only; values stay in the host secret store):
 - No `VERCEL` / `VERCEL_ENV`
 - No `ARCHITECT_APPS_STORE=memory`
 - No `ARCHITECT_APPS_ALLOW_HOST_FIXTURE=true`
-- Schema contracts in `requiredAppsSchemaContracts` present, including `architect_app_artifacts.revision_id` and `architect_app_preview_sessions`
+- Schema contracts in `requiredAppsSchemaContracts` present, including `architect_app_artifacts.revision_id`, `architect_app_preview_sessions`, `architect_app_generation_runs`, and `architect_app_worker_presence`
 
 Paid OpenAI stays a separate founder decision. Production generation requires `ARCHITECT_APPS_FOUNDER_PILOT=true`, `ARCHITECT_APPS_AI_ENABLED=true`, and a server-only `OPENAI_API_KEY`. `ARCHITECT_APPS_AI_MOCK=true` in production is a **refused** configuration: worker `--preflight` / `--health` fail. Mock stays labelled local/test only. See [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
 
@@ -177,6 +177,7 @@ Migrations, in order, local-only until founder-approved hosted application:
 3. `20261015140000_architect_apps_mutation.sql`
 4. `20261015155000_architect_apps_retain_verified.sql`
 5. `20261015156000_architect_apps_preview_sessions.sql`
+6. `20261015156500_architect_apps_pilot_budget.sql`
 
 A merge of this PR into `main` is **not** a GitHub-only operation. The connected Vercel project deploys Production from `main`. Merging would publish the web plane without a commissioned worker, without hosted Apps migrations, and without preview-cluster secrets. Do not merge until those hosted steps are separately approved. Vercel never runs the worker. An HTTP 200 from the Next.js server is not worker readiness.
 
@@ -184,7 +185,7 @@ Readiness (`--health` / `--preflight`) reports isolation, schema contracts, work
 
 Deployment sequence after approval:
 
-1. Apply the five Apps migrations to the existing Gent Ascend database (not from a founder laptop checklist; use the authorized hosted SQL path). Recorded migration history is not the same as a verified physical schema — confirm the five files exist on the chosen project before enabling flags.
+1. Apply the ordered Apps migrations to the existing Gent Ascend database (not from a founder laptop checklist; use the authorized hosted SQL path). Shared Talk/Apps names apply once. `156500` is an Architect-only forward file. Recorded migration history is not the same as a verified physical schema — confirm the physical tables/RPCs, including generation runs and worker presence, before enabling flags.
 2. Build both images on the Droplet from this repository SHA (`node scripts/architect-apps-prepare-runtime.mjs`).
 3. `node scripts/architect-apps-packaged-worker.mjs --prove-write`
 4. `node scripts/architect-apps-packaged-worker.mjs --prove-compile`

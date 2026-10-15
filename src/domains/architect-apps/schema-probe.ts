@@ -7,6 +7,8 @@ export const requiredAppsSchemaContracts = {
     architect_app_events: ['id'],
     architect_app_records: ['id'],
     architect_app_preview_sessions: ['nonce'],
+    architect_app_generation_runs: ['request_id'],
+    architect_app_worker_presence: ['worker_id'],
   },
   rpcs: [
     'architect_apps_approve',
@@ -21,6 +23,10 @@ export const requiredAppsSchemaContracts = {
     'architect_apps_preview_read',
     'architect_apps_preview_current',
     'architect_apps_preview_revoke',
+    'architect_apps_reserve_generation',
+    'architect_apps_finish_generation',
+    'architect_apps_report_worker_presence',
+    'architect_apps_worker_readiness',
   ],
 } as const;
 

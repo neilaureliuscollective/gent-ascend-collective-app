@@ -53,6 +53,7 @@ import { MemoryAppStore } from '@/domains/architect-apps/store';
 import { processAppBuildOnce } from '@/domains/architect-apps/worker';
 import { resetPreviewSessions, signPreviewSession } from '@/domains/architect-apps/preview';
 import { isSealedAppPath } from '@/domains/architect-apps/catalog';
+import { notesProposal } from '@/domains/architect-apps/notes-fixture';
 
 beforeEach(() => {
   vi.stubEnv('ARCHITECT_ORIGIN_ENABLED', 'true');
@@ -367,4 +368,65 @@ it('requires server-verified founder access before the real generation path', as
   vi.stubEnv('OPENAI_API_KEY', 'sk-test');
   await expect(requireAppsGenerationAccess(process.env, async () => false)).rejects.toThrow(/founder pilot/i);
   await expect(requireAppsGenerationAccess(process.env, async () => true)).resolves.toBeUndefined();
+});
+
+it('refuses ordinary owners on approve and start even when they own the project', async () => {
+  vi.stubEnv('APP_ENV', 'production');
+  vi.stubEnv('ARCHITECT_APPS_FOUNDER_PILOT', 'true');
+  vi.stubEnv('ARCHITECT_APPS_AI_ENABLED', 'true');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'hosted-publishable-key');
+  await expect(
+    approveArchitectApp(
+      {
+        action: 'approve',
+        projectId: state.projectId,
+        requestId: '00000000-0000-4000-8000-000000000451',
+        expected: 1,
+        approvalHash: 'a'.repeat(64),
+        proposal: notesProposal(),
+        generation: { mode: 'openai', notes: 'Model-generated application files recorded from the authorized OpenAI adapter.' },
+        baseRevision: null,
+      },
+      { verifyFounder: async () => false },
+    ),
+  ).rejects.toThrow(/founder pilot/i);
+  await expect(
+    startArchitectApp(
+      {
+        action: 'start',
+        projectId: state.projectId,
+        revisionId: '00000000-0000-4000-8000-000000000452',
+        requestId: '00000000-0000-4000-8000-000000000453',
+        expected: 1,
+        approvalHash: 'a'.repeat(64),
+      },
+      { verifyFounder: async () => false },
+    ),
+  ).rejects.toThrow(/founder pilot/i);
+});
+
+it('refuses mocked production source on approve even for a founder owner', async () => {
+  vi.stubEnv('APP_ENV', 'production');
+  vi.stubEnv('ARCHITECT_APPS_FOUNDER_PILOT', 'true');
+  vi.stubEnv('ARCHITECT_APPS_AI_ENABLED', 'true');
+  vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'hosted-publishable-key');
+  await expect(
+    approveArchitectApp(
+      {
+        action: 'approve',
+        projectId: state.projectId,
+        requestId: '00000000-0000-4000-8000-000000000454',
+        expected: 1,
+        approvalHash: 'a'.repeat(64),
+        proposal: notesProposal(),
+        generation: { mode: 'mock', notes: 'Labelled mocked provider.' },
+        baseRevision: null,
+      },
+      { verifyFounder: async () => true },
+    ),
+  ).rejects.toThrow(/mocked or fixture application source/i);
 });

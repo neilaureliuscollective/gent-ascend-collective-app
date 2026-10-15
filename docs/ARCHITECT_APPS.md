@@ -48,7 +48,7 @@ Architect owns `talk-architect-direction/v1` and the published shared contract `
 | `ARCHITECT_APPS_PREVIEW_CLUSTER` | false | Require shared preview-session state on production/preview web planes. Missing local state is deny. |
 | `ARCHITECT_APPS_WORK_ROOT` | host tmp | Identical absolute path on the Docker host and inside the packaged worker for sibling mounts |
 
-Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql`, `20261015155000_architect_apps_retain_verified.sql` and `20261015156000_architect_apps_preview_sessions.sql` are local-only until founder-approved hosted application. The 15156000 prefix stays before Talk #131 `f357385` retain/provenance files so those later migrations remain the merge-winning contract.
+Additive migrations `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql`, `20261015155000_architect_apps_retain_verified.sql`, `20261015156000_architect_apps_preview_sessions.sql` and `20261015156500_architect_apps_pilot_budget.sql` are local-only until founder-approved hosted application. The 15156000/15156500 prefixes stay before Talk #131 `f357385` retain/provenance files so those later migrations remain the merge-winning contract. Do not replay Talk’s approved 18-name batch.
 
 ## Evidence classes
 

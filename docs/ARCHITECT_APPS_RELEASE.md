@@ -6,7 +6,7 @@ Implemented on PR #130. This is not a production authorization and not a claim t
 
 - Owner APIs, durable Apps RPCs, isolated Docker compile, compiled iframe, host collections, mutation identity, and the Origin workbench.
 - Explicit founder-pilot generation policy: `ARCHITECT_APPS_FOUNDER_PILOT`. Production stays identified as production. Mock generation is refused in production.
-- Local additive migrations: `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql`, `20261015155000_architect_apps_retain_verified.sql`, `20261015156000_architect_apps_preview_sessions.sql`.
+- Local additive migrations: `20261015080000_architect_apps.sql`, `20261015120000_architect_apps_durable.sql`, `20261015140000_architect_apps_mutation.sql`, `20261015155000_architect_apps_retain_verified.sql`, `20261015156000_architect_apps_preview_sessions.sql`, `20261015156500_architect_apps_pilot_budget.sql`.
 - Pinned images `aethelios-architect-apps:2026-10-15.1` and `aethelios-architect-apps-worker:2026-10-15.1`. Prepare both with `node scripts/architect-apps-prepare-runtime.mjs` on the host that will compile.
 - Labelled mocked provider (`ARCHITECT_APPS_AI_MOCK`) for local/test Field Notes only. Do not set it on hosted production.
 
@@ -19,14 +19,16 @@ Implemented on PR #130. This is not a production authorization and not a claim t
 | Isolated images | Built in Quality `apps-isolate` and Origin `local-auth` after prepare-runtime | Same pinned tags on the worker host; work root uid 1000 mode 0755; no unsandboxed fallback |
 | `ARCHITECT_APPS_PREVIEW_SECRET` | Required; shared `architect_app_preview_sessions` | Hosted secret ≥16 chars plus `ARCHITECT_APPS_PREVIEW_CLUSTER=true` on the web plane. Missing/revoked sessions deny. |
 | Feature flags | Default false | Hosted `ARCHITECT_ORIGIN_ENABLED` + `ARCHITECT_APPS_ENABLED`. Leave `ARCHITECT_APPS_AI_MOCK` unset. |
-| Founder-pilot model | Disabled until commissioned | Separate founder authorization for `ARCHITECT_APPS_FOUNDER_PILOT=true` + `ARCHITECT_APPS_AI_ENABLED=true` + server-only `OPENAI_API_KEY`. Credit does not provide worker, DB, image or permissions. Ordinary accounts stay unavailable. |
+| Founder-pilot model | Disabled until commissioned | Separate founder authorization for `ARCHITECT_APPS_FOUNDER_PILOT=true` + `ARCHITECT_APPS_AI_ENABLED=true` + server-only `OPENAI_API_KEY`. Propose, approve, start, retries and revisions all require session `founder_access`. Credit does not provide worker, DB, image or permissions. Ordinary accounts stay unavailable. |
+| Worker presence before spend | Implemented in code; no commissioned host | Paid propose reads `architect_apps_worker_readiness` (schema, digest, isolation, queue, artifacts, 90s heartbeat). Missing/stale evidence sends no model request. |
+| Acceptance budget | Implemented in code; $1.00 reserved, two calls | Atomic `architect_apps_reserve_generation` on `gpt-6-astra` short-context $10/$50 per 1M. OpenAI spend alerts are not a cap. |
 | Talk adapter | Pending on this checkout | Integrate Talk #131 `ddfd497` / retain `f357385` candidate; do not copy Talk files from this branch |
 
 ## Sequence if later authorized
 
 Merging this PR to `main` typically triggers the existing Vercel Production deploy. That is not authorized here. The web plane would go live without a worker or hosted schema. Generation would still stay off until the founder-pilot names are set.
 
-1. Apply shared Apps schema once (coordinate with Talk) and the #130 extras, then verify the physical schema including `architect_app_preview_sessions`.
+1. Apply shared Apps schema once (coordinate with Talk) and the #130 extras (`156000`, `156500`, and `155000` only when Talk retain will not apply), then verify the physical schema including `architect_app_preview_sessions`, `architect_app_generation_runs`, and `architect_app_worker_presence`.
 2. Provision the approved Docker Droplet. Prepare both images and the uid-1000 work root. Prove write, compile and topology.
 3. Set preview secret and Apps flags on Vercel only after worker preflight is green. Do not enable `ARCHITECT_APPS_AI_MOCK` on production.
 4. Start the supervised packaged worker. Confirm one isolated Field Notes compile before inviting anyone else.

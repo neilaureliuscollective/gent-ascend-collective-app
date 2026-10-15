@@ -1,3 +1,7 @@
+# Architect generated applications founder-pilot execution bounds — 2026-10-15
+
+Close the remaining activation gaps without repeating the production-policy repair. Founder entitlement is required for every executable Apps route, not only paid propose. Paid admission must see recent worker presence before spending. The acceptance run is a server-side two-call `$1.00` reservation on `gpt-6-astra` standard short-context ($10 / $50 per 1M, ≤272K), not a GPT-5.5 estimate and not an OpenAI spend alert. Unique forward migration `20261015156500_architect_apps_pilot_budget.sql` is Architect-only and must not replay Talk’s 18-name batch. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
+
 # Architect generated applications founder-production policy — 2026-10-15
 
 Do not enable hosted generation by setting `ARCHITECT_APPS_AI_MOCK=true` or by renaming `APP_ENV`. Production OpenAI is a named founder pilot (`ARCHITECT_APPS_FOUNDER_PILOT`) plus `ARCHITECT_APPS_AI_ENABLED`, a server-only key, commissioned worker, and session-bound `founder_access`. Mock and memory stores stay local/test. Worker readiness must verify that generation policy, not only a port or image build. Talk’s 18-name package does not replace `20261015156000_architect_apps_preview_sessions.sql`. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).

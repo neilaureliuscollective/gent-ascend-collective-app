@@ -209,9 +209,13 @@ export function classifyAppRequestFailure(error: unknown): { class: AppFailureCl
   if (/typecheck|bundle|compile|isolated build|sealed toolchain|last working application/i.test(message))
     return { class: 'compile', message };
   if (
-    /worker|queued|lease|docker daemon|commissioned|isolation was unavailable|non-Vercel host/i.test(message)
+    /worker|queued|lease|docker daemon|commissioned|isolation was unavailable|non-Vercel host|Paid generation is unavailable|heartbeat|image-digest/i.test(
+      message,
+    )
   )
     return { class: 'worker', message };
+  if (/acceptance run|reserved budget|token acceptance ceiling/i.test(message))
+    return { class: 'model', message };
   if (
     status === 503 ||
     /model|openai|provider adapter|generation is unavailable|generation stays disabled|Model connection unavailable/i.test(

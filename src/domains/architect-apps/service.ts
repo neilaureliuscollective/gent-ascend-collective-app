@@ -5,8 +5,22 @@ import { readRetainedDirection } from '@/domains/architect-design-direction/rece
 import { APP_PROFILE, APP_PROFILE_VERSION, APP_TOOLCHAIN_VERSION } from './catalog';
 import { DatabaseAppStore, type AppPersistenceClient } from './database-store';
 import { assertAdditiveSchema, assertDataRate, recordToItem, validateCollectionPayload } from './data-bridge';
+import {
+  APP_ACCEPTANCE_BUDGET,
+  databaseAppBudgetStore,
+  defaultAppBudgetStore,
+  estimateAppGenerationTokens,
+  type AppBudgetStore,
+} from './budget';
 import { appGenerationProvenance, appProposalMode, generateAppProposal, type AppGenerationTransport } from './generation';
 import { appsGenerationAdmission, appsGenerationPolicy } from './generation-policy';
+import {
+  appsPilotExecutionBlockers,
+  appsPilotExecutionRequired,
+  classifyPaidGenerationReadiness,
+  readPaidGenerationRuntime,
+  type AppsPaidRuntimeEvidence,
+} from './pilot';
 import { appApprovalHash, treeHash } from './hash';
 import {
   DatabasePreviewSessionStore,
@@ -64,13 +78,31 @@ export async function requireAppsGenerationAccess(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
   verifyFounder: () => Promise<boolean> = currentFounderAccess,
 ) {
+  return requireAppsPilotExecutionAccess(env, verifyFounder);
+}
+
+export async function requireAppsPilotExecutionAccess(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+  verifyFounder: () => Promise<boolean> = currentFounderAccess,
+) {
   const policy = appsGenerationPolicy(env);
   if (policy.mode === 'refused') throw new IntelligenceError(policy.reason, 503);
-  if (policy.mode === 'openai' && !(await verifyFounder()))
+  const closed = appsPilotExecutionBlockers(env);
+  if (closed.length) throw new IntelligenceError(closed[0]!, 503);
+  if (appsPilotExecutionRequired(env) && !(await verifyFounder()))
     throw new IntelligenceError(
       'Model-backed application generation is a founder pilot and is not enabled for this account.',
       403,
     );
+}
+
+export function requirePaidGenerationRuntime(
+  evidence: AppsPaidRuntimeEvidence,
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+) {
+  const ready = classifyPaidGenerationReadiness(evidence, env);
+  if (!ready.ok) throw new IntelligenceError(ready.reason, 503);
+  return ready;
 }
 
 function asIntelligence(error: unknown): never {
@@ -223,13 +255,23 @@ export async function readArchitectApp(projectId: string, selectedRevision?: num
 export async function proposeArchitectApp(
   input: unknown,
   transport?: AppGenerationTransport,
+  options?: {
+    verifyFounder?: () => Promise<boolean>;
+    runtime?: AppsPaidRuntimeEvidence;
+    budget?: AppBudgetStore;
+    runId?: string;
+  },
 ) {
   requireReady();
   const parsed = proposeAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application proposal fields.', 400);
   try {
-    await requireAppsGenerationAccess();
+    await requireAppsPilotExecutionAccess(process.env, options?.verifyFounder ?? currentFounderAccess);
     const { person, project, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
+    const policy = appsGenerationPolicy();
+    if (policy.mode === 'openai') {
+      requirePaidGenerationRuntime(options?.runtime ?? (await readPaidGenerationRuntime(client)));
+    }
     const store = appStore({ client, plane: 'owner' });
     const revisions = await store.listRevisions(person.id, parsed.data.projectId);
     const base =
@@ -239,32 +281,79 @@ export async function proposeArchitectApp(
     if (parsed.data.kind === 'revise' && !base)
       throw new IntelligenceError('A saved application revision is required before requesting a change.', 409);
     const direction = await readRetainedDirection(parsed.data.projectId).catch(() => null);
-    const generated = await generateAppProposal(
-      {
-        instruction: parsed.data.instruction,
-        kind: parsed.data.kind,
-        demo: parsed.data.demo,
-        baseFiles: base?.files ?? [],
-        collections: base?.collections ?? [],
-        brief: project.content.blueprint?.vision,
-        direction: direction
-          ? {
-              schema: direction.receipt.schema,
-              name: direction.receipt.content.name,
-              summary: direction.receipt.content.summary,
-              digest: direction.digest,
-              verified: direction.verified,
-              sourceKind: direction.source_kind,
-              colors: direction.receipt.content.colors,
-              typography: direction.receipt.content.typography,
-              layout: direction.receipt.content.layout,
-              copy: direction.receipt.content.copy,
-              assets: direction.receipt.content.assets,
-            }
-          : null,
-      },
-      transport ?? defaultAppGenerationTransport(),
-    );
+    const generationInput = {
+      instruction: parsed.data.instruction,
+      kind: parsed.data.kind,
+      demo: parsed.data.demo,
+      baseFiles: base?.files ?? [],
+      collections: base?.collections ?? [],
+      brief: project.content.blueprint?.vision,
+      direction: direction
+        ? {
+            schema: direction.receipt.schema,
+            name: direction.receipt.content.name,
+            summary: direction.receipt.content.summary,
+            digest: direction.digest,
+            verified: direction.verified,
+            sourceKind: direction.source_kind,
+            colors: direction.receipt.content.colors,
+            typography: direction.receipt.content.typography,
+            layout: direction.receipt.content.layout,
+            copy: direction.receipt.content.copy,
+            assets: direction.receipt.content.assets,
+          }
+        : null,
+    };
+    const budget =
+      policy.mode === 'openai'
+        ? (options?.budget ??
+          (memoryAppStoreAllowed() ? defaultAppBudgetStore() : databaseAppBudgetStore(client)))
+        : null;
+    const inputTokens = estimateAppGenerationTokens(generationInput);
+    if (budget && inputTokens > APP_ACCEPTANCE_BUDGET.maxInputTokens)
+      throw new IntelligenceError(
+        `Generation input exceeds the ${APP_ACCEPTANCE_BUDGET.maxInputTokens}-token acceptance ceiling.`,
+        413,
+      );
+    const reserved = budget
+      ? await budget.reserve({
+          requestId: parsed.data.requestId,
+          runId: options?.runId ?? parsed.data.projectId,
+          personId: person.id,
+          inputTokens,
+          outputTokens: APP_ACCEPTANCE_BUDGET.maxOutputTokens,
+        })
+      : null;
+    if (reserved && !reserved.created) {
+      throw new IntelligenceError(
+        reserved.reservation.status === 'completed'
+          ? 'This generation request already completed its reserved model call. Reload before another request.'
+          : 'This generation request already reserved a model call. Inspect the usage receipt before another request. No automatic retry.',
+        409,
+      );
+    }
+    const reservation = reserved?.reservation ?? null;
+    let providerStarted = false;
+    let generated;
+    try {
+      generated = await generateAppProposal(generationInput, async (context) => {
+        providerStarted = true;
+        const next = transport ?? defaultAppGenerationTransport();
+        if (!next) throw new IntelligenceError('OpenAI app generation is authorized but the provider adapter was not wired.', 503);
+        return next(context);
+      });
+      if (reservation)
+        await budget?.finish({ requestId: parsed.data.requestId, personId: person.id, status: 'completed' });
+    } catch (error) {
+      if (reservation) {
+        await budget?.finish({
+          requestId: parsed.data.requestId,
+          personId: person.id,
+          status: providerStarted ? 'uncertain' : 'cancelled',
+        });
+      }
+      throw error;
+    }
     const files = generated.proposal.operations
       ? applyFileOperations(base?.files ?? overlaySealedFiles(generated.proposal.files), generated.proposal.operations).files
       : overlaySealedFiles(generated.proposal.files);
@@ -281,17 +370,28 @@ export async function proposeArchitectApp(
       changes: diffAppFiles(base?.files ?? [], scoped.files),
       generation: appGenerationProvenance(generated.mode),
       baseRevision: base?.revision ?? null,
+      reservation,
     };
   } catch (error) {
     asIntelligence(error);
   }
 }
 
-export async function approveArchitectApp(input: unknown) {
+export async function approveArchitectApp(
+  input: unknown,
+  options?: { verifyFounder?: () => Promise<boolean> },
+) {
   requireReady();
   const parsed = approveAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application approval fields.', 400);
   try {
+    await requireAppsPilotExecutionAccess(process.env, options?.verifyFounder ?? currentFounderAccess);
+    const policy = appsGenerationPolicy();
+    if (policy.production && parsed.data.generation.mode !== 'openai')
+      throw new IntelligenceError(
+        'Production cannot accept mocked or fixture application source. Ownership is not founder entitlement.',
+        403,
+      );
     const { person, project, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
     const store = appStore({ client, plane: 'owner' });
     const revisions = await store.listRevisions(person.id, parsed.data.projectId);
@@ -329,11 +429,15 @@ export async function approveArchitectApp(input: unknown) {
   }
 }
 
-export async function startArchitectApp(input: unknown) {
+export async function startArchitectApp(
+  input: unknown,
+  options?: { verifyFounder?: () => Promise<boolean> },
+) {
   requireReady();
   const parsed = startAppCommand.safeParse(input);
   if (!parsed.success) throw new IntelligenceError('Check the application start fields.', 400);
   try {
+    await requireAppsPilotExecutionAccess(process.env, options?.verifyFounder ?? currentFounderAccess);
     const { person, client } = await requireOwnedProject(parsed.data.projectId, parsed.data.expected);
     const store = appStore({ client, plane: 'owner' });
     const revision = await store.readRevision(person.id, parsed.data.revisionId);
@@ -341,6 +445,11 @@ export async function startArchitectApp(input: unknown) {
       throw new IntelligenceError('Approved application revision unavailable.', 404);
     if (revision.approval_hash !== parsed.data.approvalHash)
       throw new IntelligenceError('Start no longer matches the reviewed approval.', 409);
+    if (appsGenerationPolicy().production && revision.generation.mode !== 'openai')
+      throw new IntelligenceError(
+        'Production cannot queue mocked or fixture application source. Ownership is not founder entitlement.',
+        403,
+      );
     if (revision.status !== 'approved' && revision.status !== 'failed' && revision.status !== 'building')
       throw new IntelligenceError('This revision is not waiting for an explicit start.', 409);
     const app = await store.readApp(person.id, parsed.data.projectId);

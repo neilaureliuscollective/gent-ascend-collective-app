@@ -28,6 +28,33 @@ function report(payload: Record<string, unknown>) {
   console.log(JSON.stringify(payload));
 }
 
+async function reportWorkerPresence(
+  health: ReturnType<typeof classifyAppsWorkerHealth>,
+  evidence: Awaited<ReturnType<typeof gatherEvidence>>,
+) {
+  try {
+    const connection = supabaseConnection();
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    const digest = evidence.observedDigest ?? parseAppsImageDigest(process.env.ARCHITECT_APPS_IMAGE_DIGEST);
+    if (!connection || !serviceKey || !digest || !health.workerId) return false;
+    const client = createClient(connection.url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const result = await client.rpc('architect_apps_report_worker_presence', {
+      p_worker: health.workerId,
+      p_digest: digest,
+      p_isolation: health.isolation,
+      p_schema: evidence.schemaCompatible,
+      p_queue: evidence.schemaCompatible,
+      p_artifacts: evidence.schemaCompatible,
+      p_state: health.state,
+    });
+    return !result.error;
+  } catch {
+    return false;
+  }
+}
+
 async function gatherEvidence(env: NodeJS.ProcessEnv = process.env) {
   const isolation = await probeAppsDockerIsolation(env);
   const observedDigest = isolation.available ? await inspectAppsImageDigest(env) : null;
@@ -218,6 +245,7 @@ if (
 }
 
 if (preflight) {
+  await reportWorkerPresence(health, evidence);
   report({
     ok: true,
     phase: 'preflight',
@@ -295,6 +323,16 @@ try {
       signal: shutdown.signal,
       onTick: (job) => {
         busy = Boolean(job && (job.status === 'queued' || job.status === 'running'));
+        void reportWorkerPresence(
+          classifyAppsWorkerHealth({
+            env: process.env,
+            busy,
+            isolationAvailable: evidence.isolationAvailable,
+            observedDigest: evidence.observedDigest,
+            schemaCompatible: evidence.schemaCompatible,
+          }),
+          evidence,
+        );
       },
     });
     report({
@@ -311,6 +349,7 @@ try {
     });
   } else {
     console.error('apps-worker: starting');
+    await reportWorkerPresence(health, evidence);
     busy = true;
     const appJob = await processAppBuildOnce(store, workerId);
     busy = false;

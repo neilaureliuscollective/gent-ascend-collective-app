@@ -50,7 +50,9 @@ beforeAll(async () => {
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema public,auth to authenticated,anon,service_role; grant execute on function auth.uid() to authenticated;
  create table public.persons(id uuid primary key,auth_user_id uuid);
+ create table public.founder_access(person_id uuid primary key);
  insert into public.persons values('${ownerPerson}','${ownerAuth}'),('${foreignPerson}','${foreignAuth}');
+ insert into public.founder_access values('${ownerPerson}');
  grant select on public.persons to authenticated;
  create table public.ai_conversations(id uuid primary key,person_id uuid,title text);`);
   await db.exec(await readFile('supabase/migrations/20261012230000_architect_origin.sql', 'utf8'));
@@ -59,6 +61,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015140000_architect_apps_mutation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015155000_architect_apps_retain_verified.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156000_architect_apps_preview_sessions.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015156500_architect_apps_pilot_budget.sql', 'utf8'));
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
 
@@ -285,6 +288,83 @@ describe('Apps durable SQL owner policy and worker fencing (PGlite; not Supabase
         `select public.architect_apps_preview_issue('${revision}','bbbbbbbbbbbbbbbb','v1.bbbbbbbbbbbbbbbb.7fffffff.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',${Math.floor(Date.now() / 1000) + 1800},true)`,
       ),
     ).rejects.toThrow(/Revision unavailable|Sign in required/i);
+  });
+
+  it('reserves a founder-pilot budget, refuses ordinary owners, and reports worker presence', async () => {
+    const run = '00000000-0000-4000-8000-000000000831';
+    const first = '00000000-0000-4000-8000-000000000832';
+    const second = '00000000-0000-4000-8000-000000000833';
+    const third = '00000000-0000-4000-8000-000000000834';
+    const digest = `sha256:${'ab'.repeat(32)}`;
+    await expect(
+      asUser(
+        foreignAuth,
+        `select public.architect_apps_reserve_generation('${first}','${run}',1000,4000)`,
+      ),
+    ).rejects.toThrow(/founder pilot|not enabled for this account/i);
+    const reserved = await asUser(
+      ownerAuth,
+      `select public.architect_apps_reserve_generation('${first}','${run}',1000,4000) as receipt`,
+    );
+    expect((reserved.rows[0] as { receipt: { created: boolean; status: string } }).receipt).toMatchObject({
+      created: true,
+      status: 'reserved',
+    });
+    const replay = await asUser(
+      ownerAuth,
+      `select public.architect_apps_reserve_generation('${first}','${run}',1000,4000) as receipt`,
+    );
+    expect((replay.rows[0] as { receipt: { created: boolean } }).receipt.created).toBe(false);
+    await asUser(ownerAuth, `select public.architect_apps_reserve_generation('${second}','${run}',1000,4000)`);
+    await expect(
+      asUser(ownerAuth, `select public.architect_apps_reserve_generation('${third}','${run}',1000,4000)`),
+    ).rejects.toThrow(/two model calls/i);
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_finish_generation('${second}','uncertain',null,null)`,
+    );
+    expect(
+      (
+        await asUser(
+          ownerAuth,
+          `select used_micros from public.architect_app_generation_runs where request_id='${second}'`,
+        )
+      ).rows,
+    ).toEqual([{ used_micros: 210000 }]);
+    await asUser(
+      ownerAuth,
+      `select public.architect_apps_finish_generation('${first}','cancelled',null,null)`,
+    );
+    expect(
+      (
+        await asUser(
+          ownerAuth,
+          `select used_micros from public.architect_app_generation_runs where request_id='${first}'`,
+        )
+      ).rows,
+    ).toEqual([{ used_micros: 0 }]);
+    const empty = await asUser(ownerAuth, `select public.architect_apps_worker_readiness(90) as report`);
+    expect((empty.rows[0] as { report: { ok: boolean; missing: string[] } }).report).toMatchObject({
+      ok: false,
+      missing: ['worker'],
+    });
+    await asWorker(
+      `select public.architect_apps_report_worker_presence('apps-cloud','${digest}','docker',true,true,true,'idle')`,
+    );
+    const ready = await asUser(ownerAuth, `select public.architect_apps_worker_readiness(90) as report`);
+    expect((ready.rows[0] as { report: { ok: boolean; isolation: string } }).report).toMatchObject({
+      ok: true,
+      isolation: 'docker',
+    });
+    await db.exec(`update public.architect_app_worker_presence set seen_at = now() - interval '3 minutes'`);
+    const stale = await asUser(ownerAuth, `select public.architect_apps_worker_readiness(90) as report`);
+    expect((stale.rows[0] as { report: { ok: boolean } }).report.ok).toBe(false);
+    await expect(
+      asUser(
+        ownerAuth,
+        `select public.architect_apps_report_worker_presence('apps-cloud','${digest}','docker',true,true,true,'idle')`,
+      ),
+    ).rejects.toThrow(/Worker authorization required|permission denied/i);
   });
 });
 

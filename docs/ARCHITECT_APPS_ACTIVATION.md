@@ -4,7 +4,7 @@ Date: 2026-10-15. PR #130 continuation. This is a reviewable production path and
 
 ## Exact head and compatibility
 
-Policy commit on this review branch: `d06441cd07d032c4a841ceea7087d9a21068df4e`. Previous verified green head was `2c11f174337b97dbba94a5cba1a1798e493fa2de` (all six PR workflows passed). Current `origin/main` at refresh: `804c877` (Studio production on Health/Lifestyle). Merge-tree against that main was clean. Terminal Quality/Origin checks for `d06441c` are the publish gate for this activation package.
+Previous verified green head was `507c27587199a5ae4e432401f6af8532301859de` (all six PR workflows passed). This continuation adds end-to-end founder execution, worker-readiness-before-spend, and a two-call `$1.00` reserved budget. Current `origin/main` at refresh: `804c877`. Merge-tree against that main was clean. Terminal Quality/Origin checks for the published head of this pass are the publish gate.
 
 The founder-production capability is **off** until every name below is deliberately set. Default production remains production. Mock output cannot be presented as live AI generation.
 
@@ -17,7 +17,7 @@ The founder uses the real OpenAI adapter inside the actual Aethelios Architect w
 | Disabled (default) | `appsAiReady` is false. Propose returns unavailable. Worker may compile already-approved revisions only after commissioned compile flags exist. |
 | Enabled founder pilot | Production `APP_ENV` stays `production`. `ARCHITECT_APPS_FOUNDER_PILOT=true`, `ARCHITECT_APPS_AI_ENABLED=true`, server-only `OPENAI_API_KEY`, commissioned worker, and `currentFounderAccess()` (session + `founder_access` RLS) all pass. `defaultAppGenerationTransport` selects `openaiAppTransport`. |
 | Denied mock-in-production | `ARCHITECT_APPS_AI_MOCK=true` in production is a refused configuration. Worker preflight/health fail. No mocked files are labelled as model output. |
-| Ordinary account | Server-verified founder check fails. HTTP 403 class `permission`. Browser flags and client-supplied founder IDs do nothing. |
+| Ordinary account | Server-verified founder check fails on propose, approve, start, retries and revisions. HTTP 403 class `permission`. Ownership of a project is not founder entitlement. Browser flags and client-supplied founder IDs do nothing. Existing owned records and compiled previews remain readable by the owner. |
 
 Identity is the existing person-bound `founder_access` row. Email, membership, user metadata, cookies, and client headers are not authorization.
 
@@ -52,8 +52,9 @@ Shared with #130 (apply once): `20261015080000`, `20261015120000`, `202610151400
 | --- | --- | --- |
 | `20261015155000_architect_apps_retain_verified.sql` | Interim retain contract on this branch | After `140000`, before `156000`. **Skip** if Talk `160000`/`170000` are applied in the same commissioning — Talk remains the merge-winning retain contract. |
 | `20261015156000_architect_apps_preview_sessions.sql` | `architect_app_preview_sessions` plus `architect_apps_preview_issue` / `read` / `current` / `revoke`. Talk’s 18-name package does **not** include this. | After the shared Apps three (and after `155000` only when that file is used). |
+| `20261015156500_architect_apps_pilot_budget.sql` | `architect_app_generation_runs`, `architect_app_worker_presence`, reserve/finish/presence/readiness RPCs, and the replaced schema probe. Talk’s 18-name package does **not** include this. | After `156000`, before Talk `160000`/`170000`. Unique forward file; do not replay Talk’s batch. |
 
-Probe contracts that must exist after apply: tables `architect_apps`, `architect_app_revisions`, `architect_app_artifacts.revision_id`, `architect_app_jobs`, `architect_app_events`, `architect_app_records`, `architect_app_preview_sessions.nonce`; RPCs `architect_apps_approve`, `_start`, `_claim`, `_heartbeat`, `_finish`, `_write_record`, `_timeout`, `_schema_probe`, `_preview_issue`, `_preview_read`, `_preview_current`, `_preview_revoke`.
+Probe contracts that must exist after apply: tables `architect_apps`, `architect_app_revisions`, `architect_app_artifacts.revision_id`, `architect_app_jobs`, `architect_app_events`, `architect_app_records`, `architect_app_preview_sessions.nonce`, `architect_app_generation_runs.request_id`, `architect_app_worker_presence.worker_id`; RPCs `architect_apps_approve`, `_start`, `_claim`, `_heartbeat`, `_finish`, `_write_record`, `_timeout`, `_schema_probe`, `_preview_issue`, `_preview_read`, `_preview_current`, `_preview_revoke`, `_reserve_generation`, `_finish_generation`, `_report_worker_presence`, `_worker_readiness`.
 
 This branch also carries Origin tool/repair files that are not on current main (`20261014080000`, `190000`, `203000`, `220000`, `224500`). They are not Apps worker contracts. Do not assume hosted Talk apply creates them.
 
@@ -140,7 +141,7 @@ Through Supabase (not this agent):
 
 Do not merge `main` until the founder separately approves the automatic Vercel Production deploy that merge causes.
 
-1. **Schema.** Apply shared Apps `080000` / `120000` / `140000` once (skip if Talk already applied those exact names). Apply `156000` from this branch. Apply `155000` only when Talk retain `160000`/`170000` will not be applied. Apply Talk’s remaining files on the Talk release, not twice.
+1. **Schema.** Apply shared Apps `080000` / `120000` / `140000` once (skip if Talk already applied those exact names). Apply `156000` then `156500` from this branch. Apply `155000` only when Talk retain `160000`/`170000` will not be applied. Apply Talk’s remaining files on the Talk release, not twice. Do not replay the original 18-name batch.
 2. **Worker host.** Create the $12 Docker Droplet. Install nothing extra if `docker version` already works. Clone this SHA. `node scripts/architect-apps-prepare-runtime.mjs`.
 3. **Proofs.** `--prove-write`, `--prove-compile`, `--prove-topology`. Then `--preflight` must be `ok` / `idle` with work-root `ready` and generation `permitted`.
 4. **Denied proof.** A disposable local env with production + `ARCHITECT_APPS_AI_MOCK=true` must report generation `refused` and fail health. Do not use that env for hosting.
@@ -152,16 +153,21 @@ Do not merge `main` until the founder separately approves the automatic Vercel P
 
 ## Bounded real-model acceptance case (not executed)
 
-One founder session, two model calls, `maxRetries=0`, `maxOutputTokens=4000`, 30s generation timeout, 90s compile timeout.
+Selected model: configured default `AURELIUS_AI_MODEL=gpt-6-astra` (not GPT-5.5). Official standard short-context list price inspected 2026-10-15 from https://developers.openai.com/api/docs/pricing: **$10.00 / 1M input** and **$50.00 / 1M output** for ≤272K input tokens. Long-context (>272K) is $20 / $75 and is refused by the 16k input ceiling.
 
-1. Sign in as the founder on production Aethelios.
-2. Create a small Field Notes app from a short brief (create).
-3. Accept, start, wait for isolated compile and compiled preview.
-4. Revise with “Add an optional tag.”
-5. Accept, compile, confirm last-good retention if the revise compile fails.
-6. Reopen the last working revision.
+Server-side acceptance allowance (atomic, person+run): 2 calls, 16k input / 4k output per call, **$1.00 reserved cap**. Two ceiling reservations cost $0.72 list ($0.16 input + $0.20 output each). Per-call `maxRetries=0`, `maxOutputTokens=4000`, 30s generation timeout, 90s compile timeout remain. Concurrent requests and retries reuse the same `requestId` without a second provider call.
 
-**Proposed maximum spend: $2.00 USD** for those two calls, including list-price uncertainty around `gpt-6-astra` / current OpenAI rates (public GPT-5.5 standard is $5 / $30 per 1M input/output as of this writing; two bounded 4000-token completions plus context stay well under $2). No silent retries. If either call errors, stop; do not re-run without a new approval.
+1. Sign in as the founder on production Aethelios. An ordinary owner of the same project must still receive not-enabled on propose/approve/start.
+2. Confirm worker readiness (`architect_apps_worker_readiness`) is recent, digest-matched, isolated, and schema/queue/artifact capable. Do not send a paid propose if it is missing or stale.
+3. Create a small Field Notes app from a short brief (create).
+4. Accept, start, wait for isolated compile and compiled preview.
+5. Revise with “Add an optional tag.”
+6. Accept, compile, confirm last-good retention if the revise compile fails.
+7. Reopen the last working revision.
+
+**Proposed maximum spend: $1.00 USD** for those two `gpt-6-astra` calls. This is the server reserved cap, not an OpenAI dashboard alert. OpenAI spend alerts notify only and do not stop traffic. Organization/project hard spend limits can slightly overshoot while the limit state propagates (https://developers.openai.com/api/docs/guides/spend-limits). If the provider omits usage, the receipt keeps the reserved ceiling. If either call errors, stop; do not re-run without a new approval. A single preflight cannot keep the worker available after admission; a later worker failure must fail the job without a second model call or a false compile success.
+
+Implemented readiness (code + local tests) is not commissioned infrastructure. No worker host, hosted SQL, or production flags exist until the approvals below.
 
 ## Recovery and rollback
 
@@ -181,7 +187,7 @@ One founder session, two model calls, `maxRetries=0`, `maxOutputTokens=4000`, 30
 | Create DigitalOcean account / Droplet / SSH | Not approved |
 | Write `OPENAI_API_KEY`, worker token, or service-role key onto a host | Not approved |
 | Set `ARCHITECT_APPS_FOUNDER_PILOT` or `ARCHITECT_APPS_AI_ENABLED` in production | Not approved |
-| Paid OpenAI acceptance case (max $2) | Not approved |
+| Paid OpenAI acceptance case (max $1.00, gpt-6-astra short-context) | Not approved |
 | Talk #131 merge / Talk SQL | Separate Talk release |
 
 This workstream may only publish code and documentation to the review branch.

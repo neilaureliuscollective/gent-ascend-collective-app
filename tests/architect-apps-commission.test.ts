@@ -120,6 +120,10 @@ it('keeps paid generation closed and lists required schema names', async () => {
   expect(blockers.generationReady).toBe(false);
   expect(blockers.blockers.join(' ')).toMatch(/commissioned|Vercel/i);
   expect(expectedAppsSchemaNames().tables).toContain('architect_app_jobs');
+  expect(expectedAppsSchemaNames().tables).toContain('architect_app_generation_runs');
+  expect(expectedAppsSchemaNames().tables).toContain('architect_app_worker_presence');
+  expect(expectedAppsSchemaNames().rpcs).toContain('architect_apps_reserve_generation');
+  expect(expectedAppsSchemaNames().rpcs).toContain('architect_apps_worker_readiness');
   expect(requiredAppsSchemaContracts.tables.architect_app_artifacts).toEqual(['revision_id']);
   expect(requiredAppsSchemaContracts.tables.architect_app_artifacts).not.toContain('id');
   expect(classifySchemaProbeError({ code: '42703', message: 'column id does not exist' })).toBe('misconfigured');
