@@ -5,9 +5,10 @@ import { readProductStory } from '@/domains/commerce/product-story';
 import { tokenizeQuestion } from './memory-retrieval';
 
 export type CatalogStatus = 'ready' | 'unconfigured' | 'empty' | 'error';
-export type ProductKnowledgeStatus = CatalogStatus | 'stale';
+export type ProductKnowledgeStatus = CatalogStatus | 'stale' | 'ambiguous';
 export type ProductFreshness = 'live-detail' | 'stale-catalog-fallback' | 'unknown';
 export type ProductKnowledgeMode = 'detail' | 'assortment' | 'follow-up';
+export type ProductUnresolvedKind = 'ambiguous-product' | 'ambiguous-variant' | 'empty' | null;
 
 type CatalogProduct = {
   id: string;
@@ -78,6 +79,11 @@ export type ProductKnowledgeRecord = {
   missing: string[];
 };
 
+export type ProductKnowledgeOptions = {
+  priorText?: string;
+  recentUserTexts?: readonly string[];
+};
+
 export type ProductKnowledgeSnapshot = {
   retrievedAt: string;
   status: ProductKnowledgeStatus;
@@ -87,6 +93,9 @@ export type ProductKnowledgeSnapshot = {
   catalogFetchedAt: string | null;
   connectionRequirement: string | null;
   records: ProductKnowledgeRecord[];
+  unresolved: boolean;
+  unresolvedKind: ProductUnresolvedKind;
+  clarifyingQuestion: string | null;
 };
 
 export type ProductKnowledgeReaders = {
@@ -137,6 +146,38 @@ export function conversationCueText(
     .join('\n');
 }
 
+export function recentUserTextsFromTurns(turns: readonly { user_text?: string }[], limit = 6) {
+  return turns
+    .map((turn) => turn.user_text?.trim() ?? '')
+    .filter(Boolean)
+    .slice(-limit);
+}
+
+export function normalizeOptionText(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/(\d+)\s+(ml|oz|g|kg|mm|cm)\b/g, '$1$2')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+export function optionDimensions(text: string) {
+  return [
+    ...new Set(
+      normalizeOptionText(text)
+        .split(' ')
+        .filter((token) => token.length >= 2),
+    ),
+  ];
+}
+
+export function healthConcernAlone(text: string) {
+  const health = /\b(diagnos\w*|rash|symptom|bloodwork|lab result|pain|fever|clinic|dose)\b/i.test(
+    text,
+  );
+  return health && !productQuestionRelevant(text);
+}
+
 export function mentionedProductHandles(text: string) {
   return [...text.toLowerCase().matchAll(/\/shop\/([a-z0-9-]{1,120})/g)].map((match) => match[1]);
 }
@@ -164,23 +205,77 @@ export function scoreCatalogProduct(
   return tokens.reduce((score, token) => score + (hay.includes(token) ? 1 : 0), 0);
 }
 
+function productMentionScore<T extends CatalogProduct>(
+  product: T,
+  text: string,
+  handleBonus: number,
+) {
+  const normalized = normalizeOptionText(text);
+  const tokens = tokenizeQuestion(normalized);
+  const handles = new Set(mentionedProductHandles(text));
+  const title = normalizeOptionText(product.title);
+  const handleWords = product.handle.replace(/-/g, ' ');
+  let score =
+    (handles.has(product.handle) ? handleBonus : 0) + scoreCatalogProduct(product, tokens);
+  if (title.length >= 4 && normalized.includes(title)) score += handleBonus;
+  else if (handleWords.length >= 4 && normalized.includes(handleWords))
+    score += Math.max(2, Math.floor(handleBonus / 2));
+  return score;
+}
+
 export function selectCatalogMatches<T extends CatalogProduct>(
   products: readonly T[],
   question: string,
-  limit = 3,
-) {
-  const tokens = tokenizeQuestion(question);
-  const handles = new Set(mentionedProductHandles(question));
-  return products
-    .map((product, index) => ({
-      product,
-      score: (handles.has(product.handle) ? 8 : 0) + scoreCatalogProduct(product, tokens),
-      index,
-    }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, limit)
-    .map((item) => item.product);
+  options: { recentUserTexts?: readonly string[]; limit?: number } = {},
+): { products: T[]; ambiguous: boolean } {
+  const limit = options.limit ?? 3;
+  const recent = (options.recentUserTexts ?? []).filter(Boolean).slice(-6);
+  const latestMention =
+    [...recent]
+      .reverse()
+      .find(
+        (text) =>
+          mentionedProductHandles(text).length > 0 ||
+          products.some((product) => productMentionScore(product, text, 8) > 0),
+      ) ?? '';
+  const ranked = products.map((product, index) => {
+    const currentScore = productMentionScore(product, question, 12);
+    const recentScore = latestMention ? productMentionScore(product, latestMention, 4) : 0;
+    return { product, index, currentScore, recentScore };
+  });
+  const withCurrent = ranked.filter((item) => item.currentScore > 0);
+  const pool = (
+    withCurrent.length ? withCurrent : ranked.filter((item) => item.recentScore > 0)
+  ).sort((a, b) =>
+    withCurrent.length
+      ? b.currentScore - a.currentScore || a.index - b.index
+      : b.recentScore - a.recentScore || a.index - b.index,
+  );
+  if (!pool.length) return { products: [], ambiguous: false };
+  const lead = withCurrent.length ? pool[0]!.currentScore : pool[0]!.recentScore;
+  const tied = pool.filter((item) =>
+    withCurrent.length ? item.currentScore === lead : item.recentScore === lead,
+  );
+  const namedDistinct = tied.filter((item) => {
+    const q = normalizeOptionText(question);
+    const title = normalizeOptionText(item.product.title);
+    const handleWords = item.product.handle.replace(/-/g, ' ');
+    return (
+      mentionedProductHandles(question).includes(item.product.handle) ||
+      (title.length >= 4 && q.includes(title)) ||
+      (handleWords.length >= 4 && q.includes(handleWords))
+    );
+  });
+  const uniqueNamed = namedDistinct.length === 1 ? namedDistinct : null;
+  const comparison =
+    /\b(compare|both|either|or the|and the)\b/i.test(question) || namedDistinct.length > 1;
+  const ambiguous = tied.length > 1 && !comparison && !uniqueNamed;
+  return {
+    products: (uniqueNamed ?? (ambiguous ? tied : pool))
+      .slice(0, limit)
+      .map((item) => item.product),
+    ambiguous,
+  };
 }
 
 function unknownIfBlank(value: string | null | undefined) {
@@ -203,19 +298,22 @@ function variantPurchasable(
   );
 }
 
-function chooseVariant(
+export function chooseVariant(
   variants: ProductVariantFact[],
   question: string,
 ): { selectedVariantId: string | null; needsVariantChoice: boolean } {
   if (variants.length === 0) return { selectedVariantId: null, needsVariantChoice: false };
   if (variants.length === 1)
     return { selectedVariantId: variants[0]!.variantId, needsVariantChoice: false };
-  const tokens = tokenizeQuestion(question);
-  const named = variants.find((variant) => {
-    const hay = variant.title.toLowerCase();
-    return tokens.some((token) => hay.includes(token) && token.length >= 3);
+  const catalogDims = new Set(variants.flatMap((variant) => optionDimensions(variant.title)));
+  const specified = optionDimensions(question).filter((dimension) => catalogDims.has(dimension));
+  if (!specified.length) return { selectedVariantId: null, needsVariantChoice: true };
+  const complete = variants.filter((variant) => {
+    const dims = new Set(optionDimensions(variant.title));
+    return specified.every((dimension) => dims.has(dimension));
   });
-  if (named) return { selectedVariantId: named.variantId, needsVariantChoice: false };
+  if (complete.length === 1)
+    return { selectedVariantId: complete[0]!.variantId, needsVariantChoice: false };
   return { selectedVariantId: null, needsVariantChoice: true };
 }
 
@@ -311,10 +409,15 @@ export function productKnowledgeMode(
 export async function loadProductKnowledge(
   question: string,
   readers: ProductKnowledgeReaders,
-  options: { priorText?: string } = {},
+  options: ProductKnowledgeOptions = {},
 ): Promise<ProductKnowledgeSnapshot | null> {
-  const priorText = options.priorText ?? '';
-  const mode = productKnowledgeMode(question, priorText);
+  const recentUserTexts = (options.recentUserTexts?.filter(Boolean).slice(-6) ?? []).length
+    ? options.recentUserTexts!.filter(Boolean).slice(-6)
+    : options.priorText
+      ? [options.priorText]
+      : [];
+  const cue = recentUserTexts.join('\n');
+  const mode = productKnowledgeMode(question, cue);
   if (!mode) return null;
   const retrievedAt = (readers.now ?? new Date()).toISOString();
   const catalog = await readers.catalog();
@@ -329,15 +432,17 @@ export async function loadProductKnowledge(
       catalogFetchedAt: null,
       connectionRequirement,
       records: [],
+      unresolved: false,
+      unresolvedKind: null,
+      clarifyingQuestion: null,
     };
   }
-  const search = [question, priorText].filter(Boolean).join('\n');
-  const matches =
+  const selected =
     mode === 'assortment'
-      ? catalog.products.slice(0, 12)
-      : selectCatalogMatches(catalog.products, search, 3);
+      ? { products: catalog.products.slice(0, 12), ambiguous: false }
+      : selectCatalogMatches(catalog.products, question, { recentUserTexts, limit: 3 });
   const records: ProductKnowledgeRecord[] = [];
-  for (const summary of matches) {
+  for (const summary of selected.products) {
     if (mode === 'assortment') {
       records.push(shapeProductRecord(summary, retrievedAt, false, question));
       continue;
@@ -352,23 +457,45 @@ export async function loadProductKnowledge(
         detail = null;
       }
     }
-    records.push(shapeProductRecord(detail ?? summary, retrievedAt, detailLoaded, search));
+    records.push(shapeProductRecord(detail ?? summary, retrievedAt, detailLoaded, question));
   }
+  const variantAmbiguous = records.some((record) => record.needsVariantChoice);
+  const unresolvedKind: ProductUnresolvedKind = selected.ambiguous
+    ? 'ambiguous-product'
+    : variantAmbiguous
+      ? 'ambiguous-variant'
+      : records.length
+        ? null
+        : 'empty';
   const freshness = snapshotFreshness(records);
   const stale = records.some((record) => record.freshness !== 'live-detail');
+  const clarifyingQuestion = selected.ambiguous
+    ? 'Which product do you mean? The latest choice is not unique.'
+    : variantAmbiguous
+      ? 'Which variant should I use? Size and scent need a unique match.'
+      : null;
   return {
     retrievedAt,
-    status: records.length && stale ? 'stale' : 'ready',
+    status: selected.ambiguous
+      ? 'ambiguous'
+      : records.length && stale
+        ? 'stale'
+        : records.length
+          ? 'ready'
+          : 'ready',
     freshness,
     mode,
     catalogMaxAgeSeconds: 300,
     catalogFetchedAt: null,
-    connectionRequirement: matches.length
+    connectionRequirement: selected.products.length
       ? stale
         ? 'Catalog list data may be cached up to 300s. Not freshly verified: detail fetch did not verify price or stock. Do not describe fallback figures as live. catalogFetchedAt is unknown; do not treat retrievedAt as live stock age.'
-        : null
+        : clarifyingQuestion
       : 'No catalog product matched this question. Missing facts stay unknown.',
     records,
+    unresolved: unresolvedKind === 'ambiguous-product' || unresolvedKind === 'ambiguous-variant',
+    unresolvedKind,
+    clarifyingQuestion,
   };
 }
 

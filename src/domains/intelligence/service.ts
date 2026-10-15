@@ -18,8 +18,8 @@ import { selectedArtifactContext } from '@/domains/artifacts/context-service';
 import { selectConfirmedMemories } from './memory-retrieval';
 import {
   catalogConnectionRequirement,
-  conversationCueText,
   loadProductKnowledge,
+  recentUserTextsFromTurns,
 } from './product-knowledge';
 import { selectPlaybooks } from './playbooks';
 import { getProduct } from '@/domains/commerce/shopify';
@@ -669,9 +669,10 @@ export async function prepareReply(
   let threadSummary: string;
   let artifactContext = '';
   let productKnowledge: Awaited<ReturnType<typeof loadProductKnowledge>> = null;
+  let recentUserTexts: string[] = [];
   try {
     history = await conversationTurns(input.conversationId, undefined, company?.id);
-    const priorText = conversationCueText(history);
+    recentUserTexts = recentUserTextsFromTurns(history);
     [context, productKnowledge] = await Promise.all([
       input.includeContext ? personalContext(input.text) : Promise.resolve(null),
       loadProductKnowledge(
@@ -680,7 +681,7 @@ export async function prepareReply(
           catalog: readLifestyleCatalog,
           detail: getProduct,
         },
-        { priorText },
+        { recentUserTexts },
       ).catch(() => ({
         retrievedAt: new Date().toISOString(),
         status: 'error' as const,
@@ -690,6 +691,9 @@ export async function prepareReply(
         catalogFetchedAt: null,
         connectionRequirement: catalogConnectionRequirement('error'),
         records: [],
+        unresolved: false,
+        unresolvedKind: null,
+        clarifyingQuestion: null,
       })),
     ]);
     measured('history-context');
@@ -720,7 +724,9 @@ export async function prepareReply(
     company,
     {
       productKnowledge,
-      playbooks: company ? [] : selectPlaybooks(input.text, capabilityContext(input.text)?.id),
+      playbooks: company
+        ? []
+        : selectPlaybooks(input.text, capabilityContext(input.text)?.id, 2, { recentUserTexts }),
       channel: 'text',
     },
   );

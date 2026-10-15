@@ -160,11 +160,20 @@ const patterns: Array<[PlaybookId, RegExp]> = [
   ['talk', /\b(decide|compare|options|directions?|explore|idea)\b/i],
 ];
 
+const SHORT_FOLLOW_UP =
+  /^(that one|the second(?: one)?|use that|use the second|yes|ok|okay|continue|the oil|this one)\b/i;
+
 export function selectPlaybooks(
   text: string,
   capability?: CapabilityId | null,
   limit = 2,
+  options: { recentUserTexts?: readonly string[] } = {},
 ): Playbook[] {
+  const recent = (options.recentUserTexts ?? []).filter(Boolean);
+  const source =
+    SHORT_FOLLOW_UP.test(text.trim()) && recent.length
+      ? ([...recent].reverse().find((item) => item.trim().length > 12) ?? text)
+      : text;
   const chosen: PlaybookId[] = [];
   if (capability === 'lifestyle') chosen.push('lifestyle');
   if (capability === 'health') chosen.push('health');
@@ -172,7 +181,8 @@ export function selectPlaybooks(
   if (capability === 'company') chosen.push('architect');
   for (const [id, pattern] of patterns) {
     if (chosen.length >= limit) break;
-    if (pattern.test(text) && !chosen.includes(id)) chosen.push(id);
+    pattern.lastIndex = 0;
+    if (pattern.test(source) && !chosen.includes(id)) chosen.push(id);
   }
   return chosen.slice(0, limit).map((id) => playbooks[id]);
 }
