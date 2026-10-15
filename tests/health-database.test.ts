@@ -351,4 +351,31 @@ describe('Health private schema (SQL emulation, not live Auth/Storage)', () => {
     };
     expect(exported.health_export_history.workspaceRevisions[0]?.settings).toBeTruthy();
   });
+
+  it('applies Talk 15180000, Health 15181000 and Talk 15190000 in filename order', async () => {
+    const row = (
+      await db.query(`select
+        to_regclass('health_private.workspaces') is not null as health_workspace,
+        to_regclass('public.ai_live_observed_items') is not null as talk_observe,
+        to_regprocedure('public.ai_live_observe_trusted_item(uuid,uuid,text,text,uuid)') is not null as observe5,
+        to_regprocedure('public.ai_live_observe_trusted_item(uuid,uuid,text,text)') is not null as observe4,
+        exists (
+          select 1 from information_schema.columns
+          where table_schema='public' and table_name='ai_live_observed_items' and column_name='intended_turn_id'
+        ) as intended_turn`)
+    ).rows[0] as {
+      health_workspace: boolean;
+      talk_observe: boolean;
+      observe5: boolean;
+      observe4: boolean;
+      intended_turn: boolean;
+    };
+    expect(row).toEqual({
+      health_workspace: true,
+      talk_observe: true,
+      observe5: true,
+      observe4: false,
+      intended_turn: true,
+    });
+  });
 });
