@@ -7,13 +7,13 @@ October 15, 2026. Dedicated motion workstream on Talk Elevation. Review branch o
 | Layer | Reference | Head |
 | --- | --- | --- |
 | Production main | Studio #132 | `804c8770754aced1837e82dffa4a416c24baa595` |
-| Talk foundation | PR #131 `cursor/talk-creative-conversation-5b08` | `b822c319d5378b8a130bcd3c7960c5acdac125cf` |
-| Talk Elevation | PR #135 `cursor/talk-elevation-5b08` | `a859c239d7cc596bf24b58c2cbcd27f0b573796e` |
-| This workstream | `cursor/aethelios-conversation-motion-0a11` · PR #139 | restack after `fdfbcc3b6e0b656530346c53b291363fc8afe904` |
+| Talk foundation | PR #131 `cursor/talk-creative-conversation-5b08` | last restacked code `b822c319d5378b8a130bcd3c7960c5acdac125cf`; current #131 `fa8b7f6c47c351fc41e91d92df0831b068de2022` is docs-only |
+| Talk Elevation | PR #135 `cursor/talk-elevation-5b08` | last restacked `a859c239d7cc596bf24b58c2cbcd27f0b573796e`; current parent `b801b347d89a5e678473f7079565444a1139a7ba` is that docs-only pin |
+| This workstream | `cursor/aethelios-conversation-motion-0a11` · PR #139 | `1ff47a675e584e44101bf2abf37c69d2413ee1dd` plus this review-package commit |
 
-Talk remains unmerged. This branch documents the stack and keeps inline voice dock, single transcript, conversation continuity, artifact targeting and release-diagnostic repairs from #131/#135. It does not merge those branches and does not duplicate their implementation.
+Talk remains unmerged. Motion is **9 ahead / 2 behind** the current #135 parent. The two incoming commits are documentation only (`fa8b7f6`, merge `b801b34`). This branch was **not restacked** solely to chase that documentation. Merge-base remains `a859c23`. Inline voice dock, single transcript, conversation continuity, artifact targeting and release-diagnostic repairs from #131/#135 are kept and not duplicated.
 
-Last inspected elevation head before this restack: `a859c239d7cc596bf24b58c2cbcd27f0b573796e`. Merge-base was `948a9b95`. Refreshed 2026-10-15.
+Playable H.264 review clips: [docs/evidence/conversation-motion/review-clips/](evidence/conversation-motion/review-clips/).
 
 ## Starting findings
 
@@ -75,7 +75,7 @@ The motion fixture now mounts `ConversationViewport` (`.talk-page`) and smoked-g
 - `vitest run` conversation/motion units 9/9 in this file (includes persistent-notice coverage)
 - `playwright.motion.config.ts` 35/35 after header, announcer and composer-focus assertions
 - Actual Next `/app/aethelios` 200 on local `:3100` (signed-out / disconnected workspace). Visible header controls stay inside 320 / 344 / 390 / 690 CSS px, including 24px text-zoom and 690×420 keyboard-open. 320–344 hide the redundant New control; 390 and Fold keep it. Focused composer: textarea outline none, gold 2px shell. No local Auth session, so send/stream was not exercised on this route.
-- Review clips use ~2s settled opening, ≥2s dwell per readable state, and a settled ending. Product animation timing is unchanged. Labeled synthetic fixture plus signed-out Next Talk. Not paid Live.
+- Review clips use ~2s settled opening, ≥2s dwell per readable state, and a settled ending. Product animation timing is unchanged. Labeled synthetic fixture plus signed-out Next Talk. Not paid Live. Playable H.264 copies: [docs/evidence/conversation-motion/review-clips/](evidence/conversation-motion/review-clips/).
 - Production `next build`, hosted Auth, physical Fold, paid Live and live microphone were not run.
 
 Synthetic fixture sequences are labeled and are not live provider proof.
