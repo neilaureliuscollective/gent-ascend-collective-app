@@ -8,7 +8,7 @@ for (const width of [344, 720, 1440, 2560]) {
     await page.goto('/app/aethelios');
     await expect(page.locator('.imperial-workspace')).toHaveCSS(
       'background-color',
-      'rgb(17, 17, 17)',
+      'rgb(5, 7, 6)',
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
