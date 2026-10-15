@@ -700,10 +700,6 @@ export function AureliusWorkspace({
       creationScope.current = idleCreationScope();
     };
   }, [initialConversation, homeDraft, initialDraft, compact, loadCreations, recoverPendingSaves, stopImageWatch]);
-  useEffect(() => {
-    if (follow.current && scroll.current)
-      scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
-  }, [data?.turns, busy, operation.id]);
   async function sendMessage(
     messageText: string,
     replace?: { sourceTurnId: string; revisionKind: 'retry' | 'regenerate' | 'edit' } | null,
@@ -1999,10 +1995,11 @@ export function AureliusWorkspace({
           <div
             className="conversation-scroll"
             ref={scroll}
+            onWheel={(event) => { if (event.deltaY < 0) follow.current = false; }}
             onScroll={() => {
               const el = scroll.current;
               if (el) {
-                follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+                follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
                 setAwayFromLatest(!follow.current);
                 rememberReadingPosition();
               }

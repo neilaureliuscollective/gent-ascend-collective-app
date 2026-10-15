@@ -117,7 +117,10 @@ export function TalkInput({
     // The viewport owner sets the CSS cap; do not independently subtract keyboard geometry.
     const limit = Math.max(44, parseFloat(getComputedStyle(field).maxHeight) || 200);
     field.style.height = '0px';
+    const previousScroll = field.scrollTop;
     field.style.height = `${Math.max(44, Math.min(field.scrollHeight, limit))}px`;
+    // Preserve a reader’s caret position; a cleared accepted draft must collapse fully.
+    field.scrollTop = field.value ? previousScroll : 0;
   }, [inputRef]);
   useLayoutEffect(resize, [value, resize]);
   useEffect(() => {

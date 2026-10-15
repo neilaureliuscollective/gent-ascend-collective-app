@@ -2,6 +2,7 @@ import {
   DESIGN_DIRECTION_SCHEMA,
   designDirectionDigest,
   designDirectionReceiptSchema,
+  designDirectionContentSchema,
   type DesignDirectionContent,
   type DesignDirectionReceipt,
 } from '@/domains/architect-design-direction/contract';
@@ -114,7 +115,7 @@ export function produceArchitectDirection(input: {
     demo: {
       kind: 'none',
       labelled: true,
-      note: 'Talk hero-product demonstration stays in Talk. Architect v1 accepts tracker or none only.',
+      note: input.board.rendererVersion === 'premium/v2' ? 'Exact creative retained in designSnapshot. This receipt does not commission a build.' : 'Talk hero-product demonstration stays in Talk. Architect v1 accepts tracker or none only.',
     },
     copy: {
       title: direction.copy.headline.slice(0, 120),
@@ -123,6 +124,11 @@ export function produceArchitectDirection(input: {
         .filter(Boolean)
         .slice(0, 16),
     },
+    ...(input.board.rendererVersion === 'premium/v2' ? { designSnapshot: {
+      rendererVersion: input.board.rendererVersion,
+      product: input.board.product,
+      direction,
+    } } : {}),
     assets: direction.assets.map((asset) => ({
       id: assetIdentity(input.boardId, asset.id),
       kind: 'image' as const,
@@ -130,6 +136,7 @@ export function produceArchitectDirection(input: {
       note: `${asset.label} · ${asset.kind} · ${asset.provenance}`.slice(0, 400),
     })),
   };
+  const canonicalContent = designDirectionContentSchema.parse(content);
   const sourceRecords = [
     { kind: 'conversation' as const, id: input.conversationId },
     { kind: 'board' as const, id: input.boardId, revision: input.version },
@@ -138,8 +145,8 @@ export function produceArchitectDirection(input: {
   return designDirectionReceiptSchema.parse({
     schema: DESIGN_DIRECTION_SCHEMA,
     identity,
-    content,
-    digest: designDirectionDigest(content, sourceRecords),
+    content: canonicalContent,
+    digest: designDirectionDigest(canonicalContent, sourceRecords),
     sourceRecords,
   });
 }

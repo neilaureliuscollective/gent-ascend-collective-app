@@ -280,16 +280,6 @@
   gap: 8px;
   padding: 10px;
 }
-.talk-design-board:not([data-expanded]) .talk-design-hero {
-  padding: 12px;
-}
-.talk-design-board:not([data-expanded]) .talk-design-bottle {
-  height: 72px;
-}
-.talk-design-board:not([data-expanded]) .talk-design-hero h4 {
-  margin: 4px 0 0;
-  font-size: 16px;
-}
 .talk-design-directions {
   display: flex;
   flex-wrap: nowrap;
@@ -309,35 +299,54 @@
 .talk-design-direction[data-selected] {
   border-color: #c4912f;
 }
+@font-face { font-family: 'Campaign Sora'; src: url('../../assets/fonts/sora.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Campaign Inter'; src: url('../../assets/fonts/inter.woff2') format('woff2'); font-display: swap; }
 .talk-design-hero {
-  padding: 16px;
-  background: var(--board-surface, #163028);
-  color: var(--board-text, #e4bd70);
-  border: 1px solid var(--board-border, #205443);
-}
-.talk-design-hero[data-shape='soft'] {
-  border-radius: 16px;
-}
-.talk-design-hero[data-shape='pill'] {
-  border-radius: 28px;
-}
-.talk-design-hero[data-spacing='compact'] {
-  padding: 10px;
-}
-.talk-design-hero[data-spacing='generous'] {
-  padding: 24px;
-}
-.talk-design-pack {
+  container-type: inline-size;
   display: grid;
-  justify-items: center;
-  gap: 6px;
-  margin: 12px 0;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: clamp(20px, 4vw, 48px);
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--board-background, #080b0c);
+  color: var(--board-text, #f6f0e4);
+  border: 1px solid var(--board-border, #657773);
+  box-shadow: inset 0 1px 0 #ffffff30, 0 16px 32px #0005;
+  font-family: var(--board-body-font, 'Campaign Inter'), sans-serif;
 }
-.talk-design-bottle {
-  width: 44px;
-  height: 88px;
-  border-radius: 14px 14px 8px 8px;
-  background: linear-gradient(180deg, var(--board-highlight, #c4912f), var(--board-accent, #0b3b32));
+.talk-design-hero[data-material='carbon'] { background-image: repeating-linear-gradient(115deg, #ffffff03 0 1px, transparent 1px 5px); }
+.talk-design-hero[data-material='charcoal-glass'], .talk-design-hero[data-material='emerald-glass'] {
+  background-image: radial-gradient(ellipse at 95% 40%, color-mix(in srgb, var(--board-accent) 17%, transparent), transparent 60%), linear-gradient(120deg, #ffffff0d, transparent 45%);
+}
+.talk-design-hero[data-material='brushed-metal'] { background-image: repeating-linear-gradient(0deg, #ffffff05 0 1px, transparent 1px 4px), linear-gradient(140deg, var(--board-surface), var(--board-background) 65%); }
+.talk-design-hero[data-material='stone'] { background-image: radial-gradient(ellipse at 0 0, var(--board-surface), transparent 75%); }
+.talk-design-hero[data-shape='soft'] { border-radius: 18px; }
+.talk-design-hero[data-shape='pill'] { border-radius: 28px; }
+.talk-campaign-masthead, .talk-campaign-footer { grid-column: 1 / -1; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 11px; line-height: 1.6; letter-spacing: .08em; }
+.talk-campaign-masthead { border-bottom: 1px solid var(--board-border); padding-bottom: 16px; text-transform: uppercase; }
+.talk-campaign-copy { align-self: center; min-width: 0; }
+.talk-design-hero h4 { font-family: var(--board-display-font, 'Campaign Sora'), sans-serif; font-size: clamp(28px, 6cqi, 58px); font-weight: 500; line-height: 1.1; letter-spacing: -.045em; margin: 16px 0 24px; text-wrap: balance; overflow-wrap: anywhere; color: inherit; }
+.talk-design-hero[data-type='editorial'] h4 { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 400; letter-spacing: -.025em; }
+.talk-design-hero p { max-width: 44ch; line-height: 1.8; font-size: 14px; color: var(--board-text); }
+.talk-design-hero .talk-campaign-kicker { color: var(--board-accent); text-transform: uppercase; letter-spacing: .16em; font-size: 10px; }
+.talk-campaign-art { margin: 0; align-self: center; display: grid; justify-items: center; padding: 20px; min-width: 0; background: linear-gradient(145deg, #ffffff09, #00000028); border: 1px solid color-mix(in srgb, var(--board-border) 45%, transparent); box-shadow: inset 0 1px 1px #ffffff20, 0 20px 40px #0005; }
+.talk-campaign-art img { width: 100%; max-width: 300px; height: auto; object-fit: contain; }
+.talk-campaign-art figcaption { font: 11px/1.7 'Campaign Inter', sans-serif; color: var(--board-muted); text-align: center; margin-top: 12px; }
+.talk-campaign-missing { min-height: 120px; display: grid; place-items: center; color: var(--board-muted); }
+.talk-campaign-footer { color: var(--board-muted); border-top: 1px solid var(--board-border); padding-top: 16px; }
+.talk-design-hero[data-composition='editorial'] { grid-template-columns: minmax(0, 1.6fr) minmax(0, .8fr); }
+.talk-design-hero[data-composition='editorial'] .talk-campaign-art { align-self: end; border: 0; background: none; box-shadow: none; }
+.talk-design-hero[data-composition='statement'] { grid-template-columns: 1fr; text-align: center; }
+.talk-design-hero[data-composition='statement'] .talk-campaign-art { grid-row: 2; background: none; box-shadow: none; border: 0; padding: 0; }
+.talk-design-hero[data-composition='statement'] .talk-campaign-art img { max-width: 120px; }
+.talk-design-hero[data-composition='statement'] .talk-campaign-copy { max-width: 600px; margin: auto; }
+.talk-design-hero[data-composition='statement'] p { margin-inline: auto; }
+.talk-design-direction:focus-visible { outline: 3px solid #51dbab; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .talk-design-hero, .talk-design-hero[data-composition='editorial'] { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .talk-campaign-art img { max-width: 150px; }
+  .talk-design-directions { flex-wrap: wrap; }
 }
 .talk-design-swatches {
   display: grid;
@@ -392,3 +401,17 @@
     transition: none;
   }
 }
+
+.talk-document-preview { padding: clamp(20px, 4vw, 48px); background: #131719; color: #f4efe6; line-height: 1.85; }
+.talk-document-preview > * { max-width: 65ch; margin-inline: auto; }
+.talk-document-preview h1 { font: 500 clamp(28px, 4vw, 42px)/1.18 var(--font-display), sans-serif; letter-spacing: -.03em; margin-bottom: 1em; }
+.talk-document-preview h2 { font-size: 1.3rem; margin-top: 1.8em; color: #e4c88b; }
+.talk-document-preview p { margin-block: 1.1em; }
+.talk-document-preview ul, .talk-document-preview ol { padding-left: 1.5em; }
+.talk-document-preview li { margin-block: .6em; }
+.talk-document-preview a { text-decoration: underline; text-underline-offset: .2em; }
+
+.talk-design-hero[data-spacing='compact'] { padding: 22px; gap: 20px; }
+.talk-design-hero[data-spacing='generous'] { padding: clamp(24px, 5vw, 56px); gap: 32px; }
+.talk-design-hero[data-scale='tight'] h4 { font-size: clamp(26px, 5cqi, 48px); }
+.talk-design-hero[data-scale='open'] h4 { font-size: clamp(32px, 7cqi, 66px); }

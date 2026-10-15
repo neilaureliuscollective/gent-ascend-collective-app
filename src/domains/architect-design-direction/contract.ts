@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { designDirectionSchema } from '@/domains/talk-creation/design-board';
 import { createHash } from 'node:crypto';
 
 /** Talk conversational text import this contract extends. Talk owns the producer UI. */
@@ -16,14 +17,7 @@ export const designColorRole = z.enum([
   'danger',
 ]);
 
-export const designLayoutToken = z.enum([
-  'stack',
-  'split',
-  'board',
-  'form',
-  'gallery',
-  'table',
-]);
+export const designLayoutToken = z.enum(['stack', 'split', 'board', 'form', 'gallery', 'table']);
 
 export const designTypeToken = z.enum(['display', 'body', 'label', 'numeric']);
 
@@ -78,6 +72,14 @@ export const designDirectionContentSchema = z
       })
       .strict(),
     assets: z.array(designAssetRefSchema).max(16),
+    designSnapshot: z
+      .object({
+        rendererVersion: z.literal('premium/v2'),
+        product: z.string().min(1).max(80),
+        direction: designDirectionSchema,
+      })
+      .strict()
+      .optional(),
     compatibleTextImport: z.literal(TEXT_HANDOFF_SCHEMA).optional(),
   })
   .strict();

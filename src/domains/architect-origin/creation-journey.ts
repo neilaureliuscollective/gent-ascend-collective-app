@@ -298,6 +298,9 @@ export function creationBriefForGeneration(content: {
   return [
     brief.idea,
     `Path: ${brief.path}`,
+    content.blueprint?.solution ? `Imported plan: ${content.blueprint.solution}` : '',
+    content.blueprint?.milestones ? `Milestones: ${content.blueprint.milestones}` : '',
+    content.blueprint?.deliverables ? `Deliverables / palette: ${content.blueprint.deliverables}` : '',
     brief.firstVisit ? `First visit: ${brief.firstVisit}` : '',
     brief.audience.trim() ? `Audience: ${brief.audience.trim()}` : '',
     brief.constraints.trim() ? `Constraints: ${brief.constraints.trim()}` : '',

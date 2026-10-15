@@ -30,23 +30,38 @@ export function useReadingAnchor(
     const node = root.current;
     if (!node || !ready) return;
     size.current = { width: node.clientWidth, height: node.clientHeight };
-    const observer = new ResizeObserver(() => {
-      if (node.clientWidth === size.current.width && node.clientHeight === size.current.height)
-        return;
-      const saved = anchor.current;
-      if (!follow.current && saved) {
-        const row = [...node.querySelectorAll<HTMLElement>('[data-turn-id]')].find(
-          (item) => item.dataset.turnId === saved.id,
-        );
-        if (row)
-          node.scrollTop +=
-            row.getBoundingClientRect().top - node.getBoundingClientRect().top - saved.offset;
-      } else if (follow.current) node.scrollTop = node.scrollHeight;
-      size.current = { width: node.clientWidth, height: node.clientHeight };
-      anchor.current = capture(node, follow.current);
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
+    let frame = 0;
+    const restore = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const saved = anchor.current;
+        if (!follow.current && saved) {
+          const row = [...node.querySelectorAll<HTMLElement>('[data-turn-id]')].find(
+            (item) => item.dataset.turnId === saved.id,
+          );
+          if (row)
+            node.scrollTop +=
+              row.getBoundingClientRect().top - node.getBoundingClientRect().top - saved.offset;
+        } else if (follow.current) node.scrollTop = node.scrollHeight;
+        size.current = { width: node.clientWidth, height: node.clientHeight };
+        anchor.current = capture(node, follow.current);
+      });
+    };
+    const observer = new ResizeObserver(restore);
+    const observeContent = () => {
+      observer.observe(node);
+      node.querySelectorAll<HTMLElement>('[data-turn-id]').forEach((row) => observer.observe(row));
+      restore();
+    };
+    // Streamed text, lazy images and artifact insertion can grow a row without resizing the viewport.
+    const mutations = new MutationObserver(observeContent);
+    mutations.observe(node, { childList: true, subtree: true });
+    observeContent();
+    return () => {
+      observer.disconnect();
+      mutations.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [root, follow, ready]);
   return remember;
 }

@@ -699,7 +699,7 @@ export async function reviewDesignDirection(boardId: string) {
     version: creation.version,
     directionId: selectedDirection(board).id,
     receipt,
-    unsupported: [
+    unsupported: board.rendererVersion === 'premium/v2' ? ['Unprovided asset pixels are not transferred. Build approval is separate.'] : [
       'Talk hero-product demonstration stays in Talk. Architect v1 demo is tracker or none.',
       'Typeface names, shape, material, surface/border roles and disclaimer stay in Talk.',
     ],

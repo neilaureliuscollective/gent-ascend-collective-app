@@ -1,3 +1,4 @@
+import type { DesignDirectionContent } from '@/domains/architect-design-direction/contract';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { APP_DATA_SCHEMA } from './schema';
 import { isGeneratedAppPath, isSealedAppPath } from './catalog';
@@ -86,6 +87,8 @@ export type AppGenerationFile = {
 
 export type AppGenerationDirection = {
   schema: string;
+  identity?: DesignDirectionContent['identity'];
+  designSnapshot?: DesignDirectionContent['designSnapshot'];
   name?: string;
   summary?: string;
   digest?: string;
@@ -121,6 +124,8 @@ export function hashedAppFiles(files: AppFile[]): AppGenerationFile[] {
 
 export function supportedDirectionForGeneration(direction?: {
   schema?: string;
+  identity?: DesignDirectionContent['identity'];
+  designSnapshot?: DesignDirectionContent['designSnapshot'];
   name?: string;
   summary?: string;
   digest?: string;
@@ -135,6 +140,8 @@ export function supportedDirectionForGeneration(direction?: {
   if (!direction) return null;
   return {
     schema: direction.schema ?? 'talk-architect-direction/v1',
+    identity: direction.identity,
+    designSnapshot: direction.designSnapshot,
     name: direction.name,
     summary: direction.summary,
     digest: direction.digest,

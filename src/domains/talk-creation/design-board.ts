@@ -39,7 +39,14 @@ export const designBoardTokensSchema = z
       .strict(),
     spacing: z.enum(['compact', 'balanced', 'generous']),
     shape: z.enum(['sharp', 'soft', 'pill']),
-    material: z.enum(['obsidian', 'carbon', 'emerald-glass', 'stone']),
+    material: z.enum([
+      'obsidian',
+      'carbon',
+      'emerald-glass',
+      'stone',
+      'charcoal-glass',
+      'brushed-metal',
+    ]),
   })
   .strict();
 
@@ -50,12 +57,14 @@ export const designBoardAssetSchema = z
     kind: z.enum(['placeholder', 'referenced']),
     provenance: required(80),
     referenced: z.boolean(),
+    source: z.enum(['official-crest', 'studio-version']).optional(),
+    versionId: z.uuid().optional(),
   })
   .strict();
 
 export const designBoardDemoSchema = z
   .object({
-    kind: z.literal('hero-product'),
+    kind: z.enum(['hero-product', 'editorial', 'split-campaign', 'statement']),
     headline: required(80),
     supporting: bounded(200),
     cta: required(40),
@@ -87,6 +96,7 @@ export const designDirectionSchema = z
 export const designBoardContentSchema = z
   .object({
     schema: z.literal('talk-design-board/v1'),
+    rendererVersion: z.literal('premium/v2').optional(),
     title: required(80),
     product: required(80),
     notes: bounded(400),
@@ -116,10 +126,15 @@ export type DesignBoardContent = z.infer<typeof designBoardContentSchema>;
 export type DesignDirection = z.infer<typeof designDirectionSchema>;
 
 export function selectedDirection(board: DesignBoardContent) {
-  return board.directions.find((item) => item.id === board.selectedDirectionId) ?? board.directions[0]!;
+  return (
+    board.directions.find((item) => item.id === board.selectedDirectionId) ?? board.directions[0]!
+  );
 }
 
-export function selectDesignDirection(board: DesignBoardContent, directionId: string): DesignBoardContent {
+export function selectDesignDirection(
+  board: DesignBoardContent,
+  directionId: string,
+): DesignBoardContent {
   const parsed = designBoardContentSchema.parse(board);
   if (!parsed.directions.some((item) => item.id === directionId))
     throw new Error('That direction is not on this board.');
@@ -171,7 +186,8 @@ export function refineSelectedDirection(
   input: { warmer?: boolean; role?: (typeof designColorRoles)[number]; hex?: string },
 ): DesignBoardContent {
   const current = selectedDirection(board);
-  if (input.role && input.hex) return adjustDesignSwatch(board, { directionId: current.id, role: input.role, hex: input.hex });
+  if (input.role && input.hex)
+    return adjustDesignSwatch(board, { directionId: current.id, role: input.role, hex: input.hex });
   if (!input.warmer) return selectDesignDirection(board, current.id);
   return designBoardContentSchema.parse({
     ...board,
@@ -277,84 +293,91 @@ export function legacyReserveBoard(): DesignBoardContent {
   });
 }
 
-/** Labelled Aethelios Lifestyle launch board. Not Legacy Reserve. */
+/** Deterministic proposed campaign. Uses only the approved public identity asset. */
 export function lifestyleLaunchBoard(): DesignBoardContent {
+  const board = legacyReserveBoard();
+  const compositions = ['editorial', 'split-campaign', 'statement'] as const;
+  const names = ['The Founder’s Journal', 'Luminous Precision', 'A Singular Standard'];
+  const headlines = [
+    'Make room for the exceptional.',
+    'A considered daily ritual.',
+    'Ascend with intention.',
+  ];
   return designBoardContentSchema.parse({
-    schema: 'talk-design-board/v1',
-    title: 'Aethelios Lifestyle launch directions',
+    ...board,
+    rendererVersion: 'premium/v2',
+    title: 'Aethelios Lifestyle — launch studies',
     product: 'Aethelios Lifestyle',
     notes:
-      'Labelled deterministic Lifestyle launch board. Demonstration packaging and proposed copy are labelled. Approved product claims are not invented.',
-    selectedDirectionId: 'direction-b',
-    directions: [
-      direction(
-        'direction-a',
-        'Graphite Chamber',
-        {
-          colors: [
-            { role: 'background', name: 'Obsidian', hex: '#050706' },
-            { role: 'surface', name: 'Carbon', hex: '#121416' },
-            { role: 'text', name: 'Ivory', hex: '#F4EFE6' },
-            { role: 'accent', name: 'Steel', hex: '#8B9198' },
-            { role: 'highlight', name: 'Reserve Gold', hex: '#C4912F' },
-            { role: 'muted', name: 'Ash', hex: '#9AA0A6' },
-            { role: 'border', name: 'Graphite', hex: '#2A2E32' },
-          ],
-          typography: { display: 'Sora', body: 'Inter', scale: 'tight' },
-          spacing: 'compact',
-          shape: 'sharp',
-          material: 'carbon',
+      'Deterministic campaign studies. Official identity artwork; product photography has not been supplied. Proposed copy requires review.',
+    directions: board.directions.map((item, index) => ({
+      ...item,
+      name: names[index],
+      tokens: {
+        ...item.tokens,
+        colors: [
+          { role: 'background', name: 'Obsidian', hex: '#080B0C' },
+          { role: 'surface', name: 'Charcoal glass', hex: index === 0 ? '#25282B' : '#151D20' },
+          { role: 'text', name: 'Warm ivory', hex: '#F6F0E4' },
+          { role: 'accent', name: 'Luminous emerald', hex: '#51DBAB' },
+          { role: 'highlight', name: 'Restrained gold', hex: '#DAB66C' },
+          { role: 'muted', name: 'Silver sage', hex: '#C1CEC8' },
+          { role: 'border', name: 'Glass edge', hex: '#657773' },
+        ],
+        typography: {
+          display: index === 0 ? 'Editorial' : 'Sora',
+          body: 'Inter',
+          scale: index === 2 ? 'open' : 'measured',
         },
-        'A graphite chamber for the launch.',
-        'Carbon, ivory and gold.',
-        'Confirmed: Aethelios Lifestyle is the product line. This is labelled demonstration copy.',
-      ),
-      direction(
-        'direction-b',
-        'Warm Reserve',
-        {
-          colors: [
-            { role: 'background', name: 'Obsidian', hex: '#080D0D' },
-            { role: 'surface', name: 'Stone', hex: '#1A1914' },
-            { role: 'text', name: 'Ivory', hex: '#F4EFE6' },
-            { role: 'accent', name: 'Champagne', hex: '#E0BB6A' },
-            { role: 'highlight', name: 'Reserve Gold', hex: '#C4912F' },
-            { role: 'muted', name: 'Sand', hex: '#B7A48A' },
-            { role: 'border', name: 'Bronze', hex: '#6A5430' },
-          ],
-          typography: { display: 'Sora', body: 'Inter', scale: 'measured' },
-          spacing: 'balanced',
-          shape: 'soft',
-          material: 'stone',
+        material: index === 0 ? 'carbon' : index === 1 ? 'charcoal-glass' : 'brushed-metal',
+      },
+      demo: {
+        ...item.demo,
+        kind: compositions[index],
+        headline: headlines[index],
+        supporting:
+          'Considered essentials. Deliberate choices. A daily expression of the person you are becoming.',
+        productLabel: 'Product photography not supplied',
+        image: {
+          id: 'campaign-photo',
+          label: 'Product photography not supplied',
+          kind: 'placeholder',
+          provenance: 'not-supplied',
+          referenced: false,
         },
-        'A warmer reading of the launch.',
-        'Stone, champagne and gold.',
-        'Confirmed: Aethelios Lifestyle is the product line. This is labelled demonstration copy.',
-      ),
-      direction(
-        'direction-c',
-        'Emerald Glass',
+      },
+      copy: {
+        headline: headlines[index],
+        subhead: 'The Human Ascendance',
+        proof: 'Aethelios Lifestyle — proposed launch campaign.',
+        disclaimer: 'Proposed copy. Not an approved claim or live merchandising offer.',
+      },
+      assets: [
         {
-          colors: [
-            { role: 'background', name: 'Green-black', hex: '#07140F' },
-            { role: 'surface', name: 'Glass', hex: '#0B3B32' },
-            { role: 'text', name: 'Ivory', hex: '#F4EFE6' },
-            { role: 'accent', name: 'Mineral Green', hex: '#205443' },
-            { role: 'highlight', name: 'Champagne', hex: '#E4BD70' },
-            { role: 'muted', name: 'Sage', hex: '#8A9A8C' },
-            { role: 'border', name: 'Emerald', hex: '#145246' },
-          ],
-          typography: { display: 'Sora', body: 'Inter', scale: 'open' },
-          spacing: 'generous',
-          shape: 'pill',
-          material: 'emerald-glass',
+          id: 'crest',
+          label: 'Approved Aethelios emblem',
+          kind: 'referenced',
+          provenance: 'brand-identity',
+          referenced: true,
+          source: 'official-crest',
         },
-        'An emerald glass reading of the launch.',
-        'Restrained emerald, no empty theatre.',
-        'Confirmed: Aethelios Lifestyle is the product line. This is labelled demonstration copy.',
-      ),
-    ],
+      ],
+    })),
   });
+}
+
+/** Never accept arbitrary URLs. Private media remains behind the owner-checked image route. */
+export function designAssetSource(asset: z.infer<typeof designBoardAssetSchema>): string | null {
+  if (asset.kind !== 'referenced' || !asset.referenced) return null;
+  if (asset.source === 'official-crest' && asset.provenance === 'brand-identity')
+    return '/brand/aethelios-human-ascendance-20261015-crest.webp';
+  if (
+    asset.source === 'studio-version' &&
+    asset.versionId &&
+    z.uuid().safeParse(asset.versionId).success
+  )
+    return `/api/studio/image?id=${asset.versionId}&kind=version`;
+  return null;
 }
 
 function direction(
@@ -363,8 +386,7 @@ function direction(
   tokens: DesignDirection['tokens'],
   headline: string,
   supporting: string,
-  proof =
-    'Confirmed brand fact: Legacy Reserve is the separate product brand of Gent Ascend Collective.',
+  proof = 'Confirmed brand fact: Legacy Reserve is the separate product brand of Gent Ascend Collective.',
 ): DesignDirection {
   return {
     id,

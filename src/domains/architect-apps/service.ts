@@ -289,7 +289,7 @@ export async function proposeArchitectApp(
         : null;
     if (parsed.data.kind === 'revise' && !base)
       throw new IntelligenceError('A saved application revision is required before requesting a change.', 409);
-    const direction = await readRetainedDirection(parsed.data.projectId).catch(() => null);
+    const direction = await readRetainedDirection(parsed.data.projectId);
     const generationInput = {
       instruction: parsed.data.instruction,
       kind: parsed.data.kind,
@@ -300,6 +300,8 @@ export async function proposeArchitectApp(
       direction: direction
         ? {
             schema: direction.receipt.schema,
+            identity: direction.receipt.identity,
+            designSnapshot: direction.receipt.content.designSnapshot,
             name: direction.receipt.content.name,
             summary: direction.receipt.content.summary,
             digest: direction.digest,

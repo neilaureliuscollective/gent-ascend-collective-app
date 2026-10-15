@@ -127,7 +127,7 @@ export function CreationDetail({
   } | null>(null);
   const [directionBusy, setDirectionBusy] = useState<'review' | 'transfer' | null>(null);
   const [directionRequestId] = useState(() => crypto.randomUUID());
-  const [documentView, setDocumentView] = useState<(typeof talkDocumentViews)[number]>('Edit');
+  const [documentView, setDocumentView] = useState<(typeof talkDocumentViews)[number]>('Preview');
   const [compareId, setCompareId] = useState<string | null>(null);
   const [review, setReview] = useState<{
     imported: boolean;
@@ -401,7 +401,7 @@ export function CreationDetail({
                 : directionBusy === 'transfer'
                   ? 'Confirming transfer. Chat stays usable.'
                   : directionReview?.imported
-                    ? 'Imported. Architect acknowledged this exact reviewed direction.'
+                    ? 'Received in Architect. Build approval is still required.'
                     : directionReview?.receipt && directionReview.destinationValid === false
                       ? 'A previous Talk receipt has no matching Architect destination. Review again.'
                       : directionReview?.receipt
@@ -436,8 +436,7 @@ export function CreationDetail({
                 <div>
                   <dt>Stays in Talk</dt>
                   <dd>
-                    Hero-product demonstration, typeface names and scale, shape, material, surface and
-                    border roles, and placeholder packaging pixels.
+                    Unprovided asset pixels. Premium renderer compositions and tokens transfer with their exact source version.
                   </dd>
                 </div>
                 <div>

@@ -92,6 +92,7 @@ export function compileTalkDocument(kind: WorkItemKind, content: unknown): strin
       brief.purpose,
       '',
       brief.audience ? `Audience: ${brief.audience}` : '',
+      '',
       brief.visualDirection ? `Visual direction: ${brief.visualDirection}` : '',
       '',
       ...(brief.requirements.length ? ['## Requirements', ...brief.requirements.map((item) => `- ${item}`)] : []),

@@ -6,6 +6,7 @@ import { compileDocument } from '@/domains/architect-origin/documents';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import { RetainedDesign } from './retained-design';
 import { ArchitectAppPanel, type AppEditorDraft } from './app-panel';
 import { ArchitectConstructPanel } from './construct-panel';
 import { ArchitectToolPanel } from './tool-panel';
@@ -965,6 +966,7 @@ export function ArchitectOrigin({
           )}
         </details>
       ) : null}
+      {selected && surface === 'Conversation' && <RetainedDesign key={selected.id} projectId={selected.id} onContinue={() => setSurface('App')} />}
       {!selected ? (
         <>
           <CreationEntry
