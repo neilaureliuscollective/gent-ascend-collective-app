@@ -112,6 +112,32 @@ export const patchFileSchema = z
   })
   .strict();
 
+export const checkKinds = ['syntax', 'typecheck', 'build', 'functional'] as const;
+export const checkPlanItemSchema = z
+  .object({
+    id: z.string().trim().min(1).max(400).optional(),
+    name: z.string().trim().min(1).max(80),
+    kind: z.enum(checkKinds),
+    reason: z.string().min(1).max(400),
+    target: relPath.optional(),
+  })
+  .strict();
+export const unsupportedCheckSchema = z
+  .object({
+    kind: z.enum(checkKinds),
+    reason: z.string().min(1).max(400),
+  })
+  .strict();
+export const checkPlanSchema = z
+  .object({
+    no_applicable: z.boolean(),
+    applicable: z.array(checkPlanItemSchema).max(8),
+    unsupported: z.array(unsupportedCheckSchema).max(8),
+    untested: z.array(z.string().min(1).max(160)).max(16),
+  })
+  .strict();
+export type CheckPlan = z.infer<typeof checkPlanSchema>;
+
 export const briefScopeSchema = z
   .object({
     project_id: z.uuid(),
@@ -123,9 +149,26 @@ export const briefScopeSchema = z
     allowed_paths: z.array(relPath).min(1).max(32),
     protected_paths: z.array(relPath).max(32),
     intended_change: z.string().trim().min(1).max(2000),
-    acceptance_checks: z.array(acceptanceCheckSchema).min(1).max(8),
+    acceptance_checks: z.array(acceptanceCheckSchema).max(8),
+    check_plan: checkPlanSchema.optional(),
     resource_limits: resourceLimitsSchema,
     patch: z.array(patchFileSchema).min(1).max(16),
+    repair: z
+      .object({
+        kind: z.literal('check-driven'),
+        parent_run_id: z.uuid(),
+        parent_approval_hash: sha256,
+        targets: z.array(z.string().min(1).max(400)).min(1).max(8),
+        generation: z
+          .object({
+            mode: z.enum(['mock', 'openai', 'unknown']),
+            notes: z.string().max(2000).optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine(
@@ -166,11 +209,24 @@ export type ConstructBrief = z.infer<typeof constructBriefSchema>;
 export const checkStatuses = ['passed', 'failed', 'blocked', 'not-run'] as const;
 export const checkResultSchema = z
   .object({
+    id: z.string().min(1).max(400).optional(),
     name: z.string().min(1).max(80),
     command: z.string().min(1).max(200),
+    target: relPath.optional(),
     exit_code: z.number().int().min(-1).max(255),
     status: z.enum(checkStatuses),
     log: z.string().max(16384),
+  })
+  .strict();
+export const checkCoverageSchema = z
+  .object({
+    no_applicable: z.boolean(),
+    preexisting_failures: z.array(z.string().min(1).max(400)).max(8),
+    introduced_failures: z.array(z.string().min(1).max(400)).max(8),
+    untested: z.array(z.string().min(1).max(160)).max(16),
+    unsupported: z.array(unsupportedCheckSchema).max(8),
+    revision_note: z.string().min(1).max(200),
+    comparison_note: z.string().min(1).max(400).optional(),
   })
   .strict();
 
@@ -186,6 +242,8 @@ export const runResultSchema = z
     changed_files: z.array(relPath).max(32),
     diff: z.string().max(65536),
     checks: z.array(checkResultSchema).max(8),
+    baseline_checks: z.array(checkResultSchema).max(8).optional(),
+    coverage: checkCoverageSchema.optional(),
     preview: z
       .object({
         path: relPath.nullable(),
@@ -250,6 +308,7 @@ export const constructRunSchema = z
     lease_token: z.uuid().nullable(),
     lease_until: z.string().nullable(),
     result: runResultSchema.nullable(),
+    parent_run_id: z.uuid().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })
@@ -315,9 +374,34 @@ export const proposeCommand = z
     projectId: z.uuid(),
     instruction: z.string().trim().min(1).max(2000),
     intendedChange: z.string().trim().min(1).max(2000),
-    allowedPaths: z.array(relPath).min(1).max(8),
-    protectedPaths: z.array(relPath).max(8),
-    excerpts: z.array(sourceFileSchema).min(1).max(8),
+    allowedPaths: z.array(relPath).min(1).max(32),
+    protectedPaths: z.array(relPath).max(32),
+    excerpts: z.array(sourceFileSchema).min(1).max(32),
+  })
+  .strict();
+export const proposeRepairCommand = z
+  .object({
+    action: z.literal('propose-repair'),
+    projectId: z.uuid(),
+    parentRunId: z.uuid(),
+    instruction: z.string().trim().min(1).max(2000).optional(),
+  })
+  .strict();
+export const approveRepairCommand = z
+  .object({
+    action: z.literal('approve-repair'),
+    projectId: z.uuid(),
+    briefId: z.uuid(),
+    parentRunId: z.uuid(),
+    expected: z.number().int().positive().max(500),
+    patch: z.array(patchFileSchema).min(1).max(16),
+    generation: z
+      .object({
+        mode: z.enum(['mock', 'openai', 'unknown']),
+        notes: z.string().max(2000).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export const approveChangeCommand = z
@@ -334,7 +418,8 @@ export const approveChangeCommand = z
     intendedChange: z.string().trim().min(1).max(2000),
     allowedPaths: z.array(relPath).min(1).max(32),
     protectedPaths: z.array(relPath).max(32).optional(),
-    acceptanceChecks: z.array(acceptanceCheckSchema).min(1).max(8),
+    acceptanceChecks: z.array(acceptanceCheckSchema).max(8),
+    checkPlan: checkPlanSchema.optional(),
     patch: z.array(patchFileSchema).min(1).max(16),
   })
   .strict()
@@ -347,6 +432,8 @@ export const constructCommand = z.discriminatedUnion('action', [
   cancelCommand,
   proposeCommand,
   approveChangeCommand,
+  proposeRepairCommand,
+  approveRepairCommand,
 ]);
 
 export const sourceKindLabels: Record<(typeof sourceKinds)[number], string> = {

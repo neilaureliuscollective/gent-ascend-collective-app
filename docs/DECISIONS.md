@@ -1,3 +1,79 @@
+# Architect immersive creation world and budget lock — 2026-10-15
+
+Close the concurrent reservation race without weakening 156600 execution or settlement rules. Distinct request IDs now take a person+run budget row `FOR UPDATE` before counting. The $1.00 figure is a reserved allowance; character-count input bounds remain approximate. Architect’s existing entry, choice, workbench and app-panel surfaces become one connected creation world: arrival, path, shape, labelled direction, plan, real work, Use/Inspect and return. Agency remains the founder’s first Architect project. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
+
+# Architect generated applications RPC gate, settlement, and model bind — 2026-10-15
+
+Close the remaining authorization and budget holes without repeating Next-layer founder checks or worker-readiness-before-spend. SECURITY DEFINER approve/start cannot be called by an ordinary owner through PostgREST: `architect_apps_require_execution()` checks `founder_access` and the singleton `architect_apps_execution_policy` (default off, service-role/worker set). Settlement persists `started` atomically; cancel is reserved-only; uncertain/completed never reopen capacity. Paid generation is bound to `gpt-6-astra` current short-context list prices; `AURELIUS_AI_MODEL` overrides are refused; input accounting uses the serialized provider request at 2 chars/token + 512, which is a conservative bound, not a guaranteed spending cap. Unique forward migration `20261015156600_architect_apps_execution_gate.sql` is Architect-only after `156500`. Talk’s eighteen-file batch and any later Talk recovery file stay out of this workstream. Work → Agency is reserved as the founder’s first Architect project. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
+
+# Architect generated applications founder-pilot execution bounds — 2026-10-15
+
+Close the remaining activation gaps without repeating the production-policy repair. Founder entitlement is required for every executable Apps route, not only paid propose. Paid admission must see recent worker presence before spending. The acceptance run is a server-side two-call `$1.00` reservation on `gpt-6-astra` standard short-context ($10 / $50 per 1M, ≤272K), not a GPT-5.5 estimate and not an OpenAI spend alert. Unique forward migration `20261015156500_architect_apps_pilot_budget.sql` is Architect-only and must not replay Talk’s 18-name batch. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
+
+# Architect generated applications founder-production policy — 2026-10-15
+
+Do not enable hosted generation by setting `ARCHITECT_APPS_AI_MOCK=true` or by renaming `APP_ENV`. Production OpenAI is a named founder pilot (`ARCHITECT_APPS_FOUNDER_PILOT`) plus `ARCHITECT_APPS_AI_ENABLED`, a server-only key, commissioned worker, and session-bound `founder_access`. Mock and memory stores stay local/test. Worker readiness must verify that generation policy, not only a port or image build. Talk’s 18-name package does not replace `20261015156000_architect_apps_preview_sessions.sql`. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
+
+# Architect generated applications runtime images and work-root — 2026-10-15
+
+Quality `application` stays independent of live Docker images. Jobs that prove packaged-worker acceptance (`apps-isolate`, Origin `local-auth`) must build both `aethelios-architect-apps:2026-10-15.1` and `aethelios-architect-apps-worker:2026-10-15.1` on that runner, then prepare `ARCHITECT_APPS_WORK_ROOT` as uid 1000 mode 0755. The worker creates workspaces, launches sibling compiles as 65534:65534 with daemon-host paths, and cleans up. Topology may read a host marker; write/compile proofs must not. Privileged containers, worker-as-root and chmod 777 are refused. Evidence: [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
+
+# Architect generated applications packaged-worker finish — 2026-10-15
+
+A path inside the worker container is not a Docker-host path. Isolated source/output must live under `ARCHITECT_APPS_WORK_ROOT`, mounted at the same absolute path in the worker and on the host. The worker may use the Docker socket; generated compile containers stay `--network none`, `65534:65534`, no socket, no secrets. Preview cluster must not accept HMAC-only tokens when the session map is empty: revocation and replacement are stored in `architect_app_preview_sessions`. `architect_app_artifacts` is keyed by `revision_id`, not `id`. Image staging uses `fs.mkdtempSync`, not `os.mkdtempSync`. Evidence: [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
+
+# Architect generated applications commissioned worker — 2026-10-15
+
+Do not authorize production compilation by renaming `APP_ENV` to local or by running the worker on Vercel. Production stays closed until `ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned` and the isolated worker host has a matching database, worker token, pinned `ARCHITECT_APPS_IMAGE_DIGEST`, required isolation, and schema compatibility. The web application remains a separate Vercel process. Selected later host, if approved: DigitalOcean Docker Droplet, Basic 2 GiB / 1 vCPU, $12/month, because Fly Machines have no Docker daemon for sibling `--network none` compiles. GitHub Actions verifies image builds and fail-closed preflight. No account, credential, hosted migration or purchase is made here. Evidence: [ARCHITECT_APPS_CLOUD_WORKER.md](ARCHITECT_APPS_CLOUD_WORKER.md).
+
+# Architect generated applications runtime — 2026-10-15
+
+A successful save closes that mutation identity. The next distinct edit mints a new key bound to a new payload snapshot. Replay is allowed only for the same key and same payload after an uncertain result. Concurrent edits require the current integer version. An uncertain create keeps the same record ID, payload snapshot and operation key until the outcome is resolved. Isolated success still requires the pinned image built from `deploy/architect-apps/Dockerfile` and is a required CI job, not a skipped probe. `architect_apps_retain_design` keeps the Talk #131 `f357385` six-argument signature; `p_verified` and caller `p_source_kind` cannot manufacture verification. Talk #131 `f3573856002d16ac69341eb99f91e32deff76f64` is the identified integration candidate; Architect does not invent a second manifest or copy Talk's derived-board SQL. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
+# Architect generated applications compiled journey — 2026-10-14
+
+Exact-base revisions require source contents and hashes, not path/byte counts. Each user mutation has its own idempotency key; `record.id` is not that key. Isolated success still requires Docker plus confirmed named-container teardown. Preview signing has no fallback secret; sessions expire and revoke; direct navigation is CSP-sandboxed. Compiled preview mounts only the sealed IIFE, inserted without String.replace interpolation. Talk authorization uses the published shared contract; a client digest is not authority. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
+# Architect generated applications finish — 2026-10-14
+
+Durable Apps persistence uses dedicated tables and RPCs, not Origin/Construct receipt JSON. Isolated success is Docker-only (`sandbox=true`). Host-fixture stays a labelled tracker compiler. Person identity is `persons.auth_user_id`, never `person_id = auth.uid()`. Talk direction schema stays `talk-architect-direction/v1`; Talk board resolution is an explicit adapter on the Talk workstream. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
+# Architect generated applications — 2026-10-14
+
+Own source snapshots, revisions, sealed toolchain, generation adapter, trusted typecheck/bundle, private preview and host-managed collections in `architect-apps` rather than expanding Construct receipts or Origin documents. Reuse Construct worker supervision, Origin project ownership, approval-hash / request-id idempotency and Talk text-handoff compatibility through narrow adapters. Do not imply arbitrary servers, independent auth, payments or production publishing. Evidence: [ARCHITECT_APPS.md](ARCHITECT_APPS.md).
+
+# Architect stack integration onto current main — 2026-10-14
+
+Incorporate source-review #122, create-tool #124 and propose-repair #128 onto main `529d5f1` once. Preserve newer released Talk/Live and Command home. Do not merge the individual source PRs to production or pull unrelated open Talk/Connections branches. The only concrete conflicts were changelog prepends in `docs/STATUS.md` and `docs/DECISIONS.md`. Evidence: [ARCHITECT_STACK_INTEGRATION.md](ARCHITECT_STACK_INTEGRATION.md).
+
+# Architect approved-repair recovery and generation provenance — 2026-10-14
+
+Read unused owner/project repair briefs through the existing read contract so an approved repair without a child run survives reload. Bind repair enqueue identity to the brief id; lost HTTP retries return that same run. Persist sanitized generation provenance (`mock` / `openai` / `unknown`) and never imply a live model result when history is missing. Start stays an explicit owner action and revalidates owner, revision, pin, digest, ancestry and the one-repair limit. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect repair snapshot, one-journey limit, journey restore and stale revision — 2026-10-14
+
+Generate a live repair against the failed post-original-patch files, not the pinned original source, then combine the validated correction back onto that original. Refuse a parent that is itself a repair so uniqueness cannot become a repair-of-repair chain. Keep the workbench original and repair identities separate and restore proposal/approval/result from saved evidence. Compare the parent project revision before proposal, approval and execution; never copy a newer revision onto older evidence. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect cancel status locator after repair journey — 2026-10-14
+
+The Repair journey names the original attempt status in the same view as `Latest run cancelled`. Scope the cancel check to that latest-run sentence and keep the journey step assertion, rather than matching every “cancelled” string. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect one reviewed check-driven repair — 2026-10-14
+
+Propose a repair only for a terminal failed Construct run with reliably identified introduced check failures. Keep the same owner, project, source revision, allowlist, protected paths, check plan and limits. Show the combined diff against the original pinned source, then require a fresh approval digest. Persist at most one repair child per original run, replay-safe. If the repair still fails, keep the receipt and stop. Evidence: [ARCHITECT_PROPOSE_REPAIR.md](ARCHITECT_PROPOSE_REPAIR.md).
+
+# Architect estimator JSONB equality, full-precision money and confirmed-refresh — 2026-10-14
+
+Compare trusted-engine and database estimator receipts with validated structural equality, not `JSON.stringify`. JSONB key order is not a different calculation; array order and types stay strict. Money multiplies quantity × (1 + waste) × unit cost at full precision, then half-up to currency minor units; displayed quantity is rounded separately. Reject JSON-null identity fields and null/type-invalid/over-max overrides in SQL. Treat a confirmed save whose library refresh failed as a refresh offer, not an uncertain write. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
+# Architect estimator authority, exact save and draft continuity — 2026-10-14
+
+Record estimator invocations only through a session-authenticated function that loads the exact saved revision and computes the result. Do not accept a caller-supplied total. Retry saves from an immutable snapshot; reconcile a committed request before minting new identities. Keep tool drafts in owner/project scope across Architect surfaces and tell the truth about project vs tool save state. Apply quantity waste before monetary rounding. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
+# Architect quantity-and-cost estimator — 2026-10-14
+
+Keep Origin `ProjectContent` strict. Store tools in additive owner-scoped tables linked to the existing project/revision infrastructure. Calculate with a trusted decimal engine, never model arithmetic. Bind invocation to an exact saved revision. Talk receives a documented contract but does not implement the adapter in this pass. Evidence: [ARCHITECT_CREATE_TOOL.md](ARCHITECT_CREATE_TOOL.md).
+
 # Conversation motion on Talk Elevation — 2026-10-15
 
 Talk #131/#135 remain unmerged. Motion last restacked onto elevation `a859c23` / foundation `b822c31`. Current #135 `b801b34` is a docs-only pin of that same code; Motion is 2 behind and was not restacked solely to chase documentation. Conversation identity uses the approved official gold-A 192px file at 24 CSS px because no production-quality 24px conversation crop is in the tree. Activity copy and motion come only from observed request/voice/creation events. Image `approval` is waiting, not creating. In-progress stream artifacts terminalize on Stop/error; completed artifacts stay. One polite announcer covers operational transitions and does not let persistent visual notices replace Sending / Preparing / Saving. Live audio remains a CSS custom-property envelope, not a React-per-frame waveform. Narrow Talk header title min-width is 0; New moves into Tools below 360px. Composer keyboard focus is the gold shell, including over solid and forced-color surfaces. References: Apple HIG Motion, Material motion, WCAG status messages and pause-stop-hide, web.dev animations, MDN Web Audio visualizations. No production merge.
@@ -53,7 +129,7 @@ Finish the current Design/Film experience on PR #132: protect live drafts during
 
 # Health transformation workspace — 2026-10-15
 
-Health stays named Health. The previous TRT/HRT clinic structure is not the product. Command becomes a personal workspace with two built-in foundations (evening sequence and Bloodwork Tracker) rather than a six-tab dashboard. Authoritative records, units, provenance, comparison rules, consent and deletion remain in trusted Health code. Architect customization of presentation/behavior uses a narrow adapter: structured presentation requests only; personal labs, original documents and Health history are refused rather than regex-redacted into a prompt. Dynamic compilation depends on unmerged Architect Apps PR #130 head `97b9a645d88a7498f5661d69d3259ad7239d853b` with isolated Docker compile and a usable preview. Host-fixture is not success. Client workingRevision metadata cannot establish a verified build. This Health branch does not vendor the Apps engine. Talk’s unmerged migration `20261015180000_talk_live_trusted_observe.sql` forced Health’s unapplied workspace migration to `20261015181000`. No generated diagnosis, dosing, treatment, readiness score or device control. Evidence: [HEALTH_TRANSFORMATION.md](HEALTH_TRANSFORMATION.md).
+Health stays named Health. The previous TRT/HRT clinic structure is not the product. Command becomes a personal workspace with two built-in foundations (evening sequence and Bloodwork Tracker) rather than a six-tab dashboard. Authoritative records, units, provenance, comparison rules, consent and deletion remain in trusted Health code. Architect customization of presentation/behavior uses a narrow adapter: structured presentation requests only; personal labs, original documents and Health history are refused rather than regex-redacted into a prompt. Dynamic compilation depends on unmerged Architect Apps PR #130 with isolated Docker compile and a usable preview. Host-fixture is not success. Client workingRevision metadata cannot establish a verified build. This Health branch does not vendor the Apps engine. Talk’s unmerged migration `20261015180000_talk_live_trusted_observe.sql` forced Health’s unapplied workspace migration to `20261015181000`. No generated diagnosis, dosing, treatment, readiness score or device control. Evidence: [HEALTH_TRANSFORMATION.md](HEALTH_TRANSFORMATION.md).
 
 # Aethelios Studio completion pass — 2026-10-15
 
@@ -80,6 +156,18 @@ Official OpenAI server-side Realtime controls authenticate the call-id WebSocket
 # Aethelios Live production database binding — 2026-10-14
 
 The founder-visible error “The voice database binding is missing or unsafe.” was an admission-policy mismatch, not a missing project. `previewBinding` and `productionHostUnsafe` read raw `NEXT_PUBLIC_SUPABASE_*` and treated unset `AETHELIOS_LIVE_CANONICAL_PILOT` as unsafe on Production. Auth already pins `https://volpzkfsnmtztrovexcw.supabase.co` in `supabaseConnection` because Production Vercel may still carry stale public URL/key names. Live now uses that same effective connection on Production. The explicit canonical-pilot flag remains the preview opt-in for reusing Gent; an explicit `AETHELIOS_LIVE_PREVIEW_PROJECT_REF` must still agree with the intended project. Preflight reports the actual flag separately from founder-only admission. No binding-guard bypass, no founder-protection removal, no credential rotation.
+
+# Architect excerpt budget, check identity, phone modal and receipt bound — 2026-10-14
+
+Count every content-bearing excerpt, including too-large manifest entries, against the existing eight-excerpt / 32 KiB excerpt budget. Compare checks by canonical identity (kind, command, full validated target), never by truncated display names; ambiguous historical evidence is comparison-unavailable, not pre-existing. Phone review reuses `ContextSheet` native modality. Bound the complete serialized UTF-8 receipt to the existing 120,000-byte SQL limit before persist, marking truncated logs and never converting missing evidence into a pass. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).
+
+# Architect source-context and review continuity — 2026-10-14
+
+Use one browser-safe path-protection predicate for both model context and edit protection; do not send protected contents because a later patch check would reject them. Keep the last successful owner/project-scoped preview while a newer run is in flight or unsuccessful, and label the displayed revision. Make Source / Change / Evidence the main review surface instead of competing Fold columns. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md).
+
+# Architect source-aware review — 2026-10-14
+
+Keep the existing whole-file before/after patch contract. Do not send truncated excerpts as originals. Bound complete editable context to eight files / 48 KiB so output stays valid. Creating and deleting files stay unsupported; emptying a file is not deletion. Replace the no-op `present` check with explicit coverage: `node --check` when JavaScript is present, otherwise “no applicable checks available.” Record the check plan in the approval snapshot and run the same checks before and after the patch. Presentation is a focused Source / Change / Evidence surface beside the last valid preview. Evidence: [ARCHITECT_SOURCE_REVIEW.md](ARCHITECT_SOURCE_REVIEW.md). No Construct activation, hosted migration, or paid model call.
 
 # Talk → Architect Origin review-to-save consistency — 2026-10-14
 

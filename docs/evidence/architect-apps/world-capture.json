@@ -1,0 +1,36 @@
+{
+  "schema": "architect-world-capture/v1",
+  "capturedAt": "2026-10-15T10:15:45.513Z",
+  "kind": "labelled-compiled-fixture",
+  "compiledRequired": false,
+  "compiledArtifactPresent": true,
+  "label": "Local Vite fixture using compiled-preview.html. Not a commissioned or paid build.",
+  "timings": [
+    {
+      "name": "arrival-heading",
+      "ms": 1195
+    },
+    {
+      "name": "idea-input",
+      "ms": 20
+    },
+    {
+      "name": "path-open",
+      "ms": 64
+    }
+  ],
+  "overflow": {
+    "320": true,
+    "344": true,
+    "390": true,
+    "720": true,
+    "1440": true
+  },
+  "previewHeights": {
+    "320": 420,
+    "344": 420,
+    "390": 420,
+    "720": 420,
+    "1440": 560
+  }
+}

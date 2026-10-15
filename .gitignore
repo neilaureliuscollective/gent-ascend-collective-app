@@ -10,6 +10,9 @@ supabase/.temp/
 supabase/.branches/
 .dev/
 .construct-worker-*/
+.apps-worker-*/
+.apps-worker-image-*/
+.next-apps-*/
 .studio-worker-*/
 .studio-preflight-*/
 dist/studio-worker.mjs
