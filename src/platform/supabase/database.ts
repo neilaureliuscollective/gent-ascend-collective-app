@@ -905,6 +905,7 @@ export interface Database {
           width: number | null;
           height: number | null;
           duration_ms: number | null;
+          retry_count: number;
           created_at: string;
           updated_at: string;
         },
@@ -1382,7 +1383,7 @@ export interface Database {
           p_revision: string;
           p_key: string;
         };
-        Returns: boolean;
+        Returns: { id: string; status: string; created: boolean }[];
       };
       ai_studio_render_cancel: { Args: { p_id: string }; Returns: boolean };
       ai_studio_render_claim: { Args: { p_id: string; p_token: string }; Returns: boolean };
@@ -1402,6 +1403,7 @@ export interface Database {
       };
       ai_studio_render_fail: { Args: { p_id: string; p_token: string; p_code: string }; Returns: boolean };
       ai_studio_render_recover: { Args: Record<string, never>; Returns: number };
+      ai_studio_render_requeue: { Args: Record<string, never>; Returns: number };
       ai_studio_export_record: {
         Args: {
           p_design: string;

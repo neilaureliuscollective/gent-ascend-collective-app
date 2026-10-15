@@ -147,6 +147,7 @@ type Workspace = {
   narrations?: { id: string; title: string; status: string; duration: number | null }[];
   footage?: { id: string; title: string; status: string; duration: number; ratio: string }[];
   render?: { hosted: string; generation: string; narration: string; footage: string };
+  capabilities?: { design: boolean; film: boolean; setup: string | null };
   configured: boolean;
   canCreate?: boolean;
 };
@@ -735,29 +736,45 @@ export function StudioWorkspace({
                 </Link>
               </div>
             </div>
-            <StudioRooms value={view} onChange={setView} />
-            {view === 'design' && selected && (
-              <DesignWorkspace
-                key={selected}
-                projectId={selected}
-                designs={data.designs ?? []}
-                versions={data.versions}
-                references={data.references}
-                onChanged={() => load(selected)}
-              />
+            <StudioRooms
+              value={view}
+              onChange={(room) => {
+                setView(room);
+              }}
+            />
+            {data.capabilities?.setup && (view === 'design' || view === 'film') && (
+              <p role="status" className="studio-dimension-banner">
+                {data.capabilities.setup}
+              </p>
             )}
-            {view === 'film' && selected && (
-              <FilmWorkspace
-                key={selected}
-                projectId={selected}
-                compositions={data.compositions ?? []}
-                versions={data.versions}
-                footage={data.footage ?? []}
-                narrations={data.narrations ?? []}
-                renders={data.renders ?? []}
-                renderHosted={data.render?.hosted ?? 'unavailable'}
-                onChanged={() => load(selected)}
-              />
+            {selected && (
+              <div className={view === 'design' ? undefined : 'studio-room-parked'} aria-hidden={view !== 'design'}>
+                {data.capabilities?.design === false ? null : (
+                  <DesignWorkspace
+                    projectId={selected}
+                    designs={data.designs ?? []}
+                    versions={data.versions}
+                    references={data.references}
+                    onChanged={() => load(selected)}
+                  />
+                )}
+              </div>
+            )}
+            {selected && (
+              <div className={view === 'film' ? undefined : 'studio-room-parked'} aria-hidden={view !== 'film'}>
+                {data.capabilities?.film === false ? null : (
+                  <FilmWorkspace
+                    projectId={selected}
+                    compositions={data.compositions ?? []}
+                    versions={data.versions}
+                    footage={data.footage ?? []}
+                    narrations={data.narrations ?? []}
+                    renders={data.renders ?? []}
+                    renderHosted={data.render?.hosted ?? 'unavailable'}
+                    onChanged={() => load(selected)}
+                  />
+                )}
+              </div>
             )}
             {view === 'delivery' && selected && (
               <StudioDelivery

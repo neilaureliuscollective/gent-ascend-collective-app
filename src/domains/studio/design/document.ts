@@ -1,6 +1,14 @@
 import { z } from 'zod';
-import { DEFAULT_PPI, MAX_PPI, MIN_PPI, type DesignUnit } from './units';
+import {
+  DEFAULT_PPI,
+  MAX_PPI,
+  MIN_PPI,
+  convertLength,
+  roundUnit,
+  type DesignUnit,
+} from './units';
 import { designFontIds, type DesignFontId } from './fonts';
+import { sanitizeSvg } from './sanitize';
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const inset = z
@@ -158,7 +166,72 @@ export const MAX_DESIGN_BYTES = 524_288;
 export function parseDesignDocument(value: unknown): DesignDocument {
   const encoded = new TextEncoder().encode(JSON.stringify(value)).length;
   if (encoded > MAX_DESIGN_BYTES) throw new Error('This design document is too large to save.');
-  return designDocumentSchema.parse(value);
+  const parsed = designDocumentSchema.parse(value);
+  return {
+    ...parsed,
+    layers: parsed.layers.map((layer) =>
+      layer.type === 'svg' ? { ...layer, markup: sanitizeSvg(layer.markup) } : layer,
+    ),
+  };
+}
+
+export function convertDocumentUnits(document: DesignDocument, unit: DesignUnit): DesignDocument {
+  const from = document.page.unit;
+  const ppi = document.page.ppi;
+  if (from === unit) return cloneDocument(document);
+  const n = (value: number) => roundUnit(convertLength(value, from, unit, ppi), unit);
+  const inset = (box: DesignPage['bleed']) => ({
+    top: n(box.top),
+    right: n(box.right),
+    bottom: n(box.bottom),
+    left: n(box.left),
+  });
+  return parseDesignDocument({
+    ...document,
+    page: {
+      ...document.page,
+      unit,
+      width: n(document.page.width),
+      height: n(document.page.height),
+      bleed: inset(document.page.bleed),
+      safe: inset(document.page.safe),
+    },
+    layers: document.layers.map((layer) => ({
+      ...layer,
+      x: n(layer.x),
+      y: n(layer.y),
+      width: Math.max(unit === 'px' ? 1 : 0.01, n(layer.width)),
+      height: Math.max(unit === 'px' ? 1 : 0.01, n(layer.height)),
+      ...(layer.type === 'rect' || layer.type === 'ellipse'
+        ? {
+            strokeWidth: n(layer.strokeWidth),
+            cornerRadius: n(layer.cornerRadius),
+          }
+        : {}),
+    })),
+  });
+}
+
+export function ancestorsLocked(document: DesignDocument, layerId: string) {
+  let current = layerById(document, layerId);
+  while (current) {
+    if (current.locked) return true;
+    if (!current.parentId) return false;
+    current = document.layers.find((item) => item.id === current.parentId)!;
+    if (!current) return false;
+  }
+  return false;
+}
+
+export function ancestorsVisible(document: DesignDocument, layerId: string) {
+  let current = layerById(document, layerId);
+  while (current) {
+    if (!current.visible) return false;
+    if (!current.parentId) return true;
+    current = document.layers.find((item) => item.id === current.parentId)!;
+    if (!current) return false;
+  }
+  return true;
 }
 
 export function cloneDocument(document: DesignDocument): DesignDocument {

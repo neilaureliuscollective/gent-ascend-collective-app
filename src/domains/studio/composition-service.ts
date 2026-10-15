@@ -3,13 +3,13 @@ import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { studioSession, verifyStudioProject, bucket as imageBucket } from './service';
 import { parseComposition, type CompositionDocument } from './composition/model';
-import { hostedRenderConfigured, inspectFfmpeg, renderComposition } from './render/ffmpeg';
-import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { inspectFfmpeg, renderComposition, renderWorkerRequested } from './render/ffmpeg';
+import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import type { LocalAsset } from './composition/compile';
 import { compositionVtt, compositionSrt } from './composition/captions';
+import { materializeCompositionAssets } from './render/materialize';
 
 export const compositionSaveInput = z
   .object({
@@ -95,20 +95,47 @@ export async function startRender(input: z.infer<typeof renderStartInput>, execu
   });
   if (begun.error)
     throw new IntelligenceError(begun.error.message.replace(/^.*ERROR:\s*/i, '') || 'Render could not start.', 422);
-  const duplicate = begun.data === false;
-  const hosted = hostedRenderConfigured();
-  if (!executeLocal || hosted) {
+  const row = (Array.isArray(begun.data) ? begun.data[0] : begun.data) as
+    | { id: string; status: string; created: boolean }
+    | null;
+  if (!row?.id) throw new IntelligenceError('Render could not start.', 503);
+  if (row.status === 'complete') {
+    const existing = await client
+      .from('ai_studio_render_jobs')
+      .select('id,status,width,height,duration_ms')
+      .eq('id', row.id)
+      .maybeSingle();
     return {
-      id: input.id,
-      status: duplicate ? 'existing' : 'queued',
-      hosted,
+      id: row.id,
+      status: 'complete' as const,
+      hosted: false,
       local: false,
-      note: hosted
-        ? 'Hosted render worker is configured.'
-        : 'Hosted rendering is unavailable. A local FFmpeg worker is required. This job stays queued; it is not marked complete.',
+      width: existing.data?.width,
+      height: existing.data?.height,
+      durationMs: existing.data?.duration_ms,
+      note: 'Returned the existing finished render for this idempotency key.',
     };
   }
-  return executeRender(input.id, revision.document, input.projectId);
+  if (!row.created && row.status !== 'queued') {
+    return {
+      id: row.id,
+      status: row.status === 'running' ? 'existing' : row.status,
+      hosted: false,
+      local: false,
+      note: `Returned the existing ${row.status} render for this idempotency key.`,
+    };
+  }
+  const queueForWorker = renderWorkerRequested() && !executeLocal;
+  if (queueForWorker) {
+    return {
+      id: row.id,
+      status: row.created ? 'queued' : 'existing',
+      hosted: false,
+      local: false,
+      note: 'Hosted rendering is unavailable. The job is queued for scripts/studio-render-worker.mjs on a host with FFmpeg 6.1+ libx264/aac. A flag alone is not readiness.',
+    };
+  }
+  return executeRender(row.id, revision.document, input.projectId);
 }
 
 export async function cancelRender(id: string) {
@@ -125,9 +152,25 @@ export async function executeRender(jobId: string, document: CompositionDocument
   if (claimed.error || !claimed.data)
     throw new IntelligenceError('This render could not obtain a lease. It was not marked complete.', 409);
   const dir = await mkdtemp(path.join(tmpdir(), 'studio-job-'));
+  const abort = new AbortController();
+  const beat = setInterval(() => {
+    void client.rpc('ai_studio_render_heartbeat', { p_id: jobId, p_token: token }).then(async (pulse) => {
+      const row = await client.from('ai_studio_render_jobs').select('status,lease_token').eq('id', jobId).maybeSingle();
+      if (!pulse.data || row.data?.status === 'cancelled' || row.data?.lease_token !== token) abort.abort();
+    });
+  }, 15_000);
+  const uploaded: string[] = [];
   try {
-    const assets = await materializeAssets(document, projectId, dir);
-    const rendered = await renderComposition(document, assets);
+    const assets = await materializeCompositionAssets({
+      client,
+      personId: person.id,
+      projectId,
+      document,
+      dir,
+      imageBucket,
+    });
+    const rendered = await renderComposition(document, assets, { signal: abort.signal });
+    if (abort.signal.aborted) throw new IntelligenceError('Studio render was cancelled.', 409);
     const user = (await client.auth.getUser()).data.user;
     if (!user) throw new IntelligenceError('Sign in to store a film.', 401);
     const prefix = `${user.id}/${projectId}/${jobId}`;
@@ -140,8 +183,14 @@ export async function executeRender(jobId: string, document: CompositionDocument
       bucket.upload(coverKey, rendered.cover, { contentType: 'image/png', upsert: true }),
       bucket.upload(captionKey, rendered.captions, { contentType: 'text/vtt', upsert: true }),
     ]);
+    uploaded.push(filmKey, coverKey, captionKey);
     if (uploads.some((item) => item.error))
       throw new IntelligenceError('The film could not be stored privately.', 503);
+    const still = await client.from('ai_studio_render_jobs').select('status,lease_token').eq('id', jobId).maybeSingle();
+    if (still.data?.status === 'cancelled' || still.data?.lease_token !== token) {
+      await Promise.all(uploaded.map((key) => bucket.remove([key])));
+      throw new IntelligenceError('Studio render was cancelled.', 409);
+    }
     const finished = await client.rpc('ai_studio_render_finish', {
       p_id: jobId,
       p_token: token,
@@ -152,12 +201,13 @@ export async function executeRender(jobId: string, document: CompositionDocument
       p_height: rendered.height,
       p_duration: rendered.durationMs,
     });
-    if (finished.error || !finished.data)
+    if (finished.error || !finished.data) {
+      await Promise.all(uploaded.map((key) => bucket.remove([key])));
       throw new IntelligenceError(
         'The film was stored but the completion receipt could not be confirmed. Refresh before starting another render.',
         409,
       );
-    void person;
+    }
     return {
       id: jobId,
       status: 'complete' as const,
@@ -172,69 +222,15 @@ export async function executeRender(jobId: string, document: CompositionDocument
     await client.rpc('ai_studio_render_fail', {
       p_id: jobId,
       p_token: token,
-      p_code: 'render_failed',
+      p_code: abort.signal.aborted ? 'cancelled' : 'render_failed',
     });
     throw error instanceof IntelligenceError
       ? error
       : new IntelligenceError(error instanceof Error ? error.message : 'The film could not be rendered.', 503);
   } finally {
+    clearInterval(beat);
     await rm(dir, { recursive: true, force: true });
   }
-}
-
-async function materializeAssets(document: CompositionDocument, projectId: string, dir: string) {
-  await mkdir(dir, { recursive: true });
-  const { client, person } = await studioSession();
-  const assets: LocalAsset[] = [];
-  const used = new Map<string, LocalAsset>();
-  const add = async (
-    kind: LocalAsset['kind'],
-    id: string,
-    table: 'ai_studio_versions' | 'ai_studio_references' | 'ai_studio_footage' | 'ai_studio_narrations',
-    storageBucket: string,
-    media: LocalAsset['media'],
-    ext: string,
-  ) => {
-    const key = `${kind}:${id}`;
-    if (used.has(key)) {
-      assets.push(used.get(key)!);
-      return;
-    }
-    const row = await client
-      .from(table)
-      .select('id,storage_key,project_id')
-      .eq('id', id)
-      .eq('person_id', person.id)
-      .eq('project_id', projectId)
-      .maybeSingle();
-    if (row.error || !row.data?.storage_key)
-      throw new IntelligenceError('A film asset is not available in this project.', 404);
-    const file = await client.storage.from(storageBucket).download(row.data.storage_key);
-    if (file.error || !file.data)
-      throw new IntelligenceError('A film asset could not be read from private storage.', 403);
-    const target = path.join(dir, `${kind}-${id}.${ext}`);
-    await writeFile(target, Buffer.from(await file.data.arrayBuffer()));
-    const asset = { id, kind, path: target, media };
-    used.set(key, asset);
-    assets.push(asset);
-  };
-  for (const scene of document.scenes) {
-    if (scene.kind === 'image')
-      await add(
-        scene.assetKind,
-        scene.assetId,
-        scene.assetKind === 'version' ? 'ai_studio_versions' : 'ai_studio_references',
-        imageBucket,
-        'image',
-        'png',
-      );
-    else await add('footage', scene.assetId, 'ai_studio_footage', 'aethelios-studio-video', 'video', 'mp4');
-  }
-  if (document.narration)
-    await add('narration', document.narration.assetId, 'ai_studio_narrations', 'aethelios-studio-audio', 'wav', 'wav');
-  if (document.music)
-    await add('music', document.music.assetId, 'ai_studio_narrations', 'aethelios-studio-audio', 'wav', 'wav');
-  return assets;
 }
 
 export async function renderBlob(id: string, kind: 'film' | 'cover' | 'captions') {
@@ -270,11 +266,10 @@ export async function renderReadiness() {
     ffmpeg = null;
   }
   return {
-    hosted: hostedRenderConfigured() ? 'implemented' : 'unavailable',
+    hosted: 'unavailable' as const,
+    workerRequested: renderWorkerRequested(),
     localBinary: ffmpeg ? 'implemented' : 'configuration required',
     ffmpeg,
-    note: hostedRenderConfigured()
-      ? 'Hosted worker flag is on; confirm the worker process is running.'
-      : 'Hosted rendering is unavailable. Run scripts/studio-render-worker.mjs on a host with FFmpeg 6.1+ libx264/aac, or use local execution.',
+    note: 'Hosted rendering is unavailable until a functioning worker is verified. STUDIO_RENDER_WORKER=true only queues jobs. Run scripts/studio-render-worker.mjs on a host with FFmpeg 6.1+ libx264/aac, or leave the flag unset so /api/studio/film/render executes locally.',
   };
 }

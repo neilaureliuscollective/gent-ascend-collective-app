@@ -11,7 +11,7 @@ import type { AssetBytes } from './assets';
 
 function run(command: string, args: string[]) {
   return new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(/* turbopackIgnore: true */ command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     const err: Buffer[] = [];
     child.stderr.on('data', (chunk) => err.push(chunk as Buffer));
     child.on('error', reject);

@@ -59,6 +59,7 @@ create table public.ai_studio_render_jobs (
  idempotency_key uuid not null unique,
  status text not null default 'queued' check(status in ('queued','running','complete','failed','cancelled','interrupted')),
  lease_token uuid, lease_until timestamptz, failure_code text,
+ retry_count integer not null default 0 check(retry_count between 0 and 8),
  storage_film text, storage_cover text, storage_captions text,
  width integer, height integer, duration_ms integer,
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
@@ -82,6 +83,8 @@ grant select,insert on public.ai_studio_designs,public.ai_studio_compositions to
 grant update(title,document,revision,updated_at) on public.ai_studio_designs,public.ai_studio_compositions to authenticated;
 grant select on public.ai_studio_design_revisions,public.ai_studio_design_exports,
  public.ai_studio_composition_revisions,public.ai_studio_render_jobs to authenticated;
+grant select,update on public.ai_studio_render_jobs,public.ai_studio_composition_revisions to service_role;
+grant select on public.ai_studio_versions,public.ai_studio_references,public.ai_studio_footage,public.ai_studio_narrations,public.persons to service_role;
 create policy studio_designs_owner on public.ai_studio_designs for all to authenticated
  using(person_id in (select id from public.persons where auth_user_id=(select auth.uid())))
  with check(person_id in (select id from public.persons where auth_user_id=(select auth.uid())));
@@ -176,27 +179,39 @@ begin
 end $$;
 
 create function public.ai_studio_render_begin(p_id uuid,p_project uuid,p_composition uuid,p_revision uuid,p_key uuid)
-returns boolean language plpgsql security definer set search_path='' as $$
-declare v_person uuid;
+returns table(id uuid, status text, created boolean) language plpgsql security definer set search_path='' as $$
+declare v_person uuid; v_existing public.ai_studio_render_jobs%rowtype;
 begin
  select public.ai_studio_owner() into v_person;
  if v_person is null then raise exception 'Studio project unavailable'; end if;
  perform pg_advisory_xact_lock(hashtextextended(v_person::text,813));
- if exists(select 1 from public.ai_studio_render_jobs where idempotency_key=p_key) then
-  return false;
+ select j.* into v_existing from public.ai_studio_render_jobs j where j.idempotency_key=p_key;
+ if found then
+  if v_existing.person_id is distinct from v_person then raise exception 'Render key unavailable'; end if;
+  if v_existing.composition_id is distinct from p_composition or v_existing.revision_id is distinct from p_revision then
+   raise exception 'RENDER_INPUT_CHANGED';
+  end if;
+  id := v_existing.id;
+  status := v_existing.status;
+  created := false;
+  return next;
+  return;
  end if;
  if not exists(select 1 from public.ai_studio_composition_revisions r where r.id=p_revision and r.person_id=v_person and r.composition_id=p_composition and r.project_id=p_project) then
   raise exception 'Pinned composition revision unavailable';
  end if;
- if exists(select 1 from public.ai_studio_render_jobs where person_id=v_person and status in ('queued','running')) then
+ if exists(select 1 from public.ai_studio_render_jobs j where j.person_id=v_person and j.status in ('queued','running')) then
   raise exception 'A film render is already in progress';
  end if;
- if (select count(*) from public.ai_studio_render_jobs where person_id=v_person and created_at>now()-interval '1 day')>=10 then
+ if (select count(*) from public.ai_studio_render_jobs j where j.person_id=v_person and j.created_at>now()-interval '1 day')>=10 then
   raise exception 'Daily film render limit reached';
  end if;
  insert into public.ai_studio_render_jobs(id,person_id,project_id,composition_id,revision_id,idempotency_key)
   values(p_id,v_person,p_project,p_composition,p_revision,p_key);
- return true;
+ id := p_id;
+ status := 'queued';
+ created := true;
+ return next;
 end $$;
 
 create function public.ai_studio_render_cancel(p_id uuid)
@@ -204,8 +219,8 @@ returns boolean language plpgsql security definer set search_path='' as $$
 declare v_person uuid;
 begin
  select public.ai_studio_owner() into v_person;
- update public.ai_studio_render_jobs set status='cancelled',lease_token=null,lease_until=null,updated_at=now()
-  where id=p_id and person_id=v_person and status in ('queued','running');
+ update public.ai_studio_render_jobs j set status='cancelled',lease_token=null,lease_until=null,updated_at=now()
+  where j.id=p_id and j.person_id=v_person and j.status in ('queued','running');
  return found;
 end $$;
 
@@ -216,56 +231,71 @@ begin
  v_role := coalesce(nullif(auth.role(),''), current_user);
  select public.ai_studio_owner() into v_person;
  if v_role is distinct from 'service_role' and v_person is null then raise exception 'Render claim denied'; end if;
- update public.ai_studio_render_jobs set status='running',lease_token=p_token,lease_until=now()+interval '2 minutes',updated_at=now()
-  where id=p_id and status='queued' and (v_role='service_role' or person_id=v_person);
+ update public.ai_studio_render_jobs j set status='running',lease_token=p_token,lease_until=now()+interval '2 minutes',updated_at=now()
+  where j.id=p_id and j.status='queued' and (v_role='service_role' or j.person_id=v_person);
  return found;
 end $$;
 
 create function public.ai_studio_render_heartbeat(p_id uuid,p_token uuid)
 returns boolean language plpgsql security definer set search_path='' as $$
 begin
- update public.ai_studio_render_jobs set lease_until=now()+interval '2 minutes',updated_at=now()
-  where id=p_id and lease_token=p_token and status='running' and lease_until>now();
+ update public.ai_studio_render_jobs j set lease_until=now()+interval '2 minutes',updated_at=now()
+  where j.id=p_id and j.lease_token=p_token and j.status='running' and j.lease_until>now();
  return found;
 end $$;
 
 create function public.ai_studio_render_finish(p_id uuid,p_token uuid,p_film text,p_cover text,p_captions text,p_width integer,p_height integer,p_duration integer)
 returns boolean language plpgsql security definer set search_path='' as $$
-declare v_uid uuid := (select auth.uid());
+declare v_uid uuid;
 declare v_job public.ai_studio_render_jobs%rowtype;
 begin
- select * into v_job from public.ai_studio_render_jobs where id=p_id and lease_token=p_token and status in ('running','cancelled');
+ select j.* into v_job from public.ai_studio_render_jobs j
+  where j.id=p_id and j.lease_token=p_token and j.status='running' and j.lease_until is not null and j.lease_until>now();
  if not found then raise exception 'Render lease lost'; end if;
- if v_job.status='cancelled' then
-  update public.ai_studio_render_jobs set lease_token=null,lease_until=null,updated_at=now() where id=p_id;
-  return false;
- end if;
- if v_uid is not null and (
+ select p.auth_user_id into v_uid from public.persons p where p.id=v_job.person_id;
+ if v_uid is null or
    p_film is distinct from v_uid::text || '/' || v_job.project_id::text || '/' || p_id::text || '/film.mp4' or
    p_cover is distinct from v_uid::text || '/' || v_job.project_id::text || '/' || p_id::text || '/cover.png' or
    p_captions is distinct from v_uid::text || '/' || v_job.project_id::text || '/' || p_id::text || '/captions.vtt'
- ) then raise exception 'Invalid render storage key'; end if;
- update public.ai_studio_render_jobs set status='complete',storage_film=p_film,storage_cover=p_cover,storage_captions=p_captions,
+ then raise exception 'Invalid render storage key'; end if;
+ update public.ai_studio_render_jobs j set status='complete',storage_film=p_film,storage_cover=p_cover,storage_captions=p_captions,
   width=p_width,height=p_height,duration_ms=p_duration,lease_token=null,lease_until=null,updated_at=now()
-  where id=p_id and lease_token=p_token and status='running';
+  where j.id=p_id and j.lease_token=p_token and j.status='running' and j.lease_until>now();
  return found;
 end $$;
 
 create function public.ai_studio_render_fail(p_id uuid,p_token uuid,p_code text)
 returns boolean language plpgsql security definer set search_path='' as $$
 begin
- update public.ai_studio_render_jobs set status=case when status='cancelled' then 'cancelled' else 'failed' end,
+ update public.ai_studio_render_jobs j set status=case
+   when j.status='cancelled' then 'cancelled'
+   when p_code='retry' and j.retry_count<3 then 'interrupted'
+   else 'failed' end,
   failure_code=p_code,lease_token=null,lease_until=null,updated_at=now()
-  where id=p_id and lease_token=p_token and status in ('running','cancelled');
+  where j.id=p_id and j.lease_token=p_token and j.status in ('running','cancelled');
  return found;
 end $$;
 
 create function public.ai_studio_render_recover()
 returns integer language plpgsql security definer set search_path='' as $$
-declare n integer;
+declare n integer; v_role text;
 begin
- update public.ai_studio_render_jobs set status='interrupted',lease_token=null,lease_until=null,failure_code='lease_expired',updated_at=now()
-  where status='running' and (lease_until is null or lease_until<now());
+ v_role := coalesce(nullif(auth.role(),''), current_user);
+ if v_role is distinct from 'service_role' then raise exception 'Render recovery denied'; end if;
+ update public.ai_studio_render_jobs j set status='interrupted',lease_token=null,lease_until=null,failure_code='lease_expired',updated_at=now()
+  where j.status='running' and (j.lease_until is null or j.lease_until<now());
+ get diagnostics n = row_count;
+ return n;
+end $$;
+
+create function public.ai_studio_render_requeue()
+returns integer language plpgsql security definer set search_path='' as $$
+declare n integer; v_role text;
+begin
+ v_role := coalesce(nullif(auth.role(),''), current_user);
+ if v_role is distinct from 'service_role' then raise exception 'Render recovery denied'; end if;
+ update public.ai_studio_render_jobs j set status='queued',lease_token=null,lease_until=null,updated_at=now(),retry_count=j.retry_count+1
+  where j.status='interrupted' and j.retry_count<3;
  get diagnostics n = row_count;
  return n;
 end $$;
@@ -290,18 +320,18 @@ revoke all on function public.ai_studio_owner(),public.ai_studio_design_save(uui
  public.ai_studio_composition_freeze(uuid),public.ai_studio_render_begin(uuid,uuid,uuid,uuid,uuid),
  public.ai_studio_render_cancel(uuid),public.ai_studio_render_claim(uuid,uuid),public.ai_studio_render_heartbeat(uuid,uuid),
  public.ai_studio_render_finish(uuid,uuid,text,text,text,integer,integer,integer),public.ai_studio_render_fail(uuid,uuid,text),
- public.ai_studio_render_recover(),public.ai_studio_export_record(uuid,uuid,text,text,integer,integer,integer)
+ public.ai_studio_render_recover(),public.ai_studio_render_requeue(),public.ai_studio_export_record(uuid,uuid,text,text,integer,integer,integer)
  from public,anon;
 grant execute on function public.ai_studio_owner(),public.ai_studio_design_save(uuid,uuid,text,jsonb,timestamptz,integer),
  public.ai_studio_design_freeze(uuid),public.ai_studio_composition_save(uuid,uuid,text,jsonb,timestamptz,integer),
  public.ai_studio_composition_freeze(uuid),public.ai_studio_render_begin(uuid,uuid,uuid,uuid,uuid),
  public.ai_studio_render_cancel(uuid),public.ai_studio_render_claim(uuid,uuid),public.ai_studio_render_heartbeat(uuid,uuid),
  public.ai_studio_render_finish(uuid,uuid,text,text,text,integer,integer,integer),public.ai_studio_render_fail(uuid,uuid,text),
- public.ai_studio_render_recover(),public.ai_studio_export_record(uuid,uuid,text,text,integer,integer,integer)
+ public.ai_studio_export_record(uuid,uuid,text,text,integer,integer,integer)
  to authenticated;
 grant execute on function public.ai_studio_render_claim(uuid,uuid),public.ai_studio_render_heartbeat(uuid,uuid),
  public.ai_studio_render_finish(uuid,uuid,text,text,text,integer,integer,integer),public.ai_studio_render_fail(uuid,uuid,text),
- public.ai_studio_render_recover() to service_role;
+ public.ai_studio_render_recover(),public.ai_studio_render_requeue() to service_role;
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
  values('aethelios-studio-designs','aethelios-studio-designs',false,20000000,array['image/png','image/svg+xml','application/pdf'])

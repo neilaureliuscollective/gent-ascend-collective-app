@@ -8,7 +8,14 @@ import {
   undoDesign,
   alignLayers,
 } from '../src/domains/studio/design/commands';
-import { emptyDocument, parseDesignDocument, type DesignLayer } from '../src/domains/studio/design/document';
+import {
+  convertDocumentUnits,
+  emptyDocument,
+  parseDesignDocument,
+  type DesignLayer,
+} from '../src/domains/studio/design/document';
+import { glyphScale } from '../src/domains/studio/design/units';
+import { loadDesignFont } from '../src/domains/studio/design/measure';
 import { designPresets, finishLayoutPreset, presetDocument } from '../src/domains/studio/design/presets';
 import { sanitizeSvg } from '../src/domains/studio/design/sanitize';
 import { toInches, toPixels, pagePoints } from '../src/domains/studio/design/units';
@@ -17,6 +24,11 @@ import { exportPdf } from '../src/domains/studio/design/pdf-export';
 import { exportPng, inspectPng } from '../src/domains/studio/design/png-export';
 import { validateDesign } from '../src/domains/studio/design/validate';
 import { studioProviderStates } from '../src/domains/studio/provider-states';
+import { acknowledgedSave } from '../src/domains/studio/design/save-ack';
+import {
+  allStudioProductionTablesMissing,
+  missingStudioSchema,
+} from '../src/domains/studio/schema-absence';
 
 const id = '10000000-0000-4000-8000-000000000001';
 
@@ -140,6 +152,100 @@ describe('Studio design documents', () => {
     );
   });
 
+  it('refuses hostile SVG on the saved-document path, not only the helper', () => {
+    const base = emptyDocument({
+      id,
+      title: 'Unsafe',
+      width: 100,
+      height: 70,
+      unit: 'mm',
+      dimensionSource: 'supplied',
+    });
+    expect(() =>
+      parseDesignDocument({
+        ...base,
+        layers: [
+          {
+            id: '20000000-0000-4000-8000-000000000009',
+            type: 'svg',
+            name: 'Attack',
+            parentId: null,
+            visible: true,
+            locked: false,
+            opacity: 1,
+            x: 1,
+            y: 1,
+            width: 20,
+            height: 20,
+            rotation: 0,
+            markup: '<svg><script>alert(1)</script></svg>',
+          },
+        ],
+      }),
+    ).toThrow(/unsafe|not allowed/i);
+  });
+
+  it('converts physical geometry when units change instead of relabeling', () => {
+    const mm = parseDesignDocument({
+      ...emptyDocument({
+        id,
+        title: 'Units',
+        width: 25.4,
+        height: 12.7,
+        unit: 'mm',
+        dimensionSource: 'supplied',
+      }),
+      layers: [textLayer({ x: 25.4, y: 0, width: 12.7, height: 5 })],
+    });
+    const inches = convertDocumentUnits(mm, 'in');
+    expect(inches.page.unit).toBe('in');
+    expect(inches.page.width).toBeCloseTo(1, 3);
+    expect(inches.page.height).toBeCloseTo(0.5, 3);
+    expect(inches.layers[0]?.x).toBeCloseTo(1, 3);
+    expect(inches.layers[0]?.width).toBeCloseTo(0.5, 3);
+    expect(inches.layers[0] && inches.layers[0].type === 'text' ? inches.layers[0].fontSize : 0).toBe(18);
+  });
+
+  it('keeps newer local edits when an older save acknowledgement arrives', () => {
+    expect(
+      acknowledgedSave({
+        requestSeq: 4,
+        latestSeq: 7,
+        requestId: id,
+        currentId: id,
+        serverRevision: 2,
+        serverUpdatedAt: '2026-10-15T00:00:00.000Z',
+      }),
+    ).toEqual({
+      apply: true,
+      keepLocalEdits: true,
+      revision: 2,
+      updatedAt: '2026-10-15T00:00:00.000Z',
+    });
+    expect(
+      acknowledgedSave({
+        requestSeq: 3,
+        latestSeq: 3,
+        requestId: id,
+        currentId: '20000000-0000-4000-8000-000000000099',
+        serverRevision: 3,
+        serverUpdatedAt: '2026-10-15T00:00:00.000Z',
+      }),
+    ).toEqual({ apply: false });
+  });
+
+  it('treats missing Design/Film tables as a gated setup state, not a Studio history failure', () => {
+    expect(missingStudioSchema({ code: 'PGRST205' })).toBe(true);
+    expect(missingStudioSchema({ code: '42P01' })).toBe(true);
+    expect(missingStudioSchema({ code: '42501' })).toBe(false);
+    expect(
+      allStudioProductionTablesMissing({ code: 'PGRST205' }, { code: '42P01' }, { code: '42703' }),
+    ).toBe(true);
+    expect(
+      allStudioProductionTablesMissing({ code: 'PGRST205' }, { code: '42501' }, { code: 'PGRST205' }),
+    ).toBe(false);
+  });
+
   it('does not silently substitute missing fonts', async () => {
     const document = parseDesignDocument({
       ...emptyDocument({
@@ -233,5 +339,39 @@ describe('Studio design exports', () => {
         gold += 1;
     }
     expect(gold).toBeGreaterThan(400);
+  });
+
+  it('outlines SVG text at PPI-scaled glyph size, not raw point size', async () => {
+    const document = await sample();
+    const font = await loadDesignFont('inter');
+    const svg = new TextDecoder().decode(await exportSvg(document, [], 'outline'));
+    const expected = glyphScale(18, 300, font.unitsPerEm);
+    expect(svg).toContain(`scale(${expected}`);
+    expect(svg).toMatch(/width="[0-9.]+in"/);
+    expect(svg).not.toContain(`scale(${18 / font.unitsPerEm}`);
+  });
+
+  it('does not inject unsanitized SVG markup into exports', async () => {
+    const document = await sample();
+    document.layers.push({
+      id: '20000000-0000-4000-8000-000000000008',
+      type: 'svg',
+      name: 'Mark',
+      parentId: null,
+      visible: true,
+      locked: false,
+      opacity: 1,
+      x: 10,
+      y: 10,
+      width: 12,
+      height: 12,
+      rotation: 15,
+      markup: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="#C4912F"/></svg>',
+    });
+    const svg = new TextDecoder().decode(await exportSvg(parseDesignDocument(document), [], 'embed'));
+    expect(svg).toContain('<circle');
+    expect(svg).not.toContain('<script');
+    const pdf = await exportPdf(parseDesignDocument(document), []);
+    expect(pdf.byteLength).toBeGreaterThan(1000);
   });
 });

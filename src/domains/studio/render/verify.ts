@@ -1,4 +1,7 @@
-export function inspectRenderedMp4(bytes: Uint8Array, expected: { seconds: number; width: number; height: number }) {
+export function inspectRenderedMp4(
+  bytes: Uint8Array,
+  expected: { seconds: number; width: number; height: number; audio?: boolean },
+) {
   if (bytes.length < 64 || bytes.length > 80_000_000) throw new Error('Unsupported film size.');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const tag = (at: number) => String.fromCharCode(...bytes.subarray(at, at + 4));
@@ -50,5 +53,8 @@ export function inspectRenderedMp4(bytes: Uint8Array, expected: { seconds: numbe
     throw new Error(`Rendered duration was ${duration.toFixed(2)}s, expected ${expected.seconds}s.`);
   if (Math.round(width) !== expected.width || Math.round(height) !== expected.height)
     throw new Error(`Rendered frame was ${width}×${height}, expected ${expected.width}×${expected.height}.`);
-  return { duration, width, height };
+  const body = Buffer.from(bytes).toString('latin1');
+  const hasAudio = body.includes('mp4a');
+  if (expected.audio && !hasAudio) throw new Error('Rendered film is missing an AAC audio track.');
+  return { duration, width, height, audio: hasAudio };
 }

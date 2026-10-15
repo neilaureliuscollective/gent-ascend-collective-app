@@ -40,8 +40,8 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
     },
     {
       name: 'Film renderer',
-      status: env.STUDIO_RENDER_WORKER === 'true' ? 'detected' : 'unavailable',
-      next: 'Hosted rendering stays unavailable until a worker host with FFmpeg 6.1+ libx264/aac runs scripts/studio-render-worker.mjs. Local execution can still produce a real MP4.',
+      status: 'unavailable',
+      next: 'Hosted rendering stays unavailable until a verified worker host with FFmpeg 6.1+ libx264/aac runs scripts/studio-render-worker.mjs. STUDIO_RENDER_WORKER=true only queues jobs; it is not readiness. Local execution can still produce a real MP4.',
     },
     {
       name: 'Live acceptance',

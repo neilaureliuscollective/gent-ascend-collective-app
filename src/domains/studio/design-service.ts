@@ -10,6 +10,7 @@ import { exportPng, inspectPng } from './design/png-export';
 import { pagePixels } from './design/units';
 import { presetDocument, finishLayoutPreset } from './design/presets';
 import type { AssetBytes } from './design/assets';
+import { imageDimensions } from './design/assets';
 import { referenceType } from './image-validation';
 
 export const designSaveInput = z
@@ -136,8 +137,21 @@ async function ownedAssets(projectId: string, document: DesignDocument): Promise
     const buffer = new Uint8Array(await file.data.arrayBuffer());
     const media = referenceType(buffer);
     if (!media) throw new IntelligenceError('A placed image is not a supported PNG, JPEG or WebP file.', 422);
-    bytes.push({ id: layer.assetId, kind: layer.assetKind, bytes: buffer, mediaType: media });
-    info.push({ id: layer.assetId, kind: layer.assetKind });
+    const size = imageDimensions(buffer, media);
+    bytes.push({
+      id: layer.assetId,
+      kind: layer.assetKind,
+      bytes: buffer,
+      mediaType: media,
+      widthPx: size.widthPx,
+      heightPx: size.heightPx,
+    });
+    info.push({
+      id: layer.assetId,
+      kind: layer.assetKind,
+      widthPx: size.widthPx,
+      heightPx: size.heightPx,
+    });
   }
   return { info, bytes };
 }

@@ -2,6 +2,7 @@ import 'server-only';
 import { currentFounderAccess } from '@/domains/access/founder';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { studioConfiguration, type StudioSetupCheck } from './readiness';
+import { missingStudioSchema } from './schema-absence';
 export async function studioReadiness() {
   if (!(await currentFounderAccess())) throw new IntelligenceError('Founder access required.', 403);
   const { client, person } = await intelligenceSession();
@@ -25,7 +26,7 @@ export async function studioReadiness() {
         return {
           name,
           status: result.error
-            ? ['42P01', '42703', 'PGRST205', 'PGRST204'].includes(result.error.code)
+            ? missingStudioSchema(result.error)
               ? 'missing'
               : 'unavailable'
             : 'detected',

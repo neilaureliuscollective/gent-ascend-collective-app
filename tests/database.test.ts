@@ -2033,13 +2033,25 @@ describe('Studio footage owner, quote and spending boundary', () => {
       )
     ).rows[0]!.id;
     expect(
-      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}') as ok`))
-        .rows[0]!.ok,
-    ).toBe(true);
+      (
+        await asUser<{ id: string; status: string; created: boolean }>(
+          founder,
+          `select * from public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}')`,
+        )
+      ).rows[0],
+    ).toMatchObject({ id: job, status: 'queued', created: true });
+    const other = 'a1000000-0000-4000-8000-000000000009';
     expect(
-      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}') as ok`))
-        .rows[0]!.ok,
-    ).toBe(false);
+      (
+        await asUser<{ id: string; status: string; created: boolean }>(
+          founder,
+          `select * from public.ai_studio_render_begin('${other}','${project}','${composition}','${revision}','${key}')`,
+        )
+      ).rows[0],
+    ).toMatchObject({ id: job, created: false });
+    await expect(
+      asUser(founder, `select public.ai_studio_render_recover()`),
+    ).rejects.toThrow(/denied|permission/i);
     expect(
       (await asUser<{ ok: boolean }>(member, `select public.ai_studio_render_claim('${job}','${token}') as ok`))
         .rows[0]!.ok,
@@ -2060,6 +2072,68 @@ describe('Studio footage owner, quote and spending boundary', () => {
         )
       ).rows[0]!.status,
     ).toBe('cancelled');
+    expect((await asUser(member, 'select id from public.ai_studio_render_jobs')).rows).toHaveLength(0);
+    const compositionB = 'a1000000-0000-4000-8000-000000000013';
+    const sceneB = 'a1000000-0000-4000-8000-000000000014';
+    const filmB = film.replace(composition, compositionB).replace(scene, sceneB);
+    await asUser(
+      founder,
+      `select public.ai_studio_composition_save('${compositionB}','${project}','Other film','${filmB}'::jsonb,null,0)`,
+    );
+    const revisionB = (
+      await asUser<{ id: string }>(
+        founder,
+        `select id from public.ai_studio_composition_revisions where composition_id='${compositionB}'`,
+      )
+    ).rows[0]!.id;
+    await expect(
+      asUser(
+        founder,
+        `select * from public.ai_studio_render_begin('a1000000-0000-4000-8000-000000000015','${project}','${compositionB}','${revisionB}','${key}')`,
+      ),
+    ).rejects.toThrow(/INPUT_CHANGED/i);
+    await expect(
+      asUser(
+        member,
+        `select * from public.ai_studio_render_begin('${job}','${project}','${composition}','${revision}','${key}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    const expired = 'a1000000-0000-4000-8000-000000000016';
+    const expiredKey = 'a1000000-0000-4000-8000-000000000017';
+    const expiredToken = 'a1000000-0000-4000-8000-000000000018';
+    expect(
+      (
+        await asUser<{ created: boolean }>(
+          founder,
+          `select created from public.ai_studio_render_begin('${expired}','${project}','${composition}','${revision}','${expiredKey}')`,
+        )
+      ).rows[0]!.created,
+    ).toBe(true);
+    expect(
+      (await asUser<{ ok: boolean }>(founder, `select public.ai_studio_render_claim('${expired}','${expiredToken}') as ok`))
+        .rows[0]!.ok,
+    ).toBe(true);
+    await db.exec(
+      `update public.ai_studio_render_jobs set lease_until=now()-interval '1 minute' where id='${expired}'`,
+    );
+    await expect(
+      asUser(
+        founder,
+        `select public.ai_studio_render_finish('${expired}','${expiredToken}','${founder}/${project}/${expired}/film.mp4','${founder}/${project}/${expired}/cover.png','${founder}/${project}/${expired}/captions.vtt',1920,1080,3000)`,
+      ),
+    ).rejects.toThrow(/lease lost/i);
+    await db.exec(`select set_config('request.jwt.claim.role','service_role',false)`);
+    expect((await db.query<{ n: number }>('select public.ai_studio_render_recover() as n')).rows[0]!.n).toBeGreaterThan(0);
+    expect((await db.query<{ n: number }>('select public.ai_studio_render_requeue() as n')).rows[0]!.n).toBeGreaterThan(0);
+    await db.exec(`select set_config('request.jwt.claim.role','',false)`);
+    expect(
+      (
+        await asUser<{ status: string; retry: number }>(
+          founder,
+          `select status, retry_count as retry from public.ai_studio_render_jobs where id='${expired}'`,
+        )
+      ).rows[0],
+    ).toMatchObject({ status: 'queued' });
   });
 });
 

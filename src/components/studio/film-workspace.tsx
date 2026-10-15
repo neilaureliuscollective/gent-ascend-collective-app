@@ -1,13 +1,14 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   emptyComposition,
   parseComposition,
   compositionDuration,
-  compositionFrame,
   type CompositionDocument,
   type CompositionScene,
 } from '@/domains/studio/composition/model';
+import { compositionPlaybackMs } from '@/domains/studio/composition/timing';
+import { FilmPreview } from './film-preview';
 
 type SavedComposition = {
   id: string;
@@ -80,6 +81,11 @@ export function FilmWorkspace({
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [sheet, setSheet] = useState<'none' | 'assets' | 'inspect'>('none');
+  const liveRef = useRef(live);
+  const renderKeys = useRef(new Map<string, { jobId: string; key: string }>());
+  useEffect(() => {
+    liveRef.current = live;
+  });
   function setDocument(next: CompositionDocument | null) {
     if (!next) {
       setDraft(null);
@@ -94,17 +100,12 @@ export function FilmWorkspace({
   }
 
   const scene = document?.scenes[active] ?? document?.scenes[0];
-  const frame = document ? compositionFrame(document.aspect) : compositionFrame('landscape');
   const duration = document ? compositionDuration(document) : 0;
-  const previewSrc = useMemo(() => {
-    if (!scene) return '';
-    if (scene.kind === 'image')
-      return `/api/studio/image?id=${scene.assetId}&kind=${scene.assetKind === 'reference' ? 'reference' : 'version'}`;
-    return `/api/studio/footage/video?id=${scene.assetId}`;
-  }, [scene]);
+  const playback = document ? compositionPlaybackMs(document) : 0;
 
   async function persist(next = document, freeze = false) {
     if (!next) return;
+    const snapshot = liveRef.current;
     const savedRow = await json<{ id: string; revision: number; updated_at: string }>(
       await fetch('/api/studio/film', {
         method: 'POST',
@@ -114,8 +115,8 @@ export function FilmWorkspace({
           projectId,
           title: next.title,
           document: next,
-          updatedAt,
-          revision,
+          updatedAt: snapshot && snapshot.id === next.id ? snapshot.updatedAt : null,
+          revision: snapshot && snapshot.id === next.id ? snapshot.revision : 0,
         }),
       }),
     );
@@ -185,6 +186,9 @@ export function FilmWorkspace({
     const frozen = await persist(document, true);
     const revisionId = frozen && 'revisionId' in frozen ? frozen.revisionId : null;
     if (!revisionId) throw new Error('The film revision could not be frozen.');
+    const slot = `${document.id}:${revisionId}`;
+    const ids = renderKeys.current.get(slot) ?? { jobId: crypto.randomUUID(), key: crypto.randomUUID() };
+    renderKeys.current.set(slot, ids);
     const result = await json<{ id: string; status: string; note?: string; durationMs?: number }>(
       await fetch('/api/studio/film/render', {
         method: 'POST',
@@ -193,8 +197,8 @@ export function FilmWorkspace({
           projectId,
           compositionId: document.id,
           revisionId,
-          id: crypto.randomUUID(),
-          idempotencyKey: crypto.randomUUID(),
+          id: ids.jobId,
+          idempotencyKey: ids.key,
         }),
       }),
     );
@@ -240,6 +244,29 @@ export function FilmWorkspace({
         <button type="button" className="button" onClick={() => void renderFilm().catch((err) => setError(err.message))} disabled={!document}>
           Render film
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            const job = renders.find((item) => item.status === 'queued' || item.status === 'running');
+            if (!job) return;
+            void (async () => {
+              await json(
+                await fetch('/api/studio/film/render', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: job.id, action: 'cancel' }),
+                }),
+              );
+              for (const [slot, ids] of renderKeys.current) {
+                if (ids.jobId === job.id) renderKeys.current.delete(slot);
+              }
+              onChanged();
+            })();
+          }}
+          disabled={!renders.some((job) => job.status === 'queued' || job.status === 'running')}
+        >
+          Cancel render
+        </button>
         <button type="button" className="studio-sheet-toggle" onClick={() => setSheet('assets')}>
           Assets
         </button>
@@ -278,20 +305,13 @@ export function FilmWorkspace({
             ))}
         </aside>
         <div className="studio-canvas-column">
-          <div
-            className="studio-film-preview"
-            style={{ aspectRatio: `${frame.width} / ${frame.height}` }}
-            data-aspect={document?.aspect ?? 'landscape'}
-          >
-            {scene?.kind === 'video' ? (
-              <video key={previewSrc} src={previewSrc} controls playsInline />
-            ) : previewSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewSrc} alt="Active scene" />
-            ) : (
+          {document ? (
+            <FilmPreview document={document} />
+          ) : (
+            <div className="studio-film-preview">
               <p>Choose an owned still or clip to start a film.</p>
-            )}
-          </div>
+            </div>
+          )}
           <ol className="studio-timeline">
             {document?.scenes.map((item, index) => (
               <li key={item.id}>
@@ -412,6 +432,36 @@ export function FilmWorkspace({
                   <option value="dissolve">Dissolve</option>
                 </select>
               </label>
+              {(['crop', 'placement'] as const).map((field) => (
+                <fieldset key={field}>
+                  <legend>{field}</legend>
+                  {(['x', 'y', 'width', 'height'] as const).map((edge) => (
+                    <label key={edge}>
+                      {edge}
+                      <input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={scene[field][edge]}
+                        onChange={(event) =>
+                          setDocument({
+                            ...document,
+                            scenes: document.scenes.map((item) =>
+                              item.id === scene.id
+                                ? {
+                                    ...item,
+                                    [field]: { ...item[field], [edge]: Number(event.target.value) },
+                                  }
+                                : item,
+                            ),
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                </fieldset>
+              ))}
               <label>
                 Narration
                 <select
@@ -453,6 +503,62 @@ export function FilmWorkspace({
                     </option>
                   ))}
                 </select>
+              </label>
+              {document.narration && (
+                <label>
+                  Narration gain dB
+                  <input
+                    type="number"
+                    min={-24}
+                    max={6}
+                    value={document.narration.gainDb}
+                    onChange={(event) =>
+                      setDocument({
+                        ...document,
+                        narration: { ...document.narration!, gainDb: Number(event.target.value) },
+                      })
+                    }
+                  />
+                </label>
+              )}
+              {document.music && (
+                <label>
+                  Music gain dB
+                  <input
+                    type="number"
+                    min={-24}
+                    max={6}
+                    value={document.music.gainDb}
+                    onChange={(event) =>
+                      setDocument({
+                        ...document,
+                        music: { ...document.music!, gainDb: Number(event.target.value) },
+                      })
+                    }
+                  />
+                </label>
+              )}
+              <label>
+                Title
+                <input
+                  value={document.titles[0]?.text ?? ''}
+                  onChange={(event) =>
+                    setDocument({
+                      ...document,
+                      titles: event.target.value
+                        ? [
+                            {
+                              id: document.titles[0]?.id ?? crypto.randomUUID(),
+                              startMs: 0,
+                              endMs: Math.min(playback, 2500),
+                              text: event.target.value,
+                              fontId: 'inter',
+                            },
+                          ]
+                        : [],
+                    })
+                  }
+                />
               </label>
               <label>
                 Caption

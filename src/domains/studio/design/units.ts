@@ -43,6 +43,26 @@ export function roundUnit(value: number, unit: DesignUnit): number {
   return Math.round(value * factor) / factor;
 }
 
+/** Convert a signed length. Positions may be negative; page size may not. */
+export function convertLength(value: number, from: DesignUnit, to: DesignUnit, ppi: number): number {
+  assertPpi(ppi);
+  if (!Number.isFinite(value)) throw new Error('A dimension must be a finite number.');
+  if (from === to) return value;
+  const inches = from === 'in' ? value : from === 'mm' ? value / MM_PER_INCH : value / ppi;
+  if (to === 'in') return inches;
+  if (to === 'mm') return inches * MM_PER_INCH;
+  return inches * ppi;
+}
+
+export function pointsToPixels(points: number, ppi: number) {
+  assertPpi(ppi);
+  return points * (ppi / POINTS_PER_INCH);
+}
+
+export function glyphScale(fontSizePoints: number, ppi: number, unitsPerEm: number) {
+  return pointsToPixels(fontSizePoints, ppi) / unitsPerEm;
+}
+
 export function pagePixels(page: {
   width: number;
   height: number;

@@ -34,22 +34,26 @@ Open Talk #131 (`cursor/talk-creative-conversation-5b08`) and Architect #130 (`c
 Do **not** paste secret values into chat or Git. Configuration should only switch on already-implemented flows. This assignment does not apply hosted migrations, create grants or make paid calls.
 
 1. Merge review of this Studio PR onto the intended environment after founder approval. Do not deploy from this assignment.
-2. Apply `supabase/migrations/20261016010000_studio_editable_productions.sql` to the existing Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions`, `ai_studio_render_jobs` and the two private buckets exist. Do not reapply older narration/footage migrations.
-3. Confirm `OPENAI_API_KEY` is already present in the Vercel project `gent-ascend-collective-app`. Presence is not credit, quota or a live generation test. Do not rotate unless the key is actually missing.
+2. Apply `supabase/migrations/20261016010000_studio_editable_productions.sql` to the existing Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions`, `ai_studio_render_jobs` and the two private buckets exist. Do not reapply older narration/footage migrations. Do not apply this hosted from this assignment.
+3. Editing, save/reopen, PNG/SVG/PDF export and local FFmpeg film render do **not** require OpenAI or Runway. Verify them on an ordinary owner login first with permitted local or synthetic media.
 4. Leave `STUDIO_NARRATION_ENABLED` and `STUDIO_FOOTAGE_ENABLED` unset. Paid narration/Runway stay default-off.
 5. Leave `RUNWAYML_API_SECRET` and `STUDIO_FOOTAGE_SIGNING_KEY` unset until a later footage activation. A signing key must be ≥32 characters and independent of the Runway secret.
-6. Editing, save/reopen, PNG/SVG/PDF export and local FFmpeg film render do not require those paid flags. Verify them on an ordinary owner login first.
-7. Hosted film rendering stays **unavailable** until a Node worker host with FFmpeg 6.1+ (`--enable-gpl`, libx264, aac) runs `scripts/studio-render-worker.mjs` with `STUDIO_RENDER_WORKER=true` and optional `STUDIO_FFMPEG_PATH`. Missing execution must not report Completed.
+6. Confirm `OPENAI_API_KEY` only when testing existing Create generation. Presence is not credit, quota, or a Design/Film readiness test.
+7. Hosted film rendering stays **unavailable** until a separately authorized host with FFmpeg 6.1+ (`--enable-gpl`, libx264, aac) runs `npm run studio:worker:supervised` using existing `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. `STUDIO_RENDER_WORKER=true` only queues jobs; it is not readiness. Missing execution must not report Completed. Do not buy infrastructure or configure new credentials in this assignment.
 8. After code+schema are live, a founder-only read of `/api/studio/readiness` should list Design/Film schemas as detected without calling providers.
 
 ### ONE first founder action
 
-Confirm `OPENAI_API_KEY` already exists in the intended Vercel project. Do not enable narration, footage or the render worker in this step.
+Apply `supabase/migrations/20261016010000_studio_editable_productions.sql` to the **local** Gent Ascend database after review. Confirm `ai_studio_designs`, `ai_studio_compositions` and `ai_studio_render_jobs` exist. Do not apply this on hosted environments from this assignment. OpenAI/Runway keys are not required for Design editing, save/reopen, PNG/SVG/PDF export or local FFmpeg film render with permitted media.
 
 ## Remaining gaps
 
-**Code complete in this branch:** document model, Fabric adapter, persistence RPCs, PNG/SVG/vector PDF, composition model, trusted FFmpeg compile, local render/verify, Design/Film workspaces, owner isolation tests.
+**Implemented in this completion pass:** revision-aware autosave; Fabric init/stacking/group transforms; sanitizer on parse/save/export; unit conversion; faithful PNG/SVG/PDF geometry; real local worker; composed preview matching compile; lease/idempotency/recovery roles; schema gating for existing Studio.
 
-**Setup, not code:** hosted migration, worker host, paid provider keys/credits, physical Fold/phone hardware, CMYK/PDF-X/spot/foil (explicitly unavailable).
+**Running worker:** `npm run studio:worker` or `npm run studio:worker:supervised` on a host with FFmpeg 6.1+ libx264/aac and the existing Supabase URL plus service-role key. Leave `STUDIO_RENDER_WORKER` unset for in-request local execution. `STUDIO_RENDER_WORKER=true` only queues jobs.
+
+**Not deployed / not activated:** hosted migration, hosted worker process, paid OpenAI/Runway calls, CMYK/PDF-X/spot/foil (explicitly unavailable).
+
+**Setup, not code:** hosted migration, worker host authorization, paid provider keys/credits, physical Fold/phone hardware.
 
 Device checks in this environment are **simulated** (CSS/Playwright viewports at 360 CSS px phone, 717×512 unfolded Fold and 1440 desktop). No physical phone or Fold was attached.

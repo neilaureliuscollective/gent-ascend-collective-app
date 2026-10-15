@@ -3,6 +3,7 @@ import { currentAccess } from '@/domains/access/current';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { z } from 'zod';
 import { brandKitSchema, brandDirection } from './brand';
+import { allStudioProductionTablesMissing, missingStudioSchema } from './schema-absence';
 
 export const studioInput = z
   .object({
@@ -156,16 +157,16 @@ export async function studioWorkspace(projectId?: string) {
           { data: [], error: null },
           { data: [], error: null },
         ];
+  if (versions.error || references.error || scenes.error || finishes.error || narrations.error || footage.error)
+    throw new IntelligenceError('Studio history could not be loaded.', 503);
+  const editable =
+    !missingStudioSchema(designs.error) &&
+    !missingStudioSchema(compositions.error) &&
+    !missingStudioSchema(renders.error);
   if (
-    versions.error ||
-    references.error ||
-    scenes.error ||
-    finishes.error ||
-    designs.error ||
-    compositions.error ||
-    renders.error ||
-    narrations.error ||
-    footage.error
+    !editable &&
+    (designs.error || compositions.error || renders.error) &&
+    !allStudioProductionTablesMissing(designs.error, compositions.error, renders.error)
   )
     throw new IntelligenceError('Studio history could not be loaded.', 503);
   return {
@@ -176,21 +177,29 @@ export async function studioWorkspace(projectId?: string) {
     references: references.data ?? [],
     scenes: scenes.data ?? [],
     finishes: finishes.data ?? [],
-    designs: designs.data ?? [],
-    compositions: compositions.data ?? [],
-    renders: renders.data ?? [],
+    designs: editable ? (designs.data ?? []) : [],
+    compositions: editable ? (compositions.data ?? []) : [],
+    renders: editable ? (renders.data ?? []) : [],
     narrations: narrations.data ?? [],
     footage: footage.data ?? [],
     configured: Boolean(process.env.OPENAI_API_KEY),
     canCreate: (await currentAccess()).has('studio.create'),
+    capabilities: {
+      design: editable,
+      film: editable,
+      setup: editable
+        ? null
+        : 'Design and Film need supabase/migrations/20261016010000_studio_editable_productions.sql applied to this database. Existing Create, Campaign, Footage, Narration, Finish and Delivery continue to work. Hosted migration is not applied from this assignment.',
+    },
     render: {
-      hosted: process.env.STUDIO_RENDER_WORKER === 'true' ? 'implemented' : 'unavailable',
+      hosted: 'unavailable',
       generation: process.env.OPENAI_API_KEY ? 'configuration required' : 'disabled',
       narration: process.env.STUDIO_NARRATION_ENABLED === 'true' ? 'implemented' : 'disabled',
       footage: process.env.STUDIO_FOOTAGE_ENABLED === 'true' ? 'implemented' : 'disabled',
     },
   };
 }
+
 import { renderImage as generateImage, ImageGenerationError } from '@/platform/openai/image';
 export async function renderImage(
   prompt: string,

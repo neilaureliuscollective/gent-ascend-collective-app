@@ -541,6 +541,65 @@ html[data-motion='still'] .app-shell.imperial-workspace .studio-room-console but
   height: 100%;
   object-fit: contain;
 }
+.studio-film-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  background: #050706;
+  overflow: hidden;
+}
+.studio-film-layer {
+  position: absolute;
+}
+.studio-film-layer img,
+.studio-film-layer video {
+  display: block;
+}
+.studio-film-title,
+.studio-film-caption {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  margin: 0;
+  text-align: center;
+  color: #e6e7e2;
+  text-shadow: 0 1px 8px #050706;
+  pointer-events: none;
+}
+.studio-film-title {
+  top: 18%;
+  font-size: clamp(1.2rem, 4vw, 2.4rem);
+}
+.studio-film-caption {
+  bottom: 10%;
+  font-size: 1rem;
+}
+.studio-film-transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+}
+.studio-film-transport input[type='range'] {
+  flex: 1;
+  min-width: 120px;
+  min-height: 44px;
+}
+.studio-room-parked {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  pointer-events: none;
+}
+.studio-workbench-status[data-save-state='pending'],
+.studio-workbench-status[data-save-state='local-draft'],
+.studio-workbench-status[data-save-state='conflict'] {
+  color: var(--aether-gold, #c4912f);
+}
 .studio-timeline {
   list-style: none;
   padding: 0;

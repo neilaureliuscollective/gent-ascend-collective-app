@@ -8,7 +8,8 @@ import {
   compileRender,
   type LocalAsset,
 } from '../composition/compile';
-import { compositionDuration, type CompositionDocument } from '../composition/model';
+import { compositionPlaybackMs } from '../composition/timing';
+import { type CompositionDocument } from '../composition/model';
 import { inspectRenderedMp4 } from './verify';
 
 export type RenderResult = {
@@ -26,6 +27,10 @@ export function ffmpegBinary() {
 }
 
 export function hostedRenderConfigured() {
+  return false;
+}
+
+export function renderWorkerRequested() {
   return process.env.STUDIO_RENDER_WORKER === 'true';
 }
 
@@ -42,7 +47,7 @@ export async function inspectFfmpeg(binary = ffmpegBinary()) {
 
 function runCapture(command: string, args: string[]) {
   return new Promise<string>((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(/* turbopackIgnore: true */ command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     const out: Buffer[] = [];
     const err: Buffer[] = [];
     child.stdout.on('data', (chunk) => out.push(chunk as Buffer));
@@ -58,7 +63,11 @@ function runCapture(command: string, args: string[]) {
 
 function run(command: string, args: string[], timeoutMs: number, signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    if (signal?.aborted) {
+      reject(new Error('Studio render was cancelled.'));
+      return;
+    }
+    const child = spawn(/* turbopackIgnore: true */ command, args, { stdio: ['ignore', 'ignore', 'pipe'] });
     const err: Buffer[] = [];
     const timer = setTimeout(() => {
       child.kill('SIGKILL');
@@ -99,12 +108,13 @@ export async function renderComposition(
     const vtt = path.join(dir, 'captions.vtt');
     await mkdir(dir, { recursive: true });
     await writeFile(vtt, compositionVtt(document));
-    const plan = compileRender(document, assets, { film, cover });
+    const probed = await probeAssets(binary, assets);
+    const plan = compileRender(document, probed, { film, cover, captions: vtt });
     await run(binary, plan.args, options.timeoutMs ?? 90_000, options.signal);
     await run(binary, compileCoverArgs(film, cover), 15_000, options.signal);
     const filmBytes = new Uint8Array(await readFile(film));
     const coverBytes = new Uint8Array(await readFile(cover));
-    const duration = compositionDuration(document) / 1000;
+    const duration = compositionPlaybackMs(document) / 1000;
     inspectRenderedMp4(filmBytes, { seconds: duration, width: plan.width, height: plan.height });
     return {
       film: filmBytes,
@@ -118,4 +128,35 @@ export async function renderComposition(
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+}
+
+async function probeAssets(binary: string, assets: LocalAsset[]): Promise<LocalAsset[]> {
+  const probed: LocalAsset[] = [];
+  for (const asset of assets) {
+    if (asset.media !== 'video' && asset.media !== 'wav' && asset.media !== 'audio') {
+      probed.push(asset);
+      continue;
+    }
+    try {
+      const text = await runCapture(binary, [
+        '-hide_banner',
+        '-i',
+        asset.path,
+        '-f',
+        'null',
+        '-',
+      ]).catch((error) => (error instanceof Error ? error.message : ''));
+      const duration = text.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
+      if (!duration) {
+        probed.push(asset);
+        continue;
+      }
+      const ms =
+        (Number(duration[1]) * 3600 + Number(duration[2]) * 60 + Number(duration[3])) * 1000;
+      probed.push({ ...asset, durationMs: Math.round(ms) });
+    } catch {
+      probed.push(asset);
+    }
+  }
+  return probed;
 }

@@ -19,7 +19,7 @@ export function studioProviderStates(env: Record<string, string | undefined>) {
     designExport: 'implemented' as const,
     filmPreview: 'implemented' as const,
     filmRenderLocal: 'implemented' as const,
-    filmRenderHosted: env.STUDIO_RENDER_WORKER === 'true' ? 'implemented' : 'unavailable',
+    filmRenderHosted: 'unavailable' as const,
     prepressCmyk: 'unavailable' as const,
   };
 }

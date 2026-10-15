@@ -1,4 +1,11 @@
-import { compositionDuration, compositionFrame, type CompositionDocument } from './model';
+import { compositionFrame, type CompositionDocument, type CompositionScene } from './model';
+import {
+  COMPOSITION_FPS,
+  compositionPlaybackMs,
+  sceneDissolveMs,
+  sceneFrames,
+  scenePlaybackStartMs,
+} from './timing';
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'wav';
 export type LocalAsset = {
@@ -6,6 +13,9 @@ export type LocalAsset = {
   kind: 'version' | 'reference' | 'footage' | 'narration' | 'music';
   path: string;
   media: MediaKind;
+  durationMs?: number;
+  width?: number;
+  height?: number;
 };
 
 export type RenderPlan = {
@@ -13,7 +23,7 @@ export type RenderPlan = {
   durationMs: number;
   width: number;
   height: number;
-  fps: 24;
+  fps: typeof COMPOSITION_FPS;
   filter: string;
 };
 
@@ -30,13 +40,30 @@ function n(value: number) {
   return String(value);
 }
 
+function filterPath(file: string) {
+  assertSafePath(file);
+  return file.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "\\'");
+}
+
+function cropPlace(scene: CompositionScene, frame: { width: number; height: number }) {
+  const placeW = Math.max(2, Math.round(frame.width * scene.placement.width) & ~1);
+  const placeH = Math.max(2, Math.round(frame.height * scene.placement.height) & ~1);
+  const placeX = Math.max(0, Math.round(frame.width * scene.placement.x) & ~1);
+  const placeY = Math.max(0, Math.round(frame.height * scene.placement.y) & ~1);
+  return {
+    crop: `crop=iw*${n(scene.crop.width)}:ih*${n(scene.crop.height)}:iw*${n(scene.crop.x)}:ih*${n(scene.crop.y)}`,
+    scale: `scale=${placeW}:${placeH}:flags=lanczos`,
+    pad: `pad=${frame.width}:${frame.height}:${placeX}:${placeY}:black`,
+  };
+}
+
 export function compileRender(
   document: CompositionDocument,
   assets: LocalAsset[],
-  output: { film: string; cover: string },
+  output: { film: string; cover: string; captions?: string },
 ): RenderPlan {
   const frame = compositionFrame(document.aspect);
-  const durationMs = compositionDuration(document);
+  const durationMs = compositionPlaybackMs(document);
   const lookup = new Map(assets.map((asset) => [`${asset.kind}:${asset.id}`, asset]));
   const inputs: string[] = [];
   const filters: string[] = [];
@@ -44,20 +71,33 @@ export function compileRender(
     const asset = lookup.get(`${scene.assetKind}:${scene.assetId}`);
     if (!asset) throw new Error(`Composition is missing owned media for scene ${scene.name}.`);
     assertSafePath(asset.path);
-    const seconds = scene.durationMs / 1000;
+    const next = document.scenes[index + 1];
+    const extra = next ? sceneDissolveMs(next, index + 1) : 0;
+    const generateMs = scene.durationMs + extra;
+    const seconds = generateMs / 1000;
+    const frames = sceneFrames(generateMs) + (extra ? 1 : 0);
+    if (scene.kind === 'video' && asset.durationMs != null) {
+      if (scene.outMs > asset.durationMs + 20)
+        throw new Error(
+          `Scene “${scene.name}” out point ${scene.outMs}ms is past the owned clip (${asset.durationMs}ms).`,
+        );
+    }
+    const layout = cropPlace(scene, frame);
     if (scene.kind === 'image') {
-      inputs.push('-loop', '1', '-t', n(seconds), '-i', asset.path);
-      const zoom =
-        scene.stillMotion === 'slow-zoom'
-          ? `,zoompan=z='min(zoom+0.0008,1.08)':d=${Math.round((scene.durationMs / 1000) * 24)}:s=${frame.width}x${frame.height}:fps=24`
-          : `,fps=24,trim=duration=${n(seconds)},setpts=PTS-STARTPTS`;
-      filters.push(
-        `[${index}:v]scale=${frame.width}:${frame.height}:force_original_aspect_ratio=increase,crop=${frame.width}:${frame.height}${zoom}[v${index}]`,
-      );
+      inputs.push('-framerate', String(COMPOSITION_FPS), '-i', asset.path);
+      if (scene.stillMotion === 'slow-zoom') {
+        filters.push(
+          `[${index}:v]${layout.crop},${layout.scale},zoompan=z='min(zoom+0.0012,1.08)':d=${frames}:s=${frame.width}x${frame.height}:fps=${COMPOSITION_FPS},setsar=1,trim=end_frame=${frames},setpts=PTS-STARTPTS[v${index}]`,
+        );
+      } else {
+        filters.push(
+          `[${index}:v]${layout.crop},${layout.scale},${layout.pad},fps=${COMPOSITION_FPS},tpad=stop_mode=clone:stop_duration=${n(seconds)},trim=duration=${n(seconds)},setpts=PTS-STARTPTS[v${index}]`,
+        );
+      }
     } else {
       inputs.push('-ss', n(scene.inMs / 1000), '-t', n((scene.outMs - scene.inMs) / 1000), '-i', asset.path);
       filters.push(
-        `[${index}:v]trim=duration=${n(seconds)},setpts=PTS-STARTPTS,scale=${frame.width}:${frame.height}:force_original_aspect_ratio=increase,crop=${frame.width}:${frame.height},fps=24[v${index}]`,
+        `[${index}:v]${layout.crop},${layout.scale},${layout.pad},fps=${COMPOSITION_FPS},trim=duration=${n(seconds)},setpts=PTS-STARTPTS[v${index}]`,
       );
     }
   });
@@ -67,22 +107,27 @@ export function compileRender(
     video = '[vout]';
   } else {
     let last = 'v0';
-    let offset = document.scenes[0]!.durationMs / 1000;
     for (let index = 1; index < document.scenes.length; index++) {
       const scene = document.scenes[index]!;
       const label = `vx${index}`;
-      if (scene.transition === 'dissolve') {
-        const fade = 0.25;
+      const fade = sceneDissolveMs(scene, index) / 1000;
+      const offset = scenePlaybackStartMs(document, index) / 1000;
+      if (fade > 0) {
         filters.push(
-          `[${last}][v${index}]xfade=transition=fade:duration=${n(fade)}:offset=${n(Math.max(0, offset - fade))}[${label}]`,
+          `[${last}][v${index}]xfade=transition=fade:duration=${n(fade)}:offset=${n(Math.max(0, offset))}[${label}]`,
         );
       } else {
         filters.push(`[${last}][v${index}]concat=n=2:v=1:a=0[${label}]`);
       }
       last = label;
-      offset += scene.durationMs / 1000;
     }
     video = `[${last}]`;
+  }
+  const overlay = [...document.titles, ...document.captions];
+  if (overlay.length && output.captions) {
+    assertSafePath(output.captions);
+    filters.push(`${video}subtitles=${filterPath(output.captions)}[vsub]`);
+    video = '[vsub]';
   }
   let audioIndex = document.scenes.length;
   const audioMix: string[] = [];
@@ -95,7 +140,7 @@ export function compileRender(
     const fadeOut = document.narration.fadeOutMs / 1000;
     const delay = Math.max(0, durationMs / 1000 - fadeOut);
     filters.push(
-      `[${audioIndex}:a]volume=${n(dbToRatio(document.narration.gainDb))},afade=t=in:st=0:d=${n(fadeIn)},afade=t=out:st=${n(delay)}:d=${n(fadeOut)}[na]`,
+      `[${audioIndex}:a]volume=${n(dbToRatio(document.narration.gainDb))},afade=t=in:st=0:d=${n(fadeIn)},afade=t=out:st=${n(delay)}:d=${n(fadeOut)},atrim=duration=${n(durationMs / 1000)}[na]`,
     );
     audioMix.push('[na]');
     audioIndex += 1;
@@ -109,7 +154,7 @@ export function compileRender(
     const fadeOut = document.music.fadeOutMs / 1000;
     const delay = Math.max(0, durationMs / 1000 - fadeOut);
     filters.push(
-      `[${audioIndex}:a]volume=${n(dbToRatio(document.music.gainDb))},afade=t=in:st=0:d=${n(fadeIn)},afade=t=out:st=${n(delay)}:d=${n(fadeOut)}[mu]`,
+      `[${audioIndex}:a]volume=${n(dbToRatio(document.music.gainDb))},afade=t=in:st=0:d=${n(fadeIn)},afade=t=out:st=${n(delay)}:d=${n(fadeOut)},atrim=duration=${n(durationMs / 1000)}[mu]`,
     );
     audioMix.push('[mu]');
   }
@@ -131,14 +176,14 @@ export function compileRender(
     '-filter_complex',
     filters.join(';'),
     '-map',
-    video === '[vout]' ? '[vout]' : video,
+    video,
     ...audioMap,
     '-c:v',
     'libx264',
     '-pix_fmt',
     'yuv420p',
     '-r',
-    '24',
+    String(COMPOSITION_FPS),
     '-t',
     n(durationMs / 1000),
     '-movflags',
@@ -150,7 +195,7 @@ export function compileRender(
     durationMs,
     width: frame.width,
     height: frame.height,
-    fps: 24,
+    fps: COMPOSITION_FPS,
     filter: filters.join(';'),
   };
 }
