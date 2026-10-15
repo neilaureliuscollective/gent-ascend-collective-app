@@ -114,9 +114,13 @@ test('Talk keeps New and local Tools separate and retains its real composer draf
   await page.goto('/global-navigation.html?identity=member&route=/app/aethelios');
   const editor = page.getByRole('textbox', { name: 'Message Aethelios', exact: true });
   await editor.fill('Keep my conversation draft');
-  await expect(page.getByRole('button', { name: 'New', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Tools & context', exact: true }).click();
   const tools = page.getByRole('dialog', { name: 'Tools & context', exact: true });
+  // Compact Motion retains New as an explicit local action in Tools.
+  await expect(tools.getByRole('button', { name: 'New conversation', exact: true })).toBeVisible();
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await tools.getByRole('button', { name: 'New conversation', exact: true }).click();
+  await expect(editor).toHaveValue('Keep my conversation draft');
   await expect(tools.getByRole('navigation', { name: 'Aethelios destinations' })).toHaveCount(0);
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
