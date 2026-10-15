@@ -629,6 +629,7 @@ export interface Database {
           conversation_id: string;
           provider_item_id: string;
           provider_response_id: string | null;
+          intended_turn_id: string | null;
           created_at: string;
         },
         never,
@@ -1585,8 +1586,14 @@ export interface Database {
           p_conversation: string;
           p_item: string;
           p_response: string | null;
+          p_turn: string;
         };
-        Returns: { providerItemId: string; observed: boolean; trusted: boolean };
+        Returns: {
+          providerItemId: string;
+          turnId: string;
+          observed: boolean;
+          trusted: boolean;
+        };
       };
       ai_live_bind_finished_turn: {
         Args: {

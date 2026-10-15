@@ -80,6 +80,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015160000_architect_apps_retain_authority.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015170000_architect_apps_retain_provenance.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015180000_talk_live_trusted_observe.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015190000_talk_live_bind_intended_turn.sql', 'utf8'));
 });
 afterAll(() => db.close());
 
@@ -617,7 +618,7 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
     await expect(
       asUser(
         owner,
-        `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same','resp-1')`,
+        `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same','resp-1','${turnA}')`,
       ),
     ).rejects.toThrow(/Trusted voice observation required|permission denied/i);
     await expect(
@@ -627,11 +628,23 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
       ),
     ).rejects.toThrow(/unavailable/i);
     await asService(
-      `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same','resp-1')`,
+      `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same','resp-1','${turnA}')`,
     );
     await asService(
-      `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same-again','resp-2')`,
+      `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same-again','resp-2','${turnB}')`,
     );
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnB}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-2','${turnA}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
     await asUser(
       owner,
       `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,
@@ -640,6 +653,12 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
       owner,
       `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same-again','resp-2','${turnB}')`,
     );
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnB}')`,
+      ),
+    ).rejects.toThrow(/Binding request reused with different inputs|unavailable/i);
     const replay = await asUser(
       owner,
       `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnA}') as receipt`,

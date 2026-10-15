@@ -82,6 +82,7 @@ try {
         p_conversation: conversation,
         p_item: 'spoken-1',
         p_response: 'resp-1',
+        p_turn: turn,
       })
     ).error,
     'browser clients cannot call the trusted observe path',
@@ -140,14 +141,49 @@ try {
       p_turn: turn,
     });
     assert.ok(invented.error, 'invented spoken-1 from a browser client must not bind');
+    const otherTurn = crypto.randomUUID();
+    assert.equal(
+      (await owner.rpc('ai_begin_turn', {
+        p_conversation: conversation,
+        p_request: otherTurn,
+        p_text: 'Second completed turn.',
+        p_model: 'synthetic-no-model-call',
+        p_context: false,
+        p_prompt_version: 'talk-receipt-auth',
+      })).error,
+      null,
+    );
+    assert.equal(
+      (await owner.rpc('ai_finish_turn', { p_request: otherTurn, p_text: 'Saved again.', p_status: 'complete' }))
+        .error,
+      null,
+    );
     const observed = await trusted.rpc('ai_live_observe_trusted_item', {
       p_session: liveSession,
       p_conversation: conversation,
       p_item: 'spoken-1',
       p_response: 'resp-1',
+      p_turn: turn,
     });
     assert.equal(observed.error, null, 'trusted server fixture event must observe');
     assert.equal(observed.data.trusted, true);
+    assert.equal(observed.data.turnId, turn);
+    const wrongTurn = await owner.rpc('ai_live_bind_finished_turn', {
+      p_session: liveSession,
+      p_conversation: conversation,
+      p_item: 'spoken-1',
+      p_response: 'resp-1',
+      p_turn: otherTurn,
+    });
+    assert.ok(wrongTurn.error, 'observed item must not bind to a different completed turn');
+    const wrongResponse = await owner.rpc('ai_live_bind_finished_turn', {
+      p_session: liveSession,
+      p_conversation: conversation,
+      p_item: 'spoken-1',
+      p_response: 'resp-2',
+      p_turn: turn,
+    });
+    assert.ok(wrongResponse.error, 'observed item must not bind to a mismatched response');
     const bound = await owner.rpc('ai_live_bind_finished_turn', {
       p_session: liveSession,
       p_conversation: conversation,
@@ -155,8 +191,18 @@ try {
       p_response: 'resp-1',
       p_turn: turn,
     });
-    assert.equal(bound.error, null, 'server-observed item on a completed owner turn can bind');
+    assert.equal(bound.error, null, 'server-observed item on its intended completed turn can bind');
     assert.equal(bound.data.turnId, turn);
+    const replay = await owner.rpc('ai_live_bind_finished_turn', {
+      p_session: liveSession,
+      p_conversation: conversation,
+      p_item: 'spoken-1',
+      p_response: 'resp-1',
+      p_turn: turn,
+    });
+    assert.equal(replay.error, null, 'identical bind retry recovers');
+    assert.equal(replay.data.recovered, true);
+    assert.equal(replay.data.turnId, turn);
   }
   assert.ok(
     (
@@ -214,7 +260,7 @@ try {
   assert.equal((await foreign.from('ai_live_turn_bindings').select('turn_id')).data?.length ?? 0, 0);
   assert.equal((await foreign.from('ai_talk_direction_transfers').select('id')).data?.length ?? 0, 0);
   console.log(
-    'PASS: Talk receipt Auth/PostgREST denies browser observe/bind and invented spoken-1, accepts only trusted-server observation, and denies forged verified retain.',
+    'PASS: Talk receipt Auth/PostgREST denies browser observe/bind, invented spoken-1, wrong-turn and wrong-response binds, accepts only the intended trusted observation, and denies forged verified retain.',
   );
 } finally {
   await owner.from('ai_conversations').delete().eq('id', conversation);

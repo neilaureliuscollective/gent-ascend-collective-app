@@ -328,6 +328,7 @@ test('authenticated design-board selection, refinement, reload and Architect tra
         p_conversation: conversation,
         p_item: 'spoken-1',
         p_response: 'resp-1',
+        p_turn: crypto.randomUUID(),
       })
     ).error,
   ).toBeTruthy();

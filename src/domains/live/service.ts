@@ -773,6 +773,7 @@ export async function admitLive(input: LiveAdmission) {
                   conversationId: input.conversationId,
                   item: turn.providerItemId,
                   response: turn.providerResponseId ?? null,
+                  turnId: id,
                 });
                 if (!observed.trusted) return;
                 const bound = await client.rpc('ai_live_bind_finished_turn', {

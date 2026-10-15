@@ -13,6 +13,7 @@ export async function observeTrustedVoiceItem(input: {
   conversationId: string;
   item: string;
   response: string | null;
+  turnId: string;
 }): Promise<{ observed: boolean; trusted: boolean }> {
   const connection = supabaseConnection(process.env);
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -26,6 +27,7 @@ export async function observeTrustedVoiceItem(input: {
     p_conversation: input.conversationId,
     p_item: input.item,
     p_response: input.response,
+    p_turn: input.turnId,
   });
   if (saved.error || !saved.data) return { observed: false, trusted: false };
   return { observed: true, trusted: true };
