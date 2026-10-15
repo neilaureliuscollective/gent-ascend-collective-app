@@ -128,6 +128,18 @@ for (const [label, width, height] of views) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    const tileBitmap = PNG.sync.read(
+      await rooms
+        .getByRole('button', { name: 'Create', exact: true })
+        .screenshot({ animations: 'disabled' }),
+    );
+    const tilePixel = (10 * tileBitmap.width + 10) * 4;
+    expect(tileBitmap.data[tilePixel + 1]).toBeGreaterThan(tileBitmap.data[tilePixel]! + 3);
+    await rooms.getByRole('button', { name: 'Design', exact: true }).focus();
+    await expect(rooms.getByRole('button', { name: 'Design', exact: true })).toHaveCSS(
+      'outline-style',
+      'solid',
+    );
     await capture('studio');
     await rooms.getByRole('button', { name: 'Direction', exact: true }).click();
     await page.getByLabel('Color direction').fill('Emerald glass, obsidian and restrained gold');
@@ -201,4 +213,10 @@ test('material preferences and missing palette values preserve readable controls
   await expect(page.locator('.origin-studio')).toHaveCSS('background-color', system.background);
   await expect(page.locator('.origin-studio')).toHaveCSS('color', system.color);
   await expect(page.getByRole('button', { name: 'Deliverables', exact: true })).toBeVisible();
+  await openMaterialStudio(page);
+  const studioDesign = page
+    .getByRole('group', { name: 'Studio workspace views' })
+    .getByRole('button', { name: 'Design', exact: true });
+  await expect(studioDesign).toHaveCSS('background-color', system.background);
+  await expect(studioDesign).toHaveCSS('color', system.color);
 });

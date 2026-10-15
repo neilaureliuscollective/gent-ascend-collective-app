@@ -471,7 +471,7 @@
 }
 
 /* Focus removes the named side tracks as well as the side panels. */
-.environment-main .origin-active .origin-workbench.origin-canvas-focused {
+.environment-main .origin-studio.origin-active .origin-workbench.origin-workspace.origin-canvas-focused {
   display: grid;
   grid-template-columns: minmax(0, 1fr) !important;
   grid-template-areas: 'canvas' !important;
