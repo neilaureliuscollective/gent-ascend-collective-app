@@ -75,13 +75,7 @@ The motion fixture now mounts `ConversationViewport` (`.talk-page`) and smoked-g
 - `vitest run` conversation/motion units 9/9 in this file (includes persistent-notice coverage)
 - `playwright.motion.config.ts` 35/35 after header, announcer and composer-focus assertions
 - Actual Next `/app/aethelios` 200 on local `:3100` (signed-out / disconnected workspace). Visible header controls stay inside 320 / 344 / 390 / 690 CSS px, including 24px text-zoom and 690×420 keyboard-open. 320–344 hide the redundant New control; 390 and Fold keep it. Focused composer: textarea outline none, gold 2px shell. No local Auth session, so send/stream was not exercised on this route.
-- Labeled synthetic fixture clips (VP8 webm, ffprobe playable) at `/opt/cursor/artifacts/videos/`:
-  - `motion-narrow-header-keyboard.webm` 5.4s
-  - `motion-submit-activity-saved.webm` 4.9s
-  - `motion-image-approval-cancel-fail.webm` 5.1s
-  - `motion-voice-states.webm` 5.6s
-  - `motion-reduced-motion-still.webm` 5.6s
-  - `next-talk-narrow-header-keyboard.webm` 4.4s (signed-out Next Talk)
+- Review clips use ~2s settled opening, ≥2s dwell per readable state, and a settled ending. Product animation timing is unchanged. Labeled synthetic fixture plus signed-out Next Talk. Not paid Live.
 - Production `next build`, hosted Auth, physical Fold, paid Live and live microphone were not run.
 
 Synthetic fixture sequences are labeled and are not live provider proof.
