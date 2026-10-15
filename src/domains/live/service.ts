@@ -36,6 +36,7 @@ import { openLiveControlSocket } from './control-socket';
 import { liveAdmissionForm, readProviderRejection } from './admission-request';
 import { budgetLiveSeed } from './context-budget';
 import { talkLiveCreationTools, runTalkLiveOffer, runTalkLiveRefine } from '@/domains/talk-creation/live-adapter';
+import { observeTrustedVoiceItem } from './trusted-observe';
 import { selectedTalkContext, selectedTalkPredecessors } from '@/domains/talk-creation/context';
 import { readTalkCreations } from '@/domains/talk-creation/service';
 const base = 'https://api.openai.com/v1/realtime/calls';
@@ -767,6 +768,13 @@ export async function admitLive(input: LiveAdmission) {
               if (finished.error || !finished.data)
                 throw new Error('Voice turn persistence failed');
               if (turn.providerItemId) {
+                const observed = await observeTrustedVoiceItem({
+                  sessionId: input.sessionId,
+                  conversationId: input.conversationId,
+                  item: turn.providerItemId,
+                  response: turn.providerResponseId ?? null,
+                });
+                if (!observed.trusted) return;
                 const bound = await client.rpc('ai_live_bind_finished_turn', {
                   p_session: input.sessionId,
                   p_conversation: input.conversationId,

@@ -6,6 +6,10 @@ import type { ActivityReporter } from './stream';
 import { streamAurelius } from './agent';
 import { aiConfigSchema } from './validation';
 import type { TalkAgentSession } from '@/domains/talk-creation/tools';
+import {
+  streamTalkCreationFixture,
+  talkCreationFixtureEnabled,
+} from '@/domains/talk-creation/fixture-stream';
 
 export function generateReply(
   model: string,
@@ -16,6 +20,7 @@ export function generateReply(
   onActivity?: ActivityReporter,
   creation?: TalkAgentSession | null,
 ) {
+  if (talkCreationFixtureEnabled() && creation) return streamTalkCreationFixture(creation);
   const config = aiConfigSchema.parse(process.env);
   if (!config.OPENAI_API_KEY) throw new Error('OpenAI is not configured');
   const openai = createOpenAI({

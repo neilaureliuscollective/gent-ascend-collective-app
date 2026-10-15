@@ -1579,6 +1579,15 @@ export interface Database {
         };
         Returns: { providerItemId: string; observed: boolean };
       };
+      ai_live_observe_trusted_item: {
+        Args: {
+          p_session: string;
+          p_conversation: string;
+          p_item: string;
+          p_response: string | null;
+        };
+        Returns: { providerItemId: string; observed: boolean; trusted: boolean };
+      };
       ai_live_bind_finished_turn: {
         Args: {
           p_session: string;

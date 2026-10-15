@@ -436,6 +436,14 @@ export function CreationDetail({
                           requestId,
                           error: undefined,
                         });
+                    } catch {
+                      setDirectionReview({
+                        ...directionReview,
+                        imported: false,
+                        requestId,
+                        error:
+                          'The destination may already be saved. Confirm again to recover the receipt.',
+                      });
                     } finally {
                       setDirectionBusy(null);
                     }

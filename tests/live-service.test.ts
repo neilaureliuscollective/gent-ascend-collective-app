@@ -62,6 +62,9 @@ vi.mock('@/domains/talk-creation/live-adapter', () => ({
   runTalkLiveOffer: vi.fn(),
   runTalkLiveRefine: vi.fn(),
 }));
+vi.mock('@/domains/live/trusted-observe', () => ({
+  observeTrustedVoiceItem: vi.fn(async () => ({ observed: true, trusted: true })),
+}));
 import { admitLive } from '@/domains/live/service';
 import { liveAdmissionFieldKinds } from '@/domains/live/admission-request';
 class Socket extends EventTarget {

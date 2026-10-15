@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { readFile } from 'node:fs/promises';
 
-const db = new PGlite();
+const db = new PGlite({ extensions: { pgcrypto } });
 const owner = '00000000-0000-4000-8000-000000000001';
 const foreign = '00000000-0000-4000-8000-000000000002';
 const conversation = '00000000-0000-4000-8000-000000000003';
@@ -20,7 +21,16 @@ const brief = {
 const literal = (value: unknown) => "'" + JSON.stringify(value).replace(/'/g, "''") + "'::jsonb";
 
 async function asUser(id: string, sql: string) {
-  await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${id}',false)`);
+  await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${id}',false); select set_config('request.jwt.claim.role','authenticated',false)`);
+  try {
+    return await db.query(sql);
+  } finally {
+    await db.exec('reset role');
+  }
+}
+
+async function asService(sql: string) {
+  await db.exec(`set role service_role; select set_config('request.jwt.claim.role','service_role',false)`);
   try {
     return await db.query(sql);
   } finally {
@@ -29,9 +39,13 @@ async function asUser(id: string, sql: string) {
 }
 
 beforeAll(async () => {
-  await db.exec(`create role authenticated; create role anon; create schema auth;
+  await db.exec(`create role authenticated; create role anon; create role service_role; create schema auth;
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
- grant usage on schema public,auth to authenticated,anon; grant execute on function auth.uid() to authenticated;
+ create function auth.role() returns text language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claim.role',true),''),(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'role'))$$;
+ grant usage on schema public,auth to authenticated,anon,service_role;
+ grant execute on function auth.uid() to authenticated,anon,service_role;
+ grant execute on function auth.role() to authenticated,anon,service_role;
+ create extension if not exists pgcrypto;
  create table public.persons(id uuid primary key, auth_user_id uuid);
  insert into public.persons values('${owner}','${owner}'),('${foreign}','${foreign}');
  grant select on public.persons to authenticated;
@@ -46,7 +60,17 @@ beforeAll(async () => {
    revision integer default 1, digest text not null, receipt jsonb, started boolean default false,
    source_kind text not null default 'pending', verified boolean not null default false, created_at timestamptz default now()
  );
- grant select, insert on public.ai_live_sessions, public.architect_design_directions, public.architect_origin_projects to authenticated;`);
+ grant select, insert on public.ai_live_sessions, public.architect_design_directions, public.architect_origin_projects to authenticated;
+ create function public.ai_talk_scoped_identity(p_seed text) returns uuid
+ language plpgsql immutable set search_path=public,extensions as $$
+ declare raw bytea; hex text;
+ begin
+  if p_seed is null or length(p_seed)=0 then raise exception 'Invalid import'; end if;
+  raw := substring(digest(convert_to(p_seed,'UTF8'),'sha1') from 1 for 16);
+  raw := set_byte(set_byte(raw,6,(get_byte(raw,6)&15)|80),8,(get_byte(raw,8)&63)|128);
+  hex := encode(raw,'hex');
+  return (substr(hex,1,8)||'-'||substr(hex,9,4)||'-'||substr(hex,13,4)||'-'||substr(hex,17,4)||'-'||substr(hex,21,12))::uuid;
+ end $$;`);
   await db.exec(await readFile('supabase/migrations/20261013240000_talk_creation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261013260000_talk_creation_candidates.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
@@ -54,6 +78,8 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261014130000_talk_direction_transfers.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014140000_talk_live_bind_authority.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015160000_architect_apps_retain_authority.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015170000_architect_apps_retain_provenance.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261015180000_talk_live_trusted_observe.sql', 'utf8'));
 });
 afterAll(() => db.close());
 
@@ -390,12 +416,21 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
     const { legacyReserveBoard, selectDesignDirection } = await import(
       '@/domains/talk-creation/design-board'
     );
+    const { produceArchitectDirection } = await import('@/domains/talk-creation/architect-direction');
     await db.exec(`delete from public.ai_talk_creations where person_id='${owner}'`);
     const boardId = '00000000-0000-4000-8000-000000000071';
     const requestId = '00000000-0000-4000-8000-000000000072';
     const projectId = '00000000-0000-4000-8000-000000000073';
-    const directionUuid = '00000000-0000-4000-8000-000000000074';
     const board = selectDesignDirection(legacyReserveBoard(), 'direction-c');
+    const authorized = produceArchitectDirection({
+      conversationId: conversation,
+      boardId,
+      version: 1,
+      board,
+    });
+    const directionUuid = authorized.identity.directionId;
+    const digest = authorized.digest;
+    const receipt = authorized;
     await asUser(
       owner,
       `select public.ai_talk_save_creation('${boardId}','${conversation}',null,'board',null,${literal(board)})`,
@@ -407,13 +442,25 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
       )
     ).rows[0] as { selected: string };
     expect(selected.selected).toBe('direction-c');
-    const digest = 'a'.repeat(64);
-    const receipt = { schema: 'talk-architect-direction/v1', digest };
+    const derived = (
+      await db.query(
+        `select public.ai_talk_derived_design_receipt('${owner}','${conversation}','${boardId}',1) as receipt`,
+      )
+    ).rows[0] as { receipt: { digest: string; identity: { directionId: string } } };
+    expect(derived.receipt.digest).toBe(digest);
+    expect(derived.receipt.identity.directionId).toBe(directionUuid);
+    await db.exec(`insert into public.architect_origin_projects(id,person_id) values('${projectId}','${owner}')`);
     await asUser(
       owner,
-      `insert into public.architect_design_directions(request_id,person_id,project_id,digest,verified)
-       values('${requestId}','${owner}','${projectId}','${digest}',true)`,
+      `select public.architect_apps_retain_design('${requestId}','${projectId}','${digest}',${literal(receipt)},'talk-authorized',false)`,
     );
+    const retained = (
+      await asUser(
+        owner,
+        `select verified, source_kind, digest from public.architect_design_directions where request_id='${requestId}'`,
+      )
+    ).rows[0] as { verified: boolean; source_kind: string; digest: string };
+    expect(retained).toMatchObject({ verified: true, source_kind: 'talk-authorized', digest });
     await expect(
       asUser(owner, `insert into public.ai_talk_direction_transfers(id,person_id,conversation_id,board_id,board_version,direction_id,direction_uuid,project_id,digest,receipt,imported)
         values('${crypto.randomUUID()}','${owner}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)},true)`),
@@ -446,30 +493,69 @@ describe('Talk design-board SQL versions (PGlite; not Supabase Auth)', () => {
         `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)})`,
       ),
     ).rejects.toThrow(/unavailable/i);
-    const forged = '00000000-0000-4000-8000-000000000075';
-    await db.exec(`insert into public.architect_origin_projects(id,person_id) values('${projectId}','${owner}')`);
+    const forgedVersion = '00000000-0000-4000-8000-000000000075';
     await asUser(
       owner,
-      `select public.architect_apps_retain_design('${forged}','${projectId}','${digest}',${literal({
-        identity: {
-          conversationId: conversation,
-          boardId,
-          boardVersion: 99,
-          directionId: directionUuid,
-        },
+      `select public.architect_apps_retain_design('${forgedVersion}','${projectId}','${digest}',${literal({
+        ...receipt,
+        identity: { ...receipt.identity, boardVersion: 99 },
+        content: { ...receipt.content, identity: { ...receipt.content.identity, boardVersion: 99 } },
       })},'talk-authorized',true)`,
     );
-    const forgedRow = (
+    const forgedVersionRow = (
       await asUser(
         owner,
-        `select verified, source_kind from public.architect_design_directions where request_id='${forged}'`,
+        `select verified, source_kind from public.architect_design_directions where request_id='${forgedVersion}'`,
       )
     ).rows[0] as { verified: boolean; source_kind: string };
-    expect(forgedRow).toMatchObject({ verified: false, source_kind: 'pending' });
+    expect(forgedVersionRow).toMatchObject({ verified: false, source_kind: 'pending' });
+    const forgedCases = [
+      {
+        id: '00000000-0000-4000-8000-000000000076',
+        digest,
+        receipt: {
+          ...receipt,
+          identity: { ...receipt.identity, directionId: '00000000-0000-4000-8000-000000000079' },
+          content: {
+            ...receipt.content,
+            identity: { ...receipt.content.identity, directionId: '00000000-0000-4000-8000-000000000079' },
+          },
+        },
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000077',
+        digest,
+        receipt: { ...receipt, content: { ...receipt.content, name: 'Forged Chamber' } },
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000078',
+        digest: 'c'.repeat(64),
+        receipt: { ...receipt, digest: 'c'.repeat(64) },
+      },
+    ];
+    for (const forged of forgedCases) {
+      await asUser(
+        owner,
+        `select public.architect_apps_retain_design('${forged.id}','${projectId}','${forged.digest}',${literal(forged.receipt)},'talk-authorized',true)`,
+      );
+      const forgedRow = (
+        await asUser(
+          owner,
+          `select verified, source_kind from public.architect_design_directions where request_id='${forged.id}'`,
+        )
+      ).rows[0] as { verified: boolean; source_kind: string };
+      expect(forgedRow).toMatchObject({ verified: false, source_kind: 'pending' });
+      await expect(
+        asUser(
+          owner,
+          `select public.ai_talk_record_direction_transfer('${forged.id}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${forged.digest}',${literal(forged.receipt)})`,
+        ),
+      ).rejects.toThrow(/acknowledgment missing/i);
+    }
     await expect(
       asUser(
         owner,
-        `select public.ai_talk_record_direction_transfer('${forged}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)})`,
+        `select public.ai_talk_record_direction_transfer('${forgedVersion}','${conversation}','${boardId}',1,'direction-c','${directionUuid}','${projectId}','${digest}',${literal(receipt)})`,
       ),
     ).rejects.toThrow(/acknowledgment missing/i);
   });
@@ -528,6 +614,24 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
         `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${wrongTurn}')`,
       ),
     ).rejects.toThrow(/unavailable/i);
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same','resp-1')`,
+      ),
+    ).rejects.toThrow(/Trusted voice observation required|permission denied/i);
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_live_bind_finished_turn('${session}','${conversation}','spoken-1','resp-1','${turnA}')`,
+      ),
+    ).rejects.toThrow(/unavailable/i);
+    await asService(
+      `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same','resp-1')`,
+    );
+    await asService(
+      `select public.ai_live_observe_trusted_item('${session}','${conversation}','item-same-again','resp-2')`,
+    );
     await asUser(
       owner,
       `select public.ai_live_bind_finished_turn('${session}','${conversation}','item-same','resp-1','${turnA}')`,

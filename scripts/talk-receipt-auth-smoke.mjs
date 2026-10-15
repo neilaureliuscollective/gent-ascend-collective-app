@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { localSupabaseControlPlane } from './local-supabase-control-plane.mjs';
 
 const env = Object.fromEntries(
   readFileSync('.env.development.local', 'utf8')
@@ -29,6 +30,10 @@ assert.equal(
     .error,
   null,
 );
+const plane = localSupabaseControlPlane();
+const trusted = createClient(plane.url, plane.serviceRoleKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 const conversation = crypto.randomUUID();
 const turn = crypto.randomUUID();
@@ -69,6 +74,17 @@ try {
       })
     ).error,
     'direct observe must be denied',
+  );
+  assert.ok(
+    (
+      await owner.rpc('ai_live_observe_trusted_item', {
+        p_session: session,
+        p_conversation: conversation,
+        p_item: 'spoken-1',
+        p_response: 'resp-1',
+      })
+    ).error,
+    'browser clients cannot call the trusted observe path',
   );
   assert.ok(
     (
@@ -116,6 +132,22 @@ try {
       ).error,
       'observe on a real session must be denied',
     );
+    const invented = await owner.rpc('ai_live_bind_finished_turn', {
+      p_session: liveSession,
+      p_conversation: conversation,
+      p_item: 'spoken-1',
+      p_response: 'resp-1',
+      p_turn: turn,
+    });
+    assert.ok(invented.error, 'invented spoken-1 from a browser client must not bind');
+    const observed = await trusted.rpc('ai_live_observe_trusted_item', {
+      p_session: liveSession,
+      p_conversation: conversation,
+      p_item: 'spoken-1',
+      p_response: 'resp-1',
+    });
+    assert.equal(observed.error, null, 'trusted server fixture event must observe');
+    assert.equal(observed.data.trusted, true);
     const bound = await owner.rpc('ai_live_bind_finished_turn', {
       p_session: liveSession,
       p_conversation: conversation,
@@ -123,7 +155,7 @@ try {
       p_response: 'resp-1',
       p_turn: turn,
     });
-    assert.equal(bound.error, null, 'completed turn on the owner session can be bound');
+    assert.equal(bound.error, null, 'server-observed item on a completed owner turn can bind');
     assert.equal(bound.data.turnId, turn);
   }
   assert.ok(
@@ -182,7 +214,7 @@ try {
   assert.equal((await foreign.from('ai_live_turn_bindings').select('turn_id')).data?.length ?? 0, 0);
   assert.equal((await foreign.from('ai_talk_direction_transfers').select('id')).data?.length ?? 0, 0);
   console.log(
-    'PASS: Talk receipt Auth/PostgREST denies observe/bind, forged verified retain, direct inserts, and receipts without Architect acknowledgment.',
+    'PASS: Talk receipt Auth/PostgREST denies browser observe/bind and invented spoken-1, accepts only trusted-server observation, and denies forged verified retain.',
   );
 } finally {
   await owner.from('ai_conversations').delete().eq('id', conversation);

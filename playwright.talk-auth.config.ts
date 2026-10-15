@@ -7,7 +7,7 @@ export default defineConfig({
   use: { ...base.use, baseURL: 'http://127.0.0.1:3104' },
   webServer: {
     command:
-      'ARCHITECT_ORIGIN_ENABLED=true ARCHITECT_ORIGIN_AI_ENABLED=false npm run dev -- --port 3104',
+      'AETHELIOS_TALK_CREATION_FIXTURE=legacy-reserve ARCHITECT_ORIGIN_ENABLED=true ARCHITECT_ORIGIN_AI_ENABLED=false npm run dev -- --port 3104',
     url: 'http://127.0.0.1:3104',
     reuseExistingServer: false,
     timeout: 90000,
