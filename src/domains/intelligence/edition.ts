@@ -12,7 +12,7 @@ export const intelligenceEdition = {
   promptVersion: 'aethelios-2026-10-15.collaborator.1',
   knowledgeEdition: publishedKnowledge.edition,
   livePromptVersion: 'aethelios-live-pilot.3',
-  evalPack: 'collaborator.2',
+  evalPack: 'collaborator.3',
 } as const;
 
 export const promptVersion = intelligenceEdition.promptVersion;

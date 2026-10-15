@@ -238,6 +238,76 @@ describe('labeled request/context path fixtures', () => {
     expect(String(messages[0]?.content)).toContain('hero-1');
     expect(String(messages[0]?.content)).toContain('version-1');
     expect(String(messages[0]?.content)).toMatch(/not authorization/i);
+    const ownerScoped = workingStateFromTurns(
+      [
+        {
+          id: 'owner-turn-1',
+          status: 'complete',
+          user_text: 'Give me three bold directions',
+          assistant_text: 'One: archival editorial. Two: compact industrial. Three: ceremonial gold.',
+          selectedArtifact: {
+            kind: 'image',
+            id: 'owner-hero',
+            versionId: 'owner-version',
+            projectId: 'owner-project',
+            prompt: 'Owned homepage hero',
+          },
+        },
+        {
+          id: 'owner-turn-2',
+          status: 'complete',
+          user_text: 'Use the second',
+          assistant_text: 'Compact industrial stays.',
+          selectedArtifact: {
+            kind: 'image',
+            id: 'owner-hero',
+            versionId: 'owner-version',
+            projectId: 'owner-project',
+            prompt: 'Owned homepage hero',
+          },
+        },
+      ],
+      'Tighten the selected direction',
+      {
+        kind: 'image',
+        id: 'owner-hero',
+        versionId: 'owner-version',
+        projectId: 'owner-project',
+        prompt: 'Owned homepage hero',
+      },
+    );
+    const ownerMessages = buildMessages(
+      [
+        {
+          status: 'complete',
+          user_text: 'Give me three bold directions',
+          assistant_text: 'One: archival editorial. Two: compact industrial. Three: ceremonial gold.',
+        },
+        {
+          status: 'complete',
+          user_text: 'Use the second',
+          assistant_text: 'Compact industrial stays.',
+        },
+      ],
+      'Tighten the selected direction',
+      null,
+      new Date('2026-10-15T12:00:00.000Z'),
+      null,
+      null,
+      null,
+      null,
+      { workingState: ownerScoped, channel: 'text' },
+    );
+    expect(ownerScoped.selectedSource?.turnId).toBe('owner-turn-2');
+    expect(ownerScoped.authorization).toBe('none');
+    expect(String(ownerMessages[0]?.content)).toContain('owner-hero');
+    expect(String(ownerMessages[0]?.content)).toContain('compact industrial');
+    expect(String(ownerMessages[0]?.content)).toMatch(/grants no tools/i);
+    const off = composeScenarioRequest(
+      behaviorScenarios.find((item) => item.id === 'context-off')!,
+      'current',
+    );
+    expect(JSON.stringify(off.messages)).toContain('Do not use saved profile, goals or memories.');
   });
 
   it('keeps context-off, forged founder claims and malicious retrieved text inside service boundaries', () => {

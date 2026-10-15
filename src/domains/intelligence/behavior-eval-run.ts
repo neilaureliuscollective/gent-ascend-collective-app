@@ -20,7 +20,12 @@ import {
   type BehaviorEvalSet,
   type BehaviorScenario,
 } from './behavior-eval';
-import { scoreScenarioAnswer, compareScores, type ScenarioScore } from './behavior-eval-score';
+import {
+  scoreScenarioAnswer,
+  compareScores,
+  generatedContinuityFromHistory,
+  type ScenarioScore,
+} from './behavior-eval-score';
 import type { PersonalContext } from './types';
 import type { WorkingState } from './working-state';
 
@@ -37,12 +42,17 @@ export const behaviorEvalDefaults = {
   budgetUsd: 1,
   maxRequests: 24,
   maxOutputTokens: 800,
-  maxInputChars: 24000,
+  maxInputChars: 100000,
   maxRetries: 0,
 } as const;
 
 export const evalCostLimitsNote =
-  'Local USD figures are conservative estimates from inspected list prices, reserved max tokens and retained reservations when usage is missing. They do not control provider-wide billing.';
+  'Local USD figures distinguish estimated (preflight), reserved (in-flight conservative hold) and reported (provider usage) cost. Missing usage retains that turn’s reservation and is not treated as $0. They do not control provider-wide billing.';
+
+export const assembledInputPolicy = {
+  mode: 'reject-oversized' as const,
+  note: 'The fully assembled instructions plus messages, including accumulated multi-turn history, must be <= maxInputChars before dispatch. Oversized requests are rejected, not truncated, so a reservation is never taken for a smaller payload than the one sent.',
+} as const;
 
 export type EvalVariant = 'current' | 'ablation' | 'baseline';
 
@@ -99,11 +109,14 @@ export type BehaviorEvalReport = {
     | 'missing-key'
     | 'unknown-pricing'
     | 'invalid-limits'
-    | 'provider-error';
+    | 'provider-error'
+    | 'oversized-input';
   reason: string;
   estimatedUsd: number;
   spentUsd: number;
   reservedUsd: number;
+  reportedUsd: number;
+  retainedUsd: number;
   requests: number;
   skipped: string[];
   results: Array<{
@@ -156,6 +169,17 @@ function explicitNumber(
   return { value, invalid: false };
 }
 
+function explicitNonNegative(
+  env: Record<string, string | undefined>,
+  key: string,
+  fallback: number,
+): { value: number; invalid: boolean } {
+  if (!(key in env) || env[key] == null || env[key] === '') return { value: fallback, invalid: false };
+  const value = Number(env[key]);
+  if (!Number.isFinite(value) || value < 0) return { value: fallback, invalid: true };
+  return { value, invalid: false };
+}
+
 export function readBehaviorEvalConfig(
   env: Record<string, string | undefined> = { ...process.env },
 ): BehaviorEvalConfig {
@@ -175,6 +199,11 @@ export function readBehaviorEvalConfig(
     'AETHELIOS_BEHAVIOR_EVAL_MAX_INPUT_CHARS',
     behaviorEvalDefaults.maxInputChars,
   );
+  const maxRetries = explicitNonNegative(
+    env,
+    'AETHELIOS_BEHAVIOR_EVAL_MAX_RETRIES',
+    behaviorEvalDefaults.maxRetries,
+  );
   const model = env.AETHELIOS_BEHAVIOR_EVAL_MODEL || env.AURELIUS_AI_MODEL || behaviorEvalPricing.model;
   return {
     approved: env[optionalModelEvalFlag] === '1',
@@ -185,11 +214,16 @@ export function readBehaviorEvalConfig(
     maxRequests: Math.floor(maxRequests.value),
     maxOutputTokens: Math.floor(maxOutputTokens.value),
     maxInputChars: Math.floor(maxInputChars.value),
-    maxRetries: behaviorEvalDefaults.maxRetries,
+    maxRetries: Math.floor(maxRetries.value),
     hasKey: Boolean(env.OPENAI_API_KEY),
     scenarioSet: readEvalSet(env[optionalModelEvalSetFlag]),
     unknownPricing: model !== behaviorEvalPricing.model,
-    invalidLimits: budget.invalid || maxRequests.invalid || maxOutputTokens.invalid || maxInputChars.invalid,
+    invalidLimits:
+      budget.invalid ||
+      maxRequests.invalid ||
+      maxOutputTokens.invalid ||
+      maxInputChars.invalid ||
+      maxRetries.invalid,
   };
 }
 
@@ -274,6 +308,42 @@ export function accountEvalUsage(
     usd: tokensToUsd(input as number, output as number),
     usage: 'reported' as const,
     retainedReservation: false,
+  };
+}
+
+export function messageContentChars(content: unknown) {
+  if (typeof content === 'string') return content.length;
+  if (content == null) return 0;
+  return JSON.stringify(content).length;
+}
+
+export function assembledRequestChars(
+  instructions: string,
+  messages: ReadonlyArray<{ content?: unknown }>,
+) {
+  return (
+    instructions.length +
+    messages.reduce((sum, message) => sum + messageContentChars(message.content), 0)
+  );
+}
+
+export function settleDispatchUsage(
+  items: ReadonlyArray<{
+    usage?: { inputTokens?: number; outputTokens?: number } | null;
+    reservedUsd: number;
+  }>,
+) {
+  let reportedUsd = 0;
+  let retainedUsd = 0;
+  for (const item of items) {
+    const accounted = accountEvalUsage(item.usage, item.reservedUsd);
+    if (accounted.usage === 'reported') reportedUsd += accounted.usd;
+    else retainedUsd += accounted.usd;
+  }
+  return {
+    reportedUsd: Number(reportedUsd.toFixed(6)),
+    retainedUsd: Number(retainedUsd.toFixed(6)),
+    spentUsd: Number((reportedUsd + retainedUsd).toFixed(6)),
   };
 }
 
@@ -440,6 +510,8 @@ function skipReport(
     ),
     spentUsd: 0,
     reservedUsd: 0,
+    reportedUsd: 0,
+    retainedUsd: 0,
     requests: 0,
     skipped: [
       ...scenarios.map((scenario) => scenario.id),
@@ -506,99 +578,184 @@ export async function runBehaviorEval(
   const skipped: string[] = [];
   let spentUsd = 0;
   let reservedUsd = 0;
+  let reportedUsd = 0;
+  let retainedUsd = 0;
   let inFlight = 0;
   let requests = 0;
   let status: BehaviorEvalReport['status'] = 'executed';
   let reason = 'Executed opt-in model evaluation against actual returned answers.';
+  const generateFn = options.generate ?? ((input: EvalGenerateInput) => defaultGenerate(input, env));
 
   const remainingBudget = () => config.budgetUsd - spentUsd - reservedUsd;
   const remainingRequests = () => config.maxRequests - requests - inFlight;
 
+  type DispatchResult =
+    | { kind: 'ok'; generated: EvalGenerateResult; reservedUsd: number }
+    | { kind: 'oversized'; assembled: number }
+    | { kind: 'budget' }
+    | { kind: 'pricing'; reason: string }
+    | { kind: 'error'; error: unknown };
+
+  const dispatchOnce = async (input: EvalGenerateInput): Promise<DispatchResult> => {
+    const assembled = assembledRequestChars(input.instructions, input.messages);
+    if (assembled > config.maxInputChars) {
+      return { kind: 'oversized', assembled };
+    }
+    const reservation = reserveEvalRequest({
+      model: config.model,
+      maxOutputTokens: config.maxOutputTokens,
+      maxInputChars: assembled,
+      retries: 0,
+    });
+    if (!reservation.ok) return { kind: 'pricing', reason: reservation.reason };
+    if (remainingRequests() < 1 || remainingBudget() < reservation.reservedUsd) {
+      return { kind: 'budget' };
+    }
+    inFlight += 1;
+    reservedUsd += reservation.reservedUsd;
+    requests += 1;
+    try {
+      const generated = await generateFn(input);
+      const accounted = accountEvalUsage(generated, reservation.reservedUsd);
+      spentUsd += accounted.usd;
+      if (accounted.usage === 'reported') reportedUsd += accounted.usd;
+      else retainedUsd += accounted.usd;
+      return { kind: 'ok', generated, reservedUsd: reservation.reservedUsd };
+    } catch (error) {
+      spentUsd += reservation.reservedUsd;
+      retainedUsd += reservation.reservedUsd;
+      return { kind: 'error', error };
+    } finally {
+      inFlight -= 1;
+      reservedUsd = Math.max(0, reservedUsd - reservation.reservedUsd);
+    }
+  };
+
+  const dispatchWithRetries = async (input: EvalGenerateInput): Promise<DispatchResult> => {
+    let last: DispatchResult | null = null;
+    for (let attempt = 0; attempt <= config.maxRetries; attempt += 1) {
+      last = await dispatchOnce(input);
+      if (last.kind !== 'error') return last;
+    }
+    return last ?? { kind: 'error', error: new Error('dispatch failed') };
+  };
+
+  const scoreFromDispatch = (
+    scenario: BehaviorScenario,
+    text: string,
+    history: Array<{ role: 'user' | 'assistant'; text: string }>,
+  ) => {
+    if (scenario.grade?.deriveContinuityFromGenerated) {
+      const continuity = generatedContinuityFromHistory(history);
+      if (!continuity.ok) {
+        return scoreScenarioAnswer(scenario, text, { unscorable: continuity.reason });
+      }
+      return scoreScenarioAnswer(scenario, text, { continuityRetain: continuity.retain });
+    }
+    return scoreScenarioAnswer(scenario, text);
+  };
+
   for (const scenario of runnable) {
     for (const variant of variants) {
-      const dispatchCount =
+      const users =
         scenario.historyMode === 'generated-multi-turn'
-          ? Math.max(1, scenario.turns.filter((turn) => turn.role === 'user').length)
-          : 1;
-      const one = reserveEvalRequest({
-        model: config.model,
-        maxOutputTokens: config.maxOutputTokens,
-        maxInputChars: config.maxInputChars,
-        retries: config.maxRetries,
-      });
-      if (!one.ok) {
-        status = 'unknown-pricing';
-        reason = one.reason;
-        skipped.push(`${scenario.id}:${variant}`);
-        continue;
-      }
-      const needed = one.reservedUsd * dispatchCount;
-      if (remainingRequests() < dispatchCount || remainingBudget() < needed) {
-        if (status === 'executed') {
-          status = 'stopped-budget';
-          reason =
-            'Hard stop before dispatch: remaining budget or request cap cannot cover the conservative reservation.';
-        }
-        skipped.push(`${scenario.id}:${variant}`);
-        continue;
-      }
-      inFlight += dispatchCount;
-      reservedUsd += needed;
-      try {
-        const generate = options.generate ?? ((input: EvalGenerateInput) => defaultGenerate(input, env));
-        let text: string;
-        let usage: EvalGenerateResult;
-        if (scenario.historyMode === 'generated-multi-turn') {
-          const sequenced = await runGeneratedConversation(
-            scenario,
-            variant,
-            generate,
-            config.maxOutputTokens,
-          );
-          text = sequenced.text;
-          usage = sequenced.generated.reduce(
-            (sum, item) => ({
-              text,
-              inputTokens: (sum.inputTokens ?? 0) + (item.inputTokens ?? 0),
-              outputTokens: (sum.outputTokens ?? 0) + (item.outputTokens ?? 0),
-            }),
-            { text: '', inputTokens: 0, outputTokens: 0 },
-          );
-          requests += sequenced.generated.length;
-        } else {
-          const composed = composeScenarioRequest(scenario, variant);
-          const generated = await generate({
-            scenario,
-            variant,
-            instructions: composed.instructions,
-            messages: composed.messages,
-            maxOutputTokens: config.maxOutputTokens,
-          });
-          text = generated.text;
-          usage = generated;
-          requests += 1;
-        }
-        const accounted = accountEvalUsage(usage, needed);
-        spentUsd += accounted.usd;
-        const score = scoreScenarioAnswer(scenario, text);
-        score.excerpt = redactEvalText(score.excerpt);
-        results.push({
-          id: scenario.id,
+          ? scenario.turns
+              .filter((turn) => turn.role === 'user')
+              .map((turn) => turn.text ?? '')
+              .filter(Boolean)
+          : [scenario.prompt];
+      const history: Array<{ role: 'user' | 'assistant'; text: string }> = [];
+      let lastText = '';
+      let failed = false;
+      for (const userText of users) {
+        const step: BehaviorScenario =
+          scenario.historyMode === 'generated-multi-turn'
+            ? {
+                ...scenario,
+                prompt: userText,
+                turns: [
+                  ...history.map((turn) => ({ role: turn.role, text: turn.text })),
+                  { role: 'user', text: userText },
+                ],
+                historyMode: 'generated-multi-turn',
+                evidenceType: 'generated-multi-turn',
+              }
+            : scenario;
+        const composed = composeScenarioRequest(step, variant);
+        const dispatched = await dispatchWithRetries({
+          scenario: step,
           variant,
-          historyMode: scenario.historyMode ?? 'scripted-final-turn',
-          evidenceType: scenario.evidenceType ?? 'composition',
-          score,
+          instructions: composed.instructions,
+          messages: composed.messages,
+          maxOutputTokens: config.maxOutputTokens,
         });
-      } catch (error) {
-        status = 'provider-error';
-        reason = `Provider or generator failed (${error instanceof Error ? error.message : 'unknown'}). Partial results retained. Reservation was not treated as zero cost.`;
-        spentUsd += needed;
-        skipped.push(`${scenario.id}:${variant}:provider-error`);
-      } finally {
-        inFlight -= dispatchCount;
-        reservedUsd = Math.max(0, reservedUsd - needed);
+        if (dispatched.kind === 'pricing') {
+          status = 'unknown-pricing';
+          reason = dispatched.reason;
+          skipped.push(`${scenario.id}:${variant}`);
+          failed = true;
+          break;
+        }
+        if (dispatched.kind === 'oversized') {
+          skipped.push(`${scenario.id}:${variant}:oversized-input`);
+          failed = true;
+          break;
+        }
+        if (dispatched.kind === 'budget') {
+          if (status === 'executed') {
+            status = 'stopped-budget';
+            reason =
+              'Hard stop before dispatch: remaining budget or request cap cannot cover the conservative reservation for the assembled request.';
+          }
+          skipped.push(`${scenario.id}:${variant}`);
+          failed = true;
+          break;
+        }
+        if (dispatched.kind === 'error') {
+          status = 'provider-error';
+          reason = `Provider or generator failed (${
+            dispatched.error instanceof Error ? dispatched.error.message : 'unknown'
+          }). Partial results retained. Reservation was not treated as zero cost. Failed attempts and retries are counted.`;
+          skipped.push(`${scenario.id}:${variant}:provider-error`);
+          failed = true;
+          break;
+        }
+        lastText = dispatched.generated.text;
+        if (scenario.historyMode === 'generated-multi-turn') {
+          history.push({ role: 'user', text: userText }, { role: 'assistant', text: lastText });
+        }
       }
+      if (failed) continue;
+      const score = scoreFromDispatch(
+        scenario,
+        lastText,
+        history.length
+          ? history
+          : scenarioHistoryTurns(scenario).flatMap((turn) => {
+              const items: Array<{ role: 'user' | 'assistant'; text: string }> = [];
+              if (turn.user_text) items.push({ role: 'user', text: turn.user_text });
+              if (turn.assistant_text) items.push({ role: 'assistant', text: turn.assistant_text });
+              return items;
+            }),
+      );
+      score.excerpt = redactEvalText(score.excerpt);
+      results.push({
+        id: scenario.id,
+        variant,
+        historyMode: scenario.historyMode ?? 'scripted-final-turn',
+        evidenceType: scenario.evidenceType ?? 'composition',
+        score,
+      });
     }
+  }
+
+  if (
+    status === 'executed' &&
+    !results.length &&
+    skipped.some((item) => item.includes('oversized-input'))
+  ) {
+    status = 'oversized-input';
+    reason = assembledInputPolicy.note;
   }
 
   const comparisons = config.compare
@@ -640,6 +797,8 @@ export async function runBehaviorEval(
     ),
     spentUsd: Number(spentUsd.toFixed(4)),
     reservedUsd: Number(reservedUsd.toFixed(4)),
+    reportedUsd: Number(reportedUsd.toFixed(4)),
+    retainedUsd: Number(retainedUsd.toFixed(4)),
     requests,
     skipped,
     results,
