@@ -115,6 +115,11 @@ for (const width of [360, 768, 1440]) {
     await page.goto('/app/studio');
     const tabs = page.getByRole('group', { name: 'Studio workspace views' });
     await expect(tabs).toBeVisible();
+    await expect(tabs.getByRole('button', { name: 'Design', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await tabs.getByRole('button', { name: 'Create', exact: true }).click();
     await expect(
       page.getByText(
         'Image generation is awaiting a server model connection. Projects and references remain available.',

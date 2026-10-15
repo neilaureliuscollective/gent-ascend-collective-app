@@ -34,6 +34,16 @@ export function studioConfiguration(env: Record<string, string | undefined>): St
       next: 'Enable STUDIO_FOOTAGE_ENABLED only after schema, private video, actual approved render/cost/recovery and output-host acceptance.',
     },
     {
+      name: 'Design documents',
+      status: 'detected',
+      next: 'Editable Fabric-backed documents persist as owner JSON. No commercial editor SDK.',
+    },
+    {
+      name: 'Film renderer',
+      status: env.STUDIO_RENDER_COMMISSIONED === 'true' ? 'unverified' : 'unavailable',
+      next: 'Hosted rendering stays unavailable until a Fly.io Machine from ops/studio-render answers /health with status ok, deployment identity, recent queue contact, FFmpeg libx264, and STUDIO_RENDER_COMMISSIONED is set after founder authorization. STUDIO_RENDER_WORKER=true only queues Film and Design export jobs; it is not readiness.',
+    },
+    {
       name: 'Live acceptance',
       status: 'unverified',
       next: 'This read-only report does not generate media, verify billing, test private bucket configuration or prove two-account RLS. Record ordinary-login acceptance in a protected preview using the existing database.',

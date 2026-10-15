@@ -1,0 +1,40 @@
+name: Studio render package
+on:
+  pull_request:
+    paths:
+      - 'src/domains/studio/render/**'
+      - 'scripts/studio-render-*.mjs'
+      - 'ops/studio-render/**'
+      - '.github/workflows/studio-render-package.yml'
+  push:
+    branches: [cursor/studio-editable-productions-09ef]
+concurrency:
+  group: studio-render-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: ./.github/actions/install-ffmpeg
+      - run: npm ci
+      - run: node scripts/studio-render-preflight.mjs
+      - name: Build worker image
+        run: docker build -f ops/studio-render/Dockerfile -t aethelios-studio-render:test .
+      - name: Run image health without secrets
+        run: |
+          cid=$(docker run -d -p 18080:8080 \
+            -e NEXT_PUBLIC_SUPABASE_URL=https://example.invalid \
+            -e SUPABASE_SERVICE_ROLE_KEY=not-a-real-key \
+            aethelios-studio-render:test)
+          sleep 8
+          docker logs "$cid" || true
+          docker rm -f "$cid"
+          echo "Image starts; missing real credentials must not be treated as commissioned."

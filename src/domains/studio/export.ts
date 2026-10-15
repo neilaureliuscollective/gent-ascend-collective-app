@@ -11,7 +11,7 @@ function crc32(bytes: Uint8Array) {
 }
 export function exportZip(
   files: { name: string; bytes: Uint8Array }[],
-  profile: 'images' | 'delivery' = 'images',
+  profile: 'images' | 'delivery' | 'design' = 'images',
 ) {
   if (
     files.length < 1 ||
@@ -28,7 +28,9 @@ export function exportZip(
       !(
         profile === 'delivery'
           ? /^[a-zA-Z0-9_-]+\.(png|jpg|webp|mp4|wav|json|md|vtt|srt)$/
-          : /^[a-zA-Z0-9_-]+\.(png|json|md)$/
+          : profile === 'design'
+            ? /^[a-zA-Z0-9_-]+\.(png|svg|pdf|json|md)$/
+            : /^[a-zA-Z0-9_-]+\.(png|json|md)$/
       ).test(file.name)
     )
       throw new Error('Invalid export filename.');
