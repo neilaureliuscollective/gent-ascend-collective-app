@@ -87,6 +87,14 @@ jobs:
           }
       - run: npx supabase db reset --local
       - run: node scripts/dev-setup.mjs --running
+      - name: Talk Origin import recovery on disposable PostgreSQL 17
+        run: npm run test:talk-import-recovery
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: talk-import-recovery-receipt
+          path: docs/evidence/talk-origin-import-recovery/receipt.json
+          if-no-files-found: warn
       - run: npx supabase db advisors --local --type security --level warn --fail-on none
       - run: npm run test:integration
       - run: npx playwright install --with-deps chromium

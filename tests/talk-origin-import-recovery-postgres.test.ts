@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 
-const postgresReady = spawnSync('pg_isready', { encoding: 'utf8' }).status === 0;
+const postgresReady =
+  spawnSync('pg_isready', ['-h', '127.0.0.1', '-p', '54322'], { encoding: 'utf8' }).status === 0;
 
 describe('Talk Origin unique-violation recovery (real PostgreSQL)', () => {
   it.skipIf(!postgresReady)(
