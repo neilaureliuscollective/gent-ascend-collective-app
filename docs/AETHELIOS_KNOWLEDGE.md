@@ -43,7 +43,9 @@ Correction: edit the typed facts, bump `edition`, keep the superseded row, and a
 ## Person, product and capability composition
 
 - Person: existing `includeContext`, `ascend_profile_facts`, confirmed `ai_memories` (24 stored, lexical top-six when a question is supplied), conversation continuity. Context-off and forgotten rows stay out. `founder_access` is session-verified; email/name/plan claims are inert.
-- Product: bounded read-only adapter over `readLifestyleCatalog` / `getProduct` / approved `product_story`. Source IDs, URL, retrieval time and missing fields travel with the snapshot. Price and availability are request-time commerce data. Unconfigured/empty/error catalogs are labeled; they are not pretended to be refreshed.
+- Product: bounded read-only adapter over `readLifestyleCatalog` / `getProduct` / approved `product_story`. Source IDs, URL, freshness, retrieval time and missing fields travel with the snapshot. Price, currency, variant id and availability are bound to the same variant. Failed no-store detail is `stale-catalog-fallback` with `detailRetrievedAt: null`; cached list age is unknown beyond 300s and is never labeled freshly verified. Assortment questions receive at most 12 summaries; follow-ups use conversation cues and `/shop/handle`. Unconfigured/empty/error catalogs stay labeled.
+- Character: `behaviorContract` is shared. Text/voice delivery is selected per channel. Domain playbooks load only when relevant (Talk, Architect, Studio, Agency, Lifestyle, Health).
+- Voice: Talk Live uses the same `budgetLiveSeed` helper as Talk #131 (`src/domains/live/context-budget.ts`, identical API) so published knowledge and product snapshots survive history trim. This branch does not import Talk creation prompt/service changes. GPT-Live evaluation `liveStartup` pins optional `application` messages before budgeted history; it is not the public pilot path.
 - Capability honesty: intent / implemented / configured / verified-production are separate. Agency and Continuum are not implemented.
 
 ## Missing facts (not invented)
@@ -55,4 +57,6 @@ Correction: edit the typed facts, bump `edition`, keep the superseded row, and a
 
 ## Local vs hosted
 
-This branch updates knowledge composition and tests. No production merge, hosted migration, billing activation, Shopify write, feature-flag or paid model call is authorized by this workstream. Talk #131 / #135 / #139, Architect, Ecosystem #140 and Studio remain on their branches; they still carry the 2026-10-06 company-platform facts until they merge this edition.
+This branch updates knowledge composition, character/playbooks, product freshness and voice context pinning. No production merge, hosted migration, billing activation, Shopify write, feature-flag or paid model call is authorized by this workstream. Talk #131 / #135 / #139, Architect, Ecosystem #140 and Studio remain on their branches. Prompt version here is `aethelios-2026-10-15.human-ascendance.2`; Talk still carries `aethelios-2026-10-13.talk-creation.1` and the 2026-10-06 company-platform facts until those PRs merge this contract. Do not silently merge them to make this branch appear complete.
+
+Behavioral evaluation: deterministic Vitest coverage in `tests/intelligence-behavior.test.ts`, `tests/memory-lifecycle.test.ts` and `tests/live-context-budget.test.ts`. Optional model-quality rubric lives in `evals/aethelios-behavior.md` and `src/domains/intelligence/behavior-eval.ts`. Paid model calls require `AETHELIOS_BEHAVIOR_EVAL=1` and founder approval; they are not run by default.
