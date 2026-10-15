@@ -2,7 +2,9 @@
 docs/DECISIONS.md
 docs/STATUS.md
 docs/STUDIO_SUPPLIER_LABELS.md
+docs/evidence/studio-labels/.gitattributes
 docs/evidence/studio-labels/README.md
+docs/evidence/studio-labels/changed-files.txt
 docs/evidence/studio-labels/desktop-download.pdf
 docs/evidence/studio-labels/desktop-editor.png
 docs/evidence/studio-labels/desktop-full-flow.webm
@@ -50,4 +52,3 @@ tests/label-fixture/index.html
 tests/studio-label-database.test.ts
 tests/studio-label-service.test.ts
 tests/studio-label.test.ts
-docs/evidence/studio-labels/changed-files.txt
