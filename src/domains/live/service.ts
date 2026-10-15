@@ -15,6 +15,7 @@ import {
   voiceDelivery,
 } from '@/domains/intelligence/prompt';
 import { budgetLiveSeed } from './context-budget';
+import { admitLiveSeed, LiveSeedError } from './seed';
 import {
   loadProductKnowledge,
   recentUserTextsFromTurns,
@@ -173,7 +174,18 @@ export async function admitLive(input: LiveAdmission) {
           }),
       });
     const history = built.slice(1);
-    const messages = budgetLiveSeed(application, history, seedLimit);
+    let messages;
+    try {
+      messages = budgetLiveSeed(application, history, seedLimit);
+    } catch {
+      throw admissionFailure(
+        'context',
+        'invalid-response',
+        'This conversation exceeds the voice context limit. Your text workspace remains available.',
+        started,
+        correlationId,
+      );
+    }
     const sessionConfig = {
       type: 'realtime',
       model: config.model,
@@ -262,148 +274,64 @@ export async function admitLive(input: LiveAdmission) {
       );
     socket = openLiveControlSocket(call, config.key);
     await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(
-        () =>
-          reject(
-            admissionFailure(
-              'sideband',
-              'timeout',
-              'Voice control could not attach to the provider session. Your text workspace remains available.',
-              started,
-              correlationId,
-            ),
-          ),
-        10000,
-      );
-      socket!.addEventListener(
-        'open',
-        () => {
-          clearTimeout(timeout);
-          resolve();
-        },
-        { once: true },
-      );
-      socket!.addEventListener(
-        'error',
-        () => {
-          clearTimeout(timeout);
-          reject(
-            admissionFailure(
-              'sideband',
-              'unavailable',
-              'Voice control could not attach to the provider session. Your text workspace remains available.',
-              started,
-              correlationId,
-            ),
-          );
-        },
-        { once: true },
-      );
-      socket!.addEventListener(
-        'close',
-        () => {
-          clearTimeout(timeout);
-          reject(
-            admissionFailure(
-              'sideband',
-              'unavailable',
-              'Voice control closed before admission finished. Your text workspace remains available.',
-              started,
-              correlationId,
-            ),
-          );
-        },
-        { once: true },
-      );
-    });
-    // Confirm bounded context is admitted before the browser can transmit live audio.
-    // Application/artifact context is already pinned separately from the history tail.
-    const seed = messages.map((message) => ({
-      id: `ctx_${randomUUID().replaceAll('-', '')}`,
-      message,
-    }));
-    await new Promise<void>((resolve, reject) => {
-      const pending = new Set(seed.map((item) => item.id));
       const cleanup = () => {
         clearTimeout(timeout);
-        socket!.removeEventListener('message', message);
-        socket!.removeEventListener('close', closed);
+        socket!.removeEventListener('open', opened);
+        socket!.removeEventListener('error', failed);
+        socket!.removeEventListener('close', failed);
       };
-      const closed = () => {
+      const opened = () => {
+        cleanup();
+        resolve();
+      };
+      const failed = () => {
         cleanup();
         reject(
           admissionFailure(
-            'seed',
+            'sideband',
             'unavailable',
-            'Conversation context could not be admitted to voice. Your text workspace remains available.',
+            'Voice control could not attach to the provider session. Your text workspace remains available.',
             started,
             correlationId,
           ),
         );
-      };
-      const message = (event: MessageEvent) => {
-        const value = readLiveEvent(event.data);
-        if (value?.type === 'error') {
-          cleanup();
-          reject(
-            admissionFailure(
-              'seed',
-              'rejected',
-              'Conversation context could not be admitted to voice. Your text workspace remains available.',
-              started,
-              correlationId,
-            ),
-          );
-          return;
-        }
-        if (
-          value?.item?.id &&
-          ['conversation.item.created', 'conversation.item.added'].includes(value.type)
-        ) {
-          pending.delete(value.item.id);
-          if (!pending.size) {
-            cleanup();
-            resolve();
-          }
-        }
       };
       const timeout = setTimeout(() => {
         cleanup();
         reject(
           admissionFailure(
-            'seed',
+            'sideband',
             'timeout',
-            'Conversation context could not be admitted to voice. Your text workspace remains available.',
+            'Voice control could not attach to the provider session. Your text workspace remains available.',
             started,
             correlationId,
           ),
         );
       }, 10000);
-      socket!.addEventListener('message', message);
-      socket!.addEventListener('close', closed, { once: true });
-      if (!pending.size) {
-        cleanup();
-        resolve();
-        return;
-      }
-      for (const item of seed)
-        socket!.send(
-          JSON.stringify({
-            type: 'conversation.item.create',
-            item: {
-              id: item.id,
-              type: 'message',
-              role: item.message.role,
-              content: [
-                {
-                  type: item.message.role === 'assistant' ? 'output_text' : 'input_text',
-                  text: item.message.content,
-                },
-              ],
-            },
-          }),
-        );
+      socket!.addEventListener('open', opened);
+      socket!.addEventListener('error', failed);
+      socket!.addEventListener('close', failed);
     });
+    // Confirm bounded context is admitted before the browser can transmit live audio.
+    // Application/artifact context is already pinned separately from the history tail.
+    const seed = messages.map((message) => ({
+      id: `ctx_${randomUUID().replaceAll('-', '')}`,
+      eventId: `seed_${randomUUID().replaceAll('-', '')}`,
+      message,
+    }));
+    try {
+      await admitLiveSeed(socket, seed);
+    } catch (error) {
+      throw admissionFailure(
+        'seed',
+        error instanceof LiveSeedError ? error.category : 'unavailable',
+        'Conversation context could not be admitted to voice. Your text workspace remains available.',
+        started,
+        correlationId,
+        null,
+        error instanceof LiveSeedError ? error.detail : {},
+      );
+    }
     const ledger = new VoiceLedger();
     const workAbort = new AbortController();
     const jobs = new Map<string, { id: string; task: BackgroundTask; running: boolean }>();

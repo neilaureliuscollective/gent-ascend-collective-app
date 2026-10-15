@@ -1,0 +1,80 @@
+Live unit suites
+RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+
+ Test Files  23 passed (23)
+      Tests  157 passed (157)
+   Start at  17:23:44
+   Duration  4.67s (tests 56%, import 24%, transform 18%, worker 2%)
+
+    Isolate  23 workers spawned · ~189ms startup each (spawn + environment, per file)
+             at least ~1.26s faster with isolate: false — reuses workers across files instead of one per file
+
+Browser fixtures
+[WebServer] (node:1626) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 9 tests using 1 worker
+
+(node:1678) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 390px (7.3s)
+  ✓  2 tests/browser/live-voice.spec.ts:53:3 › persistent voice modes preserve one transport at 1440px (4.7s)
+  ✓  3 tests/browser/live-voice.spec.ts:135:1 › voice diagnostic download excludes transcript and record IDs (4.2s)
+  ✓  4 tests/browser/live-voice.spec.ts:191:1 › cancelling during slow SDP admission revokes the late call without restoring audio (3.3s)
+  ✓  5 tests/browser/live-voice.spec.ts:236:1 › late ASR stays ordered and uncertain cleanup prevents another voice session (3.9s)
+  ✓  6 tests/browser/live-voice.spec.ts:296:1 › connection failure stays compact with a usable retry and does not force fullscreen (3.5s)
+  ✓  7 tests/browser/live-voice.spec.ts:323:1 › simulated phone and unfolded-Fold consent stays scrollable with reachable Start (6.5s)
+  ✓  8 tests/browser/live-voice.spec.ts:350:1 › unavailable Live remains visible in Talk with an understandable reason (2.9s)
+  ✓  9 tests/browser/live-voice.spec.ts:362:1 › acknowledged voice retries in one tap without optional consent or automatic admission (7.3s)
+
+  9 passed (48.8s)
+
+Lint
+> aurelius-collective-app@0.1.0 lint
+> eslint . --max-warnings 0
+
+Types
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+Final optimized build (prebuild excluded)
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 158ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1964ms
+  Running TypeScript ...
+  Finished TypeScript in 24.6s ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/122) ...
+  Generating static pages using 4 workers (30/122)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (60/122)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 4 workers (91/122)
+✓ Generating static pages using 4 workers (122/122) in 451ms
+  Finalizing page optimization ...
+
+Final full unit run
+Test Files  2 failed | 194 passed | 1 skipped (197)
+      Tests  4 failed | 1152 passed | 1 skipped (1157)
+   Start at  17:25:49
+   Duration  39.29s (tests 76%, import 18%, transform 6%, worker 1%)
+
+    Isolate  197 workers spawned · ~101ms startup each (spawn + environment, per file)
+             at least ~6.53s faster with isolate: false — reuses workers across files instead of one per file
+
+Untouched base environment-failure reproduction
+Test Files  2 failed (2)
+      Tests  4 failed | 1 passed (5)
+   Start at  17:23:43
+   Duration  5.84s (tests 86%, transform 8%, import 7%)
+
+Standard npm run build: unchanged Mirror prebuild failed before Next compilation with EAI_AGAIN storage.googleapis.com.
+Migration ledger: 37 owned migration files verified; no migrations changed.

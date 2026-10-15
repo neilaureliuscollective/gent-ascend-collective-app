@@ -15,16 +15,19 @@ import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/o
 import { measuredAudioLevel } from '@/platform/visual/intelligence-motion';
 import { useAppearance } from '@/components/visual/appearance';
 import { ArtifactSurface } from './artifacts';
-import { LiveAvailabilityContext, LiveContext } from './context';
+import { LiveAvailabilityContext, LiveContext, LiveAcknowledgementUserContext } from './context';
+import { hasLiveAcknowledgement, saveLiveAcknowledgement } from '@/domains/live/acknowledgement';
 import { LiveDiagnostics } from './diagnostics';
 import { getTalkVoiceDock, getTalkVoiceDockSnapshot, subscribeTalkVoiceDock } from './voice-dock';
 export function LiveConversationProvider({
   children,
   enabled = false,
+  authUserId = null,
   unavailableReason = 'Aethelios Live is unavailable on this deployment.',
 }: {
   children: React.ReactNode;
   enabled?: boolean;
+  authUserId?: string | null;
   unavailableReason?: string | null;
 }) {
   const [controller] = useState(() => new LiveController());
@@ -52,12 +55,14 @@ export function LiveConversationProvider({
     if (!enabled) void controller.end();
   }, [controller, enabled]);
   return (
-    <LiveAvailabilityContext.Provider value={enabled ? null : unavailableReason}>
-      <LiveContext.Provider value={enabled ? controller : null}>
-        {children}
-        {enabled && <LiveSurface controller={controller} />}
-      </LiveContext.Provider>
-    </LiveAvailabilityContext.Provider>
+    <LiveAcknowledgementUserContext.Provider value={authUserId}>
+      <LiveAvailabilityContext.Provider value={enabled ? null : unavailableReason}>
+        <LiveContext.Provider value={enabled ? controller : null}>
+          {children}
+          {enabled && <LiveSurface controller={controller} />}
+        </LiveContext.Provider>
+      </LiveAvailabilityContext.Provider>
+    </LiveAcknowledgementUserContext.Provider>
   );
 }
 const idleSnapshot: LiveState = {
@@ -108,7 +113,11 @@ function LiveEntryLabel() {
     </>
   );
 }
-export function LiveVoiceEntry({
+export function LiveVoiceEntry(props: Parameters<typeof VoiceEntry>[0]) {
+  const userId = useContext(LiveAcknowledgementUserContext);
+  return <VoiceEntry key={userId ?? 'anonymous'} {...props} />;
+}
+function VoiceEntry({
   conversationId,
   includeContext,
   disabled = false,
@@ -123,12 +132,28 @@ export function LiveVoiceEntry({
 }) {
   const controller = useContext(LiveContext);
   const unavailable = useContext(LiveAvailabilityContext);
+  const userId = useContext(LiveAcknowledgementUserContext);
   const [consent, setConsent] = useState(false);
   const [info, setInfo] = useState(false);
   const [approved, setApproved] = useState(false);
   const [contextApproved, setContextApproved] = useState(false);
   const [backgroundWork, setBackgroundWork] = useState(false);
   const [voice, setVoice] = useState<'cedar' | 'marin'>('cedar');
+  const start = (personal = false, proposals = false) => {
+    if (!controller) return;
+    const id = conversationId ?? crypto.randomUUID();
+    onAdoptConversation?.(id);
+    setConsent(false);
+    void controller.start(id, personal, voice, proposals, workTarget);
+    setContextApproved(false);
+    setBackgroundWork(false);
+  };
+  const options = () => {
+    setApproved(hasLiveAcknowledgement(userId));
+    setContextApproved(false);
+    setBackgroundWork(false);
+    setConsent(true);
+  };
   if (!controller)
     return (
       <div className="live-entry">
@@ -164,10 +189,14 @@ export function LiveVoiceEntry({
           const state = controller.getSnapshot();
           if (['connecting', 'listening', 'speaking'].includes(state.phase)) {
             controller.mode('immersive');
-          } else setConsent(true);
+          } else if (hasLiveAcknowledgement(userId)) start();
+          else options();
         }}
       >
         <LiveEntryLabel />
+      </button>
+      <button type="button" className="talk-tool" disabled={disabled} onClick={options}>
+        Voice options
       </button>
       {consent && (
         <div className="live-consent" role="group" aria-label="Voice pilot consent">
@@ -189,7 +218,7 @@ export function LiveVoiceEntry({
               checked={approved}
               onChange={(event) => setApproved(event.target.checked)}
             />{' '}
-            I consent to audio processing and a saved transcript .
+            I consent to audio processing and a saved transcript.
           </label>
           {includeContext && (
             <label>
@@ -225,19 +254,8 @@ export function LiveVoiceEntry({
               type="button"
               disabled={!approved}
               onClick={() => {
-                const id = conversationId ?? crypto.randomUUID();
-                onAdoptConversation?.(id);
-                setConsent(false);
-                setApproved(false);
-                void controller.start(
-                  id,
-                  includeContext && contextApproved,
-                  voice,
-                  backgroundWork,
-                  workTarget,
-                );
-                setContextApproved(false);
-                setBackgroundWork(false);
+                saveLiveAcknowledgement(userId);
+                start(includeContext && contextApproved, backgroundWork);
               }}
             >
               Start voice
@@ -246,7 +264,6 @@ export function LiveVoiceEntry({
               type="button"
               onClick={() => {
                 setConsent(false);
-                setApproved(false);
                 setContextApproved(false);
                 setBackgroundWork(false);
               }}
@@ -272,7 +289,11 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const compact = useRef<HTMLElement>(null);
   const [transcript, setTranscript] = useState(true);
   const [draft, setDraft] = useState('');
-  const dock = useSyncExternalStore(subscribeTalkVoiceDock, getTalkVoiceDock, getTalkVoiceDockSnapshot);
+  const dock = useSyncExternalStore(
+    subscribeTalkVoiceDock,
+    getTalkVoiceDock,
+    getTalkVoiceDockSnapshot,
+  );
   const visible = state.phase !== 'idle';
   const active = ['connecting', 'listening', 'speaking'].includes(state.phase);
   const docked = Boolean(dock);

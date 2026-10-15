@@ -25,13 +25,10 @@ vi.mock('@/domains/intelligence/service', () => ({
     }
   },
 }));
-vi.mock('@/domains/intelligence/prompt', () => ({
+vi.mock('@/domains/intelligence/prompt', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/domains/intelligence/prompt')>()),
   aureliusInstructions: 'Synthetic instructions',
   sharedCharacter: 'Synthetic character',
-  voiceDelivery: 'VOICE DELIVERY: Begin with one useful thought.',
-  buildMessages: (turns: unknown[], _text: string, context: unknown) => [
-    { role: 'user', content: JSON.stringify({ turns, context }) },
-  ],
 }));
 vi.mock('@/domains/commerce/shopify', () => ({ getProduct: async () => null }));
 vi.mock('@/domains/commerce/lifestyle-catalog', () => ({
@@ -138,11 +135,12 @@ beforeEach(() => {
     {
       id: 'saved-turn',
       parent_turn_id: null,
-      user: 'Saved synthetic typed question',
-      assistant: 'Saved answer',
+      status: 'complete',
+      user_text: 'Saved synthetic typed question',
+      assistant_text: 'Saved answer',
     },
   ]);
-  mock.context.mockResolvedValue({ profile: 'Opted-in synthetic context' });
+  mock.context.mockResolvedValue({ profile: { displayName: 'Opted-in synthetic context' } });
   rpc = vi.fn(async (name: string) => ({
     data: name === 'ai_live_reserve' ? new Date(Date.now() + 120000).toISOString() : true,
     error: null,
@@ -435,4 +433,68 @@ it('does not confirm monitor cleanup when the database does not acknowledge End'
   rpc.mockResolvedValue({ data: false, error: null });
   Socket.last.event({ type: 'error', error: { code: 'unknown' } });
   await expect(monitor).rejects.toThrow(/cleanup could not be recorded/);
+});
+
+it('preserves allowlisted correlated seed rejection details and cleans up the admitted call', async () => {
+  const original = Socket.prototype.send;
+  const spy = vi.spyOn(Socket.prototype, 'send').mockImplementation(function (
+    this: Socket,
+    raw: string,
+  ) {
+    const sent = JSON.parse(raw);
+    if (sent.item?.role === 'assistant') {
+      queueMicrotask(() =>
+        this.event({
+          type: 'error',
+          error: {
+            event_id: sent.event_id,
+            code: 'invalid_value',
+            type: 'invalid_request_error',
+            param: 'item.content[0].type',
+            message: 'PRIVATE CONTEXT MUST NOT LEAK',
+          },
+        }),
+      );
+    } else original.call(this, raw);
+  });
+  try {
+    await expect(admitLive(input)).rejects.toMatchObject({
+      safeDetail: expect.objectContaining({
+        stage: 'seed',
+        category: 'rejected',
+        providerCode: 'invalid_value',
+        providerType: 'invalid_request_error',
+        providerParam: 'item.content[0].type',
+        seedIndex: 2,
+        seedRole: 'assistant',
+        seedLength: 12,
+        seedEventId: expect.stringMatching(/^seed_[a-f0-9]+$/),
+      }),
+    });
+    expect(Socket.last.readyState).toBe(3);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/hangup'), expect.any(Object));
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_live_end',
+      expect.objectContaining({ p_reason: 'failed' }),
+    );
+  } finally {
+    spy.mockRestore();
+  }
+});
+
+it('does not report a stale sideband-open failure when an admitted socket later closes', async () => {
+  const log = vi.spyOn(console, 'info').mockImplementation(() => {});
+  try {
+    const admission = await admitLive(input);
+    const monitor = admission.monitor();
+    Socket.last.close();
+    await monitor;
+    expect(
+      log.mock.calls.some(
+        ([name, detail]) => name === 'live-admission' && detail.stage === 'sideband',
+      ),
+    ).toBe(false);
+  } finally {
+    log.mockRestore();
+  }
 });
