@@ -1,0 +1,42 @@
+import { test, expect } from '@playwright/test';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { readFile, readdir, mkdir, copyFile } from 'node:fs/promises';
+
+test('app-wide charcoal route coverage preserves real access states and reflow', async () => {
+  const output = 'test-results/charcoal-routes';
+  await mkdir(output, { recursive: true });
+  for (const name of await readdir('docs/evidence/charcoal-pass')) {
+    if (name.startsWith('before-'))
+      await copyFile(`docs/evidence/charcoal-pass/${name}`, `${output}/${name}`);
+  }
+  await promisify(execFile)(
+    process.execPath,
+    ['--experimental-strip-types', 'scripts/capture-charcoal-routes.mjs'],
+    {
+      env: { ...process.env, MATERIAL_PHASE: 'after', MATERIAL_OUTPUT_DIR: output },
+      timeout: 285000,
+      maxBuffer: 2 * 1024 * 1024,
+    },
+  );
+  const matrix = JSON.parse(await readFile(`${output}/after-matrix.json`, 'utf8')) as {
+    rows: {
+      route: string;
+      label: string;
+      unavailable?: string;
+      errors: string[];
+      overflow?: boolean;
+      tokens?: Record<string, string>;
+      screenshot?: { path: string };
+    }[];
+  };
+  expect(matrix.rows).toHaveLength(82);
+  for (const row of matrix.rows) {
+    expect(row.unavailable, `${row.route} ${row.label}`).toBeUndefined();
+    expect(row.errors, `${row.route} ${row.label}`).toEqual([]);
+    expect(row.overflow, `${row.route} ${row.label}`).toBe(false);
+    expect(row.tokens?.['--io-environment']?.trim(), row.route).toBe('#111111');
+    if (row.screenshot)
+      expect((await readFile(`${output}/${row.screenshot.path}`)).length).toBeGreaterThan(1000);
+  }
+});

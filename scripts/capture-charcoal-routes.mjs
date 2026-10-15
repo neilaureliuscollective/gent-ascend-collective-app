@@ -1,5 +1,5 @@
 import { chromium, expect } from '@playwright/test';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
@@ -10,6 +10,8 @@ import {
   openMaterialDocument,
 } from '../tests/fixtures/creation-materials.ts';
 const phase = process.env.MATERIAL_PHASE || 'after';
+const output = process.env.MATERIAL_OUTPUT_DIR || 'docs/evidence/charcoal-pass';
+mkdirSync(output, { recursive: true });
 const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 const routes = [
   '/',
@@ -154,7 +156,7 @@ for (const [label, width, height] of [
       if (representatives.has(route)) {
         const name = `${phase}-${route === '/' ? 'home' : route.replaceAll('/', '_').slice(1)}-${label}.png`;
         const bytes = await page.screenshot({
-          path: 'docs/evidence/charcoal-pass/' + name,
+          path: output + '/' + name,
           fullPage: false,
           animations: 'disabled',
         });
@@ -178,7 +180,7 @@ for (const [label, width, height] of [
   }
 await browser.close();
 writeFileSync(
-  `docs/evidence/charcoal-pass/${phase}-matrix.json`,
+  `${output}/${phase}-matrix.json`,
   JSON.stringify({ commit: head, phase, rows }, null, 2) + '\n',
 );
 console.log(
