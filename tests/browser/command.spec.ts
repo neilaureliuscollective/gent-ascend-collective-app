@@ -1,3 +1,4 @@
+import { openGlobalMenu, globalMenu } from '../support/global-navigation';
 import { test, expect } from './fixtures';
 for (const [width, height] of [
   [344, 740],
@@ -117,7 +118,9 @@ test('bounded Command scene pauses offscreen and is removed by Still', async ({ 
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(host).toHaveAttribute('data-animating', 'false');
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect(canvas).toHaveCount(0);
 });
 
@@ -145,7 +148,9 @@ test('Command uses the current energy identity in motion, Still and graphics los
     );
   await expect(presence).not.toHaveAttribute('data-rendered', 'true');
   await expect(presence.locator('.gw-energy-fallback')).toBeVisible();
-  await page.getByRole('button', { name: 'Pause ambient motion' }).click();
+  await openGlobalMenu(page);
+  await globalMenu(page).getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect(presence.locator('canvas')).toHaveCount(0);
   await expect(presence.locator('.gw-energy-fallback')).toBeVisible();
   await page.getByRole('button', { name: 'Open day workspace', exact: true }).click();
