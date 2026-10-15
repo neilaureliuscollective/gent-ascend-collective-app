@@ -101,6 +101,7 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   const conversation = new URL(page.url()).searchParams.get('conversation');
   expect(conversation).toMatch(/^[0-9a-f-]{36}$/i);
   await page.getByRole('tab', { name: /Emerald Glass/ }).click();
+  let versionTwoId = '';
   await expect
     .poll(async () => {
       const workspace = await api<{ creations: BoardRow[] }>(
@@ -108,11 +109,13 @@ test('authenticated design-board selection, refinement, reload and Architect tra
         `/api/aurelius/creations?conversationId=${conversation}`,
       );
       const current = workspace.body.creations.find((item) => !item.superseded_by);
-      return current
-        ? `${current.content.selectedDirectionId}:${current.version}:${current.id}`
-        : '';
+      if (current?.content.selectedDirectionId === 'direction-c' && current.version === 2) {
+        versionTwoId = current.id;
+        return true;
+      }
+      return false;
     })
-    .toMatch(/^direction-c:2:/);
+    .toBe(true);
   await sendComposer(page, 'Make the selected direction warmer.');
   await expect(page.getByText(/selected direction is warmer/i)).toBeVisible({ timeout: 60000 });
   const workspace = await api<{ creations: BoardRow[] }>(
@@ -121,18 +124,25 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   );
   const current = workspace.body.creations.find((item) => !item.superseded_by);
   expect(current?.content.selectedDirectionId).toBe('direction-c');
+  expect(current?.version).toBe(3);
+  expect(current?.id).not.toBe(versionTwoId);
   expect(current?.content.directions.find((item) => item.id === 'direction-a')?.name).toBe(
     'Graphite Chamber',
   );
   expect(current?.content.directions.find((item) => item.id === 'direction-b')?.name).toBe(
     'Warm Reserve',
   );
-  const earlier = workspace.body.creations.find((item) => item.version === 2);
+  const history = await owner
+    .from('ai_talk_creations')
+    .select('id,version,superseded_by,content')
+    .eq('conversation_id', conversation)
+    .eq('kind', 'board');
+  expect(history.error).toBeNull();
+  const earlier = history.data?.find((item) => item.id === versionTwoId);
   expect(earlier?.superseded_by).toBe(current?.id);
-  const originalHighlight = earlier?.content.directions.find((item) => item.id === 'direction-c')
-    ?.tokens.colors;
+  const earlierBoard = designBoardContentSchema.parse(earlier?.content);
   expect(current?.content.directions.find((item) => item.id === 'direction-c')?.tokens.colors).not.toEqual(
-    originalHighlight,
+    earlierBoard.directions.find((item) => item.id === 'direction-c')?.tokens.colors,
   );
   const refinedId = current!.id;
   await page.reload({ waitUntil: 'domcontentloaded' });

@@ -689,7 +689,7 @@ export async function prepareReply(
   let context: PersonalContext | null;
   let threadSummary: string;
   let artifactContext = '';
-  let selectedPredecessors: Partial<Record<'brief' | 'plan' | 'palette', string>> = {};
+  let selectedPredecessors: Partial<Record<'brief' | 'plan' | 'palette' | 'board', string>> = {};
   let selectedImageId: string | null = null;
   let completeImageCount = 0;
   try {
