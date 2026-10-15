@@ -1,0 +1,59 @@
+{
+  "schema": "studio-supplier-profile/v1",
+  "supplier": "Supliful",
+  "sku": "SYNTHETIC-NOT-A-SKU",
+  "category": "other",
+  "fixture": true,
+  "template": {
+    "source": "Synthetic template-source.txt; not supplier artwork",
+    "revision": "fixture-1",
+    "sha256": "f24fd84f98e03588acd47731cddc8990da47c9f87f7b73b98874c30ef3be092c"
+  },
+  "facts": {
+    "source": "Synthetic facts-source.txt; no product claims",
+    "revision": "fixture-1",
+    "sha256": "5a68c72584117c4d0881daf8910a1b50fb1432fde2b708d300ede1471c727c3d"
+  },
+  "trim": {
+    "width": 120,
+    "height": 60
+  },
+  "bleed": {
+    "top": 2,
+    "right": 2,
+    "bottom": 2,
+    "left": 2
+  },
+  "safe": {
+    "x": 3,
+    "y": 3,
+    "width": 114,
+    "height": 54
+  },
+  "artwork": {
+    "x": 4,
+    "y": 4,
+    "width": 62,
+    "height": 46
+  },
+  "matrix": {
+    "x": 4,
+    "y": 51,
+    "width": 6,
+    "height": 6
+  },
+  "protected": [
+    {
+      "id": "a0000000-0000-4000-8000-000000000001",
+      "name": "Supplier specimen copy",
+      "box": {
+        "x": 72,
+        "y": 5,
+        "width": 42,
+        "height": 42
+      },
+      "content": "SYNTHETIC SPECIMEN\nNot a food or supplement.\nNo ingredients or health claims.\nFor software testing only.\nDo not manufacture.",
+      "fontSize": 8
+    }
+  ]
+}

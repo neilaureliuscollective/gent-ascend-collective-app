@@ -1,0 +1,10 @@
+{
+  "schema": "studio-label-brief/v1",
+  "productName": "Aethelios Specimen",
+  "direction": "Quiet emerald and gold with centered type. Synthetic demonstration only.",
+  "source": {
+    "kind": "talk",
+    "reference": "synthetic-conversation",
+    "revision": "fixture-1"
+  }
+}

@@ -1,4 +1,6 @@
 import 'server-only';
+import { readBrandKit } from './brand';
+import { assertLabelRevision, protectedLabelErrors } from './label/document';
 import { z } from 'zod';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { studioSession, verifyStudioProject } from './service';
@@ -46,7 +48,12 @@ type SaveRow = { id: string; revision: number; updated_at: string; revision_id: 
 
 export async function createDesign(input: z.infer<typeof designCreateInput>) {
   await verifyStudioProject(input.projectId);
-  const document = presetDocument(input.presetId, crypto.randomUUID());
+  if (input.presetId === 'unconfirmed-label') throw new IntelligenceError('Import the exact supplier template profile to create a product label.', 422);
+  const { client, person } = await studioSession();
+  const project = await client.from('ai_studio_projects').select('brief').eq('id', input.projectId).eq('person_id', person.id).single();
+  if (project.error) throw new IntelligenceError('Brand kit could not be loaded.', 503);
+  const brief = project.data.brief as { brand?: unknown };
+  const document = presetDocument(input.presetId, crypto.randomUUID(), readBrandKit(brief.brand));
   if (input.title) document.title = input.title;
   return saveDesign({
     id: document.id,
@@ -63,6 +70,11 @@ export async function saveDesign(input: z.infer<typeof designSaveInput>) {
   const document = parseDesignDocument(input.document);
   if (document.id !== input.id) throw new IntelligenceError('Design identity does not match.', 422);
   const { client } = await studioSession();
+  const existing = await client.from('ai_studio_designs').select('document').eq('id', input.id).maybeSingle();
+  if (existing.error) throw new IntelligenceError('Current design could not be verified.', 503);
+  if (existing.data) assertLabelRevision(parseDesignDocument(existing.data.document), document);
+  const protectedErrors = protectedLabelErrors(document);
+  if (protectedErrors.length) throw new IntelligenceError(protectedErrors[0]!, 422);
   const result = await client.rpc('ai_studio_design_save', {
     p_id: input.id,
     p_project: input.projectId,

@@ -1,3 +1,4 @@
+import { drawVectorSvg } from './svg-vector';
 import { readFile } from 'node:fs/promises';
 import {
   PDFDocument,
@@ -91,7 +92,7 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
   });
   const fonts = new Map<string, PDFFont>();
   for (const layer of document.layers) {
-    if (layer.type !== 'text') continue;
+    if (layer.type !== 'text' || document.label) continue;
     const key = `${layer.fontId}:${layer.fontWeight}`;
     if (fonts.has(key)) continue;
     fonts.set(
@@ -110,7 +111,7 @@ export async function exportPdf(document: DesignDocument, assets: AssetBytes[]) 
     height: toInches(document.page.height, document.page.unit, document.page.ppi),
   };
   pdf.setSubject(
-    `RGB export trim ${inches.width.toFixed(4)}×${inches.height.toFixed(4)} in. Bleed extends the media box outward and does not shrink trim. SVG logos are rasterized to PNG in this PDF; they are not retained as vector artwork. Type uses the bundled static Inter/Sora/DejaVu faces at the requested weight. Not CMYK, PDF/X or printer-certified. Dimension source: ${document.page.dimensionSource}. ${document.page.dimensionNote}`,
+    `RGB export trim ${inches.width.toFixed(4)}×${inches.height.toFixed(4)} in. Bleed extends the media box outward and does not shrink trim. ${document.label ? 'Label SVG logos retained as vectors; text outlined. Supplier approval not established.' : 'SVG logos rasterized to PNG.'} Type uses the bundled static Inter/Sora/DejaVu faces at the requested weight. Not CMYK, PDF/X or printer-certified. Dimension source: ${document.page.dimensionSource}. ${document.page.dimensionNote}`,
   );
   return pdf.save({ useObjectStreams: false });
 }
@@ -197,6 +198,10 @@ async function drawLayer(
   }
   if (layer.type === 'svg') {
     const markup = sanitizeSvg(layer.markup);
+    if (document.label) {
+      withRotation(page, cx, cy, layer.rotation, () => drawVectorSvg(page, markup, { x, y, width, height, opacity }));
+      return;
+    }
     const png = await rasterizeSvgMarkup(markup, Math.max(1, Math.round(width * (document.page.ppi / 72))), Math.max(1, Math.round(height * (document.page.ppi / 72))));
     const image = await pdf.embedPng(png);
     withRotation(page, cx, cy, layer.rotation, () => {
@@ -209,7 +214,7 @@ async function drawLayer(
     throw new Error(`Layer “${layer.name}” (${layer.type}) cannot be exported to PDF.`);
   }
   const fontKey = `${layer.fontId}:${layer.fontWeight}`;
-  if (!fonts.get(fontKey))
+  if (!document.label && !fonts.get(fontKey))
     throw new Error(`Missing font: ${layer.fontId} ${layer.fontWeight}. Studio does not substitute another typeface.`);
   const kit = await loadDesignFont(layer.fontId, layer.fontWeight);
   const wrapped = wrapText(layer, kit, width / 72);

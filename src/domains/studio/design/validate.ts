@@ -1,3 +1,5 @@
+import { labelGeometryErrors } from '../label/document';
+import { vectorSvg } from './svg-vector';
 import { fontSupportsWeight } from './fonts';
 import { measureTextLayer } from './measure';
 import { pagePixels, toInches } from './units';
@@ -5,6 +7,7 @@ import type { DesignDocument, ImageLayer, TextLayer } from './document';
 
 export type DesignIssue = {
   code:
+    | 'label-blocked'
     | 'missing-font'
     | 'missing-asset'
     | 'text-overflow'
@@ -28,6 +31,12 @@ export async function validateDesign(
   assets: AssetInfo[],
 ): Promise<DesignIssue[]> {
   const issues: DesignIssue[] = [];
+  if (document.label) {
+    issues.push(...labelGeometryErrors(document).map(message => ({ code: 'label-blocked' as const, message })));
+    for (const layer of document.layers) if (layer.type === 'svg') {
+      try { vectorSvg(layer.markup); } catch (error) { issues.push({ code: 'label-blocked', message: error instanceof Error ? error.message : 'SVG cannot be retained as vector.', layerId: layer.id }); }
+    }
+  }
   if (document.page.dimensionSource === 'unconfirmed')
     issues.push({
       code: 'unconfirmed-size',
@@ -97,7 +106,7 @@ export async function validateDesign(
         message: `“${layer.name}” extends outside the safe area.`,
       });
   }
-  return issues;
+  return document.label ? issues.map(issue => ['text-overflow','outside-safe','unconfirmed-size'].includes(issue.code) ? { ...issue, code: 'label-blocked' as const } : issue) : issues;
 }
 
 function outsideSafe(document: DesignDocument, layer: { x: number; y: number; width: number; height: number }) {
@@ -110,7 +119,7 @@ function outsideSafe(document: DesignDocument, layer: { x: number; y: number; wi
 }
 
 export function blockingIssues(issues: DesignIssue[]) {
-  return issues.filter((issue) => issue.code === 'missing-font' || issue.code === 'missing-asset');
+  return issues.filter((issue) => issue.code === 'label-blocked' || issue.code === 'missing-font' || issue.code === 'missing-asset');
 }
 
 export function imageAssetIds(document: DesignDocument): ImageLayer[] {

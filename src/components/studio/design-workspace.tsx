@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { LabelSetup } from './label-setup';
+import { assertLabelRevision } from '@/domains/studio/label/document';
 import { designPresets } from '@/domains/studio/design/presets';
 import {
   cloneDocument,
@@ -96,6 +98,8 @@ export function DesignWorkspace({
   exportJobs?: ExportJob[];
   onChanged: () => void;
 }) {
+  const [labelSetup, setLabelSetup] = useState(false);
+  const [preflight, setPreflight] = useState<{code:string;message:string}[]>([]);
   const [currentId, setCurrentId] = useState(designs[0]?.id ?? null);
   const saved = designs.find((item) => item.id === currentId) ?? designs[0] ?? null;
   const [draft, setDraft] = useState<{
@@ -158,6 +162,8 @@ export function DesignWorkspace({
         });
         return;
       }
+      try { assertLabelRevision(document!, next); } catch (error) { setError(error instanceof Error ? error.message : 'Protected supplier content cannot change.'); return; }
+      setPreflight([]);
       const committed = commitDesign(document!, history, { type: 'replace', document: next });
       setLive({ ...live, document: committed.document, history: committed.history });
     },
@@ -297,6 +303,7 @@ export function DesignWorkspace({
 
   async function createFrom(presetId: string) {
     setError('');
+    if (presetId === 'unconfirmed-label') { setLabelSetup(true); return; }
     const created = await json<{ id: string; revision: number; updated_at: string; document: DesignDocument }>(
       await fetch('/api/studio/design', {
         method: 'POST',
@@ -467,6 +474,13 @@ export function DesignWorkspace({
 
   return (
     <div className="studio-workbench">
+      <button type="button" onClick={() => setLabelSetup(value => !value)}>{labelSetup ? 'Close label setup' : 'Create supplier label'}</button>
+      {labelSetup ? <LabelSetup projectId={projectId} onCreated={created => {
+        setCurrentId(created.id);
+        setLive({ id:created.id, document:parseDesignDocument(created.document), revision:created.revision, updatedAt:created.updated_at, history:emptyHistory() });
+        setLabelSetup(false); onChanged();
+      }} /> : null}
+      {document?.label ? <p className="studio-dimension-banner">{document.label.profile.fixture ? 'SYNTHETIC FIXTURE · NOT FOR MANUFACTURING. ' : ''}{document.label.profile.supplier} {document.label.profile.sku} · template {document.label.profile.template.revision} · {document.label.generation === 'model' ? 'Model-generated layout' : 'Deterministic layout; no model call'}. Supplier copy and geometry protected. Supliful approval not established.</p> : null}
       <div className="studio-workbench-toolbar imperial-control-surface">
         <label>
           Document
@@ -757,7 +771,7 @@ export function DesignWorkspace({
                     ))}
                   </div>
                 )}
-            {selected?.type === 'text' && document && (
+            {selected?.type === 'text' && document && !selected.locked && (
               <div className="studio-inspector-fields">
                 <label>
                   Copy
@@ -836,7 +850,12 @@ export function DesignWorkspace({
                 </label>
               </div>
             )}
-            {document && selected && (
+            {document && selected && !selected.locked ? <div className="studio-inspector-fields">
+              {(['x','y','width','height','rotation'] as const).map(key=><label key={key}>{key}<input type="number" step="0.1" value={selected[key]} onChange={event=>apply(applyLayerPatches(document,{[selected.id]:{[key]:Number(event.target.value)}}))}/></label>)}
+              {selected.type==='text'?<label>Font size (pt)<input type="number" min="4" max="400" value={selected.fontSize} onChange={event=>apply({...document,layers:document.layers.map(layer=>layer.id===selected.id?{...selected,fontSize:Number(event.target.value)}:layer)})}/></label>:null}
+              {'fill' in selected?<label>Layer color<input type="color" value={selected.fill} onChange={event=>apply({...document,layers:document.layers.map(layer=>layer.id===selected.id?{...selected,fill:event.target.value}:layer)})}/></label>:null}
+            </div>:null}
+            {document && selected && !document.label?.profile.protected.some(item => item.id === selected.id) && (
               <div className="studio-export-actions">
                 <button
                   type="button"
@@ -977,6 +996,10 @@ export function DesignWorkspace({
                 ))}
             </div>
             <div className="studio-export-actions">
+              {document?.label ? <>
+                <button type="button" onClick={async () => { try { const result = await json<{issues:{code:string;message:string}[]}>(await fetch('/api/studio/label', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId,document})})); setPreflight(result.issues); setStatus('Preflight checked this draft. Export rechecks the pinned revision. Supplier approval is separate.'); } catch (error) {setError(error instanceof Error ? error.message : 'Preflight unavailable.');} }}>Check label preflight</button>
+                <ul>{preflight.map((issue,index)=><li key={index}>{['label-blocked','missing-font','missing-asset'].includes(issue.code)?'BLOCKING: ':'Note: '}{issue.message}</li>)}</ul>
+              </> : null}
               <p>Exports freeze the current revision. RGB is not CMYK or PDF/X. PNG uses the renderer; SVG uses bundled static faces in this runtime.</p>
               <button type="button" onClick={() => void exportFormat('png').catch((err) => setError(err.message))}>
                 Export PNG

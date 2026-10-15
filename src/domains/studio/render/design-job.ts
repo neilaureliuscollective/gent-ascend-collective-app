@@ -18,7 +18,7 @@ const DESIGN_BUCKET = 'aethelios-studio-designs';
 export function designExportNeedsFfmpeg(document: DesignDocument, format: 'png' | 'svg' | 'pdf') {
   if (format === 'png') return true;
   if (format === 'svg') return false;
-  return document.layers.some((layer) => layer.type === 'svg');
+  return !document.label && document.layers.some((layer) => layer.type === 'svg');
 }
 
 export async function renderDesignBytes(
@@ -33,6 +33,9 @@ export async function renderDesignBytes(
     return { bytes: await exportSvg(document, assets, fontMode), type: 'image/svg+xml' as const };
   }
   if (format === 'pdf') {
+    const issues = await validateDesign(document, assets);
+    const blocked = blockingIssues(issues);
+    if (blocked.length) throw new Error(blocked.map(i => i.message).join(' '));
     return { bytes: await exportPdf(document, assets), type: 'application/pdf' as const };
   }
   const bytes = await exportPng(document, assets, undefined, options);
@@ -140,6 +143,7 @@ export async function runDesignExportJob(input: {
       signal,
       timeoutMs: remainingMs(deadlineAt, RENDER_LIMITS.pngMs),
     });
+    if (input.document.label && rendered.bytes.byteLength >= 10_000_000) throw new Error('Supplier PDF must be smaller than 10 MB.');
     if (signal.aborted) throw new Error('Studio design export was cancelled.');
     const person = await input.client.from('persons').select('auth_user_id').eq('id', input.personId).maybeSingle();
     const uid = (person.data?.auth_user_id as string | undefined) ?? (await input.client.auth.getUser()).data.user?.id;
