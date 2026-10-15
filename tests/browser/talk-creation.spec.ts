@@ -287,8 +287,8 @@ test('Talk creation journey keeps brief, palette and image review in the convers
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/app/aethelios?conversation=${conversation}`);
   await settleTalk(page);
-  await expect(page.getByText('Reserve brand')).toBeVisible();
-  await expect(page.getByText('Imperial palette')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Reserve brand', level: 3 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Imperial palette', level: 3 })).toBeVisible();
   await expect(page.getByLabel('Imperial palette swatches')).toBeVisible();
   await expect(page.getByText('Queued for your approval', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve and generate', exact: true })).toBeVisible();

@@ -302,7 +302,7 @@ test('a late image result from conversation A cannot fill a new conversation', a
   await expect(page.getByText('A restrained crest on obsidian')).toHaveCount(0);
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
   await page.locator('.conversation-list > li > button').filter({ hasText: 'Premium brand' }).click();
-  await expect(page.getByText('Reserve brand')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Reserve brand', level: 3 })).toBeVisible();
   await expect(page.getByText('Saved in Studio.')).toBeVisible();
 });
 
@@ -483,7 +483,7 @@ test('a pending save for another owner is not replayed', async ({ page }) => {
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
-  await expect(page.getByText('Reserve brand')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Reserve brand', level: 3 })).toBeVisible();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await expect(page.getByText('Recovered the previous save.')).toHaveCount(0);
   expect(posts).toEqual([]);
@@ -530,7 +530,7 @@ test('a stale generated proposal remains reviewable after reload', async ({
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
-  await expect(page.getByText('Manual edit')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Manual edit', level: 3 }).first()).toBeVisible();
   await expect(page.getByText('Proposal · not applied')).toBeVisible();
   await page.getByRole('button', { name: 'Open', exact: true }).nth(1).click();
   const panel = page.getByRole('complementary', { name: 'Reviewed work' });
@@ -688,7 +688,7 @@ test('a recovered save that conflicts with newer work stays pending and does not
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
-  await expect(page.getByText('Manual edit')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Manual edit', level: 3 })).toBeVisible();
   await expect(
     page.getByText('A recovered save conflicts with newer work. Open the work to resolve it.'),
   ).toBeVisible();
