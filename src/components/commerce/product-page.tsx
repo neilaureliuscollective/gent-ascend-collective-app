@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { currentPerson } from '@/domains/person/current';
 import { CabinetSave } from './cabinet-controls';
 import { saveProductAction } from '@/app/(workspace)/app/collection/actions';
@@ -20,6 +19,8 @@ import {
 import { collectionEntries } from '@/domains/commerce/collection';
 import { resolveRelated } from '@/domains/commerce/discovery';
 import { ProductExperience } from '@/components/commerce/product-experience';
+import { CollectionReturnLink } from './collection-return-link';
+import { LifestyleAction } from './lifestyle-action';
 export async function ProductPage({
   handle,
   basePath = '/shop',
@@ -49,7 +50,9 @@ export async function ProductPage({
             ? 'Please refresh before choosing a product.'
             : 'Live product availability is not connected yet.'}
         </p>
-        <Link href={basePath}>Return to the collection →</Link>
+        <CollectionReturnLink fallback={basePath} className="world-button">
+          Return to the collection
+        </CollectionReturnLink>
       </section>
     );
   if (
@@ -101,17 +104,29 @@ export async function ProductPage({
         policies={await policiesPromise}
         cabinetControl={
           member && product ? (
-            <section className="reserve-save" aria-label="Synced Cabinet">
+            <section className="reserve-save" aria-label="Cabinet and Grooming">
               {person ? (
                 <>
                   <CabinetSave handle={product.handle} action={saveProductAction} />
-                  <Link href="/app/collection/cabinet">Open my Cabinet →</Link>
-                  <p>Save to your account across devices. Saving does not order this product.</p>
+                  <p>
+                    Save keeps this product in your account Cabinet. It does not mark it as owned or
+                    place an order.
+                  </p>
+                  <div className="collection-entry-actions">
+                    <LifestyleAction href="/app/collection/cabinet" className="world-text-link">
+                      Open Cabinet
+                    </LifestyleAction>
+                    <LifestyleAction href="/app/grooming" className="world-text-link">
+                      Open Grooming
+                    </LifestyleAction>
+                  </div>
                 </>
               ) : (
                 <>
-                  <Link href="/enter">Sign in to save to your Cabinet →</Link>
-                  <p>Your browser selection remains separate.</p>
+                  <LifestyleAction href="/enter" className="world-text-link">
+                    Sign in to save to your Cabinet
+                  </LifestyleAction>
+                  <p>Your browser selection remains separate from Cabinet and from purchasing.</p>
                 </>
               )}
             </section>

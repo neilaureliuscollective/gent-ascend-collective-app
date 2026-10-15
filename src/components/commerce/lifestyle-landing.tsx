@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { CollectionCard } from './collection-card';
-import { lifestyleBrands } from '@/domains/commerce/lifestyle';
 
 export function LifestyleLanding({
   entries,
@@ -31,15 +30,15 @@ export function LifestyleLanding({
           </h1>
           <p className="lifestyle-lead">Aethelios Lifestyle</p>
           <p>
-            Considered products. Distinctive brands.
+            Aethelios Lifestyle. Aethelios Human Ascendance products.
             <br />A higher standard for the everyday.
           </p>
           <div className="collection-entry-actions">
             <Link className="world-button" href={basePath}>
-              Explore the collection →
+              Explore the collection
             </Link>
-            <Link className="world-text-link" href={`${lifestylePath}/legacy-reserve`}>
-              Discover Legacy Reserve
+            <Link className="world-text-link" href={`${basePath}/cart`}>
+              Your cart
             </Link>
           </div>
           <span className="lifestyle-hero-foot">CARE · CHARACTER · DAILY RITUAL</span>
@@ -60,30 +59,10 @@ export function LifestyleLanding({
           </Link>
         )}
       </header>
-      <section className="lifestyle-brands" aria-labelledby="lifestyle-brands">
-        <div className="lifestyle-section-heading">
-          <span className="world-kicker">01 / Our brands</span>
-          <h2 id="lifestyle-brands">
-            Individual character.
-            <br />
-            <em>One shared ambition.</em>
-          </h2>
-        </div>
-        {lifestyleBrands.map((brand) => (
-          <article className="lifestyle-brand" key={brand.slug}>
-            <span className="world-kicker">THE FLAGSHIP / GROOMING & PERSONAL CARE</span>
-            <h3>{brand.name}</h3>
-            <p>{brand.description}</p>
-            <Link className="world-text-link" href={`${lifestylePath}/${brand.slug}`}>
-              Enter the brand →
-            </Link>
-          </article>
-        ))}
-      </section>
       <section className="collection-browse" aria-labelledby="lifestyle-products">
         <div className="collection-browse-heading">
           <div>
-            <span className="world-kicker">02 / The collection</span>
+            <span className="world-kicker">The collection</span>
             <h2 id="lifestyle-products">
               Discover your <em>daily essentials.</em>
             </h2>

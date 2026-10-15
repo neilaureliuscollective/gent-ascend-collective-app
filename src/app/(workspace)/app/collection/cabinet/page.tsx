@@ -20,6 +20,7 @@ import {
   importSelectionAction,
 } from '../actions';
 import '../collection.css';
+import { LifestyleAction } from '@/components/commerce/lifestyle-action';
 export const metadata = {
   title: 'Your Cabinet | Gent Ascend',
   robots: { index: false, follow: false },
@@ -35,7 +36,7 @@ export default async function Collection({
       <section className="member-collection">
         <h1>Your Cabinet.</h1>
         <p>Sign in to keep your products across devices.</p>
-        <Link href="/enter">Sign in →</Link>
+        <LifestyleAction href="/enter">Sign in</LifestyleAction>
       </section>
     );
   const params = await searchParams,
@@ -52,7 +53,7 @@ export default async function Collection({
       <section className="member-collection">
         <h1>Your Cabinet.</h1>
         <p role="alert">{error.message}</p>
-        <Link href="/app/collection/cabinet">Try again →</Link>
+        <LifestyleAction href="/app/collection/cabinet">Try again</LifestyleAction>
       </section>
     );
   }
@@ -61,18 +62,23 @@ export default async function Collection({
   return (
     <section className="member-collection">
       <header className="cabinet-hero">
-        <p className="eyebrow">GENT ASCEND / THE COLLECTION</p>
+        <p className="eyebrow">Aethelios Lifestyle / Cabinet</p>
         <h1>
-          Your standard.
+          Your Cabinet.
           <br />
           <em>Kept in reach.</em>
         </h1>
-        <p>Save what interests you. Remember what you use.</p>
+        <p>
+          Save what interests you. Record what you already own. Saving does not purchase a product;
+          ownership is what you mark here.
+        </p>
         <nav aria-label="Product areas">
           <a href="#cabinet">Your Cabinet</a>
           <a href="#collection">The Collection</a>
-          <Link href="/app/grooming">Grooming ritual →</Link>
-          <Link href="/app/collection/orders" prefetch={false}>My orders →</Link>
+          <LifestyleAction href="/app/grooming">Grooming</LifestyleAction>
+          <LifestyleAction href="/app/collection/orders" prefetch={false}>
+            Orders
+          </LifestyleAction>
         </nav>
       </header>
       <section id="cabinet">
@@ -98,7 +104,7 @@ export default async function Collection({
               <article className="cabinet-record" key={record.id}>
                 <p className="eyebrow">{cabinetLabels[record.relation]} / MEMBER RECORDED</p>
                 <h3>{record.name}</h3>
-                {href ? <Link href={href}>Inspect product →</Link> : null}
+                {href ? <LifestyleAction href={href}>Inspect product</LifestyleAction> : null}
                 <details>
                   <summary>Review my experience</summary>
                   <CabinetEditor
@@ -158,9 +164,9 @@ export default async function Collection({
             </article>
           ))}
         </div>
-        <Link className="secondary-button" href="/app/collection">
-          Explore the full collection →
-        </Link>
+        <LifestyleAction className="secondary-button" href="/app/collection">
+          Explore the full collection
+        </LifestyleAction>
       </section>
     </section>
   );

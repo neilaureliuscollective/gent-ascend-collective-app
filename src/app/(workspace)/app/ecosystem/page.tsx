@@ -74,22 +74,21 @@ export default function EcosystemPage() {
           <h2>Aethelios Lifestyle</h2>
           <p className="io-division-promise">The personal standard.</p>
           <p>
-            Legacy Reserve is the flagship premium grooming and personal-care brand within Aethelios
-            Lifestyle, with its own independent product identity.
+            Aethelios Lifestyle and Aethelios Human Ascendance products. Cabinet and Grooming stay
+            with the collection; purchases use the same catalog.
           </p>
           <p className="io-division-boundary">
             Physical commerce is planned through Shopify. Product availability is confirmed only in
             the official store.
           </p>
           <nav className="io-division-links" aria-label="Lifestyle destinations">
+            <Link href="/app/lifestyle">Lifestyle ↗</Link>
             <Link href="/app/grooming">Grooming workspace ↗</Link>
             {reserve ? (
               <a href={reserve} target="_blank" rel="noopener noreferrer">
-                Legacy Reserve ↗
+                Current collection store
               </a>
-            ) : (
-              <span className="io-preview-label">Legacy Reserve destination forthcoming</span>
-            )}
+            ) : null}
           </nav>
         </article>
       </div>

@@ -2,6 +2,12 @@
 
 Finish PR #132 without renaming Studio or replacing generation. Persist with revision-aware autosave so a delayed save cannot replace newer local edits. Enforce sanitized SVG at parse/save/export. Convert physical units instead of relabeling. Export PNG/SVG/PDF from one geometry/typography contract, including PPI-scaled outlined type, PDF rotation/crop/rounded corners/SVG logos and WebP decoded through FFmpeg to PNG. Compile stills as a single frame plus intended zoompan duration; burn titles/captions from a trusted VTT path; apply crop/placement and dissolve overlap. `scripts/studio-render-worker.mjs` is the trusted claim/dispatch worker. Recover is service_role-only; begin returns the canonical job id; finish requires a matching unexpired lease. Hosted rendering stays unavailable; the worker flag only queues. Missing Design/Film tables must not fail existing Studio history. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
 
+# Official Aethelios install icon — 2026-10-15
+
+Founder supplied the approved gold-A / star / Earth application icon and authorized production installation replacement. Keep the existing Next App Router metadata files, stable manifest `id` `/`, `scope` `/` and `start_url` `/app`. Version the new PNG URLs, redirect previous install paths, and bump only the static fallback cache. Standard and maskable assets stay distinct; maskable gold art stays inside the W3C 80% safe circle. No in-app crest, account, entitlement or routing change.
+
+Official references checked 2026-10-15: [W3C icon masks](https://www.w3.org/TR/appmanifest/#icon-masks), [Chrome web app updates](https://developer.chrome.com/blog/improvements-to-web-app-updates), installed Next 16.3.5 app-icons/manifest file conventions.
+
 # Aethelios Studio editable design and media productions — 2026-10-14
 
 Keep generation, storage, narration, footage, Finish and Delivery. Add a canonical Studio document model with Fabric.js 7.4.0 as the editor adapter (patched SVG-export advisories; MIT notice preserved). Persist designs and short-film compositions as owner-bound revisions. Export PNG/SVG/vector PDF from frozen revisions. Render H.264/AAC locally through compiled FFmpeg operations; hosted rendering stays unavailable without a worker. No commercial editor SDK, no invented bottle-label dies, no CMYK claim, no paid provider calls. Talk #131 and Architect #130 are not merged. Evidence: [STUDIO_EDITABLE_PRODUCTIONS.md](STUDIO_EDITABLE_PRODUCTIONS.md).
