@@ -145,6 +145,7 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261014030000_talk_origin_import_atomic.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014040000_talk_origin_import_consistency.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261014100000_talk_design_board.sql', 'utf8'));
+  await db.exec(await readFile('supabase/migrations/20261019120000_talk_origin_import_recovery.sql', 'utf8'));
   await db.exec(`
     create function public.talk_import_fail_receipt() returns trigger
     language plpgsql as $$
@@ -231,6 +232,86 @@ describe('Talk Origin atomic import SQL (PGlite; not Supabase Auth)', () => {
       }),
     );
     expect((await asUser(foreign, `select id from public.ai_talk_origin_imports`)).rows).toEqual([]);
+  });
+
+  it('rejects occupied save/project recovery without a mismatched receipt', async () => {
+    const occupyBrief = '00000000-0000-4000-8000-000000000034';
+    const occupyHandoff = '00000000-0000-4000-8000-000000000035';
+    const targetBrief = '00000000-0000-4000-8000-000000000036';
+    const targetHandoff = '00000000-0000-4000-8000-000000000037';
+    const targetImport = '00000000-0000-4000-8000-000000000038';
+    const occupyReceipt = '00000000-0000-4000-8000-000000000039';
+    const occupyPackage = {
+      ...briefOnly,
+      selections: [
+        { kind: 'brief' as const, lineageId: occupyBrief, versionId: occupyBrief, version: 1, title: 'Reserve site' },
+      ],
+    };
+    const targetPackage = {
+      ...briefOnly,
+      selections: [
+        { kind: 'brief' as const, lineageId: targetBrief, versionId: targetBrief, version: 1, title: 'Reserve site' },
+      ],
+    };
+    await db.exec(`update public.ai_talk_creations set created_at = now() - interval '2 minutes'`);
+    expect((await saveCreation(occupyBrief, 'brief', brief)).rows[0]).toMatchObject({
+      receipt: { id: occupyBrief, version: 1 },
+    });
+    expect((await saveCreation(occupyHandoff, 'handoff', occupyPackage)).rows[0]).toMatchObject({
+      receipt: { id: occupyHandoff, version: 1 },
+    });
+    expect((await saveCreation(targetBrief, 'brief', brief)).rows[0]).toMatchObject({
+      receipt: { id: targetBrief, version: 1 },
+    });
+    expect((await saveCreation(targetHandoff, 'handoff', targetPackage)).rows[0]).toMatchObject({
+      receipt: { id: targetHandoff, version: 1 },
+    });
+    const targetProject = originProjectIdentity(owner, targetHandoff);
+    const targetSave = originSaveIdentity(owner, targetHandoff);
+    const mapped = await db.query(
+      `select public.ai_talk_origin_mapped_project(${literal(targetPackage)},${literal(brief)},null,null,'[]'::jsonb) as mapped`,
+    );
+    const mappedContent = (mapped.rows[0] as { mapped: { content: unknown; provenance: unknown } }).mapped;
+    expect(
+      (
+        await asUser(
+          owner,
+          `select public.architect_origin_save('${targetProject}','${targetSave}',0,${literal(mappedContent.content)},'${originImportNote}') as revision`,
+        )
+      ).rows[0],
+    ).toEqual({ revision: 1 });
+    await db.exec(`
+      insert into public.ai_talk_origin_imports(
+        id,person_id,handoff_id,conversation_id,project_id,save_id,prepared_at,provenance,mapping_version
+      ) values (
+        '${occupyReceipt}','${owner}','${occupyHandoff}','${conversation}','${targetProject}','${targetSave}',
+        '2026-10-14T00:00:00.000Z','${JSON.stringify(mappedContent.provenance).replace(/'/g, "''")}'::jsonb,
+        'talk-origin-import/v1'
+      );
+    `);
+    await expect(
+      asUser(
+        owner,
+        `select public.ai_talk_import_origin('${targetImport}','${targetHandoff}','${conversation}')`,
+      ),
+    ).rejects.toThrow(/reused with different inputs/i);
+    expect(
+      (
+        await asUser(
+          owner,
+          `select count(*)::int as count, count(*) filter (where id='${targetImport}')::int as mismatched
+             from public.ai_talk_origin_imports
+            where project_id='${targetProject}' or save_id='${targetSave}' or handoff_id='${targetHandoff}'`,
+        )
+      ).rows,
+    ).toEqual([{ count: 1, mismatched: 0 }]);
+    const occupied = await asUser(
+      owner,
+      `select id, handoff_id, project_id, save_id from public.ai_talk_origin_imports where save_id='${targetSave}'`,
+    );
+    expect(occupied.rows).toEqual([
+      { id: occupyReceipt, handoff_id: occupyHandoff, project_id: targetProject, save_id: targetSave },
+    ]);
   });
 
   it('rejects retired acknowledgement, revoked identity, foreign and changed identities', async () => {

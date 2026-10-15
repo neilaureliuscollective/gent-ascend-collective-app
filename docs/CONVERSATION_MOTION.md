@@ -7,13 +7,13 @@ October 15, 2026. Dedicated motion workstream on Talk Elevation. Review branch o
 | Layer | Reference | Head |
 | --- | --- | --- |
 | Production main | Studio #132 | `804c8770754aced1837e82dffa4a416c24baa595` |
-| Talk foundation | PR #131 `cursor/talk-creative-conversation-5b08` | `ae406d6d0e913cfaf2104958bb508ebf9fe0f944` |
-| Talk Elevation | PR #135 `cursor/talk-elevation-5b08` | `948a9b95f179e7719fb7a3c11904666c33fdfb6d` |
-| This workstream | `cursor/aethelios-conversation-motion-0a11` · PR #139 | finishing pass after `79f5895f19ad2e2c310246cb2fc797bd483edb1f` |
+| Talk foundation | PR #131 `cursor/talk-creative-conversation-5b08` | `b822c319d5378b8a130bcd3c7960c5acdac125cf` |
+| Talk Elevation | PR #135 `cursor/talk-elevation-5b08` | `a859c239d7cc596bf24b58c2cbcd27f0b573796e` |
+| This workstream | `cursor/aethelios-conversation-motion-0a11` · PR #139 | restack after `fdfbcc3b6e0b656530346c53b291363fc8afe904` |
 
 Talk remains unmerged. This branch documents the stack and keeps inline voice dock, single transcript, conversation continuity, artifact targeting and release-diagnostic repairs from #131/#135. It does not merge those branches and does not duplicate their implementation.
 
-Last inspected elevation head before this work: `948a9b95f179e7719fb7a3c11904666c33fdfb6d`. Refreshed 2026-10-15.
+Last inspected elevation head before this restack: `a859c239d7cc596bf24b58c2cbcd27f0b573796e`. Merge-base was `948a9b95`. Refreshed 2026-10-15.
 
 ## Starting findings
 

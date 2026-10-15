@@ -27,6 +27,7 @@ type Diagnostic = {
       serviceRoleExecute: boolean | null;
       hasIntendedTurnAuthority: boolean;
       hasDerivedReceipt: boolean;
+      hasQualifiedRecovery: boolean;
     }
   >;
   columns: { table: string; column: string }[];
@@ -183,6 +184,35 @@ describe('Talk release diagnostic (PGlite; not hosted schema)', () => {
     expect(report.contracts.intendedTurn).toBe('partial');
     expect(report.requiredPolicies.ai_live_observed_items_owner).toBe(false);
     expect(report.classificationCeiling).toBe('equivalent-candidate');
+    await db.close();
+  });
+
+  it('classifies 14040000 origin import as older until qualified recovery is applied', async () => {
+    const db = new PGlite({ extensions: { pgcrypto } });
+    await bootstrap(db);
+    await db.exec('drop table public.architect_origin_projects');
+    await apply(db, [
+      '20261012230000_architect_origin.sql',
+      '20261013240000_talk_creation.sql',
+      '20261013260000_talk_creation_candidates.sql',
+      '20261014010000_talk_origin_import.sql',
+      '20261014020000_talk_origin_import_bind.sql',
+      '20261014030000_talk_origin_import_atomic.sql',
+      '20261014040000_talk_origin_import_consistency.sql',
+    ]);
+    const older = await diagnose(db);
+    expect(older.contracts.originImport).toBe('older');
+    expect(
+      older.functions['public.ai_talk_import_origin(uuid,uuid,uuid)']?.hasQualifiedRecovery,
+    ).toBe(false);
+    await apply(db, ['20261019120000_talk_origin_import_recovery.sql']);
+    const report = await diagnose(db);
+    expect(report.contracts.originImport).toBe('equivalent-candidate');
+    expect(
+      report.functions['public.ai_talk_import_origin(uuid,uuid,uuid)']?.hasQualifiedRecovery,
+    ).toBe(true);
+    expect(report.requiredPolicies.talk_origin_imports_owner).toBe(true);
+    expect(report.requiredConstraints.ai_talk_origin_imports_mapping_version).toBe(true);
     await db.close();
   });
 });
