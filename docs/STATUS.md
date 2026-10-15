@@ -1,3 +1,5 @@
+> Quality application (2026-10-15): Same PR #130 after Knowledge/logo merge `297b011`. Unverified `/shop/[handle]` now sets `openGraph: null` and `twitter: null` so the root brand card cannot satisfy the launch indexing gate. Origin `local-auth` on that head already published `architect-apps-connected-journey`. Work → Agency stays reserved. No merge, hosted SQL, Droplet, credentials or paid model call.
+
 ## Architect creation environment — verification in progress (2026-10-15)
 
 PR #130 continuation: unified code-native path stage, guided outcome input, displayed-revision edit binding, complete source comparison, immediate reopened preview-session binding, explicit verified-preview recovery and compact mobile controls. See [implementation and verification boundaries](ARCHITECT_CREATION_ENVIRONMENT.md). Exact-head connected acceptance and final evidence remain pending; no production activation or launch-readiness claim.
