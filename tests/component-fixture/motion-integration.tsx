@@ -2,6 +2,7 @@
 import { useState, type CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
+import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
 import { CompanyRoom } from '@/components/companies/company-room';
 import { AppearanceControls, useAppearance } from '@/components/visual/appearance';
@@ -13,6 +14,7 @@ import '@/app/globals.css';
 import '@/app/sovereign.css';
 import '@/app/imperial-workspace.css';
 import '@/app/imperial-emerald-ii.css';
+import '@/app/obsidian-smoked-glass.css';
 import '@/app/(workspace)/app/work/work.css';
 import './motion-integration.css';
 const base: WorkspaceData = {
@@ -133,6 +135,20 @@ window.fetch = async (input, init) => {
   }
   if (url.startsWith('/api/company-talk')) return json(room);
   if (url.startsWith('/api/company-work')) return json({ jobs: [] });
+  if (url.startsWith('/api/aurelius/creations')) {
+    return json({
+      creations: [],
+      selected: {},
+      images: [],
+      selectedImageId: null,
+      canCreateImages: false,
+      imageAccess:
+        new URLSearchParams(location.search).get('imageAccess') === 'unavailable'
+          ? 'unavailable'
+          : 'ready',
+      attachmentProjectId: null,
+    });
+  }
   if (url.startsWith('/api/aurelius')) {
     if (
       url.includes('conversationId=') &&
@@ -294,7 +310,9 @@ function Review() {
       </header>
       <main className="review-workspace" key={surface}>
         {surface === 'talk' ? (
-          <AureliusWorkspace />
+          <ConversationViewport>
+            <AureliusWorkspace />
+          </ConversationViewport>
         ) : surface === 'studio' ? (
           <StudioWorkspace />
         ) : surface === 'work' ? (

@@ -13,7 +13,7 @@ import { GuidingPresence } from './guiding-presence';
 import { LivingSignal } from './living-signal';
 import {
   conversationActivityLabel,
-  conversationAnnounceText,
+  conversationAnnouncerText,
   conversationStatusVisible,
   type ConversationArtifactHint,
 } from '@/platform/visual/conversation-motion';
@@ -152,8 +152,7 @@ export function ConversationAnnouncer({
   artifacts?: ConversationArtifactHint[];
   notice?: string;
 }) {
-  const operational = conversationAnnounceText(operation, artifacts);
-  const text = notice.trim() || operational;
+  const text = conversationAnnouncerText(operation, artifacts, notice);
   return (
     <span
       className="sr-only conversation-announcer"

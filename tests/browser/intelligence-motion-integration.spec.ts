@@ -286,3 +286,89 @@ test('Fold-like keyboard height keeps composer, Stop and compact status usable',
   expect(response!.height).toBeLessThan(56);
   expect(composer!.y + composer!.height).toBeLessThanOrEqual(421);
 });
+
+async function assertHeaderFits(page: import('@playwright/test').Page) {
+  const width = page.viewportSize()!.width;
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+    true,
+  );
+  const buttons = page.locator('.talk-toolbar button:visible');
+  const count = await buttons.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    const box = await buttons.nth(index).boundingBox();
+    expect(box, `header control ${index} should paint`).toBeTruthy();
+    expect(box!.x).toBeGreaterThanOrEqual(-1);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width + 1);
+    expect(box!.width).toBeGreaterThanOrEqual(40);
+    await buttons.nth(index).click({ trial: true });
+  }
+}
+
+for (const width of [320, 344, 390, 690]) {
+  test(`narrow Talk header controls stay inside ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 690 ? 420 : 844 });
+    await page.goto('http://127.0.0.1:3102/motion-integration.html');
+    await expect(page.locator('.talk-page .talk-toolbar')).toBeVisible();
+    await assertHeaderFits(page);
+    await page.getByLabel('Message Aethelios', { exact: true }).click();
+    await assertHeaderFits(page);
+    if (width <= 360) {
+      await expect(page.locator('.talk-toolbar .talk-new-tool')).toBeHidden();
+      await page.getByRole('button', { name: 'Tools & context' }).click();
+      await expect(page.getByRole('button', { name: 'New conversation' })).toBeVisible();
+      await page.keyboard.press('Escape');
+    } else {
+      await expect(page.locator('.talk-toolbar .talk-new-tool')).toBeVisible();
+    }
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '24px';
+    });
+    await assertHeaderFits(page);
+  });
+}
+
+test('persistent image-unavailable notice does not mask a later request', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3102/motion-integration.html?imageAccess=unavailable');
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('First synthetic turn');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Emit response text' }).click();
+  await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+  await expect(page.locator('.aurelius-notice')).toContainText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText(
+    'Image generation is unavailable; text work remains available.',
+  );
+  await page.getByLabel('Message Aethelios', { exact: true }).fill('Second synthetic turn');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Preparing a reply');
+  await expect(page.locator('.conversation-announcer')).not.toContainText(
+    'Image generation is unavailable',
+  );
+  await page.getByRole('button', { name: 'Emit saving event' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Saving');
+  await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+  await expect(page.locator('.conversation-announcer')).toHaveText('Reply saved.');
+  await expect(page.locator('.aurelius-notice')).toContainText(
+    'Image generation is unavailable; text work remains available.',
+  );
+});
+
+test('fixture Talk composer focus uses the shell ring, not an inner white box', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('http://127.0.0.1:3102/motion-integration.html');
+  await expect(page.locator('.talk-page .aurelius-composer')).toBeVisible();
+  const composer = page.getByLabel('Message Aethelios', { exact: true });
+  await composer.click();
+  await expect(composer).toBeFocused();
+  const inner = await composer.evaluate((node) => getComputedStyle(node).outlineStyle);
+  expect(inner === 'none' || inner === '').toBe(true);
+  const shell = await page.locator('.talk-page .aurelius-composer').evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { style: style.outlineStyle, color: style.outlineColor, width: style.outlineWidth };
+  });
+  expect(shell.style).toBe('solid');
+  expect(shell.width).toBe('2px');
+  expect(shell.color).toBe('rgb(196, 145, 47)');
+});

@@ -1669,7 +1669,7 @@ export function AureliusWorkspace({
           <BplusTalkTools enabled={!compact}>
             <button
               type="button"
-              className="talk-tool"
+              className="talk-tool talk-new-tool"
               disabled={blocked}
               onClick={() => {
                 if (
@@ -1685,6 +1685,20 @@ export function AureliusWorkspace({
               label="Tools & context"
               triggerContent={<span aria-hidden="true">•••</span>}
             >
+              <button
+                type="button"
+                className="text-button talk-new-in-menu"
+                disabled={blocked}
+                onClick={() => {
+                  if (
+                    !draft.trim() ||
+                    confirm('Discard the unsent draft and start a new conversation?')
+                  )
+                    newConversation();
+                }}
+              >
+                New conversation
+              </button>
               <nav className="talk-destinations" aria-label="Aethelios destinations">
                 {[
                   ['/app', 'Home'],
@@ -2379,15 +2393,7 @@ export function AureliusWorkspace({
         <ConversationAnnouncer
           operation={operation}
           artifacts={streamArtifacts}
-          notice={`${notice}${
-            creationNotice && !(openWorkId && (openCreation || openImage))
-              ? ` ${creationNotice}`
-              : ''
-          }${
-            creationWorkspace?.imageAccess === 'unavailable' && selected
-              ? ' Image generation is unavailable; text work remains available.'
-              : ''
-          }`}
+          notice={notice}
         />
         <p className="aurelius-notice">
           {notice}

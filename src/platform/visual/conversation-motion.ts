@@ -97,6 +97,27 @@ export function conversationAnnounceText(
   return `${prefix}${conversationActivityLabel(operation, artifacts)}`;
 }
 
+/**
+ * Persistent informational notices stay visual. The polite region speaks the
+ * current request, then a confirmed save/uncertain outcome.
+ */
+export function conversationAnnouncerText(
+  operation: IntelligenceOperation,
+  artifacts: ConversationArtifactHint[] = [],
+  notice = '',
+): string {
+  const operational = conversationAnnounceText(operation, artifacts);
+  if (!operational) return '';
+  if (
+    operation.phase === 'complete' &&
+    operation.persistence === 'confirmed' &&
+    notice.trim()
+  ) {
+    return notice.trim();
+  }
+  return operational;
+}
+
 export function conversationArtifactReady(artifact: ConversationArtifactHint): boolean {
   return ARTIFACT_COMPLETED.has(artifact.status ?? '');
 }

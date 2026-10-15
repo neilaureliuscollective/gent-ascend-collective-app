@@ -180,15 +180,26 @@
 .app-shell.imperial-workspace:has(
     :is(.talk-page, .studio-page, .command-continuity, .member-collection)
   )
-  :is(button, a, input, textarea, select):focus-visible {
+  :is(button, a, input, select):focus-visible,
+.app-shell.imperial-workspace:has(
+    :is(.talk-page, .studio-page, .command-continuity, .member-collection)
+  )
+  textarea:not(.talk-input):focus-visible {
   outline: 2px solid var(--io-text);
   outline-offset: 2px;
 }
+/* Talk composer: smoked-glass --io-text is #F2F2EE and paints a near-white
+   inner field box. Keyboard focus stays on the gold shell, not the textarea. */
+.app-shell.imperial-workspace:has(.talk-page)
+  :is(.aurelius-composer, .talk-composer)
+  textarea:focus-visible,
 .app-shell.imperial-workspace [data-bplus='talk']
   :is(.aurelius-composer, .talk-composer)
-  > textarea:focus-visible {
+  textarea:focus-visible {
   outline: none;
 }
+.app-shell.imperial-workspace:has(.talk-page)
+  :is(.aurelius-composer, .talk-composer):focus-within,
 .app-shell.imperial-workspace [data-bplus='talk']
   :is(.aurelius-composer, .talk-composer):focus-within {
   outline: 2px solid var(--io-gold, #c4912f);
@@ -366,7 +377,11 @@ html[data-material='solid'] .app-shell.imperial-workspace .talk-page::before {
   .app-shell.imperial-workspace:has(
       :is(.talk-page, .studio-page, .command-continuity, .member-collection)
     )
-    :is(button, a, input, textarea, select):focus-visible {
+    :is(button, a, input, select):focus-visible,
+  .app-shell.imperial-workspace:has(
+      :is(.talk-page, .studio-page, .command-continuity, .member-collection)
+    )
+    textarea:not(.talk-input):focus-visible {
     outline-color: Highlight;
   }
 }

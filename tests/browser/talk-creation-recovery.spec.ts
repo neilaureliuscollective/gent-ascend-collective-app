@@ -219,7 +219,7 @@ test('reload recovers a pending save that the server already committed', async (
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
-  await expect(page.getByText('Recovered the previous save.')).toBeVisible();
+  await expect(page.locator('.aurelius-notice').filter({ hasText: 'Recovered the previous save.' })).toBeVisible();
   await expect.poll(() => posts).toEqual([
     expect.objectContaining({ id: pendingId, kind: 'brief' }),
   ]);
@@ -289,15 +289,15 @@ test('a late image result from conversation A cannot fill a new conversation', a
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
   await expect.poll(() => aRequested).toBe(true);
   await page.getByRole('button', { name: 'New', exact: true }).click();
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.locator('.talk-title').filter({ hasText: 'New conversation' })).toBeVisible();
   aComplete = true;
   releaseA();
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.locator('.talk-title').filter({ hasText: 'New conversation' })).toBeVisible();
   await expect(page.getByText('Reserve brand')).toHaveCount(0);
   await expect(page.getByText('A restrained crest on obsidian')).toHaveCount(0);
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
   await page.locator('.conversation-list > li > button').filter({ hasText: 'Other work' }).click();
-  await expect(page.getByText('New conversation')).toHaveCount(0);
+  await expect(page.locator('.talk-title').filter({ hasText: 'New conversation' })).toHaveCount(0);
   await expect(page.getByText('Reserve brand')).toHaveCount(0);
   await expect(page.getByText('A restrained crest on obsidian')).toHaveCount(0);
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
@@ -407,13 +407,13 @@ test('New conversation does not recover conversation A into an empty screen', as
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
   await expect.poll(() => gets.filter((id) => id === conversationA).length).toBe(1);
   await page.getByRole('button', { name: 'New', exact: true }).click();
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.locator('.talk-title').filter({ hasText: 'New conversation' })).toBeVisible();
   releaseA();
   await expect.poll(() => aGetSettled).toBe(true);
-  await expect(page.getByText('New conversation')).toBeVisible();
+  await expect(page.locator('.talk-title').filter({ hasText: 'New conversation' })).toBeVisible();
   await expect(page.getByText('Pending from A')).toHaveCount(0);
   await expect(page.getByText('Reserve brand')).toHaveCount(0);
-  await expect(page.getByText('Recovered the previous save.')).toHaveCount(0);
+  await expect(page.locator('.aurelius-notice').filter({ hasText: 'Recovered the previous save.' })).toHaveCount(0);
   await expect.poll(() => posts.length).toBe(0);
   expect(gets.filter((id) => id === conversationA)).toHaveLength(1);
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
@@ -423,7 +423,7 @@ test('New conversation does not recover conversation A into an empty screen', as
   signedOut = true;
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
   await page.locator('.conversation-list > li > button').filter({ hasText: 'Premium brand' }).click();
-  await expect(page.getByText('Recovered the previous save.')).toHaveCount(0);
+  await expect(page.locator('.aurelius-notice').filter({ hasText: 'Recovered the previous save.' })).toHaveCount(0);
   await expect.poll(() => posts.length).toBe(0);
   const leftover = await page.evaluate(
     (ownerId) =>
@@ -435,7 +435,7 @@ test('New conversation does not recover conversation A into an empty screen', as
   expect(leftover?.entries?.some((entry) => entry.id === pendingId)).toBe(true);
   signedOut = false;
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
-  await expect(page.getByText('Recovered the previous save.')).toBeVisible();
+  await expect(page.locator('.aurelius-notice').filter({ hasText: 'Recovered the previous save.' })).toBeVisible();
   await expect.poll(() => posts).toEqual([expect.objectContaining({ id: pendingId, kind: 'brief' })]);
 });
 
@@ -485,7 +485,7 @@ test('a pending save for another owner is not replayed', async ({ page }) => {
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
   await expect(page.getByRole('heading', { name: 'Reserve brand', level: 3 })).toBeVisible();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
-  await expect(page.getByText('Recovered the previous save.')).toHaveCount(0);
+  await expect(page.locator('.aurelius-notice').filter({ hasText: 'Recovered the previous save.' })).toHaveCount(0);
   expect(posts).toEqual([]);
 });
 
@@ -603,7 +603,9 @@ test('a failed recovery leaves the original pending save and keeps chat usable',
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/app/aethelios?conversation=${conversationA}`);
-  await expect(page.getByText('A previous save did not confirm. It is still pending.')).toBeVisible();
+  await expect(
+    page.locator('.aurelius-notice').filter({ hasText: 'A previous save did not confirm. It is still pending.' }),
+  ).toBeVisible();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   const leftover = await page.evaluate(
     (ownerId) =>

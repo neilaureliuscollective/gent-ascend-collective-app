@@ -4,6 +4,7 @@ import {
   applyStreamArtifact,
   conversationActivityLabel,
   conversationAnnounceText,
+  conversationAnnouncerText,
   conversationArtifactReady,
   conversationMotionMode,
   conversationStatusVisible,
@@ -113,6 +114,26 @@ describe('conversation motion presentation', () => {
         label: 'Microphone muted',
       }),
     ).toBe('Microphone muted');
+  });
+
+  it('does not let a persistent notice mask request activity', () => {
+    const lingering = 'Image generation is unavailable; text work remains available.';
+    expect(
+      conversationAnnouncerText(observedOperation('a', 'sending', 'pending'), [], lingering),
+    ).toBe('Sending');
+    expect(
+      conversationAnnouncerText(observedOperation('a', 'waiting', 'pending'), [], lingering),
+    ).toBe('Preparing a reply');
+    expect(
+      conversationAnnouncerText(observedOperation('a', 'saving', 'pending'), [], lingering),
+    ).toBe('Saving');
+    expect(
+      conversationAnnouncerText(observedOperation('a', 'complete', 'confirmed'), [], 'Reply saved.'),
+    ).toBe('Reply saved.');
+    expect(
+      conversationAnnouncerText(observedOperation('a', 'cancelled', 'uncertain'), [], lingering),
+    ).toBe('Stopped · Save unconfirmed');
+    expect(conversationAnnouncerText(observedOperation('a', 'ready'), [], lingering)).toBe('');
   });
 
   it('terminalizes in-progress artifacts and preserves completed ones', () => {

@@ -83,15 +83,15 @@
   min-height: 44px;
 }
 .talk-toolbar .talk-title {
-  flex: 1 1 auto;
-  min-width: 8rem;
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
   color: var(--aether-silver);
   font-size: 13px;
 }
 .talk-toolbar .talk-title h1 {
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .aethelios-page.talk-page .aethelios-room-heading {
@@ -392,7 +392,14 @@
     display: none;
   }
   .talk-toolbar {
-    gap: 8px;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+@media (max-width: 360px) {
+  .talk-toolbar .talk-new-tool {
+    display: none;
   }
 }
 @media (max-width: 360px) {
@@ -497,6 +504,8 @@ body .app-shell .aethelios-page.talk-page {
   border: 0;
   box-shadow: none;
   background: transparent;
+  min-width: 0;
+  max-width: 100%;
 }
 .talk-page .talk-toolbar .talk-tool {
   min-width: 44px;
@@ -506,6 +515,7 @@ body .app-shell .aethelios-page.talk-page {
   display: block;
   position: static;
   width: auto;
+  min-width: 0;
   height: auto;
   margin: 0;
   clip-path: none;
@@ -528,8 +538,8 @@ body .app-shell .aethelios-page.talk-page {
     display: none;
   }
 }
-.talk-page .aurelius-composer > textarea:focus-visible,
-.talk-page .talk-composer > textarea:focus-visible {
+.talk-page .aurelius-composer textarea:focus-visible,
+.talk-page .talk-composer textarea:focus-visible {
   outline: none;
 }
 .talk-page .aurelius-composer:focus-within,
@@ -590,9 +600,8 @@ body .app-shell .aethelios-page.talk-page {
 .app-shell.imperial-workspace
   .talk-page [data-bplus='talk']
   .aurelius-composer
-  > textarea:focus-visible {
-  outline-color: var(--aether-gold, #c4912f);
-  border-radius: 10px;
+  textarea:focus-visible {
+  outline: none;
 }
 @media (max-height: 570px) {
   .app-shell.imperial-workspace .talk-page .conversation-starters {

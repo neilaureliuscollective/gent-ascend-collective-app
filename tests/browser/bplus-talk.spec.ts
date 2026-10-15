@@ -63,10 +63,15 @@ for (const width of [320, 344, 390, 412, 720, 768, 960, 1100, 1101, 1440, 2560])
         ...document.querySelectorAll(
           '.bplus-tools > button, .composer-controls > button, .talk-expand',
         ),
-      ].map((el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.x, right: r.right, width: r.width, height: r.height };
-      }),
+      ]
+        .filter((el) => {
+          const style = getComputedStyle(el);
+          return style.display !== 'none' && style.visibility !== 'hidden';
+        })
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x, right: r.right, width: r.width, height: r.height };
+        }),
       editor: document.querySelector('.talk-input')!.getBoundingClientRect().height,
       composer: document.querySelector('.aurelius-composer')!.getBoundingClientRect().width,
     }));
