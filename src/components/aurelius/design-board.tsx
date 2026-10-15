@@ -10,6 +10,24 @@ import Image from 'next/image';
 import { designAssetSource, type DesignDirection } from '@/domains/talk-creation/design-board';
 import './creation.css';
 
+function AuthorizedDesignImage({ src, alt, width }: { src: string; alt: string; width: number }) {
+  const [unavailable, setUnavailable] = useState(false);
+  return unavailable ? (
+    <div className="talk-campaign-missing">
+      Authorized asset unavailable. Select an owned asset.
+    </div>
+  ) : (
+    <Image
+      src={src}
+      alt={alt}
+      width={width}
+      height={width}
+      unoptimized
+      onError={() => setUnavailable(true)}
+    />
+  );
+}
+
 /** A bounded renderer: data can select approved compositions and fonts, never inject CSS or markup. */
 export function DirectionCanvas({
   direction,
@@ -60,20 +78,18 @@ export function DirectionCanvas({
       </div>
       <figure className="talk-campaign-art">
         {image ? (
-          <Image
+          <AuthorizedDesignImage
+            key={image}
             src={image}
             alt={direction.demo.image.label}
             width={640}
-            height={640}
-            unoptimized
           />
         ) : emblem ? (
-          <Image
+          <AuthorizedDesignImage
+            key={designAssetSource(emblem)!}
             src={designAssetSource(emblem)!}
             alt={emblem.label}
             width={360}
-            height={360}
-            unoptimized
           />
         ) : (
           <div className="talk-campaign-missing">Asset not supplied</div>
