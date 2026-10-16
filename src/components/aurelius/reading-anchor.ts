@@ -18,12 +18,22 @@ export function useReadingAnchor(
   ready: boolean,
 ) {
   const anchor = useRef<Anchor>(null);
-  const size = useRef({ width: 0, height: 0 });
+  const size = useRef({ width: 0, height: 0, scrollHeight: 0 });
   function remember() {
     const node = root.current;
     if (!node) return followRef.current;
-    if (node.clientWidth !== size.current.width || node.clientHeight !== size.current.height)
-      return followRef.current;
+    if (node.clientWidth !== size.current.width || node.clientHeight !== size.current.height) {
+      // Reflow can move the bottom without a reading gesture. A deliberate jump far
+      // beyond that geometry change still leaves follow mode immediately.
+      const reflow =
+        Math.abs(node.clientHeight - size.current.height) +
+        Math.abs(node.scrollHeight - size.current.scrollHeight);
+      if (
+        !followRef.current ||
+        node.scrollHeight - node.scrollTop - node.clientHeight <= reflow + 24
+      )
+        return followRef.current;
+    }
     followRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 24;
     anchor.current = capture(node, followRef.current);
     return followRef.current;
@@ -31,7 +41,11 @@ export function useReadingAnchor(
   useEffect(() => {
     const node = root.current;
     if (!node || !ready) return;
-    size.current = { width: node.clientWidth, height: node.clientHeight };
+    size.current = {
+      width: node.clientWidth,
+      height: node.clientHeight,
+      scrollHeight: node.scrollHeight,
+    };
     let frame = 0;
     const restore = () => {
       cancelAnimationFrame(frame);
@@ -45,7 +59,11 @@ export function useReadingAnchor(
             node.scrollTop +=
               row.getBoundingClientRect().top - node.getBoundingClientRect().top - saved.offset;
         } else if (followRef.current) node.scrollTop = node.scrollHeight;
-        size.current = { width: node.clientWidth, height: node.clientHeight };
+        size.current = {
+          width: node.clientWidth,
+          height: node.clientHeight,
+          scrollHeight: node.scrollHeight,
+        };
         anchor.current = capture(node, followRef.current);
       });
     };

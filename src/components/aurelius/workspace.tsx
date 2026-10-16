@@ -2251,9 +2251,13 @@ export function AureliusWorkspace({
                 onClick={() => {
                   follow.current = true;
                   setAwayFromLatest(false);
-                  scroll.current?.scrollTo({
-                    top: scroll.current.scrollHeight,
-                    behavior: 'instant',
+                  requestAnimationFrame(() => {
+                    // Hiding this control changes transcript height. Jump after that reflow.
+                    follow.current = true;
+                    scroll.current?.scrollTo({
+                      top: scroll.current.scrollHeight,
+                      behavior: 'instant',
+                    });
                   });
                 }}
               >

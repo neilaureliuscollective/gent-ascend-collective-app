@@ -228,6 +228,22 @@ for (const width of [390, 884])
     await page.getByRole('button', { name: 'Reload saved state', exact: true }).click();
     await expect(field).toHaveValue('Recover this exact failed campaign draft.');
     const scroll = page.locator('.conversation-scroll');
+    for (const draft of ['A short draft', 'Long synthetic draft\n'.repeat(40)]) {
+      await field.fill(draft);
+      await scroll.evaluate((node) => {
+        node.scrollTop = 0;
+        node.dispatchEvent(new Event('scroll'));
+      });
+      const latest = page.getByRole('button', { name: 'Latest message' });
+      await expect(latest).toBeVisible();
+      await latest.click();
+      await expect
+        .poll(() =>
+          scroll.evaluate((node) => node.scrollHeight - node.clientHeight - node.scrollTop),
+        )
+        .toBeLessThan(5);
+    }
+
     await scroll.evaluate((node) => {
       node.scrollTop = 1600;
       node.dispatchEvent(new Event('scroll'));
