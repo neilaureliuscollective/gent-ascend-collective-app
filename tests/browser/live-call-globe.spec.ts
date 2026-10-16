@@ -14,9 +14,11 @@ test('mocked globe scenes stay labeled and keep controls on screen', async ({ pa
   const globe = page.locator('.live-call-globe-immersive');
   await expect(globe).toBeVisible();
   await expect(globe).toHaveAttribute('data-kind', 'listening');
-  await expect(globe).toHaveAttribute('data-emblem', 'official-20261015');
-  await expect(globe).toHaveAttribute('data-earth', 'nasa-blue-marble');
-  await expect(globe.locator('.live-globe-canvas')).toBeVisible();
+  await expect(globe).toHaveAttribute('data-emblem-id', 'official-20261015');
+  await expect(globe).toHaveAttribute('data-earth', 'ready', { timeout: 15000 });
+  await expect(globe).toHaveAttribute('data-emblem', 'ready', { timeout: 15000 });
+  const canvas = globe.locator('.live-globe-canvas');
+  await expect(canvas).toBeAttached();
   await expect(page.getByRole('button', { name: 'Mute microphone', exact: true })).toBeVisible();
   await expect(page.getByRole('log')).toBeVisible();
   await page.getByRole('button', { name: 'Speaking', exact: true }).click();
@@ -68,7 +70,10 @@ for (const viewport of viewports)
     await expect(transcript).toBeVisible();
     const globeBox = await globe.boundingBox();
     const controlBox = await controls.boundingBox();
+    const canvasBox = await page.locator('.live-globe-canvas').boundingBox();
     expect(globeBox?.height ?? 999).toBeLessThanOrEqual(viewport.height * 0.4);
+    expect(Math.abs((globeBox?.width ?? 0) - (globeBox?.height ?? 1))).toBeLessThan(2);
+    expect(Math.abs((canvasBox?.width ?? 0) - (canvasBox?.height ?? 1))).toBeLessThan(2);
     expect(controlBox?.y ?? 0).toBeLessThan(viewport.height - 20);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(
       true,
@@ -155,4 +160,152 @@ test('mounting the globe does not acquire a second microphone or session', async
   expect(starts).toBe(1);
   await compact.getByRole('button', { name: 'End session', exact: true }).click();
   await expect(compact.getByRole('status')).toHaveText('Session ended');
+});
+
+test('Still and reduced motion apply on the production Live surface without remounting', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const tracks = [{ enabled: true, readyState: 'live', stop() {}, addEventListener() {} }];
+    Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+      value: async () => ({ getTracks: () => tracks, getAudioTracks: () => tracks }),
+    });
+    class PC {
+      localDescription = { sdp: 'v=0' };
+      channel = {
+        readyState: 'open',
+        onmessage: null as ((event: { data: string }) => void) | null,
+        onopen: null as (() => void) | null,
+        onclose: null as (() => void) | null,
+        close() {},
+        send() {},
+      };
+      addTrack() {}
+      async createOffer() {
+        return { type: 'offer', sdp: this.localDescription.sdp };
+      }
+      async setLocalDescription() {}
+      async setRemoteDescription() {
+        this.channel.onopen?.();
+      }
+      createDataChannel() {
+        return this.channel;
+      }
+      close() {}
+      async getStats() {
+        return new Map();
+      }
+    }
+    Object.defineProperty(window, 'RTCPeerConnection', { value: PC });
+  });
+  await page.route('**/api/aethelios/live', (route) =>
+    route.fulfill({
+      json:
+        route.request().method() === 'GET'
+          ? { jobs: [] }
+          : route.request().method() === 'DELETE'
+            ? { ended: true }
+            : {
+                answer: 'v=0\r\na=synthetic-answer',
+                expiresAt: new Date(Date.now() + 120000).toISOString(),
+              },
+    }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+  await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
+  const globe = compact.locator('.live-call-globe');
+  await expect(globe).toBeVisible();
+  await expect(globe).toHaveAttribute('data-earth', /ready|fallback/, { timeout: 15000 });
+  await globe.locator('.live-globe-canvas').evaluate((node) => node.setAttribute('data-keep', '1'));
+  await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await expect(globe).toHaveAttribute('data-motion', 'still');
+  await page.getByRole('button', { name: 'Enable ambient motion', exact: true }).click();
+  await expect(globe).toHaveAttribute('data-motion', 'ambient');
+  await expect(globe.locator('.live-globe-canvas')).toHaveAttribute('data-keep', '1');
+  await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
+  const immersive = dialog.locator('.live-call-globe');
+  await expect(immersive).toBeVisible();
+  const box = await immersive.boundingBox();
+  expect(Math.abs((box?.width ?? 0) - (box?.height ?? 1))).toBeLessThan(3);
+  await page.keyboard.press('Escape');
+  await compact.getByRole('button', { name: 'End session', exact: true }).click();
+});
+
+test('canvas stays circular in compact and expanded production layouts', async ({ page }) => {
+  await page.addInitScript(() => {
+    const tracks = [{ enabled: true, readyState: 'live', stop() {}, addEventListener() {} }];
+    Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+      value: async () => ({ getTracks: () => tracks, getAudioTracks: () => tracks }),
+    });
+    class PC {
+      localDescription = { sdp: 'v=0' };
+      channel = {
+        readyState: 'open',
+        onmessage: null as ((event: { data: string }) => void) | null,
+        onopen: null as (() => void) | null,
+        close() {},
+        send() {},
+      };
+      addTrack() {}
+      async createOffer() {
+        return { type: 'offer', sdp: this.localDescription.sdp };
+      }
+      async setLocalDescription() {}
+      async setRemoteDescription() {
+        this.channel.onopen?.();
+      }
+      createDataChannel() {
+        return this.channel;
+      }
+      close() {}
+      async getStats() {
+        return new Map();
+      }
+    }
+    Object.defineProperty(window, 'RTCPeerConnection', { value: PC });
+  });
+  await page.route('**/api/aethelios/live', (route) =>
+    route.fulfill({
+      json:
+        route.request().method() === 'GET'
+          ? { jobs: [] }
+          : route.request().method() === 'DELETE'
+            ? { ended: true }
+            : {
+                answer: 'v=0\r\na=synthetic-answer',
+                expiresAt: new Date(Date.now() + 120000).toISOString(),
+              },
+    }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+  await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
+  await expect(compact.locator('.live-call-globe')).toBeVisible();
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 390, height: 420 },
+    { width: 884, height: 690 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const compactBox = await compact.locator('.live-call-globe').boundingBox();
+    expect(Math.abs((compactBox?.width ?? 0) - (compactBox?.height ?? 1))).toBeLessThan(3);
+    await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+    const immersiveBox = await page
+      .getByRole('dialog', { name: 'Aethelios Live', exact: true })
+      .locator('.live-call-globe')
+      .boundingBox();
+    expect(Math.abs((immersiveBox?.width ?? 0) - (immersiveBox?.height ?? 1))).toBeLessThan(3);
+    await page.keyboard.press('Escape');
+    await expect(compact).toBeVisible();
+  }
+  await compact.getByRole('button', { name: 'End session', exact: true }).click();
 });

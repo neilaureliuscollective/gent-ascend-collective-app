@@ -11,6 +11,7 @@ import {
 } from '@/components/intelligence-motion/presence';
 import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/operation-adapters';
 import type { LiveCallLevels } from '@/platform/visual/live-call-presentation';
+import { createLiveLevelPoller } from '@/platform/visual/live-level-poller';
 import { useAppearance } from '@/components/visual/appearance';
 import { LiveCallControls } from './call-controls';
 import { LiveCallGlobe } from './call-globe';
@@ -316,29 +317,19 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   }, [visible, state.mode, docked]);
   useEffect(() => {
     if (!active) return;
-    let cancelled = false;
-    const poll = async () => {
-      try {
-        const next = await controller.audioLevels();
-        if (cancelled) return;
-        setLevels({
-          input: next.input,
-          output: next.output,
-          source: 'webrtc-stats',
-        });
-      } catch {
-        if (!cancelled) setLevels({ input: 0, output: 0, source: 'unavailable' });
-      }
-    };
-    void poll();
-    const timer = window.setInterval(() => {
-      void poll();
-    }, 160);
+    const poller = createLiveLevelPoller({
+      read: () => controller.audioLevels(),
+      apply: setLevels,
+      shouldPoll: () => moving && typeof document !== 'undefined' && !document.hidden,
+    });
+    poller.sync();
+    const onVisibility = () => poller.sync();
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      cancelled = true;
-      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      poller.dispose();
     };
-  }, [active, controller]);
+  }, [active, controller, moving]);
   useEffect(() => {
     if (!visible || !state.sessionId) return;
     void controller.refreshJobs();

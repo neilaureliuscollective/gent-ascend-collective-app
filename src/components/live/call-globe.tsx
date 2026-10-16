@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppearance } from '@/components/visual/appearance';
 import { motionPresentationPhase } from '@/platform/visual/motion-presentation';
 import {
@@ -7,7 +7,10 @@ import {
   type LiveCallLevels,
   type LiveCallSession,
 } from '@/platform/visual/live-call-presentation';
+import { liveGlobeAssetSources, type LiveGlobeAssetState } from '@/platform/visual/live-globe-assets';
 import { mountLiveGlobe, type LiveGlobeHandle } from '@/platform/visual/live-globe-renderer';
+
+const pendingAssets: LiveGlobeAssetState = { earth: 'loading', emblem: 'loading' };
 
 export function LiveCallGlobe({
   state,
@@ -27,12 +30,14 @@ export function LiveCallGlobe({
   const stateRef = useRef(state);
   const movingRef = useRef(allowedMotion);
   const readRef = useRef(readSample);
+  const [assets, setAssets] = useState<LiveGlobeAssetState>(pendingAssets);
   const visual = liveCallVisual(state, readSample?.(), { moving: allowedMotion });
   const phase = motionPresentationPhase(visual.operation);
   useEffect(() => {
     stateRef.current = state;
     movingRef.current = allowedMotion;
     readRef.current = readSample;
+    handle.current?.setMotion(allowedMotion);
   }, [state, allowedMotion, readSample]);
   useEffect(() => {
     const node = host.current;
@@ -48,9 +53,11 @@ export function LiveCallGlobe({
           });
           return { inward: latest.inward, outward: latest.outward };
         },
+        onAssets: (next) => setAssets(next),
       },
     );
     handle.current = globe;
+    setAssets(globe.assets());
     return () => {
       globe.dispose();
       handle.current = null;
@@ -69,11 +76,12 @@ export function LiveCallGlobe({
       data-energy-source={visual.energySource}
       data-motion={allowedMotion && visual.rotate ? 'ambient' : 'still'}
       data-operation={state.sessionId ?? 'live-idle'}
-      data-emblem="official-20261015"
-      data-earth="nasa-blue-marble"
+      data-emblem={assets.emblem}
+      data-emblem-id={liveGlobeAssetSources.emblemId}
+      data-earth={assets.earth}
       aria-hidden="true"
     >
-      <span className="live-call-globe-fallback" />
+      <span className="live-call-globe-fallback" data-earth={assets.earth} />
     </span>
   );
 }

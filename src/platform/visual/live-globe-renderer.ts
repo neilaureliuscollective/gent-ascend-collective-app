@@ -1,11 +1,17 @@
 import { liveContinents } from './live-continents';
 import type { LiveCallVisual } from './live-call-presentation';
 import { liveGlobeMapUv, liveGlobeSphereCoords } from './live-globe-projection';
+import {
+  liveGlobeAssetSources,
+  type LiveGlobeAssetState,
+} from './live-globe-assets';
 import { brand } from '@/platform/brand';
 
 export type LiveGlobeHandle = {
   setVisual: (visual: LiveCallVisual) => void;
   setEnergy: (inward: number, outward: number, reactive: boolean) => void;
+  setMotion: (moving: boolean) => void;
+  assets: () => LiveGlobeAssetState;
   pause: () => void;
   resume: () => void;
   dispose: () => void;
@@ -15,8 +21,10 @@ export type LiveGlobeHandle = {
 const MAX_PIXELS = 480;
 const FALLBACK_WIDTH = 640;
 const FALLBACK_HEIGHT = 320;
-const EARTH_SRC = '/visual/nasa-blue-marble-land-shallow-topo-2048.jpg';
-const EMBLEM_SRC = '/brand/aethelios-official-20261015-512.png';
+
+export function liveGlobeSquareCss(width: number, height: number) {
+  return Math.max(48, Math.min(width || 240, height || 240));
+}
 
 function clamp01(value: number) {
   return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
@@ -24,13 +32,13 @@ function clamp01(value: number) {
 
 function paintFallbackMap(target: CanvasRenderingContext2D) {
   const { width, height } = target.canvas;
-  target.fillStyle = '#0a100e';
+  target.fillStyle = '#070b0a';
   target.fillRect(0, 0, width, height);
   const project = (lon: number, lat: number): [number, number] => [
     ((lon + 180) / 360) * width,
     ((90 - lat) / 180) * height,
   ];
-  target.fillStyle = '#3d5a4c';
+  target.fillStyle = '#3f6a55';
   for (const ring of liveContinents) {
     target.beginPath();
     ring.forEach((point, index) => {
@@ -74,16 +82,15 @@ function punchDarkPlate(image: CanvasImageSource) {
 
 function sample(data: ImageData, lon: number, lat: number) {
   const { u, v } = liveGlobeMapUv(lon, lat);
-  const x = ((u % 1) + 1) % 1;
   const width = data.width;
   const height = data.height;
-  const fx = x * (width - 1);
+  const fx = (((u % 1) + 1) % 1) * width;
   const fy = Math.min(height - 1, Math.max(0, v * (height - 1)));
-  const x0 = Math.floor(fx);
+  const x0 = Math.floor(fx) % width;
+  const x1 = (x0 + 1) % width;
   const y0 = Math.floor(fy);
-  const x1 = Math.min(width - 1, x0 + 1);
   const y1 = Math.min(height - 1, y0 + 1);
-  const tx = fx - x0;
+  const tx = fx - Math.floor(fx);
   const ty = fy - y0;
   const at = (cx: number, cy: number) => {
     const index = (cy * width + cx) * 4;
@@ -103,15 +110,15 @@ function sample(data: ImageData, lon: number, lat: number) {
 
 function gradeEarth(red: number, green: number, blue: number) {
   const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-  const ocean = blue > green + 6 && blue > red + 10 && luma < 96;
+  const ocean = blue > green + 6 && blue > red + 10 && luma < 104;
   if (ocean) {
-    const depth = luma / 96;
-    return [6 + depth * 8, 10 + depth * 14, 10 + depth * 10] as const;
+    const depth = luma / 104;
+    return [5 + depth * 7, 8 + depth * 12, 9 + depth * 10] as const;
   }
   const ice = luma > 196 && Math.abs(red - green) < 24;
-  if (ice) return [72, 86, 84] as const;
+  if (ice) return [86, 98, 96] as const;
   const relief = luma / 255;
-  return [34 + relief * 64, 62 + relief * 96, 46 + relief * 52] as const;
+  return [38 + relief * 70, 72 + relief * 102, 52 + relief * 48] as const;
 }
 
 function prepareEarth(image: CanvasImageSource, width: number, height: number) {
@@ -138,7 +145,14 @@ function loadImage(src: string) {
       return;
     }
     const image = new Image();
-    image.onload = () => resolve(image);
+    image.onload = () => {
+      const decoded = image.decode?.();
+      if (decoded && typeof decoded.then === 'function') {
+        void decoded.then(() => resolve(image)).catch(() => resolve(image));
+        return;
+      }
+      resolve(image);
+    };
     image.onerror = () => reject(new Error(`Missing ${src}`));
     image.src = src;
   });
@@ -155,6 +169,9 @@ export function mountLiveGlobe(
   options?: {
     moving?: boolean;
     readEnergy?: () => { inward: number; outward: number };
+    earthSrc?: string;
+    emblemSrc?: string;
+    onAssets?: (state: LiveGlobeAssetState) => void;
   },
 ): LiveGlobeHandle {
   const canvas = document.createElement('canvas');
@@ -172,19 +189,35 @@ export function mountLiveGlobe(
   let paused = false;
   let visible = true;
   let hidden = typeof document !== 'undefined' && document.hidden;
+  let allowMotion = options?.moving !== false;
   let earth: ImageData | null = null;
   let emblem: HTMLCanvasElement | null = null;
-  const moving = options?.moving !== false;
-  const reduced =
-    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const assetState: LiveGlobeAssetState = { earth: 'loading', emblem: 'loading' };
+  const media =
+    typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  let reduced = Boolean(media?.matches);
+
+  const publishAssets = () => options?.onAssets?.({ ...assetState });
+
+  const reducedNow = () => Boolean(media?.matches);
+
+  const shouldAnimate = () =>
+    !disposed &&
+    !paused &&
+    visible &&
+    !hidden &&
+    allowMotion &&
+    !reduced &&
+    visual.rotate;
 
   const resize = () => {
     const box = host.getBoundingClientRect();
-    const css = Math.max(48, Math.min(box.width || 240, box.height || 240));
+    const css = liveGlobeSquareCss(box.width, box.height);
     const pixels = pixelBudget(css);
     canvas.style.width = `${css}px`;
     canvas.style.height = `${css}px`;
-    if (canvas.width !== pixels) {
+    canvas.style.aspectRatio = '1';
+    if (canvas.width !== pixels || canvas.height !== pixels) {
       canvas.width = pixels;
       canvas.height = pixels;
     }
@@ -194,17 +227,17 @@ export function mountLiveGlobe(
     if (!context || disposed) return;
     resize();
     const width = canvas.width;
-    const radius = width * 0.42;
+    const radius = width * 0.46;
     const cx = width / 2;
     const cy = width / 2;
     const image = context.createImageData(width, width);
     const pixels = image.data;
-    const lightX = -0.42;
-    const lightY = 0.36;
-    const lightZ = 0.84;
+    const lightX = -0.38;
+    const lightY = 0.28;
+    const lightZ = 0.88;
     const kind = visual.kind;
-    const night =
-      kind === 'ended' || kind === 'error' || kind === 'muted' || kind === 'blocked' ? 0.7 : 1;
+    const dim =
+      kind === 'ended' || kind === 'error' ? 0.78 : kind === 'muted' || kind === 'blocked' ? 0.86 : 1;
     for (let y = 0; y < width; y++) {
       const ny = (y - cy) / radius;
       for (let x = 0; x < width; x++) {
@@ -213,27 +246,27 @@ export function mountLiveGlobe(
         if (!sphere) continue;
         const [red, green, blue] = earth
           ? sample(earth, sphere.lon, sphere.lat)
-          : ([22, 34, 30] as const);
+          : ([24, 38, 32] as const);
         const nz = sphere.facing;
         const diffuse = Math.max(0, nx * lightX + -ny * lightY + nz * lightZ);
-        const wrap = diffuse * 0.62 + 0.28;
-        const terminator = clamp01((diffuse + 0.12) / 0.4);
-        const spec = Math.pow(diffuse, 42) * (0.1 + outward * 0.08);
-        const fresnel = Math.pow(1 - nz, 2.6);
-        const inhale = kind === 'listening' ? inward * 0.12 * (1 - nz) : 0;
-        const glow = fresnel * (10 + outward * 22);
+        const wrap = diffuse * 0.46 + 0.5;
+        const terminator = 0.55 + 0.45 * clamp01((diffuse + 0.18) / 0.55);
+        const spec = Math.pow(diffuse, 26) * (0.055 + outward * 0.04);
+        const fresnel = Math.pow(1 - nz, 3.2);
+        const inhale = kind === 'listening' ? inward * 0.06 * (1 - nz) : 0;
+        const glow = fresnel * (8 + outward * 14);
         const index = (y * width + x) * 4;
         pixels[index] = Math.min(
           255,
-          (red * wrap + spec * 190 + glow * 0.2) * night * terminator - inhale * 22,
+          (red * wrap + spec * 170 + glow * 0.16) * dim * terminator - inhale * 12,
         );
         pixels[index + 1] = Math.min(
           255,
-          (green * wrap + spec * 150 + glow * 0.55) * night * terminator - inhale * 10,
+          (green * wrap + spec * 130 + glow * 0.4) * dim * terminator - inhale * 6,
         );
         pixels[index + 2] = Math.min(
           255,
-          (blue * wrap + spec * 80 + glow * 0.32) * night * terminator,
+          (blue * wrap + spec * 70 + glow * 0.22) * dim * terminator,
         );
         pixels[index + 3] = 255;
       }
@@ -245,21 +278,20 @@ export function mountLiveGlobe(
     context.arc(cx, cy, radius, 0, Math.PI * 2);
     context.clip();
     if (emblem) {
-      const size = radius * 1.24;
-      context.globalAlpha = 0.97;
+      const size = radius * 0.84;
+      context.globalAlpha = 0.9;
       context.drawImage(emblem, cx - size / 2, cy - size / 2, size, size);
       const wash = context.createRadialGradient(
-        cx - radius * 0.22,
-        cy - radius * 0.28,
-        radius * 0.05,
+        cx - radius * 0.2,
+        cy - radius * 0.24,
+        radius * 0.04,
         cx,
         cy,
         radius,
       );
-      wash.addColorStop(0, `rgba(232,233,226,${0.1 + outward * 0.05})`);
-      wash.addColorStop(0.4, `rgba(54,137,108,${0.1 + outward * 0.06})`);
-      wash.addColorStop(0.78, `rgba(196,145,47,${0.08 + outward * 0.04})`);
-      wash.addColorStop(1, 'rgba(7,11,10,0.04)');
+      wash.addColorStop(0, `rgba(232,233,226,${0.05 + outward * 0.03})`);
+      wash.addColorStop(0.45, `rgba(54,137,108,${0.05 + outward * 0.03})`);
+      wash.addColorStop(1, 'rgba(196,145,47,0.03)');
       context.globalCompositeOperation = 'soft-light';
       context.globalAlpha = 1;
       context.fillStyle = wash;
@@ -267,57 +299,72 @@ export function mountLiveGlobe(
       context.globalCompositeOperation = 'source-over';
     }
     context.restore();
-    const atmosphere = context.createRadialGradient(
-      cx,
-      cy,
-      radius * 0.9,
-      cx,
-      cy,
-      radius * (1.16 + outward * 0.1 - inward * 0.04),
-    );
-    const atmosphereAlpha =
-      kind === 'error' ? 0.1 : kind === 'ended' ? 0.08 : kind === 'muted' ? 0.12 : 0.16 + outward * 0.18;
-    atmosphere.addColorStop(0, 'rgba(36,91,72,0)');
-    atmosphere.addColorStop(0.72, `rgba(36,91,72,${atmosphereAlpha})`);
-    atmosphere.addColorStop(1, 'rgba(7,11,10,0)');
-    context.globalCompositeOperation = 'destination-over';
-    context.fillStyle = atmosphere;
+    const rim = context.createRadialGradient(cx, cy, radius * 0.94, cx, cy, radius * 1.08);
+    const rimAlpha =
+      kind === 'error' ? 0.12 : kind === 'ended' ? 0.08 : kind === 'muted' ? 0.1 : 0.18 + outward * 0.1;
+    rim.addColorStop(0, 'rgba(36,91,72,0)');
+    rim.addColorStop(0.72, `rgba(54,137,108,${rimAlpha})`);
+    rim.addColorStop(1, 'rgba(7,11,10,0)');
+    context.fillStyle = rim;
     context.beginPath();
-    context.arc(cx, cy, radius * 1.18, 0, Math.PI * 2);
+    context.arc(cx, cy, radius * 1.08, 0, Math.PI * 2);
     context.fill();
-    context.globalCompositeOperation = 'source-over';
     last = stamp;
   };
 
+  const stopLoop = () => {
+    if (!frame) return;
+    cancelAnimationFrame(frame);
+    frame = 0;
+  };
+
   const tick = (stamp: number) => {
+    frame = 0;
     if (disposed) return;
-    frame = requestAnimationFrame(tick);
-    if (paused || !visible || hidden) return;
-    if (stamp - last < 33) return;
-    const measured = options?.readEnergy?.();
-    if (measured) {
-      inward = clamp01(measured.inward);
-      outward = clamp01(measured.outward);
+    if (!shouldAnimate()) {
+      paint(stamp);
+      return;
     }
-    if (visual.rotate && moving && !reduced) {
+    if (stamp - last >= 33) {
+      const measured = options?.readEnergy?.();
+      if (measured) {
+        inward = clamp01(measured.inward);
+        outward = clamp01(measured.outward);
+      }
       const speed =
         visual.kind === 'connecting' || visual.kind === 'recovering' ? 0.00022 : 0.00012;
-      rotation += Math.min(48, stamp - last) * speed;
+      rotation += Math.min(48, stamp - last || 16) * speed;
+      paint(stamp);
     }
-    paint(stamp);
+    if (shouldAnimate() && !frame) frame = requestAnimationFrame(tick);
+  };
+
+  const ensureLoop = () => {
+    if (disposed) return;
+    reduced = reducedNow();
+    if (shouldAnimate()) {
+      if (!frame) frame = requestAnimationFrame(tick);
+      return;
+    }
+    stopLoop();
+    paint(typeof performance !== 'undefined' ? performance.now() : 0);
   };
 
   const observer =
     typeof IntersectionObserver === 'function'
       ? new IntersectionObserver((entries) => {
           visible = entries[0]?.isIntersecting ?? false;
+          ensureLoop();
         })
       : null;
   observer?.observe(host);
   const onVisibility = () => {
     hidden = document.hidden;
+    ensureLoop();
   };
   document.addEventListener('visibilitychange', onVisibility);
+  const onMotionPreference = () => ensureLoop();
+  media?.addEventListener?.('change', onMotionPreference);
 
   if (typeof document !== 'undefined') {
     const fallback = document.createElement('canvas');
@@ -327,52 +374,81 @@ export function mountLiveGlobe(
     if (fallbackContext) {
       paintFallbackMap(fallbackContext);
       earth = fallbackContext.getImageData(0, 0, FALLBACK_WIDTH, FALLBACK_HEIGHT);
+      assetState.earth = 'fallback';
     }
   }
-  void loadImage(EARTH_SRC)
+  void loadImage(options?.earthSrc ?? liveGlobeAssetSources.earth)
     .then((image) => {
       if (disposed) return;
       const width = Math.min(1024, image.naturalWidth || 2048);
       const height = Math.min(512, image.naturalHeight || 1024);
-      earth = prepareEarth(image, width, height);
+      const prepared = prepareEarth(image, width, height);
+      if (!prepared) {
+        assetState.earth = 'fallback';
+        publishAssets();
+        return;
+      }
+      earth = prepared;
+      assetState.earth = 'ready';
+      publishAssets();
       paint(typeof performance !== 'undefined' ? performance.now() : 0);
     })
-    .catch(() => {});
-  void loadImage(EMBLEM_SRC)
+    .catch(() => {
+      if (disposed) return;
+      assetState.earth = 'fallback';
+      publishAssets();
+      paint(typeof performance !== 'undefined' ? performance.now() : 0);
+    });
+  void loadImage(options?.emblemSrc ?? liveGlobeAssetSources.emblem)
     .then((image) => {
       if (disposed) return;
       emblem = punchDarkPlate(image);
+      assetState.emblem = emblem ? 'ready' : 'missing';
+      publishAssets();
       paint(typeof performance !== 'undefined' ? performance.now() : 0);
     })
-    .catch(() => {});
+    .catch(() => {
+      if (disposed) return;
+      emblem = null;
+      assetState.emblem = 'missing';
+      publishAssets();
+      paint(typeof performance !== 'undefined' ? performance.now() : 0);
+    });
 
   paint(typeof performance !== 'undefined' ? performance.now() : 0);
-  if (moving && !reduced) frame = requestAnimationFrame(tick);
+  ensureLoop();
 
   return {
     setVisual: (next) => {
       visual = next;
       inward = next.inward;
       outward = next.outward;
-      if (paused || reduced || !moving)
-        paint(typeof performance !== 'undefined' ? performance.now() : 0);
+      ensureLoop();
     },
     setEnergy: (nextInward, nextOutward) => {
       inward = clamp01(nextInward);
       outward = clamp01(nextOutward);
     },
+    setMotion: (moving) => {
+      allowMotion = moving;
+      ensureLoop();
+    },
+    assets: () => ({ ...assetState }),
     pause: () => {
       paused = true;
+      ensureLoop();
     },
     resume: () => {
       paused = false;
+      ensureLoop();
     },
     dispose: () => {
       if (disposed) return;
       disposed = true;
-      if (frame) cancelAnimationFrame(frame);
+      stopLoop();
       observer?.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
+      media?.removeEventListener?.('change', onMotionPreference);
       canvas.remove();
     },
     paintStatic: () => paint(typeof performance !== 'undefined' ? performance.now() : 0),
@@ -380,9 +456,9 @@ export function mountLiveGlobe(
 }
 
 export const liveGlobeAssets = {
-  earth: EARTH_SRC,
-  emblem: EMBLEM_SRC,
-  emblemId: 'aethelios-official-20261015-512',
+  earth: liveGlobeAssetSources.earth,
+  emblem: liveGlobeAssetSources.emblem,
+  emblemId: liveGlobeAssetSources.emblemId,
   missingTransparentEmblem:
     'No transparent or vector official gold-A exists. All aethelios-official-20261015 PNGs are opaque RGB plates; crest/lockup are WebP plates. Live punches the dark plate of the 512 official mark without cropping.',
   crest: brand.crest,

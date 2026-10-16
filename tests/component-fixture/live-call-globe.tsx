@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { VisualEnvironment } from '@/components/visual/appearance';
+import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
 import { LiveCallControls } from '@/components/live/call-controls';
 import { LiveCallGlobe } from '@/components/live/call-globe';
 import type { LiveCallLevels, LiveCallSession } from '@/platform/visual/live-call-presentation';
@@ -131,6 +131,7 @@ export function LiveCallGlobeFixture() {
   return (
     <>
       <VisualEnvironment />
+      <AppearanceControls />
       <main className={`live-call-demo${compact ? ' is-compact' : ''}`}>
         <p className="live-call-demo-label" role="note">
           Mocked audio and session states · not a live microphone, playback or OpenAI voice call.

@@ -1,6 +1,6 @@
 # Aethelios Live call globe — 2026-10-16
 
-Reviewable refinement of the Live call surface on `cursor/aethelios-live-call-globe-1aa9`. First-pass head was `e11a82b31abdd5257845ffcd6de4f89666e021f9`. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
+Finishing pass on `cursor/aethelios-live-call-globe-1aa9` after merging main/PR152 (`e85c2f1`). Previous globe head was `4c9f5d55c7a00d4782d89bce280d06192edc8ea6`. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change. Talk image attachments and Studio reference handoff from PR152 are preserved.
 
 ## Planet
 
@@ -45,9 +45,13 @@ The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController
 
 `data-reactive` is `true` only when a measured transport sample is driving listening or speaking. Reduced motion and Still paint one frame. Hidden pages skip the loop. Pixel budget stays at 480.
 
+## Motion and polling
+
+`setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext.
+
 ## Evidence
 
-`docs/evidence/live-call-globe/before/` is the first-pass fixture at `e11a82b`. After shots and the labeled mocked tour replace the root evidence files. Real Live compact/immersive captures use the `live-voice` fixture with a fake transport. None of this is a live OpenAI voice call.
+`docs/evidence/live-call-globe/before/` is the first-pass fixture at `e11a82b`. Root files are the current production-priority captures. `live-voice-*` uses the real LiveSurface with a fake transport. The webm is a labeled fake-transport tour, not a live OpenAI voice call. Capture waits for `data-earth` / `data-emblem` loaded-or-fallback state instead of sleeping.
 
 ## Out of scope
 

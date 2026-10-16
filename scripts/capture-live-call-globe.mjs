@@ -6,24 +6,20 @@ const mocked = 'http://127.0.0.1:3102/?mode=live-call-globe';
 const voice = 'http://127.0.0.1:3102/?mode=live-voice';
 
 async function waitForGlobe(page) {
-  const canvas = page.locator('.live-globe-canvas').first();
-  await canvas.waitFor({ state: 'attached' });
+  const globe = page.locator('.live-call-globe').first();
+  await globe.waitFor({ state: 'attached' });
   await page.waitForFunction(() => {
-    const node = document.querySelector('.live-globe-canvas');
-    return Boolean(node && node.width > 8 && node.height > 8);
+    const node = document.querySelector('.live-call-globe');
+    const earth = node?.getAttribute('data-earth');
+    const emblem = node?.getAttribute('data-emblem');
+    return (earth === 'ready' || earth === 'fallback') && (emblem === 'ready' || emblem === 'missing');
   });
-  await page.waitForTimeout(1800);
 }
 
 async function fakeTransport(page) {
   await page.addInitScript(() => {
     const tracks = [
-      {
-        enabled: true,
-        readyState: 'live',
-        stop() {},
-        addEventListener() {},
-      },
+      { enabled: true, readyState: 'live', stop() {}, addEventListener() {} },
     ];
     Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
       value: async () => ({ getTracks: () => tracks, getAudioTracks: () => tracks }),
@@ -72,10 +68,29 @@ async function fakeTransport(page) {
 
 async function startVoice(page) {
   await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
-  await page.getByRole('checkbox', { name: /I consent/ }).check();
-  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  const start = page.getByRole('button', { name: 'Start voice', exact: true });
+  if (await start.count()) {
+    await page.getByRole('checkbox', { name: /I consent/ }).check();
+    await start.click();
+  }
   await page.getByRole('region', { name: 'Persistent Aethelios voice controls' }).waitFor();
   await waitForGlobe(page);
+}
+
+async function speak(page) {
+  await page.evaluate(() => {
+    window.voiceChannel?.onmessage?.({
+      data: JSON.stringify({ type: 'output_audio_buffer.started', response_id: 'synthetic-response' }),
+    });
+  });
+}
+
+async function listen(page) {
+  await page.evaluate(() => {
+    window.voiceChannel?.onmessage?.({
+      data: JSON.stringify({ type: 'output_audio_buffer.stopped', response_id: 'synthetic-response' }),
+    });
+  });
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -107,6 +122,7 @@ const liveShots = [
   { name: 'live-voice-fold-immersive.png', width: 884, height: 690, immersive: true },
   { name: 'live-voice-desktop-compact.png', width: 1440, height: 900, immersive: false },
   { name: 'live-voice-desktop-immersive.png', width: 1440, height: 900, immersive: true },
+  { name: 'live-voice-phone-short-immersive.png', width: 390, height: 420, immersive: true },
 ];
 
 for (const shot of liveShots) {
@@ -128,9 +144,28 @@ const record = await browser.newContext({
   recordVideo: { dir: out, size: { width: 390, height: 844 } },
 });
 const page = await record.newPage();
-await page.goto(`${mocked}&tour=1`);
+await fakeTransport(page);
+await page.goto(voice);
+await startVoice(page);
+await page.waitForTimeout(2500);
+await page.getByRole('button', { name: 'Expand', exact: true }).click();
 await waitForGlobe(page);
-await page.waitForTimeout(36000);
+await page.waitForTimeout(2000);
+await speak(page);
+await page.waitForTimeout(2500);
+await page.getByRole('button', { name: 'Stop playback', exact: true }).click();
+await page.waitForTimeout(2000);
+await page.getByRole('button', { name: 'Mute microphone', exact: true }).click();
+await page.waitForTimeout(2000);
+await page.getByRole('button', { name: 'Unmute microphone', exact: true }).click();
+await page.keyboard.press('Escape');
+await page.waitForTimeout(2000);
+await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+await page.waitForTimeout(2000);
+await page.getByRole('button', { name: 'Enable ambient motion', exact: true }).click();
+await page.waitForTimeout(1500);
+await page.getByRole('button', { name: 'End session', exact: true }).click();
+await page.waitForTimeout(2500);
 const video = page.video();
 await page.close();
 if (video) {
@@ -139,4 +174,4 @@ if (video) {
 }
 await record.close();
 await browser.close();
-console.log('captured mocked after-shots, fake-transport Live layouts, and labeled tour');
+console.log('captured production Live layouts and labeled fake-transport tour');

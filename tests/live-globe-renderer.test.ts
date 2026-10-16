@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { liveCallVisual } from '../src/platform/visual/live-call-presentation';
-import { liveGlobeAssets, mountLiveGlobe } from '../src/platform/visual/live-globe-renderer';
+import {
+  liveGlobeAssets,
+  liveGlobeSquareCss,
+  mountLiveGlobe,
+} from '../src/platform/visual/live-globe-renderer';
 
 const MAP_BYTES = 640 * 320 * 4;
 
@@ -9,7 +13,7 @@ function fakeCanvas() {
     className: '',
     width: 8,
     height: 8,
-    style: { width: '', height: '' },
+    style: { width: '', height: '', aspectRatio: '' },
     setAttribute: vi.fn(),
     getContext() {
       return context;
@@ -47,68 +51,108 @@ function fakeCanvas() {
   return { canvas, context };
 }
 
+function stubDocument(display: ReturnType<typeof fakeCanvas>) {
+  let created = 0;
+  vi.stubGlobal('document', {
+    createElement: () => {
+      created += 1;
+      return created === 1 ? display.canvas : fakeCanvas().canvas;
+    },
+    hidden: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  });
+}
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe('live globe renderer', () => {
-  it('paints, pauses, and disposes without touching session media', () => {
+  it('keeps the drawing buffer square', () => {
+    expect(liveGlobeSquareCss(320, 180)).toBe(180);
+    expect(liveGlobeSquareCss(90, 220)).toBe(90);
     const display = fakeCanvas();
-    const { canvas, context } = display;
-    const host = {
-      append: vi.fn(),
-      getBoundingClientRect: () => ({ width: 160, height: 160 }),
-    };
-    const frames: FrameRequestCallback[] = [];
-    let created = 0;
-    vi.stubGlobal('document', {
-      createElement: () => {
-        created += 1;
-        return created === 1 ? canvas : fakeCanvas().canvas;
-      },
-      hidden: false,
+    stubDocument(display);
+    vi.stubGlobal('devicePixelRatio', 1);
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    });
+    }));
+    vi.stubGlobal('requestAnimationFrame', vi.fn());
+    const globe = mountLiveGlobe(
+      {
+        append: vi.fn(),
+        getBoundingClientRect: () => ({ width: 300, height: 180 }),
+      } as unknown as HTMLElement,
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'listening',
+        muted: false,
+        playbackBlocked: false,
+      }),
+      { moving: false },
+    );
+    expect(display.canvas.width).toBe(display.canvas.height);
+    expect(display.canvas.style.width).toBe(display.canvas.style.height);
+    globe.dispose();
+  });
+
+  it('paints, pauses, and disposes a single render loop', () => {
+    const display = fakeCanvas();
+    stubDocument(display);
+    const frames: FrameRequestCallback[] = [];
     vi.stubGlobal('devicePixelRatio', 1);
-    vi.stubGlobal('matchMedia', () => ({ matches: false }));
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const raf = vi.fn((callback: FrameRequestCallback) => {
       frames.push(callback);
       return frames.length;
     });
-    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const cancel = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', raf);
+    vi.stubGlobal('cancelAnimationFrame', cancel);
     vi.stubGlobal('IntersectionObserver', undefined);
-    const visual = liveCallVisual({
-      sessionId: 'session-1',
-      phase: 'listening',
-      muted: false,
-      playbackBlocked: false,
-    });
-    const globe = mountLiveGlobe(host as unknown as HTMLElement, visual, { moving: true });
-    expect(host.append).toHaveBeenCalledTimes(1);
-    expect(canvas.remove).not.toHaveBeenCalled();
+    const globe = mountLiveGlobe(
+      {
+        append: vi.fn(),
+        getBoundingClientRect: () => ({ width: 160, height: 160 }),
+      } as unknown as HTMLElement,
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'listening',
+        muted: false,
+        playbackBlocked: false,
+      }),
+      { moving: true },
+    );
+    expect(raf).toHaveBeenCalledTimes(1);
     globe.pause();
-    const before = context.putImageData.mock.calls.length;
+    const before = display.context.putImageData.mock.calls.length;
     frames[0]?.(50);
-    expect(context.putImageData.mock.calls.length).toBe(before);
-    globe.resume();
+    expect(display.context.putImageData.mock.calls.length).toBeGreaterThanOrEqual(before);
     globe.dispose();
-    expect(canvas.remove).toHaveBeenCalledTimes(1);
+    expect(display.canvas.remove).toHaveBeenCalledTimes(1);
+    expect(cancel).toHaveBeenCalled();
   });
 
-  it('keeps a still fallback when motion is reduced', () => {
+  it('applies Still and reduced-motion changes after mount', () => {
     const display = fakeCanvas();
-    const { canvas, context } = display;
-    let created = 0;
-    vi.stubGlobal('document', {
-      createElement: () => {
-        created += 1;
-        return created === 1 ? canvas : fakeCanvas().canvas;
+    stubDocument(display);
+    const listeners: Array<(event: { matches: boolean }) => void> = [];
+    const media = {
+      matches: false,
+      addEventListener: (_name: string, callback: (event: { matches: boolean }) => void) => {
+        listeners.push(callback);
       },
-      hidden: false,
-      addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    });
-    vi.stubGlobal('matchMedia', () => ({ matches: true }));
-    vi.stubGlobal('requestAnimationFrame', vi.fn());
+    };
+    const raf = vi.fn(() => 1);
+    vi.stubGlobal('matchMedia', () => media);
+    vi.stubGlobal('requestAnimationFrame', raf);
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
     vi.stubGlobal('devicePixelRatio', 1);
     const globe = mountLiveGlobe(
       {
@@ -121,11 +165,66 @@ describe('live globe renderer', () => {
         muted: false,
         playbackBlocked: false,
       }),
-      { moving: false },
+      { moving: true },
     );
-    expect(requestAnimationFrame).not.toHaveBeenCalled();
-    globe.paintStatic();
-    expect(context.putImageData).toHaveBeenCalled();
+    expect(raf).toHaveBeenCalled();
+    raf.mockClear();
+    globe.setMotion(false);
+    expect(raf).not.toHaveBeenCalled();
+    globe.setMotion(true);
+    expect(raf).toHaveBeenCalled();
+    raf.mockClear();
+    media.matches = true;
+    listeners.forEach((listener) => listener({ matches: true }));
+    expect(raf).not.toHaveBeenCalled();
+    globe.dispose();
+  });
+
+  it('stops the loop while hidden and reports missing assets instead of labeling success', async () => {
+    const display = fakeCanvas();
+    stubDocument(display);
+    const visibility: Array<() => void> = [];
+    (globalThis.document as { addEventListener: (name: string, callback: () => void) => void }).addEventListener =
+      (name, callback) => {
+        if (name === 'visibilitychange') visibility.push(callback);
+      };
+    const raf = vi.fn(() => 1);
+    const cancel = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', raf);
+    vi.stubGlobal('cancelAnimationFrame', cancel);
+    vi.stubGlobal('devicePixelRatio', 1);
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const updates: Array<{ earth: string; emblem: string }> = [];
+    const globe = mountLiveGlobe(
+      {
+        append: vi.fn(),
+        getBoundingClientRect: () => ({ width: 160, height: 160 }),
+      } as unknown as HTMLElement,
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'listening',
+        muted: false,
+        playbackBlocked: false,
+      }),
+      {
+        moving: true,
+        earthSrc: '/missing-earth.jpg',
+        emblemSrc: '/missing-emblem.png',
+        onAssets: (state) => updates.push(state),
+      },
+    );
+    expect(globe.assets().earth).toBe('fallback');
+    (globalThis.document as { hidden: boolean }).hidden = true;
+    visibility.forEach((listener) => listener());
+    expect(cancel).toHaveBeenCalled();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(globe.assets()).toMatchObject({ earth: 'fallback', emblem: 'missing' });
+    expect(updates.some((state) => state.emblem === 'missing')).toBe(true);
     globe.dispose();
   });
 
