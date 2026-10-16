@@ -1,4 +1,7 @@
 import { test, expect } from './fixtures';
+import { writeFile } from 'node:fs/promises';
+test.use({ video: 'on' });
+test.setTimeout(120000);
 import {
   lifestyleLaunchBoard,
   legacyReserveBoard,
@@ -73,6 +76,12 @@ test('real Talk desktop detail panel preserves compositions and aligned semantic
 }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const panelMetrics: Array<{
+    direction: string;
+    width: number;
+    columns: string;
+    padding: string;
+  }> = [];
   const board = lifestyleLaunchBoard();
   const boardRow = creation('board', board);
   const briefRow = creation('brief', {
@@ -127,11 +136,22 @@ test('real Talk desktop detail panel preserves compositions and aligned semantic
   for (const [index, direction] of board.directions.entries()) {
     board.selectedDirectionId = direction.id;
     await page.goto(`/app/aethelios?conversation=${conversation}`);
+    const inline = page.locator('[data-kind="board"]');
+    await expect(inline).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    await inline.evaluate((node) => {
+      const scroll = node.closest('.conversation-scroll')!;
+      const hero = node.querySelector('.talk-design-hero')!;
+      scroll.scrollTop +=
+        hero.getBoundingClientRect().top - scroll.getBoundingClientRect().top - 12;
+    });
+    await page.screenshot({ path: info.outputPath(`talk-inline-desktop-${index + 1}.png`) });
+
     await page
       .locator('[data-kind="board"]')
       .getByRole('button', { name: 'Open', exact: true })
       .click();
-    const panel = page.getByLabel('Reviewed work', { exact: true });
+    const panel = page.getByRole('complementary', { name: 'Reviewed work', exact: true });
     await expect(panel).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     const width = (await panel.boundingBox())!.width;
@@ -148,6 +168,14 @@ test('real Talk desktop detail panel preserves compositions and aligned semantic
       20,
     );
     expect(await panel.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+    panelMetrics.push({
+      direction: direction.id,
+      width,
+      ...(await canvas.evaluate((node) => ({
+        columns: getComputedStyle(node).gridTemplateColumns,
+        padding: getComputedStyle(node).paddingLeft,
+      }))),
+    });
     await page.screenshot({ path: info.outputPath(`talk-detail-desktop-${index + 1}.png`) });
     await panel.evaluate((node) => {
       const hero = node.querySelector('.talk-design-hero')!;
@@ -163,7 +191,7 @@ test('real Talk desktop detail panel preserves compositions and aligned semantic
     .locator('[data-kind="brief"]')
     .getByRole('button', { name: 'Open', exact: true })
     .click();
-  const panel = page.getByLabel('Reviewed work', { exact: true });
+  const panel = page.getByRole('complementary', { name: 'Reviewed work', exact: true });
   const preview = panel.getByRole('article', { name: 'Document preview' });
   await expect(preview).toBeVisible();
   await expect(preview.locator('ul').first()).toHaveCSS('list-style-type', 'disc');
@@ -180,6 +208,19 @@ test('real Talk desktop detail panel preserves compositions and aligned semantic
     node.scrollTop += list.getBoundingClientRect().top - node.getBoundingClientRect().top - 100;
   });
   await page.screenshot({ path: info.outputPath('talk-preview-desktop-lists.png') });
+  await writeFile(
+    info.outputPath('talk-detail-metrics.json'),
+    JSON.stringify(
+      {
+        viewport: { width: 1440, height: 900 },
+        panels: panelMetrics,
+        proseLeftEdges: positions,
+        listStyles: { unordered: 'disc', ordered: 'decimal' },
+      },
+      null,
+      2,
+    ) + '\n',
+  );
   // The unchanged historical Auth journey expects this truthful limitation.
   boardRow.content = legacyReserveBoard();
   await page.goto(`/app/aethelios?conversation=${conversation}`);
@@ -192,6 +233,8 @@ test('real Talk desktop detail panel preserves compositions and aligned semantic
     .getByRole('button', { name: 'Review design transfer' })
     .click();
   await expect(
-    page.getByLabel('Reviewed work', { exact: true }).getByText(/Hero-product demonstration/),
+    page
+      .getByRole('complementary', { name: 'Reviewed work', exact: true })
+      .getByText(/Hero-product demonstration/),
   ).toBeVisible();
 });

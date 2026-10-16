@@ -196,7 +196,7 @@ test('authenticated design-board selection, refinement, reload and Architect tra
   await expect(reviewPanel.getByText(/Confirm again to recover/)).toBeVisible();
   await page.unroute('**/api/aurelius/creations');
   await reviewPanel.getByRole('button', { name: 'Confirm transfer' }).click();
-  await expect(reviewPanel.getByText(/Imported\. Architect acknowledged/)).toBeVisible();
+  await expect(reviewPanel.getByText('Received in Architect. Build approval is still required.', { exact: true })).toBeVisible();
   const destinations = await owner
     .from('architect_design_directions')
     .select('request_id,project_id,digest,verified')
