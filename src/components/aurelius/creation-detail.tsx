@@ -438,7 +438,7 @@ export function CreationDetail({
                 <div>
                   <dt>Stays in Talk</dt>
                   <dd>
-                    Unprovided asset pixels. Premium renderer compositions and tokens transfer with their exact source version.
+                    Typeface names, scale, shape, material, surface and border roles, and unprovided image pixels remain in Talk for this historical transfer.
                   </dd>
                 </div>
                 <div>
