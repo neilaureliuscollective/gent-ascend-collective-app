@@ -1,0 +1,36 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "panels": [
+    {
+      "direction": "direction-a",
+      "width": 420,
+      "columns": "311px",
+      "padding": "20px"
+    },
+    {
+      "direction": "direction-b",
+      "width": 420,
+      "columns": "311px",
+      "padding": "20px"
+    },
+    {
+      "direction": "direction-c",
+      "width": 420,
+      "columns": "311px",
+      "padding": "20px"
+    }
+  ],
+  "proseLeftEdges": [
+    1074,
+    1074,
+    1074,
+    1074
+  ],
+  "listStyles": {
+    "unordered": "disc",
+    "ordered": "decimal"
+  }
+}

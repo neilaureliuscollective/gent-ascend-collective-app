@@ -1,6 +1,6 @@
 # Premium creative output and working experience
 
-Implementation source: `05a2565abaa2024ce8c6c2fe0ea5372461dea5d9`, based on main `6e35741e46fd5ec6e9d8fc94a634e22a99f4bdc5`. No entrance redesign, merge, deployment, paid provider call, hosted database/configuration change, credential change or worker commissioning is included.
+Current application source: `80acca2c01a006e4319fdfe5f67e20a54e0a9489`; capture/Auth assertion source: `d5a5f0b`. Initial implementation source: `05a2565abaa2024ce8c6c2fe0ea5372461dea5d9`, based on main `6e35741e46fd5ec6e9d8fc94a634e22a99f4bdc5`. No entrance redesign, merge, deployment, paid provider call, hosted database/configuration change, credential change or worker commissioning is included.
 
 ## Reproduced findings and implementation
 
@@ -34,7 +34,7 @@ A transfer remains a retained creative proposal, not a completed build. Real-pro
 
 ## Integration order and boundaries
 
-- PR152 remains open/draft at `1ca5123642a60a4d95fa483e240749c201a48094`. Its image controls, Studio ownership paths and authenticated saved-version tests are unchanged. This branch changes only two small scroll-intent lines in its overlapping Talk workspace file; its other overlap is additive transfer review text in `talk-creation/service.ts`. In-memory `git merge-tree` checks merge cleanly; neither PR was merged into this branch.
+- PR152 remains open/draft at `1ca5123642a60a4d95fa483e240749c201a48094`. Its image controls and Studio ownership paths are unchanged. The historical authenticated saved-version test has one explicitly requested semantic-copy assertion update for receipt versus build approval; all later persistence, duplicate, reload and ownership assertions remain unchanged. This branch changes only two small scroll-intent lines in its overlapping Talk workspace file; its other overlap is additive transfer review text in `talk-creation/service.ts`. In-memory `git merge-tree` checks merge cleanly; neither PR was merged into this branch.
 - PR153 remains open/draft at `584943611adf4540f99b616ddce413f39d98dacc`. No knowledge, continuity, intelligence runtime or associated tests were edited. Its in-memory merge also succeeds.
 - There is no dependency on either PR for the renderer/lifecycle slice. Premium transfer has the separate database-authority dependency described above. Prefer PR152's approved release first, then this PR, and repeat the combined image/lifecycle and authenticated transfer gates. PR153 remains independently reviewable. Main release/deployment approval is still required.
 
@@ -47,3 +47,9 @@ The new focused domain tests cover three compositions/materials, AA contrast of 
 Browser cases cover phone, Fold and desktop canvases, keyboard selection/focus, reduced motion, edited headline/color save/reload, primary Preview with semantic paragraphs/lists/headings, failed retained reads/retry, exact prepared receiving-canvas tokens, and the disabled premium transfer boundary. Phone/Fold lifecycle cases use short keyboard-like viewports, accepted send/save, failure/recoverable draft/reload, asynchronous artifact growth and incrementally controlled streaming while reading.
 
 Physical foldables/native IME behavior, real hosted Auth/Storage, real-provider output quality and production acceptance remain unverified. Private asset routes retain their existing owner checks; fixture screenshots do not prove a real private asset session.
+
+## Review correction evidence
+
+[Latest evidence and raw checks](evidence/premium-creative/review/README.md) includes the actual Next Talk detail route at desktop width (three measured 420px panels), semantic list/heading alignment, normal-speed native recording, 72 focused passing tests, four component browser cases and one actual Talk desktop case. Premium snapshot authority is checked at every consumer boundary; incompatible text imports, stale unverified receipts and downgraded renderer markers are rejected. Critical generation requirements survive bounded optional plan text. Preview markers and container-relative card layout are corrected.
+
+The complete local Auth file is blocked at load by missing disposable `.env.development.local`; no running local Supabase exists. Its success assertion now explicitly requires receipt plus outstanding build approval; all later persistence assertions remain. CI real Auth acceptance is still required. Read-only merge-tree checks against both pinned PR152/153 heads still succeed; no merge was performed. Historical full-suite environment failures and Mirror-download build-hook limitation remain documented in the original evidence, not hidden by focused passes.

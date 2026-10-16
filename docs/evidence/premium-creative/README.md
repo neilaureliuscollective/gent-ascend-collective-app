@@ -1,5 +1,7 @@
 # Premium creative acceptance evidence
 
+**Latest review corrections and actual Talk detail captures:** [review evidence](review/README.md). Application `80acca2`, capture/Auth assertion `d5a5f0b`; security, renderer-marker and brief-budget regressions are covered there. Initial evidence below is historical.
+
 Application source: `05a2565abaa2024ce8c6c2fe0ea5372461dea5d9`. Base main: `6e35741e46fd5ec6e9d8fc94a634e22a99f4bdc5`. The final code delta after capture only corrects historical v1 transfer copy; the captured premium surfaces and tested behavior are unchanged. [Implementation and limitations](../../PREMIUM_CREATIVE_OUTPUT.md).
 
 These are native Chromium renders of the real repository working components in an explicitly synthetic Vite fixture. Next Image/navigation use the existing browser-only adapters. There is no authenticated account, paid provider response, generated media or generated application behind the campaign. Product photography is not supplied. The emblem is the approved repository asset. **Premium transfer is blocked in the actual UI/API until the PostgreSQL authority contract is extended. The receiving screenshot is a prepared contract preview, not a successful durable transfer.**
