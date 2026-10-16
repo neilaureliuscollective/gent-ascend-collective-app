@@ -96,6 +96,9 @@ export function DirectionCanvas({
         )}
         <figcaption>
           {image ? direction.demo.productLabel : 'Product photography not supplied'}
+          {!image && direction.demo.kind === 'hero-product' ? (
+            <span>{direction.demo.productLabel}</span>
+          ) : null}
         </figcaption>
       </figure>
       <footer className="talk-campaign-footer">
@@ -123,9 +126,10 @@ export function DesignBoardView({
 }) {
   const [draft, setDraft] = useState(board);
   const panelId = useId();
-  const [source, setSource] = useState(board);
-  if (source !== board) {
-    setSource(board);
+  const sourceSignature = JSON.stringify(board);
+  const [source, setSource] = useState(sourceSignature);
+  if (source !== sourceSignature) {
+    setSource(sourceSignature);
     setDraft(board);
   }
   const current = useMemo(() => selectedDirection(draft), [draft]);

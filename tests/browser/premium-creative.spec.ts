@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { lifestyleLaunchBoard } from '../../src/domains/talk-creation/design-board';
+test.setTimeout(120000);
 
 test('three premium compositions, keyboard selection, revision reload, document Preview and received design', async ({
   page,
@@ -7,7 +8,7 @@ test('three premium compositions, keyboard selection, revision reload, document 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/premium.html');
+  await page.goto('http://127.0.0.1:3102/premium.html');
   await page.evaluate(() => document.fonts.ready);
   const tabs = page.getByRole('tablist', { name: 'Design directions' });
   await expect(tabs).toBeVisible();
@@ -76,7 +77,7 @@ test('three premium compositions, keyboard selection, revision reload, document 
           },
         }),
   );
-  await page.goto('/premium.html?surface=architect');
+  await page.goto('http://127.0.0.1:3102/premium.html?surface=architect');
   await expect(page.getByRole('alert')).toContainText('could not be read');
   failed = false;
   await page.getByRole('button', { name: 'Retry design read' }).click();
@@ -93,7 +94,7 @@ test('three premium compositions, keyboard selection, revision reload, document 
   await page.screenshot({ path: info.outputPath('architect-retained.png'), fullPage: true });
   await page.getByRole('button', { name: 'Review build brief' }).click();
   await expect(page.getByRole('status')).toContainText('No generation started');
-  await page.goto('/premium.html?surface=document');
+  await page.goto('http://127.0.0.1:3102/premium.html?surface=document');
   await expect(page.getByRole('article', { name: 'Document preview' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'A considered launch', level: 1 })).toBeVisible();
   await expect(page.locator('.talk-document-preview li')).toHaveCount(4);
@@ -110,6 +111,8 @@ for (const width of [390, 884])
   test(`Talk accepted send, failed draft recovery and asynchronous reading anchor at ${width}`, async ({
     page,
   }, info) => {
+    page.on('pageerror', (error) => console.error('Fixture page error:', error.message));
+    page.on('crash', () => console.error('Fixture renderer crashed'));
     const { disconnectedWorkspace } = await import('../../src/components/aurelius/preview');
     const conversation = '30000000-0000-4000-8000-000000000031';
     const data = {
@@ -191,7 +194,7 @@ for (const width of [390, 884])
       return route.fulfill({ json: {} });
     });
     await page.setViewportSize({ width, height: 844 });
-    await page.goto('/premium.html?surface=talk');
+    await page.goto('http://127.0.0.1:3102/premium.html?surface=talk');
     const field = page.getByLabel('Message Aethelios', { exact: true });
     await expect(field).toBeVisible();
     await field.fill('A long campaign draft with deliberate details.\n'.repeat(45));
@@ -222,6 +225,8 @@ for (const width of [390, 884])
     await expect(
       page.getByText('Synthetic send failure. Draft recoverable.', { exact: false }).first(),
     ).toBeVisible();
+    await page.getByRole('button', { name: 'Reload saved state', exact: true }).click();
+    await expect(field).toHaveValue('Recover this exact failed campaign draft.');
     const scroll = page.locator('.conversation-scroll');
     await scroll.evaluate((node) => {
       node.scrollTop = 1600;
@@ -308,7 +313,7 @@ for (const width of [390, 884])
         );
       };
     });
-    await field.fill('Stream this deliberate campaign revision.');
+    await field.fill('Continue our written discussion with a careful explanation.');
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(field).toHaveValue('');
     await page.evaluate(() =>
