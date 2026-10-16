@@ -86,6 +86,15 @@ it('starts voice inline instead of forcing a new immersive conversation', async 
   expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
   await controller.end();
 });
+it('exposes existing session streams without acquiring another microphone', async () => {
+  const controller = new LiveController();
+  expect(controller.mediaStreams()).toEqual({ microphone: null, playback: null });
+  await controller.start(conversation, false);
+  expect(controller.mediaStreams().microphone).toBeTruthy();
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  await controller.end();
+  expect(controller.mediaStreams()).toEqual({ microphone: null, playback: null });
+});
 it('keeps a failed admission in the same conversation and does not reconnect on expand', async () => {
   fetchMock.mockResolvedValueOnce(
     Response.json(

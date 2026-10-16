@@ -1,3 +1,5 @@
+> Aethelios Live call globe (2026-10-16): acceptance-evidence pass on PR155 after `60e5c8a`. Motion tests now compare distinct painted frames, then stable pixels after Still or reduced motion. The transparent original A/star is checked on the rendered canvas, not only PNG alpha. Geography, controls, transport and brand assets are unchanged. No merge, deploy, credentials or SQL. See [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
 > Focused Live voice repair (2026-10-15): versioned device-local audio/transcript acknowledgement is scoped to the verified auth user; subsequent Live gestures start/retry explicitly with optional context and proposals off. Seed admission now correlates client event IDs with allowlisted rejection fields and removes handshake listeners on settlement. No paid acceptance, hosted SQL/configuration/credentials, merge or deployment. Verified checks and remaining production diagnosis: [LIVE_VOICE_REPAIR.md](LIVE_VOICE_REPAIR.md).
 ## Architect / released Talk and Motion integration — 2026-10-15
 

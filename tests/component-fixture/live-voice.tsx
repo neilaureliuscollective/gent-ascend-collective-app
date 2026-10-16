@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
 import { LiveConversationProvider, LiveVoiceEntry } from '@/components/live/provider';
 export function LiveVoiceFixture() {
   const [view, setView] = useState('Talk');
   const [user, setUser] = useState('synthetic-voice-user');
   return (
+    <>
+      <VisualEnvironment />
+      <AppearanceControls />
     <LiveConversationProvider key={user} authUserId={user} enabled>
       <button onClick={() => setUser('synthetic-other-user')}>Switch synthetic user</button>
       <h1>Synthetic voice fixture · no real account or provider</h1>
@@ -18,6 +22,7 @@ export function LiveVoiceFixture() {
         />
       )}
     </LiveConversationProvider>
+    </>
   );
 }
 export function LiveVoiceUnavailableFixture() {

@@ -1,3 +1,15 @@
+# Aethelios Live original emblem — 2026-10-16
+
+Use the founder-supplied 1254×1254 RGBA gold A and compass star for the Live globe. Do not keep the rounded-square `aethelios-official-20261015` install tile, do not redraw the mark, and do not change global brand assets. The supplied original already has alpha and no wordmark; no SVG of this mark exists in the repository. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
+# Aethelios Live call globe finish — 2026-10-16
+
+Keep the existing Canvas 2D NASA globe. Reject sphere samples on unclamped `nx/ny` so axis pixels outside the limb stay empty; do not crop the globe or redraw the emblem. `ResizeObserver` on the host does one Still/reduced-motion paint when displayed or buffer size is stale ([MDN ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver)); the ambient loop is not restarted. Capture must use the existing `listen` helper after Stop playback rather than leaving an unused binding. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
+# Aethelios Live call globe — 2026-10-16
+
+Use Canvas 2D for a recognizable smoked Earth instead of adding another 3D runtime. Three.js remains reserved for existing product stages. The interactive map is the locally hosted NASA Blue Marble 57752 plate (public domain), graded to emerald/obsidian at render time. Latitude uses screen-down `y` (`asin(-ny)`). Energy reuses `LiveController.audioLevels()` transport stats only, fenced while hidden/Still/unmounted. Square CSS and drawing-buffer sizes keep the globe circular. Still and reduced-motion apply after mount through `setMotion` and a media listener. No transparent/vector official gold-A exists; Live punches the dark plate of `aethelios-official-20261015-512.png` and keeps the mark upright inside the sphere. Main/PR152 Talk attachments were merged for compatibility. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
 # Architect immersive creation world and budget lock — 2026-10-15
 
 Close the concurrent reservation race without weakening 156600 execution or settlement rules. Distinct request IDs now take a person+run budget row `FOR UPDATE` before counting. The $1.00 figure is a reserved allowance; character-count input bounds remain approximate. Architect’s existing entry, choice, workbench and app-panel surfaces become one connected creation world: arrival, path, shape, labelled direction, plan, real work, Use/Inspect and return. Agency remains the founder’s first Architect project. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
