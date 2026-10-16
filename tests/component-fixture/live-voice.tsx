@@ -1,9 +1,15 @@
 import { useState } from 'react';
+import { AppearanceControls, VisualEnvironment } from '@/components/visual/appearance';
 import { LiveConversationProvider, LiveVoiceEntry } from '@/components/live/provider';
 export function LiveVoiceFixture() {
   const [view, setView] = useState('Talk');
+  const [user, setUser] = useState('synthetic-voice-user');
   return (
-    <LiveConversationProvider enabled>
+    <>
+      <VisualEnvironment />
+      <AppearanceControls />
+    <LiveConversationProvider key={user} authUserId={user} enabled>
+      <button onClick={() => setUser('synthetic-other-user')}>Switch synthetic user</button>
       <h1>Synthetic voice fixture · no real account or provider</h1>
       <button onClick={() => setView(view === 'Talk' ? 'Studio' : 'Talk')}>
         Navigate workspace
@@ -12,10 +18,11 @@ export function LiveVoiceFixture() {
       {view === 'Talk' && (
         <LiveVoiceEntry
           conversationId="ed000000-0000-4000-8000-000000000001"
-          includeContext={false}
+          includeContext={true}
         />
       )}
     </LiveConversationProvider>
+    </>
   );
 }
 export function LiveVoiceUnavailableFixture() {

@@ -1,17 +1,20 @@
 // Isolated browser-fixture only. Synthetic responses never enter application routes.
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AureliusWorkspace } from '@/components/aurelius/workspace';
+import { ConversationViewport } from '@/components/aurelius/conversation-viewport';
 import { StudioWorkspace } from '@/components/aurelius/studio-workspace';
 import { CompanyRoom } from '@/components/companies/company-room';
-import { AppearanceControls } from '@/components/visual/appearance';
+import { AppearanceControls, useAppearance } from '@/components/visual/appearance';
 import { IntelligenceActivity } from '@/components/intelligence-motion/presence';
+import { LivingSignal } from '@/components/intelligence-motion/living-signal';
 import { liveMotionOperation } from '@/platform/visual/operation-adapters';
 import type { WorkspaceData, StreamEvent, Turn } from '@/domains/intelligence/types';
 import '@/app/globals.css';
 import '@/app/sovereign.css';
 import '@/app/imperial-workspace.css';
 import '@/app/imperial-emerald-ii.css';
+import '@/app/obsidian-smoked-glass.css';
 import '@/app/(workspace)/app/work/work.css';
 import './motion-integration.css';
 const base: WorkspaceData = {
@@ -132,6 +135,20 @@ window.fetch = async (input, init) => {
   }
   if (url.startsWith('/api/company-talk')) return json(room);
   if (url.startsWith('/api/company-work')) return json({ jobs: [] });
+  if (url.startsWith('/api/aurelius/creations')) {
+    return json({
+      creations: [],
+      selected: {},
+      images: [],
+      selectedImageId: null,
+      canCreateImages: false,
+      imageAccess:
+        new URLSearchParams(location.search).get('imageAccess') === 'unavailable'
+          ? 'unavailable'
+          : 'ready',
+      attachmentProjectId: null,
+    });
+  }
   if (url.startsWith('/api/aurelius')) {
     if (
       url.includes('conversationId=') &&
@@ -171,6 +188,11 @@ function Review() {
   const [voice, setVoice] = useState<'connecting' | 'listening' | 'speaking' | 'ended' | 'error'>(
     'listening',
   );
+  const [voiceLevel, setVoiceLevel] = useState(0);
+  const [voiceOutput, setVoiceOutput] = useState(0);
+  const [voiceMuted, setVoiceMuted] = useState(false);
+  const [playbackBlocked, setPlaybackBlocked] = useState(false);
+  const { moving } = useAppearance();
   const finish = () => {
     if (turn && stream) {
       base.turns = [turn];
@@ -211,8 +233,54 @@ function Review() {
         </label>
         <AppearanceControls />
         <div>
+          <p className="review-sim-label">Labeled synthetic sequences · not a live provider.</p>
           <button onClick={() => emit({ type: 'activity', phase: 'searching' })}>
             Emit search event
+          </button>
+          <button
+            onClick={() =>
+              emit({
+                type: 'creation',
+                item: {
+                  id: 'fixture-image',
+                  kind: 'image',
+                  title: 'Synthetic image title',
+                  status: 'approval',
+                },
+              })
+            }
+          >
+            Emit image approval
+          </button>
+          <button
+            onClick={() =>
+              emit({
+                type: 'creation',
+                item: {
+                  id: 'fixture-image',
+                  kind: 'image',
+                  title: 'Synthetic image title',
+                  status: 'running',
+                },
+              })
+            }
+          >
+            Emit image artifact
+          </button>
+          <button
+            onClick={() =>
+              emit({
+                type: 'creation',
+                item: {
+                  id: 'fixture-image-ready',
+                  kind: 'image',
+                  title: 'Completed synthetic image',
+                  status: 'complete',
+                },
+              })
+            }
+          >
+            Emit completed image
           </button>
           <button
             onClick={() =>
@@ -242,14 +310,24 @@ function Review() {
       </header>
       <main className="review-workspace" key={surface}>
         {surface === 'talk' ? (
-          <AureliusWorkspace />
+          <ConversationViewport>
+            <AureliusWorkspace />
+          </ConversationViewport>
         ) : surface === 'studio' ? (
           <StudioWorkspace />
         ) : surface === 'work' ? (
           <CompanyRoom initial={room} />
         ) : (
-          <section>
+          <section
+            className="review-voice"
+            style={
+              {
+                '--live-audio-level': voice === 'speaking' ? voiceOutput : voiceLevel,
+              } as CSSProperties
+            }
+          >
             <p>Structural adapter preview only · no voice controller mounted.</p>
+            <p>Synthetic measured envelope · not a live microphone or paid session.</p>
             <select
               aria-label="Voice phase"
               value={voice}
@@ -259,14 +337,72 @@ function Review() {
                 <option key={value}>{value}</option>
               ))}
             </select>
+            <label>
+              <input
+                type="checkbox"
+                checked={voiceMuted}
+                onChange={(event) => setVoiceMuted(event.target.checked)}
+              />
+              Mute input
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={playbackBlocked}
+                onChange={(event) => setPlaybackBlocked(event.target.checked)}
+              />
+              Block playback
+            </label>
+            <label>
+              Synthetic audio level
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={voiceLevel}
+                onChange={(event) => setVoiceLevel(Number(event.target.value))}
+              />
+            </label>
+            <label>
+              Synthetic output level
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                aria-label="Synthetic output level"
+                value={voiceOutput}
+                onChange={(event) => setVoiceOutput(Number(event.target.value))}
+              />
+            </label>
+            <LivingSignal
+              still={!moving}
+              surface="voice-compact"
+              operation={{
+                ...liveMotionOperation(
+                  {
+                    sessionId: 'preview',
+                    phase: voice,
+                    muted: voiceMuted,
+                    playbackBlocked,
+                  },
+                  { input: voiceLevel, output: voiceOutput },
+                ),
+                basis: 'preview',
+              }}
+            />
             <IntelligenceActivity
               operation={{
-                ...liveMotionOperation({
-                  sessionId: 'preview',
-                  phase: voice,
-                  muted: false,
-                  playbackBlocked: false,
-                }),
+                ...liveMotionOperation(
+                  {
+                    sessionId: 'preview',
+                    phase: voice,
+                    muted: voiceMuted,
+                    playbackBlocked,
+                  },
+                  { input: voiceLevel, output: voiceOutput },
+                ),
                 basis: 'preview',
               }}
             />

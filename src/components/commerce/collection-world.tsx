@@ -9,7 +9,6 @@ import { CollectionDiscovery } from './collection-discovery';
 import { useSavedCollection, removeSavedCollection } from './saved-selection-store';
 import { LifestyleAction } from './lifestyle-action';
 import { CatalogScrollRestore } from './catalog-scroll-restore';
-import { LifestyleProductStage } from './lifestyle-product-stage';
 
 const chapters = [
   ['all', 'All essentials'],
@@ -35,6 +34,7 @@ export function CollectionWorld({
   catalogStatus?: 'ready' | 'empty' | 'unconfigured' | 'error';
 }) {
   const [notice, setNotice] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const brands = [...new Set(entries.map((entry) => entry.brand))].sort();
   const priceSortSupported =
     new Set(
@@ -76,6 +76,12 @@ export function CollectionWorld({
     update({ query: '', readyOnly: false, chapter: 'all', brandFilter: 'all', sort: 'featured' });
   }
   const member = basePath === '/app/collection';
+  const activeFilterCount =
+    Number(Boolean(query)) +
+    Number(readyOnly) +
+    Number(chapter !== 'all') +
+    Number(brandFilter !== 'all') +
+    Number(sort !== 'featured');
   return (
     <div
       className={`reserve-commerce collection-world${member ? ' member-lifestyle-collection' : ''}`}
@@ -149,14 +155,6 @@ export function CollectionWorld({
             )}
           </div>
         </div>
-        {member ? (
-          <LifestyleProductStage compact />
-        ) : (
-          <div className="collection-chamber-caption" aria-hidden="true">
-            <span>CARE / DISCIPLINE / RITUAL</span>
-            <span>THE HUMAN ASCENDANCE</span>
-          </div>
-        )}
       </header>
       <section id="collection" className="collection-browse" aria-labelledby="collection-heading">
         <div className="collection-browse-heading">
@@ -208,6 +206,27 @@ export function CollectionWorld({
             />
             Available to order
           </label>
+          <div className="collection-filter-toolbar">
+            <button
+              type="button"
+              className="collection-filter-toggle"
+              aria-expanded={filtersOpen}
+              aria-controls="collection-filter-panel"
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}
+            </button>
+            {activeFilterCount > 0 && (
+              <button type="button" className="collection-filter-reset" onClick={reset}>
+                Reset filters
+              </button>
+            )}
+          </div>
+        </div>
+        <div
+          id="collection-filter-panel"
+          className={`collection-filter-panel${filtersOpen ? ' is-open' : ''}`}
+        >
           <label>
             Sort products
             <select value={sort} onChange={(event) => update({ sort: event.target.value })}>

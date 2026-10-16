@@ -122,7 +122,7 @@ export function CartPanel({
         <div>
           <span className="world-kicker">Your selection</span>
           <h2>Cart.</h2>
-          <p>Review what earns a place in your ritual.</p>
+          <p>Review selected options, quantities and the current estimated subtotal.</p>
         </div>
         {!fullPage && (
           <button
@@ -174,13 +174,15 @@ export function CartPanel({
           <ul className="cart-lines">
             {cart.lines.nodes.map((line) => (
               <li key={line.id}>
-                {line.merchandise.product.featuredImage && (
+                {line.merchandise.product.featuredImage ? (
                   <Image
                     src={line.merchandise.product.featuredImage.url}
                     alt={line.merchandise.product.featuredImage.altText ?? ''}
                     width={96}
                     height={112}
                   />
+                ) : (
+                  <span className="cart-line-photo-pending" aria-hidden="true" />
                 )}
                 <div>
                   <Link

@@ -5,3 +5,5 @@ export const LiveContext = createContext<LiveController | null>(null);
 export const LiveAvailabilityContext = createContext<string | null>(
   'Aethelios Live is unavailable on this deployment.',
 );
+
+export const LiveAcknowledgementUserContext = createContext<string | null>(null);

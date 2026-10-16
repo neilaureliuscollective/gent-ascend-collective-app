@@ -1277,7 +1277,7 @@ html[data-motion='ambient']:not([data-quiet='true']) .ambient-light {
   font-size: 0.88rem;
 }
 .assistant-message {
-  padding: 22px 4px 8px;
+  padding: 10px 4px 8px;
 }
 .small-orb {
   width: 18px;

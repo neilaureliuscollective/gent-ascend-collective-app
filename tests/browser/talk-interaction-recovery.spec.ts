@@ -100,7 +100,8 @@ test('queued drawer close respects a newer keyboard focus target in forced color
   await expect(talk).toBeFocused();
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(talk).toBeFocused();
-  await expect(talk).toHaveCSS('outline-width', '2px');
+  await expect(talk).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('.talk-page .aurelius-composer')).toHaveCSS('outline-width', '2px');
   await expect(field).toHaveValue('Keep this draft during close and focus');
   // Ordinary Escape still returns to the invoking control.
   await trigger.click();

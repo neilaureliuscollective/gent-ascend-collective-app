@@ -1,4 +1,55 @@
+import { type TestInfo } from '@playwright/test';
 import { test, expect, type Page } from './fixtures';
+type MirrorReadiness = {
+  currentSrc: string;
+  src: string;
+  complete: boolean;
+  naturalWidth: number;
+  naturalHeight: number;
+  resources: {
+    name: string;
+    duration: number;
+    transferSize: number;
+    initiatorType: string;
+  }[];
+};
+async function readyGroomingMirror(page: Page, testInfo: TestInfo) {
+  const img = page.locator('.gw-grooming-mirror img');
+  await expect(img).toHaveCount(1);
+  let last: MirrorReadiness | undefined;
+  await expect
+    .poll(async () => {
+      last = await img.evaluate((el: HTMLImageElement) => {
+        const resources = performance.getEntriesByType('resource').flatMap((entry) => {
+          if (!/ritual-mirror|_next\/image/.test(entry.name)) return [];
+          const timing = entry as PerformanceResourceTiming;
+          return [
+            {
+              name: timing.name,
+              duration: timing.duration,
+              transferSize: timing.transferSize,
+              initiatorType: timing.initiatorType,
+            },
+          ];
+        });
+        return {
+          currentSrc: el.currentSrc,
+          src: el.src,
+          complete: el.complete,
+          naturalWidth: el.naturalWidth,
+          naturalHeight: el.naturalHeight,
+          resources,
+        };
+      });
+      return last.complete && last.naturalWidth > 0 ? 'ready' : JSON.stringify(last);
+    })
+    .toBe('ready');
+  await testInfo.attach('grooming-mirror-readiness', {
+    body: JSON.stringify(last, null, 2),
+    contentType: 'application/json',
+  });
+  return last!;
+}
 const ownerId = '60000000-0000-4000-8000-000000000001',
   ritualId = '65000000-0000-4000-8000-000000000001';
 const member = {
@@ -52,13 +103,16 @@ for (const width of [360, 768, 1440]) {
       await expect(page).toHaveURL(new RegExp(`area=${id}`));
       await expect(page.locator('#grooming-area .gw-action')).toHaveAttribute('href', link!);
     }
-    await page.reload();
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('button', { name: 'Professional', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
     await page.getByRole('button', { name: 'Ritual', exact: true }).click();
-    await page.locator('.gw-grooming-mirror img').evaluate((img: HTMLImageElement) => img.decode());
+    await readyGroomingMirror(page, testInfo);
+    await page
+      .locator('.gw-grooming-mirror img')
+      .evaluate((img: HTMLImageElement) => img.decode(), undefined, { timeout: 15_000 });
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({
       path: testInfo.outputPath('grooming-world.png'),
@@ -272,7 +326,7 @@ for (const width of [344, 768])
       return route.fulfill({ json: { id: ritualId, requestId: body.requestId } });
     });
     await page.setViewportSize({ width, height: 850 });
-    await page.goto('/experience/grooming');
+    await page.goto('/experience/grooming', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Refine ritual ↗' }).click();
     await page.getByLabel('Name', { exact: true }).fill('My sharper morning');
     await page
@@ -367,7 +421,7 @@ for (const width of [344, 768])
       return route.fulfill({ json: { id: ritualId, requestId: body.requestId } });
     });
     await page.setViewportSize({ width, height: 850 });
-    await page.goto('/experience/grooming');
+    await page.goto('/experience/grooming', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Refine ritual ↗' }).click();
     await page.getByText('Arrange individual steps', { exact: true }).click();
     await page.getByRole('button', { name: 'Move step 2 up', exact: true }).click();

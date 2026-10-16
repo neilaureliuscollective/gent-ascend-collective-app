@@ -10,6 +10,8 @@ import { CinematicWorld } from '@/components/public/cinematic-world';
 import { WorldHeader } from '@/components/public/world-header';
 import { LiveArtifactsFixture } from './live-artifacts';
 import { LiveVoiceFixture, LiveVoiceUnavailableFixture } from './live-voice';
+import { LiveCallGlobeFixture } from './live-call-globe';
+import { StudioReferenceFixture } from './studio-reference';
 import { TalkLiveFixture } from './talk-live';
 import { HealthWorkspace, type HealthView } from '@/components/health/workspace';
 import { healthFixture } from './health';
@@ -230,6 +232,10 @@ createRoot(document.getElementById('root')!).render(
     <LiveVoiceFixture />
   ) : mode === 'live-voice-unavailable' ? (
     <LiveVoiceUnavailableFixture />
+  ) : mode === 'live-call-globe' ? (
+    <LiveCallGlobeFixture />
+  ) : mode === 'studio-reference' ? (
+    <StudioReferenceFixture />
   ) : mode === 'talk-live' ? (
     <TalkLiveFixture />
   ) : mode === 'architect-origin' ? (

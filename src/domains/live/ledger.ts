@@ -1,10 +1,13 @@
 import type { LiveEvent } from './contract';
+import { isApplicationLiveItem } from './application-item';
 export type RecordedVoiceTurn = {
   user: string;
   assistant: string;
   status: 'complete' | 'cancelled' | 'failed';
   input: number;
   output: number;
+  providerItemId: string;
+  providerResponseId: string;
 };
 type Reply = {
   item: string;
@@ -22,6 +25,7 @@ export class VoiceLedger {
   private users = new Map<string, string>();
   private replies = new Map<string, Reply>();
   private latest = '';
+  private claimed = new Set<string>();
   private active = '';
   private seen = new Set<string>();
   private completed = new Set<string>();
@@ -33,7 +37,12 @@ export class VoiceLedger {
       this.seen.add(event.event_id);
       if (this.seen.size > 2048) throw new Error('Voice event limit');
     }
-    if (event.type === 'input_audio_buffer.committed' && event.item_id) this.latest = event.item_id;
+    if (
+      event.type === 'input_audio_buffer.committed' &&
+      event.item_id &&
+      !this.claimed.has(event.item_id)
+    )
+      this.latest = event.item_id;
     if (
       ['conversation.item.created', 'conversation.item.added', 'conversation.item.done'].includes(
         event.type,
@@ -41,11 +50,9 @@ export class VoiceLedger {
       event.item?.role === 'user' &&
       event.item.id
     ) {
-      if (event.item.id.startsWith('ctx_')) {
-        this.latest = '';
-        return;
-      }
-      if (event.type !== 'conversation.item.done') this.latest = event.item.id;
+      if (isApplicationLiveItem(event.item.id)) return;
+      if (event.type !== 'conversation.item.done' && !this.claimed.has(event.item.id))
+        this.latest = event.item.id;
       const text = event.item.content
         ?.map((part) => part.text ?? '')
         .join('')
@@ -66,6 +73,7 @@ export class VoiceLedger {
       !this.completed.has(event.response.id)
     ) {
       this.active = event.response.id;
+      this.claimed.add(this.latest);
       this.replies.set(this.active, {
         item: this.latest,
         text: '',
@@ -149,7 +157,11 @@ export class VoiceLedger {
           status: reply.status,
           input: reply.input,
           output: reply.output,
+          providerItemId: reply.item,
+          providerResponseId: id,
         });
+        // Keep response continuations eligible until the genuine turn is saved, then consume it.
+        if (this.latest === reply.item) this.latest = '';
         this.replies.delete(id);
         this.users.delete(reply.item);
       } else break;

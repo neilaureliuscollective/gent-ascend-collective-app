@@ -68,6 +68,7 @@
     ),
     var(--io-chamber);
 }
+
 .app-shell.imperial-workspace {
   color-scheme: dark;
   --text-primary: var(--io-text);
@@ -689,19 +690,15 @@ html[data-material='solid']
 .app-shell.imperial-workspace :is(.aurelius-composer, .talk-composer, .studio-composer) {
   border-color: var(--io-divider);
   box-shadow:
-    inset 0 1px #7be7b12b,
-    inset 0 -1px #0008,
-    0 16px 40px #0007,
-    var(--io-glow-quiet);
+    inset 0 1px #7be7b118,
+    0 10px 28px #0005;
 }
 .app-shell.imperial-workspace
   :is(.aurelius-composer, .talk-composer, .studio-composer):focus-within {
   border-color: var(--io-emerald);
   box-shadow:
-    inset 0 1px #7be7b155,
-    0 0 0 1px #36896c40,
-    var(--io-glow-active),
-    0 16px 40px #0007;
+    inset 0 1px #7be7b12b,
+    0 10px 28px #0005;
 }
 .app-shell.imperial-workspace
   :is(.button:not(.secondary):not(.ghost), .button-primary, .aurelius-send) {
@@ -1060,18 +1057,9 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
   min-height: 44px;
 }
 @media (max-width: 600px) {
-  .app-shell.imperial-workspace .talk-toolbar .talk-title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
   .app-shell.imperial-workspace .talk-toolbar {
     justify-content: space-between;
+    gap: 8px;
   }
 }
 /* Component roles share the same material hierarchy. */
@@ -1225,7 +1213,7 @@ html[data-quiet='true'] .app-shell.imperial-workspace .io-horizon * {
 }
 .app-shell.imperial-workspace .talk-presence[data-state='working'] > .talk-tool {
   border-color: var(--io-emerald);
-  box-shadow: var(--io-glow-active);
+  box-shadow: none;
 }
 .app-shell.imperial-workspace .talk-presence[data-state='saved'] > .talk-tool {
   border-color: var(--io-highlight);

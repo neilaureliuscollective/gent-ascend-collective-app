@@ -26,10 +26,11 @@ test('Talk keeps its draft and compact composer through appearance changes', asy
   await input.fill('A founder review draft');
   await input.focus();
   await expect(input).toBeFocused();
-  // The smoked composer retains optical focus emphasis and a visible editor outline.
+  // Smoked Talk keeps optical emphasis; keyboard focus is the gold composer shell.
   await expect(composer.locator('> .bplus-optics .bplus-emphasis')).toHaveCSS('opacity', '0.12');
-  await expect(input).toHaveCSS('outline-style', 'solid');
-  await expect(input).toHaveCSS('outline-width', '2px');
+  await expect(input).toHaveCSS('outline-style', 'none');
+  await expect(composer).toHaveCSS('outline-style', 'solid');
+  await expect(composer).toHaveCSS('outline-width', '2px');
   // Talk hides the global topbar; exercise the shared preference event directly.
   await page.evaluate(() => {
     localStorage.setItem('aurelius-material', 'solid');

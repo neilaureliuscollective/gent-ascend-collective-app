@@ -1,5 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import {
   type OriginProject,
   type OriginVersion,
@@ -119,7 +122,7 @@ for (const width of [320, 344, 390, 720, 768, 1440, 1920])
       'true',
     );
     await expect(page.getByLabel('Design an Application working stage')).toContainText('Expected:');
-  await expect(page.locator('.origin-choice-art image')).toHaveCount(0);
+  await expect(page.locator('.origin-choices .origin-choice-art image')).toHaveCount(4);
     await page.screenshot({
       path: `test-results/architect-immersive-entry-${width}.png`,
       fullPage: true,
@@ -2418,7 +2421,7 @@ test('welcome arrival explains paths and saved Deliverables fill the phone canva
   await page.getByRole('button', { name: 'Design an Application' }).click();
   await expect(page.getByRole('button', { name: 'Design an Application' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Design an Application working stage')).toContainText('Expected:');
-  await expect(page.locator('.origin-choice-art image')).toHaveCount(0);
+  await expect(page.locator('.origin-choices .origin-choice-art image')).toHaveCount(4);
   await expect(page.getByLabel('Design an Application working stage')).toBeVisible();
   await page.screenshot({ path: 'test-results/architect-arrival-application.png', fullPage: true });
   await page.screenshot({ path: 'docs/evidence/architect-apps/arrival-application.png', fullPage: true });
@@ -2467,4 +2470,55 @@ test('welcome arrival explains paths and saved Deliverables fill the phone canva
       fullPage: false,
     });
   }
+});
+
+
+test('restored entrance cards retain original plates and emblems with bottle-free open creation', async ({ page }) => {
+  await fixture(page);
+  const directory = 'test-results/architect-entrance-restoration';
+  mkdirSync(directory, { recursive: true });
+  const expectedPlates = ['reserve-consultation.webp', 'observatory.webp', 'gallery.webp', 'threshold-chamber.webp'];
+  const names = ['Create a Business', 'Design an Application', 'Develop a Product', 'Start without limits'];
+  const files: { path: string; bytes: number; sha256: string }[] = [];
+  for (const [label, width, height] of [['desktop', 1440, 900], ['mobile', 390, 844]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto(base);
+    await expect(page.getByRole('status')).toHaveText('');
+    const images = page.locator('.origin-choices .origin-choice-art image');
+    await expect(images).toHaveCount(4);
+    await expect.poll(() => images.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('href')))).toEqual(expectedPlates.map((name) => `/media/world/${name}`));
+    await images.evaluateAll(async (nodes) => {
+      await Promise.all(nodes.map(async (node) => {
+        const image = new Image();
+        image.src = node.getAttribute('href')!;
+        await image.decode();
+      }));
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    // Record the unchanged baseline beside the final capture in the same artifact.
+    copyFileSync(`docs/evidence/architect-entrance-restoration/before-${label}.png`, `${directory}/before-${label}.png`);
+    await page.screenshot({ path: `${directory}/after-${label}.png`, fullPage: true });
+    for (const name of names) {
+      const card = page.getByRole('button', { name: new RegExp(`^${name}`) });
+      await card.click();
+      await expect(card).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByLabel(`${name} working stage`)).toBeVisible();
+    }
+    await page.getByRole('button', { name: /^Design an Application/ }).click();
+    await page.screenshot({ path: `${directory}/selected-application-${label}.png`, fullPage: true });
+    for (const phase of ['before', 'after', 'selected-application']) {
+      const path = `${phase}-${label}.png`;
+      const bytes = readFileSync(`${directory}/${path}`);
+      files.push({ path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
+    }
+  }
+  const before = JSON.parse(readFileSync('docs/evidence/architect-entrance-restoration/before-receipt.json', 'utf8'));
+  writeFileSync(`${directory}/manifest.json`, JSON.stringify({
+    kind: 'visual-fixture',
+    beforeCommit: before.commit,
+    afterCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    referenceCommit: '243fd0e50ffacbb1418b97afa7180ed8edc1d0d8',
+    plates: expectedPlates,
+    files,
+  }, null, 2) + '\n');
 });

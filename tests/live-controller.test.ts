@@ -86,11 +86,21 @@ it('starts voice inline instead of forcing a new immersive conversation', async 
   expect(fetchMock.mock.calls.filter((call) => call[1].method === 'POST')).toHaveLength(1);
   await controller.end();
 });
+it('exposes existing session streams without acquiring another microphone', async () => {
+  const controller = new LiveController();
+  expect(controller.mediaStreams()).toEqual({ microphone: null, playback: null });
+  await controller.start(conversation, false);
+  expect(controller.mediaStreams().microphone).toBeTruthy();
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  await controller.end();
+  expect(controller.mediaStreams()).toEqual({ microphone: null, playback: null });
+});
 it('keeps a failed admission in the same conversation and does not reconnect on expand', async () => {
   fetchMock.mockResolvedValueOnce(
     Response.json(
       {
-        error: 'The voice provider did not complete admission. Your text workspace remains available.',
+        error:
+          'The voice provider did not complete admission. Your text workspace remains available.',
         detail: { stage: 'provider' },
       },
       { status: 503 },
@@ -113,9 +123,91 @@ it('does not send typed Talk text until the voice channel is open', async () => 
   const controller = new LiveController();
   await controller.start(conversation, false);
   FakePC.instances.at(-1)!.channel.readyState = 'connecting';
-  controller.text('Typed while connecting');
+  expect(controller.text('Typed while connecting')).toEqual({
+    accepted: false,
+    reason: 'channel',
+  });
   expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
   await controller.end();
+});
+it('sends the exact Changing this target with typed voice text', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const sent = controller.text(
+    'Make this warmer.',
+    'Changing this: Aethelios Lifestyle launch · v2 · Purpose',
+  );
+  expect(sent).toEqual({ accepted: true });
+  const created = FakePC.instances
+    .at(-1)!
+    .channel.send.mock.calls.map((call) => JSON.parse(call[0] as string))
+    .find((event) => event.type === 'conversation.item.create');
+  expect(created.item.content[0].text).toBe(
+    'Changing this: Aethelios Lifestyle launch · v2 · Purpose\nMake this warmer.',
+  );
+  const admission = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
+  expect(admission.sdp).toMatch(/^v=0/);
+  await controller.end();
+});
+it('replaces the spoken field target mid-call without starting a reply', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false, 'cedar', false, {
+    creationId: '50000000-0000-4000-8000-000000000409',
+    field: 'purpose',
+  });
+  fetchMock.mockClear();
+  fetchMock.mockResolvedValue(
+    Response.json({
+      status: 'active',
+      target: { creationId: '50000000-0000-4000-8000-000000000409', field: 'audience' },
+      context:
+        'Application selected-work target changed; replaces the previous Talk field target. Exact target: audience',
+    }),
+  );
+  const sent = await controller.setSpokenTarget({
+    creationId: '50000000-0000-4000-8000-000000000409',
+    field: 'audience',
+  });
+  expect(sent).toEqual({ accepted: true });
+  expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/api/aethelios/live/target');
+  const events = FakePC.instances
+    .at(-1)!
+    .channel.send.mock.calls.map((call) => JSON.parse(call[0] as string));
+  expect(events.some((event) => event.type === 'response.create')).toBe(false);
+  expect(
+    events.find((event) => event.type === 'conversation.item.create')?.item.content[0].text,
+  ).toContain('Exact target: audience');
+  fetchMock.mockClear();
+  await expect(
+    controller.setSpokenTarget({
+      creationId: '50000000-0000-4000-8000-000000000409',
+      field: 'audience',
+    }),
+  ).resolves.toEqual({ accepted: true, reason: 'unchanged' });
+  expect(fetchMock).not.toHaveBeenCalled();
+  await controller.end();
+});
+it('rejects over-limit typed voice text and keeps it unsent', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const sent = controller.text('x'.repeat(4001));
+  expect(sent).toEqual({ accepted: false, reason: 'limit' });
+  expect(FakePC.instances.at(-1)!.channel.send).not.toHaveBeenCalled();
+  await controller.end();
+});
+it('scopes late transcript invalidation after End without starting another admission', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-1',
+    transcript: 'Yes',
+  });
+  await controller.end();
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  expect(controller.getSnapshot().transcript.some((line) => line.text === 'Yes')).toBe(true);
+  controller.invalidateTranscript();
+  expect(controller.getSnapshot().transcript).toEqual([]);
 });
 it('exports content-free diagnostics with trusted configuration and preserves them after End', async () => {
   fetchMock.mockImplementation(async (_url, init) =>
@@ -250,6 +342,61 @@ it('preserves owned visual selection through minimize/end and clears it for a di
   expect(controller.getSnapshot().artifactWorkspace.selectedPartId).toBe('tools');
   controller.bindConversation('00000000-0000-4000-8000-000000000098');
   expect(controller.getSnapshot().artifactWorkspace.selectedId).toBeNull();
+});
+
+it('does not relabel voice session identity or transcript when artifacts open another conversation', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-1',
+    transcript: 'Same words twice',
+  });
+  await controller.end();
+  const ended = controller.getSnapshot();
+  expect(ended.conversationId).toBe(conversation);
+  expect(ended.transcript[0]?.text).toBe('Same words twice');
+  controller.bindConversation('00000000-0000-4000-8000-000000000098');
+  expect(controller.getSnapshot().conversationId).toBe(conversation);
+  expect(controller.getSnapshot().sessionId).toBe(ended.sessionId);
+  expect(controller.getSnapshot().transcript).toEqual(ended.transcript);
+  controller.acknowledgePersistence('00000000-0000-4000-8000-000000000077');
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  controller.acknowledgePersistence(ended.sessionId);
+  expect(controller.getSnapshot().persistence).toBe('acknowledged');
+});
+
+it('ignores a delayed receipt after a replacement session in the same conversation', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  FakePC.instances.at(-1)!.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'user-old',
+    transcript: 'First session',
+  });
+  await controller.end();
+  const first = controller.getSnapshot();
+  expect(first.persistence).toBe('pending');
+  const delayed = { sessionId: first.sessionId!, epoch: first.persistenceEpoch };
+  await controller.start(conversation, false);
+  const second = controller.getSnapshot();
+  expect(second.sessionId).not.toBe(first.sessionId);
+  expect(second.persistenceEpoch).toBeGreaterThan(first.persistenceEpoch);
+  expect(second.transcript).toEqual([]);
+  controller.markSavedItems(['user-old'], delayed);
+  controller.markPersistence('uncertain', delayed);
+  controller.acknowledgePersistence(delayed.sessionId, delayed.epoch);
+  const afterLate = controller.getSnapshot();
+  expect(afterLate.sessionId).toBe(second.sessionId);
+  expect(afterLate.savedItemIds).toEqual([]);
+  expect(afterLate.persistence).toBe('idle');
+  expect(afterLate.transcript).toEqual([]);
+  controller.markPersistence('pending', {
+    sessionId: second.sessionId!,
+    epoch: second.persistenceEpoch,
+  });
+  expect(controller.getSnapshot().persistence).toBe('pending');
+  await controller.end();
 });
 
 it('shows speech detection and processing from real provider events', async () => {
@@ -512,4 +659,102 @@ it('repeats cleanup after a late admission even while the earlier End is still p
   await Promise.all([starting, ending]);
   expect(ends).toBe(2);
   expect(controller.getSnapshot()).toMatchObject({ phase: 'ended', cleanupPending: false });
+});
+
+it('excludes compact and legacy internal items while preserving actual audio, typed text and save receipts', async () => {
+  const { voiceItemsAcknowledged } = await import('@/domains/live/receipt');
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  const internal = (id: string, type = 'conversation.item.added') =>
+    pc.event({
+      type,
+      item: { id, role: 'user', content: [{ text: 'Synthetic internal context' }] },
+    });
+  internal('c' + '0'.repeat(25));
+  internal('ctx_legacy');
+  pc.event({ type: 'input_audio_buffer.committed', item_id: 'item_spoken' });
+  internal('c' + '0'.repeat(25), 'conversation.item.created');
+  pc.event({
+    type: 'conversation.item.input_audio_transcription.completed',
+    item_id: 'item_spoken',
+    transcript: 'Application context: actual spoken words',
+  });
+  pc.event({
+    type: 'conversation.item.added',
+    item: {
+      id: 'conversation_real_typed',
+      role: 'user',
+      content: [{ text: 'Application context: actual typed words' }],
+    },
+  });
+  pc.event({
+    type: 'response.output_audio_transcript.done',
+    item_id: 'item_answer',
+    transcript: 'Actual answer',
+  });
+  internal('c' + '1'.repeat(25));
+  expect(controller.getSnapshot().transcript.map((line) => line.text)).toEqual([
+    'Application context: actual spoken words',
+    'Application context: actual typed words',
+    'Actual answer',
+  ]);
+  const ids = controller
+    .getSnapshot()
+    .transcript.filter((line) => line.role === 'user' && line.text)
+    .map((line) => line.id);
+  expect(
+    voiceItemsAcknowledged(ids, [
+      { providerItemId: 'item_spoken', providerResponseId: 'r', turnId: 't' },
+    ]),
+  ).toBe(false);
+  expect(
+    voiceItemsAcknowledged(
+      ids,
+      ids.map((id, index) => ({
+        providerItemId: id,
+        providerResponseId: 'r' + index,
+        turnId: 't' + index,
+      })),
+    ),
+  ).toBe(true);
+  const state = controller.getSnapshot();
+  controller.acknowledgePersistence(state.sessionId, state.persistenceEpoch);
+  expect(controller.getSnapshot().transcript).toEqual([]);
+  await controller.end();
+});
+it('tags selected-target context and stale-target fallback without changing text or creating a reply', async () => {
+  const controller = new LiveController();
+  await controller.start(conversation, false);
+  const pc = FakePC.instances.at(-1)!;
+  for (const [field, ok] of [
+    ['audience', true],
+    ['purpose', false],
+  ] as const) {
+    fetchMock.mockResolvedValueOnce(
+      Response.json(
+        ok
+          ? { context: 'Synthetic selected target', target: { creationId: conversation, field } }
+          : { error: 'Synthetic stale target' },
+        { status: ok ? 200 : 409 },
+      ),
+    );
+    await controller.setSpokenTarget({ creationId: conversation, field });
+    const sent = JSON.parse(pc.channel.send.mock.calls.at(-1)![0]);
+    expect(sent).toMatchObject({
+      type: 'conversation.item.create',
+      item: { type: 'message', role: 'user', id: expect.stringMatching(/^c[0-9a-z]{25}$/) },
+    });
+    if (ok)
+      expect(sent.item.content).toEqual([
+        { type: 'input_text', text: 'Synthetic selected target' },
+      ]);
+    else expect(sent.item.content[0].text).toContain('Application selected-work target expired');
+    pc.event({ type: 'conversation.item.added', item: sent.item });
+  }
+  expect(
+    pc.channel.send.mock.calls.every(([raw]) => JSON.parse(raw).type !== 'response.create'),
+  ).toBe(true);
+  expect(controller.getSnapshot().transcript).toEqual([]);
+  await controller.end();
 });

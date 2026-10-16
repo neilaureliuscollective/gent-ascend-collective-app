@@ -8,6 +8,8 @@ const mock = vi.hoisted(() => ({
   context: vi.fn(),
   turns: vi.fn(),
   access: vi.fn(),
+  artifacts: vi.fn(),
+  background: vi.fn(),
 }));
 vi.mock('@/domains/access/founder', () => ({ currentFounderAccess: mock.founder }));
 vi.mock('@/domains/access/current', () => ({ currentAccess: mock.access }));
@@ -25,20 +27,17 @@ vi.mock('@/domains/intelligence/service', () => ({
     }
   },
 }));
-vi.mock('@/domains/intelligence/prompt', () => ({
+vi.mock('@/domains/intelligence/prompt', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/domains/intelligence/prompt')>()),
   aureliusInstructions: 'Synthetic instructions',
   sharedCharacter: 'Synthetic character',
-  voiceDelivery: 'VOICE DELIVERY: Begin with one useful thought.',
-  buildMessages: (turns: unknown[], _text: string, context: unknown) => [
-    { role: 'user', content: JSON.stringify({ turns, context }) },
-  ],
 }));
 vi.mock('@/domains/commerce/shopify', () => ({ getProduct: async () => null }));
 vi.mock('@/domains/commerce/lifestyle-catalog', () => ({
   readLifestyleCatalog: async () => ({ products: [], status: 'unconfigured' }),
 }));
 vi.mock('@/domains/artifacts/service', () => ({
-  readArtifacts: async () => ({ artifacts: [], selectedId: null, projects: [] }),
+  readArtifacts: mock.artifacts,
   proposeImage: vi.fn(),
   proposeVisual: vi.fn(),
   proposeCoworker: vi.fn(),
@@ -46,8 +45,36 @@ vi.mock('@/domains/artifacts/service', () => ({
   visualWorkTool: {},
   coworkerWorkTool: {},
 }));
-vi.mock('@/domains/live/background', () => ({ backgroundTool: {}, runBackgroundTask: vi.fn() }));
+vi.mock('@/domains/live/background', () => ({
+  backgroundTool: {},
+  runBackgroundTask: mock.background,
+}));
+vi.mock('@/domains/talk-creation/context', () => ({
+  selectedTalkContext: async () => '',
+  selectedTalkPredecessors: async () => ({}),
+}));
+vi.mock('@/domains/talk-creation/service', () => ({
+  readTalkCreations: async () => ({
+    creations: [],
+    selected: {},
+    images: [],
+    selectedImageId: null,
+    canCreateImages: false,
+    imageAccess: 'unavailable',
+    attachmentProjectId: null,
+  }),
+}));
+vi.mock('@/domains/talk-creation/live-adapter', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/domains/talk-creation/live-adapter')>()),
+  runTalkLiveOffer: vi.fn(),
+  runTalkLiveRefine: vi.fn(),
+}));
+vi.mock('@/domains/live/trusted-observe', () => ({
+  observeTrustedVoiceItem: vi.fn(async () => ({ observed: true, trusted: true })),
+}));
 import { admitLive } from '@/domains/live/service';
+import { liveAdmissionFieldKinds } from '@/domains/live/admission-request';
+import { observeTrustedVoiceItem } from '@/domains/live/trusted-observe';
 class Socket extends EventTarget {
   static OPEN = 1;
   static last: Socket;
@@ -63,7 +90,7 @@ class Socket extends EventTarget {
   send(raw: string) {
     const item = JSON.parse(raw);
     this.sent.push(item);
-    if (item.item?.id?.startsWith('ctx_'))
+    if (item.type === 'conversation.item.create' && item.item?.type === 'message' && item.item.id)
       queueMicrotask(() => this.event({ type: 'conversation.item.added', item: item.item }));
   }
   event(value: unknown) {
@@ -88,6 +115,13 @@ let rpc: ReturnType<typeof vi.fn>;
 let stillFounder: boolean;
 beforeEach(() => {
   vi.clearAllMocks();
+  mock.artifacts.mockResolvedValue({ artifacts: [], selectedId: null, projects: [] });
+  mock.background.mockResolvedValue({
+    text: 'Synthetic approved result',
+    input: 1,
+    output: 2,
+    model: 'synthetic-model',
+  });
   for (const [key, value] of Object.entries({
     APP_ENV: 'production',
     VERCEL_ENV: 'production',
@@ -113,11 +147,12 @@ beforeEach(() => {
     {
       id: 'saved-turn',
       parent_turn_id: null,
-      user: 'Saved synthetic typed question',
-      assistant: 'Saved answer',
+      status: 'complete',
+      user_text: 'Saved synthetic typed question',
+      assistant_text: 'Saved answer',
     },
   ]);
-  mock.context.mockResolvedValue({ profile: 'Opted-in synthetic context' });
+  mock.context.mockResolvedValue({ profile: { displayName: 'Opted-in synthetic context' } });
   rpc = vi.fn(async (name: string) => ({
     data: name === 'ai_live_reserve' ? new Date(Date.now() + 120000).toISOString() : true,
     error: null,
@@ -133,9 +168,15 @@ beforeEach(() => {
             : null
           : table === 'membership_accounts'
             ? { beta_access: true }
-            : table === 'ai_conversations'
-              ? { context_summary: null, archived_at: null, company_id: null }
-              : { ended_at: null, conversation_id: input.conversationId };
+            : table === 'ai_live_jobs'
+              ? { status: 'approved' }
+              : table === 'ai_conversations'
+                ? { context_summary: null, archived_at: null, company_id: null }
+                : {
+                    ended_at: null,
+                    conversation_id: input.conversationId,
+                    expires_at: new Date(Date.now() + 120000).toISOString(),
+                  };
       const query = {
         select: () => query,
         eq: () => query,
@@ -179,15 +220,49 @@ it('opens the official server sideband with an Authorization header rather than 
     headers: { Authorization: 'Bearer synthetic-provider' },
   });
 });
+it('posts official string FormData fields instead of Blob file parts', async () => {
+  await admitLive(input);
+  const [, init] = vi.mocked(fetch).mock.calls[0] as [string, { body: FormData }];
+  const fields = liveAdmissionFieldKinds(init.body);
+  expect(fields.sdpKind).toBe('string');
+  expect(fields.sessionKind).toBe('string');
+  expect(fields.sdp).toBe(input.sdp);
+  const session = JSON.parse(fields.session ?? '');
+  expect(session.type).toBe('realtime');
+  expect(session.tools.map((tool: { name: string }) => tool.name)).toEqual([
+    'offer_text_work',
+    'refine_selected_direction',
+    'lookup_lifestyle_catalog',
+  ]);
+  expect(session.instructions).toContain('VOICE DELIVERY');
+  expect(session.instructions).toContain('Cached catalog figures are not live stock');
+  expect(session.instructions).toContain('Refine the selected design-board direction only');
+});
 it('reports a sanitized provider rejection instead of one generic connection message', async () => {
-  vi.mocked(fetch).mockResolvedValueOnce(new Response('no', { status: 401 }));
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        error: {
+          code: 'invalid_request_error',
+          type: 'invalid_request_error',
+          param: 'sdp',
+          message: 'raw',
+        },
+        request_id: 'req_test1',
+      }),
+      { status: 400, headers: { 'content-type': 'application/json' } },
+    ),
+  );
   await expect(admitLive(input)).rejects.toMatchObject({
     status: 503,
     message: expect.stringMatching(/provider did not complete admission/),
     safeDetail: expect.objectContaining({
       stage: 'provider',
       category: 'rejected',
-      providerStatus: 401,
+      providerStatus: 400,
+      providerCode: 'invalid_request_error',
+      providerParam: 'sdp',
+      providerRequestId: 'req_test1',
     }),
   });
   expect(rpc).toHaveBeenCalledWith('ai_live_end', expect.objectContaining({ p_reason: 'failed' }));
@@ -242,6 +317,40 @@ it('seeds saved typed history before admitting audio, omits private context with
     expect.objectContaining({ redirect: 'error' }),
   );
 });
+it('stops the voice session when trusted observation is unavailable instead of treating a saved turn as bound', async () => {
+  vi.mocked(observeTrustedVoiceItem).mockResolvedValue({ observed: false, trusted: false });
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const monitor = admission.monitor();
+  for (const event of [
+    {
+      type: 'conversation.item.added',
+      item: { id: 'typed', role: 'user', content: [{ text: 'Typed in Live' }] },
+    },
+    { type: 'response.created', response: { id: 'reply' } },
+    {
+      type: 'response.done',
+      response: {
+        id: 'reply',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Spoken answer' }] }],
+        usage: { input_tokens: 2, output_tokens: 3 },
+      },
+    },
+    { type: 'output_audio_buffer.stopped', response_id: 'reply' },
+  ])
+    socket.event(event);
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_finish_turn',
+      expect.objectContaining({ p_text: 'Spoken answer', p_status: 'complete' }),
+    ),
+  );
+  await vi.waitFor(() => expect(socket.readyState).toBe(3));
+  expect(rpc.mock.calls.some(([name]) => name === 'ai_live_bind_finished_turn')).toBe(false);
+  await monitor;
+});
+
 it('includes explicitly opted-in context and ends when founder authority is revoked even if beta remains', async () => {
   vi.useFakeTimers();
   const admission = await admitLive({ ...input, includeContext: true });
@@ -342,4 +451,193 @@ it('does not confirm monitor cleanup when the database does not acknowledge End'
   rpc.mockResolvedValue({ data: false, error: null });
   Socket.last.event({ type: 'error', error: { code: 'unknown' } });
   await expect(monitor).rejects.toThrow(/cleanup could not be recorded/);
+});
+
+it('preserves allowlisted correlated seed rejection details and cleans up the admitted call', async () => {
+  const original = Socket.prototype.send;
+  const spy = vi.spyOn(Socket.prototype, 'send').mockImplementation(function (
+    this: Socket,
+    raw: string,
+  ) {
+    const sent = JSON.parse(raw);
+    if (sent.item?.role === 'assistant') {
+      queueMicrotask(() =>
+        this.event({
+          type: 'error',
+          error: {
+            event_id: sent.event_id,
+            code: 'invalid_value',
+            type: 'invalid_request_error',
+            param: 'item.content[0].type',
+            message: 'PRIVATE CONTEXT MUST NOT LEAK',
+          },
+        }),
+      );
+    } else original.call(this, raw);
+  });
+  try {
+    await expect(admitLive(input)).rejects.toMatchObject({
+      safeDetail: expect.objectContaining({
+        stage: 'seed',
+        category: 'rejected',
+        providerCode: 'invalid_value',
+        providerType: 'invalid_request_error',
+        providerParam: 'item.content[0].type',
+        seedIndex: 2,
+        seedRole: 'assistant',
+        seedLength: 12,
+        seedEventId: expect.stringMatching(/^seed_[a-f0-9]+$/),
+      }),
+    });
+    expect(Socket.last.readyState).toBe(3);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/hangup'), expect.any(Object));
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_live_end',
+      expect.objectContaining({ p_reason: 'failed' }),
+    );
+  } finally {
+    spy.mockRestore();
+  }
+});
+
+it('does not report a stale sideband-open failure when an admitted socket later closes', async () => {
+  const log = vi.spyOn(console, 'info').mockImplementation(() => {});
+  try {
+    const admission = await admitLive(input);
+    const monitor = admission.monitor();
+    Socket.last.close();
+    await monitor;
+    expect(
+      log.mock.calls.some(
+        ([name, detail]) => name === 'live-admission' && detail.stage === 'sideband',
+      ),
+    ).toBe(false);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it('seeds real multirole history with compact IDs and independently correlated events', async () => {
+  await admitLive(input);
+  const items = Socket.last.sent as {
+    event_id?: string;
+    item?: { id?: string; role?: string; content?: { type?: string; text: string }[] };
+  }[];
+  const messages = items.filter((x) => x.item?.id);
+  expect(messages.map((x) => x.item?.role)).toEqual(['user', 'user', 'assistant']);
+  expect(new Set(messages.map((x) => x.item?.id)).size).toBe(messages.length);
+  for (const item of messages) {
+    expect(item.item?.id).toMatch(/^c[0-9a-z]{25}$/);
+    expect(item.event_id).toMatch(/^seed_[a-f0-9]{32}$/);
+  }
+  expect(messages[1]?.item?.content).toEqual([
+    { type: 'input_text', text: 'Saved synthetic typed question' },
+  ]);
+  expect(messages[2]?.item?.content).toEqual([{ type: 'output_text', text: 'Saved answer' }]);
+});
+for (const fail of [false, true])
+  it(`uses compact IDs for background ${fail ? 'failure' : 'completion'} messages`, async () => {
+    vi.useFakeTimers();
+    if (fail) mock.background.mockRejectedValueOnce(new Error('Synthetic task failure'));
+    const admission = await admitLive({ ...input, backgroundWork: true });
+    const socket = Socket.last;
+    const initial = socket.sent.length;
+    const monitor = admission.monitor();
+    socket.event({
+      type: 'response.function_call_arguments.done',
+      name: 'request_background_work',
+      call_id: 'synthetic-background',
+      arguments: JSON.stringify({ task: 'Synthetic approved task', coworker: null }),
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    const messages = socket.sent.slice(initial).filter((x) => x.item?.id);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.item?.id).toMatch(/^c[0-9a-z]{25}$/);
+    expect(messages[0]?.item?.content?.[0]?.text).toContain(
+      fail ? 'approved background work failed' : 'Synthetic approved result',
+    );
+    socket.close();
+    await monitor;
+  });
+it('uses compact IDs for changed selection and saved artifact messages', async () => {
+  vi.useFakeTimers();
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const initial = socket.sent.length;
+  const monitor = admission.monitor();
+  mock.artifacts.mockResolvedValue({
+    artifacts: [
+      {
+        id: 'synthetic-image',
+        status: 'complete',
+        visual: null,
+        version_id: 'synthetic-version',
+        project_id: null,
+        prompt: 'Synthetic image',
+      },
+    ],
+    selectedId: 'synthetic-image',
+    projects: [],
+  });
+  await vi.advanceTimersByTimeAsync(3000);
+  const messages = socket.sent.slice(initial).filter((x) => x.item?.id);
+  expect(messages).toHaveLength(2);
+  expect(new Set(messages.map((x) => x.item?.id)).size).toBe(2);
+  for (const message of messages) expect(message.item?.id).toMatch(/^c[0-9a-z]{25}$/);
+  expect(messages[0]?.item?.content?.[0]?.text).toContain('Application selection changed');
+  expect(messages[1]?.item?.content?.[0]?.text).toContain('Application saved image result');
+  socket.close();
+  await monitor;
+});
+
+it('does not persist compact or legacy context notifications, and preserves the next real voice turn', async () => {
+  const admission = await admitLive(input);
+  const socket = Socket.last;
+  const monitor = admission.monitor();
+  for (const id of ['c' + '0'.repeat(25), 'ctx_legacy']) {
+    socket.event({
+      type: 'conversation.item.added',
+      item: { id, role: 'user', content: [{ text: 'Synthetic internal notification' }] },
+    });
+    socket.event({ type: 'response.created', response: { id: 'response-' + id } });
+    socket.event({
+      type: 'response.done',
+      response: {
+        id: 'response-' + id,
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Synthetic notification answer' }] }],
+      },
+    });
+    socket.event({ type: 'output_audio_buffer.stopped', response_id: 'response-' + id });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(rpc.mock.calls.some(([name]) => name === 'ai_begin_turn')).toBe(false);
+  for (const event of [
+    { type: 'input_audio_buffer.committed', item_id: 'item-real-human' },
+    {
+      type: 'conversation.item.input_audio_transcription.completed',
+      item_id: 'item-real-human',
+      transcript: 'Application context is my actual question',
+    },
+    { type: 'response.created', response: { id: 'real-reply' } },
+    {
+      type: 'response.done',
+      response: {
+        id: 'real-reply',
+        status: 'completed',
+        output: [{ content: [{ transcript: 'Actual reply' }] }],
+      },
+    },
+    { type: 'output_audio_buffer.stopped', response_id: 'real-reply' },
+  ])
+    socket.event(event);
+  await vi.waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      'ai_begin_turn',
+      expect.objectContaining({ p_text: 'Application context is my actual question' }),
+    ),
+  );
+  socket.close();
+  await monitor;
+  expect(rpc.mock.calls.filter(([name]) => name === 'ai_begin_turn')).toHaveLength(1);
 });

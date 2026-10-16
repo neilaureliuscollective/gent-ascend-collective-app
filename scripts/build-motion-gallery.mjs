@@ -41,11 +41,17 @@ const css = outputs
   .map((item) => item.source)
   .join('\n');
 const crest = await readFile('public/brand/aethelios-human-ascendance-20261015-crest.webp');
+const emblem = await readFile('public/brand/aethelios-official-20261015-192.png');
 // Embed the official, unmodified artwork for a network-free visual review.
-const embedded = script.replaceAll(
-  '/brand/aethelios-human-ascendance-20261015-crest.webp',
-  `data:image/webp;base64,${crest.toString('base64')}`,
-);
+const embedded = script
+  .replaceAll(
+    '/brand/aethelios-human-ascendance-20261015-crest.webp',
+    `data:image/webp;base64,${crest.toString('base64')}`,
+  )
+  .replaceAll(
+    '/brand/aethelios-official-20261015-192.png',
+    `data:image/png;base64,${emblem.toString('base64')}`,
+  );
 const destination =
   process.argv.slice(2).find((value) => !value.startsWith('--')) ??
   (integration

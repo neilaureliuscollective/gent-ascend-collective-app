@@ -325,8 +325,9 @@
   padding: 18px 12px;
   border: 1px solid var(--aether-border);
   border-radius: 10px;
-  background: var(--io-material);
-  color: var(--aether-text);
+  background: var(--io-glass);
+  box-shadow: var(--io-elevation);
+  color: var(--io-text);
   transition:
     transform 160ms ease,
     border-color 160ms ease;
@@ -338,7 +339,7 @@
 .app-shell.imperial-workspace .studio-room-console button[aria-pressed='true'] {
   background: var(--io-selected);
   border-color: var(--aether-gold);
-  box-shadow: inset 0 -2px var(--aether-gold);
+  box-shadow: var(--io-elevation), inset 0 -2px var(--aether-gold);
   color: var(--aether-text);
 }
 .app-shell.imperial-workspace .studio-room-console button:focus-visible {

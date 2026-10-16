@@ -9,6 +9,10 @@ import type { ActionProposal } from '@/domains/intelligence/types';
 import { ActionReview } from './action-review';
 import { IntelligenceResponse } from '@/components/intelligence-motion/presence';
 import type { IntelligenceOperation } from '@/platform/visual/intelligence-motion';
+import type { StreamCreation } from '@/domains/intelligence/types';
+import type { TalkCreation, TalkImageJob } from '@/domains/talk-creation/schema';
+import { CreationCard, TalkImageCard, InFlightCreationCard } from './creation-card';
+import { stripCreationFences } from '@/domains/talk-creation/intent';
 
 // Stable saved answers do not reparse Markdown when the composer or active turn updates.
 const ReplyMarkdown = memo(function ReplyMarkdown({ text }: { text: string }) {
@@ -38,9 +42,21 @@ export const ConversationTurn = memo(function ConversationTurn({
   onRevise,
   companyWork = false,
   operation,
+  artifacts,
+  creations,
+  images,
+  selectedCreationId,
+  selectedImageId,
+  canApproveImages,
+  onOpenCreation,
+  onApproveImage,
+  onSelectImage,
+  onBoardCommit,
+  boardStatus,
 }: {
   turn: Turn;
   operation?: IntelligenceOperation;
+  artifacts?: StreamCreation[];
   companyWork?: boolean;
   onFeedback?: (id: string, feedback: 'helpful' | 'needs_work') => void;
   disabled: boolean;
@@ -48,6 +64,16 @@ export const ConversationTurn = memo(function ConversationTurn({
   versions?: Turn[];
   onCopy?: () => void;
   onRevise?: (kind: 'retry' | 'regenerate' | 'edit') => void;
+  creations?: TalkCreation[];
+  images?: TalkImageJob[];
+  selectedCreationId?: string | null;
+  selectedImageId?: string | null;
+  canApproveImages?: boolean;
+  onOpenCreation?: (id: string) => void;
+  onApproveImage?: (id: string, approve: boolean) => void;
+  onSelectImage?: (id: string) => void;
+  onBoardCommit?: (id: string, board: import('@/domains/talk-creation/design-board').DesignBoardContent) => void;
+  boardStatus?: { id: string; state: 'pending' | 'saved' | 'failed' | 'stale' };
 }) {
   const ritual =
     !companyWork && turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
@@ -62,6 +88,7 @@ export const ConversationTurn = memo(function ConversationTurn({
           <IntelligenceResponse
             operation={operation}
             name={councilLabel(councilFromVersion(turn.prompt_version))}
+            artifacts={artifacts}
           />
         ) : (
           <span className="message-author">
@@ -76,10 +103,41 @@ export const ConversationTurn = memo(function ConversationTurn({
                 ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
                 : companyWork
                   ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
-                  : turn.assistant_text
+                  : stripCreationFences(turn.assistant_text) || turn.assistant_text
             }
           />
         </div>
+        {artifacts
+          ?.filter(
+            (artifact) =>
+              !creations?.some((creation) => creation.id === artifact.id) &&
+              !images?.some((image) => image.id === artifact.id),
+          )
+          .map((artifact) => (
+            <InFlightCreationCard key={`${artifact.kind}-${artifact.id}`} artifact={artifact} />
+          ))}
+        {creations?.map((creation) => (
+          <CreationCard
+            key={creation.id}
+            creation={creation}
+            selected={creation.id === selectedCreationId}
+            onOpen={onOpenCreation ?? (() => {})}
+            onBoardCommit={onBoardCommit}
+            boardStatus={boardStatus?.id === creation.id ? boardStatus.state : undefined}
+          />
+        ))}
+        {images?.map((image) => (
+          <TalkImageCard
+            key={image.id}
+            image={image}
+            selected={image.id === selectedImageId}
+            canApprove={!!canApproveImages}
+            busy={disabled}
+            onOpen={onOpenCreation ?? (() => {})}
+            onApprove={onApproveImage ?? (() => {})}
+            onSelect={onSelectImage ?? (() => {})}
+          />
+        ))}
         {versions?.map((previous) => (
           <details className="message-version" key={previous.id}>
             <summary>Previous version</summary>

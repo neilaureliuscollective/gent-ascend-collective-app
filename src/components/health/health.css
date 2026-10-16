@@ -26,7 +26,8 @@
   border: 1px solid #c4912f66;
   border-radius: 9px;
   padding: 12px 18px;
-  background: linear-gradient(140deg, #254a34, #142c22);
+  background: var(--io-glass);
+  box-shadow: var(--io-elevation);
   color: #e8c980;
   font: inherit;
   font-size: 14px;
@@ -192,8 +193,8 @@
   border: 1px solid #aec2ad26;
   border-radius: 16px;
   padding: clamp(22px, 2.5vw, 38px);
-  background: linear-gradient(130deg, #163123aa, #0c2118);
-  box-shadow: inset 0 1px #dce9d608;
+  background: var(--io-glass);
+  box-shadow: var(--io-elevation);
 }
 .health-reading {
   font-size: 42px;
@@ -269,12 +270,12 @@
   border-radius: 15px;
   max-width: 800px;
   margin: 25px 0;
-  background: #10251b66;
+  background: var(--health-graphite);
 }
 .health-notice {
   padding: 22px 28px;
   margin: 20px 0;
-  background: #193427;
+  background: var(--io-selected);
   border: 1px solid #aec2ad44;
   border-radius: 12px;
 }
@@ -293,7 +294,7 @@
   align-items: center;
   gap: 24px;
   margin: 16px 0;
-  background: #10251b;
+  background: var(--health-graphite);
 }
 .health-permission p {
   max-width: 620px;
@@ -311,7 +312,7 @@
   padding: 26px;
   border: 1px solid #aec2ad33;
   border-radius: 14px;
-  background: #10251b;
+  background: var(--health-graphite);
 }
 .health-environment label {
   display: flex;
@@ -325,7 +326,7 @@
   width: 100%;
   border: 1px solid #aec2ad55;
   border-radius: 7px;
-  background: #091b12;
+  background: var(--health-inset);
   color: #dce9d6;
   padding: 12px;
   min-height: 44px;
@@ -348,7 +349,7 @@
 }
 .health-import-guide {
   padding: 18px 24px;
-  background: #10251b;
+  background: var(--health-graphite);
   border-radius: 10px;
 }
 .health-import-guide code {
@@ -356,7 +357,7 @@
   overflow: auto;
   color: #dce9d6;
   padding: 12px;
-  background: #091b12;
+  background: var(--health-inset);
 }
 .health-record {
   display: grid;
@@ -382,7 +383,7 @@
   border: 1px solid #c4912f66;
   border-radius: 6px;
   color: #e8c980;
-  background: #1d3826;
+  background: var(--health-raised);
 }
 .health-status {
   display: inline-block;
@@ -391,7 +392,7 @@
   text-transform: uppercase;
   color: #e8c980;
   padding: 4px 8px;
-  background: #284330;
+  background: var(--io-selected);
   border-radius: 4px;
 }
 .health-record-actions {
@@ -459,7 +460,7 @@
   border: 1px solid #aec2ad26;
   border-radius: 14px;
   margin: 32px 0;
-  background: #10251b;
+  background: var(--health-graphite);
 }
 .health-future-connections div {
   display: flex;
@@ -521,7 +522,7 @@
   white-space: pre-wrap;
 }
 .health-environment .context-sheet {
-  background: #0a1d14;
+  background: var(--health-inset);
   color: #dce9d6;
 }
 .health-environment .context-sheet h2 {
@@ -684,7 +685,7 @@
 }
 html[data-material='solid'] .health-hero,
 html[data-material='solid'] .health-panel {
-  background: #10251b;
+  background: var(--health-graphite);
   box-shadow: none;
 }
 html[data-material='solid'] .health-orbit {

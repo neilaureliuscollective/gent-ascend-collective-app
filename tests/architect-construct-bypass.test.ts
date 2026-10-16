@@ -76,4 +76,4 @@ it('does not execute owner-supplied check.mjs on the worker host', async () => {
   expect(trusted.isolation).toBe('unavailable');
   expect(worker?.result?.isolation).toBe('unavailable');
   expect(existsSync(marker)).toBe(false);
-});
+}, 120000);

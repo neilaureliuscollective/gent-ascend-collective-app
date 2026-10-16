@@ -29,6 +29,7 @@ export function brandDirection(brand?: BrandKit) {
 }
 
 export type StudioBrief = {
+  referenceId?: string | null;
   purpose: string;
   audience: string;
   direction: string;

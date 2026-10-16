@@ -1,70 +1,98 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { memberLifestylePhotography } from '@/domains/commerce/member-lifestyle';
+import {
+  lifestyleSceneStatus,
+  type CatalogStatus,
+  type LifestyleScene,
+  type LifestyleSceneItem,
+} from '@/domains/commerce/lifestyle-merchandising';
 import { LifestyleAction } from './lifestyle-action';
+import { ProductMediaPending } from './product-media-pending';
+
+function ScenePiece({ item, compact }: { item: LifestyleSceneItem; compact?: boolean }) {
+  const media = item.src ? (
+    <Image
+      src={item.src}
+      alt={item.alt}
+      width={item.width ?? (item.role === 'focal' ? 720 : 360)}
+      height={item.height ?? (item.role === 'focal' ? 900 : 450)}
+      sizes={
+        item.role === 'focal'
+          ? compact
+            ? '(max-width: 700px) 70vw, 28vw'
+            : '(max-width: 700px) 80vw, 42vw'
+          : '(max-width: 700px) 40vw, 16vw'
+      }
+      preload={item.role === 'focal' && !compact}
+    />
+  ) : (
+    <ProductMediaPending title={item.name} />
+  );
+  const caption = (
+    <span>
+      <strong>{item.name}</strong>
+      <small>
+        {item.kind}
+        {item.price ? ` · ${item.price}` : ''}
+        {item.status && item.source !== 'house-art' ? ` · ${item.status}` : ''}
+      </small>
+    </span>
+  );
+  const className = item.role === 'focal' ? 'member-lifestyle-focal' : 'member-lifestyle-companion';
+  if (item.href) {
+    return (
+      <Link href={item.href} className={className}>
+        {media}
+        {caption}
+      </Link>
+    );
+  }
+  return (
+    <div className={className}>
+      {media}
+      {caption}
+    </div>
+  );
+}
 
 export function LifestyleProductStage({
+  scene,
   compact = false,
   status,
+  exploreHref,
 }: {
+  scene: LifestyleScene;
   compact?: boolean;
-  status?: 'ready' | 'empty' | 'unconfigured' | 'error';
+  status?: CatalogStatus;
+  exploreHref: string;
 }) {
-  const focal = memberLifestylePhotography.find((entry) => entry.role === 'focal')!;
-  const companions = memberLifestylePhotography.filter((entry) => entry.role === 'secondary');
+  const focal = scene.items.find((item) => item.role === 'focal');
+  const companions = scene.items.filter((item) => item.role === 'secondary');
+  const catalogState = status ?? 'ready';
   return (
     <section
       className={`member-lifestyle-stage${compact ? ' member-lifestyle-stage--compact' : ''}`}
       aria-label="Aethelios Lifestyle products"
     >
-      <Link href={focal.href} className="member-lifestyle-focal">
-        <Image
-          src={focal.src}
-          alt={focal.alt}
-          width={720}
-          height={900}
-          sizes={compact ? '(max-width: 700px) 70vw, 28vw' : '(max-width: 700px) 80vw, 42vw'}
-          preload={!compact}
-        />
-        <span>
-          <strong>{focal.name}</strong>
-          <small>{focal.kind}</small>
-        </span>
-      </Link>
+      {focal ? <ScenePiece item={focal} compact={compact} /> : null}
       <div className="member-lifestyle-stage-aside">
-        <div className="member-lifestyle-companions">
-          {companions.map((entry) => (
-            <Link key={entry.id} href={entry.href} className="member-lifestyle-companion">
-              <Image
-                src={entry.src}
-                alt={entry.alt}
-                width={360}
-                height={450}
-                sizes="(max-width: 700px) 40vw, 16vw"
-              />
-              <span>
-                <strong>{entry.name}</strong>
-                <small>{entry.kind}</small>
-              </span>
-            </Link>
-          ))}
-        </div>
+        {companions.length > 0 && (
+          <div className="member-lifestyle-companions">
+            {companions.map((item) => (
+              <ScenePiece key={item.id} item={item} compact={compact} />
+            ))}
+          </div>
+        )}
         {!compact && (
           <>
             <p
               className="member-lifestyle-stage-status"
-              role={status && status !== 'ready' ? 'status' : undefined}
+              role={catalogState !== 'ready' ? 'status' : undefined}
             >
-              {status === 'error'
-                ? 'The collection could not refresh. Current prices and availability could not be verified.'
-                : status === 'unconfigured'
-                  ? 'Live product availability is not connected yet. Products are not available to order here until the catalog is connected.'
-                  : status === 'empty'
-                    ? 'The collection is being prepared. House photography is shown until published products are available.'
-                    : 'Aethelios Human Ascendance products. Availability is confirmed in the collection.'}
+              {lifestyleSceneStatus(catalogState, scene)}
             </p>
-            <LifestyleAction className="world-button" href="/app/collection">
+            <LifestyleAction className="world-button" href={exploreHref}>
               Explore the collection
             </LifestyleAction>
           </>

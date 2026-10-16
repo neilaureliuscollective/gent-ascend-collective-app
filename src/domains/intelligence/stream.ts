@@ -2,13 +2,14 @@ import type { StreamEvent, Turn, OperationActivity, StreamTimingStage } from './
 export type ActivityReporter = (phase: Exclude<OperationActivity, 'saving'>) => void;
 export type ModelChunk =
   | { type: 'text'; text: string }
+  | { type: 'creation'; item: import('./types').StreamCreation }
   | { type: 'finish'; reason: string; input?: number; output?: number };
 export type FinishReply = (
   text: string,
   status: 'complete' | 'failed' | 'cancelled',
   input?: number,
   output?: number,
-) => Promise<Turn>;
+) => Promise<Turn & { creations?: import('./types').StreamCreation[] }>;
 // A saved event is emitted only after persistence succeeds. Provider errors stay private.
 export function replyStream(
   generate: (signal: AbortSignal, activity: ActivityReporter) => AsyncIterable<ModelChunk>,
@@ -72,6 +73,8 @@ export function replyStream(
             text += chunk.text;
             if (text.length > 64000) throw new Error('Reply too long');
             emit({ type: 'delta', text: chunk.text });
+          } else if (chunk.type === 'creation') {
+            emit({ type: 'creation', item: chunk.item });
           } else {
             input = chunk.input;
             output = chunk.output;
@@ -83,7 +86,7 @@ export function replyStream(
         timed('persistence-start');
         const turn = await finish(text, 'complete', input, output);
         timed('persistence-end');
-        emit({ type: 'saved', turn });
+        emit({ type: 'saved', turn, creations: turn.creations });
       } catch {
         const status = requestSignal.aborted || abort.signal.aborted ? 'cancelled' : 'failed';
         try {

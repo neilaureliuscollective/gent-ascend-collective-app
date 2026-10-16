@@ -12,6 +12,16 @@ export const liveAdmission = z
     includeContext: z.boolean(),
     voice: z.enum(['cedar', 'marin']).default('cedar'),
     backgroundWork: z.boolean().default(false),
+    workTarget: z
+      .object({
+        creationId: z.uuid(),
+        field: z
+          .string()
+          .trim()
+          .regex(/^[a-z][a-zA-Z0-9-]{0,47}$/),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export const liveEnd = z.object({ sessionId: z.uuid() }).strict();
@@ -20,7 +30,7 @@ export const pilotSeconds = 120;
 export type LiveEvent = {
   type: string;
   event_id?: string;
-  error?: { type?: string; code?: string; event_id?: string };
+  error?: { type?: string; code?: string; param?: string; event_id?: string };
   item_id?: string;
   response_id?: string;
   name?: string;

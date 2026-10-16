@@ -1,0 +1,14 @@
+{
+  "commit": "bf25662ae7fa6e92711523ffab7eb04df9d14d51",
+  "kind": "visual-fixture",
+  "viewports": {
+    "desktop": [
+      1440,
+      900
+    ],
+    "mobile": [
+      390,
+      844
+    ]
+  }
+}

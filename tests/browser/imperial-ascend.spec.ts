@@ -13,7 +13,7 @@ for (const width of [360, 768, 1440]) {
       await expect(page.getByRole('button', { name: 'Reduced motion' })).toBeDisabled();
     }
     await page.screenshot({ path: `test-results/imperial-enter-${width}.png`, fullPage: true });
-    await expect(page.locator('.entrance-statement')).toHaveCSS('color', 'rgb(154, 175, 165)');
+    await expect(page.locator('.entrance-statement')).toHaveCSS('color', 'rgb(185, 190, 187)');
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'From thought to possibility.' })).toBeVisible();
     await expect(page.locator('.imperial-workspace')).toHaveCount(3);
@@ -23,7 +23,7 @@ for (const width of [360, 768, 1440]) {
       '/enter',
     );
     if (width < 1100) {
-      await page.getByRole('button', { name: 'Explore', exact: false }).first().click();
+      await page.getByRole('button', { name: 'Explore', exact: true }).click();
       await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeHidden();

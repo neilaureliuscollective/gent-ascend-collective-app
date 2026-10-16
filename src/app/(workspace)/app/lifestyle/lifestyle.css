@@ -35,76 +35,152 @@
     var(--aether-elevated)
   );
 }
-.lifestyle-hero {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  padding: clamp(36px, 6vw, 86px) 7% 88px;
-  min-height: 650px;
-  background:
-    radial-gradient(ellipse at 85% 40%, rgba(54, 137, 108, 0.12), transparent 48%),
-    linear-gradient(
-      125deg,
-      var(--aether-obsidian),
-      var(--aether-surface) 60%,
-      var(--aether-elevated)
-    );
-  border-bottom: 1px solid #c4912f55;
+.lifestyle-world {
+  background: var(--aether-smoke-undercut);
 }
-.lifestyle-hero::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  width: 430px;
-  height: 630px;
-  right: -130px;
-  top: 40px;
-  border: 1px solid #c4912f55;
-  border-radius: 48% 48% 0 0;
-  transform: rotate(20deg);
-  box-shadow:
-    0 0 90px rgba(54, 137, 108, 0.1),
-    inset 0 0 80px rgba(54, 137, 108, 0.06);
+.lifestyle-masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px 28px;
+  padding: 16px 6%;
+  background: #0a0a0a;
+  border-bottom: 1px solid color-mix(in srgb, var(--aether-gold) 22%, transparent);
 }
-.lifestyle-coordinate {
-  color: var(--aether-silver);
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  margin-bottom: 55px;
+.imperial-obsidian .lifestyle-masthead.lifestyle-hero {
+  background: #0a0a0a;
+}
+.lifestyle-masthead-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
 }
 .lifestyle-lockup {
   display: block;
-  width: 96px;
+  width: 56px;
   height: auto;
-  margin: 0 0 22px;
+  margin: 0;
 }
-.lifestyle-hero h1 {
-  font-size: clamp(3.5rem, 7vw, 7.5rem);
+.lifestyle-masthead-name {
+  margin: 4px 0 0;
+  color: var(--aether-text);
+  letter-spacing: 0.04em;
+}
+.lifestyle-masthead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+.lifestyle-opening {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  gap: clamp(16px, 3vw, 36px);
+  align-items: center;
+  padding: 18px 6% 22px;
+  background:
+    radial-gradient(ellipse 52% 95% at 78% 82%, #245b4858, transparent 64%),
+    radial-gradient(ellipse 36% 60% at 8% 8%, #163f3533, transparent 72%),
+    linear-gradient(180deg, #0a0a0a, #111111 78%);
+}
+.lifestyle-world .member-lifestyle-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(14px, 2vw, 24px);
+  align-items: stretch;
+  padding: 12px;
+  background:
+    radial-gradient(ellipse 70% 90% at 36% 88%, #245b483d, transparent 62%),
+    transparent;
+}
+.lifestyle-world .member-lifestyle-focal {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  min-height: 0;
+  height: 320px;
+  max-height: 340px;
+  overflow: hidden;
+  padding: 12px 16px 14px;
+  color: inherit;
+  text-decoration: none;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 110%, #36896c18, transparent 62%),
+    linear-gradient(145deg, #ffffff09, transparent 34%),
+    linear-gradient(165deg, #242424ed, #1a1a1af5 72%);
+  box-shadow:
+    inset 0 1px #ffffff24,
+    0 18px 36px #0007;
+}
+.lifestyle-world .member-lifestyle-focal img,
+.lifestyle-world .member-lifestyle-companion img {
+  justify-self: center;
+  align-self: center;
+  width: auto;
+  max-width: 78%;
+  height: 86%;
+  object-fit: contain;
+}
+.lifestyle-world .member-lifestyle-companions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+.lifestyle-world .member-lifestyle-companion {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  height: 176px;
+  min-width: 0;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+  background:
+    linear-gradient(145deg, #ffffff09, transparent 34%),
+    linear-gradient(165deg, #242424ed, #1a1a1af5 72%);
+  box-shadow: inset 0 1px #ffffff24;
+}
+.lifestyle-world .member-lifestyle-stage-aside {
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.lifestyle-world .member-lifestyle-stage-status {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--aether-silver);
+}
+.lifestyle-opening-copy h1 {
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
   line-height: 0.98;
-  letter-spacing: -0.055em;
-  margin: 26px 0;
-  max-width: 820px;
+  letter-spacing: -0.05em;
+  margin: 8px 0 12px;
+  max-width: 14ch;
 }
-.lifestyle-hero h1 em,
+.lifestyle-opening-copy h1 em,
 .lifestyle-brands em {
   color: var(--aether-gold-light);
 }
-.lifestyle-hero p {
-  max-width: 550px;
-  line-height: 1.8;
+.lifestyle-opening-copy p {
+  max-width: 46ch;
+  line-height: 1.6;
   color: var(--aether-silver);
 }
-.lifestyle-hero .lifestyle-lead {
+.lifestyle-opening-copy .lifestyle-lead {
   color: var(--aether-text);
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   letter-spacing: 0.06em;
 }
-.lifestyle-hero-foot {
-  position: absolute;
-  bottom: 28px;
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  color: var(--aether-silver);
+.lifestyle-coordinate,
+.lifestyle-hero-foot,
+.lifestyle-hero-product {
+  display: none;
 }
 .lifestyle-brands {
   display: grid;
@@ -134,17 +210,6 @@
   margin-bottom: 24px;
 }
 @media (max-width: 700px) {
-  .lifestyle-hero {
-    min-height: 570px;
-    padding: 32px 7% 75px;
-  }
-  .lifestyle-coordinate {
-    margin-bottom: 36px;
-  }
-  .lifestyle-hero::after {
-    opacity: 0.35;
-    right: -300px;
-  }
   .lifestyle-brands {
     grid-template-columns: 1fr;
     gap: 18px;
@@ -155,45 +220,101 @@
   .lifestyle-brand {
     border: 1px solid CanvasText;
   }
-  .lifestyle-hero::after {
-    display: none;
-  }
 }
 
-/* Purchase confidence: shared public/member composition, using active tokens. */
-.lifestyle-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: clamp(24px, 5vw, 80px);
+.collection-filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
 }
-.lifestyle-hero-copy {
-  min-width: 0;
-}
-.lifestyle-hero-product {
-  display: block;
-  min-width: 0;
+.collection-filter-toggle {
+  display: none;
+  min-height: 44px;
+  padding: 10px 16px;
   color: var(--aether-text);
-  text-decoration: none;
-}
-.lifestyle-hero-product img {
-  display: block;
-  width: 100%;
-  height: clamp(280px, 36vw, 500px);
-  object-fit: contain;
-  border: 1px solid var(--aether-border);
   background: var(--aether-surface);
+  border: 1px solid var(--aether-border-active);
 }
-.lifestyle-hero-product > span {
+.collection-filter-reset,
+.collection-filter-toggle {
+  cursor: pointer;
+}
+.collection-filter-reset {
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--aether-gold-light);
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+}
+.collection-filter-panel {
   display: flex;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 18px;
-  font-size: 1rem;
+  align-items: end;
+  gap: 18px;
+  margin-top: 16px;
 }
-.lifestyle-hero-product small {
-  color: var(--aether-silver);
+.imperial-obsidian .reserve-collection-card,
+.lifestyle-world .reserve-collection-card {
+  display: grid;
+  gap: 14px;
+  color: inherit;
+}
+.imperial-obsidian .reserve-card-stage,
+.lifestyle-world .reserve-card-stage {
+  min-height: 240px;
+  padding: 18px 14px 16px;
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 110%, #245b4826, transparent 62%),
+    linear-gradient(180deg, #1a1a1a, #111111);
+  box-shadow: inset 0 1px #ffffff14;
+}
+.imperial-obsidian .reserve-card-stage img,
+.lifestyle-world .reserve-card-stage img {
+  width: auto;
+  max-width: 78%;
+  height: 210px;
+  object-fit: contain;
+}
+.reserve-card-format {
+  margin: 0;
+  color: var(--aether-gold-light);
+  font-size: 0.85rem;
+}
+.imperial-obsidian .cart-page,
+.lifestyle-world .cart-page {
+  padding: 48px 6% 80px;
+  max-width: 920px;
+}
+.imperial-obsidian .cart-heading h2,
+.lifestyle-world .cart-heading h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+.imperial-obsidian .cart-lines li,
+.lifestyle-world .cart-lines li {
+  align-items: start;
+  gap: 18px;
+  padding: 20px 0;
+  border-top: 1px solid color-mix(in srgb, var(--aether-gold) 18%, transparent);
+}
+.imperial-obsidian .cart-lines img,
+.lifestyle-world .cart-lines img,
+.cart-line-photo-pending {
+  width: 96px;
+  height: 112px;
+  object-fit: contain;
+  background: radial-gradient(ellipse 70% 80% at 50% 110%, #245b4824, transparent 64%), #141414;
+}
+.cart-line-photo-pending {
+  display: block;
+  flex: 0 0 96px;
+}
+.imperial-obsidian .cart-drawer,
+.lifestyle-world .cart-drawer {
+  background: #111111;
+  border-left: 1px solid color-mix(in srgb, var(--aether-gold) 22%, transparent);
+  box-shadow: -18px 0 40px #0008;
 }
 .imperial-obsidian .collection-search-row {
   flex-wrap: wrap;
@@ -247,24 +368,48 @@
 .imperial-obsidian .reserve-photo-window img {
   animation: none !important;
 }
-@media (max-width: 700px) {
-  .lifestyle-hero {
+@media (max-width: 1100px) {
+  .lifestyle-opening,
+  .lifestyle-world .member-lifestyle-stage {
     grid-template-columns: 1fr;
-    min-height: 0;
-    padding-bottom: 75px;
   }
-  .lifestyle-hero h1 {
-    font-size: clamp(3rem, 12vw, 4.5rem);
+  .lifestyle-world .member-lifestyle-focal {
+    min-height: 280px;
+    height: 320px;
   }
-  .lifestyle-coordinate {
-    margin-bottom: 24px;
+}
+@media (max-width: 700px) {
+  .lifestyle-masthead,
+  .lifestyle-opening {
+    grid-template-columns: 1fr;
+    padding-inline: 5%;
   }
-  .lifestyle-hero-product img {
-    height: 300px;
+  .lifestyle-world .member-lifestyle-companions {
+    grid-template-columns: 1fr;
+  }
+  .lifestyle-world .member-lifestyle-focal {
+    height: 220px;
+  }
+  .lifestyle-masthead {
+    display: grid;
+    align-items: start;
+  }
+  .lifestyle-opening-copy h1 {
+    font-size: clamp(2rem, 11vw, 3.2rem);
+    max-width: none;
+  }
+  .collection-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+  .collection-filter-panel {
+    display: none;
+  }
+  .collection-filter-panel.is-open {
+    display: flex;
   }
 }
 @media (forced-colors: active) {
-  .lifestyle-hero-product img,
   .imperial-obsidian .collection-search-row select {
     border: 1px solid CanvasText;
   }
@@ -444,7 +589,8 @@
 .imperial-obsidian .reserve-commerce {
   background: var(--io-illumination), var(--io-environment);
 }
-.imperial-obsidian .lifestyle-hero {
+.imperial-obsidian .lifestyle-opening,
+.imperial-obsidian .lifestyle-masthead {
   background: var(--io-hero-material);
   border-color: var(--io-divider);
 }
@@ -460,7 +606,10 @@
     var(--io-elevation);
 }
 .imperial-obsidian .collection-chamber {
-  background: var(--io-chamber);
+  min-height: 0;
+  padding: 28px 6% 22px;
+  background:
+    radial-gradient(ellipse 46% 90% at 88% 80%, #245b4830, transparent 70%), var(--io-chamber);
 }
 .imperial-obsidian :is(.collection-product-media, .product-image-stage, .product-atelier-stage) {
   background: var(--io-navigation);
@@ -484,7 +633,7 @@ html[data-material='solid']
   .imperial-obsidian
   :is(
     .reserve-commerce,
-    .lifestyle-hero,
+    .lifestyle-opening,
     .lifestyle-brand,
     .collection-chamber,
     .product-purchase,
@@ -497,7 +646,7 @@ html[data-material='solid']
   .imperial-obsidian
     :is(
       .reserve-commerce,
-      .lifestyle-hero,
+      .lifestyle-opening,
       .lifestyle-brands,
       .lifestyle-brand,
       .collection-chamber,
@@ -518,6 +667,6 @@ html[data-material='solid']
 }
 
 /* Public header is fixed; member commerce already owns its navigation inset. */
-.public-world:not(.member-collection) .lifestyle-hero {
-  padding-top: clamp(112px, 12vw, 160px);
+.public-world:not(.member-collection) .lifestyle-masthead {
+  padding-top: clamp(88px, 10vw, 120px);
 }
