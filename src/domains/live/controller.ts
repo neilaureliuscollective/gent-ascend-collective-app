@@ -82,6 +82,17 @@ export class LiveController {
   private artifactWriting = false;
   private interruptedItems = new Set<string>();
   private spokenTargetKey = '';
+  /** Existing session streams only. Presentation may tap these; it must not stop tracks. */
+  mediaStreams() {
+    const playback = this.audio?.srcObject;
+    return {
+      microphone: this.stream,
+      playback:
+        playback && typeof playback === 'object' && 'getAudioTracks' in playback
+          ? (playback as MediaStream)
+          : null,
+    };
+  }
   async audioLevels() {
     const epoch = this.epoch;
     const stats = await this.pc?.getStats();

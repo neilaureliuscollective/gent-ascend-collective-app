@@ -1,3 +1,7 @@
+# Aethelios Live call globe — 2026-10-16
+
+Use Canvas 2D for a recognizable smoked Earth instead of adding another 3D runtime. Three.js remains reserved for existing product stages. Energy comes from a tap on the current Live microphone/playback streams, with WebRTC `getStats` as fallback. The official 2026-10-15 gold A emblem stays an upright overlay; it is not the concept placeholder. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
 # Architect immersive creation world and budget lock — 2026-10-15
 
 Close the concurrent reservation race without weakening 156600 execution or settlement rules. Distinct request IDs now take a person+run budget row `FOR UPDATE` before counting. The $1.00 figure is a reserved allowance; character-count input bounds remain approximate. Architect’s existing entry, choice, workbench and app-panel surfaces become one connected creation world: arrival, path, shape, labelled direction, plan, real work, Use/Inspect and return. Agency remains the founder’s first Architect project. Evidence: [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md).
