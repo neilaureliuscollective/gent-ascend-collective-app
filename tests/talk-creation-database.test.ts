@@ -674,3 +674,23 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
     );
   });
 });
+
+it('keeps premium transfer blocked until database authority derives the complete snapshot', async () => {
+  const { lifestyleLaunchBoard, premiumDirectionTransferBlocker } = await import('@/domains/talk-creation/design-board');
+  const { produceArchitectDirection } = await import('@/domains/talk-creation/architect-direction');
+  const boardId = '00000000-0000-4000-8000-000000000091';
+  const projectId = '00000000-0000-4000-8000-000000000092';
+  const requestId = '00000000-0000-4000-8000-000000000093';
+  const board = lifestyleLaunchBoard();
+  const receipt = produceArchitectDirection({ conversationId: conversation, boardId, version: 1, board });
+  expect(premiumDirectionTransferBlocker(board)).toMatch(/not available yet/);
+  await asUser(owner, `select public.ai_talk_save_creation('${boardId}','${conversation}',null,'board',null,${literal(board)})`);
+  const derived = (await db.query(`select public.ai_talk_derived_design_receipt('${owner}','${conversation}','${boardId}',1) as receipt`)).rows[0] as { receipt: { digest: string; content: unknown } };
+  expect(derived.receipt.digest).not.toBe(receipt.digest);
+  expect(derived.receipt.content).not.toHaveProperty('designSnapshot');
+  await db.exec(`insert into public.architect_origin_projects(id,person_id) values('${projectId}','${owner}')`);
+  await asUser(owner, `select public.architect_apps_retain_design('${requestId}','${projectId}','${receipt.digest}',${literal(receipt)},'talk-authorized',true)`);
+  const retained = (await asUser(owner, `select verified from public.architect_design_directions where request_id='${requestId}'`)).rows[0] as { verified: boolean };
+  expect(retained.verified).toBe(false);
+  await expect(asUser(owner, `select public.ai_talk_record_direction_transfer('${requestId}','${conversation}','${boardId}',1,'direction-b','${receipt.identity.directionId}','${projectId}','${receipt.digest}',${literal(receipt)})`)).rejects.toThrow(/acknowledgment missing/i);
+});

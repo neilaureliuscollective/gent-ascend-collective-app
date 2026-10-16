@@ -6,7 +6,11 @@ import {
 } from '@/domains/architect-design-direction/talk-source';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import type { DesignDirectionReceipt } from '@/domains/architect-design-direction/contract';
-import { designBoardContentSchema, selectedDirection } from './design-board';
+import {
+  designBoardContentSchema,
+  premiumDirectionTransferBlocker,
+  selectedDirection,
+} from './design-board';
 import { produceArchitectDirection, directionIdentity } from './architect-direction';
 
 async function resolveTalkDesignSource(input: {
@@ -28,6 +32,8 @@ async function resolveTalkDesignSource(input: {
   if (!row.data || row.data.candidate || row.data.version !== identity.boardVersion) return null;
   const board = designBoardContentSchema.safeParse(row.data.content);
   if (!board.success) return null;
+  const blocker = premiumDirectionTransferBlocker(board.data);
+  if (blocker) throw new IntelligenceError(blocker, 409);
   const direction = selectedDirection(board.data);
   if (directionIdentity(row.data.id, direction.id) !== identity.directionId) return null;
   const authorized = produceArchitectDirection({

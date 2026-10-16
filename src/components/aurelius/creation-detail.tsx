@@ -13,7 +13,7 @@ import type {
 import { creationTitle } from '@/domains/talk-creation/schema';
 import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
-import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
+import { premiumDirectionTransferBlocker, type DesignBoardContent } from '@/domains/talk-creation/design-board';
 import {
   compileTalkDocument,
   compareTalkRevisions,
@@ -105,6 +105,7 @@ export function CreationDetail({
   const plan = creation?.kind === 'plan' ? (creation.content as PlanContent) : null;
   const palette = creation?.kind === 'palette' ? (creation.content as PaletteContent) : null;
   const board = creation?.kind === 'board' ? (creation.content as DesignBoardContent) : null;
+  const directionTransferBlocker = board ? premiumDirectionTransferBlocker(board) : null;
   const handoff = creation?.kind === 'handoff' ? (creation.content as HandoffContent) : null;
   const [draft, setDraft] = useState(creation?.content);
   const [idea, setIdea] = useState(
@@ -376,6 +377,7 @@ export function CreationDetail({
             onCommit={(next) => onSave('board', next)}
           />
           <div className="talk-origin-review">
+            {directionTransferBlocker && <p role="status">{directionTransferBlocker}</p>}
             <p className="talk-creation-status" data-adapter="talk-architect-direction">
               {creation
                 ? describeTalkDestination({
@@ -449,7 +451,7 @@ export function CreationDetail({
             <button
               type="button"
               className="button"
-              disabled={!creation || directionBusy !== null || Boolean(directionReview?.imported)}
+              disabled={!creation || directionBusy !== null || Boolean(directionReview?.imported) || Boolean(directionTransferBlocker)}
               onClick={() => {
                 if (!creation) return;
                 setDirectionBusy('review');

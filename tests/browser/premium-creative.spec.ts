@@ -104,6 +104,12 @@ test('three premium compositions, keyboard selection, revision reload, document 
   await page.screenshot({ path: info.outputPath('document-preview.png'), fullPage: true });
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(page.locator('textarea').first()).toBeVisible();
+  await page.goto('http://127.0.0.1:3102/premium.html?surface=board-detail');
+  await expect(
+    page.getByRole('button', { name: 'Review design transfer', exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByText(/Premium design transfer is not available yet/)).toBeVisible();
+  await page.screenshot({ path: info.outputPath('premium-transfer-blocked.png'), fullPage: true });
   expect(errors).toEqual([]);
 });
 

@@ -30,7 +30,7 @@ import {
   type TalkImageJob,
 } from './schema';
 import { matchesHandoffDestination, persistKind } from './persist';
-import { designBoardContentSchema, selectedDirection } from './design-board';
+import { designBoardContentSchema, premiumDirectionTransferBlocker, selectedDirection } from './design-board';
 import {
   directionProjectIdentity,
   produceArchitectDirection,
@@ -649,6 +649,8 @@ async function authorizedBoard(conversationId: string, boardId: string) {
   const board = row.data ? designBoardContentSchema.safeParse(row.data.content) : null;
   if (!row.data || row.data.candidate || !board?.success)
     throw new IntelligenceError('Design board unavailable.', 404);
+  const blocker = premiumDirectionTransferBlocker(board.data);
+  if (blocker) throw new IntelligenceError(blocker, 409);
   return { person, client, creation: row.data, board: board.data };
 }
 

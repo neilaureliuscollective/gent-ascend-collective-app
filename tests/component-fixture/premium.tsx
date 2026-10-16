@@ -24,6 +24,38 @@ function PremiumFixture() {
   const [notice, setNotice] = useState('');
   const mode = new URLSearchParams(location.search).get('surface');
   if (mode === 'talk') return <TalkLiveFixture />;
+  if (mode === 'board-detail')
+    return (
+      <main style={{ maxWidth: 1160, padding: 24, margin: 'auto' }}>
+        <p className="eyebrow">Synthetic saved premium revision · no account or project writes</p>
+        <CreationDetail
+          creation={{
+            id: '50000000-0000-4000-8000-000000000031',
+            lineage_id: '50000000-0000-4000-8000-000000000031',
+            person_id: 'synthetic',
+            conversation_id: '30000000-0000-4000-8000-000000000031',
+            source_turn_id: null,
+            version: 2,
+            predecessor_id: null,
+            superseded_by: null,
+            created_at: '2026-10-15',
+            kind: 'board',
+            content: board,
+          }}
+          images={[]}
+          canEdit
+          busy={false}
+          error=""
+          notice=""
+          onClose={() => {}}
+          onSave={() => {}}
+          onCopy={() => {}}
+          onSelect={() => {}}
+          onHandoff={() => {}}
+        />
+      </main>
+    );
+
   return (
     <main style={{ maxWidth: 1160, padding: '24px 16px', margin: 'auto' }}>
       <p className="eyebrow">

@@ -424,3 +424,12 @@ function direction(
     ],
   };
 }
+
+/** Premium receipts need a matching PostgreSQL authority derivation before transfer can ship.
+ * Never downgrade provenance or enable execution to bypass that integration boundary.
+ */
+export function premiumDirectionTransferBlocker(board: DesignBoardContent): string | null {
+  return board.rendererVersion === 'premium/v2'
+    ? 'Premium design transfer is not available yet. Your saved direction stays in Talk; nothing has started in Architect.'
+    : null;
+}
