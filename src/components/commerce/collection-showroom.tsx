@@ -50,7 +50,7 @@ export function CollectionShowroom({
       <header className="reserve-shop-hero">
         <div className="reserve-scene-light" aria-hidden="true" />
         <div className="reserve-shop-headline">
-          <span className="world-kicker">Gent Ascend Collective / {title}</span>
+          <span className="world-kicker">Aethelios Lifestyle / {title}</span>
           <h1>
             A higher
             <br />
@@ -257,7 +257,7 @@ export function CollectionShowroom({
         )}
       </section>
       <section className="reserve-shop-manifesto">
-        <span className="world-kicker">The Legacy Reserve standard</span>
+        <span className="world-kicker">The Aethelios Lifestyle standard</span>
         <h2>
           More than a place
           <br />

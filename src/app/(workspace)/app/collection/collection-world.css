@@ -5,7 +5,13 @@
   --world-gold: #e0bb6a;
 }
 .member-collection .reserve-commerce {
-  background: radial-gradient( ellipse at 85% 12%, color-mix(in srgb, var(--aether-deep) 43.92%, transparent), transparent 45% ), var(--aether-obsidian);
+  background:
+    radial-gradient(
+      ellipse at 85% 12%,
+      color-mix(in srgb, var(--aether-deep) 43.92%, transparent),
+      transparent 45%
+    ),
+    var(--aether-obsidian);
 }
 .member-collection a {
   text-decoration: none;
@@ -15,10 +21,9 @@
   isolation: isolate;
   display: flex;
   align-items: center;
-  min-height: 370px;
-  padding: 54px 6% 58px;
-  background:
-    linear-gradient( 90deg, color-mix(in srgb, var(--aether-obsidian) 96.08%, transparent) 4%, color-mix(in srgb, var(--aether-obsidian) 72.16%, transparent) 45%, color-mix(in srgb, var(--aether-obsidian) 20.78%, transparent) ), url('/media/world/gallery.webp') center 54% / cover;
+  min-height: 0;
+  padding: 28px 6% 24px;
+  background: radial-gradient(ellipse 46% 90% at 88% 80%, #245b4830, transparent 70%), #0a0a0a;
   border-bottom: 1px solid #c4912f45;
 }
 .collection-chamber::after {
@@ -172,7 +177,11 @@
 .collection-world-footer {
   padding: 50px 6% 70px;
   border-top: 1px solid #c4912f40;
-  background: linear-gradient( 145deg, color-mix(in srgb, var(--aether-deep) 43.92%, transparent), var(--aether-obsidian) );
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--aether-deep) 43.92%, transparent),
+    var(--aether-obsidian)
+  );
 }
 .member-collection .collection-world-footer h2 {
   font-size: clamp(2.3rem, 4vw, 4rem);
@@ -218,7 +227,7 @@
   .member-collection .reserve-sticky-purchase {
     bottom: var(--interaction-nav-space, 68px);
     z-index: 32;
-    padding-bottom: 14px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
   .member-collection:has(.reserve-sticky-purchase) {
     padding-bottom: 120px;

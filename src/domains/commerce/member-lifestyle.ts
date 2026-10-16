@@ -10,36 +10,6 @@ const chapters = [
 
 export const KEPT_CABINET_RELATIONS = ['owned', 'in_use', 'favorite', 'running_low'] as const;
 
-export const memberLifestylePhotography = [
-  {
-    id: 'vitalis',
-    name: 'Vitalis',
-    kind: 'Hair & beard oil',
-    src: '/media/world/vitalis-cutout.webp',
-    alt: 'Vitalis hair and beard oil bottle in Aethelios packaging',
-    href: '/app/collection/vitalis',
-    role: 'focal' as const,
-  },
-  {
-    id: 'obsidian-creme',
-    name: 'Obsidian Crème',
-    kind: 'Face moisturizer',
-    src: '/media/world/obsidian-creme-cutout.webp',
-    alt: 'Obsidian Crème jar in Aethelios packaging',
-    href: '/app/collection',
-    role: 'secondary' as const,
-  },
-  {
-    id: 'hydros',
-    name: 'Hydros',
-    kind: 'Hydration',
-    src: '/media/world/hydros-cutout.webp',
-    alt: 'Hydros electrolyte tin in Aethelios packaging',
-    href: '/app/collection',
-    role: 'secondary' as const,
-  },
-] as const;
-
 export type MemberCabinetRecord = Pick<CabinetRow, 'id' | 'name' | 'relation' | 'shopify_handle'>;
 
 export type MemberLifestyleCabinet = {

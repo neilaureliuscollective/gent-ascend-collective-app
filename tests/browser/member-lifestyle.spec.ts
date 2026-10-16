@@ -55,7 +55,8 @@ for (const width of [344, 720, 1440]) {
     await expect(page.getByText('Nothing is saved yet.', { exact: false })).toBeVisible();
     await expect(page.getByText('No ritual is recorded yet.', { exact: false })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Legacy Reserve', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('img', { name: /Vitalis hair and beard oil/ })).toBeVisible();
+    await expect(page.getByRole('img', { name: /Vitalis hair and beard oil/ })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /Fixture Oil/ })).toBeVisible();
     await expect(page.getByText('Aethelios Human Ascendance', { exact: false })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Synthetic front image' }).first()).toBeVisible();
     expect(await page.locator('body').innerText()).not.toMatch(/↗|→|←/);
@@ -83,6 +84,8 @@ for (const width of [344, 720, 1440]) {
 test('empty catalog and returning Cabinet stay honest', async ({ page }) => {
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member&empty=1');
   await expect(page.getByText('The collection is being prepared.')).toBeVisible();
+  await expect(page.getByRole('img', { name: /Vitalis hair and beard oil/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Vitalis/ })).toHaveCount(0);
   await expect(page.getByText('recommended for you', { exact: false })).toHaveCount(0);
   await page.goto('http://127.0.0.1:3102/?mode=lifestyle-member&unconfigured=1');
   await expect(page.getByText('Live product availability is not connected yet.')).toBeVisible();

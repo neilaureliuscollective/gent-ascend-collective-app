@@ -1,3 +1,7 @@
+# Lifestyle merchandising and vendor presentation — 2026-10-16
+
+House packshots are not SKUs. Bind them to published Shopify products only by exact handle. Do not sort the catalog to force `vitalis` first. Shopify’s default store name (`My Store` and close aliases) is presentation, not a supplier: show Aethelios Lifestyle. Real vendor strings stay visible. Do not rewrite Shopify vendor data. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
+
 # Aethelios Live original emblem — 2026-10-16
 
 Use the founder-supplied 1254×1254 RGBA gold A and compass star for the Live globe. Do not keep the rounded-square `aethelios-official-20261015` install tile, do not redraw the mark, and do not change global brand assets. The supplied original already has alpha and no wordmark; no SVG of this mark exists in the repository. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
@@ -109,6 +113,7 @@ Quality application on #131 `b42f2ff` failed only `Grooming world and guest ritu
 # Talk foundation reconciliation — 2026-10-15
 
 #131 previously included main `544c156` so Health’s published `20261015181000_health_workspace.sql` and Talk’s `20261015180000` / `20261015190000` coexist by filename. That Health-only base is superseded by the Studio-live reconciliation above. Do not rename hosted `schema_migrations` rows. Architect Origin is already a hosted name-equivalent (`20261014010638` / `20261012230000_architect_origin`). The 18 Talk/Architect-apps files were not listed by name on the current hosted ledger read; objects remain unverified because the physical-schema query was cancelled. Hosted `AETHELIOS_TALK_CREATION_FIXTURE` stays unset. No main merge, hosted apply or paid provider call.
+
 # Aethelios current knowledge production — 2026-10-15
 
 Founder authorized merge of PR #141 onto main and deploy through the existing Vercel Git production pipeline. Merge `bbda46f` (parents `af29723` Human Ascendance logo + `5488060` knowledge). Production `dpl_Dq6DwWY2sPfbtxLsr2CnY6qAZ7oR` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify write or paid model call. Talk #131 creation remains unmerged. Evidence: [AETHELIOS_KNOWLEDGE.md](AETHELIOS_KNOWLEDGE.md).

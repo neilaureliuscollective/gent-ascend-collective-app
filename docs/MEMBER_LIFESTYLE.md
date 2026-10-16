@@ -8,7 +8,7 @@ Signed-in `/app/lifestyle` is a member environment: products, Cabinet and Groomi
 
 ## Implemented
 
-- Compact member masthead with Cabinet, Grooming, cart and orders, then one emerald/gold product stage (~340px on desktop) using approved house packshots from `/public/media/world/*-cutout.webp`.
+- Compact member masthead with Cabinet, Grooming, cart and orders, then one emerald product stage (~340px on desktop). House packshots from `/public/media/world/*-cutout.webp` bind to published catalog handles; they never invent a Vitalis (or other) purchase link.
 - Authentic packaging is shown as photographed, including any Legacy Reserve text still printed on physical labels. Prices and availability are confirmed only in the catalog.
 - Cabinet/Grooming continuity sits directly under the stage. Empty personal states stay compact and uninvented. Kept-product counts come from a Cabinet count query, not the first preview page.
 - Collection browsing and product detail share the same smoked-glass environment: emerald product wells, gold actions, graphite reading surfaces. Nested photo frames are reduced. Featured catalog products are not repeated as a second hero.

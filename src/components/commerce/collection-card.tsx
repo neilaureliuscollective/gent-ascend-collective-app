@@ -60,6 +60,7 @@ export function CollectionCard({
             {entry.title}
             <Icon name="arrow-up-right" className="action-icon" />
           </h3>
+          {entry.size && <p className="reserve-card-format">{entry.size}</p>}
           {entry.summary && <p>{entry.summary}</p>}
           <div className="reserve-card-price">
             <strong>{entry.price}</strong>
