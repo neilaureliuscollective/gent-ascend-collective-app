@@ -21,10 +21,12 @@ export function useReadingAnchor(
   const size = useRef({ width: 0, height: 0 });
   function remember() {
     const node = root.current;
-    if (!node) return;
+    if (!node) return follow.current;
     if (node.clientWidth !== size.current.width || node.clientHeight !== size.current.height)
-      return;
+      return follow.current;
+    follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < 24;
     anchor.current = capture(node, follow.current);
+    return follow.current;
   }
   useEffect(() => {
     const node = root.current;

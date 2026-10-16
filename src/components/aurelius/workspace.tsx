@@ -2003,9 +2003,7 @@ export function AureliusWorkspace({
             onScroll={() => {
               const el = scroll.current;
               if (el) {
-                follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
-                setAwayFromLatest(!follow.current);
-                rememberReadingPosition();
+                setAwayFromLatest(!rememberReadingPosition());
               }
             }}
             aria-label="Conversation messages"
