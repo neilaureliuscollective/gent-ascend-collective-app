@@ -32,6 +32,8 @@ Identity reconciliation (2026-10-16): the initial management lookup established 
 
 ## Required SQL review, nonexecuted
 
+The approved `7f237291` schema attempt was **not executed**: fresh production default-ACL inspection exposed authenticated TRUNCATE privileges surviving the old preview-session/generation-run declarations. The source now explicitly revokes authenticated ALL before granting SELECT on those two tables. See the [revised hashes, audit, regression coverage and transaction plan](ARCHITECT_APPS_ACTIVATION.md#revised-sql-candidate--earlier-approval-not-executed). Fresh explicit approval is required for this revised candidate. No hosted data, ledger or functions changed.
+
 Existing ledger names include the shared Apps files `20261015080000`, `20261015120000`, `20261015140000` and Talk retain `20261015160000` / `20261015170000`; physical base Apps tables were observed. Preserve them.
 
 Missing Apps dependency chain from current source:

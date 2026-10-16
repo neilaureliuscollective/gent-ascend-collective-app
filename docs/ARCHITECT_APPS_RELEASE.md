@@ -2,6 +2,8 @@
 
 Inspected 2026-10-16 against main `175fda72eeb37f389d76d73572dd882fe68cef15`. #130 is merged; this continuation stays on draft #146. #154 and the separate Talk dock are not incorporated or changed.
 
+SQL review update: the earlier approved four-file attempt stopped at read-only preflight and was **not executed**. Production default ALL grants exposed unintended authenticated TRUNCATE authority in two source declarations. Those declarations and the single manifest's hashes are revised, with production-default privilege regressions. The other two files retain their hashes. The revised candidate needs new explicit approval; prior green CI and approval are not carried forward. See [exact revised transaction plan](ARCHITECT_APPS_ACTIVATION.md#revised-sql-candidate--earlier-approval-not-executed).
+
 | Level | Evidence / limit |
 | --- | --- |
 | Implemented on released main | Origin saved projects, Apps proposal/approve/start, durable jobs, isolated Docker compiler, verified private preview, revision/reopen and owner-bound data bridge. Code presence does not activate them. |

@@ -23,7 +23,8 @@ alter table public.architect_app_generation_runs enable row level security;
 create policy architect_app_generation_runs_owner on public.architect_app_generation_runs
   for select to authenticated
   using (person_id = (select id from public.persons where auth_user_id = (select auth.uid())));
-revoke all on table public.architect_app_generation_runs from public, anon;
+-- Remove production default grants (including TRUNCATE, which bypasses RLS).
+revoke all on table public.architect_app_generation_runs from public, anon, authenticated;
 grant select on table public.architect_app_generation_runs to authenticated;
 
 create table public.architect_app_worker_presence (

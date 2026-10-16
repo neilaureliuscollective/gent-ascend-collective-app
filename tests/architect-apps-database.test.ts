@@ -60,10 +60,17 @@ beforeAll(async () => {
   await db.exec(await readFile('supabase/migrations/20261015120000_architect_apps_durable.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015140000_architect_apps_mutation.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015155000_architect_apps_retain_verified.sql', 'utf8'));
+  // Match hosted defaults: an additive GRANT SELECT does not remove these grants.
+  // Scope defaults to the four commissioning files; do not change the base fixtures.
+  await db.exec(`alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+    alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+    alter role service_role bypassrls;`);
   await db.exec(await readFile('supabase/migrations/20261015156000_architect_apps_preview_sessions.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156500_architect_apps_pilot_budget.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156600_architect_apps_execution_gate.sql', 'utf8'));
   await db.exec(await readFile('supabase/migrations/20261015156700_architect_apps_budget_lock.sql', 'utf8'));
+  expect((await db.query('select founder_pilot from public.architect_apps_execution_policy')).rows)
+    .toEqual([{ founder_pilot: false }]);
   await asWorker(`select public.architect_apps_set_execution_policy(true)`);
   await asUser(ownerAuth, `select public.architect_origin_save('${project}','${request}',0,${literal(content)},'Synthetic save')`);
 });
@@ -532,5 +539,138 @@ describe('Apps schema probe against genuinely missing prerequisites (PGlite; not
     expect(report.ok).toBe(false);
     expect(report.missing).toEqual(expect.arrayContaining(['architect_apps', 'architect_app_jobs', 'architect_apps_claim']));
     await empty.close();
+  });
+});
+
+describe('commissioning with production default privileges (synthetic PGlite)', () => {
+  const tables = [
+    ['architect_app_preview_sessions', 'nonce', true],
+    ['architect_app_generation_runs', 'request_id', true],
+    ['architect_app_worker_presence', 'worker_id', false],
+    ['architect_apps_execution_policy', 'id', true],
+    ['architect_app_generation_budgets', 'run_id', false],
+  ] as const;
+
+  for (const role of ['authenticated', 'anon'] as const) {
+    for (const [table, column, ownerRead] of tables) {
+      it(`${role} cannot mutate or truncate ${table} despite default ALL grants`, async () => {
+        const grants = await db.query(`select
+          has_table_privilege('${role}','public.${table}','SELECT') as read,
+          has_table_privilege('${role}','public.${table}','INSERT') as insert,
+          has_table_privilege('${role}','public.${table}','UPDATE') as update,
+          has_table_privilege('${role}','public.${table}','DELETE') as delete,
+          has_table_privilege('${role}','public.${table}','TRUNCATE') as truncate,
+          has_table_privilege('${role}','public.${table}','REFERENCES') as references,
+          has_table_privilege('${role}','public.${table}','TRIGGER') as trigger,
+          has_table_privilege('${role}','public.${table}','MAINTAIN') as maintain`);
+        expect(grants.rows).toEqual([
+          {
+            read: role === 'authenticated' && ownerRead,
+            insert: false,
+            update: false,
+            delete: false,
+            truncate: false,
+            references: false,
+            trigger: false,
+            maintain: false,
+          },
+        ]);
+        await db.exec(
+          `set role ${role}; select set_config('request.jwt.claim.sub','${ownerAuth}',false)`,
+        );
+        try {
+          for (const sql of [
+            `insert into public.${table} default values`,
+            `update public.${table} set ${column}=${column}`,
+            `delete from public.${table}`,
+            `truncate public.${table}`,
+          ])
+            await expect(db.query(sql)).rejects.toThrow(/permission denied/i);
+          if (role === 'anon' || !ownerRead)
+            await expect(db.query(`select * from public.${table}`)).rejects.toThrow(
+              /permission denied/i,
+            );
+        } finally {
+          await db.exec('reset role');
+        }
+      });
+    }
+  }
+
+  it('keeps owner reads filtered and intended preview/generation RPCs available', async () => {
+    for (const table of ['architect_app_preview_sessions', 'architect_app_generation_runs']) {
+      const owned = await asUser(ownerAuth, `select person_id from public.${table}`);
+      expect(owned.rows.length).toBeGreaterThan(0);
+      expect(owned.rows).toEqual(owned.rows.map(() => ({ person_id: ownerPerson })));
+      expect((await asUser(foreignAuth, `select person_id from public.${table}`)).rows).toEqual([]);
+    }
+    // Positive issue/read/revoke and reserve/begin/finish operations are exercised
+    // by the lifecycle cases above, under the same production-style defaults.
+    for (const signature of [
+      'architect_apps_preview_issue(uuid,text,text,integer,boolean)',
+      'architect_apps_preview_read(text)',
+      'architect_apps_preview_current(uuid)',
+      'architect_apps_preview_revoke(uuid)',
+      'architect_apps_worker_readiness(integer)',
+      'architect_apps_reserve_generation(uuid,uuid,integer,integer,text)',
+      'architect_apps_begin_generation(uuid)',
+      'architect_apps_finish_generation(uuid,text,integer,integer)',
+      'architect_apps_lock_generation_budget(uuid)',
+      'architect_apps_require_execution()',
+    ]) {
+      expect(
+        (
+          await db.query(`select
+        has_function_privilege('authenticated','public.${signature}','EXECUTE') as owner,
+        has_function_privilege('anon','public.${signature}','EXECUTE') as anonymous`)
+        ).rows,
+      ).toEqual([{ owner: true, anonymous: false }]);
+    }
+  });
+
+  it('keeps privileged policy/presence/probe RPCs service-role-only and functional', async () => {
+    for (const signature of [
+      'architect_apps_set_execution_policy(boolean)',
+      'architect_apps_report_worker_presence(text,text,text,boolean,boolean,boolean,text)',
+      'architect_apps_schema_probe()',
+    ]) {
+      expect(
+        (
+          await db.query(`select
+        has_function_privilege('service_role','public.${signature}','EXECUTE') as worker,
+        has_function_privilege('authenticated','public.${signature}','EXECUTE') as owner,
+        has_function_privilege('anon','public.${signature}','EXECUTE') as anonymous`)
+        ).rows,
+      ).toEqual([{ worker: true, owner: false, anonymous: false }]);
+    }
+    await db.exec(`begin; set local role service_role;
+      select set_config('request.jwt.claim.role','service_role',true)`);
+    try {
+      expect(
+        (await db.query('select public.architect_apps_set_execution_policy(false) as enabled'))
+          .rows,
+      ).toEqual([{ enabled: false }]);
+      expect(
+        (await db.query('select founder_pilot from public.architect_apps_execution_policy')).rows,
+      ).toEqual([{ founder_pilot: false }]);
+      expect(
+        (
+          await db.query(`select public.architect_apps_report_worker_presence(
+        'privilege-fixture','sha256:${'ab'.repeat(32)}','docker',true,true,true,'idle') as reported`)
+        ).rows,
+      ).toEqual([{ reported: true }]);
+      expect(
+        (
+          await db.query(
+            `select state from public.architect_app_worker_presence where worker_id='privilege-fixture'`,
+          )
+        ).rows,
+      ).toEqual([{ state: 'idle' }]);
+      expect(
+        (await db.query(`select public.architect_apps_schema_probe()->>'ok' as ok`)).rows,
+      ).toEqual([{ ok: 'true' }]);
+    } finally {
+      await db.exec('rollback; reset role');
+    }
   });
 });

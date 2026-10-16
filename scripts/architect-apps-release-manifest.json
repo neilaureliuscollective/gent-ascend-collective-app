@@ -129,12 +129,12 @@
     },
     {
       "file": "20261015156000_architect_apps_preview_sessions.sql",
-      "sha256": "45dd275157e28ac442f5c1c5099911aa32e0e829ebc414882c7a7b78966df85e",
+      "sha256": "3f9487760e56d0dccaa58a5de841a14aa2cf3cab97892b301c519dd38dcc9204",
       "profiles": ["architect-only", "talk-integrated"]
     },
     {
       "file": "20261015156500_architect_apps_pilot_budget.sql",
-      "sha256": "5f4fe397f384616b404ea3f86639abd1fbd0f97e4501f5875ae6b8108ebb0ff5",
+      "sha256": "d11ed64353225d3e6ce82adb51664e240f791034ebc68463f5cb5925978a4d4d",
       "profiles": ["architect-only", "talk-integrated"]
     },
     {

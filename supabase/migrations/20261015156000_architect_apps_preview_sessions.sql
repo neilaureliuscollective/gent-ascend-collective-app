@@ -23,7 +23,8 @@ create index architect_app_preview_sessions_owner
 alter table public.architect_app_preview_sessions enable row level security;
 create policy architect_app_preview_sessions_owner on public.architect_app_preview_sessions for select to authenticated
   using (person_id = (select id from public.persons where auth_user_id = (select auth.uid())));
-revoke all on table public.architect_app_preview_sessions from public, anon;
+-- Remove production default grants (including TRUNCATE, which bypasses RLS).
+revoke all on table public.architect_app_preview_sessions from public, anon, authenticated;
 grant select on table public.architect_app_preview_sessions to authenticated;
 
 create or replace function public.architect_apps_schema_probe()
