@@ -88,6 +88,53 @@ function punchDarkPlate(image: CanvasImageSource) {
   return canvas;
 }
 
+function sourceHasAlpha(image: CanvasImageSource) {
+  const width = 'naturalWidth' in image ? Number(image.naturalWidth) || 48 : 48;
+  const probe = Math.min(48, Math.max(8, width));
+  const data = readImageData(image, probe, probe);
+  if (!data) return false;
+  let translucent = 0;
+  const pixels = data.data.length / 4;
+  for (let i = 3; i < data.data.length; i += 4) {
+    if ((data.data[i] ?? 255) < 250) translucent += 1;
+  }
+  return translucent > pixels * 0.15;
+}
+
+function shadeEmblem(target: CanvasRenderingContext2D, size: number, source: CanvasImageSource) {
+  const light = target.createRadialGradient(
+    size * 0.32,
+    size * 0.28,
+    size * 0.05,
+    size * 0.5,
+    size * 0.54,
+    size * 0.78,
+  );
+  light.addColorStop(0, 'rgb(255,253,246)');
+  light.addColorStop(0.42, 'rgb(236,230,214)');
+  light.addColorStop(1, 'rgb(132,142,134)');
+  target.globalCompositeOperation = 'multiply';
+  target.fillStyle = light;
+  target.fillRect(0, 0, size, size);
+  target.globalCompositeOperation = 'destination-in';
+  target.drawImage(source, 0, 0, size, size);
+  target.globalCompositeOperation = 'source-over';
+}
+
+function prepareEmblem(image: HTMLImageElement) {
+  if (typeof document === 'undefined') return null;
+  if (!sourceHasAlpha(image)) return punchDarkPlate(image);
+  const size = Math.max(256, Math.min(1024, image.naturalWidth || 1024));
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.drawImage(image, 0, 0, size, size);
+  shadeEmblem(context, size, image);
+  return canvas;
+}
+
 function sample(data: ImageData, lon: number, lat: number) {
   const { u, v } = liveGlobeMapUv(lon, lat);
   const width = data.width;
@@ -292,9 +339,37 @@ export function mountLiveGlobe(
     context.arc(cx, cy, radius, 0, Math.PI * 2);
     context.clip();
     if (emblem) {
-      const size = radius * 0.84;
-      context.globalAlpha = 0.9;
-      context.drawImage(emblem, cx - size / 2, cy - size / 2, size, size);
+      const size = radius * 0.7;
+      const dx = cx - size / 2;
+      const dy = cy - size / 2 + size * 0.035;
+      const shadow = context.createRadialGradient(
+        cx,
+        cy + size * 0.1,
+        size * 0.06,
+        cx,
+        cy + size * 0.08,
+        size * 0.46,
+      );
+      shadow.addColorStop(0, 'rgba(5,8,7,0.32)');
+      shadow.addColorStop(1, 'rgba(5,8,7,0)');
+      context.fillStyle = shadow;
+      context.beginPath();
+      if (typeof context.ellipse === 'function') {
+        context.ellipse(cx, cy + size * 0.08, size * 0.4, size * 0.24, 0, 0, Math.PI * 2);
+      } else {
+        context.arc(cx, cy + size * 0.08, size * 0.32, 0, Math.PI * 2);
+      }
+      context.fill();
+      context.save();
+      context.globalAlpha = 0.1 + outward * 0.04;
+      context.translate(cx, cy + radius * 0.12);
+      context.scale(0.9, -0.26);
+      if (typeof context.filter === 'string') context.filter = 'blur(1.6px)';
+      context.drawImage(emblem, -size / 2, -size / 2, size, size);
+      if (typeof context.filter === 'string') context.filter = 'none';
+      context.restore();
+      context.globalAlpha = 0.86;
+      context.drawImage(emblem, dx, dy, size, size);
       const wash = context.createRadialGradient(
         cx - radius * 0.2,
         cy - radius * 0.24,
@@ -303,9 +378,9 @@ export function mountLiveGlobe(
         cy,
         radius,
       );
-      wash.addColorStop(0, `rgba(232,233,226,${0.05 + outward * 0.03})`);
-      wash.addColorStop(0.45, `rgba(54,137,108,${0.05 + outward * 0.03})`);
-      wash.addColorStop(1, 'rgba(196,145,47,0.03)');
+      wash.addColorStop(0, `rgba(232,233,226,${0.035 + outward * 0.025})`);
+      wash.addColorStop(0.5, `rgba(46,110,86,${0.04 + outward * 0.025})`);
+      wash.addColorStop(1, 'rgba(196,145,47,0.025)');
       context.globalCompositeOperation = 'soft-light';
       context.globalAlpha = 1;
       context.fillStyle = wash;
@@ -433,7 +508,7 @@ export function mountLiveGlobe(
   void loadImage(options?.emblemSrc ?? liveGlobeAssetSources.emblem)
     .then((image) => {
       if (disposed) return;
-      emblem = punchDarkPlate(image);
+      emblem = prepareEmblem(image);
       assetState.emblem = emblem ? 'ready' : 'missing';
       publishAssets();
       paint(typeof performance !== 'undefined' ? performance.now() : 0);
@@ -500,6 +575,6 @@ export const liveGlobeAssets = {
   emblem: liveGlobeAssetSources.emblem,
   emblemId: liveGlobeAssetSources.emblemId,
   missingTransparentEmblem:
-    'No transparent or vector official gold-A exists. All aethelios-official-20261015 PNGs are opaque RGB plates; crest/lockup are WebP plates. Live punches the dark plate of the 512 official mark without cropping.',
+    'Live uses the founder-supplied 1254 RGBA original A/star. Install icons remain aethelios-official-20261015 opaque plates. No SVG of this mark is in the repository; the supplied original already has alpha and is not redrawn.',
   crest: brand.crest,
 };

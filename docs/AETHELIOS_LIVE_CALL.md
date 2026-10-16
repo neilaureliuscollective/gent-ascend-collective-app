@@ -1,6 +1,6 @@
 # Aethelios Live call globe — 2026-10-16
 
-Verification pass on `cursor/aethelios-live-call-globe-1aa9` after reviewed head `82cdbc95ce1f8871db59d7ebfbb024f7f020f9fb`. Main/PR152 Talk attachments remain merged. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
+Original-emblem pass on `cursor/aethelios-live-call-globe-1aa9` after reviewed head `c8b447b4d4c8681f812b76bb7bb34e3a5c5434b3`. Axis-tick, Still-resize and capture-lint fixes stay in place. Main/PR152 Talk attachments remain merged. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
 
 ## Planet
 
@@ -14,15 +14,15 @@ The texture is downsampled to 1024×512, graded to restrained emerald land / obs
 
 Latitude uses screen-down `y`, so `lat = asin(-ny)`. `tests/live-globe-projection.test.ts` checks that the top of the disk is north and that Greenland/Scandinavia sit above Cape Horn, with Tasmania southern when Australia faces the camera.
 
-Thin straight ticks outside the globe in the `82cdbc9` production/gallery shots were not a map seam. `liveGlobeSphereCoords` previously clamped `nx/ny` and then tested `r2 > 1`, so axis pixels just outside the disk snapped onto the limb and painted a 1-pixel cross. The disk test now rejects unclamped `r2 > 1`. `ticks-before/` holds the reproduced shots; root captures are the after. The emblem and globe crop are unchanged.
+Thin straight ticks outside the globe in the `82cdbc9` production/gallery shots were not a map seam. `liveGlobeSphereCoords` previously clamped `nx/ny` and then tested `r2 > 1`, so axis pixels just outside the disk snapped onto the limb and painted a 1-pixel cross. The disk test now rejects unclamped `r2 > 1`. `ticks-before/` holds the reproduced shots; root captures are the after.
 
 ## Emblem
 
-Inspected brand assets: every `aethelios-official-20261015-*.png` is opaque RGB (PNG colortype 2, no tRNS). Crest and lockup are WebP plates. There is no SVG or dedicated transparent official gold-A.
+The previous Live composition used the rounded-square install icon `aethelios-official-20261015-512.png` because that was the available reference. That plate is opaque RGB and includes a miniature Earth, so punching it put a second planet on the globe.
 
-**Missing asset:** a transparent or vector official gold-A that can sit in the globe without a plate and without redrawing the mark.
+Inspected assets: no SVG of the gold A exists in the repository. Crest and lockup are WebP wordmark plates. The founder-supplied original is a 1254×1254 PNG (color type 6) with a real alpha channel, no wordmark, and the exact A + compass star. Live hosts that file as `public/visual/aethelios-original-emblem.png` without rewriting global brand or install icons.
 
-Live therefore composites `aethelios-official-20261015-512.png` inside the sphere by punching the dark plate to alpha. The mark is not cropped. It stays upright and does not rotate with the continents. The same light direction and a soft emerald/gold wash are applied after the punch so the emblem reads as part of the scene. The official mark includes its own star and miniature Earth; those remain because cropping them would damage the mark.
+The original already yields a clean emblem: corners are fully transparent, about 75% of pixels are alpha 0, and the gold is not redrawn or font-substituted. Live draws the supplied alpha, shades it with the globe's light, and keeps it upright and clipped to the sphere. A vector original is still preferable for infinite scale; none is in the tree, so this RGBA original is used rather than approximating one.
 
 ## Call chrome
 

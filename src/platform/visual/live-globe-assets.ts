@@ -8,6 +8,6 @@ export type LiveGlobeAssetState = {
 
 export const liveGlobeAssetSources = {
   earth: '/visual/nasa-blue-marble-land-shallow-topo-2048.jpg',
-  emblem: '/brand/aethelios-official-20261015-512.png',
-  emblemId: 'official-20261015',
+  emblem: '/visual/aethelios-original-emblem.png',
+  emblemId: 'original-full-logo',
 } as const;

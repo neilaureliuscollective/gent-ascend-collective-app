@@ -1,3 +1,7 @@
+# Aethelios Live original emblem — 2026-10-16
+
+Use the founder-supplied 1254×1254 RGBA gold A and compass star for the Live globe. Do not keep the rounded-square `aethelios-official-20261015` install tile, do not redraw the mark, and do not change global brand assets. The supplied original already has alpha and no wordmark; no SVG of this mark exists in the repository. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
 # Aethelios Live call globe finish — 2026-10-16
 
 Keep the existing Canvas 2D NASA globe. Reject sphere samples on unclamped `nx/ny` so axis pixels outside the limb stay empty; do not crop the globe or redraw the emblem. `ResizeObserver` on the host does one Still/reduced-motion paint when displayed or buffer size is stale ([MDN ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver)); the ambient loop is not restarted. Capture must use the existing `listen` helper after Stop playback rather than leaving an unused binding. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { PNG } from 'pngjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { liveCallVisual } from '../src/platform/visual/live-call-presentation';
 import {
@@ -47,6 +49,10 @@ function fakeCanvas() {
     putImageData: vi.fn(),
     getImageData: () => ({ data: new Uint8ClampedArray(MAP_BYTES) }),
     arc: vi.fn(),
+    ellipse: vi.fn(),
+    filter: 'none',
+    translate: vi.fn(),
+    scale: vi.fn(),
   };
   return { canvas, context };
 }
@@ -389,9 +395,18 @@ describe('live globe renderer', () => {
     globe.dispose();
   });
 
-  it('hosts NASA Blue Marble and the official 2026-10-15 mark without a transparent redraw', () => {
+  it('hosts NASA Blue Marble and the founder-supplied original A/star, not the app-icon tile', () => {
     expect(liveGlobeAssets.earth).toBe('/visual/nasa-blue-marble-land-shallow-topo-2048.jpg');
-    expect(liveGlobeAssets.emblem).toBe('/brand/aethelios-official-20261015-512.png');
-    expect(liveGlobeAssets.missingTransparentEmblem).toMatch(/No transparent or vector official gold-A/);
+    expect(liveGlobeAssets.emblem).toBe('/visual/aethelios-original-emblem.png');
+    expect(liveGlobeAssets.emblemId).toBe('original-full-logo');
+    expect(liveGlobeAssets.missingTransparentEmblem).toMatch(/1254 RGBA original/);
+    expect(liveGlobeAssets.emblem).not.toContain('aethelios-official-20261015');
+    const png = PNG.sync.read(readFileSync('public/visual/aethelios-original-emblem.png'));
+    expect(png.width).toBe(1254);
+    expect(png.height).toBe(1254);
+    expect(png.alpha).toBe(true);
+    let transparent = 0;
+    for (let i = 3; i < png.data.length; i += 4) if (png.data[i] === 0) transparent += 1;
+    expect(transparent).toBeGreaterThan(png.width * png.height * 0.5);
   });
 });

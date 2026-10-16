@@ -14,7 +14,7 @@ test('mocked globe scenes stay labeled and keep controls on screen', async ({ pa
   const globe = page.locator('.live-call-globe-immersive');
   await expect(globe).toBeVisible();
   await expect(globe).toHaveAttribute('data-kind', 'listening');
-  await expect(globe).toHaveAttribute('data-emblem-id', 'official-20261015');
+  await expect(globe).toHaveAttribute('data-emblem-id', 'original-full-logo');
   await expect(globe).toHaveAttribute('data-earth', 'ready', { timeout: 15000 });
   await expect(globe).toHaveAttribute('data-emblem', 'ready', { timeout: 15000 });
   const canvas = globe.locator('.live-globe-canvas');
