@@ -1,6 +1,6 @@
 # Aethelios Live call globe — 2026-10-16
 
-Use Canvas 2D for a recognizable smoked Earth instead of adding another 3D runtime. Three.js remains reserved for existing product stages. Energy comes from a tap on the current Live microphone/playback streams, with WebRTC `getStats` as fallback. The official 2026-10-15 gold A emblem stays an upright overlay; it is not the concept placeholder. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+Use Canvas 2D for a recognizable smoked Earth instead of adding another 3D runtime. Three.js remains reserved for existing product stages. The interactive map is the locally hosted NASA Blue Marble 57752 plate (public domain), graded to emerald/obsidian at render time. Latitude uses screen-down `y` (`asin(-ny)`). Energy reuses `LiveController.audioLevels()` transport stats only; the extra Web Audio tap was removed because an analyser presence suppressed the stats fallback. No transparent/vector official gold-A exists; Live punches the dark plate of `aethelios-official-20261015-512.png` and keeps the mark upright inside the sphere. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
 
 # Architect immersive creation world and budget lock — 2026-10-15
 

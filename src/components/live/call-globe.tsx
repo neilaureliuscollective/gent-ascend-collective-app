@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { useAppearance } from '@/components/visual/appearance';
-import { brand } from '@/platform/brand';
 import { motionPresentationPhase } from '@/platform/visual/motion-presentation';
-import { liveCallVisual, type LiveCallSession } from '@/platform/visual/live-call-presentation';
+import {
+  liveCallVisual,
+  type LiveCallLevels,
+  type LiveCallSession,
+} from '@/platform/visual/live-call-presentation';
 import { mountLiveGlobe, type LiveGlobeHandle } from '@/platform/visual/live-globe-renderer';
-import type { LiveAudioSample } from '@/platform/visual/live-audio-tap';
 
 export function LiveCallGlobe({
   state,
@@ -17,7 +18,7 @@ export function LiveCallGlobe({
   state: LiveCallSession;
   moving: boolean;
   size?: 'immersive' | 'compact';
-  readSample?: () => LiveAudioSample;
+  readSample?: () => LiveCallLevels;
 }) {
   const { moving: prefersMotion } = useAppearance();
   const allowedMotion = moving && prefersMotion;
@@ -68,18 +69,11 @@ export function LiveCallGlobe({
       data-energy-source={visual.energySource}
       data-motion={allowedMotion && visual.rotate ? 'ambient' : 'still'}
       data-operation={state.sessionId ?? 'live-idle'}
+      data-emblem="official-20261015"
+      data-earth="nasa-blue-marble"
       aria-hidden="true"
     >
       <span className="live-call-globe-fallback" />
-      <Image
-        className="live-call-emblem"
-        src={brand.conversationEmblem}
-        alt=""
-        width={size === 'compact' ? 28 : 56}
-        height={size === 'compact' ? 28 : 56}
-        unoptimized
-        draggable={false}
-      />
     </span>
   );
 }

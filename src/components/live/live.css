@@ -22,9 +22,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(0.75rem, 2vh, 1.4rem);
+  gap: clamp(1rem, 3vh, 1.85rem);
   min-height: 100%;
-  max-width: 40rem;
+  max-width: 38rem;
   margin: auto;
 }
 .live-content {
@@ -44,8 +44,8 @@
   font-size: 0.82rem;
 }
 .live-orb {
-  width: min(28vh, 240px);
-  height: min(28vh, 240px);
+  width: min(38vh, 300px);
+  height: min(38vh, 300px);
   margin: 0 auto;
   flex: none;
 }
@@ -56,15 +56,67 @@
 }
 .live-controls-compact {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.85rem;
+  justify-items: center;
+  width: 100%;
 }
 .live-control-session,
 .live-control-layout {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.85rem 1.15rem;
 }
-.live-compact .live-controls-compact button {
+.live-call-action {
+  display: grid;
+  justify-items: center;
+  gap: 0.38rem;
+  min-width: 4.4rem;
+  min-height: 44px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit;
+  box-shadow: none !important;
+}
+.live-call-action-glyph {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #2a32304d, transparent 58%),
+    #141817;
+  border: 1px solid #c4912f44;
+  box-shadow:
+    inset 0 1px #ffffff16,
+    0 10px 22px -16px #000c;
+  color: #e8e9e2;
+}
+.live-call-action-mute[aria-pressed='true'] .live-call-action-glyph {
+  background: #0d1110;
+  border-color: #c4912f88;
+  color: #e8c980;
+}
+.live-call-action-end .live-call-action-glyph {
+  background:
+    radial-gradient(circle at 30% 26%, #3a221c66, transparent 62%),
+    #1a1211;
+  border-color: #c4912f99;
+  color: #f0d7a2;
+}
+.live-call-action-caption {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--io-secondary, #b9bebb);
+}
+.live-compact .live-call-action-glyph {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.live-compact .live-controls-compact button:not(.live-call-action) {
   min-height: 40px;
   padding: 0.4rem 0.7rem;
   border-radius: 999px;
@@ -76,15 +128,17 @@
   min-height: 44px;
 }
 .live-transcript {
-  max-height: 22vh;
+  max-height: 18vh;
   overflow: auto;
-  border: 1px solid var(--io-divider, #ffffff20);
-  border-radius: 0.9rem;
-  padding: 0.75rem 0.9rem;
-  margin: 0.75rem 0;
+  border: 1px solid #ffffff12;
+  border-radius: 1rem;
+  padding: 0.7rem 0.9rem;
+  margin: 0.35rem 0 0;
   overflow-wrap: anywhere;
-  background: var(--io-glass);
-  box-shadow: var(--io-elevation, inset 0 1px #ffffff10);
+  background: #101413cc;
+  box-shadow: inset 0 1px #ffffff0d;
+  font-size: 0.92rem;
+  color: var(--io-secondary, #b9bebb);
 }
 .live-call-stage .im-status {
   font-size: 1.05rem;
@@ -218,20 +272,24 @@
 }
 @media (min-width: 1000px) {
   .live-immersive .live-orb {
-    height: min(32vh, 280px);
-    width: min(32vh, 280px);
+    height: min(42vh, 340px);
+    width: min(42vh, 340px);
   }
   .live-immersive .live-transcript {
-    max-height: 22vh;
+    max-height: 18vh;
   }
 }
 @media (max-height: 540px) {
   .live-immersive .live-orb {
-    width: min(18vh, 160px);
-    height: min(18vh, 160px);
+    width: min(30vh, 148px);
+    height: min(30vh, 148px);
   }
   .live-immersive .live-transcript {
-    max-height: 16vh;
+    max-height: 14vh;
+  }
+  .live-call-action-glyph {
+    width: 2.85rem;
+    height: 2.85rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -249,7 +307,7 @@
 }
 .live-call-globe-fallback {
   position: absolute;
-  inset: 12%;
+  inset: 10%;
   border-radius: 50%;
   background:
     radial-gradient(circle at 32% 28%, #3a4a43, #141c19 42%, #070b0a 72%),
@@ -265,18 +323,9 @@
   width: 100%;
   height: 100%;
 }
-.live-call-emblem {
-  position: absolute;
-  z-index: 2;
-  width: 28%;
-  height: 28%;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 10px #000c);
-}
 .live-call-globe-compact {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   flex: none;
   background: radial-gradient(circle at 50% 50%, #163f35, #070b0a 72%);
   border-radius: 50%;
@@ -284,10 +333,6 @@
 }
 .live-compact-presence .live-brand {
   white-space: nowrap;
-}
-.live-call-globe-compact .live-call-emblem {
-  width: 28px;
-  height: 28px;
 }
 .live-compact-presence {
   display: flex;
@@ -305,6 +350,11 @@
   box-shadow: 0 0 0 1px #c4912f55;
 }
 
+.live-content > .live-job,
+.live-compact > .live-job {
+  opacity: 0.86;
+  font-size: 0.9rem;
+}
 .live-job {
   border-top: 1px solid var(--aether-border, #c4912f50);
   padding-block: 0.75rem;

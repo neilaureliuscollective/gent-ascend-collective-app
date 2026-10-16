@@ -17,7 +17,13 @@ export type LiveCallVisualKind =
   | 'ended'
   | 'error';
 
-export type LiveEnergySource = 'web-audio-tap' | 'webrtc-stats' | 'unavailable';
+export type LiveEnergySource = 'webrtc-stats' | 'unavailable';
+
+export type LiveCallLevels = {
+  input: number;
+  output: number;
+  source?: LiveEnergySource;
+};
 
 export type LiveCallSession = {
   sessionId: string | null;
@@ -64,7 +70,7 @@ function clamp01(value: number) {
 /** Map controller truth plus optional measured levels. Timers never invent speech. */
 export function liveCallVisual(
   state: LiveCallSession,
-  levels?: { input: number; output: number; source?: LiveEnergySource },
+  levels?: LiveCallLevels,
   options?: { moving?: boolean },
 ): LiveCallVisual {
   const operation = liveMotionOperation(state, levels);

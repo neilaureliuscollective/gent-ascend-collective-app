@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { liveCallVisual } from '../src/platform/visual/live-call-presentation';
-import { mountLiveGlobe } from '../src/platform/visual/live-globe-renderer';
+import { liveGlobeAssets, mountLiveGlobe } from '../src/platform/visual/live-globe-renderer';
 
 const MAP_BYTES = 640 * 320 * 4;
 
@@ -30,6 +30,11 @@ function fakeCanvas() {
     fill: vi.fn(),
     stroke: vi.fn(),
     clearRect: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    clip: vi.fn(),
+    drawImage: vi.fn(),
+    globalAlpha: 1,
     createLinearGradient: () => ({ addColorStop: vi.fn() }),
     createRadialGradient: () => ({ addColorStop: vi.fn() }),
     createImageData: (width = canvas.width, height = canvas.height) => ({
@@ -46,14 +51,19 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('live globe renderer', () => {
   it('paints, pauses, and disposes without touching session media', () => {
-    const { canvas, context } = fakeCanvas();
+    const display = fakeCanvas();
+    const { canvas, context } = display;
     const host = {
       append: vi.fn(),
       getBoundingClientRect: () => ({ width: 160, height: 160 }),
     };
     const frames: FrameRequestCallback[] = [];
+    let created = 0;
     vi.stubGlobal('document', {
-      createElement: () => canvas,
+      createElement: () => {
+        created += 1;
+        return created === 1 ? canvas : fakeCanvas().canvas;
+      },
       hidden: false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -85,9 +95,14 @@ describe('live globe renderer', () => {
   });
 
   it('keeps a still fallback when motion is reduced', () => {
-    const { canvas, context } = fakeCanvas();
+    const display = fakeCanvas();
+    const { canvas, context } = display;
+    let created = 0;
     vi.stubGlobal('document', {
-      createElement: () => canvas,
+      createElement: () => {
+        created += 1;
+        return created === 1 ? canvas : fakeCanvas().canvas;
+      },
       hidden: false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -112,5 +127,11 @@ describe('live globe renderer', () => {
     globe.paintStatic();
     expect(context.putImageData).toHaveBeenCalled();
     globe.dispose();
+  });
+
+  it('hosts NASA Blue Marble and the official 2026-10-15 mark without a transparent redraw', () => {
+    expect(liveGlobeAssets.earth).toBe('/visual/nasa-blue-marble-land-shallow-topo-2048.jpg');
+    expect(liveGlobeAssets.emblem).toBe('/brand/aethelios-official-20261015-512.png');
+    expect(liveGlobeAssets.missingTransparentEmblem).toMatch(/No transparent or vector official gold-A/);
   });
 });

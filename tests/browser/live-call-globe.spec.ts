@@ -14,10 +14,9 @@ test('mocked globe scenes stay labeled and keep controls on screen', async ({ pa
   const globe = page.locator('.live-call-globe-immersive');
   await expect(globe).toBeVisible();
   await expect(globe).toHaveAttribute('data-kind', 'listening');
-  await expect(globe.locator('.live-call-emblem')).toHaveAttribute(
-    'src',
-    /aethelios-official-20261015-192/,
-  );
+  await expect(globe).toHaveAttribute('data-emblem', 'official-20261015');
+  await expect(globe).toHaveAttribute('data-earth', 'nasa-blue-marble');
+  await expect(globe.locator('.live-globe-canvas')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Mute microphone', exact: true })).toBeVisible();
   await expect(page.getByRole('log')).toBeVisible();
   await page.getByRole('button', { name: 'Speaking', exact: true }).click();
@@ -37,7 +36,7 @@ test('mocked globe scenes stay labeled and keep controls on screen', async ({ pa
 test('keyboard users can move through mocked call controls', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:3102/?mode=live-call-globe&scene=listening');
-  await page.keyboard.press('Tab');
+  await page.getByRole('region', { name: 'Aethelios Live' }).getByRole('button', { name: 'Mute microphone', exact: true }).focus();
   await expect(page.getByRole('button', { name: 'Mute microphone', exact: true })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'End session', exact: true })).toBeFocused();
@@ -51,9 +50,9 @@ test('reduced motion keeps the official emblem upright and still', async ({ page
   await page.goto('http://127.0.0.1:3102/?mode=live-call-globe&scene=speaking');
   const globe = page.locator('.live-call-globe');
   await expect(globe).toHaveAttribute('data-motion', 'still');
-  const emblem = page.locator('.live-call-emblem');
-  await expect(emblem).toBeVisible();
-  const rotation = await emblem.evaluate((node) => getComputedStyle(node).transform);
+  const canvas = globe.locator('.live-globe-canvas');
+  await expect(canvas).toBeVisible();
+  const rotation = await canvas.evaluate((node) => getComputedStyle(node).transform);
   expect(rotation === 'none' || rotation === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
 });
 

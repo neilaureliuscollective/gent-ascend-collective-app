@@ -1,5 +1,7 @@
 import { liveContinents } from './live-continents';
 import type { LiveCallVisual } from './live-call-presentation';
+import { liveGlobeMapUv, liveGlobeSphereCoords } from './live-globe-projection';
+import { brand } from '@/platform/brand';
 
 export type LiveGlobeHandle = {
   setVisual: (visual: LiveCallVisual) => void;
@@ -11,30 +13,24 @@ export type LiveGlobeHandle = {
 };
 
 const MAX_PIXELS = 480;
-const MAP_WIDTH = 640;
-const MAP_HEIGHT = 320;
+const FALLBACK_WIDTH = 640;
+const FALLBACK_HEIGHT = 320;
+const EARTH_SRC = '/visual/nasa-blue-marble-land-shallow-topo-2048.jpg';
+const EMBLEM_SRC = '/brand/aethelios-official-20261015-512.png';
 
 function clamp01(value: number) {
   return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
 }
 
-function paintMap(target: CanvasRenderingContext2D) {
+function paintFallbackMap(target: CanvasRenderingContext2D) {
   const { width, height } = target.canvas;
-  target.fillStyle = '#070b0a';
-  target.fillRect(0, 0, width, height);
-  const ocean = target.createLinearGradient(0, 0, 0, height);
-  ocean.addColorStop(0, '#12201c');
-  ocean.addColorStop(0.5, '#0c1412');
-  ocean.addColorStop(1, '#080d0c');
-  target.fillStyle = ocean;
+  target.fillStyle = '#0a100e';
   target.fillRect(0, 0, width, height);
   const project = (lon: number, lat: number): [number, number] => [
     ((lon + 180) / 360) * width,
     ((90 - lat) / 180) * height,
   ];
-  target.fillStyle = '#5d7d6a';
-  target.strokeStyle = 'rgba(212,183,106,0.35)';
-  target.lineWidth = 1;
+  target.fillStyle = '#3d5a4c';
   for (const ring of liveContinents) {
     target.beginPath();
     ring.forEach((point, index) => {
@@ -44,40 +40,108 @@ function paintMap(target: CanvasRenderingContext2D) {
     });
     target.closePath();
     target.fill();
-    target.stroke();
   }
-  const shade = target.createLinearGradient(0, 0, width, height);
-  shade.addColorStop(0, 'rgba(54,137,108,0.08)');
-  shade.addColorStop(0.45, 'transparent');
-  shade.addColorStop(1, 'rgba(5,7,6,0.18)');
-  target.fillStyle = shade;
-  target.fillRect(0, 0, width, height);
 }
 
-let mapPixels: Uint8ClampedArray | null = null;
-
-function mapTexture() {
-  if (mapPixels) return mapPixels;
+function readImageData(image: CanvasImageSource, width: number, height: number) {
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas');
-  canvas.width = MAP_WIDTH;
-  canvas.height = MAP_HEIGHT;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext('2d', { willReadFrequently: true });
   if (!context) return null;
-  paintMap(context);
-  mapPixels = context.getImageData(0, 0, MAP_WIDTH, MAP_HEIGHT).data;
-  return mapPixels;
+  context.drawImage(image, 0, 0, width, height);
+  return context.getImageData(0, 0, width, height);
 }
 
-function sampleMap(lon: number, lat: number) {
-  const data = mapTexture();
-  if (!data) return [12, 16, 14] as const;
-  const u = ((lon + Math.PI) / (Math.PI * 2) + 1) % 1;
-  const v = 0.5 - lat / Math.PI;
-  const x = Math.min(MAP_WIDTH - 1, Math.max(0, Math.floor(u * MAP_WIDTH)));
-  const y = Math.min(MAP_HEIGHT - 1, Math.max(0, Math.floor(v * MAP_HEIGHT)));
-  const index = (y * MAP_WIDTH + x) * 4;
-  return [data[index] ?? 12, data[index + 1] ?? 16, data[index + 2] ?? 14] as const;
+function punchDarkPlate(image: CanvasImageSource) {
+  const data = readImageData(image, 512, 512);
+  if (!data || typeof document === 'undefined') return null;
+  const pixels = data.data;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const red = pixels[i] ?? 0;
+    const green = pixels[i + 1] ?? 0;
+    const blue = pixels[i + 2] ?? 0;
+    const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    pixels[i + 3] = luma < 22 ? 0 : luma < 48 ? Math.round(((luma - 22) / 26) * 255) : 255;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  canvas.getContext('2d')?.putImageData(data, 0, 0);
+  return canvas;
+}
+
+function sample(data: ImageData, lon: number, lat: number) {
+  const { u, v } = liveGlobeMapUv(lon, lat);
+  const x = ((u % 1) + 1) % 1;
+  const width = data.width;
+  const height = data.height;
+  const fx = x * (width - 1);
+  const fy = Math.min(height - 1, Math.max(0, v * (height - 1)));
+  const x0 = Math.floor(fx);
+  const y0 = Math.floor(fy);
+  const x1 = Math.min(width - 1, x0 + 1);
+  const y1 = Math.min(height - 1, y0 + 1);
+  const tx = fx - x0;
+  const ty = fy - y0;
+  const at = (cx: number, cy: number) => {
+    const index = (cy * width + cx) * 4;
+    return [data.data[index] ?? 10, data.data[index + 1] ?? 14, data.data[index + 2] ?? 12] as const;
+  };
+  const a = at(x0, y0);
+  const b = at(x1, y0);
+  const c = at(x0, y1);
+  const d = at(x1, y1);
+  const mix = (left: number, right: number, t: number) => left + (right - left) * t;
+  return [
+    mix(mix(a[0], b[0], tx), mix(c[0], d[0], tx), ty),
+    mix(mix(a[1], b[1], tx), mix(c[1], d[1], tx), ty),
+    mix(mix(a[2], b[2], tx), mix(c[2], d[2], tx), ty),
+  ] as const;
+}
+
+function gradeEarth(red: number, green: number, blue: number) {
+  const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  const ocean = blue > green + 6 && blue > red + 10 && luma < 96;
+  if (ocean) {
+    const depth = luma / 96;
+    return [6 + depth * 8, 10 + depth * 14, 10 + depth * 10] as const;
+  }
+  const ice = luma > 196 && Math.abs(red - green) < 24;
+  if (ice) return [72, 86, 84] as const;
+  const relief = luma / 255;
+  return [34 + relief * 64, 62 + relief * 96, 46 + relief * 52] as const;
+}
+
+function prepareEarth(image: CanvasImageSource, width: number, height: number) {
+  const data = readImageData(image, width, height);
+  if (!data) return null;
+  const pixels = data.data;
+  for (let index = 0; index < pixels.length; index += 4) {
+    const [red, green, blue] = gradeEarth(
+      pixels[index] ?? 0,
+      pixels[index + 1] ?? 0,
+      pixels[index + 2] ?? 0,
+    );
+    pixels[index] = red;
+    pixels[index + 1] = green;
+    pixels[index + 2] = blue;
+  }
+  return data;
+}
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    if (typeof Image === 'undefined') {
+      reject(new Error('Image unavailable'));
+      return;
+    }
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Missing ${src}`));
+    image.src = src;
+  });
 }
 
 function pixelBudget(size: number) {
@@ -101,13 +165,15 @@ export function mountLiveGlobe(
   let visual = initial;
   let inward = initial.inward;
   let outward = initial.outward;
-  let rotation = 0.42;
+  let rotation = 0.35;
   let frame = 0;
   let last = 0;
   let disposed = false;
   let paused = false;
   let visible = true;
   let hidden = typeof document !== 'undefined' && document.hidden;
+  let earth: ImageData | null = null;
+  let emblem: HTMLCanvasElement | null = null;
   const moving = options?.moving !== false;
   const reduced =
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -133,91 +199,93 @@ export function mountLiveGlobe(
     const cy = width / 2;
     const image = context.createImageData(width, width);
     const pixels = image.data;
-    const lightX = -0.46;
-    const lightY = 0.58;
-    const lightZ = 0.68;
+    const lightX = -0.42;
+    const lightY = 0.36;
+    const lightZ = 0.84;
     const kind = visual.kind;
     const night =
-      kind === 'ended' || kind === 'error' || kind === 'muted' || kind === 'blocked' ? 0.62 : 1;
-    const warmth = kind === 'speaking' ? 1 + outward * 0.18 : 1;
+      kind === 'ended' || kind === 'error' || kind === 'muted' || kind === 'blocked' ? 0.7 : 1;
     for (let y = 0; y < width; y++) {
       const ny = (y - cy) / radius;
       for (let x = 0; x < width; x++) {
         const nx = (x - cx) / radius;
-        const r2 = nx * nx + ny * ny;
-        if (r2 > 1) continue;
-        const nz = Math.sqrt(1 - r2);
-        const cos = Math.cos(rotation);
-        const sin = Math.sin(rotation);
-        const rx = nx * cos + nz * sin;
-        const rz = -nx * sin + nz * cos;
-        const lon = Math.atan2(rx, rz);
-        const lat = Math.asin(Math.max(-1, Math.min(1, ny)));
-        const [red, green, blue] = sampleMap(lon, lat);
-        const diffuse = Math.max(0, nx * lightX + ny * lightY + nz * lightZ);
-        const rim = Math.pow(1 - nz, 2.4);
-        const spec = Math.pow(diffuse, 28) * (0.18 + outward * 0.22);
-        const limb = kind === 'listening' ? inward * 0.16 * (1 - nz) : 0;
-        const emerald = rim * (18 + outward * 42);
+        const sphere = liveGlobeSphereCoords(nx, ny, rotation);
+        if (!sphere) continue;
+        const [red, green, blue] = earth
+          ? sample(earth, sphere.lon, sphere.lat)
+          : ([22, 34, 30] as const);
+        const nz = sphere.facing;
+        const diffuse = Math.max(0, nx * lightX + -ny * lightY + nz * lightZ);
+        const wrap = diffuse * 0.62 + 0.28;
+        const terminator = clamp01((diffuse + 0.12) / 0.4);
+        const spec = Math.pow(diffuse, 42) * (0.1 + outward * 0.08);
+        const fresnel = Math.pow(1 - nz, 2.6);
+        const inhale = kind === 'listening' ? inward * 0.12 * (1 - nz) : 0;
+        const glow = fresnel * (10 + outward * 22);
         const index = (y * width + x) * 4;
-        const light = 0.72 + diffuse * 0.5;
         pixels[index] = Math.min(
           255,
-          (red * light + spec * 210 + emerald * 0.18) * night * warmth - limb * 28,
+          (red * wrap + spec * 190 + glow * 0.2) * night * terminator - inhale * 22,
         );
         pixels[index + 1] = Math.min(
           255,
-          (green * light + spec * 170 + emerald * 0.62) * night * warmth - limb * 12,
+          (green * wrap + spec * 150 + glow * 0.55) * night * terminator - inhale * 10,
         );
         pixels[index + 2] = Math.min(
           255,
-          (blue * light + spec * 90 + emerald * 0.4) * night,
+          (blue * wrap + spec * 80 + glow * 0.32) * night * terminator,
         );
         pixels[index + 3] = 255;
       }
     }
     context.clearRect(0, 0, width, width);
     context.putImageData(image, 0, 0);
+    context.save();
+    context.beginPath();
+    context.arc(cx, cy, radius, 0, Math.PI * 2);
+    context.clip();
+    if (emblem) {
+      const size = radius * 1.24;
+      context.globalAlpha = 0.97;
+      context.drawImage(emblem, cx - size / 2, cy - size / 2, size, size);
+      const wash = context.createRadialGradient(
+        cx - radius * 0.22,
+        cy - radius * 0.28,
+        radius * 0.05,
+        cx,
+        cy,
+        radius,
+      );
+      wash.addColorStop(0, `rgba(232,233,226,${0.1 + outward * 0.05})`);
+      wash.addColorStop(0.4, `rgba(54,137,108,${0.1 + outward * 0.06})`);
+      wash.addColorStop(0.78, `rgba(196,145,47,${0.08 + outward * 0.04})`);
+      wash.addColorStop(1, 'rgba(7,11,10,0.04)');
+      context.globalCompositeOperation = 'soft-light';
+      context.globalAlpha = 1;
+      context.fillStyle = wash;
+      context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+      context.globalCompositeOperation = 'source-over';
+    }
+    context.restore();
     const atmosphere = context.createRadialGradient(
       cx,
       cy,
-      radius * 0.86,
+      radius * 0.9,
       cx,
       cy,
-      radius * (1.18 + outward * 0.16 - inward * 0.06),
+      radius * (1.16 + outward * 0.1 - inward * 0.04),
     );
     const atmosphereAlpha =
-      kind === 'error'
-        ? 0.12
-        : kind === 'ended'
-          ? 0.1
-          : kind === 'muted'
-            ? 0.14
-            : 0.2 + outward * 0.28;
-    atmosphere.addColorStop(0, `rgba(36,91,72,${atmosphereAlpha})`);
-    atmosphere.addColorStop(0.55, `rgba(22,63,53,${atmosphereAlpha * 0.45})`);
+      kind === 'error' ? 0.1 : kind === 'ended' ? 0.08 : kind === 'muted' ? 0.12 : 0.16 + outward * 0.18;
+    atmosphere.addColorStop(0, 'rgba(36,91,72,0)');
+    atmosphere.addColorStop(0.72, `rgba(36,91,72,${atmosphereAlpha})`);
     atmosphere.addColorStop(1, 'rgba(7,11,10,0)');
     context.globalCompositeOperation = 'destination-over';
     context.fillStyle = atmosphere;
     context.beginPath();
-    context.arc(cx, cy, radius * 1.22, 0, Math.PI * 2);
+    context.arc(cx, cy, radius * 1.18, 0, Math.PI * 2);
     context.fill();
     context.globalCompositeOperation = 'source-over';
-    const sheen = context.createRadialGradient(
-      cx - radius * 0.28,
-      cy - radius * 0.32,
-      radius * 0.04,
-      cx,
-      cy,
-      radius,
-    );
-    sheen.addColorStop(0, `rgba(232,233,226,${0.1 + outward * 0.08})`);
-    sheen.addColorStop(0.18, 'rgba(54,137,108,0.08)');
-    sheen.addColorStop(1, 'rgba(0,0,0,0)');
-    context.fillStyle = sheen;
-    context.beginPath();
-    context.arc(cx, cy, radius, 0, Math.PI * 2);
-    context.fill();
     last = stamp;
   };
 
@@ -233,7 +301,7 @@ export function mountLiveGlobe(
     }
     if (visual.rotate && moving && !reduced) {
       const speed =
-        visual.kind === 'connecting' || visual.kind === 'recovering' ? 0.00028 : 0.00016;
+        visual.kind === 'connecting' || visual.kind === 'recovering' ? 0.00022 : 0.00012;
       rotation += Math.min(48, stamp - last) * speed;
     }
     paint(stamp);
@@ -250,7 +318,34 @@ export function mountLiveGlobe(
     hidden = document.hidden;
   };
   document.addEventListener('visibilitychange', onVisibility);
-  mapTexture();
+
+  if (typeof document !== 'undefined') {
+    const fallback = document.createElement('canvas');
+    fallback.width = FALLBACK_WIDTH;
+    fallback.height = FALLBACK_HEIGHT;
+    const fallbackContext = fallback.getContext('2d');
+    if (fallbackContext) {
+      paintFallbackMap(fallbackContext);
+      earth = fallbackContext.getImageData(0, 0, FALLBACK_WIDTH, FALLBACK_HEIGHT);
+    }
+  }
+  void loadImage(EARTH_SRC)
+    .then((image) => {
+      if (disposed) return;
+      const width = Math.min(1024, image.naturalWidth || 2048);
+      const height = Math.min(512, image.naturalHeight || 1024);
+      earth = prepareEarth(image, width, height);
+      paint(typeof performance !== 'undefined' ? performance.now() : 0);
+    })
+    .catch(() => {});
+  void loadImage(EMBLEM_SRC)
+    .then((image) => {
+      if (disposed) return;
+      emblem = punchDarkPlate(image);
+      paint(typeof performance !== 'undefined' ? performance.now() : 0);
+    })
+    .catch(() => {});
+
   paint(typeof performance !== 'undefined' ? performance.now() : 0);
   if (moving && !reduced) frame = requestAnimationFrame(tick);
 
@@ -259,7 +354,8 @@ export function mountLiveGlobe(
       visual = next;
       inward = next.inward;
       outward = next.outward;
-      if (paused || reduced || !moving) paint(typeof performance !== 'undefined' ? performance.now() : 0);
+      if (paused || reduced || !moving)
+        paint(typeof performance !== 'undefined' ? performance.now() : 0);
     },
     setEnergy: (nextInward, nextOutward) => {
       inward = clamp01(nextInward);
@@ -282,3 +378,12 @@ export function mountLiveGlobe(
     paintStatic: () => paint(typeof performance !== 'undefined' ? performance.now() : 0),
   };
 }
+
+export const liveGlobeAssets = {
+  earth: EARTH_SRC,
+  emblem: EMBLEM_SRC,
+  emblemId: 'aethelios-official-20261015-512',
+  missingTransparentEmblem:
+    'No transparent or vector official gold-A exists. All aethelios-official-20261015 PNGs are opaque RGB plates; crest/lockup are WebP plates. Live punches the dark plate of the 512 official mark without cropping.',
+  crest: brand.crest,
+};

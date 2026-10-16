@@ -10,8 +10,9 @@ import {
   IntelligenceActivity,
 } from '@/components/intelligence-motion/presence';
 import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/operation-adapters';
-import { createLiveAudioMonitor, type LiveAudioSample } from '@/platform/visual/live-audio-tap';
+import type { LiveCallLevels } from '@/platform/visual/live-call-presentation';
 import { useAppearance } from '@/components/visual/appearance';
+import { LiveCallControls } from './call-controls';
 import { LiveCallGlobe } from './call-globe';
 import { ArtifactSurface } from './artifacts';
 import { LiveAvailabilityContext, LiveContext, LiveAcknowledgementUserContext } from './context';
@@ -285,9 +286,11 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const { moving } = useAppearance();
   const operation = liveMotionOperation(state);
   const compact = useRef<HTMLElement>(null);
-  const monitorRef = useRef<ReturnType<typeof createLiveAudioMonitor> | null>(null);
-  const readSample = (): LiveAudioSample =>
-    monitorRef.current?.read() ?? { input: 0, output: 0, source: 'unavailable' };
+  const [levels, setLevels] = useState<LiveCallLevels>({
+    input: 0,
+    output: 0,
+    source: 'unavailable',
+  });
   const [transcript, setTranscript] = useState(true);
   const [draft, setDraft] = useState('');
   const dock = useSyncExternalStore(
@@ -298,6 +301,8 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const visible = state.phase !== 'idle';
   const active = ['connecting', 'listening', 'speaking'].includes(state.phase);
   const docked = Boolean(dock);
+  const readSample = () =>
+    active ? levels : { input: 0, output: 0, source: 'unavailable' as const };
   useEffect(() => {
     const node = dialog.current;
     if (!node) return;
@@ -311,14 +316,27 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   }, [visible, state.mode, docked]);
   useEffect(() => {
     if (!active) return;
-    const monitor = createLiveAudioMonitor({
-      streams: () => controller.mediaStreams(),
-      stats: () => controller.audioLevels(),
-    });
-    monitorRef.current = monitor;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const next = await controller.audioLevels();
+        if (cancelled) return;
+        setLevels({
+          input: next.input,
+          output: next.output,
+          source: 'webrtc-stats',
+        });
+      } catch {
+        if (!cancelled) setLevels({ input: 0, output: 0, source: 'unavailable' });
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => {
+      void poll();
+    }, 160);
     return () => {
-      monitor.dispose();
-      if (monitorRef.current === monitor) monitorRef.current = null;
+      cancelled = true;
+      window.clearInterval(timer);
     };
   }, [active, controller]);
   useEffect(() => {
@@ -338,50 +356,26 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const canStopPlayback = state.phase === 'speaking' && !state.playbackBlocked;
   const canEnd = active || state.cleanupPending;
   const controls = (
-    <div className="live-controls live-controls-compact">
-      <div className="live-control-session">
-        {canMute && (
-          <button type="button" aria-pressed={state.muted} onClick={() => controller.mute()}>
-            {state.muted ? 'Unmute microphone' : 'Mute microphone'}
-          </button>
-        )}
-        {canStopPlayback && (
-          <button type="button" onClick={() => controller.interrupt()}>
-            Stop playback
-          </button>
-        )}
-        {canEnd && (
-          <button
-            type="button"
-            onClick={() => {
-              void controller.end();
-            }}
-          >
-            {state.cleanupPending ? 'Retry end session' : 'End session'}
-          </button>
-        )}
-      </div>
-      <div className="live-control-layout">
-        <button
-          type="button"
-          onClick={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
-        >
-          {state.mode === 'immersive' ? 'Compact' : 'Expand'}
-        </button>
-        <button
-          type="button"
-          aria-pressed={transcript}
-          onClick={() => setTranscript((value) => !value)}
-        >
-          Transcript
-        </button>
-        {!active && !state.cleanupPending && (
-          <button type="button" onClick={() => controller.dismiss()}>
-            Close
-          </button>
-        )}
-      </div>
-    </div>
+    <LiveCallControls
+      model={{
+        muted: state.muted,
+        canMute,
+        canStopPlayback,
+        canEnd,
+        cleanupPending: state.cleanupPending,
+        mode: state.mode,
+        transcript,
+        canClose: !active && !state.cleanupPending,
+      }}
+      onMute={() => controller.mute()}
+      onInterrupt={() => controller.interrupt()}
+      onEnd={() => {
+        void controller.end();
+      }}
+      onMode={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
+      onTranscript={() => setTranscript((value) => !value)}
+      onClose={() => controller.dismiss()}
+    />
   );
   const identity = (
     <div className="live-call-identity">

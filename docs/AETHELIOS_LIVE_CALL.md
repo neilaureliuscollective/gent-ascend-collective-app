@@ -1,41 +1,53 @@
 # Aethelios Live call globe — 2026-10-16
 
-Reviewable implementation of the premium Live call surface. Concept image is direction only; this is a real responsive interface. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
+Reviewable refinement of the Live call surface on `cursor/aethelios-live-call-globe-1aa9`. First-pass head was `e11a82b31abdd5257845ffcd6de4f89666e021f9`. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
 
-## Existing signals reused
+## Planet
 
-The Live controller already owns one WebRTC transport, one `getUserMedia` microphone stream, one playback `HTMLAudioElement`, and truthful phases: `connecting`, `listening`, `speaking`, `ended`, `error`, plus `muted`, `recovering`, `speechDetected`, `responsePending`, `playbackBlocked` and compact/immersive mode. Atmosphere energy prefers a Web Audio tap on those existing streams, then `controller.audioLevels()` (WebRTC `getStats` `media-source` input / `inbound-rtp` output). Presentation never calls `getUserMedia`, never creates a second peer connection, and never restarts a call when the globe mounts, unmounts, minimizes or expands.
+The first-pass 640×320 single-color polygon map is the offline fallback only. The interactive globe samples a locally hosted NASA Blue Marble plate:
+
+- File: `public/visual/nasa-blue-marble-land-shallow-topo-2048.jpg`
+- Source: NASA Visible Earth image 57752, public domain
+- Rights: [NASA_BLUE_MARBLE_ATTRIBUTION.md](../public/visual/NASA_BLUE_MARBLE_ATTRIBUTION.md)
+
+The texture is downsampled to 1024×512, graded to restrained emerald land / obsidian water / cooler ice, then lit with directional wrap, terminator depth, a tight specular and a thin atmosphere. It is not a screenshot of the concept image and does not invent geography.
+
+Latitude uses screen-down `y`, so `lat = asin(-ny)`. `tests/live-globe-projection.test.ts` checks that the top of the disk is north and that Greenland/Scandinavia sit above Cape Horn, with Tasmania southern when Australia faces the camera.
+
+## Emblem
+
+Inspected brand assets: every `aethelios-official-20261015-*.png` is opaque RGB (PNG colortype 2, no tRNS). Crest and lockup are WebP plates. There is no SVG or dedicated transparent official gold-A.
+
+**Missing asset:** a transparent or vector official gold-A that can sit in the globe without a plate and without redrawing the mark.
+
+Live therefore composites `aethelios-official-20261015-512.png` inside the sphere by punching the dark plate to alpha. The mark is not cropped. It stays upright and does not rotate with the continents. The same light direction and a soft emerald/gold wash are applied after the punch so the emblem reads as part of the scene. The official mark includes its own star and miniature Earth; those remain because cropping them would damage the mark.
+
+## Call chrome
+
+Immersive and compact Live use charcoal-glass spacing, circular tappable actions and accessible names (`Mute microphone` / `Unmute microphone`, `End session`, `Compact` / `Expand`, `Transcript`). Mute state is `aria-pressed`. End is a distinct hang-up action. Transcript is secondary. Diagnostics stay behind the existing `Voice diagnostics` disclosure. Scene-switching buttons exist only on the `?mode=live-call-globe` fixture.
+
+Compact docking and Escape-to-compact are unchanged.
+
+## Audio
+
+The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController.audioLevels()` (WebRTC `getStats` `media-source` input / `inbound-rtp` output) and `liveMotionOperation`. These are **transport audio levels**, not proof of audible speaker output. Presentation does not create an `AudioContext`, request a microphone, attach a playback route or open a second voice connection.
 
 ## Honest reactivity
 
 | State | Visual | Energy |
 | --- | --- | --- |
 | Connecting / reconnecting | Restrained rotation, labeled Connecting or Reconnecting | State only |
-| Listening | Gentle inward atmosphere | Microphone energy when measured |
-| Speaking | Outward emerald illumination | Playback energy when measured |
+| Listening | Gentle inward atmosphere | Transport input when measured |
+| Speaking | Outward emerald illumination | Transport output when measured |
 | Waiting (`responsePending`) | Subtle rest, no speaking pretence | State only |
 | Interrupted | Immediate return to listening | New measured input, speaking output dropped |
 | Muted / blocked / ended / error | Distinct, quieter or still | Not audio-reactive |
 
-`data-reactive` is `true` only when a measured sample is driving listening or speaking. Slow globe rotation is decorative and is never labeled audio-reactive. Reduced motion and Still paint one frame.
+`data-reactive` is `true` only when a measured transport sample is driving listening or speaking. Reduced motion and Still paint one frame. Hidden pages skip the loop. Pixel budget stays at 480.
 
-## Integration seams
+## Evidence
 
-- `LiveController.mediaStreams()` — read-only access to the current microphone and playback streams.
-- `src/platform/visual/live-call-presentation.ts` — state mapping.
-- `src/platform/visual/live-audio-tap.ts` — tap/cleanup. Disconnects its own nodes and closes its AudioContext; does not stop shared tracks or connect to the destination, so audible playback stays on the existing element.
-- `src/components/live/call-globe.tsx` + `live-globe-renderer.ts` — canvas Earth, official emblem overlay (`brand.conversationEmblem`).
-- `src/components/live/provider.tsx` and `live.css` — call chrome only.
-
-Talk workspace, design boards, creation detail, knowledge, Architect and global theme files were not edited. Text-chat `LivingSignal` / `IntelligenceResponse` remain the separate conversation activity indicator.
-
-## Limitations
-
-- WebRTC `audioLevel` can be `0` or delayed in some browsers. The globe then uses the truthful state fallback and does not claim to be audio-reactive.
-- The Web Audio tap reads the existing playback `MediaStream` when `srcObject` is a stream. It does not use `MediaElementSource`, so it cannot steal the playback graph. If no stream is attached yet, energy waits for `getStats`.
-- An ended microphone is not revived. This task does not fix the separately identified disconnect issue or change the two-minute pilot policy.
-- Fixture `/mode=live-call-globe` is a labeled mocked-audio demonstration, not a live voice test. Screenshots and a 33-second state tour are in `docs/evidence/live-call-globe/`.
-- Physical Android, iPhone and Fold devices remain unverified; Chromium viewports were used.
+`docs/evidence/live-call-globe/before/` is the first-pass fixture at `e11a82b`. After shots and the labeled mocked tour replace the root evidence files. Real Live compact/immersive captures use the `live-voice` fixture with a fake transport. None of this is a live OpenAI voice call.
 
 ## Out of scope
 

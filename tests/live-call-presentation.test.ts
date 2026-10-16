@@ -39,7 +39,7 @@ describe('live call visual states', () => {
     expect(listening.inward).toBeGreaterThan(listening.outward);
     const speaking = liveCallVisual(
       { ...session, phase: 'speaking' },
-      { input: 0.4, output: 0.8, source: 'web-audio-tap' },
+      { input: 0.4, output: 0.8, source: 'webrtc-stats' },
     );
     expect(speaking.reactive).toBe(true);
     expect(speaking.energy).toBe(0.8);
