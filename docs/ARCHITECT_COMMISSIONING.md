@@ -28,7 +28,7 @@ Observed via Vercel metadata (no decrypted secrets) and narrow SELECT queries on
 
 The earlier 2026-10-14 entrance-only report and “Origin unapplied” advice are superseded by these observations. Do not reapply Origin or replay the original Talk batch.
 
-Identity clarification: the narrow management lookup selected the named saved project and followed `project.person_id` to `persons.auth_user_id` and the person-bound `founder_access` row. It did **not** identify Neil by email or authenticate his session. A second narrow read confirmed revision 1, one version, zero Apps rows and unchanged creation/update timestamp; the supplied sign-in email does not match the database owner. Await Neil's confirmed sign-in and a session/RLS ownership check before owner-scoped acceptance. “Untouched” means this task made no data mutation, not that Neil's identity or hosted acceptance has been verified. Do not publish personal identifiers or account emails in Git.
+Identity reconciliation (2026-10-16): the initial management lookup established the saved project and person-bound founder entitlement, but the initially supplied email did not match. Neil subsequently supplied his actual app sign-in. A narrow owner-scoped SELECT now confirms the Auth user → person → existing Nexus relationship, founder access, application discipline, revision 1, one saved version, zero Apps rows and unchanged creation/update timestamp. No entitlement grant or duplicate project is needed. Authenticated browser/session-RLS acceptance is still unperformed; the management lookup does not substitute for it. Personal emails and owner/project identifiers remain outside Git. This task made no data mutation.
 
 ## Required SQL review, nonexecuted
 
