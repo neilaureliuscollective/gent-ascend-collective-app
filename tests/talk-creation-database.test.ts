@@ -675,15 +675,14 @@ describe('Live turn bindings (PGlite; not Supabase Auth)', () => {
   });
 });
 
-it('keeps premium transfer blocked until database authority derives the complete snapshot', async () => {
-  const { lifestyleLaunchBoard, premiumDirectionTransferBlocker } = await import('@/domains/talk-creation/design-board');
+it('a v1-only database cannot verify a premium snapshot receipt', async () => {
+  const { lifestyleLaunchBoard } = await import('@/domains/talk-creation/design-board');
   const { produceArchitectDirection } = await import('@/domains/talk-creation/architect-direction');
   const boardId = '00000000-0000-4000-8000-000000000091';
   const projectId = '00000000-0000-4000-8000-000000000092';
   const requestId = '00000000-0000-4000-8000-000000000093';
   const board = lifestyleLaunchBoard();
   const receipt = produceArchitectDirection({ conversationId: conversation, boardId, version: 1, board });
-  expect(premiumDirectionTransferBlocker(board)).toMatch(/not available yet/);
   await asUser(owner, `select public.ai_talk_save_creation('${boardId}','${conversation}',null,'board',null,${literal(board)})`);
   const derived = (await db.query(`select public.ai_talk_derived_design_receipt('${owner}','${conversation}','${boardId}',1) as receipt`)).rows[0] as { receipt: { digest: string; content: unknown } };
   expect(derived.receipt.digest).not.toBe(receipt.digest);

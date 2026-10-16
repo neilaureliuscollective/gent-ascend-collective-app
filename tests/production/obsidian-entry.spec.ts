@@ -50,7 +50,8 @@ test('the verified production application serves Obsidian and preserves public e
       if (route.startsWith('/app/')) {
         await expect(page.locator('.imperial-workspace')).toHaveCSS(
           'background-color',
-          ['/app/aethelios', '/app/studio'].includes(route) ? 'rgb(17, 17, 17)' : 'rgb(7, 11, 10)',
+          // Shared charcoal environment: aether smoke canvas → io environment.
+          'rgb(17, 17, 17)',
         );
         // Talk's approved compact shell exposes destinations inside Tools.
         // Other workspaces retain the six-link primary navigation.

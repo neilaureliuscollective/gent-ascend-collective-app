@@ -117,12 +117,27 @@ export const designDirectionReceiptSchema = z
 
 export type DesignDirectionReceipt = z.infer<typeof designDirectionReceiptSchema>;
 
+/** Premium-only canonical JSON: fixed ASCII schema keys sorted recursively; arrays retain order.
+ * Historical receipts deliberately keep JSON.stringify byte identity.
+ */
+export function canonicalDesignJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalDesignJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).filter((key) => record[key] !== undefined).sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalDesignJson(record[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
 export function designDirectionDigest(
   content: DesignDirectionContent,
   sourceRecords: DesignDirectionReceipt['sourceRecords'],
 ) {
   return createHash('sha256')
-    .update(JSON.stringify({ content, sourceRecords }), 'utf8')
+    .update(content.designSnapshot
+      ? canonicalDesignJson({ content, sourceRecords })
+      : JSON.stringify({ content, sourceRecords }), 'utf8')
     .digest('hex');
 }
 

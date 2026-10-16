@@ -1,3 +1,4 @@
+import { requirePremiumReceiptAuthority } from '@/domains/talk-creation/premium-receipt';
 import 'server-only';
 import { hasVerifiedPremiumAuthority, UNVERIFIED_PREMIUM_DIRECTION } from './premium-authority';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
@@ -8,6 +9,7 @@ import {
   DESIGN_DIRECTION_SCHEMA,
   TEXT_HANDOFF_SCHEMA,
   receiveDesignDirectionCommand,
+  designDirectionReceiptSchema,
   type DesignDirectionReceipt,
 } from './contract';
 import { resolveAuthorizedTalkSource, talkSourceAdapterStatus } from './talk-source';
@@ -79,7 +81,9 @@ async function bindOriginProject(
     p_request: requestId,
     p_expected: 0,
     p_content: content,
-    p_note: `Retained ${TEXT_HANDOFF_SCHEMA} compatible design direction. Execution was not started.`,
+    p_note: receipt.content.designSnapshot
+      ? 'Exact premium Talk direction received. Build approval is still required.'
+      : `Retained ${TEXT_HANDOFF_SCHEMA} compatible design direction. Execution was not started.`,
   });
   if (saved.error || saved.data == null)
     throw new IntelligenceError(
@@ -188,6 +192,11 @@ function checkedRetainedDirection(row: RetainedDirection | null) {
     })
   )
     throw new IntelligenceError(UNVERIFIED_PREMIUM_DIRECTION, 409);
+  if (row?.receipt.content.designSnapshot) {
+    const parsed = designDirectionReceiptSchema.safeParse(row.receipt);
+    if (!parsed.success || row.digest !== parsed.data.digest)
+      throw new IntelligenceError('The retained premium receipt is inconsistent. Review the saved source again.', 409);
+  }
   return row;
 }
 
@@ -215,7 +224,9 @@ export async function readRetainedDirection(projectId: string) {
     .eq('person_id', person.id)
     .maybeSingle();
   if (error) throw new IntelligenceError('Design direction unavailable.', 503);
-  return checkedRetainedDirection((data as RetainedDirection | null) ?? null);
+  const retained = checkedRetainedDirection((data as RetainedDirection | null) ?? null);
+  if (retained) await requirePremiumReceiptAuthority(client as never, retained.receipt);
+  return retained;
 }
 
 export { talkSourceAdapterStatus, DESIGN_DIRECTION_SCHEMA };

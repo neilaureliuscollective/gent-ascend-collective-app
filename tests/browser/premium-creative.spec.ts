@@ -107,10 +107,12 @@ test('three premium compositions, keyboard selection, revision reload, document 
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(page.locator('textarea').first()).toBeVisible();
   await page.goto('http://127.0.0.1:3102/premium.html?surface=board-detail');
-  await expect(
-    page.getByRole('button', { name: 'Review design transfer', exact: true }),
-  ).toBeDisabled();
-  await expect(page.getByText(/Premium design transfer is not available yet/)).toBeVisible();
+  await page.route('**/api/aurelius/creations?direction=*', (route) => route.fulfill({
+    status: 409, json: { error: 'Premium design transfer is not available on this database yet. Your saved direction stays in Talk; nothing has started in Architect.' },
+  }));
+  await page.getByRole('button', { name: 'Review design transfer', exact: true }).click();
+  await expect(page.getByText(/Premium design transfer is not available on this database yet/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Confirm transfer', exact: true })).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('premium-transfer-blocked.png'), fullPage: true });
   expect(errors).toEqual([]);
 });

@@ -1919,6 +1919,10 @@ export interface Database {
           recovered?: boolean;
         };
       };
+      ai_talk_review_premium_direction: {
+        Args: { p_conversation: string; p_board: string; p_version: number };
+        Returns: unknown;
+      };
       architect_apps_retain_design: {
         Args: {
           p_request: string;

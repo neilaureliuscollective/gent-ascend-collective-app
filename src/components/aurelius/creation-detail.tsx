@@ -13,7 +13,7 @@ import type {
 import { creationTitle } from '@/domains/talk-creation/schema';
 import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
-import { premiumDirectionTransferBlocker, type DesignBoardContent } from '@/domains/talk-creation/design-board';
+import { type DesignBoardContent } from '@/domains/talk-creation/design-board';
 import {
   compileTalkDocument,
   compareTalkRevisions,
@@ -105,7 +105,6 @@ export function CreationDetail({
   const plan = creation?.kind === 'plan' ? (creation.content as PlanContent) : null;
   const palette = creation?.kind === 'palette' ? (creation.content as PaletteContent) : null;
   const board = creation?.kind === 'board' ? (creation.content as DesignBoardContent) : null;
-  const directionTransferBlocker = board ? premiumDirectionTransferBlocker(board) : null;
   const handoff = creation?.kind === 'handoff' ? (creation.content as HandoffContent) : null;
   const [draft, setDraft] = useState(creation?.content);
   const [idea, setIdea] = useState(
@@ -377,7 +376,7 @@ export function CreationDetail({
             onCommit={(next) => onSave('board', next)}
           />
           <div className="talk-origin-review">
-            {directionTransferBlocker && <p role="status">{directionTransferBlocker}</p>}
+            {board?.rendererVersion === 'premium/v2' && <p className="talk-creation-status">Review checks whether Architect can retain this exact premium design. Build approval stays separate.</p>}
             <p className="talk-creation-status" data-adapter="talk-architect-direction">
               {creation
                 ? describeTalkDestination({
@@ -431,14 +430,17 @@ export function CreationDetail({
                 <div>
                   <dt>Transfers</dt>
                   <dd>
-                    Mapped color roles, display/body tokens, layout tokens, approved copy and labelled
-                    asset references.
+                    {board?.rendererVersion === 'premium/v2'
+                      ? 'Exact composition, typefaces, material, all surface/color roles, copy and authorized asset references.'
+                      : 'Mapped color roles, display/body tokens, layout tokens, approved copy and labelled asset references.'}
                   </dd>
                 </div>
                 <div>
                   <dt>Stays in Talk</dt>
                   <dd>
-                    Hero-product demonstration, typeface names, scale, shape, material, surface and border roles, and unprovided image pixels remain in Talk for this historical transfer.
+                    {board?.rendererVersion === 'premium/v2'
+                      ? 'Unprovided image pixels. Referenced media keeps its existing owner access; transfer does not publish it.'
+                      : 'Hero-product demonstration, typeface names, scale, shape, material, surface and border roles, and unprovided image pixels remain in Talk for this historical transfer.'}
                   </dd>
                 </div>
                 <div>
@@ -451,7 +453,7 @@ export function CreationDetail({
             <button
               type="button"
               className="button"
-              disabled={!creation || directionBusy !== null || Boolean(directionReview?.imported) || Boolean(directionTransferBlocker)}
+              disabled={!creation || directionBusy !== null || Boolean(directionReview?.imported)}
               onClick={() => {
                 if (!creation) return;
                 setDirectionBusy('review');
@@ -499,6 +501,9 @@ export function CreationDetail({
                       selectedDirectionId: body.selectedDirectionId,
                       selectedDirectionName: body.selectedDirectionName,
                     });
+                  } catch {
+                    setDirectionReview({ unsupported: [], imported: false, projectId: null, requestId: null,
+                      destinationValid: false, error: 'This design could not be reviewed. Retry before continuing.' });
                   } finally {
                     setDirectionBusy(null);
                   }

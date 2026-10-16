@@ -36,9 +36,12 @@ it('refuses premium receipts before any Architect binding while database authori
     version: 2,
   };
   state.row = { id: identity.boardId, version: 2, content: board, candidate: false };
+  state.writes.mockResolvedValue({ data: null, error: { code: 'PGRST202', message: 'Function missing' } });
   const receipt = produceArchitectDirection({ ...identity, board });
   await expect(resolveTalkDesignSource({ personId: 'synthetic-owner', receipt })).rejects.toThrow(
-    /Premium design transfer is not available yet/,
+    /Premium design transfer is not available on this database yet/,
   );
-  expect(state.writes).not.toHaveBeenCalled();
+  expect(state.writes).toHaveBeenCalledExactlyOnceWith('ai_talk_review_premium_direction', {
+    p_conversation: identity.conversationId, p_board: identity.boardId, p_version: 2,
+  });
 });
