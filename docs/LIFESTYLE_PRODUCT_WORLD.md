@@ -47,8 +47,14 @@ Fixture page `goto` / `domContentLoaded` on the component server, after the chan
 
 These are local fixture timings, not hosted LCP or a live catalog comparison. No before-timing was recorded on this machine; do not read them as a speed claim.
 
+## Production
+
+Founder authorized 2026-10-16 merge of PR #156 onto main. Live production is merge `715a2d9d` / deployment `dpl_HyKuNtX5emzqUCUceisFmdsMbQQu` on https://www.gentascend.com. Home HTML `data-dpl-id` matches. This is the existing Vercel Git production pipeline, not promotion of a preview.
+
+Signed-out live HTML shows a connected catalog: opening Solaris / Hydros (Lemonade) / Recovery Cream, then more published pieces including Ascend flavours. `/shop` reports 11 essentials. Vendor presentation is Aethelios Lifestyle. Checkout was not placed.
+
+Rollback: previous READY production SHA `4a7d909a` / `dpl_5APRcVnFknyY7kakDxh6rfMzciAF`. Preserve private tables, buckets and records if reverting the app.
+
 ## Outside this code task
 
-Shopify catalog publication, media uploads, merchant-data edits, purchases, hosted credentials and production merge remain closed. This environment has no Storefront token, so live product handles, prices and checkout were not verified here. Fixture and unconfigured-catalog states are honest and labelled.
-
-If the live shop still uses default vendor “My Store”, change that in Shopify admin. If Vitalis / Obsidian / Hydros / Ascend handles differ from the mapping above, send the current handles — do not invent SKUs in code.
+Shopify catalog publication, media uploads, merchant-data edits, purchases and hosted credentials were not changed. House-packshot handles `vitalis`, `obsidian-creme`, `obsidian-wash`, `hydros` and `ascend` did not become the live opening SKUs; production used the published catalog instead. If current Aethelios packaging photographs should replace the printed Legacy Reserve packshots, add those assets in a later pass.

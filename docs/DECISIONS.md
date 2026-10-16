@@ -1,3 +1,7 @@
+# Lifestyle product world production — 2026-10-16
+
+Founder authorized merge of PR #156 onto main and deploy through the existing Vercel Git production pipeline. Merge `715a2d9d` (parents `4a7d909a` Live globe + `571babfd` Lifestyle). Production `dpl_HyKuNtX5emzqUCUceisFmdsMbQQu` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify Admin write or purchase. Talk/Architect/Studio source was not changed. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
+
 # Lifestyle merchandising and vendor presentation — 2026-10-16
 
 House packshots are not SKUs. Bind them to published Shopify products only by exact handle. Do not sort the catalog to force `vitalis` first. Shopify’s default store name (`My Store` and close aliases) is presentation, not a supplier: show Aethelios Lifestyle. Real vendor strings stay visible. Do not rewrite Shopify vendor data. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
