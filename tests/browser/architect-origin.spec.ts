@@ -733,7 +733,7 @@ test('Fold dock reveals one panel at 720px without fabricating checks', async ({
     .click();
   await expect(page.locator('.origin-checks-pane')).toBeVisible();
   await expect(page.locator('.origin-checks-pane')).toContainText(
-    'Construct checks are not in this checkout',
+    'Construct execution is not activated in this environment.',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/architect-studio-fold-720.png', fullPage: true });
